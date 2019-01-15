@@ -1,0 +1,39 @@
+#!/usr/bin/python3
+
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+def main(tree, kickstart, skip_package_install=False):
+    with open("/tmp/kickstart.ks", "w") as f:
+        if skip_package_install:
+            subprocess.run(["tar", "cvf", "/tmp/empty.tar", "--files-from", "/dev/null"])
+            f.write(f"liveimg --url=file:///tmp/empty.tar\n")
+        f.write(kickstart)
+
+    cmd = [
+        "anaconda",
+        "--cmdline",
+        "--loglevel", "debug",
+        "--kickstart", "/tmp/kickstart.ks",
+        "--dirinstall", tree
+    ]
+    print(" ".join(cmd), flush=True)
+    returncode = subprocess.run(cmd).returncode
+
+    if returncode != 0:
+        print("\n=== anaconda.log" + "=" * 50)
+        with open("/tmp/anaconda.log") as f:
+            print(f.read())
+
+    if skip_package_install:
+        os.unlink("/tmp/empty.tar")
+    os.unlink("/tmp/kickstart.ks")
+
+    return returncode
+
+if __name__ == '__main__':
+    options = json.load(sys.stdin)
+    sys.exit(main(**options))

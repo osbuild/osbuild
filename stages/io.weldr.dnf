@@ -1,0 +1,47 @@
+#!/usr/bin/python3
+
+import atexit
+import configparser
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+def bindmount(source, dest):
+    os.makedirs(source, 0o755, True)
+    os.makedirs(dest, 0o755, True)
+    subprocess.run(["mount", "--bind", source, dest], check=True)
+    atexit.register(lambda: subprocess.run(["umount", dest]))
+
+def main(tree, repos, packages, releasever, cache=None):
+    with tempfile.NamedTemporaryFile(mode="w", prefix="dnf-", suffix=".conf", delete=False) as dnfconfig:
+        p = configparser.ConfigParser()
+        p.read_dict(repos)
+        p.write(dnfconfig)
+        atexit.register(lambda: os.unlink(dnfconfig.name))
+
+    bindmount("/proc", f"{tree}/proc")
+    bindmount("/sys", f"{tree}/sys")
+    bindmount("/dev", f"{tree}/dev")
+
+    if cache:
+        bindmount(cache, f"{tree}/var/cache/dnf")
+
+    cmd = [
+        "dnf", "-yv",
+        "--installroot", tree,
+        "--setopt", "reposdir=",
+        "--setopt", "keepcache=True",
+        "--setopt", "install_weak_deps=False",
+        "--releasever", releasever,
+        "--config", dnfconfig.name,
+        "install"
+    ] + packages
+
+    print(" ".join(cmd), flush=True)
+    return subprocess.run(cmd).returncode
+
+if __name__ == '__main__':
+    options = json.load(sys.stdin)
+    sys.exit(main(**options))

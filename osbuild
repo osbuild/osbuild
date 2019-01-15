@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+
+import argparse
+import contextlib
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+RED = "\033[31m"
+
+
+@contextlib.contextmanager
+def tmpfs():
+    """A contextmanager that mounts a tmpfs and returns its location."""
+
+    with tempfile.TemporaryDirectory(prefix="osbuild-tree-", dir=os.getcwd()) as path:
+        subprocess.run(["mount", "-t", "tmpfs", "tmpfs", path], check=True)
+        try:
+            yield path
+        finally:
+            subprocess.run(["umount", path], check=True)
+
+
+def main(pipeline_path):
+    with open(pipeline_path) as f:
+        pipeline = json.load(f)
+
+    with tmpfs() as tree:
+        for i, stage in enumerate(pipeline["stages"], start=1):
+            name = stage["name"]
+            options = stage.get("options", {})
+            options["tree"] = os.path.abspath(tree)
+
+            options_str = json.dumps(options, indent=2)
+
+            print(f"{RESET}{BOLD}{i}. {name}{RESET} {options_str}")
+            print()
+
+            script = f"""
+                set -e
+                mount -t tmpfs tmpfs /tmp
+                mount -t tmpfs tmpfs /var/tmp
+                stages/{name}
+            """
+
+            try:
+                subprocess.run(["unshare", "--pid", "--kill-child", "--mount", "sh", "-c", script],
+                    input=options_str, encoding="utf-8", check=True)
+            except KeyboardInterrupt:
+                print()
+                print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
+                return 1
+            except subprocess.CalledProcessError as error:
+                print()
+                print(f"{RESET}{BOLD}{RED}{name} failed with code {error.returncode}{RESET}")
+                return 1
+
+            print()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Build operating system images")
+    parser.add_argument("pipeline_path", metavar="pipeline", help="json file containing the pipeline that should be built")
+    args = parser.parse_args()
+    sys.exit(main(**vars(args)))
