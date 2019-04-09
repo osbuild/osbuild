@@ -40,3 +40,13 @@ pid namespaces. It injects the `options` object with a `tree` key pointing to
 the file system tree and passes that to the stage via its `stdin`.
 Stages may have side effects: the `io.weldr.qcow2` stage in the above example
 packs the tree into a `qcow2` image.
+
+## Running
+
+```
+osbuild [--from ARCHIVE] [--save ARCHIVE] PIPELINE
+```
+
+Runs `PIPELINE`. If `--from` is given, unpacks its contents (`.tar.gz`) into
+the tree before running the first stage. If `--save` is given, saves the
+contents of the tree in the given archive.
