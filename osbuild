@@ -15,22 +15,34 @@ RED = "\033[31m"
 
 
 @contextlib.contextmanager
-def tmpfs():
-    """A contextmanager that mounts a tmpfs and returns its location."""
+def tmpfs(save=None):
+    """A contextmanager that mounts a tmpfs and returns its location.
+
+    If `save` is given, it should contain the name of an .tar.gz archive to
+    which the contents of the tmpfs will be written.
+    """
 
     with tempfile.TemporaryDirectory(prefix="osbuild-tree-", dir=os.getcwd()) as path:
         subprocess.run(["mount", "-t", "tmpfs", "tmpfs", path], check=True)
         try:
             yield path
+            if save:
+                print(f"Saving tree to {save}...")
+                subprocess.run(["tar", "-czf", save, "-C", path, "."], stdout=subprocess.DEVNULL, check=True)
         finally:
             subprocess.run(["umount", path], check=True)
 
 
-def main(pipeline_path):
+def main(pipeline_path, from_archive, save):
     with open(pipeline_path) as f:
         pipeline = json.load(f)
 
-    with tmpfs() as tree:
+    with tmpfs(save) as tree:
+        if from_archive:
+            r = subprocess.run(["tar", "-xzf", from_archive, "-C", tree])
+            if r.returncode != 0:
+                return
+
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
@@ -38,6 +50,7 @@ def main(pipeline_path):
 
             options_str = json.dumps(options, indent=2)
 
+            print()
             print(f"{RESET}{BOLD}{i}. {name}{RESET} {options_str}")
             print()
 
@@ -54,17 +67,21 @@ def main(pipeline_path):
             except KeyboardInterrupt:
                 print()
                 print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
-                return 1
+                return 130
             except subprocess.CalledProcessError as error:
                 print()
                 print(f"{RESET}{BOLD}{RED}{name} failed with code {error.returncode}{RESET}")
                 return 1
 
-            print()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build operating system images")
-    parser.add_argument("pipeline_path", metavar="pipeline", help="json file containing the pipeline that should be built")
+    parser.add_argument("pipeline_path", metavar="PIPELINE",
+                        help="json file containing the pipeline that should be built")
+    parser.add_argument("--save", metavar="ARCHIVE",
+                        help="save the resulting tree to ARCHIVE")
+    parser.add_argument("--from", dest="from_archive", metavar="ARCHIVE",
+                        help="initialize the tree from ARCHIVE")
     args = parser.parse_args()
+
     sys.exit(main(**vars(args)))
