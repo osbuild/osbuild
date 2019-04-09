@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+
+import contextlib
+import json
+import os
+import subprocess
+import sys
+
+
+@contextlib.contextmanager
+def mount(source, dest, *options):
+    os.makedirs(dest, 0o755, True)
+    subprocess.run(["mount", *options, source, dest], check=True)
+    try:
+        yield
+    finally:
+        subprocess.run(["umount", dest], check=True)
+
+
+def main(tree, playbook):
+    with open("/tmp/inventory", "w") as f:
+        f.write(f"osbuild-tree ansible_connection=chroot ansible_host={tree} ansible_python_interpreter=/usr/bin/python3")
+
+    with open("/tmp/playbook.yml", "w") as f:
+        if isinstance(playbook, str):
+            f.write(playbook)
+        else:
+            json.dump(playbook, f)
+
+    with mount("/dev", f"{tree}/dev", "--bind"), \
+         mount("/proc", f"{tree}/proc", "--bind"), \
+         mount("/sys", f"{tree}/sys", "--bind"):
+        r = subprocess.run([
+            "ansible-playbook", "-v",
+            "--connection", "chroot",
+            "--inventory", "/tmp/inventory",
+            "/tmp/playbook.yml"
+        ])
+
+    return r.returncode
+
+if __name__ == '__main__':
+    options = json.load(sys.stdin)
+    sys.exit(main(**options))
+
