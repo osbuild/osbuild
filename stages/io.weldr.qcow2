@@ -1,0 +1,74 @@
+#!/usr/bin/python3
+
+import contextlib
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+def tree_size(tree):
+    size = 0
+    for root, dirs, files in os.walk(tree):
+        for entry in files + dirs:
+            path = os.path.join(root, entry)
+            size += os.stat(path, follow_symlinks=False).st_size
+    return size
+
+@contextlib.contextmanager
+def mount(source, dest, *options):
+    os.makedirs(dest, 0o755, True)
+    subprocess.run(["mount", *options, source, dest], check=True)
+    try:
+        yield
+    finally:
+        subprocess.run(["umount", dest], check=True)
+
+@contextlib.contextmanager
+def mount_image(device, dest):
+    with mount(device, dest), \
+         mount("/dev", f"{dest}/dev", "--bind"), \
+         mount("/proc", f"{dest}/proc", "--bind"), \
+         mount("/sys", f"{dest}/sys", "--bind"):
+             yield
+
+@contextlib.contextmanager
+def loop_device(image):
+    r = subprocess.run(["losetup", "--show", "-f", "-P", image], stdout=subprocess.PIPE, encoding="utf-8", check=True)
+    loop = r.stdout.strip()
+    try:
+        yield loop
+    finally:
+        subprocess.run(["losetup", "-d", loop], check=True)
+
+def main(tree, target):
+    size = tree_size(tree)
+
+    with tempfile.TemporaryDirectory(dir=os.getcwd()) as workdir:
+        image = f"{workdir}/image.raw"
+        mountpoint = f"{workdir}/mnt"
+
+        subprocess.run(["truncate", "--size", str(int(size * 1.1)), image], check=True)
+
+        partition_table = "label: mbr\nbootable, type=83"
+        subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
+
+        with loop_device(image) as loop:
+            subprocess.run(["mkfs.ext4", "-d", tree, f"{loop}p1"], check=True)
+
+            # grub2-mkconfig and grub2-install only seem to work reliably when
+            # called from a chroot
+            with mount_image(f"{loop}p1", mountpoint):
+                subprocess.run(["chroot", mountpoint, "grub2-mkconfig", "-o", "/boot/grub2/grub.cfg"], check=True)
+                subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy", "--target", "i386-pc", loop], check=True)
+
+        subprocess.run(["qemu-img", "convert", "-O" "qcow2", "-c", image, target], check=True)
+
+if __name__ == '__main__':
+    options = json.load(sys.stdin)
+
+    try:
+        main(**options)
+    except CalledProcessError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
