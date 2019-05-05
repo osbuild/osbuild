@@ -1,18 +1,10 @@
 #!/usr/bin/python3
 
-import atexit
 import configparser
 import json
 import os
 import subprocess
 import sys
-
-
-def bindmount(source, dest):
-    os.makedirs(source, 0o755, True)
-    os.makedirs(dest, 0o755, True)
-    subprocess.run(["mount", "--bind", source, dest], check=True)
-    atexit.register(lambda: subprocess.run(["umount", dest]))
 
 
 def main(tree, repos, packages, releasever, cache=None):
@@ -21,17 +13,14 @@ def main(tree, repos, packages, releasever, cache=None):
         p.read_dict(repos)
         p.write(conf)
 
-    bindmount("/proc", f"{tree}/proc")
-    bindmount("/sys", f"{tree}/sys")
-    bindmount("/dev", f"{tree}/dev")
-
-    if cache:
-        bindmount(cache, f"{tree}/var/cache/dnf")
+    if not cache:
+        cache = f"/tmp/dnf-cache"
 
     cmd = [
         "dnf", "-yv",
         "--installroot", tree,
         "--setopt", "reposdir=",
+        "--setopt", f"cachedir={cache}",
         "--setopt", "keepcache=True",
         "--setopt", "install_weak_deps=False",
         "--releasever", releasever,
