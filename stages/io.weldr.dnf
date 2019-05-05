@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
+
 
 def bindmount(source, dest):
     os.makedirs(source, 0o755, True)
@@ -14,12 +14,12 @@ def bindmount(source, dest):
     subprocess.run(["mount", "--bind", source, dest], check=True)
     atexit.register(lambda: subprocess.run(["umount", dest]))
 
+
 def main(tree, repos, packages, releasever, cache=None):
-    with tempfile.NamedTemporaryFile(mode="w", prefix="dnf-", suffix=".conf", delete=False) as dnfconfig:
+    with open("/tmp/dnf.conf", "w") as conf:
         p = configparser.ConfigParser()
         p.read_dict(repos)
-        p.write(dnfconfig)
-        atexit.register(lambda: os.unlink(dnfconfig.name))
+        p.write(conf)
 
     bindmount("/proc", f"{tree}/proc")
     bindmount("/sys", f"{tree}/sys")
@@ -35,12 +35,13 @@ def main(tree, repos, packages, releasever, cache=None):
         "--setopt", "keepcache=True",
         "--setopt", "install_weak_deps=False",
         "--releasever", releasever,
-        "--config", dnfconfig.name,
+        "--config", "/tmp/dnf.conf",
         "install"
     ] + packages
 
     print(" ".join(cmd), flush=True)
     return subprocess.run(cmd).returncode
+
 
 if __name__ == '__main__':
     options = json.load(sys.stdin)
