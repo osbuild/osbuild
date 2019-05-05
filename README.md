@@ -37,9 +37,10 @@ modifies a file system tree. Pipelines are defined as JSON files like this one:
 
 `osbuild` runs each of stages in turn, somewhat isolating them into mount and
 pid namespaces. It injects the `options` object with a `tree` key pointing to
-the file system tree and passes that to the stage via its `stdin`.
-Stages may have side effects: the `io.weldr.qcow2` stage in the above example
-packs the tree into a `qcow2` image.
+the file system tree and passes that to the stage via its `stdin`. Each stage
+has private `/tmp` and `/var/tmp` directories that are deleted after the stage
+is run.  Stages may have side effects: the `io.weldr.qcow2` stage in the above
+example packs the tree into a `qcow2` image.
 
 ## Running
 
