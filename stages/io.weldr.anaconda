@@ -4,7 +4,6 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
 
 def main(tree, kickstart, skip_package_install=False):
     with open("/tmp/kickstart.ks", "w") as f:
