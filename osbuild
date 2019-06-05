@@ -56,6 +56,7 @@ def main(pipeline_path, from_archive, save):
 
             script = f"""
                 set -e
+                mount -t tmpfs tmpfs /run
                 mount -t tmpfs tmpfs /tmp
                 mount -t tmpfs tmpfs /var/tmp
                 mkdir -p {tree}/dev {tree}/sys {tree}/proc
