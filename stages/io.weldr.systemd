@@ -1,0 +1,13 @@
+#!/usr/bin/python3
+
+import json
+import os
+import subprocess
+
+def main(tree, enabled_services):
+    for service in enabled_services:
+        subprocess.run([f"{tree}/usr/bin/systemctl", "--root", tree, "enable", service], check=True)
+
+if __name__ == '__main__':
+    options = json.load(sys.stdin)
+    sys.exit(main(**options))

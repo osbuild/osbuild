@@ -1,0 +1,18 @@
+#!/usr/bin/python3
+
+import json
+import sys
+
+def main(tree, language, vc_keymap=None):
+    with open(f"{tree}/etc/locale.conf", "w") as f:
+        f.write(f'LANG="{language}"\n')
+
+    if vc_keymap:
+        with open(f"{tree}/etc/vconsole.conf", "w") as f:
+            f.write(f'KEYMAP="{vc_keymap}"\n')
+            f.write(f'FONT="eurlatgr"\n')
+
+if __name__ == '__main__':
+    options = json.load(sys.stdin)
+    sys.exit(main(**options))
+

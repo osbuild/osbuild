@@ -1,0 +1,24 @@
+#!/usr/bin/python3
+
+import atexit
+import json
+import os
+import subprocess
+import sys
+
+
+def main(tree, script):
+    scriptfile = f"{tree}/osbuild-script"
+
+    with open(scriptfile, "w") as f:
+        f.write(script)
+
+    os.chmod(scriptfile, 0o550)
+    atexit.register(lambda: os.unlink(scriptfile))
+
+    return subprocess.run(["chroot", tree, "/osbuild-script"]).returncode
+
+
+if __name__ == '__main__':
+    options = json.load(sys.stdin)
+    sys.exit(main(**options))

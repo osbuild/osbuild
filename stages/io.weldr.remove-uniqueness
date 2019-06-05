@@ -1,0 +1,15 @@
+#!/usr/bin/python3
+
+import contextlib
+import json
+import os
+import sys
+
+def main(tree):
+    with contextlib.suppress(FileNotFoundError):
+        os.unlink(f"{tree}/etc/machine-id")
+        os.unlink(f"{tree}/var/lib/systemd/random-seed")
+
+if __name__ == '__main__':
+    options = json.load(sys.stdin)
+    sys.exit(main(**options))
