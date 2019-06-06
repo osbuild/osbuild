@@ -59,10 +59,6 @@ def main(pipeline_path, from_archive, save):
                 mount -t tmpfs tmpfs /run
                 mount -t tmpfs tmpfs /tmp
                 mount -t tmpfs tmpfs /var/tmp
-                mkdir -p {tree}/dev {tree}/sys {tree}/proc
-                mount --bind /dev {tree}/dev
-                mount --bind /sys {tree}/sys
-                mount --bind /proc {tree}/proc
                 stages/{name}
             """
 

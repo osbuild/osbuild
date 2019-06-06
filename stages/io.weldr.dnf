@@ -16,6 +16,19 @@ def main(tree, repos, packages, releasever, cache=None):
     if not cache:
         cache = f"/tmp/dnf-cache"
 
+    script = f"""
+        set -e
+        mkdir -p {tree}/dev {tree}/sys {tree}/proc
+        mount -t devtmpfs none {tree}/dev
+        mount -t sysfs none {tree}/sys
+        mount -t proc none {tree}/proc
+    """
+    returncode = subprocess.run(["/bin/sh", "-c", script]).returncode
+
+    if returncode != 0:
+        print(f"setting up API VFS in target tree failed: {returncode}")
+        return returncode
+
     cmd = [
         "dnf", "-yv",
         "--installroot", tree,
