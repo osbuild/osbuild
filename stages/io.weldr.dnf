@@ -7,14 +7,11 @@ import subprocess
 import sys
 
 
-def main(tree, repos, packages, releasever, cache=None):
+def main(tree, state, repos, packages, releasever):
     with open("/tmp/dnf.conf", "w") as conf:
         p = configparser.ConfigParser()
         p.read_dict(repos)
         p.write(conf)
-
-    if not cache:
-        cache = f"/tmp/dnf-cache"
 
     script = f"""
         set -e
@@ -33,7 +30,7 @@ def main(tree, repos, packages, releasever, cache=None):
         "dnf", "-yv",
         "--installroot", tree,
         "--setopt", "reposdir=",
-        "--setopt", f"cachedir={cache}",
+        "--setopt", f"cachedir={state}/dnf-cache",
         "--setopt", "keepcache=True",
         "--setopt", "install_weak_deps=False",
         "--releasever", releasever,
