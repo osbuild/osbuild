@@ -32,12 +32,24 @@ def tmpfs(save=None):
         finally:
             subprocess.run(["umount", path], check=True)
 
+@contextlib.contextmanager
+def bindmnt(src_path):
+    """A contextmanager that mindmounts a path read-only and returns its location.
+    """
+
+    with tempfile.TemporaryDirectory(prefix="osbuild-build-", dir=os.getcwd()) as dst_path:
+        subprocess.run(["mount", "-o", "bind,ro", src_path, dst_path], check=True)
+        try:
+            yield dst_path
+        finally:
+            subprocess.run(["umount", dst_path], check=True)
+
 
 def main(pipeline_path, from_archive, save):
     with open(pipeline_path) as f:
         pipeline = json.load(f)
 
-    with tmpfs(save) as tree:
+    with tmpfs(save) as tree, bindmnt("/") as root:
         if from_archive:
             r = subprocess.run(["tar", "-xzf", from_archive, "-C", tree])
             if r.returncode != 0:
@@ -46,8 +58,8 @@ def main(pipeline_path, from_archive, save):
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
-            options["tree"] = os.path.abspath(tree)
-            options["state"] = f"{os.getcwd()}/state/{name}"
+            options["tree"] = "/tmp/tree"
+            options["state"] = "/tmp/state"
 
             options_str = json.dumps(options, indent=2)
 
@@ -59,16 +71,14 @@ def main(pipeline_path, from_archive, save):
             print(f"{RESET}{BOLD}{i}. {name}{RESET} {options_str}")
             print()
 
-            script = f"""
-                set -e
-                mount -t tmpfs tmpfs /run
-                mount -t tmpfs tmpfs /tmp
-                mount -t tmpfs tmpfs /var/tmp
-                stages/{name}
-            """
-
             try:
-                subprocess.run(["unshare", "--pid", "--kill-child", "--mount", "sh", "-c", script],
+                subprocess.run(["systemd-nspawn",
+                                "--link-journal=no",
+                                f"--directory={root}",
+                                f"--bind={tree}:/tmp/tree",
+                                f"--bind={os.getcwd()}/state/{name}:/tmp/state",
+                                f"--bind={os.getcwd()}/stages/{name}:/tmp/stage",
+                                "/tmp/stage"],
                     input=options_str, encoding="utf-8", check=True)
             except KeyboardInterrupt:
                 print()
