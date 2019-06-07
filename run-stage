@@ -1,0 +1,24 @@
+#!/usr/bin/python3
+
+import argparse
+import subprocess
+import sys
+
+
+def main(stage):
+    subprocess.run(["ldconfig"], check=True)
+    subprocess.run(["systemd-sysusers"], check=True)
+
+    # Allow systemd-tmpfiles to return non-0. Some packages want to create
+    # directories owned by users that are not set up with systemd-sysusers.
+    subprocess.run(["systemd-tmpfiles", "--create"])
+
+    r = subprocess.run([stage])
+    return r.returncode
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("stage")
+    args = parser.parse_args()
+    sys.exit(main(**vars(args)))

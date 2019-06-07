@@ -81,9 +81,10 @@ def main(pipeline_path, from_archive, save):
                                 f"--directory={root}",
                                 f"--bind={tree}:/tmp/tree",
                                 f"--bind={os.getcwd()}/state/{name}:/tmp/state",
+                                f"--bind={os.getcwd()}/run-stage:/tmp/run-stage",
                                 f"--bind={os.getcwd()}/stages/{name}:/tmp/stage",
                                 "--bind=/etc/pki",
-                                "/tmp/stage"],
+                                "/tmp/run-stage", "/tmp/stage"],
                     input=options_str, encoding="utf-8", check=True)
             except KeyboardInterrupt:
                 print()
