@@ -73,6 +73,7 @@ def main(pipeline_path, from_archive, save):
 
             try:
                 subprocess.run(["systemd-nspawn",
+                                "--as-pid2",
                                 "--link-journal=no",
                                 "--volatile=yes",
                                 f"--directory={root}",
