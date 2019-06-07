@@ -90,7 +90,10 @@ def main(tree, state, kickstart, skip_package_install=False):
 
     subprocess.run(["ldconfig"], check=True)
     subprocess.run(["systemd-sysusers"], check=True)
-    subprocess.run(["systemd-tmpfiles", "--create"], check=True)
+
+    # Allow systemd-tmpfiles to return non-0. Some packages want to create
+    # directories owned by users that are not set up with systemd-sysusers.
+    subprocess.run(["systemd-tmpfiles", "--create"])
 
     cmd = [
         "anaconda",
