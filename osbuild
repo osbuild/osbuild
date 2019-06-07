@@ -69,6 +69,8 @@ def main(pipeline_path, from_archive, save):
 
             print()
             print(f"{RESET}{BOLD}{i}. {name}{RESET} {options_str}")
+            print("Inspect with:")
+            print(f"\t# nsenter -a --wd=/root -t `machinectl show {os.path.basename(root)} -p Leader --value`")
             print()
 
             try:
