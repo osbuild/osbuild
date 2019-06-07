@@ -74,10 +74,12 @@ def main(pipeline_path, from_archive, save):
             try:
                 subprocess.run(["systemd-nspawn",
                                 "--link-journal=no",
+                                "--volatile=yes",
                                 f"--directory={root}",
                                 f"--bind={tree}:/tmp/tree",
                                 f"--bind={os.getcwd()}/state/{name}:/tmp/state",
                                 f"--bind={os.getcwd()}/stages/{name}:/tmp/stage",
+                                "--bind=/etc/pki",
                                 "/tmp/stage"],
                     input=options_str, encoding="utf-8", check=True)
             except KeyboardInterrupt:

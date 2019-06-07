@@ -5,12 +5,92 @@ import os
 import subprocess
 import sys
 
+config = """
+[Anaconda]
+addons_enabled = True
+debug = False
+kickstart_modules =
+     org.fedoraproject.Anaconda.Modules.Timezone
+     org.fedoraproject.Anaconda.Modules.Network
+     org.fedoraproject.Anaconda.Modules.Localization
+     org.fedoraproject.Anaconda.Modules.Security
+     org.fedoraproject.Anaconda.Modules.Users
+     org.fedoraproject.Anaconda.Modules.Payload
+     org.fedoraproject.Anaconda.Modules.Storage
+     org.fedoraproject.Anaconda.Modules.Services
+
+[Installation System]
+type = UNKNOWN
+can_detect_unsupported_hardware = False
+can_detect_support_removed = False
+
+[Installation Target]
+type = HARDWARE
+physical_root = /mnt/sysimage
+
+[Network]
+default_on_boot = NONE
+
+[Payload]
+default_environment =
+ignored_packages =
+enable_updates = True
+enable_closest_mirror = True
+check_supported_locales = False
+
+[Security]
+selinux = -1
+
+[Bootloader]
+efi_dir = default
+menu_auto_hide = False
+nonibft_iscsi_boot = False
+
+[Storage]
+dmraid = True
+ibft = True
+gpt = False
+multipath_friendly_names = True
+allow_imperfect_devices = False
+file_system_type =
+default_partitioning = WORKSTATION
+luks_version = luks2
+
+[User Interface]
+custom_stylesheet =
+default_help_pages =
+blivet_gui_supported = True
+
+[License]
+eula =
+"""
+
+product = """
+[Product]
+product_name = Fedora
+"""
+
 def main(tree, state, kickstart, skip_package_install=False):
     with open("/tmp/kickstart.ks", "w") as f:
         if skip_package_install:
             subprocess.run(["tar", "cvf", "/tmp/empty.tar", "--files-from", "/dev/null"])
             f.write(f"liveimg --url=file:///tmp/empty.tar\n")
         f.write(kickstart)
+
+
+    # Anaconda cannot start without the config existing
+    os.makedirs("/etc/anaconda/conf.d", exist_ok=True)
+    os.makedirs("/etc/anaconda/product.d", exist_ok=True)
+
+    with open("/etc/anaconda/anaconda.conf", "w") as f:
+        f.write(config)
+
+    with open("/etc/anaconda/product.d/fedora.conf", "w") as f:
+        f.write(product)
+
+    subprocess.run(["ldconfig"], check=True)
+    subprocess.run(["systemd-sysusers"], check=True)
+    subprocess.run(["systemd-tmpfiles", "--create"], check=True)
 
     cmd = [
         "anaconda",
@@ -23,9 +103,12 @@ def main(tree, state, kickstart, skip_package_install=False):
     returncode = subprocess.run(cmd).returncode
 
     if returncode != 0:
-        print("\n=== anaconda.log" + "=" * 50)
-        with open("/tmp/anaconda.log") as f:
-            print(f.read())
+        try:
+            with open("/tmp/anaconda.log") as f:
+                print("\n=== anaconda.log" + "=" * 50)
+                print(f.read())
+        except FileNotFoundError:
+            pass
 
     if skip_package_install:
         os.unlink("/tmp/empty.tar")
