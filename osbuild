@@ -97,10 +97,7 @@ def main(pipeline_path, input_dir, output_dir, sit):
             print()
 
             try:
-                subprocess.run(argv,
-                    input=options_str, encoding="utf-8",
-                    stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT,
-                    check=True)
+                subprocess.run(argv, input=options_str, encoding="utf-8", check=True)
             except KeyboardInterrupt:
                 print()
                 print(f"{RESET}{BOLD}{RED}Aborted{RESET}")

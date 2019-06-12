@@ -18,24 +18,15 @@ def main(stage, sit):
     # directories owned by users that are not set up with systemd-sysusers.
     subprocess.run(["systemd-tmpfiles", "--create"])
 
-    proc = subprocess.Popen([stage], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8")
-
-    with open("/tmp/output", "w") as output:
-        for line in proc.stdout:
-            sys.stdout.write(line)
-            output.write(line)
-            output.flush()
-
-    returncode = proc.wait()
-
-    if sit and returncode != 0:
+    r = subprocess.run([stage])
+    if sit and r.returncode != 0:
         import signal
         print()
-        print(f"{RESET}{BOLD}{RED}Stage failed with code {returncode}{RESET}")
+        print(f"{RESET}{BOLD}{RED}Stage failed with code {r.returncode}{RESET}")
         print("Keeping the build environment running...")
         signal.pause()
 
-    return returncode
+    return r.returncode
 
 
 if __name__ == "__main__":
