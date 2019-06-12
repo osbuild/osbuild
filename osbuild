@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import argparse
-import contextlib
 import json
 import os
 import subprocess
@@ -14,29 +13,41 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 
 
-@contextlib.contextmanager
-def tmpfs():
-    """A contextmanager that mounts a tmpfs and returns its location.
-    """
-
-    with tempfile.TemporaryDirectory(prefix="osbuild-tree-", dir=os.getcwd()) as path:
-        subprocess.run(["mount", "-t", "tmpfs", "tmpfs", path], check=True)
+class BuildContainer:
+    def __init__(self, path=os.getcwd()):
+        self.buildroot = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
+        self.buildroot_mounted = False
+        self.tree = tempfile.mkdtemp(prefix="osbuild-tree-", dir=path)
+        self.tree_mounted = False
         try:
-            yield path
-        finally:
-            subprocess.run(["umount", path], check=True)
+            subprocess.run(["mount", "-o", "bind,ro", "/", self.buildroot], check=True)
+            self.tree_mounted = True
+            subprocess.run(["mount", "-t", "tmpfs", "tmpfs", self.tree], check=True)
+            self.buildroot_mounted = True
+        except subprocess.CalledProcessError:
+            self.unmount()
+            raise
 
-@contextlib.contextmanager
-def bindmnt(src_path):
-    """A contextmanager that mindmounts a path read-only and returns its location.
-    """
+    def unmount(self):
+        if self.tree:
+            if self.tree_mounted:
+                subprocess.run(["umount", "--lazy", self.tree], check=True)
+            os.rmdir(self.tree)
+            self.tree = None
+        if self.buildroot:
+            if self.buildroot_mounted:
+                subprocess.run(["umount", "--lazy", self.buildroot], check=True)
+            os.rmdir(self.buildroot)
+            self.buildroot = None
 
-    with tempfile.TemporaryDirectory(prefix="osbuild-build-", dir=os.getcwd()) as dst_path:
-        subprocess.run(["mount", "-o", "bind,ro", src_path, dst_path], check=True)
-        try:
-            yield dst_path
-        finally:
-            subprocess.run(["umount", dst_path], check=True)
+    def __del__(self):
+        self.unmount()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.unmount()
 
 
 def main(pipeline_path, input_dir, output_dir, sit):
@@ -48,7 +59,7 @@ def main(pipeline_path, input_dir, output_dir, sit):
     with open(pipeline_path) as f:
         pipeline = json.load(f)
 
-    with tmpfs() as tree, bindmnt("/") as root:
+    with BuildContainer() as container:
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
@@ -59,15 +70,15 @@ def main(pipeline_path, input_dir, output_dir, sit):
             # us is '_', because all other characters used by
             # TemporaryDirectory() are allowed. Replace it with 'L's
             # (TemporaryDirectory() only uses lower-case characters)
-            machine_name = os.path.basename(root).replace("_", "L")
+            machine_name = os.path.basename(container.buildroot).replace("_", "L")
 
             argv = ["systemd-nspawn",
                     "--as-pid2",
                     "--link-journal=no",
                     "--volatile=yes",
                     f"--machine={machine_name}",
-                    f"--directory={root}",
-                    f"--bind={tree}:/tmp/tree",
+                    f"--directory={container.buildroot}",
+                    f"--bind={container.tree}:/tmp/tree",
                     f"--bind={os.getcwd()}/run-stage:/tmp/run-stage",
                     f"--bind={os.getcwd()}/stages/{name}:/tmp/stage",
                     "--bind=/etc/pki"]
