@@ -41,7 +41,7 @@ def loop_device(image):
     finally:
         subprocess.run(["losetup", "-d", loop], check=True)
 
-def main(tree, state, target):
+def main(tree, target):
     size = tree_size(tree)
 
     with tempfile.TemporaryDirectory(dir=os.getcwd()) as workdir:

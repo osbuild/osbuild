@@ -70,7 +70,7 @@ product = """
 product_name = Fedora
 """
 
-def main(tree, state, kickstart, skip_package_install=False):
+def main(tree, kickstart, skip_package_install=False):
     with open("/tmp/kickstart.ks", "w") as f:
         if skip_package_install:
             subprocess.run(["tar", "cvf", "/tmp/empty.tar", "--files-from", "/dev/null"])

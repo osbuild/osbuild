@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 
-def main(tree, state, repos, packages, releasever):
+def main(tree, repos, packages, releasever):
     with open("/tmp/dnf.conf", "w") as conf:
         p = configparser.ConfigParser()
         p.read_dict(repos)
@@ -30,8 +30,6 @@ def main(tree, state, repos, packages, releasever):
         "dnf", "-yv",
         "--installroot", tree,
         "--setopt", "reposdir=",
-        "--setopt", f"cachedir={state}/dnf-cache",
-        "--setopt", "keepcache=True",
         "--setopt", "install_weak_deps=False",
         "--releasever", releasever,
         "--config", "/tmp/dnf.conf",

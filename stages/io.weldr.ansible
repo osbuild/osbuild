@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 
-def main(tree, state, playbook):
+def main(tree, playbook):
     with open("/tmp/inventory", "w") as f:
         f.write(f"osbuild-tree ansible_connection=chroot ansible_host={tree} ansible_python_interpreter=/usr/bin/python3")
 

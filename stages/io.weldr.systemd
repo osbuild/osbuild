@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 
-def main(tree, state, enabled_services):
+def main(tree, enabled_services):
     for service in enabled_services:
         subprocess.run([f"{tree}/usr/bin/systemctl", "--root", tree, "enable", service], check=True)
 

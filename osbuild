@@ -59,13 +59,8 @@ def main(pipeline_path, from_archive, save, sit):
             name = stage["name"]
             options = stage.get("options", {})
             options["tree"] = "/tmp/tree"
-            options["state"] = "/tmp/state"
 
             options_str = json.dumps(options, indent=2)
-
-            r = subprocess.run(["mkdir", "-p", f"{os.getcwd()}/state/{name}"])
-            if r.returncode != 0:
-                return
 
             print()
             print(f"{RESET}{BOLD}{i}. {name}{RESET} {options_str}")
@@ -81,7 +76,6 @@ def main(pipeline_path, from_archive, save, sit):
                                 "--volatile=yes",
                                 f"--directory={root}",
                                 f"--bind={tree}:/tmp/tree",
-                                f"--bind={os.getcwd()}/state/{name}:/tmp/state",
                                 f"--bind={os.getcwd()}/run-stage:/tmp/run-stage",
                                 f"--bind={os.getcwd()}/stages/{name}:/tmp/stage",
                                 "--bind=/etc/pki",
