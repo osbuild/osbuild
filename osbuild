@@ -60,6 +60,35 @@ class BuildRoot:
             *[f"--bind-ro={src}:{dest}" for src, dest in readonly_binds]
         ] + argv, *args, **kwargs)
 
+    def run_stage(self, stage, options={}, input_dir=None, output_dir=None, sit=False):
+        options = {
+            **options,
+            "tree": "/tmp/tree",
+            "input_dir": None
+        }
+
+        binds = [
+            (f"{os.getcwd()}/run-stage", "/tmp/run-stage"),
+            (f"{os.getcwd()}/stages/{stage}", "/tmp/stage"),
+            ("/etc/pki", "/etc/pki")
+        ]
+
+        robinds = []
+        if input_dir:
+            options["input_dir"] = "/tmp/input"
+            robinds.append((input_dir, "/tmp/input"))
+
+        if output_dir:
+            options["output_dir"] = "/tmp/output"
+            binds.append((output_dir, "/tmp/output"))
+
+        argv = ["/tmp/run-stage"]
+        if sit:
+            argv.append("--sit")
+        argv.append("/tmp/stage")
+
+        self.run(argv, binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+
     def __del__(self):
         self.unmount()
 
@@ -83,40 +112,15 @@ def main(pipeline_path, input_dir, output_dir, sit):
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
-            options["tree"] = "/tmp/tree"
-
-            binds = [
-                (f"{os.getcwd()}/run-stage", "/tmp/run-stage"),
-                (f"{os.getcwd()}/stages/{name}", "/tmp/stage"),
-                ("/etc/pki", "/etc/pki")
-            ]
-
-            readonly_binds = []
-            if input_dir:
-                options["input_dir"] = "/tmp/input"
-                readonly_binds.append((input_dir, "/tmp/input"))
-            else:
-                options["input_dir"] = None
-
-            if output_dir:
-                options["output_dir"] = "/tmp/output"
-                binds.append(output_dir, "/tmp/output")
-
-            argv = ["/tmp/run-stage"]
-            if sit:
-                argv.append("--sit")
-            argv.append("/tmp/stage")
-
-            options_str = json.dumps(options, indent=2)
 
             print()
-            print(f"{RESET}{BOLD}{i}. {name}{RESET} {options_str}")
+            print(f"{RESET}{BOLD}{i}. {name}{RESET} " + json.dumps(options, indent=2))
             print("Inspect with:")
             print(f"\t# nsenter -a --wd=/root -t `machinectl show {buildroot.machine_name} -p Leader --value`")
             print()
 
             try:
-                buildroot.run(argv, binds=binds, readonly_binds=readonly_binds, input=options_str, encoding="utf-8", check=True)
+                buildroot.run_stage(name, options, input_dir, output_dir, sit)
             except KeyboardInterrupt:
                 print()
                 print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
