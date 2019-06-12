@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 
-def main(tree, script):
+def main(tree, input_dir, script):
     scriptfile = f"{tree}/osbuild-script"
 
     with open(scriptfile, "w") as f:

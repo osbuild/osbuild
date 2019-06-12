@@ -76,6 +76,8 @@ def main(pipeline_path, input_dir, output_dir, sit):
             if input_dir:
                 options["input_dir"] = "/tmp/input"
                 argv.append(f"--bind-ro={os.getcwd()}/{input_dir}:/tmp/input")
+            else:
+                options["input_dir"] = None
 
             # Pass the tree r/w to all stages but the last one.
             # The last stage gets the tree ro and optionally gets an output dir

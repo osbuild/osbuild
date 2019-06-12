@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 
-def main(tree, repos, packages, releasever):
+def main(tree, input_dir, repos, packages, releasever):
     with open("/tmp/dnf.conf", "w") as conf:
         p = configparser.ConfigParser()
         p.read_dict(repos)

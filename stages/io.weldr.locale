@@ -3,7 +3,7 @@
 import json
 import sys
 
-def main(tree, language, vc_keymap=None):
+def main(tree, input_dir, language, vc_keymap=None):
     with open(f"{tree}/etc/locale.conf", "w") as f:
         f.write(f'LANG="{language}"\n')
 
