@@ -54,10 +54,18 @@ def main(pipeline_path, input_dir, output_dir, sit):
             options = stage.get("options", {})
             options["tree"] = "/tmp/tree"
 
+            # systemd-nspawn silently removes some characters when choosing a
+            # machine name from the directory name. The only one relevant for
+            # us is '_', because all other characters used by
+            # TemporaryDirectory() are allowed. Replace it with 'L's
+            # (TemporaryDirectory() only uses lower-case characters)
+            machine_name = os.path.basename(root).replace("_", "L")
+
             argv = ["systemd-nspawn",
                     "--as-pid2",
                     "--link-journal=no",
                     "--volatile=yes",
+                    f"--machine={machine_name}",
                     f"--directory={root}",
                     f"--bind={tree}:/tmp/tree",
                     f"--bind={os.getcwd()}/run-stage:/tmp/run-stage",
@@ -85,7 +93,7 @@ def main(pipeline_path, input_dir, output_dir, sit):
             print()
             print(f"{RESET}{BOLD}{i}. {name}{RESET} {options_str}")
             print("Inspect with:")
-            print(f"\t# nsenter -a --wd=/root -t `machinectl show {os.path.basename(root)} -p Leader --value`")
+            print(f"\t# nsenter -a --wd=/root -t `machinectl show {machine_name} -p Leader --value`")
             print()
 
             try:
