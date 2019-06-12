@@ -35,21 +35,21 @@ modifies a file system tree. Pipelines are defined as JSON files like this one:
 }
 ```
 
-`osbuild` runs each of the stages in turn, isolating them into mount and pid
-namespaces. It injects the `options` object with a `tree` key pointing to the
-file system tree and passes that to the stage via its `stdin`. Each stage has
-private `/tmp` and `/var/tmp` directories that are deleted after the stage is
-run.
+`osbuild` runs each of the stages in turn, isolating them from the host and
+from each other, with the exception that the first stage may be given an input
+directory, the last stage an output directory and all stages of a given
+pipeline are given the same filesystem tree to operate on.
 
-Stages may have side effects: the `io.weldr.qcow2` stage in the above
-example packs the tree into a `qcow2` image.
+Each stage is passed the (appended) `options` object as JSON over stdin.
+
+The above pipeline has no input and produces a qcow2 image.
 
 ## Running
 
 ```
-osbuild [--from ARCHIVE] [--save ARCHIVE] PIPELINE
+osbuild [--input DIRECTORY] [--output DIRECTORY] PIPELINE
 ```
 
-Runs `PIPELINE`. If `--from` is given, unpacks its contents (`.tar.gz`) into
-the tree before running the first stage. If `--save` is given, saves the
-contents of the tree in the given archive.
+Runs `PIPELINE`. If `--input` is given, the directory is available
+read-only in the first stage. If `--output` is given it, it must be empty
+and is avialble read-write in the final stage.

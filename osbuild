@@ -15,20 +15,14 @@ RED = "\033[31m"
 
 
 @contextlib.contextmanager
-def tmpfs(save=None):
+def tmpfs():
     """A contextmanager that mounts a tmpfs and returns its location.
-
-    If `save` is given, it should contain the name of an .tar.gz archive to
-    which the contents of the tmpfs will be written.
     """
 
     with tempfile.TemporaryDirectory(prefix="osbuild-tree-", dir=os.getcwd()) as path:
         subprocess.run(["mount", "-t", "tmpfs", "tmpfs", path], check=True)
         try:
             yield path
-            if save:
-                print(f"Saving tree to {save}...")
-                subprocess.run(["tar", "-czf", save, "-C", path, "."], stdout=subprocess.DEVNULL, check=True)
         finally:
             subprocess.run(["umount", path], check=True)
 
@@ -45,20 +39,46 @@ def bindmnt(src_path):
             subprocess.run(["umount", dst_path], check=True)
 
 
-def main(pipeline_path, from_archive, save, sit):
+def main(pipeline_path, input_dir, output_dir, sit):
+    if output_dir and len(os.listdir(output_dir)) != 0:
+        print()
+        print(f"{RESET}{BOLD}{RED}Output directory {output_dir} is not empty{RESET}")
+        return 1
+
     with open(pipeline_path) as f:
         pipeline = json.load(f)
 
-    with tmpfs(save) as tree, bindmnt("/") as root:
-        if from_archive:
-            r = subprocess.run(["tar", "-xzf", from_archive, "-C", tree])
-            if r.returncode != 0:
-                return
-
+    with tmpfs() as tree, bindmnt("/") as root:
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
             options["tree"] = "/tmp/tree"
+
+            argv = ["systemd-nspawn",
+                    "--as-pid2",
+                    "--link-journal=no",
+                    "--volatile=yes",
+                    f"--directory={root}",
+                    f"--bind={tree}:/tmp/tree",
+                    f"--bind={os.getcwd()}/run-stage:/tmp/run-stage",
+                    f"--bind={os.getcwd()}/stages/{name}:/tmp/stage",
+                    "--bind=/etc/pki"]
+
+            # Optionally pass the input dir to the first stage
+            if i == 1 and input_dir:
+                options["input_dir"] = "/tmp/input"
+                argv.append(f"--bind-ro={os.getcwd()}/{input_dir}:/tmp/input")
+
+            # Pass the tree r/w to all stages but the last one.
+            # The last stage gets the tree ro and optionally gets an output dir
+            if i == len(pipeline["stages"]) and output_dir:
+                options["output_dir"] = "/tmp/output"
+                argv.append(f"--bind={os.getcwd()}/{output_dir}:/tmp/output")
+
+            argv.append("/tmp/run-stage")
+            if sit:
+                argv.append("--sit")
+            argv.append("/tmp/stage")
 
             options_str = json.dumps(options, indent=2)
 
@@ -69,17 +89,7 @@ def main(pipeline_path, from_archive, save, sit):
             print()
 
             try:
-                opts = ["--sit"] if sit else []
-                subprocess.run(["systemd-nspawn",
-                                "--as-pid2",
-                                "--link-journal=no",
-                                "--volatile=yes",
-                                f"--directory={root}",
-                                f"--bind={tree}:/tmp/tree",
-                                f"--bind={os.getcwd()}/run-stage:/tmp/run-stage",
-                                f"--bind={os.getcwd()}/stages/{name}:/tmp/stage",
-                                "--bind=/etc/pki",
-                                "/tmp/run-stage", *opts, "/tmp/stage"],
+                subprocess.run(argv,
                     input=options_str, encoding="utf-8",
                     stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT,
                     check=True)
@@ -97,10 +107,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
                         help="json file containing the pipeline that should be built")
-    parser.add_argument("--save", metavar="ARCHIVE",
-                        help="save the resulting tree to ARCHIVE")
-    parser.add_argument("--from", dest="from_archive", metavar="ARCHIVE",
-                        help="initialize the tree from ARCHIVE")
+    parser.add_argument("--input", dest="input_dir", metavar="DIRECTORY",
+                        help="provide the contents of DIRECTORY to the first stage")
+    parser.add_argument("--output", dest="output_dir", metavar="DIRECTORY",
+                        help="provide the empty DIRECTORY as output argument to the last stage")
     parser.add_argument("--sit", action="store_true",
                         help="keep the build environment up when a stage failed")
     args = parser.parse_args()
