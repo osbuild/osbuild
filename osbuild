@@ -13,7 +13,7 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 
 
-class BuildContainer:
+class BuildRoot:
     def __init__(self, path=os.getcwd()):
         self.buildroot = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
         self.buildroot_mounted = False
@@ -28,6 +28,13 @@ class BuildContainer:
             self.unmount()
             raise
 
+        # systemd-nspawn silently removes some characters when choosing a
+        # machine name from the directory name. The only one relevant for
+        # us is '_', because all other characters used by
+        # TemporaryDirectory() are allowed. Replace it with 'L's
+        # (TemporaryDirectory() only uses lower-case characters)
+        self.machine_name = os.path.basename(self.buildroot).replace("_", "L")
+
     def unmount(self):
         if self.tree:
             if self.tree_mounted:
@@ -39,6 +46,19 @@ class BuildContainer:
                 subprocess.run(["umount", "--lazy", self.buildroot], check=True)
             os.rmdir(self.buildroot)
             self.buildroot = None
+
+    def run(self, argv, binds=[], readonly_binds=[], *args, **kwargs):
+        return subprocess.run([
+            "systemd-nspawn",
+            "--as-pid2",
+            "--link-journal=no",
+            "--volatile=yes",
+            f"--machine={self.machine_name}",
+            f"--directory={self.buildroot}",
+            f"--bind={self.tree}:/tmp/tree",
+            *[f"--bind={src}:{dest}" for src, dest in binds],
+            *[f"--bind-ro={src}:{dest}" for src, dest in readonly_binds]
+        ] + argv, *args, **kwargs)
 
     def __del__(self):
         self.unmount()
@@ -59,44 +79,30 @@ def main(pipeline_path, input_dir, output_dir, sit):
     with open(pipeline_path) as f:
         pipeline = json.load(f)
 
-    with BuildContainer() as container:
+    with BuildRoot() as buildroot:
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
             options["tree"] = "/tmp/tree"
 
-            # systemd-nspawn silently removes some characters when choosing a
-            # machine name from the directory name. The only one relevant for
-            # us is '_', because all other characters used by
-            # TemporaryDirectory() are allowed. Replace it with 'L's
-            # (TemporaryDirectory() only uses lower-case characters)
-            machine_name = os.path.basename(container.buildroot).replace("_", "L")
+            binds = [
+                (f"{os.getcwd()}/run-stage", "/tmp/run-stage"),
+                (f"{os.getcwd()}/stages/{name}", "/tmp/stage"),
+                ("/etc/pki", "/etc/pki")
+            ]
 
-            argv = ["systemd-nspawn",
-                    "--as-pid2",
-                    "--link-journal=no",
-                    "--volatile=yes",
-                    f"--machine={machine_name}",
-                    f"--directory={container.buildroot}",
-                    f"--bind={container.tree}:/tmp/tree",
-                    f"--bind={os.getcwd()}/run-stage:/tmp/run-stage",
-                    f"--bind={os.getcwd()}/stages/{name}:/tmp/stage",
-                    "--bind=/etc/pki"]
-
-            # Optionally pass the input dir to the first stage
+            readonly_binds = []
             if input_dir:
                 options["input_dir"] = "/tmp/input"
-                argv.append(f"--bind-ro={os.getcwd()}/{input_dir}:/tmp/input")
+                readonly_binds.append((input_dir, "/tmp/input"))
             else:
                 options["input_dir"] = None
 
-            # Pass the tree r/w to all stages but the last one.
-            # The last stage gets the tree ro and optionally gets an output dir
-            if i == len(pipeline["stages"]) and output_dir:
+            if output_dir:
                 options["output_dir"] = "/tmp/output"
-                argv.append(f"--bind={os.getcwd()}/{output_dir}:/tmp/output")
+                binds.append(output_dir, "/tmp/output")
 
-            argv.append("/tmp/run-stage")
+            argv = ["/tmp/run-stage"]
             if sit:
                 argv.append("--sit")
             argv.append("/tmp/stage")
@@ -106,11 +112,11 @@ def main(pipeline_path, input_dir, output_dir, sit):
             print()
             print(f"{RESET}{BOLD}{i}. {name}{RESET} {options_str}")
             print("Inspect with:")
-            print(f"\t# nsenter -a --wd=/root -t `machinectl show {machine_name} -p Leader --value`")
+            print(f"\t# nsenter -a --wd=/root -t `machinectl show {buildroot.machine_name} -p Leader --value`")
             print()
 
             try:
-                subprocess.run(argv, input=options_str, encoding="utf-8", check=True)
+                buildroot.run(argv, binds=binds, readonly_binds=readonly_binds, input=options_str, encoding="utf-8", check=True)
             except KeyboardInterrupt:
                 print()
                 print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
