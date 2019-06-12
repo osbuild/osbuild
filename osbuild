@@ -65,7 +65,7 @@ def main(pipeline_path, input_dir, output_dir, sit):
                     "--bind=/etc/pki"]
 
             # Optionally pass the input dir to the first stage
-            if i == 1 and input_dir:
+            if input_dir:
                 options["input_dir"] = "/tmp/input"
                 argv.append(f"--bind-ro={os.getcwd()}/{input_dir}:/tmp/input")
 
