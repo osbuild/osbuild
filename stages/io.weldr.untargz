@@ -1,0 +1,12 @@
+#!/usr/bin/python3
+
+import json
+import subprocess
+import sys
+
+def main(tree, input_dir, filename):
+    subprocess.run(["tar", "-xzf", f"{input_dir}/{filename}", "-C", tree], stdout=subprocess.DEVNULL, check=True)
+
+if __name__ == '__main__':
+    options = json.load(sys.stdin)
+    sys.exit(main(**options))
