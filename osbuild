@@ -121,11 +121,11 @@ def run_stage_interactive(i, name, options, buildroot, input_dir=None, output_di
         return True
 
 
-def main(pipeline_path, input_dir, output_dir, sit):
+def run_interactive(pipeline_path, input_dir, output_dir, sit):
     if output_dir and len(os.listdir(output_dir)) != 0:
         print()
         print(f"{RESET}{BOLD}{RED}Output directory {output_dir} is not empty{RESET}")
-        return 1
+        return False
 
     with open(pipeline_path) as f:
         pipeline = json.load(f)
@@ -135,14 +135,16 @@ def main(pipeline_path, input_dir, output_dir, sit):
             name = stage["name"]
             options = stage.get("options", {})
             if not run_stage_interactive(i, name, options, buildroot, input_dir=input_dir, sit=sit):
-                return 1
+                return False
 
         assembler = pipeline.get("assembler")
         if assembler:
             name = assembler["name"]
             options = assembler.get("options", {})
             if not run_stage_interactive("A", name, options, buildroot, output_dir=output_dir, sit=sit):
-                return 1
+                return False
+
+    return True
 
 
 if __name__ == "__main__":
@@ -157,4 +159,5 @@ if __name__ == "__main__":
                         help="keep the build environment up when a stage failed")
     args = parser.parse_args()
 
-    sys.exit(main(**vars(args)))
+    if not run_interactive(args.pipeline_path, args.input_dir, args.output_dir, args.sit):
+        sys.exit(1)
