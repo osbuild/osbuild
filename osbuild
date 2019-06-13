@@ -149,9 +149,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
                         help="json file containing the pipeline that should be built")
-    parser.add_argument("--input", dest="input_dir", metavar="DIRECTORY",
+    parser.add_argument("--input", dest="input_dir", metavar="DIRECTORY", type=os.path.abspath,
                         help="provide the contents of DIRECTORY to the first stage")
-    parser.add_argument("--output", dest="output_dir", metavar="DIRECTORY",
+    parser.add_argument("--output", dest="output_dir", metavar="DIRECTORY", type=os.path.abspath,
                         help="provide the empty DIRECTORY as output argument to the last stage")
     parser.add_argument("--sit", action="store_true",
                         help="keep the build environment up when a stage failed")
