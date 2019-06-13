@@ -8,6 +8,12 @@ import sys
 import tempfile
 
 
+if os.path.dirname(__file__) == f"{sys.prefix}/bin":
+    libdir = f"{sys.prefix}/lib"
+else:
+    libdir = os.path.abspath(".")
+
+
 RESET = "\033[0m"
 BOLD = "\033[1m"
 RED = "\033[31m"
@@ -69,8 +75,8 @@ class BuildRoot:
         }
 
         binds = [
-            (f"{os.getcwd()}/run-stage", "/tmp/run-stage"),
-            (f"{os.getcwd()}/stages/{stage}", "/tmp/stage"),
+            (f"{libdir}/run-stage", "/tmp/run-stage"),
+            (f"{libdir}/stages/{stage}", "/tmp/stage"),
             ("/etc/pki", "/etc/pki")
         ]
 
