@@ -20,7 +20,7 @@ RED = "\033[31m"
 
 
 class BuildRoot:
-    def __init__(self, path=os.getcwd()):
+    def __init__(self, path=None):
         self.buildroot = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
         self.buildroot_mounted = False
         self.tree = tempfile.mkdtemp(prefix="osbuild-tree-", dir=path)
@@ -136,7 +136,7 @@ def run_interactive(pipeline_path, input_dir, output_dir, sit):
     with open(pipeline_path) as f:
         pipeline = json.load(f)
 
-    with BuildRoot() as buildroot:
+    with BuildRoot("/run/osbuild") as buildroot:
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
@@ -164,6 +164,8 @@ if __name__ == "__main__":
     parser.add_argument("--sit", action="store_true",
                         help="keep the build environment up when a stage failed")
     args = parser.parse_args()
+
+    os.makedirs("/run/osbuild", exist_ok=True)
 
     if not run_interactive(args.pipeline_path, args.input_dir, args.output_dir, args.sit):
         sys.exit(1)
