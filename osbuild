@@ -99,6 +99,27 @@ class BuildRoot:
         self.unmount()
 
 
+def run_stage_interactive(i, name, options, buildroot, input_dir=None, output_dir=None, sit=False):
+    print()
+    print(f"{RESET}{BOLD}{i}. {name}{RESET} " + json.dumps(options or {}, indent=2))
+    print("Inspect with:")
+    print(f"\t# nsenter -a --wd=/root -t `machinectl show {buildroot.machine_name} -p Leader --value`")
+    print()
+
+    try:
+        buildroot.run_stage(name, options, input_dir, output_dir, sit)
+    except KeyboardInterrupt:
+        print()
+        print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
+        return False
+    except subprocess.CalledProcessError as error:
+        print()
+        print(f"{RESET}{BOLD}{RED}{name} failed with code {error.returncode}{RESET}")
+        return False
+    else:
+        return True
+
+
 def main(pipeline_path, input_dir, output_dir, sit):
     if output_dir and len(os.listdir(output_dir)) != 0:
         print()
@@ -112,22 +133,14 @@ def main(pipeline_path, input_dir, output_dir, sit):
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
+            if not run_stage_interactive(i, name, options, buildroot, input_dir=input_dir, sit=sit):
+                return 1
 
-            print()
-            print(f"{RESET}{BOLD}{i}. {name}{RESET} " + json.dumps(options, indent=2))
-            print("Inspect with:")
-            print(f"\t# nsenter -a --wd=/root -t `machinectl show {buildroot.machine_name} -p Leader --value`")
-            print()
-
-            try:
-                buildroot.run_stage(name, options, input_dir, output_dir, sit)
-            except KeyboardInterrupt:
-                print()
-                print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
-                return 130
-            except subprocess.CalledProcessError as error:
-                print()
-                print(f"{RESET}{BOLD}{RED}{name} failed with code {error.returncode}{RESET}")
+        assembler = pipeline.get("assembler")
+        if assembler:
+            name = assembler["name"]
+            options = assembler.get("options", {})
+            if not run_stage_interactive("A", name, options, buildroot, output_dir=output_dir, sit=sit):
                 return 1
 
 
