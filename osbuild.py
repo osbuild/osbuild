@@ -6,12 +6,21 @@ import sys
 import tempfile
 
 
-__all__ = [ "BuildRoot" ]
+__all__ = [
+    "StageFailed",
+    "BuildRoot"
+]
 
 
 libdir = os.path.dirname(__file__)
 if not os.path.exists(f"{libdir}/stages"):
     libdir = f"{sys.prefix}/lib"
+
+
+class StageFailed(Exception):
+    def __init__(self, stage, returncode):
+        self.stage = stage
+        self.returncode = returncode
 
 
 class BuildRoot:
@@ -62,7 +71,7 @@ class BuildRoot:
             *[f"--bind-ro={src}:{dest}" for src, dest in readonly_binds]
         ] + argv, *args, **kwargs)
 
-    def run_stage(self, stage, options={}, input_dir=None, output_dir=None, sit=False):
+    def run_stage(self, stage, options={}, input_dir=None, sit=False):
         options = {
             **options,
             "tree": "/tmp/tree",
@@ -80,6 +89,32 @@ class BuildRoot:
             options["input_dir"] = "/tmp/input"
             robinds.append((input_dir, "/tmp/input"))
 
+        argv = ["/tmp/run-stage"]
+        if sit:
+            argv.append("--sit")
+        argv.append("/tmp/stage")
+
+        try:
+            self.run(argv, binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+        except subprocess.CalledProcessError as error:
+            raise StageFailed(stage, error.returncode)
+
+    def run_assembler(self, name, options, output_dir=None, sit=False):
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        options = {
+            **options,
+            "tree": "/tmp/tree",
+            "input_dir": None
+        }
+
+        binds = [
+            (f"{libdir}/run-stage", "/tmp/run-stage"),
+            (f"{libdir}/stages/{name}", "/tmp/stage"),
+            ("/etc/pki", "/etc/pki")
+        ]
+
         if output_dir:
             options["output_dir"] = "/tmp/output"
             binds.append((output_dir, "/tmp/output"))
@@ -89,7 +124,10 @@ class BuildRoot:
             argv.append("--sit")
         argv.append("/tmp/stage")
 
-        self.run(argv, binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+        try:
+            self.run(argv, binds=binds, input=json.dumps(options), encoding="utf-8", check=True)
+        except subprocess.CalledProcessError as error:
+            raise StageFailed(stage, error.returncode)
 
     def __del__(self):
         self.unmount()
