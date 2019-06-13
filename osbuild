@@ -50,6 +50,7 @@ class BuildRoot:
     def run(self, argv, binds=[], readonly_binds=[], *args, **kwargs):
         return subprocess.run([
             "systemd-nspawn",
+            "--quiet",
             "--as-pid2",
             "--link-journal=no",
             "--volatile=yes",
