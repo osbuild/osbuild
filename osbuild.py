@@ -78,13 +78,11 @@ class BuildRoot:
             "input_dir": None
         }
 
-        binds = [
+        robinds = [
             (f"{libdir}/run-stage", "/tmp/run-stage"),
             (f"{libdir}/stages/{stage}", "/tmp/stage"),
             ("/etc/pki", "/etc/pki")
         ]
-
-        robinds = []
         if input_dir:
             options["input_dir"] = "/tmp/input"
             robinds.append((input_dir, "/tmp/input"))
@@ -95,7 +93,7 @@ class BuildRoot:
         argv.append("/tmp/stage")
 
         try:
-            self.run(argv, binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+            self.run(argv, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(stage, error.returncode)
 
@@ -109,12 +107,13 @@ class BuildRoot:
             "input_dir": None
         }
 
-        binds = [
+        robinds = [
             (f"{libdir}/run-stage", "/tmp/run-stage"),
             (f"{libdir}/stages/{name}", "/tmp/stage"),
             ("/etc/pki", "/etc/pki")
         ]
 
+        binds = []
         if output_dir:
             options["output_dir"] = "/tmp/output"
             binds.append((output_dir, "/tmp/output"))
@@ -125,7 +124,7 @@ class BuildRoot:
         argv.append("/tmp/stage")
 
         try:
-            self.run(argv, binds=binds, input=json.dumps(options), encoding="utf-8", check=True)
+            self.run(argv, binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(stage, error.returncode)
 
