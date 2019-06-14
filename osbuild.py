@@ -87,21 +87,32 @@ class BuildRoot:
             "--volatile=yes",
             f"--machine={self.machine_name}",
             f"--directory={self.root}",
-            f"--bind-ro=/etc/pki",
             f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
             *[f"--bind={b}" for b in binds],
             *[f"--bind-ro={b}" for b in readonly_binds],
             "/run/osbuild/osbuild-run",
         ] + argv, *args, **kwargs)
 
-    def run_stage(self, name, tree, options={}, input_dir=None):
+    def _get_system_resources_from_etc(self, stage_or_assembler):
+        resources = stage_or_assembler.get("systemResourcesFromEtc", [])
+        for r in resources:
+            if not r.startswith("/etc"):
+                raise ValueError(f"{r} is not a resource in /etc/")
+            if ":" in r:
+                raise ValueError(f"{r} tries to bind to a different location")
+        return resources
+
+    def run_stage(self, stage, tree, input_dir=None):
+        name = stage["name"]
         options = {
-            **options,
+            **stage.get("options", {}),
             "tree": "/run/osbuild/tree",
             "input_dir": None
         }
 
         robinds = [f"{libdir}/stages/{name}:/run/osbuild/{name}"]
+        robinds.extend(self._get_system_resources_from_etc(stage))
+
         binds = [f"{tree}:/run/osbuild/tree"]
         if input_dir:
             robinds.append(f"{input_dir}:/run/osbuild/input")
@@ -112,12 +123,13 @@ class BuildRoot:
         except subprocess.CalledProcessError as error:
             raise StageFailed(name, error.returncode)
 
-    def run_assembler(self, name, tree, options={}, input_dir=None, output_dir=None):
+    def run_assembler(self, assembler, tree, input_dir=None, output_dir=None):
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
+        name = assembler["name"]
         options = {
-            **options,
+            **assembler.get("options", {}),
             "tree": "/run/osbuild/tree",
             "input_dir": None,
             "output_dir": None
@@ -126,6 +138,7 @@ class BuildRoot:
             f"{tree}:/run/osbuild/tree",
             f"{libdir}/assemblers/{name}:/run/osbuild/{name}"
         ]
+        robinds.extend(self._get_system_resources_from_etc(assembler))
         binds = []
 
         if input_dir:
