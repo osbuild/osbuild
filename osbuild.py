@@ -73,25 +73,25 @@ class BuildRoot:
             "/run/osbuild/osbuild-run",
         ] + argv, *args, **kwargs)
 
-    def run_stage(self, stage, options={}, input_dir=None):
+    def run_stage(self, name, options={}, input_dir=None):
         options = {
             **options,
             "tree": "/run/osbuild/tree",
             "input_dir": None
         }
 
-        robinds = [f"{libdir}/stages/{stage}:/run/osbuild/{stage}"]
+        robinds = [f"{libdir}/stages/{name}:/run/osbuild/{name}"]
         binds = [f"{self.tree}:/run/osbuild/tree"]
         if input_dir:
             robinds.append(f"{input_dir}:/run/osbuild/input")
             options["input_dir"] = "/run/osbuild/input"
 
         try:
-            self.run([f"/run/osbuild/{stage}"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+            self.run([f"/run/osbuild/{name}"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
-            raise StageFailed(stage, error.returncode)
+            raise StageFailed(name, error.returncode)
 
-    def run_assembler(self, stage, options, input_dir=None, output_dir=None):
+    def run_assembler(self, name, options, input_dir=None, output_dir=None):
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -103,7 +103,7 @@ class BuildRoot:
         }
         robinds = [
             f"{self.tree}:/run/osbuild/tree",
-            f"{libdir}/assemblers/{stage}:/run/osbuild/{stage}"
+            f"{libdir}/assemblers/{name}:/run/osbuild/{name}"
         ]
         binds = []
 
@@ -115,9 +115,9 @@ class BuildRoot:
             options["output_dir"] = "/run/osbuild/output"
 
         try:
-            self.run([f"/run/osbuild/{stage}"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+            self.run([f"/run/osbuild/{name}"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
-            raise StageFailed(stage, error.returncode)
+            raise StageFailed(name, error.returncode)
 
     def __del__(self):
         self.unmount()
