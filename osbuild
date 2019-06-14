@@ -13,7 +13,7 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 
 
-def run_interactive(pipeline_path, input_dir, output_dir, sit):
+def run_interactive(pipeline_path, input_dir, output_dir):
     with open(pipeline_path) as f:
         pipeline = json.load(f)
 
@@ -26,7 +26,7 @@ def run_interactive(pipeline_path, input_dir, output_dir, sit):
             print("Inspect with:")
             print(f"\t# nsenter -a --wd=/root -t `machinectl show {buildroot.machine_name} -p Leader --value`")
             print()
-            buildroot.run_stage(name, options, input_dir, sit)
+            buildroot.run_stage(name, options, input_dir)
 
         assembler = pipeline.get("assembler")
         if assembler:
@@ -48,8 +48,6 @@ if __name__ == "__main__":
                         help="provide the contents of DIRECTORY to the first stage")
     parser.add_argument("--output", dest="output_dir", metavar="DIRECTORY", type=os.path.abspath,
                         help="provide the empty DIRECTORY as output argument to the last stage")
-    parser.add_argument("--sit", action="store_true",
-                        help="keep the build environment up when a stage failed")
     args = parser.parse_args()
 
     os.makedirs("/run/osbuild", exist_ok=True)
@@ -59,7 +57,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     try:
-        run_interactive(args.pipeline_path, args.input_dir, args.output_dir, args.sit)
+        run_interactive(args.pipeline_path, args.input_dir, args.output_dir)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")

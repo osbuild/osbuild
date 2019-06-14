@@ -10,7 +10,7 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 
 
-def main(stage, sit):
+def main(stage):
     # ld.so.conf must exist, or `ldconfig` throws a warning
     subprocess.run(["touch", "/etc/ld.so.conf"], check=True)
     subprocess.run(["ldconfig"], check=True)
@@ -26,19 +26,11 @@ def main(stage, sit):
     subprocess.run(["systemd-tmpfiles", "--create"])
 
     r = subprocess.run([stage])
-    if sit and r.returncode != 0:
-        import signal
-        print()
-        print(f"{RESET}{BOLD}{RED}Stage failed with code {r.returncode}{RESET}")
-        print("Keeping the build environment running...")
-        signal.pause()
-
     return r.returncode
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("stage")
-    parser.add_argument("--sit", action="store_true")
     args = parser.parse_args()
     sys.exit(main(**vars(args)))
