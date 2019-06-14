@@ -66,11 +66,11 @@ class BuildRoot:
             "--volatile=yes",
             f"--machine={self.machine_name}",
             f"--directory={self.buildroot}",
-            f"--bind={libdir}/osbuild-run:/run/osbuild-run",
-            f"--bind={self.tree}:/tmp/tree",
-            *[f"--bind={src}:{dest}" for src, dest in binds],
-            *[f"--bind-ro={src}:{dest}" for src, dest in readonly_binds],
-            "/run/osbuild-run",
+            f"--bind-ro=/etc/pki",
+            f"--bind={libdir}/osbuild-run:/tmp/osbuild-run",
+            *[f"--bind={b}" for b in binds],
+            *[f"--bind-ro={b}" for b in readonly_binds],
+            "/tmp/osbuild-run",
         ] + argv, *args, **kwargs)
 
     def run_stage(self, stage, options={}, input_dir=None):
@@ -80,41 +80,42 @@ class BuildRoot:
             "input_dir": None
         }
 
-        robinds = [
-            (f"{libdir}/stages/{stage}", "/tmp/stage"),
-            ("/etc/pki", "/etc/pki")
-        ]
+        robinds = [f"{libdir}/stages/{stage}:/tmp/{stage}"]
+        binds = [f"{self.tree}:/tmp/tree"]
         if input_dir:
+            robinds.append(f"{input_dir}:/tmp/input")
             options["input_dir"] = "/tmp/input"
-            robinds.append((input_dir, "/tmp/input"))
+
         try:
-            self.run(["/tmp/stage"], readonly_binds=robinds,
-                input=json.dumps(options), encoding="utf-8", check=True)
+            self.run([f"/tmp/{stage}"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(stage, error.returncode)
 
-    def run_assembler(self, name, options, output_dir=None):
+    def run_assembler(self, stage, options, input_dir=None, output_dir=None):
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
         options = {
             **options,
             "tree": "/tmp/tree",
-            "input_dir": None
+            "input_dir": None,
+            "output_dir": None
         }
-
         robinds = [
-            (f"{libdir}/stages/{name}", "/tmp/stage"),
-            ("/etc/pki", "/etc/pki")
+            f"{self.tree}:/tmp/tree",
+            f"{libdir}/stages/{stage}:/tmp/{stage}"
         ]
-
         binds = []
+
+        if input_dir:
+            robinds.append(f"{input_dir}:/tmp/input")
+            options["input_dir"] = "/tmp/input"
         if output_dir:
+            binds.append(f"{output_dir}:/tmp/output")
             options["output_dir"] = "/tmp/output"
-            binds.append((output_dir, "/tmp/output"))
 
         try:
-            self.run(["/tmp/stage"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+            self.run([f"/tmp/{stage}"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(stage, error.returncode)
 
