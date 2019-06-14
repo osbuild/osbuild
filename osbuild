@@ -17,7 +17,7 @@ def run_interactive(pipeline_path, input_dir, output_dir):
     with open(pipeline_path) as f:
         pipeline = json.load(f)
 
-    with osbuild.BuildRoot("/run/osbuild") as buildroot:
+    with osbuild.BuildRoot() as buildroot, osbuild.tmpfs() as tree:
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
@@ -26,7 +26,7 @@ def run_interactive(pipeline_path, input_dir, output_dir):
             print("Inspect with:")
             print(f"\t# nsenter -a --wd=/root -t `machinectl show {buildroot.machine_name} -p Leader --value`")
             print()
-            buildroot.run_stage(name, options, input_dir)
+            buildroot.run_stage(name, tree, options, input_dir)
 
         assembler = pipeline.get("assembler")
         if assembler:
@@ -37,7 +37,7 @@ def run_interactive(pipeline_path, input_dir, output_dir):
             print("Inspect with:")
             print(f"\t# nsenter -a --wd=/root -t `machinectl show {buildroot.machine_name} -p Leader --value`")
             print()
-            buildroot.run_assembler(name, options, output_dir)
+            buildroot.run_assembler(name, tree, options, input_dir, output_dir)
 
 
 if __name__ == "__main__":
