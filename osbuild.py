@@ -66,9 +66,11 @@ class BuildRoot:
             "--volatile=yes",
             f"--machine={self.machine_name}",
             f"--directory={self.buildroot}",
+            f"--bind={libdir}/osbuild-run:/run/osbuild-run",
             f"--bind={self.tree}:/tmp/tree",
             *[f"--bind={src}:{dest}" for src, dest in binds],
-            *[f"--bind-ro={src}:{dest}" for src, dest in readonly_binds]
+            *[f"--bind-ro={src}:{dest}" for src, dest in readonly_binds],
+            "/run/osbuild-run",
         ] + argv, *args, **kwargs)
 
     def run_stage(self, stage, options={}, input_dir=None):
@@ -79,7 +81,6 @@ class BuildRoot:
         }
 
         robinds = [
-            (f"{libdir}/run-stage", "/tmp/run-stage"),
             (f"{libdir}/stages/{stage}", "/tmp/stage"),
             ("/etc/pki", "/etc/pki")
         ]
@@ -87,7 +88,7 @@ class BuildRoot:
             options["input_dir"] = "/tmp/input"
             robinds.append((input_dir, "/tmp/input"))
         try:
-            self.run(["/tmp/run-stage", "/tmp/stage"], readonly_binds=robinds,
+            self.run(["/tmp/stage"], readonly_binds=robinds,
                 input=json.dumps(options), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(stage, error.returncode)
@@ -103,7 +104,6 @@ class BuildRoot:
         }
 
         robinds = [
-            (f"{libdir}/run-stage", "/tmp/run-stage"),
             (f"{libdir}/stages/{name}", "/tmp/stage"),
             ("/etc/pki", "/etc/pki")
         ]
@@ -114,7 +114,7 @@ class BuildRoot:
             binds.append((output_dir, "/tmp/output"))
 
         try:
-            self.run(["/tmp/run-stage", "/tmp/stage"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+            self.run(["/tmp/stage"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(stage, error.returncode)
 

@@ -1,0 +1,22 @@
+#!/usr/bin/python3
+
+import subprocess
+import sys
+
+
+# ld.so.conf must exist, or `ldconfig` throws a warning
+subprocess.run(["touch", "/etc/ld.so.conf"], check=True)
+subprocess.run(["ldconfig"], check=True)
+
+try:
+    subprocess.run(["systemd-sysusers"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
+except subprocess.CalledProcessError as error:
+    sys.stderr.write(error.stdout)
+    sys.exit(1)
+
+# Allow systemd-tmpfiles to return non-0. Some packages want to create
+# directories owned by users that are not set up with systemd-sysusers.
+subprocess.run(["systemd-tmpfiles", "--create"])
+
+r = subprocess.run(sys.argv[1:])
+sys.exit(r.returncode)
