@@ -103,7 +103,7 @@ class BuildRoot:
         }
         robinds = [
             f"{self.tree}:/run/osbuild/tree",
-            f"{libdir}/stages/{stage}:/run/osbuild/{stage}"
+            f"{libdir}/assemblers/{stage}:/run/osbuild/{stage}"
         ]
         binds = []
 
