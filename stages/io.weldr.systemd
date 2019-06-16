@@ -4,10 +4,13 @@ import json
 import os
 import subprocess
 
-def main(tree, input_dir, enabled_services):
+def main(tree, options):
+    enabled_services = options["enabled_services"]
+
     for service in enabled_services:
         subprocess.run([f"{tree}/usr/bin/systemctl", "--root", tree, "enable", service], check=True)
 
 if __name__ == '__main__':
-    options = json.load(sys.stdin)
-    sys.exit(main(**options))
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

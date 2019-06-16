@@ -70,7 +70,10 @@ product = """
 product_name = Fedora
 """
 
-def main(tree, input_dir, kickstart, skip_package_install=False):
+def main(tree, options):
+    kickstart = options["kickstart"]
+    skip_package_install = options.get("skip_package_install", False)
+
     with open("/tmp/kickstart.ks", "w") as f:
         if skip_package_install:
             subprocess.run(["tar", "cvf", "/tmp/empty.tar", "--files-from", "/dev/null"])
@@ -113,5 +116,6 @@ def main(tree, input_dir, kickstart, skip_package_install=False):
     return returncode
 
 if __name__ == '__main__':
-    options = json.load(sys.stdin)
-    sys.exit(main(**options))
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

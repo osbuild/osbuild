@@ -6,7 +6,9 @@ import subprocess
 import sys
 
 
-def main(tree, input_dir, playbook):
+def main(tree, options):
+    playbook = options["playbook"]
+
     with open("/tmp/inventory", "w") as f:
         f.write(f"osbuild-tree ansible_connection=chroot ansible_host={tree} ansible_python_interpreter=/usr/bin/python3")
 
@@ -26,5 +28,6 @@ def main(tree, input_dir, playbook):
     return r.returncode
 
 if __name__ == '__main__':
-    options = json.load(sys.stdin)
-    sys.exit(main(**options))
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

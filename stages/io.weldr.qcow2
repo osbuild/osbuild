@@ -41,7 +41,9 @@ def loop_device(image):
     finally:
         subprocess.run(["losetup", "-d", loop], check=True)
 
-def main(tree, input_dir, target):
+def main(tree, options):
+    target = options["target"])
+
     size = tree_size(tree)
 
     with tempfile.TemporaryDirectory(dir=os.getcwd()) as workdir:
@@ -65,10 +67,12 @@ def main(tree, input_dir, target):
         subprocess.run(["qemu-img", "convert", "-O" "qcow2", "-c", image, target], check=True)
 
 if __name__ == '__main__':
-    options = json.load(sys.stdin)
+    args = json.load(sys.stdin)
 
     try:
-        main(**options)
+        r = main(args["tree"], args["options"])
     except CalledProcessError as e:
         print(e, file=sys.stderr)
-        sys.exit(1)
+        r = 1
+
+    sys.exit(r)

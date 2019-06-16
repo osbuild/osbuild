@@ -3,7 +3,10 @@
 import json
 import sys
 
-def main(tree, input_dir, language, vc_keymap=None):
+def main(tree, options):
+    language = options["language"]
+    vc_keymap = options.get(vc_keymap)
+
     with open(f"{tree}/etc/locale.conf", "w") as f:
         f.write(f'LANG="{language}"\n')
 
@@ -13,6 +16,6 @@ def main(tree, input_dir, language, vc_keymap=None):
             f.write(f'FONT="eurlatgr"\n')
 
 if __name__ == '__main__':
-    options = json.load(sys.stdin)
-    sys.exit(main(**options))
-
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

@@ -7,7 +7,11 @@ import subprocess
 import sys
 
 
-def main(tree, input_dir, repos, packages, releasever):
+def main(tree, options):
+    repos = options["repos"]
+    packages = options["packages"]
+    releasever = options["releasever"]
+
     with open("/tmp/dnf.conf", "w") as conf:
         p = configparser.ConfigParser()
         p.read_dict(repos)
@@ -41,5 +45,6 @@ def main(tree, input_dir, repos, packages, releasever):
 
 
 if __name__ == '__main__':
-    options = json.load(sys.stdin)
-    sys.exit(main(**options))
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

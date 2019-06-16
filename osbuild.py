@@ -104,10 +104,9 @@ class BuildRoot:
 
     def run_stage(self, stage, tree, input_dir=None):
         name = stage["name"]
-        options = {
-            **stage.get("options", {}),
+        args = {
             "tree": "/run/osbuild/tree",
-            "input_dir": None
+            "options": stage.get("options", {})
         }
 
         robinds = [f"{libdir}/stages/{name}:/run/osbuild/{name}"]
@@ -116,10 +115,10 @@ class BuildRoot:
         binds = [f"{tree}:/run/osbuild/tree"]
         if input_dir:
             robinds.append(f"{input_dir}:/run/osbuild/input")
-            options["input_dir"] = "/run/osbuild/input"
+            args["input_dir"] = "/run/osbuild/input"
 
         try:
-            self.run([f"/run/osbuild/{name}"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+            self.run([f"/run/osbuild/{name}"], binds=binds, readonly_binds=robinds, input=json.dumps(args), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(name, error.returncode)
 
@@ -128,11 +127,9 @@ class BuildRoot:
             os.makedirs(output_dir)
 
         name = assembler["name"]
-        options = {
-            **assembler.get("options", {}),
+        args = {
             "tree": "/run/osbuild/tree",
-            "input_dir": None,
-            "output_dir": None
+            "options": assembler.get("options", {}),
         }
         robinds = [
             f"{tree}:/run/osbuild/tree",
@@ -143,13 +140,13 @@ class BuildRoot:
 
         if input_dir:
             robinds.append(f"{input_dir}:/run/osbuild/input")
-            options["input_dir"] = "/run/osbuild/input"
+            args["input_dir"] = "/run/osbuild/input"
         if output_dir:
             binds.append(f"{output_dir}:/run/osbuild/output")
-            options["output_dir"] = "/run/osbuild/output"
+            args["output_dir"] = "/run/osbuild/output"
 
         try:
-            self.run([f"/run/osbuild/{name}"], binds=binds, readonly_binds=robinds, input=json.dumps(options), encoding="utf-8", check=True)
+            self.run([f"/run/osbuild/{name}"], binds=binds, readonly_binds=robinds, input=json.dumps(args), encoding="utf-8", check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(name, error.returncode)
 
