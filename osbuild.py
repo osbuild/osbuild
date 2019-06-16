@@ -115,7 +115,8 @@ class BuildRoot:
         robinds = [f"{libdir}/stages/{name}:/run/osbuild/{name}"]
         robinds.extend(self._get_system_resources_from_etc(stage))
 
-        binds = [f"{tree}:/run/osbuild/tree"]
+        binds = [f"{tree}:/run/osbuild/tree", "/dev:/dev"]
+
         if input_dir:
             robinds.append(f"{input_dir}:/run/osbuild/input")
             args["input_dir"] = "/run/osbuild/input"
