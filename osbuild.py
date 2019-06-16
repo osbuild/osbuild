@@ -29,7 +29,7 @@ class tmpfs:
         self.root = tempfile.mkdtemp(prefix="osbuild-tmpfs-", dir=path)
         self.mounted = False
         try:
-            subprocess.run(["mount", "-t", "tmpfs", "tmpfs", self.root], check=True)
+            subprocess.run(["mount", "-t", "tmpfs", "-o", "mode=0755", "tmpfs", self.root], check=True)
             self.mounted = True
         except subprocess.CalledProcessError:
             self.unmount()
