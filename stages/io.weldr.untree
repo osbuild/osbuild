@@ -8,11 +8,7 @@ import sys
 def main(tree, input_dir, options):
     input_tree = os.path.join(input_dir, options["tree"])
 
-    # Initialize the tree from the tree given in the input
-    for name in os.listdir(input_tree):
-        srcname = os.path.join(input_tree, name)
-        dstname = os.path.join(tree, name)
-        subprocess.run(["cp", "-a", "-T", srcname, dstname], check=True)
+    subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)

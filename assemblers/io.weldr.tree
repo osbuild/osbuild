@@ -13,10 +13,7 @@ def main(tree, output_dir, options):
     os.makedirs(output_tree, mode=0o755)
 
     # Copy the tree to the output directory
-    for name in os.listdir(tree):
-        srcname = os.path.join(tree, name)
-        dstname = os.path.join(output_tree, name)
-        subprocess.run(["cp", "-a", "-T", srcname, dstname], check=True)
+    subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)

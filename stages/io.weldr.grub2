@@ -82,12 +82,8 @@ def main(tree, input_dir, options):
 
                 # Copy the entire contents of the image back on top of the input tree, capturing all the changes
                 # the tool performed.
-                for name in os.listdir(mountpoint):
-                    if name == "lost+found":
-                        continue
-                    srcname = os.path.join(mountpoint, name)
-                    dstname = os.path.join(tree, name)
-                    subprocess.run(["cp", "-a", "-T", srcname, dstname], check=True)
+                shutil.rmtree(tree, ignore_errors=True)
+                subprocess.run(["cp", "-a", f"{mountpoint}/.", tree], check=True)
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
