@@ -11,6 +11,7 @@ def main(tree, options):
     repos = options["repos"]
     packages = options["packages"]
     releasever = options["releasever"]
+    operation = options["operation"]
 
     with open("/tmp/dnf.conf", "w") as conf:
         p = configparser.ConfigParser()
@@ -37,7 +38,7 @@ def main(tree, options):
         "--setopt", "install_weak_deps=False",
         "--releasever", releasever,
         "--config", "/tmp/dnf.conf",
-        "install"
+        operation
     ] + packages
 
     print(" ".join(cmd), flush=True)
