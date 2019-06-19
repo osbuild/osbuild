@@ -52,10 +52,6 @@ if __name__ == "__main__":
 
     os.makedirs("/run/osbuild", exist_ok=True)
 
-    if args.output_dir and os.path.exists(args.output_dir) and len(os.listdir(args.output_dir)) != 0:
-        print("Error: output directory is not empty", file=sys.stderr)
-        sys.exit(1)
-
     try:
         run_interactive(args.pipeline_path, args.input_dir, args.output_dir)
     except KeyboardInterrupt:
