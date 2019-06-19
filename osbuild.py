@@ -140,7 +140,7 @@ class BuildRoot:
             f"{libdir}/assemblers/{name}:/run/osbuild/{name}"
         ]
         robinds.extend(self._get_system_resources_from_etc(assembler))
-        binds = []
+        binds = ["/dev:/dev"]
 
         if input_dir:
             robinds.append(f"{input_dir}:/run/osbuild/input")
