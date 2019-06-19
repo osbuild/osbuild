@@ -11,7 +11,8 @@ def main(tree, options):
     repos = options["repos"]
     packages = options["packages"]
     releasever = options["releasever"]
-    operation = options["operation"]
+    operation = options.get("operation", "install")
+    verbosity = options.get("verbosity", "info")
 
     with open("/tmp/dnf.conf", "w") as conf:
         p = configparser.ConfigParser()
@@ -37,6 +38,7 @@ def main(tree, options):
         "--setopt", "reposdir=",
         "--setopt", "install_weak_deps=False",
         "--releasever", releasever,
+        "--rpmverbosity", verbosity,
         "--config", "/tmp/dnf.conf",
         operation
     ] + packages
