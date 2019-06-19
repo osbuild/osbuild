@@ -1,0 +1,23 @@
+{
+  "name": "base-with-locale",
+  "stages": [
+    {
+      "name": "io.weldr.untargz",
+      "options": {
+        "filename": "base.tar.gz"
+      }
+    },
+    {
+      "name": "io.weldr.locale",
+      "options": {
+        "language": "en_US"
+      }
+    }
+  ],
+  "assembler": {
+    "name": "io.weldr.tree",
+    "options": {
+      "tree": "base-with-locale"
+    }
+  }
+}

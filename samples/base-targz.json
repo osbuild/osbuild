@@ -1,0 +1,17 @@
+{
+  "name": "base-targz",
+  "stages": [
+    {
+      "name": "io.weldr.untree",
+      "options": {
+        "tree": "base"
+      }
+    }
+  ],
+  "assembler": {
+    "name": "io.weldr.targz",
+    "options": {
+      "filename": "base.tar.gz"
+    }
+  }
+}
