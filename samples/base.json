@@ -14,7 +14,8 @@
           }
         },
         "packages": [
-          "@Core"
+          "@Core",
+          "selinux-policy-targeted"
         ]
       }
     }

@@ -1,0 +1,23 @@
+{
+  "name": "base-with-selinux",
+  "stages": [
+    {
+      "name": "io.weldr.untree",
+      "options": {
+        "tree": "base"
+      }
+    },
+    {
+      "name": "io.weldr.selinux",
+      "options": {
+        "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+      }
+    }
+  ],
+  "assembler": {
+    "name": "io.weldr.tree",
+    "options": {
+      "tree": "base-with-selinux"
+    }
+  }
+}
