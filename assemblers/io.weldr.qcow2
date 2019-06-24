@@ -43,11 +43,10 @@ def loop_device(image):
     finally:
         subprocess.run(["losetup", "-d", loop], check=True)
 
-def main(tree, input_dir, options):
+def main(tree, input_dir, output_dir, options):
     filename = options["filename"]
     partition_table_id = options["partition_table_id"]
     root_fs_uuid = options["root_fs_uuid"]
-    output_dir = options["output_dir"]
 
     # Create a working directory on a tmpfs, maybe we should implicitly
     # always do this.
@@ -79,5 +78,5 @@ def main(tree, input_dir, options):
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
-    r = main(args["tree"], args["input_dir"], args["options"])
+    r = main(args["tree"], args["input_dir"], args["output_dir"],  args["options"])
     sys.exit(r)
