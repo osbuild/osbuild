@@ -15,7 +15,8 @@
         },
         "packages": [
           "@Core",
-          "selinux-policy-targeted"
+          "selinux-policy-targeted",
+          "grub2-pc"
         ]
       }
     }
