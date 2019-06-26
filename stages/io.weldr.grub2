@@ -35,9 +35,8 @@ def mount_api(dest):
 
 @contextlib.contextmanager
 def loop_device(image):
-    r = subprocess.run(["losetup", "-f"], stdout=subprocess.PIPE, encoding="utf-8", check=True)
+    r = subprocess.run(["losetup", "--partscan", "--show", "--find", image], stdout=subprocess.PIPE, encoding="utf-8", check=True)
     loop = r.stdout.strip()
-    r = subprocess.run(["losetup", loop, "-P", image], check=True)
     try:
         yield loop
     finally:
