@@ -2,6 +2,7 @@
 
 import contextlib
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -54,7 +55,7 @@ def main(tree, input_dir, output_dir, options):
         mountpoint = f"{workdir}/mnt"
 
         # Create an empty image file of the right size
-        size = int(tree_size(tree) * 1.2)
+        size = int(math.ceil(tree_size(tree) * 1.2 / 512) * 512)
         subprocess.run(["truncate", "--size", str(size), image], check=True)
 
         # Set up the partition table of the image
