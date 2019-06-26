@@ -50,6 +50,8 @@ def main(tree, input_dir, options):
     # Create the configuration file that determines how grub.cfg is generated.
     os.makedirs(f"{tree}/etc/default", exist_ok=True)
     with open(f"{tree}/etc/default/grub", "w") as default:
+        default.write("GRUB_TIMEOUT=0")
+        default.write("GRUB_DEFAULT=0")
         default.write("GRUB_ENABLE_BLSCFG=true")
 
     # Create a working directory on a tmpfs, maybe we should implicitly
