@@ -35,8 +35,8 @@ def mount_api(dest):
              yield
 
 @contextlib.contextmanager
-def loop_device(image):
-    r = subprocess.run(["losetup", "--partscan", "--show", "--find", image], stdout=subprocess.PIPE, encoding="utf-8", check=True)
+def loop_device(image, size, offset=0):
+    r = subprocess.run(["losetup", "--partscan", "--show", "--find", "--sizelimit", str(size), "--offset", str(offset), image], stdout=subprocess.PIPE, encoding="utf-8", check=True)
     loop = r.stdout.strip()
     try:
         yield loop
@@ -63,7 +63,7 @@ def main(tree, input_dir, output_dir, options):
         subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
 
         # Mount the created image as a loopback device
-        with loop_device(image) as loop:
+        with loop_device(image, size) as loop:
             # Populate the first partition of the image with an ext4 fs and fill it with the contents of the
             # tree we are operating on.
             subprocess.run(["mkfs.ext4", "-d", tree, "-U", root_fs_uuid, f"{loop}p1"], check=True)
