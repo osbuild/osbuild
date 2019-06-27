@@ -36,7 +36,7 @@ def mount_api(dest):
 
 @contextlib.contextmanager
 def loop_device(image):
-    r = subprocess.run(["losetup", "--partscan", "--show", "--find", image], stdout=subprocess.PIPE, encoding="utf-8", check=True)
+    r = subprocess.run(["losetup", "--show", "--find", image], stdout=subprocess.PIPE, encoding="utf-8", check=True)
     loop = r.stdout.strip()
     try:
         yield loop
@@ -64,20 +64,16 @@ def main(tree, input_dir, options):
         size = int(math.ceil(tree_size(tree) * 1.2 / 512) * 512)
         subprocess.run(["truncate", "--size", str(size), image], check=True)
 
-        # Set up the partition table of the image
-        partition_table = "label: mbr\nlabel-id: {partition_table_id}\nbootable, type=83"
-        subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
-
         # Mount the created image as a loopback device
         with loop_device(image) as loop:
             # Populate the first partition of the image with an ext4 fs and fill it with the contents of the
             # tree we are operating on.
-            subprocess.run(["mkfs.ext4", "-d", tree, "-U", root_fs_uuid, f"{loop}p1"], check=True)
+            subprocess.run(["mkfs.ext4", "-d", tree, "-U", root_fs_uuid, loop], check=True)
 
             # Mount the partition. The contents is now exactly the same as the input tree, with the only
             # difference that when it inspects its own filesystem it will see what has been configured,
             # rather than a tmpfs.
-            with mount(f"{loop}p1", mountpoint):
+            with mount(loop, mountpoint):
                 # Run the tool in the image we created.
                 with mount_api(mountpoint):
                     subprocess.run(["chroot", mountpoint, "grub2-mkconfig", "--output=/boot/grub2/grub.cfg"], check=True)
