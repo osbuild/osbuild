@@ -128,7 +128,7 @@ class BuildRoot:
             args["input_dir"] = "/run/osbuild/input"
 
         try:
-            self.run([f"/run/osbuild/{name}"],
+            r = self.run([f"/run/osbuild/{name}"],
                 binds=binds,
                 readonly_binds=robinds,
                 input=json.dumps(args),
@@ -138,6 +138,11 @@ class BuildRoot:
                 check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(name, error.returncode, error.stdout)
+
+        return {
+            "name": name,
+            "output": r.stdout
+        }
 
     def run_assembler(self, assembler, tree, input_dir=None, output_dir=None):
         if output_dir and not os.path.exists(output_dir):
@@ -163,7 +168,7 @@ class BuildRoot:
             args["output_dir"] = "/run/osbuild/output"
 
         try:
-            self.run([f"/run/osbuild/{name}"],
+            r = self.run([f"/run/osbuild/{name}"],
                 binds=binds,
                 readonly_binds=robinds,
                 input=json.dumps(args),
@@ -173,6 +178,11 @@ class BuildRoot:
                 check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(name, error.returncode, error.stdout)
+
+        return {
+            "name": name,
+            "output": r.stdout
+        }
 
     def __del__(self):
         self.unmount()
@@ -193,13 +203,17 @@ def print_header(title, options, machine_name):
 
 
 def run(pipeline, input_dir, output_dir, interactive=False):
+    results = {
+        "stages": []
+    }
     with BuildRoot() as buildroot, tmpfs() as tree:
         for i, stage in enumerate(pipeline["stages"], start=1):
             name = stage["name"]
             options = stage.get("options", {})
             if interactive:
                 print_header(f"{i}. {name}", options, buildroot.machine_name)
-            buildroot.run_stage(stage, tree, input_dir, interactive)
+            r = buildroot.run_stage(stage, tree, input_dir, interactive)
+            results["stages"].append(r)
 
         assembler = pipeline.get("assembler")
         if assembler:
@@ -207,4 +221,7 @@ def run(pipeline, input_dir, output_dir, interactive=False):
             options = assembler.get("options", {})
             if interactive:
                 print_header(f"Assembling: {name}", options, buildroot.machine_name)
-            buildroot.run_assembler(assembler, tree, input_dir, output_dir, interactive)
+            r = buildroot.run_assembler(assembler, tree, input_dir, output_dir, interactive)
+            results["assembler"] = r
+
+    return results
