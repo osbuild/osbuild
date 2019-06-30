@@ -13,33 +13,6 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 
 
-def run_interactive(pipeline_path, input_dir, output_dir):
-    with open(pipeline_path) as f:
-        pipeline = json.load(f)
-
-    with osbuild.BuildRoot() as buildroot, osbuild.tmpfs() as tree:
-        for i, stage in enumerate(pipeline["stages"], start=1):
-            name = stage["name"]
-            options = stage.get("options", {})
-            print()
-            print(f"{RESET}{BOLD}{i}. {name}{RESET} " + json.dumps(options or {}, indent=2))
-            print("Inspect with:")
-            print(f"\t# nsenter -a --wd=/root -t `machinectl show {buildroot.machine_name} -p Leader --value`")
-            print()
-            buildroot.run_stage(stage, tree, input_dir)
-
-        assembler = pipeline.get("assembler")
-        if assembler:
-            name = assembler["name"]
-            options = assembler.get("options", {})
-            print()
-            print(f"{RESET}{BOLD}Assembling: {name}{RESET} " + json.dumps(options or {}, indent=2))
-            print("Inspect with:")
-            print(f"\t# nsenter -a --wd=/root -t `machinectl show {buildroot.machine_name} -p Leader --value`")
-            print()
-            buildroot.run_assembler(assembler, tree, input_dir, output_dir)
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
@@ -53,8 +26,11 @@ if __name__ == "__main__":
 
     os.makedirs("/run/osbuild", exist_ok=True)
 
+    with open(args.pipeline_path) as f:
+        pipeline = json.load(f)
+
     try:
-        run_interactive(args.pipeline_path, args.input_dir, args.output_dir)
+        osbuild.run(pipeline, args.input_dir, args.output_dir, interactive=True)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")

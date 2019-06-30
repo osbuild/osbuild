@@ -9,8 +9,13 @@ import tempfile
 __all__ = [
     "StageFailed",
     "BuildRoot",
-    "tmpfs"
+    "tmpfs",
+    "run"
 ]
+
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
 
 
 libdir = os.path.dirname(__file__)
@@ -19,9 +24,10 @@ if not os.path.exists(f"{libdir}/stages"):
 
 
 class StageFailed(Exception):
-    def __init__(self, stage, returncode):
+    def __init__(self, stage, returncode, output):
         self.stage = stage
         self.returncode = returncode
+        self.output = output
 
 
 class tmpfs:
@@ -105,7 +111,7 @@ class BuildRoot:
                 raise ValueError(f"{r} tries to bind to a different location")
         return resources
 
-    def run_stage(self, stage, tree, input_dir=None):
+    def run_stage(self, stage, tree, input_dir=None, interactive=False):
         name = stage["name"]
         args = {
             "tree": "/run/osbuild/tree",
@@ -122,9 +128,16 @@ class BuildRoot:
             args["input_dir"] = "/run/osbuild/input"
 
         try:
-            self.run([f"/run/osbuild/{name}"], binds=binds, readonly_binds=robinds, input=json.dumps(args), encoding="utf-8", check=True)
+            self.run([f"/run/osbuild/{name}"],
+                binds=binds,
+                readonly_binds=robinds,
+                input=json.dumps(args),
+                encoding="utf-8",
+                stdout=subprocess.PIPE if not interactive else None,
+                stderr=subprocess.STDOUT if not interactive else None,
+                check=True)
         except subprocess.CalledProcessError as error:
-            raise StageFailed(name, error.returncode)
+            raise StageFailed(name, error.returncode, error.stdout)
 
     def run_assembler(self, assembler, tree, input_dir=None, output_dir=None):
         if output_dir and not os.path.exists(output_dir):
@@ -150,9 +163,16 @@ class BuildRoot:
             args["output_dir"] = "/run/osbuild/output"
 
         try:
-            self.run([f"/run/osbuild/{name}"], binds=binds, readonly_binds=robinds, input=json.dumps(args), encoding="utf-8", check=True)
+            self.run([f"/run/osbuild/{name}"],
+                binds=binds,
+                readonly_binds=robinds,
+                input=json.dumps(args),
+                encoding="utf-8",
+                stdout=subprocess.PIPE if not interactive else None,
+                stderr=subprocess.STDOUT if not interactive else None,
+                check=True)
         except subprocess.CalledProcessError as error:
-            raise StageFailed(name, error.returncode)
+            raise StageFailed(name, error.returncode, error.stdout)
 
     def __del__(self):
         self.unmount()
@@ -162,3 +182,29 @@ class BuildRoot:
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         self.unmount()
+
+
+def print_header(title, options, machine_name):
+    print()
+    print(f"{RESET}{BOLD}{title}{RESET} " + json.dumps(options or {}, indent=2))
+    print("Inspect with:")
+    print(f"\t# nsenter -a --wd=/root -t `machinectl show {machine_name} -p Leader --value`")
+    print()
+
+
+def run(pipeline, input_dir, output_dir, interactive=False):
+    with BuildRoot() as buildroot, tmpfs() as tree:
+        for i, stage in enumerate(pipeline["stages"], start=1):
+            name = stage["name"]
+            options = stage.get("options", {})
+            if interactive:
+                print_header(f"{i}. {name}", options, buildroot.machine_name)
+            buildroot.run_stage(stage, tree, input_dir, interactive)
+
+        assembler = pipeline.get("assembler")
+        if assembler:
+            name = assembler["name"]
+            options = assembler.get("options", {})
+            if interactive:
+                print_header(f"Assembling: {name}", options, buildroot.machine_name)
+            buildroot.run_assembler(assembler, tree, input_dir, output_dir, interactive)
