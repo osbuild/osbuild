@@ -144,7 +144,7 @@ class BuildRoot:
             "output": r.stdout
         }
 
-    def run_assembler(self, assembler, tree, input_dir=None, output_dir=None):
+    def run_assembler(self, assembler, tree, input_dir=None, output_dir=None, interactive=False):
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
