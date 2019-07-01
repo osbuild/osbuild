@@ -5,7 +5,7 @@
       "name": "io.weldr.dnf",
       "systemResourcesFromEtc": ["/etc/pki"],
       "options": {
-        "releasever": "29",
+        "releasever": "30",
         "repos": {
           "fedora": {
             "name": "Fedora",
