@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -203,13 +204,16 @@ def print_header(title, options, machine_name):
     print()
 
 class Pipeline:
-    def __init__(self, pipeline):
+    def __init__(self, pipeline, objects):
         m = hashlib.sha256()
         m.update(json.dumps(pipeline, sort_keys=True).encode())
 
         self.id = m.hexdigest()
         self.stages = pipeline["stages"]
         self.assembler = pipeline.get("assembler")
+        self.objects = objects
+
+        os.makedirs(objects, exist_ok=True)
 
     def run(self, input_dir, output_dir, interactive=False):
         results = {
@@ -231,5 +235,12 @@ class Pipeline:
                     print_header(f"Assembling: {name}", options, buildroot.machine_name)
                 r = buildroot.run_assembler(self.assembler, tree, input_dir, output_dir, interactive)
                 results["assembler"] = r
+            else:
+                output_tree = os.path.join(self.objects, self.id)
+
+                shutil.rmtree(output_tree, ignore_errors=True)
+                os.makedirs(output_tree, mode=0o755)
+
+                subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
 
         self.results = results

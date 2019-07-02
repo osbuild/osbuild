@@ -4,7 +4,7 @@
     {
       "name": "io.weldr.untree",
       "options": {
-        "tree": "base-with-grub2"
+        "tree": "efc7b094c174d9f5fd66c863db7128415f5df0f073125716f5279554f13a659f"
       }
     }
   ],

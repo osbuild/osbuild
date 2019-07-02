@@ -20,12 +20,5 @@
         ]
       }
     }
-  ],
-  "assembler":
-    {
-      "name": "io.weldr.tree",
-      "options": {
-        "tree": "base"
-      }
-    }
+  ]
 }
