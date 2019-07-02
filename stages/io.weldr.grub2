@@ -51,37 +51,23 @@ def main(tree, input_dir, options):
     os.makedirs(f"{tree}/etc/default", exist_ok=True)
     with open(f"{tree}/etc/default/grub", "w") as default:
         default.write("GRUB_TIMEOUT=0\n"
-                      "GRUB_DEFAULT=0\n"
                       "GRUB_ENABLE_BLSCFG=true\n")
 
-    # Create a working directory on a tmpfs, maybe we should implicitly
-    # always do this.
-    with tempfile.TemporaryDirectory() as workdir:
-        image = f"{workdir}/image.raw"
-        mountpoint = f"{workdir}/mnt"
-
-        # Create an empty image file of the right size
-        size = int(math.ceil(tree_size(tree) * 1.2 / 512) * 512)
-        subprocess.run(["truncate", "--size", str(size), image], check=True)
-
-        # Mount the created image as a loopback device
-        with loop_device(image) as loop:
-            # Populate the first partition of the image with an ext4 fs and fill it with the contents of the
-            # tree we are operating on.
-            subprocess.run(["mkfs.ext4", "-d", tree, "-U", root_fs_uuid, loop], check=True)
-
-            # Mount the partition. The contents is now exactly the same as the input tree, with the only
-            # difference that when it inspects its own filesystem it will see what has been configured,
-            # rather than a tmpfs.
-            with mount(loop, mountpoint):
-                # Run the tool in the image we created.
-                with mount_api(mountpoint):
-                    subprocess.run(["chroot", mountpoint, "grub2-mkconfig", "--output=/boot/grub2/grub.cfg"], check=True)
-
-                # Copy the entire contents of the image back on top of the input tree, capturing all the changes
-                # the tool performed.
-                shutil.rmtree(tree, ignore_errors=True)
-                subprocess.run(["cp", "-a", f"{mountpoint}/.", tree], check=True)
+    os.makedirs(f"{tree}/boot/grub2", exist_ok=True)
+    with open(f"{tree}/boot/grub2/grubenv", "w") as env:
+        env.write("# GRUB Environment Block\n"
+                  f"GRUB2_ROOT_FS_UUID={root_fs_uuid}\n"
+                  f"GRUB2_BOOT_FS_UUID={root_fs_uuid}\n"
+                  f"kernelopts=root=UUID={root_fs_uuid} ro\n")
+    with open(f"{tree}/boot/grub2/grub.cfg", "w") as cfg:
+        cfg.write("set timeout=0\n"
+                  "load_env\n"
+                  "search --no-floppy --fs-uuid --set=root ${GRUB2_ROOT_FS_UUID}\n"
+                  "search --no-floppy --fs-uuid --set=boot ${GRUB2_BOOT_FS_UUID}\n"
+                  "function load_video {\n"
+                  "  insmod all_video\n"
+                  "}\n"
+                  "blscfg\n")
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
