@@ -30,6 +30,9 @@ if __name__ == "__main__":
         pipeline = json.load(f)
     pipeline = osbuild.Pipeline(pipeline)
 
+    print()
+    print(f"{RESET}{BOLD}Pipeline: {pipeline.id}{RESET}")
+
     try:
         pipeline.run(args.input_dir, args.output_dir, interactive=True)
     except KeyboardInterrupt:
