@@ -113,7 +113,7 @@ class BuildRoot:
                 raise ValueError(f"{r} tries to bind to a different location")
         return resources
 
-    def run_stage(self, stage, tree, input_dir=None, interactive=False):
+    def run_stage(self, stage, tree, interactive=False):
         name = stage["name"]
         args = {
             "tree": "/run/osbuild/tree",
@@ -124,10 +124,6 @@ class BuildRoot:
         robinds.extend(self._get_system_resources_from_etc(stage))
 
         binds = [f"{tree}:/run/osbuild/tree", "/dev:/dev"]
-
-        if input_dir:
-            robinds.append(f"{input_dir}:/run/osbuild/input")
-            args["input_dir"] = "/run/osbuild/input"
 
         try:
             r = self.run([f"/run/osbuild/{name}"],
@@ -146,7 +142,7 @@ class BuildRoot:
             "output": r.stdout
         }
 
-    def run_assembler(self, assembler, tree, input_dir=None, output_dir=None, interactive=False):
+    def run_assembler(self, assembler, tree, output_dir=None, interactive=False):
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -162,9 +158,6 @@ class BuildRoot:
         robinds.extend(self._get_system_resources_from_etc(assembler))
         binds = ["/dev:/dev"]
 
-        if input_dir:
-            robinds.append(f"{input_dir}:/run/osbuild/input")
-            args["input_dir"] = "/run/osbuild/input"
         if output_dir:
             binds.append(f"{output_dir}:/run/osbuild/output")
             args["output_dir"] = "/run/osbuild/output"
@@ -216,7 +209,7 @@ class Pipeline:
 
         os.makedirs(objects, exist_ok=True)
 
-    def run(self, input_dir, output_dir, interactive=False):
+    def run(self, output_dir, interactive=False):
         results = {
             "stages": []
         }
@@ -231,7 +224,7 @@ class Pipeline:
                 options = stage.get("options", {})
                 if interactive:
                     print_header(f"{i}. {name}", options, buildroot.machine_name)
-                r = buildroot.run_stage(stage, tree, input_dir, interactive)
+                r = buildroot.run_stage(stage, tree, interactive)
                 results["stages"].append(r)
 
             if self.assembler:
@@ -239,7 +232,7 @@ class Pipeline:
                 options = self.assembler.get("options", {})
                 if interactive:
                     print_header(f"Assembling: {name}", options, buildroot.machine_name)
-                r = buildroot.run_assembler(self.assembler, tree, input_dir, output_dir, interactive)
+                r = buildroot.run_assembler(self.assembler, tree, output_dir, interactive)
                 results["assembler"] = r
             else:
                 output_tree = os.path.join(self.objects, self.id)

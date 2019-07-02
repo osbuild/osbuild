@@ -21,8 +21,6 @@ if __name__ == "__main__":
                         default=".osbuild/objects",
                         help="the directory where intermediary os trees are stored")
     requiredNamed = parser.add_argument_group('required named arguments')
-    requiredNamed.add_argument("-i", "--input", dest="input_dir", metavar="DIRECTORY", type=os.path.abspath,
-                        help="provide the contents of DIRECTORY to the first stage", required=True)
     requiredNamed.add_argument("-o", "--output", dest="output_dir", metavar="DIRECTORY", type=os.path.abspath,
                         help="provide the empty DIRECTORY as output argument to the last stage", required=True)
     args = parser.parse_args()
@@ -37,7 +35,7 @@ if __name__ == "__main__":
     print(f"{RESET}{BOLD}Pipeline: {pipeline.id}{RESET}")
 
     try:
-        pipeline.run(args.input_dir, args.output_dir, interactive=True)
+        pipeline.run(args.output_dir, interactive=True)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
