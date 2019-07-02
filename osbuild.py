@@ -1,4 +1,5 @@
 
+import hashlib
 import json
 import os
 import subprocess
@@ -203,6 +204,10 @@ def print_header(title, options, machine_name):
 
 class Pipeline:
     def __init__(self, pipeline):
+        m = hashlib.sha256()
+        m.update(json.dumps(pipeline, sort_keys=True).encode())
+
+        self.id = m.hexdigest()
         self.stages = pipeline["stages"]
         self.assembler = pipeline.get("assembler")
 
