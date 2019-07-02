@@ -1,13 +1,6 @@
 {
   "name": "base-qcow2",
-  "stages": [
-    {
-      "name": "io.weldr.untree",
-      "options": {
-        "tree": "efc7b094c174d9f5fd66c863db7128415f5df0f073125716f5279554f13a659f"
-      }
-    }
-  ],
+  "base": "f571638c0a21a7141e2391d476433c1679831e4f21df6555c2ef53c4446b7603",
   "assembler":
     {
       "name": "io.weldr.qcow2",

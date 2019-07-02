@@ -209,7 +209,8 @@ class Pipeline:
         m.update(json.dumps(pipeline, sort_keys=True).encode())
 
         self.id = m.hexdigest()
-        self.stages = pipeline["stages"]
+        self.base = pipeline.get("base")
+        self.stages = pipeline.get("stages", [])
         self.assembler = pipeline.get("assembler")
         self.objects = objects
 
@@ -220,6 +221,11 @@ class Pipeline:
             "stages": []
         }
         with BuildRoot() as buildroot, tmpfs() as tree:
+            if self.base:
+                input_tree = os.path.join(self.objects, self.base)
+
+                subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
+
             for i, stage in enumerate(self.stages, start=1):
                 name = stage["name"]
                 options = stage.get("options", {})
