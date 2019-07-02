@@ -17,6 +17,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
                         help="json file containing the pipeline that should be built")
+    parser.add_argument("--objects", metavar="DIRECTORY", type=os.path.abspath,
+                        default=".osbuild/objects",
+                        help="the directory where intermediary os trees are stored")
     requiredNamed = parser.add_argument_group('required named arguments')
     requiredNamed.add_argument("-i", "--input", dest="input_dir", metavar="DIRECTORY", type=os.path.abspath,
                         help="provide the contents of DIRECTORY to the first stage", required=True)
@@ -28,7 +31,7 @@ if __name__ == "__main__":
 
     with open(args.pipeline_path) as f:
         pipeline = json.load(f)
-    pipeline = osbuild.Pipeline(pipeline)
+    pipeline = osbuild.Pipeline(pipeline, args.objects)
 
     print()
     print(f"{RESET}{BOLD}Pipeline: {pipeline.id}{RESET}")
