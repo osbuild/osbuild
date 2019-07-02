@@ -9,8 +9,8 @@ import tempfile
 __all__ = [
     "StageFailed",
     "BuildRoot",
-    "tmpfs",
-    "run"
+    "Pipeline",
+    "tmpfs"
 ]
 
 
@@ -201,27 +201,30 @@ def print_header(title, options, machine_name):
     print(f"\t# nsenter -a --wd=/root -t `machinectl show {machine_name} -p Leader --value`")
     print()
 
+class Pipeline:
+    def __init__(self, pipeline):
+        self.stages = pipeline["stages"]
+        self.assembler = pipeline.get("assembler")
 
-def run(pipeline, input_dir, output_dir, interactive=False):
-    results = {
-        "stages": []
-    }
-    with BuildRoot() as buildroot, tmpfs() as tree:
-        for i, stage in enumerate(pipeline["stages"], start=1):
-            name = stage["name"]
-            options = stage.get("options", {})
-            if interactive:
-                print_header(f"{i}. {name}", options, buildroot.machine_name)
-            r = buildroot.run_stage(stage, tree, input_dir, interactive)
-            results["stages"].append(r)
+    def run(self, input_dir, output_dir, interactive=False):
+        results = {
+            "stages": []
+        }
+        with BuildRoot() as buildroot, tmpfs() as tree:
+            for i, stage in enumerate(self.stages, start=1):
+                name = stage["name"]
+                options = stage.get("options", {})
+                if interactive:
+                    print_header(f"{i}. {name}", options, buildroot.machine_name)
+                r = buildroot.run_stage(stage, tree, input_dir, interactive)
+                results["stages"].append(r)
 
-        assembler = pipeline.get("assembler")
-        if assembler:
-            name = assembler["name"]
-            options = assembler.get("options", {})
-            if interactive:
-                print_header(f"Assembling: {name}", options, buildroot.machine_name)
-            r = buildroot.run_assembler(assembler, tree, input_dir, output_dir, interactive)
-            results["assembler"] = r
+            if self.assembler:
+                name = self.assembler["name"]
+                options = self.assembler.get("options", {})
+                if interactive:
+                    print_header(f"Assembling: {name}", options, buildroot.machine_name)
+                r = buildroot.run_assembler(self.assembler, tree, input_dir, output_dir, interactive)
+                results["assembler"] = r
 
-    return results
+        self.results = results
