@@ -216,7 +216,6 @@ class Pipeline:
         with BuildRoot() as buildroot, tmpfs() as tree:
             if self.base:
                 input_tree = os.path.join(self.objects, self.base)
-
                 subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
 
             for i, stage in enumerate(self.stages, start=1):
@@ -236,10 +235,8 @@ class Pipeline:
                 results["assembler"] = r
             else:
                 output_tree = os.path.join(self.objects, self.id)
-
                 shutil.rmtree(output_tree, ignore_errors=True)
                 os.makedirs(output_tree, mode=0o755)
-
                 subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
 
         self.results = results
