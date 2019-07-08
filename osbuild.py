@@ -153,21 +153,22 @@ class Stage:
         self.options = options
         self.resources = resources
 
-    def run(self, buildroot, tree, interactive=False):
-        if interactive:
-            print_header(f"{self.name}", self.options, buildroot.machine_name)
+    def run(self, tree, interactive=False):
+        with BuildRoot() as buildroot:
+            if interactive:
+                print_header(f"{self.name}", self.options, buildroot.machine_name)
 
-        args = {
-            "tree": "/run/osbuild/tree",
-            "options": self.options,
-        }
+            args = {
+                "tree": "/run/osbuild/tree",
+                "options": self.options,
+            }
 
-        robinds = [f"{libdir}/stages/{self.name}:/run/osbuild/{self.name}"]
-        robinds.extend(_get_system_resources_from_etc(self.resources))
+            robinds = [f"{libdir}/stages/{self.name}:/run/osbuild/{self.name}"]
+            robinds.extend(_get_system_resources_from_etc(self.resources))
 
-        binds = [f"{tree}:/run/osbuild/tree", "/dev:/dev"]
+            binds = [f"{tree}:/run/osbuild/tree", "/dev:/dev"]
 
-        return buildroot.run(self.name, args, binds, robinds, interactive)
+            return buildroot.run(self.name, args, binds, robinds, interactive)
 
 
 class Assembler:
@@ -176,29 +177,30 @@ class Assembler:
         self.options = options
         self.resources = resources
 
-    def run(self, buildroot, tree, output_dir=None, interactive=False):
-        if interactive:
-            print_header(f"Assembling: {self.name}", self.options, buildroot.machine_name)
+    def run(self, tree, output_dir=None, interactive=False):
+        with BuildRoot() as buildroot:
+            if interactive:
+                print_header(f"Assembling: {self.name}", self.options, buildroot.machine_name)
 
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
 
-        args = {
-            "tree": "/run/osbuild/tree",
-            "options": self.options,
-        }
-        robinds = [
-            f"{tree}:/run/osbuild/tree",
-            f"{libdir}/assemblers/{self.name}:/run/osbuild/{self.name}"
-        ]
-        robinds.extend(_get_system_resources_from_etc(self.resources))
-        binds = ["/dev:/dev"]
+            args = {
+                "tree": "/run/osbuild/tree",
+                "options": self.options,
+            }
+            robinds = [
+                f"{tree}:/run/osbuild/tree",
+                f"{libdir}/assemblers/{self.name}:/run/osbuild/{self.name}"
+            ]
+            robinds.extend(_get_system_resources_from_etc(self.resources))
+            binds = ["/dev:/dev"]
 
-        if output_dir:
-            binds.append(f"{output_dir}:/run/osbuild/output")
-            args["output_dir"] = "/run/osbuild/output"
+            if output_dir:
+                binds.append(f"{output_dir}:/run/osbuild/output")
+                args["output_dir"] = "/run/osbuild/output"
 
-        return buildroot.run(self.name, args, binds, robinds, interactive)
+            return buildroot.run(self.name, args, binds, robinds, interactive)
 
 
 class Pipeline:
@@ -218,7 +220,7 @@ class Pipeline:
         results = {
             "stages": []
         }
-        with BuildRoot() as buildroot, tmpfs() as tree:
+        with tmpfs() as tree:
             if self.base:
                 input_tree = os.path.join(self.objects, self.base)
                 subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
@@ -228,7 +230,7 @@ class Pipeline:
                 options = stage.get("options", {})
                 resources = stage.get("systemResourcesFromEtc", [])
                 stage = Stage(name, options, resources)
-                r = stage.run(buildroot, tree, interactive)
+                r = stage.run(tree, interactive)
                 results["stages"].append(r)
 
             if self.assembler:
@@ -236,7 +238,7 @@ class Pipeline:
                 options = self.assembler.get("options", {})
                 resources = self.assembler.get("systemResourcesFromEtc", [])
                 assembler = Assembler(name, options, resources)
-                r = assembler.run(buildroot, tree, output_dir, interactive)
+                r = assembler.run(tree, output_dir, interactive)
                 results["assembler"] = r
             else:
                 output_tree = os.path.join(self.objects, self.id)
