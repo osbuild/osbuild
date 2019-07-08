@@ -112,12 +112,10 @@ class BuildRoot:
                 raise ValueError(f"{r} tries to bind to a different location")
         return resources
 
-    def run_stage(self, stage, tree, interactive=False):
-        name = stage["name"]
-        resources = stage.get("systemResourcesFromEtc", [])
+    def run_stage(name, options, resources, stage, tree, interactive=False):
         args = {
             "tree": "/run/osbuild/tree",
-            "options": stage.get("options", {})
+            "options": options,
         }
 
         robinds = [f"{libdir}/stages/{name}:/run/osbuild/{name}"]
@@ -142,15 +140,13 @@ class BuildRoot:
             "output": r.stdout
         }
 
-    def run_assembler(self, assembler, tree, output_dir=None, interactive=False):
+    def run_assembler(self, name, options, resources, tree, output_dir=None, interactive=False):
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        name = assembler["name"]
-        resources = assembler.get("systemResourcesFromEtc", [])
         args = {
             "tree": "/run/osbuild/tree",
-            "options": assembler.get("options", {}),
+            "options": options,
         }
         robinds = [
             f"{tree}:/run/osbuild/tree",
@@ -222,17 +218,19 @@ class Pipeline:
             for i, stage in enumerate(self.stages, start=1):
                 name = stage["name"]
                 options = stage.get("options", {})
+                resources = stage.get("systemResourcesFromEtc", [])
                 if interactive:
                     print_header(f"{i}. {name}", options, buildroot.machine_name)
-                r = buildroot.run_stage(stage, tree, interactive)
+                r = buildroot.run_stage(name, options, resources, tree, interactive)
                 results["stages"].append(r)
 
             if self.assembler:
                 name = self.assembler["name"]
                 options = self.assembler.get("options", {})
+                resources = assembler.get("systemResourcesFromEtc", [])
                 if interactive:
                     print_header(f"Assembling: {name}", options, buildroot.machine_name)
-                r = buildroot.run_assembler(self.assembler, tree, output_dir, interactive)
+                r = buildroot.run_assembler(name, options, resources, tree, output_dir, interactive)
                 results["assembler"] = r
             else:
                 output_tree = os.path.join(self.objects, self.id)
