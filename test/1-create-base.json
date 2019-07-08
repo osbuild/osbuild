@@ -1,0 +1,24 @@
+{
+  "name": "base",
+  "stages": [
+    {
+      "name": "io.weldr.dnf",
+      "systemResourcesFromEtc": ["/etc/pki"],
+      "options": {
+        "releasever": "30",
+        "repos": {
+          "fedora": {
+            "name": "Fedora",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
+          }
+        },
+        "packages": [
+          "@Core",
+          "selinux-policy-targeted",
+          "grub2-pc"
+        ]
+      }
+    }
+  ]
+}
