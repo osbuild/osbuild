@@ -104,8 +104,7 @@ class BuildRoot:
             "/run/osbuild/osbuild-run",
         ] + argv, *args, **kwargs)
 
-    def _get_system_resources_from_etc(self, stage_or_assembler):
-        resources = stage_or_assembler.get("systemResourcesFromEtc", [])
+    def _get_system_resources_from_etc(self, resources):
         for r in resources:
             if not r.startswith("/etc"):
                 raise ValueError(f"{r} is not a resource in /etc/")
@@ -113,15 +112,14 @@ class BuildRoot:
                 raise ValueError(f"{r} tries to bind to a different location")
         return resources
 
-    def run_stage(self, stage, tree, interactive=False):
-        name = stage["name"]
+    def run_stage(self, name, options, resources, tree, interactive=False):
         args = {
             "tree": "/run/osbuild/tree",
-            "options": stage.get("options", {})
+            "options": options
         }
 
         robinds = [f"{libdir}/stages/{name}:/run/osbuild/{name}"]
-        robinds.extend(self._get_system_resources_from_etc(stage))
+        robinds.extend(self._get_system_resources_from_etc(resources))
 
         binds = [f"{tree}:/run/osbuild/tree", "/dev:/dev"]
 
@@ -142,20 +140,19 @@ class BuildRoot:
             "output": r.stdout
         }
 
-    def run_assembler(self, assembler, tree, output_dir=None, interactive=False):
+    def run_assembler(self, name, options, resources, tree, output_dir=None, interactive=False):
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        name = assembler["name"]
         args = {
             "tree": "/run/osbuild/tree",
-            "options": assembler.get("options", {}),
+            "options": options,
         }
         robinds = [
             f"{tree}:/run/osbuild/tree",
             f"{libdir}/assemblers/{name}:/run/osbuild/{name}"
         ]
-        robinds.extend(self._get_system_resources_from_etc(assembler))
+        robinds.extend(self._get_system_resources_from_etc(resources))
         binds = ["/dev:/dev"]
 
         if output_dir:
@@ -196,6 +193,60 @@ def print_header(title, options, machine_name):
     print(f"\t# nsenter -a --wd=/root -t `machinectl show {machine_name} -p Leader --value`")
     print()
 
+class Stage:
+    def __init__(self, stage, objects):
+        m = hashlib.sha256()
+        m.update(json.dumps(stage, sort_keys=True).encode())
+
+        self.name = stage["name"]
+        self.options = stage.get("options", {})
+        self.id = m.hexdigest()
+        self.base = stage.get("base")
+        self.resources = stage.get("systemResourcesFromEtc", [])
+        self.objects = objects
+
+    def run(self, interactive=False):
+        output_tree = os.path.join(self.objects, self.id)
+
+        if os.path.exists(output_tree):
+            return
+
+        with BuildRoot() as buildroot, tmpfs() as tree:
+            if interactive:
+                print_header(f"{self.name} ({self.id})", self.options, buildroot.machine_name)
+            if self.base:
+                input_tree = os.path.join(self.objects, self.base)
+                subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
+            r = buildroot.run_stage(self.name, self.options, self.resources, tree, interactive)
+            shutil.rmtree(output_tree, ignore_errors=True)
+            os.makedirs(output_tree, mode=0o755)
+            subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
+
+        return r
+
+class Assembler:
+    def __init__(self, assembler, objects):
+        m = hashlib.sha256()
+        m.update(json.dumps(assembler, sort_keys=True).encode())
+
+        self.name = assembler["name"]
+        self.options = assembler.get("options", {})
+        self.id = m.hexdigest()
+        self.base = assembler.get("base")
+        self.resources = assembler.get("systemResourcesFromEtc", [])
+        self.objects = objects
+
+    def run(self, output_dir=None, interactive=False):
+        with BuildRoot() as buildroot, tmpfs() as tree:
+            if interactive:
+                print_header(f"Assembling: {self.name} ({self.id})", self.options, buildroot.machine_name)
+            if self.base:
+                input_tree = os.path.join(self.objects, self.base)
+                subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
+            r = buildroot.run_assembler(self.name, self.options, self.resources, tree, output_dir, interactive)
+
+        return r
+
 class Pipeline:
     def __init__(self, pipeline, objects):
         m = hashlib.sha256()
@@ -213,30 +264,25 @@ class Pipeline:
         results = {
             "stages": []
         }
-        with BuildRoot() as buildroot, tmpfs() as tree:
-            if self.base:
-                input_tree = os.path.join(self.objects, self.base)
-                subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
+        base = self.base
 
-            for i, stage in enumerate(self.stages, start=1):
-                name = stage["name"]
-                options = stage.get("options", {})
-                if interactive:
-                    print_header(f"{i}. {name}", options, buildroot.machine_name)
-                r = buildroot.run_stage(stage, tree, interactive)
-                results["stages"].append(r)
+        for stage in self.stages:
+            name = stage["name"]
+            options = stage.get("options", {})
+            if base:
+                stage["base"] = base
+            stage = Stage(stage, self.objects)
+            base = stage.id
+            r = stage.run(interactive)
+            results["stages"].append(r)
 
-            if self.assembler:
-                name = self.assembler["name"]
-                options = self.assembler.get("options", {})
-                if interactive:
-                    print_header(f"Assembling: {name}", options, buildroot.machine_name)
-                r = buildroot.run_assembler(self.assembler, tree, output_dir, interactive)
-                results["assembler"] = r
-            else:
-                output_tree = os.path.join(self.objects, self.id)
-                shutil.rmtree(output_tree, ignore_errors=True)
-                os.makedirs(output_tree, mode=0o755)
-                subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
+        if self.assembler:
+            name = self.assembler["name"]
+            options = self.assembler.get("options", {})
+            if base:
+                self.assembler["base"] = base
+            assembler = Assembler(self.assembler, self.objects)
+            r = assembler.run(output_dir, interactive)
+            results["assembler"] = r
 
         self.results = results
