@@ -1,15 +1,22 @@
 #!/usr/bin/python3
 
 import json
-import os
 import subprocess
 import sys
 
+
 def main(tree, options):
     enabled_services = options["enabled_services"]
+    disabled_services = options.get("disabled_services", [])
 
     for service in enabled_services:
         subprocess.run([f"systemctl", "--root", tree, "enable", service], check=True)
+
+    for service in disabled_services:
+        subprocess.run([f"systemctl", "--root", tree, "disable", service], check=True)
+
+    return 0
+
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
