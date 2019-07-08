@@ -10,8 +10,10 @@ import tempfile
 
 __all__ = [
     "StageFailed",
+    "Assembler",
     "BuildRoot",
     "Pipeline",
+    "Stage"
     "tmpfs"
 ]
 
@@ -86,88 +88,30 @@ class BuildRoot:
         os.rmdir(self.root)
         self.root = None
 
-    def run(self, argv, binds=[], readonly_binds=[], *args, **kwargs):
-        return subprocess.run([
-            "systemd-nspawn",
-            "--quiet",
-            "--as-pid2",
-            "--link-journal=no",
-            "--volatile=yes",
-            "--property=DeviceAllow=/dev/loop-control rw",
-            "--property=DeviceAllow=block-loop rw",
-            "--property=DeviceAllow=block-blkext rw",
-            f"--machine={self.machine_name}",
-            f"--directory={self.root}",
-            f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
-            *[f"--bind={b}" for b in binds],
-            *[f"--bind-ro={b}" for b in readonly_binds],
-            "/run/osbuild/osbuild-run",
-        ] + argv, *args, **kwargs)
-
-    def _get_system_resources_from_etc(self, resources):
-        for r in resources:
-            if not r.startswith("/etc"):
-                raise ValueError(f"{r} is not a resource in /etc/")
-            if ":" in r:
-                raise ValueError(f"{r} tries to bind to a different location")
-        return resources
-
-    def run_stage(name, options, resources, stage, tree, interactive=False):
-        args = {
-            "tree": "/run/osbuild/tree",
-            "options": options,
-        }
-
-        robinds = [f"{libdir}/stages/{name}:/run/osbuild/{name}"]
-        robinds.extend(self._get_system_resources_from_etc(resources))
-
-        binds = [f"{tree}:/run/osbuild/tree", "/dev:/dev"]
-
+    def run(self, name, args, binds=[], readonly_binds=[], interactive=False):
         try:
-            r = self.run([f"/run/osbuild/{name}"],
-                binds=binds,
-                readonly_binds=robinds,
-                input=json.dumps(args),
-                encoding="utf-8",
-                stdout=subprocess.PIPE if not interactive else None,
-                stderr=subprocess.STDOUT if not interactive else None,
-                check=True)
-        except subprocess.CalledProcessError as error:
-            raise StageFailed(name, error.returncode, error.stdout)
-
-        return {
-            "name": name,
-            "output": r.stdout
-        }
-
-    def run_assembler(self, name, options, resources, tree, output_dir=None, interactive=False):
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        args = {
-            "tree": "/run/osbuild/tree",
-            "options": options,
-        }
-        robinds = [
-            f"{tree}:/run/osbuild/tree",
-            f"{libdir}/assemblers/{name}:/run/osbuild/{name}"
-        ]
-        robinds.extend(self._get_system_resources_from_etc(resource))
-        binds = ["/dev:/dev"]
-
-        if output_dir:
-            binds.append(f"{output_dir}:/run/osbuild/output")
-            args["output_dir"] = "/run/osbuild/output"
-
-        try:
-            r = self.run([f"/run/osbuild/{name}"],
-                binds=binds,
-                readonly_binds=robinds,
-                input=json.dumps(args),
-                encoding="utf-8",
-                stdout=subprocess.PIPE if not interactive else None,
-                stderr=subprocess.STDOUT if not interactive else None,
-                check=True)
+            r = subprocess.run([
+                "systemd-nspawn",
+                "--quiet",
+                "--as-pid2",
+                "--link-journal=no",
+                "--volatile=yes",
+                "--property=DeviceAllow=/dev/loop-control rw",
+                "--property=DeviceAllow=block-loop rw",
+                "--property=DeviceAllow=block-blkext rw",
+                f"--machine={self.machine_name}",
+                f"--directory={self.root}",
+                f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
+                *[f"--bind={b}" for b in binds],
+                *[f"--bind-ro={b}" for b in readonly_binds],
+                "/run/osbuild/osbuild-run",
+                f"/run/osbuild/{name}",
+            ],
+            input=json.dumps(args),
+            encoding="utf-8",
+            stdout=subprocess.PIPE if not interactive else None,
+            stderr=subprocess.STDOUT if not interactive else None,
+            check=True)
         except subprocess.CalledProcessError as error:
             raise StageFailed(name, error.returncode, error.stdout)
 
@@ -193,6 +137,70 @@ def print_header(title, options, machine_name):
     print(f"\t# nsenter -a --wd=/root -t `machinectl show {machine_name} -p Leader --value`")
     print()
 
+
+def _get_system_resources_from_etc(resources):
+    for r in resources:
+        if not r.startswith("/etc"):
+            raise ValueError(f"{r} is not a resource in /etc/")
+        if ":" in r:
+            raise ValueError(f"{r} tries to bind to a different location")
+    return resources
+
+
+class Stage:
+    def __init__(self, name, options, resources):
+        self.name = name
+        self.options = options
+        self.resources = resources
+
+    def run(self, buildroot, tree, interactive=False):
+        if interactive:
+            print_header(f"{self.name}", self.options, buildroot.machine_name)
+
+        args = {
+            "tree": "/run/osbuild/tree",
+            "options": self.options,
+        }
+
+        robinds = [f"{libdir}/stages/{self.name}:/run/osbuild/{self.name}"]
+        robinds.extend(_get_system_resources_from_etc(self.resources))
+
+        binds = [f"{tree}:/run/osbuild/tree", "/dev:/dev"]
+
+        return buildroot.run(self.name, args, binds, robinds, interactive)
+
+
+class Assembler:
+    def __init__(self, name, options, resources):
+        self.name = name
+        self.options = options
+        self.resources = resources
+
+    def run(self, buildroot, tree, output_dir=None, interactive=False):
+        if interactive:
+            print_header(f"Assembling: {self.name}", self.options, buildroot.machine_name)
+
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        args = {
+            "tree": "/run/osbuild/tree",
+            "options": self.options,
+        }
+        robinds = [
+            f"{tree}:/run/osbuild/tree",
+            f"{libdir}/assemblers/{self.name}:/run/osbuild/{self.name}"
+        ]
+        robinds.extend(_get_system_resources_from_etc(self.resources))
+        binds = ["/dev:/dev"]
+
+        if output_dir:
+            binds.append(f"{output_dir}:/run/osbuild/output")
+            args["output_dir"] = "/run/osbuild/output"
+
+        return buildroot.run(self.name, args, binds, robinds, interactive)
+
+
 class Pipeline:
     def __init__(self, pipeline, objects):
         m = hashlib.sha256()
@@ -215,22 +223,20 @@ class Pipeline:
                 input_tree = os.path.join(self.objects, self.base)
                 subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
 
-            for i, stage in enumerate(self.stages, start=1):
+            for stage in self.stages:
                 name = stage["name"]
                 options = stage.get("options", {})
                 resources = stage.get("systemResourcesFromEtc", [])
-                if interactive:
-                    print_header(f"{i}. {name}", options, buildroot.machine_name)
-                r = buildroot.run_stage(name, options, resources, tree, interactive)
+                stage = Stage(name, options, resources)
+                r = stage.run(buildroot, tree, interactive)
                 results["stages"].append(r)
 
             if self.assembler:
                 name = self.assembler["name"]
                 options = self.assembler.get("options", {})
-                resources = assembler.get("systemResourcesFromEtc", [])
-                if interactive:
-                    print_header(f"Assembling: {name}", options, buildroot.machine_name)
-                r = buildroot.run_assembler(name, options, resources, tree, output_dir, interactive)
+                resources = self.assembler.get("systemResourcesFromEtc", [])
+                assembler = Assembler(name, options, resources)
+                r = assembler.run(buildroot, tree, output_dir, interactive)
                 results["assembler"] = r
             else:
                 output_tree = os.path.join(self.objects, self.id)
