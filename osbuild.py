@@ -104,8 +104,7 @@ class BuildRoot:
             "/run/osbuild/osbuild-run",
         ] + argv, *args, **kwargs)
 
-    def _get_system_resources_from_etc(self, stage_or_assembler):
-        resources = stage_or_assembler.get("systemResourcesFromEtc", [])
+    def _get_system_resources_from_etc(self, resources):
         for r in resources:
             if not r.startswith("/etc"):
                 raise ValueError(f"{r} is not a resource in /etc/")
@@ -115,13 +114,14 @@ class BuildRoot:
 
     def run_stage(self, stage, tree, interactive=False):
         name = stage["name"]
+        resources = stage.get("systemResourcesFromEtc", [])
         args = {
             "tree": "/run/osbuild/tree",
             "options": stage.get("options", {})
         }
 
         robinds = [f"{libdir}/stages/{name}:/run/osbuild/{name}"]
-        robinds.extend(self._get_system_resources_from_etc(stage))
+        robinds.extend(self._get_system_resources_from_etc(resources))
 
         binds = [f"{tree}:/run/osbuild/tree", "/dev:/dev"]
 
@@ -147,6 +147,7 @@ class BuildRoot:
             os.makedirs(output_dir)
 
         name = assembler["name"]
+        resources = assembler.get("systemResourcesFromEtc", [])
         args = {
             "tree": "/run/osbuild/tree",
             "options": assembler.get("options", {}),
@@ -155,7 +156,7 @@ class BuildRoot:
             f"{tree}:/run/osbuild/tree",
             f"{libdir}/assemblers/{name}:/run/osbuild/{name}"
         ]
-        robinds.extend(self._get_system_resources_from_etc(assembler))
+        robinds.extend(self._get_system_resources_from_etc(resource))
         binds = ["/dev:/dev"]
 
         if output_dir:
