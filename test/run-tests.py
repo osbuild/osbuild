@@ -5,15 +5,14 @@ import subprocess
 import sys
 import tempfile
 import time
-from enum import Enum
 
 EXPECTED_TIME_TO_BOOT = 60  # seconds
 RESET = "\033[0m"
 BOLD = "\033[1m"
 RED = "\033[31m"
-OBJECTS = os.environ.get("OBJECTS", tempfile.mkdtemp())
-OUTPUT_DIR = os.environ.get("OUTPUT_DIR", tempfile.mkdtemp())
-OSBUILD = os.environ.get("OSBUILD", "../osbuild")
+OBJECTS = os.environ.get("OBJECTS", tempfile.mkdtemp(prefix="osbuild-"))
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", tempfile.mkdtemp(prefix="osbuild-"))
+OSBUILD = os.environ.get("OSBUILD", os.path.join(os.path.dirname(__file__), "..", "osbuild"))
 IMAGE_PATH = os.environ.get("IMAGE_PATH", OUTPUT_DIR + "/base.qcow2")
 
 
@@ -36,19 +35,17 @@ def run_osbuild(pipeline: str, check=True):
     return osbuild.returncode
 
 
+def rel_path(fname: str) -> str:
+    return os.path.join(os.path.dirname(__file__), fname)
+
+
 def build_web_server_image():
-    run_osbuild("1-create-base.json")
-    r = run_osbuild("2-configure-web-server.json", check=False)
+    run_osbuild(rel_path("1-create-base.json"))
+    r = run_osbuild(rel_path("2-configure-web-server.json"), check=False)
     # TODO: remove this workaround once the grub2 stage works on the first try :-)
     if r != 0:
-        run_osbuild("2-configure-web-server.json")
-    run_osbuild("3-compose-qcow2.json")
-
-
-class QemuAcceleration(Enum):
-    KVMTCG = 0
-    HVF = 1
-    NONE = 2
+        run_osbuild(rel_path("2-configure-web-server.json"))
+    run_osbuild(rel_path("3-compose-qcow2.json"))
 
 
 def uname() -> str:
@@ -56,30 +53,11 @@ def uname() -> str:
     return uname.stdout.decode("utf-8").strip()
 
 
-def detect_qemu_acceleration() -> QemuAcceleration:
-    system = uname()
-    if system == "Linux":
-        logging.info("Detected Linux (using kvm:tcg)")
-        return QemuAcceleration.KVMTCG
-    elif system == "Darwin":
-        logging.info("Detected macOS (support for hvf is expected)")
-        return QemuAcceleration.HVF
-    else:
-        logging.info("Unknown OS")
-        return QemuAcceleration.NONE
-
-
 @contextlib.contextmanager
 def boot_image(path: str):
-    qemu_accel_options = {
-        QemuAcceleration.KVMTCG: ["-accel", "kvm:tcg"],
-        QemuAcceleration.HVF: ["-accel", "hvf"],
-        QemuAcceleration.NONE: []
-    }
-    acceleration = detect_qemu_acceleration()
+    acceleration = ["-accel", "kvm:hvf:tcg"]
     network = ["-net", "nic,model=rtl8139", "-net", "user,hostfwd=tcp::8888-:8888"]
-    cmd = ["qemu-system-x86_64", "-nographic", "-m", "1024", "-snapshot"] + qemu_accel_options[acceleration]\
-          + [path] + network
+    cmd = ["qemu-system-x86_64", "-nographic", "-m", "1024", "-snapshot"] + acceleration + [path] + network
     logging.info(f"Booting image: {cmd}")
     vm = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
@@ -99,7 +77,9 @@ def test_web_server():
 
 
 if __name__ == '__main__':
-    if uname() == "Linux":
+    if uname() == "Darwin":
+        logging.info("Running on macOS. Skipping image build.")
+    else:
         logging.info("Building image")
         build_web_server_image()
 
