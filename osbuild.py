@@ -148,7 +148,14 @@ def _get_system_resources_from_etc(resources):
 
 
 class Stage:
-    def __init__(self, name, options, resources):
+    def __init__(self, name, base, options, resources):
+        m = hashlib.sha256()
+        m.update(json.dumps(name, sort_keys=True).encode())
+        m.update(json.dumps(base, sort_keys=True).encode())
+        m.update(json.dumps(options, sort_keys=True).encode())
+        m.update(json.dumps(resources, sort_keys=True).encode())
+
+        self.id = m.hexdigest()
         self.name = name
         self.options = options
         self.resources = resources
@@ -156,7 +163,7 @@ class Stage:
     def run(self, tree, interactive=False):
         with BuildRoot() as buildroot:
             if interactive:
-                print_header(f"{self.name}", self.options, buildroot.machine_name)
+                print_header(f"{self.name}: {self.id}", self.options, buildroot.machine_name)
 
             args = {
                 "tree": "/run/osbuild/tree",
@@ -205,10 +212,6 @@ class Assembler:
 
 class Pipeline:
     def __init__(self, pipeline, objects):
-        m = hashlib.sha256()
-        m.update(json.dumps(pipeline, sort_keys=True).encode())
-
-        self.id = m.hexdigest()
         self.base = pipeline.get("base")
         self.stages = pipeline.get("stages", [])
         self.assembler = pipeline.get("assembler")
@@ -221,17 +224,20 @@ class Pipeline:
             "stages": []
         }
         with tmpfs() as tree:
-            if self.base:
-                input_tree = os.path.join(self.objects, self.base)
+            base = self.base
+
+            if base:
+                input_tree = os.path.join(self.objects, base)
                 subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
 
             for stage in self.stages:
                 name = stage["name"]
                 options = stage.get("options", {})
                 resources = stage.get("systemResourcesFromEtc", [])
-                stage = Stage(name, options, resources)
+                stage = Stage(name, base, options, resources)
                 r = stage.run(tree, interactive)
                 results["stages"].append(r)
+                base = stage.id
 
             if self.assembler:
                 name = self.assembler["name"]
@@ -241,7 +247,7 @@ class Pipeline:
                 r = assembler.run(tree, output_dir, interactive)
                 results["assembler"] = r
             else:
-                output_tree = os.path.join(self.objects, self.id)
+                output_tree = os.path.join(self.objects, base)
                 shutil.rmtree(output_tree, ignore_errors=True)
                 os.makedirs(output_tree, mode=0o755)
                 subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
