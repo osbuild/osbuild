@@ -9,11 +9,12 @@ import tempfile
 
 
 __all__ = [
-    "StageFailed",
     "Assembler",
+    "AssemblerFailed",
     "BuildRoot",
     "Pipeline",
     "Stage"
+    "StageFailed",
     "tmpfs"
 ]
 
@@ -30,6 +31,13 @@ if not os.path.exists(f"{libdir}/stages"):
 class StageFailed(Exception):
     def __init__(self, stage, returncode, output):
         self.stage = stage
+        self.returncode = returncode
+        self.output = output
+
+
+class AssemblerFailed(Exception):
+    def __init__(self, assembler, returncode, output):
+        self.assembler = assembler
         self.returncode = returncode
         self.output = output
 
@@ -88,37 +96,30 @@ class BuildRoot:
         os.rmdir(self.root)
         self.root = None
 
-    def run(self, name, args, binds=[], readonly_binds=[], interactive=False):
-        try:
-            r = subprocess.run([
-                "systemd-nspawn",
-                "--quiet",
-                "--as-pid2",
-                "--link-journal=no",
-                "--volatile=yes",
-                "--property=DeviceAllow=/dev/loop-control rw",
-                "--property=DeviceAllow=block-loop rw",
-                "--property=DeviceAllow=block-blkext rw",
-                f"--machine={self.machine_name}",
-                f"--directory={self.root}",
-                f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
-                *[f"--bind={b}" for b in binds],
-                *[f"--bind-ro={b}" for b in readonly_binds],
-                "/run/osbuild/osbuild-run",
-                f"/run/osbuild/{name}",
-            ],
-            input=json.dumps(args),
-            encoding="utf-8",
-            stdout=subprocess.PIPE if not interactive else None,
-            stderr=subprocess.STDOUT if not interactive else None,
-            check=True)
-        except subprocess.CalledProcessError as error:
-            raise StageFailed(name, error.returncode, error.stdout)
+    def run(self, argv, binds=[], readonly_binds=[], **kwargs):
+        """Runs a command in the buildroot.
 
-        return {
-            "name": name,
-            "output": r.stdout
-        }
+        Its arguments mean the same as those for subprocess.run().
+        """
+        command = "/run/osbuild/" + os.path.basename(argv[0])
+        return subprocess.run([
+            "systemd-nspawn",
+            "--quiet",
+            "--as-pid2",
+            "--link-journal=no",
+            "--volatile=yes",
+            "--property=DeviceAllow=/dev/loop-control rw",
+            "--property=DeviceAllow=block-loop rw",
+            "--property=DeviceAllow=block-blkext rw",
+            f"--machine={self.machine_name}",
+            f"--directory={self.root}",
+            f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
+            *[f"--bind={b}" for b in binds],
+            *[f"--bind-ro={b}" for b in [argv[0] + ":" + command, *readonly_binds]],
+            "/run/osbuild/osbuild-run",
+            command
+            ] + argv[1:], **kwargs
+        )
 
     def __del__(self):
         self.unmount()
@@ -170,12 +171,25 @@ class Stage:
                 "options": self.options,
             }
 
-            robinds = [f"{libdir}/stages/{self.name}:/run/osbuild/{self.name}"]
-            robinds.extend(_get_system_resources_from_etc(self.resources))
+            r = buildroot.run(
+                [f"{libdir}/stages/{self.name}"],
+                binds=[
+                    f"{tree}:/run/osbuild/tree",
+                    "/dev:/dev"
+                ],
+                readonly_binds=_get_system_resources_from_etc(self.resources),
+                encoding="utf-8",
+                input=json.dumps(args),
+                stdout=None if interactive else subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            if r.returncode != 0:
+                raise AssemblerFailed(self.name, r.returncode, r.stdout)
 
-            binds = [f"{tree}:/run/osbuild/tree", "/dev:/dev"]
-
-            return buildroot.run(self.name, args, binds, robinds, interactive)
+            return {
+                "name": self.name,
+                "output": r.stdout
+            }
 
 
 class Assembler:
@@ -196,18 +210,27 @@ class Assembler:
                 "tree": "/run/osbuild/tree",
                 "options": self.options,
             }
-            robinds = [
-                f"{tree}:/run/osbuild/tree",
-                f"{libdir}/assemblers/{self.name}:/run/osbuild/{self.name}"
-            ]
-            robinds.extend(_get_system_resources_from_etc(self.resources))
-            binds = ["/dev:/dev"]
 
+            binds = ["/dev:/dev"]
             if output_dir:
                 binds.append(f"{output_dir}:/run/osbuild/output")
                 args["output_dir"] = "/run/osbuild/output"
 
-            return buildroot.run(self.name, args, binds, robinds, interactive)
+            r = buildroot.run(
+                [f"{libdir}/assemblers/{self.name}"],
+                binds=binds,
+                readonly_binds=[f"{tree}:/run/osbuild/tree"] + _get_system_resources_from_etc(self.resources),
+                encoding="utf-8",
+                input=json.dumps(args),
+                stdout=None if interactive else subprocess.PIPE,
+                stderr=subprocess.STDOUT)
+            if r.returncode != 0:
+                raise StageFailed(self.name, r.returncode, r.stdout)
+
+            return {
+                "name": self.name,
+                "output": r.stdout
+            }
 
 
 class Pipeline:
