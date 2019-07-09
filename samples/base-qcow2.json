@@ -1,6 +1,6 @@
 {
   "name": "base-qcow2",
-  "base": "f571638c0a21a7141e2391d476433c1679831e4f21df6555c2ef53c4446b7603",
+  "base": "445c09ba71fd656aadcc2c1e84adb12dcc5fd193fcbdc386b63e2fc02e134e98",
   "assembler":
     {
       "name": "io.weldr.qcow2",
