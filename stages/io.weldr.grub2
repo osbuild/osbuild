@@ -1,50 +1,11 @@
 #!/usr/bin/python3
 
-import contextlib
 import json
-import math
 import os
-import shutil
-import subprocess
 import sys
 import tempfile
 
-def tree_size(tree):
-    size = 0
-    for root, dirs, files in os.walk(tree):
-        for entry in files + dirs:
-            path = os.path.join(root, entry)
-            size += os.stat(path, follow_symlinks=False).st_size
-    return size
-
-@contextlib.contextmanager
-def mount(source, dest, *options):
-    os.makedirs(dest, 0o755, True)
-    subprocess.run(["mount", *options, source, dest], check=True)
-    try:
-        yield
-    finally:
-        subprocess.run(["umount", "-R", dest], check=True)
-
-@contextlib.contextmanager
-def mount_api(dest):
-    with mount("/dev", f"{dest}/dev", "-o", "rbind"), \
-         mount("/proc", f"{dest}/proc", "-o", "rbind"), \
-         mount("/sys", f"{dest}/sys", "-o", "rbind"), \
-         mount("none", f"{dest}/run", "-t", "tmpfs"):
-             yield
-
-@contextlib.contextmanager
-def loop_device(image):
-    r = subprocess.run(["losetup", "--show", "--find", image], stdout=subprocess.PIPE, encoding="utf-8", check=True)
-    loop = r.stdout.strip()
-    try:
-        yield loop
-    finally:
-        subprocess.run(["losetup", "-d", loop], check=True)
-
 def main(tree, options):
-    partition_table_id = options["partition_table_id"]
     root_fs_uuid = options["root_fs_uuid"]
 
     # Create the configuration file that determines how grub.cfg is generated.
