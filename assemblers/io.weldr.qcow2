@@ -61,18 +61,22 @@ def main(tree, output_dir, options):
         # Set up the partition table of the image
         partition_table = "label: mbr\nlabel-id: {partition_table_id}\nbootable, type=83"
         subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
+        r = subprocess.run(["sfdisk", "--json", image], stdout=subprocess.PIPE, encoding='utf-8', check=True)
+        partition_table = json.loads(r.stdout)
+        partition = partition_table["partitiontable"]["partitions"][0]
+        partition_offset = partition["start"] * 512
+        partition_size = partition["size"] * 512
+
+        # Populate the first partition of the image with an ext4 fs and fill it with the contents of the
+        # tree we are operating on.
+        subprocess.run(["mkfs.ext4", "-d", tree, "-U", root_fs_uuid, "-E", f"offset={partition_offset}", image, f"{int(partition_size / 1024)}k"], input="y", encoding='utf-8', check=True)
 
         # Mount the created image as a loopback device
-        with loop_device(image, size) as loop:
-            # Populate the first partition of the image with an ext4 fs and fill it with the contents of the
-            # tree we are operating on.
-            subprocess.run(["mkfs.ext4", "-d", tree, "-U", root_fs_uuid, f"{loop}p1"], check=True)
-
-            # Install grub2 into the boot sector of the image
-            # It is unclear why chrooting into the image is required.
-            with mount(f"{loop}p1", mountpoint):
-                with mount_api(mountpoint):
-                    subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy", "--target", "i386-pc", loop], check=True)
+        with loop_device(image, size) as loop, \
+            mount(f"{loop}p1", mountpoint):
+            # Install grub2 into the boot sector of the image, and copy the grub2 imagise into /boot/grub2
+            with mount_api(mountpoint):
+                subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy", "--target", "i386-pc", loop], check=True)
 
         subprocess.run(["qemu-img", "convert", "-O" "qcow2", "-c", image, f"{output_dir}/{filename}"], check=True)
 
