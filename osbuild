@@ -25,8 +25,6 @@ if __name__ == "__main__":
                         help="provide the empty DIRECTORY as output argument to the last stage", required=True)
     args = parser.parse_args()
 
-    os.makedirs("/run/osbuild", exist_ok=True)
-
     with open(args.pipeline_path) as f:
         pipeline = json.load(f)
     pipeline = osbuild.Pipeline(pipeline, args.objects)
