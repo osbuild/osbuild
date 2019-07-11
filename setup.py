@@ -9,6 +9,7 @@ setuptools.setup(
     py_modules=["osbuild"],
     data_files=[
         ("/usr/bin", ["osbuild"]),
+        ("/usr/lib/osbuild", ["osbuild-run"]),
         ("/usr/lib/osbuild/stages", glob.glob("./stages/*")),
         ("/usr/lib/osbuild/assemblers", glob.glob("./assemblers/*"))
     ]
