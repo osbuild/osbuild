@@ -243,6 +243,7 @@ class Pipeline:
         os.makedirs(objects, exist_ok=True)
 
     def run(self, output_dir, interactive=False):
+        os.makedirs("/run/osbuild", exist_ok=True)
         results = {
             "stages": []
         }
