@@ -225,7 +225,7 @@ class Assembler:
                 stdout=None if interactive else subprocess.PIPE,
                 stderr=subprocess.STDOUT)
             if r.returncode != 0:
-                raise StageFailed(self.name, r.returncode, r.stdout)
+                raise AssemblerFailed(self.name, r.returncode, r.stdout)
 
             return {
                 "name": self.name,
