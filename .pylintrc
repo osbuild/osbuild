@@ -1,3 +1,6 @@
 [MASTER]
-disable=missing-docstring,too-few-public-methods,invalid-name,duplicate-code,superfluous-parens,too-many-locals
+disable=missing-docstring,too-few-public-methods,invalid-name,duplicate-code,superfluous-parens,too-many-locals,attribute-defined-outside-init
 max-line-length=120
+
+[TYPECHECK]
+ignored-classes=osbuild.loop.LoopInfo
