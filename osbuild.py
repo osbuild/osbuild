@@ -234,13 +234,16 @@ class Assembler:
 
 
 class Pipeline:
-    def __init__(self, pipeline, objects):
+    def __init__(self, pipeline, objects=None):
         self.base = pipeline.get("base")
         self.stages = pipeline.get("stages", [])
         self.assembler = pipeline.get("assembler")
         self.objects = objects
 
-        os.makedirs(objects, exist_ok=True)
+        if objects:
+            os.makedirs(objects, exist_ok=True)
+        elif self.base:
+            raise ValueError("'objects' argument must be given when pipeline has a 'base'")
 
     def run(self, output_dir, interactive=False):
         os.makedirs("/run/osbuild", exist_ok=True)
@@ -270,7 +273,7 @@ class Pipeline:
                 assembler = Assembler(name, options, resources)
                 r = assembler.run(tree, output_dir, interactive)
                 results["assembler"] = r
-            else:
+            elif self.objects:
                 output_tree = os.path.join(self.objects, base)
                 shutil.rmtree(output_tree, ignore_errors=True)
                 os.makedirs(output_tree, mode=0o755)
