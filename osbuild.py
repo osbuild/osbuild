@@ -203,9 +203,6 @@ class Assembler:
             if interactive:
                 print_header(f"Assembling: {self.name}", self.options, buildroot.machine_name)
 
-            if output_dir and not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-
             args = {
                 "tree": "/run/osbuild/tree",
                 "options": self.options,
@@ -213,6 +210,7 @@ class Assembler:
 
             binds = ["/dev:/dev"]
             if output_dir:
+                os.makedirs(output_dir, exist_ok=True)
                 binds.append(f"{output_dir}:/run/osbuild/output")
                 args["output_dir"] = "/run/osbuild/output"
 
