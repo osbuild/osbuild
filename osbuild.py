@@ -266,8 +266,10 @@ class Pipeline:
             if self.assembler:
                 r = self.assembler.run(tree, output_dir, interactive)
                 results["assembler"] = r
-            elif objects:
-                output_tree = os.path.join(objects, self.stages[-1].id if self.stages else self.base)
+
+            last = self.stages[-1].id if self.stages else self.base
+            if objects and last:
+                output_tree = f"{objects}/{last}"
                 shutil.rmtree(output_tree, ignore_errors=True)
                 os.makedirs(output_tree, mode=0o755)
                 subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
