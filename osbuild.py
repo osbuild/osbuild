@@ -16,7 +16,6 @@ __all__ = [
     "Pipeline",
     "Stage",
     "StageFailed",
-    "tmpfs"
 ]
 
 
