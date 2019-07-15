@@ -34,7 +34,7 @@ if __name__ == "__main__":
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
         sys.exit(130)
-    except osbuild.StageFailed as error:
+    except (osbuild.StageFailed, osbuild.AssemblerFailed) as error:
         print()
-        print(f"{RESET}{BOLD}{RED}{error.stage} failed with code {error.returncode}{RESET}")
+        print(f"{RESET}{BOLD}{RED}{error.name} failed with code {error.returncode}{RESET}")
         sys.exit(1)

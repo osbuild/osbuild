@@ -30,15 +30,15 @@ if not os.path.exists(f"{libdir}/stages"):
 
 
 class StageFailed(Exception):
-    def __init__(self, stage, returncode, output):
-        self.stage = stage
+    def __init__(self, name, returncode, output):
+        self.name = name
         self.returncode = returncode
         self.output = output
 
 
 class AssemblerFailed(Exception):
-    def __init__(self, assembler, returncode, output):
-        self.assembler = assembler
+    def __init__(self, name, returncode, output):
+        self.name = name
         self.returncode = returncode
         self.output = output
 
