@@ -12,8 +12,9 @@ __all__ = [
     "Assembler",
     "AssemblerFailed",
     "BuildRoot",
+    "load",
     "Pipeline",
-    "Stage"
+    "Stage",
     "StageFailed",
     "tmpfs"
 ]
@@ -234,19 +235,26 @@ class Assembler:
 
 
 class Pipeline:
-    def __init__(self, pipeline, objects=None):
-        self.base = pipeline.get("base")
-        self.stages = pipeline.get("stages", [])
-        self.assembler = pipeline.get("assembler")
-        self.objects = objects
+    def __init__(self, base=None):
+        self.base = base
+        self.stages = []
+        self.assembler = None
 
+    def add_stage(self, name, options={}, resources=[]):
+        base = self.stages[-1].id if self.stages else self.base
+        stage = Stage(name, base, options, resources)
+        self.stages.append(stage)
+
+    def set_assembler(self, name, options={}, resources=[]):
+        self.assembler = Assembler(name, options, resources)
+
+    def run(self, output_dir, objects=None, interactive=False):
+        os.makedirs("/run/osbuild", exist_ok=True)
         if objects:
             os.makedirs(objects, exist_ok=True)
         elif self.base:
             raise ValueError("'objects' argument must be given when pipeline has a 'base'")
 
-    def run(self, output_dir, interactive=False):
-        os.makedirs("/run/osbuild", exist_ok=True)
         results = {
             "stages": []
         }
@@ -254,29 +262,34 @@ class Pipeline:
             base = self.base
 
             if base:
-                input_tree = os.path.join(self.objects, base)
+                input_tree = os.path.join(objects, base)
                 subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
 
             for stage in self.stages:
-                name = stage["name"]
-                options = stage.get("options", {})
-                resources = stage.get("systemResourcesFromEtc", [])
-                stage = Stage(name, base, options, resources)
                 r = stage.run(tree, interactive)
                 results["stages"].append(r)
                 base = stage.id
 
             if self.assembler:
-                name = self.assembler["name"]
-                options = self.assembler.get("options", {})
-                resources = self.assembler.get("systemResourcesFromEtc", [])
-                assembler = Assembler(name, options, resources)
-                r = assembler.run(tree, output_dir, interactive)
+                r = self.assembler.run(tree, output_dir, interactive)
                 results["assembler"] = r
-            elif self.objects:
-                output_tree = os.path.join(self.objects, base)
+            elif objects:
+                output_tree = os.path.join(objects, base)
                 shutil.rmtree(output_tree, ignore_errors=True)
                 os.makedirs(output_tree, mode=0o755)
                 subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
 
-        self.results = results
+        return results
+
+
+def load(description):
+    pipeline = Pipeline(description.get("base"))
+
+    for s in description.get("stages", []):
+        pipeline.add_stage(s["name"], s.get("options", {}), s.get("systemResourcesFromEtc", []))
+
+    a = description.get("assembler")
+    if a:
+        pipeline.set_assembler(a["name"], a.get("options", {}), a.get("systemResourcesFromEtc", []))
+
+    return pipeline
