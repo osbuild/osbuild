@@ -7,7 +7,7 @@ import sys
 def main(tree, output_dir, options):
     filename = options["filename"]
 
-    subprocess.run(["tar", "-czf", f"{output_dir}/{filename}", "-C", tree, "."], stdout=subprocess.DEVNULL, check=True)
+    subprocess.run(["tar", "--auto-compress", "-cf", f"{output_dir}/{filename}", "-C", tree, "."], stdout=subprocess.DEVNULL, check=True)
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
