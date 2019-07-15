@@ -26,11 +26,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     with open(args.pipeline_path) as f:
-        pipeline = json.load(f)
-    pipeline = osbuild.Pipeline(pipeline, args.objects)
+        pipeline = osbuild.load(json.load(f))
 
     try:
-        pipeline.run(args.output_dir, interactive=True)
+        pipeline.run(args.output_dir, args.objects, interactive=True)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
