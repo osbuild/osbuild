@@ -256,22 +256,18 @@ class Pipeline:
             "stages": []
         }
         with tmpfs() as tree:
-            base = self.base
-
-            if base:
-                input_tree = os.path.join(objects, base)
-                subprocess.run(["cp", "-a", f"{input_tree}/.", tree], check=True)
+            if self.base:
+                subprocess.run(["cp", "-a", f"{objects}/{self.base}/.", tree], check=True)
 
             for stage in self.stages:
                 r = stage.run(tree, interactive)
                 results["stages"].append(r)
-                base = stage.id
 
             if self.assembler:
                 r = self.assembler.run(tree, output_dir, interactive)
                 results["assembler"] = r
             elif objects:
-                output_tree = os.path.join(objects, base)
+                output_tree = os.path.join(objects, self.stages[-1].id if self.stages else self.base)
                 shutil.rmtree(output_tree, ignore_errors=True)
                 os.makedirs(output_tree, mode=0o755)
                 subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
