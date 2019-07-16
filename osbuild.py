@@ -161,7 +161,7 @@ class Stage:
         self.options = options
         self.resources = resources
 
-    def run(self, tree, interactive=False):
+    def run(self, tree, interactive=False, check=True):
         with BuildRoot() as buildroot:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options, buildroot.machine_name)
@@ -183,11 +183,12 @@ class Stage:
                 stdout=None if interactive else subprocess.PIPE,
                 stderr=subprocess.STDOUT
             )
-            if r.returncode != 0:
+            if check and r.returncode != 0:
                 raise StageFailed(self.name, r.returncode, r.stdout)
 
             return {
                 "name": self.name,
+                "returncode": r.returncode,
                 "output": r.stdout
             }
 
@@ -198,7 +199,7 @@ class Assembler:
         self.options = options
         self.resources = resources
 
-    def run(self, tree, output_dir=None, interactive=False):
+    def run(self, tree, output_dir=None, interactive=False, check=True):
         with BuildRoot() as buildroot:
             if interactive:
                 print_header(f"Assembling: {self.name}", self.options, buildroot.machine_name)
@@ -222,11 +223,12 @@ class Assembler:
                 input=json.dumps(args),
                 stdout=None if interactive else subprocess.PIPE,
                 stderr=subprocess.STDOUT)
-            if r.returncode != 0:
+            if check and r.returncode != 0:
                 raise AssemblerFailed(self.name, r.returncode, r.stdout)
 
             return {
                 "name": self.name,
+                "returncode": r.returncode,
                 "output": r.stdout
             }
 
@@ -245,7 +247,7 @@ class Pipeline:
     def set_assembler(self, name, options={}, resources=[]):
         self.assembler = Assembler(name, options, resources)
 
-    def run(self, output_dir, objects=None, interactive=False):
+    def run(self, output_dir, objects=None, interactive=False, check=True):
         os.makedirs("/run/osbuild", exist_ok=True)
         if objects:
             os.makedirs(objects, exist_ok=True)
@@ -260,12 +262,18 @@ class Pipeline:
                 subprocess.run(["cp", "-a", f"{objects}/{self.base}/.", tree], check=True)
 
             for stage in self.stages:
-                r = stage.run(tree, interactive)
+                r = stage.run(tree, interactive, check)
                 results["stages"].append(r)
+                if r["returncode"] != 0:
+                    results["returncode"] = r["returncode"]
+                    return results
 
             if self.assembler:
-                r = self.assembler.run(tree, output_dir, interactive)
+                r = self.assembler.run(tree, output_dir, interactive, check)
                 results["assembler"] = r
+                if r["returncode"] != 0:
+                    results["returncode"] = r["returncode"]
+                    return results
 
             last = self.stages[-1].id if self.stages else self.base
             if objects and last:
@@ -274,6 +282,7 @@ class Pipeline:
                 os.makedirs(output_tree, mode=0o755)
                 subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
 
+        results["returncode"] = 0
         return results
 
 
