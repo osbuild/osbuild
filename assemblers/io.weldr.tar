@@ -4,10 +4,18 @@ import json
 import subprocess
 import sys
 
+
 def main(tree, output_dir, options):
     filename = options["filename"]
+    compression = options["compression"]
 
-    subprocess.run(["tar", "--auto-compress", "-cf", f"{output_dir}/{filename}", "-C", tree, "."], stdout=subprocess.DEVNULL, check=True)
+    if compression not in {"bzip2", "xz", "lzip", "lzma", "lzop", "gzip"}:
+        return 1
+
+    subprocess.run(["tar", f"--{compression}", "-cf", f"{output_dir}/{filename}", "-C", tree, "."],
+                   stdout=subprocess.DEVNULL, check=True)
+    return 0
+
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
