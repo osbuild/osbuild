@@ -45,7 +45,6 @@ def loop_device(image, size, offset=0):
 
 def main(tree, output_dir, options):
     filename = options["filename"]
-    # partition_table_id = options["partition_table_id"]
     root_fs_uuid = options["root_fs_uuid"]
 
     # Create a working directory on a tmpfs, maybe we should implicitly
