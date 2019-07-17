@@ -6,12 +6,8 @@ setuptools.setup(
     version="1",
     description="A build system for OS images",
     packages=["osbuild"],
+    license='Apache-2.0',
     entry_points={
         "console_scripts": ["osbuild = osbuild.__main__:main"]
     },
-    data_files=[
-        ("/usr/lib/osbuild", ["osbuild-run"]),
-        ("/usr/lib/osbuild/stages", glob.glob("./stages/*")),
-        ("/usr/lib/osbuild/assemblers", glob.glob("./assemblers/*"))
-    ]
 )
