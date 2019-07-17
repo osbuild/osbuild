@@ -1,8 +1,8 @@
-base:
-	$(OSBUILD) --input $(BASE_INPUT) --output $(BASE_OUTPUT) 1-create-base.json
+up:
+	vagrant up
 
-web:
-	$(OSBUILD) --input $(BASE_OUTPUT) --output $(WEB_OUTPUT) 2-configure-web-server.json
+install-deps:
+	vagrant provision
 
-qcow2:
-	$(OSBUILD) --input $(WEB_OUTPUT) --output $(QCOW2_OUTPUT) 3-compose-qcow2.json
+run-tests-remotely:
+	vagrant ssh -c 'pushd /vagrant; sudo python3 run-tests.py'
