@@ -3,7 +3,6 @@
 import json
 import os
 import sys
-import tempfile
 
 def main(tree, options):
     root_fs_uuid = options["root_fs_uuid"]

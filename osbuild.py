@@ -30,6 +30,7 @@ if not os.path.exists(f"{libdir}/stages"):
 
 class StageFailed(Exception):
     def __init__(self, name, returncode, output):
+        super(StageFailed, self).__init__()
         self.name = name
         self.returncode = returncode
         self.output = output
@@ -37,12 +38,13 @@ class StageFailed(Exception):
 
 class AssemblerFailed(Exception):
     def __init__(self, name, returncode, output):
+        super(AssemblerFailed, self).__init__()
         self.name = name
         self.returncode = returncode
         self.output = output
 
 
-class tmpfs:
+class TmpFs:
     def __init__(self, path="/run/osbuild"):
         self.root = tempfile.mkdtemp(prefix="osbuild-tmpfs-", dir=path)
         self.mounted = False
@@ -96,7 +98,7 @@ class BuildRoot:
         os.rmdir(self.root)
         self.root = None
 
-    def run(self, argv, binds=[], readonly_binds=[], **kwargs):
+    def run(self, argv, binds=None, readonly_binds=None, **kwargs):
         """Runs a command in the buildroot.
 
         Its arguments mean the same as those for subprocess.run().
@@ -114,12 +116,12 @@ class BuildRoot:
             f"--machine={self.machine_name}",
             f"--directory={self.root}",
             f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
-            *[f"--bind={b}" for b in binds],
-            *[f"--bind-ro={b}" for b in [argv[0] + ":" + command, *readonly_binds]],
+            *[f"--bind={b}" for b in (binds or [])],
+            *[f"--bind-ro={b}" for b in [argv[0] + ":" + command,
+                                         *(readonly_binds or [])]],
             "/run/osbuild/osbuild-run",
             command
-            ] + argv[1:], **kwargs
-        )
+            ] + argv[1:], **kwargs)
 
     def __del__(self):
         self.unmount()
@@ -239,13 +241,13 @@ class Pipeline:
         self.stages = []
         self.assembler = None
 
-    def add_stage(self, name, options={}, resources=[]):
+    def add_stage(self, name, options=None, resources=None):
         base = self.stages[-1].id if self.stages else self.base
-        stage = Stage(name, base, options, resources)
+        stage = Stage(name, base, options or {}, resources or [])
         self.stages.append(stage)
 
-    def set_assembler(self, name, options={}, resources=[]):
-        self.assembler = Assembler(name, options, resources)
+    def set_assembler(self, name, options=None, resources=None):
+        self.assembler = Assembler(name, options or {}, resources or [])
 
     def run(self, output_dir, objects=None, interactive=False, check=True):
         os.makedirs("/run/osbuild", exist_ok=True)
@@ -257,7 +259,7 @@ class Pipeline:
         results = {
             "stages": []
         }
-        with tmpfs() as tree:
+        with TmpFs() as tree:
             if self.base:
                 subprocess.run(["cp", "-a", f"{objects}/{self.base}/.", tree], check=True)
 
