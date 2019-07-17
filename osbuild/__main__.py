@@ -35,3 +35,7 @@ def main():
         print()
         print(f"{RESET}{BOLD}{RED}{error.name} failed with code {error.returncode}{RESET}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
