@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import json
-import os
 import subprocess
 import sys
 
@@ -10,7 +9,8 @@ def main(tree, options):
     playbook = options["playbook"]
 
     with open("/tmp/inventory", "w") as f:
-        f.write(f"osbuild-tree ansible_connection=chroot ansible_host={tree} ansible_python_interpreter=/usr/bin/python3")
+        f.write(f"osbuild-tree ansible_connection=chroot ansible_host={tree} "
+                f"ansible_python_interpreter=/usr/bin/python3")
 
     with open("/tmp/playbook.yml", "w") as f:
         if isinstance(playbook, str):
@@ -29,5 +29,5 @@ def main(tree, options):
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
-    r = main(args["tree"], args["options"])
-    sys.exit(r)
+    ret = main(args["tree"], args["options"])
+    sys.exit(ret)

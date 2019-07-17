@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import json
-import os
 import subprocess
 import sys
 
@@ -17,13 +16,13 @@ def main(tree, options):
         for repoid, repo in repos.items():
             conf.write(f"[{repoid}]\n")
             for key, value in repo.items():
-                if type(value) == str:
+                if isinstance(value, str):
                     s = value
-                elif type(value) == list:
+                elif isinstance(value, list):
                     s = " ".join(value)
-                elif type(value) == bool:
+                elif isinstance(value, bool):
                     s = "1" if value else "0"
-                elif type(value) == int:
+                elif isinstance(value, int):
                     s = str(value)
                 else:
                     print(f"unkown type for `{key}`: {value} ({type(value)})")

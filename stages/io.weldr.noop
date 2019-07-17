@@ -3,7 +3,7 @@
 import json
 import sys
 
-def main(tree, options):
+def main(_tree, options):
     print("Not doing anything with these options:", json.dumps(options))
 
 if __name__ == '__main__':
