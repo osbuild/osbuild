@@ -7,7 +7,7 @@ setuptools.setup(
     description="A build system for OS images",
     packages=["osbuild"],
     entry_points={
-        "console_scripts": ["osbuild = osbuild.executable:main"]
+        "console_scripts": ["osbuild = osbuild.__main__:main"]
     },
     data_files=[
         ("/usr/lib/osbuild", ["osbuild-run"]),
