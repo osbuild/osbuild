@@ -175,10 +175,7 @@ class Stage:
 
             r = buildroot.run(
                 [f"{libdir}/stages/{self.name}"],
-                binds=[
-                    f"{tree}:/run/osbuild/tree",
-                    "/dev:/dev"
-                ],
+                binds=[f"{tree}:/run/osbuild/tree"],
                 readonly_binds=_get_system_resources_from_etc(self.resources),
                 encoding="utf-8",
                 input=json.dumps(args),
