@@ -12,7 +12,7 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 OBJECTS = os.environ.get("OBJECTS", tempfile.mkdtemp(prefix="osbuild-"))
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", tempfile.mkdtemp(prefix="osbuild-"))
-OSBUILD = os.environ.get("OSBUILD", os.path.join(os.path.dirname(__file__), "..", "osbuild"))
+OSBUILD = os.environ.get("OSBUILD", "osbuild")
 IMAGE_PATH = os.environ.get("IMAGE_PATH", OUTPUT_DIR + "/base.qcow2")
 
 
@@ -40,12 +40,13 @@ def rel_path(fname: str) -> str:
 
 
 def build_web_server_image():
-    run_osbuild(rel_path("1-create-base.json"))
-    r = run_osbuild(rel_path("2-configure-web-server.json"), check=False)
-    # TODO: remove this workaround once the grub2 stage works on the first try :-)
-    if r != 0:
-        run_osbuild(rel_path("2-configure-web-server.json"))
-    run_osbuild(rel_path("3-compose-qcow2.json"))
+    run_osbuild(rel_path("4-all.json"))
+    # run_osbuild(rel_path("1-create-base.json"))
+    # r = run_osbuild(rel_path("2-configure-web-server.json"), check=False)
+    # # TODO: remove this workaround once the grub2 stage works on the first try :-)
+    # if r != 0:
+    #     run_osbuild(rel_path("2-configure-web-server.json"))
+    # run_osbuild(rel_path("3-compose-qcow2.json"))
 
 
 def uname() -> str:
