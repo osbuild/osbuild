@@ -1,7 +1,9 @@
 
+import contextlib
 import hashlib
 import json
 import os
+import socket
 import shutil
 import subprocess
 import sys
@@ -75,6 +77,7 @@ class TmpFs:
 class BuildRoot:
     def __init__(self, path="/run/osbuild"):
         self.root = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
+        self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
         self.mounted = False
         try:
             subprocess.run(["mount", "-o", "bind,ro", "/", self.root], check=True)
@@ -97,6 +100,9 @@ class BuildRoot:
             subprocess.run(["umount", "--lazy", self.root], check=True)
         os.rmdir(self.root)
         self.root = None
+        if self.api:
+            shutil.rmtree(self.api)
+            self.api = None
 
     def run(self, argv, binds=None, readonly_binds=None, **kwargs):
         """Runs a command in the buildroot.
@@ -118,10 +124,22 @@ class BuildRoot:
             f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
             *[f"--bind={b}" for b in (binds or [])],
             *[f"--bind-ro={b}" for b in [argv[0] + ":" + command,
+                                         self.api + ":" + "/run/osbuild/api",
                                          *(readonly_binds or [])]],
             "/run/osbuild/osbuild-run",
             command
             ] + argv[1:], **kwargs)
+
+    @contextlib.contextmanager
+    def bound_socket(self, name):
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        sock_path = os.path.join(self.api, name)
+        sock.bind(os.path.join(self.api, name))
+        try:
+            yield sock
+        finally:
+            os.unlink(sock_path)
+            sock.close()
 
     def __del__(self):
         self.unmount()
