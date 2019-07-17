@@ -1,11 +1,8 @@
-#!/usr/bin/python3
-
 import argparse
 import json
 import os
-import osbuild
-import subprocess
 import sys
+import osbuild
 
 
 RESET = "\033[0m"
@@ -13,7 +10,7 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
                         help="json file containing the pipeline that should be built")
@@ -22,7 +19,7 @@ if __name__ == "__main__":
                         help="the directory where intermediary os trees are stored")
     requiredNamed = parser.add_argument_group('required named arguments')
     requiredNamed.add_argument("-o", "--output", dest="output_dir", metavar="DIRECTORY", type=os.path.abspath,
-                        help="provide the empty DIRECTORY as output argument to the last stage", required=True)
+                               help="provide the empty DIRECTORY as output argument to the last stage", required=True)
     args = parser.parse_args()
 
     with open(args.pipeline_path) as f:
