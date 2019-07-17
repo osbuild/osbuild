@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import osbuild.remoteloop as remoteloop
 
 
 __all__ = [
@@ -233,16 +234,18 @@ class Assembler:
                 binds.append(f"{output_dir}:/run/osbuild/output")
                 args["output_dir"] = "/run/osbuild/output"
 
-            r = buildroot.run(
-                [f"{libdir}/assemblers/{self.name}"],
-                binds=binds,
-                readonly_binds=[f"{tree}:/run/osbuild/tree"] + _get_system_resources_from_etc(self.resources),
-                encoding="utf-8",
-                input=json.dumps(args),
-                stdout=None if interactive else subprocess.PIPE,
-                stderr=subprocess.STDOUT)
-            if check and r.returncode != 0:
-                raise AssemblerFailed(self.name, r.returncode, r.stdout)
+            with buildroot.bound_socket("remoteloop") as sock, \
+                remoteloop.LoopServer(sock):
+                r = buildroot.run(
+                    [f"{libdir}/assemblers/{self.name}"],
+                    binds=binds,
+                    readonly_binds=[f"{tree}:/run/osbuild/tree"] + _get_system_resources_from_etc(self.resources),
+                    encoding="utf-8",
+                    input=json.dumps(args),
+                    stdout=None if interactive else subprocess.PIPE,
+                    stderr=subprocess.STDOUT)
+                if check and r.returncode != 0:
+                    raise AssemblerFailed(self.name, r.returncode, r.stdout)
 
             return {
                 "name": self.name,
