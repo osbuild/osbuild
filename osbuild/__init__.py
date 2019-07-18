@@ -23,7 +23,7 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 
 
-libdir = os.path.dirname(__file__)
+libdir = os.path.dirname(os.path.dirname(__file__))
 if not os.path.exists(f"{libdir}/stages"):
     libdir = f"{sys.prefix}/lib/osbuild"
 
