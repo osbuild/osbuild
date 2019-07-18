@@ -72,11 +72,12 @@ def main(tree, output_dir, options):
                         f"{int(partition_size / 1024)}k"], input="y", encoding='utf-8', check=True)
 
         # Mount the created image as a loopback device
-        with loop_device(image, size) as loop, \
-                mount(f"{loop}p1", mountpoint):
+        with loop_device(image, partition_offset) as loop_block, \
+            loop_device(image, partition_size, partition_offset) as loop_part, \
+            mount(loop_part, mountpoint):
             # Install grub2 into the boot sector of the image, and copy the grub2 imagise into /boot/grub2
             with mount_api(mountpoint):
-                subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy", "--target", "i386-pc", loop],
+                subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy", "--modules=part_msdos", "--target=i386-pc", loop_block],
                                check=True)
 
         subprocess.run(["qemu-img", "convert", "-O", "qcow2", "-c", image, f"{output_dir}/{filename}"], check=True)
