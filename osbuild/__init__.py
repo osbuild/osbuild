@@ -228,7 +228,7 @@ class Assembler:
                 "options": self.options,
             }
 
-            binds = ["/dev:/dev"]
+            binds = []
             if output_dir:
                 os.makedirs(output_dir, exist_ok=True)
                 binds.append(f"{output_dir}:/run/osbuild/output")
