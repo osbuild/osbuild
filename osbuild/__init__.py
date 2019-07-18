@@ -122,6 +122,7 @@ class BuildRoot:
             f"--machine={self.machine_name}",
             f"--directory={self.root}",
             f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
+            f"--bind-ro={libdir}/osbuild:/run/osbuild/osbuild",
             *[f"--bind={b}" for b in (binds or [])],
             *[f"--bind-ro={b}" for b in [argv[0] + ":" + command,
                                          self.api + ":" + "/run/osbuild/api",
