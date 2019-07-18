@@ -87,13 +87,6 @@ class BuildRoot:
             self.unmount()
             raise
 
-        # systemd-nspawn silently removes some characters when choosing a
-        # machine name from the directory name. The only one relevant for
-        # us is '_', because all other characters used by
-        # TemporaryDirectory() are allowed. Replace it with 'L's
-        # (TemporaryDirectory() only uses lower-case characters)
-        self.machine_name = os.path.basename(self.root).replace("_", "L")
-
     def unmount(self):
         if not self.root:
             return
@@ -114,11 +107,11 @@ class BuildRoot:
         return subprocess.run([
             "systemd-nspawn",
             "--quiet",
+            "--register=no",
             "--as-pid2",
             "--link-journal=no",
             "--volatile=yes",
             "--property=DeviceAllow=block-loop rw",
-            f"--machine={self.machine_name}",
             f"--directory={self.root}",
             f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
             f"--bind-ro={libdir}/osbuild:/run/osbuild/osbuild",
@@ -151,11 +144,9 @@ class BuildRoot:
         self.unmount()
 
 
-def print_header(title, options, machine_name):
+def print_header(title, options):
     print()
     print(f"{RESET}{BOLD}{title}{RESET} " + json.dumps(options or {}, indent=2))
-    print("Inspect with:")
-    print(f"\t# nsenter -a --wd=/root -t `machinectl show {machine_name} -p Leader --value`")
     print()
 
 
@@ -184,7 +175,7 @@ class Stage:
     def run(self, tree, interactive=False, check=True):
         with BuildRoot() as buildroot:
             if interactive:
-                print_header(f"{self.name}: {self.id}", self.options, buildroot.machine_name)
+                print_header(f"{self.name}: {self.id}", self.options)
 
             args = {
                 "tree": "/run/osbuild/tree",
@@ -219,7 +210,7 @@ class Assembler:
     def run(self, tree, output_dir=None, interactive=False, check=True):
         with BuildRoot() as buildroot:
             if interactive:
-                print_header(f"Assembling: {self.name}", self.options, buildroot.machine_name)
+                print_header(f"Assembling: {self.name}", self.options)
 
             args = {
                 "tree": "/run/osbuild/tree",
