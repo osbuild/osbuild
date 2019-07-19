@@ -159,27 +159,16 @@ def print_header(title, options, machine_name):
     print()
 
 
-def _get_system_resources_from_etc(resources):
-    for r in resources:
-        if not r.startswith("/etc"):
-            raise ValueError(f"{r} is not a resource in /etc/")
-        if ":" in r:
-            raise ValueError(f"{r} tries to bind to a different location")
-    return resources
-
-
 class Stage:
-    def __init__(self, name, base, options, resources):
+    def __init__(self, name, base, options):
         m = hashlib.sha256()
         m.update(json.dumps(name, sort_keys=True).encode())
         m.update(json.dumps(base, sort_keys=True).encode())
         m.update(json.dumps(options, sort_keys=True).encode())
-        m.update(json.dumps(resources, sort_keys=True).encode())
 
         self.id = m.hexdigest()
         self.name = name
         self.options = options
-        self.resources = resources
 
     def run(self, tree, interactive=False, check=True):
         with BuildRoot() as buildroot:
@@ -194,7 +183,6 @@ class Stage:
             r = buildroot.run(
                 [f"{libdir}/stages/{self.name}"],
                 binds=[f"{tree}:/run/osbuild/tree"],
-                readonly_binds=_get_system_resources_from_etc(self.resources),
                 encoding="utf-8",
                 input=json.dumps(args),
                 stdout=None if interactive else subprocess.PIPE,
@@ -211,10 +199,9 @@ class Stage:
 
 
 class Assembler:
-    def __init__(self, name, options, resources):
+    def __init__(self, name, options):
         self.name = name
         self.options = options
-        self.resources = resources
 
     def run(self, tree, output_dir=None, interactive=False, check=True):
         with BuildRoot() as buildroot:
@@ -237,7 +224,7 @@ class Assembler:
                 r = buildroot.run(
                     [f"{libdir}/assemblers/{self.name}"],
                     binds=binds,
-                    readonly_binds=[f"{tree}:/run/osbuild/tree"] + _get_system_resources_from_etc(self.resources),
+                    readonly_binds=[f"{tree}:/run/osbuild/tree"],
                     encoding="utf-8",
                     input=json.dumps(args),
                     stdout=None if interactive else subprocess.PIPE,
@@ -258,13 +245,13 @@ class Pipeline:
         self.stages = []
         self.assembler = None
 
-    def add_stage(self, name, options=None, resources=None):
+    def add_stage(self, name, options=None):
         base = self.stages[-1].id if self.stages else self.base
-        stage = Stage(name, base, options or {}, resources or [])
+        stage = Stage(name, base, options or {})
         self.stages.append(stage)
 
-    def set_assembler(self, name, options=None, resources=None):
-        self.assembler = Assembler(name, options or {}, resources or [])
+    def set_assembler(self, name, options=None):
+        self.assembler = Assembler(name, options or {})
 
     def run(self, output_dir, objects=None, interactive=False, check=True):
         os.makedirs("/run/osbuild", exist_ok=True)
@@ -309,10 +296,10 @@ def load(description):
     pipeline = Pipeline(description.get("base"))
 
     for s in description.get("stages", []):
-        pipeline.add_stage(s["name"], s.get("options", {}), s.get("systemResourcesFromEtc", []))
+        pipeline.add_stage(s["name"], s.get("options", {}))
 
     a = description.get("assembler")
     if a:
-        pipeline.set_assembler(a["name"], a.get("options", {}), a.get("systemResourcesFromEtc", []))
+        pipeline.set_assembler(a["name"], a.get("options", {}))
 
     return pipeline
