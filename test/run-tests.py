@@ -12,7 +12,7 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 OBJECTS = os.environ.get("OBJECTS", tempfile.mkdtemp(prefix="osbuild-"))
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", tempfile.mkdtemp(prefix="osbuild-"))
-OSBUILD = os.environ.get("OSBUILD", "osbuild")
+OSBUILD = os.environ.get("OSBUILD", "osbuild").split(' ')
 IMAGE_PATH = os.environ.get("IMAGE_PATH", OUTPUT_DIR + "/base.qcow2")
 
 
@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.getLevelName(os.environ.get("TESTS_LOGLEVEL", 
 
 
 def run_osbuild(pipeline: str, check=True):
-    cmd = [OSBUILD, "--objects", OBJECTS, "-o", OUTPUT_DIR, pipeline]
+    cmd = OSBUILD + ["--objects", OBJECTS, "-o", OUTPUT_DIR, pipeline]
     logging.info(f"Running osbuild: {cmd}")
     osbuild = subprocess.run(cmd, capture_output=True)
     if osbuild.returncode != 0:
