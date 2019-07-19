@@ -3,7 +3,6 @@
   "stages": [
     {
       "name": "io.weldr.dnf",
-      "systemResourcesFromEtc": ["/etc/pki"],
       "options": {
         "releasever": "30",
         "repos": {
