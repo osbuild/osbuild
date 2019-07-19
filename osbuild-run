@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import os
 import subprocess
 import sys
 
@@ -13,6 +14,12 @@ try:
 except subprocess.CalledProcessError as error:
     sys.stderr.write(error.stdout)
     sys.exit(1)
+
+# generate /etc/pki/tls/certs/ca-bundle.crt
+os.makedirs("/etc/pki/ca-trust/extracted/pem")
+os.makedirs("/etc/pki/tls/certs")
+os.symlink("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "/etc/pki/tls/certs/ca-bundle.crt")
+subprocess.run(["update-ca-trust"])
 
 # Allow systemd-tmpfiles to return non-0. Some packages want to create
 # directories owned by users that are not set up with systemd-sysusers.
