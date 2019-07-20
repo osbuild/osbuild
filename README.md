@@ -67,7 +67,7 @@ The above pipeline has no base and produces a qcow2 image.
 ## Running
 
 ```
-usage: python3 -m osbuild [-h] [--objects DIRECTORY] [-l DIRECTORY] -o DIRECTORY
+usage: python3 -m osbuild [-h] [--store DIRECTORY] [-l DIRECTORY] -o DIRECTORY
                    PIPELINE
 
 Build operating system images
@@ -77,7 +77,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --objects DIRECTORY   the directory where intermediary os trees are stored
+  --store DIRECTORY   the directory where intermediary os trees are stored
   -l DIRECTORY, --libdir DIRECTORY
                         the directory containing stages, assemblers, and the
                         osbuild library

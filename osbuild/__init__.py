@@ -1,5 +1,6 @@
 
 import contextlib
+import errno
 import hashlib
 import json
 import os
@@ -67,6 +68,134 @@ class TmpFs:
             self.mounted = False
         os.rmdir(self.root)
         self.root = None
+
+
+def treesum(m, dir_fd):
+    """Compute a content hash of a filesystem tree
+
+    Parameters
+    ----------
+    m : hash object
+        the hash object to append the treesum to
+    dir_fd : int
+        directory file descriptor number to operate on
+
+    The hash is stable between runs, and guarantees that two filesystem
+    trees with the same hash, are functionally equivalent from the OS
+    point of view.
+
+    The file, symlink and directory names and contents are recursively
+    hashed, together with security-relevant metadata."""
+
+    with os.scandir(dir_fd) as it:
+        for dirent in sorted(it, key=(lambda d: d.name)):
+            stat_result = dirent.stat(follow_symlinks=False)
+            metadata = {}
+            metadata["name"] = os.fsdecode(dirent.name)
+            metadata["mode"] = stat_result.st_mode
+            metadata["uid"] = stat_result.st_uid
+            metadata["gid"] = stat_result.st_gid
+            # include the size of symlink target/file-contents so we don't have to delimit it
+            metadata["size"] = stat_result.st_size
+            # getxattr cannot operate on a dir_fd, so do a trick and rely on the entries in /proc
+            stable_file_path = os.path.join(f"/proc/self/fd/{dir_fd}", dirent.name)
+            try:
+                selinux_label = os.getxattr(stable_file_path, b"security.selinux", follow_symlinks=False)
+            except OSError as e:
+                # SELinux support is optional
+                if e.errno != errno.ENODATA:
+                    raise
+            else:
+                metadata["selinux"] = os.fsdecode(selinux_label)
+            # hash the JSON representation of the metadata to stay unique/stable/well-defined
+            m.update(json.dumps(metadata, sort_keys=True).encode())
+            if dirent.is_symlink():
+                m.update(os.fsdecode(os.readlink(dirent.name, dir_fd=dir_fd)).encode())
+            else:
+                fd = os.open(dirent.name, flags=os.O_RDONLY, dir_fd=dir_fd)
+                try:
+                    if dirent.is_dir(follow_symlinks=False):
+                        treesum(m, fd)
+                    elif dirent.is_file(follow_symlinks=False):
+                        # hash a page at a time (using f with fd as default is a hack to please pylint)
+                        for byte_block in iter(lambda f=fd: os.read(f, 4096), b""):
+                            m.update(byte_block)
+                    else:
+                        raise ValueError("Found unexpected filetype on OS image")
+                finally:
+                    os.close(fd)
+
+
+class ObjectStore:
+    def __init__(self, store):
+        self.store = store
+        self.objects = f"{store}/objects"
+        self.refs = f"{store}/refs"
+        os.makedirs(self.store, exist_ok=True)
+        os.makedirs(self.objects, exist_ok=True)
+        os.makedirs(self.refs, exist_ok=True)
+
+    def has_tree(self, tree_id):
+        if not tree_id:
+            return False
+        return os.access(f"{self.refs}/{tree_id}", os.F_OK)
+
+    @contextlib.contextmanager
+    def get_tree(self, tree_id):
+        with tempfile.TemporaryDirectory(dir=self.store) as tmp:
+            if tree_id:
+                subprocess.run(["mount", "-o", "bind,ro,mode=0755", f"{self.refs}/{tree_id}", tmp], check=True)
+                yield tmp
+                subprocess.run(["umount", "--lazy", tmp], check=True)
+            else:
+                # None was given as tree_id, just return an empty directory
+                yield tmp
+
+    @contextlib.contextmanager
+    def new_tree(self, tree_id, base_id=None):
+        with tempfile.TemporaryDirectory(dir=self.store) as tmp:
+            # the tree that is yielded will be added to the content store
+            # on success as tree_id
+
+            tree = f"{tmp}/tree"
+            link = f"{tmp}/link"
+            os.mkdir(tree, mode=0o755)
+
+            if base_id:
+                # the base, the working tree and the output tree are all on
+                # the same fs, so attempt a lightweight copy if the fs
+                # supports it
+                subprocess.run(["cp", "--reflink=auto", "-a", f"{self.refs}/{base_id}/.", tree], check=True)
+
+            yield tree
+
+            # if the yield raises an exception, the working tree is cleaned
+            # up by tempfile, otherwise, we save it in the correct place:
+            fd = os.open(tree, os.O_DIRECTORY)
+            try:
+                m = hashlib.sha256()
+                treesum(m, fd)
+                treesum_hash = m.hexdigest()
+            finally:
+                os.close(fd)
+            # the tree is stored in the objects directory using its content
+            # hash as its name, ideally a given tree_id (i.e., given config)
+            # will always produce the same content hash, but that is not
+            # guaranteed
+            output_tree = f"{self.objects}/{treesum_hash}"
+            try:
+                os.rename(tree, output_tree)
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    pass # tree with the same content hash already exist, use that
+                else:
+                    raise
+            # symlink the tree_id (config hash) in the refs directory to the treesum
+            # (content hash) in the objects directory. If a symlink by that name
+            # alreday exists, atomically replace it, but leave the backing object
+            # in place (it may be in use).
+            os.symlink(f"../objects/{treesum_hash}", link)
+            os.replace(link, f"{self.refs}/{tree_id}")
 
 
 class BuildRoot:
@@ -241,32 +370,38 @@ class Pipeline:
     def set_assembler(self, name, options=None):
         self.assembler = Assembler(name, options or {})
 
-    def run(self, output_dir, objects=None, interactive=False, check=True, libdir=None):
+    def run(self, output_dir, store, interactive=False, check=True, libdir=None):
         os.makedirs("/run/osbuild", exist_ok=True)
-        if objects:
-            os.makedirs(objects, exist_ok=True)
-        elif self.base:
-            raise ValueError("'objects' argument must be given when pipeline has a 'base'")
-
+        if self.base and not store:
+            raise ValueError("'store' argument must be given when pipeline has a 'base'")
+        object_store = ObjectStore(store)
         results = {
             "stages": []
         }
-        with TmpFs() as tree:
-            if self.base:
-                subprocess.run(["cp", "-a", f"{objects}/{self.base}/.", tree], check=True)
+        if self.stages:
+            tree_id = self.stages[-1].id
+            if not object_store.has_tree(tree_id):
+                # The tree does not exist. Create it and save it to the object store. If
+                # two run() calls race each-other, two trees may be generated, and it
+                # is nondeterministic which of them will end up referenced by the tree_id
+                # in the content store. However, we guarantee that all tree_id's and all
+                # generated trees remain valid.
+                with object_store.new_tree(tree_id, base_id=self.base) as tree:
+                    for stage in self.stages:
+                        r = stage.run(tree,
+                                      "/",
+                                      interactive=interactive,
+                                      check=check,
+                                      libdir=libdir)
+                        results["stages"].append(r)
+                        if r["returncode"] != 0:
+                            results["returncode"] = r["returncode"]
+                            return results
+        else:
+            tree_id = None
 
-            for stage in self.stages:
-                r = stage.run(tree,
-                              "/",
-                              interactive=interactive,
-                              check=check,
-                              libdir=libdir)
-                results["stages"].append(r)
-                if r["returncode"] != 0:
-                    results["returncode"] = r["returncode"]
-                    return results
-
-            if self.assembler:
+        if self.assembler:
+            with object_store.get_tree(tree_id) as tree:
                 r = self.assembler.run(tree,
                                        "/",
                                        output_dir=output_dir,
@@ -277,13 +412,6 @@ class Pipeline:
                 if r["returncode"] != 0:
                     results["returncode"] = r["returncode"]
                     return results
-
-            last = self.stages[-1].id if self.stages else self.base
-            if objects and last:
-                output_tree = f"{objects}/{last}"
-                shutil.rmtree(output_tree, ignore_errors=True)
-                os.makedirs(output_tree, mode=0o755)
-                subprocess.run(["cp", "-a", f"{tree}/.", output_tree], check=True)
 
         results["returncode"] = 0
         return results

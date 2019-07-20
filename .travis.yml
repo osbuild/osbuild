@@ -16,7 +16,9 @@ jobs:
       script: make rpm-nodeps
     - name: pipeline-noop
       before_install: sudo apt-get install -y systemd-container
-      script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
+      script:
+        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
+        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
     - name: pipeline-yum
       before_install: sudo apt-get install -y systemd-container yum
       script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/build-from-yum.json

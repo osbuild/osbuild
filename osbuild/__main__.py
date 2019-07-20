@@ -14,8 +14,8 @@ def main():
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
                         help="json file containing the pipeline that should be built")
-    parser.add_argument("--objects", metavar="DIRECTORY", type=os.path.abspath,
-                        default=".osbuild/objects",
+    parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
+                        default=".osbuild/store",
                         help="the directory where intermediary os trees are stored")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
                         help="the directory containing stages, assemblers, and the osbuild library")
@@ -28,7 +28,7 @@ def main():
         pipeline = osbuild.load(json.load(f))
 
     try:
-        pipeline.run(args.output_dir, args.objects, interactive=True, libdir=args.libdir)
+        pipeline.run(args.output_dir, args.store, interactive=True, libdir=args.libdir)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
