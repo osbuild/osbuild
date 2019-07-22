@@ -207,6 +207,20 @@ class Loop:
                 info.lo_flags &= ~self.LO_FLAGS_PARTSCAN
         fcntl.ioctl(self.fd, self.LOOP_SET_STATUS64, info)
 
+    def set_direct_io(self, dio=True):
+        """Set the direct-IO property on the loopback device
+
+        Enabling direct IO allows one to avoid double caching, which
+        should improve performance and memory usage.
+
+        Parameters
+        ----------
+        dio : bool, optional
+            Whether or not to enable direct IO (default is True)
+        """
+
+        fcntl.ioctl(self.fd, self.LOOP_SET_DIRECT_IO, dio)
+
     def mknod(self, dir_fd=None, mode=0o600):
         """Create a secondary device node
 
