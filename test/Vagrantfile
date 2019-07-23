@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 $script = <<-SCRIPT
-sudo dnf install qemu-system-x86 /vagrant/osbuild*.rpm -y
+sudo dnf install qemu-system-x86 /vagrant/*.noarch.rpm -y
 SCRIPT
 
 Vagrant.configure("2") do |config|
