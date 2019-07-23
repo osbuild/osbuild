@@ -17,6 +17,8 @@ def main():
     parser.add_argument("--objects", metavar="DIRECTORY", type=os.path.abspath,
                         default=".osbuild/objects",
                         help="the directory where intermediary os trees are stored")
+    parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
+                        help="the directory containing stages, assemblers, and the osbuild library")
     requiredNamed = parser.add_argument_group('required named arguments')
     requiredNamed.add_argument("-o", "--output", dest="output_dir", metavar="DIRECTORY", type=os.path.abspath,
                                help="provide the empty DIRECTORY as output argument to the last stage", required=True)
@@ -26,7 +28,7 @@ def main():
         pipeline = osbuild.load(json.load(f))
 
     try:
-        pipeline.run(args.output_dir, args.objects, interactive=True)
+        pipeline.run(args.output_dir, args.objects, interactive=True, libdir=args.libdir)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")

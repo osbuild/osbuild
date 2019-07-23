@@ -26,11 +26,6 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 
 
-libdir = os.path.dirname(os.path.dirname(__file__))
-if not os.path.exists(f"{libdir}/stages"):
-    libdir = f"{sys.prefix}/libexec/osbuild"
-
-
 class StageFailed(Exception):
     def __init__(self, name, returncode, output):
         super(StageFailed, self).__init__()
@@ -103,7 +98,6 @@ class BuildRoot:
 
         Its arguments mean the same as those for subprocess.run().
         """
-        command = "/run/osbuild/" + os.path.basename(argv[0])
         return subprocess.run([
             "systemd-nspawn",
             "--quiet",
@@ -113,15 +107,9 @@ class BuildRoot:
             "--volatile=yes",
             "--property=DeviceAllow=block-loop rw",
             f"--directory={self.root}",
-            f"--bind={libdir}/osbuild-run:/run/osbuild/osbuild-run",
-            f"--bind-ro={libdir}/osbuild:/run/osbuild/osbuild",
             *[f"--bind={b}" for b in (binds or [])],
-            *[f"--bind-ro={b}" for b in [argv[0] + ":" + command,
-                                         self.api + ":" + "/run/osbuild/api",
-                                         *(readonly_binds or [])]],
-            "/run/osbuild/osbuild-run",
-            command
-            ] + argv[1:], **kwargs)
+            *[f"--bind-ro={b}" for b in [f"{self.api}:/run/osbuild/api"] + (readonly_binds or [])],
+            ] + argv, **kwargs)
 
     @contextlib.contextmanager
     def bound_socket(self, name):
@@ -161,7 +149,7 @@ class Stage:
         self.name = name
         self.options = options
 
-    def run(self, tree, interactive=False, check=True):
+    def run(self, tree, interactive=False, check=True, libdir=None):
         with BuildRoot() as buildroot:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options)
@@ -171,9 +159,11 @@ class Stage:
                 "options": self.options,
             }
 
+            path = "/run/osbuild/lib" if libdir else "/usr/libexec/osbuild"
             r = buildroot.run(
-                [f"{libdir}/stages/{self.name}"],
+                [f"{path}/osbuild-run", f"{path}/stages/{self.name}"],
                 binds=[f"{tree}:/run/osbuild/tree"],
+                readonly_binds=[f"{libdir}:{path}"] if libdir else [],
                 encoding="utf-8",
                 input=json.dumps(args),
                 stdout=None if interactive else subprocess.PIPE,
@@ -194,7 +184,7 @@ class Assembler:
         self.name = name
         self.options = options
 
-    def run(self, tree, output_dir=None, interactive=False, check=True):
+    def run(self, tree, output_dir=None, interactive=False, check=True, libdir=None):
         with BuildRoot() as buildroot:
             if interactive:
                 print_header(f"Assembling: {self.name}", self.options)
@@ -210,12 +200,13 @@ class Assembler:
                 binds.append(f"{output_dir}:/run/osbuild/output")
                 args["output_dir"] = "/run/osbuild/output"
 
+            path = "/run/osbuild/lib" if libdir else "/usr/libexec/osbuild"
             with buildroot.bound_socket("remoteloop") as sock, \
                 remoteloop.LoopServer(sock):
                 r = buildroot.run(
-                    [f"{libdir}/assemblers/{self.name}"],
+                    [f"{path}/osbuild-run", f"{path}/assemblers/{self.name}"],
                     binds=binds,
-                    readonly_binds=[f"{tree}:/run/osbuild/tree"],
+                    readonly_binds=[f"{tree}:/run/osbuild/tree"] + ([f"{libdir}:{path}"] if libdir else []),
                     encoding="utf-8",
                     input=json.dumps(args),
                     stdout=None if interactive else subprocess.PIPE,
@@ -244,7 +235,7 @@ class Pipeline:
     def set_assembler(self, name, options=None):
         self.assembler = Assembler(name, options or {})
 
-    def run(self, output_dir, objects=None, interactive=False, check=True):
+    def run(self, output_dir, objects=None, interactive=False, check=True, libdir=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         if objects:
             os.makedirs(objects, exist_ok=True)
@@ -259,14 +250,14 @@ class Pipeline:
                 subprocess.run(["cp", "-a", f"{objects}/{self.base}/.", tree], check=True)
 
             for stage in self.stages:
-                r = stage.run(tree, interactive, check)
+                r = stage.run(tree, interactive, check, libdir=libdir)
                 results["stages"].append(r)
                 if r["returncode"] != 0:
                     results["returncode"] = r["returncode"]
                     return results
 
             if self.assembler:
-                r = self.assembler.run(tree, output_dir, interactive, check)
+                r = self.assembler.run(tree, output_dir, interactive, check, libdir=libdir)
                 results["assembler"] = r
                 if r["returncode"] != 0:
                     results["returncode"] = r["returncode"]
