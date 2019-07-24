@@ -22,3 +22,6 @@ jobs:
     - name: pipeline-yum
       before_install: sudo apt-get install -y systemd-container yum
       script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/build-from-yum.json
+    - name: pipeline-base-from-yum
+      before_install: sudo apt-get install -y systemd-container yum
+      script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/base-from-yum.json
