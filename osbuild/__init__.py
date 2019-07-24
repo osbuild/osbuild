@@ -70,12 +70,12 @@ class TmpFs:
 
 
 class BuildRoot:
-    def __init__(self, path="/run/osbuild"):
+    def __init__(self, root, path="/run/osbuild"):
         self.root = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
         self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
         self.mounts = []
         for p in ["usr", "bin", "sbin", "lib", "lib64"]:
-            source = os.path.join("/", p)
+            source = os.path.join(root, p)
             target = os.path.join(self.root, p)
             if not os.path.isdir(source) or os.path.islink(source):
                 continue # only bind-mount real dirs
@@ -155,8 +155,8 @@ class Stage:
         self.name = name
         self.options = options
 
-    def run(self, tree, interactive=False, check=True, libdir=None):
-        with BuildRoot() as buildroot:
+    def run(self, tree, build_tree, interactive=False, check=True, libdir=None):
+        with BuildRoot(build_tree) as buildroot:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options)
 
@@ -190,8 +190,8 @@ class Assembler:
         self.name = name
         self.options = options
 
-    def run(self, tree, output_dir=None, interactive=False, check=True, libdir=None):
-        with BuildRoot() as buildroot:
+    def run(self, tree, build_tree, output_dir=None, interactive=False, check=True, libdir=None):
+        with BuildRoot(build_tree) as buildroot:
             if interactive:
                 print_header(f"Assembling: {self.name}", self.options)
 
@@ -256,14 +256,23 @@ class Pipeline:
                 subprocess.run(["cp", "-a", f"{objects}/{self.base}/.", tree], check=True)
 
             for stage in self.stages:
-                r = stage.run(tree, interactive, check, libdir=libdir)
+                r = stage.run(tree,
+                              "/",
+                              interactive=interactive,
+                              check=check,
+                              libdir=libdir)
                 results["stages"].append(r)
                 if r["returncode"] != 0:
                     results["returncode"] = r["returncode"]
                     return results
 
             if self.assembler:
-                r = self.assembler.run(tree, output_dir, interactive, check, libdir=libdir)
+                r = self.assembler.run(tree,
+                                       "/",
+                                       output_dir=output_dir,
+                                       interactive=interactive,
+                                       check=check,
+                                       libdir=libdir)
                 results["assembler"] = r
                 if r["returncode"] != 0:
                     results["returncode"] = r["returncode"]
