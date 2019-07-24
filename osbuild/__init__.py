@@ -274,9 +274,10 @@ def print_header(title, options):
 
 
 class Stage:
-    def __init__(self, name, base, options):
+    def __init__(self, name, base, build, options):
         m = hashlib.sha256()
         m.update(json.dumps(name, sort_keys=True).encode())
+        m.update(json.dumps(build, sort_keys=True).encode())
         m.update(json.dumps(base, sort_keys=True).encode())
         m.update(json.dumps(options, sort_keys=True).encode())
 
@@ -359,16 +360,38 @@ class Assembler:
 class Pipeline:
     def __init__(self, base=None):
         self.base = base
+        self.build = None
         self.stages = []
         self.assembler = None
 
+    def get_id(self):
+        return self.stages[-1].id if self.stages else self.base
+
+    def set_build(self, pipeline):
+        if self.stages:
+            raise ValueError("Must set build before stages.")
+        self.build = pipeline
+
     def add_stage(self, name, options=None):
-        base = self.stages[-1].id if self.stages else self.base
-        stage = Stage(name, base, options or {})
+        build = self.build.get_id() if self.build else None
+        stage = Stage(name, build, self.get_id(), options or {})
         self.stages.append(stage)
 
     def set_assembler(self, name, options=None):
         self.assembler = Assembler(name, options or {})
+
+    @contextlib.contextmanager
+    def get_buildtree(self, object_store):
+        if self.build:
+            with object_store.get_tree(self.build.get_id()) as tree:
+                yield tree
+        else:
+            with tempfile.TemporaryDirectory(dir=object_store.store) as tmp:
+                subprocess.run(["mount", "-o", "bind,ro,mode=0755", "/", tmp], check=True)
+                try:
+                    yield tmp
+                finally:
+                    subprocess.run(["umount", "--lazy", tmp], check=True)
 
     def run(self, output_dir, store, interactive=False, check=True, libdir=None):
         os.makedirs("/run/osbuild", exist_ok=True)
@@ -378,40 +401,45 @@ class Pipeline:
         results = {
             "stages": []
         }
-        if self.stages:
-            tree_id = self.stages[-1].id
-            if not object_store.has_tree(tree_id):
-                # The tree does not exist. Create it and save it to the object store. If
-                # two run() calls race each-other, two trees may be generated, and it
-                # is nondeterministic which of them will end up referenced by the tree_id
-                # in the content store. However, we guarantee that all tree_id's and all
-                # generated trees remain valid.
-                with object_store.new_tree(tree_id, base_id=self.base) as tree:
-                    for stage in self.stages:
-                        r = stage.run(tree,
-                                      "/",
-                                      interactive=interactive,
-                                      check=check,
-                                      libdir=libdir)
-                        results["stages"].append(r)
-                        if r["returncode"] != 0:
-                            results["returncode"] = r["returncode"]
-                            return results
-        else:
-            tree_id = None
+        if self.build:
+            r = self.build.run(None, store, interactive, check, libdir)
+            results["build"] = r
+            if r["returncode"] != 0:
+                results["returncode"] = r["returncode"]
+                return results
 
-        if self.assembler:
-            with object_store.get_tree(tree_id) as tree:
-                r = self.assembler.run(tree,
-                                       "/",
-                                       output_dir=output_dir,
-                                       interactive=interactive,
-                                       check=check,
-                                       libdir=libdir)
-                results["assembler"] = r
-                if r["returncode"] != 0:
-                    results["returncode"] = r["returncode"]
-                    return results
+        with self.get_buildtree(object_store) as build_tree:
+            if self.stages:
+                if not object_store.has_tree(self.get_id()):
+                    # The tree does not exist. Create it and save it to the object store. If
+                    # two run() calls race each-other, two trees may be generated, and it
+                    # is nondeterministic which of them will end up referenced by the tree_id
+                    # in the content store. However, we guarantee that all tree_id's and all
+                    # generated trees remain valid.
+                    with object_store.new_tree(self.get_id(), base_id=self.base) as tree:
+                        for stage in self.stages:
+                            r = stage.run(tree,
+                                          build_tree,
+                                          interactive=interactive,
+                                          check=check,
+                                          libdir=libdir)
+                            results["stages"].append(r)
+                            if r["returncode"] != 0:
+                                results["returncode"] = r["returncode"]
+                                return results
+
+            if self.assembler:
+                with object_store.get_tree(self.get_id()) as tree:
+                    r = self.assembler.run(tree,
+                                           build_tree,
+                                           output_dir=output_dir,
+                                           interactive=interactive,
+                                           check=check,
+                                           libdir=libdir)
+                    results["assembler"] = r
+                    if r["returncode"] != 0:
+                        results["returncode"] = r["returncode"]
+                        return results
 
         results["returncode"] = 0
         return results
@@ -419,6 +447,10 @@ class Pipeline:
 
 def load(description):
     pipeline = Pipeline(description.get("base"))
+
+    b = description.get("build")
+    if b:
+        pipeline.set_build(load(b))
 
     for s in description.get("stages", []):
         pipeline.add_stage(s["name"], s.get("options", {}))
