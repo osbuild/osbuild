@@ -1,3 +1,4 @@
 *.rpm
 *.tar.gz
 *.egg-info
+output

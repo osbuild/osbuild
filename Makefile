@@ -15,6 +15,7 @@ srpm: $(PACKAGE_NAME).spec tarball
 	  $(PACKAGE_NAME).spec
 
 rpm: $(PACKAGE_NAME).spec tarball
+	- rm -r "`pwd`/output"
 	mkdir -p "`pwd`/output"
 	mkdir -p "`pwd`/rpmbuild"
 	/usr/bin/rpmbuild -bb \
@@ -25,13 +26,12 @@ rpm: $(PACKAGE_NAME).spec tarball
 	  --define "_rpmdir `pwd`/output" \
 	  --define "_buildrootdir `pwd`/build" \
 	  $(PACKAGE_NAME).spec
-	find `pwd`/output -name '*.rpm' -printf '%f\n' -exec mv {} . \;
 	rm -r "`pwd`/rpmbuild"
-	rm -r "`pwd`/output"
 	rm -r "`pwd`/build"
 
 copy-rpms-to-test:
-	cp *.rpm test/
+	- rm test/testing-rpms/*.rpm
+	find `pwd`/output -name '*.rpm' -printf '%f\n' -exec cp {} test/testing-rpms/ \;
 
 vagrant-test: rpm copy-rpms-to-test
 	- $(MAKE) -C test up
