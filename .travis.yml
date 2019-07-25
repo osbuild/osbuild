@@ -2,9 +2,16 @@ dist: bionic
 language: python
 python:
   - "3.7"
+before_install:
+  - sudo apt-get install -y rpm
+  - sudo wget --directory-prefix=/usr/lib/rpm/macros.d https://src.fedoraproject.org/rpms/python-rpm-macros/raw/master/f/macros.python-srpm
+  - sudo wget --directory-prefix=/usr/lib/rpm/macros.d https://src.fedoraproject.org/rpms/python-rpm-macros/raw/master/f/macros.python
+  - sudo wget --directory-prefix=/usr/lib/rpm/macros.d https://src.fedoraproject.org/rpms/python-rpm-macros/raw/master/f/macros.python3
 install:
   - pip install pylint
 jobs:
   include:
     - name: pylint
       script: pylint osbuild assemblers/* stages/*
+    - name: rpm
+      script: make rpm-nodeps
