@@ -2,6 +2,8 @@
 # vi: set ft=ruby :
 
 $script = <<-SCRIPT
+packages=$(find /vagrant/testing-rpms -name '*.noarch.rpm')
+sudo dnf remove -y $(basename -a ${packages[@]} | sed 's/-[0-9].*.rpm$//') || true
 sudo dnf install qemu-system-x86 /vagrant/testing-rpms/*.noarch.rpm -y
 SCRIPT
 

@@ -1,6 +1,9 @@
 up:
 	vagrant up
 
+destroy:
+	vagrant destroy -f
+
 install-deps:
 	vagrant provision
 
