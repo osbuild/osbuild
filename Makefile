@@ -31,6 +31,22 @@ rpm: $(PACKAGE_NAME).spec tarball
 	rm -r "`pwd`/rpmbuild"
 	rm -r "`pwd`/build"
 
+rpm-nodeps: $(PACKAGE_NAME).spec tarball
+	- rm -r "`pwd`/output"
+	mkdir -p "`pwd`/output"
+	mkdir -p "`pwd`/rpmbuild"
+	/usr/bin/rpmbuild -bb \
+	  --nodeps \
+	  --define "_sourcedir `pwd`" \
+	  --define "_specdir `pwd`" \
+	  --define "_builddir `pwd`/rpmbuild" \
+	  --define "_srcrpmdir `pwd`" \
+	  --define "_rpmdir `pwd`/output" \
+	  --define "_buildrootdir `pwd`/build" \
+	  $(PACKAGE_NAME).spec
+	rm -r "`pwd`/rpmbuild"
+	rm -r "`pwd`/build"
+
 copy-rpms-to-test: rpm
 	- rm test/testing-rpms/*.rpm
 	find `pwd`/output -name '*.rpm' -printf '%f\n' -exec cp {} test/testing-rpms/ \;
