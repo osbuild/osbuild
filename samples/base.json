@@ -2,7 +2,7 @@
   "name": "base",
   "stages": [
     {
-      "name": "io.weldr.dnf",
+      "name": "org.osbuild.dnf",
       "options": {
         "releasever": "30",
         "repos": {
