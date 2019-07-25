@@ -48,10 +48,10 @@ A build system for OS images
 %py3_install
 
 mkdir -p %{buildroot}%{_libexecdir}/%{pypi_name}/stages
-install -p -m 0755 stages/* %{buildroot}%{_libexecdir}/%{pypi_name}/stages/
+install -p -m 0755 $(find stages -type f) %{buildroot}%{_libexecdir}/%{pypi_name}/stages/
 
 mkdir -p %{buildroot}%{_libexecdir}/%{pypi_name}/assemblers
-install -p -m 0755 assemblers/* %{buildroot}%{_libexecdir}/%{pypi_name}/assemblers/
+install -p -m 0755 $(find assemblers -type f) %{buildroot}%{_libexecdir}/%{pypi_name}/assemblers/
 
 install -p -m 0755 osbuild-run %{buildroot}%{_libexecdir}/%{pypi_name}/
 
