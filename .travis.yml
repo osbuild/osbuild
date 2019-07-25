@@ -7,6 +7,13 @@ jobs:
     - name: pylint
       install: pip install pylint
       script: pylint osbuild osbuild-run assemblers/* stages/*
+    - name: rpm
+      before_install:
+        - sudo apt-get install -y rpm python3-setuptools
+        - sudo wget --directory-prefix=/usr/lib/rpm/macros.d https://src.fedoraproject.org/rpms/python-rpm-macros/raw/master/f/macros.python-srpm
+        - sudo wget --directory-prefix=/usr/lib/rpm/macros.d https://src.fedoraproject.org/rpms/python-rpm-macros/raw/master/f/macros.python
+        - sudo wget --directory-prefix=/usr/lib/rpm/macros.d https://src.fedoraproject.org/rpms/python-rpm-macros/raw/master/f/macros.python3
+      script: make rpm-nodeps
     - name: pipeline-noop
       before_install: sudo apt-get install -y systemd-container
       script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
