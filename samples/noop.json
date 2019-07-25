@@ -1,0 +1,11 @@
+{
+  "name": "noop",
+  "stages": [
+    {
+      "name": "io.weldr.noop"
+    }
+  ],
+  "assembler": {
+    "name": "io.weldr.noop"
+  }
+}

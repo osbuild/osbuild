@@ -1,8 +1,14 @@
-dist: xenial   # required for Python >= 3.7
+dist: bionic
 language: python
 python:
   - "3.7"
+before_install:
+  - sudo apt-get install -y systemd-container tree
 install:
   - pip install pylint
-# command to run tests
-script: pylint osbuild assemblers/* stages/*
+jobs:
+  include:
+    - name: pylint
+      script: pylint osbuild assemblers/* stages/*
+    - name: pipeline-noop
+      script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json

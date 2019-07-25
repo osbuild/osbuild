@@ -75,9 +75,33 @@ class BuildRoot:
         self.root = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
         self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
         self.mounted = False
+        self.usr_mounted = False
+        self.lib_mounted = False
+        self.lib64_mounted = False
+        self.bin_mounted = False
+        self.sbin_mounted = False
         try:
-            subprocess.run(["mount", "-o", "bind,ro", "/", self.root], check=True)
+            subprocess.run(["mount", "-t", "tmpfs", "none", self.root], check=True)
+            os.mkdir(os.path.join(self.root, "usr"))
             self.mounted = True
+            subprocess.run(["mount", "-o", "bind,ro", "/usr", os.path.join(self.root, "usr")], check=True)
+            self.usr_mounted = True
+            if os.path.isdir("/lib") and not os.path.islink("/lib"):
+                os.mkdir(os.path.join(self.root, "lib"))
+                subprocess.run(["mount", "-o", "bind,ro", "/lib", os.path.join(self.root, "lib")], check=True)
+                self.lib_mounted = True
+            if os.path.isdir("/lib64") and not os.path.islink("/lib64"):
+                os.mkdir(os.path.join(self.root, "lib64"))
+                subprocess.run(["mount", "-o", "bind,ro", "/lib64", os.path.join(self.root, "lib64")], check=True)
+                self.lib64_mounted = True
+            if os.path.isdir("/bin") and not os.path.islink("/bin"):
+                os.mkdir(os.path.join(self.root, "bin"))
+                subprocess.run(["mount", "-o", "bind,ro", "/bin", os.path.join(self.root, "bin")], check=True)
+                self.bin_mounted = True
+            if os.path.isdir("/sbin") and not os.path.islink("/sbin"):
+                os.mkdir(os.path.join(self.root, "sbin"))
+                subprocess.run(["mount", "-o", "bind,ro", "/sbin", os.path.join(self.root, "sbin")], check=True)
+                self.sbin_mounted = True
         except subprocess.CalledProcessError:
             self.unmount()
             raise
@@ -85,6 +109,21 @@ class BuildRoot:
     def unmount(self):
         if not self.root:
             return
+        if self.sbin_mounted:
+            subprocess.run(["umount", "--lazy", os.path.join(self.root, "sbin")], check=True)
+            self.sbin_mounted = False
+        if self.bin_mounted:
+            subprocess.run(["umount", "--lazy", os.path.join(self.root, "bin")], check=True)
+            self.bin_mounted = False
+        if self.lib64_mounted:
+            subprocess.run(["umount", "--lazy", os.path.join(self.root, "lib64")], check=True)
+            self.lib64_mounted = False
+        if self.lib_mounted:
+            subprocess.run(["umount", "--lazy", os.path.join(self.root, "lib")], check=True)
+            self.lib_mounted = False
+        if self.usr_mounted:
+            subprocess.run(["umount", "--lazy", os.path.join(self.root, "usr")], check=True)
+            self.usr_mounted = False
         if self.mounted:
             subprocess.run(["umount", "--lazy", self.root], check=True)
         os.rmdir(self.root)
@@ -98,13 +137,12 @@ class BuildRoot:
 
         Its arguments mean the same as those for subprocess.run().
         """
+
         return subprocess.run([
             "systemd-nspawn",
-            "--quiet",
             "--register=no",
             "--as-pid2",
             "--link-journal=no",
-            "--volatile=yes",
             "--property=DeviceAllow=block-loop rw",
             f"--directory={self.root}",
             *[f"--bind={b}" for b in (binds or [])],
@@ -167,7 +205,8 @@ class Stage:
                 encoding="utf-8",
                 input=json.dumps(args),
                 stdout=None if interactive else subprocess.PIPE,
-                stderr=subprocess.STDOUT
+                stderr=subprocess.STDOUT,
+                check=True
             )
             if check and r.returncode != 0:
                 raise StageFailed(self.name, r.returncode, r.stdout)

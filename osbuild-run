@@ -19,7 +19,10 @@ except subprocess.CalledProcessError as error:
 os.makedirs("/etc/pki/ca-trust/extracted/pem")
 os.makedirs("/etc/pki/tls/certs")
 os.symlink("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "/etc/pki/tls/certs/ca-bundle.crt")
-subprocess.run(["update-ca-trust"])
+try:
+    subprocess.run(["update-ca-trust"])
+except:
+    pass
 
 # Allow systemd-tmpfiles to return non-0. Some packages want to create
 # directories owned by users that are not set up with systemd-sysusers.
