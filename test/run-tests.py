@@ -41,17 +41,6 @@ def rel_path(fname: str) -> str:
 
 def build_web_server_image():
     run_osbuild(rel_path("4-all.json"))
-    # run_osbuild(rel_path("1-create-base.json"))
-    # r = run_osbuild(rel_path("2-configure-web-server.json"), check=False)
-    # # TODO: remove this workaround once the grub2 stage works on the first try :-)
-    # if r != 0:
-    #     run_osbuild(rel_path("2-configure-web-server.json"))
-    # run_osbuild(rel_path("3-compose-qcow2.json"))
-
-
-def uname() -> str:
-    uname = subprocess.run(["uname"], capture_output=True)
-    return uname.stdout.decode("utf-8").strip()
 
 
 @contextlib.contextmanager
@@ -78,12 +67,6 @@ def test_web_server():
 
 
 if __name__ == '__main__':
-    if uname() == "Darwin":
-        logging.info("Running on macOS. Skipping image build.")
-    else:
-        logging.info("Building image")
-        build_web_server_image()
-
     logging.info("Running tests")
     tests = [test_web_server]
     with boot_image(IMAGE_PATH):
