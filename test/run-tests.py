@@ -66,14 +66,35 @@ def test_web_server():
     assert curl.stdout.decode("utf-8").strip() == "hello, world!"
 
 
+def build_timezone_image():
+    run_osbuild(rel_path("timezone-test.json"))
+
+
+def test_timezone():
+    extract_dir = tempfile.mkdtemp(prefix="osbuild-")
+    subprocess.run(["tar", "xf", OUTPUT_DIR + "/timezone-output.tar.xz"], cwd=extract_dir, check=True)
+    ls = subprocess.run(["ls", "-l", "etc/localtime"], cwd=extract_dir, check=True, stdout=subprocess.PIPE)
+    ls_output = ls.stdout.decode("utf-8")
+    assert "Europe/Prague" in ls_output
+
+
+def evaluate_test(test):
+    try:
+        test()
+        print(f"{RESET}{BOLD}{test.__name__}: Success{RESET}")
+    except AssertionError as e:
+        print(f"{RESET}{BOLD}{test.__name__}: {RESET}{RED}Fail{RESET}")
+        print(e)
+
+
 if __name__ == '__main__':
     logging.info("Running tests")
+    build_web_server_image()
     tests = [test_web_server]
     with boot_image(IMAGE_PATH):
         for test in tests:
-            try:
-                test()
-                print(f"{RESET}{BOLD}{test.__name__}: Success{RESET}")
-            except AssertionError as e:
-                print(f"{RESET}{BOLD}{test.__name__}: {RESET}{RED}Fail{RESET}")
-                print(e)
+            evaluate_test(test)
+
+    build_timezone_image()
+    evaluate_test(test_timezone)
+

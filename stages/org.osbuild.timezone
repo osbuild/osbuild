@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+
+import json
+import subprocess
+import sys
+import os
+
+
+def main(tree, options):
+    zone = options["zone"]
+
+    # We need to remove the /etc/localtime symlink first, because it is created while we install RPM packages.
+    # systemd-firstboot expects that if /etc/localtime exists it is a user-defined value and does not change it, but
+    # the assumption is wrong, because it contains a default value from RPM package.
+    # This is (hopefully) a temporary workaround.
+    try:
+        os.remove(f"{tree}/etc/localtime")
+        # ^ This will fail once systemd RPM package stops shipping the file
+    except FileNotFoundError:
+        print("systemd does not ship /etc/localtime anymore. Remove the workaround")
+
+    subprocess.run(["systemd-firstboot", f"--root={tree}", f"--timezone={zone}"], check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
