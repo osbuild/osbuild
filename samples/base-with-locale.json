@@ -3,7 +3,7 @@
   "base": "baa7c544f69bb82d5f3992dd534e203a8f8442a47e751a286481f391a2d1f075",
   "stages": [
     {
-      "name": "io.weldr.locale",
+      "name": "org.osbuild.locale",
       "options": {
         "language": "en_US"
       }

@@ -15,7 +15,7 @@ assembles it into an image. Pipelines are defined as JSON files like this one:
   "name": "Example Image",
   "stages": [
     {
-      "name": "io.weldr.dnf",
+      "name": "org.osbuild.dnf",
       "options": {
         "releasever": "30",
         "repos": {
@@ -29,13 +29,13 @@ assembles it into an image. Pipelines are defined as JSON files like this one:
         }
     },
     {
-      "name": "io.weldr.systemd",
+      "name": "org.osbuild.systemd",
       "options": {
         "enabled_services": [ "httpd" ]
       }
     },
     {
-      "name": "io.weldr.grub2",
+      "name": "org.osbuild.grub2",
       "options": {
         "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac"
       }
