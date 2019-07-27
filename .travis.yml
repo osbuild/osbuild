@@ -1,8 +1,10 @@
-dist: xenial   # required for Python >= 3.7
+dist: bionic
 language: python
 python:
   - "3.7"
 install:
   - pip install pylint
-# command to run tests
-script: pylint osbuild assemblers/* stages/*
+jobs:
+  include:
+    - name: pylint
+      script: pylint osbuild assemblers/* stages/*
