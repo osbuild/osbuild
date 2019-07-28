@@ -1,6 +1,6 @@
 {
   "name": "base-qcow2",
-  "base": "d7f6aca0b9cf09833f70983c20ef3ac6e626152ee99901fc07f26cbf85c2bced",
+  "base": "b317426a4dcbef722cf6cccb117deedc0e636dcc24e5d3283e7e6fc2076f1e62",
   "assembler":
     {
       "name": "org.osbuild.qcow2",

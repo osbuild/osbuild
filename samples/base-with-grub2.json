@@ -1,6 +1,6 @@
 {
   "name": "base-with-grub2",
-  "base": "baa7c544f69bb82d5f3992dd534e203a8f8442a47e751a286481f391a2d1f075",
+  "base": "cf184c3183ada9edd0b7a728dedc337ac7f4b3df0393b4628a361d8d1fcfa9c0",
   "stages": [
     {
       "name": "org.osbuild.grub2",
