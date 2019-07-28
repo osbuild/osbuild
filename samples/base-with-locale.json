@@ -1,6 +1,6 @@
 {
   "name": "base-with-locale",
-  "base": "baa7c544f69bb82d5f3992dd534e203a8f8442a47e751a286481f391a2d1f075",
+  "base": "ba22ac2afc2db87df992d8937ee6664f53808465821670b0d636b3ebfac4ce9c",
   "stages": [
     {
       "name": "org.osbuild.locale",

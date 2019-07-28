@@ -1,6 +1,6 @@
 {
   "name": "base-with-selinux",
-  "base": "baa7c544f69bb82d5f3992dd534e203a8f8442a47e751a286481f391a2d1f075",
+  "base": "a26f5fd7cee0b606f35887e1df9c7449af13ab0f62c01b81ecd1bf9e623449ed",
   "stages": [
     {
       "name": "org.osbuild.selinux",
