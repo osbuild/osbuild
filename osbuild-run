@@ -5,25 +5,38 @@ import subprocess
 import sys
 
 
-# ld.so.conf must exist, or `ldconfig` throws a warning
-subprocess.run(["touch", "/etc/ld.so.conf"], check=True)
-subprocess.run(["ldconfig"], check=True)
+def ldconfig():
+    # ld.so.conf must exist, or `ldconfig` throws a warning
+    subprocess.run(["touch", "/etc/ld.so.conf"], check=True)
+    subprocess.run(["ldconfig"], check=True)
 
-try:
-    subprocess.run(["systemd-sysusers"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
-except subprocess.CalledProcessError as error:
-    sys.stderr.write(error.stdout)
-    sys.exit(1)
 
-# generate /etc/pki/tls/certs/ca-bundle.crt
-os.makedirs("/etc/pki/ca-trust/extracted/pem")
-os.makedirs("/etc/pki/tls/certs")
-os.symlink("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "/etc/pki/tls/certs/ca-bundle.crt")
-subprocess.run(["update-ca-trust"])
+def sysusers():
+    try:
+        subprocess.run(["systemd-sysusers"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
+    except subprocess.CalledProcessError as error:
+        sys.stderr.write(error.stdout)
+        sys.exit(1)
 
-# Allow systemd-tmpfiles to return non-0. Some packages want to create
-# directories owned by users that are not set up with systemd-sysusers.
-subprocess.run(["systemd-tmpfiles", "--create"])
 
-r = subprocess.run(sys.argv[1:])
-sys.exit(r.returncode)
+def update_ca_trust():
+    # generate /etc/pki/tls/certs/ca-bundle.crt
+    os.makedirs("/etc/pki/ca-trust/extracted/pem")
+    os.makedirs("/etc/pki/tls/certs")
+    os.symlink("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "/etc/pki/tls/certs/ca-bundle.crt")
+    subprocess.run(["update-ca-trust"])
+
+
+def tmpfiles():
+    # Allow systemd-tmpfiles to return non-0. Some packages want to create
+    # directories owned by users that are not set up with systemd-sysusers.
+    subprocess.run(["systemd-tmpfiles", "--create"])
+
+if __name__ == "__main__":
+    ldconfig()
+    sysusers()
+    update_ca_trust()
+    tmpfiles()
+
+    r = subprocess.run(sys.argv[1:])
+    sys.exit(r.returncode)
