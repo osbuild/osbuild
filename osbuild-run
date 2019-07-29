@@ -31,15 +31,40 @@ def update_ca_trust():
     subprocess.run(["update-ca-trust"])
 
 
+def append_certs(cert_conf, dir_fd, parents=b""):
+    for entry in os.scandir(f"/proc/self/fd/{dir_fd}".encode()):
+        if entry.is_file():
+            line = os.path.join(parents, entry.name)
+            cert_conf.write(line)
+            cert_conf.write(b"\n")
+        elif entry.is_dir():
+            append_certs(cert_conf,
+                         os.open(entry.name, os.O_DIRECTORY, dir_fd=dir_fd),
+                         os.path.join(parents, entry.name))
+
+
+def update_ca_certificates():
+    if not shutil.which("update-ca-certificates"):
+        return
+
+    # generate /etc/ssl/certs/ca-certificates.crt
+    os.makedirs("/etc/ssl/certs")
+    with open("/etc/ca-certificates.conf", "wb") as f:
+        append_certs(f, os.open("/usr/share/ca-certificates", os.O_DIRECTORY))
+    subprocess.run(["update-ca-certificates"])
+
+
 def tmpfiles():
     # Allow systemd-tmpfiles to return non-0. Some packages want to create
     # directories owned by users that are not set up with systemd-sysusers.
     subprocess.run(["systemd-tmpfiles", "--create"])
 
+
 if __name__ == "__main__":
     ldconfig()
     sysusers()
     update_ca_trust()
+    update_ca_certificates()
     tmpfiles()
 
     r = subprocess.run(sys.argv[1:])
