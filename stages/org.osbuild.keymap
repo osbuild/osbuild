@@ -1,0 +1,28 @@
+#!/usr/bin/python3
+
+import json
+import subprocess
+import sys
+import os
+
+
+def main(tree, options):
+    keymap = options["keymap"]
+
+    # We need to remove the /etc/vconsole.conf file first, because it is created while we install RPM packages.
+    # systemd-firstboot expects that if /etc/vconsole.conf exists it is a user-defined value and does not change it, but
+    # the assumption is wrong, because it contains a default value from RPM package.
+    try:
+        os.remove(f"{tree}/etc/vconsole.conf")
+    except FileNotFoundError:
+        print("vconsole.conf does not exist")
+
+    subprocess.run(["systemd-firstboot", f"--root={tree}", f"--keymap={keymap}"], check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
