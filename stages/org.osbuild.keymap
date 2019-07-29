@@ -14,8 +14,9 @@ def main(tree, options):
     # the assumption is wrong, because it contains a default value from RPM package.
     try:
         os.remove(f"{tree}/etc/vconsole.conf")
+        print("/etc/vconsole.conf already exists. Replacing.")
     except FileNotFoundError:
-        print("vconsole.conf does not exist")
+        pass
 
     subprocess.run(["systemd-firstboot", f"--root={tree}", f"--keymap={keymap}"], check=True)
 
