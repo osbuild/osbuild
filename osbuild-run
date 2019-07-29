@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import shutil
 import os
 import subprocess
 import sys
@@ -20,6 +21,9 @@ def sysusers():
 
 
 def update_ca_trust():
+    if not shutil.which("update-ca-trust"):
+        return
+
     # generate /etc/pki/tls/certs/ca-bundle.crt
     os.makedirs("/etc/pki/ca-trust/extracted/pem")
     os.makedirs("/etc/pki/tls/certs")
