@@ -2,15 +2,14 @@ dist: bionic
 language: python
 python:
   - "3.7"
-before_install:
-  - sudo apt-get install -y systemd-container yum
-install:
-  - pip install pylint
 jobs:
   include:
     - name: pylint
+      install: pip install pylint
       script: pylint osbuild osbuild-run assemblers/* stages/*
     - name: pipeline-noop
+      before_install: sudo apt-get install -y systemd-container
       script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
     - name: pipeline-yum
+      before_install: sudo apt-get install -y systemd-container yum
       script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/build-from-yum.json
