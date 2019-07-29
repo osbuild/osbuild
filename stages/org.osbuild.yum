@@ -1,0 +1,62 @@
+#!/usr/bin/python3
+
+import json
+import subprocess
+import sys
+
+
+def main(tree, options):
+    repos = options["repos"]
+    packages = options["packages"]
+    releasever = options["releasever"]
+    operation = options.get("operation", "install")
+    verbosity = options.get("verbosity", "info")
+
+    with open("/tmp/yum.conf", "w") as conf:
+        for repoid, repo in repos.items():
+            conf.write(f"[{repoid}]\n")
+            for key, value in repo.items():
+                if isinstance(value, str):
+                    s = value
+                elif isinstance(value, list):
+                    s = " ".join(value)
+                elif isinstance(value, bool):
+                    s = "1" if value else "0"
+                elif isinstance(value, int):
+                    s = str(value)
+                else:
+                    print(f"unkown type for `{key}`: {value} ({type(value)})")
+                    return 1
+                conf.write(f"{key}={s}\n")
+
+    script = f"""
+        set -e
+        mkdir -p {tree}/dev {tree}/sys {tree}/proc
+        mount -t devtmpfs none {tree}/dev
+        mount -t sysfs none {tree}/sys
+        mount -t proc none {tree}/proc
+    """
+    returncode = subprocess.run(["/bin/sh", "-c", script]).returncode
+
+    if returncode != 0:
+        print(f"setting up API VFS in target tree failed: {returncode}")
+        return returncode
+
+    cmd = [
+        "yum", "-y", "-v",
+        f"--installroot={tree}",
+        "--setopt=\"reposdir=\"",
+        f"--releasever={releasever}",
+        f"--rpmverbosity={verbosity}",
+        "--config=/tmp/yum.conf",
+        operation
+    ] + packages
+
+    print(" ".join(cmd), flush=True)
+    return subprocess.run(cmd).returncode
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
