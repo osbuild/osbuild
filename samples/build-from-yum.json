@@ -1,0 +1,22 @@
+{
+  "name": "build-from-yum",
+  "stages": [
+    {
+      "name": "org.osbuild.yum",
+      "options": {
+        "releasever": "27",
+        "repos": {
+          "fedora": {
+            "name": "Fedora",
+            "baseurl": "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/$releasever/Everything/$basearch/os/",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
+          }
+        },
+        "packages": [
+          "dnf",
+          "systemd"
+        ]
+      }
+    }
+  ]
+}
