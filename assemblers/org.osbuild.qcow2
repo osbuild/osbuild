@@ -61,7 +61,7 @@ def main(tree, output_dir, options, loop_client):
         subprocess.run(["truncate", "--size", str(size), image], check=True)
 
         # Set up the partition table of the image
-        partition_table = "label: mbr\nlabel-id: {partition_table_id}\nbootable, type=83"
+        partition_table = "label: mbr\nbootable, type=83"
         subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
         r = subprocess.run(["sfdisk", "--json", image], stdout=subprocess.PIPE, encoding='utf-8', check=True)
         partition_table = json.loads(r.stdout)
