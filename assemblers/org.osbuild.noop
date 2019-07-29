@@ -1,0 +1,12 @@
+#!/usr/bin/python3
+
+import json
+import sys
+
+def main(_tree, _output_dir, options):
+    print("Not doing anything with these options:", json.dumps(options))
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["output_dir"], args.get("options", {}))
+    sys.exit(r)

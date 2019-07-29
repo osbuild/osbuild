@@ -1,0 +1,11 @@
+{
+  "name": "noop",
+  "stages": [
+    {
+      "name": "org.osbuild.noop"
+    }
+  ],
+  "assembler": {
+    "name": "org.osbuild.noop"
+  }
+}
