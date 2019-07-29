@@ -7,4 +7,4 @@ install:
 jobs:
   include:
     - name: pylint
-      script: pylint osbuild assemblers/* stages/*
+      script: pylint osbuild osbuild-run assemblers/* stages/*
