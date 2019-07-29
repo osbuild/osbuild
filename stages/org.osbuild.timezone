@@ -16,8 +16,9 @@ def main(tree, options):
     try:
         os.remove(f"{tree}/etc/localtime")
         # ^ This will fail once systemd RPM package stops shipping the file
+        print("/etc/localtime already exists. Replacing.")
     except FileNotFoundError:
-        print("systemd does not ship /etc/localtime anymore. Remove the workaround")
+        pass
 
     subprocess.run(["systemd-firstboot", f"--root={tree}", f"--timezone={zone}"], check=True)
 
