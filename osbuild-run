@@ -60,12 +60,23 @@ def tmpfiles():
     subprocess.run(["systemd-tmpfiles", "--create"])
 
 
+def nsswitch():
+    # the default behavior is fine, but using nss-resolve does not
+    # necessarily work in a non-booted container, so make sure that
+    # is not configured.
+    try:
+        os.remove("/etc/nsswitch.conf")
+    except FileNotFoundError:
+        pass
+
+
 if __name__ == "__main__":
     ldconfig()
     sysusers()
     update_ca_trust()
     update_ca_certificates()
     tmpfiles()
+    nsswitch()
 
     r = subprocess.run(sys.argv[1:])
     sys.exit(r.returncode)
