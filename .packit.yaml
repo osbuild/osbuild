@@ -1,0 +1,8 @@
+# we have the specfile in the root of our repository
+specfile_path: osbuild.spec
+# when doing an update in Fedora, we want to copy the spec file and the config file
+synced_files:
+  - osbuild.spec
+  - .packit.yaml
+upstream_project_name: osbuild
+downstream_package_name: osbuild
