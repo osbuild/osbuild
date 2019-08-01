@@ -1,0 +1,54 @@
+{
+  "name": "Example Image",
+  "stages": [
+    {
+      "name": "org.osbuild.dnf",
+      "options": {
+        "releasever": "30",
+        "repos": {
+          "fedora": {
+            "name": "Fedora",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
+          }
+        },
+        "packages": ["@Core"]
+	}
+    },
+    {
+      "name": "org.osbuild.dnf",
+      "options": {
+        "releasever": "30",
+        "repos": {
+          "fedora": {
+            "name": "Fedora",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
+          }
+        },
+        "packages": ["zsh"]
+	}
+    },
+    {
+      "name": "org.osbuild.useradd",
+      "options": {
+        "name": "tester",
+	"description": "Mr Test",
+	"password": "$2b$aaaaaa",
+	"key": "ssh-rsa aaaa superdeveloper@death-star.redhat.com",
+	"home": "/home/tester",
+	"shell": "/usr/bin/zsh",
+	"groups": "wheel",
+	"uid": "1999",
+	"gid": "1999"
+      }
+    }
+  ],
+  "assembler": {
+    "name": "org.osbuild.tar",
+    "options": {
+      "filename": "timezone-output.tar.xz",
+      "compression": "xz"
+    }
+  }
+}

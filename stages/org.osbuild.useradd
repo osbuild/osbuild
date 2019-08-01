@@ -1,0 +1,86 @@
+#!/usr/bin/python3
+
+import json
+import subprocess
+import sys
+import os
+
+
+def generate_password_line(input_line: str, password: str) -> str:
+    """Split the line usually found in /etc/shadow and replace the part with password and salt."""
+    parts = input_line.split(':')
+    parts[1] = password
+    return ':'.join(parts)
+
+
+def replace_password(file, user, password):
+    """Open file with passwords (/etc/shadow) and replace the line starting with new user's name."""
+    f = open(file, 'r')
+    lines = f.readlines()
+    f.close()
+    new_lines = list(map(lambda line: generate_password_line(line, password) if line.startswith(user) else line, lines))
+    f = open(file, 'w')
+    f.writelines(new_lines)
+    f.close()
+
+
+def add_key_to_authorized_hosts(tree, home_dir, user, key):
+    """Open ~/.ssh/authorized_keys file and insert the key. This will only work if the home directory exists."""
+    if home_dir:
+        os.makedirs(f"{tree}/{home_dir}/.ssh/", exist_ok=True)
+        with open(f"{tree}/{home_dir}/.ssh/authorized_keys", "a") as f:
+            f.write(f"{key}\n")
+
+        # real_root = os.open("/", os.O_RDONLY)
+        # os.chroot(f"{tree}")
+        subprocess.run(["chroot", tree, "chown", "--recursive", f"{user}:{user}", f"{home_dir}/.ssh/"],
+                       check=True)
+        # shutil.chown(f"{tree}/{home_dir}/.ssh/", user, user)
+        # shutil.chown(f"{tree}/{home_dir}/.ssh/authorized_keys", user, user)
+        # os.fchdir(real_root)
+        # os.chroot(".")
+        # # Back to old root
+        # os.close(real_root)
+
+
+def compose_cmd_arg(option, value):
+    if value:
+        return [option, value]
+
+    return []
+
+
+def main(tree, options):
+    name = options["name"]
+    description = compose_cmd_arg("--comment", options.get("description"))
+    password = options.get("password")  # TODO: add support for plain text passwords
+    key = options.get("key")  # Public SSH key
+    home_dir = options.get("home")
+    home = compose_cmd_arg("--home-dir", home_dir)
+    shell = compose_cmd_arg("--shell", options.get("shell"))
+    groups = options.get("groups")  # comma separated list
+    uid = compose_cmd_arg("--uid", options.get("uid"))
+    input_gid = options.get("gid")
+    gid = compose_cmd_arg("--gid", options.get("gid"))
+
+    if input_gid:
+        subprocess.run(["groupadd", "--root", tree, "--gid", input_gid, name], check=True)
+
+    subprocess.run(["useradd", "--root", tree] + home + shell + uid + gid + description + [name], check=True)
+
+    if groups:
+        subprocess.run(["usermod", "--root", tree, "--append", "--groups", groups, name], check=True)
+
+    if password:
+        replace_password(f"{tree}/etc/shadow", name, password)
+
+    if key:
+        add_key_to_authorized_hosts(tree, home_dir, name, key)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
