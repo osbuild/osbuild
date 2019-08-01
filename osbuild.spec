@@ -7,7 +7,9 @@ License:        ASL 2.0
 
 URL:            https://github.com/osbuild/osbuild
 
-Source0:        https://github.com/osbuild/%{pypi_name}/archive/%{version}.tar.gz
+# We use /version/whatever to get the tarball because github releases use only <version>.tar.gz, but
+# packit/rpm expect <name>-<version>.tar.gz
+Source0:        https://github.com/osbuild/%{pypi_name}/archive/%{version}/%{name}-%{version}.tar.gz
 BuildArch:      noarch
 Summary:        A build system for OS images
 
@@ -39,7 +41,7 @@ Summary:        %{summary}
 A build system for OS images
 
 %prep
-%autosetup -n %{name}-%{version}
+%autosetup
 
 %build
 %py3_build
