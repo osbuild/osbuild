@@ -145,8 +145,10 @@ class ObjectStore:
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
             if tree_id:
                 subprocess.run(["mount", "-o", "bind,ro,mode=0755", f"{self.refs}/{tree_id}", tmp], check=True)
-                yield tmp
-                subprocess.run(["umount", "--lazy", tmp], check=True)
+                try:
+                    yield tmp
+                finally:
+                    subprocess.run(["umount", "--lazy", tmp], check=True)
             else:
                 # None was given as tree_id, just return an empty directory
                 yield tmp
