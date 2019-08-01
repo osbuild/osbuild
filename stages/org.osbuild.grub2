@@ -4,8 +4,10 @@ import json
 import os
 import sys
 
+
 def main(tree, options):
     root_fs_uuid = options["root_fs_uuid"]
+    kernel_opts = options.get("kernel_opts", "")
 
     # Create the configuration file that determines how grub.cfg is generated.
     os.makedirs(f"{tree}/etc/default", exist_ok=True)
@@ -18,7 +20,7 @@ def main(tree, options):
         env.write("# GRUB Environment Block\n"
                   f"GRUB2_ROOT_FS_UUID={root_fs_uuid}\n"
                   f"GRUB2_BOOT_FS_UUID={root_fs_uuid}\n"
-                  f"kernelopts=root=UUID={root_fs_uuid} rw\n")
+                  f"kernelopts=root=UUID={root_fs_uuid} rw {kernel_opts}\n")
     with open(f"{tree}/boot/grub2/grub.cfg", "w") as cfg:
         cfg.write("set timeout=0\n"
                   "load_env\n"
@@ -28,6 +30,9 @@ def main(tree, options):
                   "  insmod all_video\n"
                   "}\n"
                   "blscfg\n")
+
+    return 0
+
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
