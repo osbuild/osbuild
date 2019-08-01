@@ -374,14 +374,13 @@ class Assembler:
 
 
 class Pipeline:
-    def __init__(self, build=None, base=None):
-        self.base = base
+    def __init__(self, build=None):
         self.build = build
         self.stages = []
         self.assembler = None
 
     def get_id(self):
-        return self.stages[-1].id if self.stages else self.base
+        return self.stages[-1].id if self.stages else None
 
     def add_stage(self, name, options=None):
         build = self.build.get_id() if self.build else None
@@ -393,8 +392,6 @@ class Pipeline:
 
     def description(self):
         description = {}
-        if self.base:
-            description["base"] = self.base
         if self.build:
             description["build"] = self.build.description()
         if self.stages:
@@ -418,8 +415,6 @@ class Pipeline:
 
     def run(self, output_dir, store, interactive=False, check=True, libdir=None):
         os.makedirs("/run/osbuild", exist_ok=True)
-        if self.base and not store:
-            raise ValueError("'store' argument must be given when pipeline has a 'base'")
         object_store = ObjectStore(store)
         results = {
             "stages": []
@@ -436,7 +431,7 @@ class Pipeline:
                 if not object_store.has_tree(self.get_id()):
                     # Find the last stage that already exists in the object store, and use
                     # that as the base.
-                    base = self.base
+                    base = None
                     base_idx = -1
                     for i in range(len(self.stages) - 1, 0, -1):
                         if object_store.has_tree(self.stages[i].id):
@@ -483,7 +478,7 @@ def load(description):
         build = load(build_description)
     else:
         build = None
-    pipeline = Pipeline(build, description.get("base"))
+    pipeline = Pipeline(build)
 
     for s in description.get("stages", []):
         pipeline.add_stage(s["name"], s.get("options", {}))
