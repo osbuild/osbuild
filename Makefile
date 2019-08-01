@@ -1,5 +1,5 @@
-PACKAGE_NAME=osbuild
-VERSION=1
+PACKAGE_NAME = osbuild
+VERSION = $$(rpmspec -q --qf '%{version}\n' osbuild.spec | head -1)
 
 .PHONY: sdist tarball srpm rpm copy-rpms-to-test check-working-directory vagrant-test vagrant-test-keep-running
 
@@ -8,7 +8,7 @@ sdist:
 	find `pwd`/dist -name '*.tar.gz' -printf '%f\n' -exec mv {} . \;
 
 tarball:
-	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > $(VERSION).tar.gz
+	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > $(PACKAGE_NAME)-$(VERSION).tar.gz
 
 srpm: $(PACKAGE_NAME).spec tarball
 	/usr/bin/rpmbuild -bs \
