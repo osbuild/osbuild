@@ -360,14 +360,13 @@ class Assembler:
 
 
 class Pipeline:
-    def __init__(self, build=None, base=None):
-        self.base = base
+    def __init__(self, build=None):
         self.build = build
         self.stages = []
         self.assembler = None
 
     def get_id(self):
-        return self.stages[-1].id if self.stages else self.base
+        return self.stages[-1].id if self.stages else None
 
     def add_stage(self, name, options=None):
         build = self.build.get_id() if self.build else None
@@ -392,8 +391,6 @@ class Pipeline:
 
     def run(self, output_dir, store, interactive=False, check=True, libdir=None):
         os.makedirs("/run/osbuild", exist_ok=True)
-        if self.base and not store:
-            raise ValueError("'store' argument must be given when pipeline has a 'base'")
         object_store = ObjectStore(store)
         results = {
             "stages": []
@@ -408,13 +405,22 @@ class Pipeline:
         with self.get_buildtree(object_store) as build_tree:
             if self.stages:
                 if not object_store.has_tree(self.get_id()):
+                    # Find the last stage that already exists in the object store, and use
+                    # that as the base.
+                    base = None
+                    base_idx = -1
+                    for i in range(len(self.stages) - 1, 0, -1):
+                        if object_store.has_tree(self.stages[i].id):
+                            base = self.stages[i].id
+                            base_idx = i
+                            break
                     # The tree does not exist. Create it and save it to the object store. If
                     # two run() calls race each-other, two trees may be generated, and it
                     # is nondeterministic which of them will end up referenced by the tree_id
                     # in the content store. However, we guarantee that all tree_id's and all
                     # generated trees remain valid.
-                    with object_store.new_tree(self.get_id(), base_id=self.base) as tree:
-                        for stage in self.stages:
+                    with object_store.new_tree(self.get_id(), base_id=base) as tree:
+                        for stage in self.stages[base_idx + 1:]:
                             r = stage.run(tree,
                                           build_tree,
                                           interactive=interactive,
@@ -443,7 +449,7 @@ class Pipeline:
 
 
 def load(description):
-    pipeline = Pipeline(description.get("build"), description.get("base"))
+    pipeline = Pipeline(description.get("build"))
 
     for s in description.get("stages", []):
         pipeline.add_stage(s["name"], s.get("options", {}))
