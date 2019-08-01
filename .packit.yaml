@@ -6,3 +6,10 @@ synced_files:
   - .packit.yaml
 upstream_project_name: osbuild
 downstream_package_name: osbuild
+jobs:
+  - job: copr_build
+    trigger: pull_request
+    metadata:
+      targets:
+      - fedora-30-x86_64
+      - fedora-rawhide-x86_64
