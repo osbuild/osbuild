@@ -374,19 +374,14 @@ class Assembler:
 
 
 class Pipeline:
-    def __init__(self, base=None):
+    def __init__(self, build=None, base=None):
         self.base = base
-        self.build = None
+        self.build = build
         self.stages = []
         self.assembler = None
 
     def get_id(self):
         return self.stages[-1].id if self.stages else self.base
-
-    def set_build(self, pipeline):
-        if self.stages:
-            raise ValueError("Must set build before stages.")
-        self.build = pipeline
 
     def add_stage(self, name, options=None):
         build = self.build.get_id() if self.build else None
@@ -474,11 +469,12 @@ class Pipeline:
 
 
 def load(description):
-    pipeline = Pipeline(description.get("base"))
-
-    b = description.get("build")
-    if b:
-        pipeline.set_build(load(b))
+    build_description = description.get("build")
+    if build_description:
+        build = load(build_description)
+    else:
+        build = None
+    pipeline = Pipeline(build, description.get("base"))
 
     for s in description.get("stages", []):
         pipeline.add_stage(s["name"], s.get("options", {}))

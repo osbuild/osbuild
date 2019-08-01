@@ -47,8 +47,7 @@ class TestDescriptions(unittest.TestCase):
         build = osbuild.Pipeline()
         build.add_stage("org.osbuild.test", { "one": 1 })
 
-        pipeline = osbuild.Pipeline()
-        pipeline.set_build(build)
+        pipeline = osbuild.Pipeline(build)
         pipeline.add_stage("org.osbuild.test", { "one": 2 })
         pipeline.set_assembler("org.osbuild.test")
 
