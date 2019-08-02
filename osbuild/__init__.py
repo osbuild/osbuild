@@ -287,6 +287,13 @@ class Stage:
         self.name = name
         self.options = options
 
+    def description(self):
+        description = {}
+        description["name"] = self.name
+        if self.options:
+            description["options"] = self.options
+        return description
+
     def run(self, tree, build_tree, interactive=False, check=True, libdir=None):
         with BuildRoot(build_tree) as buildroot:
             if interactive:
@@ -321,6 +328,13 @@ class Assembler:
     def __init__(self, name, options):
         self.name = name
         self.options = options
+
+    def description(self):
+        description = {}
+        description["name"] = self.name
+        if self.options:
+            description["options"] = self.options
+        return description
 
     def run(self, tree, build_tree, output_dir=None, interactive=False, check=True, libdir=None):
         with BuildRoot(build_tree) as buildroot:
@@ -381,6 +395,18 @@ class Pipeline:
 
     def set_assembler(self, name, options=None):
         self.assembler = Assembler(name, options or {})
+
+    def description(self):
+        description = {}
+        if self.base:
+            description["base"] = self.base
+        if self.build:
+            description["build"] = self.build.description()
+        if self.stages:
+            description["stages"] = [s.description() for s in self.stages]
+        if self.assembler:
+            description["assembler"] = self.assembler.description()
+        return description
 
     @contextlib.contextmanager
     def get_buildtree(self, object_store):
