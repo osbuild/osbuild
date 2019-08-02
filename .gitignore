@@ -1,4 +1,9 @@
 *.rpm
 *.tar.gz
 *.egg-info
-output
+__pycache__
+
+/.osbuild
+/output
+
+/test/.vagrant
