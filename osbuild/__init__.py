@@ -9,6 +9,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+
+from osbuild.common import RESET, BOLD, RED
 import osbuild.remoteloop as remoteloop
 
 
@@ -21,10 +23,6 @@ __all__ = [
     "Stage",
     "StageFailed",
 ]
-
-
-RESET = "\033[0m"
-BOLD = "\033[1m"
 
 
 class StageFailed(Exception):

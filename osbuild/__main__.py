@@ -2,12 +2,9 @@ import argparse
 import json
 import os
 import sys
+
+from osbuild.common import RESET, BOLD, RED
 import osbuild
-
-
-RESET = "\033[0m"
-BOLD = "\033[1m"
-RED = "\033[31m"
 
 
 def main():
