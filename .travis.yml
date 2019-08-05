@@ -25,3 +25,12 @@ jobs:
     - name: pipeline-base-from-yum
       before_install: sudo apt-get install -y systemd-container yum
       script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/base-from-yum.json
+
+deploy:
+  - provider: pypi
+    user: osbuild
+    password: your-secure-password
+    on:
+      tags: true
+    distributions: sdist bdist_wheel
+    skip_existing: true
