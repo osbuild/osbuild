@@ -1,5 +1,5 @@
 [MASTER]
-disable=missing-docstring,too-few-public-methods,invalid-name,duplicate-code,superfluous-parens,too-many-locals,attribute-defined-outside-init,too-many-arguments
+disable=missing-docstring,too-few-public-methods,invalid-name,duplicate-code,superfluous-parens,too-many-locals,attribute-defined-outside-init,too-many-arguments,too-many-branches
 max-line-length=120
 
 [TYPECHECK]

@@ -395,7 +395,7 @@ class Pipeline:
                 finally:
                     subprocess.run(["umount", "--lazy", tmp], check=True)
 
-    def run(self, output_dir, store, interactive=False, check=True, libdir=None):
+    def run(self, output_dir, store, interactive=False, check=True, libdir=None, keepalive=False):
         os.makedirs("/run/osbuild", exist_ok=True)
         if self.base and not store:
             raise ValueError("'store' argument must be given when pipeline has a 'base'")
@@ -420,28 +420,40 @@ class Pipeline:
                     # generated trees remain valid.
                     with object_store.new_tree(self.get_id(), base_id=self.base) as tree:
                         for stage in self.stages:
-                            r = stage.run(tree,
-                                          build_tree,
-                                          interactive=interactive,
-                                          check=check,
-                                          libdir=libdir)
-                            results["stages"].append(r)
-                            if r["returncode"] != 0:
-                                results["returncode"] = r["returncode"]
-                                return results
+                            try:
+                                r = stage.run(tree,
+                                              build_tree,
+                                              interactive=interactive,
+                                              check=check,
+                                              libdir=libdir)
+                                results["stages"].append(r)
+                                if r["returncode"] != 0:
+                                    results["returncode"] = r["returncode"]
+                                    return results
+                            except StageFailed as e:
+                                if keepalive:
+                                    print(e)
+                                    subprocess.run(["chroot", tree, "bash"])
+                                raise e
 
             if self.assembler:
                 with object_store.get_tree(self.get_id()) as tree:
-                    r = self.assembler.run(tree,
-                                           build_tree,
-                                           output_dir=output_dir,
-                                           interactive=interactive,
-                                           check=check,
-                                           libdir=libdir)
-                    results["assembler"] = r
-                    if r["returncode"] != 0:
-                        results["returncode"] = r["returncode"]
-                        return results
+                    try:
+                        r = self.assembler.run(tree,
+                                               build_tree,
+                                               output_dir=output_dir,
+                                               interactive=interactive,
+                                               check=check,
+                                               libdir=libdir)
+                        results["assembler"] = r
+                        if r["returncode"] != 0:
+                            results["returncode"] = r["returncode"]
+                            return results
+                    except AssemblerFailed as e:
+                        if keepalive:
+                            print(e)
+                            subprocess.run(["chroot", tree, "bash"])
+                        raise e
 
         results["returncode"] = 0
         return results
