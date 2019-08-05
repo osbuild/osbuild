@@ -70,12 +70,32 @@ def build_timezone_image():
     run_osbuild(rel_path("timezone-test.json"))
 
 
-def test_timezone():
+def build_firewall_image():
+    run_osbuild(rel_path("firewall-test.json"))
+
+
+def extract_to_tempdir(image_file):
     extract_dir = tempfile.mkdtemp(prefix="osbuild-")
-    subprocess.run(["tar", "xf", OUTPUT_DIR + "/timezone-output.tar.xz"], cwd=extract_dir, check=True)
+    subprocess.run(["tar", "xf", OUTPUT_DIR + image_file], cwd=extract_dir, check=True)
+    return extract_dir
+
+
+def test_timezone():
+    extract_dir = extract_to_tempdir("timezone-output.tar.xz")
     ls = subprocess.run(["ls", "-l", "etc/localtime"], cwd=extract_dir, check=True, stdout=subprocess.PIPE)
     ls_output = ls.stdout.decode("utf-8")
     assert "Europe/Prague" in ls_output
+
+
+def test_firewall():
+    extract_dir = extract_to_tempdir("firewall-output.tar.xz")
+    cat = subprocess.run(["cat", "etc/firewalld/zones/public.xml"], cwd=extract_dir, check=True, stdout=subprocess.PIPE)
+    cat_output = cat.stdout.decode("utf-8")
+    assert 'service name="http"' in cat_output
+    assert 'service name="ftp"' in cat_output
+    assert 'service name="telnet"' not in cat_output
+    assert 'port port="53" protocol="tcp"' in cat_output
+    assert 'port port="88" protocol="udp"' in cat_output
 
 
 def evaluate_test(test):
@@ -98,3 +118,5 @@ if __name__ == '__main__':
     build_timezone_image()
     evaluate_test(test_timezone)
 
+    build_firewall_image()
+    evaluate_test(test_firewall)
