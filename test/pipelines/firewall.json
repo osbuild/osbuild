@@ -1,5 +1,5 @@
 {
-  "name": "base",
+  "name": "Example Image",
   "stages": [
     {
       "name": "org.osbuild.dnf",
@@ -12,12 +12,23 @@
             "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
           }
         },
-        "packages": [
-          "@Core",
-          "selinux-policy-targeted",
-          "grub2-pc"
-        ]
+        "packages": ["@Core", "firewalld"]
+	}
+    },
+    {
+      "name": "org.osbuild.firewall",
+      "options": {
+        "ports": ["53:tcp", "88:udp"],
+        "enabled_services": ["http", "ftp"],
+        "disabled_services": ["telnet"]
       }
     }
-  ]
+  ],
+  "assembler": {
+    "name": "org.osbuild.tar",
+    "options": {
+      "filename": "firewall.tar.xz",
+      "compression": "xz"
+    }
+  }
 }

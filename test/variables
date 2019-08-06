@@ -1,6 +1,0 @@
-export OSBUILD=../osbuild
-export BASE_INPUT=/osbuild/workdir
-export BASE_OUTPUT=/osbuild/base-tree
-export WEB_OUTPUT=/osbuild/web-tree
-export QCOW2_OUTPUT=/osbuild/output
-export IMAGE_PATH=/osbuild/output/base.qcow2
