@@ -12,22 +12,20 @@
             "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
           }
         },
-        "packages": ["@Core", "firewalld"]
+        "packages": ["@Core"]
 	}
     },
     {
-      "name": "org.osbuild.firewall",
+      "name": "org.osbuild.timezone",
       "options": {
-        "ports": ["53:tcp", "88:udp"],
-        "enabled_services": ["http", "ftp"],
-        "disabled_services": ["telnet"]
+        "zone": "Europe/Prague"
       }
     }
   ],
   "assembler": {
     "name": "org.osbuild.tar",
     "options": {
-      "filename": "firewall-output.tar.xz",
+      "filename": "timezone.tar.xz",
       "compression": "xz"
     }
   }
