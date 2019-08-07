@@ -1,0 +1,37 @@
+#!/usr/bin/python3
+
+import json
+import os
+import subprocess
+import sys
+
+
+def main(tree, options):
+    user = options["user"]
+    key = options["key"]
+
+    # Start by finding the user's home directory
+    with open(f"{tree}/etc/passwd", "r") as passwd_file:
+        lines = passwd_file.readlines()
+        # Use ':' to prevent errors when multiple usernames start with the same substring
+        user_line = next(x for x in lines if x.startswith(f"{user}:"))
+        # This format is described in man page for /etc/passwd
+        parts = user_line.split(':')
+        uid, gid, home_dir = parts[2], parts[3], parts[-2]
+
+    # Open $HOME/.ssh/authorized_keys or create a new one, if it does not exist yet
+    ssh_dir = f"{tree}/{home_dir}/.ssh"
+    os.makedirs(ssh_dir, exist_ok=True)
+    with open(f"{ssh_dir}/authorized_keys", "a") as ak_file:
+        ak_file.write(f"{key}\n")
+
+    # Change owner of the directory
+    subprocess.run(["chown", "--recursive", f"{uid}:{gid}", ssh_dir])
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
