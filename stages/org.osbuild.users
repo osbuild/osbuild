@@ -1,0 +1,104 @@
+#!/usr/bin/python3
+
+import json
+import subprocess
+import sys
+import os
+
+
+def getpwnam(root, name):
+    """Similar to pwd.getpwnam, but takes a @root parameter"""
+    with open(f"{root}/etc/passwd") as f:
+        for line in f:
+            passwd = line.split(":")
+            if passwd[0] == name:
+                return passwd
+        return None
+
+
+def useradd(root, name, uid=None, gid=None, groups=None, description=None, home=None, shell=None, password=None):
+    arguments = []
+    if uid:
+        arguments += ["--uid", uid]
+    if gid:
+        arguments += ["--gid", gid]
+    if groups:
+        arguments += ["--groups", ",".join(groups)]
+    if description:
+        arguments += ["--comment", description]
+    if home:
+        arguments += ["--home-dir", home]
+    if shell:
+        arguments += ["--shell", shell]
+    if password:
+        arguments += ["--password", password]
+
+    subprocess.run(["chroot", root, "useradd", *arguments, name], check=True)
+
+
+def usermod(root, name, gid=None, groups=None, description=None, home=None, shell=None, password=None):
+    arguments = []
+    if gid:
+        arguments += ["--gid", gid]
+    if groups:
+        arguments += ["--groups", ",".join(groups)]
+    if description:
+        arguments += ["--comment", description]
+    if home:
+        arguments += ["--home", home]
+    if shell:
+        arguments += ["--shell", shell]
+    if password:
+        arguments += ["--password", password]
+
+    if arguments:
+        subprocess.run(["chroot", root, "usermod", *arguments, name], check=True)
+
+
+def add_ssh_key(root, user, key):
+    _, _, uid, gid, _, home, _ = getpwnam(root, user)
+    ssh_dir = f"{root}/{home}/.ssh"
+    authorized_keys = f"{ssh_dir}/authorized_keys"
+
+    if not os.path.exists(ssh_dir):
+        os.mkdir(ssh_dir, 0o700)
+        os.chown(ssh_dir, int(uid), int(gid))
+
+    with open(authorized_keys, "a") as f:
+        f.write(f"{key}\n")
+
+    os.chown(authorized_keys, int(uid), int(gid))
+
+
+def main(tree, options):
+    users = options["users"]
+
+    for name, user_options in users.items():
+        uid = user_options.get("uid")
+        gid = user_options.get("gid")
+        groups = user_options.get("groups")
+        description = user_options.get("description")
+        home = user_options.get("home")
+        shell = user_options.get("shell")
+        password = user_options.get("password")
+
+        passwd = getpwnam(tree, name)
+        if passwd:
+            if uid:
+                print(f"Error: can't set uid of existing user '{name}'")
+                return 1
+            usermod(tree, name, gid, groups, description, home, shell, password)
+        else:
+            useradd(tree, name, uid, gid, groups, description, home, shell, password)
+
+        key = user_options.get("key")  # Public SSH key
+        if key:
+            add_ssh_key(tree, name, key)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
