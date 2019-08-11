@@ -188,7 +188,7 @@ class ObjectStore:
             try:
                 os.rename(tree, output_tree)
             except OSError as e:
-                if e.errno == errno.EEXIST:
+                if e.errno == errno.ENOTEMPTY:
                     pass # tree with the same content hash already exist, use that
                 else:
                     raise
