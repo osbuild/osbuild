@@ -49,6 +49,7 @@ def main(tree, options):
         "--setopt", "install_weak_deps=False",
         "--releasever", releasever,
         "--rpmverbosity", verbosity,
+        "--disableplugin=generate_completion_cache", # supress error that completion db can't be opened
         "--config", "/tmp/dnf.conf",
         operation
     ] + packages
