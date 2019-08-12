@@ -434,13 +434,22 @@ class Pipeline:
         with self.get_buildtree(object_store) as build_tree:
             if self.stages:
                 if not object_store.has_tree(self.get_id()):
+                    # Find the last stage that already exists in the object store, and use
+                    # that as the base.
+                    base = self.base
+                    base_idx = -1
+                    for i in range(len(self.stages) - 1, 0, -1):
+                        if object_store.has_tree(self.stages[i].id):
+                            base = self.stages[i].id
+                            base_idx = i
+                            break
                     # The tree does not exist. Create it and save it to the object store. If
                     # two run() calls race each-other, two trees may be generated, and it
                     # is nondeterministic which of them will end up referenced by the tree_id
                     # in the content store. However, we guarantee that all tree_id's and all
                     # generated trees remain valid.
-                    with object_store.new_tree(self.get_id(), base_id=self.base) as tree:
-                        for stage in self.stages:
+                    with object_store.new_tree(self.get_id(), base_id=base) as tree:
+                        for stage in self.stages[base_idx + 1:]:
                             r = stage.run(tree,
                                           build_tree,
                                           interactive=interactive,
