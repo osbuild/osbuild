@@ -32,9 +32,9 @@ def main(tree, options):
     script = f"""
         set -e
         mkdir -p {tree}/dev {tree}/sys {tree}/proc
-        mount -t devtmpfs none {tree}/dev
-        mount -t sysfs none {tree}/sys
-        mount -t proc none {tree}/proc
+        mount -o bind /dev {tree}/dev
+        mount -o bind /sys {tree}/sys
+        mount -o bind /proc {tree}/proc
     """
     returncode = subprocess.run(["/bin/sh", "-c", script]).returncode
 
