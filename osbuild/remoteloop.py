@@ -5,7 +5,7 @@ import json
 import os
 import socket
 import threading
-import osbuild.loop as loop
+from . import loop
 
 
 __all__ = [
