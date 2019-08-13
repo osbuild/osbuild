@@ -276,7 +276,7 @@ def print_header(title, options):
 
 
 class Stage:
-    def __init__(self, name, base, build, options):
+    def __init__(self, name, build, base, options):
         m = hashlib.sha256()
         m.update(json.dumps(name, sort_keys=True).encode())
         m.update(json.dumps(build, sort_keys=True).encode())
