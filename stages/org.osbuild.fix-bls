@@ -1,0 +1,33 @@
+#!/usr/bin/python3
+
+import glob
+import json
+import re
+import sys
+
+
+def main(tree, _options):
+    """Fix broken paths in /boot/loader/entries.
+
+    grub2-mkrelpath uses /proc/self/mountinfo to find the source of the file
+    system it is installed to. This breaks in a container, because we
+    bind-mount the tree from the host.
+    """
+
+    path_re = re.compile(r"(/.*)+/boot")
+
+    for name in glob.glob(f"{tree}/boot/loader/entries/*.conf"):
+        with open(name) as f:
+            entry = f.read().splitlines(keepends=True)
+
+        with open(name, "w") as f:
+            for line in entry:
+                f.write(path_re.sub("/boot", line))
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
