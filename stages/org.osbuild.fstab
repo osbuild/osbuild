@@ -1,0 +1,25 @@
+#!/usr/bin/python3
+
+import json
+import sys
+
+
+def main(tree, options):
+    filesystems = options["filesystems"]
+
+    with open(f"{tree}/etc/fstab", "w") as f:
+        for filesystem in filesystems:
+            uuid = filesystem["uuid"]
+            path = filesystem["path"]
+            vfs_type = filesystem.get("vfs_type", "none")
+            options = filesystem.get("options", "defaults")
+            freq = filesystem.get("freq", "0")
+            passno = filesystem.get("passno", "0")
+
+            f.write(f"UUID={uuid}\t{path}\t{vfs_type}\t{options}\t{freq}\t{passno}\n")
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
