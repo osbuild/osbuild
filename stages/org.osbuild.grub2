@@ -20,7 +20,7 @@ def main(tree, options):
         env.write("# GRUB Environment Block\n"
                   f"GRUB2_ROOT_FS_UUID={root_fs_uuid}\n"
                   f"GRUB2_BOOT_FS_UUID={root_fs_uuid}\n"
-                  f"kernelopts=root=UUID={root_fs_uuid} rw {kernel_opts}\n")
+                  f"kernelopts=root=UUID={root_fs_uuid} {kernel_opts}\n")
     with open(f"{tree}/boot/grub2/grub.cfg", "w") as cfg:
         cfg.write("set timeout=0\n"
                   "load_env\n"
