@@ -10,6 +10,7 @@ def main(tree, options):
     packages = options["packages"]
     releasever = options["releasever"]
     operation = options.get("operation", "install")
+    weak_deps = options.get("install_weak_deps", True)
 
     with open("/tmp/dnf.conf", "w") as conf:
         for repoid, repo in repos.items():
@@ -45,7 +46,7 @@ def main(tree, options):
         "dnf", "-yv",
         "--installroot", tree,
         "--setopt", "reposdir=",
-        "--setopt", "install_weak_deps=False",
+        "--setopt", f"install_weak_deps={weak_deps}",
         "--releasever", releasever,
         "--disableplugin=generate_completion_cache", # supress error that completion db can't be opened
         "--config", "/tmp/dnf.conf",
