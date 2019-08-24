@@ -5,6 +5,7 @@
       "name": "org.osbuild.dnf",
       "options": {
         "releasever": "30",
+        "install_weak_deps": true,
         "repos": {
           "fedora": {
             "name": "Fedora",
@@ -14,8 +15,14 @@
         },
         "packages": [
           "@Core",
+          "chrony",
+          "kernel",
           "selinux-policy-targeted",
-          "grub2-pc"
+          "grub2-pc",
+          "spice-vdagent",
+          "qemu-guest-agent",
+          "xen-libs",
+          "langpacks-en"
         ]
       }
     },
