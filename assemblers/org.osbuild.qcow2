@@ -71,13 +71,15 @@ def main(tree, output_dir, options, loop_client):
 
         # Populate the first partition of the image with an ext4 fs and fill it with the contents of the
         # tree we are operating on.
-        subprocess.run(["mkfs.ext4", "-d", tree, "-U", root_fs_uuid, "-E", f"offset={partition_offset}", image,
+        subprocess.run(["mkfs.ext4", "-U", root_fs_uuid, "-E", f"offset={partition_offset}", image,
                         f"{int(partition_size / 1024)}k"], input="y", encoding='utf-8', check=True)
 
         # Mount the created image as a loopback device
         with loop_device(loop_client, image, partition_offset) as loop_block, \
             loop_device(loop_client, image, partition_size, partition_offset) as loop_part, \
             mount(loop_part, mountpoint):
+            # Copy the tree into the target image
+            subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
             # Install grub2 into the boot sector of the image, and copy the grub2 imagise into /boot/grub2
             with mount_api(mountpoint):
                 subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy",
