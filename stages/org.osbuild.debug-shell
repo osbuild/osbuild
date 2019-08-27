@@ -1,0 +1,49 @@
+#!/usr/bin/python3
+
+import json
+import os
+import sys
+
+
+def main(tree, options):
+    tty = options["tty"]
+
+    unit = f"""
+[Unit]
+Description=Early root shell on {tty} FOR DEBUGGING ONLY
+DefaultDependencies=no
+IgnoreOnIsolate=yes
+ConditionPathExists={tty}
+
+[Service]
+Environment=TERM=linux
+ExecStart=/bin/sh
+Restart=always
+RestartSec=0
+StandardInput=tty
+TTYPath={tty}
+TTYReset=yes
+TTYVHangup=yes
+KillMode=process
+IgnoreSIGPIPE=no
+# bash ignores SIGTERM
+KillSignal=SIGHUP
+
+# Unset locale for the console getty since the console has problems
+# displaying some internationalized messages.
+UnsetEnvironment=LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION
+"""
+
+    with open(f"{tree}/etc/systemd/system/osbuild-debug-shell.service", "w") as f:
+        f.write(unit)
+
+    os.symlink("../osbuild-debug-shell.service",
+               f"{tree}/etc/systemd/system/sysinit.target.wants/osbuild-debug-shell.service")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
