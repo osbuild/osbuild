@@ -54,6 +54,12 @@
       }
     },
     {
+      "name": "org.osbuild.test",
+      "options": {
+        "script": "/usr/bin/systemctl is-system-running --wait"
+      }
+    },
+    {
       "name": "org.osbuild.selinux",
       "options": {
         "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
