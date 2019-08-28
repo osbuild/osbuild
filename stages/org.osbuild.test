@@ -1,0 +1,34 @@
+#!/usr/bin/python3
+
+import json
+import os
+import sys
+
+
+def main(tree, options):
+    script = options["script"]
+
+    unit = f"""
+[Unit]
+Description=Boot Test
+Wants=dev-vport0p1.device
+After=dev-vport0p1.device
+
+[Service]
+StandardOutput=file:/dev/vport0p1
+ExecStart={script}
+ExecStopPost=/usr/bin/systemctl poweroff
+"""
+    with open(f"{tree}/etc/systemd/system/osbuild-test.service", "w") as f:
+        f.write(unit)
+
+    os.symlink("../osbuild-test.service",
+               f"{tree}/etc/systemd/system/multi-user.target.wants/osbuild-test.service")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
