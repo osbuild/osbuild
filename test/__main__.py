@@ -31,6 +31,8 @@ def test_firewall(extract_dir):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run integration tests')
     parser.add_argument('--list', dest='list', action='store_true', help='list test cases')
+    parser.add_argument('--build-pipeline', dest='build_pipeline', metavar='PIPELINE',
+                        type=os.path.abspath, help='the build pipeline to run tests in')
     parser.add_argument('--case', dest='specific_case', metavar='TEST_CASE', help='run single test case')
     args = parser.parse_args()
 
@@ -41,6 +43,7 @@ if __name__ == '__main__':
     f30_boot = IntegrationTestCase(
         name="f30-boot",
         pipeline="f30-boot.json",
+        build_pipeline=args.build_pipeline,
         output_image="f30-boot.qcow2",
         test_cases=[test_is_system_running],
         type=IntegrationTestType.BOOT_WITH_QEMU
@@ -48,6 +51,7 @@ if __name__ == '__main__':
     timezone = IntegrationTestCase(
         name="timezone",
         pipeline="timezone.json",
+        build_pipeline=args.build_pipeline,
         output_image="timezone.tar.xz",
         test_cases=[test_timezone],
         type=IntegrationTestType.EXTRACT
@@ -55,6 +59,7 @@ if __name__ == '__main__':
     firewall = IntegrationTestCase(
         name="firewall",
         pipeline="firewall.json",
+        build_pipeline=args.build_pipeline,
         output_image="firewall.tar.xz",
         test_cases=[test_firewall],
         type=IntegrationTestType.EXTRACT

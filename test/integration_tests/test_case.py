@@ -16,12 +16,13 @@ class IntegrationTestType(Enum):
 class IntegrationTestCase:
     name: str
     pipeline: str
+    build_pipeline: str
     output_image: str
     test_cases: List[Callable[[Any], None]]
     type: IntegrationTestType
 
     def run(self):
-        run_osbuild(rel_path(f"pipelines/{self.pipeline}"))
+        run_osbuild(rel_path(f"pipelines/{self.pipeline}"), self.build_pipeline)
         if self.type == IntegrationTestType.BOOT_WITH_QEMU:
             self.run_and_test()
         else:
