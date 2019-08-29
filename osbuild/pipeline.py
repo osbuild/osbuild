@@ -151,6 +151,12 @@ class Pipeline:
     def set_assembler(self, name, options=None):
         self.assembler = Assembler(name, options or {})
 
+    def prepend_build_pipeline(self, build):
+        pipeline = self
+        while pipeline.build:
+            pipeline = pipeline.build
+        pipeline.build = build
+
     def description(self):
         description = {}
         if self.build:

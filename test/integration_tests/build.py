@@ -5,8 +5,10 @@ import sys
 from .config import *
 
 
-def run_osbuild(pipeline: str, check=True):
+def run_osbuild(pipeline: str, build_pipeline: str, check=True):
     cmd = OSBUILD + ["--store", OBJECTS, "-o", OUTPUT_DIR, pipeline]
+    if build_pipeline:
+        cmd += ["--build-pipeline", build_pipeline]
     logging.info(f"Running osbuild: {cmd}")
     osbuild = subprocess.run(cmd, capture_output=True)
     if osbuild.returncode != 0:
@@ -21,5 +23,5 @@ def run_osbuild(pipeline: str, check=True):
     return osbuild.returncode
 
 
-def build_testing_image(pipeline_full_path):
-    run_osbuild(pipeline_full_path)
+def build_testing_image(pipeline_full_path, build_pipeline_full_path):
+    run_osbuild(pipeline_full_path, build_pipeline_full_path)
