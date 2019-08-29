@@ -1,5 +1,5 @@
 PACKAGE_NAME = osbuild
-VERSION = $$(rpmspec -q --qf '%{version}\n' osbuild.spec | head -1)
+VERSION = $$(python3 setup.py --version)
 
 .PHONY: sdist tarball srpm rpm copy-rpms-to-test check-working-directory vagrant-test vagrant-test-keep-running
 
@@ -9,6 +9,9 @@ sdist:
 
 tarball:
 	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > $(PACKAGE_NAME)-$(VERSION).tar.gz
+
+tarball-alternative:
+	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > $(VERSION).tar.gz
 
 srpm: $(PACKAGE_NAME).spec tarball
 	/usr/bin/rpmbuild -bs \

@@ -6,10 +6,29 @@ synced_files:
   - .packit.yaml
 upstream_project_name: osbuild
 downstream_package_name: osbuild
+create_tarball_command: ["make", "tarball"]
+current_version_command: ["python3", "setup.py", "--version"]
 jobs:
+  # trigger a COPR build for push events in open PRs
   - job: copr_build
     trigger: pull_request
     metadata:
       targets:
       - fedora-30-x86_64
       - fedora-rawhide-x86_64
+  # this is triggered by a commit on src.fedoraproject.org, not Github!
+  # e.g. in case of mass rebuild or automated changes of spec file (e.g. Python packagers)
+  # it will create a PR on Github with changes in synchronized files
+  - job: sync_from_downstream
+    trigger: commit
+  # create a PR on src.fedoraproject.org containing updated spec file and new sources (tarball)
+  # triggered by Github release
+  - job: propose_downstream
+    trigger: release
+    metadata:
+      dist-git-branch: master
+  # The same as above only for f30
+  - job: propose_downstream
+    trigger: release
+    metadata:
+      dist-git-branch: f30
