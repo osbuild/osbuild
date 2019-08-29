@@ -9,13 +9,8 @@ from test.integration_tests.config import *
 logging.basicConfig(level=logging.getLevelName(os.environ.get("TESTS_LOGLEVEL", "INFO")))
 
 
-def test_web_server_with_curl():
-    cmd = ["curl", "-s", "http://127.0.0.1:8888/index"]
-    logging.info(f"Running curl: {cmd}")
-    curl = subprocess.run(cmd, capture_output=True)
-    logging.info(f"Curl returned: code={curl.returncode}, stdout={curl.stdout.decode()}, stderr={curl.stderr.decode()}")
-    assert curl.returncode == 0
-    assert curl.stdout.decode("utf-8").strip() == "hello, world!"
+def test_is_system_running(result):
+    assert result.strip() == "running"
 
 
 def test_timezone(extract_dir):
@@ -43,11 +38,11 @@ if __name__ == '__main__':
     logging.info(f"Using {OUTPUT_DIR} for output images storage.")
     logging.info(f"Using {OSBUILD} for building images.")
 
-    web_server = IntegrationTestCase(
-        name="web-server",
-        pipeline="web-server.json",
-        output_image="web-server.qcow2",
-        test_cases=[test_web_server_with_curl],
+    f30_boot = IntegrationTestCase(
+        name="f30-boot",
+        pipeline="f30-boot.json",
+        output_image="f30-boot.qcow2",
+        test_cases=[test_is_system_running],
         type=IntegrationTestType.BOOT_WITH_QEMU
     )
     timezone = IntegrationTestCase(
@@ -65,7 +60,7 @@ if __name__ == '__main__':
         type=IntegrationTestType.EXTRACT
     )
 
-    cases = [web_server, timezone, firewall]
+    cases = [f30_boot, timezone, firewall]
 
     if args.list:
         print("Available test cases:")
