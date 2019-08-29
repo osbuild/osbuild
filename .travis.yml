@@ -21,9 +21,6 @@ jobs:
       script:
         - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
         - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
-    - name: pipeline-yum
-      before_install: sudo apt-get install -y systemd-container yum
-      script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/build-from-yum.json
-    - name: pipeline-base-from-yum
-      before_install: sudo apt-get install -y systemd-container yum
-      script: sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/base-from-yum.json
+    - name: f30-boot
+      before_install: sudo apt-get install -y systemd-container yum qemu-kvm
+      script: sudo env "PATH=$PATH" python3 -m test --case f30-boot --build-pipeline samples/build-from-yum.json
