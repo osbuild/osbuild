@@ -4,7 +4,7 @@ from typing import List, Callable, Any
 
 from . import evaluate_test, rel_path
 from .build import run_osbuild
-from .run import boot_image, extract_image
+from .run import run_image, extract_image
 
 
 class IntegrationTestType(Enum):
@@ -23,16 +23,16 @@ class IntegrationTestCase:
     def run(self):
         run_osbuild(rel_path(f"pipelines/{self.pipeline}"))
         if self.type == IntegrationTestType.BOOT_WITH_QEMU:
-            self.boot_and_run()
+            self.run_and_test()
         else:
-            self.extract_and_run()
+            self.extract_and_test()
 
-    def boot_and_run(self):
-        with boot_image(self.output_image):
-            for test in self.test_cases:
-                evaluate_test(test)
+    def run_and_test(self):
+        r = run_image(self.output_image)
+        for test in self.test_cases:
+            evaluate_test(test, r.stdout)
 
-    def extract_and_run(self):
+    def extract_and_test(self):
         with extract_image(self.output_image) as fstree:
             for test in self.test_cases:
                 evaluate_test(lambda: test(fstree), name=test.__name__)
