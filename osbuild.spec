@@ -2,14 +2,12 @@
 
 Name:           %{pypi_name}
 Version:        1
-Release:        2%{?dist}
+Release:        3%{?dist}
 License:        ASL 2.0
 
 URL:            https://github.com/osbuild/osbuild
 
-# We use /version/whatever to get the tarball because github releases use only <version>.tar.gz, but
-# packit/rpm expect <name>-<version>.tar.gz
-Source0:        https://github.com/osbuild/%{pypi_name}/archive/%{version}/%{name}-%{version}.tar.gz
+Source0:        https://github.com/osbuild/%{pypi_name}/archive/%{version}.tar.gz
 BuildArch:      noarch
 Summary:        A build system for OS images
 
@@ -41,7 +39,7 @@ Summary:        %{summary}
 A build system for OS images
 
 %prep
-%autosetup
+%autosetup -n %{name}-%{version}
 
 %build
 %py3_build
@@ -74,6 +72,9 @@ exit 0
 %{python3_sitelib}/%{pypi_name}/
 
 %changelog
+* Mon Aug 19 2019 Miro Hrončok <mhroncok@redhat.com> - 1-3
+- Rebuilt for Python 3.8
+
 * Mon Jul 29 2019 Martin Sehnoutka <msehnout@redhat.com> - 1-2
 - update upstream URL to the new Github organization
 
