@@ -8,9 +8,6 @@ sdist:
 	find `pwd`/dist -name '*.tar.gz' -printf '%f\n' -exec mv {} . \;
 
 tarball:
-	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > $(PACKAGE_NAME)-$(VERSION).tar.gz
-
-tarball-alternative:
 	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > $(VERSION).tar.gz
 
 srpm: $(PACKAGE_NAME).spec tarball
