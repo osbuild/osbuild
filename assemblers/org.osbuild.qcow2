@@ -2,20 +2,11 @@
 
 import contextlib
 import json
-import math
 import os
 import socket
 import subprocess
 import sys
 import osbuild.remoteloop as remoteloop
-
-def tree_size(tree):
-    size = 0
-    for root, dirs, files in os.walk(tree):
-        for entry in files + dirs:
-            path = os.path.join(root, entry)
-            size += os.stat(path, follow_symlinks=False).st_size
-    return size
 
 @contextlib.contextmanager
 def mount(source, dest, *options):
@@ -48,12 +39,16 @@ def loop_device(loop_client, image, size, offset=0):
 def main(tree, output_dir, options, loop_client):
     filename = options["filename"]
     root_fs_uuid = options["root_fs_uuid"]
+    size = options["size"]
+
+    # sfdisk works on sectors of 512 bytes and ignores excess space - be explicit about this
+    if size % 512 != 0:
+        raise ValueError("`size` must be a multiple of sector size (512)")
 
     image = f"/tmp/osbuild-image.raw"
     mountpoint = f"/tmp/osbuild-mnt"
 
-    # Create an empty image file of the right size
-    size = int(math.ceil(tree_size(tree) * 1.2 / 512) * 512)
+    # Create an empty image file
     subprocess.run(["truncate", "--size", str(size), image], check=True)
 
     # Set up the partition table of the image

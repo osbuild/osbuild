@@ -42,10 +42,11 @@ assembles it into an image. Pipelines are defined as JSON files like this one:
     }
   ],
   "assembler": {
-    "name": "io.weldr.qcow2",
+    "name": "org.osbuild.qcow2",
     "options": {
       "filename": "example.qcow2",
-      "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac"
+      "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+      "size": 3221225472
     }
   }
 }
