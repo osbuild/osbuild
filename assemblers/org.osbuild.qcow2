@@ -7,7 +7,6 @@ import os
 import socket
 import subprocess
 import sys
-import tempfile
 import osbuild.remoteloop as remoteloop
 
 def tree_size(tree):
@@ -50,42 +49,39 @@ def main(tree, output_dir, options, loop_client):
     filename = options["filename"]
     root_fs_uuid = options["root_fs_uuid"]
 
-    # Create a working directory on a tmpfs, maybe we should implicitly
-    # always do this.
-    with tempfile.TemporaryDirectory() as workdir:
-        image = f"{workdir}/image.raw"
-        mountpoint = f"{workdir}/mnt"
+    image = f"/tmp/osbuild-image.raw"
+    mountpoint = f"/tmp/osbuild-mnt"
 
-        # Create an empty image file of the right size
-        size = int(math.ceil(tree_size(tree) * 1.2 / 512) * 512)
-        subprocess.run(["truncate", "--size", str(size), image], check=True)
+    # Create an empty image file of the right size
+    size = int(math.ceil(tree_size(tree) * 1.2 / 512) * 512)
+    subprocess.run(["truncate", "--size", str(size), image], check=True)
 
-        # Set up the partition table of the image
-        partition_table = "label: mbr\nbootable, type=83"
-        subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
-        r = subprocess.run(["sfdisk", "--json", image], stdout=subprocess.PIPE, encoding='utf-8', check=True)
-        partition_table = json.loads(r.stdout)
-        partition = partition_table["partitiontable"]["partitions"][0]
-        partition_offset = partition["start"] * 512
-        partition_size = partition["size"] * 512
+    # Set up the partition table of the image
+    partition_table = "label: mbr\nbootable, type=83"
+    subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
+    r = subprocess.run(["sfdisk", "--json", image], stdout=subprocess.PIPE, encoding='utf-8', check=True)
+    partition_table = json.loads(r.stdout)
+    partition = partition_table["partitiontable"]["partitions"][0]
+    partition_offset = partition["start"] * 512
+    partition_size = partition["size"] * 512
 
-        # Populate the first partition of the image with an ext4 fs and fill it with the contents of the
-        # tree we are operating on.
-        subprocess.run(["mkfs.ext4", "-U", root_fs_uuid, "-E", f"offset={partition_offset}", image,
-                        f"{int(partition_size / 1024)}k"], input="y", encoding='utf-8', check=True)
+    # Populate the first partition of the image with an ext4 fs and fill it with the contents of the
+    # tree we are operating on.
+    subprocess.run(["mkfs.ext4", "-U", root_fs_uuid, "-E", f"offset={partition_offset}", image,
+                    f"{int(partition_size / 1024)}k"], input="y", encoding='utf-8', check=True)
 
-        # Mount the created image as a loopback device
-        with loop_device(loop_client, image, partition_offset) as loop_block, \
-            loop_device(loop_client, image, partition_size, partition_offset) as loop_part, \
-            mount(loop_part, mountpoint):
-            # Copy the tree into the target image
-            subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
-            # Install grub2 into the boot sector of the image, and copy the grub2 imagise into /boot/grub2
-            with mount_api(mountpoint):
-                subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy",
-                                "--modules=part_msdos", "--target=i386-pc", loop_block], check=True)
+    # Mount the created image as a loopback device
+    with loop_device(loop_client, image, partition_offset) as loop_block, \
+        loop_device(loop_client, image, partition_size, partition_offset) as loop_part, \
+        mount(loop_part, mountpoint):
+        # Copy the tree into the target image
+        subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
+        # Install grub2 into the boot sector of the image, and copy the grub2 imagise into /boot/grub2
+        with mount_api(mountpoint):
+            subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy",
+                            "--modules=part_msdos", "--target=i386-pc", loop_block], check=True)
 
-        subprocess.run(["qemu-img", "convert", "-O", "qcow2", "-c", image, f"{output_dir}/{filename}"], check=True)
+    subprocess.run(["qemu-img", "convert", "-O", "qcow2", "-c", image, f"{output_dir}/{filename}"], check=True)
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
