@@ -4,6 +4,7 @@ import contextlib
 import json
 import os
 import socket
+import shutil
 import subprocess
 import sys
 import osbuild.remoteloop as remoteloop
@@ -16,14 +17,6 @@ def mount(source, dest, *options):
         yield
     finally:
         subprocess.run(["umount", "-R", dest], check=True)
-
-@contextlib.contextmanager
-def mount_api(dest):
-    with mount("/dev", f"{dest}/dev", "-o", "rbind"), \
-         mount("/proc", f"{dest}/proc", "-o", "rbind"), \
-         mount("/sys", f"{dest}/sys", "-o", "rbind"), \
-         mount("none", f"{dest}/run", "-t", "tmpfs"):
-        yield
 
 @contextlib.contextmanager
 def loop_device(loop_client, image, size, offset=0):
@@ -51,6 +44,8 @@ def main(tree, output_dir, options, loop_client):
         raise ValueError("`format` must be one of raw, qcow, vdi, vmdk")
 
     image = f"/var/tmp/osbuild-image.raw"
+    grub2_core = "/var/tmp/grub2-core.img"
+    grub2_load = "/var/tmp/grub2-load.cfg"
     mountpoint = f"/tmp/osbuild-mnt"
 
     # Create an empty image file
@@ -59,27 +54,58 @@ def main(tree, output_dir, options, loop_client):
     # Set up the partition table of the image
     partition_table = f"label: mbr\nlabel-id: {ptuuid}\nbootable, type=83"
     subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
+
     r = subprocess.run(["sfdisk", "--json", image], stdout=subprocess.PIPE, encoding='utf-8', check=True)
     partition_table = json.loads(r.stdout)
     partition = partition_table["partitiontable"]["partitions"][0]
     partition_offset = partition["start"] * 512
     partition_size = partition["size"] * 512
 
-    # Populate the first partition of the image with an ext4 fs and fill it with the contents of the
-    # tree we are operating on.
+    with open(grub2_load, "w") as load:
+        load.write(f"search.fs_uuid {root_fs_uuid} root \n"
+                   "set prefix=($root)'/boot/grub2'\n")
+
+    # Create the level-2 bootloader
+    # The purpose of this is to find the grub modules and configuration
+    # to be able to start the level-3 bootloader. It contains the modules
+    # necessary to do this, but nothing else.
+    subprocess.run(["grub2-mkimage",
+                    "--verbose",
+                    "--directory", "/usr/lib/grub/i386-pc",
+                    "--prefix", "/boot/grub2",
+                    "--format", "i386-pc",
+                    "--compression", "auto",
+                    "--config", grub2_load,
+                    "--output", grub2_core,
+                    "part_msdos", "ext2", "biosdisk", "search_fs_uuid"],
+                   check=True)
+
+    assert os.path.getsize(grub2_core) < partition_offset - 512
+
+    with open(image, "rb+") as image_f:
+        # Install the level-1 bootloader into the start of the MBR
+        # The purpose of this is simply to jump into the level-2 bootloader.
+        with open("/usr/lib/grub/i386-pc/boot.img", "rb") as boot_f:
+            # The boot.img file is 512 bytes, but we must only copy the first 440
+            # bytes, as these contain the bootstrapping code. The rest of the
+            # first sector contains the partition table, and must not be
+            # overwritten.
+            image_f.write(boot_f.read(440))
+
+        # Install the level-2 bootloader into the space after the MBR, before
+        # the first partition.
+        with open(grub2_core, "rb") as core_f:
+            image_f.seek(512)
+            shutil.copyfileobj(core_f, image_f)
+
+    # Populate the first partition of the image with an ext4 fs
     subprocess.run(["mkfs.ext4", "-U", root_fs_uuid, "-E", f"offset={partition_offset}", image,
                     f"{int(partition_size / 1024)}k"], input="y", encoding='utf-8', check=True)
 
-    # Mount the created image as a loopback device
-    with loop_device(loop_client, image, partition_offset) as loop_block, \
-        loop_device(loop_client, image, partition_size, partition_offset) as loop_part, \
-        mount(loop_part, mountpoint):
-        # Copy the tree into the target image
+    # Copy the tree into the target image
+    with loop_device(loop_client, image, partition_size, partition_offset) as loop, \
+        mount(loop, mountpoint):
         subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
-        # Install grub2 into the boot sector of the image, and copy the grub2 imagise into /boot/grub2
-        with mount_api(mountpoint):
-            subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy",
-                            "--modules=part_msdos", "--target=i386-pc", loop_block], check=True)
 
     subprocess.run(["qemu-img", "convert", "-O", fmt, "-c", image, f"{output_dir}/{filename}"], check=True)
 
