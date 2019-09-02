@@ -2,6 +2,7 @@
 
 import json
 import os
+import shutil
 import sys
 
 
@@ -30,6 +31,20 @@ def main(tree, options):
                   "  insmod all_video\n"
                   "}\n"
                   "blscfg\n")
+
+    # Copy all modules from the build image to /boot
+    os.makedirs(f"{tree}/boot/grub2/i386-pc", exist_ok=True)
+    for dirent in os.scandir("/usr/lib/grub/i386-pc"):
+        (_, ext) = os.path.splitext(dirent.name)
+        if ext not in ('.mod', '.lst'):
+            continue
+        if dirent.name == "fdt.lst":
+            continue
+        shutil.copy2(f"/usr/lib/grub/i386-pc/{dirent.name}", f"{tree}/boot/grub2/i386-pc/")
+
+    # Copy a unicode font into /boot
+    os.makedirs(f"{tree}/boot/grub2/fonts", exist_ok=True)
+    shutil.copy2("/usr/share/grub/unicode.pf2", f"{tree}/boot/grub2/fonts/")
 
     return 0
 

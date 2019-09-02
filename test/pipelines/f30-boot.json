@@ -17,6 +17,7 @@
           "packages": [
             "dnf",
             "e2fsprogs",
+            "grub2-pc",
             "policycoreutils",
             "qemu-img",
             "systemd"
@@ -49,6 +50,9 @@
           "qemu-guest-agent",
           "xen-libs",
           "langpacks-en"
+        ],
+        "exclude-packages": [
+          "dracut-config-rescue"
         ]
       }
     },
