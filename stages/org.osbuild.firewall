@@ -7,11 +7,11 @@ import sys
 
 def main(tree, options):
     # Takes a list of <port|application protocol>:<transport protocol> pairs
-    ports = options["ports"]
+    ports = options.get("ports", [])
     # These must be defined for firewalld. It has a set of pre-defined services here: /usr/lib/firewalld/services/, but
     # you can also define you own XML files in /etc/firewalld.
-    enabled_services = options["enabled_services"]
-    disabled_services = options["disabled_services"]
+    enabled_services = options.get("enabled_services", [])
+    disabled_services = options.get("disabled_services", [])
 
     # firewall-offline-cmd does not implement --root option so we must chroot it
     subprocess.run(["chroot",
