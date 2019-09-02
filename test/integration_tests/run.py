@@ -35,7 +35,8 @@ def run_image(file_name: str):
 @contextlib.contextmanager
 def extract_image(file_name: str):
     extract_dir = tempfile.mkdtemp(prefix="osbuild-")
-    subprocess.run(["tar", "xf", f"{OUTPUT_DIR}/{file_name}"], cwd=extract_dir, check=True)
+    CWD = os.getcwd()
+    subprocess.run(["tar", "xf", f"{CWD}/{OUTPUT_DIR}/{file_name}"], cwd=extract_dir, check=True)
     try:
         yield extract_dir
     finally:
