@@ -200,7 +200,7 @@ class Pipeline:
                     # that as the base.
                     base = None
                     base_idx = -1
-                    for i in range(len(self.stages) - 1, 0, -1):
+                    for i in reversed(range(len(self.stages))):
                         if object_store.has_tree(self.stages[i].id):
                             base = self.stages[i].id
                             base_idx = i
