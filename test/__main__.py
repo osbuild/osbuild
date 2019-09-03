@@ -2,6 +2,7 @@ import argparse
 import logging
 import subprocess
 
+from test.integration_tests import print_results_again
 from test.integration_tests.test_case import IntegrationTestCase, IntegrationTestType
 from test.integration_tests.config import *
 
@@ -91,7 +92,10 @@ if __name__ == '__main__':
         if not args.specific_case:
             for case in cases:
                 case.run()
+
+            print_results_again()
         else:
             for case in cases:
                 if case.name == args.specific_case:
                     case.run()
+
