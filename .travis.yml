@@ -21,6 +21,15 @@ jobs:
       script:
         - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
         - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
-    - name: run-all-tests
+    - name: f30-boot
       before_install: sudo apt-get install -y systemd-container yum qemu-kvm curl tar
-      script: sudo env "PATH=$PATH" python3 -m test --build-pipeline samples/build-from-yum.json
+      script: sudo env "PATH=$PATH" python3 -m test --case f30-boot --build-pipeline samples/build-from-yum.json
+    - name: web-server
+      before_install: sudo apt-get install -y systemd-container yum qemu-kvm curl tar
+      script: sudo env "PATH=$PATH" python3 -m test --case web-server --build-pipeline samples/build-from-yum.json
+    - name: timezone
+      before_install: sudo apt-get install -y systemd-container yum qemu-kvm curl tar xz-utils
+      script: sudo env "PATH=$PATH" python3 -m test --case timezone --build-pipeline samples/build-from-yum.json
+    - name: firewall
+      before_install: sudo apt-get install -y systemd-container yum qemu-kvm curl tar xz-utils
+      script: sudo env "PATH=$PATH" python3 -m test --case firewall --build-pipeline samples/build-from-yum.json
