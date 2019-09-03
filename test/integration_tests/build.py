@@ -10,7 +10,7 @@ def run_osbuild(pipeline: str, build_pipeline: str, check=True):
     if build_pipeline:
         cmd += ["--build-pipeline", build_pipeline]
     logging.info(f"Running osbuild: {cmd}")
-    osbuild = subprocess.run(cmd, capture_output=True)
+    osbuild = subprocess.run(cmd, capture_output=False)
     if osbuild.returncode != 0:
         logging.error(f"{RED}osbuild failed!{RESET}")
         print(f"{BOLD}STDERR{RESET}")
