@@ -45,7 +45,7 @@ def main(tree, output_dir, options, loop_client):
     if size % 512 != 0:
         raise ValueError("`size` must be a multiple of sector size (512)")
 
-    image = f"/tmp/osbuild-image.raw"
+    image = f"/var/tmp/osbuild-image.raw"
     mountpoint = f"/tmp/osbuild-mnt"
 
     # Create an empty image file
