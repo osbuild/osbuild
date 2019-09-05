@@ -16,7 +16,13 @@ class BuildRoot:
     def __init__(self, root, path="/run/osbuild"):
         self.root = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
         self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
+        self.var = tempfile.mkdtemp(prefix="osbuild-var-", dir="/var/tmp")
         self.mounts = []
+
+        self.mount_root(root)
+        self.mount_var()
+
+    def mount_root(self, root):
         for p in ["usr", "bin", "sbin", "lib", "lib64"]:
             source = os.path.join(root, p)
             target = os.path.join(self.root, p)
@@ -30,6 +36,16 @@ class BuildRoot:
                 raise
             self.mounts.append(target)
 
+    def mount_var(self):
+        target = os.path.join(self.root, "var")
+        os.mkdir(target)
+        try:
+            subprocess.run(["mount", "-o", "bind", self.var, target], check=True)
+        except subprocess.CalledProcessError:
+            self.unmount()
+            raise
+        self.mounts.append(target)
+
     def unmount(self):
         for path in self.mounts:
             subprocess.run(["umount", "--lazy", path], check=True)
@@ -41,6 +57,9 @@ class BuildRoot:
         if self.api:
             shutil.rmtree(self.api)
             self.api = None
+        if self.var:
+            shutil.rmtree(self.var)
+            self.var = None
 
     def run(self, argv, binds=None, readonly_binds=None, **kwargs):
         """Runs a command in the buildroot.
