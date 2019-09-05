@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--build-pipeline", metavar="PIPELINE", type=os.path.abspath,
                         help="json file containing the pipeline to create a build environment")
     parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
-                        default=".osbuild/store",
+                        default=".osbuild",
                         help="the directory where intermediary os trees are stored")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
                         help="the directory containing stages, assemblers, and the osbuild library")
