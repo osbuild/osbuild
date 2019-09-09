@@ -4,6 +4,8 @@
 __pycache__
 
 /.osbuild
+/.osbuild-test
 /output
+/output-test
 
 /test/.vagrant
