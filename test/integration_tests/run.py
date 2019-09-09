@@ -1,7 +1,7 @@
 import contextlib
 import logging
 import subprocess
-import time
+from os import path
 
 from .config import *
 
@@ -19,7 +19,8 @@ def run_image(file_name: str):
 @contextlib.contextmanager
 def extract_image(file_name: str):
     extract_dir = tempfile.mkdtemp(prefix="osbuild-")
-    subprocess.run(["tar", "xf", f"{OUTPUT_DIR}/{file_name}"], cwd=extract_dir, check=True)
+    archive = path.join(os.getcwd(), OUTPUT_DIR, file_name)
+    subprocess.run(["tar", "xf", archive], cwd=extract_dir, check=True)
     try:
         yield extract_dir
     finally:
