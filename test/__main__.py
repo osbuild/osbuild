@@ -28,6 +28,12 @@ def test_firewall(extract_dir):
         assert 'port port="88" protocol="udp"' in content
 
 
+def test_locale(extract_dir):
+    with open(f"{extract_dir}/etc/locale.conf") as f:
+        content = f.read()
+        assert 'LANG=nn_NO.utf8' in content
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run integration tests')
     parser.add_argument('--list', dest='list', action='store_true', help='list test cases')
@@ -64,8 +70,16 @@ if __name__ == '__main__':
         test_cases=[test_firewall],
         type=IntegrationTestType.EXTRACT
     )
+    locale = IntegrationTestCase(
+        name="locale",
+        pipeline="locale.json",
+        build_pipeline=args.build_pipeline,
+        output_image="locale.tar.xz",
+        test_cases=[test_locale],
+        type=IntegrationTestType.EXTRACT
+    )
 
-    cases = [f30_boot, timezone, firewall]
+    cases = [f30_boot, timezone, firewall, locale]
 
     if args.list:
         print("Available test cases:")
