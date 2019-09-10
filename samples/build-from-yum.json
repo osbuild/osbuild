@@ -14,7 +14,8 @@
         },
         "packages": [
           "dnf",
-          "systemd"
+          "systemd",
+          "tar"
         ]
       }
     }
