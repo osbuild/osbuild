@@ -7,13 +7,18 @@ import sys
 
 def main(tree, output_dir, options):
     filename = options["filename"]
-    compression = options["compression"]
+    compression = options.get("compression")
 
-    if compression not in {"bzip2", "xz", "lzip", "lzma", "lzop", "gzip"}:
-        return 1
+    command = ["tar", "-cf", f"{output_dir}/{filename}", "-C", tree]
 
-    subprocess.run(["tar", f"--{compression}", "-cf", f"{output_dir}/{filename}", "-C", tree, "."],
-                   stdout=subprocess.DEVNULL, check=True)
+    if compression is not None:
+        if compression not in {"bzip2", "xz", "lzip", "lzma", "lzop", "gzip"}:
+            return 1
+        command.append(f"--{compression}")
+
+    command.append(".")
+
+    subprocess.run(command, stdout=subprocess.DEVNULL, check=True)
     return 0
 
 
