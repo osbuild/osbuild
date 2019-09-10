@@ -24,3 +24,12 @@ jobs:
     - name: f30-boot
       before_install: sudo apt-get install -y systemd-container yum qemu-kvm
       script: sudo env "PATH=$PATH" python3 -m test --case f30-boot --build-pipeline samples/build-from-yum.json
+    - name: timezone
+      before_install: sudo apt-get install -y systemd-container yum tar
+      script: sudo env "PATH=$PATH" python3 -m test --case timezone --build-pipeline samples/build-from-yum.json
+    - name: firewall
+      before_install: sudo apt-get install -y systemd-container yum tar
+      script: sudo env "PATH=$PATH" python3 -m test --case firewall --build-pipeline samples/build-from-yum.json  
+    - name: locale
+      before_install: sudo apt-get install -y systemd-container yum tar
+      script: sudo env "PATH=$PATH" python3 -m test --case locale --build-pipeline samples/build-from-yum.json  
