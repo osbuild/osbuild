@@ -58,7 +58,7 @@ if __name__ == '__main__':
         name="timezone",
         pipeline="timezone.json",
         build_pipeline=args.build_pipeline,
-        output_image="timezone.tar.xz",
+        output_image="timezone.tar",
         test_cases=[test_timezone],
         type=IntegrationTestType.EXTRACT
     )
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         name="firewall",
         pipeline="firewall.json",
         build_pipeline=args.build_pipeline,
-        output_image="firewall.tar.xz",
+        output_image="firewall.tar",
         test_cases=[test_firewall],
         type=IntegrationTestType.EXTRACT
     )
@@ -74,7 +74,7 @@ if __name__ == '__main__':
         name="locale",
         pipeline="locale.json",
         build_pipeline=args.build_pipeline,
-        output_image="locale.tar.xz",
+        output_image="locale.tar",
         test_cases=[test_locale],
         type=IntegrationTestType.EXTRACT
     )
