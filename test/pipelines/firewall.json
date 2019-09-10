@@ -27,8 +27,7 @@
   "assembler": {
     "name": "org.osbuild.tar",
     "options": {
-      "filename": "firewall.tar.xz",
-      "compression": "xz"
+      "filename": "firewall.tar"
     }
   }
 }
