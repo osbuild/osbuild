@@ -22,8 +22,11 @@ jobs:
         - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
         - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --output . samples/noop.json
     - name: f30-boot
-      before_install: sudo apt-get install -y systemd-container yum qemu-kvm
-      script: sudo env "PATH=$PATH" python3 -m test --case f30-boot --build-pipeline samples/build-from-yum.json
+      before_install: sudo apt-get install -y systemd-container yum qemu-kvm qemu-utils
+      script:
+        - sudo modprobe nbd
+        - sudo env "PATH=$PATH" python3 -m test --case f30-boot --build-pipeline samples/build-from-yum.json
+        - sudo env "PATH=$PATH" python3 -m tree-compare output-test/f30-boot.qcow2
     - name: timezone
       before_install: sudo apt-get install -y systemd-container yum tar
       script: sudo env "PATH=$PATH" python3 -m test --case timezone --build-pipeline samples/build-from-yum.json
