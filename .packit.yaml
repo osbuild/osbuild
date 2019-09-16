@@ -6,8 +6,6 @@ synced_files:
   - .packit.yaml
 upstream_project_name: osbuild
 downstream_package_name: osbuild
-create_tarball_command: ["make", "tarball"]
-current_version_command: ["python3", "setup.py", "--version"]
 jobs:
   # trigger a COPR build for push events in open PRs
   - job: copr_build
