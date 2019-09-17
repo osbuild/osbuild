@@ -1,8 +1,8 @@
 %global         pypi_name osbuild
 
 Name:           %{pypi_name}
-Version:        1
-Release:        3%{?dist}
+Version:	2
+Release:	1%{?dist}
 License:        ASL 2.0
 
 URL:            https://github.com/osbuild/osbuild
