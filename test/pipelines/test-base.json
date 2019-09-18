@@ -1,0 +1,55 @@
+{
+  "name": "test-base",
+  "build": {
+    "name": "f30-build",
+    "stages": [
+      {
+        "name": "org.osbuild.dnf",
+        "options": {
+          "releasever": "30",
+          "install_weak_deps": false,
+          "repos": {
+            "fedora": {
+              "name": "Fedora",
+              "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
+              "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
+            }
+          },
+          "packages": [
+            "dnf",
+            "e2fsprogs",
+            "policycoreutils",
+            "qemu-img",
+            "systemd"
+          ]
+        }
+      }
+    ]
+  },
+  "stages": [
+    {
+      "name": "org.osbuild.dnf",
+      "options": {
+        "releasever": "30",
+        "install_weak_deps": true,
+        "repos": {
+          "fedora": {
+            "name": "Fedora",
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
+            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
+          }
+        },
+        "packages": [
+          "@Core",
+          "selinux-policy-targeted"
+        ]
+      }
+    },
+    {
+      "name": "org.osbuild.selinux",
+      "options": {
+        "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+      }
+    }
+  ]
+}

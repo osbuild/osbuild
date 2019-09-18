@@ -29,7 +29,12 @@ jobs:
       script: sudo env "PATH=$PATH" python3 -m test --case timezone --build-pipeline samples/build-from-yum.json
     - name: firewall
       before_install: sudo apt-get install -y systemd-container yum tar
-      script: sudo env "PATH=$PATH" python3 -m test --case firewall --build-pipeline samples/build-from-yum.json  
+      script: sudo env "PATH=$PATH" python3 -m test --case firewall --build-pipeline samples/build-from-yum.json
     - name: locale
       before_install: sudo apt-get install -y systemd-container yum tar
-      script: sudo env "PATH=$PATH" python3 -m test --case locale --build-pipeline samples/build-from-yum.json  
+      script: sudo env "PATH=$PATH" python3 -m test --case locale --build-pipeline samples/build-from-yum.json
+    - name: tree-diff-tests
+      before_install:
+        - sudo apt-get install -y systemd-container yum qemu-utils
+        - sudo modprobe nbd
+      script: sudo env "PATH=$PATH" python3 -m test --case "treediff/.*" --build-pipeline samples/build-from-yum.json
