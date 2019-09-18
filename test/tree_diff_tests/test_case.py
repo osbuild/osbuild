@@ -24,5 +24,7 @@ class TreeDiffTestCase:
 
         with self.trees[0].mount() as a_tree, self.trees[1].mount() as b_tree:
             tree_diff = compare_trees(a_tree, b_tree)
+            # debug only, delete before PR merge!!!
+            print(tree_diff)
             for test in self.test_cases:
                 evaluate_test(lambda: test(tree_diff))
