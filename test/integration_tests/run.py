@@ -3,7 +3,7 @@ import logging
 import subprocess
 from os import path
 
-from .config import *
+from test.constants import *
 
 
 def run_image(file_name: str):

@@ -2,7 +2,7 @@ import logging
 import subprocess
 import sys
 
-from .config import *
+from .constants import *
 
 
 def run_osbuild(pipeline: str, build_pipeline: str, check=True):

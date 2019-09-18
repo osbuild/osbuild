@@ -2,8 +2,8 @@ import argparse
 import logging
 import re
 
-from test.integration_tests.test_case import IntegrationTestCase, IntegrationTestType
-from test.integration_tests.config import *
+from .integration_tests.test_case import IntegrationTestCase, IntegrationTestType
+from .constants import *
 
 logging.basicConfig(level=logging.getLevelName(os.environ.get("TESTS_LOGLEVEL", "INFO")))
 

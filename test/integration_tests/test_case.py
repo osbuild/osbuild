@@ -1,9 +1,10 @@
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Callable, Any
 
-from . import evaluate_test, rel_path
-from .build import run_osbuild
+from test import evaluate_test, rel_path
+from test.build import run_osbuild
 from .run import run_image, extract_image
 
 
@@ -22,6 +23,7 @@ class IntegrationTestCase:
     type: IntegrationTestType
 
     def run(self):
+        logging.info(f"Running integration test {self.name}")
         run_osbuild(rel_path(f"pipelines/{self.pipeline}"), self.build_pipeline)
         if self.type == IntegrationTestType.BOOT_WITH_QEMU:
             self.run_and_test()
