@@ -77,6 +77,13 @@ def diff_aux(dir_fd1, dir_fd2, path, report):
                 stat2 = os.stat(dirent.name, dir_fd=dir_fd2, follow_symlinks=False)
             except FileNotFoundError:
                 report["deleted_files"] += [os.path.join(path, dirent.name)]
+                if dirent.is_dir(follow_symlinks=False):
+                    try:
+                        child_fd = os.open(dirent.name, os.O_DIRECTORY, dir_fd=dir_fd1)
+                    except OSError:
+                        continue
+                    list_dir(child_fd, os.path.join(path, dirent.name), report["deleted_files"])
+                    os.close(child_fd)
                 continue
             entries1.add(dirent.name)
             stat1 = dirent.stat(follow_symlinks=False)
@@ -120,6 +127,13 @@ def diff_aux(dir_fd1, dir_fd2, path, report):
         for dirent in it:
             if dirent.name not in entries1:
                 report["added_files"] += [os.path.join(path, dirent.name)]
+                if dirent.is_dir(follow_symlinks=False):
+                    try:
+                        child_fd = os.open(dirent.name, os.O_DIRECTORY, dir_fd=dir_fd2)
+                    except OSError:
+                        continue
+                    list_dir(child_fd, os.path.join(path, dirent.name), report["added_files"])
+                    os.close(child_fd)
 
 
 def diff(dir_fd1, dir_fd2, report):
@@ -128,6 +142,20 @@ def diff(dir_fd1, dir_fd2, report):
     selinux_diff(f"/proc/self/fd/{dir_fd1}", f"/proc/self/fd/{dir_fd2}", "/", report["differences"])
     stat_diff(stat1, stat2, "/", report["differences"])
     diff_aux(dir_fd1, dir_fd2, "/", report)
+
+
+def list_dir(dir_fd, path, target_list):
+    with os.scandir(dir_fd) as it:
+        for dirent in it:
+            p = os.path.join(path, dirent.name)
+            target_list.append(p)
+            if dirent.is_dir(follow_symlinks=False):
+                try:
+                    child_fd = os.open(dirent.name, os.O_DIRECTORY, dir_fd=dir_fd)
+                except OSError:
+                    continue
+                list_dir(child_fd, p, target_list)
+                os.close(child_fd)
 
 
 def main():
