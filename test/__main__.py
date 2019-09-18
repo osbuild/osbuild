@@ -1,7 +1,6 @@
 import argparse
 import logging
-import subprocess
-import os
+import re
 
 from test.integration_tests.test_case import IntegrationTestCase, IntegrationTestType
 from test.integration_tests.config import *
@@ -90,6 +89,7 @@ if __name__ == '__main__':
             for case in cases:
                 case.run()
         else:
+            re_case = re.compile(args.specific_case)
             for case in cases:
-                if case.name == args.specific_case:
+                if re_case.fullmatch(case.name) is not None:
                     case.run()
