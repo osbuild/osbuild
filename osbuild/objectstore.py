@@ -13,6 +13,19 @@ __all__ = [
 ]
 
 
+@contextlib.contextmanager
+def suppress_oserror(*errnos):
+    """A context manager that suppresses any OSError with an errno in `errnos`.
+
+    Like contextlib.suppress, but can differentiate between OSErrors.
+    """
+    try:
+        yield
+    except OSError as e:
+        if e.errno not in errnos:
+            raise e
+
+
 class ObjectStore:
     def __init__(self, store):
         self.store = store
@@ -72,13 +85,11 @@ class ObjectStore:
             # will always produce the same content hash, but that is not
             # guaranteed
             output_tree = f"{self.objects}/{treesum_hash}"
-            try:
+
+            # if a tree with the same treesum already exist, use that
+            with suppress_oserror(errno.ENOTEMPTY):
                 os.rename(tree, output_tree)
-            except OSError as e:
-                if e.errno == errno.ENOTEMPTY:
-                    pass # tree with the same content hash already exist, use that
-                else:
-                    raise
+
             # symlink the tree_id (config hash) in the refs directory to the treesum
             # (content hash) in the objects directory. If a symlink by that name
             # alreday exists, atomically replace it, but leave the backing object
