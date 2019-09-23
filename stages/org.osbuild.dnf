@@ -9,6 +9,7 @@ def main(tree, options):
     repos = options["repos"]
     packages = options["packages"]
     releasever = options["releasever"]
+    basearch = options["basearch"]
     operation = options.get("operation", "install")
     weak_deps = options.get("install_weak_deps", True)
 
@@ -45,6 +46,7 @@ def main(tree, options):
     cmd = [
         "dnf", "-yv",
         "--installroot", tree,
+        "--forcearch", basearch,
         "--setopt", "reposdir=",
         "--setopt", f"install_weak_deps={weak_deps}",
         "--releasever", releasever,
