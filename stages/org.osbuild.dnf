@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -25,6 +26,29 @@ def write_repofile(f, repoid, repo):
         subprocess.run(["gpg2", "--armor", "--output", keyfile, "--export", repo["gpgkey"]], check=True)
         write_option("gpgcheck", 1)
         write_option("gpgkey", f"file://{keyfile}")
+
+
+def dnf_cachedir(repoid, repo, releasever, basearch):
+    """Return the relative cache directory for a repository.
+
+    Using the same algorithm as libdnf:
+
+        https://github.com/rpm-software-management/libdnf/blob/master/libdnf/repo/Repo.cpp#L1288
+    """
+
+    if "metalink" in repo:
+        url = repo["metalink"]
+    elif "mirrorlist" in repo:
+        url = repo["mirrorlist"]
+    elif "baseurl" in repo:
+        url = repo["baseurl"]
+    else:
+        raise RuntimeError(f"one of metalink, mirrorlist, or baseurl must be given for repository '{repoid}'")
+
+    url = url.replace("$basearch", basearch).replace("$releasever", releasever)
+    digest = hashlib.sha256(url.encode()).hexdigest()[:16]
+
+    return f"{repoid}-{digest}"
 
 
 def main(tree, options):
@@ -65,7 +89,18 @@ def main(tree, options):
     ] + packages
 
     print(" ".join(cmd), flush=True)
-    return subprocess.run(cmd).returncode
+    subprocess.run(cmd, check=True)
+
+    # verify metadata checksum
+    for repoid, repo in repos.items():
+        algorithm, checksum = repo["checksum"].split(":")
+        assert algorithm == "sha256"
+        cachedir = dnf_cachedir(repoid, repo, releasever, basearch)
+        with open(f"{tree}/var/cache/dnf/{cachedir}/repodata/repomd.xml", "rb") as f:
+            repomd = f.read()
+        assert hashlib.sha256(repomd).hexdigest() == checksum
+
+    return 0
 
 
 if __name__ == '__main__':
