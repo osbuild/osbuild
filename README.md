@@ -18,6 +18,7 @@ assembles it into an image. Pipelines are defined as JSON files like this one:
       "name": "org.osbuild.dnf",
       "options": {
         "releasever": "30",
+        "basearch": "x86_64",
         "repos": {
           "fedora": {
             "name": "Fedora",

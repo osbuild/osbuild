@@ -5,6 +5,7 @@
       "name": "org.osbuild.dnf",
       "options": {
         "releasever": "30",
+        "basearch": "x86_64",
         "install_weak_deps": true,
         "repos": {
           "fedora": {

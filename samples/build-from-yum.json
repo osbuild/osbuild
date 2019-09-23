@@ -5,6 +5,7 @@
       "name": "org.osbuild.yum",
       "options": {
         "releasever": "27",
+        "basearch": "x86_64",
         "repos": {
           "fedora": {
             "name": "Fedora",

@@ -5,6 +5,7 @@
       "name": "org.osbuild.dnf",
       "options": {
         "releasever": "30",
+        "basearch": "x86_64",
         "repos": {
           "fedora": {
             "name": "Fedora",
