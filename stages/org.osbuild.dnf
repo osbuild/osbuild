@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import subprocess
 import sys
 
@@ -76,7 +77,7 @@ def main(tree, options):
         print(f"setting up API VFS in target tree failed: {err.returncode}")
         return err.returncode
 
-    cmd = [
+    base_cmd = [
         "dnf", "-yv",
         "--installroot", tree,
         "--forcearch", basearch,
@@ -84,10 +85,10 @@ def main(tree, options):
         "--setopt", f"install_weak_deps={weak_deps}",
         "--releasever", releasever,
         "--disableplugin=generate_completion_cache", # supress error that completion db can't be opened
-        "--config", "/tmp/dnf.conf",
-        operation
-    ] + packages
+        "--config", "/tmp/dnf.conf"
+    ]
 
+    cmd = base_cmd + [operation] + packages
     print(" ".join(cmd), flush=True)
     subprocess.run(cmd, check=True)
 
@@ -99,6 +100,15 @@ def main(tree, options):
         with open(f"{tree}/var/cache/dnf/{cachedir}/repodata/repomd.xml", "rb") as f:
             repomd = f.read()
         assert hashlib.sha256(repomd).hexdigest() == checksum
+
+    # delete cache manually, because `dnf clean all` leaves some contents behind
+    fd = os.open(f"{tree}/var/cache/dnf", os.O_DIRECTORY)
+    for _, dirs, files, dirfd in os.fwalk(".", topdown=False, dir_fd=fd):
+        for name in files:
+            os.unlink(name, dir_fd=dirfd)
+        for name in dirs:
+            os.rmdir(name, dir_fd=dirfd)
+    os.close(fd)
 
     return 0
 
