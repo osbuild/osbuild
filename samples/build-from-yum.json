@@ -16,7 +16,8 @@
         "packages": [
           "dnf",
           "systemd",
-          "tar"
+          "tar",
+          "gnupg"
         ]
       }
     }

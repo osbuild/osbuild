@@ -5,6 +5,28 @@ import subprocess
 import sys
 
 
+def write_repofile(f, repoid, repo):
+    f.write(f"[{repoid}]\n")
+
+    def write_option(key, value):
+        f.write(f"{key}={value}\n")
+
+    # silence dnf warning about missing name
+    write_option("name", repoid)
+
+    for key in ("metalink", "mirrorlist", "baseurl"):
+        value = repo.get(key)
+        if value:
+            write_option(key, value)
+
+    if "gpgkey" in repo:
+        keyfile = f"/tmp/{repoid}.asc"
+        subprocess.run(["gpg2", "--recv-keys", repo["gpgkey"]], check=True)
+        subprocess.run(["gpg2", "--armor", "--output", keyfile, "--export", repo["gpgkey"]], check=True)
+        write_option("gpgcheck", 1)
+        write_option("gpgkey", f"file://{keyfile}")
+
+
 def main(tree, options):
     repos = options["repos"]
     packages = options["packages"]
@@ -15,20 +37,7 @@ def main(tree, options):
 
     with open("/tmp/dnf.conf", "w") as conf:
         for repoid, repo in repos.items():
-            conf.write(f"[{repoid}]\n")
-            for key, value in repo.items():
-                if isinstance(value, str):
-                    s = value
-                elif isinstance(value, list):
-                    s = " ".join(value)
-                elif isinstance(value, bool):
-                    s = "1" if value else "0"
-                elif isinstance(value, int):
-                    s = str(value)
-                else:
-                    print(f"unkown type for `{key}`: {value} ({type(value)})")
-                    return 1
-                conf.write(f"{key}={s}\n")
+            write_repofile(conf, repoid, repo)
 
     script = f"""
         set -e
