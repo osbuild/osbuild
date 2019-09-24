@@ -10,9 +10,8 @@
           "basearch": "x86_64",
           "repos": {
             "fedora": {
-              "name": "Fedora",
               "baseurl": "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/$releasever/Everything/$basearch/os/",
-              "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
+              "gpgkey": "860E 19B0 AFA8 00A1 7518 81A6 F55E 7430 F528 2EE4"
             }
           },
           "packages": [
