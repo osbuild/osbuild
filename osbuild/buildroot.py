@@ -67,6 +67,9 @@ class BuildRoot:
         Its arguments mean the same as those for subprocess.run().
         """
 
+        # pylint suggests to epxlicitly pass `check` to subprocess.run()
+        check = kwargs.pop("check", False)
+
         return subprocess.run([
             "systemd-nspawn",
             "--quiet",
@@ -77,7 +80,7 @@ class BuildRoot:
             f"--directory={self.root}",
             *[f"--bind={b}" for b in (binds or [])],
             *[f"--bind-ro={b}" for b in [f"{self.api}:/run/osbuild/api"] + (readonly_binds or [])],
-            ] + argv, **kwargs)
+            ] + argv, check=check, **kwargs)
 
     @contextlib.contextmanager
     def bound_socket(self, name):

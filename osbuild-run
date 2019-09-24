@@ -28,7 +28,9 @@ def update_ca_trust():
     os.makedirs("/etc/pki/ca-trust/extracted/pem")
     os.makedirs("/etc/pki/tls/certs")
     os.symlink("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "/etc/pki/tls/certs/ca-bundle.crt")
-    subprocess.run(["update-ca-trust"])
+
+    # allow to fail, because it sometimes mysteriously does
+    subprocess.run(["update-ca-trust", "extract"], check=False)
 
 
 def append_certs(cert_conf, dir_fd, parents=b""):
@@ -51,13 +53,13 @@ def update_ca_certificates():
     os.makedirs("/etc/ssl/certs")
     with open("/etc/ca-certificates.conf", "wb") as f:
         append_certs(f, os.open("/usr/share/ca-certificates", os.O_DIRECTORY))
-    subprocess.run(["update-ca-certificates"])
+    subprocess.run(["update-ca-certificates"], check=True)
 
 
 def tmpfiles():
     # Allow systemd-tmpfiles to return non-0. Some packages want to create
     # directories owned by users that are not set up with systemd-sysusers.
-    subprocess.run(["systemd-tmpfiles", "--create"])
+    subprocess.run(["systemd-tmpfiles", "--create"], check=False)
 
 
 def nsswitch():
@@ -78,5 +80,5 @@ if __name__ == "__main__":
     tmpfiles()
     nsswitch()
 
-    r = subprocess.run(sys.argv[1:])
+    r = subprocess.run(sys.argv[1:], check=False)
     sys.exit(r.returncode)

@@ -36,11 +36,11 @@ def main(tree, options):
         mount -t sysfs none {tree}/sys
         mount -t proc none {tree}/proc
     """
-    returncode = subprocess.run(["/bin/sh", "-c", script]).returncode
-
-    if returncode != 0:
-        print(f"setting up API VFS in target tree failed: {returncode}")
-        return returncode
+    try:
+        subprocess.run(["/bin/sh", "-c", script], check=True)
+    except subprocess.CalledProcessError as err:
+        print(f"setting up API VFS in target tree failed: {err.returncode}")
+        return err.returncode
 
     cmd = [
         "yum", "-y", "-v",
@@ -53,7 +53,7 @@ def main(tree, options):
     ] + packages
 
     print(" ".join(cmd), flush=True)
-    return subprocess.run(cmd).returncode
+    return subprocess.run(cmd, check=False).returncode
 
 
 if __name__ == '__main__':
