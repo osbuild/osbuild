@@ -18,7 +18,7 @@ def main(tree, options):
     os.chmod(scriptfile, 0o550)
     atexit.register(lambda: os.unlink(scriptfile))
 
-    return subprocess.run(["chroot", tree, "/osbuild-script"]).returncode
+    return subprocess.run(["chroot", tree, "/osbuild-script"], check=False).returncode
 
 
 if __name__ == '__main__':

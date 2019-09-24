@@ -36,11 +36,11 @@ def main(tree, options):
         mount -o bind /sys {tree}/sys
         mount -o bind /proc {tree}/proc
     """
-    returncode = subprocess.run(["/bin/sh", "-c", script]).returncode
-
-    if returncode != 0:
-        print(f"setting up API VFS in target tree failed: {returncode}")
-        return returncode
+    try:
+        subprocess.run(["/bin/sh", "-c", script], check=True)
+    except subprocess.CalledProcessError as err:
+        print(f"setting up API VFS in target tree failed: {err.returncode}")
+        return err.returncode
 
     cmd = [
         "dnf", "-yv",
