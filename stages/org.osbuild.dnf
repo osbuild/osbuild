@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import pathlib
 import subprocess
 import sys
 
@@ -71,6 +72,17 @@ def main(tree, options):
         mount -o bind /sys {tree}/sys
         mount -o bind /proc {tree}/proc
     """
+
+    machine_id_set_previously = os.path.exists(f"{tree}/etc/machine-id")
+    if not machine_id_set_previously:
+        # create a fake machine ID to improve reproducibility
+        print("creating a fake machine id")
+        script += f"""
+            mkdir -p {tree}/etc
+            echo "ffffffffffffffffffffffffffffffff" > {tree}/etc/machine-id
+            chmod 0444 {tree}/etc/machine-id
+        """
+
     try:
         subprocess.run(["/bin/sh", "-c", script], check=True)
     except subprocess.CalledProcessError as err:
@@ -109,6 +121,13 @@ def main(tree, options):
         for name in dirs:
             os.rmdir(name, dir_fd=dirfd)
     os.close(fd)
+
+    # remove temporary machine ID if it was created by us
+    if not machine_id_set_previously:
+        print("deleting the fake machine id")
+        machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
+        machine_id_file.unlink()
+        machine_id_file.touch()
 
     return 0
 
