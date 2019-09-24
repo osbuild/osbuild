@@ -1,6 +1,7 @@
 #!/usr/bin/python3
-
+import contextlib
 import json
+import os
 import subprocess
 import sys
 
@@ -36,6 +37,14 @@ def main(tree, options):
         mount -o bind /sys {tree}/sys
         mount -o bind /proc {tree}/proc
     """
+
+    # create a fake machine ID to improve reproducibility
+    script += f"""
+        mkdir -p {tree}/etc
+        echo "ffffffffffffffffffffffffffffffff" > {tree}/etc/machine-id
+        chmod 0444 {tree}/etc/machine-id
+    """
+
     returncode = subprocess.run(["/bin/sh", "-c", script]).returncode
 
     if returncode != 0:
@@ -54,7 +63,13 @@ def main(tree, options):
     ] + packages
 
     print(" ".join(cmd), flush=True)
-    return subprocess.run(cmd).returncode
+    subprocess.run(cmd, check=True)
+
+    # remove temporary machine ID and the random seed
+    with contextlib.suppress(FileNotFoundError):
+        os.unlink(f"{tree}/etc/machine-id")
+
+    return 0
 
 
 if __name__ == '__main__':
