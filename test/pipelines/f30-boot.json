@@ -11,9 +11,8 @@
           "install_weak_deps": false,
           "repos": {
             "fedora": {
-              "name": "Fedora",
               "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
-              "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
+              "gpgkey": "F1D8 EC98 F241 AAF2 0DF6  9420 EF3C 111F CFC6 59B9"
             }
           },
           "packages": [
@@ -36,9 +35,8 @@
         "install_weak_deps": true,
         "repos": {
           "fedora": {
-            "name": "Fedora",
             "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
-            "gpgkey": "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch"
+            "gpgkey": "F1D8 EC98 F241 AAF2 0DF6  9420 EF3C 111F CFC6 59B9"
           }
         },
         "packages": [
