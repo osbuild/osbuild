@@ -35,9 +35,9 @@ class TestDescriptions(unittest.TestCase):
         name = "org.osbuild.test"
         options = { "one": 1 }
         cases = [
-            (osbuild.Assembler(name, {}), {"name": name}),
-            (osbuild.Assembler(name, None), {"name": name}),
-            (osbuild.Assembler(name, options), {"name": name, "options": options}),
+            (osbuild.Assembler(name, None, None, {}), {"name": name}),
+            (osbuild.Assembler(name, None, None, None), {"name": name}),
+            (osbuild.Assembler(name, None, None, options), {"name": name, "options": options}),
         ]
         for assembler, description in cases:
             with self.subTest(description):
