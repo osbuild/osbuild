@@ -70,7 +70,7 @@ The above pipeline has no base and produces a qcow2 image.
 
 ```
 usage: python3 -m osbuild [-h] [--build-pipeline PIPELINE] [--store DIRECTORY]
-                   [-l DIRECTORY] -o DIRECTORY
+                   [-l DIRECTORY]
                    PIPELINE
 
 Build operating system images
@@ -87,11 +87,6 @@ optional arguments:
   -l DIRECTORY, --libdir DIRECTORY
                         the directory containing stages, assemblers, and the
                         osbuild library
-
-required named arguments:
-  -o DIRECTORY, --output DIRECTORY
-                        provide the empty DIRECTORY as output argument to the
-                        last stage
 ```
 
 ### Running example
@@ -99,7 +94,7 @@ required named arguments:
 You can build basic qcow2 image of Fedora 30 by running a following command:
 
 ```
-sudo python3 -m osbuild -o output --libdir . samples/base-qcow2.json
+sudo python3 -m osbuild --libdir . samples/base-qcow2.json
 ```
 
 - Root rights are required because osbuild heavily relies on creating

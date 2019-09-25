@@ -43,7 +43,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     logging.info(f"Using {OBJECTS} for objects storage.")
-    logging.info(f"Using {OUTPUT_DIR} for output images storage.")
     logging.info(f"Using {OSBUILD} for building images.")
 
     f30_boot = IntegrationTestCase(

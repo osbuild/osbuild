@@ -111,7 +111,7 @@ class Assembler:
     def run(self, tree, build_tree, output_dir=None, interactive=False, check=True, libdir=None):
         with buildroot.BuildRoot(build_tree) as build_root:
             if interactive:
-                print_header(f"Assembling: {self.name}", self.options)
+                print_header(f"Assembler {self.name}: {self.id}", self.options)
 
             args = {
                 "tree": "/run/osbuild/tree",
@@ -195,11 +195,11 @@ class Pipeline:
                 finally:
                     subprocess.run(["umount", "--lazy", tmp], check=True)
 
-    def run(self, output_dir, store, interactive=False, check=True, libdir=None):
+    def run(self, store, interactive=False, check=True, libdir=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         object_store = objectstore.ObjectStore(store)
         if self.build:
-            if not self.build.run(None, store, interactive, check, libdir):
+            if not self.build.run(store, interactive, check, libdir):
                 return False
 
         with self.get_buildtree(object_store) as build_tree:
@@ -228,8 +228,9 @@ class Pipeline:
                                              libdir=libdir):
                                 return False
 
-            if self.assembler:
-                with object_store.get(self.tree_id) as tree:
+            if self.assembler and not object_store.contains(self.output_id):
+                with object_store.get(self.tree_id) as tree, \
+                    object_store.new(self.output_id) as output_dir:
                     if not self.assembler.run(tree,
                                               build_tree,
                                               output_dir=output_dir,

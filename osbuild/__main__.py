@@ -23,9 +23,6 @@ def main():
                         help="the directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--json", action="store_true",
                         help="output results in JSON format")
-    requiredNamed = parser.add_argument_group('required named arguments')
-    requiredNamed.add_argument("-o", "--output", dest="output_dir", metavar="DIRECTORY", type=os.path.abspath,
-                               help="provide the empty DIRECTORY as output argument to the last stage", required=True)
     args = parser.parse_args()
 
     with open(args.pipeline_path) as f:
@@ -37,7 +34,7 @@ def main():
         pipeline.prepend_build_pipeline(build)
 
     try:
-        pipeline.run(args.output_dir, args.store, interactive=not args.json, libdir=args.libdir)
+        pipeline.run(args.store, interactive=not args.json, libdir=args.libdir)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
