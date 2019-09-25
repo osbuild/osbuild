@@ -21,6 +21,8 @@ def main():
                         help="the directory where intermediary os trees are stored")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
                         help="the directory containing stages, assemblers, and the osbuild library")
+    parser.add_argument("--json", action="store_true",
+                        help="output results in JSON format")
     requiredNamed = parser.add_argument_group('required named arguments')
     requiredNamed.add_argument("-o", "--output", dest="output_dir", metavar="DIRECTORY", type=os.path.abspath,
                                help="provide the empty DIRECTORY as output argument to the last stage", required=True)
@@ -35,16 +37,27 @@ def main():
         pipeline.prepend_build_pipeline(build)
 
     try:
-        pipeline.run(args.output_dir, args.store, interactive=True, libdir=args.libdir)
+        pipeline.run(args.output_dir, args.store, interactive=not args.json, libdir=args.libdir)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
-        sys.exit(130)
+        return 130
     except (osbuild.StageFailed, osbuild.AssemblerFailed) as error:
         print()
         print(f"{RESET}{BOLD}{RED}{error.name} failed with code {error.returncode}{RESET}")
-        sys.exit(1)
+        if args.json:
+            print(error.output)
+        return 1
+
+    if args.json:
+        json.dump({
+            "tree_id": pipeline.tree_id,
+            "output_id": pipeline.output_id,
+        }, sys.stdout)
+        sys.stdout.write("\n")
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
