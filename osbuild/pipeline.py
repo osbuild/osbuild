@@ -82,11 +82,7 @@ class Stage:
             if check and r.returncode != 0:
                 raise StageFailed(self.name, r.returncode, r.stdout)
 
-            return {
-                "name": self.name,
-                "returncode": r.returncode,
-                "output": r.stdout
-            }
+            return r.returncode == 0
 
 
 class Assembler:
@@ -142,11 +138,7 @@ class Assembler:
                 if check and r.returncode != 0:
                     raise AssemblerFailed(self.name, r.returncode, r.stdout)
 
-            return {
-                "name": self.name,
-                "returncode": r.returncode,
-                "output": r.stdout
-            }
+            return r.returncode == 0
 
 
 class Pipeline:
@@ -206,15 +198,9 @@ class Pipeline:
     def run(self, output_dir, store, interactive=False, check=True, libdir=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         object_store = objectstore.ObjectStore(store)
-        results = {
-            "stages": []
-        }
         if self.build:
-            r = self.build.run(None, store, interactive, check, libdir)
-            results["build"] = r
-            if r["returncode"] != 0:
-                results["returncode"] = r["returncode"]
-                return results
+            if not self.build.run(None, store, interactive, check, libdir):
+                return False
 
         with self.get_buildtree(object_store) as build_tree:
             if self.stages:
@@ -235,31 +221,24 @@ class Pipeline:
                     # generated trees remain valid.
                     with object_store.new_tree(self.tree_id, base_id=base) as tree:
                         for stage in self.stages[base_idx + 1:]:
-                            r = stage.run(tree,
-                                          build_tree,
-                                          interactive=interactive,
-                                          check=check,
-                                          libdir=libdir)
-                            results["stages"].append(r)
-                            if r["returncode"] != 0:
-                                results["returncode"] = r["returncode"]
-                                return results
+                            if not stage.run(tree,
+                                             build_tree,
+                                             interactive=interactive,
+                                             check=check,
+                                             libdir=libdir):
+                                return False
 
             if self.assembler:
                 with object_store.get_tree(self.tree_id) as tree:
-                    r = self.assembler.run(tree,
-                                           build_tree,
-                                           output_dir=output_dir,
-                                           interactive=interactive,
-                                           check=check,
-                                           libdir=libdir)
-                    results["assembler"] = r
-                    if r["returncode"] != 0:
-                        results["returncode"] = r["returncode"]
-                        return results
+                    if not self.assembler.run(tree,
+                                              build_tree,
+                                              output_dir=output_dir,
+                                              interactive=interactive,
+                                              check=check,
+                                              libdir=libdir):
+                        return False
 
-        results["returncode"] = 0
-        return results
+        return True
 
 
 def load(description):
