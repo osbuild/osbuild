@@ -35,29 +35,35 @@ class ObjectStore:
         os.makedirs(self.objects, exist_ok=True)
         os.makedirs(self.refs, exist_ok=True)
 
-    def has_tree(self, tree_id):
-        if not tree_id:
+    def contains(self, object_id):
+        if not object_id:
             return False
-        return os.access(f"{self.refs}/{tree_id}", os.F_OK)
+        return os.access(f"{self.refs}/{object_id}", os.F_OK)
 
     @contextlib.contextmanager
-    def get_tree(self, tree_id):
+    def get(self, object_id):
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
-            if tree_id:
-                subprocess.run(["mount", "-o", "bind,ro,mode=0755", f"{self.refs}/{tree_id}", tmp], check=True)
+            if object_id:
+                subprocess.run(["mount", "-o", "bind,ro,mode=0755", f"{self.refs}/{object_id}", tmp], check=True)
                 try:
                     yield tmp
                 finally:
                     subprocess.run(["umount", "--lazy", tmp], check=True)
             else:
-                # None was given as tree_id, just return an empty directory
+                # None was given as object_id, just return an empty directory
                 yield tmp
 
     @contextlib.contextmanager
-    def new_tree(self, tree_id, base_id=None):
+    def new(self, object_id, base_id=None):
+        """Creates a new directory for `object_id`.
+
+        This method must be used as a context manager. It returns a path to a
+        temporary directory and only commits it when the context completes
+        without raising an exception.
+        """
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
             # the tree that is yielded will be added to the content store
-            # on success as tree_id
+            # on success as object_id
 
             tree = f"{tmp}/tree"
             link = f"{tmp}/link"
@@ -81,7 +87,7 @@ class ObjectStore:
             finally:
                 os.close(fd)
             # the tree is stored in the objects directory using its content
-            # hash as its name, ideally a given tree_id (i.e., given config)
+            # hash as its name, ideally a given object_id (i.e., given config)
             # will always produce the same content hash, but that is not
             # guaranteed
             output_tree = f"{self.objects}/{treesum_hash}"
@@ -90,9 +96,9 @@ class ObjectStore:
             with suppress_oserror(errno.ENOTEMPTY):
                 os.rename(tree, output_tree)
 
-            # symlink the tree_id (config hash) in the refs directory to the treesum
-            # (content hash) in the objects directory. If a symlink by that name
-            # alreday exists, atomically replace it, but leave the backing object
-            # in place (it may be in use).
+            # symlink the object_id (config hash) in the refs directory to the
+            # treesum (content hash) in the objects directory. If a symlink by
+            # that name alreday exists, atomically replace it, but leave the
+            # backing object in place (it may be in use).
             os.symlink(f"../objects/{treesum_hash}", link)
-            os.replace(link, f"{self.refs}/{tree_id}")
+            os.replace(link, f"{self.refs}/{object_id}")

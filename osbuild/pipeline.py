@@ -185,7 +185,7 @@ class Pipeline:
     @contextlib.contextmanager
     def get_buildtree(self, object_store):
         if self.build:
-            with object_store.get_tree(self.build.tree_id) as tree:
+            with object_store.get(self.build.tree_id) as tree:
                 yield tree
         else:
             with tempfile.TemporaryDirectory(dir=object_store.store) as tmp:
@@ -204,13 +204,13 @@ class Pipeline:
 
         with self.get_buildtree(object_store) as build_tree:
             if self.stages:
-                if not object_store.has_tree(self.tree_id):
+                if not object_store.contains(self.tree_id):
                     # Find the last stage that already exists in the object store, and use
                     # that as the base.
                     base = None
                     base_idx = -1
                     for i in reversed(range(len(self.stages))):
-                        if object_store.has_tree(self.stages[i].id):
+                        if object_store.contains(self.stages[i].id):
                             base = self.stages[i].id
                             base_idx = i
                             break
@@ -219,7 +219,7 @@ class Pipeline:
                     # is nondeterministic which of them will end up referenced by the tree_id
                     # in the content store. However, we guarantee that all tree_id's and all
                     # generated trees remain valid.
-                    with object_store.new_tree(self.tree_id, base_id=base) as tree:
+                    with object_store.new(self.tree_id, base_id=base) as tree:
                         for stage in self.stages[base_idx + 1:]:
                             if not stage.run(tree,
                                              build_tree,
@@ -229,7 +229,7 @@ class Pipeline:
                                 return False
 
             if self.assembler:
-                with object_store.get_tree(self.tree_id) as tree:
+                with object_store.get(self.tree_id) as tree:
                     if not self.assembler.run(tree,
                                               build_tree,
                                               output_dir=output_dir,
