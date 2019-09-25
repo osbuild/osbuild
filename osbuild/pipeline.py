@@ -38,15 +38,19 @@ def print_header(title, options):
 
 class Stage:
     def __init__(self, name, build, base, options):
-        m = hashlib.sha256()
-        m.update(json.dumps(name, sort_keys=True).encode())
-        m.update(json.dumps(build, sort_keys=True).encode())
-        m.update(json.dumps(base, sort_keys=True).encode())
-        m.update(json.dumps(options, sort_keys=True).encode())
-
-        self.id = m.hexdigest()
         self.name = name
+        self.build = build
+        self.base = base
         self.options = options
+
+    @property
+    def id(self):
+        m = hashlib.sha256()
+        m.update(json.dumps(self.name, sort_keys=True).encode())
+        m.update(json.dumps(self.build, sort_keys=True).encode())
+        m.update(json.dumps(self.base, sort_keys=True).encode())
+        m.update(json.dumps(self.options, sort_keys=True).encode())
+        return m.hexdigest()
 
     def description(self):
         description = {}
@@ -86,9 +90,20 @@ class Stage:
 
 
 class Assembler:
-    def __init__(self, name, options):
+    def __init__(self, name, build, base, options):
         self.name = name
+        self.build = build
+        self.base = base
         self.options = options
+
+    @property
+    def id(self):
+        m = hashlib.sha256()
+        m.update(json.dumps(self.name, sort_keys=True).encode())
+        m.update(json.dumps(self.build, sort_keys=True).encode())
+        m.update(json.dumps(self.base, sort_keys=True).encode())
+        m.update(json.dumps(self.options, sort_keys=True).encode())
+        return m.hexdigest()
 
     def description(self):
         description = {}
@@ -140,16 +155,24 @@ class Pipeline:
         self.stages = []
         self.assembler = None
 
-    def get_id(self):
+    @property
+    def tree_id(self):
         return self.stages[-1].id if self.stages else None
 
+    @property
+    def output_id(self):
+        return self.assembler.id if self.assembler else None
+
     def add_stage(self, name, options=None):
-        build = self.build.get_id() if self.build else None
-        stage = Stage(name, build, self.get_id(), options or {})
+        build = self.build.tree_id if self.build else None
+        stage = Stage(name, build, self.tree_id, options or {})
         self.stages.append(stage)
+        if self.assembler:
+            self.assembler.base = stage.id
 
     def set_assembler(self, name, options=None):
-        self.assembler = Assembler(name, options or {})
+        build = self.build.tree_id if self.build else None
+        self.assembler = Assembler(name, build, self.tree_id, options or {})
 
     def prepend_build_pipeline(self, build):
         pipeline = self
@@ -170,7 +193,7 @@ class Pipeline:
     @contextlib.contextmanager
     def get_buildtree(self, object_store):
         if self.build:
-            with object_store.get_tree(self.build.get_id()) as tree:
+            with object_store.get_tree(self.build.tree_id) as tree:
                 yield tree
         else:
             with tempfile.TemporaryDirectory(dir=object_store.store) as tmp:
@@ -195,7 +218,7 @@ class Pipeline:
 
         with self.get_buildtree(object_store) as build_tree:
             if self.stages:
-                if not object_store.has_tree(self.get_id()):
+                if not object_store.has_tree(self.tree_id):
                     # Find the last stage that already exists in the object store, and use
                     # that as the base.
                     base = None
@@ -210,7 +233,7 @@ class Pipeline:
                     # is nondeterministic which of them will end up referenced by the tree_id
                     # in the content store. However, we guarantee that all tree_id's and all
                     # generated trees remain valid.
-                    with object_store.new_tree(self.get_id(), base_id=base) as tree:
+                    with object_store.new_tree(self.tree_id, base_id=base) as tree:
                         for stage in self.stages[base_idx + 1:]:
                             r = stage.run(tree,
                                           build_tree,
@@ -223,7 +246,7 @@ class Pipeline:
                                 return results
 
             if self.assembler:
-                with object_store.get_tree(self.get_id()) as tree:
+                with object_store.get_tree(self.tree_id) as tree:
                     r = self.assembler.run(tree,
                                            build_tree,
                                            output_dir=output_dir,
