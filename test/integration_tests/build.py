@@ -1,3 +1,4 @@
+import json
 import logging
 import subprocess
 import sys
@@ -5,8 +6,8 @@ import sys
 from .config import *
 
 
-def run_osbuild(pipeline: str, build_pipeline: str, check=True):
-    cmd = OSBUILD + ["--store", OBJECTS, "-o", OUTPUT_DIR, pipeline]
+def run_osbuild(pipeline: str, build_pipeline: str):
+    cmd = OSBUILD + ["--json", "--store", OBJECTS, pipeline]
     if build_pipeline:
         cmd += ["--build-pipeline", build_pipeline]
     logging.info(f"Running osbuild: {cmd}")
@@ -17,10 +18,10 @@ def run_osbuild(pipeline: str, build_pipeline: str, check=True):
         print(osbuild.stderr.decode())
         print(f"{BOLD}STDOUT{RESET}")
         print(osbuild.stdout.decode())
-        if check:
-            sys.exit(1)
+        sys.exit(1)
 
-    return osbuild.returncode
+    result = json.loads(osbuild.stdout.decode())
+    return result["tree_id"], result.get("output_id")
 
 
 def build_testing_image(pipeline_full_path, build_pipeline_full_path):

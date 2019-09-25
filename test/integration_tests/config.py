@@ -7,5 +7,4 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 RED = "\033[31m"
 OBJECTS = os.environ.get("OBJECTS", ".osbuild-test")
-OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "output-test")
 OSBUILD = os.environ.get("OSBUILD", "python3 -m osbuild --libdir .").split(' ')
