@@ -45,14 +45,6 @@ if __name__ == '__main__':
     logging.info(f"Using {OBJECTS} for objects storage.")
     logging.info(f"Using {OSBUILD} for building images.")
 
-    f30_boot = IntegrationTestCase(
-        name="f30-boot",
-        pipeline="f30-boot.json",
-        build_pipeline=args.build_pipeline,
-        output_image="f30-boot.qcow2",
-        test_cases=[test_is_system_running],
-        type=IntegrationTestType.BOOT_WITH_QEMU
-    )
     timezone = IntegrationTestCase(
         name="timezone",
         pipeline="timezone.json",
@@ -78,7 +70,7 @@ if __name__ == '__main__':
         type=IntegrationTestType.EXTRACT
     )
 
-    cases = [f30_boot, timezone, firewall, locale]
+    cases = [timezone, firewall, locale]
 
     if args.list:
         print("Available test cases:")
