@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+import contextlib
 import hashlib
 import json
 import os
@@ -128,6 +128,10 @@ def main(tree, options):
         machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
         machine_id_file.unlink()
         machine_id_file.touch()
+
+    # remove random seed from the tree if exists
+    with contextlib.suppress(FileNotFoundError):
+        os.unlink(f"{tree}/var/lib/systemd/random-seed")
 
     return 0
 
