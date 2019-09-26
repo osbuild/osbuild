@@ -1,8 +1,20 @@
 #!/usr/bin/env python3
 
 import argparse
+import hashlib
 import json
 import os
+
+
+def hash_file(fd):
+    BLOCK_SIZE = 4096
+    hasher = hashlib.sha256()
+    buf = os.read(fd, BLOCK_SIZE)
+    while len(buf) > 0:
+        hasher.update(buf)
+        buf = os.read(fd, BLOCK_SIZE)
+
+    return f"sha256:{hasher.hexdigest()}"
 
 
 def stat_diff(stat1, stat2, path, differences):
@@ -32,11 +44,7 @@ def selinux_diff(path1, path2, path, differences):
     return True
 
 
-def content_diff(name, dir_fd1, dir_fd2, size1, size2, path, differences):
-    if size1 != size2:
-        props = differences.setdefault(path, {})
-        props["content"] = "different"
-        return
+def content_diff(name, dir_fd1, dir_fd2, path, differences):
     try:
         fd1 = os.open(name, flags=os.O_RDONLY, dir_fd=dir_fd1)
     except OSError:
@@ -47,12 +55,12 @@ def content_diff(name, dir_fd1, dir_fd2, size1, size2, path, differences):
         os.close(fd1)
         return
     try:
-        for (byte_block1, byte_block2) in zip(iter(lambda f=fd1: os.read(f, 4096), b""),
-                                              iter(lambda f=fd2: os.read(f, 4096), b"")):
-            if byte_block1 != byte_block2:
-                props = differences.setdefault(path, {})
-                props["content"] = "different"
-                break
+        hash1 = hash_file(fd1)
+        hash2 = hash_file(fd2)
+
+        if hash1 != hash2:
+            props = differences.setdefault(path, {})
+            props["content"] = [hash1, hash2]
     finally:
         os.close(fd1)
         os.close(fd2)
@@ -106,8 +114,6 @@ def diff_aux(dir_fd1, dir_fd2, path, report):
                 content_diff(dirent.name,
                              dir_fd1,
                              dir_fd2,
-                             stat1.st_size,
-                             stat2.st_size,
                              os.path.join(path, dirent.name),
                              report["differences"])
             elif dirent.is_dir(follow_symlinks=False):
