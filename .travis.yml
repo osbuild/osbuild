@@ -25,7 +25,7 @@ jobs:
         - sudo env "PATH=$PATH" python3 -m osbuild --libdir . samples/noop.json
     - name: f30-boot
       before_install: sudo apt-get install -y systemd-container yum qemu-kvm
-      script: sudo env "PATH=$PATH" python3 -m test --case f30-boot --build-pipeline samples/build-from-yum.json
+      script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_PIPELINE=samples/build-from-yum.json" python3 -m unittest test.test_boot
     - name: timezone
       before_install: sudo apt-get install -y systemd-container yum tar
       script: sudo env "PATH=$PATH" python3 -m test --case timezone --build-pipeline samples/build-from-yum.json
