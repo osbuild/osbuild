@@ -13,7 +13,7 @@ RED = "\033[31m"
 def main():
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
-                        help="json file containing the pipeline that should be built")
+                        help="json file containing the pipeline that should be built, or a '-' to read from stdin")
     parser.add_argument("--build-pipeline", metavar="PIPELINE", type=os.path.abspath,
                         help="json file containing the pipeline to create a build environment")
     parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
@@ -25,8 +25,12 @@ def main():
                         help="output results in JSON format")
     args = parser.parse_args()
 
-    with open(args.pipeline_path) as f:
-        pipeline = osbuild.load(json.load(f))
+    if args.pipeline_path == "-":
+        f = sys.stdin
+    else:
+        f = open(args.pipeline_path)
+    pipeline = osbuild.load(json.load(f))
+    f.close()
 
     if args.build_pipeline:
         with open(args.build_pipeline) as f:
