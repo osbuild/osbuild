@@ -35,8 +35,8 @@ def main(tree, options):
     verbosity = options.get("verbosity", "info")
 
     with open("/tmp/yum.conf", "w") as conf:
-        for repoid, repo in repos.items():
-            write_repofile(conf, repoid, repo)
+        for repoid, repo in enumerate(repos):
+            write_repofile(conf, f"repo{repoid}", repo)
 
     script = f"""
         set -e

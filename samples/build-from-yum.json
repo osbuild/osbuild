@@ -5,12 +5,12 @@
       "options": {
         "releasever": "27",
         "basearch": "x86_64",
-        "repos": {
-          "fedora": {
+        "repos": [
+          {
             "baseurl": "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/$releasever/Everything/$basearch/os/",
             "gpgkey": "860E 19B0 AFA8 00A1 7518 81A6 F55E 7430 F528 2EE4"
           }
-        },
+        ],
         "packages": [
           "dnf",
           "systemd",
