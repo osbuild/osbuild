@@ -1,5 +1,4 @@
 {
-  "name": "Example Image",
   "stages": [
     {
       "name": "org.osbuild.dnf",

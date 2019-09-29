@@ -1,5 +1,4 @@
 {
-  "name": "base",
   "stages": [
     {
       "name": "org.osbuild.dnf",

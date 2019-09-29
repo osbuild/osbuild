@@ -1,7 +1,5 @@
 {
-  "name": "f30-boot",
   "build": {
-    "name": "f30-build",
     "stages": [
       {
         "name": "org.osbuild.dnf",

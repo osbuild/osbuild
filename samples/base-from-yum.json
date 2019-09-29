@@ -1,7 +1,5 @@
 {
-  "name": "base",
   "build": {
-    "name": "build",
     "stages": [
       {
         "name": "org.osbuild.yum",

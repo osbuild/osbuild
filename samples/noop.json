@@ -1,5 +1,4 @@
 {
-  "name": "noop",
   "stages": [
     {
       "name": "org.osbuild.noop"
