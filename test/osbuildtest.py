@@ -1,14 +1,22 @@
 
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 
 
 class TestCase(unittest.TestCase):
-    def run_osbuild(self, pipeline, store):
-            osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--store", store, "--libdir", ".", pipeline]
+    def setUp(self):
+        self.store = tempfile.mkdtemp(dir="/var/tmp")
+
+    def tearDown(self):
+        shutil.rmtree(self.store)
+
+    def run_osbuild(self, pipeline):
+            osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--store", self.store, "--libdir", ".", pipeline]
 
             build_pipeline = os.getenv("OSBUILD_TEST_BUILD_PIPELINE", None)
             if build_pipeline:
