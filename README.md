@@ -19,13 +19,13 @@ assembles it into an image. Pipelines are defined as JSON files like this one:
       "options": {
         "releasever": "30",
         "basearch": "x86_64",
-        "repos": {
-          "fedora": {
+        "repos": [
+          {
             "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
             "gpgkey": "F1D8 EC98 F241 AAF2 0DF6  9420 EF3C 111F CFC6 59B9",
             "checksum": "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
           }
-        },
+        ],
         "packages": [ "@Core", "grub2-pc", "httpd" ]
         }
     },
