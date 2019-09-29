@@ -37,6 +37,7 @@ def loop_device(loop_client, image, size, offset=0):
         os.unlink(path)
 
 def main(tree, output_dir, options, loop_client):
+    fmt = options["format"]
     filename = options["filename"]
     root_fs_uuid = options["root_fs_uuid"]
     size = options["size"]
@@ -44,6 +45,9 @@ def main(tree, output_dir, options, loop_client):
     # sfdisk works on sectors of 512 bytes and ignores excess space - be explicit about this
     if size % 512 != 0:
         raise ValueError("`size` must be a multiple of sector size (512)")
+
+    if fmt not in ["raw", "qcow2", "vdi", "vmdk"]:
+        raise ValueError("`format` must be one of raw, qcow, vdi, vmdk")
 
     image = f"/var/tmp/osbuild-image.raw"
     mountpoint = f"/tmp/osbuild-mnt"
@@ -76,7 +80,7 @@ def main(tree, output_dir, options, loop_client):
             subprocess.run(["chroot", mountpoint, "grub2-install", "--no-floppy",
                             "--modules=part_msdos", "--target=i386-pc", loop_block], check=True)
 
-    subprocess.run(["qemu-img", "convert", "-O", "qcow2", "-c", image, f"{output_dir}/{filename}"], check=True)
+    subprocess.run(["qemu-img", "convert", "-O", fmt, "-c", image, f"{output_dir}/{filename}"], check=True)
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
