@@ -9,6 +9,12 @@ import unittest
 
 
 class TestCase(unittest.TestCase):
+    """A TestCase to test running the osbuild program.
+
+    Each test case can use `self.run_osbuild()` to run osbuild. A temporary
+    store is used, which can be accessed through `self.store`.
+    """
+
     def setUp(self):
         self.store = tempfile.mkdtemp(dir="/var/tmp")
 
