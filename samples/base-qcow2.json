@@ -1,5 +1,4 @@
 {
-  "name": "base-qcow2",
   "stages": [
     {
       "name": "org.osbuild.dnf",

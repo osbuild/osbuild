@@ -1,5 +1,4 @@
 {
-  "name": "build-from-yum",
   "stages": [
     {
       "name": "org.osbuild.yum",
