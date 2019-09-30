@@ -23,6 +23,9 @@
           "qemu-guest-agent",
           "xen-libs",
           "langpacks-en"
+        ],
+        "exclude-packages": [
+          "dracut-config-rescue"
         ]
       }
     },
