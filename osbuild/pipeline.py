@@ -189,7 +189,7 @@ class Pipeline:
                 yield tree
         else:
             with tempfile.TemporaryDirectory(dir=object_store.store) as tmp:
-                subprocess.run(["mount", "-o", "bind,ro,mode=0755", "/", tmp], check=True)
+                subprocess.run(["mount", "--make-private", "-o", "bind,ro,mode=0755", "/", tmp], check=True)
                 try:
                     yield tmp
                 finally:
