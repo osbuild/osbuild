@@ -39,6 +39,7 @@ def loop_device(loop_client, image, size, offset=0):
 def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
     filename = options["filename"]
+    ptuuid = options["ptuuid"]
     root_fs_uuid = options["root_fs_uuid"]
     size = options["size"]
 
@@ -56,7 +57,7 @@ def main(tree, output_dir, options, loop_client):
     subprocess.run(["truncate", "--size", str(size), image], check=True)
 
     # Set up the partition table of the image
-    partition_table = "label: mbr\nbootable, type=83"
+    partition_table = f"label: mbr\nlabel-id: {ptuuid}\nbootable, type=83"
     subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
     r = subprocess.run(["sfdisk", "--json", image], stdout=subprocess.PIPE, encoding='utf-8', check=True)
     partition_table = json.loads(r.stdout)

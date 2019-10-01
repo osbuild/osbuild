@@ -47,6 +47,7 @@ assembles it into an image. Pipelines are defined as JSON files like this one:
     "options": {
       "format": "qcow2",
       "filename": "example.qcow2",
+      "ptuuid": "0x7e83a7ba",
       "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
       "size": 3221225472
     }
