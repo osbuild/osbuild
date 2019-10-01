@@ -24,6 +24,6 @@ class TestBoot(osbuildtest.TestCase):
             "-device", "virtserialport,chardev=stdio",
 
             f"{self.store}/refs/{output_id}/f30-boot.qcow2"
-        ], encoding="utf-8", capture_output=True, check=True)
+        ], encoding="utf-8", stdout=subprocess.PIPE, check=True)
 
         self.assertEqual(r.stdout.strip(), "running")
