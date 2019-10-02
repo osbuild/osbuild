@@ -39,7 +39,7 @@ def selinux_diff(path1, path2, path, differences):
         return True
     if label1 != label2:
         props = differences.setdefault(path, {})
-        props["selinux"] = [os.fsdecode(label1), os.fsdecode(label2)]
+        props["selinux"] = [label1.strip('\n\0'), label2.strip('\n\0')]
         return False
     return True
 
