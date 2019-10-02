@@ -56,6 +56,9 @@ def main():
             "output_id": pipeline.output_id,
         }, sys.stdout)
         sys.stdout.write("\n")
+    else:
+        print("tree id:", pipeline.tree_id)
+        print("output id:", pipeline.output_id)
 
     return 0
 
