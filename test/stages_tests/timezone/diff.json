@@ -1,0 +1,12 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/localtime": {
+      "symlink": [
+        "../usr/share/zoneinfo/UTC",
+        "../usr/share/zoneinfo/Europe/Prague"
+      ]
+    }
+  }
+}

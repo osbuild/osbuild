@@ -23,7 +23,7 @@ class TestBoot(osbuildtest.TestCase):
             "-device", "virtio-serial",
             "-device", "virtserialport,chardev=stdio",
 
-            f"{self.store}/refs/{output_id}/f30-boot.qcow2"
+            f"{self.get_path_to_store(output_id)}/f30-boot.qcow2"
         ], encoding="utf-8", stdout=subprocess.PIPE, check=True)
 
         self.assertEqual(r.stdout.strip(), "running")
