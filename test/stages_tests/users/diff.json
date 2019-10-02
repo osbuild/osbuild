@@ -1,0 +1,80 @@
+{
+  "added_files": [
+    "/etc/subgid-",
+    "/etc/subuid-",
+    "/home/test",
+    "/home/test/.bash_logout",
+    "/home/test/.bashrc",
+    "/home/test/.bash_profile",
+    "/var/spool/mail/test"
+  ],
+  "deleted_files": [],
+  "differences": {
+    "/etc/shadow-": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/passwd": {
+      "content": [
+        "sha256:9f38297afcc8f09e9e313db2628402f4448b92f5e5c41fdef8a859063703b09f",
+        "sha256:323c887dd9cc7f6ec7a2cb70daf54b56d74054153a8759983d84e92dc2393127"
+      ]
+    },
+    "/etc/group": {
+      "content": [
+        "sha256:302bff1ff0e98dfee5bddea461138a3f584695aceb590f8452e11e343e5eea2d",
+        "sha256:1bfe88ec0b2125a00a6e423bed2fbd562f426ddcb7cd28a27e21df90ee516bee"
+      ]
+    },
+    "/etc/gshadow": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/subuid": {
+      "content": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:26d48e295489c012dd33c13df566059d0f97215e1990d80192026e5a162dc3a0"
+      ]
+    },
+    "/etc/group-": {
+      "content": [
+        "sha256:ca63b6808736bb195f8a0576d0ed96a1d290a5e95da53beba9841ad59e17edc8",
+        "sha256:302bff1ff0e98dfee5bddea461138a3f584695aceb590f8452e11e343e5eea2d"
+      ]
+    },
+    "/etc/passwd-": {
+      "content": [
+        "sha256:8feaad3131f7f2842a96c2b4c054e2e32c8d2472de26fb29d7beb2b603753d53",
+        "sha256:9f38297afcc8f09e9e313db2628402f4448b92f5e5c41fdef8a859063703b09f"
+      ]
+    },
+    "/etc/gshadow-": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/subgid": {
+      "content": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:26d48e295489c012dd33c13df566059d0f97215e1990d80192026e5a162dc3a0"
+      ]
+    },
+    "/etc/shadow": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/var/log/lastlog": {
+      "content": [
+        "sha256:a29839a75996714fe64f0d3dc9e21b58a66f8465a0e1a248ef76fcc822b1d078",
+        "sha256:d1024fa7ebf79a2dd6d553fef19bf1d1234616885979e533b345b7c54968079b"
+      ]
+    }
+  }
+}
