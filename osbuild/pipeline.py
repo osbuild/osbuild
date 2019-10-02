@@ -69,7 +69,7 @@ class Stage:
                 "options": self.options,
             }
 
-            path = "/run/osbuild/lib" if libdir else "/usr/libexec/osbuild"
+            path = "/run/osbuild/lib" if libdir else "/usr/lib/osbuild"
             r = build_root.run(
                 [f"{path}/osbuild-run", f"{path}/stages/{self.name}"],
                 binds=[f"{tree}:/run/osbuild/tree"],
@@ -124,7 +124,7 @@ class Assembler:
                 binds.append(f"{output_dir}:/run/osbuild/output")
                 args["output_dir"] = "/run/osbuild/output"
 
-            path = "/run/osbuild/lib" if libdir else "/usr/libexec/osbuild"
+            path = "/run/osbuild/lib" if libdir else "/usr/lib/osbuild"
             with build_root.bound_socket("remoteloop") as sock, \
                 remoteloop.LoopServer(sock):
                 r = build_root.run(
