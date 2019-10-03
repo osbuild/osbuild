@@ -60,7 +60,7 @@ def main(tree, options):
     basearch = options["basearch"]
     operation = options.get("operation", "install")
     weak_deps = options.get("install_weak_deps", True)
-    exclude_packages = options.get("exclude-packages", [])
+    exclude_packages = options.get("exclude_packages", [])
 
     with open("/tmp/dnf.conf", "w") as conf:
         for repoid, repo in enumerate(repos):
