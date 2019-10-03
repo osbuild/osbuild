@@ -1,4 +1,5 @@
 %global         pypi_name osbuild
+%global 	pkgdir %{_prefix}/lib/%{pypi_name}
 
 Name:           %{pypi_name}
 Version:	2
@@ -47,13 +48,13 @@ A build system for OS images
 %install
 %py3_install
 
-mkdir -p %{buildroot}%{_libdir}/%{pypi_name}/stages
-install -p -m 0755 $(find stages -type f) %{buildroot}%{_libdir}/%{pypi_name}/stages/
+mkdir -p %{buildroot}%{pkgdir}/stages
+install -p -m 0755 $(find stages -type f) %{buildroot}%{pkgdir}/stages/
 
-mkdir -p %{buildroot}%{_libdir}/%{pypi_name}/assemblers
-install -p -m 0755 $(find assemblers -type f) %{buildroot}%{_libdir}/%{pypi_name}/assemblers/
+mkdir -p %{buildroot}%{pkgdir}/assemblers
+install -p -m 0755 $(find assemblers -type f) %{buildroot}%{pkgdir}/assemblers/
 
-install -p -m 0755 osbuild-run %{buildroot}%{_libdir}/%{pypi_name}/
+install -p -m 0755 osbuild-run %{buildroot}%{pkgdir}/
 
 %check
 exit 0
@@ -63,7 +64,7 @@ exit 0
 %files
 %license LICENSE
 %{_bindir}/osbuild
-%{_libdir}/%{pypi_name}
+%{pkgdir}
 
 %files -n     python3-%{pypi_name}
 %license LICENSE
