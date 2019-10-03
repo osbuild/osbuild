@@ -51,7 +51,7 @@
           "xen-libs",
           "langpacks-en"
         ],
-        "exclude-packages": [
+        "exclude_packages": [
           "dracut-config-rescue"
         ]
       }
