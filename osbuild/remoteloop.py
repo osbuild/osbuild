@@ -1,5 +1,6 @@
 import array
 import asyncio
+import contextlib
 import errno
 import json
 import os
@@ -112,7 +113,8 @@ class LoopClient:
     def __init__(self, sock):
         self.sock = sock
 
-    def create_device(self, filename, offset=None, sizelimit=None):
+    @contextlib.contextmanager
+    def device(self, filename, offset=None, sizelimit=None):
         req = {}
         fds = array.array("i")
         fd = os.open(filename, os.O_RDWR | os.O_DIRECT)
@@ -133,5 +135,8 @@ class LoopClient:
         os.close(fd)
 
         ret = json.loads(self.sock.recv(1024))
-
-        return ret["devname"]
+        path = os.path.join("/dev", ret["devname"])
+        try:
+            yield path
+        finally:
+            os.unlink(path)

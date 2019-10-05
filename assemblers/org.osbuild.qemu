@@ -9,6 +9,7 @@ import subprocess
 import sys
 import osbuild.remoteloop as remoteloop
 
+
 @contextlib.contextmanager
 def mount(source, dest, *options):
     os.makedirs(dest, 0o755, True)
@@ -18,14 +19,6 @@ def mount(source, dest, *options):
     finally:
         subprocess.run(["umount", "-R", dest], check=True)
 
-@contextlib.contextmanager
-def loop_device(loop_client, image, size, offset=0):
-    devname = loop_client.create_device(image, offset=offset, sizelimit=size)
-    path = f"/dev/{devname}"
-    try:
-        yield path
-    finally:
-        os.unlink(path)
 
 def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
@@ -101,7 +94,7 @@ def main(tree, output_dir, options, loop_client):
                     f"{int(partition_size / 1024)}k"], input="y", encoding='utf-8', check=True)
 
     # Copy the tree into the target image
-    with loop_device(loop_client, image, partition_size, partition_offset) as loop, \
+    with loop_client.device(image, partition_offset, partition_size) as loop, \
         mount(loop, mountpoint):
         subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
 
