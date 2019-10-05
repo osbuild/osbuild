@@ -20,9 +20,7 @@ def mount(source, dest, *options):
 
 @contextlib.contextmanager
 def loop_device(loop_client, image, size, offset=0):
-    fd = os.open(image, os.O_RDWR | os.O_DIRECT)
-    devname = loop_client.create_device(fd, offset=offset, sizelimit=size)
-    os.close(fd)
+    devname = loop_client.create_device(image, offset=offset, sizelimit=size)
     path = f"/dev/{devname}"
     try:
         yield path
