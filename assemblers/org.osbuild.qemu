@@ -111,8 +111,10 @@ def main(tree, output_dir, options, loop_client):
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
-    sock.connect("/run/osbuild/api/remoteloop")
-    ret = main(args["tree"], args["output_dir"], args["options"], remoteloop.LoopClient(sock))
+
+    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
+        sock.connect("/run/osbuild/api/remoteloop")
+        ret = main(args["tree"], args["output_dir"], args["options"], remoteloop.LoopClient(sock))
+
     sys.exit(ret)

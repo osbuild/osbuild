@@ -112,9 +112,6 @@ class LoopClient:
     def __init__(self, sock):
         self.sock = sock
 
-    def __del__(self):
-        self.sock.close()
-
     def create_device(self, fd, dir_fd=None, offset=None, sizelimit=None):
         req = {}
         fds = array.array("i")
