@@ -112,12 +112,10 @@ class LoopClient:
     def __init__(self, sock):
         self.sock = sock
 
-    def create_device(self, fd, dir_fd=None, offset=None, sizelimit=None):
+    def create_device(self, fd, offset=None, sizelimit=None):
         req = {}
         fds = array.array("i")
-
-        if not dir_fd:
-            dir_fd = os.open("/dev", os.O_DIRECTORY)
+        dir_fd = os.open("/dev", os.O_DIRECTORY)
 
         fds.append(fd)
         req["fd"] = 0
@@ -130,6 +128,8 @@ class LoopClient:
             req["sizelimit"] = sizelimit
 
         dump_fds(self.sock, req, fds)
+        os.close(dir_fd)
+
         ret = json.loads(self.sock.recv(1024))
 
         return ret["devname"]
