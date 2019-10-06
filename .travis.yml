@@ -35,3 +35,6 @@ jobs:
     - name: locale
       before_install: sudo apt-get install -y systemd-container yum tar
       script: sudo env "PATH=$PATH" python3 -m test --case locale --build-pipeline samples/build-from-yum.json  
+    - name: assemblers
+      before_install: sudo apt-get install -y systemd-container yum tar
+      script: sudo python3 -m unittest test.test_assemblers
