@@ -21,7 +21,7 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.store)
 
-    def run_osbuild(self, pipeline):
+    def run_osbuild(self, pipeline, input=None):
             osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--store", self.store, "--libdir", ".", pipeline]
 
             build_pipeline = os.getenv("OSBUILD_TEST_BUILD_PIPELINE", None)
@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
                 osbuild_cmd.append("--build-pipeline")
                 osbuild_cmd.append(build_pipeline)
 
-            r = subprocess.run(osbuild_cmd, encoding="utf-8", stdout=subprocess.PIPE, check=True)
+            r = subprocess.run(osbuild_cmd, encoding="utf-8", input=input, stdout=subprocess.PIPE, check=True)
 
             result = json.loads(r.stdout)
             return result["tree_id"], result["output_id"]
