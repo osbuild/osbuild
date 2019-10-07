@@ -1,0 +1,83 @@
+{
+  "stages": [
+    {
+      "name": "org.osbuild.dnf",
+      "options": {
+        "releasever": "30",
+        "basearch": "x86_64",
+        "install_weak_deps": true,
+        "repos": [
+          {
+            "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch",
+            "gpgkey": "F1D8 EC98 F241 AAF2 0DF6  9420 EF3C 111F CFC6 59B9",
+            "checksum": "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
+          }
+        ],
+        "packages": [
+          "kernel-core",
+	  "@Fedora Cloud Server",
+	  "chrony",
+	  "polkit",
+	  "systemd-udev",
+          "selinux-policy-targeted",
+          "grub2-pc",
+          "langpacks-en"
+        ],
+        "exclude_packages": [
+          "dracut-config-rescue",
+	  "etables",
+	  "firewalld",
+	  "gobject-introspection",
+	  "plymouth"
+        ]
+      }
+    },
+    {
+      "name": "org.osbuild.locale",
+      "options": {
+        "language": "en_US"
+      }
+    },
+    {
+      "name": "org.osbuild.fstab",
+      "options": {
+        "filesystems": [
+          {
+            "uuid": "ea711a29-e460-4879-9d70-9da99ae021f9",
+            "vfs_type": "ext4",
+            "path": "/",
+            "freq": "1",
+            "passno": "1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "org.osbuild.grub2",
+      "options": {
+        "root_fs_uuid": "ea711a29-e460-4879-9d70-9da99ae021f9",
+        "kernel_opts": "ro biosdevname=0 net.ifnames=0"
+      }
+    },
+    {
+      "name": "org.osbuild.selinux",
+      "options": {
+        "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+      }
+    },
+    {
+      "name": "org.osbuild.fix-bls"
+    }
+  ],
+  "assembler":
+    {
+      "name": "org.osbuild.qemu",
+      "options": {
+        "format": "qcow2",
+        "filename": "base.qcow2",
+        "ptuuid": "0x14fc63d2",
+        "root_fs_uuid": "ea711a29-e460-4879-9d70-9da99ae021f9",
+        "size": 3221225472
+      }
+    }
+}
