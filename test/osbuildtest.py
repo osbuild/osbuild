@@ -40,13 +40,22 @@ class TestCase(unittest.TestCase):
             osbuild_cmd.append("--build-pipeline")
             osbuild_cmd.append(build_pipeline)
 
+        p = subprocess.Popen(osbuild_cmd, encoding="utf-8", stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        if input:
+            p.stdin.write(input)
+            p.stdin.close()
         try:
-            r = subprocess.run(osbuild_cmd, encoding="utf-8", input=input, stdout=subprocess.PIPE, check=True)
-        except subprocess.CalledProcessError as e:
-            print(e.stdout)
-            raise e from None
+            r = p.wait()
+            if r != 0:
+                print(p.stdout.read())
+            self.assertEqual(r, 0)
+        except KeyboardInterrupt:
+            # explicitly wait again to let osbuild clean up
+            p.wait()
+            raise
 
-        result = json.loads(r.stdout)
+        result = json.load(p.stdout)
+        p.stdout.close()
         return result["tree_id"], result["output_id"]
 
     def run_tree_diff(self, tree1, tree2):
