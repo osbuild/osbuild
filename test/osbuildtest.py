@@ -25,7 +25,7 @@ class TestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.store = os.getenv("OSBUILD_TEST_STORE")
         if not cls.store:
-            cls.store = tempfile.mkdtemp(dir="/var/tmp")
+            cls.store = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
 
     @classmethod
     def tearDownClass(cls):
