@@ -24,8 +24,8 @@ def write_repofile(f, repoid, repo):
 
     if "gpgkey" in repo:
         keyfile = f"/tmp/{repoid}.asc"
-        subprocess.run(["gpg2", "--recv-keys", repo["gpgkey"]], check=True)
-        subprocess.run(["gpg2", "--armor", "--output", keyfile, "--export", repo["gpgkey"]], check=True)
+        with open(keyfile, "w") as key:
+            key.write(repo["gpgkey"])
         write_option("gpgcheck", 1)
         write_option("gpgkey", f"file://{keyfile}")
 
