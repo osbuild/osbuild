@@ -1,6 +1,7 @@
 
 import contextlib
 import glob
+import hashlib
 import json
 import os
 import subprocess
@@ -39,6 +40,17 @@ class TestAssemblers(osbuildtest.TestCase):
             self.assertEqual(diff["added_files"], ["/lost+found"])
             self.assertEqual(diff["deleted_files"], [])
             self.assertEqual(diff["differences"], {})
+
+    def assertGRUB2(self, device, l1hash, l2hash, size):
+        m1 = hashlib.sha256()
+        m2 = hashlib.sha256()
+        with open(device, "rb") as d:
+            sectors = d.read(size)
+        self.assertEqual(len(sectors), size)
+        m1.update(sectors[:440])
+        m2.update(sectors[512:size])
+        self.assertEqual(m1.hexdigest(), l1hash)
+        self.assertEqual(m2.hexdigest(), l2hash)
 
     def assertPartitionTable(self, device, label, uuid, n_partitions, boot_partition=None):
         sfdisk = json.loads(subprocess.check_output(["sfdisk", "--json", device]))
@@ -79,6 +91,10 @@ class TestAssemblers(osbuildtest.TestCase):
                 self.assertImageFile(image, fmt, options["size"])
                 with nbd_connect(image) as device:
                     self.assertPartitionTable(device, "dos", options["ptuuid"], 1, boot_partition=1)
+                    self.assertGRUB2(device,
+                                     "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
+                                     "1ebb35399388ba4007cee817a066570db948c450da911a3db67dba8083be247d",
+                                     1024 * 1024)
                     self.assertFilesystem(device + "p1", options["root_fs_uuid"], "ext4", tree_id)
 
 
