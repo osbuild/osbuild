@@ -1,9 +1,10 @@
 import glob
 import setuptools
+import osbuild
 
 setuptools.setup(
     name="osbuild",
-    version="3",
+    version=osbuild.__version__,
     description="A build system for OS images",
     packages=["osbuild"],
     license='Apache-2.0',
