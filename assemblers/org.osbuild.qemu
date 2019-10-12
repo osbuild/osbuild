@@ -36,7 +36,6 @@ def main(tree, output_dir, options, loop_client):
 
     image = f"/var/tmp/osbuild-image.raw"
     grub2_core = "/var/tmp/grub2-core.img"
-    grub2_load = "/var/tmp/grub2-load.cfg"
     mountpoint = f"/tmp/osbuild-mnt"
 
     # Create an empty image file
@@ -52,10 +51,6 @@ def main(tree, output_dir, options, loop_client):
     partition_offset = partition["start"] * 512
     partition_size = partition["size"] * 512
 
-    with open(grub2_load, "w") as load:
-        load.write(f"search.fs_uuid {root_fs_uuid} root \n"
-                   "set prefix=($root)'/boot/grub2'\n")
-
     # Create the level-2 bootloader
     # The purpose of this is to find the grub modules and configuration
     # to be able to start the level-3 bootloader. It contains the modules
@@ -63,12 +58,11 @@ def main(tree, output_dir, options, loop_client):
     subprocess.run(["grub2-mkimage",
                     "--verbose",
                     "--directory", "/usr/lib/grub/i386-pc",
-                    "--prefix", "/boot/grub2",
+                    "--prefix", "(,msdos1)/boot/grub2",
                     "--format", "i386-pc",
                     "--compression", "auto",
-                    "--config", grub2_load,
                     "--output", grub2_core,
-                    "part_msdos", "ext2", "biosdisk", "search_fs_uuid"],
+                    "part_msdos", "ext2", "biosdisk"],
                    check=True)
 
     assert os.path.getsize(grub2_core) < partition_offset - 512
