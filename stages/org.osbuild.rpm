@@ -1,0 +1,109 @@
+#!/usr/bin/python3
+
+import concurrent.futures
+import contextlib
+import json
+import os
+import pathlib
+import subprocess
+import sys
+
+
+RPM_CACHE_DIR = "/var/cache/org.osbuild.rpm"
+
+
+def download_package(pkg):
+    # some mirrors are broken sometimes. retry manually, because curl doesn't on 404
+    for _ in range(3):
+        curl = subprocess.run([
+            "curl",
+            "--silent",
+            "--show-error",
+            "--fail",
+            "--location",
+            "--remote-name",
+            "--write-out", "%{filename_effective}",
+            pkg["url"]
+        ], encoding="utf-8", cwd=RPM_CACHE_DIR, stdout=subprocess.PIPE, check=False)
+
+        if curl.returncode == 0:
+            filename = curl.stdout.strip()
+            break
+    else:
+        raise RuntimeError("Error downloading " + pkg["url"])
+
+    algorithm, checksum = pkg["checksum"].split(":", 1)
+    subprocess.run(
+        [f"{algorithm}sum", "-c"],
+        cwd=RPM_CACHE_DIR,
+        input=f"{checksum} {filename}",
+        stdout=subprocess.DEVNULL,
+        encoding="utf-8",
+        check=True)
+
+    # check signature, because `rpm --install` doesn't
+    subprocess.run(
+        ["rpmkeys", "--checksig", filename],
+        cwd=RPM_CACHE_DIR,
+        stdout=subprocess.DEVNULL,
+        check=True)
+
+    return filename
+
+
+def main(tree, options):
+    for key in  options.get("gpgkeys", []):
+        keyfile = "/tmp/key.asc"
+        with open(keyfile, "w") as f:
+            f.write(key)
+        subprocess.run(["rpmkeys", "--import", keyfile], check=True)
+        os.remove(keyfile)
+
+    os.makedirs(RPM_CACHE_DIR)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        packages = executor.map(download_package, options["packages"])
+
+    script = f"""
+        set -e
+        mkdir -p {tree}/dev {tree}/sys {tree}/proc
+        mount -o bind /dev {tree}/dev
+        mount -o bind /sys {tree}/sys
+        mount -o bind /proc {tree}/proc
+    """
+
+    machine_id_set_previously = os.path.exists(f"{tree}/etc/machine-id")
+    if not machine_id_set_previously:
+        # create a fake machine ID to improve reproducibility
+        print("creating a fake machine id")
+        script += f"""
+            mkdir -p {tree}/etc
+            echo "ffffffffffffffffffffffffffffffff" > {tree}/etc/machine-id
+            chmod 0444 {tree}/etc/machine-id
+        """
+
+    subprocess.run(["/bin/sh", "-c", script], check=True)
+
+    with open("/tmp/manifest", "w") as f:
+        f.write("\n".join(packages))
+
+    subprocess.run(["rpm", "--root", tree, "--install", "/tmp/manifest"], cwd=RPM_CACHE_DIR, check=True)
+
+    # remove temporary machine ID if it was created by us
+    if not machine_id_set_previously:
+        print("deleting the fake machine id")
+        machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
+        machine_id_file.unlink()
+        machine_id_file.touch()
+
+    # remove random seed from the tree if exists
+    with contextlib.suppress(FileNotFoundError):
+        os.unlink(f"{tree}/var/lib/systemd/random-seed")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

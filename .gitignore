@@ -1,8 +1,8 @@
-*.rpm
 *.tar.gz
 *.egg-info
 __pycache__
 
+/*.rpm
 /.osbuild
 /.osbuild-test
 /output
