@@ -13,6 +13,7 @@ jobs:
     metadata:
       targets:
       - fedora-30-x86_64
+      - fedora-31-x86_64
       - fedora-rawhide-x86_64
   # this is triggered by a commit on src.fedoraproject.org, not Github!
   # e.g. in case of mass rebuild or automated changes of spec file (e.g. Python packagers)
@@ -25,7 +26,11 @@ jobs:
     trigger: release
     metadata:
       dist-git-branch: master
-  # The same as above only for f30
+  # The same as above only for f31
+  - job: propose_downstream
+    trigger: release
+    metadata:
+      dist-git-branch: f31
   - job: propose_downstream
     trigger: release
     metadata:
