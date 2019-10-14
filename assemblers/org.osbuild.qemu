@@ -7,17 +7,18 @@ import socket
 import shutil
 import subprocess
 import sys
+import tempfile
 import osbuild.remoteloop as remoteloop
 
 
 @contextlib.contextmanager
-def mount(source, dest, *options):
-    os.makedirs(dest, 0o755, True)
-    subprocess.run(["mount", *options, source, dest], check=True)
-    try:
-        yield
-    finally:
-        subprocess.run(["umount", "-R", dest], check=True)
+def mount(source):
+    with tempfile.TemporaryDirectory(prefix="osbuild-mnt") as dest:
+        subprocess.run(["mount", source, dest], check=True)
+        try:
+            yield dest
+        finally:
+            subprocess.run(["umount", "-R", dest], check=True)
 
 
 def main(tree, output_dir, options, loop_client):
@@ -34,9 +35,8 @@ def main(tree, output_dir, options, loop_client):
     if fmt not in ["raw", "qcow2", "vdi", "vmdk"]:
         raise ValueError("`format` must be one of raw, qcow, vdi, vmdk")
 
-    image = f"/var/tmp/osbuild-image.raw"
+    image = "/var/tmp/osbuild-image.raw"
     grub2_core = "/var/tmp/grub2-core.img"
-    mountpoint = f"/tmp/osbuild-mnt"
 
     # Create an empty image file
     subprocess.run(["truncate", "--size", str(size), image], check=True)
@@ -83,14 +83,13 @@ def main(tree, output_dir, options, loop_client):
             image_f.seek(512)
             shutil.copyfileobj(core_f, image_f)
 
-    # Populate the first partition of the image with an ext4 fs
-    subprocess.run(["mkfs.ext4", "-U", root_fs_uuid, "-E", f"offset={partition_offset}", image,
-                    f"{int(partition_size / 1024)}k"], input="y", encoding='utf-8', check=True)
-
-    # Copy the tree into the target image
-    with loop_client.device(image, partition_offset, partition_size) as loop, \
-        mount(loop, mountpoint):
-        subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
+    with loop_client.device(image, partition_offset, partition_size) as loop:
+        # Populate the first partition of the image with an ext4 fs
+        subprocess.run(["mkfs.ext4", "-U", root_fs_uuid, loop],
+                       input="y", encoding='utf-8', check=True)
+        # Copy the tree into the target image
+        with mount(loop) as mountpoint:
+            subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
 
     extra_args = []
 
