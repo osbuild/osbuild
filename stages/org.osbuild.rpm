@@ -33,6 +33,9 @@ def download_package(pkg):
         raise RuntimeError("Error downloading " + pkg["url"])
 
     algorithm, checksum = pkg["checksum"].split(":", 1)
+    if algorithm not in ("md5", "sha1", "sha256", "sha384", "sha512"):
+        raise RuntimeError(f"Unsupported checksum algorithm: {algorithm}")
+
     subprocess.run(
         [f"{algorithm}sum", "-c"],
         cwd=RPM_CACHE_DIR,
