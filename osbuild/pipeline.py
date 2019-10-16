@@ -69,11 +69,11 @@ class Stage:
                 "options": self.options,
             }
 
-            path = "/run/osbuild/lib" if libdir else "/usr/lib/osbuild"
+            path = "/run/osbuild/lib"
             r = build_root.run(
                 [f"{path}/osbuild-run", f"{path}/stages/{self.name}"],
                 binds=[f"{tree}:/run/osbuild/tree"],
-                readonly_binds=[f"{libdir}:{path}"] if libdir else [],
+                readonly_binds=[f"{libdir}:{path}"] if libdir else [f"/usr/lib/osbuild:{path}"],
                 encoding="utf-8",
                 input=json.dumps(args),
                 stdout=None if interactive else subprocess.PIPE,
@@ -124,13 +124,15 @@ class Assembler:
                 binds.append(f"{output_dir}:/run/osbuild/output")
                 args["output_dir"] = "/run/osbuild/output"
 
-            path = "/run/osbuild/lib" if libdir else "/usr/lib/osbuild"
+            path = "/run/osbuild/lib"
             with build_root.bound_socket("remoteloop") as sock, \
                 remoteloop.LoopServer(sock):
                 r = build_root.run(
                     [f"{path}/osbuild-run", f"{path}/assemblers/{self.name}"],
                     binds=binds,
-                    readonly_binds=[f"{tree}:/run/osbuild/tree"] + ([f"{libdir}:{path}"] if libdir else []),
+                    readonly_binds=[f"{tree}:/run/osbuild/tree"] +
+                                   ([f"{libdir}:{path}"] if libdir else [f"/usr/lib/osbuild:{path}",
+                                   f"/usr/lib/python3.7/site-packages/osbuild:{path}/assemblers/osbuild"]),
                     encoding="utf-8",
                     input=json.dumps(args),
                     stdout=None if interactive else subprocess.PIPE,
