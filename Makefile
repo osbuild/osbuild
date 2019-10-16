@@ -10,13 +10,13 @@ sdist:
 tarball:
 	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > $(VERSION).tar.gz
 
-srpm: $(PACKAGE_NAME).spec tarball
+srpm: $(PACKAGE_NAME).spec check-working-directory tarball
 	/usr/bin/rpmbuild -bs \
 	  --define "_sourcedir $(CURDIR)" \
 	  --define "_srcrpmdir $(CURDIR)" \
 	  $(PACKAGE_NAME).spec
 
-rpm: $(PACKAGE_NAME).spec tarball
+rpm: $(PACKAGE_NAME).spec check-working-directory tarball 
 	- rm -r "`pwd`/output"
 	mkdir -p "`pwd`/output"
 	mkdir -p "`pwd`/rpmbuild"

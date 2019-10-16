@@ -1,10 +1,12 @@
 
 import contextlib
 import hashlib
+import importlib
 import json
 import os
 import subprocess
 import tempfile
+
 from . import buildroot
 from . import objectstore
 from . import remoteloop
@@ -125,14 +127,21 @@ class Assembler:
                 args["output_dir"] = "/run/osbuild/output"
 
             path = "/run/osbuild/lib"
+            osbuild_module_path = os.path.dirname(importlib.util.find_spec('osbuild').origin)
+            ro_binds = [f"{tree}:/run/osbuild/tree"]
+            if libdir:
+                ro_binds += [f"{libdir}:{path}"]
+            else:
+                # This is a temporary workaround, once we have a common way to include osbuild in the
+                # buildroot we should remove this because it includes code from the host in the buildroot thus
+                # violating our effort of reproducibility.
+                ro_binds += [f"/usr/lib/osbuild:{path}", f"{osbuild_module_path}:{path}/assemblers/osbuild"]
             with build_root.bound_socket("remoteloop") as sock, \
                 remoteloop.LoopServer(sock):
                 r = build_root.run(
                     [f"{path}/osbuild-run", f"{path}/assemblers/{self.name}"],
                     binds=binds,
-                    readonly_binds=[f"{tree}:/run/osbuild/tree"] +
-                                   ([f"{libdir}:{path}"] if libdir else [f"/usr/lib/osbuild:{path}",
-                                   f"/usr/lib/python3.7/site-packages/osbuild:{path}/assemblers/osbuild"]),
+                    readonly_binds=ro_binds,
                     encoding="utf-8",
                     input=json.dumps(args),
                     stdout=None if interactive else subprocess.PIPE,
