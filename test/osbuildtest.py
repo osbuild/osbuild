@@ -40,7 +40,9 @@ class TestCase(unittest.TestCase):
             osbuild_cmd.append("--build-pipeline")
             osbuild_cmd.append(build_pipeline)
 
-        p = subprocess.Popen(osbuild_cmd, encoding="utf-8", stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        stdin = subprocess.PIPE if input else None
+
+        p = subprocess.Popen(osbuild_cmd, encoding="utf-8", stdin=stdin, stdout=subprocess.PIPE)
         if input:
             p.stdin.write(input)
             p.stdin.close()
