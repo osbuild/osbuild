@@ -1,0 +1,29 @@
+#!/usr/bin/python3
+import json
+import subprocess
+import sys
+
+
+def groupadd(root, name, gid=None):
+    arguments = []
+    if gid:
+        arguments += ["--gid", str(gid)]
+
+    subprocess.run(["groupadd", "--root", root, *arguments, name], check=True)
+
+
+def main(tree, options):
+    groups = options["groups"]
+
+    for name, group_options in groups.items():
+        gid = group_options.get("gid")
+
+        groupadd(tree, name, gid)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
