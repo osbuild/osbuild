@@ -68,6 +68,7 @@ def add_ssh_key(root, user, key):
         f.write(f"{key}\n")
 
     os.chown(authorized_keys, int(uid), int(gid))
+    os.chmod(authorized_keys, 0o600)
 
 
 def main(tree, options):
