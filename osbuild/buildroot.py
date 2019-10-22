@@ -75,6 +75,7 @@ class BuildRoot:
             "--quiet",
             "--register=no",
             "--as-pid2",
+            "--console=pipe",
             "--link-journal=no",
             "--property=DeviceAllow=block-loop rw",
             f"--directory={self.root}",

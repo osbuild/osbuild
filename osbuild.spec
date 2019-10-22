@@ -22,7 +22,7 @@ Requires: glibc
 Requires: policycoreutils
 Requires: qemu-img
 Requires: systemd
-Requires: systemd-container
+Requires: systemd-container >= 242
 Requires: tar
 Requires: util-linux
 Requires: python3-%{pypi_name}
