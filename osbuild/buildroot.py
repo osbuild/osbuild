@@ -70,7 +70,7 @@ class BuildRoot:
         # pylint suggests to epxlicitly pass `check` to subprocess.run()
         check = kwargs.pop("check", False)
 
-        return subprocess.run([
+        args =  [
             "systemd-nspawn",
             "--quiet",
             "--register=no",
@@ -80,7 +80,16 @@ class BuildRoot:
             f"--directory={self.root}",
             *[f"--bind={b}" for b in (binds or [])],
             *[f"--bind-ro={b}" for b in [f"{self.api}:/run/osbuild/api"] + (readonly_binds or [])],
-            ] + argv, check=check, **kwargs)
+            ]
+        try:
+            # systemd-nspawn changed the stdin handling, and added the --pipe option to restore the
+            # behavior we depend on. We need to be able to work on systemd with and without this
+            # patch.
+            ret = subprocess.run(args + ["--pipe"] + argv, check=True, **kwargs)
+        except subprocess.CalledProcessError:
+            ret = subprocess.run(args + argv, check=check, **kwargs)
+
+        return ret
 
     @contextlib.contextmanager
     def bound_socket(self, name):
