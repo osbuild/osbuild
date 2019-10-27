@@ -25,8 +25,9 @@ def load_fds(sock, msglen):
     return json.loads(msg), list(fds), addr
 
 
-def dump_fds(sock, obj, fds):
-    sock.sendmsg([json.dumps(obj).encode('utf-8')], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds))])
+def dump_fds(sock, obj, fds, flags=0, addr=None):
+    ancillary = [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds))]
+    sock.sendmsg([json.dumps(obj).encode('utf-8')], ancillary, flags, addr)
 
 
 class LoopServer:
