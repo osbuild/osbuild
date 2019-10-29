@@ -7,6 +7,7 @@ import os
 import subprocess
 import tempfile
 
+from .api import API
 from . import buildroot
 from . import objectstore
 from . import remoteloop
@@ -72,17 +73,16 @@ class Stage:
             }
 
             path = "/run/osbuild/lib"
-            r = build_root.run(
-                [f"{path}/osbuild-run", f"{path}/stages/{self.name}"],
-                binds=[f"{tree}:/run/osbuild/tree"],
-                readonly_binds=[f"{libdir}:{path}"] if libdir else [f"/usr/lib/osbuild:{path}"],
-                encoding="utf-8",
-                input=json.dumps(args),
-                stdout=None if interactive else subprocess.PIPE,
-                stderr=subprocess.STDOUT
-            )
-            if check and r.returncode != 0:
-                raise StageFailed(self.name, r.returncode, r.stdout)
+            with build_root.bound_socket("osbuild") as osbuild_sock, \
+                API(osbuild_sock, args, interactive) as api:
+                r = build_root.run(
+                    [f"{path}/osbuild-run", f"{path}/stages/{self.name}"],
+                    binds=[f"{tree}:/run/osbuild/tree"],
+                    readonly_binds=[f"{libdir}:{path}"] if libdir else [f"/usr/lib/osbuild:{path}"],
+                    stdin=subprocess.DEVNULL,
+                )
+                if check and r.returncode != 0:
+                    raise StageFailed(self.name, r.returncode, api.output)
 
             return r.returncode == 0
 
@@ -136,18 +136,18 @@ class Assembler:
                 # buildroot we should remove this because it includes code from the host in the buildroot thus
                 # violating our effort of reproducibility.
                 ro_binds += [f"/usr/lib/osbuild:{path}", f"{osbuild_module_path}:{path}/assemblers/osbuild"]
-            with build_root.bound_socket("remoteloop") as sock, \
-                remoteloop.LoopServer(sock):
+            with build_root.bound_socket("remoteloop") as loop_sock, \
+                build_root.bound_socket("osbuild") as osbuild_sock, \
+                remoteloop.LoopServer(loop_sock), \
+                API(osbuild_sock, args, interactive) as api:
                 r = build_root.run(
                     [f"{path}/osbuild-run", f"{path}/assemblers/{self.name}"],
                     binds=binds,
                     readonly_binds=ro_binds,
-                    encoding="utf-8",
-                    input=json.dumps(args),
-                    stdout=None if interactive else subprocess.PIPE,
-                    stderr=subprocess.STDOUT)
+                    stdin=subprocess.DEVNULL,
+                )
                 if check and r.returncode != 0:
-                    raise AssemblerFailed(self.name, r.returncode, r.stdout)
+                    raise AssemblerFailed(self.name, r.returncode, api.output)
 
             return r.returncode == 0
 
