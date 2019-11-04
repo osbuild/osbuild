@@ -5,6 +5,18 @@ import json
 import re
 import sys
 
+STAGE_DESC = "Fix paths in /boot/loader/entries"
+STAGE_INFO = """
+Fixes paths in /boot/loader/entries that have incorrect paths for /boot.
+
+This happens because some boot loader config tools (e.g. grub2-mkrelpath)
+examine /proc/self/mountinfo to find the "real" path to /boot, and find the
+path to the osbuild tree - which won't be valid at boot time for this image.
+
+This stage reads and (re)writes all .conf files in /boot/loader/entries.
+"""
+STAGE_OPTS = ""
+
 
 def main(tree, _options):
     """Fix broken paths in /boot/loader/entries.

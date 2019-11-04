@@ -5,6 +5,85 @@ import subprocess
 import sys
 import tempfile
 
+STAGE_DESC = "Install packages using YUM"
+STAGE_INFO = """
+Depsolves, downloads, and installs packages (and dependencies) using YUM.
+
+Writes the `repos` into `/tmp/yum.conf`, does some tree setup, and then runs
+the buildhost's `yum` command with `--installroot`, plus the following
+arguments generated from the stage options:
+
+* `--releasever={releasever}`
+* `--rpmverbosity={verbosity}`
+* `--config=/tmp/yum.conf`
+
+To prepare the tree, this stage mounts `devtmpfs`, `sysfs`, and `proc` at
+`/dev`, `/sys`, and `/proc` (respectively).
+
+Each repo listed in `repos` needs at least one of `mirrorlist`, `metalink`, or
+`baseurl`. If a `gpgkey` is provided, `gpgcheck` will be turned on for that
+repo, and YUM will exit with an error unless every package downloaded from that
+repo is signed by one of the trusted `gpgkey`s.
+
+Buildhost commands used: `/bin/sh`, `yum`, `mkdir`, `mount`.
+"""
+STAGE_OPTS = """
+"required": ["repos", "packages", "releasever"],
+"properties": {
+  "repos": {
+    "description": "Array of repo objects to set up",
+    "type": "array",
+    "minItems": 1,
+    "items": {
+      "type": "object",
+      "properties": {
+        "metalink": {
+          "description": "metalink URL for this repo",
+          "type": "string"
+        },
+        "mirrorlist": {
+          "description": "mirrorlist URL for this repo",
+          "type": "string"
+        },
+        "baseurl": {
+          "description": "baseurl for this repo",
+          "type": "string"
+        },
+        "gpgkey": {
+          "description": "GPG public key contents (to check signatures)",
+          "type": "string"
+        }
+      },
+      "anyOf": [
+        {"required": ["metalink"]},
+        {"required": ["mirrorlist"]},
+        {"required": ["baseurl"]}
+      ]
+    }
+  },
+  "packages": {
+    "description": "List of package-specs to pass to yum",
+    "type": "array",
+    "minItems": 1,
+    "items": { "type": "string" }
+  },
+  "releasever": {
+    "description": "yum $releasever value",
+    "type": "string"
+  },
+  "operation": {
+    "description": "yum command to use",
+    "type": "string",
+    "default": "install"
+  },
+  "verbosity": {
+    "description": "Set yum's --rpmverbosity",
+    "type": "string",
+    "default": "info"
+  }
+}
+"""
+
 def write_repofile(f, repoid, repo, keydir):
     f.write(f"[{repoid}]\n")
 

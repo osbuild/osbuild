@@ -3,6 +3,22 @@ import json
 import sys
 import re
 
+STAGE_DESC = "Configure chrony to set system time from the network"
+STAGE_INFO = """
+Configures `chrony` to set the system time from the given `timeservers`.
+
+Modifies /etc/chrony.conf, removing all "server" or "pool" lines and adding
+a "server" line for each server listed in `timeservers`.
+"""
+STAGE_OPTS = """
+"properties": {
+  "timeservers": {
+    "type": "array",
+    "items": { "type": "string" },
+    "description": "Array of NTP server addresses"
+  }
+}
+"""
 DELETE_LINE_REGEX = re.compile(r"(server|pool) ")
 
 

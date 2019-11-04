@@ -5,6 +5,34 @@ import os
 import subprocess
 import sys
 
+STAGE_DESC = "Set SELinux file contexts"
+STAGE_INFO = """
+Sets correct SELinux labels for every file in the tree, according to the
+SELinux policy installed inside the tree.
+
+Uses the host's `setfiles` program and the tree's `file_contexts`, usually
+    /etc/selinux/<SELINUXTYPE>/contexts/files/file_contexts
+where <SELINUXTYPE> is the value set in /etc/selinux/config (usually "targeted"
+but may also be "minimum" or "mls").
+
+This stage may set or modify xattrs for any file inside the tree, but should
+not need to create files, modify file contents, or read any files other than
+`file_contexts`.
+
+This stage should run after all other stages that create (or move) files, since
+labels for newly-created files are determined by the host's SELinux policy and
+may not match the tree's policy.
+"""
+STAGE_OPTS = """
+"required": ["file_contexts"],
+"properties": {
+  "file_contexts": {
+    "type": "string",
+    "description": "Path to the active SELinux policy's `file_contexts`"
+  }
+}
+"""
+
 def main(tree, options):
     file_contexts = os.path.join(f"{tree}", options["file_contexts"])
 

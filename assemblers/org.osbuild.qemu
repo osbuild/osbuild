@@ -10,6 +10,48 @@ import sys
 import tempfile
 import osbuild.remoteloop as remoteloop
 
+STAGE_DESC = "Assemble a bootable partitioned disk image with qemu-img"
+STAGE_INFO = """
+Assemble a bootable partitioned disk image using `qemu-img`.
+
+Creates a sparse MBR-partitioned disk image of the given `size`, with a single
+bootable partition containing an ext4 root filesystem.
+
+Installs GRUB2 (using the buildhost's `/usr/lib/grub/i386-pc/boot.img` etc.) as
+the bootloader.
+
+Copies the tree contents into the root filesystem and then converts the raw
+sparse image into the format requested with the `fmt` option.
+
+Buildhost commands used: `truncate`, `mount`, `umount`, `sfdisk`,
+`grub2-mkimage`, `mkfs.ext4`, `qemu-img`.
+"""
+STAGE_OPTS = """
+"required": ["format", "filename", "ptuuid", "root_fs_uuid", "size"],
+"properties": {
+  "format": {
+    "description": "Image file format to use",
+    "type": "string",
+    "enum": ["raw", "qcow2", "vdi", "vmdk"]
+  },
+  "filename": {
+    "description": "Image filename",
+    "type": "string"
+  },
+  "ptuuid": {
+    "description": "UUID for the disk image's partition table",
+    "type": "string"
+  },
+  "root_fs_uuid": {
+    "description": "UUID for the root filesystem",
+    "type": "string"
+  },
+  "size": {
+    "description": "Virtual disk size",
+    "type": "string"
+  }
+}
+"""
 
 @contextlib.contextmanager
 def mount(source):

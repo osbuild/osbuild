@@ -5,6 +5,24 @@ import subprocess
 import sys
 import os
 
+STAGE_DESC = "Set image's default keymap"
+STAGE_INFO = """
+Sets the default console keyboard layout to `keymap`, like 'us' or 'de-latin1'.
+
+Removes any existing /etc/vconsole.conf, then runs `systemd-firstboot` with the
+`--keymap` option, which sets KEYMAP in /etc/vconsole.conf.
+
+Valid keymaps are generally found in /lib/kbd/keymaps.
+"""
+STAGE_OPTS = """
+"required": ["keymap"],
+"properties": {
+  "keymap": {
+    "type": "string",
+    "description": "Name of keymap to use"
+  }
+}
+"""
 
 def main(tree, options):
     keymap = options["keymap"]
