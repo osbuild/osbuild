@@ -4,6 +4,32 @@ import json
 import subprocess
 import sys
 
+STAGE_DESC = "Enable or disable systemd services"
+STAGE_INFO = """
+Enable or disable systemd units (service, socket, path, etc.)
+
+This stage runs `systemctl enable` for all `enabled_services` items, which may
+create symlinks under `/etc/systemd/system`.
+After enabling units, it runs `systemctl disable` for all `disabled_services`
+items, which will delete _all_ symlinks to the named services.
+
+Uses `systemctl` from the buildhost.
+"""
+STAGE_OPTS = """
+"required": ["enabled_services"],
+"properties": {
+  "enabled_services": {
+    "type": "array",
+    "items": { "type": "string" },
+    "description": "Array of systemd unit names to be enabled"
+  },
+  "disabled_services": {
+    "type": "array",
+    "items": { "type": "string" },
+    "description": "Array of systemd unit names to be enabled"
+  }
+}
+"""
 
 def main(tree, options):
     enabled_services = options["enabled_services"]

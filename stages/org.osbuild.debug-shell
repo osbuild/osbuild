@@ -4,6 +4,23 @@ import json
 import os
 import sys
 
+STAGE_DESC = "Set up an early root shell on a certain tty"
+STAGE_INFO = """
+Creates a systemd unit file at /etc/systemd/system/osbuild-debug-shell.service
+which starts an early-boot root shell on the given `tty`.
+
+Also symlinks the service file into /etc/systemd/system/sysinit.target.wants/.
+"""
+STAGE_OPTS = """
+"required": ["tty"],
+"properties": {
+  "tty": {
+    "type": "string",
+    "description": "Absolute path of the tty device to start a root shell on."
+  }
+}
+"""
+
 
 def main(tree, options):
     tty = options["tty"]

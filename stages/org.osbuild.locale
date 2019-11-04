@@ -5,6 +5,24 @@ import subprocess
 import sys
 import os
 
+STAGE_DESC = "Set system language."
+STAGE_INFO = """
+Sets the system language to the given `language`, which must be a valid locale
+identifier, like "en_US.UTF-8".
+
+Removes `/etc/locale.conf` and then uses `systemd-firstboot` from the buildhost,
+with the `--locale` flag, which will write a new `/etc/locale.conf` in the
+target system with `LANG={language}`.
+"""
+STAGE_OPTS = """
+"required": ["language"],
+"properties": {
+  "language": {
+    "type": "string",
+    "description": "Locale identifier (like 'en_US.UTF-8') for system LANG"
+  }
+}
+"""
 
 def main(tree, options):
     language = options["language"]

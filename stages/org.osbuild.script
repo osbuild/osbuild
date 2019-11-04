@@ -6,6 +6,33 @@ import os
 import subprocess
 import sys
 
+STAGE_DESC = "Run an arbitrary script inside the target tree"
+STAGE_INFO = """
+Runs an arbitrary script inside the target tree.
+
+Writes the contents of the `script` item to `/osbuild-script`, sets the
+permissions of the script to 0550 (-r-xr-x---), then uses the host's `chroot`
+binary to chroot into the tree and execute the script. The script is removed
+after it completes.
+
+WARNING: running code inside the tree is unsafe, unreliable, and generally
+discouraged. Using this stage may result in unexplained failures or other
+undefined behavior, and should only be done as a last resort.
+
+NOTE: if `script` does not start with a line like '#!/bin/bash\n', executing
+it will fail with ENOEXEC. Some `chroot` binaries will try to run the script
+through `/bin/sh` in that case, so it might still work, but that behavior is
+not guaranteed.
+"""
+STAGE_OPTS = """
+"required": ["script"],
+"properties": {
+  "script": {
+    "type": "string",
+    "description": "contents of the script file to be executed."
+  }
+}
+"""
 
 def main(tree, options):
     script = options["script"]

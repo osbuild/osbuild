@@ -3,6 +3,57 @@
 import json
 import sys
 
+STAGE_DESC = "Create /etc/fstab entries for filesystems"
+STAGE_INFO = """
+Create /etc/fstab entries for the given `filesystems`.
+
+Each filesystem item must have at least `uuid` and a `path` (mount point).
+
+This stage replaces /etc/fstab, removing any existing entries.
+"""
+STAGE_OPTS = """
+"required": ["filesystems"],
+"properties": {
+  "filesystems": {
+    "type": "array",
+    "description": "array of filesystem objects",
+    "items": {
+      "type": "object",
+      "required": ["uuid", "path"],
+      "properties": {
+        "uuid": {
+          "description": "Filesystem UUID",
+          "type": "string"
+        },
+        "path": {
+          "description": "Filesystem mountpoint",
+          "type": "string"
+        },
+        "vfs_type": {
+          "description": "Filesystem type",
+          "type": "string",
+          "default": "none"
+        },
+        "options": {
+          "description": "Filesystem options (comma-separated)",
+          "type": "string",
+          "default": "defaults"
+        },
+        "freq": {
+          "description": "dump(8) period in days",
+          "type": "number",
+          "default": 0
+        },
+        "passno": {
+          "description": "pass number on parallel fsck(8)",
+          "type": "number",
+          "default": 0
+        }
+      }
+    }
+  }
+}
+"""
 
 def main(tree, options):
     filesystems = options["filesystems"]

@@ -5,6 +5,23 @@ import os
 import subprocess
 import sys
 
+STAGE_DESC = "Set system hostname"
+STAGE_INFO = """
+Sets system hostname.
+
+Deletes /etc/hostname if present, then runs `systemd-firstboot` from the
+buildhost with `--hostname={hostname}`, which checks the validity of the
+hostname and writes it to /etc/hostname.
+"""
+STAGE_OPTS = """
+"required": ["hostname"],
+"properties": {
+  "hostname": {
+    "type": "string",
+    "description": "hostname for the target system"
+  }
+}
+"""
 
 def main(tree, options):
     hostname = options["hostname"]

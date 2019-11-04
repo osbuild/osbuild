@@ -5,6 +5,67 @@ import subprocess
 import sys
 import os
 
+STAGE_DESC = "Add or modify user accounts"
+STAGE_INFO = """
+Add or modify user accounts inside the tree.
+
+WARNING: This stage uses chroot() to run the `useradd` or `usermod` binary
+from inside the tree. This will fail for cross-arch builds and may fail or
+misbehave if the `usermod`/`useradd` binary inside the tree makes incorrect
+assumptions about its host system.
+"""
+STAGE_OPTS = """
+"properties": {
+  "users": {
+    "type": "object",
+    "description": "Keys are usernames, values are objects giving user info.",
+    "propertyNames": {
+      "pattern": "^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$"
+    },
+    "additionalProperties": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "description": "User UID",
+          "type": "number"
+        },
+        "gid": {
+          "description": "User GID",
+          "type": "number"
+        },
+        "groups": {
+          "description": "Array of group names for this user",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "description": "User account description (or full name)",
+          "type": "string"
+        },
+        "home": {
+          "description": "Path to user's home directory",
+          "type": "string"
+        },
+        "shell": {
+          "description": "User's login shell",
+          "type": "string"
+        },
+        "password": {
+          "description": "User's encrypted password, as returned by crypt(3)",
+          "type": "string"
+        },
+        "key": {
+          "description": "SSH Public Key to add to ~/.ssh/authorized_keys",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+"""
+
 
 def getpwnam(root, name):
     """Similar to pwd.getpwnam, but takes a @root parameter"""

@@ -3,6 +3,13 @@
 import json
 import sys
 
+STAGE_DESC = "Do Nothing"
+STAGE_INFO = """
+No-op stage. Prints a JSON dump of the options passed into this stage and
+leaves the tree untouched. Useful for testing, debugging, and wasting time.
+"""
+STAGE_OPTS = ""
+
 def main(_tree, options):
     print("Not doing anything with these options:", json.dumps(options))
 

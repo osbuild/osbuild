@@ -4,6 +4,23 @@ import json
 import os
 import sys
 
+STAGE_DESC = "Enable osbuild Boot Test service"
+STAGE_INFO = """
+Creates a Boot Test service that executes the given `script` (sending output to
+/dev/vport0p1) then immediately shuts down the system.
+
+Creates `/etc/systemd/system/osbuild-test.service`, and a symlink to it in
+`/etc/systemd/system/multi-user.target.wants/`.
+"""
+STAGE_OPTS = """
+"required": ["script"],
+"properties": {
+  "script": {
+    "type": "string",
+    "description": "Full path to a script that verifies successful bootup"
+  }
+}
+"""
 
 def main(tree, options):
     script = options["script"]

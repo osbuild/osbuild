@@ -3,6 +3,35 @@ import json
 import subprocess
 import sys
 
+STAGE_DESC = "Create group accounts"
+STAGE_INFO = """
+Create group accounts, optionally assigning them static GIDs.
+
+Runs `groupadd` from the buildhost to create the groups listed in `groups`.
+If no `gid` is given, `groupadd` will choose one.
+
+If the specified group name or GID is already in use, this stage will fail.
+"""
+STAGE_OPTS = """
+"properties": {
+  "groups": {
+    "type": "object",
+    "description": "Keys are group names, values are objects with group info",
+    "propertyNames": {
+      "pattern": "^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$"
+    },
+    "additionalProperties": {
+      "type": "object",
+      "properties": {
+        "gid": {
+          "type": "number",
+          "description": "GID for this group"
+        }
+      }
+    }
+  }
+}
+"""
 
 def groupadd(root, name, gid=None):
     arguments = []

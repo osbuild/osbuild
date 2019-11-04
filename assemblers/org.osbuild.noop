@@ -3,6 +3,12 @@
 import json
 import sys
 
+STAGE_DESC = "No-op assembler"
+STAGE_INFO = """
+No-op assembler. Produces no output, just prints a JSON dump of its options
+and then exits.
+"""
+STAGE_OPTS = ""
 def main(_tree, _output_dir, options):
     print("Not doing anything with these options:", json.dumps(options))
 

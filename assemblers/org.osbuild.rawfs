@@ -8,6 +8,44 @@ import subprocess
 import sys
 import osbuild.remoteloop as remoteloop
 
+STAGE_DESC = "Assemble tree into a raw ext4 filesystem image"
+STAGE_INFO = """
+Assemble the tree into a raw ext4 filesystem image named `filename`, with the
+UUID `root_fs_uuid`.
+
+The image is a sparse file of the given `size`, which is created using the
+`truncate(1)` command. The `size` is an integer with an optional suffix:
+K,M,G,T,... (for powers of 1024) or KB,MB,GB,TB,... (powers of 1000).
+
+NOTE: If the tree contents are larger than `size`, this assembler will fail.
+On the other hand, since the image is a sparse file, the unused parts of the
+image take up almost no disk space - so a 1GB tree in a 20GB image should not
+use much more than 1GB disk space.
+
+The filesystem UUID should be a standard (RFC4122) UUID, which you can
+generate with uuid.uuid4() in Python, `uuidgen(1)` in a shell script, or
+read from `/proc/sys/kernel/random/uuid` if your kernel provides it.
+"""
+STAGE_OPTS = """
+"required": ["filename", "root_fs_uuid", "size"],
+"properties": {
+  "filename": {
+    "description": "Raw ext4 filesystem image filename",
+    "type": "string"
+  },
+  "root_fs_uuid": {
+    "description": "UUID for the filesystem",
+    "type": "string",
+    "pattern": "^[0-9A-Za-z]{8}(-[0-9A-Za-z]{4}){3}-[0-9A-Za-z]{12}$",
+    "examples": ["9c6ae55b-cf88-45b8-84e8-64990759f39d"]
+  },
+  "size": {
+    "description": "Maximum size of the filesystem",
+    "type": "string",
+    "examples": ["500M", "20GB"]
+  }
+}
+"""
 
 @contextlib.contextmanager
 def mount(source, dest, *options):

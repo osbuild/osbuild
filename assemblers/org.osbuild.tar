@@ -4,6 +4,37 @@ import json
 import subprocess
 import sys
 
+STAGE_DESC = "Assemble a tar archive"
+STAGE_INFO = """
+Assembles the tree into a tar archive named `filename`.
+
+Uses the buildhost's `tar` command, like: `tar -cf $FILENAME -C $TREE`
+
+If the `compression` option is given, the archive will be compressed by passing
+the `--{compression}` option to `tar`. (This option is non-standard and might
+not work for anything other than GNU tar.)
+
+Known options for `compression`: "bzip2", "xz", "lzip", "lzma", "lzop", "gzip".
+
+Note that using `compression` does not add an extension to `filename`, so the
+caller is responsible for making sure that `compression` and `filename` match.
+
+Buildhost commands used: `tar` and any named `compression` program.
+"""
+STAGE_OPTS = """
+"required": ["filename"],
+"properties": {
+  "filename": {
+    "description": "Filename for tar archive",
+    "type": "string"
+  },
+  "compression": {
+    "description": "Name of compression program",
+    "type": "string",
+    "enum": ["bzip2", "xz", "lzip", "lzma", "lzop", "gzip"]
+  }
+}
+"""
 
 def main(tree, output_dir, options):
     filename = options["filename"]

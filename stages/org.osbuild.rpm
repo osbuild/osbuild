@@ -9,6 +9,59 @@ import subprocess
 import sys
 import tempfile
 
+STAGE_DESC = "Download, verify, and install RPM packages"
+STAGE_INFO = """
+Download, verify, and install RPM packages.
+
+`gpgkeys` should be an array of strings containing each GPG key to be used
+to verify the downloaded packages.
+
+`packages` is an array of objects; each item must have a `url` to download
+the .rpm file and a `checksum` to verify the integrity of the downloaded
+data.
+
+This stage will fail if any of URLs can't be reached, or if any downloaded
+RPM has a signature or digest that cannot be verified.
+
+NOTE: this stage currently does _not_ fail if a package is unsigned, only if
+the package is signed but the signature cannot be verified. A future version
+of this stage will fail on unsigned packages by default, but may support a
+flag to skip signature checks for packages that are known to be unsigned.
+
+Uses the following binaries from the host:
+    * `curl` to fetch RPMs
+    * `sha256sum` (or `sha1sum`, `md5sum`, etc.) to check RPM checksums
+    * `rpmkeys` to import keys and to verify signatures for each package
+    * `sh`, `mkdir`, `mount`, `chmod` to prepare the target tree for `rpm`
+    * `rpm` to install packages into the target tree
+"""
+STAGE_OPTS = """
+"properties": {
+  "gpgkeys": {
+    "description": "Array of GPG key contents to import",
+    "type": "array",
+    "items": { "type": "string" }
+  },
+  "packages": {
+    "description": "Array of package objects",
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": ["url", "checksum"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL to download a .rpm package file"
+        },
+        "checksum": {
+          "type": "string",
+          "description": ".rpm file checksum, prefixed with 'md5:', 'sha1:', 'sha256:', 'sha384:', or 'sha512:', indicating the algorithm used."
+        }
+      }
+    }
+  }
+}
+"""
 
 RPM_CACHE_DIR = "/var/cache/org.osbuild.rpm"
 

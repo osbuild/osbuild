@@ -8,6 +8,119 @@ import subprocess
 import sys
 import tempfile
 
+STAGE_DESC = "Install packages using DNF"
+STAGE_INFO = """
+Depsolves, downloads, and installs packages (and dependencies) using DNF.
+
+Writes the `repos` into `/tmp/dnf.conf`, does some tree setup, and then runs
+the buildhost's `dnf` command with `--installroot`, plus the following
+arguments generated from the stage options:
+
+* `--forcearch {basearch}`
+* `--releasever {releasever}`
+* `--setopt install_weak_deps={install_weak_deps}`
+* `--config /tmp/dnf.conf`
+* `--exclude {pkg}` for each item in `exclude_packages`
+
+Also disables the "generate_completion_cache" plugin, and sets `reposdir` to ""
+to ensure the buildhost's repo files are *not* being used.
+
+To prepare the tree, this stage sets `/etc/machine-id` to "ffff..." (32 chars)
+and bind-mounts `/dev`, `/sys`, and `/proc` from the buildhost into the tree.
+
+Each repo listed in `repos` needs to have a `checksum` and at least one of
+`mirrorlist`, `metalink`, or `baseurl`. If a `gpgkey` is provided, `gpgcheck`
+will be turned on for that repo, and DNF will exit with an error unless every
+package downloaded from that repo is signed by one of the trusted `gpgkey`s.
+
+The provided `checksum` must start with "sha256:" and then have the hex-encoded
+SHA256 of the repo's `repomd.xml` file. If the metadata for any repo has
+changed and no longer matches `checksum`, this stage will fail after package
+installation.
+
+NOTE: Any pipeline that uses a repo that changes frequently (like Fedora's
+"updates") will quickly become un-reproduceable. This is an unavoidable
+consequence of Fedora removing "out-of-date" metadata and packages: it's
+impossible to reproduce a build that requires files that have been deleted.
+To quote Douglas Adams: "We apologize for the inconvenience."
+
+After DNF finishes, this stage cleans up the tree by removing
+`/etc/machine-id`, `/var/lib/systemd/random-seed`, and everything under
+`/var/cache/dnf`.
+
+Buildhost commands used: `/bin/sh`, `dnf`, `mkdir`, `mount`, `chmod`.
+"""
+STAGE_OPTS = """
+"required": ["repos", "packages", "releasever", "basearch"],
+"properties": {
+  "repos": {
+    "description": "Array of repo objects to set up",
+    "type": "array",
+    "minItems": 1,
+    "items": {
+        "type": "object",
+        "properties": {
+            "metalink": {
+                "description": "metalink URL for this repo",
+                "type": "string"
+            },
+            "mirrorlist": {
+                "description": "mirrorlist URL for this repo",
+                "type": "string"
+            },
+            "baseurl": {
+                "description": "baseurl for this repo",
+                "type": "string"
+            },
+            "checksum": {
+                "description": "checksum for the expected repo metadata",
+                "type": "string",
+                "pattern": "sha256:[a-fA-F0-9]{32}"
+            },
+            "gpgkey": {
+                "description": "GPG public key contents (to check signatures)",
+                "type": "string"
+            }
+        },
+        "anyOf": [
+            {"required": ["checksum", "metalink"]},
+            {"required": ["checksum", "mirrorlist"]},
+            {"required": ["checksum", "baseurl"]}
+        ]
+    }
+  },
+  "packages": {
+    "description": "List of package-specs to pass to DNF",
+    "type": "array",
+    "minItems": 1,
+    "items": { "type": "string" }
+  },
+  "releasever": {
+    "description": "DNF $releasever value",
+    "type": "string"
+  },
+  "basearch": {
+    "description": "DNF $basearch value",
+    "type": "string"
+  },
+  "operation": {
+    "description": "DNF command to use",
+    "type": "string",
+    "default": "install"
+  },
+  "install_weak_deps": {
+    "description": "Whether DNF should install weak deps",
+    "type": "boolean",
+    "default": true
+  },
+  "exclude_packages": {
+    "description": "List of package-specs to --exclude",
+    "type": "array",
+    "items": { "type": "string" },
+    "default": []
+  }
+}
+"""
 
 def write_repofile(f, repoid, repo, keydir):
     f.write(f"[{repoid}]\n")
