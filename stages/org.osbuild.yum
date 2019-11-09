@@ -3,9 +3,9 @@
 import json
 import subprocess
 import sys
+import tempfile
 
-
-def write_repofile(f, repoid, repo):
+def write_repofile(f, repoid, repo, keydir):
     f.write(f"[{repoid}]\n")
 
     def write_option(key, value):
@@ -20,7 +20,7 @@ def write_repofile(f, repoid, repo):
             write_option(key, value)
 
     if "gpgkey" in repo:
-        keyfile = f"/tmp/{repoid}.asc"
+        keyfile = f"{keydir}/{repoid}.asc"
         with open(keyfile, "w") as key:
             key.write(repo["gpgkey"])
         write_option("gpgcheck", 1)
@@ -33,10 +33,6 @@ def main(tree, options):
     releasever = options["releasever"]
     operation = options.get("operation", "install")
     verbosity = options.get("verbosity", "info")
-
-    with open("/tmp/yum.conf", "w") as conf:
-        for repoid, repo in enumerate(repos):
-            write_repofile(conf, f"repo{repoid}", repo)
 
     script = f"""
         set -e
@@ -51,18 +47,24 @@ def main(tree, options):
         print(f"setting up API VFS in target tree failed: {err.returncode}")
         return err.returncode
 
-    cmd = [
-        "yum", "--assumeyes",
-        f"--installroot={tree}",
-        "--setopt=\"reposdir=\"",
-        f"--releasever={releasever}",
-        f"--rpmverbosity={verbosity}",
-        "--config=/tmp/yum.conf",
-        operation
-    ] + packages
+    with tempfile.TemporaryDirectory(prefix="org.osbuild.yum.") as confdir:
+        yumconf = f"{confdir}/yum.conf"
+        with open(yumconf, "w") as conf:
+            for num, repo in enumerate(repos):
+                write_repofile(conf, f"repo{num}", repo, confdir)
 
-    print(" ".join(cmd), flush=True)
-    return subprocess.run(cmd, check=False).returncode
+        cmd = [
+            "yum", "--assumeyes",
+            f"--installroot={tree}",
+            "--setopt=\"reposdir=\"",
+            f"--releasever={releasever}",
+            f"--rpmverbosity={verbosity}",
+            f"--config={yumconf}",
+            operation
+        ] + packages
+
+        print(" ".join(cmd), flush=True)
+        return subprocess.run(cmd, check=False).returncode
 
 
 if __name__ == '__main__':
