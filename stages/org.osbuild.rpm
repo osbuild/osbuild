@@ -31,9 +31,9 @@ def download_package(pkg):
             filename = curl.stdout.strip()
             break
     else:
-        raise RuntimeError("Error downloading " + pkg["url"])
+        raise RuntimeError(f"Error downloading {pkg['url']}")
 
-    algorithm, checksum = pkg["checksum"].split(":", 1)
+    algorithm, checksum = pkg["checksum"].strip().split(":", 1)
     if algorithm not in ("md5", "sha1", "sha256", "sha384", "sha512"):
         raise RuntimeError(f"Unsupported checksum algorithm: {algorithm}")
 
@@ -45,12 +45,6 @@ def download_package(pkg):
         encoding="utf-8",
         check=True)
 
-    # check signature, because `rpm --install` doesn't
-    subprocess.run(
-        ["rpmkeys", "--checksig", filename],
-        cwd=RPM_CACHE_DIR,
-        stdout=subprocess.DEVNULL,
-        check=True)
 
     return filename
 
@@ -93,6 +87,9 @@ def main(tree, options):
         subprocess.run([
             "rpm",
             "--root", tree,
+            # Make rpm require valid signatures & digests on packages.
+            # (see /usr/lib/rpm/macros for more info)
+            "--define", "_pkgverify_level all",
             "--install", manifest.name
         ], cwd=RPM_CACHE_DIR, check=True)
 
