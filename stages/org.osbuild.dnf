@@ -6,9 +6,10 @@ import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 
 
-def write_repofile(f, repoid, repo):
+def write_repofile(f, repoid, repo, keydir):
     f.write(f"[{repoid}]\n")
 
     def write_option(key, value):
@@ -23,7 +24,7 @@ def write_repofile(f, repoid, repo):
             write_option(key, value)
 
     if "gpgkey" in repo:
-        keyfile = f"/tmp/{repoid}.asc"
+        keyfile = f"{keydir}/{repoid}.asc"
         with open(keyfile, "w") as key:
             key.write(repo["gpgkey"])
         write_option("gpgcheck", 1)
@@ -62,10 +63,6 @@ def main(tree, options):
     weak_deps = options.get("install_weak_deps", True)
     exclude_packages = options.get("exclude_packages", [])
 
-    with open("/tmp/dnf.conf", "w") as conf:
-        for repoid, repo in enumerate(repos):
-            write_repofile(conf, f"repo{repoid}", repo)
-
     script = f"""
         set -e
         mkdir -p {tree}/dev {tree}/sys {tree}/proc
@@ -90,22 +87,29 @@ def main(tree, options):
         print(f"setting up API VFS in target tree failed: {err.returncode}")
         return err.returncode
 
-    base_cmd = [
-        "dnf", "-yv",
-        "--installroot", tree,
-        "--forcearch", basearch,
-        "--setopt", "reposdir=",
-        "--setopt", f"install_weak_deps={weak_deps}",
-        "--releasever", releasever,
-        "--disableplugin=generate_completion_cache", # supress error that completion db can't be opened
-        "--config", "/tmp/dnf.conf"
-    ]
+    with tempfile.TemporaryDirectory(prefix="org.osbuild.dnf.") as confdir:
+        dnfconf = f"{confdir}/dnf.conf"
 
-    cmd = base_cmd + [operation] + packages
-    for x in exclude_packages:
-        cmd += ["--exclude", x]
-    print(" ".join(cmd), flush=True)
-    subprocess.run(cmd, check=True)
+        with open(dnfconf, "w") as conf:
+            for num, repo in enumerate(repos):
+                write_repofile(conf, f"repo{num}", repo, confdir)
+
+        base_cmd = [
+            "dnf", "-yv",
+            "--installroot", tree,
+            "--forcearch", basearch,
+            "--setopt", "reposdir=",
+            "--setopt", f"install_weak_deps={weak_deps}",
+            "--releasever", releasever,
+            "--disableplugin=generate_completion_cache", # supress error that completion db can't be opened
+            "--config", dnfconf
+        ]
+
+        cmd = base_cmd + [operation] + packages
+        for x in exclude_packages:
+            cmd += ["--exclude", x]
+        print(" ".join(cmd), flush=True)
+        subprocess.run(cmd, check=True)
 
     # verify metadata checksum
     for repoid, repo in enumerate(repos):
