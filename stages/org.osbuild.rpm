@@ -7,6 +7,7 @@ import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 
 
 RPM_CACHE_DIR = "/var/cache/org.osbuild.rpm"
@@ -55,12 +56,11 @@ def download_package(pkg):
 
 
 def main(tree, options):
-    for key in  options.get("gpgkeys", []):
-        keyfile = "/tmp/key.asc"
-        with open(keyfile, "w") as f:
-            f.write(key)
-        subprocess.run(["rpmkeys", "--import", keyfile], check=True)
-        os.remove(keyfile)
+    for key in options.get("gpgkeys", []):
+        with tempfile.NamedTemporaryFile(prefix="gpgkey.") as keyfile:
+            keyfile.write(key)
+            keyfile.flush()
+            subprocess.run(["rpmkeys", "--import", keyfile.name], check=True)
 
     os.makedirs(RPM_CACHE_DIR)
 
@@ -87,10 +87,14 @@ def main(tree, options):
 
     subprocess.run(["/bin/sh", "-c", script], check=True)
 
-    with open("/tmp/manifest", "w") as f:
-        f.write("\n".join(packages))
-
-    subprocess.run(["rpm", "--root", tree, "--install", "/tmp/manifest"], cwd=RPM_CACHE_DIR, check=True)
+    with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
+        manifest.writelines(p+'\n' for p in packages)
+        manifest.flush()
+        subprocess.run([
+            "rpm",
+            "--root", tree,
+            "--install", manifest.name
+        ], cwd=RPM_CACHE_DIR, check=True)
 
     # remove temporary machine ID if it was created by us
     if not machine_id_set_previously:
