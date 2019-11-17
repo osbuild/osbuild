@@ -118,7 +118,11 @@ STAGE_OPTS = """
     "type": "array",
     "items": { "type": "string" },
     "default": []
-  }
+  },
+  "module_platform_id": {
+    "description": "DNF's module_platform_id option. Corresponds to PLATFORM_ID from /etc/os-release",
+    "type": "string"
+  },
 }
 """
 
@@ -175,6 +179,7 @@ def main(tree, options):
     operation = options.get("operation", "install")
     weak_deps = options.get("install_weak_deps", True)
     exclude_packages = options.get("exclude_packages", [])
+    module_platform_id = options.get("module_platform_id", None)
 
     script = f"""
         set -e
@@ -204,6 +209,9 @@ def main(tree, options):
         dnfconf = f"{confdir}/dnf.conf"
 
         with open(dnfconf, "w") as conf:
+            if module_platform_id:
+                conf.write("[main]\n")
+                conf.write(f"module_platform_id={module_platform_id}\n")
             for num, repo in enumerate(repos):
                 write_repofile(conf, f"repo{num}", repo, confdir)
 
