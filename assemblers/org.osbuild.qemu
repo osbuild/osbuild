@@ -139,19 +139,10 @@ def main(tree, output_dir, options, loop_client):
     if fmt not in ("raw", "vdi", "vpc"):
         extra_args.append("-c")
 
-    if fmt != "vpc":
-        subprocess.run(["qemu-img", "convert", "-O", fmt, *extra_args, image, f"{output_dir}/{filename}"], check=True)
-    else:
-        # Implementation of the resize algorithm from here:
-        # https://docs.microsoft.com/en-us/azure/virtual-machines/linux/create-upload-generic
-        mb = 1024*1024
-        rounded_size = int((size/mb + 1) * mb)
-        subprocess.run(["qemu-img", "resize", image, rounded_size], check=True)
-        subprocess.run(["qemu-img", "convert",
-                        "-f", "raw",
-                        "-o", "subformat=fixed,force_size",
-                        "-O", "vpc",
-                        image, f"{output_dir}/{filename}"], check=True)
+    if fmt == "vpc":
+        extra_args += ["-o", "subformat=fixed,force_size"]
+
+    subprocess.run(["qemu-img", "convert", "-O", fmt, *extra_args, image, f"{output_dir}/{filename}"], check=True)
 
 
 if __name__ == '__main__':
