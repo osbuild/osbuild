@@ -52,6 +52,10 @@ STAGE_OPTS = """
         "gpgkey": {
           "description": "GPG public key contents (to check signatures)",
           "type": "string"
+        },
+        "proxy": {
+          "description": "URL of a proxy server to use for this repository",
+          "type": "string"
         }
       },
       "anyOf": [
@@ -69,6 +73,10 @@ STAGE_OPTS = """
   },
   "releasever": {
     "description": "yum $releasever value",
+    "type": "string"
+  },
+  "proxy": {
+    "description": "URL of a proxy server to use for all yum operations",
     "type": "string"
   },
   "operation": {
@@ -93,7 +101,7 @@ def write_repofile(f, repoid, repo, keydir):
     # silence dnf warning about missing name
     write_option("name", repoid)
 
-    for key in ("metalink", "mirrorlist", "baseurl"):
+    for key in ("metalink", "mirrorlist", "baseurl", "proxy"):
         value = repo.get(key)
         if value:
             write_option(key, value)
@@ -110,6 +118,7 @@ def main(tree, options):
     repos = options["repos"]
     packages = options["packages"]
     releasever = options["releasever"]
+    proxy = options.get("proxy")
     operation = options.get("operation", "install")
     verbosity = options.get("verbosity", "info")
 
@@ -129,6 +138,10 @@ def main(tree, options):
     with tempfile.TemporaryDirectory(prefix="org.osbuild.yum.") as confdir:
         yumconf = f"{confdir}/yum.conf"
         with open(yumconf, "w") as conf:
+            conf.write("[main]\n")
+            if proxy:
+                conf.write(f"proxy={proxy}\n")
+
             for num, repo in enumerate(repos):
                 write_repofile(conf, f"repo{num}", repo, confdir)
 
