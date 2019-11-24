@@ -62,8 +62,8 @@ class Stage:
             description["options"] = self.options
         return description
 
-    def run(self, tree, build_tree, interactive=False, check=True, libdir=None):
-        with buildroot.BuildRoot(build_tree, libdir) as build_root:
+    def run(self, tree, runner, build_tree, interactive=False, check=True, libdir=None):
+        with buildroot.BuildRoot(build_tree, runner, libdir=libdir) as build_root:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options)
 
@@ -108,8 +108,8 @@ class Assembler:
             description["options"] = self.options
         return description
 
-    def run(self, tree, build_tree, output_dir=None, interactive=False, check=True, libdir=None):
-        with buildroot.BuildRoot(build_tree, libdir) as build_root:
+    def run(self, tree, runner, build_tree, output_dir=None, interactive=False, check=True, libdir=None):
+        with buildroot.BuildRoot(build_tree, runner, libdir=libdir) as build_root:
             if interactive:
                 print_header(f"Assembler {self.name}: {self.id}", self.options)
 
@@ -148,8 +148,9 @@ class Assembler:
 
 
 class Pipeline:
-    def __init__(self, build=None):
+    def __init__(self, runner=None, build=None):
         self.build = build
+        self.runner = runner
         self.stages = []
         self.assembler = None
 
@@ -172,16 +173,20 @@ class Pipeline:
         build = self.build.tree_id if self.build else None
         self.assembler = Assembler(name, build, self.tree_id, options or {})
 
-    def prepend_build_pipeline(self, build):
+    def prepend_build_env(self, build_pipeline, runner):
         pipeline = self
         while pipeline.build:
             pipeline = pipeline.build
-        pipeline.build = build
+        pipeline.build = build_pipeline
+        pipeline.runner = runner
 
     def description(self):
         description = {}
         if self.build:
-            description["build"] = self.build.description()
+            description["build"] = {
+                "pipeline": self.build.description(),
+                "runner": self.runner
+            }
         if self.stages:
             description["stages"] = [s.description() for s in self.stages]
         if self.assembler:
@@ -228,6 +233,7 @@ class Pipeline:
                     with object_store.new(self.tree_id, base_id=base) as tree:
                         for stage in self.stages[base_idx + 1:]:
                             if not stage.run(tree,
+                                             self.runner,
                                              build_tree,
                                              interactive=interactive,
                                              check=check,
@@ -238,6 +244,7 @@ class Pipeline:
                 with object_store.get(self.tree_id) as tree, \
                     object_store.new(self.output_id) as output_dir:
                     if not self.assembler.run(tree,
+                                              self.runner,
                                               build_tree,
                                               output_dir=output_dir,
                                               interactive=interactive,
@@ -248,13 +255,24 @@ class Pipeline:
         return True
 
 
-def load(description):
-    build_description = description.get("build")
-    if build_description:
-        build = load(build_description)
+def load_build(description):
+    pipeline = description.get("pipeline")
+    if pipeline:
+        build_pipeline = load(pipeline)
     else:
-        build = None
-    pipeline = Pipeline(build)
+        build_pipeline = None
+
+    return build_pipeline, description["runner"]
+
+
+def load(description):
+    build = description.get("build")
+    if build:
+        build_pipeline, runner = load_build(build)
+    else:
+        build_pipeline, runner = None, None
+
+    pipeline = Pipeline(runner, build_pipeline)
 
     for s in description.get("stages", []):
         pipeline.add_stage(s["name"], s.get("options", {}))

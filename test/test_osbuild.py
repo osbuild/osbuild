@@ -44,21 +44,24 @@ class TestDescriptions(unittest.TestCase):
                 self.assertEqual(assembler.description(), description)
 
     def test_pipeline(self):
-        build = osbuild.Pipeline()
+        build = osbuild.Pipeline("org.osbuild.test")
         build.add_stage("org.osbuild.test", { "one": 1 })
 
-        pipeline = osbuild.Pipeline(build)
+        pipeline = osbuild.Pipeline("org.osbuild.test", build)
         pipeline.add_stage("org.osbuild.test", { "one": 2 })
         pipeline.set_assembler("org.osbuild.test")
 
         self.assertEqual(pipeline.description(), {
               "build": {
-                "stages": [
-                  {
-                    "name": "org.osbuild.test",
-                    "options": { "one": 1 }
-                  }
-                ]
+                "pipeline": {
+                  "stages": [
+                    {
+                      "name": "org.osbuild.test",
+                      "options": { "one": 1 }
+                    }
+                  ]
+                },
+                "runner": "org.osbuild.test"
               },
               "stages": [
                 {

@@ -71,24 +71,25 @@ The above pipeline has no base and produces a qcow2 image.
 ## Running
 
 ```
-usage: python3 -m osbuild [-h] [--build-pipeline PIPELINE] [--store DIRECTORY]
-                   [-l DIRECTORY]
+usage: __main__.py [-h] [--build-env ENV] [--store DIRECTORY] [-l DIRECTORY]
+                   [--json]
                    PIPELINE
 
 Build operating system images
 
 positional arguments:
-  PIPELINE              json file containing the pipeline that should be built
+  PIPELINE              json file containing the pipeline that should be
+                        built, or a '-' to read from stdin
 
 optional arguments:
   -h, --help            show this help message and exit
-  --build-pipeline PIPELINE
-                        json file containing the pipeline to create a build
+  --build-env ENV       json file containing a description of the build
                         environment
   --store DIRECTORY     the directory where intermediary os trees are stored
   -l DIRECTORY, --libdir DIRECTORY
                         the directory containing stages, assemblers, and the
                         osbuild library
+  --json                output results in JSON format
 ```
 
 ### Running example

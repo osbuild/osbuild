@@ -35,10 +35,10 @@ class TestCase(unittest.TestCase):
     def run_osbuild(self, pipeline, input=None):
         osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--store", self.store, "--libdir", ".", pipeline]
 
-        build_pipeline = os.getenv("OSBUILD_TEST_BUILD_PIPELINE", None)
-        if build_pipeline:
-            osbuild_cmd.append("--build-pipeline")
-            osbuild_cmd.append(build_pipeline)
+        build_env = os.getenv("OSBUILD_TEST_BUILD_ENV", None)
+        if build_env:
+            osbuild_cmd.append("--build-env")
+            osbuild_cmd.append(build_env)
 
         stdin = subprocess.PIPE if input else None
 

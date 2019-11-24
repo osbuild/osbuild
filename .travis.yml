@@ -8,7 +8,7 @@ jobs:
   include:
     - name: pylint
       install: pip install pylint==2.4.1
-      script: pylint osbuild osbuild-run assemblers/* stages/*
+      script: pylint osbuild runners/* assemblers/* stages/*
     - name: unit-tests
       script: python3 -m unittest test.test_osbuild
     - name: rpm
@@ -21,14 +21,14 @@ jobs:
     - name: pipeline-noop
       before_install: sudo apt-get install -y systemd-container
       script:
-        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . samples/noop.json
-        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . samples/noop.json
+        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
+        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
     - name: f30-boot
       before_install: sudo apt-get install -y systemd-container yum qemu-kvm
-      script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_PIPELINE=samples/build-from-yum.json" python3 -m unittest -v test.test_boot
+      script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_boot
     - name: assemblers
       before_install: sudo apt-get install -y systemd-container yum tar qemu-utils
-      script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_PIPELINE=samples/build-from-yum.json" python3 -m unittest -v test.test_assemblers
+      script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_assemblers
     - name: stage-tests
       before_install: sudo apt-get install -y systemd-container yum
-      script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_PIPELINE=samples/build-from-yum.json" python3 -m unittest -v test.test_stages
+      script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_stages
