@@ -8,10 +8,10 @@ import subprocess
 import sys
 import osbuild.remoteloop as remoteloop
 
-STAGE_DESC = "Assemble tree into a raw ext4 filesystem image"
+STAGE_DESC = "Assemble tree into a raw filesystem image"
 STAGE_INFO = """
-Assemble the tree into a raw ext4 filesystem image named `filename`, with the
-UUID `root_fs_uuid`.
+Assemble the tree into a raw filesystem image named `filename`, with the UUID
+`root_fs_uuid`.
 
 The image is a sparse file of the given `size`, which is created using the
 `truncate(1)` command. The `size` is an integer with an optional suffix:
@@ -30,7 +30,7 @@ STAGE_OPTS = """
 "required": ["filename", "root_fs_uuid", "size"],
 "properties": {
   "filename": {
-    "description": "Raw ext4 filesystem image filename",
+    "description": "Raw filesystem image filename",
     "type": "string"
   },
   "root_fs_uuid": {
@@ -43,6 +43,12 @@ STAGE_OPTS = """
     "description": "Maximum size of the filesystem",
     "type": "string",
     "examples": ["500M", "20GB"]
+  },
+  "fs_type": {
+    "description": "Filesystem type",
+    "type": "string",
+    "enum": ["ext4", "xfs"],
+    "default": "ext4"
   }
 }
 """
@@ -57,16 +63,31 @@ def mount(source, dest, *options):
         subprocess.run(["umount", "-R", dest], check=True)
 
 
+def mkfs_ext4(device, uuid):
+    subprocess.run(["mkfs.ext4", "-U", uuid, device], input="y", encoding='utf-8', check=True)
+
+
+def mkfs_xfs(device, uuid):
+    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf-8', check=True)
+
+
 def main(tree, output_dir, options, loop_client):
     filename = options["filename"]
     root_fs_uuid = options["root_fs_uuid"]
     size = options["size"]
+    fs_type = options.get("fs_type", "ext4")
 
     image = f"/var/tmp/osbuild-image.raw"
     mountpoint = f"/tmp/osbuild-mnt"
 
     subprocess.run(["truncate", "--size", str(size), image], check=True)
-    subprocess.run(["mkfs.ext4", "-U", root_fs_uuid, image], input="y", encoding='utf-8', check=True)
+
+    if fs_type == "ext4":
+        mkfs_ext4(image, root_fs_uuid)
+    elif fs_type == "xfs":
+        mkfs_xfs(image, root_fs_uuid)
+    else:
+        raise ValueError("`fs_type` must be either ext4 or xfs")
 
     # Copy the tree into the target image
     with loop_client.device(image) as loop, mount(loop, mountpoint):
