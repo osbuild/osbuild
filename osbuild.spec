@@ -54,7 +54,8 @@ install -p -m 0755 $(find stages -type f) %{buildroot}%{pkgdir}/stages/
 mkdir -p %{buildroot}%{pkgdir}/assemblers
 install -p -m 0755 $(find assemblers -type f) %{buildroot}%{pkgdir}/assemblers/
 
-install -p -m 0755 osbuild-run %{buildroot}%{pkgdir}/
+mkdir -p %{buildroot}%{pkgdir}/runners
+install -p -m 0755 $(find runners -type f) %{buildroot}%{pkgdir}/runners
 
 %check
 exit 0

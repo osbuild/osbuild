@@ -13,12 +13,13 @@ __all__ = [
 
 
 class BuildRoot:
-    def __init__(self, root, path="/run/osbuild", libdir=None):
+    def __init__(self, root, runner, path="/run/osbuild", libdir=None):
         self.root = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
         self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
         self.var = tempfile.mkdtemp(prefix="osbuild-var-", dir="/var/tmp")
         self.mounts = []
         self.libdir = libdir or "/usr/lib/osbuild"
+        self.runner = runner
 
         self.mount_root(root)
         self.mount_var()
@@ -82,7 +83,7 @@ class BuildRoot:
             f"--bind-ro={self.libdir}:/run/osbuild/lib",
             *[f"--bind={b}" for b in (binds or [])],
             *[f"--bind-ro={b}" for b in [f"{self.api}:/run/osbuild/api"] + (readonly_binds or [])],
-            f"/run/osbuild/lib/osbuild-run"
+            f"/run/osbuild/lib/runners/{self.runner}"
             ] + argv, check=check, **kwargs)
 
     @contextlib.contextmanager

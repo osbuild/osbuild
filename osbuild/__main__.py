@@ -14,8 +14,8 @@ def main():
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
                         help="json file containing the pipeline that should be built, or a '-' to read from stdin")
-    parser.add_argument("--build-pipeline", metavar="PIPELINE", type=os.path.abspath,
-                        help="json file containing the pipeline to create a build environment")
+    parser.add_argument("--build-env", metavar="ENV", type=os.path.abspath,
+                        help="json file containing a description of the build environment")
     parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
                         default=".osbuild",
                         help="the directory where intermediary os trees are stored")
@@ -32,10 +32,10 @@ def main():
     pipeline = osbuild.load(json.load(f))
     f.close()
 
-    if args.build_pipeline:
-        with open(args.build_pipeline) as f:
-            build = osbuild.load(json.load(f))
-        pipeline.prepend_build_pipeline(build)
+    if args.build_env:
+        with open(args.build_env) as f:
+            build_pipeline, runner = osbuild.load_build(json.load(f))
+        pipeline.prepend_build_env(build_pipeline, runner)
 
     try:
         pipeline.run(args.store, interactive=not args.json, libdir=args.libdir)
