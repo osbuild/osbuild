@@ -63,7 +63,7 @@ class Stage:
         return description
 
     def run(self, tree, build_tree, interactive=False, check=True, libdir=None):
-        with buildroot.BuildRoot(build_tree) as build_root:
+        with buildroot.BuildRoot(build_tree, libdir) as build_root:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options)
 
@@ -72,13 +72,11 @@ class Stage:
                 "options": self.options,
             }
 
-            path = "/run/osbuild/lib"
             with build_root.bound_socket("osbuild") as osbuild_sock, \
                 API(osbuild_sock, args, interactive) as api:
                 r = build_root.run(
-                    [f"{path}/osbuild-run", f"{path}/stages/{self.name}"],
+                    [f"/run/osbuild/lib/stages/{self.name}"],
                     binds=[f"{tree}:/run/osbuild/tree"],
-                    readonly_binds=[f"{libdir}:{path}"] if libdir else [f"/usr/lib/osbuild:{path}"],
                     stdin=subprocess.DEVNULL,
                 )
                 if check and r.returncode != 0:
@@ -111,7 +109,7 @@ class Assembler:
         return description
 
     def run(self, tree, build_tree, output_dir=None, interactive=False, check=True, libdir=None):
-        with buildroot.BuildRoot(build_tree) as build_root:
+        with buildroot.BuildRoot(build_tree, libdir) as build_root:
             if interactive:
                 print_header(f"Assembler {self.name}: {self.id}", self.options)
 
@@ -126,22 +124,19 @@ class Assembler:
                 binds.append(f"{output_dir}:/run/osbuild/output")
                 args["output_dir"] = "/run/osbuild/output"
 
-            path = "/run/osbuild/lib"
             osbuild_module_path = os.path.dirname(importlib.util.find_spec('osbuild').origin)
             ro_binds = [f"{tree}:/run/osbuild/tree"]
-            if libdir:
-                ro_binds += [f"{libdir}:{path}"]
-            else:
+            if not libdir:
                 # This is a temporary workaround, once we have a common way to include osbuild in the
                 # buildroot we should remove this because it includes code from the host in the buildroot thus
                 # violating our effort of reproducibility.
-                ro_binds += [f"/usr/lib/osbuild:{path}", f"{osbuild_module_path}:{path}/assemblers/osbuild"]
+                ro_binds.append(f"{osbuild_module_path}:/run/osbuild/lib/assemblers/osbuild")
             with build_root.bound_socket("remoteloop") as loop_sock, \
                 build_root.bound_socket("osbuild") as osbuild_sock, \
                 remoteloop.LoopServer(loop_sock), \
                 API(osbuild_sock, args, interactive) as api:
                 r = build_root.run(
-                    [f"{path}/osbuild-run", f"{path}/assemblers/{self.name}"],
+                    [f"/run/osbuild/lib/assemblers/{self.name}"],
                     binds=binds,
                     readonly_binds=ro_binds,
                     stdin=subprocess.DEVNULL,

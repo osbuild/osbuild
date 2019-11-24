@@ -13,11 +13,12 @@ __all__ = [
 
 
 class BuildRoot:
-    def __init__(self, root, path="/run/osbuild"):
+    def __init__(self, root, path="/run/osbuild", libdir=None):
         self.root = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
         self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
         self.var = tempfile.mkdtemp(prefix="osbuild-var-", dir="/var/tmp")
         self.mounts = []
+        self.libdir = libdir or "/usr/lib/osbuild"
 
         self.mount_root(root)
         self.mount_var()
@@ -78,8 +79,10 @@ class BuildRoot:
             "--link-journal=no",
             "--property=DeviceAllow=block-loop rw",
             f"--directory={self.root}",
+            f"--bind-ro={self.libdir}:/run/osbuild/lib",
             *[f"--bind={b}" for b in (binds or [])],
             *[f"--bind-ro={b}" for b in [f"{self.api}:/run/osbuild/api"] + (readonly_binds or [])],
+            f"/run/osbuild/lib/osbuild-run"
             ] + argv, check=check, **kwargs)
 
     @contextlib.contextmanager
