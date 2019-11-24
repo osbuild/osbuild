@@ -15,7 +15,7 @@ STAGE_INFO = """
 Assemble a bootable partitioned disk image using `qemu-img`.
 
 Creates a sparse MBR-partitioned disk image of the given `size`, with a single
-bootable partition containing an ext4 root filesystem.
+bootable partition containing the root filesystem.
 
 Installs GRUB2 (using the buildhost's `/usr/lib/grub/i386-pc/boot.img` etc.) as
 the bootloader.
@@ -24,7 +24,7 @@ Copies the tree contents into the root filesystem and then converts the raw
 sparse image into the format requested with the `fmt` option.
 
 Buildhost commands used: `truncate`, `mount`, `umount`, `sfdisk`,
-`grub2-mkimage`, `mkfs.ext4`, `qemu-img`.
+`grub2-mkimage`, `mkfs.ext4` or `mkfs.xfs`, `qemu-img`.
 """
 STAGE_OPTS = """
 "required": ["format", "filename", "ptuuid", "root_fs_uuid", "size"],
@@ -49,6 +49,12 @@ STAGE_OPTS = """
   "size": {
     "description": "Virtual disk size",
     "type": "string"
+  },
+  "root_fs_type": {
+    "description": "Type of the root filesystem",
+    "type": "string",
+    "enum": ["ext4", "xfs"],
+    "default": "ext4"
   }
 }
 """
@@ -63,12 +69,21 @@ def mount(source):
             subprocess.run(["umount", "-R", dest], check=True)
 
 
+def mkfs_ext4(device, uuid):
+    subprocess.run(["mkfs.ext4", "-U", uuid, device], input="y", encoding='utf-8', check=True)
+
+
+def mkfs_xfs(device, uuid):
+    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf-8', check=True)
+
+
 def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
     filename = options["filename"]
     ptuuid = options["ptuuid"]
     root_fs_uuid = options["root_fs_uuid"]
     size = options["size"]
+    root_fs_type = options.get("root_fs_type", "ext4")
 
     # sfdisk works on sectors of 512 bytes and ignores excess space - be explicit about this
     if size % 512 != 0:
@@ -76,6 +91,15 @@ def main(tree, output_dir, options, loop_client):
 
     if fmt not in ["raw", "qcow2", "vdi", "vmdk"]:
         raise ValueError("`format` must be one of raw, qcow, vdi, vmdk")
+
+    if root_fs_type == "ext4":
+        mkfs = mkfs_ext4
+        grub2_fs_module = "ext2"
+    elif root_fs_type == "xfs":
+        mkfs = mkfs_xfs
+        grub2_fs_module = "xfs"
+    else:
+        raise ValueError("`root_fs_type` must be either ext4 or xfs")
 
     image = "/var/tmp/osbuild-image.raw"
     grub2_core = "/var/tmp/grub2-core.img"
@@ -104,7 +128,7 @@ def main(tree, output_dir, options, loop_client):
                     "--format", "i386-pc",
                     "--compression", "auto",
                     "--output", grub2_core,
-                    "part_msdos", "ext2", "biosdisk"],
+                    "part_msdos", grub2_fs_module, "biosdisk"],
                    check=True)
 
     assert os.path.getsize(grub2_core) < partition_offset - 512
@@ -126,9 +150,8 @@ def main(tree, output_dir, options, loop_client):
             shutil.copyfileobj(core_f, image_f)
 
     with loop_client.device(image, partition_offset, partition_size) as loop:
-        # Populate the first partition of the image with an ext4 fs
-        subprocess.run(["mkfs.ext4", "-U", root_fs_uuid, loop],
-                       input="y", encoding='utf-8', check=True)
+        # Populate the first partition of the image with a filesystem
+        mkfs(loop, root_fs_uuid)
         # Copy the tree into the target image
         with mount(loop) as mountpoint:
             subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
