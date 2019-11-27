@@ -27,6 +27,10 @@ STAGE_OPTS = """
     "type": "array",
     "items": { "type": "string" },
     "description": "Array of systemd unit names to be enabled"
+  },
+  "default_target": {
+    "type": "string",
+    "description": "The default target to boot into"
   }
 }
 """
@@ -34,12 +38,16 @@ STAGE_OPTS = """
 def main(tree, options):
     enabled_services = options["enabled_services"]
     disabled_services = options.get("disabled_services", [])
+    default_target = options.get("default_target")
 
     for service in enabled_services:
         subprocess.run([f"systemctl", "--root", tree, "enable", service], check=True)
 
     for service in disabled_services:
         subprocess.run([f"systemctl", "--root", tree, "disable", service], check=True)
+
+    if default_target:
+        subprocess.run([f"systemctl", "--root", tree, "set-default", default_target], check=True)
 
     return 0
 
