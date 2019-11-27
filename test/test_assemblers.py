@@ -77,8 +77,9 @@ class TestAssemblers(osbuildtest.TestCase):
         self.assertFilesystem(image, options["root_fs_uuid"], "ext4", tree_id)
 
     def test_qemu(self):
-        for fmt in ["raw", "qcow2", "vmdk", "vdi"]:
+        for fmt in ["raw", "raw.xz", "qcow2", "vmdk", "vdi"]:
             with self.subTest(fmt=fmt):
+                print(f"  {fmt}", flush=True)
                 options = {
                     "format": fmt,
                     "filename": f"image.{fmt}",
@@ -88,6 +89,10 @@ class TestAssemblers(osbuildtest.TestCase):
                 }
                 tree_id, output_id = self.run_assembler("org.osbuild.qemu", options)
                 image = f"{self.store}/refs/{output_id}/image.{fmt}"
+                if fmt == "raw.xz":
+                    subprocess.run(["unxz", image], check=True)
+                    image = image[:-3]
+                    fmt = "raw"
                 self.assertImageFile(image, fmt, options["size"])
                 with nbd_connect(image) as device:
                     self.assertPartitionTable(device, "dos", options["ptuuid"], 1, boot_partition=1)
