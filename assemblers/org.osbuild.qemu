@@ -89,7 +89,7 @@ def main(tree, output_dir, options, loop_client):
     if size % 512 != 0:
         raise ValueError("`size` must be a multiple of sector size (512)")
 
-    if fmt not in ["raw", "qcow2", "vdi", "vmdk", "vpc"]:
+    if fmt not in ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc"]:
         raise ValueError("`format` must be one of raw, qcow, vdi, vmdk, vpc")
 
     if root_fs_type == "ext4":
@@ -156,15 +156,26 @@ def main(tree, output_dir, options, loop_client):
         with mount(loop) as mountpoint:
             subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
 
-    extra_args = {
-        "raw": [],
-        "qcow2": ["-c"],
-        "vdi": [],
-        "vmdk": ["-c"],
-        "vpc": ["-o", "subformat=fixed,force_size"]
-    }
-
-    subprocess.run(["qemu-img", "convert", "-O", fmt, *extra_args[fmt], image, f"{output_dir}/{filename}"], check=True)
+    if fmt == "raw":
+        subprocess.run(["cp", image, f"{output_dir}/{filename}"], check=True)
+    elif fmt == "raw.xz":
+        with open(f"{output_dir}/{filename}", "w") as f:
+            subprocess.run(["xz", "--keep", "--stdout", "-0", image], stdout=f, check=True)
+    else:
+        extra_args = {
+            "qcow2": ["-c"],
+            "vdi": [],
+            "vmdk": ["-c"],
+            "vpc": ["-o", "subformat=fixed,force_size"]
+        }
+        subprocess.run([
+            "qemu-img",
+            "convert",
+            "-O", fmt,
+            *extra_args[fmt],
+            image,
+            f"{output_dir}/{filename}"
+        ], check=True)
 
 
 if __name__ == '__main__':
