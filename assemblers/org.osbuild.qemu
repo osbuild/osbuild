@@ -156,16 +156,15 @@ def main(tree, output_dir, options, loop_client):
         with mount(loop) as mountpoint:
             subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
 
-    extra_args = []
+    extra_args = {
+        "raw": [],
+        "qcow2": ["-c"],
+        "vdi": [],
+        "vmdk": ["-c"],
+        "vpc": ["-o", "subformat=fixed,force_size"]
+    }
 
-    # raw and vdi don't suppport compression
-    if fmt not in ("raw", "vdi", "vpc"):
-        extra_args.append("-c")
-
-    if fmt == "vpc":
-        extra_args += ["-o", "subformat=fixed,force_size"]
-
-    subprocess.run(["qemu-img", "convert", "-O", fmt, *extra_args, image, f"{output_dir}/{filename}"], check=True)
+    subprocess.run(["qemu-img", "convert", "-O", fmt, *extra_args[fmt], image, f"{output_dir}/{filename}"], check=True)
 
 
 if __name__ == '__main__':
