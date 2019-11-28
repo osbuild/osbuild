@@ -2,7 +2,7 @@
 %global         pkgdir %{_prefix}/lib/%{pypi_name}
 
 Name:           %{pypi_name}
-Version:        5
+Version:        6
 Release:        1%{?dist}
 License:        ASL 2.0
 
