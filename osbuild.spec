@@ -1,9 +1,9 @@
 %global         pypi_name osbuild
-%global 	pkgdir %{_prefix}/lib/%{pypi_name}
+%global         pkgdir %{_prefix}/lib/%{pypi_name}
 
 Name:           %{pypi_name}
-Version:	5
-Release:	1%{?dist}
+Version:        5
+Release:        1%{?dist}
 License:        ASL 2.0
 
 URL:            https://github.com/osbuild/osbuild
