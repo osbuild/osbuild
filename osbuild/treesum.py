@@ -19,7 +19,7 @@ def treesum(m, dir_fd):
     The file, symlink and directory names and contents are recursively
     hashed, together with security-relevant metadata."""
 
-    with os.scandir(dir_fd) as it:
+    with os.scandir(f"/proc/self/fd/{dir_fd}") as it:
         for dirent in sorted(it, key=(lambda d: d.name)):
             stat_result = dirent.stat(follow_symlinks=False)
             metadata = {}
