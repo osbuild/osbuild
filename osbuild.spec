@@ -57,6 +57,10 @@ install -p -m 0755 $(find assemblers -type f) %{buildroot}%{pkgdir}/assemblers/
 mkdir -p %{buildroot}%{pkgdir}/runners
 install -p -m 0755 $(find runners -type f) %{buildroot}%{pkgdir}/runners
 
+# mount points for bind mounting the osbuild library
+mkdir -p %{buildroot}%{pkgdir}/stages/osbuild
+mkdir -p %{buildroot}%{pkgdir}/assemblers/osbuild
+
 %check
 exit 0
 # We have some integration tests, but those require running a VM, so that would
