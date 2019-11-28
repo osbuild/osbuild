@@ -222,7 +222,7 @@ def main(tree, options):
             "--setopt", "reposdir=",
             "--setopt", f"install_weak_deps={weak_deps}",
             "--releasever", releasever,
-            "--disableplugin=generate_completion_cache", # supress error that completion db can't be opened
+            "--noplugins",
             "--config", dnfconf
         ]
 
