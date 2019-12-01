@@ -270,7 +270,7 @@ def load(description):
     if build:
         build_pipeline, runner = load_build(build)
     else:
-        build_pipeline, runner = None, None
+        build_pipeline, runner = None, "org.osbuild.host"
 
     pipeline = Pipeline(runner, build_pipeline)
 
