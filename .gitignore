@@ -9,3 +9,5 @@ __pycache__
 /output-test
 
 /test/.vagrant
+
+/runners/org.osbuild.host
