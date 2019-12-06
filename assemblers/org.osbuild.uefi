@@ -1,0 +1,158 @@
+#!/usr/bin/python3
+
+import contextlib
+import json
+import socket
+import subprocess
+import sys
+import tempfile
+import osbuild.remoteloop as remoteloop
+
+STAGE_DESC = "Assemble a UEFI bootable partitioned disk image with qemu-img"
+STAGE_INFO = """
+Assemble a UEFI bootable partitioned disk image using `qemu-img`.
+
+Creates a sparse GPT-partitioned disk image of the given `size`, with the last
+partition containing an ext4 root filesystem. The image is configured so that
+can boot on UEFI based systems.
+
+Copies the tree contents into the root filesystem and then converts the raw
+sparse image into the format requested with the `fmt` option.
+
+Buildhost commands used: `truncate`, `mount`, `umount`, `sfdisk`,
+`mkfs.ext4`, `mkfs.vfat`, `qemu-img`.
+
+This assembler assumes that the UEFI packages and configuration have already
+been written to the tree. (see the org.osbuild.uefi-bls stage)
+
+The esp_fs_id is a 32-bit hex number that must match the fstab entry for
+/boot/efi where it must be of the form 'ABCD-0123' but for mkfs.vfat it must be
+ABCD0123. This assembler accepts it in either form, stripping any '-' from it
+before passing it to mkfs.vfat
+"""
+STAGE_OPTS = """
+"required": ["format", "filename", "ptuuid", "esp_fs_id", "root_fs_uuid", "size"],
+"properties": {
+  "format": {
+    "description": "Image file format to use",
+    "type": "string",
+    "enum": ["raw", "qcow2", "vdi", "vmdk"]
+  },
+  "filename": {
+    "description": "Image filename",
+    "type": "string"
+  },
+  "ptuuid": {
+    "description": "UUID for the disk image's partition table",
+    "type": "string"
+  },
+  "esp_fs_id": {
+    "description": "32-bit hex Volume ID for the EFI System Partition filesystem",
+    "type": "string"
+  },
+  "root_fs_uuid": {
+    "description": "UUID for the root filesystem",
+    "type": "string"
+  },
+  "size": {
+    "description": "Virtual disk size",
+    "type": "string"
+  }
+}
+"""
+
+@contextlib.contextmanager
+def mount(source):
+    with tempfile.TemporaryDirectory(prefix="osbuild-mnt") as dest:
+        subprocess.run(["mount", source, dest], check=True)
+        try:
+            yield dest
+        finally:
+            subprocess.run(["umount", "-R", dest], check=True)
+
+
+@contextlib.contextmanager
+def mount_path(source, dest):
+    subprocess.run(["mount", source, dest], check=True)
+    try:
+        yield dest
+    finally:
+        subprocess.run(["umount", "-R", dest], check=True)
+
+
+def main(tree, output_dir, options, loop_client):
+    fmt = options["format"]
+    filename = options["filename"]
+    ptuuid = options["ptuuid"]
+
+    # Allow 32 bit hex value to also contain a '-' which is required by the fstab entry
+    esp_fs_id = options["esp_fs_id"].replace("-", "")
+    root_fs_uuid = options["root_fs_uuid"]
+    size = options["size"]
+
+    # sfdisk works on sectors of 512 bytes and ignores excess space - be explicit about this
+    if size % 512 != 0:
+        raise ValueError("`size` must be a multiple of sector size (512)")
+
+    if fmt not in ["raw", "qcow2", "vdi", "vmdk"]:
+        raise ValueError("`format` must be one of raw, qcow, vdi, vmdk")
+
+    image = "/var/tmp/osbuild-image.raw"
+
+    # Create an empty image file
+    subprocess.run(["truncate", "--size", str(size), image], check=True)
+
+    # Set up the partition table of the image
+    # p1 is the EFI System Partition
+    # p2 is the / filesystem
+    partition_table = f"label: gpt\nlabel-id: {ptuuid}\n" \
+                       "2048 972800 C12A7328-F81F-11D2-BA4B-00A0C93EC93B\n" \
+                       "976896"
+    subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
+
+    r = subprocess.run(["sfdisk", "--json", image], stdout=subprocess.PIPE, encoding='utf-8', check=True)
+    partition_table = json.loads(r.stdout)
+
+    esp_partition = partition_table["partitiontable"]["partitions"][0]
+    esp_offset = esp_partition["start"] * 512
+    esp_size = esp_partition["size"] * 512
+
+    root_partition = partition_table["partitiontable"]["partitions"][1]
+    root_offset = root_partition["start"] * 512
+    root_size = root_partition["size"] * 512
+
+    with loop_client.device(image, root_offset, root_size) as loop:
+        # Populate the root partition of the image with an ext4 fs
+        subprocess.run(["mkfs.ext4", "-U", root_fs_uuid, loop],
+                       input="y", encoding='utf-8', check=True)
+
+        # Mount the root partition and create the UEFI System Partition at /boot/efi/
+        with mount(loop) as mountpoint:
+            with loop_client.device(image, esp_offset, esp_size) as esp_loop:
+                # Format and mount the ESP at /boot/efi/
+                subprocess.run(["mkfs.vfat", "-n", "EFI System Partition", "-i", esp_fs_id, esp_loop],
+                               encoding='utf-8', check=True)
+
+                # EFI/BOOT goes under /boot/efi/
+                subprocess.run(["mkdir", "-p", mountpoint+"/boot/efi/"], check=True)
+                with mount_path(esp_loop, mountpoint+"/boot/efi"):
+                    # Copy the tree into the target image
+                    subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
+
+    extra_args = []
+
+    # raw and vdi don't suppport compression
+    if fmt not in ("raw", "vdi"):
+        extra_args.append("-c")
+
+    subprocess.run(["qemu-img", "convert", "-O", fmt, *extra_args, image, f"{output_dir}/{filename}"], check=True)
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+
+    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
+        sock.connect("/run/osbuild/api/remoteloop")
+        ret = main(args["tree"], args["output_dir"], args["options"], remoteloop.LoopClient(sock))
+
+    sys.exit(ret)

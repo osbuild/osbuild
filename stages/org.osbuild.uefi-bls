@@ -1,0 +1,42 @@
+#!/usr/bin/python3
+
+import glob
+import json
+import os
+import sys
+import subprocess
+
+STAGE_DESC = "Setup paths for UEFI booting with blscfg"
+STAGE_INFO = """
+This stage copies the configuration files needed to boot on UEFI systems using
+the blscfg module.
+
+This stage must be run after org.stage.grub2 and org.stage.fix-bls so that the correct
+files are available.
+"""
+STAGE_OPTS = ""
+
+
+def main(tree, _options):
+    """Copy configuration files needed for UEFI blscfg booting
+    """
+    # A minimal grub.cfg has already been written, it needs to be copied to the
+    # distribution specific EFI directory (eg. /boot/efi/EFI/fedora)
+    # The grubenv file contains the UUID of the filesystem to read the bls entries
+    # from.
+    # It may already exist in this path, this makes sure that it is present.
+    for d in glob.glob(f"{tree}/boot/efi/EFI/*"):
+        # Skip the fallback loader
+        if d.endswith("BOOT"):
+            continue
+        # Copy config files if they don't already exist
+        for file in ["grubenv", "grub.cfg"]:
+            if not os.path.exists(f"{d}/{file}"):
+                subprocess.run(["cp", f"{tree}/boot/grub2/{file}", d], check=True)
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
