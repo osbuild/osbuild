@@ -67,6 +67,19 @@ def copy_font(tree):
     shutil.copy2("/usr/share/grub/unicode.pf2", f"{tree}/boot/grub2/fonts/")
 
 
+def write_grub_cfg(tree, path):
+    """Write the grub config"""
+    with open(os.path.join(tree, path), "w") as cfg:
+        cfg.write("set timeout=0\n"
+                  "load_env\n"
+                  "search --no-floppy --fs-uuid --set=root ${GRUB2_ROOT_FS_UUID}\n"
+                  "search --no-floppy --fs-uuid --set=boot ${GRUB2_BOOT_FS_UUID}\n"
+                  "function load_video {\n"
+                  "  insmod all_video\n"
+                  "}\n"
+                  "blscfg\n")
+
+
 def main(tree, options):
     root_fs_uuid = options["root_fs_uuid"]
     kernel_opts = options.get("kernel_opts", "")
@@ -83,16 +96,8 @@ def main(tree, options):
                   f"GRUB2_ROOT_FS_UUID={root_fs_uuid}\n"
                   f"GRUB2_BOOT_FS_UUID={root_fs_uuid}\n"
                   f"kernelopts=root=UUID={root_fs_uuid} {kernel_opts}\n")
-    with open(f"{tree}/boot/grub2/grub.cfg", "w") as cfg:
-        cfg.write("set timeout=0\n"
-                  "load_env\n"
-                  "search --no-floppy --fs-uuid --set=root ${GRUB2_ROOT_FS_UUID}\n"
-                  "search --no-floppy --fs-uuid --set=boot ${GRUB2_BOOT_FS_UUID}\n"
-                  "function load_video {\n"
-                  "  insmod all_video\n"
-                  "}\n"
-                  "blscfg\n")
 
+    write_grub_cfg(tree, "boot/grub2/grub.cfg")
     copy_modules(tree)
     copy_font(tree)
 
