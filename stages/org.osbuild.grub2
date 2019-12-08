@@ -48,6 +48,19 @@ STAGE_OPTS = """
 }
 """
 
+
+def copy_modules(tree):
+    """Copy all modules from the build image to /boot"""
+    os.makedirs(f"{tree}/boot/grub2/i386-pc", exist_ok=True)
+    for dirent in os.scandir("/usr/lib/grub/i386-pc"):
+        (_, ext) = os.path.splitext(dirent.name)
+        if ext not in ('.mod', '.lst'):
+            continue
+        if dirent.name == "fdt.lst":
+            continue
+        shutil.copy2(f"/usr/lib/grub/i386-pc/{dirent.name}", f"{tree}/boot/grub2/i386-pc/")
+
+
 def main(tree, options):
     root_fs_uuid = options["root_fs_uuid"]
     kernel_opts = options.get("kernel_opts", "")
@@ -74,15 +87,7 @@ def main(tree, options):
                   "}\n"
                   "blscfg\n")
 
-    # Copy all modules from the build image to /boot
-    os.makedirs(f"{tree}/boot/grub2/i386-pc", exist_ok=True)
-    for dirent in os.scandir("/usr/lib/grub/i386-pc"):
-        (_, ext) = os.path.splitext(dirent.name)
-        if ext not in ('.mod', '.lst'):
-            continue
-        if dirent.name == "fdt.lst":
-            continue
-        shutil.copy2(f"/usr/lib/grub/i386-pc/{dirent.name}", f"{tree}/boot/grub2/i386-pc/")
+    copy_modules(tree)
 
     # Copy a unicode font into /boot
     os.makedirs(f"{tree}/boot/grub2/fonts", exist_ok=True)
