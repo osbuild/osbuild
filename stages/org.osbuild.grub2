@@ -19,13 +19,20 @@ behavior in Fedora 30 and later.
 This stage will overwrite `/etc/default/grub`, `/boot/grub2/grubenv`, and
 `/boot/grub2/grub.cfg`. (Leading directories will be created if not present.)
 
-This stage also copies GRUB2 files from the buildhost into the target tree:
+If Legacy boot support is requested (the default, or explicitly via `legacy`)
+this stage will also overwrite `/boot/grub2/grub.cfg` and will copy the
+GRUB2 files from the buildhost into the target tree:
 * `/usr/share/grub/unicode.pf2`       -> `/boot/grub2/fonts/`
 * `/usr/lib/grub/i386-pc/*.{mod,lst}` -> `/boot/grub2/i386-pc/`
   * NOTE: skips `fdt.lst`, which is an empty file
 
-This stage will fail if the buildhost doesn't have `/usr/lib/grub/i386-pc/`
-and `/usr/share/grub/unicode.pf2`.
+NB: with legacy support enabled, this stage will fail if the buildhost
+doesn't have `/usr/lib/grub/i386-pc/` and `/usr/share/grub/unicode.pf2`.
+
+If UEFI support is enabled via `uefi: {"vendor": "<vendor>"}` this stage will
+also write the `grub.cfg` to `boot/efi/EFI/<vendor>/grub.cfg`.
+
+Both UEFI and Legacy can be specified at the same time.
 """
 STAGE_OPTS = """
 "required": ["root_fs_uuid"],
@@ -44,6 +51,24 @@ STAGE_OPTS = """
     "description": "Additional kernel boot options",
     "type": "string",
     "default": ""
+  },
+  "legacy": {
+    "description": "Include legacy boot support",
+    "type": "boolean",
+    "default": true
+  },
+  "uefi": {
+    "description": "Include UEFI boot support",
+    "type": "object",
+    "required": ["vendor"],
+      "properties": {
+        "vendor": {
+          "type": "string",
+           "description": "The vendor of the UEFI binaries (this is us)",
+           "examples": ["fedora"],
+           "pattern": "^(.+)$"
+         }
+      }
   }
 }
 """
@@ -83,6 +108,8 @@ def write_grub_cfg(tree, path):
 def main(tree, options):
     root_fs_uuid = options["root_fs_uuid"]
     kernel_opts = options.get("kernel_opts", "")
+    legacy = options.get("legacy", True)
+    uefi = options.get("uefi", None)
 
     # Create the configuration file that determines how grub.cfg is generated.
     os.makedirs(f"{tree}/etc/default", exist_ok=True)
@@ -97,9 +124,20 @@ def main(tree, options):
                   f"GRUB2_BOOT_FS_UUID={root_fs_uuid}\n"
                   f"kernelopts=root=UUID={root_fs_uuid} {kernel_opts}\n")
 
-    write_grub_cfg(tree, "boot/grub2/grub.cfg")
-    copy_modules(tree)
-    copy_font(tree)
+    if legacy:
+        write_grub_cfg(tree, "boot/grub2/grub.cfg")
+        copy_modules(tree)
+        copy_font(tree)
+
+    if uefi is not None:
+        # UEFI support:
+        # The following files are needed for UEFI support:
+        # /boot/efi/EFI/<vendor>/{grubenv, grub.cfg}
+        # - grubenv should have been written to via the link from
+        #     /boot/grub2/grubenv created by grub2-efi-{x64, ia32}.rpm
+        # - grub.cfg needs to be generated
+        vendor = uefi["vendor"]
+        write_grub_cfg(tree, f"boot/efi/EFI/{vendor}/grub.cfg")
 
     return 0
 
