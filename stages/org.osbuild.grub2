@@ -61,6 +61,12 @@ def copy_modules(tree):
         shutil.copy2(f"/usr/lib/grub/i386-pc/{dirent.name}", f"{tree}/boot/grub2/i386-pc/")
 
 
+def copy_font(tree):
+    """Copy a unicode font into /boot"""
+    os.makedirs(f"{tree}/boot/grub2/fonts", exist_ok=True)
+    shutil.copy2("/usr/share/grub/unicode.pf2", f"{tree}/boot/grub2/fonts/")
+
+
 def main(tree, options):
     root_fs_uuid = options["root_fs_uuid"]
     kernel_opts = options.get("kernel_opts", "")
@@ -88,10 +94,7 @@ def main(tree, options):
                   "blscfg\n")
 
     copy_modules(tree)
-
-    # Copy a unicode font into /boot
-    os.makedirs(f"{tree}/boot/grub2/fonts", exist_ok=True)
-    shutil.copy2("/usr/share/grub/unicode.pf2", f"{tree}/boot/grub2/fonts/")
+    copy_font(tree)
 
     return 0
 
