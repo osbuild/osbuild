@@ -102,6 +102,22 @@ class TestAssemblers(osbuildtest.TestCase):
                                      1024 * 1024)
                     self.assertFilesystem(device + "p1", options["root_fs_uuid"], "ext4", tree_id)
 
+    def test_tar(self):
+        cases = [
+            ("tree.tar.gz", None, ["application/x-tar"]),
+            ("tree.tar.gz", "gzip", ["application/x-gzip", "application/gzip"])
+        ]
+        for filename, compression, expected_mimetypes in cases:
+            options = {
+                    "filename": filename,
+                    "compression": compression
+            }
+            tree_id, output_id = self.run_assembler("org.osbuild.tar", options)
+            image = f"{self.store}/refs/{output_id}/{filename}"
+            output = subprocess.check_output(["file", "--mime-type", image], encoding="utf-8")
+            _, mimetype = output.strip().split(": ") # "filename: mimetype"
+            self.assertIn(mimetype, expected_mimetypes)
+
 
 @contextlib.contextmanager
 def mount(device):
