@@ -1,0 +1,207 @@
+#!/usr/bin/python3
+"""
+Create (re-create) the initial RAM file-system
+
+Uses `dracut` to re-create the initial RAM filesystem, see man dracut(8).
+The kernels for which the initramfs should be generated need to be provided
+via `kernel` matching their name on the disk, like  "5.6.6-300.fc32.x86_64".
+
+Supports most options also found in `dracut`(8). See the respective man
+page and schema for this stage.
+
+NB: needs chroot for now as well as `strip` for stripping the initrfams.
+"""
+
+import json
+import subprocess
+import sys
+
+
+SCHEMA = """
+"required": ["kernel"],
+"properties": {
+  "kernel": {
+    "description": "List of target kernel versions",
+    "type": "array",
+    "items": {
+       "type": "string",
+       "description": "A kernel version"
+    }
+  },
+  "compress": {
+    "description": "Compress the initramfs, passed via `--compress`",
+    "type": "string"
+  },
+  "modules": {
+    "description": "Exact list of dracut modules to use.",
+    "type": "array",
+    "items": {
+       "type": "string",
+       "description": "A dracut module, e.g. base, nfs, network ..."
+    }
+  },
+  "add_modules": {
+    "description": "Additional dracut modules to include.",
+    "type": "array",
+    "items": {
+      "type": "string",
+      "description": "A dracut module, e.g. base, nfs, network ..."
+    }
+  },
+  "omit_modules": {
+    "description": "Dracut modules to not include.",
+    "type": "array",
+    "items": {
+      "type": "string",
+      "description": "A dracut module, e.g. base, nfs, network ..."
+    }
+  },
+  "drivers": {
+    "description": "Kernel modules to exclusively include.",
+    "type": "array",
+    "items": {
+      "type": "string",
+      "description": "A kernel module without the .ko extension"
+    }
+  },
+  "add_drivers": {
+    "description": "Add a specific kernel modules.",
+    "type": "array",
+    "items": {
+      "type": "string",
+      "description": "A kernel module without the .ko extension"
+    }
+  },
+  "force_drivers": {
+    "description": "Add driver and ensure that they are tried to be loaded.",
+    "type": "array",
+    "items": {
+      "type": "string",
+      "description": "A kernel module without the .ko extension"
+    }
+  },
+  "filesystems": {
+    "description": "Kernel filesystem modules to exclusively include.",
+    "type": "array",
+    "items": {
+      "type": "string",
+      "description": "A kernel module without the .ko extension"
+    }
+  },
+  "include": {
+    "description": "Add custom files to the initramfs.",
+    "type": "array",
+    "items": {
+      "type": "object",
+      "description": "What (keys) to include where (values)"
+    }
+  },
+  "install": {
+    "description": "Install the specified files.",
+    "type": "array",
+    "items": {
+      "type": "string"
+    }
+  },
+  "early_microcode": {
+    "description": "Combine early microcode with the initramfs.",
+    "type": "boolean",
+    "default": false
+  },
+  "reproducible": {
+    "description": "Create reproducible images.",
+    "type": "boolean"
+  },
+  "extra": {
+    "description": "Extra arguments to directly pass to dracut",
+    "type": "array",
+    "items": {
+      "type": "string",
+      "description": "Individual extra arguments"
+    }
+  }
+}
+"""
+
+
+def yesno(name: str, value: bool) -> str:
+    prefix = "" if value else "no-"
+    return f"--{prefix}{name}"
+
+
+#pylint: disable=too-many-branches
+def main(tree, options):
+    kernels = options["kernel"]
+    compress = options.get("compress")
+    modules = options.get("modules", [])  # dracut modules
+    add_modules = options.get("add_modules", [])
+    omit_modules = options.get("omit_modules", [])
+    drivers = options.get("drivers", [])  # kernel modules
+    add_drivers = options.get("add_drivers", [])
+    force_drivers = options.get("force_drivers", [])
+    filesystems = options.get("filesystems", [])
+    include = options.get("include", [])
+    install = options.get("install", [])
+    early_microcode = options.get("early_microcode", False)
+    reproducible = options.get("reproducible")
+    extra = options.get("extra", [])
+
+    # initrds may have already been created, force the recreation
+    opts = ["--force", "-v", "--show-modules"]
+
+    opts += [
+        yesno("early-microcode", early_microcode),
+        yesno("reproducible", reproducible)
+    ]
+
+    if compress:
+        opts += [f"--compress={compress}"]
+
+    if modules:
+        opts += ["--modules", " ".join(modules)]
+
+    if add_modules:
+        opts += ["--add", " ".join(add_modules)]
+
+    if omit_modules:
+        opts += ["--omit", " ".join(omit_modules)]
+
+    if drivers:
+        opts += ["--drivers", " ".join(drivers)]
+
+    if add_drivers:
+        opts += ["--add-drivers", " ".join(add_drivers)]
+
+    if force_drivers:
+        opts += ["--force-drivers", " ".join(force_drivers)]
+
+    if filesystems:
+        opts += ["--filesystems", " ".join(filesystems)]
+
+    if include:
+        for l in include:
+            for k, v in l.items():
+                opts += ["--include", k, v]
+
+    if install:
+        for i in install:
+            opts += ["--install", i]
+
+    opts += extra
+
+    for kver in kernels:
+        print(f"Building initramfs for {kver}", file=sys.stderr)
+
+        subprocess.run(["/usr/sbin/chroot", tree,
+                        "/usr/bin/dracut",
+                        "--kver", kver]
+                       + opts,
+                       check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
