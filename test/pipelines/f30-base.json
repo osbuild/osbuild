@@ -21,7 +21,8 @@
               "grub2-pc",
               "policycoreutils",
               "qemu-img",
-              "systemd"
+              "systemd",
+              "tar"
             ]
           }
         }
