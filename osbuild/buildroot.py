@@ -39,10 +39,11 @@ class BuildRoot:
                 raise
             self.mounts.append(target)
 
-        if platform.machine() == "s390x":
+        if platform.machine() == "s390x" or platform.machine() == "ppc64le":
             # work around a combination of systemd not creating the link from
             # /lib64 -> /usr/lib64 (see systemd issue #14311) and the dynamic
             # linker is being set to (/lib/ld64.so.1 -> /lib64/ld64.so.1)
+            # on s390x or /lib64/ld64.so.2 on ppc64le
             # Therefore we manually create the link before calling nspawn
             os.symlink("/usr/lib64", f"{self.root}/lib64")
 
