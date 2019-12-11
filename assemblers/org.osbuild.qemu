@@ -60,13 +60,12 @@ STAGE_OPTS = """
 """
 
 @contextlib.contextmanager
-def mount(source):
-    with tempfile.TemporaryDirectory(prefix="osbuild-mnt") as dest:
-        subprocess.run(["mount", source, dest], check=True)
-        try:
-            yield dest
-        finally:
-            subprocess.run(["umount", "-R", dest], check=True)
+def mount(source, dest):
+    subprocess.run(["mount", source, dest], check=True)
+    try:
+        yield dest
+    finally:
+        subprocess.run(["umount", "-R", dest], check=True)
 
 
 def mkfs_ext4(device, uuid):
@@ -75,6 +74,16 @@ def mkfs_ext4(device, uuid):
 
 def mkfs_xfs(device, uuid):
     subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf-8', check=True)
+
+
+def mkfs_for_type(device, uuid, fs_type):
+    if fs_type == "ext4":
+        maker = mkfs_ext4
+    elif fs_type == "xfs":
+        maker = mkfs_xfs
+    else:
+        raise ValueError("Unknown filesystem type")
+    maker(device, uuid)
 
 
 def create_partition_table(image, options):
@@ -143,8 +152,6 @@ def install_grub2(image, fs_module, partition_offset):
 def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
     filename = options["filename"]
-    ptuuid = options["ptuuid"]
-    root_fs_uuid = options["root_fs_uuid"]
     size = options["size"]
     root_fs_type = options.get("root_fs_type", "ext4")
 
@@ -172,17 +179,27 @@ def main(tree, output_dir, options, loop_client):
     # The partition table
     partitions = create_partition_table(image, options)
     partition_offset = partitions[0]["start"]
-    partition_size = partitions[0]["size"]
 
     # Create the level-2 bootloader
     install_grub2(image, grub2_fs_module, partition_offset)
 
-    with loop_client.device(image, partition_offset, partition_size) as loop:
-        # Populate the first partition of the image with a filesystem
-        mkfs(loop, root_fs_uuid)
-        # Copy the tree into the target image
-        with mount(loop) as mountpoint:
-            subprocess.run(["cp", "-a", f"{tree}/.", mountpoint], check=True)
+    # Now assemble the filesystem hierarchy and copy the tree into the image
+    with contextlib.ExitStack() as cm:
+        root = cm.enter_context(tempfile.TemporaryDirectory(prefix="osbuild-mnt"))
+        # sort the partition according to their position in the filesystem tree
+        for partition in sorted(partitions, key=lambda p: len(p["filesystem"]["mountpoint"])):
+            offset, size = partition["start"], partition["size"]
+            filesystem = partition["filesystem"]
+            loop = cm.enter_context(loop_client.device(image, offset, size))
+            # make the specified filesystem
+            mkfs_for_type(loop, filesystem["uuid"], filesystem["type"])
+            # now mount it
+            mountpoint = os.path.normpath(f"{root}/{filesystem['mountpoint']}")
+            os.makedirs(mountpoint, exist_ok=True)
+            cm.enter_context(mount(loop, mountpoint))
+        # the filesystem tree should now be properly setup,
+        # copy the tree into the target image
+        subprocess.run(["cp", "-a", f"{tree}/.", root], check=True)
 
     if fmt == "raw":
         subprocess.run(["cp", image, f"{output_dir}/{filename}"], check=True)
