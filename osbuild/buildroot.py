@@ -1,6 +1,7 @@
 
 import contextlib
 import os
+import platform
 import socket
 import shutil
 import subprocess
@@ -37,6 +38,13 @@ class BuildRoot:
                 self.unmount()
                 raise
             self.mounts.append(target)
+
+        if platform.machine() == "s390x":
+            # work around a combination of systemd not creating the link from
+            # /lib64 -> /usr/lib64 (see systemd issue #14311) and the dynamic
+            # linker is being set to (/lib/ld64.so.1 -> /lib64/ld64.so.1)
+            # Therefore we manually create the link before calling nspawn
+            os.symlink("/usr/lib64", f"{self.root}/lib64")
 
     def mount_var(self):
         target = os.path.join(self.root, "var")
