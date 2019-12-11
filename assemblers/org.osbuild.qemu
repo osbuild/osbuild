@@ -80,7 +80,7 @@ STAGE_OPTS = """
             "type": {
               "description": "Type of the filesystem",
               "type": "string",
-              "enum": ["ext4", "xfs"]
+              "enum": ["ext4", "xfs", "vfat"]
             },
             "uuid": {
               "description": "UUID for the filesystem",
@@ -134,11 +134,21 @@ def mkfs_xfs(device, uuid):
     subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf-8', check=True)
 
 
+def mkfs_vfat(device, uuid, name=None):
+    volid = uuid.replace('-', '')
+    opts = []
+    if name:
+        opts = ["-n", name]
+    subprocess.run(["mkfs.vfat", "-i", volid] + opts + [device], encoding='utf-8', check=True)
+
+
 def mkfs_for_type(device, uuid, fs_type):
     if fs_type == "ext4":
         maker = mkfs_ext4
     elif fs_type == "xfs":
         maker = mkfs_xfs
+    elif fs_type == "vfat":
+        maker = mkfs_vfat
     else:
         raise ValueError(f"Unknown filesystem type '{fs_type}'")
     maker(device, uuid)
@@ -166,7 +176,7 @@ def create_partition_table_legacy(image, options):
         }
     }]
 
-    return partitions
+    return "mbr", partitions
 
 
 def create_partition_table(image, options):
@@ -204,7 +214,7 @@ def create_partition_table(image, options):
         partition["start"] = disk_partitions[i]["start"] * 512
         partition["size"] = disk_partitions[i]["size"] * 512
 
-    return partitions
+    return pttype, partitions
 
 
 def install_grub2(image, partitions):
@@ -276,10 +286,11 @@ def main(tree, output_dir, options, loop_client):
     subprocess.run(["truncate", "--size", str(size), image], check=True)
 
     # The partition table
-    partitions = create_partition_table(image, options)
+    pttype, partitions = create_partition_table(image, options)
 
     # Create the level-2 bootloader
-    install_grub2(image, partitions)
+    if pttype == "mbr":
+        install_grub2(image, partitions)
 
     # Now assemble the filesystem hierarchy and copy the tree into the image
     with contextlib.ExitStack() as cm:
