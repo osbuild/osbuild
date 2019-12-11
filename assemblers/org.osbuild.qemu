@@ -14,11 +14,13 @@ STAGE_DESC = "Assemble a bootable partitioned disk image with qemu-img"
 STAGE_INFO = """
 Assemble a bootable partitioned disk image using `qemu-img`.
 
-Creates a sparse MBR-partitioned disk image of the given `size`, with a single
-bootable partition containing the root filesystem.
+Creates a sparse partitioned disk image of type `pttype` of a given `size`,
+with a partition table according to `partitions` or a MBR partitioned disk
+having a single bootable partition containing the root filesystem if the
+`pttype` property is absent.
 
-Installs GRUB2 (using the buildhost's `/usr/lib/grub/i386-pc/boot.img` etc.) as
-the bootloader.
+If the partition type is MBR it installs GRUB2 (using the buildhost's
+`/usr/lib/grub/i386-pc/boot.img` etc.) as the bootloader.
 
 Copies the tree contents into the root filesystem and then converts the raw
 sparse image into the format requested with the `fmt` option.
@@ -27,7 +29,12 @@ Buildhost commands used: `truncate`, `mount`, `umount`, `sfdisk`,
 `grub2-mkimage`, `mkfs.ext4` or `mkfs.xfs`, `qemu-img`.
 """
 STAGE_OPTS = """
-"required": ["format", "filename", "ptuuid", "root_fs_uuid", "size"],
+"required": ["format", "filename", "ptuuid", "size"],
+"oneOf": [{
+  "required": ["root_fs_uuid"]
+},{
+  "required": ["pttype", "partitions"]
+}],
 "properties": {
   "format": {
     "description": "Image file format to use",
@@ -38,9 +45,60 @@ STAGE_OPTS = """
     "description": "Image filename",
     "type": "string"
   },
+  "partitions": {
+    "description": "Partition layout ",
+    "type": "array",
+    "items": {
+      "description": "Description of one partition",
+      "type": "object",
+      "properties": {
+        "bootable": {
+          "description": "Mark the partition as bootable (MBR)",
+          "type": "boolean"
+        },
+        "size": {
+          "description": "The size of this partition",
+          "type": "integer"
+        },
+        "start": {
+          "description": "The start offset of this partition",
+          "type": "integer"
+        },
+        "type": {
+          "description": "The partition type (UUID or identifier)",
+          "type": "string"
+        },
+        "filesystem": {
+          "description": "Description of the filesystem",
+          "type": "object",
+          "required": ["mountpoint", "type", "uuid"],
+          "properties": {
+            "mountpoint": {
+              "description": "Where to mount the partition",
+              "type": "string"
+            },
+            "type": {
+              "description": "Type of the filesystem",
+              "type": "string",
+              "enum": ["ext4", "xfs"]
+            },
+            "uuid": {
+              "description": "UUID for the filesystem",
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
   "ptuuid": {
     "description": "UUID for the disk image's partition table",
     "type": "string"
+  },
+  "pttype": {
+    "description": "The type of the partition table",
+    "type": "string",
+    "enum": ["mbr", "gpt"]
   },
   "root_fs_uuid": {
     "description": "UUID for the root filesystem",
@@ -86,8 +144,7 @@ def mkfs_for_type(device, uuid, fs_type):
     maker(device, uuid)
 
 
-def create_partition_table(image, options):
-    """Set up the partition table of the image"""
+def create_partition_table_legacy(image, options):
     ptuuid = options["ptuuid"]
     root_fs_uuid = options["root_fs_uuid"]
     root_fs_type = options.get("root_fs_type", "ext4")
@@ -108,6 +165,44 @@ def create_partition_table(image, options):
             "mountpoint": "/"
         }
     }]
+
+    return partitions
+
+
+def create_partition_table(image, options):
+    """Set up the partition table of the image"""
+    ptuuid = options["ptuuid"]
+    pttype = options.get("pttype")
+
+    # if 'pttype' is missing, we are in legacy mode
+    if pttype is None:
+        return create_partition_table_legacy(image, options)
+
+    # new mode
+    partitions = options["partitions"]
+
+    # generate the command for sfdisk to create the table
+    command = f"label: {pttype}\nlabel-id: {ptuuid}"
+    for partition in partitions:
+        fields = []
+        for field in ["start", "size", "type"]:
+            if field in partition:
+                fields += [f'{field}="{partition[field]}"']
+        if "bootable" in partition and partition["bootable"]:
+            fields += ["bootable"]
+        command += "\n" + ", ".join(fields)
+
+    subprocess.run(["sfdisk", "-q", image], input=command, encoding='utf-8', check=True)
+
+    # read the actual dimensions back
+    r = subprocess.run(["sfdisk", "--json", image], stdout=subprocess.PIPE, encoding='utf-8', check=True)
+    disk_table = json.loads(r.stdout)["partitiontable"]
+    disk_partitions = disk_table["partitions"]
+
+    assert len(disk_partitions) == len(partitions)
+    for i, partition in enumerate(partitions):
+        partition["start"] = disk_partitions[i]["start"] * 512
+        partition["size"] = disk_partitions[i]["size"] * 512
 
     return partitions
 
