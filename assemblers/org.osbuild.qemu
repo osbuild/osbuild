@@ -77,14 +77,30 @@ def mkfs_xfs(device, uuid):
     subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf-8', check=True)
 
 
-def create_partition_table(image, ptuuid):
+def create_partition_table(image, options):
     """Set up the partition table of the image"""
+    ptuuid = options["ptuuid"]
+    root_fs_uuid = options["root_fs_uuid"]
+    root_fs_type = options.get("root_fs_type", "ext4")
+
     partition_table = f"label: mbr\nlabel-id: {ptuuid}\nbootable, type=83"
     subprocess.run(["sfdisk", "-q", image], input=partition_table, encoding='utf-8', check=True)
 
     r = subprocess.run(["sfdisk", "--json", image], stdout=subprocess.PIPE, encoding='utf-8', check=True)
     partition_table = json.loads(r.stdout)
-    return partition_table
+
+    partition = partition_table["partitiontable"]["partitions"][0]
+    partitions = [{
+        "start": partition["start"] * 512,
+        "size": partition["size"] * 512,
+        "filesystem": {
+            "type": root_fs_type,
+            "uuid": root_fs_uuid,
+            "mountpoint": "/"
+        }
+    }]
+
+    return partitions
 
 
 def install_grub2(image, fs_module, partition_offset):
@@ -154,10 +170,9 @@ def main(tree, output_dir, options, loop_client):
     subprocess.run(["truncate", "--size", str(size), image], check=True)
 
     # The partition table
-    partition_table = create_partition_table(image, ptuuid)
-    partition = partition_table["partitiontable"]["partitions"][0]
-    partition_offset = partition["start"] * 512
-    partition_size = partition["size"] * 512
+    partitions = create_partition_table(image, options)
+    partition_offset = partitions[0]["start"]
+    partition_size = partitions[0]["size"]
 
     # Create the level-2 bootloader
     install_grub2(image, grub2_fs_module, partition_offset)
