@@ -38,6 +38,17 @@ STAGE_OPTS = """
   "required": ["pttype", "partitions"]
 }],
 "properties": {
+  "bootloader": {
+    "description": "Options specific to the bootloader",
+    "type": "object",
+    "properties": {
+      "type": {
+        "description": "What bootloader to install",
+        "type": "string",
+        "enum": ["grub2"]
+      }
+    },
+  },
   "format": {
     "description": "Image file format to use",
     "type": "string",
