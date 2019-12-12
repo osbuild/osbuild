@@ -99,7 +99,7 @@
         "pttype": "gpt",
         "partitions": [
           {"start": 2048, "size": 972800, "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
-           "filesystem": {"type": "vfat", "uuid": "46BB-8120",
+           "filesystem": {"type": "vfat", "uuid": "46BB-8120", "label": "EFI System Partition",
                           "mountpoint": "/boot/efi"}},
           {"start": 976896,
            "filesystem": {"type": "ext4", "uuid": "7acfe2cc-4134-482a-a9d4-4979a5a87569",
