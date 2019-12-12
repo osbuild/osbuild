@@ -73,6 +73,10 @@ STAGE_OPTS = """
           "type": "object",
           "required": ["mountpoint", "type", "uuid"],
           "properties": {
+            "label": {
+              "description": "Label for the filesystem",
+              "type": "string"
+            },
             "mountpoint": {
               "description": "Where to mount the partition",
               "type": "string"
@@ -126,23 +130,31 @@ def mount(source, dest):
         subprocess.run(["umount", "-R", dest], check=True)
 
 
-def mkfs_ext4(device, uuid):
-    subprocess.run(["mkfs.ext4", "-U", uuid, device], input="y", encoding='utf-8', check=True)
+def mkfs_ext4(device, uuid, label):
+    opts = []
+    if label:
+        opts = ["-L", label]
+    subprocess.run(["mkfs.ext4", "-U", uuid] + opts + [device],
+                   input="y", encoding='utf-8', check=True)
 
 
-def mkfs_xfs(device, uuid):
-    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf-8', check=True)
+def mkfs_xfs(device, uuid, label):
+    opts = []
+    if label:
+        opts = ["-L", label]
+    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}"] + opts + [device],
+                   encoding='utf-8', check=True)
 
 
-def mkfs_vfat(device, uuid, name=None):
+def mkfs_vfat(device, uuid, label):
     volid = uuid.replace('-', '')
     opts = []
-    if name:
-        opts = ["-n", name]
+    if label:
+        opts = ["-n", label]
     subprocess.run(["mkfs.vfat", "-i", volid] + opts + [device], encoding='utf-8', check=True)
 
 
-def mkfs_for_type(device, uuid, fs_type):
+def mkfs_for_type(device, uuid, fs_type, label):
     if fs_type == "ext4":
         maker = mkfs_ext4
     elif fs_type == "xfs":
@@ -151,7 +163,7 @@ def mkfs_for_type(device, uuid, fs_type):
         maker = mkfs_vfat
     else:
         raise ValueError(f"Unknown filesystem type '{fs_type}'")
-    maker(device, uuid)
+    maker(device, uuid, label)
 
 
 def create_partition_table_legacy(image, options):
@@ -301,7 +313,8 @@ def main(tree, output_dir, options, loop_client):
             filesystem = partition["filesystem"]
             loop = cm.enter_context(loop_client.device(image, offset, size))
             # make the specified filesystem
-            mkfs_for_type(loop, filesystem["uuid"], filesystem["type"])
+            fs_label = filesystem.get("label")
+            mkfs_for_type(loop, filesystem["uuid"], filesystem["type"], fs_label)
             # now mount it
             mountpoint = os.path.normpath(f"{root}/{filesystem['mountpoint']}")
             os.makedirs(mountpoint, exist_ok=True)
