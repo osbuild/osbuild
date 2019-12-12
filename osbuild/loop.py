@@ -82,7 +82,7 @@ class Loop:
         minor
             the minor number of the underlying device
         dir_fd : int, optional
-            A directory file descriptor to a filesytem containing the
+            A directory file descriptor to a filesystem containing the
             underlying device node, or None to use /dev (default is None)
 
         Raises
@@ -124,7 +124,7 @@ class Loop:
         """Unbind the file descriptor from the loopback device
 
         The loopback device must be bound. The device is then marked
-        to be cleared, so once nobodoy holds it open any longer the
+        to be cleared, so once nobody holds it open any longer the
         backing file is unbound and the device returns to the unbound
         state.
         """
@@ -156,7 +156,7 @@ class Loop:
 
         The loopback device must be bound, and the properties will be
         cleared once the device is unbound, but preserved by changing
-        the backnig file descriptor.
+        the backing file descriptor.
 
         Note that this operation is not atomic: All the current properties
         are read out, the ones specified in this function call are modified,
@@ -169,7 +169,7 @@ class Loop:
 
         Enabling autoclear has the same effect as calling clear_fd().
 
-        When partscan is first enabed, the partition table of the
+        When partscan is first enabled, the partition table of the
         device is scanned, and new blockdevices potentially added for
         the partitions.
 
@@ -273,7 +273,7 @@ class LoopControl:
         Add a new loopback device
     remove(minor)
         Remove an existing loopback device
-    get_unbound(minor)
+    get_unbound()
         Get or create the first unbound loopback device
     """
 
@@ -328,7 +328,7 @@ class LoopControl:
         ----------
         minor : int, optional
             The requested minor number, or a negative value for
-            unspecified (deafult is -1)
+            unspecified (default is -1)
         """
 
         fcntl.ioctl(self.fd, self.LOOP_CTL_REMOVE, minor)
