@@ -38,29 +38,24 @@ def main():
         pipeline.prepend_build_env(build_pipeline, runner)
 
     try:
-        pipeline.run(args.store, interactive=not args.json, libdir=args.libdir)
+        r = pipeline.run(args.store, interactive=not args.json, libdir=args.libdir)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
         return 130
-    except (osbuild.StageFailed, osbuild.AssemblerFailed) as error:
-        print()
-        print(f"{RESET}{BOLD}{RED}{error.name} failed with code {error.returncode}{RESET}")
-        if args.json:
-            print(error.output)
-        return 1
 
     if args.json:
-        json.dump({
-            "tree_id": pipeline.tree_id,
-            "output_id": pipeline.output_id,
-        }, sys.stdout)
+        json.dump(r, sys.stdout)
         sys.stdout.write("\n")
     else:
-        print("tree id:", pipeline.tree_id)
-        print("output id:", pipeline.output_id)
+        if r["success"]:
+            print("tree id:", pipeline.tree_id)
+            print("output id:", pipeline.output_id)
+        else:
+            print()
+            print(f"{RESET}{BOLD}{RED}Failed{RESET}")
 
-    return 0
+    return 0 if r["success"] else 1
 
 
 if __name__ == "__main__":

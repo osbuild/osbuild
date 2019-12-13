@@ -42,23 +42,19 @@ class TestCase(unittest.TestCase):
 
         stdin = subprocess.PIPE if input else None
 
-        p = subprocess.Popen(osbuild_cmd, encoding="utf-8", stdin=stdin, stdout=subprocess.PIPE)
-        if input:
-            p.stdin.write(input)
-            p.stdin.close()
+        p = subprocess.Popen(osbuild_cmd, encoding="utf-8", stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         try:
-            r = p.wait()
-            if r != 0:
-                print(p.stdout.read())
-            self.assertEqual(r, 0)
+            output, _ = p.communicate(input)
+            if p.returncode != 0:
+                print(output)
+            self.assertEqual(p.returncode, 0)
         except KeyboardInterrupt:
             # explicitly wait again to let osbuild clean up
             p.wait()
             raise
 
-        result = json.load(p.stdout)
-        p.stdout.close()
-        return result["tree_id"], result["output_id"]
+        result = json.loads(output)
+        return result.get("tree_id"), result.get("output_id")
 
     def run_tree_diff(self, tree1, tree2):
         tree_diff_cmd = ["./tree-diff", tree1, tree2]
