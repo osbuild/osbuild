@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+import json
+import os
+import sys
+
+
+STAGE_DESC = "Configure the z Initial Program Loader (zipl)"
+STAGE_INFO = """
+Configures `zipl` with a minimal config so it can be used in
+the assembler to write the bootmap and bootloader code.
+"""
+STAGE_OPTS = """
+"""
+
+
+def main(tree, options):
+    timeout = options.get("timeout", 0)
+    config = ["[defaultboot]",
+              "defaultauto",
+              "prompt=1",
+              f"timeout={timeout}",
+              "target=/boot"]
+
+    new_zipl_conf = "\n".join(config) + "\n"
+
+    os.makedirs(f"{tree}/etc", exist_ok=True)
+    with open(f"{tree}/etc/zipl.conf", "w") as f:
+        f.write(new_zipl_conf)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
