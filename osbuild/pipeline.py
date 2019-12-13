@@ -17,22 +17,6 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 
 
-class StageFailed(Exception):
-    def __init__(self, name, returncode, output):
-        super(StageFailed, self).__init__()
-        self.name = name
-        self.returncode = returncode
-        self.output = output
-
-
-class AssemblerFailed(Exception):
-    def __init__(self, name, returncode, output):
-        super(AssemblerFailed, self).__init__()
-        self.name = name
-        self.returncode = returncode
-        self.output = output
-
-
 def print_header(title, options):
     print()
     print(f"{RESET}{BOLD}{title}{RESET} " + json.dumps(options or {}, indent=2))
@@ -62,7 +46,7 @@ class Stage:
             description["options"] = self.options
         return description
 
-    def run(self, tree, runner, build_tree, interactive=False, check=True, libdir=None):
+    def run(self, tree, runner, build_tree, interactive=False, libdir=None):
         with buildroot.BuildRoot(build_tree, runner, libdir=libdir) as build_root:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options)
@@ -79,8 +63,13 @@ class Stage:
                     binds=[f"{tree}:/run/osbuild/tree"],
                     stdin=subprocess.DEVNULL,
                 )
-                if check and r.returncode != 0:
-                    raise StageFailed(self.name, r.returncode, api.output)
+                return {
+                    "name": self.name,
+                    "id": self.id,
+                    "options": self.options,
+                    "success": r.returncode == 0,
+                    "output": api.output
+                }
 
             return r.returncode == 0
 
@@ -108,7 +97,7 @@ class Assembler:
             description["options"] = self.options
         return description
 
-    def run(self, tree, runner, build_tree, output_dir=None, interactive=False, check=True, libdir=None):
+    def run(self, tree, runner, build_tree, output_dir=None, interactive=False, libdir=None):
         with buildroot.BuildRoot(build_tree, runner, libdir=libdir) as build_root:
             if interactive:
                 print_header(f"Assembler {self.name}: {self.id}", self.options)
@@ -141,10 +130,13 @@ class Assembler:
                     readonly_binds=ro_binds,
                     stdin=subprocess.DEVNULL,
                 )
-                if check and r.returncode != 0:
-                    raise AssemblerFailed(self.name, r.returncode, api.output)
-
-            return r.returncode == 0
+                return {
+                    "name": self.name,
+                    "id": self.id,
+                    "options": self.options,
+                    "success": r.returncode == 0,
+                    "output": api.output
+                }
 
 
 class Pipeline:
@@ -206,13 +198,14 @@ class Pipeline:
                 finally:
                     subprocess.run(["umount", "--lazy", tmp], check=True)
 
-    def run(self, store, interactive=False, check=True, libdir=None):
+    def run(self, store, interactive=False, libdir=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         object_store = objectstore.ObjectStore(store)
         if self.build:
-            if not self.build.run(store, interactive, check, libdir):
+            if not self.build.run(store, interactive, libdir):
                 return False
 
+        results = {}
         with self.get_buildtree(object_store) as build_tree:
             if self.stages:
                 if not object_store.contains(self.tree_id):
@@ -225,34 +218,46 @@ class Pipeline:
                             base = self.stages[i].id
                             base_idx = i
                             break
+
                     # The tree does not exist. Create it and save it to the object store. If
                     # two run() calls race each-other, two trees may be generated, and it
                     # is nondeterministic which of them will end up referenced by the tree_id
                     # in the content store. However, we guarantee that all tree_id's and all
                     # generated trees remain valid.
+                    results["stages"] = []
                     with object_store.new(self.tree_id, base_id=base) as tree:
                         for stage in self.stages[base_idx + 1:]:
-                            if not stage.run(tree,
-                                             self.runner,
-                                             build_tree,
-                                             interactive=interactive,
-                                             check=check,
-                                             libdir=libdir):
-                                return False
+                            r = stage.run(tree,
+                                          self.runner,
+                                          build_tree,
+                                          interactive=interactive,
+                                          libdir=libdir)
+                            results["stages"].append(r)
+                            if not r["success"]:
+                                results["success"] = False
+                                return results
 
-            if self.assembler and not object_store.contains(self.output_id):
-                with object_store.get(self.tree_id) as tree, \
-                    object_store.new(self.output_id) as output_dir:
-                    if not self.assembler.run(tree,
-                                              self.runner,
-                                              build_tree,
-                                              output_dir=output_dir,
-                                              interactive=interactive,
-                                              check=check,
-                                              libdir=libdir):
-                        return False
+                results["tree_id"] = self.tree_id
 
-        return True
+            if self.assembler:
+                if not object_store.contains(self.output_id):
+                    with object_store.get(self.tree_id) as tree, \
+                        object_store.new(self.output_id) as output_dir:
+                        r = self.assembler.run(tree,
+                                               self.runner,
+                                               build_tree,
+                                               output_dir=output_dir,
+                                               interactive=interactive,
+                                               libdir=libdir)
+                        results["assembler"] = r
+                        if not r["success"]:
+                            results["success"] = False
+                            return results
+
+                results["output_id"] = self.output_id
+
+        results["success"] = True
+        return results
 
 
 def load_build(description):
