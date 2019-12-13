@@ -79,13 +79,20 @@ class BuildRoot:
         # pylint suggests to epxlicitly pass `check` to subprocess.run()
         check = kwargs.pop("check", False)
 
+        # we need read-write access to loopback devices
+        loopback_allow = "rw"
+        if platform.machine() == "s390x":
+            # on s390x, the bootloader installation program (zipl)
+            # wants to be able create devices nodes, so allow that
+            loopback_allow += "m"
+
         return subprocess.run([
             "systemd-nspawn",
             "--quiet",
             "--register=no",
             "--as-pid2",
             "--link-journal=no",
-            "--property=DeviceAllow=block-loop rw",
+            f"--property=DeviceAllow=block-loop {loopback_allow}",
             f"--directory={self.root}",
             f"--bind-ro={self.libdir}:/run/osbuild/lib",
             *[f"--bind={b}" for b in (binds or [])],
