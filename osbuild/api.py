@@ -51,9 +51,6 @@ class API:
             msg['stderr'] = 2
             remoteloop.dump_fds(self.sock, msg, fds, addr=addr)
 
-    def __del__(self):
-        self.sock.close()
-
     def _dispatch(self):
         msg, addr = self.sock.recvfrom(1024)
         args = json.loads(msg)
