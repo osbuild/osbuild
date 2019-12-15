@@ -62,9 +62,6 @@ class LoopServer:
         self.event_loop.add_reader(self.sock, self._dispatch)
         self.thread = threading.Thread(target=self._run_event_loop)
 
-    def __del__(self):
-        self.sock.close()
-
     def _create_device(self, fd, dir_fd, offset=None, sizelimit=None):
         while True:
             # Getting an unbound loopback device and attaching a backing
