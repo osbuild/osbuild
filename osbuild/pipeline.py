@@ -201,11 +201,15 @@ class Pipeline:
     def run(self, store, interactive=False, libdir=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         object_store = objectstore.ObjectStore(store)
-        if self.build:
-            if not self.build.run(store, interactive, libdir):
-                return False
-
         results = {}
+
+        if self.build:
+            r = self.build.run(store, interactive, libdir)
+            results["build"] = r
+            if not r["success"]:
+                results["success"] = False
+                return results
+
         with self.get_buildtree(object_store) as build_tree:
             if self.stages:
                 if not object_store.contains(self.tree_id):
