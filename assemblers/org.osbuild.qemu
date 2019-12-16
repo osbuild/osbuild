@@ -54,8 +54,12 @@ STAGE_OPTS = """
       "type": "object",
       "properties": {
         "bootable": {
-          "description": "Mark the partition as bootable (MBR)",
+          "description": "Mark the partition as bootable (dos)",
           "type": "boolean"
+        },
+        "name": {
+          "description": "The partition name (GPT)",
+          "type": "string"
         },
         "size": {
           "description": "The size of this partition",
@@ -185,11 +189,13 @@ class Partition:
                  start: int = None,
                  size: int = None,
                  bootable: bool = False,
+                 name: str = None,
                  filesystem: Filesystem = None):
         self.type = pttype
         self.start = start
         self.size = size
         self.bootable = bootable
+        self.name = name
         self.filesystem = filesystem
 
     @property
@@ -248,7 +254,7 @@ class PartitionTable:
         command = f"label: {self.label}\nlabel-id: {self.uuid}"
         for partition in self.partitions:
             fields = []
-            for field in ["start", "size", "type"]:
+            for field in ["start", "size", "type", "name"]:
                 value = getattr(partition, field)
                 if value:
                     fields += [f'{field}="{value}"']
@@ -278,6 +284,7 @@ class PartitionTable:
             part.start = disk_parts[i]["start"]
             part.size = disk_parts[i]["size"]
             part.type = disk_parts[i].get("type")
+            part.name = disk_parts[i].get("name")
 
 
 def filesystem_from_json(js) -> Filesystem:
@@ -288,7 +295,8 @@ def partition_from_json(js) -> Partition:
     p = Partition(pttype=js.get("type"),
                   start=js.get("start"),
                   size=js.get("size"),
-                  bootable=js.get("bootable"))
+                  bootable=js.get("bootable"),
+                  name=js.get("name"))
     fs = js.get("filesystem")
     if fs:
         p.filesystem = filesystem_from_json(fs)
