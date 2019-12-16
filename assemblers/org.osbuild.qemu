@@ -131,18 +131,6 @@ def mount(source, dest):
         subprocess.run(["umount", "-R", dest], check=True)
 
 
-class Filesystem:
-    def __init__(self,
-                 fstype: str,
-                 uuid: str,
-                 mountpoint: str,
-                 label: str = None):
-        self.type = fstype
-        self.uuid = uuid
-        self.mountpoint = mountpoint
-        self.label = label
-
-
 def mkfs_ext4(device, uuid, label):
     opts = []
     if label:
@@ -167,17 +155,28 @@ def mkfs_vfat(device, uuid, label):
     subprocess.run(["mkfs.vfat", "-i", volid] + opts + [device], encoding='utf-8', check=True)
 
 
-def mkfs_for_type(device: str, fs: Filesystem):
-    fs_type = fs.type
-    if fs_type == "ext4":
-        maker = mkfs_ext4
-    elif fs_type == "xfs":
-        maker = mkfs_xfs
-    elif fs_type == "vfat":
-        maker = mkfs_vfat
-    else:
-        raise ValueError(f"Unknown filesystem type '{fs_type}'")
-    maker(device, fs.uuid, fs.label)
+class Filesystem:
+    def __init__(self,
+                 fstype: str,
+                 uuid: str,
+                 mountpoint: str,
+                 label: str = None):
+        self.type = fstype
+        self.uuid = uuid
+        self.mountpoint = mountpoint
+        self.label = label
+
+    def make_at(self, device: str):
+        fs_type = self.type
+        if fs_type == "ext4":
+            maker = mkfs_ext4
+        elif fs_type == "xfs":
+            maker = mkfs_xfs
+        elif fs_type == "vfat":
+            maker = mkfs_vfat
+        else:
+            raise ValueError(f"Unknown filesystem type '{fs_type}'")
+        maker(device, self.uuid, self.label)
 
 
 class Partition:
@@ -404,7 +403,7 @@ def main(tree, output_dir, options, loop_client):
             # make the specified filesystem, if any
             if partition.filesystem is None:
                 continue
-            mkfs_for_type(loop, partition.filesystem)
+            partition.filesystem.make_at(loop)
             # now mount it
             mountpoint = os.path.normpath(f"{root}/{partition.mountpoint}")
             os.makedirs(mountpoint, exist_ok=True)
