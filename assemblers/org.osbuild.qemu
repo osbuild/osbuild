@@ -236,6 +236,13 @@ class PartitionTable:
         parts_fs = filter(lambda p: p.filesystem is not None, self.partitions)
         return sorted(parts_fs, key=mountpoint_len)
 
+    def partition_containing_root(self) -> Partition:
+        """Return the partition containing the root filesystem"""
+        for p in self.partitions:
+            if p.mountpoint and p.mountpoint == "/":
+                return p
+        return None
+
     def write_to(self, target, sync=True):
         """Write the partition table to disk"""
         # generate the command for sfdisk to create the table
@@ -318,11 +325,8 @@ def install_grub2(image: str, pt: PartitionTable):
     """Install grub2 to image"""
     grub2_core = "/var/tmp/grub2-core.img"
 
-    root_fs_type = "unknown"
-    for p in pt:
-        if p.mountpoint and p.mountpoint == "/":
-            root_fs_type = p.fs_type
-            break
+    root_part = pt.partition_containing_root()
+    root_fs_type = root_part.fs_type or "unknown"
 
     if root_fs_type == "ext4":
         fs_module = "ext2"
