@@ -1,0 +1,10 @@
+{
+  "stages": [
+    {
+      "name": "org.osbuild.error"
+    }
+  ],
+  "assembler": {
+    "name": "org.osbuild.noop"
+  }
+}
