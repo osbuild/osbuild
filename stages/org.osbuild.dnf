@@ -234,12 +234,15 @@ def main(tree, options):
 
     # verify metadata checksum
     for repoid, repo in enumerate(repos):
-        algorithm, checksum = repo["checksum"].split(":")
+        algorithm, expected_checksum = repo["checksum"].split(":")
         assert algorithm == "sha256"
         cachedir = dnf_cachedir(f"repo{repoid}", repo, releasever, basearch)
         with open(f"{tree}/var/cache/dnf/{cachedir}/repodata/repomd.xml", "rb") as f:
             repomd = f.read()
-        assert hashlib.sha256(repomd).hexdigest() == checksum
+        checksum = hashlib.sha256(repomd).hexdigest()
+        if checksum != expected_checksum:
+            print(f"repo {repoid} has checksum {checksum}, expected {expected_checksum}")
+            return 1
 
     # delete cache manually, because `dnf clean all` leaves some contents behind
     fd = os.open(f"{tree}/var/cache/dnf", os.O_DIRECTORY)
