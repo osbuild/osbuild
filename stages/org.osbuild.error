@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+
+import json
+import sys
+
+STAGE_DESC = "Return an error"
+STAGE_INFO = """
+Error stage. Return the given error. Useful for testing, debugging, and
+wasting time.
+"""
+STAGE_OPTS = """
+"properties": {
+  "returncode": {
+    "description": "What to return code to use"
+    "type": "number",
+    "default": 255
+  }
+}
+"""
+
+
+def main(_tree, options):
+    errno = options.get("returncode", 255)
+    print(f"Error stage will now return error: {errno}")
+    return errno
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args.get("options", {}))
+    sys.exit(r)
