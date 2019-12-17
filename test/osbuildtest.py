@@ -42,7 +42,7 @@ class TestCase(unittest.TestCase):
 
         stdin = subprocess.PIPE if input else None
 
-        p = subprocess.Popen(osbuild_cmd, encoding="utf-8", stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p = subprocess.Popen(osbuild_cmd, encoding="utf-8", stdin=stdin, stdout=subprocess.PIPE)
         try:
             output, _ = p.communicate(input)
             if p.returncode != 0:
