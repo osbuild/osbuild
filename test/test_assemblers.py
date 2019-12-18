@@ -90,7 +90,7 @@ class TestAssemblers(osbuildtest.TestCase):
                 tree_id, output_id = self.run_assembler("org.osbuild.qemu", options)
                 image = f"{self.store}/refs/{output_id}/image.{fmt}"
                 if fmt == "raw.xz":
-                    subprocess.run(["unxz", image], check=True)
+                    subprocess.run(["unxz", "--keep", "--force", image], check=True)
                     image = image[:-3]
                     fmt = "raw"
                 self.assertImageFile(image, fmt, options["size"])
