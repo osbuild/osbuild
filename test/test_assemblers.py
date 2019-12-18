@@ -6,7 +6,6 @@ import json
 import os
 import subprocess
 import tempfile
-import uuid
 import time
 
 from . import osbuildtest
@@ -69,7 +68,7 @@ class TestAssemblers(osbuildtest.TestCase):
     def test_rawfs(self):
         options = {
             "filename": "image.raw",
-            "root_fs_uuid": str(uuid.uuid4()),
+            "root_fs_uuid": "016a1cda-5182-4ab3-bf97-426b00b74eb0",
             "size": 2 * 1024 * 1024 * 1024
         }
         tree_id, output_id = self.run_assembler("org.osbuild.rawfs", options)
@@ -84,8 +83,8 @@ class TestAssemblers(osbuildtest.TestCase):
                 options = {
                     "format": fmt,
                     "filename": f"image.{fmt}",
-                    "ptuuid": str(uuid.uuid4()),
-                    "root_fs_uuid": str(uuid.uuid4()),
+                    "ptuuid": "b2c09a39-db93-44c5-846a-81e06b1dc162",
+                    "root_fs_uuid": "aff010e9-df95-4f81-be6b-e22317251033",
                     "size": 2 * 1024 * 1024 * 1024
                 }
                 tree_id, output_id = self.run_assembler("org.osbuild.qemu", options)
