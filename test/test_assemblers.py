@@ -7,6 +7,7 @@ import os
 import subprocess
 import tempfile
 import uuid
+import time
 
 from . import osbuildtest
 
@@ -135,9 +136,17 @@ def nbd_connect(image):
         r = subprocess.run(["qemu-nbd", "--connect", device, "--read-only", image], check=False).returncode
         if r == 0:
             try:
+                # qemu-nbd doesn't wait for the device to be ready
+                for _ in range(100):
+                    if subprocess.run(["nbd-client", "--check", device], check=False, stdout=subprocess.DEVNULL).returncode == 0:
+                        break
+                    time.sleep(0.2)
+
                 yield device
             finally:
+                # qemu-nbd doesn't wait until the device is released. nbd-client does
                 subprocess.run(["qemu-nbd", "--disconnect", device], check=True, stdout=subprocess.DEVNULL)
+                subprocess.run(["nbd-client", "--disconnect", device], check=False, stdout=subprocess.DEVNULL)
             break
     else:
         raise RuntimeError("no free network block device")
