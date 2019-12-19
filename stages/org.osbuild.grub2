@@ -22,12 +22,14 @@ This stage will overwrite `/etc/default/grub`, `/boot/grub2/grubenv`, and
 If Legacy boot support is requested (the default, or explicitly via `legacy`)
 this stage will also overwrite `/boot/grub2/grub.cfg` and will copy the
 GRUB2 files from the buildhost into the target tree:
-* `/usr/share/grub/unicode.pf2`       -> `/boot/grub2/fonts/`
-* `/usr/lib/grub/i386-pc/*.{mod,lst}` -> `/boot/grub2/i386-pc/`
+* `/usr/share/grub/unicode.pf2`          -> `/boot/grub2/fonts/`
+* `/usr/lib/grub/$platform/*.{mod,lst}` -> `/boot/grub2/$platform/`
   * NOTE: skips `fdt.lst`, which is an empty file
+The $platform variable (default: i386-pc) refers to target platform
+that grub2 is mean to ran on (see grub-install(1)'s `--target`)
 
 NB: with legacy support enabled, this stage will fail if the buildhost
-doesn't have `/usr/lib/grub/i386-pc/` and `/usr/share/grub/unicode.pf2`.
+doesn't have `/usr/lib/grub/$platform/` and `/usr/share/grub/unicode.pf2`.
 
 If UEFI support is enabled via `uefi: {"vendor": "<vendor>"}` this stage will
 also write the `grub.cfg` to `boot/efi/EFI/<vendor>/grub.cfg`.
@@ -67,23 +69,26 @@ STAGE_OPTS = """
            "description": "The vendor of the UEFI binaries (this is us)",
            "examples": ["fedora"],
            "pattern": "^(.+)$"
-         }
+        }
       }
+    }
   }
 }
 """
 
 
-def copy_modules(tree):
+def copy_modules(tree, platform):
     """Copy all modules from the build image to /boot"""
-    os.makedirs(f"{tree}/boot/grub2/i386-pc", exist_ok=True)
-    for dirent in os.scandir("/usr/lib/grub/i386-pc"):
+    target = f"{tree}/boot/grub2/{platform}"
+    source = f"/usr/lib/grub/{platform}"
+    os.makedirs(target, exist_ok=True)
+    for dirent in os.scandir(source):
         (_, ext) = os.path.splitext(dirent.name)
         if ext not in ('.mod', '.lst'):
             continue
         if dirent.name == "fdt.lst":
             continue
-        shutil.copy2(f"/usr/lib/grub/i386-pc/{dirent.name}", f"{tree}/boot/grub2/i386-pc/")
+        shutil.copy2(f"/{source}/{dirent.name}", target)
 
 
 def copy_font(tree):
@@ -111,6 +116,10 @@ def main(tree, options):
     legacy = options.get("legacy", True)
     uefi = options.get("uefi", None)
 
+    # legacy boolean means the
+    if isinstance(legacy, bool):
+        legacy = "i386-pc"
+
     # Create the configuration file that determines how grub.cfg is generated.
     os.makedirs(f"{tree}/etc/default", exist_ok=True)
     with open(f"{tree}/etc/default/grub", "w") as default:
@@ -126,7 +135,7 @@ def main(tree, options):
 
     if legacy:
         write_grub_cfg(tree, "boot/grub2/grub.cfg")
-        copy_modules(tree)
+        copy_modules(tree, legacy)
         copy_font(tree)
 
     if uefi is not None:
