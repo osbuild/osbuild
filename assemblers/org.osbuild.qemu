@@ -332,32 +332,39 @@ def install_grub2(image: str, pt: PartitionTable):
     """Install grub2 to image"""
     grub2_core = "/var/tmp/grub2-core.img"
 
+    # Create the level-2 & 3 stages of the bootloader, aka the core
+    # it consists of the kernel plus the core modules required to
+    # to locate and load the rest of the grub modules, specifically
+    # the "normal.mod" (Stage 4) module.
+    # The exact list of modules required to be built into the core
+    # depends on the system: it is the minimal set needed to find
+    # read the partition and its filesystem containing said modules
+    # and the grub configuration [NB: efi systems work differently]
+
+    # modules: access the disk and read the partition table
+    modules = ["biosdisk", "part_msdos"]
+
+    # modules: grubs needs to access the filesystems
     root_part = pt.partition_containing_root()
     root_fs_type = root_part.fs_type or "unknown"
 
     if root_fs_type == "ext4":
-        fs_module = "ext2"
+        modules += ["ext2"]
     elif root_fs_type == "xfs":
-        fs_module = "xfs"
+        modules += ["xfs"]
     else:
         raise ValueError(f"unknown root filesystem type: '{root_fs_type}'")
 
-    # Create the level-2 bootloader
-    # The purpose of this is to find the grub modules and configuration
-    # to be able to start the level-3 bootloader. It contains the modules
-    # necessary to do this, but nothing else.
+    # now created the core image
     subprocess.run(["grub2-mkimage",
                     "--verbose",
                     "--directory", "/usr/lib/grub/i386-pc",
                     "--prefix", "(,msdos1)/boot/grub2",
                     "--format", "i386-pc",
                     "--compression", "auto",
-                    "--output", grub2_core,
-                    "part_msdos", fs_module, "biosdisk"],
+                    "--output", grub2_core] +
+                   modules,
                    check=True)
-
-    partition_offset = pt[0].start_in_bytes
-    assert os.path.getsize(grub2_core) < partition_offset - 512
 
     with open(image, "rb+") as image_f:
         # Install the level-1 bootloader into the start of the MBR
@@ -369,8 +376,13 @@ def install_grub2(image: str, pt: PartitionTable):
             # overwritten.
             image_f.write(boot_f.read(440))
 
-        # Install the level-2 bootloader into the space after the MBR, before
-        # the first partition.
+        # Embed Stage-2 in the MBR gap
+        # For historic and performance reasons the first partition
+        # is aligned to a specific sector number (used to be 64,
+        # now it is 2048), which leaves a gap between it and the MBR,
+        # where the core image can be embedded in; also check it fits
+        partition_offset = pt[0].start_in_bytes
+        assert os.path.getsize(grub2_core) < partition_offset - 512
         with open(grub2_core, "rb") as core_f:
             image_f.seek(512)
             shutil.copyfileobj(core_f, image_f)

@@ -98,7 +98,7 @@ class TestAssemblers(osbuildtest.TestCase):
                     self.assertPartitionTable(device, "dos", options["ptuuid"], 1, boot_partition=1)
                     self.assertGRUB2(device,
                                      "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
-                                     "1ebb35399388ba4007cee817a066570db948c450da911a3db67dba8083be247d",
+                                     "18031c9465e3f9ccb9aeb9c8e59dec6b82e91376e2628c8100b5461af62ad67c",
                                      1024 * 1024)
                     self.assertFilesystem(device + "p1", options["root_fs_uuid"], "ext4", tree_id)
 
