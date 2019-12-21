@@ -9,8 +9,8 @@ class TestDescriptions(osbuildtest.TestCase):
     def run_stage_test(self, test_dir: str):
         pipeline1 = f"{test_dir}/a.json"
         pipeline2 = f"{test_dir}/b.json"
-        tree_id1, _ = self.run_osbuild(pipeline1)
-        tree_id2, _ = self.run_osbuild(pipeline2)
+        tree_id1, _ = self.run_osbuild(pipeline1, sources="test/pipelines/sources.json")
+        tree_id2, _ = self.run_osbuild(pipeline2, sources="test/pipelines/sources.json")
 
         actual_diff = self.run_tree_diff(self.get_path_to_store(tree_id1), self.get_path_to_store(tree_id2))
 

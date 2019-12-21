@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+
+import json
+import sys
+
+
+def main(options, sources):
+    repos = options.get("repos", {})
+
+    reply = []
+    for s in sources:
+        try:
+            repo = {
+                "checksum": s,
+                **repos[s]
+            }
+        except KeyError:
+            json.dump({"error": f"source unknown: {s}"}, sys.stdout)
+            return 1
+
+        reply.append(repo)
+
+    json.dump(reply, sys.stdout)
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["options"], args["checksums"])
+    sys.exit(r)

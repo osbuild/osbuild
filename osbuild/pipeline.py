@@ -11,6 +11,7 @@ from .api import API
 from . import buildroot
 from . import objectstore
 from . import remoteloop
+from . import sources
 
 
 RESET = "\033[0m"
@@ -67,7 +68,7 @@ class Stage:
             description["options"] = self.options
         return description
 
-    def run(self, tree, runner, build_tree, interactive=False, libdir=None):
+    def run(self, tree, runner, build_tree, interactive=False, libdir=None, source_options=None):
         with buildroot.BuildRoot(build_tree, runner, libdir=libdir) as build_root:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options)
@@ -77,8 +78,12 @@ class Stage:
                 "options": self.options,
             }
 
+            sources_dir = f"{libdir}/sources" if libdir else "/usr/lib/osbuild/sources"
+
             with build_root.bound_socket("osbuild") as osbuild_sock, \
-                API(osbuild_sock, args, interactive) as api:
+                build_root.bound_socket("sources") as sources_sock, \
+                API(osbuild_sock, args, interactive) as api, \
+                sources.SourcesServer(sources_sock, sources_dir, source_options or {}):
                 r = build_root.run(
                     [f"/run/osbuild/lib/stages/{self.name}"],
                     binds=[f"{tree}:/run/osbuild/tree"],
@@ -211,13 +216,13 @@ class Pipeline:
                 finally:
                     subprocess.run(["umount", "--lazy", tmp], check=True)
 
-    def run(self, store, interactive=False, libdir=None):
+    def run(self, store, interactive=False, libdir=None, source_options=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         object_store = objectstore.ObjectStore(store)
         results = {}
 
         if self.build:
-            r = self.build.run(store, interactive, libdir)
+            r = self.build.run(store, interactive, libdir, source_options or {})
             results["build"] = r
             if not r["success"]:
                 results["success"] = False
@@ -249,7 +254,8 @@ class Pipeline:
                                               self.runner,
                                               build_tree,
                                               interactive=interactive,
-                                              libdir=libdir)
+                                              libdir=libdir,
+                                              source_options=source_options)
                                 results["stages"].append(r.as_dict())
                     except BuildError as err:
                         results["stages"].append(err.as_dict())
