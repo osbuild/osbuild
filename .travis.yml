@@ -8,7 +8,7 @@ jobs:
   include:
     - name: pylint
       install: pip install pylint==2.4.1
-      script: pylint osbuild runners/* assemblers/* stages/*
+      script: pylint osbuild runners/* assemblers/* stages/* sources/*
     - name: unit-tests
       script: python3 -m unittest test.test_osbuild
     - name: rpm

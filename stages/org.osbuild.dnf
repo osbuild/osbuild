@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import contextlib
 import hashlib
 import json
@@ -7,6 +8,8 @@ import pathlib
 import subprocess
 import sys
 import tempfile
+
+import osbuild.sources
 
 STAGE_DESC = "Install packages using DNF"
 STAGE_INFO = """
@@ -54,39 +57,46 @@ STAGE_OPTS = """
 "required": ["repos", "packages", "releasever", "basearch"],
 "properties": {
   "repos": {
-    "description": "Array of repo objects to set up",
+    "description": "Array of checksums to repository sources or repo objects",
     "type": "array",
     "minItems": 1,
     "items": {
-        "type": "object",
-        "properties": {
-            "metalink": {
-                "description": "metalink URL for this repo",
-                "type": "string"
-            },
-            "mirrorlist": {
-                "description": "mirrorlist URL for this repo",
-                "type": "string"
-            },
-            "baseurl": {
-                "description": "baseurl for this repo",
-                "type": "string"
-            },
-            "checksum": {
-                "description": "checksum for the expected repo metadata",
-                "type": "string",
-                "pattern": "sha256:[a-fA-F0-9]{32}"
-            },
-            "gpgkey": {
-                "description": "GPG public key contents (to check signatures)",
-                "type": "string"
-            }
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+              "metalink": {
+                  "description": "metalink URL for this repo",
+                  "type": "string"
+              },
+              "mirrorlist": {
+                  "description": "mirrorlist URL for this repo",
+                  "type": "string"
+              },
+              "baseurl": {
+                  "description": "baseurl for this repo",
+                  "type": "string"
+              },
+              "checksum": {
+                  "description": "checksum for the expected repo metadata",
+                  "type": "string",
+                  "pattern": "sha256:[a-fA-F0-9]{32}"
+              },
+              "gpgkey": {
+                  "description": "GPG public key contents (to check signatures)",
+                  "type": "string"
+              }
+          },
+          "anyOf": [
+              {"required": ["checksum", "metalink"]},
+              {"required": ["checksum", "mirrorlist"]},
+              {"required": ["checksum", "baseurl"]}
+          ]
         },
-        "anyOf": [
-            {"required": ["checksum", "metalink"]},
-            {"required": ["checksum", "mirrorlist"]},
-            {"required": ["checksum", "baseurl"]}
-        ]
+        {
+          "type": "string"
+        }
+      ]
     }
   },
   "packages": {
@@ -125,6 +135,21 @@ STAGE_OPTS = """
   },
 }
 """
+
+def fetch_repos(repos):
+    """Use osbuild's source api to fill in details about those repos in @repos
+    that only have a "checksum" set. All others are passed through unchanged.
+    """
+    checksums = []
+    result = []
+    for repo in repos:
+        if isinstance(repo, str):
+            checksums.append(repo)
+        else:
+            result.append(repo)
+
+    return result + osbuild.sources.get("org.osbuild.dnf", checksums)
+
 
 def write_repofile(f, repoid, repo, keydir):
     f.write(f"[{repoid}]\n")
@@ -172,7 +197,7 @@ def dnf_cachedir(repoid, repo, releasever, basearch):
 
 
 def main(tree, options):
-    repos = options["repos"]
+    repos = fetch_repos(options["repos"])
     packages = options["packages"]
     releasever = options["releasever"]
     basearch = options["basearch"]
@@ -180,6 +205,8 @@ def main(tree, options):
     weak_deps = options.get("install_weak_deps", True)
     exclude_packages = options.get("exclude_packages", [])
     module_platform_id = options.get("module_platform_id", None)
+
+    print("Repositories: {}\n".format(json.dumps(repos, indent=2)))
 
     script = f"""
         set -e
@@ -265,7 +292,6 @@ def main(tree, options):
         os.unlink(f"{tree}/var/lib/systemd/random-seed")
 
     return 0
-
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)

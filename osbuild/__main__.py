@@ -19,6 +19,8 @@ def main():
     parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
                         default=".osbuild",
                         help="the directory where intermediary os trees are stored")
+    parser.add_argument("--sources", metavar="SOURCES", type=os.path.abspath,
+                        help="json file containing a dictionary of source configuration")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
                         help="the directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--json", action="store_true",
@@ -37,8 +39,13 @@ def main():
             build_pipeline, runner = osbuild.load_build(json.load(f))
         pipeline.prepend_build_env(build_pipeline, runner)
 
+    source_options = {}
+    if args.sources:
+        with open(args.sources) as f:
+            source_options = json.load(f)
+
     try:
-        r = pipeline.run(args.store, interactive=not args.json, libdir=args.libdir)
+        r = pipeline.run(args.store, interactive=not args.json, libdir=args.libdir, source_options=source_options)
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
