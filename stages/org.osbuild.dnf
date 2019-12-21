@@ -268,7 +268,7 @@ def main(tree, options):
             repomd = f.read()
         checksum = hashlib.sha256(repomd).hexdigest()
         if checksum != expected_checksum:
-            print(f"repo {repoid} has checksum {checksum}, expected {expected_checksum}")
+            print(f"error: repo was configured with checksum {expected_checksum}, but actually got {checksum}")
             return 1
 
     # delete cache manually, because `dnf clean all` leaves some contents behind
