@@ -257,6 +257,18 @@ class PartitionTable:
         # fallback to the root partition
         return self.partition_containing_root()
 
+    def find_prep_partition(self) -> Partition:
+        """Find the PReP partition'"""
+        if self.label == "dos":
+            prep_type = "41"
+        elif self.label == "gpt":
+            prep_type = "9E1A2D38-C612-4316-AA26-8B49521E5A8B"
+
+        for part in self.partitions:
+            if part.type.upper() == prep_type:
+                return part
+        return None
+
     def write_to(self, target, sync=True):
         """Write the partition table to disk"""
         # generate the command for sfdisk to create the table
@@ -353,8 +365,29 @@ def grub2_write_core_mbrgap(core_f: BinaryIO,
     shutil.copyfileobj(core_f, image_f)
 
 
+def grub2_write_core_prep_part(core_f: BinaryIO,
+                               image_f: BinaryIO,
+                               pt: PartitionTable):
+    """Write the core to the prep partition"""
+    # On ppc64le with Open Firmware a special partition called
+    # 'PrEP partition' is used the store the grub2 core; the
+    # firmware looks for this partition and directly loads and
+    # executes the core form it.
+    prep_part = pt.find_prep_partition()
+    if prep_part is None:
+        raise ValueError("PrEP partition missing")
+
+    core_size = os.fstat(core_f.fileno()).st_size
+    assert core_size < prep_part.size_in_bytes - 512
+    image_f.seek(prep_part.start_in_bytes)
+    shutil.copyfileobj(core_f, image_f)
+
+
 def install_grub2(image: str, pt: PartitionTable, options):
     """Install grub2 to image"""
+    platform = options.get("platform", "i386-pc")
+
+    boot_path = f"/usr/lib/grub/{platform}/boot.img"
     core_path = "/var/tmp/grub2-core.img"
 
     # Create the level-2 & 3 stages of the bootloader, aka the core
@@ -369,8 +402,15 @@ def install_grub2(image: str, pt: PartitionTable, options):
     # find the partition containing /boot/grub2
     boot_part = pt.partition_containing_boot()
 
-    # modules: access the disk and read the partition table
-    modules = ["biosdisk", "part_msdos"]
+    # modules: access the disk and read the partition table:
+    # on x86 'biosdisk' is used to access the disk, on ppc64le
+    # with "Open Firmware" the latter is directly loading core
+    if platform == "i386-pc":
+        modules = ["biosdisk"]
+    else:
+        modules = []
+
+    modules += ["part_msdos"]
 
     # modules: grubs needs to access the filesystems of /boot/grub2
     fs_type = boot_part.fs_type or "unknown"
@@ -391,27 +431,33 @@ def install_grub2(image: str, pt: PartitionTable, options):
     # now created the core image
     subprocess.run(["grub2-mkimage",
                     "--verbose",
-                    "--directory", "/usr/lib/grub/i386-pc",
-                    "--format", "i386-pc",
+                    "--directory", f"/usr/lib/grub/{platform}",
                     "--prefix", f"(,{partid})/boot/grub2",
+                    "--format", platform,
                     "--compression", "auto",
-                    "--output", grub2_core] +
+                    "--output", core_path] +
                    modules,
                    check=True)
 
     with open(image, "rb+") as image_f:
-        # Install the level-1 bootloader into the start of the MBR
-        # The purpose of this is simply to jump into the level-2 bootloader.
-        with open("/usr/lib/grub/i386-pc/boot.img", "rb") as boot_f:
-            # The boot.img file is 512 bytes, but we must only copy the first 440
-            # bytes, as these contain the bootstrapping code. The rest of the
-            # first sector contains the partition table, and must not be
-            # overwritten.
-            image_f.write(boot_f.read(440))
+        if platform == "i386-pc":
+            # On x86, install the level-1 bootloader into the start of the MBR
+            # The purpose of this is simply to jump into the stage-2 bootloader.
+            # On ppc64le & Open Firmware stage-2 is loaded by the firmware
+            with open(boot_path, "rb") as boot_f:
+                # The boot.img file is 512 bytes, but we must only copy the first 440
+                # bytes, as these contain the bootstrapping code. The rest of the
+                # first sector contains the partition table, and must not be
+                # overwritten.
+                image_f.write(boot_f.read(440))
 
         with open(core_path, "rb") as core_f:
-            # Embed the core in the gap between the MBR and the fist partition
-            grub2_write_core_mbrgap(core_f, image_f, pt)
+            if platform == "powerpc-ieee1275":
+                # write the core to the PrEP partition
+                grub2_write_core_prep_part(core_f, image_f, pt)
+            else:
+                # embed the core in the MBR gap
+                grub2_write_core_mbrgap(core_f, image_f, pt)
 
 
 def main(tree, output_dir, options, loop_client):
