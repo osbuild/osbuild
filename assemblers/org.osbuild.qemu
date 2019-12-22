@@ -338,7 +338,7 @@ def partition_table_from_options(options) -> PartitionTable:
     return PartitionTable(pttype, ptuuid, parts)
 
 
-def install_grub2(image: str, pt: PartitionTable):
+def install_grub2(image: str, pt: PartitionTable, options):
     """Install grub2 to image"""
     grub2_core = "/var/tmp/grub2-core.img"
 
@@ -410,6 +410,7 @@ def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
     filename = options["filename"]
     size = options["size"]
+    bootloader = options.get("bootloader", {"type": "grub2"})
 
     # sfdisk works on sectors of 512 bytes and ignores excess space - be explicit about this
     if size % 512 != 0:
@@ -427,9 +428,9 @@ def main(tree, output_dir, options, loop_client):
     pt = partition_table_from_options(options)
     pt.write_to(image)
 
-    # Create the level-2 bootloader
-    if pt.label == "dos":
-        install_grub2(image, pt)
+    # Install the bootloader
+    if bootloader["type"] == "grub2":
+        install_grub2(image, pt, bootloader)
 
     # Now assemble the filesystem hierarchy and copy the tree into the image
     with contextlib.ExitStack() as cm:
