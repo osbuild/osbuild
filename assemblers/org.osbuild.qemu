@@ -248,6 +248,14 @@ class PartitionTable:
                 return p
         return None
 
+    def partition_containing_boot(self) -> Partition:
+        """Return the partition containing /boot"""
+        for p in self.partitions_with_filesystems():
+            if p.mountpoint == "/boot":
+                return p
+        # fallback to the root partition
+        return self.partition_containing_root()
+
     def write_to(self, target, sync=True):
         """Write the partition table to disk"""
         # generate the command for sfdisk to create the table
@@ -341,19 +349,21 @@ def install_grub2(image: str, pt: PartitionTable):
     # read the partition and its filesystem containing said modules
     # and the grub configuration [NB: efi systems work differently]
 
+    # find the partition containing /boot/grub2
+    boot_part = pt.partition_containing_boot()
+
     # modules: access the disk and read the partition table
     modules = ["biosdisk", "part_msdos"]
 
-    # modules: grubs needs to access the filesystems
-    root_part = pt.partition_containing_root()
-    root_fs_type = root_part.fs_type or "unknown"
+    # modules: grubs needs to access the filesystems of /boot/grub2
+    fs_type = boot_part.fs_type or "unknown"
 
-    if root_fs_type == "ext4":
+    if fs_type == "ext4":
         modules += ["ext2"]
-    elif root_fs_type == "xfs":
+    elif fs_type == "xfs":
         modules += ["xfs"]
     else:
-        raise ValueError(f"unknown root filesystem type: '{root_fs_type}'")
+        raise ValueError(f"unknown boot filesystem type: '{fs_type}'")
 
     # now created the core image
     subprocess.run(["grub2-mkimage",
