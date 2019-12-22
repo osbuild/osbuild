@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import List
+from typing import List, BinaryIO
 import osbuild.remoteloop as remoteloop
 
 STAGE_DESC = "Assemble a bootable partitioned disk image with qemu-img"
@@ -338,9 +338,24 @@ def partition_table_from_options(options) -> PartitionTable:
     return PartitionTable(pttype, ptuuid, parts)
 
 
+def grub2_write_core_mbrgap(core_f: BinaryIO,
+                            image_f: BinaryIO,
+                            pt: PartitionTable):
+    """Write the core into the MBR gap"""
+    # For historic and performance reasons the first partition
+    # is aligned to a specific sector number (used to be 64,
+    # now it is 2048), which leaves a gap between it and the MBR,
+    # where the core image can be embedded in; also check it fits
+    core_size = os.fstat(core_f.fileno()).st_size
+    partition_offset = pt[0].start_in_bytes
+    assert core_size < partition_offset - 512
+    image_f.seek(512)
+    shutil.copyfileobj(core_f, image_f)
+
+
 def install_grub2(image: str, pt: PartitionTable, options):
     """Install grub2 to image"""
-    grub2_core = "/var/tmp/grub2-core.img"
+    core_path = "/var/tmp/grub2-core.img"
 
     # Create the level-2 & 3 stages of the bootloader, aka the core
     # it consists of the kernel plus the core modules required to
@@ -394,16 +409,9 @@ def install_grub2(image: str, pt: PartitionTable, options):
             # overwritten.
             image_f.write(boot_f.read(440))
 
-        # Embed Stage-2 in the MBR gap
-        # For historic and performance reasons the first partition
-        # is aligned to a specific sector number (used to be 64,
-        # now it is 2048), which leaves a gap between it and the MBR,
-        # where the core image can be embedded in; also check it fits
-        partition_offset = pt[0].start_in_bytes
-        assert os.path.getsize(grub2_core) < partition_offset - 512
-        with open(grub2_core, "rb") as core_f:
-            image_f.seek(512)
-            shutil.copyfileobj(core_f, image_f)
+        with open(core_path, "rb") as core_f:
+            # Embed the core in the gap between the MBR and the fist partition
+            grub2_write_core_mbrgap(core_f, image_f, pt)
 
 
 def main(tree, output_dir, options, loop_client):
