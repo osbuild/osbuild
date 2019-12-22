@@ -197,6 +197,7 @@ class Partition:
         self.bootable = bootable
         self.name = name
         self.filesystem = filesystem
+        self.index = None
 
     @property
     def start_in_bytes(self):
@@ -289,6 +290,7 @@ class PartitionTable:
 
         assert len(disk_parts) == len(self.partitions)
         for i, part in enumerate(self.partitions):
+            part.index = i
             part.start = disk_parts[i]["start"]
             part.size = disk_parts[i]["size"]
             part.type = disk_parts[i].get("type")
@@ -365,12 +367,18 @@ def install_grub2(image: str, pt: PartitionTable):
     else:
         raise ValueError(f"unknown boot filesystem type: '{fs_type}'")
 
+    # identify the partition containing boot for grub2
+    if pt.label == "dos":
+        partid = "msdos" + str(boot_part.index + 1)
+    else:
+        raise ValueError(f"unsupported partition type: '{pt.label}'")
+
     # now created the core image
     subprocess.run(["grub2-mkimage",
                     "--verbose",
                     "--directory", "/usr/lib/grub/i386-pc",
-                    "--prefix", "(,msdos1)/boot/grub2",
                     "--format", "i386-pc",
+                    "--prefix", f"(,{partid})/boot/grub2",
                     "--compression", "auto",
                     "--output", grub2_core] +
                    modules,
