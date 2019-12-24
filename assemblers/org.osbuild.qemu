@@ -45,9 +45,9 @@ STAGE_OPTS = """
       "type": {
         "description": "What bootloader to install",
         "type": "string",
-        "enum": ["grub2"]
+        "enum": ["grub2", "zipl"]
       }
-    },
+    }
   },
   "format": {
     "description": "Image file format to use",
@@ -546,6 +546,46 @@ def install_grub2(image: str, pt: PartitionTable, options):
                 grub2_write_boot_image(boot_f, image_f, core_loc)
 
 
+def parse_blsfile(blsfile):
+    params = {}
+    with open(blsfile, "r") as bls:
+        for line in bls:
+            key, value = line.split(' ', 1)
+            params[key] = value.strip()
+    return params
+
+
+def find_kernel(root):
+    base = f"{root}/boot/loader/entries"
+    for dirent in os.scandir(base):
+        fn, ext = os.path.splitext(dirent.name)
+        if ext != ".conf" or fn.endswith("rescue"):
+            continue
+        blsfile = f"{base}/{dirent.name}"
+        params = parse_blsfile(blsfile)
+        linux = root + params["linux"]
+        initrd = root + params["initrd"]
+        options = params.get("options", "")
+        return linux, initrd, options
+
+
+def install_zipl(root: str, device: str, pt: PartitionTable):
+    """Install the bootloader on s390x via zipl"""
+    kernel, initrd, kopts = find_kernel(root)
+    part_with_boot = pt.partition_containing_boot()
+    subprocess.run(["/usr/sbin/zipl",
+                    "--verbose",
+                    "--target", f"{root}/boot",
+                    "--image", kernel,
+                    "--ramdisk", initrd,
+                    "--parameters", kopts,
+                    "--targetbase", device,
+                    "--targettype", "SCSI",
+                    "--targetblocksize", "512",
+                    "--targetoffset", str(part_with_boot.start)],
+                   check=True)
+
+
 def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
     filename = options["filename"]
@@ -580,6 +620,7 @@ def main(tree, output_dir, options, loop_client):
     # Now assemble the filesystem hierarchy and copy the tree into the image
     with contextlib.ExitStack() as cm:
         root = cm.enter_context(tempfile.TemporaryDirectory(prefix="osbuild-mnt"))
+        disk = cm.enter_context(loop_client.device(image, 0, size))
         # iterate the partition according to their position in the filesystem tree
         for partition in pt.partitions_with_filesystems():
             offset, size = partition.start_in_bytes, partition.size_in_bytes
@@ -595,6 +636,11 @@ def main(tree, output_dir, options, loop_client):
         # the filesystem tree should now be properly setup,
         # copy the tree into the target image
         subprocess.run(["cp", "-a", f"{tree}/.", root], check=True)
+
+        # zipl needs access to the /boot directory and the whole image
+        # via the loopback device node
+        if bootloader["type"] == "zipl":
+            install_zipl(root, disk, pt)
 
     if fmt == "raw":
         subprocess.run(["cp", image, f"{output_dir}/{filename}"], check=True)
