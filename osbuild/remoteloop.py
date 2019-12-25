@@ -54,12 +54,11 @@ class LoopServer:
     object.
     """
 
-    def __init__(self, sock):
+    def __init__(self, socket_address):
+        self.socket_address = socket_address
         self.devs = []
-        self.sock = sock
         self.ctl = loop.LoopControl()
         self.event_loop = asyncio.new_event_loop()
-        self.event_loop.add_reader(self.sock, self._dispatch)
         self.thread = threading.Thread(target=self._run_event_loop)
 
     def _create_device(self, fd, dir_fd, offset=None, sizelimit=None):
@@ -81,8 +80,8 @@ class LoopServer:
         self.devs.append(lo)
         return lo.devname
 
-    def _dispatch(self):
-        args, fds, addr = load_fds(self.sock, 1024)
+    def _dispatch(self, sock):
+        args, fds, addr = load_fds(sock, 1024)
 
         fd = fds[args["fd"]]
         dir_fd = fds[args["dir_fd"]]
@@ -91,13 +90,16 @@ class LoopServer:
 
         devname = self._create_device(fd, dir_fd, offset, sizelimit)
         ret = json.dumps({"devname": devname})
-        self.sock.sendto(ret.encode('utf-8'), addr)
+        sock.sendto(ret.encode('utf-8'), addr)
 
     def _run_event_loop(self):
-        # Set the thread-local event loop
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        sock.bind(self.socket_address)
+        self.event_loop.add_reader(sock, self._dispatch, sock)
         asyncio.set_event_loop(self.event_loop)
-        # Run event loop until stopped
         self.event_loop.run_forever()
+        self.event_loop.remove_reader(sock)
+        sock.close()
 
     def __enter__(self):
         self.thread.start()

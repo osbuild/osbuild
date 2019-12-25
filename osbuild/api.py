@@ -2,22 +2,22 @@ import array
 import asyncio
 import json
 import os
+import socket
+import sys
 import tempfile
 import threading
-import sys
 
 
 from . import remoteloop
 
 
 class API:
-    def __init__(self, sock, args, interactive):
-        self.sock = sock
+    def __init__(self, socket_address, args, interactive):
+        self.socket_address = socket_address
         self.input = args
         self.interactive = interactive
         self._output = None
         self.event_loop = asyncio.new_event_loop()
-        self.event_loop.add_reader(self.sock, self._dispatch)
         self.thread = threading.Thread(target=self._run_event_loop)
 
     @property
@@ -38,7 +38,7 @@ class API:
         self._output = os.fdopen(fd)
         return out
 
-    def _setup_stdio(self, addr):
+    def _setup_stdio(self, sock, addr):
         with self._prepare_input() as stdin, \
              self._prepare_output() as stdout:
             msg = {}
@@ -49,19 +49,22 @@ class API:
             msg['stdout'] = 1
             fds.append(stdout.fileno())
             msg['stderr'] = 2
-            remoteloop.dump_fds(self.sock, msg, fds, addr=addr)
+            remoteloop.dump_fds(sock, msg, fds, addr=addr)
 
-    def _dispatch(self):
-        msg, addr = self.sock.recvfrom(1024)
+    def _dispatch(self, sock):
+        msg, addr = sock.recvfrom(1024)
         args = json.loads(msg)
         if args["method"] == 'setup-stdio':
-            self._setup_stdio(addr)
+            self._setup_stdio(sock, addr)
 
     def _run_event_loop(self):
-        # Set the thread-local event loop
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        sock.bind(self.socket_address)
+        self.event_loop.add_reader(sock, self._dispatch, sock)
         asyncio.set_event_loop(self.event_loop)
-        # Run event loop until stopped
         self.event_loop.run_forever()
+        self.event_loop.remove_reader(sock)
+        sock.close()
 
     def __enter__(self):
         self.thread.start()
