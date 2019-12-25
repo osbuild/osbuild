@@ -80,10 +80,8 @@ class Stage:
 
             sources_dir = f"{libdir}/sources" if libdir else "/usr/lib/osbuild/sources"
 
-            with build_root.bound_socket("osbuild") as osbuild_sock, \
-                build_root.bound_socket("sources") as sources_sock, \
-                API(osbuild_sock, args, interactive) as api, \
-                sources.SourcesServer(sources_sock, sources_dir, source_options or {}):
+            with API(f"{build_root.api}/osbuild", args, interactive) as api, \
+                sources.SourcesServer(f"{build_root.api}/sources", sources_dir, source_options or {}):
                 r = build_root.run(
                     [f"/run/osbuild/lib/stages/{self.name}"],
                     binds=[f"{tree}:/run/osbuild/tree"],
@@ -141,10 +139,8 @@ class Assembler:
                 # buildroot we should remove this because it includes code from the host in the buildroot thus
                 # violating our effort of reproducibility.
                 ro_binds.append(f"{osbuild_module_path}:/run/osbuild/lib/assemblers/osbuild")
-            with build_root.bound_socket("remoteloop") as loop_sock, \
-                build_root.bound_socket("osbuild") as osbuild_sock, \
-                remoteloop.LoopServer(loop_sock), \
-                API(osbuild_sock, args, interactive) as api:
+            with remoteloop.LoopServer(f"{build_root.api}/remoteloop"), \
+                API(f"{build_root.api}/osbuild", args, interactive) as api:
                 r = build_root.run(
                     [f"/run/osbuild/lib/assemblers/{self.name}"],
                     binds=binds,

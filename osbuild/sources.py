@@ -6,12 +6,11 @@ import threading
 
 
 class SourcesServer:
-    def __init__(self, sock, sources_dir, source_options):
-        self.sock = sock
+    def __init__(self, socket_address, sources_dir, source_options):
+        self.socket_address = socket_address
         self.sources_dir = sources_dir
         self.source_options = source_options
         self.event_loop = asyncio.new_event_loop()
-        self.event_loop.add_reader(self.sock, self._dispatch)
         self.thread = threading.Thread(target=self._run_event_loop)
 
     def _run_source(self, source, checksums):
@@ -29,16 +28,21 @@ class SourcesServer:
 
         return json.loads(r.stdout)
 
-    def _dispatch(self):
-        msg, addr = self.sock.recvfrom(8182)
+    def _dispatch(self, sock):
+        msg, addr = sock.recvfrom(8182)
         request = json.loads(msg)
         reply = self._run_source(request["source"], request["checksums"])
         msg = json.dumps(reply).encode("utf-8")
-        self.sock.sendmsg([msg], [], 0, addr)
+        sock.sendmsg([msg], [], 0, addr)
 
     def _run_event_loop(self):
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        sock.bind(self.socket_address)
+        self.event_loop.add_reader(sock, self._dispatch, sock)
         asyncio.set_event_loop(self.event_loop)
         self.event_loop.run_forever()
+        self.event_loop.remove_reader(sock)
+        sock.close()
 
     def __enter__(self):
         self.thread.start()

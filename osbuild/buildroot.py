@@ -1,8 +1,6 @@
 
-import contextlib
 import os
 import platform
-import socket
 import shutil
 import subprocess
 import tempfile
@@ -94,17 +92,6 @@ class BuildRoot:
             *[f"--bind-ro={b}" for b in [f"{self.api}:/run/osbuild/api"] + (readonly_binds or [])],
             f"/run/osbuild/lib/runners/{self.runner}"
             ] + argv, check=check, **kwargs)
-
-    @contextlib.contextmanager
-    def bound_socket(self, name):
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        sock_path = os.path.join(self.api, name)
-        sock.bind(os.path.join(self.api, name))
-        try:
-            yield sock
-        finally:
-            os.unlink(sock_path)
-            sock.close()
 
     def __del__(self):
         self.unmount()
