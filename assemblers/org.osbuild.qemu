@@ -5,6 +5,7 @@ import json
 import os
 import socket
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -269,6 +270,14 @@ class PartitionTable:
                 return part
         return None
 
+    def find_bios_boot_partition(self) -> Partition:
+        """Find the BIOS-boot Partition"""
+        bb_type = "21686148-6449-6E6F-744E-656564454649"
+        for part in self.partitions:
+            if part.type.upper() == bb_type:
+                return part
+        return None
+
     def write_to(self, target, sync=True):
         """Write the partition table to disk"""
         # generate the command for sfdisk to create the table
@@ -394,6 +403,51 @@ def grub2_write_core_prep_part(core_f: BinaryIO,
     shutil.copyfileobj(core_f, image_f)
 
 
+def grub2_write_core_bios_boot(core_f: BinaryIO,
+                               image_f: BinaryIO,
+                               pt: PartitionTable):
+    """Write the core to the bios boot partition"""
+    bb = pt.find_bios_boot_partition()
+    if bb is None:
+        raise ValueError("BIOS-boot partition missing")
+    core_size = os.fstat(core_f.fileno()).st_size
+    if bb.size_in_bytes < core_size:
+        raise ValueError("BIOS-boot partition too small")
+
+    image_f.seek(bb.start_in_bytes)
+    shutil.copyfileobj(core_f, image_f)
+
+    # The core image needs to know from where to load its
+    # second sector so that information needs to be embedded
+    # into the image itself at the right location, i.e.
+    # the "sector start parameter" ("size .long 2, 0"):
+    # 0x200 - GRUB_BOOT_MACHINE_LIST_SIZE (12) = 0x1F4 = 500
+    image_f.seek(bb.start_in_bytes + 500)
+    image_f.write(struct.pack("<Q", bb.start + 1))
+
+    # Additionally, write the location (in sectors) of
+    # the grub core image, into the boot image, so the
+    # latter can find the former. To exact location is
+    # taken from grub2's "boot.S"":
+    #  GRUB_BOOT_MACHINE_KERNEL_SECTOR 0x5c (= 92)
+    image_f.seek(0x5c)
+    image_f.write(struct.pack("<Q", bb.start))
+
+
+def grub2_partition_id(pt: PartitionTable):
+    """grub2 partition identifier for the partition table"""
+
+    label2grub = {
+        "dos": "msdos",
+        "gpt": "gpt"
+    }
+
+    if pt.label not in label2grub:
+        raise ValueError(f"Unknown partition type: {pt.label}")
+
+    return label2grub[pt.label]
+
+
 def install_grub2(image: str, pt: PartitionTable, options):
     """Install grub2 to image"""
     platform = options.get("platform", "i386-pc")
@@ -421,7 +475,10 @@ def install_grub2(image: str, pt: PartitionTable, options):
     else:
         modules = []
 
-    modules += ["part_msdos"]
+    if pt.label == "dos":
+        modules += ["part_msdos"]
+    elif pt.label == "gpt":
+        modules += ["part_gpt"]
 
     # modules: grubs needs to access the filesystems of /boot/grub2
     fs_type = boot_part.fs_type or "unknown"
@@ -434,10 +491,8 @@ def install_grub2(image: str, pt: PartitionTable, options):
         raise ValueError(f"unknown boot filesystem type: '{fs_type}'")
 
     # identify the partition containing boot for grub2
-    if pt.label == "dos":
-        partid = "msdos" + str(boot_part.index + 1)
-    else:
-        raise ValueError(f"unsupported partition type: '{pt.label}'")
+    partid = grub2_partition_id(pt) + str(boot_part.index + 1)
+    print(f"grub2 prefix {partid}")
 
     # now created the core image
     subprocess.run(["grub2-mkimage",
@@ -462,6 +517,9 @@ def install_grub2(image: str, pt: PartitionTable, options):
             if platform == "powerpc-ieee1275":
                 # write the core to the PrEP partition
                 grub2_write_core_prep_part(core_f, image_f, pt)
+            elif pt.label == "gpt":
+                # gpt requires a bios-boot partition
+                grub2_write_core_bios_boot(core_f, image_f, pt)
             else:
                 # embed the core in the MBR gap
                 grub2_write_core_mbrgap(core_f, image_f, pt)
