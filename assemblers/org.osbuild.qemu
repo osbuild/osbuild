@@ -350,6 +350,17 @@ def partition_table_from_options(options) -> PartitionTable:
     return PartitionTable(pttype, ptuuid, parts)
 
 
+def grub2_write_boot_image(boot_f: BinaryIO,
+                           image_f: BinaryIO):
+    """Write the boot image (grub2 stage 1) to the MBR"""
+
+    # The boot.img file is 512 bytes, but we must only copy the first 440
+    # bytes, as these contain the bootstrapping code. The rest of the
+    # first sector contains the partition table, and must not be
+    # overwritten.
+    image_f.write(boot_f.read(440))
+
+
 def grub2_write_core_mbrgap(core_f: BinaryIO,
                             image_f: BinaryIO,
                             pt: PartitionTable):
@@ -445,11 +456,7 @@ def install_grub2(image: str, pt: PartitionTable, options):
             # The purpose of this is simply to jump into the stage-2 bootloader.
             # On ppc64le & Open Firmware stage-2 is loaded by the firmware
             with open(boot_path, "rb") as boot_f:
-                # The boot.img file is 512 bytes, but we must only copy the first 440
-                # bytes, as these contain the bootstrapping code. The rest of the
-                # first sector contains the partition table, and must not be
-                # overwritten.
-                image_f.write(boot_f.read(440))
+                grub2_write_boot_image(boot_f, image_f)
 
         with open(core_path, "rb") as core_f:
             if platform == "powerpc-ieee1275":
