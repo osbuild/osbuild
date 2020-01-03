@@ -360,14 +360,24 @@ def partition_table_from_options(options) -> PartitionTable:
 
 
 def grub2_write_boot_image(boot_f: BinaryIO,
-                           image_f: BinaryIO):
+                           image_f: BinaryIO,
+                           core_location: int):
     """Write the boot image (grub2 stage 1) to the MBR"""
 
     # The boot.img file is 512 bytes, but we must only copy the first 440
     # bytes, as these contain the bootstrapping code. The rest of the
     # first sector contains the partition table, and must not be
     # overwritten.
+    image_f.seek(0)
     image_f.write(boot_f.read(440))
+
+    # Additionally, write the location (in sectors) of
+    # the grub core image, into the boot image, so the
+    # latter can find the former. To exact location is
+    # taken from grub2's "boot.S":
+    #  GRUB_BOOT_MACHINE_KERNEL_SECTOR 0x5c (= 92)
+    image_f.seek(0x5c)
+    image_f.write(struct.pack("<Q", core_location))
 
 
 def grub2_write_core_mbrgap(core_f: BinaryIO,
@@ -383,6 +393,8 @@ def grub2_write_core_mbrgap(core_f: BinaryIO,
     assert core_size < partition_offset - 512
     image_f.seek(512)
     shutil.copyfileobj(core_f, image_f)
+
+    return 1  # the location of the core image in sectors
 
 
 def grub2_write_core_prep_part(core_f: BinaryIO,
@@ -401,6 +413,8 @@ def grub2_write_core_prep_part(core_f: BinaryIO,
     assert core_size < prep_part.size_in_bytes - 512
     image_f.seek(prep_part.start_in_bytes)
     shutil.copyfileobj(core_f, image_f)
+
+    return prep_part.start
 
 
 def grub2_write_core_bios_boot(core_f: BinaryIO,
@@ -425,13 +439,7 @@ def grub2_write_core_bios_boot(core_f: BinaryIO,
     image_f.seek(bb.start_in_bytes + 500)
     image_f.write(struct.pack("<Q", bb.start + 1))
 
-    # Additionally, write the location (in sectors) of
-    # the grub core image, into the boot image, so the
-    # latter can find the former. To exact location is
-    # taken from grub2's "boot.S"":
-    #  GRUB_BOOT_MACHINE_KERNEL_SECTOR 0x5c (= 92)
-    image_f.seek(0x5c)
-    image_f.write(struct.pack("<Q", bb.start))
+    return bb.start
 
 
 def grub2_partition_id(pt: PartitionTable):
@@ -506,23 +514,25 @@ def install_grub2(image: str, pt: PartitionTable, options):
                    check=True)
 
     with open(image, "rb+") as image_f:
-        if platform == "i386-pc":
-            # On x86, install the level-1 bootloader into the start of the MBR
-            # The purpose of this is simply to jump into the stage-2 bootloader.
-            # On ppc64le & Open Firmware stage-2 is loaded by the firmware
-            with open(boot_path, "rb") as boot_f:
-                grub2_write_boot_image(boot_f, image_f)
-
+        # Write the newly created grub2 core to the image
         with open(core_path, "rb") as core_f:
             if platform == "powerpc-ieee1275":
                 # write the core to the PrEP partition
-                grub2_write_core_prep_part(core_f, image_f, pt)
+                core_loc = grub2_write_core_prep_part(core_f, image_f, pt)
             elif pt.label == "gpt":
                 # gpt requires a bios-boot partition
-                grub2_write_core_bios_boot(core_f, image_f, pt)
+                core_loc = grub2_write_core_bios_boot(core_f, image_f, pt)
             else:
                 # embed the core in the MBR gap
-                grub2_write_core_mbrgap(core_f, image_f, pt)
+                core_loc = grub2_write_core_mbrgap(core_f, image_f, pt)
+
+        # On certain platforms (x86) a level 1 boot loader is required
+        # to load to the core image (on ppc64le & Open Firmware this is
+        # done by the firmware itself)
+        if platform == "i386-pc":
+            # On x86, the boot image just jumps to core image
+            with open(boot_path, "rb") as boot_f:
+                grub2_write_boot_image(boot_f, image_f, core_loc)
 
 
 def main(tree, output_dir, options, loop_client):
