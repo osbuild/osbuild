@@ -6,16 +6,18 @@ import threading
 
 
 class SourcesServer:
-    def __init__(self, socket_address, sources_dir, source_options):
+    def __init__(self, socket_address, sources_dir, source_options, secrets=None):
         self.socket_address = socket_address
         self.sources_dir = sources_dir
-        self.source_options = source_options
+        self.source_options = source_options or {}
+        self.secrets = secrets or {}
         self.event_loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_event_loop)
 
     def _run_source(self, source, checksums):
         msg = {
             "options": self.source_options.get(source, {}),
+            "secrets": self.secrets.get(source, {}),
             "checksums": checksums
         }
 
