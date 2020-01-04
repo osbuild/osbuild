@@ -68,7 +68,7 @@ class Stage:
             description["options"] = self.options
         return description
 
-    def run(self, tree, runner, build_tree, interactive=False, libdir=None, source_options=None):
+    def run(self, tree, runner, build_tree, interactive=False, libdir=None, source_options=None, secrets=None):
         with buildroot.BuildRoot(build_tree, runner, libdir=libdir) as build_root:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options)
@@ -81,7 +81,7 @@ class Stage:
             sources_dir = f"{libdir}/sources" if libdir else "/usr/lib/osbuild/sources"
 
             with API(f"{build_root.api}/osbuild", args, interactive) as api, \
-                sources.SourcesServer(f"{build_root.api}/sources", sources_dir, source_options or {}):
+                sources.SourcesServer(f"{build_root.api}/sources", sources_dir, source_options, secrets):
                 r = build_root.run(
                     [f"/run/osbuild/lib/stages/{self.name}"],
                     binds=[f"{tree}:/run/osbuild/tree"],
@@ -212,13 +212,13 @@ class Pipeline:
                 finally:
                     subprocess.run(["umount", "--lazy", tmp], check=True)
 
-    def run(self, store, interactive=False, libdir=None, source_options=None):
+    def run(self, store, interactive=False, libdir=None, source_options=None, secrets=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         object_store = objectstore.ObjectStore(store)
         results = {}
 
         if self.build:
-            r = self.build.run(store, interactive, libdir, source_options or {})
+            r = self.build.run(store, interactive, libdir, source_options, secrets)
             results["build"] = r
             if not r["success"]:
                 results["success"] = False
@@ -251,7 +251,8 @@ class Pipeline:
                                               build_tree,
                                               interactive=interactive,
                                               libdir=libdir,
-                                              source_options=source_options)
+                                              source_options=source_options,
+                                              secrets=secrets)
                                 results["stages"].append(r.as_dict())
                     except BuildError as err:
                         results["stages"].append(err.as_dict())

@@ -21,6 +21,8 @@ def main():
                         help="the directory where intermediary os trees are stored")
     parser.add_argument("--sources", metavar="SOURCES", type=os.path.abspath,
                         help="json file containing a dictionary of source configuration")
+    parser.add_argument("--secrets", metavar="SECRETS", type=os.path.abspath,
+                        help="json file containing a dictionary of secrets that are passed to sources")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
                         help="the directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--json", action="store_true",
@@ -44,8 +46,19 @@ def main():
         with open(args.sources) as f:
             source_options = json.load(f)
 
+    secrets = {}
+    if args.secrets:
+        with open(args.secrets) as f:
+            secrets = json.load(f)
+
     try:
-        r = pipeline.run(args.store, interactive=not args.json, libdir=args.libdir, source_options=source_options)
+        r = pipeline.run(
+            args.store,
+            interactive=not args.json,
+            libdir=args.libdir,
+            source_options=source_options,
+            secrets=secrets
+        )
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
