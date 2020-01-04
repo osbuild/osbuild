@@ -26,7 +26,10 @@ class SourcesServer:
             encoding="utf-8",
             check=False)
 
-        return json.loads(r.stdout)
+        try:
+            return json.loads(r.stdout)
+        except ValueError:
+            return {"error": f"source returned malformed json: {r.stdout}"}
 
     def _dispatch(self, sock):
         msg, addr = sock.recvfrom(8182)
