@@ -165,6 +165,13 @@ def write_repofile(f, repoid, repo, keydir):
         if value:
             write_option(key, value)
 
+    for cert in ("sslcacert", "sslclientcert", "sslclientkey"):
+        if cert in repo:
+            path = f"{keydir}/{cert}.pem"
+            with open(path, "w") as certfile:
+                certfile.write(repo[cert])
+            write_option(cert, path)
+
     if "gpgkey" in repo:
         keyfile = f"{keydir}/{repoid}.asc"
         with open(keyfile, "w") as key:
