@@ -34,7 +34,7 @@ class SourcesServer:
             return {"error": f"source returned malformed json: {r.stdout}"}
 
     def _dispatch(self, sock):
-        msg, addr = sock.recvfrom(8182)
+        msg, addr = sock.recvfrom(65536)
         request = json.loads(msg)
         reply = self._run_source(request["source"], request["checksums"])
         msg = json.dumps(reply).encode("utf-8")
@@ -67,7 +67,7 @@ def get(source, checksums):
             "checksums": checksums
         }
         sock.sendall(json.dumps(msg).encode('utf-8'))
-        reply = json.loads(sock.recv(8192))
+        reply = json.loads(sock.recv(65536))
         if "error" in reply:
             raise RuntimeError(f"{source}: " + reply["error"])
         return reply
