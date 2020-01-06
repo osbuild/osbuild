@@ -213,8 +213,6 @@ def main(tree, options):
     exclude_packages = options.get("exclude_packages", [])
     module_platform_id = options.get("module_platform_id", None)
 
-    print("Repositories: {}\n".format(json.dumps(repos, indent=2)))
-
     script = f"""
         set -e
         mkdir -p {tree}/dev {tree}/sys {tree}/proc
