@@ -4,19 +4,41 @@ import json
 import sys
 
 
-def main(options, sources):
+def main(options, sources, secrets):
     repos = options.get("repos", {})
+    repo_secrets = secrets.get("repos", {})
 
     reply = []
-    for s in sources:
+    for checksum in sources:
         try:
-            repo = {
-                "checksum": s,
-                **repos[s]
-            }
+            source_repo = repos[checksum]
+            source_repo_secrets = repo_secrets.get(checksum, {})
         except KeyError:
-            json.dump({"error": f"source unknown: {s}"}, sys.stdout)
+            json.dump({"error": f"source unknown: {checksum}"}, sys.stdout)
             return 1
+
+        repo = {"checksum": checksum}
+
+        if "baseurl" in source_repo:
+            repo["baseurl"] = source_repo["baseurl"]
+        elif "mirrorlist" in source_repo:
+            repo["mirrorlist"] = source_repo["mirrorlist"]
+        elif "metalink" in source_repo:
+            repo["metalink"] = source_repo["metalink"]
+        else:
+            json.dump({"error": f"repo {checksum} is missing baseurl, mirrorlist, or metalink key"}, sys.stdout)
+
+        if "sslcacert" in source_repo:
+            repo["sslcacert"] = source_repo["sslcacert"]
+
+        if "gpgkey" in source_repo:
+            repo["gpgkey"] = source_repo["gpgkey"]
+
+        if "sslclientcert" in source_repo_secrets:
+            repo["sslclientcert"] = source_repo_secrets["sslclientcert"]
+
+        if "sslclientkey" in source_repo_secrets:
+            repo["sslclientkey"] = source_repo_secrets["sslclientkey"]
 
         reply.append(repo)
 
@@ -26,5 +48,5 @@ def main(options, sources):
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
-    r = main(args["options"], args["checksums"])
+    r = main(args["options"], args["checksums"], args.get("secrets", {}))
     sys.exit(r)
