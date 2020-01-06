@@ -253,6 +253,7 @@ def main(tree, options):
             "--forcearch", basearch,
             "--setopt", "reposdir=",
             "--setopt", f"install_weak_deps={weak_deps}",
+            "--setopt", f"skip_if_unavailable=false",
             "--releasever", releasever,
             "--noplugins",
             "--config", dnfconf
