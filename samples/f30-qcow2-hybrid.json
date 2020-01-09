@@ -1,0 +1,130 @@
+{
+  "runner": "org.osbuild.fedora30",
+  "stages": [
+    {
+      "name": "org.osbuild.dnf",
+      "options": {
+        "releasever": "30",
+        "basearch": "x86_64",
+        "install_weak_deps": true,
+        "repos": [
+          "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
+        ],
+        "packages": [
+          "@Fedora Cloud Server",
+          "chrony",
+          "kernel",
+          "selinux-policy-targeted",
+          "grub2-pc",
+          "spice-vdagent",
+          "qemu-guest-agent",
+          "xen-libs",
+          "langpacks-en",
+          "grub2-efi-ia32",
+          "shim-ia32",
+          "grub2-efi-x64",
+          "shim-x64",
+          "efibootmgr",
+          "grub2-tools"
+        ],
+        "exclude_packages": [
+          "dracut-config-rescue"
+        ]
+      }
+    },
+    {
+      "name": "org.osbuild.systemd",
+      "options": {
+        "enabled_services": [
+          "cloud-config",
+          "cloud-final",
+          "cloud-init",
+          "cloud-init-local"]
+      }
+    },
+    {
+      "name": "org.osbuild.locale",
+      "options": {
+        "language": "en_US"
+      }
+    },
+    {
+      "name": "org.osbuild.fstab",
+      "options": {
+        "filesystems": [
+          {
+            "uuid": "7acfe2cc-4134-482a-a9d4-4979a5a87569",
+            "vfs_type": "ext4",
+            "path": "/",
+            "freq": "1",
+            "passno": "1"
+          },
+          {
+            "uuid": "46BB-8120",
+            "vfs_type": "vfat",
+            "path": "/boot/efi",
+            "options": "umask=0077,shortname=winnt",
+            "freq": "0",
+            "passno": "2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "org.osbuild.grub2",
+      "options": {
+        "root_fs_uuid": "7acfe2cc-4134-482a-a9d4-4979a5a87569",
+        "kernel_opts": "ro biosdevname=0 net.ifnames=0 console=ttyS0 console=tty1",
+        "uefi": {
+          "vendor": "fedora"
+        },
+        "legacy": "i386-pc"
+      }
+    },
+    {
+      "name": "org.osbuild.fix-bls"
+    },
+    {
+      "name": "org.osbuild.selinux",
+      "options": {
+        "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+      }
+    }
+  ],
+  "assembler": {
+    "name": "org.osbuild.qemu",
+    "options": {
+      "bootloader": {"type": "grub2"},
+      "format": "qcow2",
+      "filename": "base.qcow2",
+      "size": 3221225472,
+      "ptuuid": "29579f67-d390-43e7-bd96-dc8f5461171e",
+      "pttype": "gpt",
+      "partitions": [
+        {
+          "size": 8192,
+          "type": "21686148-6449-6E6F-744E-656564454649",
+          "bootable": true
+        },
+        {
+          "size": 972800,
+          "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+          "filesystem": {
+            "type": "vfat",
+            "uuid": "46BB-8120",
+            "label": "EFI System Partition",
+            "mountpoint": "/boot/efi"
+          }
+        },
+        {
+          "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+          "filesystem": {
+            "type": "ext4",
+            "uuid": "7acfe2cc-4134-482a-a9d4-4979a5a87569",
+            "mountpoint": "/"
+          }
+        }
+      ]
+    }
+  }
+}
