@@ -57,6 +57,9 @@ install -p -m 0755 $(find assemblers -type f) %{buildroot}%{pkgdir}/assemblers/
 mkdir -p %{buildroot}%{pkgdir}/runners
 install -p -m 0755 $(find runners -type f) %{buildroot}%{pkgdir}/runners
 
+mkdir -p %{buildroot}%{pkgdir}/sources
+install -p -m 0755 $(find sources -type f) %{buildroot}%{pkgdir}/sources
+
 # mount points for bind mounting the osbuild library
 mkdir -p %{buildroot}%{pkgdir}/stages/osbuild
 mkdir -p %{buildroot}%{pkgdir}/assemblers/osbuild
