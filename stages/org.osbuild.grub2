@@ -110,6 +110,15 @@ def write_grub_cfg(tree, path):
                   "blscfg\n")
 
 
+def write_grub_cfg_redirect(tree, path):
+    """Write a grub config pointing to the other cfg"""
+    print("hybrid boot support enabled. Writing alias grub config")
+    with open(os.path.join(tree, path), "w") as cfg:
+        cfg.write("search --no-floppy --set prefix --file /boot/grub2/grub.cfg\n"
+                  "set prefix=($prefix)/boot/grub2\n"
+                  "configfile $prefix/grub.cfg\n")
+
+
 def main(tree, options):
     root_fs_uuid = options["root_fs_uuid"]
     kernel_opts = options.get("kernel_opts", "")
@@ -120,33 +129,59 @@ def main(tree, options):
     if isinstance(legacy, bool) and legacy:
         legacy = "i386-pc"
 
+    # Check if hybrid boot support is requested, i.e. the resulting image
+    # should support booting via legacy and also UEFI. In that case the
+    # canonical grub.cfg and the grubenv will be in /boot/grub2. The ESP
+    # will only contain a small config file redirecting to the one in
+    # /boot/grub2 and will not have a grubenv itself.
+    hybrid = uefi and legacy
+
     # Create the configuration file that determines how grub.cfg is generated.
     os.makedirs(f"{tree}/etc/default", exist_ok=True)
     with open(f"{tree}/etc/default/grub", "w") as default:
         default.write("GRUB_TIMEOUT=0\n"
                       "GRUB_ENABLE_BLSCFG=true\n")
 
+
     os.makedirs(f"{tree}/boot/grub2", exist_ok=True)
-    with open(f"{tree}/boot/grub2/grubenv", "w") as env:
+    grubenv = f"{tree}/boot/grub2/grubenv"
+
+    if hybrid:
+        # The rpm grub2-efi package will have installed a symlink from
+        # /boot/grub2/grubenv to the ESP. In the case of hybrid boot we
+        # want a single grubenv in /boot/grub2; therefore remove the link
+        try:
+            os.unlink(grubenv)
+        except FileNotFoundError:
+            pass
+
+    with open(grubenv, "w") as env:
         env.write("# GRUB Environment Block\n"
                   f"GRUB2_ROOT_FS_UUID={root_fs_uuid}\n"
                   f"GRUB2_BOOT_FS_UUID={root_fs_uuid}\n"
                   f"kernelopts=root=UUID={root_fs_uuid} {kernel_opts}\n")
 
+    if uefi is not None:
+        # UEFI support:
+        # The following files are needed for UEFI support:
+        # /boot/efi/EFI/<vendor>/
+        # - grubenv: in the case of non-hybrid boot it should have
+        #     been written to via the link from /boot/grub2/grubenv
+        #     created by grub2-efi-{x64, ia32}.rpm
+        # - grub.cfg: needs to be generated, either the canonical one
+        #     or a shim one that redirects to the canonical one in
+        #     /boot/grub2 in case of hybrid boot (see above)
+        vendor = uefi["vendor"]
+        grubcfg = f"boot/efi/EFI/{vendor}/grub.cfg"
+        if hybrid:
+            write_grub_cfg_redirect(tree, grubcfg)
+        else:
+            write_grub_cfg(tree, grubcfg)
+
     if legacy:
         write_grub_cfg(tree, "boot/grub2/grub.cfg")
         copy_modules(tree, legacy)
         copy_font(tree)
-
-    if uefi is not None:
-        # UEFI support:
-        # The following files are needed for UEFI support:
-        # /boot/efi/EFI/<vendor>/{grubenv, grub.cfg}
-        # - grubenv should have been written to via the link from
-        #     /boot/grub2/grubenv created by grub2-efi-{x64, ia32}.rpm
-        # - grub.cfg needs to be generated
-        vendor = uefi["vendor"]
-        write_grub_cfg(tree, f"boot/efi/EFI/{vendor}/grub.cfg")
 
     return 0
 
