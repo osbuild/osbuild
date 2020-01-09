@@ -117,7 +117,7 @@ def main(tree, options):
     uefi = options.get("uefi", None)
 
     # legacy boolean means the
-    if isinstance(legacy, bool):
+    if isinstance(legacy, bool) and legacy:
         legacy = "i386-pc"
 
     # Create the configuration file that determines how grub.cfg is generated.
