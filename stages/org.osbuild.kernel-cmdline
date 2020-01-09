@@ -1,0 +1,58 @@
+#!/usr/bin/python3
+import json
+import os
+import sys
+
+STAGE_DESC = "Configure the kernel command-line parameters"
+STAGE_INFO = """
+Configures the kernel boot parameters, also known as the kernel
+command line.
+
+https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
+"""
+STAGE_OPTS = """
+"properties": {
+  "root_fs_uuid": {
+    "description": "UUID of the root filesystem image",
+    "type": "string",
+    "oneOf": [
+      { "pattern": "^[0-9A-Za-z]{8}(-[0-9A-Za-z]{4}){3}-[0-9A-Za-z]{12}$",
+        "examples": ["9c6ae55b-cf88-45b8-84e8-64990759f39d"] },
+      { "pattern": "^[0-9A-Za-z]{4}-[0-9A-Za-z]{4}$",
+        "examples": ["6699-AFB5"] }
+    ]
+  },
+  "kernel_opts": {
+    "description": "Additional kernel boot options",
+    "type": "string",
+    "default": ""
+  }
+}
+"""
+
+
+def main(tree, options):
+    root_fs_uuid = options.get("root_fs_uuid", "")
+    additional = options.get("kernel_opts", "")
+
+    params = []
+
+    if root_fs_uuid:
+        params += [f"root=UUID={root_fs_uuid}"]
+
+    if additional:
+        params += [additional]
+
+    base = os.path.join(tree, "etc/kernel")
+    os.makedirs(base, exist_ok=True)
+
+    with open(f"{base}/cmdline", "w") as f:
+        f.write(" ".join(filter(len, params)))
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
