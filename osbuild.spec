@@ -68,6 +68,12 @@ mkdir -p %{buildroot}%{pkgdir}/assemblers/osbuild
 %if 0%{?fc30}
 ln -s org.osbuild.fedora30 %{buildroot}%{pkgdir}/runners/org.osbuild.host
 %endif
+%if 0%{?fc31}
+ln -s org.osbuild.fedora31 %{buildroot}%{pkgdir}/runners/org.osbuild.host
+%endif
+%if 0%{?fc32}
+ln -s org.osbuild.fedora32 %{buildroot}%{pkgdir}/runners/org.osbuild.host
+%endif
 %if 0%{?el8}
 ln -s org.osbuild.rhel82 %{buildroot}%{pkgdir}/runners/org.osbuild.host
 %endif
