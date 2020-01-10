@@ -539,7 +539,7 @@ def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
     filename = options["filename"]
     size = options["size"]
-    bootloader = options.get("bootloader", {"type": "grub2"})
+    bootloader = options.get("bootloader", {"type": "none"})
 
     # sfdisk works on sectors of 512 bytes and ignores excess space - be explicit about this
     if size % 512 != 0:
@@ -556,6 +556,11 @@ def main(tree, output_dir, options, loop_client):
     # The partition table
     pt = partition_table_from_options(options)
     pt.write_to(image)
+
+    # For backwards comparability assume that if bootloader is not
+    # set and partition scheme is dos (MBR) grub2 is being used
+    if bootloader["type"] == "none" and pt.label == "dos":
+        bootloader["type"] = "grub2"
 
     # Install the bootloader
     if bootloader["type"] == "grub2":
