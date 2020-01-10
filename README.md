@@ -86,6 +86,8 @@ optional arguments:
   --build-env ENV       json file containing a description of the build
                         environment
   --store DIRECTORY     the directory where intermediary os trees are stored
+  --sources SOURCES     json file containing a dictionary of source
+                        configuration
   -l DIRECTORY, --libdir DIRECTORY
                         the directory containing stages, assemblers, and the
                         osbuild library
@@ -97,7 +99,7 @@ optional arguments:
 You can build basic qcow2 image of Fedora 30 by running a following command:
 
 ```
-sudo python3 -m osbuild --libdir . samples/base-qcow2.json
+sudo python3 -m osbuild --libdir . --sources samples/sources.json samples/base-qcow2.json
 ```
 
 - Root rights are required because osbuild heavily relies on creating
@@ -112,4 +114,3 @@ sudo python3 -m osbuild --libdir . samples/base-qcow2.json
 
 - You don't need to use any kind of virtual environment, modern version of
   Python 3 is enough. `osbuild` uses only standard library and linux commands.
-
