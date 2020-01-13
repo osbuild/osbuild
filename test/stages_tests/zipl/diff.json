@@ -1,0 +1,12 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/zipl.conf": {
+      "content": [
+        "sha256:516d31e6606c4bc28dfe9f6e3cf6c438f8be22781b7132f6a4b2ea0b3735ab42",
+        "sha256:156c06c8cac3adedea18063ea5a391851f5bc603695cf0cb8c982d3ad857ad6d"
+      ]
+    }
+  }
+}
