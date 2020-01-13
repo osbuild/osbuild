@@ -1,0 +1,31 @@
+{
+  "build": {
+    "pipeline": {
+      "stages": [
+        {
+          "name": "org.osbuild.dnf",
+          "options": {
+            "releasever": "30",
+            "basearch": "x86_64",
+            "install_weak_deps": false,
+            "repos": [
+              "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
+            ],
+            "packages": [
+              "dnf"
+            ]
+          }
+        }
+      ]
+    },
+    "runner": "org.osbuild.fedora30"
+  },
+  "stages": [
+    {
+      "name": "org.osbuild.zipl",
+      "options": {
+        "timeout": 1
+      }
+    }
+  ]
+}
