@@ -513,11 +513,14 @@ def install_grub2(image: str, pt: PartitionTable, options):
     partid = grub2_partition_id(pt) + str(boot_part.index + 1)
     print(f"grub2 prefix {partid}")
 
+    # the path containing the grub files relative partition
+    grub_path = os.path.relpath("/boot/grub2", boot_part.mountpoint)
+
     # now created the core image
     subprocess.run(["grub2-mkimage",
                     "--verbose",
                     "--directory", f"/usr/lib/grub/{platform}",
-                    "--prefix", f"(,{partid})/boot/grub2",
+                    "--prefix", f"(,{partid})/{grub_path}",
                     "--format", platform,
                     "--compression", "auto",
                     "--output", core_path] +
