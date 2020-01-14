@@ -18,13 +18,14 @@ This stage reads and (re)writes all .conf files in /boot/loader/entries.
 STAGE_OPTS = ""
 
 
-def main(tree, _options):
+def main(tree, options):
     """Fix broken paths in /boot/loader/entries.
 
     grub2-mkrelpath uses /proc/self/mountinfo to find the source of the file
     system it is installed to. This breaks in a container, because we
     bind-mount the tree from the host.
     """
+    prefix = options.get("prefix", "/boot")
 
     path_re = re.compile(r"(/.*)+/boot")
 
@@ -34,7 +35,7 @@ def main(tree, _options):
 
         with open(name, "w") as f:
             for line in entry:
-                f.write(path_re.sub("/boot", line))
+                f.write(path_re.sub(prefix, line))
 
     return 0
 
