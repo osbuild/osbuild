@@ -4,8 +4,6 @@ specfile_path: osbuild.spec
 synced_files:
   - osbuild.spec
   - .packit.yaml
-upstream_project_name: osbuild
-downstream_package_name: osbuild
 jobs:
   # trigger a COPR build for push events in open PRs
   - job: copr_build
