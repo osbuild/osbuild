@@ -113,7 +113,7 @@ def write_grub_cfg(tree, path):
         cfg.write("set timeout=0\n"
                   "load_env\n"
                   "search --no-floppy --fs-uuid --set=root ${GRUB2_ROOT_FS_UUID}\n"
-                  "search --no-floppy --fs-uuid --set=boot ${GRUB2_BOOT_FS_UUID}\n"
+                  "set boot=${root}\n"
                   "function load_video {\n"
                   "  insmod all_video\n"
                   "}\n"
@@ -158,7 +158,6 @@ def main(tree, options):
         default.write("GRUB_TIMEOUT=0\n"
                       "GRUB_ENABLE_BLSCFG=true\n")
 
-
     os.makedirs(f"{tree}/boot/grub2", exist_ok=True)
     grubenv = f"{tree}/boot/grub2/grubenv"
 
@@ -174,7 +173,6 @@ def main(tree, options):
     with open(grubenv, "w") as env:
         env.write("# GRUB Environment Block\n"
                   f"GRUB2_ROOT_FS_UUID={grub_fs_uuid}\n"
-                  f"GRUB2_BOOT_FS_UUID={grub_fs_uuid}\n"
                   f"kernelopts=root=UUID={root_fs_uuid} {kernel_opts}\n")
 
     if uefi is not None:
