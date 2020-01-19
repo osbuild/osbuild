@@ -1,3 +1,4 @@
+import contextlib
 import ctypes
 import fcntl
 import os
@@ -92,11 +93,15 @@ class Loop:
             expected device node
         """
 
-        if not dir_fd:
-            dir_fd = os.open("/dev", os.O_DIRECTORY)
         self.devname = f"loop{minor}"
         self.minor = minor
-        self.fd = os.open(self.devname, os.O_RDWR, dir_fd=dir_fd)
+
+        with contextlib.ExitStack() as stack:
+            if not dir_fd:
+                dir_fd = os.open("/dev", os.O_DIRECTORY)
+                stack.callback(lambda: os.close(dir_fd))
+            self.fd = os.open(self.devname, os.O_RDWR, dir_fd=dir_fd)
+
         info = os.stat(self.fd)
         if ((not stat.S_ISBLK(info.st_mode)) or
                 (not os.major(info.st_rdev) == self.LOOP_MAJOR) or
