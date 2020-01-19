@@ -74,8 +74,16 @@ class LoopServer:
                 if e.errno == errno.EBUSY:
                     continue
                 raise e
+            # `set_status` returns EBUSY when the pages from the previously
+            # bound file have not been fully cleared yet.
+            try:
+                lo.set_status(offset=offset, sizelimit=sizelimit, autoclear=True)
+            except BlockingIOError:
+                lo.clear_fd()
+                lo.close()
+                continue
             break
-        lo.set_status(offset=offset, sizelimit=sizelimit, autoclear=True)
+
         lo.mknod(dir_fd)
         # Pin the Loop objects so they are only released when the LoopServer
         # is destroyed.
