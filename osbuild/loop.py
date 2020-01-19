@@ -108,6 +108,19 @@ class Loop:
                 (not os.minor(info.st_rdev) == minor)):
             raise UnexpectedDevice(minor, info.st_rdev, info.st_mode)
 
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        """Close this loop device.
+
+        No operations on this object are valid after this call.
+        """
+        if self.fd >= 0:
+            os.close(self.fd)
+            self.fd = -1
+            self.devname = "<closed>"
+
     def set_fd(self, fd):
         """Bind a file descriptor to the loopback device
 

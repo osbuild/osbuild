@@ -70,6 +70,7 @@ class LoopServer:
             try:
                 lo.set_fd(fd)
             except OSError as e:
+                lo.close()
                 if e.errno == errno.EBUSY:
                     continue
                 raise e
@@ -108,6 +109,8 @@ class LoopServer:
     def __exit__(self, *args):
         self.event_loop.call_soon_threadsafe(self.event_loop.stop)
         self.thread.join()
+        for lo in self.devs:
+            lo.close()
 
 
 class LoopClient:
