@@ -32,7 +32,7 @@ class LoopInfo(ctypes.Structure):
         ('lo_flags', ctypes.c_uint32),
         ('lo_file_name', ctypes.c_uint8 * 64),
         ('lo_crypt_name', ctypes.c_uint8 * 64),
-        ('lo_encrypet_key', ctypes.c_uint8 * 32),
+        ('lo_encrypt_key', ctypes.c_uint8 * 32),
         ('lo_init', ctypes.c_uint64 * 2)
     ]
 
