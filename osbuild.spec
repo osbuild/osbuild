@@ -48,22 +48,6 @@ A build system for OS images
 %install
 %py3_install
 
-mkdir -p %{buildroot}%{pkgdir}/stages
-install -p -m 0755 $(find stages -type f) %{buildroot}%{pkgdir}/stages/
-
-mkdir -p %{buildroot}%{pkgdir}/assemblers
-install -p -m 0755 $(find assemblers -type f) %{buildroot}%{pkgdir}/assemblers/
-
-mkdir -p %{buildroot}%{pkgdir}/runners
-install -p -m 0755 $(find runners -type f) %{buildroot}%{pkgdir}/runners
-
-mkdir -p %{buildroot}%{pkgdir}/sources
-install -p -m 0755 $(find sources -type f) %{buildroot}%{pkgdir}/sources
-
-# mount points for bind mounting the osbuild library
-mkdir -p %{buildroot}%{pkgdir}/stages/osbuild
-mkdir -p %{buildroot}%{pkgdir}/assemblers/osbuild
-
 # install host runner
 %if 0%{?fc30}
 ln -s org.osbuild.fedora30 %{buildroot}%{pkgdir}/runners/org.osbuild.host
