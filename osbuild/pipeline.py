@@ -80,11 +80,20 @@ class Stage:
 
             sources_dir = f"{libdir}/sources" if libdir else "/usr/lib/osbuild/sources"
 
+            ro_binds = []
+            if not libdir:
+                osbuild_module_path = os.path.dirname(importlib.util.find_spec('osbuild').origin)
+                # This is a temporary workaround, once we have a common way to include osbuild in the
+                # buildroot we should remove this because it includes code from the host in the buildroot thus
+                # violating our effort of reproducibility.
+                ro_binds.append(f"{osbuild_module_path}:/run/osbuild/lib/stages/osbuild")
+
             with API(f"{build_root.api}/osbuild", args, interactive) as api, \
                 sources.SourcesServer(f"{build_root.api}/sources", sources_dir, source_options, secrets):
                 r = build_root.run(
                     [f"/run/osbuild/lib/stages/{self.name}"],
                     binds=[f"{tree}:/run/osbuild/tree"],
+                    readonly_binds=ro_binds,
                     stdin=subprocess.DEVNULL,
                 )
                 res = BuildResult(self, r.returncode, api.output)
