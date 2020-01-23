@@ -12,10 +12,10 @@ __all__ = [
 
 
 class BuildRoot:
-    def __init__(self, root, runner, path="/run/osbuild", libdir=None):
+    def __init__(self, root, runner, path="/run/osbuild", libdir=None, var="/var/tmp"):
         self.root = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
         self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
-        self.var = tempfile.mkdtemp(prefix="osbuild-var-", dir="/var/tmp")
+        self.var = tempfile.mkdtemp(prefix="osbuild-var-", dir=var)
         self.mounts = []
         self.libdir = libdir or "/usr/lib/osbuild"
         self.runner = runner
