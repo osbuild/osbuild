@@ -68,8 +68,16 @@ class Stage:
             description["options"] = self.options
         return description
 
-    def run(self, tree, runner, build_tree, interactive=False, libdir=None, source_options=None, secrets=None):
-        with buildroot.BuildRoot(build_tree, runner, libdir=libdir) as build_root:
+    def run(self,
+            tree,
+            runner,
+            build_tree,
+            interactive=False,
+            libdir=None,
+            var="/var/tmp",
+            source_options=None,
+            secrets=None):
+        with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options)
 
@@ -125,8 +133,8 @@ class Assembler:
             description["options"] = self.options
         return description
 
-    def run(self, tree, runner, build_tree, output_dir=None, interactive=False, libdir=None):
-        with buildroot.BuildRoot(build_tree, runner, libdir=libdir) as build_root:
+    def run(self, tree, runner, build_tree, output_dir=None, interactive=False, libdir=None, var="/var/tmp"):
+        with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root:
             if interactive:
                 print_header(f"Assembler {self.name}: {self.id}", self.options)
 
@@ -260,6 +268,7 @@ class Pipeline:
                                               build_tree,
                                               interactive=interactive,
                                               libdir=libdir,
+                                              var=store,
                                               source_options=source_options,
                                               secrets=secrets)
                                 results["stages"].append(r.as_dict())
@@ -280,7 +289,8 @@ class Pipeline:
                                                    build_tree,
                                                    output_dir=output_dir,
                                                    interactive=interactive,
-                                                   libdir=libdir)
+                                                   libdir=libdir,
+                                                   var=store)
                             results["assembler"] = r.as_dict()
                     except BuildError as err:
                         results["assembler"] = err.as_dict()
