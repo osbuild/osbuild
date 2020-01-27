@@ -51,6 +51,7 @@ class Stage:
         self.build = build
         self.base = base
         self.options = options
+        self.checkpoint = False
 
     @property
     def id(self):
@@ -271,6 +272,8 @@ class Pipeline:
                                               var=store,
                                               source_options=source_options,
                                               secrets=secrets)
+                                if stage.checkpoint:
+                                    object_store.snapshot(tree, stage.id)
                                 results["stages"].append(r.as_dict())
                     except BuildError as err:
                         results["stages"].append(err.as_dict())

@@ -10,6 +10,25 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 
 
+def mark_checkpoints(pipeline, checkpoints):
+    points = set(checkpoints)
+    def mark_stage(stage):
+        for c in points:
+            if stage.id == c:
+                stage.checkpoint = True
+                points.remove(c)
+                return
+
+    def mark_pipeline(pl):
+        for stage in pl.stages:
+            mark_stage(stage)
+        if pl.build:
+            mark_pipeline(pl.build)
+
+    mark_pipeline(pipeline)
+    return points
+
+
 def main():
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
@@ -25,6 +44,8 @@ def main():
                         help="json file containing a dictionary of secrets that are passed to sources")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
                         help="the directory containing stages, assemblers, and the osbuild library")
+    parser.add_argument("--checkpoint", metavar="CHECKPOINT", action="append", type=str, default=None,
+                        help="stage to commit to the object store during build (can be passed multiple times)")
     parser.add_argument("--json", action="store_true",
                         help="output results in JSON format")
     args = parser.parse_args()
@@ -50,6 +71,14 @@ def main():
     if args.secrets:
         with open(args.secrets) as f:
             secrets = json.load(f)
+
+    if args.checkpoint:
+        missed = mark_checkpoints(pipeline, args.checkpoint)
+        if missed:
+            for checkpoint in missed:
+                print(f"Checkpoint {BOLD}{checkpoint}{RESET} not found!")
+            print(f"{RESET}{BOLD}{RED}Failed{RESET}")
+            return 1
 
     try:
         r = pipeline.run(
