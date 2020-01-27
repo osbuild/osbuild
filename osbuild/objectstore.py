@@ -106,6 +106,24 @@ class ObjectStore:
             # left to do is to commit it to the object store
             self.commit(tree, object_id)
 
+    def snapshot(self, tree_path: str, object_id: str) -> str:
+        """Commit `tree_path` to store and ref it as `object_id`
+
+        Create a snapshot of `tree_path` and store it via its
+        content hash in the object directory; additionally
+        create a new reference to it via `object_id` in the
+        reference directory.
+
+        Returns: The treesum of the snapshot
+        """
+        # Make a new temporary directory and TreeObject; initialize
+        # the latter with the contents of `tree_path` and commit
+        # it to the store
+        with tempfile.TemporaryDirectory(dir=self.store) as tmp:
+            tree = TreeObject(f"{tmp}/tree")
+            tree.init(tree_path)
+            return self.commit(tree, object_id)
+
     def commit(self, tree: TreeObject, object_id: str) -> str:
         """Commits a TreeObject to the object store
 
