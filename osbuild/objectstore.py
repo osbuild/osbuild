@@ -144,7 +144,7 @@ class ObjectStore:
         output_tree = f"{self.objects}/{treesum_hash}"
 
         # if a tree with the same treesum already exist, use that
-        with suppress_oserror(errno.ENOTEMPTY):
+        with suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
             os.rename(tree.path, output_tree)
         tree.path = output_tree
 
