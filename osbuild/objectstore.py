@@ -101,25 +101,42 @@ class ObjectStore:
             yield tree.path
 
             # if the yield above raises an exception, the working tree
-            # is cleaned up by tempfile, otherwise, we save it in the
-            # correct place:
-            treesum_hash = tree.treesum
+            # is cleaned up by tempfile, otherwise, the it the content
+            # of it was created or modified by the caller. All that is
+            # left to do is to commit it to the object store
+            self.commit(tree, object_id)
 
-            # the tree is stored in the objects directory using its content
-            # hash as its name, ideally a given object_id (i.e., given config)
-            # will always produce the same content hash, but that is not
-            # guaranteed
-            output_tree = f"{self.objects}/{treesum_hash}"
+    def commit(self, tree: TreeObject, object_id: str) -> str:
+        """Commits a TreeObject to the object store
 
-            # if a tree with the same treesum already exist, use that
-            with suppress_oserror(errno.ENOTEMPTY):
-                os.rename(tree, output_tree)
-            tree.path = output_tree
+        Move the contents of the tree (TreeObject) to object directory
+        of the store with the content hash (tree.treesum) as its name.
+        Creates a symlink to that ('objects/{hash}') in the references
+        directory with the object_id as the name ('refs/{object_id}).
+        If the link already exists, it will be atomically replaced.
 
-            # symlink the object_id (config hash) in the refs directory to the
-            # treesum (content hash) in the objects directory. If a symlink by
-            # that name alreday exists, atomically replace it, but leave the
-            # backing object in place (it may be in use).
+        Returns: The treesum of the tree
+        """
+        treesum_hash = tree.treesum
+
+        # the tree is stored in the objects directory using its content
+        # hash as its name, ideally a given object_id (i.e., given config)
+        # will always produce the same content hash, but that is not
+        # guaranteed
+        output_tree = f"{self.objects}/{treesum_hash}"
+
+        # if a tree with the same treesum already exist, use that
+        with suppress_oserror(errno.ENOTEMPTY):
+            os.rename(tree.path, output_tree)
+        tree.path = output_tree
+
+        # symlink the object_id (config hash) in the refs directory to the
+        # treesum (content hash) in the objects directory. If a symlink by
+        # that name alreday exists, atomically replace it, but leave the
+        # backing object in place (it may be in use).
+        with tempfile.TemporaryDirectory(dir=self.store) as tmp:
             link = f"{tmp}/link"
             os.symlink(f"../objects/{treesum_hash}", link)
             os.replace(link, f"{self.refs}/{object_id}")
+
+        return treesum_hash
