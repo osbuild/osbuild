@@ -47,6 +47,26 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(object_store.objects)) == 2
             assert len(os.listdir(f"{object_store.refs}/b/")) == 2
 
+    def test_duplicate(self):
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+            object_store = objectstore.ObjectStore(tmp)
+            with object_store.new("a") as tree:
+                p = Path(f"{tree}/A")
+                p.touch()
+
+            with object_store.new("b") as tree:
+                shutil.copy2(f"{object_store.refs}/a/A",
+                             f"{tree}/A")
+
+            assert os.path.exists(f"{object_store.refs}/a")
+            assert os.path.exists(f"{object_store.refs}/a/A")
+            assert os.path.exists(f"{object_store.refs}/b/A")
+
+            assert len(os.listdir(object_store.refs)) == 2
+            assert len(os.listdir(object_store.objects)) == 1
+            assert len(os.listdir(f"{object_store.refs}/a/")) == 1
+            assert len(os.listdir(f"{object_store.refs}/b/")) == 1
+
     def test_snapshot(self):
         object_store = objectstore.ObjectStore(self.store)
         with object_store.new("b") as tree:
