@@ -73,13 +73,12 @@ STAGE_OPTS = """
     "description": "Include UEFI boot support",
     "type": "object",
     "required": ["vendor"],
-      "properties": {
-        "vendor": {
-          "type": "string",
-           "description": "The vendor of the UEFI binaries (this is us)",
-           "examples": ["fedora"],
-           "pattern": "^(.+)$"
-        }
+    "properties": {
+      "vendor": {
+        "type": "string",
+         "description": "The vendor of the UEFI binaries (this is us)",
+         "examples": ["fedora"],
+         "pattern": "^(.+)$"
       }
     }
   }
