@@ -132,7 +132,7 @@ STAGE_OPTS = """
   "module_platform_id": {
     "description": "DNF's module_platform_id option. Corresponds to PLATFORM_ID from /etc/os-release",
     "type": "string"
-  },
+  }
 }
 """
 
