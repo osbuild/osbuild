@@ -11,7 +11,7 @@ wasting time.
 STAGE_OPTS = """
 "properties": {
   "returncode": {
-    "description": "What to return code to use"
+    "description": "What to return code to use",
     "type": "number",
     "default": 255
   }
