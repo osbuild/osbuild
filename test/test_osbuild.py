@@ -1,7 +1,9 @@
-
-import osbuild
+import importlib.util
+import json
+import os
 import unittest
 
+import osbuild
 
 class TestDescriptions(unittest.TestCase):
     def test_canonical(self):
@@ -73,6 +75,29 @@ class TestDescriptions(unittest.TestCase):
                 "name": "org.osbuild.test"
               }
             })
+
+    def test_stageinfo(self):
+        def list_stages(base):
+            return [(base, f) for f in os.listdir(base) if f.startswith("org.osbuild")]
+
+        def load_module(base, name):
+            loader = importlib.machinery.SourceFileLoader(name, f"{base}/{name}")
+            spec = importlib.util.spec_from_loader(loader.name, loader)
+            mod = importlib.util.module_from_spec(spec)
+            loader.exec_module(mod)
+            return mod
+
+        stages = list_stages("stages")
+        stages += list_stages("assemblers")
+
+        for stage in stages:
+            base, name = stage
+            m = load_module(base, name)
+            try:
+                json.loads("{" + m.STAGE_OPTS + "}")
+            except json.decoder.JSONDecodeError as e:
+                msg = f"Stage '{base}/{name}' has invalid STAGE_OPTS\n\t" + str(e)
+                self.fail(msg)
 
 
 if __name__ == "__main__":
