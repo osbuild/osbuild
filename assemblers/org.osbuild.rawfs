@@ -41,8 +41,7 @@ STAGE_OPTS = """
   },
   "size": {
     "description": "Maximum size of the filesystem",
-    "type": "string",
-    "examples": ["500M", "20GB"]
+    "type": "integer"
   },
   "fs_type": {
     "description": "Filesystem type",
