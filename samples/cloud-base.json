@@ -42,8 +42,8 @@
             "uuid": "ea711a29-e460-4879-9d70-9da99ae021f9",
             "vfs_type": "ext4",
             "path": "/",
-            "freq": "1",
-            "passno": "1"
+            "freq": 1,
+            "passno": 1
           }
         ]
       }
