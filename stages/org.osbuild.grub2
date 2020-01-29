@@ -66,8 +66,10 @@ STAGE_OPTS = """
   },
   "legacy": {
     "description": "Include legacy boot support",
-    "type": "boolean",
-    "default": true
+    "oneOf": [
+      {"type": "boolean", "default": true},
+      {"type": "string", "default": "i386-pc"}
+    ]
   },
   "uefi": {
     "description": "Include UEFI boot support",
