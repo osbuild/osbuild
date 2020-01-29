@@ -56,23 +56,23 @@
             "uuid": "08a41983-3328-4d1a-ae3c-1699e6d2a806",
             "vfs_type": "ext4",
             "path": "/boot",
-            "freq": "1",
-            "passno": "1"
+            "freq": 1,
+            "passno": 1
           },
           {
             "uuid": "7acfe2cc-4134-482a-a9d4-4979a5a87569",
             "vfs_type": "ext4",
             "path": "/",
-            "freq": "1",
-            "passno": "1"
+            "freq": 1,
+            "passno": 1
           },
           {
             "uuid": "46BB-8120",
             "vfs_type": "vfat",
             "path": "/boot/efi",
             "options": "umask=0077,shortname=winnt",
-            "freq": "0",
-            "passno": "2"
+            "freq": 0,
+            "passno": 2
           }
         ]
       }
