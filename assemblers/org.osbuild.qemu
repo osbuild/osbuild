@@ -119,7 +119,7 @@ STAGE_OPTS = """
   "pttype": {
     "description": "The type of the partition table",
     "type": "string",
-    "enum": ["mbr", "gpt"]
+    "enum": ["mbr", "dos", "gpt"]
   },
   "root_fs_uuid": {
     "description": "UUID for the root filesystem",
