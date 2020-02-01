@@ -1,0 +1,108 @@
+#!/usr/bin/python3
+
+import concurrent.futures
+import itertools
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+
+def verify_checksum(filename, checksum):
+    algorithm, checksum = checksum.split(":", 1)
+    if algorithm not in ("md5", "sha1", "sha256", "sha384", "sha512"):
+        raise RuntimeError(f"unsupported checksum algorithm: {algorithm}")
+
+    ret = subprocess.run(
+        [f"{algorithm}sum", "-c"],
+        input=f"{checksum} {filename}",
+        stdout=subprocess.DEVNULL,
+        encoding="utf-8",
+        check=False
+    )
+
+    return ret.returncode == 0
+
+
+def fetch(url, checksum, directory):
+    # Invariant: all files in @directory must be named after their (verified) checksum.
+    if os.path.isfile(f"{directory}/{checksum}"):
+        return
+
+    # Download to a temporary directory until we have verified the checksum. Use a
+    # subdirectory, so we avoid copying accross block devices.
+    with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=directory) as tmpdir:
+        # some mirrors are broken sometimes. retry manually, because curl doesn't on 404
+        for _ in range(3):
+            curl = subprocess.run([
+                "curl",
+                "--silent",
+                "--show-error",
+                "--fail",
+                "--location",
+                "--output", checksum,
+                url
+            ], encoding="utf-8", cwd=tmpdir, check=False)
+            if curl.returncode == 0:
+                break
+        else:
+            raise RuntimeError(f"error downloading {url}")
+
+        if not verify_checksum(f"{tmpdir}/{checksum}", checksum):
+            raise RuntimeError(f"checksum mismatch: {checksum} {url}")
+
+        # The checksum has been verified, move the file into place. in case we race
+        # another download of the same file, we simply ignore the error as their
+        # contents are guaranteed to be  the same.
+        try:
+            os.rename(f"{tmpdir}/{checksum}", f"{directory}/{checksum}")
+        except FileExistsError:
+            pass
+
+
+def main(options, checksums, cache, output):
+    urls = options.get("urls", {})
+
+    os.makedirs(cache, exist_ok=True)
+    os.makedirs(output, exist_ok=True)
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+        requested_urls = []
+        for checksum in checksums:
+            try:
+                requested_urls.append(urls[checksum])
+            except KeyError:
+                json.dump({"error": f"unknown file: {checksum}"}, sys.stdout)
+                return 1
+        results = executor.map(fetch, requested_urls, checksums, itertools.repeat(cache))
+
+        try:
+            for _ in results:
+                pass
+        except RuntimeError as e:
+            json.dump({"error": e.args[0]}, sys.stdout)
+            return 1
+
+    for checksum in checksums:
+        try:
+            subprocess.run([
+                "cp",
+                "--reflink=auto",
+                f"{cache}/{checksum}",
+                f"{output}/{checksum}"],
+                           check=True)
+        except FileExistsError:
+            continue
+        except Exception as e:
+            json.dump({"error": e.message}, sys.stdout)
+            return 1
+
+    json.dump({}, sys.stdout)
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["options"], args["checksums"], args["cache"], args["output"])
+    sys.exit(r)

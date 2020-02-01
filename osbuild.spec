@@ -16,6 +16,7 @@ BuildRequires:  python3-devel
 
 Requires: bash
 Requires: coreutils
+Requires: curl
 Requires: dnf
 Requires: e2fsprogs
 Requires: glibc

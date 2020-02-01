@@ -72,23 +72,26 @@ class Stage:
             tree,
             runner,
             build_tree,
+            cache,
             interactive=False,
             libdir=None,
             var="/var/tmp",
             source_options=None,
             secrets=None):
-        with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root:
+        with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root, \
+            tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var) as sources_output:
             if interactive:
                 print_header(f"{self.name}: {self.id}", self.options)
 
             args = {
                 "tree": "/run/osbuild/tree",
+                "sources": "/run/osbuild/sources",
                 "options": self.options,
             }
 
             sources_dir = f"{libdir}/sources" if libdir else "/usr/lib/osbuild/sources"
 
-            ro_binds = []
+            ro_binds = [f"{sources_output}:/run/osbuild/sources"]
             if not libdir:
                 osbuild_module_path = os.path.dirname(importlib.util.find_spec('osbuild').origin)
                 # This is a temporary workaround, once we have a common way to include osbuild in the
@@ -97,7 +100,12 @@ class Stage:
                 ro_binds.append(f"{osbuild_module_path}:/run/osbuild/lib/stages/osbuild")
 
             with API(f"{build_root.api}/osbuild", args, interactive) as api, \
-                sources.SourcesServer(f"{build_root.api}/sources", sources_dir, source_options, secrets):
+                sources.SourcesServer(f"{build_root.api}/sources",
+                                      sources_dir,
+                                      source_options,
+                                      f"{cache}/sources",
+                                      sources_output,
+                                      secrets):
                 r = build_root.run(
                     [f"/run/osbuild/lib/stages/{self.name}"],
                     binds=[f"{tree}:/run/osbuild/tree"],
@@ -266,6 +274,7 @@ class Pipeline:
                                 r = stage.run(tree,
                                               self.runner,
                                               build_tree,
+                                              store,
                                               interactive=interactive,
                                               libdir=libdir,
                                               var=store,
