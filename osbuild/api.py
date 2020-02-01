@@ -19,6 +19,7 @@ class API:
         self._output = None
         self.event_loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_event_loop)
+        self.barrier = threading.Barrier(2)
 
     @property
     def output(self):
@@ -60,6 +61,7 @@ class API:
     def _run_event_loop(self):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         sock.bind(self.socket_address)
+        self.barrier.wait()
         self.event_loop.add_reader(sock, self._dispatch, sock)
         asyncio.set_event_loop(self.event_loop)
         self.event_loop.run_forever()
@@ -68,6 +70,7 @@ class API:
 
     def __enter__(self):
         self.thread.start()
+        self.barrier.wait()
         return self
 
     def __exit__(self, *args):
