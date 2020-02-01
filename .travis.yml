@@ -25,6 +25,9 @@ jobs:
       script:
         - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
         - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
+    - name: sources-tests
+      before_install: sudo apt-get install -y rpm
+      script: sudo env "PATH=$PATH" python3 -m unittest -v test.test_sources
     - name: f30-boot
       before_install: sudo apt-get install -y systemd-container yum qemu-kvm
       script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_boot
