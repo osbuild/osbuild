@@ -4,7 +4,6 @@ import contextlib
 import errno
 import json
 import os
-import platform
 import socket
 import threading
 from . import loop
@@ -133,13 +132,8 @@ class LoopClient:
     def device(self, filename, offset=None, sizelimit=None):
         req = {}
         fds = array.array("i")
-        oflags = os.O_RDWR
 
-        if platform.machine() != "s390x":
-            # O_DIRECT will break s390x currently
-            oflags |= os.O_DIRECT
-
-        fd = os.open(filename, oflags)
+        fd = os.open(filename, os.O_RDWR)
         dir_fd = os.open("/dev", os.O_DIRECTORY)
 
         fds.append(fd)
