@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import concurrent.futures
 import contextlib
 import json
 import os
@@ -9,18 +8,19 @@ import subprocess
 import sys
 import tempfile
 
-STAGE_DESC = "Download, verify, and install RPM packages"
+import osbuild.sources
+
+STAGE_DESC = "Verify, and install RPM packages"
 STAGE_INFO = """
-Download, verify, and install RPM packages.
+Verify, and install RPM packages.
 
 `gpgkeys` should be an array of strings containing each GPG key to be used
-to verify the downloaded packages.
+to verify the packages.
 
-`packages` is an array of objects; each item must have a `url` to download
-the .rpm file and a `checksum` to verify the integrity of the downloaded
-data.
+`packages` is an array of RPM checksums. Specifically, the content hash of
+the rpms, not the chucksums found in the rpm header.
 
-This stage will fail if any of URLs can't be reached, or if any downloaded
+This stage will fail if any of the packages can't be found, or if any
 RPM has a signature or digest that cannot be verified.
 
 NOTE: this stage currently does _not_ fail if a package is unsigned, only if
@@ -29,8 +29,6 @@ of this stage will fail on unsigned packages by default, but may support a
 flag to skip signature checks for packages that are known to be unsigned.
 
 Uses the following binaries from the host:
-    * `curl` to fetch RPMs
-    * `sha256sum` (or `sha1sum`, `md5sum`, etc.) to check RPM checksums
     * `rpmkeys` to import keys and to verify signatures for each package
     * `sh`, `mkdir`, `mount`, `chmod` to prepare the target tree for `rpm`
     * `rpm` to install packages into the target tree
@@ -43,76 +41,30 @@ STAGE_OPTS = """
     "items": { "type": "string" }
   },
   "packages": {
-    "description": "Array of package objects",
+    "description": "Array of RPM content hashes",
     "type": "array",
     "items": {
-      "type": "object",
-      "required": ["url", "checksum"],
-      "properties": {
-        "url": {
-          "type": "string",
-          "description": "URL to download a .rpm package file"
-        },
-        "checksum": {
-          "type": "string",
-          "description": ".rpm file checksum, prefixed with 'md5:', 'sha1:', 'sha256:', 'sha384:', or 'sha512:', indicating the algorithm used."
-        }
-      }
+      "type": "string",
+      "description": ".rpm file checksum, prefixed with 'md5:', 'sha1:', 'sha256:', 'sha384:', or 'sha512:', indicating the algorithm used."
     }
   }
 }
 """
 
-RPM_CACHE_DIR = "/var/cache/org.osbuild.rpm"
 
-
-def download_package(pkg):
-    # some mirrors are broken sometimes. retry manually, because curl doesn't on 404
-    for _ in range(3):
-        curl = subprocess.run([
-            "curl",
-            "--silent",
-            "--show-error",
-            "--fail",
-            "--location",
-            "--remote-name",
-            "--write-out", "%{filename_effective}",
-            pkg["url"]
-        ], encoding="utf-8", cwd=RPM_CACHE_DIR, stdout=subprocess.PIPE, check=False)
-
-        if curl.returncode == 0:
-            filename = curl.stdout.strip()
-            break
-    else:
-        raise RuntimeError(f"Error downloading {pkg['url']}")
-
-    algorithm, checksum = pkg["checksum"].strip().split(":", 1)
-    if algorithm not in ("md5", "sha1", "sha256", "sha384", "sha512"):
-        raise RuntimeError(f"Unsupported checksum algorithm: {algorithm}")
-
-    subprocess.run(
-        [f"{algorithm}sum", "-c"],
-        cwd=RPM_CACHE_DIR,
-        input=f"{checksum} {filename}",
-        stdout=subprocess.DEVNULL,
-        encoding="utf-8",
-        check=True)
-
-
-    return filename
-
-
-def main(tree, options):
+def main(tree, sources, options):
+    packages = options.get("packages", [])
     for key in options.get("gpgkeys", []):
-        with tempfile.NamedTemporaryFile(prefix="gpgkey.") as keyfile:
+        with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
             keyfile.write(key)
             keyfile.flush()
-            subprocess.run(["rpmkeys", "--import", keyfile.name], check=True)
+            subprocess.run([
+                "rpmkeys",
+                "--root", tree,
+                "--import", keyfile.name
+            ], check=True)
 
-    os.makedirs(RPM_CACHE_DIR)
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        packages = executor.map(download_package, options["packages"])
+    osbuild.sources.get("org.osbuild.files", packages)
 
     script = f"""
         set -e
@@ -144,7 +96,7 @@ def main(tree, options):
             # (see /usr/lib/rpm/macros for more info)
             "--define", "_pkgverify_level all",
             "--install", manifest.name
-        ], cwd=RPM_CACHE_DIR, check=True)
+        ], cwd=f"{sources}/org.osbuild.files", check=True)
 
     # remove temporary machine ID if it was created by us
     if not machine_id_set_previously:
@@ -162,5 +114,5 @@ def main(tree, options):
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
-    r = main(args["tree"], args["options"])
+    r = main(args["tree"], args["sources"], args["options"])
     sys.exit(r)

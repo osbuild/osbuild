@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 
 from test import osbuildtest
 
@@ -12,7 +13,18 @@ class TestDescriptions(osbuildtest.TestCase):
         tree_id1, _ = self.run_osbuild(pipeline1, sources="test/pipelines/sources.json")
         tree_id2, _ = self.run_osbuild(pipeline2, sources="test/pipelines/sources.json")
 
-        actual_diff = self.run_tree_diff(self.get_path_to_store(tree_id1), self.get_path_to_store(tree_id2))
+        with tempfile.TemporaryDirectory() as empty:
+            if tree_id1:
+                tree1 = self.get_path_to_store(tree_id1)
+            else:
+                tree1 = empty
+
+            if tree_id2:
+                tree2 = self.get_path_to_store(tree_id2)
+            else:
+                tree2 = empty
+
+            actual_diff = self.run_tree_diff(tree1, tree2)
 
         with open(f"{test_dir}/diff.json") as f:
             expected_diff = json.load(f)
