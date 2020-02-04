@@ -50,6 +50,16 @@ class TreeObject:
 
         return treesum_hash
 
+    def move(self, destination: str):
+        """Move the tree to destination
+
+        Does so atomically by using rename(2). If the
+        target already exist, use that instead
+        """
+        with suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
+            os.rename(self.path, destination)
+        self.path = destination
+
 
 class ObjectStore:
     def __init__(self, store):
@@ -140,13 +150,9 @@ class ObjectStore:
         # the tree is stored in the objects directory using its content
         # hash as its name, ideally a given object_id (i.e., given config)
         # will always produce the same content hash, but that is not
-        # guaranteed
-        output_tree = f"{self.objects}/{treesum_hash}"
-
-        # if a tree with the same treesum already exist, use that
-        with suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
-            os.rename(tree.path, output_tree)
-        tree.path = output_tree
+        # guaranteed. If a tree with the same treesum already exist, us
+        # the existing one instead
+        tree.move(f"{self.objects}/{treesum_hash}")
 
         # symlink the object_id (config hash) in the refs directory to the
         # treesum (content hash) in the objects directory. If a symlink by
