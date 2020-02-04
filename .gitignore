@@ -11,3 +11,7 @@ __pycache__
 /test/.vagrant
 
 /runners/org.osbuild.host
+
+/.vscode
+/.idea
+/.gdb_history
