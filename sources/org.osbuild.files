@@ -92,10 +92,8 @@ def main(options, checksums, cache, output):
                 f"{cache}/{checksum}",
                 f"{output}/{checksum}"],
                            check=True)
-        except FileExistsError:
-            continue
-        except Exception as e:
-            json.dump({"error": e.message}, sys.stdout)
+        except subprocess.CalledProcessError as e:
+            json.dump({"error": e.output}, sys.stdout)
             return 1
 
     json.dump({}, sys.stdout)
