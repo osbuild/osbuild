@@ -40,15 +40,20 @@ class TreeObject:
     @property
     def treesum(self) -> str:
         """Calculate the treesum of the tree"""
-        fd = os.open(self.path, os.O_DIRECTORY)
-        try:
+        with self.open() as fd:
             m = hashlib.sha256()
             treesum.treesum(m, fd)
             treesum_hash = m.hexdigest()
+            return treesum_hash
+
+    @contextlib.contextmanager
+    def open(self):
+        """Open the directory and return the file descriptor"""
+        try:
+            fd = os.open(self.path, os.O_DIRECTORY)
+            yield fd
         finally:
             os.close(fd)
-
-        return treesum_hash
 
     def move(self, destination: str):
         """Move the tree to destination
