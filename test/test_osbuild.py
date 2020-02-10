@@ -19,15 +19,15 @@ class TestDescriptions(unittest.TestCase):
         ]
         for pipeline in cases:
             with self.subTest(pipeline):
-                self.assertEqual(osbuild.load(pipeline).description(), {})
+                self.assertEqual(osbuild.load(pipeline, {}).description(), {})
 
     def test_stage(self):
         name = "org.osbuild.test"
         options = { "one": 1 }
         cases = [
-            (osbuild.Stage(name, None, None, {}), {"name": name}),
-            (osbuild.Stage(name, None, None, None), {"name": name}),
-            (osbuild.Stage(name, None, None, options), {"name": name, "options": options}),
+            (osbuild.Stage(name, {}, None, None, {}), {"name": name}),
+            (osbuild.Stage(name, {}, None, None, None), {"name": name}),
+            (osbuild.Stage(name, {}, None, None, options), {"name": name, "options": options}),
         ]
         for stage, description in cases:
             with self.subTest(description):
@@ -47,10 +47,10 @@ class TestDescriptions(unittest.TestCase):
 
     def test_pipeline(self):
         build = osbuild.Pipeline("org.osbuild.test")
-        build.add_stage("org.osbuild.test", { "one": 1 })
+        build.add_stage("org.osbuild.test", {}, { "one": 1 })
 
         pipeline = osbuild.Pipeline("org.osbuild.test", build)
-        pipeline.add_stage("org.osbuild.test", { "one": 2 })
+        pipeline.add_stage("org.osbuild.test", {}, { "one": 2 })
         pipeline.set_assembler("org.osbuild.test")
 
         self.assertEqual(pipeline.description(), {
