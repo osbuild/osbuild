@@ -54,18 +54,20 @@ def main():
         f = sys.stdin
     else:
         f = open(args.pipeline_path)
-    pipeline = osbuild.load(json.load(f))
+    pipeline = json.load(f)
     f.close()
+
+    sources_options = {}
+    if args.sources:
+        with open(args.sources) as f:
+            sources_options = json.load(f)
+
+    pipeline = osbuild.load(pipeline, sources_options)
 
     if args.build_env:
         with open(args.build_env) as f:
-            build_pipeline, runner = osbuild.load_build(json.load(f))
+            build_pipeline, runner = osbuild.load_build(json.load(f), sources_options)
         pipeline.prepend_build_env(build_pipeline, runner)
-
-    source_options = {}
-    if args.sources:
-        with open(args.sources) as f:
-            source_options = json.load(f)
 
     secrets = {}
     if args.secrets:
@@ -85,7 +87,6 @@ def main():
             args.store,
             interactive=not args.json,
             libdir=args.libdir,
-            source_options=source_options,
             secrets=secrets
         )
     except KeyboardInterrupt:

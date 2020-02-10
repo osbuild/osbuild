@@ -46,8 +46,9 @@ def print_header(title, options):
 
 
 class Stage:
-    def __init__(self, name, build, base, options):
+    def __init__(self, name, source_options, build, base, options):
         self.name = name
+        self.sources = source_options
         self.build = build
         self.base = base
         self.options = options
@@ -77,7 +78,6 @@ class Stage:
             interactive=False,
             libdir=None,
             var="/var/tmp",
-            source_options=None,
             secrets=None):
         with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root, \
             tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var) as sources_output:
@@ -103,7 +103,7 @@ class Stage:
             with API(f"{build_root.api}/osbuild", args, interactive) as api, \
                 sources.SourcesServer(f"{build_root.api}/sources",
                                       sources_dir,
-                                      source_options,
+                                      self.sources,
                                       f"{cache}/sources",
                                       sources_output,
                                       secrets):
@@ -194,9 +194,9 @@ class Pipeline:
     def output_id(self):
         return self.assembler.id if self.assembler else None
 
-    def add_stage(self, name, options=None):
+    def add_stage(self, name, sources_options=None, options=None):
         build = self.build.tree_id if self.build else None
-        stage = Stage(name, build, self.tree_id, options or {})
+        stage = Stage(name, sources_options, build, self.tree_id, options or {})
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id
@@ -238,13 +238,13 @@ class Pipeline:
                 finally:
                     subprocess.run(["umount", "--lazy", tmp], check=True)
 
-    def run(self, store, interactive=False, libdir=None, source_options=None, secrets=None):
+    def run(self, store, interactive=False, libdir=None, secrets=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         object_store = objectstore.ObjectStore(store)
         results = {}
 
         if self.build:
-            r = self.build.run(store, interactive, libdir, source_options, secrets)
+            r = self.build.run(store, interactive, libdir, secrets)
             results["build"] = r
             if not r["success"]:
                 results["success"] = False
@@ -279,7 +279,6 @@ class Pipeline:
                                               interactive=interactive,
                                               libdir=libdir,
                                               var=store,
-                                              source_options=source_options,
                                               secrets=secrets)
                                 if stage.checkpoint:
                                     object_store.snapshot(tree, stage.id)
@@ -315,27 +314,27 @@ class Pipeline:
         return results
 
 
-def load_build(description):
+def load_build(description, sources_options):
     pipeline = description.get("pipeline")
     if pipeline:
-        build_pipeline = load(pipeline)
+        build_pipeline = load(pipeline, sources_options)
     else:
         build_pipeline = None
 
     return build_pipeline, description["runner"]
 
 
-def load(description):
+def load(description, sources_options):
     build = description.get("build")
     if build:
-        build_pipeline, runner = load_build(build)
+        build_pipeline, runner = load_build(build, sources_options)
     else:
         build_pipeline, runner = None, "org.osbuild.host"
 
     pipeline = Pipeline(runner, build_pipeline)
 
     for s in description.get("stages", []):
-        pipeline.add_stage(s["name"], s.get("options", {}))
+        pipeline.add_stage(s["name"], sources_options, s.get("options", {}))
 
     a = description.get("assembler")
     if a:
