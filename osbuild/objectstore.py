@@ -5,6 +5,7 @@ import hashlib
 import os
 import subprocess
 import tempfile
+from typing import Optional
 from . import treesum
 
 
@@ -78,13 +79,20 @@ class ObjectStore:
     def contains(self, object_id):
         if not object_id:
             return False
-        return os.access(f"{self.refs}/{object_id}", os.F_OK)
+        return os.access(self.resolve_ref(object_id), os.F_OK)
+
+    def resolve_ref(self, object_id: Optional[str]) -> Optional[str]:
+        """Returns the path to the given object_id"""
+        if not object_id:
+            return None
+        return f"{self.refs}/{object_id}"
 
     @contextlib.contextmanager
     def get(self, object_id):
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
             if object_id:
-                subprocess.run(["mount", "-o", "bind,ro,mode=0755", f"{self.refs}/{object_id}", tmp], check=True)
+                path = self.resolve_ref(object_id)
+                subprocess.run(["mount", "-o", "bind,ro,mode=0755", path, tmp], check=True)
                 try:
                     yield tmp
                 finally:
@@ -111,7 +119,7 @@ class ObjectStore:
                 # the base, the working tree and the output tree are all on
                 # the same fs, so attempt a lightweight copy if the fs
                 # supports it
-                tree.init(f"{self.refs}/{base_id}")
+                tree.init(self.resolve_ref(base_id))
 
             yield tree.path
 
@@ -166,6 +174,6 @@ class ObjectStore:
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
             link = f"{tmp}/link"
             os.symlink(f"../objects/{treesum_hash}", link)
-            os.replace(link, f"{self.refs}/{object_id}")
+            os.replace(link, self.resolve_ref(object_id))
 
         return treesum_hash
