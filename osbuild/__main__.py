@@ -29,6 +29,8 @@ def mark_checkpoints(pipeline, checkpoints):
     return points
 
 
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-statements
 def main():
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
@@ -54,10 +56,17 @@ def main():
         f = sys.stdin
     else:
         f = open(args.pipeline_path)
-    pipeline = json.load(f)
+    manifest = json.load(f)
     f.close()
 
-    sources_options = {}
+    if "pipeline" in manifest:
+        pipeline = manifest["pipeline"]
+        sources_options = manifest.get("sources", {})
+    else:
+        # backwards compatibility
+        pipeline = manifest
+        sources_options = {}
+
     if args.sources:
         with open(args.sources) as f:
             sources_options = json.load(f)
