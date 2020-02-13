@@ -88,9 +88,15 @@ class ObjectStore:
             return None
         return f"{self.refs}/{object_id}"
 
+    def tempdir(self, prefix=None, suffix=None):
+        """Return a tempfile.TemporaryDirectory within the store"""
+        return tempfile.TemporaryDirectory(dir=self.store,
+                                           prefix=prefix,
+                                           suffix=suffix)
+
     @contextlib.contextmanager
     def get(self, object_id):
-        with tempfile.TemporaryDirectory(dir=self.store) as tmp:
+        with self.tempdir() as tmp:
             if object_id:
                 path = self.resolve_ref(object_id)
                 subprocess.run(["mount", "-o", "bind,ro,mode=0755", path, tmp], check=True)
@@ -111,7 +117,8 @@ class ObjectStore:
         temporary instance of `Object`. It will only be committed to the
         store if the context completes without raising an exception.
         """
-        with tempfile.TemporaryDirectory(dir=self.store) as tmp:
+
+        with self.tempdir() as tmp:
             # the object that is yielded will be added to the content store
             # on success as object_id
             obj = Object(self, f"{tmp}/tree")
@@ -143,7 +150,7 @@ class ObjectStore:
         # Make a new temporary directory and Object; initialize
         # the latter with the contents of `object_path` and commit
         # it to the store
-        with tempfile.TemporaryDirectory(dir=self.store) as tmp:
+        with self.tempdir() as tmp:
             obj = Object(self, f"{tmp}/tree")
             obj.init(object_path)
             return self.commit(obj, object_id)
@@ -172,7 +179,7 @@ class ObjectStore:
         # treesum (content hash) in the objects directory. If a symlink by
         # that name alreday exists, atomically replace it, but leave the
         # backing object in place (it may be in use).
-        with tempfile.TemporaryDirectory(dir=self.store) as tmp:
+        with self.tempdir() as tmp:
             link = f"{tmp}/link"
             os.symlink(f"../objects/{treesum_hash}", link)
             os.replace(link, self.resolve_ref(object_id))
