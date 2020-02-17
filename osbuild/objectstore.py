@@ -28,16 +28,21 @@ def suppress_oserror(*errnos):
 
 
 class Object:
-    def __init__(self, store: "ObjectStore", path: str):
+    def __init__(self, store: "ObjectStore"):
+        self._workdir = None
+        self._tree = None
         self.store = store
-        os.makedirs(path, mode=0o755, exist_ok=True)
-        self.path = path
+        self.reset()
 
     def init(self, source: str) -> None:
         """Initialize the object with source content"""
         subprocess.run(["cp", "--reflink=auto", "-a",
                         f"{source}/.", self.path],
                        check=True)
+
+    @property
+    def path(self) -> str:
+        return self._tree
 
     @property
     def treesum(self) -> str:
@@ -65,7 +70,25 @@ class Object:
         """
         with suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
             os.rename(self.path, destination)
-        self.path = destination
+        self._tree = destination
+
+    def reset(self):
+        self.cleanup()
+        self._workdir = self.store.tempdir(suffix="object")
+        self._tree = os.path.join(self._workdir.name, "tree")
+        os.makedirs(self._tree, mode=0o755, exist_ok=True)
+
+    def cleanup(self):
+        if self._workdir:
+            self._workdir.cleanup()
+            self._workdir = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cleanup()
+        return exc_type is None
 
 
 class ObjectStore:
@@ -118,10 +141,9 @@ class ObjectStore:
         store if the context completes without raising an exception.
         """
 
-        with self.tempdir() as tmp:
+        with Object(self) as obj:
             # the object that is yielded will be added to the content store
             # on success as object_id
-            obj = Object(self, f"{tmp}/tree")
 
             if base_id:
                 # the base, the working tree and the output dir are all
@@ -150,8 +172,7 @@ class ObjectStore:
         # Make a new temporary directory and Object; initialize
         # the latter with the contents of `object_path` and commit
         # it to the store
-        with self.tempdir() as tmp:
-            obj = Object(self, f"{tmp}/tree")
+        with Object(self) as obj:
             obj.init(object_path)
             return self.commit(obj, object_id)
 
