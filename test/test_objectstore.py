@@ -72,7 +72,7 @@ class TestObjectStore(unittest.TestCase):
         with object_store.new("b") as tree:
             p = Path(f"{tree.path}/A")
             p.touch()
-            object_store.snapshot(tree.path, "a")
+            object_store.snapshot(tree, "a")
             p = Path(f"{tree.path}/B")
             p.touch()
 
