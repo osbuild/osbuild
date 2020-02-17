@@ -160,22 +160,22 @@ class ObjectStore:
             # left to do is to commit it to the object store
             self.commit(obj, object_id)
 
-    def snapshot(self, object_path: str, object_id: str) -> str:
-        """Commit `object_path` to store and ref it as `object_id`
+    def snapshot(self, obj: str, object_id: str) -> str:
+        """Commit `obj` to store and ref it as `object_id`
 
-        Create a snapshot of `object_path` and store it via its
-        content hash in the object directory; additionally
+        Create a snapshot of the object `obj` and store it via
+        its content hash in the object directory; additionally
         create a new reference to it via `object_id` in the
         reference directory.
 
         Returns: The treesum of the snapshot
         """
         # Make a new temporary directory and Object; initialize
-        # the latter with the contents of `object_path` and commit
+        # the latter with the contents of `obj.path` and commit
         # it to the store
-        with Object(self) as obj:
-            obj.init(object_path)
-            return self.commit(obj, object_id)
+        with Object(self) as tmp:
+            tmp.init(obj.path)
+            return self.commit(tmp, object_id)
 
     def commit(self, obj: Object, object_id: str) -> str:
         """Commits a Object to the object store

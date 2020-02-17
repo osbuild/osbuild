@@ -281,7 +281,7 @@ class Pipeline:
                                               var=store,
                                               secrets=secrets)
                                 if stage.checkpoint:
-                                    object_store.snapshot(tree.path, stage.id)
+                                    object_store.snapshot(tree, stage.id)
                                 results["stages"].append(r.as_dict())
                     except BuildError as err:
                         results["stages"].append(err.as_dict())
