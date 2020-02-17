@@ -272,7 +272,7 @@ class Pipeline:
                     try:
                         with object_store.new(self.tree_id, base_id=base) as tree:
                             for stage in self.stages[base_idx + 1:]:
-                                r = stage.run(tree,
+                                r = stage.run(tree.path,
                                               self.runner,
                                               build_tree,
                                               store,
@@ -281,7 +281,7 @@ class Pipeline:
                                               var=store,
                                               secrets=secrets)
                                 if stage.checkpoint:
-                                    object_store.snapshot(tree, stage.id)
+                                    object_store.snapshot(tree.path, stage.id)
                                 results["stages"].append(r.as_dict())
                     except BuildError as err:
                         results["stages"].append(err.as_dict())
@@ -298,7 +298,7 @@ class Pipeline:
                             r = self.assembler.run(tree,
                                                    self.runner,
                                                    build_tree,
-                                                   output_dir=output_dir,
+                                                   output_dir=output_dir.path,
                                                    interactive=interactive,
                                                    libdir=libdir,
                                                    var=store)

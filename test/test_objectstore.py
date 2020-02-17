@@ -25,7 +25,7 @@ class TestObjectStore(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
             object_store = objectstore.ObjectStore(tmp)
             with object_store.new("a") as tree:
-                p = Path(f"{tree}/A")
+                p = Path(f"{tree.path}/A")
                 p.touch()
 
             assert os.path.exists(f"{object_store.refs}/a")
@@ -35,9 +35,9 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(f"{object_store.refs}/a/")) == 1
 
             with object_store.new("b") as tree:
-                p = Path(f"{tree}/A")
+                p = Path(f"{tree.path}/A")
                 p.touch()
-                p = Path(f"{tree}/B")
+                p = Path(f"{tree.path}/B")
                 p.touch()
 
             assert os.path.exists(f"{object_store.refs}/b")
@@ -51,12 +51,12 @@ class TestObjectStore(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
             object_store = objectstore.ObjectStore(tmp)
             with object_store.new("a") as tree:
-                p = Path(f"{tree}/A")
+                p = Path(f"{tree.path}/A")
                 p.touch()
 
             with object_store.new("b") as tree:
                 shutil.copy2(f"{object_store.refs}/a/A",
-                             f"{tree}/A")
+                             f"{tree.path}/A")
 
             assert os.path.exists(f"{object_store.refs}/a")
             assert os.path.exists(f"{object_store.refs}/a/A")
@@ -70,10 +70,10 @@ class TestObjectStore(unittest.TestCase):
     def test_snapshot(self):
         object_store = objectstore.ObjectStore(self.store)
         with object_store.new("b") as tree:
-            p = Path(f"{tree}/A")
+            p = Path(f"{tree.path}/A")
             p.touch()
-            object_store.snapshot(tree, "a")
-            p = Path(f"{tree}/B")
+            object_store.snapshot(tree.path, "a")
+            p = Path(f"{tree.path}/B")
             p.touch()
 
         # check the references exist

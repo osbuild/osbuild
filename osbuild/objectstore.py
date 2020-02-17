@@ -105,11 +105,11 @@ class ObjectStore:
 
     @contextlib.contextmanager
     def new(self, object_id, base_id=None):
-        """Creates a new directory for `object_id`.
+        """Creates a new `Object` for `object_id`.
 
-        This method must be used as a context manager. It returns a path to a
-        temporary directory and only commits it when the context completes
-        without raising an exception.
+        This method must be used as a context manager. It returns a new
+        temporary instance of `Object`. It will only be committed to the
+        store if the context completes without raising an exception.
         """
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
             # the object that is yielded will be added to the content store
@@ -122,7 +122,7 @@ class ObjectStore:
                 # fs supports it
                 obj.init(self.resolve_ref(base_id))
 
-            yield obj.path
+            yield obj
 
             # if the yield above raises an exception, the working tree
             # is cleaned up by tempfile, otherwise, the it the content
