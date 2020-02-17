@@ -62,15 +62,16 @@ class Object:
         finally:
             os.close(fd)
 
-    def move(self, destination: str):
-        """Move the object to destination
+    def store_tree(self, destination: str):
+        """Store the tree at destination and reset itself
 
-        Does so atomically by using rename(2). If the
-        target already exist, use that instead
+        Moves the tree atomically by using rename(2). If the
+        target already exist, does nothing. Afterwards it
+        resets itself and can be used as if it was new.
         """
         with suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
             os.rename(self.path, destination)
-        self._tree = destination
+        self.reset()
 
     def reset(self):
         self.cleanup()
@@ -194,7 +195,7 @@ class ObjectStore:
         # will always produce the same content hash, but that is not
         # guaranteed. If an object with the same treesum already exist, us
         # the existing one instead
-        obj.move(f"{self.objects}/{treesum_hash}")
+        obj.store_tree(f"{self.objects}/{treesum_hash}")
 
         # symlink the object_id (config hash) in the refs directory to the
         # treesum (content hash) in the objects directory. If a symlink by
