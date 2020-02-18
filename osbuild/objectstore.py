@@ -59,7 +59,7 @@ class Object:
     @property
     def treesum(self) -> str:
         """Calculate the treesum of the object"""
-        with self.open() as fd:
+        with self._open() as fd:
             m = hashlib.sha256()
             treesum.treesum(m, fd)
             treesum_hash = m.hexdigest()
@@ -72,15 +72,6 @@ class Object:
         else:
             path = self._tree
         return path
-
-    @contextlib.contextmanager
-    def open(self):
-        """Open the directory and return the file descriptor"""
-        try:
-            fd = os.open(self._path, os.O_DIRECTORY)
-            yield fd
-        finally:
-            os.close(fd)
 
     def write(self) -> str:
         """Return a path that can be written to"""
@@ -110,6 +101,15 @@ class Object:
         if self._workdir:
             self._workdir.cleanup()
             self._workdir = None
+
+    @contextlib.contextmanager
+    def _open(self):
+        """Open the directory and return the file descriptor"""
+        try:
+            fd = os.open(self._path, os.O_DIRECTORY)
+            yield fd
+        finally:
+            os.close(fd)
 
     def __enter__(self):
         return self
