@@ -8,6 +8,8 @@ import subprocess
 import tempfile
 import unittest
 
+import osbuild
+
 
 class TestCase(unittest.TestCase):
     """A TestCase to test running the osbuild program.
@@ -43,6 +45,20 @@ class TestCase(unittest.TestCase):
         if sources:
             osbuild_cmd.append("--sources")
             osbuild_cmd.append(sources)
+
+        # Create a checkpoint at the last stage, i.e.
+        # commit the final tree to the store, so that
+        # tests can use it to compare against
+        if input:
+            manifest = json.loads(input)
+        else:
+            with open(pipeline, "r") as f:
+                manifest = json.load(f)
+
+        parsed = osbuild.load(manifest, {})
+        if parsed.tree_id:
+            osbuild_cmd.append("--checkpoint")
+            osbuild_cmd.append(parsed.tree_id)
 
         stdin = subprocess.PIPE if input else None
 

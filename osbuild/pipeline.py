@@ -243,46 +243,49 @@ class Pipeline:
         object_store = objectstore.ObjectStore(store)
         results = {}
 
-        if self.build:
+        if self.build and self.build.stages:
+            # For now, the last build stage is always committed to the object store
+            self.build.stages[-1].checkpoint = True
+
             r = self.build.run(store, interactive, libdir, secrets)
             results["build"] = r
             if not r["success"]:
                 results["success"] = False
                 return results
 
-        with self.get_buildtree(object_store) as build_tree:
+        with self.get_buildtree(object_store) as build_tree, \
+             object_store.new(base_id=self.tree_id) as tree:
+
             if self.stages:
                 if not object_store.contains(self.tree_id):
                     # Find the last stage that already exists in the object store, and use
                     # that as the base.
-                    base = None
                     base_idx = -1
+                    tree.base = None
                     for i in reversed(range(len(self.stages))):
                         if object_store.contains(self.stages[i].id):
-                            base = self.stages[i].id
+                            tree.base = self.stages[i].id
                             base_idx = i
                             break
 
-                    # The tree does not exist. Create it and save it to the object store. If
-                    # two run() calls race each-other, two trees may be generated, and it
+                    # If two run() calls race each-other, two trees may be generated  and it
                     # is nondeterministic which of them will end up referenced by the tree_id
-                    # in the content store. However, we guarantee that all tree_id's and all
-                    # generated trees remain valid.
+                    # in the content store if they are both committed. However, after the call
+                    # to commit all the trees will be based on the winner.
                     results["stages"] = []
                     try:
-                        with object_store.new(self.tree_id, base_id=base) as tree:
-                            for stage in self.stages[base_idx + 1:]:
-                                r = stage.run(tree.write(),
-                                              self.runner,
-                                              build_tree,
-                                              store,
-                                              interactive=interactive,
-                                              libdir=libdir,
-                                              var=store,
-                                              secrets=secrets)
-                                if stage.checkpoint:
-                                    object_store.commit(tree, stage.id)
-                                results["stages"].append(r.as_dict())
+                        for stage in self.stages[base_idx + 1:]:
+                            r = stage.run(tree.write(),
+                                          self.runner,
+                                          build_tree,
+                                          store,
+                                          interactive=interactive,
+                                          libdir=libdir,
+                                          var=store,
+                                          secrets=secrets)
+                            if stage.checkpoint:
+                                object_store.commit(tree, stage.id)
+                            results["stages"].append(r.as_dict())
                     except BuildError as err:
                         results["stages"].append(err.as_dict())
                         results["success"] = False
@@ -293,9 +296,9 @@ class Pipeline:
             if self.assembler:
                 if not object_store.contains(self.output_id):
                     try:
-                        with object_store.get(self.tree_id) as tree, \
-                             object_store.new(self.output_id) as output_dir:
-                            r = self.assembler.run(tree,
+                        with tree.read() as input_tree, \
+                             object_store.new() as output_dir:
+                            r = self.assembler.run(input_tree,
                                                    self.runner,
                                                    build_tree,
                                                    output_dir=output_dir.write(),
@@ -303,6 +306,7 @@ class Pipeline:
                                                    libdir=libdir,
                                                    var=store)
                             results["assembler"] = r.as_dict()
+                            object_store.commit(output_dir, self.output_id)
                     except BuildError as err:
                         results["assembler"] = err.as_dict()
                         results["success"] = False
