@@ -272,7 +272,7 @@ class Pipeline:
                     try:
                         with object_store.new(self.tree_id, base_id=base) as tree:
                             for stage in self.stages[base_idx + 1:]:
-                                r = stage.run(tree.path,
+                                r = stage.run(tree.write(),
                                               self.runner,
                                               build_tree,
                                               store,
@@ -298,7 +298,7 @@ class Pipeline:
                             r = self.assembler.run(tree,
                                                    self.runner,
                                                    build_tree,
-                                                   output_dir=output_dir.path,
+                                                   output_dir=output_dir.write(),
                                                    interactive=interactive,
                                                    libdir=libdir,
                                                    var=store)

@@ -73,11 +73,21 @@ class Object:
     @contextlib.contextmanager
     def open(self):
         """Open the directory and return the file descriptor"""
+        if self._base_path and not self._init:
+            path = self._base_path
+        else:
+            path = self._tree
+
         try:
-            fd = os.open(self.path, os.O_DIRECTORY)
+            fd = os.open(path, os.O_DIRECTORY)
             yield fd
         finally:
             os.close(fd)
+
+    def write(self) -> str:
+        """Return a path that can be written to"""
+        self.init()
+        return self._tree
 
     def store_tree(self, destination: str):
         """Store the tree at destination and reset itself
@@ -167,8 +177,8 @@ class ObjectStore:
             if base_id:
                 # if we were given a base id, resolve its path and set it
                 # as the base_path of the object
+                # NB: `obj` does not get initialized explicitly here
                 obj.base_path = self.resolve_ref(base_id)
-                obj.init()
 
             yield obj
 
