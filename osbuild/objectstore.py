@@ -129,8 +129,8 @@ class Object:
     @contextlib.contextmanager
     def _open(self):
         """Open the directory and return the file descriptor"""
+        fd = os.open(self._path, os.O_DIRECTORY)
         try:
-            fd = os.open(self._path, os.O_DIRECTORY)
             yield fd
         finally:
             os.close(fd)
