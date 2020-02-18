@@ -150,7 +150,7 @@ class ObjectStore:
         with self.tempdir() as tmp:
             if object_id:
                 path = self.resolve_ref(object_id)
-                subprocess.run(["mount", "-o", "bind,ro,mode=0755", path, tmp], check=True)
+                subprocess.run(["mount", "--make-private", "-o", "bind,ro,mode=0755", path, tmp], check=True)
                 try:
                     yield tmp
                 finally:
