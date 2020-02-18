@@ -54,6 +54,7 @@ def umount(target, lazy=True):
 class Object:
     def __init__(self, store: "ObjectStore"):
         self._init = True
+        self._readers = 0
         self._base = None
         self._workdir = None
         self._tree = None
@@ -62,6 +63,8 @@ class Object:
 
     def init(self) -> None:
         """Initialize the object with content of its base"""
+        self._check_writable()
+        self._check_readers()
         if self._init:
             return
 
@@ -99,8 +102,22 @@ class Object:
 
     def write(self) -> str:
         """Return a path that can be written to"""
+        self._check_writable()
+        self._check_readers()
         self.init()
         return self._tree
+
+    @contextlib.contextmanager
+    def read(self) -> str:
+        self._check_writable()
+        with self.tempdir("mount") as target:
+            mount(self._path, target)
+            try:
+                self._readers += 1
+                yield target
+            finally:
+                umount(target)
+                self._readers -= 1
 
     def store_tree(self, destination: str):
         """Store the tree at destination and reset itself
@@ -109,6 +126,8 @@ class Object:
         target already exist, does nothing. Afterwards it
         resets itself and can be used as if it was new.
         """
+        self._check_writable()
+        self._check_readers()
         self.init()
         with suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
             os.rename(self._tree, destination)
@@ -122,20 +141,40 @@ class Object:
         self._init = not self._base
 
     def cleanup(self):
+        self._check_readers()
         if self._workdir:
             self._workdir.cleanup()
             self._workdir = None
 
+    def _check_readers(self):
+        """Internal: Raise a ValueError if there are readers"""
+        if self._readers:
+            raise ValueError("Read operation is ongoing")
+
+    def _check_writable(self):
+        """Internal: Raise a ValueError if not writable"""
+        if not self._workdir:
+            raise ValueError("Object is not writable")
+
     @contextlib.contextmanager
     def _open(self):
         """Open the directory and return the file descriptor"""
-        fd = os.open(self._path, os.O_DIRECTORY)
-        try:
-            yield fd
-        finally:
-            os.close(fd)
+        with self.read() as path:
+            fd = os.open(path, os.O_DIRECTORY)
+            try:
+                yield fd
+            finally:
+                os.close(fd)
+
+    def tempdir(self, suffix=None):
+        workdir = self._workdir.name
+        if suffix:
+            suffix = "-" + suffix
+        return tempfile.TemporaryDirectory(dir=workdir,
+                                           suffix=suffix)
 
     def __enter__(self):
+        self._check_writable()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
