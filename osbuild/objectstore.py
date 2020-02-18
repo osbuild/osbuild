@@ -188,24 +188,6 @@ class ObjectStore:
             # left to do is to commit it to the object store
             self.commit(obj, object_id)
 
-    def snapshot(self, obj: str, object_id: str) -> str:
-        """Commit `obj` to store and ref it as `object_id`
-
-        Create a snapshot of the object `obj` and store it via
-        its content hash in the object directory; additionally
-        create a new reference to it via `object_id` in the
-        reference directory.
-
-        Returns: The treesum of the snapshot
-        """
-        # Make a new temporary directory and Object; initialize
-        # the latter with the contents of `obj.path` and commit
-        # it to the store
-        with Object(self) as tmp:
-            tmp.base_path = obj.path
-            tmp.init()
-            return self.commit(tmp, object_id)
-
     def commit(self, obj: Object, object_id: str) -> str:
         """Commits a Object to the object store
 
@@ -234,5 +216,14 @@ class ObjectStore:
             link = f"{tmp}/link"
             os.symlink(f"../objects/{treesum_hash}", link)
             os.replace(link, self.resolve_ref(object_id))
+
+        # the reference that is pointing to `treesum_hash` is now the base
+        # of `obj`. It is not actively initialized but any subsequent calls
+        # to `obj.write()` or `obj.path`will initialize it again
+        # NB: in the case that an object with the same treesum as `obj`
+        # already existed in the store obj.store_tree() will not actually
+        # have written anything to the store. In this case `obj` will then
+        # be initialized with the content of the already existing object.
+        obj.base_path = self.resolve_ref(object_id)
 
         return treesum_hash

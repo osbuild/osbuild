@@ -77,7 +77,7 @@ class TestObjectStore(unittest.TestCase):
             path = tree.write()
             p = Path(f"{path}/A")
             p.touch()
-            object_store.snapshot(tree, "a")
+            object_store.commit(tree, "a")
             path = tree.write()
             p = Path(f"{path}/B")
             p.touch()
