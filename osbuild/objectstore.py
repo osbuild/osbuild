@@ -29,19 +29,36 @@ def suppress_oserror(*errnos):
 
 class Object:
     def __init__(self, store: "ObjectStore"):
+        self._init = True
+        self._base_path = None
         self._workdir = None
         self._tree = None
         self.store = store
         self.reset()
 
-    def init(self, source: str) -> None:
-        """Initialize the object with source content"""
+    def init(self) -> None:
+        """Initialize the object with content of its base"""
+        if self._init:
+            return
+
+        source = self._base_path
         subprocess.run(["cp", "--reflink=auto", "-a",
-                        f"{source}/.", self.path],
+                        f"{source}/.", self._tree],
                        check=True)
+        self._init = True
+
+    @property
+    def base_path(self) -> Optional[str]:
+        return self._base_path
+
+    @base_path.setter
+    def base_path(self, path: Optional[str]):
+        self._init = not path
+        self._base_path = path
 
     @property
     def path(self) -> str:
+        self.init()
         return self._tree
 
     @property
@@ -78,6 +95,7 @@ class Object:
         self._workdir = self.store.tempdir(suffix="object")
         self._tree = os.path.join(self._workdir.name, "tree")
         os.makedirs(self._tree, mode=0o755, exist_ok=True)
+        self._init = not self._base_path
 
     def cleanup(self):
         if self._workdir:
@@ -147,10 +165,10 @@ class ObjectStore:
             # on success as object_id
 
             if base_id:
-                # the base, the working tree and the output dir are all
-                # on the same fs, so attempt a lightweight copy if the
-                # fs supports it
-                obj.init(self.resolve_ref(base_id))
+                # if we were given a base id, resolve its path and set it
+                # as the base_path of the object
+                obj.base_path = self.resolve_ref(base_id)
+                obj.init()
 
             yield obj
 
@@ -174,7 +192,8 @@ class ObjectStore:
         # the latter with the contents of `obj.path` and commit
         # it to the store
         with Object(self) as tmp:
-            tmp.init(obj.path)
+            tmp.base_path = obj.path
+            tmp.init()
             return self.commit(tmp, object_id)
 
     def commit(self, obj: Object, object_id: str) -> str:
