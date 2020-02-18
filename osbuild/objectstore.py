@@ -30,7 +30,7 @@ def suppress_oserror(*errnos):
 class Object:
     def __init__(self, store: "ObjectStore"):
         self._init = True
-        self._base_path = None
+        self._base = None
         self._workdir = None
         self._tree = None
         self.store = store
@@ -41,20 +41,20 @@ class Object:
         if self._init:
             return
 
-        source = self._base_path
+        source = self.store.resolve_ref(self._base)
         subprocess.run(["cp", "--reflink=auto", "-a",
                         f"{source}/.", self._tree],
                        check=True)
         self._init = True
 
     @property
-    def base_path(self) -> Optional[str]:
-        return self._base_path
+    def base(self) -> Optional[str]:
+        return self._base
 
-    @base_path.setter
-    def base_path(self, path: Optional[str]):
-        self._init = not path
-        self._base_path = path
+    @base.setter
+    def base(self, base_id: Optional[str]):
+        self._init = not base_id
+        self._base = base_id
 
     @property
     def path(self) -> str:
@@ -73,8 +73,8 @@ class Object:
     @contextlib.contextmanager
     def open(self):
         """Open the directory and return the file descriptor"""
-        if self._base_path and not self._init:
-            path = self._base_path
+        if self._base and not self._init:
+            path = self.store.resolve_ref(self._base)
         else:
             path = self._tree
 
@@ -105,7 +105,7 @@ class Object:
         self._workdir = self.store.tempdir(suffix="object")
         self._tree = os.path.join(self._workdir.name, "tree")
         os.makedirs(self._tree, mode=0o755, exist_ok=True)
-        self._init = not self._base_path
+        self._init = not self._base
 
     def cleanup(self):
         if self._workdir:
@@ -175,10 +175,10 @@ class ObjectStore:
             # on success as object_id
 
             if base_id:
-                # if we were given a base id, resolve its path and set it
-                # as the base_path of the object
-                # NB: `obj` does not get initialized explicitly here
-                obj.base_path = self.resolve_ref(base_id)
+                # if we were given a base id then this is the base for the
+                # new object
+                # NB: its initialization is deferred to the first write
+                obj.base = base_id
 
             yield obj
 
@@ -219,11 +219,11 @@ class ObjectStore:
 
         # the reference that is pointing to `treesum_hash` is now the base
         # of `obj`. It is not actively initialized but any subsequent calls
-        # to `obj.write()` or `obj.path`will initialize it again
+        # to `obj.write()` or `obj.path` will initialize it again
         # NB: in the case that an object with the same treesum as `obj`
         # already existed in the store obj.store_tree() will not actually
         # have written anything to the store. In this case `obj` will then
         # be initialized with the content of the already existing object.
-        obj.base_path = self.resolve_ref(object_id)
+        obj.base = object_id
 
         return treesum_hash
