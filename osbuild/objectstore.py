@@ -57,11 +57,6 @@ class Object:
         self._base = base_id
 
     @property
-    def path(self) -> str:
-        self.init()
-        return self._tree
-
-    @property
     def treesum(self) -> str:
         """Calculate the treesum of the object"""
         with self.open() as fd:
@@ -70,16 +65,19 @@ class Object:
             treesum_hash = m.hexdigest()
             return treesum_hash
 
-    @contextlib.contextmanager
-    def open(self):
-        """Open the directory and return the file descriptor"""
+    @property
+    def _path(self) -> str:
         if self._base and not self._init:
             path = self.store.resolve_ref(self._base)
         else:
             path = self._tree
+        return path
 
+    @contextlib.contextmanager
+    def open(self):
+        """Open the directory and return the file descriptor"""
         try:
-            fd = os.open(path, os.O_DIRECTORY)
+            fd = os.open(self._path, os.O_DIRECTORY)
             yield fd
         finally:
             os.close(fd)
@@ -96,8 +94,9 @@ class Object:
         target already exist, does nothing. Afterwards it
         resets itself and can be used as if it was new.
         """
+        self.init()
         with suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
-            os.rename(self.path, destination)
+            os.rename(self._tree, destination)
         self.reset()
 
     def reset(self):
@@ -219,7 +218,7 @@ class ObjectStore:
 
         # the reference that is pointing to `treesum_hash` is now the base
         # of `obj`. It is not actively initialized but any subsequent calls
-        # to `obj.write()` or `obj.path` will initialize it again
+        # to `obj.write()` will initialize it again
         # NB: in the case that an object with the same treesum as `obj`
         # already existed in the store obj.store_tree() will not actually
         # have written anything to the store. In this case `obj` will then
