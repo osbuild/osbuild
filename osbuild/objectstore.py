@@ -210,18 +210,10 @@ class ObjectStore:
 
     @contextlib.contextmanager
     def get(self, object_id):
-        with self.tempdir() as tmp:
-            if object_id:
-                path = self.resolve_ref(object_id)
-                mount(path, tmp)
-                try:
-                    yield tmp
-                finally:
-                    umount(tmp)
-            else:
-                # None was given as object_id, just return an empty directory
-                yield tmp
-
+        with Object(self) as obj:
+            obj.base = object_id
+            with obj.read() as path:
+                yield path
 
     @contextlib.contextmanager
     def new(self, object_id, base_id=None):
