@@ -27,6 +27,30 @@ def suppress_oserror(*errnos):
             raise e
 
 
+def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
+    options = []
+    if bind:
+        options += ["bind"]
+    if ro:
+        options += ["ro"]
+    if mode:
+        options += [mode]
+
+    args = []
+    if private:
+        args += ["--make-private"]
+    if options:
+        args += ["-o", ",".join(options)]
+    subprocess.run(["mount"] + args + [source, target], check=True)
+
+
+def umount(target, lazy=True):
+    args = []
+    if lazy:
+        args += ["--lazy"]
+    subprocess.run(["umount"] + args + [target], check=True)
+
+
 class Object:
     def __init__(self, store: "ObjectStore"):
         self._init = True
@@ -150,11 +174,11 @@ class ObjectStore:
         with self.tempdir() as tmp:
             if object_id:
                 path = self.resolve_ref(object_id)
-                subprocess.run(["mount", "--make-private", "-o", "bind,ro,mode=0755", path, tmp], check=True)
+                mount(path, tmp)
                 try:
                     yield tmp
                 finally:
-                    subprocess.run(["umount", "--lazy", tmp], check=True)
+                    umount(tmp)
             else:
                 # None was given as object_id, just return an empty directory
                 yield tmp
