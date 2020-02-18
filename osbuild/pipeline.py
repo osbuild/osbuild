@@ -228,15 +228,17 @@ class Pipeline:
     @contextlib.contextmanager
     def get_buildtree(self, object_store):
         if self.build:
-            with object_store.get(self.build.tree_id) as tree:
-                yield tree
+            with object_store.new() as tree:
+                tree.base = self.build.tree_id
+                with tree.read() as path:
+                    yield path
         else:
-            with tempfile.TemporaryDirectory(dir=object_store.store) as tmp:
-                subprocess.run(["mount", "--make-private", "-o", "bind,ro,mode=0755", "/", tmp], check=True)
+            with object_store.tempdir() as tmp:
+                objectstore.mount("/", tmp)
                 try:
                     yield tmp
                 finally:
-                    subprocess.run(["umount", "--lazy", tmp], check=True)
+                    objectstore.umount(tmp)
 
     def run(self, store, interactive=False, libdir=None, secrets=None):
         os.makedirs("/run/osbuild", exist_ok=True)
