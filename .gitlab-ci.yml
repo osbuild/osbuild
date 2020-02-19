@@ -1,8 +1,0 @@
-stages:
-  - test
-
-unit_test:
-  stage: test
-  image: python:3.7-alpine
-  script:
-    - python3 -m unittest test.test_osbuild
