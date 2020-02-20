@@ -8,7 +8,7 @@ sdist:
 	find `pwd`/dist -name '*.tar.gz' -printf '%f\n' -exec mv {} . \;
 
 tarball:
-	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > $(VERSION).tar.gz
+	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > osbuild-$(VERSION).tar.gz
 
 srpm: $(PACKAGE_NAME).spec check-working-directory tarball
 	/usr/bin/rpmbuild -bs \
