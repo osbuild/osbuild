@@ -30,15 +30,6 @@ class BuildResult:
         return vars(self)
 
 
-class BuildError(Exception):
-    def __init__(self, result):
-        super(BuildError, self).__init__()
-        self.result = result
-
-    def as_dict(self):
-        return self.result.as_dict()
-
-
 def print_header(title, options):
     print()
     print(f"{RESET}{BOLD}{title}{RESET} " + json.dumps(options or {}, indent=2))
@@ -113,10 +104,7 @@ class Stage:
                     readonly_binds=ro_binds,
                     stdin=subprocess.DEVNULL,
                 )
-                res = BuildResult(self, r.returncode, api.output)
-                if not res.success:
-                    raise BuildError(res)
-                return res
+                return BuildResult(self, r.returncode, api.output)
 
 
 class Assembler:
@@ -173,10 +161,7 @@ class Assembler:
                     readonly_binds=ro_binds,
                     stdin=subprocess.DEVNULL,
                 )
-                res = BuildResult(self, r.returncode, api.output)
-                if not res.success:
-                    raise BuildError(res)
-                return res
+                return BuildResult(self, r.returncode, api.output)
 
 
 class Pipeline:
@@ -275,44 +260,39 @@ class Pipeline:
                     # in the content store if they are both committed. However, after the call
                     # to commit all the trees will be based on the winner.
                     results["stages"] = []
-                    try:
-                        for stage in self.stages[base_idx + 1:]:
-                            r = stage.run(tree.write(),
-                                          self.runner,
-                                          build_tree,
-                                          store,
-                                          interactive=interactive,
-                                          libdir=libdir,
-                                          var=store,
-                                          secrets=secrets)
-                            if stage.checkpoint:
-                                object_store.commit(tree, stage.id)
-                            results["stages"].append(r.as_dict())
-                    except BuildError as err:
-                        results["stages"].append(err.as_dict())
-                        results["success"] = False
-                        return results
-
+                    for stage in self.stages[base_idx + 1:]:
+                        r = stage.run(tree.write(),
+                                      self.runner,
+                                      build_tree,
+                                      store,
+                                      interactive=interactive,
+                                      libdir=libdir,
+                                      var=store,
+                                      secrets=secrets)
+                        if stage.checkpoint:
+                            object_store.commit(tree, stage.id)
+                        results["stages"].append(r.as_dict())
+                        if not r.success:
+                            results["success"] = False
+                            return results
                 results["tree_id"] = self.tree_id
 
             if self.assembler:
                 if not object_store.contains(self.output_id):
-                    try:
-                        with tree.read() as input_tree, \
-                             object_store.new() as output_dir:
-                            r = self.assembler.run(input_tree,
-                                                   self.runner,
-                                                   build_tree,
-                                                   output_dir=output_dir.write(),
-                                                   interactive=interactive,
-                                                   libdir=libdir,
-                                                   var=store)
-                            results["assembler"] = r.as_dict()
-                            object_store.commit(output_dir, self.output_id)
-                    except BuildError as err:
-                        results["assembler"] = err.as_dict()
-                        results["success"] = False
-                        return results
+                    with tree.read() as input_tree, \
+                         object_store.new() as output_dir:
+                        r = self.assembler.run(input_tree,
+                                               self.runner,
+                                               build_tree,
+                                               output_dir=output_dir.write(),
+                                               interactive=interactive,
+                                               libdir=libdir,
+                                               var=store)
+                        object_store.commit(output_dir, self.output_id)
+                        results["assembler"] = r.as_dict()
+                        if not r.success:
+                            results["success"] = False
+                            return results
 
                 results["output_id"] = self.output_id
 
