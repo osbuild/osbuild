@@ -22,6 +22,7 @@ arguments generated from the stage options:
 * `--forcearch {basearch}`
 * `--releasever {releasever}`
 * `--setopt install_weak_deps={install_weak_deps}`
+* `--setopt fastestmirror={fastestmirror}`
 * `--config /tmp/dnf.conf`
 * `--exclude {pkg}` for each item in `exclude_packages`
 
@@ -123,6 +124,11 @@ STAGE_OPTS = """
     "type": "boolean",
     "default": true
   },
+  "fastestmirror": {
+    "description": "Whether DNF should choose the fastest mirror available",
+    "type": "boolean",
+    "default": true
+  },
   "exclude_packages": {
     "description": "List of package-specs to --exclude",
     "type": "array",
@@ -210,6 +216,7 @@ def main(tree, options):
     basearch = options["basearch"]
     operation = options.get("operation", "install")
     weak_deps = options.get("install_weak_deps", True)
+    fastestmirror = options.get("fastestmirror", True)
     exclude_packages = options.get("exclude_packages", [])
     module_platform_id = options.get("module_platform_id", None)
 
@@ -253,6 +260,7 @@ def main(tree, options):
             "--forcearch", basearch,
             "--setopt", "reposdir=",
             "--setopt", f"install_weak_deps={weak_deps}",
+            "--setopt", f"fastestmirror={fastestmirror}",
             "--setopt", f"skip_if_unavailable=false",
             "--releasever", releasever,
             "--noplugins",
