@@ -16,27 +16,11 @@ srpm: $(PACKAGE_NAME).spec check-working-directory tarball
 	  --define "_srcrpmdir $(CURDIR)" \
 	  $(PACKAGE_NAME).spec
 
-rpm: $(PACKAGE_NAME).spec check-working-directory tarball 
+rpm: $(PACKAGE_NAME).spec check-working-directory tarball
 	- rm -r "`pwd`/output"
 	mkdir -p "`pwd`/output"
 	mkdir -p "`pwd`/rpmbuild"
 	/usr/bin/rpmbuild -bb \
-	  --define "_sourcedir `pwd`" \
-	  --define "_specdir `pwd`" \
-	  --define "_builddir `pwd`/rpmbuild" \
-	  --define "_srcrpmdir `pwd`" \
-	  --define "_rpmdir `pwd`/output" \
-	  --define "_buildrootdir `pwd`/build" \
-	  $(PACKAGE_NAME).spec
-	rm -r "`pwd`/rpmbuild"
-	rm -r "`pwd`/build"
-
-rpm-nodeps: $(PACKAGE_NAME).spec tarball
-	- rm -r "`pwd`/output"
-	mkdir -p "`pwd`/output"
-	mkdir -p "`pwd`/rpmbuild"
-	/usr/bin/rpmbuild -bb \
-	  --nodeps \
 	  --define "_sourcedir `pwd`" \
 	  --define "_specdir `pwd`" \
 	  --define "_builddir `pwd`/rpmbuild" \
