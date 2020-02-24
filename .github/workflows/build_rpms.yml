@@ -1,0 +1,57 @@
+name: RPM Build
+
+# NOTE(mhayden): Restricting branches prevents jobs from being doubled since
+# a push to a pull request triggers two events.
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - master
+
+jobs:
+  rpm_build:
+    name: "Build RPMs"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        fedora_release: ["31", "32", "rawhide"]
+    container:
+      image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
+    steps:
+      - name: Prepare container
+        run: |
+          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
+          echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
+          dnf -y upgrade
+          dnf -y install dnf-plugins-core git make rpm-build
+          mkdir rpms
+
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          path: osbuild
+
+      - name: Install RPM build dependencies
+        run: dnf -y builddep osbuild/osbuild.spec
+
+      - name: Build RPMs
+        run: |
+          pushd osbuild
+            make rpm
+          popd
+          cp -av osbuild/output/*/*.rpm rpms/
+          date > rpms/timestamp.txt
+
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v1
+        with:
+          name: Packages
+          path: rpms/
+
+      - name: Test RPM installation
+        run: |
+          pushd rpms
+            dnf -y install $(ls *.rpm)
+          popd
