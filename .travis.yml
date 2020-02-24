@@ -13,18 +13,6 @@ jobs:
       script:
         - python3 -m unittest test.test_osbuild
         - python3 -m unittest test.test_objectstore
-    - name: rpm-f31
-      services:
-        - docker
-      script: docker run --rm -v $(pwd):/src fedora:31 sh -c "cd /src && dnf install -y 'dnf-command(builddep)' make git rpm-build && dnf builddep -y osbuild.spec && make rpm"
-    - name: rpm-f32
-      services:
-        - docker
-      script: docker run --rm -v $(pwd):/src fedora:32 sh -c "cd /src && dnf install -y 'dnf-command(builddep)' make git rpm-build && dnf builddep -y osbuild.spec && make rpm"
-    - name: rpm-f33
-      services:
-        - docker
-      script: docker run --rm -v $(pwd):/src fedora:33 sh -c "cd /src && dnf install -y 'dnf-command(builddep)' make git rpm-build && dnf builddep -y osbuild.spec && make rpm"
     - name: pipeline-noop
       before_install: sudo apt-get install -y systemd-container
       script:
