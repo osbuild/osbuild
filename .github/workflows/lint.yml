@@ -1,0 +1,31 @@
+name: Linting
+
+# NOTE(mhayden): Restricting branches prevents jobs from being doubled since
+# a push to a pull request triggers two events.
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - master
+
+jobs:
+  pylint:
+    name: "pylint"
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/library/python:3.7
+    steps:
+      - name: Install pylint
+        run: pip install pylint==2.4.1
+
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          path: osbuild
+
+      - name: Run pylint
+        run: |
+          cd osbuild
+          pylint osbuild runners/* assemblers/* stages/* sources/*
