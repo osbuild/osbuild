@@ -6,10 +6,6 @@ env:
   - PYTHONUNBUFFERED=1
 jobs:
   include:
-    - name: unit-tests
-      script:
-        - python3 -m unittest test.test_osbuild
-        - python3 -m unittest test.test_objectstore
     - name: pipeline-noop
       before_install: sudo apt-get install -y systemd-container
       script:
