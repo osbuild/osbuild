@@ -49,3 +49,45 @@ jobs:
         run: |
           cd osbuild
           python3 -m unittest -v test.test_objectstore
+  builds:
+    name: "builds"
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Prepare instance
+        run: |
+          sudo rm -fv /etc/apt/sources.list.d/*
+          sudo apt -y update
+          sudo apt -y upgrade
+          sudo apt -y install qemu-kvm qemu-utils nbd-client rpm systemd-container tar yum
+
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          path: osbuild
+
+      - name: Run noop tests
+        run: |
+          cd osbuild
+          sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
+          sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
+
+      - name: Run test_sources
+        run: |
+          cd osbuild
+          sudo env "PATH=$PATH" python3 -m unittest -v test.test_sources
+
+      - name: Run test_assemblers
+        run: |
+          cd osbuild
+          sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_assemblers
+
+      - name: Run test_stages
+        run: |
+          cd osbuild
+          sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_stages
+
+      - name: Run test_boot
+        run: |
+          cd osbuild
+          sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_boot
