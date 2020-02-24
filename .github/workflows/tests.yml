@@ -1,4 +1,4 @@
-name: Linting
+name: Tests
 
 # NOTE(mhayden): Restricting branches prevents jobs from being doubled since
 # a push to a pull request triggers two events.
@@ -29,3 +29,23 @@ jobs:
         run: |
           cd osbuild
           pylint osbuild runners/* assemblers/* stages/* sources/*
+  unit_tests:
+    name: "unit"
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/library/python:3.7
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          path: osbuild
+
+      - name: Run test_osbuild
+        run: |
+          cd osbuild
+          python3 -m unittest -v test.test_osbuild
+
+      - name: Run test_objectstore
+        run: |
+          cd osbuild
+          python3 -m unittest -v test.test_objectstore
