@@ -9,7 +9,7 @@
   },
   "org.osbuild.files": {
     "urls": {
-      "sha256:3fbe971c4e0737df9dd0484ec48f294df693631bfe3be89cba01e147a5eec140": "http://fedora.uib.no/fedora/linux/releases/30/Everything/x86_64/os/Packages/f/fedora-gpg-keys-30-1.noarch.rpm"
+      "sha256:3fbe971c4e0737df9dd0484ec48f294df693631bfe3be89cba01e147a5eec140": "http://download.fedoraproject.org/pub/fedora/linux/releases/30/Everything/x86_64/os/Packages/f/fedora-gpg-keys-30-1.noarch.rpm"
     }
   }
 }
