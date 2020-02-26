@@ -23,7 +23,8 @@
         ],
         "exclude_packages": [
           "dracut-config-rescue"
-        ]
+        ],
+        "module_platform_id": "platform:f30"
       }
     },
     {

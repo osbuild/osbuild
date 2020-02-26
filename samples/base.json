@@ -12,7 +12,8 @@
           "@Core",
           "selinux-policy-targeted",
           "grub2-pc"
-        ]
+        ],
+        "module_platform_id": "platform:f30"
       }
     }
   ]

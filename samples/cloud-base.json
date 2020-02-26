@@ -25,7 +25,8 @@
           "firewalld",
           "gobject-introspection",
           "plymouth"
-        ]
+        ],
+        "module_platform_id": "platform:f30"
       }
     },
     {

@@ -7,7 +7,7 @@
         "basearch": "x86_64",
         "install_weak_deps": true,
         "repos": [
-            "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
+          "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
         ],
         "packages": [
           "@Fedora Cloud Server",
@@ -22,7 +22,8 @@
         ],
         "exclude_packages": [
           "dracut-config-rescue"
-        ]
+        ],
+        "module_platform_id": "platform:f30"
       }
     },
     {
@@ -32,7 +33,8 @@
           "cloud-config",
           "cloud-final",
           "cloud-init",
-          "cloud-init-local"]
+          "cloud-init-local"
+        ]
       }
     },
     {
@@ -72,29 +74,32 @@
       "name": "org.osbuild.fix-bls"
     }
   ],
-  "assembler":
-    {
-      "name": "org.osbuild.qemu",
-      "options": {
-        "bootloader": {"type": "grub2"},
-        "format": "qcow2",
-        "filename": "base.qcow2",
-        "ptuuid": "29579f67-d390-43e7-bd96-dc8f5461171e",
-        "pttype": "gpt",
-        "partitions": [
-          {
-            "size": 8192, "type": "21686148-6449-6E6F-744E-656564454649", "bootable": true
-          },
-          {
-            "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-            "filesystem": {
-              "type": "ext4",
-              "uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-              "mountpoint": "/"
-            }
+  "assembler": {
+    "name": "org.osbuild.qemu",
+    "options": {
+      "bootloader": {
+        "type": "grub2"
+      },
+      "format": "qcow2",
+      "filename": "base.qcow2",
+      "ptuuid": "29579f67-d390-43e7-bd96-dc8f5461171e",
+      "pttype": "gpt",
+      "partitions": [
+        {
+          "size": 8192,
+          "type": "21686148-6449-6E6F-744E-656564454649",
+          "bootable": true
+        },
+        {
+          "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+          "filesystem": {
+            "type": "ext4",
+            "uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+            "mountpoint": "/"
           }
-        ],
-        "size": 3221225472
-      }
+        }
+      ],
+      "size": 3221225472
     }
+  }
 }

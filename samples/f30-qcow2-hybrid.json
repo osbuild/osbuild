@@ -29,7 +29,8 @@
         ],
         "exclude_packages": [
           "dracut-config-rescue"
-        ]
+        ],
+        "module_platform_id": "platform:f30"
       }
     },
     {
@@ -39,7 +40,8 @@
           "cloud-config",
           "cloud-final",
           "cloud-init",
-          "cloud-init-local"]
+          "cloud-init-local"
+        ]
       }
     },
     {
@@ -94,7 +96,9 @@
   "assembler": {
     "name": "org.osbuild.qemu",
     "options": {
-      "bootloader": {"type": "grub2"},
+      "bootloader": {
+        "type": "grub2"
+      },
       "format": "qcow2",
       "filename": "base.qcow2",
       "size": 3221225472,

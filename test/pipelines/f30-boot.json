@@ -18,7 +18,8 @@
               "policycoreutils",
               "qemu-img",
               "systemd"
-            ]
+            ],
+            "module_platform_id": "platform:f30"
           }
         }
       ]
@@ -48,7 +49,8 @@
         ],
         "exclude_packages": [
           "dracut-config-rescue"
-        ]
+        ],
+        "module_platform_id": "platform:f30"
       }
     },
     {

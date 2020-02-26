@@ -7,7 +7,7 @@
         "basearch": "x86_64",
         "install_weak_deps": true,
         "repos": [
-            "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
+          "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
         ],
         "packages": [
           "@Core",
@@ -22,7 +22,8 @@
         ],
         "exclude_packages": [
           "dracut-config-rescue"
-        ]
+        ],
+        "module_platform_id": "platform:f30"
       }
     },
     {
@@ -62,15 +63,14 @@
       "name": "org.osbuild.fix-bls"
     }
   ],
-  "assembler":
-    {
-      "name": "org.osbuild.qemu",
-      "options": {
-        "format": "qcow2",
-        "filename": "base.qcow2",
-        "ptuuid": "0x14fc63d2",
-        "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-        "size": 3221225472
-      }
+  "assembler": {
+    "name": "org.osbuild.qemu",
+    "options": {
+      "format": "qcow2",
+      "filename": "base.qcow2",
+      "ptuuid": "0x14fc63d2",
+      "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+      "size": 3221225472
     }
+  }
 }
