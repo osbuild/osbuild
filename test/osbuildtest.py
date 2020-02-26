@@ -34,17 +34,13 @@ class TestCase(unittest.TestCase):
         if not os.getenv("OSBUILD_TEST_STORE"):
             shutil.rmtree(cls.store)
 
-    def run_osbuild(self, pipeline, input=None, sources=None):
+    def run_osbuild(self, pipeline, input=None):
         osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--store", self.store, "--libdir", ".", pipeline]
 
         build_env = os.getenv("OSBUILD_TEST_BUILD_ENV", None)
         if build_env:
             osbuild_cmd.append("--build-env")
             osbuild_cmd.append(build_env)
-
-        if sources:
-            osbuild_cmd.append("--sources")
-            osbuild_cmd.append(sources)
 
         # Create a checkpoint at the last stage, i.e.
         # commit the final tree to the store, so that
@@ -55,7 +51,7 @@ class TestCase(unittest.TestCase):
             with open(pipeline, "r") as f:
                 manifest = json.load(f)
 
-        parsed = osbuild.load(manifest, {})
+        parsed = osbuild.load(manifest.get("pipeline", {}), manifest.get("sources", {}))
         if parsed.tree_id:
             osbuild_cmd.append("--checkpoint")
             osbuild_cmd.append(parsed.tree_id)

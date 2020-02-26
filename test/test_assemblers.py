@@ -20,8 +20,8 @@ class TestAssemblers(osbuildtest.TestCase):
     def run_assembler(self, name, options):
         with open("test/pipelines/f30-base.json") as f:
             base = json.load(f)
-        pipeline = dict(base, assembler={ "name": name, "options": options })
-        return self.run_osbuild("-", input=json.dumps(pipeline), sources="test/pipelines/sources.json")
+        base["pipeline"] = dict(base["pipeline"], assembler={ "name": name, "options": options })
+        return self.run_osbuild("-", input=json.dumps(base))
 
     def assertImageFile(self, filename, fmt, expected_size=None):
         info = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", filename]))
