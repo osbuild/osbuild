@@ -51,10 +51,12 @@ def umount(target, lazy=True):
     subprocess.run(["umount"] + args + [target], check=True)
 
 
+# pylint: disable=too-many-instance-attributes
 class Object:
     def __init__(self, store: "ObjectStore"):
         self._init = True
         self._readers = 0
+        self._writer = False
         self._base = None
         self._workdir = None
         self._tree = None
@@ -65,6 +67,7 @@ class Object:
         """Initialize the object with content of its base"""
         self._check_writable()
         self._check_readers()
+        self._check_writer()
         if self._init:
             return
 
@@ -100,17 +103,27 @@ class Object:
             path = self._tree
         return path
 
+    @contextlib.contextmanager
     def write(self) -> str:
         """Return a path that can be written to"""
         self._check_writable()
         self._check_readers()
+        self._check_writer()
         self.init()
-        return self._tree
+        with self.tempdir("writer") as target:
+            mount(self._path, target, ro=False)
+            try:
+                self._writer = True
+                yield target
+            finally:
+                umount(target)
+                self._writer = False
 
     @contextlib.contextmanager
     def read(self) -> str:
         self._check_writable()
-        with self.tempdir("mount") as target:
+        self._check_writer()
+        with self.tempdir("reader") as target:
             mount(self._path, target)
             try:
                 self._readers += 1
@@ -128,6 +141,7 @@ class Object:
         """
         self._check_writable()
         self._check_readers()
+        self._check_writer()
         self.init()
         with suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
             os.rename(self._tree, destination)
@@ -142,6 +156,7 @@ class Object:
 
     def cleanup(self):
         self._check_readers()
+        self._check_writer()
         if self._workdir:
             self._workdir.cleanup()
             self._workdir = None
@@ -155,6 +170,11 @@ class Object:
         """Internal: Raise a ValueError if not writable"""
         if not self._workdir:
             raise ValueError("Object is not writable")
+
+    def _check_writer(self):
+        """Internal: Raise a ValueError if there is a writer"""
+        if self._writer:
+            raise ValueError("Write operation is ongoing")
 
     @contextlib.contextmanager
     def _open(self):

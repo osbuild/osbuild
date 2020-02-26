@@ -261,14 +261,15 @@ class Pipeline:
                     # to commit all the trees will be based on the winner.
                     results["stages"] = []
                     for stage in self.stages[base_idx + 1:]:
-                        r = stage.run(tree.write(),
-                                      self.runner,
-                                      build_tree,
-                                      store,
-                                      interactive=interactive,
-                                      libdir=libdir,
-                                      var=store,
-                                      secrets=secrets)
+                        with tree.write() as path:
+                            r = stage.run(path,
+                                          self.runner,
+                                          build_tree,
+                                          store,
+                                          interactive=interactive,
+                                          libdir=libdir,
+                                          var=store,
+                                          secrets=secrets)
                         if stage.checkpoint:
                             object_store.commit(tree, stage.id)
                         results["stages"].append(r.as_dict())
@@ -279,16 +280,17 @@ class Pipeline:
 
             if self.assembler:
                 if not object_store.contains(self.output_id):
-                    with tree.read() as input_tree, \
-                         object_store.new() as output_dir:
-                        r = self.assembler.run(input_tree,
-                                               self.runner,
-                                               build_tree,
-                                               output_dir=output_dir.write(),
-                                               interactive=interactive,
-                                               libdir=libdir,
-                                               var=store)
-                        object_store.commit(output_dir, self.output_id)
+                    with tree.read() as input_dir, \
+                         object_store.new() as output_tree:
+                        with output_tree.write() as output_dir:
+                            r = self.assembler.run(input_dir,
+                                                   self.runner,
+                                                   build_tree,
+                                                   output_dir=output_dir,
+                                                   interactive=interactive,
+                                                   libdir=libdir,
+                                                   var=store)
+                        object_store.commit(output_tree, self.output_id)
                         results["assembler"] = r.as_dict()
                         if not r.success:
                             results["success"] = False
