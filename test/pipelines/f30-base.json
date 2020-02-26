@@ -19,7 +19,8 @@
               "qemu-img",
               "systemd",
               "tar"
-            ]
+            ],
+            "module_platform_id": "platform:f30"
           }
         }
       ]
@@ -38,7 +39,8 @@
         "packages": [
           "@Core",
           "selinux-policy-targeted"
-        ]
+        ],
+        "module_platform_id": "platform:f30"
       }
     },
     {

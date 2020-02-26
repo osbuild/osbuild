@@ -13,7 +13,8 @@
             ],
             "packages": [
               "dnf"
-            ]
+            ],
+            "module_platform_id": "platform:f30"
           }
         }
       ]

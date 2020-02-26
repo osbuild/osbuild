@@ -13,7 +13,8 @@
             ],
             "packages": [
               "dnf"
-            ]
+            ],
+            "module_platform_id": "platform:f30"
           }
         }
       ]
@@ -31,7 +32,8 @@
         ],
         "packages": [
           "@Core"
-        ]
+        ],
+        "module_platform_id": "platform:f30"
       }
     },
     {
