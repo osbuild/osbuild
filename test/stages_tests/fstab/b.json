@@ -1,54 +1,66 @@
 {
-  "build": {
-    "pipeline": {
-      "stages": [
-        {
-          "name": "org.osbuild.dnf",
-          "options": {
-            "releasever": "30",
-            "basearch": "x86_64",
-            "install_weak_deps": false,
-            "repos": [
-              "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
-            ],
-            "packages": [
-              "dnf"
-            ],
-            "module_platform_id": "platform:f30"
-          }
+  "sources": {
+    "org.osbuild.dnf": {
+      "repos": {
+        "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97": {
+          "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-30&arch=x86_64",
+          "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBFturGcBEACv0xBo91V2n0uEC2vh69ywCiSyvUgN/AQH8EZpCVtM7NyjKgKm\nbbY4G3R0M3ir1xXmvUDvK0493/qOiFrjkplvzXFTGpPTi0ypqGgxc5d0ohRA1M75\nL+0AIlXoOgHQ358/c4uO8X0JAA1NYxCkAW1KSJgFJ3RjukrfqSHWthS1d4o8fhHy\nKJKEnirE5hHqB50dafXrBfgZdaOs3C6ppRIePFe2o4vUEapMTCHFw0woQR8Ah4/R\nn7Z9G9Ln+0Cinmy0nbIDiZJ+pgLAXCOWBfDUzcOjDGKvcpoZharA07c0q1/5ojzO\n4F0Fh4g/BUmtrASwHfcIbjHyCSr1j/3Iz883iy07gJY5Yhiuaqmp0o0f9fgHkG53\n2xCU1owmACqaIBNQMukvXRDtB2GJMuKa/asTZDP6R5re+iXs7+s9ohcRRAKGyAyc\nYKIQKcaA+6M8T7/G+TPHZX6HJWqJJiYB+EC2ERblpvq9TPlLguEWcmvjbVc31nyq\nSDoO3ncFWKFmVsbQPTbP+pKUmlLfJwtb5XqxNR5GEXSwVv4I7IqBmJz1MmRafnBZ\ng0FJUtH668GnldO20XbnSVBr820F5SISMXVwCXDXEvGwwiB8Lt8PvqzXnGIFDAu3\nDlQI5sxSqpPVWSyw08ppKT2Tpmy8adiBotLfaCFl2VTHwOae48X2dMPBvQARAQAB\ntDFGZWRvcmEgKDMwKSA8ZmVkb3JhLTMwLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQI4BBMBAgAiBQJbbqxnAhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAK\nCRDvPBEfz8ZZudTnD/9170LL3nyTVUCFmBjT9wZ4gYnpwtKVPa/pKnxbbS+Bmmac\ng9TrT9pZbqOHrNJLiZ3Zx1Hp+8uxr3Lo6kbYwImLhkOEDrf4aP17HfQ6VYFbQZI8\nf79OFxWJ7si9+3gfzeh9UYFEqOQfzIjLWFyfnas0OnV/P+RMQ1Zr+vPRqO7AR2va\nN9wg+Xl7157dhXPCGYnGMNSoxCbpRs0JNlzvJMuAea5nTTznRaJZtK/xKsqLn51D\nK07k9MHVFXakOH8QtMCUglbwfTfIpO5YRq5imxlWbqsYWVQy1WGJFyW6hWC0+RcJ\nOx5zGtOfi4/dN+xJ+ibnbyvy/il7Qm+vyFhCYqIPyS5m2UVJUuao3eApE38k78/o\n8aQOTnFQZ+U1Sw+6woFTxjqRQBXlQm2+7Bt3bqGATg4sXXWPbmwdL87Ic+mxn/ml\nSMfQux/5k6iAu1kQhwkO2YJn9eII6HIPkW+2m5N1JsUyJQe4cbtZE5Yh3TRA0dm7\n+zoBRfCXkOW4krchbgww/ptVmzMMP7GINJdROrJnsGl5FVeid9qHzV7aZycWSma7\nCxBYB1J8HCbty5NjtD6XMYRrMLxXugvX6Q4NPPH+2NKjzX4SIDejS6JjgrP3KA3O\npMuo7ZHMfveBngv8yP+ZD/1sS6l+dfExvdaJdOdgFCnp4p3gPbw5+Lv70HrMjA==\n=BfZ/\n-----END PGP PUBLIC KEY BLOCK-----\n"
         }
-      ]
-    },
-    "runner": "org.osbuild.fedora30"
-  },
-  "stages": [
-    {
-      "name": "org.osbuild.dnf",
-      "options": {
-        "releasever": "30",
-        "basearch": "x86_64",
-        "repos": [
-          "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
-        ],
-        "packages": [
-          "@Core"
-        ],
-        "module_platform_id": "platform:f30"
-      }
-    },
-    {
-      "name": "org.osbuild.fstab",
-      "options": {
-        "filesystems": [
-          {
-            "uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-            "vfs_type": "ext4",
-            "path": "/",
-            "freq": "1",
-            "passno": "1"
-          }
-        ]
       }
     }
-  ]
+  },
+  "pipeline": {
+    "build": {
+      "pipeline": {
+        "stages": [
+          {
+            "name": "org.osbuild.dnf",
+            "options": {
+              "releasever": "30",
+              "basearch": "x86_64",
+              "install_weak_deps": false,
+              "repos": [
+                "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
+              ],
+              "packages": [
+                "dnf"
+              ],
+              "module_platform_id": "platform:f30"
+            }
+          }
+        ]
+      },
+      "runner": "org.osbuild.fedora30"
+    },
+    "stages": [
+      {
+        "name": "org.osbuild.dnf",
+        "options": {
+          "releasever": "30",
+          "basearch": "x86_64",
+          "repos": [
+            "sha256:9f596e18f585bee30ac41c11fb11a83ed6b11d5b341c1cb56ca4015d7717cb97"
+          ],
+          "packages": [
+            "@Core"
+          ],
+          "module_platform_id": "platform:f30"
+        }
+      },
+      {
+        "name": "org.osbuild.fstab",
+        "options": {
+          "filesystems": [
+            {
+              "uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+              "vfs_type": "ext4",
+              "path": "/",
+              "freq": "1",
+              "passno": "1"
+            }
+          ]
+        }
+      }
+    ]
+  }
 }

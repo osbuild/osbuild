@@ -6,7 +6,7 @@ from . import osbuildtest
 
 class TestBoot(osbuildtest.TestCase):
     def test_boot(self):
-        _, output_id = self.run_osbuild("test/pipelines/f30-boot.json", sources="test/pipelines/sources.json")
+        _, output_id = self.run_osbuild("test/pipelines/f30-boot.json")
 
         r = subprocess.run(["qemu-system-x86_64",
             "-snapshot",
