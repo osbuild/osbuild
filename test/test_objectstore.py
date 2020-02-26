@@ -29,9 +29,9 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(object_store.objects)) == 0
 
             with object_store.new() as tree:
-                path = tree.write()
-                p = Path(f"{path}/A")
-                p.touch()
+                with tree.write() as path:
+                    p = Path(f"{path}/A")
+                    p.touch()
                 object_store.commit(tree, "a")
 
             assert object_store.contains("a")
@@ -42,11 +42,11 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(f"{object_store.refs}/a/")) == 1
 
             with object_store.new() as tree:
-                path = tree.write()
-                p = Path(f"{path}/A")
-                p.touch()
-                p = Path(f"{path}/B")
-                p.touch()
+                with tree.write() as path:
+                    p = Path(f"{path}/A")
+                    p.touch()
+                    p = Path(f"{path}/B")
+                    p.touch()
                 object_store.commit(tree, "b")
 
             assert object_store.contains("b")
@@ -65,15 +65,15 @@ class TestObjectStore(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
             object_store = objectstore.ObjectStore(tmp)
             with object_store.new() as tree:
-                path = tree.write()
-                p = Path(f"{path}/A")
-                p.touch()
+                with tree.write() as path:
+                    p = Path(f"{path}/A")
+                    p.touch()
                 object_store.commit(tree, "a")
 
             with object_store.new() as tree:
-                path = tree.write()
-                shutil.copy2(f"{object_store.refs}/a/A",
-                             f"{path}/A")
+                with tree.write() as path:
+                    shutil.copy2(f"{object_store.refs}/a/A",
+                                 f"{path}/A")
                 object_store.commit(tree, "b")
 
             assert os.path.exists(f"{object_store.refs}/a")
@@ -90,9 +90,9 @@ class TestObjectStore(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
             object_store = objectstore.ObjectStore(tmp)
             with object_store.new() as tree:
-                path = tree.write()
-                p = Path(f"{path}/A")
-                p.touch()
+                with tree.write() as path:
+                    p = Path(f"{path}/A")
+                    p.touch()
                 object_store.commit(tree, "a")
 
             with object_store.new() as tree:
@@ -101,9 +101,9 @@ class TestObjectStore(unittest.TestCase):
 
             with object_store.new() as tree:
                 tree.base = "b"
-                path = tree.write()
-                p = Path(f"{path}/C")
-                p.touch()
+                with tree.write() as path:
+                    p = Path(f"{path}/C")
+                    p.touch()
                 object_store.commit(tree, "c")
 
             assert os.path.exists(f"{object_store.refs}/a/A")
@@ -125,7 +125,8 @@ class TestObjectStore(unittest.TestCase):
 
             with object_store.new() as tree:
                 path = tree.write()
-                with open(f"{path}/data", "w") as f:
+                with tree.write() as path, \
+                     open(f"{path}/data", "w") as f:
                     f.write(data)
                     st = os.fstat(f.fileno())
                     data_inode = st.st_ino
@@ -159,14 +160,14 @@ class TestObjectStore(unittest.TestCase):
                         self.assertEqual(st.st_ino, data_inode)
                         data_read = f.read()
                         self.assertEqual(data, data_read)
-                path = tree.write()
-                # "data" must of course still be present
-                assert os.path.exists(f"{path}/data")
-                # but since it is a copy, have a different inode
-                st = os.stat(f"{path}/data")
-                self.assertNotEqual(st.st_ino, data_inode)
-                p = Path(f"{path}/other_data")
-                p.touch()
+                with tree.write() as path:
+                    # "data" must of course still be present
+                    assert os.path.exists(f"{path}/data")
+                    # but since it is a copy, have a different inode
+                    st = os.stat(f"{path}/data")
+                    self.assertNotEqual(st.st_ino, data_inode)
+                    p = Path(f"{path}/other_data")
+                    p.touch()
                 # now that we have written, the treesum
                 # should have changed
                 self.assertNotEqual(tree.treesum, x_hash)
@@ -178,7 +179,8 @@ class TestObjectStore(unittest.TestCase):
             # currently being read from fails
             with tree.read() as _:
                 with self.assertRaises(ValueError):
-                    tree.write()
+                    with tree.write() as _:
+                        pass
 
                 # check multiple readers are ok
                 with tree.read() as _:
@@ -188,34 +190,54 @@ class TestObjectStore(unittest.TestCase):
 
                 # writing should still fail
                 with self.assertRaises(ValueError):
-                    tree.write()
+                    with tree.write() as _:
+                        pass
 
             # Now that all readers are gone, writing should
             # work
-            tree.write()
+            with tree.write() as _:
+                pass
 
             # and back to reading, one last time
             with tree.read() as _:
                 with self.assertRaises(ValueError):
-                    tree.write()
+                    with tree.write() as _:
+                        pass
+
+            # Only one single writer
+            with tree.write() as _:
+                # no other readers
+                with self.assertRaises(ValueError):
+                    with tree.read() as _:
+                        pass
+
+                # or other writers
+                with self.assertRaises(ValueError):
+                    with tree.write() as _:
+                        pass
+
+            # one more time
+            with tree.write() as _:
+                pass
 
         # tree has exited the context, it should NOT be
         # writable anymore
         with self.assertRaises(ValueError):
-            tree.write()
+            with tree.write() as _:
+                pass
 
     def test_snapshot(self):
         object_store = objectstore.ObjectStore(self.store)
         with object_store.new() as tree:
-            path = tree.write()
-            p = Path(f"{path}/A")
-            p.touch()
+            with tree.write() as path:
+                p = Path(f"{path}/A")
+                p.touch()
             assert not object_store.contains("a")
             object_store.commit(tree, "a")
             assert object_store.contains("a")
-            path = tree.write()
-            p = Path(f"{path}/B")
-            p.touch()
+            with tree.write() as path:
+                p = Path(f"{path}/B")
+                p.touch()
             object_store.commit(tree, "b")
 
         # check the references exist
