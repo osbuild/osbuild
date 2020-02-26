@@ -28,7 +28,8 @@ def suppress_oserror(*errnos):
 
 
 class Object:
-    def __init__(self, path: str):
+    def __init__(self, store: "ObjectStore", path: str):
+        self.store = store
         os.makedirs(path, mode=0o755, exist_ok=True)
         self.path = path
 
@@ -113,7 +114,7 @@ class ObjectStore:
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
             # the object that is yielded will be added to the content store
             # on success as object_id
-            obj = Object(f"{tmp}/tree")
+            obj = Object(self, f"{tmp}/tree")
 
             if base_id:
                 # the base, the working tree and the output dir are all
@@ -143,7 +144,7 @@ class ObjectStore:
         # the latter with the contents of `object_path` and commit
         # it to the store
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
-            obj = Object(f"{tmp}/tree")
+            obj = Object(self, f"{tmp}/tree")
             obj.init(object_path)
             return self.commit(obj, object_id)
 
