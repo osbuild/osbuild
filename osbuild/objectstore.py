@@ -27,20 +27,20 @@ def suppress_oserror(*errnos):
             raise e
 
 
-class TreeObject:
+class Object:
     def __init__(self, path: str):
         os.makedirs(path, mode=0o755, exist_ok=True)
         self.path = path
 
     def init(self, source: str) -> None:
-        """Initialize the tree with a source tree"""
+        """Initialize the object with source content"""
         subprocess.run(["cp", "--reflink=auto", "-a",
                         f"{source}/.", self.path],
                        check=True)
 
     @property
     def treesum(self) -> str:
-        """Calculate the treesum of the tree"""
+        """Calculate the treesum of the object"""
         with self.open() as fd:
             m = hashlib.sha256()
             treesum.treesum(m, fd)
@@ -57,7 +57,7 @@ class TreeObject:
             os.close(fd)
 
     def move(self, destination: str):
-        """Move the tree to destination
+        """Move the object to destination
 
         Does so atomically by using rename(2). If the
         target already exist, use that instead
@@ -111,61 +111,61 @@ class ObjectStore:
         without raising an exception.
         """
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
-            # the tree that is yielded will be added to the content store
+            # the object that is yielded will be added to the content store
             # on success as object_id
-            tree = TreeObject(f"{tmp}/tree")
+            obj = Object(f"{tmp}/tree")
 
             if base_id:
-                # the base, the working tree and the output tree are all on
-                # the same fs, so attempt a lightweight copy if the fs
-                # supports it
-                tree.init(self.resolve_ref(base_id))
+                # the base, the working tree and the output dir are all
+                # on the same fs, so attempt a lightweight copy if the
+                # fs supports it
+                obj.init(self.resolve_ref(base_id))
 
-            yield tree.path
+            yield obj.path
 
             # if the yield above raises an exception, the working tree
             # is cleaned up by tempfile, otherwise, the it the content
             # of it was created or modified by the caller. All that is
             # left to do is to commit it to the object store
-            self.commit(tree, object_id)
+            self.commit(obj, object_id)
 
-    def snapshot(self, tree_path: str, object_id: str) -> str:
-        """Commit `tree_path` to store and ref it as `object_id`
+    def snapshot(self, object_path: str, object_id: str) -> str:
+        """Commit `object_path` to store and ref it as `object_id`
 
-        Create a snapshot of `tree_path` and store it via its
+        Create a snapshot of `object_path` and store it via its
         content hash in the object directory; additionally
         create a new reference to it via `object_id` in the
         reference directory.
 
         Returns: The treesum of the snapshot
         """
-        # Make a new temporary directory and TreeObject; initialize
-        # the latter with the contents of `tree_path` and commit
+        # Make a new temporary directory and Object; initialize
+        # the latter with the contents of `object_path` and commit
         # it to the store
         with tempfile.TemporaryDirectory(dir=self.store) as tmp:
-            tree = TreeObject(f"{tmp}/tree")
-            tree.init(tree_path)
-            return self.commit(tree, object_id)
+            obj = Object(f"{tmp}/tree")
+            obj.init(object_path)
+            return self.commit(obj, object_id)
 
-    def commit(self, tree: TreeObject, object_id: str) -> str:
-        """Commits a TreeObject to the object store
+    def commit(self, obj: Object, object_id: str) -> str:
+        """Commits a Object to the object store
 
-        Move the contents of the tree (TreeObject) to object directory
-        of the store with the content hash (tree.treesum) as its name.
+        Move the contents of the obj (Object) to object directory
+        of the store with the content hash (obj.treesum) as its name.
         Creates a symlink to that ('objects/{hash}') in the references
         directory with the object_id as the name ('refs/{object_id}).
         If the link already exists, it will be atomically replaced.
 
-        Returns: The treesum of the tree
+        Returns: The treesum of the object
         """
-        treesum_hash = tree.treesum
+        treesum_hash = obj.treesum
 
-        # the tree is stored in the objects directory using its content
+        # the object is stored in the objects directory using its content
         # hash as its name, ideally a given object_id (i.e., given config)
         # will always produce the same content hash, but that is not
-        # guaranteed. If a tree with the same treesum already exist, us
+        # guaranteed. If an object with the same treesum already exist, us
         # the existing one instead
-        tree.move(f"{self.objects}/{treesum_hash}")
+        obj.move(f"{self.objects}/{treesum_hash}")
 
         # symlink the object_id (config hash) in the refs directory to the
         # treesum (content hash) in the objects directory. If a symlink by
