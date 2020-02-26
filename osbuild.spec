@@ -80,6 +80,9 @@ ln -s org.osbuild.fedora31 %{buildroot}%{pkgdir}/runners/org.osbuild.host
 %if 0%{?fc32}
 ln -s org.osbuild.fedora32 %{buildroot}%{pkgdir}/runners/org.osbuild.host
 %endif
+%if 0%{?fc33}
+ln -s org.osbuild.fedora33 %{buildroot}%{pkgdir}/runners/org.osbuild.host
+%endif
 %if 0%{?el8}
 ln -s org.osbuild.rhel82 %{buildroot}%{pkgdir}/runners/org.osbuild.host
 %endif
