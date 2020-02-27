@@ -29,6 +29,7 @@ jobs:
         run: |
           cd osbuild
           pylint osbuild runners/* assemblers/* stages/* sources/*
+
   unit_tests:
     name: "unit"
     runs-on: ubuntu-latest
@@ -49,3 +50,70 @@ jobs:
         run: |
           cd osbuild
           python3 -m unittest -v test.test_objectstore
+
+  rpm_build:
+    name: "RPM build"
+    needs:
+      - pylint
+      - unit_tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fedora_release: ["31", "32", "rawhide"]
+    container:
+      image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
+    steps:
+      - name: Prepare container
+        run: |
+          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
+          echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
+          dnf -y upgrade
+          dnf -y install dnf-plugins-core rpm-build rpmdevtools
+
+      - name: Fetch .spec file
+        run: |
+          mkdir spec
+          # Fetch the spec file at the given commit, and prepend the commit sha to it
+          curl "https://raw.githubusercontent.com/osbuild/osbuild/${GITHUB_SHA}/osbuild.spec" -o osbuild.spec
+          echo "%global commit ${GITHUB_SHA}" | cat - osbuild.spec > spec/osbuild.spec
+
+      - name: Install RPM build dependencies
+        run: dnf -y builddep spec/osbuild.spec
+
+      - name: Fetch sources
+        run: |
+          mkdir sources
+          spectool -g spec/osbuild.spec -C sources/
+
+      - name: Build SRPM
+        run: |
+          mkdir srpms
+          rpmbuild -bs \
+            --define "_sourcedir sources" \
+            --define "_srcrpmdir srpms" \
+            spec/osbuild.spec
+
+      - name: Build RPMs
+        run: |
+          mkdir rpmbuild rpms build
+          rpmbuild -bb \
+            --define "_sourcedir `pwd`/sources" \
+            --define "_specdir `pwd`/spec" \
+            --define "_builddir `pwd`/rpmbuild" \
+            --define "_srcrpmdir `pwd`/srpms" \
+            --define "_rpmdir `pwd`/rpms" \
+            --define "_buildrootdir `pwd`/build" \
+            spec/osbuild.spec
+
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v1
+        with:
+          name: rpms
+          path: rpms/
+
+      - name: Test RPM installation
+        run: |
+          pushd rpms/noarch
+            dnf -y install $(ls *.rpm)
+          popd
