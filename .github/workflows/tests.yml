@@ -1,5 +1,4 @@
 name: Tests
-
 # NOTE(mhayden): Restricting branches prevents jobs from being doubled since
 # a push to a pull request triggers two events.
 on:
@@ -11,41 +10,164 @@ on:
       - master
 
 jobs:
-  pylint:
-    name: "pylint"
+  # pylint:
+  #   name: "pylint"
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: docker.io/library/python:3.7
+  #   steps:
+  #     - name: Install pylint
+  #       run: pip install pylint==2.4.1
+
+  #     - name: Clone repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         path: osbuild
+
+  #     - name: Run pylint
+  #       run: |
+  #         cd osbuild
+  #         pylint osbuild runners/* assemblers/* stages/* sources/*
+
+  # unit_tests:
+  #   name: "unit tests"
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: docker.io/library/python:3.7
+  #   steps:
+  #     - name: Clone repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         path: osbuild
+
+  #     - name: Run test_osbuild
+  #       run: |
+  #         cd osbuild
+  #         python3 -m unittest -v test.test_osbuild
+
+  #     - name: Run test_objectstore
+  #       run: |
+  #         cd osbuild
+  #         python3 -m unittest -v test.test_objectstore
+
+  rpm_build:
+    name: "rpm build"
+    # needs:
+    #   - pylint
+    #   - unit_tests
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        fedora_release: ["31", "32", "rawhide"]
     container:
-      image: docker.io/library/python:3.7
+      image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
     steps:
-      - name: Install pylint
-        run: pip install pylint==2.4.1
+      - name: Prepare container
+        run: |
+          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
+          echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
+          dnf -y upgrade
+          dnf -y install dnf-plugins-core rpm-build rpmdevtools
+
+      - name: Fetch .spec file
+        run: |
+          mkdir spec
+          # Fetch the spec file at the given commit, and prepend the commit sha to it
+          curl "https://raw.githubusercontent.com/osbuild/osbuild/${GITHUB_SHA}/osbuild.spec" -o osbuild.spec
+          echo "%global commit ${GITHUB_SHA}" | cat - osbuild.spec > spec/osbuild.spec
+
+      - name: Install RPM build dependencies
+        run: dnf -y builddep spec/osbuild.spec
+
+      - name: Fetch sources
+        run: |
+          mkdir sources
+          spectool -g spec/osbuild.spec -C sources/
+
+      - name: Build SRPM
+        run: |
+          mkdir srpms
+          rpmbuild -bs \
+            --define "_sourcedir sources" \
+            --define "_srcrpmdir srpms" \
+            spec/osbuild.spec
+
+      - name: Build RPMs
+        run: |
+          mkdir rpmbuild rpms build
+          rpmbuild -bb \
+            --define "_sourcedir `pwd`/sources" \
+            --define "_specdir `pwd`/spec" \
+            --define "_builddir `pwd`/rpmbuild" \
+            --define "_srcrpmdir `pwd`/srpms" \
+            --define "_rpmdir `pwd`/rpms" \
+            --define "_buildrootdir `pwd`/build" \
+            spec/osbuild.spec
+
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v1
+        with:
+          name: rpms
+          path: rpms/
+
+      - name: Test RPM installation
+        run: |
+          pushd rpms/noarch
+            dnf -y install $(ls *.rpm)
+          popd
+
+  functional_testing:
+    name: "functional"
+    needs: rpm_build
+    runs-on: ubuntu-latest
+    container: docker.io/library/fedora:31
+    env:
+      AWS_REGION: us-east-2
+      AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+      AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+      PLAYBOOK_DIR: "${{ github.workspace }}/osbuild/.github/playbooks"
+      # Set the inventory for the playbooks.
+      ANSIBLE_INVENTORY: "${{ github.workspace }}/osbuild/.github/playbooks/hosts.ini"
+      # Colors are much more fun.
+      ANSIBLE_FORCE_COLOR: "true"
+      ANSIBLE_COLOR_DEBUG: purple
+      # Hide deprecation warnings.
+      ANSIBLE_DEPRECATION_WARNINGS: "false"
+      # Our instances will be different each time, so ignore host keys.
+      ANSIBLE_HOST_KEY_CHECKING: "false"
+      # Add profiling information for each task and use YAML for stdout.
+      ANSIBLE_CALLBACK_WHITELIST: profile_tasks
+      ANSIBLE_LOAD_CALLBACK_PLUGINS: "true"
+      ANSIBLE_STDOUT_CALLBACK: yaml
+      # Our ssh key to reach the EC2 instance is stored here.
+      ANSIBLE_PRIVATE_KEY_FILE: /root/.ssh/boot
+      # Speed up the Ansible tasks that run remotely at EC2.
+      ANSIBLE_SSH_PIPELINING: "true"
+    steps:
+      - name: Prepare container
+        run: |
+          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
+          echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
+          dnf -y upgrade
+          dnf -y install ansible openssh openssh-clients python3-boto python3-boto3 python3-botocore unzip
 
       - name: Clone repository
         uses: actions/checkout@v2
         with:
           path: osbuild
 
-      - name: Run pylint
-        run: |
-          cd osbuild
-          pylint osbuild runners/* assemblers/* stages/* sources/*
-  unit_tests:
-    name: "unit"
-    runs-on: ubuntu-latest
-    container:
-      image: docker.io/library/python:3.7
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v2
+      - name: Download osbuild RPMs from previous job
+        uses: actions/download-artifact@v1
         with:
-          path: osbuild
+          name: rpms
 
-      - name: Run test_osbuild
-        run: |
-          cd osbuild
-          python3 -m unittest -v test.test_osbuild
+      - name: Provision CI infrastructure on EC2
+        run: ansible-playbook ${PLAYBOOK_DIR}/ec2_create.yml
 
-      - name: Run test_objectstore
+      - name: Functional tests
+        run: ansible-playbook ${PLAYBOOK_DIR}/functional_testing.yml
+
+      - name: Clean up the CI infrastructure
+        if: always()
         run: |
-          cd osbuild
-          python3 -m unittest -v test.test_objectstore
+          ansible-playbook ${PLAYBOOK_DIR}/ec2_cleanup.yml

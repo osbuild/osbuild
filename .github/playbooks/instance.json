@@ -1,0 +1,39 @@
+{
+  "BlockDeviceMappings": [
+      {
+          "DeviceName": "/dev/sda1",
+          "Ebs": {
+              "DeleteOnTermination": true,
+              "VolumeSize": 50,
+              "VolumeType": "gp2",
+              "Encrypted": false
+          }
+      }
+  ],
+  "ImageId": "{{ item.image_id }}",
+  "InstanceType": "{{ item.instance_type }}",
+  "KeyName": "osbuild.ci.keypair.{{ github_run_id }}",
+  "SecurityGroups": [
+      "default"
+  ],
+  "UserData": {{ ec2_user_data | to_json }},
+  "TagSpecifications": [
+      {
+          "ResourceType": "instance",
+          "Tags": [
+              {
+                  "Key": "Name",
+                  "Value": "{{ item.instance_name }}"
+              }
+          ]
+      }
+  ],
+  "InstanceMarketOptions": {
+      "MarketType": "spot",
+      "SpotOptions": {
+          "MaxPrice": "0.50",
+          "SpotInstanceType": "one-time",
+          "InstanceInterruptionBehavior": "terminate"
+      }
+  }
+}

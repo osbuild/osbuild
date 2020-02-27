@@ -1,0 +1,36 @@
+---
+
+  - hosts: test_manager
+    tasks:
+
+      - name: Set facts based on GitLab actions variables
+        set_fact:
+          github_run_id: "{{ ansible_env.GITHUB_RUN_ID }}"
+          github_sha: "{{ ansible_env.GITHUB_SHA }}"
+          aws_region: "{{ ansible_env.AWS_REGION }}"
+
+      - name: Clean up keypair
+        ec2_key:
+          name: "osbuild.ci.keypair.{{ github_run_id }}"
+          state: absent
+          region: "{{ aws_region }}"
+        ignore_errors: yes
+
+      - name: Get facts about instances
+        ec2_instance_facts:
+          region: "{{ aws_region }}"
+          filters:
+            "tag:Name": "osbuild.ci.{{ github_run_id }}*"
+            "instance-state-name": "running"
+        register: ec2
+
+      - name: Clean up instances
+        ec2_instance:
+          instance_ids: "{{ item.instance_id }}"
+          state: absent
+          region: "{{ aws_region }}"
+          wait: no
+        ignore_errors: yes
+        loop: "{{ ec2.instances }}"
+        loop_control:
+          label: "{{ item.tags.Name }}"

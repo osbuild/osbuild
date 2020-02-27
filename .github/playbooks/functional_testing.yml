@@ -1,0 +1,92 @@
+- hosts: test_instances
+  user: fedora
+  become: yes
+  vars:
+    osbuild_pkg_dir: /tmp/osbuild-packages
+    test_samples:
+      aarch64:
+        - f30-aarch64.json
+      x86_64:
+        # - f30-base-uefi.json
+        # - f30-bootpart-hybrid.json
+        # - f30-qcow2-gpt.json
+        - f30-qcow2-hybrid.json
+    # This fact is set to 'no' if any tests failed.
+    all_tests_passed: yes
+  tasks:
+
+    - name: Upgrade system
+      package:
+        name: "*"
+        exclude:
+          - kernel
+          - kernel-core
+        state: latest
+      register: system_update
+      until: system_update is success
+      retries: 4
+
+    - name: Install required packages
+      package:
+        name:
+          - dosfstools
+          - e2fsprogs
+          - git
+          - xfsprogs
+        state: present
+      register: required_packages_install
+      until: required_packages_install is success
+      retries: 4
+
+    - name: Add major's ssh key as a backup
+      authorized_key:
+        user: fedora
+        state: present
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCxjfFIIlGfCn9iclHymWrEBrTU2lL6tkSGT1ep7dCPzw1jY6WnhQlPXMpePriNxNXlG8cWO9/RFpBd0z9FwNy+kfgh9fuyNY49I+Ma6OyTVBg5hNoFxfRXG5iHtc/SQlnbEFiKpSk4lipo4QZtBtmgAqgkSA6Dzhygb6u5M9ixTIx4WBjuSM0GXQzNjpefyiWu+sIR+h2UrQkKABuuIYQbrjl+FhVmaLvrvyTO2usOtvnYBjhbPwyO72WPjapKd/9hTaqPE1wFy6UF2nXc4Pgw0giQb6sibFTz7NTexW35Q98qpQOWMYKcpgZrlSaHHKZSMhtzO7MdZrOLFUXoS1AeAy4ghtcNrOBTlb5SvP73zz0qBRF2cCO4O0wp5wwqPhvw2ntb3pTLPtdetJ+V50QPnpnXySSnZp2zFwce21bXx67nh9lnhLrZgje7coQnPAFx/cl36ESJygiuPcBw+k18YulYMXUqaBtkwJLkRjDpjTX2e5MJ16oD7sJHc4/W5kyfLvdMsVhdq1CXHGVVOpzogb095VYi0RXFpnZR/1eVgC/R+WVytYfY80rfVOcdAo2GZfnJ5zYRUXJJ9MZkanxx3E7UOikEJN9sUj200z6Cyy0IfIqTbJ1B5f7fd3acRrL4DcYUdFI/1ByNW6F1j7cZiAGOJKNbzXF0T3tf8x0e1Q== major@iridium.local"
+
+    - name: Create a directory to hold the RPMs built in GitHub
+      file:
+        path: "{{ osbuild_pkg_dir }}"
+        state: directory
+
+    - name: Copy artifacts from RPM build
+      copy:
+        src: "{{ github_workspace }}/rpms/noarch/"
+        dest: "{{ osbuild_pkg_dir }}/"
+
+    - name: Find the RPMs matching our Fedora release
+      shell: "find {{ osbuild_pkg_dir }} | grep fc{{ ansible_distribution_version }}"
+      register: osbuild_rpms
+
+    - name: Clone the osbuild repository
+      git:
+        repo: https://github.com/osbuild/osbuild.git
+        dest: /opt/osbuild
+        version: master
+        clone: yes
+        update: yes
+        depth: 1
+      register: osbuild_clone
+      until: osbuild_clone is success
+      retries: 4
+
+    - name: Install osbuild RPMs
+      package:
+        name: "{{ osbuild_rpms.stdout_lines }}"
+        state: latest
+      register: osbuild_install
+      until: osbuild_install is success
+      retries: 4
+
+    - name: Run functional tests
+      include_tasks: include/run_osbuild.yml
+      loop: "{{ test_samples[ansible_architecture] }}"
+      loop_control:
+        loop_var: test_to_run
+
+    - name: Fail with an error if any tests failed
+      fail:
+        msg: |
+          One or more tests failed. Check the Ansible output for details.
+      when:
+        - not all_tests_passed

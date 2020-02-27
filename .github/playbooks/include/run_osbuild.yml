@@ -1,0 +1,31 @@
+---
+
+- name: "Run test - {{ test_to_run | splitext | first }}"
+  command: |
+    osbuild --sources /opt/osbuild/samples/sources.json \
+      /opt/osbuild/samples/{{ test_to_run }}
+  register: osbuild_test_run
+  async: 1200
+  poll: 0
+
+- name: "Waiting for test to finish - {{ test_to_run | splitext | first }}"
+  async_status:
+    jid: "{{ osbuild_test_run.ansible_job_id }}"
+  register: job_result
+  until: job_result is finished
+  retries: 80
+  delay: 15
+
+- name: Set a fact if the test failed
+  set_fact:
+    all_tests_passed: no
+  when:
+    - osbuild_test_run is failure
+
+- name: Print stdout from test
+  debug:
+    var: osbuild_test_run.stdout
+
+- name: Print stderr from test
+  debug:
+    var: osbuild_test_run.stderr
