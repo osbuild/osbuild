@@ -34,6 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: docker.io/library/python:3.7
+      options: --privileged  # Needed for bind mounts in unit tests
     steps:
       - name: Clone repository
         uses: actions/checkout@v2
