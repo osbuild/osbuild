@@ -24,12 +24,17 @@ class TestObjectStore(unittest.TestCase):
         # always use a temporary store so item counting works
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
             object_store = objectstore.ObjectStore(tmp)
+            # No objects or references should be in the store
+            assert len(os.listdir(object_store.refs)) == 0
+            assert len(os.listdir(object_store.objects)) == 0
+
             with object_store.new() as tree:
                 path = tree.write()
                 p = Path(f"{path}/A")
                 p.touch()
                 object_store.commit(tree, "a")
 
+            assert object_store.contains("a")
             assert os.path.exists(f"{object_store.refs}/a")
             assert os.path.exists(f"{object_store.refs}/a/A")
             assert len(os.listdir(object_store.refs)) == 1
@@ -44,12 +49,17 @@ class TestObjectStore(unittest.TestCase):
                 p.touch()
                 object_store.commit(tree, "b")
 
+            assert object_store.contains("b")
             assert os.path.exists(f"{object_store.refs}/b")
             assert os.path.exists(f"{object_store.refs}/b/B")
 
             assert len(os.listdir(object_store.refs)) == 2
             assert len(os.listdir(object_store.objects)) == 2
             assert len(os.listdir(f"{object_store.refs}/b/")) == 2
+
+            self.assertEqual(object_store.resolve_ref(None), None)
+            self.assertEqual(object_store.resolve_ref("a"),
+                             f"{object_store.refs}/a")
 
     def test_duplicate(self):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
@@ -81,7 +91,9 @@ class TestObjectStore(unittest.TestCase):
             path = tree.write()
             p = Path(f"{path}/A")
             p.touch()
+            assert not object_store.contains("a")
             object_store.commit(tree, "a")
+            assert object_store.contains("a")
             path = tree.write()
             p = Path(f"{path}/B")
             p.touch()
