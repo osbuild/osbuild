@@ -85,6 +85,63 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(f"{object_store.refs}/a/")) == 1
             assert len(os.listdir(f"{object_store.refs}/b/")) == 1
 
+    def test_object_copy_on_write(self):
+        # operate with a clean object store
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+            # sample data to be used for read, write checks
+            data = "23"
+
+            object_store = objectstore.ObjectStore(tmp)
+            assert len(os.listdir(object_store.refs)) == 0
+
+            with object_store.new() as tree:
+                path = tree.write()
+                with open(f"{path}/data", "w") as f:
+                    f.write(data)
+                    st = os.fstat(f.fileno())
+                    data_inode = st.st_ino
+                # commit the object as "x"
+                x_hash = object_store.commit(tree, "x")
+                # after the commit, "x" is now the base
+                # of "tree"
+                self.assertEqual(tree.base, "x")
+                # check that "data" is still the very
+                # same file after committing
+                with tree.read() as path:
+                    with open(f"{path}/data", "r") as f:
+                        st = os.fstat(f.fileno())
+                        self.assertEqual(st.st_ino, data_inode)
+                        data_read = f.read()
+                        self.assertEqual(data, data_read)
+
+            # the object referenced by "x" should act as
+            # the base of a new object. As long as the
+            # new one is not modified, it should have
+            # the very same content
+            with object_store.new(base_id="x") as tree:
+                self.assertEqual(tree.base, "x")
+                self.assertEqual(tree.treesum, x_hash)
+                with tree.read() as path:
+                    with open(f"{path}/data", "r") as f:
+                        # copy-on-write: since we have not written
+                        # to the tree yet, "data" should be the
+                        # very same file as that one of object "x"
+                        st = os.fstat(f.fileno())
+                        self.assertEqual(st.st_ino, data_inode)
+                        data_read = f.read()
+                        self.assertEqual(data, data_read)
+                path = tree.write()
+                # "data" must of course still be present
+                assert os.path.exists(f"{path}/data")
+                # but since it is a copy, have a different inode
+                st = os.stat(f"{path}/data")
+                self.assertNotEqual(st.st_ino, data_inode)
+                p = Path(f"{path}/other_data")
+                p.touch()
+                # now that we have written, the treesum
+                # should have changed
+                self.assertNotEqual(tree.treesum, x_hash)
+
     def test_snapshot(self):
         object_store = objectstore.ObjectStore(self.store)
         with object_store.new() as tree:
