@@ -24,6 +24,7 @@ jobs:
         run: |
           echo "fastestmirror=1" >> /etc/dnf/dnf.conf
           echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
+          rm -fv /etc/yum.repos.d/fedora*modular*
           dnf -y upgrade
           dnf -y install dnf-plugins-core rpm-build rpmdevtools
 
