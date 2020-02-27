@@ -85,6 +85,35 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(f"{object_store.refs}/a/")) == 1
             assert len(os.listdir(f"{object_store.refs}/b/")) == 1
 
+    def test_object_base(self):
+        # operate with a clean object store
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+            object_store = objectstore.ObjectStore(tmp)
+            with object_store.new() as tree:
+                path = tree.write()
+                p = Path(f"{path}/A")
+                p.touch()
+                object_store.commit(tree, "a")
+
+            with object_store.new() as tree:
+                tree.base = "a"
+                object_store.commit(tree, "b")
+
+            with object_store.new() as tree:
+                tree.base = "b"
+                path = tree.write()
+                p = Path(f"{path}/C")
+                p.touch()
+                object_store.commit(tree, "c")
+
+            assert os.path.exists(f"{object_store.refs}/a/A")
+            assert os.path.exists(f"{object_store.refs}/b/A")
+            assert os.path.exists(f"{object_store.refs}/c/A")
+            assert os.path.exists(f"{object_store.refs}/c/C")
+
+            assert len(os.listdir(object_store.refs)) == 3
+            assert len(os.listdir(object_store.objects)) == 2
+
     def test_object_copy_on_write(self):
         # operate with a clean object store
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
