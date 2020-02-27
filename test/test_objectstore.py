@@ -142,6 +142,39 @@ class TestObjectStore(unittest.TestCase):
                 # should have changed
                 self.assertNotEqual(tree.treesum, x_hash)
 
+    def test_object_mode(self):
+        object_store = objectstore.ObjectStore(self.store)
+        with object_store.new() as tree:
+            # check that trying to write to a tree that is
+            # currently being read from fails
+            with tree.read() as _:
+                with self.assertRaises(ValueError):
+                    tree.write()
+
+                # check multiple readers are ok
+                with tree.read() as _:
+                    # calculating the treesum also is reading,
+                    # so this is 3 nested readers
+                    _ = tree.treesum
+
+                # writing should still fail
+                with self.assertRaises(ValueError):
+                    tree.write()
+
+            # Now that all readers are gone, writing should
+            # work
+            tree.write()
+
+            # and back to reading, one last time
+            with tree.read() as _:
+                with self.assertRaises(ValueError):
+                    tree.write()
+
+        # tree has exited the context, it should NOT be
+        # writable anymore
+        with self.assertRaises(ValueError):
+            tree.write()
+
     def test_snapshot(self):
         object_store = objectstore.ObjectStore(self.store)
         with object_store.new() as tree:
