@@ -15,6 +15,7 @@ jobs:
     name: "Build RPMs"
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         fedora_release: ["31", "32", "rawhide"]
     container:
