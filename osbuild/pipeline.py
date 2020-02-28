@@ -314,6 +314,33 @@ class Pipeline:
         return results
 
 
+def detect_os(*paths):
+    """Detect the os from an os-release file.
+
+    The first file in 'paths' is used and interpreted like a os-release(5)
+    file.
+
+    Returns ID + VERSION_ID (without dots), which is the same format that
+    runners are named as.
+    """
+    path = next((p for p in paths if os.path.exists(p)), None)
+    if not path:
+        raise FileNotFoundError("none of the specified os-release files exist")
+
+    with open(path) as f:
+        osrelease = {}
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            if line[0] == "#":
+                continue
+            key, value = line.split("=", 1)
+            osrelease[key] = value.strip('"')
+
+    return osrelease["ID"] + osrelease["VERSION_ID"].replace(".", "")
+
+
 def load_build(description, sources_options):
     pipeline = description.get("pipeline")
     if pipeline:
@@ -329,7 +356,7 @@ def load(description, sources_options):
     if build:
         build_pipeline, runner = load_build(build, sources_options)
     else:
-        build_pipeline, runner = None, "org.osbuild.host"
+        build_pipeline, runner = None, "org.osbuild." + detect_os("/etc/os-release", "/usr/lib/os-release")
 
     pipeline = Pipeline(runner, build_pipeline)
 

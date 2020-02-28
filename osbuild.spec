@@ -70,23 +70,6 @@ install -p -m 0755 $(find sources -type f) %{buildroot}%{pkgdir}/sources
 mkdir -p %{buildroot}%{pkgdir}/stages/osbuild
 mkdir -p %{buildroot}%{pkgdir}/assemblers/osbuild
 
-# install host runner
-%if 0%{?fc30}
-ln -s org.osbuild.fedora30 %{buildroot}%{pkgdir}/runners/org.osbuild.host
-%endif
-%if 0%{?fc31}
-ln -s org.osbuild.fedora31 %{buildroot}%{pkgdir}/runners/org.osbuild.host
-%endif
-%if 0%{?fc32}
-ln -s org.osbuild.fedora32 %{buildroot}%{pkgdir}/runners/org.osbuild.host
-%endif
-%if 0%{?fc33}
-ln -s org.osbuild.fedora33 %{buildroot}%{pkgdir}/runners/org.osbuild.host
-%endif
-%if 0%{?el8}
-ln -s org.osbuild.rhel82 %{buildroot}%{pkgdir}/runners/org.osbuild.host
-%endif
-
 %check
 exit 0
 # We have some integration tests, but those require running a VM, so that would
