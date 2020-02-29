@@ -5,7 +5,8 @@ import osbuild
 
 class TestOSRelease(unittest.TestCase):
     def test_non_existant(self):
-        self.assertRaises(FileNotFoundError, osbuild.pipeline.detect_os, "💩")
+        """Verify default os-release value, if no files are given."""
+        self.assertEqual(osbuild.pipeline.detect_os(), "linux")
 
     def test_detect_os(self):
         """Test host os detection. test/os-release contains the os-release files
