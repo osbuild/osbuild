@@ -311,22 +311,25 @@ def detect_os(*paths):
     Returns ID + VERSION_ID (without dots), which is the same format that
     runners are named as.
     """
+    osrelease = {}
+
     path = next((p for p in paths if os.path.exists(p)), None)
-    if not path:
-        raise FileNotFoundError("none of the specified os-release files exist")
+    if path:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                if line[0] == "#":
+                    continue
+                key, value = line.split("=", 1)
+                osrelease[key] = value.strip('"')
 
-    with open(path) as f:
-        osrelease = {}
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line[0] == "#":
-                continue
-            key, value = line.split("=", 1)
-            osrelease[key] = value.strip('"')
+    # Fetch `ID` and `VERSION_ID`. Defaults are defined in `os-release(5)`.
+    osrelease_id = osrelease.get("ID", "linux")
+    osrelease_version_id = osrelease.get("VERSION_ID", "")
 
-    return osrelease["ID"] + osrelease["VERSION_ID"].replace(".", "")
+    return osrelease_id + osrelease_version_id.replace(".", "")
 
 
 def load_build(description, sources_options):
