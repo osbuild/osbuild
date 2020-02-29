@@ -302,14 +302,16 @@ class Pipeline:
         return results
 
 
-def detect_os(*paths):
-    """Detect the os from an os-release file.
+def describe_os(*paths):
+    """Read the Operating System Description from `os-release`
 
-    The first file in 'paths' is used and interpreted like a os-release(5)
-    file.
+    This creates a string describing the running operating-system name and
+    version. It reads the information from the path array provided as `paths`.
+    The first available file takes precedence. It must be formatted according
+    to the rules in `os-release(5)`.
 
-    Returns ID + VERSION_ID (without dots), which is the same format that
-    runners are named as.
+    The returned string uses the format `${ID}${VERSION_ID}` with all dots
+    stripped.
     """
     osrelease = {}
 
@@ -347,7 +349,7 @@ def load(description, sources_options):
     if build:
         build_pipeline, runner = load_build(build, sources_options)
     else:
-        build_pipeline, runner = None, "org.osbuild." + detect_os("/etc/os-release", "/usr/lib/os-release")
+        build_pipeline, runner = None, "org.osbuild." + describe_os("/etc/os-release", "/usr/lib/os-release")
 
     pipeline = Pipeline(runner, build_pipeline)
 
