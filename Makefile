@@ -1,7 +1,8 @@
 PACKAGE_NAME = osbuild
-VERSION = $$(python3 setup.py --version)
+VERSION := $(shell python3 setup.py --version)
+NEXT_VERSION := $(shell expr "$(VERSION)" + 1)
 
-.PHONY: sdist tarball srpm rpm copy-rpms-to-test check-working-directory vagrant-test vagrant-test-keep-running
+.PHONY: sdist tarball srpm rpm copy-rpms-to-test check-working-directory vagrant-test vagrant-test-keep-running bump-version
 
 sdist:
 	python3 setup.py sdist
@@ -51,3 +52,8 @@ vagrant-test-keep-running: check-working-directory copy-rpms-to-test
 	- $(MAKE) -C test up
 	- $(MAKE) -C test install-deps
 	$(MAKE) -C test run-tests-remotely
+
+bump-version:
+	sed -i "s|Version:\s*$(VERSION)|Version:\\t$(NEXT_VERSION)|" osbuild.spec
+	sed -i "s|Release:\s*[[:digit:]]\+|Release:\\t1|" osbuild.spec
+	sed -i "s|version=\"$(VERSION)\"|version=\"$(NEXT_VERSION)\"|" setup.py
