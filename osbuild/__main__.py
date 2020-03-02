@@ -14,11 +14,10 @@ def mark_checkpoints(pipeline, checkpoints):
     points = set(checkpoints)
 
     def mark_stage(stage):
-        for c in points:
-            if stage.id == c:
-                stage.checkpoint = True
-                points.remove(c)
-                return
+        c = stage.id
+        if c in points:
+            stage.checkpoint = True
+            points.remove(c)
 
     def mark_pipeline(pl):
         for stage in pl.stages:
