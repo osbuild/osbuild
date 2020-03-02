@@ -1,0 +1,80 @@
+- hosts: test_instances
+  user: fedora
+  become: yes
+  vars:
+    osbuild_pkg_dir: /tmp/osbuild-packages
+    # Specify functional tests to run.
+    test_samples:
+      aarch64: []
+      x86_64:
+        # NOTE(mhayden): The qemu command options will need to be adjusted for
+        # this test to work on Fedora.
+        # - test.test_boot
+        - test.test_assemblers
+        - test.test_stages
+    all_tests_passed: yes
+    test_logs: []
+  tasks:
+
+    - name: Upgrade system
+      package:
+        name: "*"
+        exclude:
+          - kernel
+          - kernel-core
+        state: latest
+      register: system_update
+      until: system_update is success
+      retries: 4
+
+    - name: Install required packages
+      package:
+        name:
+          - dosfstools
+          - e2fsprogs
+          - git
+          - nbd
+          - nbd-cli
+          - qemu-img
+          - qemu-kvm
+          - systemd-container
+          - tar
+          - xfsprogs
+          - xz
+        state: present
+      register: required_packages_install
+      until: required_packages_install is success
+      retries: 4
+
+    - name: Add major's ssh key as a backup
+      authorized_key:
+        user: fedora
+        state: present
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCxjfFIIlGfCn9iclHymWrEBrTU2lL6tkSGT1ep7dCPzw1jY6WnhQlPXMpePriNxNXlG8cWO9/RFpBd0z9FwNy+kfgh9fuyNY49I+Ma6OyTVBg5hNoFxfRXG5iHtc/SQlnbEFiKpSk4lipo4QZtBtmgAqgkSA6Dzhygb6u5M9ixTIx4WBjuSM0GXQzNjpefyiWu+sIR+h2UrQkKABuuIYQbrjl+FhVmaLvrvyTO2usOtvnYBjhbPwyO72WPjapKd/9hTaqPE1wFy6UF2nXc4Pgw0giQb6sibFTz7NTexW35Q98qpQOWMYKcpgZrlSaHHKZSMhtzO7MdZrOLFUXoS1AeAy4ghtcNrOBTlb5SvP73zz0qBRF2cCO4O0wp5wwqPhvw2ntb3pTLPtdetJ+V50QPnpnXySSnZp2zFwce21bXx67nh9lnhLrZgje7coQnPAFx/cl36ESJygiuPcBw+k18YulYMXUqaBtkwJLkRjDpjTX2e5MJ16oD7sJHc4/W5kyfLvdMsVhdq1CXHGVVOpzogb095VYi0RXFpnZR/1eVgC/R+WVytYfY80rfVOcdAo2GZfnJ5zYRUXJJ9MZkanxx3E7UOikEJN9sUj200z6Cyy0IfIqTbJ1B5f7fd3acRrL4DcYUdFI/1ByNW6F1j7cZiAGOJKNbzXF0T3tf8x0e1Q== major@iridium.local"
+
+    - name: "Cloning osbuild SHA » {{ github_sha }}"
+      git:
+        repo: https://github.com/osbuild/osbuild.git
+        dest: /opt/osbuild
+        version: "{{ github_sha }}"
+        refspec: "{{ github_ref }}"
+        clone: yes
+        update: yes
+        depth: 1
+      register: osbuild_clone
+      until: osbuild_clone is success
+      retries: 4
+
+    - name: Run tests
+      include_tasks: include/run_osbuild.yml
+      loop: "{{ test_samples[ansible_architecture] }}"
+      loop_control:
+        loop_var: test_to_run
+
+    - name: Fail with an error if any tests failed
+      fail:
+        msg: |
+          🧨 💣 😥 One or more tests failed.
+          Check the Ansible output for details.
+      when:
+        - not all_tests_passed

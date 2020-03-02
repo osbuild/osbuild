@@ -1,0 +1,249 @@
+---
+
+- hosts: test_manager
+  vars:
+    ec2_user_data: |
+      #!/bin/bash
+      echo 'fastestmirror=1' >> /etc/dnf/dnf.conf
+      echo 'install_weak_deps=0' >> /etc/dnf/dnf.conf
+      dnf -y upgrade
+      dnf -y install python3 python3-dnf
+    ec2_instance_tags:
+      - Key: github_run_id
+        Value: "{{ github_run_id }}"
+  tasks:
+
+    - name: Set facts based on GitLab actions variables
+      set_fact:
+        github_ref: "{{ ansible_env.GITHUB_REF }}"
+        github_run_id: "{{ ansible_env.GITHUB_RUN_ID }}"
+        github_sha: "{{ ansible_env.GITHUB_SHA }}"
+        aws_region: "{{ ansible_env.AWS_REGION }}"
+
+    - name: Create directory for awscli download
+      file:
+        path: /tmp/awscli
+        state: directory
+
+    - name: Download awscli
+      unarchive:
+        src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscli
+        remote_src: yes
+      register: awscli_download
+      until: awscli_download is success
+      retries: 4
+
+    - name: Install awscli
+      command: /tmp/awscli/aws/install
+
+    - name: Ensure root's ssh directory exists
+      file:
+        path: /root/.ssh
+        state: directory
+        mode: 0700
+        owner: root
+        group: root
+
+    - name: Create SSH keypair
+      openssh_keypair:
+        path: /root/.ssh/boot
+        size: 2048
+        force: no
+      register: keypair_content
+
+    - name: Create a new EC2 keypair
+      ec2_key:
+        name: "osbuild.ci.keypair.{{ github_run_id }}"
+        region: "{{ aws_region }}"
+        key_material: "{{ keypair_content.public_key }}"
+        force: no
+      register: boot_keypair
+
+    - name: Get Fedora 31 x86_64 AMI list
+      ec2_ami_info:
+        filters:
+          "owner-id": "125523088429"
+          "architecture": "x86_64"
+          "name": "Fedora-Cloud-Base-31*"
+          "virtualization-type": hvm
+      register: fedora_31_x86_64_ami_list
+
+    - name: Get Fedora 31 aarch64 AMI list
+      ec2_ami_info:
+        filters:
+          "owner-id": "125523088429"
+          "architecture": "arm64"
+          "name": "Fedora-Cloud-Base-31*"
+          "virtualization-type": hvm
+      register: fedora_31_aarch64_ami_list
+
+    - name: Get Fedora 32 x86_64 AMI list
+      ec2_ami_info:
+        filters:
+          "owner-id": "125523088429"
+          "architecture": "x86_64"
+          "name": "Fedora-Cloud-Base-32*"
+          "virtualization-type": hvm
+      register: fedora_32_x86_64_ami_list
+
+    - name: Get Fedora 32 aarch64 AMI list
+      ec2_ami_info:
+        filters:
+          "owner-id": "125523088429"
+          "architecture": "arm64"
+          "name": "Fedora-Cloud-Base-32*"
+          "virtualization-type": hvm
+      register: fedora_32_aarch64_ami_list
+
+    - name: Get Fedora 33 (rawhide) x86_64 AMI list
+      ec2_ami_info:
+        filters:
+          "owner-id": "125523088429"
+          "architecture": "x86_64"
+          "name": "Fedora-Cloud-Base-Rawhide*"
+          "virtualization-type": hvm
+      register: fedora_33_x86_64_ami_list
+
+    - name: Get Fedora 33 (rawhide) aarch64 AMI list
+      ec2_ami_info:
+        filters:
+          "owner-id": "125523088429"
+          "architecture": "arm64"
+          "name": "Fedora-Cloud-Base-Rawhide*"
+          "virtualization-type": hvm
+      register: fedora_33_aarch64_ami_list
+
+    - name: Get count of AMIs found for each release
+      debug:
+        msg: |
+          f31.x86_64:  {{ fedora_31_x86_64_ami_list.images | length }}
+          f32.x86_64:  {{ fedora_32_x86_64_ami_list.images | length }}
+          f33.x86_64:  {{ fedora_33_x86_64_ami_list.images | length }}
+          f31.aarch64: {{ fedora_31_aarch64_ami_list.images | length }}
+          f32.aarch64: {{ fedora_32_aarch64_ami_list.images | length }}
+          f33.aarch64: {{ fedora_33_aarch64_ami_list.images | length }}
+
+    - name: Get the latest AMI for each release and architecture
+      set_fact:
+        fedora_31_x86_64_latest_ami: "{{ (fedora_31_x86_64_ami_list.images | sort(attribute='creation_date') | last)['image_id'] }}"
+        fedora_32_x86_64_latest_ami: "{{ (fedora_32_x86_64_ami_list.images | sort(attribute='creation_date') | last)['image_id'] }}"
+        fedora_33_x86_64_latest_ami: "{{ (fedora_33_x86_64_ami_list.images | sort(attribute='creation_date') | last)['image_id'] }}"
+        fedora_31_aarch64_latest_ami: "{{ (fedora_31_aarch64_ami_list.images | sort(attribute='creation_date') | last)['image_id'] }}"
+        fedora_32_aarch64_latest_ami: "{{ (fedora_32_aarch64_ami_list.images | sort(attribute='creation_date') | last)['image_id'] }}"
+        fedora_33_aarch64_latest_ami: "{{ (fedora_33_aarch64_ami_list.images | sort(attribute='creation_date') | last)['image_id'] }}"
+
+    - name: Assemble a list of instances to launch
+      set_fact:
+        instances_to_launch:
+          # Fedora 31 x86_64
+          - instance_name: "osbuild.ci.{{ github_run_id }}.x86_64.f31"
+            image_id: "{{ fedora_31_x86_64_latest_ami }}"
+            instance_type: m5a.large
+          # Fedora 31 aarch64
+          # - instance_name: "osbuild.ci.{{ github_run_id }}.aarch64.f31"
+          #   image_id: "{{ fedora_31_aarch64_latest_ami }}"
+          #   instance_type: a1.2xlarge
+          # Fedora 32 x86_64
+          - instance_name: "osbuild.ci.{{ github_run_id }}.x86_64.f32"
+            image_id: "{{ fedora_32_x86_64_latest_ami }}"
+            instance_type: m5a.large
+          # Fedora 32 aarch64
+          # - instance_name: "osbuild.ci.{{ github_run_id }}.aarch64.f32"
+          #   image_id: "{{ fedora_32_aarch64_latest_ami }}"
+          #   instance_type: a1.2xlarge
+          # Fedora 33 x86_64 (Rawhide)
+          - instance_name: "osbuild.ci.{{ github_run_id }}.x86_64.f33"
+            image_id: "{{ fedora_33_x86_64_latest_ami }}"
+            instance_type: m5a.large
+          # Fedora 33 aarch64 (Rawhide)
+          # - instance_name: "osbuild.ci.{{ github_run_id }}.aarch64.f33"
+          #   image_id: "{{ fedora_33_aarch64_latest_ami }}"
+          #   instance_type: a1.2xlarge
+
+    - name: Write JSON templates
+      template:
+        src: instance.json
+        dest: "/tmp/{{ item.instance_name }}.json"
+      loop: "{{ instances_to_launch }}"
+
+    - name: Run awscli to boot instances
+      command: "aws ec2 run-instances --cli-input-json file:///tmp/{{ item.instance_name }}.json"
+      loop: "{{ instances_to_launch }}"
+      register: instance_boot
+      until: instance_boot is success
+      retries: 4
+
+    - name: Wait for instances to reach 'running' state
+      ec2_instance_facts:
+        region: "{{ aws_region }}"
+        filters:
+          "tag:Name": "osbuild.ci.{{ github_run_id }}*"
+          "instance-state-name": "running"
+      register: ec2
+      until:
+        - ec2.instances
+        - ec2.instances | length == instances_to_launch | length
+      retries: 60
+      delay: 15
+
+    - name: Add hosts to group
+      add_host:
+        name: "{{ item.tags.Name }}"
+        hostname: "{{ item.public_ip_address }}"
+        ansible_host: "{{ item.public_ip_address }}"
+        ansible_user: "fedora"
+        aws_region: "{{ aws_region }}"
+        github_ref: "{{ github_ref }}"
+        github_run_id: "{{ github_run_id }}"
+        github_sha: "{{ github_sha }}"
+        github_workspace: "{{ ansible_env.GITHUB_WORKSPACE }}"
+        group: test_instances
+      loop: "{{ ec2.instances }}"
+      loop_control:
+        label: "{{ item.tags.Name }}"
+
+    - name: Write instances to hosts.ini file
+      ini_file:
+        path: "{{ ansible_env.ANSIBLE_INVENTORY }}"
+        section: test_instances
+        option: >
+          {{ item.tags.Name }}
+          ansible_host={{ item.public_ip_address }}
+          ansible_user=fedora
+          github_ref={{ github_ref }}
+          github_run_id={{ github_run_id }}
+          github_sha={{ github_sha }}
+          github_workspace={{ ansible_env.GITHUB_WORKSPACE }}
+        allow_no_value: yes
+      loop: "{{ ec2.instances }}"
+      loop_control:
+        label: "{{ item.tags.Name }}"
+
+    - name: Wait for instances to respond to ssh
+      wait_for:
+        host: "{{ item.public_ip_address }}"
+        port: 22
+        search_regex: OpenSSH
+        delay: 10
+      loop: "{{ ec2.instances }}"
+      loop_control:
+        label: "{{ item.tags.Name }}"
+
+- hosts: test_instances
+  user: fedora
+  become: yes
+  tasks:
+
+    - name: Ensure cloud-init has finished
+      raw: test -f /var/lib/cloud/instance/boot-finished
+      retries: 60
+      register: cloud_init_check
+      changed_when: false
+      until: cloud_init_check is success
+
+    - name: Install Ansible requirements
+      raw: dnf -y install --best python3 python3-dnf
+      register: ansible_reqs
+      until: ansible_reqs is success
+      retries: 4
