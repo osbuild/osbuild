@@ -54,6 +54,6 @@ vagrant-test-keep-running: check-working-directory copy-rpms-to-test
 	$(MAKE) -C test run-tests-remotely
 
 bump-version:
-	sed -i "s|Version:\s*$(VERSION)|Version:\\t$(NEXT_VERSION)|" osbuild.spec
-	sed -i "s|Release:\s*[[:digit:]]\+|Release:\\t1|" osbuild.spec
+	sed -i "s|Version:\(\s*\)$(VERSION)|Version:\1$(NEXT_VERSION)|" osbuild.spec
+	sed -i "s|Release:\(\s*\)[[:digit:]]\+|Release:\11|" osbuild.spec
 	sed -i "s|version=\"$(VERSION)\"|version=\"$(NEXT_VERSION)\"|" setup.py
