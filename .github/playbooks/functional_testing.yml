@@ -65,11 +65,37 @@
       until: osbuild_clone is success
       retries: 4
 
-    - name: Run tests
-      include_tasks: include/run_osbuild.yml
-      loop: "{{ test_samples[ansible_architecture] }}"
-      loop_control:
-        loop_var: test_to_run
+    - name: "Run test » test_stages"
+      command: "python3 -m unittest -vv test.test_stages"
+      args:
+        chdir: /opt/osbuild
+      register: test_stages
+      async: 1200
+      poll: 0
+
+    - name: "Run test » test_assemblers"
+      command: "python3 -m unittest -vv test.test_assemblers"
+      args:
+        chdir: /opt/osbuild
+      register: test_assemblers
+      async: 1200
+      poll: 0
+
+    - name: "Waiting for test to finish » test_stages"
+      async_status:
+        jid: "{{ test_stages.ansible_job_id }}"
+      register: test_stages_result
+      until: test_stages_result is finished
+      retries: 40
+      delay: 30
+
+    - name: "Waiting for test to finish » test_assemblers"
+      async_status:
+        jid: "{{ test_assemblers.ansible_job_id }}"
+      register: test_assemblers_result
+      until: test_assemblers_result is finished
+      retries: 40
+      delay: 30
 
     - name: Fail with an error if any tests failed
       fail:
@@ -77,4 +103,4 @@
           🧨 💣 😥 One or more tests failed.
           Check the Ansible output for details.
       when:
-        - not all_tests_passed
+        - test_assemblers_result is failed or test_stages_result is failed

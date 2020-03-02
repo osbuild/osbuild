@@ -6,20 +6,22 @@ env:
   - PYTHONUNBUFFERED=1
 jobs:
   include:
-    - name: pipeline-noop
-      before_install: sudo apt-get install -y systemd-container
-      script:
-        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
-        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
-    - name: sources-tests
-      before_install: sudo apt-get install -y rpm
-      script: sudo env "PATH=$PATH" python3 -m unittest -v test.test_sources
+    # NOTE(mhayden): These tests are now run in Fedora on EC2.
+    # - name: pipeline-noop
+    #   before_install: sudo apt-get install -y systemd-container
+    #   script:
+    #     - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
+    #     - sudo env "PATH=$PATH" python3 -m osbuild --libdir . --build-env samples/ubuntu1804.json samples/noop.json
+    # - name: sources-tests
+    #   before_install: sudo apt-get install -y rpm
+    #   script: sudo env "PATH=$PATH" python3 -m unittest -v test.test_sources
     - name: f30-boot
       before_install: sudo apt-get install -y systemd-container yum qemu-kvm
       script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_boot
-    - name: assemblers
-      before_install: sudo apt-get install -y systemd-container yum tar qemu-utils nbd-client
-      script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_assemblers
-    - name: stage-tests
-      before_install: sudo apt-get install -y systemd-container yum
-      script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_stages
+    # NOTE(mhayden): These tests are now run in Fedora on EC2.
+    # - name: assemblers
+    #   before_install: sudo apt-get install -y systemd-container yum tar qemu-utils nbd-client
+    #   script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_assemblers
+    # - name: stage-tests
+    #   before_install: sudo apt-get install -y systemd-container yum
+    #   script: sudo env "PATH=$PATH" "OSBUILD_TEST_BUILD_ENV=samples/f27-build-from-ubuntu1804.json" python3 -m unittest -v test.test_stages

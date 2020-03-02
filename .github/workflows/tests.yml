@@ -119,7 +119,7 @@ jobs:
 
   functional_testing:
     name: "functional"
-    # needs: rpm_build
+    needs: rpm_build
     runs-on: ubuntu-latest
     container: docker.io/library/fedora:31
     env:
