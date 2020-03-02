@@ -12,6 +12,7 @@ RED = "\033[31m"
 
 def mark_checkpoints(pipeline, checkpoints):
     points = set(checkpoints)
+
     def mark_stage(stage):
         for c in points:
             if stage.id == c:
