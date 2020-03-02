@@ -35,18 +35,18 @@ def main():
     parser = argparse.ArgumentParser(description="Build operating system images")
     parser.add_argument("pipeline_path", metavar="PIPELINE",
                         help="json file containing the pipeline that should be built, or a '-' to read from stdin")
-    parser.add_argument("--build-env", metavar="ENV", type=os.path.abspath,
+    parser.add_argument("--build-env", metavar="FILE", type=os.path.abspath,
                         help="json file containing a description of the build environment")
     parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
                         default=".osbuild",
-                        help="the directory where intermediary os trees are stored")
-    parser.add_argument("--sources", metavar="SOURCES", type=os.path.abspath,
+                        help="directory where intermediary os trees are stored")
+    parser.add_argument("--sources", metavar="FILE", type=os.path.abspath,
                         help="json file containing a dictionary of source configuration")
-    parser.add_argument("--secrets", metavar="SECRETS", type=os.path.abspath,
+    parser.add_argument("--secrets", metavar="FILE", type=os.path.abspath,
                         help="json file containing a dictionary of secrets that are passed to sources")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
                         help="the directory containing stages, assemblers, and the osbuild library")
-    parser.add_argument("--checkpoint", metavar="CHECKPOINT", action="append", type=str, default=None,
+    parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
                         help="stage to commit to the object store during build (can be passed multiple times)")
     parser.add_argument("--json", action="store_true",
                         help="output results in JSON format")
