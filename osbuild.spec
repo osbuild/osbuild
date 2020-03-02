@@ -1,4 +1,4 @@
-%global		forgeurl https://github.com/osbuild/osbuild
+%global         forgeurl https://github.com/osbuild/osbuild
 
 Version:        8
 
