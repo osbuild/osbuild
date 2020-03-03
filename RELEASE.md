@@ -3,7 +3,7 @@
 ## Manual version using Packit
 
 ```
-$ ./bump-version.sh
+$ make bump-version
 ```
 Check that the spec file is correctly modified.
 Create new commit from this change; this commit will become the new tag.
