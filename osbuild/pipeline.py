@@ -270,12 +270,12 @@ class Pipeline:
                                           libdir=libdir,
                                           var=store,
                                           secrets=secrets)
-                        if stage.checkpoint:
-                            object_store.commit(tree, stage.id)
                         results["stages"].append(r.as_dict())
                         if not r.success:
                             results["success"] = False
                             return results
+                        if stage.checkpoint:
+                            object_store.commit(tree, stage.id)
                 results["tree_id"] = self.tree_id
 
             if self.assembler:
@@ -290,11 +290,11 @@ class Pipeline:
                                                    interactive=interactive,
                                                    libdir=libdir,
                                                    var=store)
-                        object_store.commit(output_tree, self.output_id)
                         results["assembler"] = r.as_dict()
                         if not r.success:
                             results["success"] = False
                             return results
+                        object_store.commit(output_tree, self.output_id)
 
                 results["output_id"] = self.output_id
 
