@@ -120,16 +120,40 @@ The above pipeline has no base and produces a qcow2 image.
 EXAMPLES
 ========
 
- 1. To build a basic qcow2 image of Fedora 30, use:
+The following sub-sections contain examples on running **osbuild**. Generally,
+**osbuild** must be run with superuser privileges, since this is required to
+create file-system images.
 
-    ``sudo osbuild --sources samples/sources.json samples/base-qcow2.json``
+Example 1: Run an empty pipeline
+--------------------------------
 
-    Superuser privileges are needed to mount file systems, create loop devices,
-    and setup isolation environments.
+To verify your **osbuild** setup, you can run it on an empty pipeline which
+produces no output:
 
- 2. To run **osbuild** from a local checkout, use:
+    |
+    | # echo {} | osbuild -
+    |
 
-    ``sudo python3 -m osbuild --libdir . --sources samples/sources.json samples/base-qcow2.json``
+Example 1: Build a Fedora 30 qcow2 image
+----------------------------------------
 
-    This will make sure to execute the `osbuild` module from the current
-    directory, as well as use it to search for stages, assemblers, and more.
+To build a basic qcow2 image of Fedora 30, use:
+
+    |
+    | # osbuild ./samples/base-qcow2.json
+    |
+
+The pipeline definition ``./samples/base-rpm-qcow2.json`` is provided in the
+upstream source repository of **osbuild**.
+
+Example 2: Run from a local checkout
+------------------------------------
+
+To run **osbuild** from a local checkout, use:
+
+    |
+    | # python3 -m osbuild --libdir . samples/base-rpm-qcow2.json
+    |
+
+This will make sure to execute the **osbuild** module from the current
+directory, as well as use it to search for stages, assemblers, and more.
