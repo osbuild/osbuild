@@ -235,28 +235,27 @@ class ObjectStore:
             with obj.read() as path:
                 yield path
 
-    @contextlib.contextmanager
     def new(self, base_id=None):
         """Creates a new temporary `Object`.
 
-        This method must be used as a context manager. It returns
-        a temporary instance of `Object`, which can then be used
-        for interaction with the store.
+        It returns a temporary instance of `Object`, the base
+        optionally set to `base_id`. It can be used to interact
+        with the store.
         If changes to the object's content were made (by calling
         `Object.write`), these must manually be committed to the
         store via `commit()`.
         """
 
-        with Object(self) as obj:
+        obj = Object(self)
 
-            if base_id:
-                # if we were given a base id then this is the base
-                # content for the new object
-                # NB: `Object` has copy-on-write semantics, so no
-                # copying of the data takes places at this point
-                obj.base = base_id
+        if base_id:
+            # if we were given a base id then this is the base
+            # content for the new object
+            # NB: `Object` has copy-on-write semantics, so no
+            # copying of the data takes places at this point
+            obj.base = base_id
 
-            yield obj
+        return obj
 
     def commit(self, obj: Object, object_id: str) -> str:
         """Commits a Object to the object store
