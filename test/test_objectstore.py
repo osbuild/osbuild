@@ -61,6 +61,18 @@ class TestObjectStore(unittest.TestCase):
             self.assertEqual(object_store.resolve_ref("a"),
                              f"{object_store.refs}/a")
 
+    def test_cleanup(self):
+        # always use a temporary store so item counting works
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+            with objectstore.ObjectStore(tmp) as object_store:
+                tree = object_store.new()
+                self.assertEqual(len(os.listdir(object_store.tmp)), 1)
+                with tree.write() as path:
+                    p = Path(f"{path}/A")
+                    p.touch()
+            # there should be no temporary Objects dirs anymore
+            self.assertEqual(len(os.listdir(object_store.tmp)), 0)
+
     def test_duplicate(self):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
             object_store = objectstore.ObjectStore(tmp)
