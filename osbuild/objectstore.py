@@ -5,6 +5,7 @@ import hashlib
 import os
 import subprocess
 import tempfile
+import weakref
 from typing import Optional
 from . import treesum
 
@@ -212,6 +213,7 @@ class ObjectStore:
         os.makedirs(self.objects, exist_ok=True)
         os.makedirs(self.refs, exist_ok=True)
         os.makedirs(self.tmp, exist_ok=True)
+        self._objs = weakref.WeakSet()
 
     def contains(self, object_id):
         if not object_id:
@@ -257,6 +259,8 @@ class ObjectStore:
             # copying of the data takes places at this point
             obj.base = base_id
 
+        self._objs.add(obj)
+
         return obj
 
     def commit(self, obj: Object, object_id: str) -> str:
@@ -298,3 +302,15 @@ class ObjectStore:
         obj.base = object_id
 
         return treesum_hash
+
+    def cleanup(self):
+        """Cleanup all created Objects that are still alive"""
+        for obj in self._objs:
+            obj.cleanup()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cleanup()
+        return exc_type is None
