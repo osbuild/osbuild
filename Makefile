@@ -1,36 +1,51 @@
-PACKAGE_NAME = osbuild
 VERSION := $(shell python3 setup.py --version)
 NEXT_VERSION := $(shell expr "$(VERSION)" + 1)
+COMMIT=$(shell git rev-parse HEAD)
 
-.PHONY: sdist tarball srpm rpm copy-rpms-to-test check-working-directory vagrant-test vagrant-test-keep-running bump-version
+.PHONY: sdist copy-rpms-to-test check-working-directory vagrant-test vagrant-test-keep-running bump-version
 
 sdist:
 	python3 setup.py sdist
 	find `pwd`/dist -name '*.tar.gz' -printf '%f\n' -exec mv {} . \;
 
-tarball:
-	git archive --prefix=osbuild-$(VERSION)/ --format=tar.gz HEAD > osbuild-$(VERSION).tar.gz
+#
+# Building packages
+#
+# The following rules build osbuild packages from the current HEAD commit,
+# based on the spec file in this directory. The resulting packages have the
+# commit hash in their version, so that they don't get overwritten when calling
+# `make rpm` again after switching to another branch.
+#
+# All resulting files (spec files, source rpms, rpms) are written into
+# ./rpmbuild, using rpmbuild's usual directory structure.
+#
 
-srpm: $(PACKAGE_NAME).spec check-working-directory tarball
-	/usr/bin/rpmbuild -bs \
-	  --define "_sourcedir $(CURDIR)" \
-	  --define "_srcrpmdir $(CURDIR)" \
-	  $(PACKAGE_NAME).spec
+RPM_SPECFILE=rpmbuild/SPECS/osbuild-$(COMMIT).spec
+RPM_TARBALL=rpmbuild/SOURCES/osbuild-$(COMMIT).tar.gz
 
-rpm: $(PACKAGE_NAME).spec check-working-directory tarball
-	- rm -r "`pwd`/output"
-	mkdir -p "`pwd`/output"
-	mkdir -p "`pwd`/rpmbuild"
-	/usr/bin/rpmbuild -bb \
-	  --define "_sourcedir `pwd`" \
-	  --define "_specdir `pwd`" \
-	  --define "_builddir `pwd`/rpmbuild" \
-	  --define "_srcrpmdir `pwd`" \
-	  --define "_rpmdir `pwd`/output" \
-	  --define "_buildrootdir `pwd`/build" \
-	  $(PACKAGE_NAME).spec
-	rm -r "`pwd`/rpmbuild"
-	rm -r "`pwd`/build"
+$(RPM_SPECFILE):
+	mkdir -p $(CURDIR)/rpmbuild/SPECS
+	(echo "%global commit $(COMMIT)"; git show HEAD:osbuild.spec) > $(RPM_SPECFILE)
+
+$(RPM_TARBALL):
+	mkdir -p $(CURDIR)/rpmbuild/SOURCES
+	git archive --prefix=osbuild-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+
+.PHONY: srpm
+srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+	rpmbuild -bs \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		$(RPM_SPECFILE)
+
+.PHONY: rpm
+rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+	rpmbuild -bb \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		$(RPM_SPECFILE)
+
+#
+# Vagrant
+#
 
 copy-rpms-to-test: rpm
 	- rm test/testing-rpms/*.rpm
