@@ -4,7 +4,7 @@ __pycache__
 
 /*.rpm
 /.osbuild
-/output
+/rpmbuild
 
 /test/.vagrant
 
