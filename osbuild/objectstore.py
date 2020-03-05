@@ -207,9 +207,11 @@ class ObjectStore:
         self.store = store
         self.objects = f"{store}/objects"
         self.refs = f"{store}/refs"
+        self.tmp = f"{store}/tmp"
         os.makedirs(self.store, exist_ok=True)
         os.makedirs(self.objects, exist_ok=True)
         os.makedirs(self.refs, exist_ok=True)
+        os.makedirs(self.tmp, exist_ok=True)
 
     def contains(self, object_id):
         if not object_id:
@@ -224,7 +226,7 @@ class ObjectStore:
 
     def tempdir(self, prefix=None, suffix=None):
         """Return a tempfile.TemporaryDirectory within the store"""
-        return tempfile.TemporaryDirectory(dir=self.store,
+        return tempfile.TemporaryDirectory(dir=self.tmp,
                                            prefix=prefix,
                                            suffix=suffix)
 
