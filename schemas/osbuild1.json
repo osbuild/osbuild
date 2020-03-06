@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "https://osbuild.org/schemas/osbuild1.json",
+
+  "title": "OSBuild Manifest",
+  "description": "OSBuild manifest describing a pipeline and all parameters",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "pipeline": { "$ref": "#/definitions/pipeline" },
+    "sources": { "$ref": "#/definitions/sources" }
+  },
+  "required": [],
+
+  "definitions": {
+    "assembler": {
+      "title": "Pipeline Assembler",
+      "description": "Final stage of a pipeline that assembles the result",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [ "name" ]
+    },
+
+    "build": {
+      "title": "Build Pipeline",
+      "description": "Description of the build pipeline required to run stages",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pipeline": { "$ref": "#/definitions/pipeline" },
+        "runner": { "type": "string" }
+      },
+      "required": [ "pipeline", "runner" ]
+    },
+
+    "pipeline": {
+      "title": "Pipeline Description",
+      "description": "Full description of a pipeline to execute",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "assembler": { "$ref": "#/definitions/assembler" },
+        "build": { "$ref": "#/definitions/build" },
+        "stages": { "$ref": "#/definitions/stages" }
+      },
+      "required": []
+    },
+
+    "source": {
+      "title": "External Source",
+      "description": "External source to be passed to the pipeline",
+      "type": "object",
+      "additionalProperties": true
+    },
+
+    "sources": {
+      "title": "Collection of External Sources",
+      "description": "Collection of external sources to be passed to the pipeline",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/source" }
+    },
+
+    "stage": {
+      "title": "Pipeline Stage",
+      "description": "Single stage of a pipeline executing one step",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [ "name" ]
+    },
+
+    "stages": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/stage" }
+    }
+  }
+}
