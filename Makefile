@@ -2,12 +2,6 @@ VERSION := $(shell python3 setup.py --version)
 NEXT_VERSION := $(shell expr "$(VERSION)" + 1)
 COMMIT=$(shell git rev-parse HEAD)
 
-.PHONY: sdist bump-version
-
-sdist:
-	python3 setup.py sdist
-	find `pwd`/dist -name '*.tar.gz' -printf '%f\n' -exec mv {} . \;
-
 #
 # Building packages
 #
@@ -47,6 +41,7 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 # Releasing
 #
 
+.PHONY: bump-version
 bump-version:
 	sed -i "s|Version:\(\s*\)$(VERSION)|Version:\1$(NEXT_VERSION)|" osbuild.spec
 	sed -i "s|Release:\(\s*\)[[:digit:]]\+|Release:\11|" osbuild.spec
