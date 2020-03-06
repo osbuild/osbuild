@@ -1,5 +1,4 @@
 
-import contextlib
 import hashlib
 import importlib
 import json
@@ -295,6 +294,43 @@ class Pipeline:
         results["tree_id"] = self.tree_id
         return results, build_tree, tree
 
+    def assemble(self, object_store, build_tree, tree, interactive, libdir):
+        results = {"success": True}
+
+        if not self.assembler:
+            return results
+
+        # if the output is already in the store, short-circuit
+        if object_store.contains(self.output_id):
+            results["output_id"] = self.output_id
+            return results
+
+        output = object_store.new()
+
+        with build_tree.read() as build_dir, \
+             tree.read() as input_dir, \
+             output.write() as output_dir:
+
+            r = self.assembler.run(input_dir,
+                                   self.runner,
+                                   build_dir,
+                                   output_dir=output_dir,
+                                   interactive=interactive,
+                                   libdir=libdir,
+                                   var=object_store.store)
+
+            results["assembler"] = r.as_dict()
+            if not r.success:
+                output.cleanup()
+                results["success"] = False
+                return results
+
+        object_store.commit(output, self.output_id)
+        output.cleanup()
+
+        results["output_id"] = self.output_id
+        return results
+
     def run(self, store, interactive=False, libdir=None, secrets=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         results = {}
@@ -308,28 +344,14 @@ class Pipeline:
             if not results["success"]:
                 return results
 
-            if self.assembler:
-                if not object_store.contains(self.output_id):
-                    with build_tree.read() as build_dir, \
-                         tree.read() as input_dir, \
-                         object_store.new() as output_tree:
-                        with output_tree.write() as output_dir:
-                            r = self.assembler.run(input_dir,
-                                                   self.runner,
-                                                   build_dir,
-                                                   output_dir=output_dir,
-                                                   interactive=interactive,
-                                                   libdir=libdir,
-                                                   var=store)
-                        results["assembler"] = r.as_dict()
-                        if not r.success:
-                            results["success"] = False
-                            return results
-                        object_store.commit(output_tree, self.output_id)
+            r = self.assemble(object_store,
+                              build_tree,
+                              tree,
+                              interactive,
+                              libdir)
 
-                results["output_id"] = self.output_id
+            results.update(r)  # This will also update 'success'
 
-        results["success"] = True
         return results
 
 
