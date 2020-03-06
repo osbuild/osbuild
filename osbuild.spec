@@ -18,6 +18,7 @@ BuildArch:      noarch
 Summary:        A build system for OS images
 
 BuildRequires:  python3-devel
+BuildRequires:  python3-docutils
 
 Requires: bash
 Requires: coreutils
@@ -50,6 +51,7 @@ A build system for OS images
 
 %build
 %py3_build
+rst2man docs/%{name}.1.rst %{name}.1
 
 %install
 %py3_install
@@ -70,6 +72,10 @@ install -p -m 0755 $(find sources -type f) %{buildroot}%{pkgdir}/sources
 mkdir -p %{buildroot}%{pkgdir}/stages/osbuild
 mkdir -p %{buildroot}%{pkgdir}/assemblers/osbuild
 
+# documentation
+mkdir -p %{buildroot}%{_mandir}/man1
+install -m 644 osbuild.1 %{buildroot}%{_mandir}/man1/
+
 %check
 exit 0
 # We have some integration tests, but those require running a VM, so that would
@@ -78,6 +84,7 @@ exit 0
 %files
 %license LICENSE
 %{_bindir}/osbuild
+%{_mandir}/man1/%{name}.1*
 %{pkgdir}
 
 %files -n     python3-%{pypi_name}
