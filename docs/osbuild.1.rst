@@ -51,71 +51,16 @@ is not listed here, **osbuild** will deny startup and exit with an error.
                                 build (can be passed multiple times)
 --json                          output results in JSON format
 
-PIPELINES
-=========
+MANIFEST
+========
 
-The build process for an image is described by a pipeline. Each *stage* in a
-pipeline is a program that, given some configuration, modifies a file system
-tree. Finally, an assembler takes a filesystem tree, and assembles it into an
-image. Pipelines are defined as JSON files like this one:
+The input to **osbuild** is a description of the pipeline to execute, as well
+as required parameters to each pipeline stage. This data must be *JSON*
+encoded. It is read from the file specified on the command-line, or, if ``-``
+is passed, from standard input.
 
-|
-| {
-|   "name": "Example Image",
-|   "stages": [
-|     {
-|       "name": "org.osbuild.dnf",
-|       "options": {
-|         "releasever": "31",
-|         "basearch": "x86_64",
-|         "repos": [
-|           {
-|             "metalink": "https://example.com",
-|             "checksum": "sha256:...<checksum>...",
-|             "gpgkey": "...<gpg-key>..."
-|           }
-|         ],
-|         "packages": [ "@Core", "grub2-pc", "httpd" ]
-|         }
-|     },
-|     {
-|       "name": "org.osbuild.systemd",
-|       "options": {
-|         "enabled_services": [ "httpd" ]
-|       }
-|     },
-|     {
-|       "name": "org.osbuild.grub2",
-|       "options": {
-|         "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac"
-|       }
-|     }
-|   ],
-|   "assembler": {
-|     "name": "org.osbuild.qemu",
-|     "options": {
-|       "format": "qcow2",
-|       "filename": "example.qcow2",
-|       "ptuuid": "0x7e83a7ba",
-|       "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-|       "size": 3221225472
-|     }
-|   }
-| }
-|
-
-`osbuild` runs each of the stages in turn, isolating them from the host and
-from each other, with the exception that they all operate on the same
-filesystem-tree. The assembler is similarly isolated, and given the same
-tree, in read-only mode, and assembles it into an image without altering
-its contents.
-
-The filesystem tree produced by the final stage of a pipeline, is named
-and optionally saved to be reused as the base for future pipelines.
-
-Each stage is passed the (appended) `options` object as JSON over stdin.
-
-The above pipeline has no base and produces a qcow2 image.
+The format of the manifest is described in ``osbuild-manifest``\(5). The formal
+schema of the manifest is available online as the OSBuild JSON Schema [#]_.
 
 EXAMPLES
 ========
@@ -157,3 +102,14 @@ To run **osbuild** from a local checkout, use:
 
 This will make sure to execute the **osbuild** module from the current
 directory, as well as use it to search for stages, assemblers, and more.
+
+SEE ALSO
+========
+
+``osbuild-manifest``\(5), ``osbuild-composer``\(1)
+
+NOTES
+=====
+
+.. [#] OSBuild JSON Schema:
+       https://osbuild.org/schemas/osbuild1.json
