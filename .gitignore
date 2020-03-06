@@ -6,8 +6,6 @@ __pycache__
 /.osbuild
 /rpmbuild
 
-/test/.vagrant
-
 /.vscode
 /.idea
 /.gdb_history
