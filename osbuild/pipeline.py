@@ -210,82 +210,113 @@ class Pipeline:
             description["assembler"] = self.assembler.description()
         return description
 
-    @contextlib.contextmanager
-    def get_buildtree(self, object_store):
-        if self.build:
-            with object_store.new() as tree:
-                tree.base = self.build.tree_id
-                with tree.read() as path:
-                    yield path
+    def build_stages(self, object_store, interactive, libdir, secrets):
+        results = {"success": True}
+
+        if not self.stages:
+            build_tree = objectstore.HostTree(object_store)
+            tree = object_store.new()
+            return results, build_tree, tree
+
+        # We need a build tree for the stages below, which is either
+        # another tree that needs to be built with the build pipeline
+        # or the host file system if no build pipeline is specified
+        # NB: the very last level of nested build pipelines is always
+        # build on the host
+
+        if not self.build:
+            build_tree = objectstore.HostTree(object_store)
         else:
-            with object_store.tempdir() as tmp:
-                objectstore.mount("/", tmp)
-                try:
-                    yield tmp
-                finally:
-                    objectstore.umount(tmp)
+            build = self.build
+
+            r, t, tree = build.build_stages(object_store,
+                                            interactive,
+                                            libdir,
+                                            secrets)
+            # Cleanup the build tree used to build `tree`
+            # which is not needed anymore
+            t.cleanup()
+
+            results["build"] = r
+            if not r["success"]:
+                tree.cleanup()
+                results["success"] = False
+                return results, None, None
+
+            build_tree = tree
+
+        # Create a new tree. The base is our tree_id because if that
+        # is already in the store, we can short-circuit directly and
+        # exit directly; `tree` is then used to read the tree behind
+        # `self.tree_id`
+        tree = object_store.new(base_id=self.tree_id)
+
+        if object_store.contains(self.tree_id):
+            results["tree_id"] = self.tree_id
+            return results, build_tree, tree
+
+        # Not in the store yet, need to actually build it, but maybe
+        # an intermediate checkpoint exists: Find the last stage that
+        # already exists in the store and use that as the base.
+        base_idx = -1
+        tree.base = None
+        for i in reversed(range(len(self.stages))):
+            if object_store.contains(self.stages[i].id):
+                tree.base = self.stages[i].id
+                base_idx = i
+                break
+
+        # If two run() calls race each-other, two trees will get built
+        # and it is nondeterministic which of them will end up
+        # referenced by the `tree_id` in the content store if they are
+        # both committed. However, after the call to commit all the
+        # trees will be based on the winner.
+        results["stages"] = []
+
+        for stage in self.stages[base_idx + 1:]:
+            with build_tree.read() as build_path, tree.write() as path:
+                r = stage.run(path,
+                              self.runner,
+                              build_path,
+                              object_store.store,
+                              interactive=interactive,
+                              libdir=libdir,
+                              var=object_store.store,
+                              secrets=secrets)
+
+            results["stages"].append(r.as_dict())
+            if not r.success:
+                results["success"] = False
+                return results, None, None
+
+            if stage.checkpoint:
+                object_store.commit(tree, stage.id)
+
+        results["tree_id"] = self.tree_id
+        return results, build_tree, tree
 
     def run(self, store, interactive=False, libdir=None, secrets=None):
         os.makedirs("/run/osbuild", exist_ok=True)
-        object_store = objectstore.ObjectStore(store)
         results = {}
 
-        if self.build and self.build.stages:
-            # For now, the last build stage is always committed to the object store
-            self.build.stages[-1].checkpoint = True
+        with objectstore.ObjectStore(store) as object_store:
+            results, build_tree, tree = self.build_stages(object_store,
+                                                          interactive,
+                                                          libdir,
+                                                          secrets)
 
-            r = self.build.run(store, interactive, libdir, secrets)
-            results["build"] = r
-            if not r["success"]:
-                results["success"] = False
+            if not results["success"]:
                 return results
-
-        with self.get_buildtree(object_store) as build_tree, \
-             object_store.new(base_id=self.tree_id) as tree:
-
-            if self.stages:
-                if not object_store.contains(self.tree_id):
-                    # Find the last stage that already exists in the object store, and use
-                    # that as the base.
-                    base_idx = -1
-                    tree.base = None
-                    for i in reversed(range(len(self.stages))):
-                        if object_store.contains(self.stages[i].id):
-                            tree.base = self.stages[i].id
-                            base_idx = i
-                            break
-
-                    # If two run() calls race each-other, two trees may be generated  and it
-                    # is nondeterministic which of them will end up referenced by the tree_id
-                    # in the content store if they are both committed. However, after the call
-                    # to commit all the trees will be based on the winner.
-                    results["stages"] = []
-                    for stage in self.stages[base_idx + 1:]:
-                        with tree.write() as path:
-                            r = stage.run(path,
-                                          self.runner,
-                                          build_tree,
-                                          store,
-                                          interactive=interactive,
-                                          libdir=libdir,
-                                          var=store,
-                                          secrets=secrets)
-                        results["stages"].append(r.as_dict())
-                        if not r.success:
-                            results["success"] = False
-                            return results
-                        if stage.checkpoint:
-                            object_store.commit(tree, stage.id)
-                results["tree_id"] = self.tree_id
 
             if self.assembler:
                 if not object_store.contains(self.output_id):
-                    with tree.read() as input_dir, \
+                    with build_tree.read() as build_dir, \
+                         tree.read() as input_dir, \
                          object_store.new() as output_tree:
                         with output_tree.write() as output_dir:
                             r = self.assembler.run(input_dir,
                                                    self.runner,
-                                                   build_tree,
+                                                   build_dir,
                                                    output_dir=output_dir,
                                                    interactive=interactive,
                                                    libdir=libdir,
