@@ -46,3 +46,6 @@ bump-version:
 	sed -i "s|Version:\(\s*\)$(VERSION)|Version:\1$(NEXT_VERSION)|" osbuild.spec
 	sed -i "s|Release:\(\s*\)[[:digit:]]\+|Release:\11|" osbuild.spec
 	sed -i "s|version=\"$(VERSION)\"|version=\"$(NEXT_VERSION)\"|" setup.py
+
+man:
+	rst2man docs/osbuild.1.rst osbuild.1
