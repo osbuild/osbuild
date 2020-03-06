@@ -336,6 +336,17 @@ class Pipeline:
         results = {}
 
         with objectstore.ObjectStore(store) as object_store:
+            # if the final result is already in the store, exit
+            # early and don't attempt to build the tree, which
+            # in turn might not be in the store and would in that
+            # case be build but not be used
+            if object_store.contains(self.output_id):
+                results = {"output_id": self.output_id,
+                           "success": True}
+                if object_store.contains(self.tree_id):
+                    results["tree_id"] = self.tree_id
+                return results
+
             results, build_tree, tree = self.build_stages(object_store,
                                                           interactive,
                                                           libdir,
