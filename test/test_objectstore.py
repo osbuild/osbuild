@@ -263,6 +263,21 @@ class TestObjectStore(unittest.TestCase):
         assert os.path.exists(f"{object_store.refs}/b/A")
         assert os.path.exists(f"{object_store.refs}/b/B")
 
+    def test_host_tree(self):
+        object_store = objectstore.ObjectStore(self.store)
+        host = objectstore.HostTree(object_store)
+
+        # check we cannot call `write`
+        with self.assertRaises(ValueError):
+            with host.write() as _:
+                pass
+
+        # check we actually cannot write to the path
+        with host.read() as path:
+            p = Path(f"{path}/osbuild-test-file")
+            with self.assertRaises(OSError):
+                p.touch()
+
 
 if __name__ == "__main__":
     unittest.main()

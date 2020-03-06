@@ -203,6 +203,33 @@ class Object:
         return exc_type is None
 
 
+class HostTree:
+    """Read-only access to the host file system
+
+    An object that provides the same interface as
+    `objectstore.Object` that can be used to read
+    the host file-system.
+    """
+    def __init__(self, store):
+        self.store = store
+
+    @staticmethod
+    def write():
+        raise ValueError("Cannot write to host")
+
+    @contextlib.contextmanager
+    def read(self):
+        with self.store.tempdir() as tmp:
+            mount("/", tmp)
+            try:
+                yield tmp
+            finally:
+                umount(tmp)
+
+    def cleanup(self):
+        pass  # noop for the host
+
+
 class ObjectStore:
     def __init__(self, store):
         self.store = store
