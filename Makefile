@@ -2,7 +2,7 @@ VERSION := $(shell python3 setup.py --version)
 NEXT_VERSION := $(shell expr "$(VERSION)" + 1)
 COMMIT=$(shell git rev-parse HEAD)
 
-.PHONY: sdist copy-rpms-to-test check-working-directory vagrant-test vagrant-test-keep-running bump-version
+.PHONY: sdist bump-version
 
 sdist:
 	python3 setup.py sdist
@@ -44,29 +44,8 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 		$(RPM_SPECFILE)
 
 #
-# Vagrant
+# Releasing
 #
-
-copy-rpms-to-test: rpm
-	- rm test/testing-rpms/*.rpm
-	find `pwd`/output -name '*.rpm' -printf '%f\n' -exec cp {} test/testing-rpms/ \;
-
-check-working-directory:
-	@if [ "`git status --porcelain --untracked-files=no | wc -l`" != "0" ]; then \
-	  echo "Uncommited changes, refusing (Use git add . && git commit or git stash to clean your working directory)."; \
-	  exit 1; \
-	fi
-
-vagrant-test: check-working-directory copy-rpms-to-test
-	- $(MAKE) -C test destroy
-	- $(MAKE) -C test up
-	$(MAKE) -C test run-tests-remotely
-	- $(MAKE) -C test destroy
-
-vagrant-test-keep-running: check-working-directory copy-rpms-to-test
-	- $(MAKE) -C test up
-	- $(MAKE) -C test install-deps
-	$(MAKE) -C test run-tests-remotely
 
 bump-version:
 	sed -i "s|Version:\(\s*\)$(VERSION)|Version:\1$(NEXT_VERSION)|" osbuild.spec
