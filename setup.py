@@ -1,4 +1,3 @@
-import glob
 import setuptools
 
 setuptools.setup(
