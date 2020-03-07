@@ -17,6 +17,8 @@
 BUILDDIR ?= .
 SRCDIR ?= .
 
+RST2MAN ?= rst2man
+
 #
 # Automatic Variables
 #
@@ -88,9 +90,14 @@ $(BUILDDIR)/%/:
 # deployments to our website, as well as package manager scripts.
 #
 
+MANPAGES_RST = $(wildcard $(SRCDIR)/docs/*.[0123456789].rst)
+MANPAGES_TROFF = $(patsubst $(SRCDIR)/%.rst,$(BUILDDIR)/%,$(MANPAGES_RST))
+
+$(MANPAGES_TROFF): $(BUILDDIR)/docs/%: $(SRCDIR)/docs/%.rst | $(BUILDDIR)/docs/
+	$(RST2MAN) "$<" "$@"
+
 .PHONY: man
-man:
-	rst2man docs/osbuild.1.rst osbuild.1
+man: $(MANPAGES_TROFF)
 
 #
 # Building packages
