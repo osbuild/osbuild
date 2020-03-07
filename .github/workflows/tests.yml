@@ -30,6 +30,36 @@ jobs:
           cd osbuild
           pylint osbuild runners/* assemblers/* stages/* sources/*
 
+  documentation:
+    name: "📚 Documentation"
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/library/python:3.7
+    steps:
+      - name: Install Dependencies
+        run: |
+          pip install docutils
+
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          path: osbuild
+
+      - name: Generate Documentation
+        run: |
+          make \
+            -f osbuild/Makefile \
+            SRCDIR=osbuild \
+            BUILDDIR=build \
+            RST2MAN=rst2man.py \
+            man
+
+      - name: Verify Documentation
+        working-directory: build
+        run: |
+          test -d docs
+          test -f docs/osbuild.1
+
   unit_tests:
     name: "unit"
     runs-on: ubuntu-latest
