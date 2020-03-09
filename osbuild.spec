@@ -20,19 +20,19 @@ Summary:        A build system for OS images
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 
-Requires: bash
-Requires: coreutils
-Requires: curl
-Requires: dnf
-Requires: e2fsprogs
-Requires: glibc
-Requires: policycoreutils
-Requires: qemu-img
-Requires: systemd
-Requires: systemd-container
-Requires: tar
-Requires: util-linux
-Requires: python3-%{pypi_name}
+Requires:       bash
+Requires:       coreutils
+Requires:       curl
+Requires:       dnf
+Requires:       e2fsprogs
+Requires:       glibc
+Requires:       policycoreutils
+Requires:       qemu-img
+Requires:       systemd
+Requires:       systemd-container
+Requires:       tar
+Requires:       util-linux
+Requires:       python3-%{pypi_name}
 
 %{?python_enable_dependency_generator}
 
@@ -43,7 +43,7 @@ A build system for OS images
 Summary:        %{summary}
 %{?python_provide:%python_provide python3-%{pypi_name}}
 
-%description -n     python3-%{pypi_name}
+%description -n python3-%{pypi_name}
 A build system for OS images
 
 %prep
@@ -87,7 +87,7 @@ exit 0
 %{_mandir}/man1/%{name}.1*
 %{pkgdir}
 
-%files -n     python3-%{pypi_name}
+%files -n       python3-%{pypi_name}
 %license LICENSE
 %doc README.md
 %{python3_sitelib}/%{pypi_name}-*.egg-info/
