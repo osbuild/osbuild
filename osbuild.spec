@@ -17,6 +17,7 @@ Source0:        %{forgesource}
 BuildArch:      noarch
 Summary:        A build system for OS images
 
+BuildRequires:  make
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 
@@ -51,7 +52,7 @@ A build system for OS images
 
 %build
 %py3_build
-rst2man docs/%{name}.1.rst %{name}.1
+make man
 
 %install
 %py3_install
@@ -74,7 +75,9 @@ mkdir -p %{buildroot}%{pkgdir}/assemblers/osbuild
 
 # documentation
 mkdir -p %{buildroot}%{_mandir}/man1
-install -m 644 osbuild.1 %{buildroot}%{_mandir}/man1/
+mkdir -p %{buildroot}%{_mandir}/man5
+install -p -m 0644 -t %{buildroot}%{_mandir}/man1/ docs/*.1
+install -p -m 0644 -t %{buildroot}%{_mandir}/man5/ docs/*.5
 
 %check
 exit 0
@@ -85,6 +88,7 @@ exit 0
 %license LICENSE
 %{_bindir}/osbuild
 %{_mandir}/man1/%{name}.1*
+%{_mandir}/man5/%{name}-manifest.5*
 %{pkgdir}
 
 %files -n       python3-%{pypi_name}
