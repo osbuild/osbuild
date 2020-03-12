@@ -1,0 +1,89 @@
+#!/usr/bin/python3
+
+import argparse
+import json
+import os
+import sys
+
+import osbuild
+
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+RED = "\033[31m"
+
+
+def print_pipeline(pipeline, level=0):
+    indent = "  "*level
+
+    if pipeline.build:
+        print(f"{indent}build:")
+        print_pipeline(pipeline.build, level=level+1)
+
+    runner = pipeline.runner
+    if runner:
+        print(f"{indent}runner:")
+        print(f"{indent}  {runner}")
+
+    if pipeline.stages:
+        print(f"{indent}stages:")
+    for stage in pipeline.stages:
+        print(f"{indent}  {stage.name}: \t{stage.id}")
+
+    asm = pipeline.assembler
+    if asm:
+        print(f"{indent}assembler:")
+        print(f"{indent}  {asm.name}: \t{asm.id}")
+
+
+def load_manifest(args):
+    if args.manifest_path == "-":
+        f = sys.stdin
+    else:
+        f = open(args.manifest_path)
+    manifest = json.load(f)
+    f.close()
+
+    if "pipeline" in manifest:
+        pipeline = manifest["pipeline"]
+        sources = manifest.get("sources", {})
+    else:
+        # backwards compatibility
+        pipeline = manifest
+        sources = {}
+
+    if args.sources:
+        with open(args.sources) as f:
+            sources = json.load(f)
+
+    return osbuild.load(pipeline, sources)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Manifest operations")
+    parser.set_defaults(cmd=None)
+    sp = parser.add_subparsers(help='commands')
+
+    pinfo = sp.add_parser("info", help='print information')
+    pinfo.add_argument("manifest_path", metavar="MANIFEST",
+                       help="json file containing the manifest"
+                       "or a '-' to read from stdin")
+    pinfo.add_argument("--sources", metavar="FILE", type=os.path.abspath,
+                       help="json file containing a dictionary of sources")
+    pinfo.set_defaults(cmd='info')
+
+    args = parser.parse_args()
+
+    if not args.cmd:
+        parser.print_help(sys.stderr)
+        return 1
+
+    pipeline = load_manifest(args)
+
+    if args.cmd == "info":
+        print_pipeline(pipeline, level=0)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
