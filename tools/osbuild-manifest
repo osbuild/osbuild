@@ -36,6 +36,34 @@ def print_pipeline(pipeline, level=0):
         print(f"{indent}  {asm.name}: \t{asm.id}")
 
 
+def pipeline2json(pipeline):
+    r = {}
+    if pipeline.build:
+        r["build"] = pipeline2json(pipeline.build)
+
+    runner = pipeline.runner
+    if runner:
+        r["runner"] = pipeline.runner
+
+    stages = []
+    for stage in pipeline.stages:
+        s = {"name": stage.name,
+             "id": stage.id}
+        stages.append(s)
+
+    if stages:
+        r["stages"] = stages
+
+    asm = pipeline.assembler
+    if asm:
+        r["assembler"] = {
+            "name": asm.name,
+            "id": asm.id
+        }
+
+    return r
+
+
 def load_manifest(args):
     if args.manifest_path == "-":
         f = sys.stdin
@@ -61,6 +89,8 @@ def load_manifest(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Manifest operations")
+    parser.add_argument("--json", action="store_true",
+                        help="output results in JSON format")
     parser.set_defaults(cmd=None)
     sp = parser.add_subparsers(help='commands')
 
@@ -81,7 +111,11 @@ def main():
     pipeline = load_manifest(args)
 
     if args.cmd == "info":
-        print_pipeline(pipeline, level=0)
+        if args.json:
+            js = pipeline2json(pipeline)
+            sys.stdout.write(json.dumps(js))
+        else:
+            print_pipeline(pipeline, level=0)
     return 0
 
 
