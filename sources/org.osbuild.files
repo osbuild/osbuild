@@ -34,10 +34,12 @@ def fetch(url, checksum, directory):
     # subdirectory, so we avoid copying accross block devices.
     with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=directory) as tmpdir:
         # some mirrors are broken sometimes. retry manually, because curl doesn't on 404
-        for _ in range(3):
+        for i in range(10):
             curl = subprocess.run([
                 "curl",
                 "--silent",
+                "--max-time", f"{30 + i*15}",
+                "--connect-timeout", "10",
                 "--show-error",
                 "--fail",
                 "--location",
@@ -67,7 +69,7 @@ def main(options, checksums, cache, output):
     os.makedirs(cache, exist_ok=True)
     os.makedirs(output, exist_ok=True)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=15) as executor:
         requested_urls = []
         for checksum in checksums:
             try:
