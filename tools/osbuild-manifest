@@ -13,12 +13,22 @@ BOLD = "\033[1m"
 RED = "\033[31m"
 
 
-def print_pipeline(pipeline, level=0):
+def store_status(store, object_id):
+    if not store:
+        return ""
+
+    if not store.contains(object_id):
+        return ""
+
+    return " *"
+
+
+def print_pipeline(pipeline, store, level=0):
     indent = "  "*level
 
     if pipeline.build:
         print(f"{indent}build:")
-        print_pipeline(pipeline.build, level=level+1)
+        print_pipeline(pipeline.build, store, level=level+1)
 
     runner = pipeline.runner
     if runner:
@@ -28,12 +38,15 @@ def print_pipeline(pipeline, level=0):
     if pipeline.stages:
         print(f"{indent}stages:")
     for stage in pipeline.stages:
-        print(f"{indent}  {stage.name}: \t{stage.id}")
+        status = store_status(store, stage.id)
+        print(f"{indent}  {stage.name}: \t{stage.id}{status}")
 
     asm = pipeline.assembler
     if asm:
+        status = store_status(store, asm.id)
+        status = store_status(store, stage.id)
         print(f"{indent}assembler:")
-        print(f"{indent}  {asm.name}: \t{asm.id}")
+        print(f"{indent}  {asm.name}: \t{asm.id}{status}")
 
 
 def pipeline2json(pipeline):
@@ -91,6 +104,8 @@ def main():
     parser = argparse.ArgumentParser(description="Manifest operations")
     parser.add_argument("--json", action="store_true",
                         help="output results in JSON format")
+    parser.add_argument("--store", metavar="DIRECTORY", default=None,
+                        help="directory where objects are stored in")
     parser.set_defaults(cmd=None)
     sp = parser.add_subparsers(help='commands')
 
@@ -110,12 +125,17 @@ def main():
 
     pipeline = load_manifest(args)
 
+    store = None
+    if args.store:
+        path = os.path.abspath(args.store)
+        store = osbuild.objectstore.ObjectStore(path)
+
     if args.cmd == "info":
         if args.json:
             js = pipeline2json(pipeline)
             sys.stdout.write(json.dumps(js))
         else:
-            print_pipeline(pipeline, level=0)
+            print_pipeline(pipeline, store, level=0)
     return 0
 
 
