@@ -1,0 +1,134 @@
+#!/usr/bin/python3
+
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+from osbuild.util import ostree
+
+
+STAGE_DESC = "Assemble a file system tree into a ostree commit"
+STAGE_INFO = """
+Takes a file system tree that is already conforming to the ostree
+system layout[1] and commits it to an archive repository.
+
+The repository is located at the `/repo` directory and additional
+metadata is stored in `/commit.id` and `/compose.json` which contain
+the commit id and the compose information respectively.
+
+
+[1] https://ostree.readthedocs.io/en/stable/manual/adapting-existing/
+"""
+STAGE_OPTS = """
+"required": ["ref"],
+"properties": {
+  "ref": {
+    "description": "OStree ref to create for the commit",
+    "type": "string",
+    "default": ""
+  },
+  "tmp-is-dir": {
+    "description": "Create a regular directory for /tmp",
+    "type": "boolean",
+    "default": true
+  },
+  "parent": {
+    "description": "commit id of the parent commit",
+    "type": "string"
+  }
+}
+"""
+
+TOPLEVEL_DIRS = ["dev", "proc", "run", "sys", "sysroot", "var"]
+TOPLEVEL_LINKS = {
+    "home": "var/home",
+    "media": "run/media",
+    "mnt": "var/mnt",
+    "opt": "var/opt",
+    "ostree": "sysroot/ostree",
+    "root": "var/roothome",
+    "srv": "var/srv",
+}
+
+
+def copy(name, source, dest):
+    subprocess.run(["cp", "--reflink=auto", "-a",
+                    os.path.join(source, name),
+                    os.path.join(dest, name)],
+                   check=True)
+
+
+def init_rootfs(root, tmp_is_dir):
+    """Initialize a pristine root file-system"""
+
+    fd = os.open(root, os.O_DIRECTORY)
+
+    os.fchmod(fd, 0o755)
+
+    for d in TOPLEVEL_DIRS:
+        os.mkdir(d, mode=0o755, dir_fd=fd)
+        os.chmod(d, mode=0o755, dir_fd=fd)
+
+    for l, t in TOPLEVEL_LINKS.items():
+        # <dir_fd>/l -> t
+        os.symlink(t, l, dir_fd=fd)
+
+    if tmp_is_dir:
+        os.mkdir("tmp", mode=0o1777, dir_fd=fd)
+        os.chmod("tmp", mode=0o1777, dir_fd=fd)
+    else:
+        os.symlink("tmp", "sysroot/tmp", dir_fd=fd)
+
+
+def main(tree, output_dir, options):
+    ref = options["ref"]
+    tmp_is_dir = options.get("tmp-is-dir", True)
+    parent = options.get("parent", None)
+
+    with tempfile.TemporaryDirectory(dir=output_dir) as root:
+        print("Initializing root filesystem", file=sys.stderr)
+        init_rootfs(root, tmp_is_dir)
+
+        print("Copying data", file=sys.stderr)
+        copy("usr", tree, root)
+        copy("boot", tree, root)
+        copy("var", tree, root)
+
+        for name in ["bin", "lib", "lib32", "lib64", "sbin"]:
+            if os.path.lexists(f"{tree}/{name}"):
+                copy(name, tree, root)
+
+        repo = os.path.join(output_dir, "repo")
+
+        subprocess.run(["ostree",
+                        "init",
+                        "--mode=archive",
+                        f"--repo={repo}"],
+                       stdout=sys.stderr,
+                       check=True)
+
+        treefile = ostree.Treefile()
+        treefile["ref"] = ref
+
+        argv = ["rpm-ostree", "compose", "commit"]
+        argv += [f"--repo={repo}"]
+
+        if parent:
+            argv += [f"--parent={parent}"]
+
+        argv += [f"--write-composejson-to={output_dir}/compose.json"]
+
+        with treefile.as_tmp_file() as path:
+            argv += [path, root]
+
+            subprocess.run(argv,
+                           stdout=sys.stderr,
+                           check=True)
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["output_dir"], args["options"])
+    sys.exit(r)
