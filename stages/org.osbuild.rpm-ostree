@@ -1,0 +1,76 @@
+#!/usr/bin/python3
+
+import json
+import os
+import subprocess
+import sys
+
+from osbuild.util import ostree
+
+
+STAGE_DESC = "Transforms the tree to an ostree layout"
+STAGE_INFO = """
+Uses `rpm-ostree compose` to transform a "normal" file system tree into
+an OSTree conforming layout (see [1]). Among other things the main steps
+are:
+  - moves /etc to /usr/etc
+  - move /boot to /usr/lib/ostree-boot
+  - potentially moving /var/lib/rpm
+  - re-creates the initramfs (via dracut)
+  - adds altfiles module to NSS
+  - Re-compiles SELinux policy (semodule -nB)
+  - Migrates /usr/etc/{passwd, group} to /usr/lib/
+  - Postprocess SELinux policy
+  - Convert /var to use tmpfiles.d
+  - Prepares symlinks
+    - /usr/local -> /var/usrlocal
+    - /var/lib/alternatives -> /usr/lib/alternatives
+    - /var/lib/vagrant -> /usr/lib/vagrant
+  - copies the rpmdb
+
+The configuration options, `etc_group_members` corresponds to the
+Treefile[2] option of rpm-ostree. In brief: The groups mentioned
+in `etc_group_members` will be stored in /etc/groups instead of
+/usr/etc/groups (which is read-only). Therefore all groups that
+human users need to be part of.
+
+[1] https://ostree.readthedocs.io/en/latest/manual/adapting-existing/
+[2] https://rpm-ostree.readthedocs.io/en/latest/manual/treefile/
+"""
+STAGE_OPTS = """
+"required": ["enabled_services"],
+"properties": {
+  "etc_group_members": {
+    "description": "Array of group names to still keep in /etc/group",
+    "type": "array",
+    "items": { "type": "string" }
+  }
+}
+"""
+
+
+def main(tree, options):
+    etc_group_members = options.get("etc_group_members", [])
+
+    # rpm-ostree will either ensure that machine-id is empty
+    # when machineid-compat is 'true' is or will remove it
+    # otherwise. Since we have to decide, detect the current
+    # state and make rpm-ostree follow suit
+    machineid_compat = os.path.exists(f"{tree}/etc/machine-id")
+    print(f"ostree: machineid-compat: {machineid_compat}")
+
+    treefile = ostree.Treefile()
+    treefile["boot-location"] = "new"
+    treefile["machineid-compat"] = machineid_compat
+    treefile["etc-group-members"] = etc_group_members
+
+    with treefile.as_tmp_file() as path:
+        subprocess.run(["rpm-ostree", "compose", "postprocess",
+                        tree, path],
+                       check=True)
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
