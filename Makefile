@@ -145,3 +145,60 @@ bump-version:
 	sed -i "s|Version:\(\s*\)$(VERSION)|Version:\1$(NEXT_VERSION)|" osbuild.spec
 	sed -i "s|Release:\(\s*\)[[:digit:]]\+|Release:\11|" osbuild.spec
 	sed -i "s|version=\"$(VERSION)\"|version=\"$(NEXT_VERSION)\"|" setup.py
+
+.PHONY: release
+release:
+	@echo
+	@echo "Checklist for release of osbuild-$(NEXT_VERSION):"
+	@echo
+	@echo " * Create news entry in NEWS.md with a short description of"
+	@echo "   any changes since the last release, which are relevant to"
+	@echo "   users, packagers, distributors, or dependent projects."
+	@echo
+	@echo "   Use the following template, break lines at 80ch:"
+	@echo
+	@echo "--------------------------------------------------------------------------------"
+	@echo "## CHANGES WITH $(NEXT_VERSION):"
+	@echo
+	@echo "        * ..."
+	@echo
+	@echo "        * ..."
+	@echo
+	@echo -n "        Contributions from: "
+	@echo `git log --format='%an, ' v$(VERSION)..HEAD | sort -u | tr -d '\n' | sed 's/, $$//'`
+	@echo
+	@echo "        - Location, YYYY-MM-DD"
+	@echo "--------------------------------------------------------------------------------"
+	@echo
+	@echo "   To get a list of changes since the last release, you may use:"
+	@echo
+	@echo "        git log v$(VERSION)..HEAD"
+	@echo
+	@echo " * Bump the project version. The canonical location is"
+	@echo "   'setup.py', but 'osbuild.spec' needs to be updated as well."
+	@echo "   You can use the following make-target to automate this:"
+	@echo
+	@echo "        make bump-version"
+	@echo
+	@echo " * Make sure the spec-file is updated for the new release and"
+	@echo "   correctly supports all new features. This should already be"
+	@echo "   done by previous commits that introduced the changes, but"
+	@echo "   a sanity check does not hurt."
+	@echo
+	@echo " * Commit the version bump, spec-file changes and NEWS.md in any"
+	@echo "   order you want."
+	@echo
+	@echo " * Tag the release via:"
+	@echo
+	@echo "        git tag -s -m 'osbuild $(NEXT_VERSION)' v$(NEXT_VERSION) HEAD"
+	@echo
+	@echo " * Push master as well as the tag:"
+	@echo
+	@echo "        git push origin master"
+	@echo "        git push origin v$(NEXT_VERSION)"
+	@echo
+	@echo " * Create a release on github. Use 'NEWS.md' verbatim from the"
+	@echo "   top until the end of the section for this release as release"
+	@echo "   notes. Use 'v$(NEXT_VERSION)' as release name and as tag for"
+	@echo "   the release."
+	@echo
