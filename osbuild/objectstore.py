@@ -3,6 +3,7 @@ import contextlib
 import errno
 import hashlib
 import os
+import shutil
 import subprocess
 import tempfile
 import weakref
@@ -50,6 +51,35 @@ def umount(target, lazy=True):
     if lazy:
         args += ["--lazy"]
     subprocess.run(["umount"] + args + [target], check=True)
+
+
+def remove_tree(path):
+    def fixperms(p):
+        subprocess.run(["chattr", "-i", p],
+                       check=False)
+        os.chmod(p, 0o777)
+
+    def unlink(p):
+        try:
+            os.unlink(p)
+        except IsADirectoryError:
+            remove_tree(p)
+        except FileNotFoundError:
+            pass
+
+    def on_error(_fn, p, exc_info):
+        e = exc_info[0]
+        if issubclass(e, FileNotFoundError):
+            pass
+        elif issubclass(e, PermissionError):
+            if p != path:
+                fixperms(os.path.dirname(p))
+            fixperms(p)
+            unlink(p)
+        else:
+            raise e
+
+    shutil.rmtree(path, onerror=on_error)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -158,6 +188,12 @@ class Object:
     def cleanup(self):
         self._check_readers()
         self._check_writer()
+        if self._tree:
+            # manually remove the tree, it might contain
+            # files with immutable flag set, which will
+            # throw off standard Python 3 tempdir cleanup
+            remove_tree(self._tree)
+            self._tree = None
         if self._workdir:
             self._workdir.cleanup()
             self._workdir = None
