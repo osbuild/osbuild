@@ -2,9 +2,23 @@ import os
 import shutil
 import tempfile
 import unittest
+import subprocess
 
 from pathlib import Path
 from osbuild import objectstore
+
+
+def can_set_immutable():
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+        try:
+            os.makedirs(f"{tmp}/f")
+            # fist they give it ...
+            subprocess.run(["chattr", "+i", f"{tmp}/f"], check=True)
+            # ... then they take it away
+            subprocess.run(["chattr", "-i", f"{tmp}/f"], check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+        return True
 
 
 class TestObjectStore(unittest.TestCase):
@@ -72,6 +86,17 @@ class TestObjectStore(unittest.TestCase):
                     p.touch()
             # there should be no temporary Objects dirs anymore
             self.assertEqual(len(os.listdir(object_store.tmp)), 0)
+
+    @unittest.skipUnless(can_set_immutable(), "Need root permissions")
+    def test_cleanup_immutable(self):
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+            with objectstore.ObjectStore(tmp) as object_store:
+                tree = object_store.new()
+                with tree.write() as path:
+                    p = Path(f"{path}/A")
+                    p.touch()
+                    subprocess.run(["chattr", "+i", f"{path}/A"],
+                                   check=True)
 
     def test_duplicate(self):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
