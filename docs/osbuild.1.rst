@@ -45,7 +45,7 @@ is not listed here, **osbuild** will deny startup and exit with an error.
                                 configuration
 --secrets=PATH                  json file containing a dictionary of secrets
                                 that are passed to sources
--l, --libdir=DIR                directory containing stages, assemblers, and
+-l DIR, --libdir=DIR            directory containing stages, assemblers, and
                                 the osbuild library
 --checkpoint=CHECKPOINT         stage to commit to the object store during
                                 build (can be passed multiple times)
