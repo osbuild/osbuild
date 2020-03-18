@@ -1,0 +1,64 @@
+#!/usr/bin/python3
+
+import json
+import os
+import sys
+import subprocess
+import uuid
+
+
+def ostree(*args, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print(f"ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   check=True)
+
+
+def main(options, checksums, cache, output):
+    commits = options["commits"]
+
+    os.makedirs(output, exist_ok=True)
+    os.makedirs(cache, exist_ok=True)
+
+    # Prepare the cache and the output repo
+    repo_cache = os.path.join(cache, "repo")
+    ostree("init", mode="archive", repo=repo_cache)
+
+    repo_out = os.path.join(output, "repo")
+    ostree("init", mode="archive", repo=repo_out)
+
+    for commit in checksums:
+        remote = commits[commit]["remote"]
+        url = remote["url"]
+        uid = str(uuid.uuid4())
+
+        ostree("remote", "add",
+               "--no-gpg-verify",
+               uid, url,
+               repo=repo_cache)
+
+        # Transfer the commit: remote → cache
+        print(f"pulling {commit}", file=sys.stderr)
+        ostree("pull", uid, commit, repo=repo_cache)
+
+        # Transfer the commit: cache → output
+        ostree("pull-local", repo_cache, commit,
+               repo=repo_out)
+
+        # Remove the temporary remote again
+        ostree("remote", "delete", uid,
+               repo=repo_cache)
+
+    json.dump({}, sys.stdout)
+    return 0
+
+
+if __name__ == '__main__':
+    source_args = json.load(sys.stdin)
+    r = main(source_args["options"],
+             source_args["checksums"],
+             source_args["cache"],
+             source_args["output"])
+    sys.exit(r)
