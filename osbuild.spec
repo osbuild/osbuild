@@ -93,7 +93,7 @@ exit 0
 
 %files -n       python3-%{pypi_name}
 %license LICENSE
-%doc README.md
+%doc README.md NEWS.md
 %{python3_sitelib}/%{pypi_name}-*.egg-info/
 %{python3_sitelib}/%{pypi_name}/
 
