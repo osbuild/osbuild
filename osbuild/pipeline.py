@@ -232,15 +232,15 @@ class Pipeline:
                                             interactive,
                                             libdir,
                                             secrets)
-            # Cleanup the build tree used to build `tree`
-            # which is not needed anymore
-            t.cleanup()
 
             results["build"] = r
             if not r["success"]:
-                tree.cleanup()
                 results["success"] = False
                 return results, None, None
+
+            # Cleanup the build tree (`t`) which was used to
+            # build `tree`; it is now not needed anymore
+            t.cleanup()
 
             build_tree = tree
 
