@@ -17,6 +17,11 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 
 
+def cleanup(*objs):
+    """Call cleanup method for all objects, filters None values out"""
+    _ = map(lambda o: o.cleanup(), filter(None, objs))
+
+
 class BuildResult:
     def __init__(self, origin, returncode, output):
         self.name = origin.name
@@ -285,6 +290,7 @@ class Pipeline:
 
             results["stages"].append(r.as_dict())
             if not r.success:
+                cleanup(build_tree, tree)
                 results["success"] = False
                 return results, None, None
 
