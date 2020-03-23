@@ -2,13 +2,7 @@ name: Tests
 
 # NOTE(mhayden): Restricting branches prevents jobs from being doubled since
 # a push to a pull request triggers two events.
-on:
-  pull_request:
-    branches:
-      - "*"
-  push:
-    branches:
-      - master
+on: [pull_request, push]
 
 jobs:
   pylint:
@@ -86,6 +80,45 @@ jobs:
         run: |
           cd osbuild
           python3 -m unittest -v test.test_osrelease
+
+  runtime_tests:
+    name: "Runtime Tests"
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: 1
+    steps:
+    - name: "Clone Repositors"
+      uses: actions/checkout@v2
+    - name: "Install Dependencies"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install \
+          nbd-client \
+          qemu-kvm \
+          qemu-utils \
+          rpm \
+          systemd-container \
+          tar \
+          yum
+
+    - name: "Set up Python"
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+
+    - name: "Run Noop Tests"
+      run: |
+        for i in {0..2} ; do
+          sudo python3 -m osbuild --libdir . samples/noop.json
+        done
+    - name: "Run Source Tests"
+      run: sudo python3 -m unittest -v test.test_sources
+    - name: "Run Boot Tests"
+      run: sudo python3 -m unittest -v test.test_boot
+    - name: "Run Assembler Tests"
+      run: sudo python3 -m unittest -v test.test_assemblers
+    - name: "Run Stage Tests"
+      run: sudo python3 -m unittest -v test.test_stages
 
   rpm_build:
     name: "📦 RPM"
