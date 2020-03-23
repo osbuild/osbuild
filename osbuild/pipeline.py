@@ -217,11 +217,6 @@ class Pipeline:
     def build_stages(self, object_store, interactive, libdir, secrets):
         results = {"success": True}
 
-        if not self.stages:
-            build_tree = objectstore.HostTree(object_store)
-            tree = object_store.new()
-            return results, build_tree, tree
-
         # We need a build tree for the stages below, which is either
         # another tree that needs to be built with the build pipeline
         # or the host file system if no build pipeline is specified
@@ -248,6 +243,13 @@ class Pipeline:
             t.cleanup()
 
             build_tree = tree
+
+        # If there are no stages, just return build tree we just
+        # obtained and a new, clean `tree`
+        if not self.stages:
+            tree = object_store.new()
+            return results, build_tree, tree
+
 
         # Create a new tree. The base is our tree_id because if that
         # is already in the store, we can short-circuit directly and
