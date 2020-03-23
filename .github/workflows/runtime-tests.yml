@@ -1,0 +1,95 @@
+name: Runtime Tests
+
+on: [pull_request, push]
+
+#
+# We set `PYTHONUNBUFFERED` to get more immediate and ordered output from
+# python programs. This should not be necessary if all relevant output used the
+# unbuffered stderr, but that is not entirely under our control.
+#
+env:
+  PYTHONUNBUFFERED: 1
+
+jobs:
+  noop_pipeline_tests:
+    name: "Noop-Pipeline Tests"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Install Dependencies"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install \
+          systemd-container
+    - name: "Set up Python"
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: "Run Noop-Pipeline Tests"
+      run: |
+        for i in {0..2} ; do
+          sudo env "PATH=$PATH" python3 -m osbuild --libdir . samples/noop.json
+        done
+
+  source_tests:
+    name: "Source Tests"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Install Dependencies"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install \
+          rpm \
+          systemd-container
+    - name: "Set up Python"
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: "Run Source Tests"
+      run: sudo env "PATH=$PATH" python3 -m unittest -v test.test_sources
+
+  assembler_tests:
+    name: "Assembler Tests"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Install Dependencies"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install \
+          nbd-client \
+          qemu-utils \
+          rpm \
+          systemd-container \
+          tar \
+          yum
+    - name: "Set up Python"
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: "Run Assembler Tests"
+      run: sudo env "PATH=$PATH" python3 -m unittest -v test.test_assemblers
+
+  stage_tests:
+    name: "Stage Tests"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Install Dependencies"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install \
+          systemd-container \
+          tar \
+          yum
+    - name: "Set up Python"
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: "Run Stage Tests"
+      run: sudo env "PATH=$PATH" python3 -m unittest -v test.test_stages

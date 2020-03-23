@@ -6,20 +6,6 @@ env:
   - PYTHONUNBUFFERED=1
 jobs:
   include:
-    - name: pipeline-noop
-      before_install: sudo apt-get install -y systemd-container
-      script:
-        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . samples/noop.json
-        - sudo env "PATH=$PATH" python3 -m osbuild --libdir . samples/noop.json
-    - name: sources-tests
-      before_install: sudo apt-get install -y rpm
-      script: sudo env "PATH=$PATH" python3 -m unittest -v test.test_sources
     - name: f30-boot
       before_install: sudo apt-get install -y systemd-container yum qemu-kvm
       script: sudo env "PATH=$PATH" python3 -m unittest -v test.test_boot
-    - name: assemblers
-      before_install: sudo apt-get install -y systemd-container yum tar qemu-utils nbd-client
-      script: sudo env "PATH=$PATH" python3 -m unittest -v test.test_assemblers
-    - name: stage-tests
-      before_install: sudo apt-get install -y systemd-container yum
-      script: sudo env "PATH=$PATH" python3 -m unittest -v test.test_stages
