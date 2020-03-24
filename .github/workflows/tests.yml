@@ -85,17 +85,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        fedora_release: ["31", "32", "rawhide"]
+        fedora_release: ["31", "32", "33"]
     container:
-      image: "docker.io/library/fedora:${{ matrix.fedora_release }}"
+      image: "quay.io/osbuild/osbuild-fedora${{ matrix.fedora_release }}:latest"
     steps:
       - name: "📥 Prepare container"
         run: |
           echo "fastestmirror=1" >> /etc/dnf/dnf.conf
           echo "install_weak_deps=0" >> /etc/dnf/dnf.conf
           rm -fv /etc/yum.repos.d/fedora*modular*
-          dnf -y upgrade
-          dnf -y install dnf-plugins-core findutils git make rpm-build rpmdevtools
 
       - name: "🗄️ Clone the repository"
         uses: actions/checkout@v2
