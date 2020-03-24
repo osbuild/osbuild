@@ -7,12 +7,13 @@ import subprocess
 import uuid
 
 
-def ostree(*args, **kwargs):
+def ostree(*args, _input=None, **kwargs):
     args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
     print(f"ostree " + " ".join(args), file=sys.stderr)
     subprocess.run(["ostree"] + args,
                    encoding="utf-8",
                    stdout=sys.stderr,
+                   input=_input,
                    check=True)
 
 
@@ -32,12 +33,22 @@ def main(options, checksums, cache, output):
     for commit in checksums:
         remote = commits[commit]["remote"]
         url = remote["url"]
+        gpg = remote.get("gpgkeys", [])
         uid = str(uuid.uuid4())
+
+        extra_args = []
+        if not gpg:
+            extra_args += ["--no-gpg-verify"]
 
         ostree("remote", "add",
                "--no-gpg-verify",
+               *extra_args,
                uid, url,
                repo=repo_cache)
+
+        for key in gpg:
+            ostree("remote", "gpg-import", "--stdin", uid,
+                   repo=repo_cache, _input=key)
 
         # Transfer the commit: remote → cache
         print(f"pulling {commit}", file=sys.stderr)
