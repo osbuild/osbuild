@@ -11,7 +11,7 @@ class TestBoot(osbuildtest.TestCase):
         r = subprocess.run(["qemu-system-x86_64",
             "-snapshot",
             "-m", "1024",
-            "-accel", "kvm:hvf:tcg",
+            "-M", "accel=kvm:hvf:tcg",
 
             # be silent
             "-nographic",
