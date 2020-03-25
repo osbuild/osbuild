@@ -35,6 +35,12 @@ Requires:       tar
 Requires:       util-linux
 Requires:       python3-%{pypi_name}
 
+# Turn off dependency generators for assemblers, runners and stages.
+# They run in a container, so there's no reason to generate dependencies
+# from them. As of 2020-03-25 this filters out python3.6 dependency generated
+# by rhel runner.
+%global __requires_exclude_from ^%{pkgdir}/(assemblers|runners|stages)/.*$
+
 %{?python_enable_dependency_generator}
 
 %description
