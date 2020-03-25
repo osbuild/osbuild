@@ -42,6 +42,10 @@ STAGE_OPTS = """
     "description": "Additional kernel command line options",
     "type": "string"
   },
+  "ref": {
+    "description": "OStree ref to create and use for deployment",
+    "type": "string"
+  },
   "rootfs": {
     "description": "Identifier to locate the root file system",
     "type": "string"
@@ -104,17 +108,22 @@ def main(tree, sources, options):
     rootfs = options["rootfs"]
     mounts = options.get("mounts", [])
     kopts = options.get("kernel_opts", [])
-
-    print(f"Fetching ostree commit {commit}")
-    osbuild.sources.get("org.osbuild.ostree", [commit])
+    ref = options.get("ref", commit)
 
     ostree("admin", "init-fs", "--modern", tree,
            sysroot=tree)
 
-    ostree("pull-local",
-           f"{sources}/org.osbuild.ostree/repo",
-           commit,
+    print(f"Fetching ostree commit {commit}")
+    osbuild.sources.get("org.osbuild.ostree", [commit])
+
+    source_repo = f"{sources}/org.osbuild.ostree/repo"
+
+    ostree("pull-local", source_repo, commit,
            repo=f"{tree}/ostree/repo")
+
+    if ref != commit:
+        ostree("refs", "--create", ref, commit,
+               repo=f"{tree}/ostree/repo")
 
     ostree("admin", "os-init", osname, sysroot=tree)
 
@@ -129,7 +138,7 @@ def main(tree, sources, options):
             os.makedirs(path, exist_ok=True)  # FIXME: SELinux
             mounter.mount(path, path)
 
-        ostree("admin", "deploy", commit,
+        ostree("admin", "deploy", ref,
                f"--karg=root={rootfs}",
                *kargs,
                sysroot=tree,
