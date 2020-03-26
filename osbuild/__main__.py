@@ -59,13 +59,8 @@ def main():
     manifest = json.load(f)
     f.close()
 
-    if "pipeline" in manifest:
-        pipeline = manifest["pipeline"]
-        sources_options = manifest.get("sources", {})
-    else:
-        # backwards compatibility
-        pipeline = manifest
-        sources_options = {}
+    pipeline = manifest.get("pipeline", {})
+    sources_options = manifest.get("sources", {})
 
     if args.sources:
         with open(args.sources) as f:
