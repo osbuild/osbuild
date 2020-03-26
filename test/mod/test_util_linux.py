@@ -95,3 +95,73 @@ def test_capabilities():
     assert not linux.cap_is_supported("CAP_GICMO")
     with pytest.raises(OSError):
         lib.from_name("CAP_GICMO")
+
+
+def test_fcntl_flock():
+    #
+    # This tests the `linux.fcntl_flock()` file-locking helper. Note
+    # that file-locks are on the open-file-description, so they are shared
+    # between dupped file-descriptors. We explicitly create a separate
+    # file-description via `/proc/self/fd/`.
+    #
+
+    with tempfile.TemporaryFile() as f:
+        fd1 = f.fileno()
+        fd2 = os.open(os.path.join("/proc/self/fd/", str(fd1)), os.O_RDWR | os.O_CLOEXEC)
+
+        # Test: unlock
+        linux.fcntl_flock(fd1, linux.fcntl.F_UNLCK)
+
+        # Test: write-lock + unlock
+        linux.fcntl_flock(fd1, linux.fcntl.F_WRLCK)
+        linux.fcntl_flock(fd1, linux.fcntl.F_UNLCK)
+
+        # Test: read-lock1 + read-lock2 + unlock1 + unlock2
+        linux.fcntl_flock(fd1, linux.fcntl.F_RDLCK)
+        linux.fcntl_flock(fd2, linux.fcntl.F_RDLCK)
+        linux.fcntl_flock(fd1, linux.fcntl.F_UNLCK)
+        linux.fcntl_flock(fd2, linux.fcntl.F_UNLCK)
+
+        # Test: write-lock1 + write-lock2 + unlock
+        linux.fcntl_flock(fd1, linux.fcntl.F_WRLCK)
+        with pytest.raises(BlockingIOError):
+            linux.fcntl_flock(fd2, linux.fcntl.F_WRLCK)
+        linux.fcntl_flock(fd1, linux.fcntl.F_UNLCK)
+
+        # Test: write-lock1 + read-lock2 + unlock
+        linux.fcntl_flock(fd1, linux.fcntl.F_WRLCK)
+        with pytest.raises(BlockingIOError):
+            linux.fcntl_flock(fd2, linux.fcntl.F_RDLCK)
+        linux.fcntl_flock(fd1, linux.fcntl.F_UNLCK)
+
+        # Test: read-lock1 + write-lock2 + unlock
+        linux.fcntl_flock(fd1, linux.fcntl.F_RDLCK)
+        with pytest.raises(BlockingIOError):
+            linux.fcntl_flock(fd2, linux.fcntl.F_WRLCK)
+        linux.fcntl_flock(fd1, linux.fcntl.F_UNLCK)
+
+        # Test: write-lock1 + read-lock1 + read-lock2 + unlock
+        linux.fcntl_flock(fd1, linux.fcntl.F_WRLCK)
+        linux.fcntl_flock(fd1, linux.fcntl.F_RDLCK)
+        linux.fcntl_flock(fd2, linux.fcntl.F_RDLCK)
+        linux.fcntl_flock(fd1, linux.fcntl.F_UNLCK)
+
+        # Test: read-lock1 + read-lock2 + write-lock1 + unlock1 + unlock2
+        linux.fcntl_flock(fd1, linux.fcntl.F_RDLCK)
+        linux.fcntl_flock(fd2, linux.fcntl.F_RDLCK)
+        with pytest.raises(BlockingIOError):
+            linux.fcntl_flock(fd1, linux.fcntl.F_WRLCK)
+        linux.fcntl_flock(fd1, linux.fcntl.F_UNLCK)
+        linux.fcntl_flock(fd2, linux.fcntl.F_UNLCK)
+
+        # Test: write-lock3 + write-lock1 + close3 + write-lock1 + unlock1
+        fd3 = os.open(os.path.join("/proc/self/fd/", str(fd1)), os.O_RDWR | os.O_CLOEXEC)
+        linux.fcntl_flock(fd3, linux.fcntl.F_WRLCK)
+        with pytest.raises(BlockingIOError):
+            linux.fcntl_flock(fd1, linux.fcntl.F_WRLCK)
+        os.close(fd3)
+        linux.fcntl_flock(fd1, linux.fcntl.F_WRLCK)
+        linux.fcntl_flock(fd1, linux.fcntl.F_UNLCK)
+
+        # Cleanup
+        os.close(fd2)
