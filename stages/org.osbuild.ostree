@@ -35,7 +35,19 @@ STAGE_OPTS = """
     "type": "array",
     "items": {
       "description": "Description of one mount point",
-      "type": "string"
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "description": "The path of the mount point",
+          "type": "string"
+        },
+        "mode": {
+          "description": "The mode of the mount point",
+          "type": "integer",
+          "default": 493
+        }
+      }
     }
   },
   "kernel_opts": {
@@ -156,9 +168,10 @@ def main(tree, sources, options):
 
     with MountGuard() as mounter:
         for mount in mounts:
-            path = os.path.join(tree, mount)
-            print(f"mounting {path} onto itself")
-            os.makedirs(path, exist_ok=True)  # FIXME: SELinux
+            path = mount["path"].lstrip("/")
+            path = os.path.join(tree, path)
+            os.makedirs(path, exist_ok=True)
+            os.chmod(path, mount.get("mode", 0o755))
             mounter.mount(path, path)
 
         rootfs_id = make_fs_identifier(rootfs)
