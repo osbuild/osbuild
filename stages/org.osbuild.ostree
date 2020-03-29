@@ -48,7 +48,22 @@ STAGE_OPTS = """
   },
   "rootfs": {
     "description": "Identifier to locate the root file system",
-    "type": "string"
+    "type": "object",
+    "oneOf": [{
+      "required": ["uuid"]
+    }, {
+      "required": ["label"]
+    }],
+    "properties": {
+      "label": {
+        "description": "Identify the root file system by label",
+        "type": "string"
+      },
+      "uuid": {
+        "description": "Identify the root file system by UUID",
+        "type": "string"
+      }
+    }
   }
 }
 """
@@ -101,6 +116,14 @@ class MountGuard:
         return exc_type is None
 
 
+def make_fs_identifier(desc):
+    for key in ["uuid", "label"]:
+        val = desc.get(key)
+        if val:
+            return f"{key.upper()}={val}"
+    raise ValueError("unknown rootfs type")
+
+
 def main(tree, sources, options):
 
     commit = options["commit"]
@@ -138,8 +161,9 @@ def main(tree, sources, options):
             os.makedirs(path, exist_ok=True)  # FIXME: SELinux
             mounter.mount(path, path)
 
+        rootfs_id = make_fs_identifier(rootfs)
         ostree("admin", "deploy", ref,
-               f"--karg=root={rootfs}",
+               f"--karg=root={rootfs_id}",
                *kargs,
                sysroot=tree,
                os=osname)
