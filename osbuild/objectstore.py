@@ -1,6 +1,7 @@
-
+import array
 import contextlib
 import errno
+import fcntl
 import hashlib
 import os
 import shutil
@@ -53,10 +54,28 @@ def umount(target, lazy=True):
     subprocess.run(["umount"] + args + [target], check=True)
 
 
+def clear_mutable_flag(path):
+    FS_IOC_GETFLAGS	= 0x80086601
+    FS_IOC_SETFLAGS	= 0x40086602
+    FS_IMMUTABLE_FL	= 0x010
+
+    fd = -1
+    try:
+        fd = os.open(path, os.O_RDONLY)
+        flags = array.array('L', [0])
+        fcntl.ioctl(fd, FS_IOC_GETFLAGS, flags, True)
+        flags[0] &= ~FS_IMMUTABLE_FL
+        fcntl.ioctl(fd, FS_IOC_SETFLAGS, flags, False)
+    except OSError:
+        pass  # clearing flags is best effort
+    finally:
+        if fd > -1:
+            os.close(fd)
+
+
 def remove_tree(path):
     def fixperms(p):
-        subprocess.run(["chattr", "-i", p],
-                       check=False)
+        clear_mutable_flag(p)
         os.chmod(p, 0o777)
 
     def unlink(p):
