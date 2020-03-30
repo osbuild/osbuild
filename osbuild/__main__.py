@@ -33,8 +33,8 @@ def mark_checkpoints(pipeline, checkpoints):
 # pylint: disable=too-many-statements
 def main():
     parser = argparse.ArgumentParser(description="Build operating system images")
-    parser.add_argument("pipeline_path", metavar="PIPELINE",
-                        help="json file containing the pipeline that should be built, or a '-' to read from stdin")
+    parser.add_argument("manifest_path", metavar="MANIFEST",
+                        help="json file containing the manifest that should be built, or a '-' to read from stdin")
     parser.add_argument("--build-env", metavar="FILE", type=os.path.abspath,
                         help="json file containing a description of the build environment")
     parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
@@ -52,10 +52,10 @@ def main():
                         help="output results in JSON format")
     args = parser.parse_args()
 
-    if args.pipeline_path == "-":
+    if args.manifest_path == "-":
         f = sys.stdin
     else:
-        f = open(args.pipeline_path)
+        f = open(args.manifest_path)
     manifest = json.load(f)
     f.close()
 
