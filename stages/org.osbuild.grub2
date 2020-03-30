@@ -32,7 +32,8 @@ NB: with legacy support enabled, this stage will fail if the buildhost
 doesn't have `/usr/lib/grub/$platform/` and `/usr/share/grub/unicode.pf2`.
 
 If UEFI support is enabled via `uefi: {"vendor": "<vendor>"}` this stage will
-also write the `grub.cfg` to `boot/efi/EFI/<vendor>/grub.cfg`.
+also write the `grub.cfg` to `boot/efi/EFI/<vendor>/grub.cfg`. EFI binaries
+and accompanying data can be installed from the built root via `uefi.install`.
 
 Both UEFI and Legacy can be specified at the same time.
 """
@@ -81,6 +82,11 @@ STAGE_OPTS = """
          "description": "The vendor of the UEFI binaries (this is us)",
          "examples": ["fedora"],
          "pattern": "^(.+)$"
+      },
+      "install": {
+        "description": "Install EFI binaries and data from the build root",
+        "type": "boolean",
+        "default": false
       }
     }
   }
@@ -106,6 +112,15 @@ def copy_font(tree):
     """Copy a unicode font into /boot"""
     os.makedirs(f"{tree}/boot/grub2/fonts", exist_ok=True)
     shutil.copy2("/usr/share/grub/unicode.pf2", f"{tree}/boot/grub2/fonts/")
+
+
+def copy_efi_data(tree, vendor):
+    """Copy the EFI binaries & data into /boot/efi"""
+    for d in ['BOOT', vendor]:
+        source = f"/boot/efi/EFI/{d}"
+        target = f"{tree}/boot/efi/EFI/{d}/"
+        shutil.copytree(source, target,
+                        symlinks=False)
 
 
 def write_grub_cfg(tree, path):
@@ -178,7 +193,7 @@ def main(tree, options):
 
     if uefi is not None:
         # UEFI support:
-        # The following files are needed for UEFI support:
+        # The following config files are needed for UEFI support:
         # /boot/efi/EFI/<vendor>/
         # - grubenv: in the case of non-hybrid boot it should have
         #     been written to via the link from /boot/grub2/grubenv
@@ -187,6 +202,12 @@ def main(tree, options):
         #     or a shim one that redirects to the canonical one in
         #     /boot/grub2 in case of hybrid boot (see above)
         vendor = uefi["vendor"]
+
+        # EFI binaries and accompanying data can be installed from
+        # the build root instead of using an rpm package
+        if uefi.get('install', False):
+            copy_efi_data(tree, vendor)
+
         grubcfg = f"boot/efi/EFI/{vendor}/grub.cfg"
         if hybrid:
             write_grub_cfg_redirect(tree, grubcfg, separate_boot)
