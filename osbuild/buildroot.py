@@ -24,7 +24,7 @@ class BuildRoot:
         self.mount_var()
 
     def mount_root(self, root):
-        for p in ["usr", "bin", "sbin", "lib", "lib64"]:
+        for p in ["boot", "usr", "bin", "sbin", "lib", "lib64"]:
             source = os.path.join(root, p)
             target = os.path.join(self.root, p)
             if not os.path.isdir(source) or os.path.islink(source):
