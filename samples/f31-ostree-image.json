@@ -630,7 +630,7 @@
       "name": "org.osbuild.qemu",
       "options": {
         "bootloader": {
-          "type": "none"
+          "type": "grub2"
         },
         "format": "qcow2",
         "filename": "fedora-31-ostree.qcow2",
