@@ -327,11 +327,11 @@ class Pipeline:
                                    libdir=libdir,
                                    var=object_store.store)
 
-            results["assembler"] = r.as_dict()
-            if not r.success:
-                output.cleanup()
-                results["success"] = False
-                return results
+        results["assembler"] = r.as_dict()
+        if not r.success:
+            output.cleanup()
+            results["success"] = False
+            return results
 
         object_store.commit(output, self.output_id)
         output.cleanup()
