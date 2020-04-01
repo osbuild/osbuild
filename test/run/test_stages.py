@@ -3,6 +3,7 @@
 #
 
 import difflib
+import glob
 import json
 import os
 import pprint
@@ -88,7 +89,7 @@ class TestStages(test.TestBase):
     def setUp(self):
         self.osbuild = test.OSBuild(self)
 
-    def run_stage_test(self, test_dir: str):
+    def run_stage_diff_test(self, test_dir: str):
         with self.osbuild as osb:
 
             def run(path):
@@ -121,6 +122,8 @@ class TestStages(test.TestBase):
 
     def test_stages(self):
         path = os.path.join(self.locate_test_data(), "stages")
-        for name in os.listdir(path):
-            with self.subTest(stage=name):
-                self.run_stage_test(os.path.join(path, name))
+        for t in glob.glob(f"{path}/*/diff.json"):
+            test_path = os.path.dirname(t)
+            test_name = os.path.basename(test_path)
+            with self.subTest(stage=test_name):
+                self.run_stage_diff_test(test_path)
