@@ -85,6 +85,10 @@ STAGE_OPTS = """
           "description": "The partition type (UUID or identifier)",
           "type": "string"
         },
+        "uuid": {
+           "description": "UUID of the partition (GPT)",
+           "type": "string"
+        },
         "filesystem": {
           "description": "Description of the filesystem",
           "type": "object",
@@ -195,6 +199,7 @@ class Filesystem:
         maker(device, self.uuid, self.label)
 
 
+# pylint: disable=too-many-instance-attributes
 class Partition:
     def __init__(self,
                  pttype: str = None,
@@ -202,12 +207,14 @@ class Partition:
                  size: int = None,
                  bootable: bool = False,
                  name: str = None,
+                 uuid: str = None,
                  filesystem: Filesystem = None):
         self.type = pttype
         self.start = start
         self.size = size
         self.bootable = bootable
         self.name = name
+        self.uuid = uuid
         self.filesystem = filesystem
         self.index = None
 
@@ -295,7 +302,7 @@ class PartitionTable:
         command = f"label: {self.label}\nlabel-id: {self.uuid}"
         for partition in self.partitions:
             fields = []
-            for field in ["start", "size", "type", "name"]:
+            for field in ["start", "size", "type", "name", "uuid"]:
                 value = getattr(partition, field)
                 if value:
                     fields += [f'{field}="{value}"']
@@ -338,7 +345,8 @@ def partition_from_json(js) -> Partition:
                   start=js.get("start"),
                   size=js.get("size"),
                   bootable=js.get("bootable"),
-                  name=js.get("name"))
+                  name=js.get("name"),
+                  uuid=js.get("uuid"))
     fs = js.get("filesystem")
     if fs:
         p.filesystem = filesystem_from_json(fs)
