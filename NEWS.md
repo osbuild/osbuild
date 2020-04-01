@@ -1,5 +1,41 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 11:
+
+        * Drop support for legacy input: passing in non-manifest style
+		  pipelines is now not supported anymore.
+
+	    * Support for specifying an UUID for partitions when using the GPT
+		  partition layout was added to the org.osbuild.qemu assembler.
+
+	    * Fix a crash in the case the assembler failed, which was caused by
+		  cleanup up the object while the object was still being written to.
+
+	    * Delay the cleanup of the build tree to after the error checking
+		  since in the error case there is nothing to clean up and trying
+		  to do so will lead to crash.
+
+	    * `objectstore.Object` now directly cleans its working tree up, in
+		  contrast to relying on the implicit cleanup of `TemporaryDirectory`.
+		  One advantage of this is that the custom cleanup code can handle
+		  immutable directories, which Python 3 fails to clean up.
+
+	    * Drop custom `os-release` creation from the RHEL 8.2 runner. The
+	      issue that made this neccessary got fixed upstream.
+
+		* Ensure the build tree is always being built even if there are no
+		  stages specified.
+
+		* spec file: Do no generate dependencies for the internal files and
+		  add NEWS.md to the documentation section.
+
+	    * The Fedora 30 based aarch64 example was fixed and now builds again.
+
+        Contributions from: Christian Kellner, David Rheinsberg, Lars Karlitski,
+		                    Major Hayden, Ondřej Budai
+
+        - Berlin, 2020-04-01
+
 ## CHANGES WITH 10:
 
         * A new man-page `osbuild-manifest(5)` is available, which describes
