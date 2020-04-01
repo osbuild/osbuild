@@ -13,6 +13,7 @@ import unittest
 from typing import Dict
 
 from osbuild.util import selinux
+from .. import initrd
 from .. import test
 
 
@@ -186,6 +187,33 @@ class TestStages(test.TestBase):
             test_name = os.path.basename(test_path)
             with self.subTest(stage=test_name):
                 self.run_stage_diff_test(test_path)
+
+    def test_dracut(self):
+        datadir = self.locate_test_data()
+        base = os.path.join(datadir, "stages/dracut")
+
+        with open(f"{base}/vanilla.json", "r") as f:
+            refs = json.load(f)
+
+        with self.osbuild as osb:
+            with open(f"{base}/template.json", "r") as f:
+                manifest = f.read()
+
+            tree = osb.treeid_from_manifest(manifest)
+            osb.compile(manifest, checkpoints=[tree])
+
+            with osb.map_object(tree) as tree:
+                for name, want in refs.items():
+                    image = initrd.Initrd(f"{tree}/boot/{name}")
+                    have = image.as_dict()
+
+                    for key in ["modules", "kmods"]:
+                        a = set(have[key])
+                        b = set(want[key])
+                        self.assertEqual(a, b, msg=key)
+
+            # cache the downloaded data for the files source
+            osb.copy_source_data(self.store, "org.osbuild.files")
 
     def test_selinux(self):
         datadir = self.locate_test_data()
