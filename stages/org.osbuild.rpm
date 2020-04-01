@@ -44,6 +44,10 @@ from osbuild import api
 SCHEMA = """
 "additionalProperties": false,
 "properties": {
+  "disable_dracut": {
+    "description": "Prevent dracut from running",
+    "type": "boolean"
+  },
   "exclude": {
     "type": "object",
     "additionalProperties": false,
@@ -102,6 +106,10 @@ SCHEMA_2 = """
       "type": "array",
       "items": { "type": "string" }
     },
+    "disable_dracut": {
+      "description": "Prevent dracut from running",
+      "type": "boolean"
+    },
     "exclude": {
       "type": "object",
       "additionalProperties": false,
@@ -157,6 +165,25 @@ def generate_package_metadata(tree):
     return json.loads(jsdata)
 
 
+def disable_dracut(tree):
+    kernel_install_d = f"{tree}/etc/kernel/install.d"
+    files = []
+
+    os.makedirs(kernel_install_d, exist_ok=True)
+
+    for path in ["50-dracut.install", "51-dracut-rescue.install"]:
+        target = os.path.join(kernel_install_d, path)
+        os.symlink("/dev/null", target)
+        files.append(target)
+
+    return files
+
+
+def enable_dracut(masked_files):
+    for path in masked_files:
+        os.unlink(path)
+
+
 def parse_input(inputs):
     packages = inputs["packages"]
     path = packages["path"]
@@ -208,10 +235,16 @@ def main(tree, inputs, options):
 
     subprocess.run(["/bin/sh", "-c", script], check=True)
 
+
     extra_args = []
 
     if options.get("exclude", {}).get("docs"):
         extra_args += ["--excludedocs"]
+
+    # prevent dracut from running, if enabled
+    no_dracut = options.get("disable_dracut", False)
+    if no_dracut:
+        masked_files = disable_dracut(tree)
 
     with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
         manifest.writelines(c+'\n' for c in packages)
@@ -226,6 +259,10 @@ def main(tree, inputs, options):
             "--define", "_pkgverify_level none",
             "--install", manifest.name
         ], cwd=pkgpath, check=True)
+
+    # re-enabled dracut
+    if no_dracut:
+        enable_dracut(masked_files)
 
     # remove temporary machine ID if it was created by us
     if not machine_id_set_previously:
