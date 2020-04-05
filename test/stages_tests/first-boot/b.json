@@ -1,0 +1,16 @@
+{
+  "sources": {},
+  "pipeline": {
+    "stages": [
+      {
+        "name": "org.osbuild.first-boot",
+        "options": {
+          "commands": [
+            "/usr/bin/true"
+          ],
+          "wait_for_network": true
+        }
+      }
+    ]
+  }
+}
