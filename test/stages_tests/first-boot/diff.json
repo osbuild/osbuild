@@ -1,0 +1,22 @@
+{
+  "added_files": [
+    "/etc",
+    "/etc/osbuild-first-boot",
+    "/usr",
+    "/usr/lib",
+    "/usr/lib/systemd",
+    "/usr/lib/systemd/system",
+    "/usr/lib/systemd/system/default.target.wants",
+    "/usr/lib/systemd/system/default.target.wants/osbuild-first-boot.service",
+    "/usr/lib/systemd/system/osbuild-first-boot.service"
+  ],
+  "deleted_files": [],
+  "differences": {
+    "/": {
+      "mode": [
+        16832,
+        16877
+      ]
+    }
+  }
+}

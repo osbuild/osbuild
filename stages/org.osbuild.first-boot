@@ -1,0 +1,82 @@
+#!/usr/bin/python3
+
+import json
+import os
+import sys
+
+STAGE_DESC = "Execute commands on first-boot"
+STAGE_INFO = """
+Sequentially execute a list of commands on first-boot / instantiation.
+
+This stage uses a logic similar to systemd's first-boot to execute a given
+script only the first time the image is booted.
+
+An empty flag file /etc/osbuild-first-boot is written to /etc and a systemd
+service is enabled that is only run when the file exits, and will remove it
+before executing the given commands.
+
+If the flag-file cannot be removed, the service fails without executing
+any further first-boot commands.
+"""
+STAGE_OPTS = """
+"required": ["commands"],
+"properties": {
+  "commands": {
+    "type": "array",
+    "description": "The command lines to execute",
+    "items": {
+      "type": "string"
+    }
+  },
+  "wait_for_network": {
+    "type": "bool",
+    "description": "Wait for the network to be up before executing",
+    "default": false
+  }
+}
+"""
+
+def add_first_boot(tree, commands, wait_for_network):
+    if wait_for_network:
+        network = """Wants=network-online.target
+After=network-online.target"""
+    else:
+        network = ""
+
+    execs = "\n"
+    for command in commands:
+        execs += f"ExecStart={command}\n"
+
+    service = f"""[Unit]
+Description=OSBuild First Boot Service
+ConditionPathExists=/etc/osbuild-first-boot
+{network}
+
+[Service]
+Type=oneshot
+{execs}"""
+
+    os.makedirs(f"{tree}/usr/lib/systemd/system/default.target.wants", exist_ok=True)
+    with open(f"{tree}/usr/lib/systemd/system/osbuild-first-boot.service", "w") as f:
+        f.write(service)
+    os.symlink("../osbuild-first-boot.service",
+               f"{tree}/usr/lib/systemd/system/default.target.wants/osbuild-first-boot.service")
+
+    os.makedirs(f"{tree}/etc", exist_ok=True)
+    open(f"{tree}/etc/osbuild-first-boot", 'a').close()
+
+def main(tree, options):
+    commands = options["commands"]
+    wait_for_network = options.get("wait_for_network", False)
+
+    commands = ["/usr/bin/rm /etc/osbuild-first-boot"] + commands
+
+    add_first_boot(tree, commands, wait_for_network)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
