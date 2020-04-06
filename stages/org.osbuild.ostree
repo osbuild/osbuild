@@ -58,6 +58,39 @@ STAGE_OPTS = """
     "description": "OStree ref to create and use for deployment",
     "type": "string"
   },
+  "remotes": {
+    "description": "Configure remotes for the system repository",
+    "type": "array",
+    "items": {
+      "description": "Description of a remote",
+      "type": "object",
+      "required": ["name", "url"],
+      "properties": {
+        "name": {
+          "description": "Identifier for the remote",
+          "type": "string"
+        },
+        "url": {
+          "description": "URL of the remote",
+          "type": "string"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "description": "Configured branches for the remote",
+            "type": "string"
+          }
+        },
+        "gpgkeys": {
+          "type": "array",
+          "items": {
+            "description": "GPG keys for the remote to verify commits",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
   "rootfs": {
     "description": "Identifier to locate the root file system",
     "type": "object",
@@ -81,12 +114,13 @@ STAGE_OPTS = """
 """
 
 
-def ostree(*args, **kwargs):
+def ostree(*args, _input=None, **kwargs):
     args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
     print(f"ostree " + " ".join(args), file=sys.stderr)
     subprocess.run(["ostree"] + args,
                    encoding="utf-8",
                    stdout=sys.stderr,
+                   input=_input,
                    check=True)
 
 
@@ -144,6 +178,7 @@ def main(tree, sources, options):
     mounts = options.get("mounts", [])
     kopts = options.get("kernel_opts", [])
     ref = options.get("ref", commit)
+    remotes = options.get("remotes", [])
 
     ostree("admin", "init-fs", "--modern", tree,
            sysroot=tree)
@@ -180,6 +215,28 @@ def main(tree, sources, options):
                *kargs,
                sysroot=tree,
                os=osname)
+
+    for remote in remotes:
+        name = remote["name"]
+        url = remote["url"]
+        branches = remote.get("branches", [])
+        gpgkeys = remote.get("gpgkeys", [])
+
+        extra_args = []
+        if not gpgkeys:
+            extra_args += ["--no-gpg-verify"]
+
+        ostree("remote", "add",
+               "--if-not-exists",
+               *extra_args,
+               name, url,
+               *branches,
+               repo=f"{tree}/ostree/repo")
+
+        for key in gpgkeys:
+            ostree("remote", "gpg-import", "--stdin", name,
+                   repo=f"{tree}/ostree/repo",
+                   _input=key)
 
 
 if __name__ == '__main__':
