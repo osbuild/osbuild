@@ -33,7 +33,7 @@ Requires:       systemd
 Requires:       systemd-container
 Requires:       tar
 Requires:       util-linux
-Requires:       python3-%{pypi_name}
+Requires:       python3-%{pypi_name} = %{version}-%{release}
 
 # Turn off dependency generators for assemblers, runners and stages.
 # They run in a container, so there's no reason to generate dependencies
