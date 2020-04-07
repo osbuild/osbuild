@@ -23,16 +23,14 @@ class TestCase(unittest.TestCase):
     it for actual testing.
     """
 
-    @classmethod
-    def setUpClass(cls):
-        cls.store = os.getenv("OSBUILD_TEST_STORE")
-        if not cls.store:
-            cls.store = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
+    def setUp(self):
+        self.store = os.getenv("OSBUILD_TEST_STORE")
+        if not self.store:
+            self.store = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         if not os.getenv("OSBUILD_TEST_STORE"):
-            shutil.rmtree(cls.store)
+            shutil.rmtree(self.store)
 
     def run_osbuild(self, pipeline, input=None):
         osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--store", self.store, "--libdir", ".", pipeline]
