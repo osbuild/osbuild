@@ -85,7 +85,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        fedora_release: ["31", "32", "33"]
+        fedora_release: ["31", "33"] # XXX: "32" temporarily disabled during freeze
     container:
       image: "quay.io/osbuild/osbuild-fedora${{ matrix.fedora_release }}:latest"
     steps:
