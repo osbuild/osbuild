@@ -6,6 +6,7 @@ import sys
 import subprocess
 
 import osbuild.sources
+from osbuild.util import selinux
 
 
 STAGE_DESC = "Initialize the sysroot and pull and deploy an OStree commit"
@@ -215,6 +216,35 @@ def main(tree, sources, options):
                *kargs,
                sysroot=tree,
                os=osname)
+
+    # deploying a tree creates new files that need to be properly
+    # labeled for SELinux. In theory, ostree will take care of
+    # this by loading the SELinux config from the deployment and
+    # then applying the labels; but it does so conditionally on
+    # is_selinux_enabled(2), which in our container is FALSE
+    # Therefore we have to do the same dance as ostree does, at
+    # least for now, and manually re-label the affected paths
+    sysroot = f"{tree}/ostree/deploy/{osname}/deploy/{commit}.0"
+    se_policy = None
+
+    for p in ["etc/selinux", "usr/etc/selinux"]:
+        se_home = os.path.join(sysroot, p)
+        cfgfile = os.path.join(se_home, "config")
+        if not os.path.isfile(cfgfile):
+            continue
+
+        with open(cfgfile, 'r') as f:
+            cfg = selinux.parse_config(f)
+        se_policy = selinux.config_get_policy(cfg)
+
+    if se_policy:
+        spec = f"{se_home}/{se_policy}/contexts/files/file_contexts"
+        # kernel, initramfs & BLS config snippets were
+        # written to {tree}/boot
+        selinux.setfiles(spec, tree, "/boot")
+        # various config files will be created as a result
+        # of the 3-way configuration merge, see ostree(3)
+        selinux.setfiles(spec, sysroot, "/etc")
 
     for remote in remotes:
         name = remote["name"]
