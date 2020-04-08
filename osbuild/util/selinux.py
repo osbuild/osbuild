@@ -1,5 +1,7 @@
 """SELinux utility functions"""
 
+import subprocess
+
 from typing import Dict, TextIO
 
 
@@ -27,3 +29,20 @@ def config_get_policy(config: Dict[str, str]):
     if enabled not in ['enforcing', 'permissive']:
         return None
     return config.get('SELINUXTYPE', None)
+
+
+def setfiles(spec_file: str, root: str, *paths):
+    """Initialize the security context fields for `paths`
+
+    Initialize the security context fields (extended attributes)
+    on `paths` using the given specification in `spec_file`. The
+    `root` argument determines the root path of the file system
+    and the entries in `path` are interpreted as relative to it.
+    Uses the setfiles(8) tool to actually set the contexts.
+    """
+    for path in paths:
+        subprocess.run(["setfiles", "-F",
+                        "-r", root,
+                        spec_file,
+                        f"{root}{path}"],
+                       check=True)
