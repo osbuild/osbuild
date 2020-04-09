@@ -1,8 +1,8 @@
 import asyncio
 import json
-import socket
 import subprocess
 import threading
+from .util import jsoncomm
 
 
 class SourcesServer:
@@ -39,22 +39,18 @@ class SourcesServer:
         except ValueError:
             return {"error": f"source returned malformed json: {r.stdout}"}
 
-    def _dispatch(self, sock):
-        msg, addr = sock.recvfrom(65536)
-        request = json.loads(msg)
+    def _dispatch(self, server):
+        request, _, addr = server.recv()
         reply = self._run_source(request["source"], request["checksums"])
-        msg = json.dumps(reply).encode("utf-8")
-        sock.sendmsg([msg], [], 0, addr)
+        server.send(reply, destination=addr)
 
     def _run_event_loop(self):
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        sock.bind(self.socket_address)
-        self.barrier.wait()
-        self.event_loop.add_reader(sock, self._dispatch, sock)
-        asyncio.set_event_loop(self.event_loop)
-        self.event_loop.run_forever()
-        self.event_loop.remove_reader(sock)
-        sock.close()
+        with jsoncomm.Socket.new_server(self.socket_address) as server:
+            self.barrier.wait()
+            self.event_loop.add_reader(server, self._dispatch, server)
+            asyncio.set_event_loop(self.event_loop)
+            self.event_loop.run_forever()
+            self.event_loop.remove_reader(server)
 
     def __enter__(self):
         self.thread.start()
@@ -67,15 +63,13 @@ class SourcesServer:
 
 
 def get(source, checksums, api_path="/run/osbuild/api/sources"):
-    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
-        sock.connect(api_path)
+    with jsoncomm.Socket.new_client(api_path) as client:
         msg = {
             "source": source,
             "checksums": checksums
         }
-        sock.sendall(json.dumps(msg).encode('utf-8'))
-        reply = json.loads(sock.recv(65536))
+        client.send(msg)
+        reply, _, _ = client.recv()
         if "error" in reply:
             raise RuntimeError(f"{source}: " + reply["error"])
         return reply

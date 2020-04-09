@@ -3,7 +3,6 @@
 import contextlib
 import json
 import os
-import socket
 import subprocess
 import sys
 import osbuild.remoteloop as remoteloop
@@ -97,10 +96,5 @@ def main(tree, output_dir, options, loop_client):
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
-
-    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
-        sock.connect("/run/osbuild/api/remoteloop")
-        r = main(args["tree"], args["output_dir"], args["options"], remoteloop.LoopClient(sock))
-
+    r = main(args["tree"], args["output_dir"], args["options"], remoteloop.LoopClient("/run/osbuild/api/remoteloop"))
     sys.exit(r)
