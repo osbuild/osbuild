@@ -1,33 +1,16 @@
-import array
 import asyncio
 import contextlib
 import errno
-import json
 import os
-import socket
 import threading
 from . import loop
+from .util import jsoncomm
 
 
 __all__ = [
     "LoopClient",
     "LoopServer"
 ]
-
-
-def load_fds(sock, msglen):
-    fds = array.array("i")   # Array of ints
-    msg, ancdata, _, addr = sock.recvmsg(msglen, socket.CMSG_LEN(253 * fds.itemsize))
-    for cmsg_level, cmsg_type, cmsg_data in ancdata:
-        if (cmsg_level == socket.SOL_SOCKET and cmsg_type == socket.SCM_RIGHTS):
-            # Append data, ignoring any truncated integers at the end.
-            fds.frombytes(cmsg_data[:len(cmsg_data) - (len(cmsg_data) % fds.itemsize)])
-    return json.loads(msg), list(fds), addr
-
-
-def dump_fds(sock, obj, fds, flags=0, addr=None):
-    ancillary = [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds))]
-    sock.sendmsg([json.dumps(obj).encode('utf-8')], ancillary, flags, addr)
 
 
 class LoopServer:
@@ -90,8 +73,8 @@ class LoopServer:
         self.devs.append(lo)
         return lo.devname
 
-    def _dispatch(self, sock):
-        args, fds, addr = load_fds(sock, 1024)
+    def _dispatch(self, server):
+        args, fds, addr = server.recv()
 
         fd = fds[args["fd"]]
         dir_fd = fds[args["dir_fd"]]
@@ -99,18 +82,16 @@ class LoopServer:
         sizelimit = args.get("sizelimit")
 
         devname = self._create_device(fd, dir_fd, offset, sizelimit)
-        ret = json.dumps({"devname": devname})
-        sock.sendto(ret.encode('utf-8'), addr)
+        server.send({"devname": devname}, destination=addr)
+        fds.close()
 
     def _run_event_loop(self):
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        sock.bind(self.socket_address)
-        self.barrier.wait()
-        self.event_loop.add_reader(sock, self._dispatch, sock)
-        asyncio.set_event_loop(self.event_loop)
-        self.event_loop.run_forever()
-        self.event_loop.remove_reader(sock)
-        sock.close()
+        with jsoncomm.Socket.new_server(self.socket_address) as server:
+            self.barrier.wait()
+            self.event_loop.add_reader(server, self._dispatch, server)
+            asyncio.set_event_loop(self.event_loop)
+            self.event_loop.run_forever()
+            self.event_loop.remove_reader(server)
 
     def __enter__(self):
         self.thread.start()
@@ -125,13 +106,19 @@ class LoopServer:
 
 
 class LoopClient:
-    def __init__(self, sock):
-        self.sock = sock
+    client = None
+
+    def __init__(self, connect_to):
+        self.client = jsoncomm.Socket.new_client(connect_to)
+
+    def __del__(self):
+        if self.client is not None:
+            self.client.close()
 
     @contextlib.contextmanager
     def device(self, filename, offset=None, sizelimit=None):
         req = {}
-        fds = array.array("i")
+        fds = []
 
         fd = os.open(filename, os.O_RDWR)
         dir_fd = os.open("/dev", os.O_DIRECTORY)
@@ -146,12 +133,12 @@ class LoopClient:
         if sizelimit:
             req["sizelimit"] = sizelimit
 
-        dump_fds(self.sock, req, fds)
+        self.client.send(req, fds=fds)
         os.close(dir_fd)
         os.close(fd)
 
-        ret = json.loads(self.sock.recv(1024))
-        path = os.path.join("/dev", ret["devname"])
+        payload, _, _ = self.client.recv()
+        path = os.path.join("/dev", payload["devname"])
         try:
             yield path
         finally:
