@@ -1,14 +1,11 @@
-import array
 import asyncio
 import json
 import os
-import socket
 import sys
 import tempfile
 import threading
 
-
-from . import remoteloop
+import osbuild.util.jsoncomm as jsoncomm
 
 
 class API:
@@ -39,34 +36,33 @@ class API:
         self._output = os.fdopen(fd)
         return out
 
-    def _setup_stdio(self, sock, addr):
+    def _setup_stdio(self, server, addr):
         with self._prepare_input() as stdin, \
              self._prepare_output() as stdout:
             msg = {}
-            fds = array.array("i")
+            fds = []
             fds.append(stdin.fileno())
             msg['stdin'] = 0
             fds.append(stdout.fileno())
             msg['stdout'] = 1
             fds.append(stdout.fileno())
             msg['stderr'] = 2
-            remoteloop.dump_fds(sock, msg, fds, addr=addr)
 
-    def _dispatch(self, sock):
-        msg, addr = sock.recvfrom(1024)
-        args = json.loads(msg)
-        if args["method"] == 'setup-stdio':
-            self._setup_stdio(sock, addr)
+            server.send(msg, fds=fds, destination=addr)
+
+    def _dispatch(self, server):
+        msg = server.recv()
+        if msg[0]["method"] == 'setup-stdio':
+            self._setup_stdio(server, msg[2])
 
     def _run_event_loop(self):
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        sock.bind(self.socket_address)
+        server = jsoncomm.Socket.new_server(self.socket_address)
         self.barrier.wait()
-        self.event_loop.add_reader(sock, self._dispatch, sock)
+        self.event_loop.add_reader(server, self._dispatch, server)
         asyncio.set_event_loop(self.event_loop)
         self.event_loop.run_forever()
-        self.event_loop.remove_reader(sock)
-        sock.close()
+        self.event_loop.remove_reader(server)
+        server.close()
 
     def __enter__(self):
         self.thread.start()
