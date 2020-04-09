@@ -20,7 +20,7 @@ jobs:
       - name: Run pylint
         run: |
           cd osbuild
-          pylint osbuild runners/* assemblers/* stages/* sources/*
+          pylint osbuild osbuild/util runners/* assemblers/* stages/* sources/*
 
   documentation:
     name: "📚 Documentation"
