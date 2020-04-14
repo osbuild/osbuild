@@ -52,7 +52,7 @@ STAGE_OPTS = """
   "format": {
     "description": "Image file format to use",
     "type": "string",
-    "enum": ["raw", "qcow2", "vdi", "vmdk", "vpc"]
+    "enum": ["raw", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]
   },
   "filename": {
     "description": "Image filename",
@@ -607,8 +607,8 @@ def main(tree, output_dir, options, loop_client):
     if size % 512 != 0:
         raise ValueError("`size` must be a multiple of sector size (512)")
 
-    if fmt not in ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc"]:
-        raise ValueError("`format` must be one of raw, qcow, vdi, vmdk, vpc")
+    if fmt not in ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]:
+        raise ValueError("`format` must be one of raw, qcow, vdi, vmdk, vpc, vhdx")
 
     image = "/var/tmp/osbuild-image.raw"
 
@@ -663,7 +663,8 @@ def main(tree, output_dir, options, loop_client):
             "qcow2": ["-c"],
             "vdi": [],
             "vmdk": ["-c"],
-            "vpc": ["-o", "subformat=fixed,force_size"]
+            "vpc": ["-o", "subformat=fixed,force_size"],
+            "vhdx": []
         }
         subprocess.run([
             "qemu-img",
