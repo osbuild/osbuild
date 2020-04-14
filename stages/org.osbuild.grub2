@@ -89,6 +89,11 @@ STAGE_OPTS = """
         "default": false
       }
     }
+  },
+  "write_defaults": {
+    "description": "Whether to write /etc/defaults/grub",
+    "type": "boolean",
+    "default": true
   }
 }
 """
@@ -152,6 +157,7 @@ def main(tree, options):
     kernel_opts = options.get("kernel_opts", "")
     legacy = options.get("legacy", None)
     uefi = options.get("uefi", None)
+    write_defaults = options.get("write_defaults", True)
 
     # legacy boolean means the
     if isinstance(legacy, bool) and legacy:
@@ -169,10 +175,11 @@ def main(tree, options):
     separate_boot = boot_fs_uuid is not None
 
     # Create the configuration file that determines how grub.cfg is generated.
-    os.makedirs(f"{tree}/etc/default", exist_ok=True)
-    with open(f"{tree}/etc/default/grub", "w") as default:
-        default.write("GRUB_TIMEOUT=0\n"
-                      "GRUB_ENABLE_BLSCFG=true\n")
+    if write_defaults:
+        os.makedirs(f"{tree}/etc/default", exist_ok=True)
+        with open(f"{tree}/etc/default/grub", "w") as default:
+            default.write("GRUB_TIMEOUT=0\n"
+                          "GRUB_ENABLE_BLSCFG=true\n")
 
     os.makedirs(f"{tree}/boot/grub2", exist_ok=True)
     grubenv = f"{tree}/boot/grub2/grubenv"
