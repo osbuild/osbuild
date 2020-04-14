@@ -74,7 +74,6 @@
       "options": {
         "root_fs_uuid": "7acfe2cc-4134-482a-a9d4-4979a5a87569",
         "kernel_opts": "ro biosdevname=0 net.ifnames=0 console=ttyS0 console=tty1",
-        "legacy": false,
         "uefi": {
           "vendor": "fedora"
         }

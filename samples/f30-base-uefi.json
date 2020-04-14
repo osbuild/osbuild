@@ -78,7 +78,8 @@
         "kernel_opts": "ro biosdevname=0 net.ifnames=0 console=ttyS0 console=tty1",
         "uefi": {
           "vendor": "fedora"
-        }
+        },
+        "legacy": "i386-pc"
       }
     },
     {
