@@ -53,7 +53,8 @@
       "name": "org.osbuild.grub2",
       "options": {
         "root_fs_uuid": "ea711a29-e460-4879-9d70-9da99ae021f9",
-        "kernel_opts": "ro biosdevname=0 net.ifnames=0"
+        "kernel_opts": "ro biosdevname=0 net.ifnames=0",
+        "legacy": "i386-pc"
       }
     },
     {

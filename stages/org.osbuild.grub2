@@ -19,9 +19,9 @@ behavior in Fedora 30 and later.
 This stage will overwrite `/etc/default/grub`, `/boot/grub2/grubenv`, and
 `/boot/grub2/grub.cfg`. (Leading directories will be created if not present.)
 
-If Legacy boot support is requested (the default, or explicitly via `legacy`)
-this stage will also overwrite `/boot/grub2/grub.cfg` and will copy the
-GRUB2 files from the buildhost into the target tree:
+If Legacy boot support is requested via `legacy` this stage will also
+overwrite `/boot/grub2/grub.cfg` and will copy the GRUB2 files from the
+buildhost into the target tree:
 * `/usr/share/grub/unicode.pf2`          -> `/boot/grub2/fonts/`
 * `/usr/lib/grub/$platform/*.{mod,lst}` -> `/boot/grub2/$platform/`
   * NOTE: skips `fdt.lst`, which is an empty file
@@ -67,8 +67,8 @@ STAGE_OPTS = """
   "legacy": {
     "description": "Include legacy boot support",
     "oneOf": [
-      {"type": "boolean", "default": true},
-      {"type": "string", "default": "i386-pc"}
+      {"type": "boolean", "default": false},
+      {"type": "string"}
     ]
   },
   "uefi": {
@@ -135,7 +135,7 @@ def main(tree, options):
     root_fs_uuid = options["root_fs_uuid"]
     boot_fs_uuid = options.get("boot_fs_uuid", None)
     kernel_opts = options.get("kernel_opts", "")
-    legacy = options.get("legacy", True)
+    legacy = options.get("legacy", None)
     uefi = options.get("uefi", None)
 
     # legacy boolean means the
