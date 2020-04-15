@@ -36,31 +36,40 @@ def main(options, checksums, cache, output):
         gpg = remote.get("gpgkeys", [])
         uid = str(uuid.uuid4())
 
-        extra_args = []
-        if not gpg:
-            extra_args += ["--no-gpg-verify"]
-
         ostree("remote", "add",
                "--no-gpg-verify",
-               *extra_args,
                uid, url,
                repo=repo_cache)
 
+        # this temporary remote is needed to verify
+        # the commit signatures via gpg below
+        ostree("remote", "add",
+               uid, repo_cache,
+               repo=repo_out)
+
         for key in gpg:
             ostree("remote", "gpg-import", "--stdin", uid,
-                   repo=repo_cache, _input=key)
+                   repo=repo_out, _input=key)
 
         # Transfer the commit: remote → cache
         print(f"pulling {commit}", file=sys.stderr)
         ostree("pull", uid, commit, repo=repo_cache)
 
         # Transfer the commit: cache → output
+        verify_args = []
+        if gpg:
+            verify_args = ["--gpg-verify", "--remote", uid]
+
         ostree("pull-local", repo_cache, commit,
+               *verify_args,
                repo=repo_out)
 
-        # Remove the temporary remote again
+        # Remove the temporary remotes again
         ostree("remote", "delete", uid,
                repo=repo_cache)
+
+        ostree("remote", "delete", uid,
+               repo=repo_out)
 
     json.dump({}, sys.stdout)
     return 0
