@@ -1,10 +1,17 @@
 {
-  "stages": [
-    {
-      "name": "org.osbuild.error"
+  "sources": {
+    "org.osbuild.files": {
+      "urls": {}
     }
-  ],
-  "assembler": {
-    "name": "org.osbuild.noop"
+  },
+  "pipeline": {
+    "stages": [
+      {
+        "name": "org.osbuild.error"
+      }
+    ],
+    "assembler": {
+      "name": "org.osbuild.noop"
+    }
   }
 }
