@@ -53,6 +53,16 @@ Summary:        %{summary}
 %description -n python3-%{pypi_name}
 A build system for OS images
 
+%package        ostree
+Summary:        OSTree support
+Requires:       %{name} = %{version}-%{release}
+Requires:       ostree
+Requires:       rpm-ostree
+
+%description ostree
+Contains the necessary stages, assembler and source
+to build OSTree based images.
+
 %prep
 %forgesetup
 
@@ -96,12 +106,23 @@ exit 0
 %{_mandir}/man1/%{name}.1*
 %{_mandir}/man5/%{name}-manifest.5*
 %{pkgdir}
+# the following files are in the ostree sub-package
+%exclude %{pkgdir}/assemblers/org.osbuild.ostree.commit
+%exclude %{pkgdir}/sources/org.osbuild.ostree
+%exclude %{pkgdir}/stages/org.osbuild.ostree
+%exclude %{pkgdir}/stages/org.osbuild.rpm-ostree
 
 %files -n       python3-%{pypi_name}
 %license LICENSE
 %doc README.md NEWS.md
 %{python3_sitelib}/%{pypi_name}-*.egg-info/
 %{python3_sitelib}/%{pypi_name}/
+
+%files ostree
+%{pkgdir}/assemblers/org.osbuild.ostree.commit
+%{pkgdir}/sources/org.osbuild.ostree
+%{pkgdir}/stages/org.osbuild.ostree
+%{pkgdir}/stages/org.osbuild.rpm-ostree
 
 %changelog
 * Mon Aug 19 2019 Miro Hrončok <mhroncok@redhat.com> - 1-3
