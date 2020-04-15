@@ -1,10 +1,17 @@
 {
-  "stages": [
-    {
+  "sources": {
+    "org.osbuild.files": {
+      "urls": {}
+    }
+  },
+  "pipeline": {
+    "stages": [
+      {
+        "name": "org.osbuild.noop"
+      }
+    ],
+    "assembler": {
       "name": "org.osbuild.noop"
     }
-  ],
-  "assembler": {
-    "name": "org.osbuild.noop"
   }
 }
