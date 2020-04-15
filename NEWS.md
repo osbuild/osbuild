@@ -32,7 +32,7 @@
         * The Fedora 30 based aarch64 example was fixed and now builds again.
 
         Contributions from: Christian Kellner, David Rheinsberg, Lars Karlitski,
-		                    Major Hayden, Martin Sehnoutka, Ondřej Budai
+                            Major Hayden, Martin Sehnoutka, Ondřej Budai
 
         - Berlin, 2020-04-01
 
