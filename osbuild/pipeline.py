@@ -340,37 +340,42 @@ class Pipeline:
         results["output_id"] = self.output_id
         return results
 
-    def run(self, store, interactive=False, libdir=None, secrets=None):
+    def run(self, store, interactive=False, libdir=None, secrets=None, output_directory=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         results = {}
 
         with objectstore.ObjectStore(store) as object_store:
-            # if the final result is already in the store, exit
-            # early and don't attempt to build the tree, which
-            # in turn might not be in the store and would in that
-            # case be build but not be used
+            # If the final result is already in the store, no need to attempt
+            # building it. Just fetch the cached information. If the associated
+            # tree exists, we return it as well, but we do not care if it is
+            # missing, since it is not a mandatory part of the result and would
+            # usually be needless overhead.
             if object_store.contains(self.output_id):
                 results = {"output_id": self.output_id,
                            "success": True}
                 if object_store.contains(self.tree_id):
                     results["tree_id"] = self.tree_id
-                return results
+            else:
+                results, build_tree, tree = self.build_stages(object_store,
+                                                              interactive,
+                                                              libdir,
+                                                              secrets)
 
-            results, build_tree, tree = self.build_stages(object_store,
-                                                          interactive,
-                                                          libdir,
-                                                          secrets)
+                if not results["success"]:
+                    return results
 
-            if not results["success"]:
-                return results
+                r = self.assemble(object_store,
+                                  build_tree,
+                                  tree,
+                                  interactive,
+                                  libdir)
 
-            r = self.assemble(object_store,
-                              build_tree,
-                              tree,
-                              interactive,
-                              libdir)
+                results.update(r)  # This will also update 'success'
 
-            results.update(r)  # This will also update 'success'
+            if results["success"] and output_directory is not None:
+                output_source = object_store.resolve_ref(results["output_id"])
+                if output_source is not None:
+                    subprocess.run(["cp", "--reflink=auto", "-a", f"{output_source}/.", output_directory], check=True)
 
         return results
 

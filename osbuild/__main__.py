@@ -50,6 +50,8 @@ def main():
                         help="stage to commit to the object store during build (can be passed multiple times)")
     parser.add_argument("--json", action="store_true",
                         help="output results in JSON format")
+    parser.add_argument("--output-directory", metavar="DIRECTORY", type=os.path.abspath,
+                        help="directory where result objects are stored")
     args = parser.parse_args()
 
     if args.manifest_path == "-":
@@ -91,7 +93,8 @@ def main():
             args.store,
             interactive=not args.json,
             libdir=args.libdir,
-            secrets=secrets
+            secrets=secrets,
+            output_directory=args.output_directory
         )
     except KeyboardInterrupt:
         print()
