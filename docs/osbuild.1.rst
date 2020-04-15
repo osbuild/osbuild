@@ -50,6 +50,7 @@ is not listed here, **osbuild** will deny startup and exit with an error.
 --checkpoint=CHECKPOINT         stage to commit to the object store during
                                 build (can be passed multiple times)
 --json                          output results in JSON format
+--output-directory=DIR          directory where result objects are stored
 
 MANIFEST
 ========
