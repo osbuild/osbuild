@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="osbuild",
-    version="11",
+    version="12",
     description="A build system for OS images",
     packages=["osbuild"],
     license='Apache-2.0',
