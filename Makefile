@@ -165,9 +165,9 @@ release:
 	@echo "        * ..."
 	@echo
 	@echo -n "        Contributions from: "
-	# We omit the contributor list if `git log` fails. If you hit this,
-	# consider fetching missing tags via `git fetch --tags`, or just copy
-	# this command and remove the stderr-redirect.
+#       We omit the contributor list if `git log` fails. If you hit this,
+#       consider fetching missing tags via `git fetch --tags`, or just copy
+#       this command and remove the stderr-redirect.
 	@echo `( git log --format='%an, ' v$(VERSION)..HEAD 2>/dev/null | sort -u | tr -d '\n' | sed 's/, $$//' ) || echo`
 	@echo
 	@echo "        - Location, YYYY-MM-DD"
