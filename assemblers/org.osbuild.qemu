@@ -657,7 +657,14 @@ def main(tree, output_dir, options, loop_client):
         subprocess.run(["cp", image, f"{output_dir}/{filename}"], check=True)
     elif fmt == "raw.xz":
         with open(f"{output_dir}/{filename}", "w") as f:
-            subprocess.run(["xz", "--keep", "--stdout", "-0", image], stdout=f, check=True)
+            subprocess.run(
+                ["xz", "--keep", "--stdout", "-0", image],
+                stdout=f,
+                check=True,
+                env={
+                    "XZ_OPT": "--threads 0"
+                }
+            )
     else:
         extra_args = {
             "qcow2": ["-c"],
