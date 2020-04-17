@@ -7,7 +7,8 @@ STAGE_DESC = "Create /etc/fstab entries for filesystems"
 STAGE_INFO = """
 Create /etc/fstab entries for the given `filesystems`.
 
-Each filesystem item must have at least `uuid` and a `path` (mount point).
+Each filesystem item must have at least `uuid` or `label` and
+a `path` (mount point).
 
 This stage replaces /etc/fstab, removing any existing entries.
 """
@@ -19,10 +20,18 @@ STAGE_OPTS = """
     "description": "array of filesystem objects",
     "items": {
       "type": "object",
-      "required": ["uuid", "path"],
+      "oneOf": [{
+        "required": ["uuid", "path"]
+      }, {
+        "required": ["label", "path"]
+      }],
       "properties": {
         "uuid": {
           "description": "Filesystem UUID",
+          "type": "string"
+        },
+        "label": {
+          "description": "Filesystem label",
           "type": "string"
         },
         "path": {
@@ -60,14 +69,22 @@ def main(tree, options):
 
     with open(f"{tree}/etc/fstab", "w") as f:
         for filesystem in filesystems:
-            uuid = filesystem["uuid"]
+            uuid = filesystem.get("uuid")
             path = filesystem["path"]
+            label = filesystem.get("label")
             vfs_type = filesystem.get("vfs_type", "none")
             options = filesystem.get("options", "defaults")
             freq = filesystem.get("freq", "0")
             passno = filesystem.get("passno", "0")
 
-            f.write(f"UUID={uuid}\t{path}\t{vfs_type}\t{options}\t{freq}\t{passno}\n")
+            if uuid:
+                fs_spec = f"UUID={uuid}"
+            elif label:
+                fs_spec = f"LABEL={label}"
+            else:
+                raise ValueError("Need 'uuid' or 'label'")
+
+            f.write(f"{fs_spec}\t{path}\t{vfs_type}\t{options}\t{freq}\t{passno}\n")
 
 
 if __name__ == '__main__':
