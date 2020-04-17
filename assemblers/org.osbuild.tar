@@ -46,8 +46,28 @@ def main(tree, output_dir, options):
             return 1
         extra_args.append(f"--{compression}")
 
-    subprocess.run(["tar", *extra_args, "-cf", f"{output_dir}/{filename}", "-C", tree, "."],
-                   stdout=subprocess.DEVNULL, check=True)
+    # Set environment variables for the tar operation.
+    tar_env = {
+        # Speed up xz by allowing it to use all CPU cores for compression.
+        "XZ_OPT": "--threads 0"
+    }
+
+    # Set up the tar command.
+    tar_cmd = [
+        "tar",
+        *extra_args,
+        "-cf", f"{output_dir}/{filename}",
+        "-C", tree,
+        "."
+    ]
+
+    # Make a tarball of the tree.
+    subprocess.run(
+        tar_cmd,
+        stdout=subprocess.DEVNULL,
+        check=True,
+        env=tar_env
+    )
 
     return 0
 
