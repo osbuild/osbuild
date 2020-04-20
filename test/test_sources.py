@@ -11,7 +11,7 @@ import unittest
 
 import osbuild.sources
 
-def errcheck(ret, func, args):
+def errcheck(ret, _func, _args):
     if ret == -1:
         e = ctypes.get_errno()
         raise OSError(e, os.strerror(e))
@@ -62,7 +62,7 @@ class TestSources(unittest.TestCase):
         self.sources = 'test/sources_tests'
 
 
-    def check_case(self, source, case, destdir, api_path):
+    def check_case(self, source, case, api_path):
         expects = case["expects"]
         if expects == "error":
             with self.assertRaises(RuntimeError):
@@ -89,8 +89,8 @@ class TestSources(unittest.TestCase):
                             f"{tmpdir}/sources-api",
                             "./sources", source_options,
                             f"{tmpdir}/cache", f"{tmpdir}/dst"):
-                    self.check_case(source, case_options, f"{tmpdir}/dst", f"{tmpdir}/sources-api")
-                    self.check_case(source, case_options, f"{tmpdir}/dst", f"{tmpdir}/sources-api")
+                    self.check_case(source, case_options, f"{tmpdir}/sources-api")
+                    self.check_case(source, case_options, f"{tmpdir}/sources-api")
 
 
     def test_sources(self):
