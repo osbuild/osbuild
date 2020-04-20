@@ -7,6 +7,8 @@ setuptools.setup(
     packages=["osbuild", "osbuild.util"],
     license='Apache-2.0',
     entry_points={
-        "console_scripts": ["osbuild = osbuild.__main__:main"]
+        "console_scripts": [
+            "osbuild = osbuild.main_cli:main_cli"
+        ]
     },
 )
