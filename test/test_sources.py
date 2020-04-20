@@ -1,5 +1,6 @@
 import contextlib
 import ctypes
+import http.server
 import json
 import os
 import osbuild.sources
@@ -9,7 +10,6 @@ import tempfile
 import threading
 import unittest
 
-from http import server
 
 def errcheck(ret, func, args):
     if ret == -1:
@@ -52,7 +52,7 @@ def fileServer(path):
 
 
 def runFileServer(path, barrier):
-    httpd = socketserver.TCPServer(('', 80), server.SimpleHTTPRequestHandler)
+    httpd = socketserver.TCPServer(('', 80), http.server.SimpleHTTPRequestHandler)
     barrier.wait()
     httpd.serve_forever()
 
