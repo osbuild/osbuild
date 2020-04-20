@@ -20,7 +20,8 @@ jobs:
       - name: Run pylint
         run: |
           cd osbuild
-          pylint osbuild runners/* assemblers/* stages/* sources/*
+          find . -type f -name "*.py" | xargs pylint
+          pylint runners/* assemblers/* stages/* sources/*
 
   documentation:
     name: "📚 Documentation"
