@@ -3,7 +3,6 @@ import contextlib
 import glob
 import hashlib
 import json
-import os
 import subprocess
 import tempfile
 import time
@@ -20,7 +19,7 @@ class TestAssemblers(osbuildtest.TestCase):
     def run_assembler(self, name, options):
         with open("test/pipelines/f30-base.json") as f:
             base = json.load(f)
-        base["pipeline"] = dict(base["pipeline"], assembler={ "name": name, "options": options })
+        base["pipeline"] = dict(base["pipeline"], assembler={"name": name, "options": options})
         return self.run_osbuild("-", input=json.dumps(base))
 
     def assertImageFile(self, filename, fmt, expected_size=None):
@@ -32,7 +31,7 @@ class TestAssemblers(osbuildtest.TestCase):
         output = subprocess.check_output(["blkid", "--output", "export", device], encoding="utf-8")
         blkid = dict(line.split("=") for line in output.strip().split("\n"))
         self.assertEqual(blkid["UUID"], uuid)
-        self.assertEqual(blkid["TYPE"],fstype)
+        self.assertEqual(blkid["TYPE"], fstype)
 
         with mount(device) as target_tree:
             tree = f"{self.store}/refs/{tree_id}"
@@ -109,10 +108,10 @@ class TestAssemblers(osbuildtest.TestCase):
         ]
         for filename, compression, expected_mimetypes in cases:
             options = {
-                    "filename": filename,
-                    "compression": compression
+                "filename": filename,
+                "compression": compression
             }
-            tree_id, output_id = self.run_assembler("org.osbuild.tar", options)
+            _, output_id = self.run_assembler("org.osbuild.tar", options)
             image = f"{self.store}/refs/{output_id}/{filename}"
             output = subprocess.check_output(["file", "--mime-type", image], encoding="utf-8")
             _, mimetype = output.strip().split(": ") # "filename: mimetype"
@@ -137,7 +136,9 @@ def nbd_connect(image):
             try:
                 # qemu-nbd doesn't wait for the device to be ready
                 for _ in range(100):
-                    if subprocess.run(["nbd-client", "--check", device], check=False, stdout=subprocess.DEVNULL).returncode == 0:
+                    if subprocess.run(["nbd-client", "--check", device],
+                                      check=False,
+                                      stdout=subprocess.DEVNULL).returncode == 0:
                         break
                     time.sleep(0.2)
 

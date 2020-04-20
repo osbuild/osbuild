@@ -15,4 +15,3 @@ class TestOSRelease(unittest.TestCase):
         for entry in os.scandir("test/os-release"):
             with self.subTest(entry.name):
                 self.assertEqual(osbuild.pipeline.describe_os(entry.path), entry.name)
-

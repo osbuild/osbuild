@@ -24,6 +24,7 @@ def have_rpm_ostree():
 
 class TestObjectStore(unittest.TestCase):
 
+    # pylint: disable=no-self-use
     @unittest.skipIf(not have_rpm_ostree(), "rpm-ostree missing")
     def test_treefile_empty(self):
         # check we produce a valid treefile from an empty object
