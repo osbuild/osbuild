@@ -1,14 +1,13 @@
-import array
 import contextlib
 import errno
-import fcntl
 import hashlib
 import os
-import shutil
 import subprocess
 import tempfile
 import weakref
 from typing import Optional
+
+import osbuild.util.rmrf as rmrf
 from . import treesum
 
 
@@ -52,53 +51,6 @@ def umount(target, lazy=True):
     if lazy:
         args += ["--lazy"]
     subprocess.run(["umount"] + args + [target], check=True)
-
-
-def clear_mutable_flag(path):
-    FS_IOC_GETFLAGS	= 0x80086601
-    FS_IOC_SETFLAGS	= 0x40086602
-    FS_IMMUTABLE_FL	= 0x010
-
-    fd = -1
-    try:
-        fd = os.open(path, os.O_RDONLY)
-        flags = array.array('L', [0])
-        fcntl.ioctl(fd, FS_IOC_GETFLAGS, flags, True)
-        flags[0] &= ~FS_IMMUTABLE_FL
-        fcntl.ioctl(fd, FS_IOC_SETFLAGS, flags, False)
-    except OSError:
-        pass  # clearing flags is best effort
-    finally:
-        if fd > -1:
-            os.close(fd)
-
-
-def remove_tree(path):
-    def fixperms(p):
-        clear_mutable_flag(p)
-        os.chmod(p, 0o777)
-
-    def unlink(p):
-        try:
-            os.unlink(p)
-        except IsADirectoryError:
-            remove_tree(p)
-        except FileNotFoundError:
-            pass
-
-    def on_error(_fn, p, exc_info):
-        e = exc_info[0]
-        if issubclass(e, FileNotFoundError):
-            pass
-        elif issubclass(e, PermissionError):
-            if p != path:
-                fixperms(os.path.dirname(p))
-            fixperms(p)
-            unlink(p)
-        else:
-            raise e
-
-    shutil.rmtree(path, onerror=on_error)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -211,7 +163,7 @@ class Object:
             # manually remove the tree, it might contain
             # files with immutable flag set, which will
             # throw off standard Python 3 tempdir cleanup
-            remove_tree(self._tree)
+            rmrf.rmtree(self._tree)
             self._tree = None
         if self._workdir:
             self._workdir.cleanup()
