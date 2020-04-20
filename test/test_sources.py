@@ -39,19 +39,19 @@ def netns():
 
 
 @contextlib.contextmanager
-def fileServer(path):
+def fileServer():
     with netns():
         # This is leaked until the program exits, but inaccessible after the with
         # due to the network namespace.
         barrier = threading.Barrier(2)
-        thread = threading.Thread(target=runFileServer, args=(path, barrier))
+        thread = threading.Thread(target=runFileServer, args=(barrier,))
         thread.daemon = True
         thread.start()
         barrier.wait()
         yield
 
 
-def runFileServer(path, barrier):
+def runFileServer(barrier):
     httpd = socketserver.TCPServer(('', 80), http.server.SimpleHTTPRequestHandler)
     barrier.wait()
     httpd.serve_forever()
@@ -68,8 +68,8 @@ class TestSources(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 osbuild.sources.get(source, case["checksums"], api_path=api_path)
         elif expects == "success":
-                r = osbuild.sources.get(source, case["checksums"], api_path=api_path)
-                self.assertEqual(r, {})
+            r = osbuild.sources.get(source, case["checksums"], api_path=api_path)
+            self.assertEqual(r, {})
         else:
             raise ValueError(f"invalid expectation: {expects}")
 
@@ -84,10 +84,13 @@ class TestSources(unittest.TestCase):
                 with open(f"{self.sources}/{source}/cases/{case}") as f:
                     case_options = json.load(f)
                 with tempfile.TemporaryDirectory() as tmpdir, \
-                    fileServer(f"{self.sources}/{source}/data"), \
-                    osbuild.sources.SourcesServer(f"{tmpdir}/sources-api", "./sources", source_options, f"{tmpdir}/cache", f"{tmpdir}/dst"):
-                        self.check_case(source, case_options, f"{tmpdir}/dst", f"{tmpdir}/sources-api")
-                        self.check_case(source, case_options, f"{tmpdir}/dst", f"{tmpdir}/sources-api")
+                    fileServer(), \
+                    osbuild.sources.SourcesServer(
+                            f"{tmpdir}/sources-api",
+                            "./sources", source_options,
+                            f"{tmpdir}/cache", f"{tmpdir}/dst"):
+                    self.check_case(source, case_options, f"{tmpdir}/dst", f"{tmpdir}/sources-api")
+                    self.check_case(source, case_options, f"{tmpdir}/dst", f"{tmpdir}/sources-api")
 
 
     def test_sources(self):
