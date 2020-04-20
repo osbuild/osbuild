@@ -36,11 +36,18 @@ def mark_checkpoints(pipeline, checkpoints):
     mark_pipeline(pipeline)
     return points
 
+def parse_manifest(path):
+    if path == "-":
+        manifest = json.load(sys.stdin)
+    else:
+        with open(path) as f:
+            manifest = json.load(f)
 
-# pylint: disable=too-many-branches
-# pylint: disable=too-many-statements
-def osbuild_cli(*, sys_argv=[]):
+    return manifest
+
+def parse_arguments(sys_argv):
     parser = argparse.ArgumentParser(description="Build operating system images")
+
     parser.add_argument("manifest_path", metavar="MANIFEST",
                         help="json file containing the manifest that should be built, or a '-' to read from stdin")
     parser.add_argument("--build-env", metavar="FILE", type=os.path.abspath,
@@ -60,14 +67,12 @@ def osbuild_cli(*, sys_argv=[]):
                         help="output results in JSON format")
     parser.add_argument("--output-directory", metavar="DIRECTORY", type=os.path.abspath,
                         help="directory where result objects are stored")
-    args = parser.parse_args(sys_argv[1:])
 
-    if args.manifest_path == "-":
-        f = sys.stdin
-    else:
-        f = open(args.manifest_path)
-    manifest = json.load(f)
-    f.close()
+    return parser.parse_args(sys_argv[1:])
+
+def osbuild_cli(*, sys_argv=[]):
+    args = parse_arguments(sys_argv)
+    manifest = parse_manifest(args.manifest_path)
 
     pipeline = manifest.get("pipeline", {})
     sources_options = manifest.get("sources", {})
