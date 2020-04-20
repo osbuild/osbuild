@@ -12,10 +12,10 @@ class TestDescriptions(unittest.TestCase):
 
         cases = [
             {},
-            { "assembler": None },
-            { "stages": [] },
-            { "build": {} },
-            { "build": None }
+            {"assembler": None},
+            {"stages": []},
+            {"build": {}},
+            {"build": None}
         ]
         for pipeline in cases:
             with self.subTest(pipeline):
@@ -23,7 +23,7 @@ class TestDescriptions(unittest.TestCase):
 
     def test_stage(self):
         name = "org.osbuild.test"
-        options = { "one": 1 }
+        options = {"one": 1}
         cases = [
             (osbuild.Stage(name, {}, None, None, {}), {"name": name}),
             (osbuild.Stage(name, {}, None, None, None), {"name": name}),
@@ -35,7 +35,7 @@ class TestDescriptions(unittest.TestCase):
 
     def test_assembler(self):
         name = "org.osbuild.test"
-        options = { "one": 1 }
+        options = {"one": 1}
         cases = [
             (osbuild.Assembler(name, None, None, {}), {"name": name}),
             (osbuild.Assembler(name, None, None, None), {"name": name}),
@@ -47,33 +47,33 @@ class TestDescriptions(unittest.TestCase):
 
     def test_pipeline(self):
         build = osbuild.Pipeline("org.osbuild.test")
-        build.add_stage("org.osbuild.test", {}, { "one": 1 })
+        build.add_stage("org.osbuild.test", {}, {"one": 1})
 
         pipeline = osbuild.Pipeline("org.osbuild.test", build)
-        pipeline.add_stage("org.osbuild.test", {}, { "one": 2 })
+        pipeline.add_stage("org.osbuild.test", {}, {"one": 2})
         pipeline.set_assembler("org.osbuild.test")
 
         self.assertEqual(pipeline.description(), {
-              "build": {
+            "build": {
                 "pipeline": {
-                  "stages": [
-                    {
-                      "name": "org.osbuild.test",
-                      "options": { "one": 1 }
-                    }
-                  ]
+                    "stages": [
+                        {
+                            "name": "org.osbuild.test",
+                            "options": {"one": 1}
+                        }
+                    ]
                 },
                 "runner": "org.osbuild.test"
-              },
-              "stages": [
+            },
+            "stages": [
                 {
-                  "name": "org.osbuild.test",
-                  "options": { "one": 2 }
+                    "name": "org.osbuild.test",
+                    "options": {"one": 2}
                 }
-              ],
-              "assembler": {
+            ],
+            "assembler": {
                 "name": "org.osbuild.test"
-              }
+            }
             })
 
     def test_stageinfo(self):

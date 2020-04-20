@@ -87,6 +87,7 @@ class TestObjectStore(unittest.TestCase):
             # there should be no temporary Objects dirs anymore
             self.assertEqual(len(os.listdir(object_store.tmp)), 0)
 
+    # pylint: disable=no-self-use
     @unittest.skipUnless(can_set_immutable(), "Need root permissions")
     def test_cleanup_immutable(self):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
@@ -98,6 +99,7 @@ class TestObjectStore(unittest.TestCase):
                     subprocess.run(["chattr", "+i", f"{path}/A"],
                                    check=True)
 
+    # pylint: disable=no-self-use
     def test_duplicate(self):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
             object_store = objectstore.ObjectStore(tmp)
@@ -122,6 +124,7 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(f"{object_store.refs}/a/")) == 1
             assert len(os.listdir(f"{object_store.refs}/b/")) == 1
 
+    # pylint: disable=no-self-use
     def test_object_base(self):
         # operate with a clean object store
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:

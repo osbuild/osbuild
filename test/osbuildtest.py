@@ -70,6 +70,7 @@ class TestCase(unittest.TestCase):
         result = json.loads(output)
         return result.get("tree_id"), result.get("output_id")
 
+    # pylint: disable=no-self-use
     def run_tree_diff(self, tree1, tree2):
         tree_diff_cmd = ["./tree-diff", tree1, tree2]
 

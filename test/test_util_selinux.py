@@ -1,6 +1,5 @@
 import io
 import unittest
-import subprocess
 
 from osbuild.util import selinux
 
