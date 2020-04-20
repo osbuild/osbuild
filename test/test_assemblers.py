@@ -20,7 +20,7 @@ class TestAssemblers(osbuildtest.TestCase):
         with open("test/pipelines/f30-base.json") as f:
             base = json.load(f)
         base["pipeline"] = dict(base["pipeline"], assembler={"name": name, "options": options})
-        return self.run_osbuild("-", input=json.dumps(base))
+        return self.run_osbuild("-", input_data=json.dumps(base))
 
     def assertImageFile(self, filename, fmt, expected_size=None):
         info = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", filename]))

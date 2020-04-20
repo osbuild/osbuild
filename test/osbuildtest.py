@@ -32,7 +32,7 @@ class TestCase(unittest.TestCase):
         if not os.getenv("OSBUILD_TEST_STORE"):
             shutil.rmtree(self.store)
 
-    def run_osbuild(self, pipeline, input=None):
+    def run_osbuild(self, pipeline, input_data=None):
         osbuild_cmd = ["python3", "-m", "osbuild", "--json", "--store", self.store, "--libdir", ".", pipeline]
 
         build_env = os.getenv("OSBUILD_TEST_BUILD_ENV", None)
@@ -43,8 +43,8 @@ class TestCase(unittest.TestCase):
         # Create a checkpoint at the last stage, i.e.
         # commit the final tree to the store, so that
         # tests can use it to compare against
-        if input:
-            manifest = json.loads(input)
+        if input_data:
+            manifest = json.loads(input_data)
         else:
             with open(pipeline, "r") as f:
                 manifest = json.load(f)
@@ -54,11 +54,11 @@ class TestCase(unittest.TestCase):
             osbuild_cmd.append("--checkpoint")
             osbuild_cmd.append(parsed.tree_id)
 
-        stdin = subprocess.PIPE if input else None
+        stdin = subprocess.PIPE if input_data else None
 
         p = subprocess.Popen(osbuild_cmd, encoding="utf-8", stdin=stdin, stdout=subprocess.PIPE)
         try:
-            output, _ = p.communicate(input)
+            output, _ = p.communicate(input_data)
             if p.returncode != 0:
                 print(output)
             self.assertEqual(p.returncode, 0)
