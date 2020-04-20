@@ -3,13 +3,13 @@ import ctypes
 import http.server
 import json
 import os
-import osbuild.sources
 import socketserver
 import subprocess
 import tempfile
 import threading
 import unittest
 
+import osbuild.sources
 
 def errcheck(ret, func, args):
     if ret == -1:
