@@ -11,10 +11,10 @@ removed.
 """
 
 
-import array
-import fcntl
 import os
 import shutil
+
+import osbuild.util.linux as linux
 
 
 __all__ = [
@@ -52,27 +52,28 @@ def rmtree(path: str):
         function is used internally). Consult its documentation for details.
     """
 
-    def clear_mutable_flag(path):
-        FS_IOC_GETFLAGS	= 0x80086601
-        FS_IOC_SETFLAGS	= 0x40086602
-        FS_IMMUTABLE_FL	= 0x010
-
-        fd = -1
-        try:
-            fd = os.open(path, os.O_RDONLY)
-            flags = array.array('L', [0])
-            fcntl.ioctl(fd, FS_IOC_GETFLAGS, flags, True)
-            flags[0] &= ~FS_IMMUTABLE_FL
-            fcntl.ioctl(fd, FS_IOC_SETFLAGS, flags, False)
-        except OSError:
-            pass  # clearing flags is best effort
-        finally:
-            if fd > -1:
-                os.close(fd)
-
     def fixperms(p):
-        clear_mutable_flag(p)
-        os.chmod(p, 0o777)
+        fd = None
+        try:
+            fd = os.open(p, os.O_RDONLY)
+
+            # The root-only immutable flag prevents files from being unlinked
+            # or modified. Clear it, so we can unlink the file-system tree.
+            try:
+                linux.ioctl_toggle_immutable(fd, False)
+            except OSError:
+                pass
+
+            # If we do not have sufficient permissions on a directory, we
+            # cannot traverse it, nor unlink its content. Make sure to set
+            # sufficient permissions up front.
+            try:
+                os.fchmod(fd, 0o777)
+            except OSError:
+                pass
+        finally:
+            if fd is not None:
+                os.close(fd)
 
     def unlink(p):
         try:
