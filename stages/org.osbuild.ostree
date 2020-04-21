@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import contextlib
 import json
 import os
 import sys
@@ -125,7 +126,7 @@ def ostree(*args, _input=None, **kwargs):
                    check=True)
 
 
-class MountGuard:
+class MountGuard(contextlib.AbstractContextManager):
     def __init__(self):
         self.mounts = []
 
@@ -155,12 +156,8 @@ class MountGuard:
             subprocess.run(["umount", "--lazy", target],
                            check=True)
 
-    def __enter__(self):
-        return self
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.unmount()
-        return exc_type is None
 
 
 def make_fs_identifier(desc):

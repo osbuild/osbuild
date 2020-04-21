@@ -1,4 +1,5 @@
 
+import contextlib
 import importlib
 import importlib.util
 import os
@@ -13,7 +14,7 @@ __all__ = [
 ]
 
 
-class BuildRoot:
+class BuildRoot(contextlib.AbstractContextManager):
     def __init__(self, root, runner, path="/run/osbuild", libdir=None, var="/var/tmp"):
         self.root = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
         self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
@@ -130,9 +131,6 @@ class BuildRoot:
 
     def __del__(self):
         self.unmount()
-
-    def __enter__(self):
-        return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         self.unmount()
