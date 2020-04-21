@@ -207,7 +207,6 @@ class Object:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.cleanup()
-        return exc_type is None
 
 
 class HostTree:
@@ -237,7 +236,7 @@ class HostTree:
         pass  # noop for the host
 
 
-class ObjectStore:
+class ObjectStore(contextlib.AbstractContextManager):
     def __init__(self, store):
         self.store = store
         self.objects = f"{store}/objects"
@@ -342,9 +341,5 @@ class ObjectStore:
         for obj in self._objs:
             obj.cleanup()
 
-    def __enter__(self):
-        return self
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.cleanup()
-        return exc_type is None
