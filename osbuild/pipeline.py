@@ -1,7 +1,5 @@
 
 import hashlib
-import importlib
-import importlib.util
 import json
 import os
 import subprocess
@@ -89,12 +87,6 @@ class Stage:
             sources_dir = f"{libdir}/sources" if libdir else "/usr/lib/osbuild/sources"
 
             ro_binds = [f"{sources_output}:/run/osbuild/sources"]
-            if not libdir:
-                osbuild_module_path = os.path.dirname(importlib.util.find_spec('osbuild').origin)
-                # This is a temporary workaround, once we have a common way to include osbuild in the
-                # buildroot we should remove this because it includes code from the host in the buildroot thus
-                # violating our effort of reproducibility.
-                ro_binds.append(f"{osbuild_module_path}:/run/osbuild/lib/stages/osbuild")
 
             with API(f"{build_root.api}/osbuild", args, interactive) as api, \
                 sources.SourcesServer(f"{build_root.api}/sources",
@@ -151,13 +143,8 @@ class Assembler:
                 binds.append(f"{output_dir}:/run/osbuild/output")
                 args["output_dir"] = "/run/osbuild/output"
 
-            osbuild_module_path = os.path.dirname(importlib.util.find_spec('osbuild').origin)
             ro_binds = [f"{tree}:/run/osbuild/tree"]
-            if not libdir:
-                # This is a temporary workaround, once we have a common way to include osbuild in the
-                # buildroot we should remove this because it includes code from the host in the buildroot thus
-                # violating our effort of reproducibility.
-                ro_binds.append(f"{osbuild_module_path}:/run/osbuild/lib/assemblers/osbuild")
+
             with remoteloop.LoopServer(f"{build_root.api}/remoteloop"), \
                 API(f"{build_root.api}/osbuild", args, interactive) as api:
                 r = build_root.run(

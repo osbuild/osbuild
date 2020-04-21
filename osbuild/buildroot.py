@@ -1,4 +1,6 @@
 
+import importlib
+import importlib.util
 import os
 import platform
 import shutil
@@ -17,7 +19,7 @@ class BuildRoot:
         self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
         self.var = tempfile.mkdtemp(prefix="osbuild-var-", dir=var)
         self.mounts = []
-        self.libdir = libdir or "/usr/lib/osbuild"
+        self.libdir = libdir
         self.runner = runner
 
         self.mount_root(root)
@@ -76,6 +78,8 @@ class BuildRoot:
         Its arguments mean the same as those for subprocess.run().
         """
 
+        nspawn_ro_binds = []
+
         # pylint suggests to epxlicitly pass `check` to subprocess.run()
         check = kwargs.pop("check", False)
 
@@ -86,6 +90,30 @@ class BuildRoot:
             # wants to be able create devices nodes, so allow that
             loopback_allow += "m"
 
+        # make osbuild API-calls accessible to the container
+        nspawn_ro_binds.append(f"{self.api}:/run/osbuild/api")
+
+        # We want to execute our stages and other scripts in the container. So
+        # far, we do not install osbuild as a package in the container, but
+        # provide it from the outside. Therefore, we need to provide `libdir`
+        # via bind-mount. Furthermore, a system-installed `libdir` has the
+        # python packages separate in `site-packages`, so we need to bind-mount
+        # them as well.
+        # In the future, we want to work towards mandating an osbuild package to
+        # be installed in the container, so the build is self-contained and does
+        # not take scripts from the host. However, this requires osbuild
+        # packaged for those containers. Furthermore, we want to keep supporting
+        # the current import-model for testing and development.
+        if self.libdir is not None:
+            # caller-specified `libdir` must be self-contained
+            nspawn_ro_binds.append(f"{self.libdir}:/run/osbuild/lib")
+        else:
+            # system `libdir` requires importing the python module
+            nspawn_ro_binds.append(f"/usr/lib/osbuild:/run/osbuild/lib")
+            modorigin = importlib.util.find_spec('osbuild').origin
+            modpath = os.path.dirname(modorigin)
+            nspawn_ro_binds.append(f"{modpath}:/run/osbuild/lib/osbuild")
+
         return subprocess.run([
             "systemd-nspawn",
             "--quiet",
@@ -94,9 +122,9 @@ class BuildRoot:
             "--link-journal=no",
             f"--property=DeviceAllow=block-loop {loopback_allow}",
             f"--directory={self.root}",
-            f"--bind-ro={self.libdir}:/run/osbuild/lib",
+            *[f"--bind-ro={b}" for b in nspawn_ro_binds],
             *[f"--bind={b}" for b in (binds or [])],
-            *[f"--bind-ro={b}" for b in [f"{self.api}:/run/osbuild/api"] + (readonly_binds or [])],
+            *[f"--bind-ro={b}" for b in (readonly_binds or [])],
             f"/run/osbuild/lib/runners/{self.runner}"
             ] + argv, check=check, **kwargs)
 
