@@ -17,7 +17,11 @@
 BUILDDIR ?= .
 SRCDIR ?= .
 
+PYLINT ?= pylint
+PYTHON3 ?= python3
 RST2MAN ?= rst2man
+
+SHELL = /bin/bash
 
 #
 # Automatic Variables
@@ -74,6 +78,11 @@ help:
 	@echo
 	@echo "    help:               Print this usage information."
 	@echo "    man:                Generate all man-pages"
+	@echo
+	@echo "    test-all:           Run all tests"
+	@echo "    test-pylint:        Run pylint on all sources"
+	@echo "    test-module:        Run all module unit-tests"
+	@echo "    test-runtime:       Run all osbuild pipeline tests"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -98,6 +107,44 @@ $(MANPAGES_TROFF): $(BUILDDIR)/docs/%: $(SRCDIR)/docs/%.rst | $(BUILDDIR)/docs/
 
 .PHONY: man
 man: $(MANPAGES_TROFF)
+
+#
+# Test Suite
+#
+# We use the python `unittest` module for all tests. All the test-sources are
+# located in the `./test/` top-level directory, with `./test/mod/` for module
+# unittests and `./test/run/` for osbuild pipeline runtime tests.
+#
+
+.PHONY: test-units
+test-module:
+	@$(PYTHON3) -m unittest \
+		discover \
+			--start=$(SRCDIR)/test/mod \
+			--top-level-directory=$(SRCDIR) \
+			-v
+
+.PHONY: test-runtime
+test-runtime:
+	@[[ $${EUID} -eq 0 ]] || (echo "Error: Root privileges required!"; exit 1)
+	@$(PYTHON3) -m unittest \
+		discover \
+			--start=$(SRCDIR)/test/run \
+			--top-level-directory=$(SRCDIR) \
+			-v
+
+.PHONY: test-pylint
+test-pylint:
+	@find . -type f -name "*.py" | xargs $(PYLINT)
+	@$(PYLINT) runners/* assemblers/* stages/* sources/*
+
+.PHONY: test
+test-all: test-pylint
+	@$(PYTHON3) -m unittest \
+		discover \
+			--start=$(SRCDIR)/test \
+			--top-level-directory=$(SRCDIR) \
+			-v
 
 #
 # Building packages

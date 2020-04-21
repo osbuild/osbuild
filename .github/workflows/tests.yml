@@ -6,22 +6,24 @@ jobs:
   pylint:
     name: "pylint"
     runs-on: ubuntu-latest
-    container:
-      image: docker.io/library/python:3.7
+    container: docker.io/library/python:3.7
     steps:
       - name: Install pylint
         run: pip install pylint==2.4.1
-
       - name: Clone repository
         uses: actions/checkout@v2
-        with:
-          path: osbuild
-
       - name: Run pylint
-        run: |
-          cd osbuild
-          find . -type f -name "*.py" | xargs pylint
-          pylint runners/* assemblers/* stages/* sources/*
+        run: make test-pylint
+
+  module:
+    name: "Module Unittests"
+    runs-on: ubuntu-latest
+    container: docker.io/library/python:3.7
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+      - name: Run Module Unittests
+        run: make test-module
 
   documentation:
     name: "📚 Documentation"

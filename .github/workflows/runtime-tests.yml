@@ -11,6 +11,29 @@ env:
   PYTHONUNBUFFERED: 1
 
 jobs:
+  runtime_tests:
+    name: "Runtime Pipeline Execution Tests"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Install Dependencies"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install \
+          nbd-client \
+          qemu-utils \
+          rpm \
+          systemd-container \
+          tar \
+          yum
+    - name: "Set up Python"
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: "Run Pipeline Tests"
+      run: sudo env "PATH=$PATH" make test-runtime
+
   noop_pipeline_tests:
     name: "Noop-Pipeline Tests"
     runs-on: ubuntu-latest
