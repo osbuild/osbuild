@@ -1,3 +1,7 @@
+#
+# Tests for the 'osbuild.util.ostree' module.
+#
+
 import json
 import unittest
 import subprocess
@@ -87,7 +91,3 @@ class TestObjectStore(unittest.TestCase):
 
         for p, v in params.items():
             self.assertEqual(v, js[p])
-
-
-if __name__ == "__main__":
-    unittest.main()
