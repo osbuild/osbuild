@@ -254,8 +254,19 @@ def main(tree, options):
 
     with open(grubenv, "w") as env:
         fs_type, fs_id = fs_spec_decode(root_fs)
-        env.write("# GRUB Environment Block\n"
-                  f"kernelopts=root={fs_type}={fs_id} {kernel_opts}\n")
+        data = (
+            "# GRUB Environment Block\n"
+            f"kernelopts=root={fs_type}={fs_id} {kernel_opts}\n"
+        )
+
+        # The 'grubenv' file is, according to the documentation,
+        # a 'preallocated 1024-byte file'. The empty space is
+        # needs to be filled with '#' as padding
+        data += '#' * (1024 - len(data))
+        assert len(data) == 1024
+
+        print(data)
+        env.write(data)
 
     if uefi is not None:
         # UEFI support:
