@@ -239,7 +239,7 @@ class Loop:
 
         fcntl.ioctl(self.fd, self.LOOP_SET_DIRECT_IO, dio)
 
-    def mknod(self, dir_fd=None, mode=0o600):
+    def mknod(self, dir_fd, mode=0o600):
         """Create a secondary device node
 
         Create a device node with the correct name, mode, minor and major
@@ -260,14 +260,12 @@ class Loop:
 
         Parameters
         ----------
-        dir_fd : int, optional
-            Target directory file descriptor, or None to use /dev (None is default)
+        dir_fd : int
+            Target directory file descriptor
         mode : int, optional
             Access mode on the created device node (0o600 is default)
         """
 
-        if not dir_fd:
-            dir_fd = os.open("/dev", os.O_DIRECTORY)
         os.mknod(self.devname,
                  mode=(stat.S_IMODE(mode) | stat.S_IFBLK),
                  device=os.makedev(self.LOOP_MAJOR, self.minor),
