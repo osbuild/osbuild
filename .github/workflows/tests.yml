@@ -87,11 +87,6 @@ jobs:
           cd osbuild
           python3 -m unittest -v test.test_util_ostree
 
-      - name: Run test_util_selinux
-        run: |
-          cd osbuild
-          python3 -m unittest -v test.test_util_selinux
-
   rpm_build:
     name: "📦 RPM"
     runs-on: ubuntu-latest
