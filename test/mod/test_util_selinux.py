@@ -1,3 +1,7 @@
+#
+# Tests for the 'osbuild.util.selinux' module.
+#
+
 import io
 import unittest
 
@@ -36,7 +40,3 @@ class TestObjectStore(unittest.TestCase):
 
         policy = selinux.config_get_policy(cfg)
         self.assertEqual(policy, 'targeted')
-
-
-if __name__ == "__main__":
-    unittest.main()
