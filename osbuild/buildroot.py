@@ -119,6 +119,7 @@ class BuildRoot(contextlib.AbstractContextManager):
             "systemd-nspawn",
             "--quiet",
             "--register=no",
+            "--keep-unit",
             "--as-pid2",
             "--link-journal=no",
             f"--property=DeviceAllow=block-loop {loopback_allow}",
