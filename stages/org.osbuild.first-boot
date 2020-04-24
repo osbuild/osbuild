@@ -29,7 +29,7 @@ STAGE_OPTS = """
     }
   },
   "wait_for_network": {
-    "type": "bool",
+    "type": "boolean",
     "description": "Wait for the network to be up before executing",
     "default": false
   }
