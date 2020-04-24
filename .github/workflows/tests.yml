@@ -9,7 +9,7 @@ jobs:
     container: docker.io/library/python:3.7
     steps:
       - name: Install pylint
-        run: pip install pylint==2.4.1
+        run: pip install pylint==2.4.1 jsonschema
       - name: Clone repository
         uses: actions/checkout@v2
       - name: Run pylint
@@ -66,6 +66,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: osbuild
+
+      - name: Install Dependencies
+        run: pip install jsonschema
 
       - name: Run test_osbuild
         run: |

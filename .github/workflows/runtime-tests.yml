@@ -31,6 +31,8 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+    - name: Install Python Packages
+      run: pip install jsonschema
     - name: "Run Pipeline Tests"
       run: sudo env "PATH=$PATH" make test-runtime
 
@@ -49,6 +51,8 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+    - name: Install Python Packages
+      run: pip install jsonschema
     - name: "Run Noop-Pipeline Tests"
       run: |
         for i in {0..2} ; do
@@ -75,6 +79,8 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+    - name: Install Python Packages
+      run: pip install jsonschema
     - name: "Run Assembler Tests"
       run: sudo env "PATH=$PATH" python3 -m unittest -v test.test_assemblers
 
@@ -95,5 +101,7 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+    - name: Install Python Packages
+      run: pip install jsonschema
     - name: "Run Stage Tests"
       run: sudo env "PATH=$PATH" python3 -m unittest -v test.test_stages
