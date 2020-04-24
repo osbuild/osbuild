@@ -110,8 +110,8 @@ class BuildRoot(contextlib.AbstractContextManager):
             nspawn_ro_binds.append(f"{self.libdir}:/run/osbuild/lib")
         else:
             # system `libdir` requires importing the python module
-            nspawn_ro_binds.append(f"/usr/lib/osbuild:/run/osbuild/lib")
-            modorigin = importlib.util.find_spec('osbuild').origin
+            nspawn_ro_binds.append("/usr/lib/osbuild:/run/osbuild/lib")
+            modorigin = importlib.util.find_spec("osbuild").origin
             modpath = os.path.dirname(modorigin)
             nspawn_ro_binds.append(f"{modpath}:/run/osbuild/lib/osbuild")
 
