@@ -54,7 +54,11 @@ STAGE_OPTS = """
   },
   "kernel_opts": {
     "description": "Additional kernel command line options",
-    "type": "string"
+    "type": "array",
+    "items": {
+      "description": "A single kernel command line option",
+      "type": "string"
+    }
   },
   "ref": {
     "description": "OStree ref to create and use for deployment",
