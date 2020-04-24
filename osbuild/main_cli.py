@@ -10,12 +10,15 @@ import argparse
 import json
 import os
 import sys
+
 import osbuild
+import osbuild.meta
 
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
 RED = "\033[31m"
+GREEN = "\033[32m"
 
 
 def mark_checkpoints(pipeline, checkpoints):
@@ -47,6 +50,24 @@ def parse_manifest(path):
     return manifest
 
 
+def show_validation(result, name):
+    if name == "-":
+        name = "<stdin>"
+
+    print(f"{BOLD}{name}{RESET} ", end='')
+
+    if result:
+        print(f"is {BOLD}{GREEN}valid{RESET}")
+        return
+
+    print(f"has {BOLD}{RED}errors{RESET}:")
+    print("")
+
+    for error in result:
+        print(f"{BOLD}{error.id}{RESET}:")
+        print(f"  {error.message}\n")
+
+
 def parse_arguments(sys_argv):
     parser = argparse.ArgumentParser(description="Build operating system images")
 
@@ -76,6 +97,17 @@ def parse_arguments(sys_argv):
 def osbuild_cli(*, sys_argv=[]):
     args = parse_arguments(sys_argv)
     manifest = parse_manifest(args.manifest_path)
+
+    # first thing after parsing is validation of the input
+    index = osbuild.meta.Index(args.libdir)
+    res = osbuild.meta.validate(manifest, index)
+    if not res:
+        if not args.json:
+            show_validation(res, args.manifest_path)
+        else:
+            json.dump(res.as_dict(), sys.stdout)
+            sys.stdout.write("\n")
+        return 2
 
     pipeline = manifest.get("pipeline", {})
     sources_options = manifest.get("sources", {})
