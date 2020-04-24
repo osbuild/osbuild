@@ -55,25 +55,6 @@ jobs:
           sudo env "PATH=$PATH" python3 -m osbuild --libdir . samples/noop.json
         done
 
-  source_tests:
-    name: "Source Tests"
-    runs-on: ubuntu-latest
-    steps:
-    - name: "Clone Repository"
-      uses: actions/checkout@v2
-    - name: "Install Dependencies"
-      run: |
-        sudo apt-get update
-        sudo apt-get -y install \
-          rpm \
-          systemd-container
-    - name: "Set up Python"
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: "Run Source Tests"
-      run: sudo env "PATH=$PATH" python3 -m unittest -v test.test_sources
-
   assembler_tests:
     name: "Assembler Tests"
     runs-on: ubuntu-latest
