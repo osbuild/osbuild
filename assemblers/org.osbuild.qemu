@@ -51,7 +51,7 @@ STAGE_OPTS = """
   "format": {
     "description": "Image file format to use",
     "type": "string",
-    "enum": ["raw", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]
+    "enum": ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]
   },
   "filename": {
     "description": "Image filename",
