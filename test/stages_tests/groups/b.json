@@ -825,7 +825,7 @@
         "options": {
           "groups": {
             "testgroup": {
-              "gid": "42042"
+              "gid": 42042
             }
           }
         }
