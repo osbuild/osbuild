@@ -107,10 +107,9 @@ class TestAssemblers(osbuildtest.TestCase):
             ("tree.tar.gz", "gzip", ["application/x-gzip", "application/gzip"])
         ]
         for filename, compression, expected_mimetypes in cases:
-            options = {
-                "filename": filename,
-                "compression": compression
-            }
+            options = {"filename": filename}
+            if compression:
+                options["compression"] = compression
             _, output_id = self.run_assembler("org.osbuild.tar", options)
             image = f"{self.store}/refs/{output_id}/{filename}"
             output = subprocess.check_output(["file", "--mime-type", image], encoding="utf-8")
