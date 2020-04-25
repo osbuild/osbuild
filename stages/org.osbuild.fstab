@@ -74,8 +74,8 @@ def main(tree, options):
             label = filesystem.get("label")
             vfs_type = filesystem.get("vfs_type", "none")
             options = filesystem.get("options", "defaults")
-            freq = filesystem.get("freq", "0")
-            passno = filesystem.get("passno", "0")
+            freq = filesystem.get("freq", 0)
+            passno = filesystem.get("passno", 0)
 
             if uuid:
                 fs_spec = f"UUID={uuid}"
