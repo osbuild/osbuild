@@ -30,8 +30,12 @@ the sysroot and the deployments. Additional kernel options can be passed via
 [1] https://ostree.readthedocs.io/en/latest/manual/deployment/
 """
 STAGE_OPTS = """
-"required": ["rootfs"],
+"required": ["commit", "osname", "rootfs"],
 "properties": {
+  "commit": {
+    "description": "checksum of the OSTree commit",
+    "type": "string"
+  },
   "mounts": {
     "description": "Mount points of the final file system",
     "type": "array",
@@ -51,6 +55,10 @@ STAGE_OPTS = """
         }
       }
     }
+  },
+  "osname": {
+    "description": "Name of the stateroot to be used in the deployment",
+    "type": "string"
   },
   "kernel_opts": {
     "description": "Additional kernel command line options",
