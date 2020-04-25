@@ -1,4 +1,3 @@
-import importlib.util
 import json
 import os
 import unittest
@@ -79,26 +78,18 @@ class TestDescriptions(unittest.TestCase):
             })
 
     def test_stageinfo(self):
-        def list_stages(base):
-            return [(base, f) for f in os.listdir(base) if f.startswith("org.osbuild")]
+        def list_stages(base, klass):
+            return [(klass, f) for f in os.listdir(base) if f.startswith("org.osbuild")]
 
-        def load_module(base, name):
-            loader = importlib.machinery.SourceFileLoader(name, f"{base}/{name}")
-            spec = importlib.util.spec_from_loader(loader.name, loader)
-            mod = importlib.util.module_from_spec(spec)
-            loader.exec_module(mod)
-            return mod
-
-        stages = list_stages("stages")
-        stages += list_stages("assemblers")
+        stages = list_stages("stages", "Stage")
+        stages += list_stages("assemblers", "Assembler")
 
         for stage in stages:
-            base, name = stage
-            m = load_module(base, name)
+            klass, name = stage
             try:
-                json.loads("{" + m.STAGE_OPTS + "}")
+                osbuild.meta.StageInfo.load(os.curdir, klass, name)
             except json.decoder.JSONDecodeError as e:
-                msg = f"Stage '{base}/{name}' has invalid STAGE_OPTS\n\t" + str(e)
+                msg = f"{klass} '{name}' has invalid STAGE_OPTS\n\t" + str(e)
                 self.fail(msg)
 
     def test_validation(self):
