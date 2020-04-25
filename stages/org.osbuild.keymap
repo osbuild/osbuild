@@ -15,6 +15,7 @@ Removes any existing /etc/vconsole.conf, then runs `systemd-firstboot` with the
 Valid keymaps are generally found in /lib/kbd/keymaps.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["keymap"],
 "properties": {
   "keymap": {

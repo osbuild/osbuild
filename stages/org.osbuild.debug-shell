@@ -12,6 +12,7 @@ which starts an early-boot root shell on the given `tty`.
 Also symlinks the service file into /etc/systemd/system/sysinit.target.wants/.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["tty"],
 "properties": {
   "tty": {

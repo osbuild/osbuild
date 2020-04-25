@@ -11,6 +11,7 @@ Modifies /etc/chrony.conf, removing all "server" or "pool" lines and adding
 a "server" line for each server listed in `timeservers`.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["timeservers"],
 "properties": {
   "timeservers": {

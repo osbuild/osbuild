@@ -38,6 +38,7 @@ human users need to be part of.
 [2] https://rpm-ostree.readthedocs.io/en/latest/manual/treefile/
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "properties": {
   "etc_group_members": {
     "description": "Array of group names to still keep in /etc/group",

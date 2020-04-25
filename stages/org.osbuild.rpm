@@ -34,6 +34,7 @@ Uses the following binaries from the host:
     * `rpm` to install packages into the target tree
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "properties": {
   "gpgkeys": {
     "description": "Array of GPG key contents to import",

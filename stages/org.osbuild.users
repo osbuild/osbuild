@@ -15,6 +15,7 @@ misbehave if the `usermod`/`useradd` binary inside the tree makes incorrect
 assumptions about its host system.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "properties": {
   "users": {
     "type": "object",

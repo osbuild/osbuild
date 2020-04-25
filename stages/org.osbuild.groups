@@ -13,6 +13,7 @@ If no `gid` is given, `groupadd` will choose one.
 If the specified group name or GID is already in use, this stage will fail.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "properties": {
   "groups": {
     "type": "object",

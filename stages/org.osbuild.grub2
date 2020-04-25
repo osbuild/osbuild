@@ -42,6 +42,7 @@ and accompanying data can be installed from the built root via `uefi.install`.
 Both UEFI and Legacy can be specified at the same time.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "oneOf": [{
   "required": ["root_fs_uuid"]
 }, {

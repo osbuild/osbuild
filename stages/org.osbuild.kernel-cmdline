@@ -11,6 +11,7 @@ command line.
 https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "properties": {
   "root_fs_uuid": {
     "description": "UUID of the root filesystem image",
