@@ -14,6 +14,7 @@ buildhost with `--hostname={hostname}`, which checks the validity of the
 hostname and writes it to /etc/hostname.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["hostname"],
 "properties": {
   "hostname": {

@@ -26,6 +26,7 @@ generate with uuid.uuid4() in Python, `uuidgen(1)` in a shell script, or
 read from `/proc/sys/kernel/random/uuid` if your kernel provides it.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["filename", "root_fs_uuid", "size"],
 "properties": {
   "filename": {

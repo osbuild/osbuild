@@ -22,6 +22,7 @@ caller is responsible for making sure that `compression` and `filename` match.
 Buildhost commands used: `tar` and any named `compression` program.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["filename"],
 "properties": {
   "filename": {

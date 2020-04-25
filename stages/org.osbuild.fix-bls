@@ -22,6 +22,7 @@ By default it is `/boot`, i.e. assumes `/boot` is on the root file-system.
 This stage reads and (re)writes all .conf files in /boot/loader/entries.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "properties": {
   "prefix": {
     "description": "Prefix to use, normally `/boot`",

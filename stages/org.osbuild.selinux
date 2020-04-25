@@ -24,6 +24,7 @@ labels for newly-created files are determined by the host's SELinux policy and
 may not match the tree's policy.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["file_contexts"],
 "properties": {
   "file_contexts": {

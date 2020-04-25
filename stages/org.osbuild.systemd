@@ -16,6 +16,7 @@ items, which will delete _all_ symlinks to the named services.
 Uses `systemctl` from the buildhost.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["enabled_services"],
 "properties": {
   "enabled_services": {

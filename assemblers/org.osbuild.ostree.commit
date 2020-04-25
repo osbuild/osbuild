@@ -22,6 +22,7 @@ the commit id and the compose information respectively.
 [1] https://ostree.readthedocs.io/en/stable/manual/adapting-existing/
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["ref"],
 "properties": {
   "ref": {

@@ -19,6 +19,7 @@ If the flag-file cannot be removed, the service fails without executing
 any further first-boot commands.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["commands"],
 "properties": {
   "commands": {

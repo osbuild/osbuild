@@ -15,6 +15,7 @@ with the `--locale` flag, which will write a new `/etc/locale.conf` in the
 target system with `LANG={language}`.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["language"],
 "properties": {
   "language": {

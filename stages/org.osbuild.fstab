@@ -13,6 +13,7 @@ a `path` (mount point).
 This stage replaces /etc/fstab, removing any existing entries.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["filesystems"],
 "properties": {
   "filesystems": {

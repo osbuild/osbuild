@@ -29,6 +29,7 @@ target tree, which means it may fail unexpectedly when the buildhost and target
 are different arches or OSes.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "properties": {
   "ports": {
     "description": "Ports (or port ranges) to open",

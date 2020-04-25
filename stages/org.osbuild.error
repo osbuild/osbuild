@@ -9,6 +9,7 @@ Error stage. Return the given error. Useful for testing, debugging, and
 wasting time.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "properties": {
   "returncode": {
     "description": "What to return code to use",

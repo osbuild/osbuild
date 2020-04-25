@@ -25,6 +25,7 @@ through `/bin/sh` in that case, so it might still work, but that behavior is
 not guaranteed.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["script"],
 "properties": {
   "script": {

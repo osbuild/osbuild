@@ -30,6 +30,7 @@ Buildhost commands used: `truncate`, `mount`, `umount`, `sfdisk`,
 `grub2-mkimage`, `mkfs.ext4` or `mkfs.xfs`, `qemu-img`.
 """
 STAGE_OPTS = """
+"additionalProperties": false,
 "required": ["format", "filename", "ptuuid", "size"],
 "oneOf": [{
   "required": ["root_fs_uuid"]
