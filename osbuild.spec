@@ -92,6 +92,11 @@ ln -s ../osbuild %{buildroot}%{pkgdir}/sources/osbuild
 # mount point for bind mounting the osbuild library
 mkdir -p %{buildroot}%{pkgdir}/osbuild
 
+# schemata
+mkdir -p %{buildroot}%{_datadir}/osbuild/schemas
+install -p -m 0755 $(find schemas/*.json) %{buildroot}%{_datadir}/osbuild/schemas
+ln -s %{_datadir}/osbuild/schemas %{buildroot}%{pkgdir}/schemas
+
 # documentation
 mkdir -p %{buildroot}%{_mandir}/man1
 mkdir -p %{buildroot}%{_mandir}/man5
@@ -108,6 +113,7 @@ exit 0
 %{_bindir}/osbuild
 %{_mandir}/man1/%{name}.1*
 %{_mandir}/man5/%{name}-manifest.5*
+%{_datadir}/osbuild/schemas
 %{pkgdir}
 # the following files are in the ostree sub-package
 %exclude %{pkgdir}/assemblers/org.osbuild.ostree.commit
