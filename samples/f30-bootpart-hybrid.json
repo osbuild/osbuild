@@ -390,7 +390,6 @@
     }
   },
   "pipeline": {
-    "runner": "org.osbuild.fedora30",
     "stages": [
       {
         "name": "org.osbuild.rpm",
