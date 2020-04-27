@@ -4,6 +4,8 @@ import os
 import unittest
 
 import osbuild
+import osbuild.meta
+
 
 class TestDescriptions(unittest.TestCase):
     def test_canonical(self):
@@ -98,6 +100,114 @@ class TestDescriptions(unittest.TestCase):
             except json.decoder.JSONDecodeError as e:
                 msg = f"Stage '{base}/{name}' has invalid STAGE_OPTS\n\t" + str(e)
                 self.fail(msg)
+
+    def test_validation(self):
+        index = osbuild.meta.Index(os.curdir)
+
+        # an empty manifest is OK
+        res = osbuild.meta.validate({}, index)
+        self.assertEqual(res.valid, True)
+
+        # something totally invalid (by Ondřej Budai)
+        totally_invalid = {
+            "osbuild": {
+                "state": "awesome",
+                "but": {
+                    "input-validation": 1
+                }
+            }
+        }
+
+        res = osbuild.meta.validate(totally_invalid, index)
+        self.assertEqual(res.valid, False)
+        # The top-level 'osbuild' is an additional property
+        self.assertEqual(len(res), 1)
+
+        # This is missing the runner
+        no_runner = {
+            "pipeline": {
+                "build": {
+                    "pipeline": {}
+                }
+            }
+        }
+
+        res = osbuild.meta.validate(no_runner, index)
+        self.assertEqual(res.valid, False)
+        self.assertEqual(len(res), 1)  # missing runner
+        lst = res[".pipeline.build"]
+        self.assertEqual(len(lst), 1)
+
+        # de-dup issues: the manifest checking will report
+        # the extra element and the recursive build pipeline
+        # check will also report that same error; make sure
+        # they get properly de-duplicated
+        no_runner_extra = {
+            "pipeline": {
+                "build": {  # missing runner
+                    "pipeline": {
+                        "extra": True,  # should not be there
+                        "stages": [{
+                            "name": "org.osbuild.chrony",
+                            "options": {
+                                "timeservers": "string"  # should be an array
+                            }
+                        }]
+                    }
+                }
+            }
+        }
+
+        res = osbuild.meta.validate(no_runner_extra, index)
+        self.assertEqual(res.valid, False)
+        self.assertEqual(len(res), 3)
+        lst = res[".pipeline.build.pipeline"]
+        self.assertEqual(len(lst), 1)  # should only have one
+        lst = res[".pipeline.build.pipeline.stages[0].options.timeservers"]
+        self.assertEqual(len(lst), 1)  # should only have one
+
+        # stage issues
+        stage_check = {
+            "pipeline": {
+                "stages": [{
+                    "name": "org.osbuild.grub2",
+                    "options": {
+                        "uefi": {
+                            "install": False,
+                            # missing "vendor"
+                        },
+                        # missing rootfs or root_fs_uuid
+                    }
+                }]
+            }
+        }
+
+        res = osbuild.meta.validate(stage_check, index)
+        self.assertEqual(res.valid, False)
+        self.assertEqual(len(res), 2)
+        lst = res[".pipeline.stages[0].options"]
+        self.assertEqual(len(lst), 1)  #  missing rootfs
+        lst = res[".pipeline.stages[0].options.uefi"]
+        self.assertEqual(len(lst), 1)  #  missing "osname"
+
+        assembler_check = {
+            "pipeline": {
+                "assembler": {
+                    "name": "org.osbuild.tar",
+                    "options": {
+                        "compression": "foobar"
+                    }
+                }
+            }
+        }
+
+        res = osbuild.meta.validate(assembler_check, index)
+        self.assertEqual(res.valid, False)
+        self.assertEqual(len(res), 2)
+        lst = res[".pipeline.assembler.options"]
+        self.assertEqual(len(lst), 1)  #  missing "filename"
+        lst = res[".pipeline.assembler.options.compression"]
+        self.assertEqual(len(lst), 1)  #  wrong compression method
 
 
 if __name__ == "__main__":
