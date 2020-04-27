@@ -14,13 +14,17 @@ reasonable manner.
 
 import array
 import fcntl
+import hashlib
+import hmac
 import struct
+import uuid
 
 
 __all__ = [
     "fcntl_flock",
     "ioctl_get_immutable",
     "ioctl_toggle_immutable",
+    "proc_boot_id",
 ]
 
 
@@ -209,3 +213,37 @@ def fcntl_flock(fd: int, lock_type: int):
     arg_flock64 = type_flock64.pack(lock_type, 0, 0, 0, 0, 0, 0)
 
     fcntl.fcntl(fd, lock_cmd, arg_flock64)
+
+
+def proc_boot_id(appid):
+    """Acquire Application-specific Boot-ID
+
+    This queries the kernel for the boot-id of the running system. It then
+    calculates an application-specific boot-id by combining the kernel boot-id
+    with the provided application-id. This uses a cryptographic HMAC.
+    Therefore, the kernel boot-id will not be deducable from the output. This
+    allows the caller to use the resulting application specific boot-id for any
+    purpose they wish without exposing the confidential kernel boot-id.
+
+    This always returns an object of type `uuid.UUID` from the python standard
+    library. Furthermore, this always produces UUIDs of version 4 variant 1.
+
+    Parameters
+    ----------
+    appid
+        An arbitrary object (usually a string) that identifies the use-case of
+        the boot-id.
+    """
+
+    with open("/proc/sys/kernel/random/boot_id", "r") as f:
+        content = f.read().strip(" \t\r\n")
+
+    # Running the boot-id through HMAC-SHA256 guarantees that the original
+    # boot-id will not be exposed. Thus two IDs generated with this interface
+    # will not allow to deduce whether they share a common boot-id.
+    # From the result, we throw away everything but the lower 128bits and then
+    # turn it into a UUID version 4 variant 1.
+    h = bytearray(hmac.digest(content.encode(), appid.encode(), hashlib.sha256))
+    h[6] = (h[6] & 0x0f) | 0x40 # mark as version 4
+    h[8] = (h[6] & 0x3f) | 0x80 # mark as variant 1
+    return uuid.UUID(bytes=bytes(h[0:16]))
