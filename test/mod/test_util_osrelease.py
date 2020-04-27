@@ -1,9 +1,14 @@
+#
+# Tests for the `osbuild.util.osrelease` module.
+#
+
 import os
 import unittest
 
 from osbuild.util import osrelease
 
-class TestOSRelease(unittest.TestCase):
+
+class TestUtilOSRelease(unittest.TestCase):
     def test_non_existant(self):
         """Verify default os-release value, if no files are given."""
         self.assertEqual(osrelease.describe_os(), "linux")
