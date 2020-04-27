@@ -10,6 +10,7 @@ from . import buildroot
 from . import objectstore
 from . import remoteloop
 from . import sources
+from .util import osrelease
 
 
 RESET = "\033[0m"
@@ -367,38 +368,6 @@ class Pipeline:
         return results
 
 
-def describe_os(*paths):
-    """Read the Operating System Description from `os-release`
-
-    This creates a string describing the running operating-system name and
-    version. It reads the information from the path array provided as `paths`.
-    The first available file takes precedence. It must be formatted according
-    to the rules in `os-release(5)`.
-
-    The returned string uses the format `${ID}${VERSION_ID}` with all dots
-    stripped.
-    """
-    osrelease = {}
-
-    path = next((p for p in paths if os.path.exists(p)), None)
-    if path:
-        with open(path) as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                if line[0] == "#":
-                    continue
-                key, value = line.split("=", 1)
-                osrelease[key] = value.strip('"')
-
-    # Fetch `ID` and `VERSION_ID`. Defaults are defined in `os-release(5)`.
-    osrelease_id = osrelease.get("ID", "linux")
-    osrelease_version_id = osrelease.get("VERSION_ID", "")
-
-    return osrelease_id + osrelease_version_id.replace(".", "")
-
-
 def load_build(description, sources_options):
     pipeline = description.get("pipeline")
     if pipeline:
@@ -414,7 +383,7 @@ def load(description, sources_options):
     if build:
         build_pipeline, runner = load_build(build, sources_options)
     else:
-        build_pipeline, runner = None, "org.osbuild." + describe_os("/etc/os-release", "/usr/lib/os-release")
+        build_pipeline, runner = None, "org.osbuild." + osrelease.describe_os("/etc/os-release", "/usr/lib/os-release")
 
     pipeline = Pipeline(runner, build_pipeline)
 
