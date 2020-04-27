@@ -2,13 +2,25 @@
 # Tests for the `osbuild.util.linux` module.
 #
 
-
 import os
 import subprocess
 import tempfile
 import unittest
 
-import osbuild.util.linux as linux
+from osbuild.util import linux
+
+
+def can_set_immutable():
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+        try:
+            os.makedirs(f"{tmp}/f")
+            # fist they give it ...
+            subprocess.run(["chattr", "+i", f"{tmp}/f"], check=True)
+            # ... then they take it away
+            subprocess.run(["chattr", "-i", f"{tmp}/f"], check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
+        return True
 
 
 class TestUtilLinux(unittest.TestCase):
@@ -27,7 +39,7 @@ class TestUtilLinux(unittest.TestCase):
         with open(f"{self.vartmpdir.name}/immutable", "x") as f:
             assert not linux.ioctl_get_immutable(f.fileno())
 
-    @unittest.skipUnless(os.geteuid() == 0, "root-only")
+    @unittest.skipUnless(can_set_immutable(), "root-only")
     def test_ioctl_toggle_immutable(self):
         #
         # Test the `ioctl_toggle_immutable()` helper and make sure it works
@@ -66,7 +78,3 @@ class TestUtilLinux(unittest.TestCase):
 
             # Verify we can unlink the file again, once the flag is cleared.
             os.unlink(f"{self.vartmpdir.name}/immutable")
-
-
-if __name__ == "__main__":
-    unittest.main()
