@@ -165,3 +165,21 @@ def test_fcntl_flock():
 
         # Cleanup
         os.close(fd2)
+
+
+def test_proc_boot_id():
+    #
+    # Test the `proc_boot_id()` function which reads the current boot-id
+    # from the kernel. Make sure it is a valid UUID and also consistent on
+    # repeated queries.
+    #
+
+    bootid = linux.proc_boot_id("test")
+    assert len(bootid.hex) == 32
+    assert bootid.version == 4
+
+    bootid2 = linux.proc_boot_id("test")
+    assert bootid.int == bootid2.int
+
+    bootid3 = linux.proc_boot_id("foobar")
+    assert bootid.int != bootid3.int
