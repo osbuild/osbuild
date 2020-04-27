@@ -77,11 +77,6 @@ jobs:
           cd osbuild
           python3 -m unittest -v test.test_objectstore
 
-      - name: Run test_osrelease
-        run: |
-          cd osbuild
-          python3 -m unittest -v test.test_osrelease
-
   rpm_build:
     name: "📦 RPM"
     runs-on: ubuntu-latest
