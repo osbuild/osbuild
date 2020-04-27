@@ -2,11 +2,11 @@
 # Tests for the 'osbuild.util.jsoncomm' module.
 #
 
-
 import asyncio
 import os
 import tempfile
 import unittest
+
 from osbuild.util import jsoncomm
 
 
@@ -153,7 +153,3 @@ class TestUtilJsonComm(unittest.TestCase):
 
         msg = self.client.recv()
         assert msg[0] == {}
-
-
-if __name__ == "__main__":
-    unittest.main()
