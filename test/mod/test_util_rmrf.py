@@ -2,7 +2,6 @@
 # Tests for the `osbuild.util.rmrf` module.
 #
 
-
 import os
 import pathlib
 import shutil
@@ -10,7 +9,7 @@ import subprocess
 import tempfile
 import unittest
 
-import osbuild.util.rmrf as rmrf
+from osbuild.util import rmrf
 
 
 def can_set_immutable():
@@ -46,7 +45,3 @@ class TestUtilLinux(unittest.TestCase):
                 shutil.rmtree(f"{vartmpdir}/dir")
 
             rmrf.rmtree(f"{vartmpdir}/dir")
-
-
-if __name__ == "__main__":
-    unittest.main()
