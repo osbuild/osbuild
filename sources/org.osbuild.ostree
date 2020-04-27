@@ -27,6 +27,11 @@ def main(options, checksums, cache, output):
     repo_cache = os.path.join(cache, "repo")
     ostree("init", mode="archive", repo=repo_cache)
 
+    # Make sure the cache repository uses locks to protect the metadata during
+    # shared access. This is the default since `2018.5`, but lets document this
+    # explicitly here.
+    ostree("config", "set", "repo.locking", "true", repo=repo_cache)
+
     repo_out = os.path.join(output, "repo")
     ostree("init", mode="archive", repo=repo_out)
 
