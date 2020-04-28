@@ -58,11 +58,12 @@ class Stage:
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def description(self):
-        description = {}
-        description["name"] = self.name
+    def description(self, *, with_id=False):
+        description = {"name": self.name}
         if self.options:
             description["options"] = self.options
+        if with_id:
+            description["id"] = self.id
         return description
 
     def run(self,
@@ -121,11 +122,12 @@ class Assembler:
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def description(self):
-        description = {}
-        description["name"] = self.name
+    def description(self, *, with_id=False):
+        description = {"name": self.name}
         if self.options:
             description["options"] = self.options
+        if with_id:
+            description["id"] = self.id
         return description
 
     def run(self, tree, runner, build_tree, output_dir=None, interactive=False, libdir=None, var="/var/tmp"):
@@ -190,17 +192,28 @@ class Pipeline:
         pipeline.build = build_pipeline
         pipeline.runner = runner
 
-    def description(self):
+    def description(self, *, with_id=False):
         description = {}
         if self.build:
             description["build"] = {
-                "pipeline": self.build.description(),
+                "pipeline": self.build.description(with_id=with_id),
                 "runner": self.runner
             }
         if self.stages:
-            description["stages"] = [s.description() for s in self.stages]
+            stages = [s.description(with_id=with_id) for s in self.stages]
+            description["stages"] = stages
         if self.assembler:
-            description["assembler"] = self.assembler.description()
+            assembler = self.assembler.description(with_id=with_id)
+            description["assembler"] = assembler
+
+        if with_id:
+            tree_id = self.tree_id
+            if tree_id:
+                description["tree_id"] = tree_id
+            output_id = self.output_id
+            if output_id:
+                description["output_id"] = tree_id
+
         return description
 
     def build_stages(self, object_store, interactive, libdir, secrets):
