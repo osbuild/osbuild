@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euxo pipefail
 
+# Read variables about the OS.
+source /etc/os-release
+
 # Restart systemd to work around some Fedora issues in cloud images.
 systemctl restart systemd-journald
 
@@ -30,13 +33,23 @@ export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
 # Get the current SHA of osbuild.
 OSBUILD_VERSION=$(git rev-parse HEAD)
 
-# Run the deployment.
+# Deploy the software.
 git clone https://github.com/osbuild/ansible-osbuild.git ansible-osbuild
 ansible-playbook \
   -i hosts.ini \
   -e osbuild_repo=${WORKSPACE} \
   -e osbuild_version=$(git rev-parse HEAD) \
   ansible-osbuild/playbook.yml
+
+# Run the tests only on Fedora 31 for now.
+if [[ $NAME == "Fedora" ]] && [[ $VERSION_ID == "31" ]]; then
+  ansible-playbook \
+    -e workspace=${WORKSPACE} \
+    -e journald_cursor="${JOURNALD_CURSOR}" \
+    -e test_type=${TEST_TYPE:-image} \
+    -i hosts.ini \
+    /opt/osbuild-composer/jenkins/test.yml
+fi
 
 # Collect the systemd journal anyway if we made it all the way to the end.
 journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
