@@ -36,6 +36,7 @@ def mark_checkpoints(pipeline, checkpoints):
     mark_pipeline(pipeline)
     return points
 
+
 def parse_manifest(path):
     if path == "-":
         manifest = json.load(sys.stdin)
@@ -44,6 +45,7 @@ def parse_manifest(path):
             manifest = json.load(f)
 
     return manifest
+
 
 def parse_arguments(sys_argv):
     parser = argparse.ArgumentParser(description="Build operating system images")
@@ -69,6 +71,7 @@ def parse_arguments(sys_argv):
                         help="directory where result objects are stored")
 
     return parser.parse_args(sys_argv[1:])
+
 
 def osbuild_cli(*, sys_argv=[]):
     args = parse_arguments(sys_argv)
