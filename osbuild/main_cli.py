@@ -90,10 +90,13 @@ def parse_arguments(sys_argv):
                         help="output results in JSON format")
     parser.add_argument("--output-directory", metavar="DIRECTORY", type=os.path.abspath,
                         help="directory where result objects are stored")
+    parser.add_argument("--inspect", action="store_true",
+                        help="return the manifest in JSON format including all the ids")
 
     return parser.parse_args(sys_argv[1:])
 
 
+# pylint: disable=too-many-branches
 def osbuild_cli(*, sys_argv=[]):
     args = parse_arguments(sys_argv)
     manifest = parse_manifest(args.manifest_path)
@@ -102,11 +105,11 @@ def osbuild_cli(*, sys_argv=[]):
     index = osbuild.meta.Index(args.libdir)
     res = osbuild.meta.validate(manifest, index)
     if not res:
-        if not args.json:
-            show_validation(res, args.manifest_path)
-        else:
+        if args.json or args.inspect:
             json.dump(res.as_dict(), sys.stdout)
             sys.stdout.write("\n")
+        else:
+            show_validation(res, args.manifest_path)
         return 2
 
     pipeline = manifest.get("pipeline", {})
@@ -135,6 +138,14 @@ def osbuild_cli(*, sys_argv=[]):
                 print(f"Checkpoint {BOLD}{checkpoint}{RESET} not found!")
             print(f"{RESET}{BOLD}{RED}Failed{RESET}")
             return 1
+
+    if args.inspect:
+        result = {"pipeline": pipeline.description(with_id=True)}
+        if sources_options:
+            result["sources"] = sources_options
+        json.dump(result, sys.stdout)
+        sys.stdout.write("\n")
+        return 0
 
     try:
         r = pipeline.run(
