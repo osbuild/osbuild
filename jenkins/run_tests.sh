@@ -38,5 +38,10 @@ ansible-playbook \
   -e osbuild_version=$(git rev-parse HEAD) \
   ansible-osbuild/playbook.yml
 
+# Test the assembler tests in Jenkins
+pushd /opt/osbuild
+  time python3 -m unittest -v test.test_assemblers
+popd
+
 # Collect the systemd journal anyway if we made it all the way to the end.
 journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
