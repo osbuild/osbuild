@@ -80,6 +80,28 @@ jobs:
           cd osbuild
           python3 -m unittest -v test.test_objectstore
 
+  sample_validation:
+    name: "sample validation"
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/library/python:3.7
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          path: osbuild
+
+      - name: Install Dependencies
+        run: |
+          pip install jsonschema
+
+      - name: Validate the samples
+        run: |
+          cd osbuild
+          for f in samples/*; do
+            python3 -m osbuild --libdir . --inspect "$f" > /dev/null
+          done
+
   rpm_build:
     name: "📦 RPM"
     runs-on: ubuntu-latest
