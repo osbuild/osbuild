@@ -87,7 +87,12 @@ class TestDescriptions(unittest.TestCase):
         for stage in stages:
             klass, name = stage
             try:
-                osbuild.meta.StageInfo.load(os.curdir, klass, name)
+                info = osbuild.meta.StageInfo.load(os.curdir, klass, name)
+                schema = osbuild.meta.Schema(info.schema, name)
+                res = schema.check()
+                if not res:
+                    err = "\n  ".join(str(e) for e in res)
+                    self.fail(str(res) + "\n  " + err)
             except json.decoder.JSONDecodeError as e:
                 msg = f"{klass} '{name}' has invalid STAGE_OPTS\n\t" + str(e)
                 self.fail(msg)
