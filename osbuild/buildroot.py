@@ -84,13 +84,6 @@ class BuildRoot(contextlib.AbstractContextManager):
         # pylint suggests to epxlicitly pass `check` to subprocess.run()
         check = kwargs.pop("check", False)
 
-        # we need read-write access to loopback devices
-        loopback_allow = "rw"
-        if platform.machine() == "s390x":
-            # on s390x, the bootloader installation program (zipl)
-            # wants to be able create devices nodes, so allow that
-            loopback_allow += "m"
-
         # make osbuild API-calls accessible to the container
         nspawn_ro_binds.append(f"{self.api}:/run/osbuild/api")
 
@@ -122,7 +115,6 @@ class BuildRoot(contextlib.AbstractContextManager):
             "--keep-unit",
             "--as-pid2",
             "--link-journal=no",
-            f"--property=DeviceAllow=block-loop {loopback_allow}",
             f"--directory={self.root}",
             *[f"--bind-ro={b}" for b in nspawn_ro_binds],
             *[f"--bind={b}" for b in (binds or [])],
