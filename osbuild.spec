@@ -103,6 +103,20 @@ exit 0
 # We have some integration tests, but those require running a VM, so that would
 # be an overkill for RPM check script.
 
+%pretrans -p <lua>
+-- usr/lib/osbuild/.../osbuild used to be a directory but is now a symlink;
+-- rpm cannot replace a directory with a link[1]; as a work-around remove it
+-- in case that the target is a directory
+-- [1] https://docs.fedoraproject.org/en-US/packaging-guidelines/Directory_Replacement/
+folder = {"assemblers", "stages"}
+for i, target in ipairs(folder) do
+  path = "/usr/lib/osbuild/" .. target .. "/osbuild"
+  st = posix.stat(path)
+  if st and st.type == "directory" then
+    os.remove(path)
+  end
+end
+
 %files
 %license LICENSE
 %{_bindir}/osbuild
