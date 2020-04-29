@@ -214,8 +214,31 @@ class Schema:
     def __init__(self, schema: str, name: Optional[str] = None):
         self.data = schema
         self.name = name
-        if schema:
-            self._validator = jsonschema.Draft7Validator(schema)
+        self._validator = None
+
+    def check(self) -> ValidationResult:
+        """Validate the `schema` data itself"""
+        res = ValidationResult(self.name)
+
+        # validator is assigned if and only if the schema
+        # itself passes validation (see below). Therefore
+        # this can be taken as an indicator for a valid
+        # schema and thus we can and should short-circuit
+        if self._validator:
+            return res
+
+        if not self.data:
+            res.fail("missing schema information")
+            return res
+
+        try:
+            Validator = jsonschema.Draft7Validator
+            Validator.check_schema(self.data)
+            self._validator = Validator(self.data)
+        except jsonschema.exceptions.SchemaError as err:
+            res += ValidationError.from_exception(err)
+
+        return res
 
     def validate(self, target) -> ValidationResult:
         """Validate the `target` against this schema
@@ -224,10 +247,9 @@ class Schema:
         will return a `ValidationResult` in failed state,
         with 'missing schema information' as the reason.
         """
-        res = ValidationResult(self.name)
-
-        if not self.data:
-            return res.fail("missing schema information")
+        res = self.check()
+        if not res:
+            return res
 
         for error in self._validator.iter_errors(target):
             res += ValidationError.from_exception(error)
