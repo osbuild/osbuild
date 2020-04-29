@@ -97,6 +97,23 @@ class TestDescriptions(unittest.TestCase):
                 msg = f"{klass} '{name}' has invalid STAGE_OPTS\n\t" + str(e)
                 self.fail(msg)
 
+    def test_schema(self):
+        schema = osbuild.meta.Schema(None)
+        self.assertFalse(schema)
+
+        schema = osbuild.meta.Schema({"type": "bool"})  # should be 'boolean'
+        self.assertFalse(schema.check().valid)
+        self.assertFalse(schema)
+
+        schema = osbuild.meta.Schema({"type": "array", "minItems": 3})
+        self.assertTrue(schema.check().valid)
+        self.assertTrue(schema)
+
+        res = schema.validate([1, 2])
+        self.assertFalse(res)
+        res = schema.validate([1, 2, 3])
+        self.assertTrue(res)
+
     def test_validation(self):
         index = osbuild.meta.Index(os.curdir)
 
