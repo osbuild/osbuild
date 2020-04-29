@@ -257,7 +257,7 @@ class Schema:
         return res
 
     def __bool__(self):
-        return self.data
+        return self.check().valid
 
 
 class StageInfo:
