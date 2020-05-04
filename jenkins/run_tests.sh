@@ -5,14 +5,14 @@ set -euxo pipefail
 source /etc/os-release
 
 # Restart systemd to work around some Fedora issues in cloud images.
-systemctl restart systemd-journald
+sudo systemctl restart systemd-journald
 
 # Get the current journald cursor.
-export JOURNALD_CURSOR=$(journalctl --quiet -n 1 --show-cursor | tail -n 1 | grep -oP 's\=.*$')
+export JOURNALD_CURSOR=$(sudo journalctl --quiet -n 1 --show-cursor | tail -n 1 | grep -oP 's\=.*$')
 
 # Add a function to preserve the system journal if something goes wrong.
 preserve_journal() {
-  journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
+  sudo journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
   exit 1
 }
 trap "preserve_journal" ERR
@@ -52,4 +52,4 @@ if [[ $NAME == "Fedora" ]] && [[ $VERSION_ID == "31" ]]; then
 fi
 
 # Collect the systemd journal anyway if we made it all the way to the end.
-journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
+sudo journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
