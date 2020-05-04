@@ -39,6 +39,7 @@ ansible-playbook \
   -i hosts.ini \
   -e osbuild_repo=${WORKSPACE} \
   -e osbuild_version=$(git rev-parse HEAD) \
+  -e cleanup_composer_directories=yes \
   ansible-osbuild/playbook.yml
 
 # Run the tests only on Fedora 31 for now.
