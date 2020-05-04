@@ -75,19 +75,15 @@ make man
 
 mkdir -p %{buildroot}%{pkgdir}/stages
 install -p -m 0755 $(find stages/* -not -path "*/osbuild") %{buildroot}%{pkgdir}/stages/
-ln -s ../osbuild %{buildroot}%{pkgdir}/stages/osbuild
 
 mkdir -p %{buildroot}%{pkgdir}/assemblers
 install -p -m 0755 $(find assemblers/* -not -path "*/osbuild") %{buildroot}%{pkgdir}/assemblers/
-ln -s ../osbuild %{buildroot}%{pkgdir}/assemblers/osbuild
 
 mkdir -p %{buildroot}%{pkgdir}/runners
 install -p -m 0755 $(find runners/* -not -path "*/osbuild") %{buildroot}%{pkgdir}/runners
-ln -s ../osbuild %{buildroot}%{pkgdir}/runners/osbuild
 
 mkdir -p %{buildroot}%{pkgdir}/sources
 install -p -m 0755 $(find sources/* -not -path "*/osbuild") %{buildroot}%{pkgdir}/sources
-ln -s ../osbuild %{buildroot}%{pkgdir}/sources/osbuild
 
 # mount point for bind mounting the osbuild library
 mkdir -p %{buildroot}%{pkgdir}/osbuild
