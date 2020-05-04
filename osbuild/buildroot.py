@@ -116,6 +116,7 @@ class BuildRoot(contextlib.AbstractContextManager):
             "--as-pid2",
             "--link-journal=no",
             f"--directory={self.root}",
+            f"--setenv=PYTHONPATH=/run/osbuild/lib",
             *[f"--bind-ro={b}" for b in nspawn_ro_binds],
             *[f"--bind={b}" for b in (binds or [])],
             *[f"--bind-ro={b}" for b in (readonly_binds or [])],
