@@ -119,6 +119,8 @@ class BuildRoot(contextlib.AbstractContextManager):
             *[f"--bind-ro={b}" for b in nspawn_ro_binds],
             *[f"--bind={b}" for b in (binds or [])],
             *[f"--bind-ro={b}" for b in (readonly_binds or [])],
+            "--",
+            "python3",
             f"/run/osbuild/lib/runners/{self.runner}"
             ] + argv, check=check, **kwargs)
 
