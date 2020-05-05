@@ -4,6 +4,10 @@ set -euxo pipefail
 # Read variables about the OS.
 source /etc/os-release
 
+# Create temporary directories for Ansible.
+sudo mkdir -vp /opt/ansible_{local,remote}
+sudo chmod -R 777 /opt/ansible_{local,remote}
+
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
 
@@ -49,7 +53,7 @@ if [[ $NAME == "Fedora" ]] && [[ $VERSION_ID == "31" ]]; then
     -e journald_cursor="${JOURNALD_CURSOR}" \
     -e test_type=${TEST_TYPE:-image} \
     -i hosts.ini \
-    /opt/osbuild-composer/jenkins/test.yml
+    ansible-osbuild/repos/osbuild-composer/jenkins/test.yml
 fi
 
 # Collect the systemd journal anyway if we made it all the way to the end.
