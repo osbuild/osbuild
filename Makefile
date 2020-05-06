@@ -17,7 +17,6 @@
 BUILDDIR ?= .
 SRCDIR ?= .
 
-PYLINT ?= pylint
 PYTHON3 ?= python3
 RST2MAN ?= rst2man
 
@@ -80,9 +79,9 @@ help:
 	@echo "    man:                Generate all man-pages"
 	@echo
 	@echo "    test-all:           Run all tests"
-	@echo "    test-pylint:        Run pylint on all sources"
 	@echo "    test-module:        Run all module unit-tests"
 	@echo "    test-runtime:       Run all osbuild pipeline tests"
+	@echo "    test-src:           Run all osbuild source tests"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -113,7 +112,8 @@ man: $(MANPAGES_TROFF)
 #
 # We use the python `unittest` module for all tests. All the test-sources are
 # located in the `./test/` top-level directory, with `./test/mod/` for module
-# unittests and `./test/run/` for osbuild pipeline runtime tests.
+# unittests, `./test/run/` for osbuild pipeline runtime tests, and `./test/src/`
+# for linters and other tests on the source code.
 #
 
 .PHONY: test-units
@@ -133,13 +133,16 @@ test-runtime:
 			--top-level-directory=$(SRCDIR) \
 			-v
 
-.PHONY: test-pylint
-test-pylint:
-	@find . -type f -name "*.py" | xargs $(PYLINT)
-	@$(PYLINT) runners/* assemblers/* stages/* sources/*
+.PHONY: test-src
+test-src:
+	@$(PYTHON3) -m unittest \
+		discover \
+			--start=$(SRCDIR)/test/src \
+			--top-level-directory=$(SRCDIR) \
+			-v
 
 .PHONY: test
-test-all: test-pylint
+test-all:
 	@$(PYTHON3) -m unittest \
 		discover \
 			--start=$(SRCDIR)/test \

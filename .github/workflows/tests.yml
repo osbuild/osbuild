@@ -4,7 +4,7 @@ on: [pull_request, push]
 
 jobs:
   pylint:
-    name: "pylint"
+    name: "Source Tests"
     runs-on: ubuntu-latest
     container: docker.io/library/python:3.7
     steps:
@@ -12,8 +12,8 @@ jobs:
         run: pip install pylint==2.4.1 jsonschema
       - name: Clone repository
         uses: actions/checkout@v2
-      - name: Run pylint
-        run: make test-pylint
+      - name: Run Source Tests
+        run: make test-src
 
   module:
     name: "Module Unittests"
