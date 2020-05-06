@@ -9,18 +9,7 @@ import unittest
 
 from osbuild.util import linux
 
-
-def can_set_immutable():
-    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
-        try:
-            os.makedirs(f"{tmp}/f")
-            # fist they give it ...
-            subprocess.run(["chattr", "+i", f"{tmp}/f"], check=True)
-            # ... then they take it away
-            subprocess.run(["chattr", "-i", f"{tmp}/f"], check=True)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return False
-        return True
+from .. import test
 
 
 class TestUtilLinux(unittest.TestCase):
@@ -30,6 +19,7 @@ class TestUtilLinux(unittest.TestCase):
     def tearDown(self):
         self.vartmpdir.cleanup()
 
+    @unittest.skipUnless(test.TestBase.can_modify_immutable("/var/tmp"), "root-only")
     def test_ioctl_get_immutable(self):
         #
         # Test the `ioctl_get_immutable()` helper and make sure it works
@@ -39,7 +29,7 @@ class TestUtilLinux(unittest.TestCase):
         with open(f"{self.vartmpdir.name}/immutable", "x") as f:
             assert not linux.ioctl_get_immutable(f.fileno())
 
-    @unittest.skipUnless(can_set_immutable(), "root-only")
+    @unittest.skipUnless(test.TestBase.can_modify_immutable("/var/tmp"), "root-only")
     def test_ioctl_toggle_immutable(self):
         #
         # Test the `ioctl_toggle_immutable()` helper and make sure it works
