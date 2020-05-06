@@ -73,8 +73,6 @@ def parse_arguments(sys_argv):
 
     parser.add_argument("manifest_path", metavar="MANIFEST",
                         help="json file containing the manifest that should be built, or a '-' to read from stdin")
-    parser.add_argument("--build-env", metavar="FILE", type=os.path.abspath,
-                        help="json file containing a description of the build environment")
     parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
                         default=".osbuild",
                         help="directory where intermediary os trees are stored")
@@ -120,11 +118,6 @@ def osbuild_cli(*, sys_argv=[]):
             sources_options = json.load(f)
 
     pipeline = osbuild.load(pipeline, sources_options)
-
-    if args.build_env:
-        with open(args.build_env) as f:
-            build_pipeline, runner = osbuild.load_build(json.load(f), sources_options)
-        pipeline.prepend_build_env(build_pipeline, runner)
 
     secrets = {}
     if args.secrets:

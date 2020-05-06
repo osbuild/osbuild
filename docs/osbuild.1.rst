@@ -37,8 +37,6 @@ The following command-line options are supported. If an option is passed, which
 is not listed here, **osbuild** will deny startup and exit with an error.
 
 -h, --help                      print usage information and exit immediately
---build-env=PATH                json file containing a description of the build
-                                environment
 --store=DIR                     directory where intermediary file system trees
                                 are stored
 --sources=PATH                  json file containing a dictionary of source

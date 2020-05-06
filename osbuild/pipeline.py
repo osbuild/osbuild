@@ -185,13 +185,6 @@ class Pipeline:
         build = self.build.tree_id if self.build else None
         self.assembler = Assembler(name, build, self.tree_id, options or {})
 
-    def prepend_build_env(self, build_pipeline, runner):
-        pipeline = self
-        while pipeline.build:
-            pipeline = pipeline.build
-        pipeline.build = build_pipeline
-        pipeline.runner = runner
-
     def description(self, *, with_id=False):
         description = {}
         if self.build:
