@@ -11,22 +11,11 @@ import unittest
 
 from osbuild.util import rmrf
 
-
-def can_set_immutable():
-    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
-        try:
-            os.makedirs(f"{tmp}/f")
-            # fist they give it ...
-            subprocess.run(["chattr", "+i", f"{tmp}/f"], check=True)
-            # ... then they take it away
-            subprocess.run(["chattr", "-i", f"{tmp}/f"], check=True)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return False
-        return True
+from .. import test
 
 
 class TestUtilLinux(unittest.TestCase):
-    @unittest.skipUnless(can_set_immutable(), "Need root permissions")
+    @unittest.skipUnless(test.TestBase.can_modify_immutable("/var/tmp"), "root-only")
     def test_rmtree_immutable(self):
         #
         # Test the `rmrf.rmtree()` helper and verify it can correctly unlink

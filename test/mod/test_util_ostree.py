@@ -8,6 +8,8 @@ import subprocess
 
 from osbuild.util import ostree
 
+from .. import test
+
 
 def run(*args, check=True, encoding="utf-8", **kwargs):
     res = subprocess.run(*args,
@@ -17,19 +19,10 @@ def run(*args, check=True, encoding="utf-8", **kwargs):
     return res
 
 
-def have_rpm_ostree():
-    try:
-        r = run(["rpm-ostree", "--version"],
-                capture_output=True, check=False)
-    except FileNotFoundError:
-        return False
-    return r.returncode == 0 and "compose" in r.stdout
-
-
 class TestObjectStore(unittest.TestCase):
 
     # pylint: disable=no-self-use
-    @unittest.skipIf(not have_rpm_ostree(), "rpm-ostree missing")
+    @unittest.skipUnless(test.TestBase.have_rpm_ostree(), "rpm-ostree missing")
     def test_treefile_empty(self):
         # check we produce a valid treefile from an empty object
         tf = ostree.Treefile()
@@ -64,7 +57,7 @@ class TestObjectStore(unittest.TestCase):
                 self.assertEqual(js["ref"], test_ref)
                 self.assertEqual(tf["ref"], test_ref)
 
-    @unittest.skipIf(not have_rpm_ostree(), "rpm-ostree missing")
+    @unittest.skipUnless(test.TestBase.have_rpm_ostree(), "rpm-ostree missing")
     def test_treefile_full(self):
         params = {
             "ref": "osbuild/ostree/devel",
