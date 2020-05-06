@@ -102,7 +102,7 @@ def osbuild_cli(*, sys_argv=[]):
     manifest = parse_manifest(args.manifest_path)
 
     # first thing after parsing is validation of the input
-    index = osbuild.meta.Index(args.libdir)
+    index = osbuild.meta.Index(args.libdir or "/usr/lib/osbuild")
     res = osbuild.meta.validate(manifest, index)
     if not res:
         if args.json or args.inspect:
