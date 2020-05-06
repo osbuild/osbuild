@@ -1,5 +1,32 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 14:
+
+        * Schema validation: The osbuild python library gained support for
+          retrieving the metadata of modules and schema validation. This is
+          being used on each invocation of osbuild in order to validate the
+          manifest. Should the validation fail the build is aborted and
+          validation errors are returned, either in human readable form or
+          in JSON, if `--json` was specified.
+
+        * A `--inspect` command line option was added for osbuild. Instead
+          of attempting to build the pipeline, the manifest will be printed
+          to stdout in JSON form, including all the calulcated identifiers
+          of stages, the assembler and the `tree_id` and `output_id` of the
+          pipeline (and build pipelines). Schema validation will be done and
+          errors will be reported.
+
+        * Internally, the buildroot class now uses `PYTHONPATH` to point to
+          the `osbuild` module instead of the symlinks or bind-mounts in the
+          individual modules.
+
+        * Fixes to the CI and many cleanups to the schemata, sample and test
+          pipelines as a result of the schema validation work.
+
+        Contributions from: Christian Kellner, David Rheinsberg, Ondřej Budai
+
+        - Berlin, 2020-05-06
+
 ## CHANGES WITH 13:
 
         * Stage `org.osbuild.yum` has been dropped. It has been deprecated for
