@@ -74,16 +74,16 @@ make man
 %py3_install
 
 mkdir -p %{buildroot}%{pkgdir}/stages
-install -p -m 0755 $(find stages/* -not -path "*/osbuild") %{buildroot}%{pkgdir}/stages/
+install -p -m 0755 $(find stages -type f) %{buildroot}%{pkgdir}/stages/
 
 mkdir -p %{buildroot}%{pkgdir}/assemblers
-install -p -m 0755 $(find assemblers/* -not -path "*/osbuild") %{buildroot}%{pkgdir}/assemblers/
+install -p -m 0755 $(find assemblers -type f) %{buildroot}%{pkgdir}/assemblers/
 
 mkdir -p %{buildroot}%{pkgdir}/runners
-install -p -m 0755 $(find runners/* -not -path "*/osbuild") %{buildroot}%{pkgdir}/runners
+install -p -m 0755 $(find runners -type f -or -type l) %{buildroot}%{pkgdir}/runners
 
 mkdir -p %{buildroot}%{pkgdir}/sources
-install -p -m 0755 $(find sources/* -not -path "*/osbuild") %{buildroot}%{pkgdir}/sources
+install -p -m 0755 $(find sources -type f) %{buildroot}%{pkgdir}/sources
 
 # mount point for bind mounting the osbuild library
 mkdir -p %{buildroot}%{pkgdir}/osbuild
