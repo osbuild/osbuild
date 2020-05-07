@@ -14,7 +14,7 @@ class TestAssemblers(osbuildtest.TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        subprocess.run(["modprobe", "nbd"], check=True)
+        subprocess.run(["modprobe", "nbd"], check=False)
 
     def run_assembler(self, name, options):
         with open("test/pipelines/f30-base.json") as f:
