@@ -7,26 +7,13 @@ import tempfile
 import weakref
 from typing import Optional
 
-import osbuild.util.rmrf as rmrf
+from osbuild.util import ctx, rmrf
 from . import treesum
 
 
 __all__ = [
     "ObjectStore",
 ]
-
-
-@contextlib.contextmanager
-def suppress_oserror(*errnos):
-    """A context manager that suppresses any OSError with an errno in `errnos`.
-
-    Like contextlib.suppress, but can differentiate between OSErrors.
-    """
-    try:
-        yield
-    except OSError as e:
-        if e.errno not in errnos:
-            raise e
 
 
 def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
@@ -145,7 +132,7 @@ class Object:
         self._check_readers()
         self._check_writer()
         self.init()
-        with suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
+        with ctx.suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
             os.rename(self._tree, destination)
         self.reset()
 
