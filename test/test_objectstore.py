@@ -274,12 +274,6 @@ class TestObjectStore(unittest.TestCase):
             with host.write() as _:
                 pass
 
-        # check we actually cannot write to the path
-        with host.read() as path:
-            p = Path(f"{path}/osbuild-test-file")
-            with self.assertRaises(OSError):
-                p.touch()
-
 
 if __name__ == "__main__":
     unittest.main()

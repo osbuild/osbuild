@@ -16,30 +16,6 @@ __all__ = [
 ]
 
 
-def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
-    options = []
-    if bind:
-        options += ["bind"]
-    if ro:
-        options += ["ro"]
-    if mode:
-        options += [mode]
-
-    args = []
-    if private:
-        args += ["--make-private"]
-    if options:
-        args += ["-o", ",".join(options)]
-    subprocess.run(["mount"] + args + [source, target], check=True)
-
-
-def umount(target, lazy=True):
-    args = []
-    if lazy:
-        args += ["--lazy"]
-    subprocess.run(["umount"] + args + [target], check=True)
-
-
 # pylint: disable=too-many-instance-attributes
 class Object:
     def __init__(self, store: "ObjectStore"):
@@ -99,27 +75,23 @@ class Object:
         self._check_readers()
         self._check_writer()
         self.init()
-        with self.tempdir("writer") as target:
-            mount(self._path, target, ro=False)
-            try:
-                self._writer = True
-                yield target
-            finally:
-                umount(target)
-                self._writer = False
+
+        try:
+            self._writer = True
+            yield self._path
+        finally:
+            self._writer = False
 
     @contextlib.contextmanager
     def read(self) -> str:
         self._check_writable()
         self._check_writer()
-        with self.tempdir("reader") as target:
-            mount(self._path, target)
-            try:
-                self._readers += 1
-                yield target
-            finally:
-                umount(target)
-                self._readers -= 1
+
+        try:
+            self._readers += 1
+            yield self._path
+        finally:
+            self._readers -= 1
 
     def store_tree(self, destination: str):
         """Store the tree at destination and reset itself
@@ -210,14 +182,10 @@ class HostTree:
     def write():
         raise ValueError("Cannot write to host")
 
+    # pylint: disable=no-self-use
     @contextlib.contextmanager
     def read(self):
-        with self.store.tempdir() as tmp:
-            mount("/", tmp)
-            try:
-                yield tmp
-            finally:
-                umount(tmp)
+        yield "/"
 
     def cleanup(self):
         pass  # noop for the host
