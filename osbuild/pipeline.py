@@ -101,7 +101,6 @@ class Stage:
                     [f"/run/osbuild/lib/stages/{self.name}"],
                     binds=[f"{tree}:/run/osbuild/tree"],
                     readonly_binds=ro_binds,
-                    stdin=subprocess.DEVNULL,
                 )
                 return BuildResult(self, r.returncode, api.output)
 
@@ -154,7 +153,6 @@ class Assembler:
                     [f"/run/osbuild/lib/assemblers/{self.name}"],
                     binds=binds,
                     readonly_binds=ro_binds,
-                    stdin=subprocess.DEVNULL,
                 )
                 return BuildResult(self, r.returncode, api.output)
 
