@@ -108,6 +108,7 @@ exit 0
 %license LICENSE
 %{_bindir}/osbuild
 %{_mandir}/man1/%{name}.1*
+%{_mandir}/man1/%{name}-api.1*
 %{_mandir}/man5/%{name}-manifest.5*
 %{_datadir}/osbuild/schemas
 %{pkgdir}
