@@ -367,9 +367,15 @@ class Pipeline:
                 results.update(r)  # This will also update 'success'
 
             if results["success"] and output_directory is not None:
-                output_source = object_store.resolve_ref(results["output_id"])
-                if output_source is not None:
-                    subprocess.run(["cp", "--reflink=auto", "-a", f"{output_source}/.", output_directory], check=True)
+                copy_from = None
+
+                if "output_id" in results:
+                    copy_from = object_store.resolve_ref(results["output_id"])
+                elif "tree_id" in results:
+                    copy_from = object_store.resolve_ref(results["tree_id"])
+
+                if copy_from is not None:
+                    subprocess.run(["cp", "--reflink=auto", "-a", f"{copy_from}/.", output_directory], check=True)
 
         return results
 
