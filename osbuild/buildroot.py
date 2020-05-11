@@ -73,16 +73,13 @@ class BuildRoot(contextlib.AbstractContextManager):
             shutil.rmtree(self.var)
             self.var = None
 
-    def run(self, argv, binds=None, readonly_binds=None, **kwargs):
+    def run(self, argv, binds=None, readonly_binds=None):
         """Runs a command in the buildroot.
 
         Its arguments mean the same as those for subprocess.run().
         """
 
         nspawn_ro_binds = []
-
-        # pylint suggests to epxlicitly pass `check` to subprocess.run()
-        check = kwargs.pop("check", False)
 
         # make osbuild API-calls accessible to the container
         nspawn_ro_binds.append(f"{self.api}:/run/osbuild/api")
@@ -121,7 +118,7 @@ class BuildRoot(contextlib.AbstractContextManager):
             *[f"--bind={b}" for b in (binds or [])],
             *[f"--bind-ro={b}" for b in (readonly_binds or [])],
             f"/run/osbuild/lib/runners/{self.runner}"
-            ] + argv, check=check, **kwargs)
+            ] + argv, check=False, stdin=subprocess.DEVNULL)
 
     def __del__(self):
         self.unmount()
