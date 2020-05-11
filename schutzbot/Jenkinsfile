@@ -1,0 +1,29 @@
+pipeline {
+    agent none
+
+    options {
+        timestamps()
+        ansiColor('xterm')
+    }
+
+    stages {
+        stage("Functional Testing") {
+            parallel {
+                stage('Fedora 31 image') {
+                    agent { label "fedora31" }
+                    environment { TEST_TYPE = "image" }
+                    steps {
+                        sh "schutzbot/run_tests.sh"
+                    }
+                }
+                stage('Fedora 32 image') {
+                    agent { label "fedora32" }
+                    environment { TEST_TYPE = "image" }
+                    steps {
+                        sh "schutzbot/run_tests.sh"
+                    }
+                }
+            }
+        }
+    }
+}
