@@ -20,8 +20,8 @@ of the pipeline description, and more.
 
 The requirements for this project are:
 
+ * `bubblewrap >= 0.4.0`
  * `python >= 3.7`
- * `systemd-nspawn >= 244`
 
 Additionally, the built-in stages require:
 
