@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import concurrent.futures
+import glob
 import itertools
 import json
 import os
@@ -30,12 +31,14 @@ def fetch(url, checksum, directory):
     if os.path.isfile(f"{directory}/{checksum}"):
         return
 
+    secrets = url.get("secrets")
+    url_path = url.get("url")
     # Download to a temporary directory until we have verified the checksum. Use a
     # subdirectory, so we avoid copying accross block devices.
     with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=directory) as tmpdir:
         # some mirrors are broken sometimes. retry manually, because curl doesn't on 404
         for i in range(10):
-            curl = subprocess.run([
+            curl_command = [
                 "curl",
                 "--silent",
                 "--max-time", f"{30 + i*15}",
@@ -44,8 +47,18 @@ def fetch(url, checksum, directory):
                 "--fail",
                 "--location",
                 "--output", checksum,
-                url
-            ], encoding="utf-8", cwd=tmpdir, check=False)
+            ]
+            if secrets:
+                if secrets.get('ssl_ca_cert'):
+                    curl_command.extend(["--cacert", secrets.get('ssl_ca_cert')])
+                if secrets.get('ssl_client_cert'):
+                    curl_command.extend(["--cert", secrets.get('ssl_client_cert')])
+                if secrets.get('ssl_client_key'):
+                    curl_command.extend(["--key", secrets.get('ssl_client_key')])
+            # url must follow options
+            curl_command.append(url_path)
+
+            curl = subprocess.run(curl_command, encoding="utf-8", cwd=tmpdir, check=False)
             if curl.returncode == 0:
                 break
         else:
@@ -63,6 +76,26 @@ def fetch(url, checksum, directory):
             pass
 
 
+def get_rhsm_secrets():
+    rhsm_secrets = {
+        'ssl_ca_cert': "/etc/rhsm/ca/redhat-uep.pem",
+        'ssl_client_key': "",
+        'ssl_client_cert': ""
+    }
+
+    keys = glob.glob("/etc/pki/entitlement/*-key.pem")
+    for key in keys:
+        # The key and cert have the same prefix
+        cert = key.rstrip("-key.pem") + ".pem"
+        # The key is only valid if it has a matching cert
+        if os.path.exists(cert):
+            rhsm_secrets['ssl_client_key'] = key
+            rhsm_secrets['ssl_client_cert'] = cert
+            return rhsm_secrets
+
+    raise RuntimeError(f"no matching rhsm key and cert")
+
+
 def main(options, checksums, cache, output):
     urls = options.get("urls", {})
 
@@ -71,8 +104,23 @@ def main(options, checksums, cache, output):
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=15) as executor:
         requested_urls = []
+        rhsm_secrets = None
+
         for checksum in checksums:
             try:
+                if isinstance(urls[checksum], dict):
+                    # check if url needs rhsm secrets
+                    if urls[checksum].get("secrets").get("name") == "org.osbuild.rhsm":
+                        # rhsm secrets only need to be retrieved once and can then be reused
+                        if rhsm_secrets is None:
+                            try:
+                                rhsm_secrets = get_rhsm_secrets()
+                            except RuntimeError as e:
+                                json.dump({"error": e.args[0]}, sys.stdout)
+                                return 1
+                        urls[checksum]["secrets"] = rhsm_secrets
+                else:
+                    urls[checksum] = {"url": urls[checksum]}
                 requested_urls.append(urls[checksum])
             except KeyError:
                 json.dump({"error": f"unknown file: {checksum}"}, sys.stdout)
