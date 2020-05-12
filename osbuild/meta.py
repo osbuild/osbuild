@@ -232,7 +232,7 @@ class Schema:
             return res
 
         try:
-            Validator = jsonschema.Draft7Validator
+            Validator = jsonschema.Draft4Validator
             Validator.check_schema(self.data)
             self._validator = Validator(self.data)
         except jsonschema.exceptions.SchemaError as err:
