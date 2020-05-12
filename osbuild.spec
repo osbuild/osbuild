@@ -23,6 +23,7 @@ BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 
 Requires:       bash
+Requires:       bubblewrap
 Requires:       coreutils
 Requires:       curl
 Requires:       dnf
@@ -31,7 +32,6 @@ Requires:       glibc
 Requires:       policycoreutils
 Requires:       qemu-img
 Requires:       systemd
-Requires:       systemd-container
 Requires:       tar
 Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}

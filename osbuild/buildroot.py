@@ -1,10 +1,15 @@
+"""Build Roots
+
+This implements the file-system environment available to osbuild modules. It
+uses `bubblewrap` to contain osbuild modules in a private environment with as
+little access to the outside as possible.
+"""
 
 import contextlib
 import importlib
 import importlib.util
 import os
-import platform
-import shutil
+import stat
 import subprocess
 import tempfile
 
@@ -14,115 +19,167 @@ __all__ = [
 ]
 
 
+# pylint: disable=too-many-instance-attributes
 class BuildRoot(contextlib.AbstractContextManager):
+    """Build Root
+
+    This class implements a context-manager that maintains a root file-system
+    for contained environments. When entering the context, the required
+    file-system setup is performed, and it is automatically torn down when
+    exiting.
+
+    The `run()` method allows running applications in this environment. Some
+    state is persistent across runs, including data in `/var`. It is deleted
+    only when exiting the context manager.
+    """
+
     def __init__(self, root, runner, path="/run/osbuild", libdir=None, var="/var/tmp"):
-        self.root = tempfile.mkdtemp(prefix="osbuild-buildroot-", dir=path)
-        self.api = tempfile.mkdtemp(prefix="osbuild-api-", dir=path)
-        self.var = tempfile.mkdtemp(prefix="osbuild-var-", dir=var)
-        self.mounts = []
-        self.libdir = libdir
-        self.runner = runner
+        self._exitstack = None
+        self._rootdir = root
+        self._rundir = path
+        self._vardir = var
+        self._libdir = libdir
+        self._runner = runner
+        self.api = None
+        self.dev = None
+        self.var = None
 
-        self.mount_root(root)
-        self.mount_var()
+    @staticmethod
+    def _mknod(path, name, mode, major, minor):
+        os.mknod(os.path.join(path, name),
+                 mode=(stat.S_IMODE(mode) | stat.S_IFCHR),
+                 device=os.makedev(major, minor))
 
-    def mount_root(self, root):
-        for p in ["boot", "usr", "bin", "sbin", "lib", "lib64"]:
-            source = os.path.join(root, p)
-            target = os.path.join(self.root, p)
-            if not os.path.isdir(source) or os.path.islink(source):
-                continue # only bind-mount real dirs
-            os.mkdir(target)
-            try:
-                subprocess.run(["mount", "-o", "bind,ro", source, target], check=True)
-            except subprocess.CalledProcessError:
-                self.unmount()
-                raise
-            self.mounts.append(target)
+    def __enter__(self):
+        self._exitstack = contextlib.ExitStack()
+        with self._exitstack:
+            # We create almost everything directly in the container as temporary
+            # directories and mounts. However, for some things we need external
+            # setup. For these, we create temporary directories which are then
+            # bind-mounted into the container.
+            #
+            # For now, this includes:
+            #
+            #   * We create an API directory where the caller can place sockets
+            #     before we bind-mount it into the container on
+            #     `/run/osbuild/api`.
+            #
+            #   * We create a tmpfs instance *without* `nodev` which we then use
+            #     as `/dev` in the container. This is required for the container
+            #     to create device nodes for loop-devices.
+            #
+            #   * We create a temporary directory for variable data and then use
+            #     it as '/var' in the container. This allows the container to
+            #     create throw-away data that it does not want to put into a
+            #     tmpfs.
 
-        if platform.machine() == "s390x" or platform.machine() == "ppc64le":
-            # work around a combination of systemd not creating the link from
-            # /lib64 -> /usr/lib64 (see systemd issue #14311) and the dynamic
-            # linker is being set to (/lib/ld64.so.1 -> /lib64/ld64.so.1)
-            # on s390x or /lib64/ld64.so.2 on ppc64le
-            # Therefore we manually create the link before calling nspawn
-            os.symlink("/usr/lib64", f"{self.root}/lib64")
+            api = tempfile.TemporaryDirectory(prefix="osbuild-api-", dir=self._rundir)
+            self.api = self._exitstack.enter_context(api)
 
-    def mount_var(self):
-        target = os.path.join(self.root, "var")
-        os.mkdir(target)
-        try:
-            subprocess.run(["mount", "-o", "bind", self.var, target], check=True)
-        except subprocess.CalledProcessError:
-            self.unmount()
-            raise
-        self.mounts.append(target)
+            dev = tempfile.TemporaryDirectory(prefix="osbuild-dev-", dir=self._rundir)
+            self.dev = self._exitstack.enter_context(dev)
 
-    def unmount(self):
-        for path in self.mounts:
-            subprocess.run(["umount", "--lazy", path], check=True)
-            os.rmdir(path)
-        self.mounts = []
-        if self.root:
-            shutil.rmtree(self.root)
-            self.root = None
-        if self.api:
-            shutil.rmtree(self.api)
-            self.api = None
-        if self.var:
-            shutil.rmtree(self.var)
-            self.var = None
+            var = tempfile.TemporaryDirectory(prefix="osbuild-var-", dir=self._vardir)
+            self.var = self._exitstack.enter_context(var)
+
+            subprocess.run(["mount", "-t", "tmpfs", "-o", "nosuid", "none", self.dev], check=True)
+            self._exitstack.callback(lambda: subprocess.run(["umount", "--lazy", self.dev], check=True))
+
+            self._mknod(self.dev, "full", 0o666, 1, 7)
+            self._mknod(self.dev, "null", 0o666, 1, 3)
+            self._mknod(self.dev, "random", 0o666, 1, 8)
+            self._mknod(self.dev, "urandom", 0o666, 1, 9)
+            self._mknod(self.dev, "tty", 0o666, 5, 0)
+            self._mknod(self.dev, "zero", 0o666, 1, 5)
+
+            self._exitstack = self._exitstack.pop_all()
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self._exitstack.close()
+        self._exitstack = None
 
     def run(self, argv, binds=None, readonly_binds=None):
         """Runs a command in the buildroot.
 
-        Its arguments mean the same as those for subprocess.run().
+        Takes the command and arguments, as well as bind mounts to mirror
+        in the build-root for this command.
+
+        This must be called from within an active context of this buildroot
+        context-manager.
         """
 
-        nspawn_ro_binds = []
+        if not self._exitstack:
+            raise RuntimeError("No active context")
 
-        # make osbuild API-calls accessible to the container
-        nspawn_ro_binds.append(f"{self.api}:/run/osbuild/api")
+        mounts = []
 
-        # We want to execute our stages and other scripts in the container. So
-        # far, we do not install osbuild as a package in the container, but
-        # provide it from the outside. Therefore, we need to provide `libdir`
-        # via bind-mount. Furthermore, a system-installed `libdir` has the
-        # python packages separate in `site-packages`, so we need to bind-mount
-        # them as well.
-        # In the future, we want to work towards mandating an osbuild package to
-        # be installed in the container, so the build is self-contained and does
-        # not take scripts from the host. However, this requires osbuild
-        # packaged for those containers. Furthermore, we want to keep supporting
-        # the current import-model for testing and development.
-        if self.libdir is not None:
-            # caller-specified `libdir` must be self-contained
-            nspawn_ro_binds.append(f"{self.libdir}:/run/osbuild/lib")
+        # Import directories from the caller-provided root.
+        for p in ["boot", "usr"]:
+            source = os.path.join(self._rootdir, p)
+            if os.path.isdir(source) and not os.path.islink(source):
+                mounts += ["--ro-bind", source, os.path.join("/", p)]
+
+        # Create /usr symlinks.
+        mounts += ["--symlink", "usr/lib", "/lib"]
+        mounts += ["--symlink", "usr/lib64", "/lib64"]
+        mounts += ["--symlink", "usr/bin", "/bin"]
+        mounts += ["--symlink", "usr/sbin", "/sbin"]
+
+        # Setup /dev.
+        mounts += ["--dev-bind", self.dev, "/dev"]
+        mounts += ["--tmpfs", "/dev/shm"]
+
+        # Setup temporary/data file-systems.
+        mounts += ["--dir", "/etc"]
+        mounts += ["--tmpfs", "/run"]
+        mounts += ["--tmpfs", "/tmp"]
+        mounts += ["--bind", self.var, "/var"]
+
+        # Setup API file-systems.
+        mounts += ["--proc", "/proc"]
+        mounts += ["--bind", "/sys", "/sys"]
+
+        # Make osbuild API-calls accessible to the container.
+        mounts += ["--ro-bind", f"{self.api}", "/run/osbuild/api"]
+
+        # We execute our own modules by bind-mounting them from the host into
+        # the build-root. We have minimal requirements on the build-root, so
+        # these modules can be executed. Everything else we provide ourselves.
+        # In case you pass `--libdir`, it must be self-contained and we provide
+        # nothing else. If you use the system libdir, we additionally look for
+        # the installed `osbuild` module and bind-mount it as well.
+        if self._libdir is not None:
+            mounts += ["--ro-bind", f"{self._libdir}", "/run/osbuild/lib"]
         else:
-            # system `libdir` requires importing the python module
-            nspawn_ro_binds.append("/usr/lib/osbuild:/run/osbuild/lib")
+            mounts += ["--ro-bind", "/usr/lib/osbuild", "/run/osbuild/lib"]
             modorigin = importlib.util.find_spec("osbuild").origin
             modpath = os.path.dirname(modorigin)
-            nspawn_ro_binds.append(f"{modpath}:/run/osbuild/lib/osbuild")
+            mounts += ["--ro-bind", f"{modpath}", "/run/osbuild/lib/osbuild"]
 
-        return subprocess.run([
-            "systemd-nspawn",
-            "--quiet",
-            "--register=no",
-            "--keep-unit",
-            "--as-pid2",
-            "--link-journal=no",
-            "--capability=CAP_MAC_ADMIN",  # for SELinux labeling
-            f"--directory={self.root}",
-            "--setenv=PYTHONPATH=/run/osbuild/lib",
-            *[f"--bind-ro={b}" for b in nspawn_ro_binds],
-            *[f"--bind={b}" for b in (binds or [])],
-            *[f"--bind-ro={b}" for b in (readonly_binds or [])],
-            f"/run/osbuild/lib/runners/{self.runner}"
-            ] + argv, check=False, stdin=subprocess.DEVNULL)
+        # Make caller-provided mounts available as well.
+        for b in binds or []:
+            mounts += ["--bind"] + b.split(":")
+        for b in readonly_binds or []:
+            mounts += ["--ro-bind"] + b.split(":")
 
-    def __del__(self):
-        self.unmount()
+        cmd = [
+            "bwrap",
+            "--cap-add", "CAP_MAC_ADMIN",
+            "--chdir", "/",
+            "--die-with-parent",
+            "--new-session",
+            "--setenv", "PATH", "/usr/sbin:/usr/bin",
+            "--setenv", "PYTHONPATH", "/run/osbuild/lib",
+            "--unshare-ipc",
+            "--unshare-pid",
+        ]
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        self.unmount()
+        cmd += mounts
+        cmd += ["--", f"/run/osbuild/lib/runners/{self._runner}"]
+        cmd += argv
+
+        return subprocess.run(cmd,
+                              check=False,
+                              stdin=subprocess.DEVNULL)
