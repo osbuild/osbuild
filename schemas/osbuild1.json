@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "$id": "https://osbuild.org/schemas/osbuild1.json",
 
   "title": "OSBuild Manifest",
@@ -10,7 +10,6 @@
     "pipeline": { "$ref": "#/definitions/pipeline" },
     "sources": { "$ref": "#/definitions/sources" }
   },
-  "required": [],
 
   "definitions": {
     "assembler": {
@@ -49,8 +48,7 @@
         "assembler": { "$ref": "#/definitions/assembler" },
         "build": { "$ref": "#/definitions/build" },
         "stages": { "$ref": "#/definitions/stages" }
-      },
-      "required": []
+      }
     },
 
     "source": {
