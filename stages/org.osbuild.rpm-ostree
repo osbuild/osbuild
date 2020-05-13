@@ -46,6 +46,11 @@ SCHEMA = """
     "description": "Array of group names to still keep in /etc/group",
     "type": "array",
     "items": { "type": "string" }
+  },
+  "initramfs-args": {
+    "description": "Array of arguments passed to dracut",
+    "type": "array",
+    "items": { "type": "string" }
   }
 }
 """
@@ -53,6 +58,7 @@ SCHEMA = """
 
 def main(tree, options):
     etc_group_members = options.get("etc_group_members", [])
+    initramfs = options.get("initramfs-args", [])
 
     # rpm-ostree will either ensure that machine-id is empty
     # when machineid-compat is 'true' is or will remove it
@@ -65,6 +71,7 @@ def main(tree, options):
     treefile["boot-location"] = "new"
     treefile["machineid-compat"] = machineid_compat
     treefile["etc-group-members"] = etc_group_members
+    treefile["initramfs-args"] = initramfs
 
     with treefile.as_tmp_file() as path:
         subprocess.run(["rpm-ostree", "compose", "postprocess",
