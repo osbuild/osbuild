@@ -17,24 +17,10 @@ jobs:
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v2
-    - name: "Install Dependencies"
-      run: |
-        sudo apt-get update
-        sudo apt-get -y install \
-          nbd-client \
-          qemu-utils \
-          rpm \
-          systemd-container \
-          tar \
-          yum
-    - name: "Set up Python"
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: Install Python Packages
-      run: pip install jsonschema
     - name: "Run Pipeline Tests"
-      run: sudo env "PATH=$PATH" make test-runtime
+      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
+      with:
+        run: make test-runtime
 
   noop_pipeline_tests:
     name: "Noop-Pipeline Tests"
