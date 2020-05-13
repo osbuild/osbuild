@@ -41,6 +41,7 @@ Both UEFI and Legacy can be specified at the same time.
 import json
 import os
 import shutil
+import string
 import sys
 
 SCHEMA = """
@@ -139,6 +140,22 @@ SCHEMA = """
 """
 
 
+# The main grub2 configuration file template. Used for UEFI and legacy
+# boot. The parameters are currently:
+#   - $search: to specify the search criteria of how to locate grub's
+#     "root device", i.e. the device where the "OS images" are stored.
+GRUB_CFG_TEMPLATE = """
+set timeout=0
+load_env
+search --no-floppy --set=root $search
+set boot=$${root}
+function load_video {
+  insmod all_video
+}
+blscfg
+"""
+
+
 def fs_spec_decode(spec):
     for key in ["uuid", "label"]:
         val = spec.get(key)
@@ -205,18 +222,16 @@ class GrubConfig:
             "LABEL": "--label"
         }
 
-        # options for the configuration strings
-        search = type2opt[fs_type] + " " + fs_id
+        # configuration options for the main template
+        config = {
+            "search": type2opt[fs_type] + " " + fs_id
+        }
 
-        with open(path) as cfg:
-            cfg.write("set timeout=0\n"
-                      "load_env\n"
-                      f"search --no-floppy --set=root {search}\n"
-                      "set boot=${root}\n"
-                      "function load_video {\n"
-                      "  insmod all_video\n"
-                      "}\n"
-                      "blscfg\n")
+        tplt = string.Template(GRUB_CFG_TEMPLATE)
+        data = tplt.safe_substitute(config)
+
+        with open(path, "w") as cfg:
+            cfg.write(data)
 
     def write_redirect(self, tree, path):
         """Write a grub config pointing to the other cfg"""
