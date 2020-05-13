@@ -7,5 +7,4 @@ env:
 jobs:
   include:
     - name: f30-boot
-      before_install: sudo apt-get install -y systemd-container yum qemu-kvm
-      script: sudo env "PATH=$PATH" python3 -m unittest -v test.test_boot
+      script: echo Nothing to do.
