@@ -125,6 +125,11 @@ SCHEMA = """
         "type": "string"
       }
     }
+  },
+  "populate_var": {
+    "description": "Populate $stateroot/var via systemd-tmpfiles",
+    "type": "boolean",
+    "default": false
   }
 }
 """
@@ -182,6 +187,37 @@ def make_fs_identifier(desc):
     raise ValueError("unknown rootfs type")
 
 
+def populate_var(sysroot):
+    # Like anaconda[1] and Fedora CoreOS dracut[2]
+    # [1] pyanaconda/payload/rpmostreepayload.py
+    # [2] ignition-ostree-populate-var.sh
+
+    for target in ('lib', 'log'):
+        os.makedirs(f"{sysroot}/var/{target}", exist_ok=True)
+
+    for target in ('home', 'roothome', 'lib/rpm', 'opt', 'srv',
+                   'usrlocal', 'mnt', 'media', 'spool', 'spool/mail'):
+
+        if os.path.exists(f"{sysroot}/var/{target}"):
+            continue
+
+        res = subprocess.run(["systemd-tmpfiles", "--create", "--boot",
+                              "--root=" + sysroot,
+                              "--prefix=/var/" + target],
+                             encoding="utf-8",
+                             stdout=sys.stderr,
+                             check=False)
+
+        # According to systemd-tmpfiles(8), the return values are:
+        #  0 → success
+        # 65 → so some lines had to be ignored, but no other errors
+        # 73 → configuration ok, but could not be created
+        #  1 → other error
+        if res.returncode not in [0, 65]:
+            raise RuntimeError(f"Failed to provision /var/{target}")
+
+
+# pylint: disable=too-many-statements
 def main(tree, sources, options):
 
     commit = options["commit"]
@@ -191,6 +227,7 @@ def main(tree, sources, options):
     kopts = options.get("kernel_opts", [])
     ref = options.get("ref", commit)
     remotes = options.get("remotes", [])
+    pop_var = options.get("populate_var", False)
 
     ostree("admin", "init-fs", "--modern", tree,
            sysroot=tree)
@@ -208,6 +245,8 @@ def main(tree, sources, options):
                repo=f"{tree}/ostree/repo")
 
     ostree("admin", "os-init", osname, sysroot=tree)
+    # this created a state root at `osname`
+    stateroot = f"{tree}/ostree/deploy/{osname}"
 
     kargs = []
     for opt in kopts:
@@ -228,6 +267,15 @@ def main(tree, sources, options):
                sysroot=tree,
                os=osname)
 
+    # now that we have a deployment, we do have a sysroot
+    sysroot = f"{stateroot}/deploy/{commit}.0"
+
+    if pop_var:
+        populate_var(stateroot)
+
+    ostree("config", "set", "sysroot.readonly", "true",
+           repo=f"{tree}/ostree/repo")
+
     # deploying a tree creates new files that need to be properly
     # labeled for SELinux. In theory, ostree will take care of
     # this by loading the SELinux config from the deployment and
@@ -235,7 +283,6 @@ def main(tree, sources, options):
     # is_selinux_enabled(2), which in our container is FALSE
     # Therefore we have to do the same dance as ostree does, at
     # least for now, and manually re-label the affected paths
-    sysroot = f"{tree}/ostree/deploy/{osname}/deploy/{commit}.0"
     se_policy = None
 
     for p in ["etc/selinux", "usr/etc/selinux"]:
@@ -256,6 +303,8 @@ def main(tree, sources, options):
         # various config files will be created as a result
         # of the 3-way configuration merge, see ostree(3)
         selinux.setfiles(spec, sysroot, "/etc")
+        # if we populated /var, we need to fix its labels
+        selinux.setfiles(spec, stateroot, "/var")
 
     for remote in remotes:
         name = remote["name"]
