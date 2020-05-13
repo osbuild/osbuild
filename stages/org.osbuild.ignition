@@ -1,0 +1,57 @@
+#!/usr/bin/python3
+"""
+Setup ignition so it will be triggered on first boot.
+
+Create the file '/boot/ignition.firstboot' that will be used by grub,
+if the necessary ignition support is enabled, to create a variable to
+be used in the kernel command line ('ignition_firstboot'). Via this
+variable, if included in the actual kernel command line, the run of
+ignition during early boot can be controlled: if grub detects the
+aforementioned file to be present it will set 'ignition_firstboot'
+to "ignition.firstboot" which is the trigger for ignition to run.
+The "ignition-firstboot-complete.service" will remove said file and
+thus preventing ignition to be run on the next boot.
+
+The `network` option can be used to overwrite the default network
+configuration, in case that ignition is run.
+"""
+
+
+import json
+import sys
+
+
+STAGE_OPTS = """
+"properties": {
+  "network": {
+    "type": "array",
+    "description": "Overwrite default network connection",
+    "items": {
+      "type": "string"
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    network = options.get("network", [])
+
+    # grub, when detecting the '/boot/ignition.firstboot' file
+    # will set the "ignition_firstboot" option so that ignition
+    # gets triggered during that boot. Additionally, the file
+    # itself will be sourced this the 'ignition_network_kcmdline'
+    # that is also in the "ignition_firstboot" variable can be
+    # overwritten with the contents of `network`
+    with open(f"{tree}/boot/ignition.firstboot", "w") as f:
+        if network:
+            netstr = " ".join(network)
+            f.write(f"ignition_network_kcmdline={netstr}")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args.get("options", {}))
+    sys.exit(r)
