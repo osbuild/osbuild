@@ -35,6 +35,14 @@ also write the `grub.cfg` to `boot/efi/EFI/<vendor>/grub.cfg`. EFI binaries
 and accompanying data can be installed from the built root via `uefi.install`.
 
 Both UEFI and Legacy can be specified at the same time.
+
+Support for ignition (https://github.com/coreos/ignition) can be turned
+on via the `ignition` option. If enabled, a 'ignition_firstboot' variable
+will be created, which is meant to be included in the kernel command line.
+The grub.cfg will then contain the necessary code to detect and source
+the '/boot/ignition.firstboot' file and configure said 'ignition_firstboot'
+variable appropriately. See the 'org.osbuild.ignition' stage for more
+information on that file.
 """
 
 
@@ -135,6 +143,11 @@ SCHEMA = """
     "description": "Whether to write /etc/defaults/grub",
     "type": "boolean",
     "default": true
+  },
+  "ignition": {
+    "description": "Include ignition support in the grub.cfg",
+    "type": "boolean",
+    "default": false
   }
 }
 """
@@ -144,6 +157,8 @@ SCHEMA = """
 # boot. The parameters are currently:
 #   - $search: to specify the search criteria of how to locate grub's
 #     "root device", i.e. the device where the "OS images" are stored.
+#   - $ignition: configuration for ignition, if support for ignition
+#     is enabled
 GRUB_CFG_TEMPLATE = """
 set timeout=0
 load_env
@@ -152,6 +167,7 @@ set boot=$${root}
 function load_video {
   insmod all_video
 }
+${ignition}
 blscfg
 """
 
@@ -167,6 +183,34 @@ GRUB_REDIRECT_TEMPLATE = """
 search --no-floppy --set prefix --file ${root}grub2/grub.cfg
 set prefix=($$prefix)${root}grub2
 configfile $$prefix/grub.cfg
+"""
+
+
+# Template for ignition support in the grub.cfg
+#
+# it was taken verbatim from Fedora CoreOS assembler's grub.cfg
+# See https://github.com/coreos/coreos-assembler/
+#
+# The parameters are:
+#   - $root: specifies the path to the grub2 directory relative
+#     to the file-system where the directory is located on
+
+IGNITION_TEMPLATE = """
+# Ignition support
+set ignition_firstboot=""
+if [ -f "${root}ignition.firstboot" ]; then
+    # Default networking parameters to be used with ignition.
+    set ignition_network_kcmdline=''
+
+    # Source in the `ignition.firstboot` file which could override the
+    # above $ignition_network_kcmdline with static networking config.
+    # This override feature is primarily used by coreos-installer to
+    # persist static networking config provided during install to the
+    # first boot of the machine.
+    source "${root}ignition.firstboot"
+
+    set ignition_firstboot="ignition.firstboot $${ignition_network_kcmdline}"
+fi
 """
 
 
@@ -212,6 +256,7 @@ class GrubConfig:
         self.rootfs = rootfs
         self.bootfs = bootfs
         self.path = "boot/grub2/grub.cfg"
+        self.ignition = False
 
     @property
     def grubfs(self):
@@ -226,6 +271,10 @@ class GrubConfig:
     def separate_boot(self):
         return self.bootfs is not None
 
+    @property
+    def grub_home(self):
+        return "/" if self.separate_boot else "/boot/"
+
     def write(self, tree):
         """Write the grub config to `tree` at `self.path`"""
         path = os.path.join(tree, self.path)
@@ -236,9 +285,16 @@ class GrubConfig:
             "LABEL": "--label"
         }
 
+        ignition = ""
+        if self.ignition:
+            tplt = string.Template(IGNITION_TEMPLATE)
+            subs = {"root": self.grub_home}
+            ignition = tplt.safe_substitute(subs)
+
         # configuration options for the main template
         config = {
-            "search": type2opt[fs_type] + " " + fs_id
+            "search": type2opt[fs_type] + " " + fs_id,
+            "ignition": ignition
         }
 
         tplt = string.Template(GRUB_CFG_TEMPLATE)
@@ -253,7 +309,7 @@ class GrubConfig:
 
         # configuration options for the template
         config = {
-            "root": "/" if self.separate_boot else "/boot/"
+            "root": self.grub_home
         }
 
         tplt = string.Template(GRUB_REDIRECT_TEMPLATE)
@@ -270,6 +326,7 @@ def main(tree, options):
     legacy = options.get("legacy", None)
     uefi = options.get("uefi", None)
     write_defaults = options.get("write_defaults", True)
+    ignition = options.get("ignition", False)
 
     # backwards compatibility
     if not root_fs:
@@ -291,6 +348,7 @@ def main(tree, options):
 
     # Prepare the actual grub configuration file, will be written further down
     config = GrubConfig(root_fs, boot_fs)
+    config.ignition = ignition
 
     # Create the configuration file that determines how grub.cfg is generated.
     if write_defaults:
