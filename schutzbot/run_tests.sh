@@ -39,18 +39,15 @@ echo -e "[test_instances]\nlocalhost ansible_connection=local" > hosts.ini
 # Set Ansible's config file location.
 export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
 
-# Clone the latest version of ansible-osbuild.
-
-# Get the current SHA of osbuild.
+# Get the SHA of osbuild which Jenkins checked out for us.
 OSBUILD_VERSION=$(git rev-parse HEAD)
 
-# Deploy the software.
+# Deploy osbuild-composer and osbuild using RPMs built in a mock chroot.
 git clone https://github.com/osbuild/ansible-osbuild.git ansible-osbuild
 ansible-playbook \
   -i hosts.ini \
-  -e osbuild_repo=${WORKSPACE} \
   -e osbuild_version=$(git rev-parse HEAD) \
-  -e cleanup_composer_directories=yes \
+  -e install_source=mock \
   ansible-osbuild/playbook.yml
 
 # Run the tests only on Fedora 31 for now.
@@ -60,7 +57,7 @@ if [[ $NAME == "Fedora" ]] && [[ $VERSION_ID == "31" ]]; then
     -e journald_cursor="${JOURNALD_CURSOR}" \
     -e test_type=${TEST_TYPE:-image} \
     -i hosts.ini \
-    ansible-osbuild/repos/osbuild-composer/jenkins/test.yml
+    /tmp/git_repos/osbuild-composer/jenkins/test.yml
 fi
 
 # Collect the systemd journal anyway if we made it all the way to the end.
