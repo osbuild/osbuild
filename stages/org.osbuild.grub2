@@ -316,10 +316,11 @@ def main(tree, options):
             config.write_redirect(tree, grubcfg)
         else:
             config.path = grubcfg
-            config.write(tree)
+
+    # Now actually write the main grub.cfg file
+    config.write(tree)
 
     if legacy:
-        config.write(tree)
         copy_modules(tree, legacy)
         copy_font(tree)
 
