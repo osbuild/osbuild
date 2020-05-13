@@ -61,7 +61,8 @@ class Treefile:
         "selinux": Param(bool),
         "boot-location": Param(str),
         "etc-group-members": Param(List[str]),
-        "machineid-compat": Param(bool)
+        "machineid-compat": Param(bool),
+        "initramfs-args": Param(List[str]),
     }
 
     def __init__(self):
