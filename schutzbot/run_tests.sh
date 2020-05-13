@@ -57,7 +57,7 @@ if [[ $NAME == "Fedora" ]] && [[ $VERSION_ID == "31" ]]; then
     -e journald_cursor="${JOURNALD_CURSOR}" \
     -e test_type=${TEST_TYPE:-image} \
     -i hosts.ini \
-    /tmp/git_repos/osbuild-composer/jenkins/test.yml
+    /tmp/git_repos/osbuild-composer/schutzbot/test.yml
 fi
 
 # Collect the systemd journal anyway if we made it all the way to the end.
