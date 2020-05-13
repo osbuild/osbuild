@@ -156,6 +156,20 @@ blscfg
 """
 
 
+# The grub2 redirect configuration template. This is used in case of
+# hybrid (uefi + legacy) boot. In this case this configuration, which
+# is located in the EFI directory, will redirect to the main grub.cfg
+# (GRUB_CFG_TEMPLATE).
+# The parameters are:
+#   - $root: specifies the path to the grub2 directory relative to
+#     to the file-system where the directory is located on
+GRUB_REDIRECT_TEMPLATE = """
+search --no-floppy --set prefix --file ${root}grub2/grub.cfg
+set prefix=($$prefix)${root}grub2
+configfile $$prefix/grub.cfg
+"""
+
+
 def fs_spec_decode(spec):
     for key in ["uuid", "label"]:
         val = spec.get(key)
@@ -237,12 +251,16 @@ class GrubConfig:
         """Write a grub config pointing to the other cfg"""
         print("hybrid boot support enabled. Writing alias grub config")
 
-        # options for the configuration string
-        root = "/" if self.separate_boot else "/boot/"
+        # configuration options for the template
+        config = {
+            "root": "/" if self.separate_boot else "/boot/"
+        }
+
+        tplt = string.Template(GRUB_REDIRECT_TEMPLATE)
+        data = tplt.safe_substitute(config)
+
         with open(os.path.join(tree, path), "w") as cfg:
-            cfg.write(f"search --no-floppy --set prefix --file {root}grub2/grub.cfg\n"
-                      f"set prefix=($prefix){root}grub2\n"
-                      "configfile $prefix/grub.cfg\n")
+            cfg.write(data)
 
 
 def main(tree, options):
