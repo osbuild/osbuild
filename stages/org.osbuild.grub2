@@ -191,6 +191,10 @@ class GrubConfig:
         """
         return self.bootfs or self.rootfs
 
+    @property
+    def separate_boot(self):
+        return self.bootfs is not None
+
     def write(self, tree):
         """Write the grub config to `tree` at `self.path`"""
         path = os.path.join(tree, self.path)
@@ -214,15 +218,16 @@ class GrubConfig:
                       "}\n"
                       "blscfg\n")
 
+    def write_redirect(self, tree, path):
+        """Write a grub config pointing to the other cfg"""
+        print("hybrid boot support enabled. Writing alias grub config")
 
-def write_grub_cfg_redirect(tree, path, separate_boot):
-    """Write a grub config pointing to the other cfg"""
-    print("hybrid boot support enabled. Writing alias grub config")
-    root = "/" if separate_boot else "/boot/"
-    with open(os.path.join(tree, path), "w") as cfg:
-        cfg.write(f"search --no-floppy --set prefix --file {root}grub2/grub.cfg\n"
-                  f"set prefix=($prefix){root}grub2\n"
-                  "configfile $prefix/grub.cfg\n")
+        # options for the configuration string
+        root = "/" if self.separate_boot else "/boot/"
+        with open(os.path.join(tree, path), "w") as cfg:
+            cfg.write(f"search --no-floppy --set prefix --file {root}grub2/grub.cfg\n"
+                      f"set prefix=($prefix){root}grub2\n"
+                      "configfile $prefix/grub.cfg\n")
 
 
 def main(tree, options):
@@ -253,11 +258,6 @@ def main(tree, options):
 
     # Prepare the actual grub configuration file, will be written further down
     config = GrubConfig(root_fs, boot_fs)
-
-    # grub_fs points to the filesystem containing the grub files, which is
-    # either a separate partition (boot_fs) or the root file system (root_fs)
-    grub_fs = boot_fs or root_fs
-    separate_boot = boot_fs is not None
 
     # Create the configuration file that determines how grub.cfg is generated.
     if write_defaults:
@@ -313,7 +313,7 @@ def main(tree, options):
 
         grubcfg = f"boot/efi/EFI/{vendor}/grub.cfg"
         if hybrid:
-            write_grub_cfg_redirect(tree, grubcfg, separate_boot)
+            config.write_redirect(tree, grubcfg)
         else:
             config.path = grubcfg
             config.write(tree)
