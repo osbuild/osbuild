@@ -55,15 +55,13 @@ ansible-playbook \
   -e install_source=mock \
   ansible-osbuild/playbook.yml
 
-# Run the tests only on Fedora 31 for now.
-if [[ $NAME == "Fedora" ]] && [[ $VERSION_ID == "31" ]]; then
-  ansible-playbook \
-    -e workspace=${WORKSPACE} \
-    -e journald_cursor="${JOURNALD_CURSOR}" \
-    -e test_type=${TEST_TYPE:-image} \
-    -i hosts.ini \
-    /tmp/git_repos/osbuild-composer/schutzbot/test.yml
-fi
+# Run the image tests from osbuild-composer to stress-test osbuild.
+ansible-playbook \
+  -e workspace=${WORKSPACE} \
+  -e journald_cursor="${JOURNALD_CURSOR}" \
+  -e test_type=${TEST_TYPE:-image} \
+  -i hosts.ini \
+  /tmp/git_repos/osbuild-composer/schutzbot/test.yml
 
 # Collect the systemd journal anyway if we made it all the way to the end.
 sudo journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
