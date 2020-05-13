@@ -176,23 +176,43 @@ def copy_efi_data(tree, vendor):
                         symlinks=False)
 
 
-def write_grub_cfg(tree, path, grub_fs):
-    """Write the grub config to `tree` at `path`"""
-    fs_type, fs_id = fs_spec_decode(grub_fs)
-    type2opt = {
-        "UUID": "--fs-uuid",
-        "LABEL": "--label"
-    }
-    search = type2opt[fs_type] + " " + fs_id
-    with open(os.path.join(tree, path), "w") as cfg:
-        cfg.write("set timeout=0\n"
-                  "load_env\n"
-                  f"search --no-floppy --set=root {search}\n"
-                  "set boot=${root}\n"
-                  "function load_video {\n"
-                  "  insmod all_video\n"
-                  "}\n"
-                  "blscfg\n")
+class GrubConfig:
+    def __init__(self, rootfs, bootfs):
+        self.rootfs = rootfs
+        self.bootfs = bootfs
+        self.path = "boot/grub2/grub.cfg"
+
+    @property
+    def grubfs(self):
+        """The filesystem containing the grub files,
+
+        This is  either a separate partition (self.bootfs if set) or
+        the root file system (self.rootfs)
+        """
+        return self.bootfs or self.rootfs
+
+    def write(self, tree):
+        """Write the grub config to `tree` at `self.path`"""
+        path = os.path.join(tree, self.path)
+
+        fs_type, fs_id = fs_spec_decode(self.grubfs)
+        type2opt = {
+            "UUID": "--fs-uuid",
+            "LABEL": "--label"
+        }
+
+        # options for the configuration strings
+        search = type2opt[fs_type] + " " + fs_id
+
+        with open(path) as cfg:
+            cfg.write("set timeout=0\n"
+                      "load_env\n"
+                      f"search --no-floppy --set=root {search}\n"
+                      "set boot=${root}\n"
+                      "function load_video {\n"
+                      "  insmod all_video\n"
+                      "}\n"
+                      "blscfg\n")
 
 
 def write_grub_cfg_redirect(tree, path, separate_boot):
@@ -230,6 +250,9 @@ def main(tree, options):
     # will only contain a small config file redirecting to the one in
     # /boot/grub2 and will not have a grubenv itself.
     hybrid = uefi and legacy
+
+    # Prepare the actual grub configuration file, will be written further down
+    config = GrubConfig(root_fs, boot_fs)
 
     # grub_fs points to the filesystem containing the grub files, which is
     # either a separate partition (boot_fs) or the root file system (root_fs)
@@ -292,10 +315,11 @@ def main(tree, options):
         if hybrid:
             write_grub_cfg_redirect(tree, grubcfg, separate_boot)
         else:
-            write_grub_cfg(tree, grubcfg, grub_fs)
+            config.path = grubcfg
+            config.write(tree)
 
     if legacy:
-        write_grub_cfg(tree, "boot/grub2/grub.cfg", grub_fs)
+        config.write(tree)
         copy_modules(tree, legacy)
         copy_font(tree)
 
