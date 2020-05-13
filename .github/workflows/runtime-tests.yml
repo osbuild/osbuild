@@ -22,6 +22,17 @@ jobs:
       with:
         run: make test-runtime
 
+  boot_tests:
+    name: "Boot Tests"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Run Boot Tests"
+      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
+      with:
+        run: python3 -m unittest -v test.test_boot
+
   noop_pipeline_tests:
     name: "Noop-Pipeline Tests"
     runs-on: ubuntu-latest
