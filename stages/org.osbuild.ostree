@@ -32,7 +32,7 @@ from osbuild.util import selinux
 
 
 SCHEMA = """
-"required": ["commit", "osname", "rootfs"],
+"required": ["commit", "osname"],
 "properties": {
   "commit": {
     "description": "checksum of the OSTree commit",
@@ -219,10 +219,9 @@ def populate_var(sysroot):
 
 # pylint: disable=too-many-statements
 def main(tree, sources, options):
-
     commit = options["commit"]
     osname = options["osname"]
-    rootfs = options["rootfs"]
+    rootfs = options.get("rootfs")
     mounts = options.get("mounts", [])
     kopts = options.get("kernel_opts", [])
     ref = options.get("ref", commit)
@@ -249,6 +248,11 @@ def main(tree, sources, options):
     stateroot = f"{tree}/ostree/deploy/{osname}"
 
     kargs = []
+
+    if rootfs:
+        rootfs_id = make_fs_identifier(rootfs)
+        kargs += [f"--karg=root={rootfs_id}"]
+
     for opt in kopts:
         kargs += [f"--karg-append={opt}"]
 
@@ -260,9 +264,8 @@ def main(tree, sources, options):
             os.chmod(path, mount.get("mode", 0o755))
             mounter.mount(path, path)
 
-        rootfs_id = make_fs_identifier(rootfs)
+
         ostree("admin", "deploy", ref,
-               f"--karg=root={rootfs_id}",
                *kargs,
                sysroot=tree,
                os=osname)
