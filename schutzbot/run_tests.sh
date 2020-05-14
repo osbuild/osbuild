@@ -43,9 +43,14 @@ export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
 OSBUILD_VERSION=$(git rev-parse HEAD)
 
 # Deploy osbuild-composer and osbuild using RPMs built in a mock chroot.
+# NOTE(mhayden): Jenkins clones the repository and then merges the code from
+# the pull request into the repo. This creates a new SHA that exists only in
+# Jenkins. We use ${WORKSPACE} below to tell ansible-osbuild to use the clone
+# that Jenkins made for testing osbuild.
 git clone https://github.com/osbuild/ansible-osbuild.git ansible-osbuild
 ansible-playbook \
   -i hosts.ini \
+  -e osbuild_repo_url=${WORKSPACE} \
   -e osbuild_version=$(git rev-parse HEAD) \
   -e install_source=mock \
   ansible-osbuild/playbook.yml
