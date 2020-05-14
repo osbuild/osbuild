@@ -210,17 +210,17 @@ release:
 	@echo "--------------------------------------------------------------------------------"
 	@echo "## CHANGES WITH $(NEXT_VERSION):"
 	@echo
-	@echo "        * ..."
+	@echo "  * ..."
 	@echo
-	@echo "        * ..."
+	@echo "  * ..."
 	@echo
-	@echo -n "        Contributions from: "
+	@echo -n "Contributions from: "
 #       We omit the contributor list if `git log` fails. If you hit this,
 #       consider fetching missing tags via `git fetch --tags`, or just copy
 #       this command and remove the stderr-redirect.
 	@echo `( git log --format='%an, ' v$(VERSION)..HEAD 2>/dev/null | sort -u | tr -d '\n' | sed 's/, $$//' ) || echo`
 	@echo
-	@echo "        - Location, YYYY-MM-DD"
+	@echo "— Location, YYYY-MM-DD"
 	@echo "--------------------------------------------------------------------------------"
 	@echo
 	@echo "   To get a list of changes since the last release, you may use:"
