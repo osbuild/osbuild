@@ -13,24 +13,63 @@ pipeline {
                     agent { label "fedora31" }
                     environment { TEST_TYPE = "image" }
                     steps {
-                        sh "schutzbot/run_tests.sh"
+                        run_tests()
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora31-image')
+                        }
                     }
                 }
                 stage('Fedora 32 image') {
                     agent { label "fedora32" }
                     environment { TEST_TYPE = "image" }
                     steps {
-                        sh "schutzbot/run_tests.sh"
+                        run_tests()
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora32-image')
+                        }
                     }
                 }
                 stage('RHEL 8.2 image') {
                     agent { label "rhel82" }
                     environment { TEST_TYPE = "image" }
                     steps {
-                        sh "schutzbot/run_tests.sh"
+                        run_tests()
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel82-image')
+                        }
                     }
                 }
             }
         }
     }
+}
+
+// Set up a function to hold the steps needed to run the tests so we don't
+// need to copy/paste the same lines over and over above.
+void run_tests() {
+
+    // Run the tests from the repository.
+    sh "schutzbot/run_tests.sh"
+
+}
+
+// Move logs to a unique location and tell Jenkins to capture them on success
+// or failure.
+void preserve_logs(test_slug) {
+
+    // Make a directory for the log files and move the logs there.
+    sh "mkdir ${test_slug} && mv *.log ${test_slug}/"
+
+    // Artifact the logs.
+    archiveArtifacts (
+        allowEmptyArchive: true,
+        artifacts: "${test_slug}/*.log"
+    )
+
 }
