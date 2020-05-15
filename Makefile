@@ -79,6 +79,7 @@ help:
 	@echo "    man:                Generate all man-pages"
 	@echo
 	@echo "    test-all:           Run all tests"
+	@echo "    test-data:          Generate test data"
 	@echo "    test-module:        Run all module unit-tests"
 	@echo "    test-runtime:       Run all osbuild pipeline tests"
 	@echo "    test-src:           Run all osbuild source tests"
@@ -115,6 +116,15 @@ man: $(MANPAGES_TROFF)
 # unittests, `./test/run/` for osbuild pipeline runtime tests, and `./test/src/`
 # for linters and other tests on the source code.
 #
+
+TEST_MANIFESTS_MPP = $(wildcard $(SRCDIR)/test/data/manifests/mpp-*.json)
+TEST_MANIFESTS_GEN = $(patsubst $(SRCDIR)/test/data/manifests/mpp-%.json,$(SRCDIR)/test/data/manifests/%.json,$(TEST_MANIFESTS_MPP))
+
+$(TEST_MANIFESTS_GEN): $(SRCDIR)/test/data/manifests/%.json: $(SRCDIR)/test/data/manifests/mpp-%.json
+	$(SRCDIR)/tools/mpp-depsolve.py <"$<" >"$@"
+
+.PHONY: test-data
+test-data: $(TEST_MANIFESTS_GEN)
 
 .PHONY: test-units
 test-module:
