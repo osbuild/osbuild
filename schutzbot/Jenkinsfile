@@ -23,6 +23,13 @@ pipeline {
                         sh "schutzbot/run_tests.sh"
                     }
                 }
+                stage('RHEL 8.2 image') {
+                    agent { label "rhel82" }
+                    environment { TEST_TYPE = "image" }
+                    steps {
+                        sh "schutzbot/run_tests.sh"
+                    }
+                }
             }
         }
     }
