@@ -1,0 +1,30 @@
+OSBuild Test Data
+=================
+
+This directory contains data used by the osbuild test-suite. Since many formats
+do not allow comments, this file shortly describes their purpose.
+
+### Directories
+
+ * `./os-release/`:
+   This directory is consumed by the unit-tests of the `os-release` parser. The
+   directory contains example os-release files (see `os-release(5)`). Their
+   directory name is the expected output of the parser.
+
+ * `./manifests/`:
+   This directory contains osbuild manifests used throughout the test-suite.
+
+   Manifests prefixed with `f30`, `f31`, etc. are manifests that produce fedora
+   images. If they have `base` as part of their name, they include a base set
+   of packages which we very loosely define as `@core` plus the packages our
+   test-suite needs.
+   If they have `build` as part of their name, they have a very restricted
+   package set which includes just what is needed in a build-root for osbuild.
+
+   The `rhel` prefix is used for Red Hat Enterprise Linux images. Since they are
+   not available publicly, the test-suite usually skips them.
+
+   Manifests prefixed with `mpp-*` are fed through the ManifestPreProcessors and
+   then stored in the same directory with the `mpp-*` prefix dropped. The
+   generated files are committed to the repository. Nevertheless, if you need to
+   regenerate them, use `make test-data`.
