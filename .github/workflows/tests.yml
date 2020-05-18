@@ -3,16 +3,15 @@ name: Tests
 on: [pull_request, push]
 
 jobs:
-  pylint:
+  source_tests:
     name: "Source Tests"
     runs-on: ubuntu-latest
-    container: docker.io/library/python:3.7
     steps:
-      - name: Install pylint
-        run: pip install pylint==2.4.1 jsonschema
-      - name: Clone repository
-        uses: actions/checkout@v2
-      - name: Run Source Tests
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Run Source Tests"
+      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
+      with:
         run: make test-src
 
   module:
