@@ -245,6 +245,7 @@
         "sha256:6dc68869e3f76b3893e67334e44e2df076c6a695c34801bda17ee74bdbcd56c1": "http://mirrors.kernel.org/fedora/releases/31/Everything/x86_64/os/Packages/s/systemd-pam-243-4.gitef67743.fc31.x86_64.rpm",
         "sha256:2cb4bf18b759143cf2aeb6041e8b2edcaa1444d5f1eff8a6681ba8ca9da2a91c": "http://mirrors.kernel.org/fedora/releases/31/Everything/x86_64/os/Packages/s/systemd-rpm-macros-243-4.gitef67743.fc31.noarch.rpm",
         "sha256:5d83d0aa80fb9a9ad9cb3f4f34878a8934e25530989c21e377c61107dd22475c": "http://mirrors.kernel.org/fedora/releases/31/Everything/x86_64/os/Packages/s/systemd-udev-243-4.gitef67743.fc31.x86_64.rpm",
+        "sha256:9975496f29601a1c2cdb89e63aac698fdd8283ba3a52a9d91ead9473a0e064c8": "http://mirrors.kernel.org/fedora/releases/31/Everything/x86_64/os/Packages/t/tar-1.32-2.fc31.x86_64.rpm",
         "sha256:9c118bf51ab45f3da02c226872dbdd2dca0c1ca3f6a23532255ee0f495adf15a": "http://mirrors.kernel.org/fedora/releases/31/Everything/x86_64/os/Packages/t/tree-1.8.0-3.fc31.x86_64.rpm",
         "sha256:b737fde58005843aa4b0fd0ae0da7c7da7d8d7733c161db717ee684ddacffd18": "http://mirrors.kernel.org/fedora/releases/31/Everything/x86_64/os/Packages/t/trousers-0.3.13-13.fc31.x86_64.rpm",
         "sha256:a81b0e79a6ec19343c97c50f02abda957288adadf1f59b09104126dc8e9246df": "http://mirrors.kernel.org/fedora/releases/31/Everything/x86_64/os/Packages/t/trousers-lib-0.3.13-13.fc31.x86_64.rpm",
@@ -713,6 +714,7 @@
                 "sha256:6dc68869e3f76b3893e67334e44e2df076c6a695c34801bda17ee74bdbcd56c1",
                 "sha256:2cb4bf18b759143cf2aeb6041e8b2edcaa1444d5f1eff8a6681ba8ca9da2a91c",
                 "sha256:5d83d0aa80fb9a9ad9cb3f4f34878a8934e25530989c21e377c61107dd22475c",
+                "sha256:9975496f29601a1c2cdb89e63aac698fdd8283ba3a52a9d91ead9473a0e064c8",
                 "sha256:9c118bf51ab45f3da02c226872dbdd2dca0c1ca3f6a23532255ee0f495adf15a",
                 "sha256:b737fde58005843aa4b0fd0ae0da7c7da7d8d7733c161db717ee684ddacffd18",
                 "sha256:a81b0e79a6ec19343c97c50f02abda957288adadf1f59b09104126dc8e9246df",
@@ -1251,7 +1253,10 @@
     "assembler": {
       "name": "org.osbuild.ostree.commit",
       "options": {
-        "ref": "fedora/x86_64/osbuild-demo"
+        "ref": "fedora/x86_64/osbuild-demo",
+        "tar": {
+          "filename": "commit.tar"
+        }
       }
     }
   }
