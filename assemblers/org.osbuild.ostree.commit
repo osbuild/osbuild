@@ -15,9 +15,14 @@ Takes a file system tree that is already conforming to the ostree
 system layout[1] and commits it to an archive repository.
 
 The repository is located at the `/repo` directory and additional
-metadata is stored in `/commit.id` and `/compose.json` which contain
-the commit id and the compose information respectively.
+metadata is stored in `/compose.json` which contains the commit
+compose information.
 
+Alternatively, if the `tar` option is supplied, the repository and
+the `compose.json` will be archived in a file named via the
+`tar.filename` option. This supports auto-compression via the file
+extension (see the tar man page). Requires the `tar` command to be
+in the build root.
 
 [1] https://ostree.readthedocs.io/en/stable/manual/adapting-existing/
 """
@@ -38,6 +43,18 @@ STAGE_OPTS = """
   "parent": {
     "description": "commit id of the parent commit",
     "type": "string"
+  },
+  "tar": {
+    "description": "Emit a tarball as the result",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["filename"],
+    "properties": {
+      "filename": {
+        "description": "File-name of the tarball to create. Compression is determined by the extension.",
+        "type": "string"
+      }
+    }
   }
 }
 """
@@ -87,6 +104,7 @@ def main(tree, output_dir, options):
     ref = options["ref"]
     tmp_is_dir = options.get("tmp-is-dir", True)
     parent = options.get("parent", None)
+    tar = options.get("tar", None)
 
     with tempfile.TemporaryDirectory(dir=output_dir) as root:
         print("Initializing root filesystem", file=sys.stderr)
@@ -127,6 +145,21 @@ def main(tree, output_dir, options):
             subprocess.run(argv,
                            stdout=sys.stderr,
                            check=True)
+
+    if tar:
+        filename = tar["filename"]
+        command = [
+            "tar",
+            "--remove-files",
+            "--auto-compress",
+            "-cf", os.path.join(output_dir, filename),
+            "-C", output_dir,
+            "repo", "compose.json"
+        ]
+        subprocess.run(command,
+                       stdout=sys.stderr,
+                       check=True)
+
 
 
 if __name__ == '__main__':
