@@ -93,7 +93,7 @@ def main(options, checksums, cache, output):
                 "--reflink=auto",
                 f"{cache}/{checksum}",
                 f"{output}/{checksum}"],
-                           check=True)
+                check=True)
         except subprocess.CalledProcessError as e:
             json.dump({"error": e.output}, sys.stdout)
             return 1
