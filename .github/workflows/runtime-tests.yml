@@ -33,29 +33,6 @@ jobs:
       with:
         run: python3 -m unittest -v test.test_boot
 
-  noop_pipeline_tests:
-    name: "Noop-Pipeline Tests"
-    runs-on: ubuntu-latest
-    steps:
-    - name: "Clone Repository"
-      uses: actions/checkout@v2
-    - name: "Install Dependencies"
-      run: |
-        sudo apt-get update
-        sudo apt-get -y install \
-          systemd-container
-    - name: "Set up Python"
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: Install Python Packages
-      run: pip install jsonschema
-    - name: "Run Noop-Pipeline Tests"
-      run: |
-        for i in {0..2} ; do
-          sudo env "PATH=$PATH" python3 -m osbuild --libdir . samples/noop.json
-        done
-
   assembler_tests:
     name: "Assembler Tests"
     runs-on: ubuntu-latest
