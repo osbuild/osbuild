@@ -136,6 +136,29 @@ class TestBase():
 
         return r.returncode == 0 and "compose" in r.stdout
 
+    @staticmethod
+    def have_tree_diff() -> bool:
+        """Check for tree-diff Tool
+
+        Check whether the current test-run has access to the `tree-diff` tool.
+        We currently use the one from a checkout, so it is available whenever
+        a checkout is available.
+        """
+
+        return TestBase.have_test_checkout()
+
+    @staticmethod
+    def tree_diff(path1, path2):
+        """Compare File-System Trees
+
+        Run the `tree-diff` tool from the osbuild checkout. It produces a JSON
+        output that describes the difference between 2 file-system trees.
+        """
+
+        checkout = TestBase.locate_test_checkout()
+        output = subprocess.check_output([os.path.join(checkout, "tree-diff"), path1, path2])
+        return json.loads(output)
+
 
 class OSBuild(contextlib.AbstractContextManager):
     """OSBuild Executor
