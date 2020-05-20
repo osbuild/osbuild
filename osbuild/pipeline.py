@@ -86,13 +86,11 @@ class Stage:
                 "options": self.options,
             }
 
-            sources_dir = f"{libdir}/sources" if libdir else "/usr/lib/osbuild/sources"
-
             ro_binds = [f"{sources_output}:/run/osbuild/sources"]
 
             with API(f"{build_root.api}/osbuild", args, interactive) as api, \
                 sources.SourcesServer(f"{build_root.api}/sources",
-                                      sources_dir,
+                                      libdir or "/usr/lib/osbuild",
                                       self.sources,
                                       f"{cache}/sources",
                                       sources_output,

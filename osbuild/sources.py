@@ -7,9 +7,9 @@ from .util import jsoncomm
 
 class SourcesServer:
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, socket_address, sources_libdir, options, cache, output, secrets=None):
+    def __init__(self, socket_address, libdir, options, cache, output, secrets=None):
         self.socket_address = socket_address
-        self.sources_libdir = sources_libdir
+        self.libdir = libdir
         self.cache = cache
         self.output = output
         self.options = options or {}
@@ -24,11 +24,12 @@ class SourcesServer:
             "secrets": self.secrets.get(source, {}),
             "cache": f"{self.cache}/{source}",
             "output": f"{self.output}/{source}",
-            "checksums": checksums
+            "checksums": checksums,
+            "libdir": self.libdir
         }
 
         r = subprocess.run(
-            [f"{self.sources_libdir}/{source}"],
+            [f"{self.libdir}/sources/{source}"],
             input=json.dumps(msg),
             stdout=subprocess.PIPE,
             encoding="utf-8",

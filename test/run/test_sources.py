@@ -92,7 +92,7 @@ class TestSources(unittest.TestCase):
                     fileServer(), \
                     osbuild.sources.SourcesServer(
                             f"{tmpdir}/sources-api",
-                            "./sources", source_options,
+                            "./", source_options,
                             f"{tmpdir}/cache", f"{tmpdir}/dst"):
                     self.check_case(source, case_options, f"{tmpdir}/sources-api")
                     self.check_case(source, case_options, f"{tmpdir}/sources-api")
