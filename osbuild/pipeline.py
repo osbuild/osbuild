@@ -195,14 +195,6 @@ class Pipeline:
             assembler = self.assembler.description(with_id=with_id)
             description["assembler"] = assembler
 
-        if with_id:
-            tree_id = self.tree_id
-            if tree_id:
-                description["tree_id"] = tree_id
-            output_id = self.output_id
-            if output_id:
-                description["output_id"] = tree_id
-
         return description
 
     def build_stages(self, object_store, interactive, libdir, secrets):
