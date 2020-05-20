@@ -364,7 +364,7 @@ class Pipeline:
 
                 results.update(r)  # This will also update 'success'
 
-            if results["success"] and output_directory is not None:
+            if results["success"] and output_directory and "output_id" in results:
                 output_source = object_store.resolve_ref(results["output_id"])
                 if output_source is not None:
                     subprocess.run(["cp", "--reflink=auto", "-a", f"{output_source}/.", output_directory], check=True)
