@@ -10,26 +10,19 @@ import tempfile
 
 import osbuild.sources
 
-STAGE_DESC = "Verify, and install RPM packages"
+STAGE_DESC = "Install RPM packages"
 STAGE_INFO = """
-Verify, and install RPM packages.
+Install RPM packages, and import GPG keys.
 
-`gpgkeys` should be an array of strings containing each GPG key to be used
-to verify the packages.
+`gpgkeys` should be an array of strings containing each GPG key to import.
 
 `packages` is an array of RPM checksums. Specifically, the content hash of
 the rpms, not the chucksums found in the rpm header.
 
-This stage will fail if any of the packages can't be found, or if any
-RPM has a signature or digest that cannot be verified.
-
-NOTE: this stage currently does _not_ fail if a package is unsigned, only if
-the package is signed but the signature cannot be verified. A future version
-of this stage will fail on unsigned packages by default, but may support a
-flag to skip signature checks for packages that are known to be unsigned.
+This stage will fail if any of the packages can't be found.
 
 Uses the following binaries from the host:
-    * `rpmkeys` to import keys and to verify signatures for each package
+    * `rpmkeys` to import keys
     * `sh`, `mkdir`, `mount`, `chmod` to prepare the target tree for `rpm`
     * `rpm` to install packages into the target tree
 """
@@ -96,9 +89,6 @@ def main(tree, sources, options):
             "rpm",
             "--verbose",
             "--root", tree,
-            # Make rpm require valid signatures & digests on packages.
-            # (see /usr/lib/rpm/macros for more info)
-            "--define", "_pkgverify_level all",
             "--install", manifest.name
         ], cwd=f"{sources}/org.osbuild.files", check=True)
 
