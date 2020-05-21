@@ -1,19 +1,26 @@
 #!/bin/bash
 set -euxo pipefail
 
-# Read variables about the OS.
+# Get OS details.
 source /etc/os-release
+
+# Set up a dnf repository for the RPMs we built via mock.
+sudo tee /etc/yum.repos.d/osbuild-mock.repo > /dev/null << EOF
+[osbuild-mock]
+name=osbuild mock ${BUILD_TAG} ${ID}${VERSION_ID//./}
+baseurl=${MOCK_REPO_BASE_URL}/${BUILD_TAG}/${ID}${VERSION_ID//./}
+enabled=1
+gpgcheck=0
+# Default dnf repo priority is 99. Lower number means higher priority.
+priority=5
+EOF
+
+# Verify that the repository we added is working properly.
+dnf list all | grep osbuild-mock
 
 # Create temporary directories for Ansible.
 sudo mkdir -vp /opt/ansible_{local,remote}
 sudo chmod -R 777 /opt/ansible_{local,remote}
-
-# Remove Fedora modular repositories to speed up dnf-json.
-sudo rm -rfv /etc/yum.repos.d/fedora*modular*
-
-# Ensure /tmp is mounted on tmpfs.
-sudo systemctl enable tmp.mount || \
-  sudo systemctl unmask tmp.mount && sudo systemctl start tmp.mount
 
 # Restart systemd to work around some Fedora issues in cloud images.
 sudo systemctl restart systemd-journald
@@ -28,16 +35,8 @@ preserve_journal() {
 }
 trap "preserve_journal" ERR
 
-# Ensure Ansible is installed.
-if ! rpm -q ansible; then
-  sudo dnf -y install ansible
-fi
-
 # Write a simple hosts file for Ansible.
 echo -e "[test_instances]\nlocalhost ansible_connection=local" > hosts.ini
-
-# Set Ansible's config file location.
-export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
 
 # Get the SHA of osbuild which Jenkins checked out for us.
 OSBUILD_VERSION=$(git rev-parse HEAD)
@@ -47,21 +46,24 @@ OSBUILD_VERSION=$(git rev-parse HEAD)
 # the pull request into the repo. This creates a new SHA that exists only in
 # Jenkins. We use ${WORKSPACE} below to tell ansible-osbuild to use the clone
 # that Jenkins made for testing osbuild.
+export ANSIBLE_CONFIG=ansible-osbuild/ansible.cfg
 git clone https://github.com/osbuild/ansible-osbuild.git ansible-osbuild
 ansible-playbook \
   -i hosts.ini \
-  -e osbuild_repo_url=${WORKSPACE} \
-  -e osbuild_version=$(git rev-parse HEAD) \
-  -e install_source=mock \
+  -e install_source=os \
   ansible-osbuild/playbook.yml
 
+# Ensure the testing package is installed.
+sudo dnf -y install osbuild-composer-tests
+
 # Run the image tests from osbuild-composer to stress-test osbuild.
+git clone https://github.com/osbuild/osbuild-composer
 ansible-playbook \
   -e workspace=${WORKSPACE} \
   -e journald_cursor="${JOURNALD_CURSOR}" \
   -e test_type=${TEST_TYPE:-image} \
   -i hosts.ini \
-  /tmp/git_repos/osbuild-composer/schutzbot/test.yml
+  osbuild-composer/schutzbot/test.yml
 
 # Collect the systemd journal anyway if we made it all the way to the end.
 sudo journalctl --after-cursor=${JOURNALD_CURSOR} > systemd-journald.log
