@@ -195,6 +195,20 @@ class Object:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.cleanup()
 
+    def export(self, to_directory):
+        """Copy object into an external directory"""
+        with self.read() as from_directory:
+            subprocess.run(
+                [
+                    "cp",
+                    "--reflink=auto",
+                    "-a",
+                    f"{from_directory}/.",
+                    to_directory,
+                ],
+                check=True,
+            )
+
 
 class HostTree:
     """Read-only access to the host file system
