@@ -16,7 +16,7 @@ priority=5
 EOF
 
 # Verify that the repository we added is working properly.
-dnf list all | grep osbuild-mock
+sudo dnf list all | grep osbuild-mock
 
 # Create temporary directories for Ansible.
 sudo mkdir -vp /opt/ansible_{local,remote}
