@@ -241,7 +241,6 @@ class Pipeline:
         tree = object_store.new(base_id=self.tree_id)
 
         if object_store.contains(self.tree_id):
-            results["tree_id"] = self.tree_id
             return results, build_tree, tree
 
         # Not in the store yet, need to actually build it, but maybe
@@ -282,7 +281,6 @@ class Pipeline:
             if stage.checkpoint:
                 object_store.commit(tree, stage.id)
 
-        results["tree_id"] = self.tree_id
         return results, build_tree, tree
 
     def assemble(self, object_store, build_tree, tree, interactive, libdir, output_directory=None):
