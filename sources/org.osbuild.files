@@ -110,7 +110,7 @@ def main(options, checksums, cache, output):
             try:
                 if isinstance(urls[checksum], dict):
                     # check if url needs rhsm secrets
-                    if urls[checksum].get("secrets").get("name") == "org.osbuild.rhsm":
+                    if urls[checksum].get("secrets", {}).get("name") == "org.osbuild.rhsm":
                         # rhsm secrets only need to be retrieved once and can then be reused
                         if rhsm_secrets is None:
                             try:
