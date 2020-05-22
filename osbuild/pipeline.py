@@ -291,11 +291,6 @@ class Pipeline:
         if not self.assembler:
             return results
 
-        # if the output is already in the store, short-circuit
-        if object_store.contains(self.output_id):
-            results["output_id"] = self.output_id
-            return results
-
         output = object_store.new()
 
         with build_tree.read() as build_dir, \
