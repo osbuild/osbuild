@@ -285,7 +285,7 @@ class Pipeline:
         results["tree_id"] = self.tree_id
         return results, build_tree, tree
 
-    def assemble(self, object_store, build_tree, tree, interactive, libdir):
+    def assemble(self, object_store, build_tree, tree, interactive, libdir, output_directory=None):
         results = {"success": True}
 
         if not self.assembler:
@@ -312,9 +312,10 @@ class Pipeline:
             return results
 
         object_store.commit(output, self.output_id)
+        if output_directory:
+            output.export(output_directory)
         output.cleanup()
 
-        results["output_id"] = self.output_id
         return results
 
     def run(self, store, interactive=False, libdir=None, secrets=None, output_directory=None):
@@ -328,10 +329,10 @@ class Pipeline:
             # missing, since it is not a mandatory part of the result and would
             # usually be needless overhead.
             if object_store.contains(self.output_id):
-                results = {"output_id": self.output_id,
-                           "success": True}
-                if object_store.contains(self.tree_id):
-                    results["tree_id"] = self.tree_id
+                results = {"success": True}
+                if output_directory:
+                    with object_store.new(base_id=self.output_id) as output:
+                        output.export(output_directory)
             else:
                 results, build_tree, tree = self.build_stages(object_store,
                                                               interactive,
@@ -345,14 +346,10 @@ class Pipeline:
                                   build_tree,
                                   tree,
                                   interactive,
-                                  libdir)
+                                  libdir,
+                                  output_directory)
 
                 results.update(r)  # This will also update 'success'
-
-            if results["success"] and output_directory and "output_id" in results:
-                output_source = object_store.resolve_ref(results["output_id"])
-                if output_source is not None:
-                    subprocess.run(["cp", "--reflink=auto", "-a", f"{output_source}/.", output_directory], check=True)
 
         return results
 
