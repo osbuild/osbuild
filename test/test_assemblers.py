@@ -11,7 +11,7 @@ import unittest
 from . import test
 
 
-class TestAssemblers(unittest.TestCase, test.TestBase):
+class TestAssemblers(test.TestBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()

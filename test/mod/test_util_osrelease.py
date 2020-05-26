@@ -10,7 +10,7 @@ from osbuild.util import osrelease
 from .. import test
 
 
-class TestUtilOSRelease(test.TestBase, unittest.TestCase):
+class TestUtilOSRelease(test.TestBase):
     def test_non_existant(self):
         #
         # Verify default os-release value, if no files are given.

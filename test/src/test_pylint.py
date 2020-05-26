@@ -10,7 +10,7 @@ from .. import test
 
 
 @unittest.skipUnless(test.TestBase.have_test_checkout(), "no test-checkout access")
-class TestPylint(test.TestBase, unittest.TestCase):
+class TestPylint(test.TestBase):
     def test_pylint(self):
         #
         # Run `pylint` on all python sources. We simply use `find` to locate
