@@ -156,7 +156,7 @@ class TestBase():
         """
 
         checkout = TestBase.locate_test_checkout()
-        output = subprocess.check_output([os.path.join(checkout, "tree-diff"), path1, path2])
+        output = subprocess.check_output([os.path.join(checkout, "tools/tree-diff"), path1, path2])
         return json.loads(output)
 
 
