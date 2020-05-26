@@ -176,8 +176,8 @@ class OSBuild(contextlib.AbstractContextManager):
     _cachedir = None
     _outputdir = None
 
-    def __init__(self, unittest, cache_from=None):
-        self._unittest = unittest
+    def __init__(self, unit_test, cache_from=None):
+        self._unittest = unit_test
         self._cache_from = cache_from
 
     def __enter__(self):
