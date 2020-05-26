@@ -68,7 +68,7 @@ class ValidationError:
             elif isinstance(p, int):
                 result += f"[{p}]"
             else:
-                assert "new type"
+                raise AssertionError("new type")
 
         return result
 
