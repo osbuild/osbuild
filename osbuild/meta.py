@@ -128,7 +128,7 @@ class ValidationResult:
         self.errors.add(err)
         return self
 
-    def merge(self, result: "ValidationResult", *, path=[]):
+    def merge(self, result: "ValidationResult", *, path=None):
         """Merge all errors of `result` into this
 
         Merge all the errors of in `result` into this,
@@ -137,7 +137,7 @@ class ValidationResult:
         """
         for err in result:
             err = copy.deepcopy(err)
-            err.rebase(path)
+            err.rebase(path or [])
             self.errors.add(err)
 
     def as_dict(self):
