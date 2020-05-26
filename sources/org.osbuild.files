@@ -108,23 +108,27 @@ def main(options, checksums, cache, output):
 
         for checksum in checksums:
             try:
-                if isinstance(urls[checksum], dict):
-                    # check if url needs rhsm secrets
-                    if urls[checksum].get("secrets", {}).get("name") == "org.osbuild.rhsm":
-                        # rhsm secrets only need to be retrieved once and can then be reused
-                        if rhsm_secrets is None:
-                            try:
-                                rhsm_secrets = get_rhsm_secrets()
-                            except RuntimeError as e:
-                                json.dump({"error": e.args[0]}, sys.stdout)
-                                return 1
-                        urls[checksum]["secrets"] = rhsm_secrets
-                else:
-                    urls[checksum] = {"url": urls[checksum]}
-                requested_urls.append(urls[checksum])
+                url = urls[checksum]
             except KeyError:
                 json.dump({"error": f"unknown file: {checksum}"}, sys.stdout)
                 return 1
+
+            if isinstance(url, dict):
+                # check if url needs rhsm secrets
+                if url.get("secrets", {}).get("name") == "org.osbuild.rhsm":
+                    # rhsm secrets only need to be retrieved once and can then be reused
+                    if rhsm_secrets is None:
+                        try:
+                            rhsm_secrets = get_rhsm_secrets()
+                        except RuntimeError as e:
+                            json.dump({"error": e.args[0]}, sys.stdout)
+                            return 1
+                    url["secrets"] = rhsm_secrets
+            else:
+                url = {"url": url}
+
+            requested_urls.append(url)
+
         results = executor.map(fetch, requested_urls, checksums, itertools.repeat(cache))
 
         try:
