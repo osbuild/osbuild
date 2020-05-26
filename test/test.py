@@ -257,11 +257,11 @@ class OSBuild(contextlib.AbstractContextManager):
         # trees (they would trigger `EBUSY` if we didn't wait).
         try:
             p = subprocess.Popen(
-                    ["python3", "-m", "osbuild"] + cmd_args + ["-"],
-                    encoding="utf-8",
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                ["python3", "-m", "osbuild"] + cmd_args + ["-"],
+                encoding="utf-8",
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
             data_stdout, data_stderr = p.communicate(data_stdin)
         except KeyboardInterrupt:
