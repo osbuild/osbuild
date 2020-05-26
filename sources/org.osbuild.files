@@ -93,7 +93,7 @@ def get_rhsm_secrets():
             rhsm_secrets['ssl_client_cert'] = cert
             return rhsm_secrets
 
-    raise RuntimeError(f"no matching rhsm key and cert")
+    raise RuntimeError("no matching rhsm key and cert")
 
 
 def main(options, checksums, cache, output):
