@@ -8,7 +8,7 @@ import unittest
 from . import test
 
 
-class TestDescriptions(unittest.TestCase, test.TestBase):
+class TestDescriptions(test.TestBase):
 
     def assertTreeDiffsEqual(self, tree_diff1, tree_diff2):
         """

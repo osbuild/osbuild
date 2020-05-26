@@ -9,12 +9,13 @@ import os
 import subprocess
 import sys
 import tempfile
+import unittest
 
 import osbuild
 from osbuild.util import linux
 
 
-class TestBase():
+class TestBase(unittest.TestCase):
     """Base Class for Tests
 
     This class serves as base for our test infrastructure and provides access
