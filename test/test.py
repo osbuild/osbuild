@@ -227,7 +227,7 @@ class OSBuild(contextlib.AbstractContextManager):
         print(data_stderr)
         print("-- END ---------------------------------")
 
-    def compile(self, data_stdin, checkpoints=[]):
+    def compile(self, data_stdin, checkpoints=None):
         """Compile an Artifact
 
         This takes a manifest as `data_stdin`, executes the pipeline, and
@@ -247,7 +247,7 @@ class OSBuild(contextlib.AbstractContextManager):
         cmd_args += ["--output-directory", self._outputdir]
         cmd_args += ["--store", self._cachedir]
 
-        for c in checkpoints:
+        for c in (checkpoints or []):
             cmd_args += ["--checkpoint", c]
 
         # Spawn the `osbuild` executable, feed it the specified data on
@@ -272,7 +272,7 @@ class OSBuild(contextlib.AbstractContextManager):
             self._print_result(p.returncode, data_stdout, data_stderr)
             self._unittest.assertEqual(p.returncode, 0)
 
-    def compile_file(self, file_stdin, checkpoints=[]):
+    def compile_file(self, file_stdin, checkpoints=None):
         """Compile an Artifact
 
         This is similar to `compile()` but takes a file-path instead of raw

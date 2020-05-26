@@ -95,7 +95,7 @@ def parse_arguments(sys_argv):
 
 
 # pylint: disable=too-many-branches
-def osbuild_cli(*, sys_argv=[]):
+def osbuild_cli(*, sys_argv):
     args = parse_arguments(sys_argv)
     manifest = parse_manifest(args.manifest_path)
 
