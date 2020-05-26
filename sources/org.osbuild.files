@@ -136,12 +136,15 @@ def main(options, checksums, cache, output):
 
     for checksum in checksums:
         try:
-            subprocess.run([
-                "cp",
-                "--reflink=auto",
-                f"{cache}/{checksum}",
-                f"{output}/{checksum}"],
-                check=True)
+            subprocess.run(
+                [
+                    "cp",
+                    "--reflink=auto",
+                    f"{cache}/{checksum}",
+                    f"{output}/{checksum}",
+                ],
+                check=True,
+            )
         except subprocess.CalledProcessError as e:
             json.dump({"error": e.output}, sys.stdout)
             return 1
