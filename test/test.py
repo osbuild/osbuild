@@ -214,7 +214,8 @@ class OSBuild(contextlib.AbstractContextManager):
         self._cachedir = None
         self._exitstack = None
 
-    def _print_result(self, code, data_stdout, data_stderr):
+    @staticmethod
+    def _print_result(code, data_stdout, data_stderr):
         print(f"osbuild failed with: {code}")
         try:
             json_stdout = json.loads(data_stdout)
@@ -284,7 +285,8 @@ class OSBuild(contextlib.AbstractContextManager):
             data_stdin = f.read()
             return self.compile(data_stdin, checkpoints=checkpoints)
 
-    def treeid_from_manifest(self, manifest_data):
+    @staticmethod
+    def treeid_from_manifest(manifest_data):
         """Calculate Tree ID
 
         This takes an in-memory manifest, inspects it, and returns the ID of
