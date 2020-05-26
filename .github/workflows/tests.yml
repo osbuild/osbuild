@@ -100,3 +100,16 @@ jobs:
           for f in samples/*; do
             python3 -m osbuild --libdir . --inspect "$f" > /dev/null
           done
+
+  test_data:
+    name: "Regenerate Test Data"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Regenerate Test Data"
+      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
+      with:
+        run: |
+          make --always-make test-data
+          git diff --exit-code -- ./test/data
