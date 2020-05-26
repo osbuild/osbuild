@@ -121,7 +121,11 @@ TEST_MANIFESTS_MPP = $(wildcard $(SRCDIR)/test/data/manifests/mpp-*.json)
 TEST_MANIFESTS_GEN = $(patsubst $(SRCDIR)/test/data/manifests/mpp-%.json,$(SRCDIR)/test/data/manifests/%.json,$(TEST_MANIFESTS_MPP))
 
 $(TEST_MANIFESTS_GEN): $(SRCDIR)/test/data/manifests/%.json: $(SRCDIR)/test/data/manifests/mpp-%.json
-	$(SRCDIR)/tools/mpp-depsolve.py <"$<" >"$@"
+	$(SRCDIR)/tools/mpp-depsolve.py <"$<" \
+		| $(SRCDIR)/tools/mpp-import-pipeline.py >"$@" \
+			"--cwd=$(SRCDIR)/test/data/manifests"
+
+$(SRCDIR)/test/data/manifests/f32-base.json: $(SRCDIR)/test/data/manifests/f32-build.json
 
 .PHONY: test-data
 test-data: $(TEST_MANIFESTS_GEN)
