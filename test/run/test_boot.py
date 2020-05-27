@@ -1,13 +1,17 @@
+#
+# Runtime Tests for Bootable Pipelines
+#
 
 import os
 import subprocess
 import tempfile
 import unittest
 
-from . import test
+from .. import test
 
 
-class TestBoot(unittest.TestCase):
+@unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+class TestBoot(test.TestBase):
     def setUp(self):
         self.osbuild = test.OSBuild(self)
 
@@ -16,9 +20,12 @@ class TestBoot(unittest.TestCase):
         # Build an image and test-boot it.
         #
 
+        manifest = os.path.join(self.locate_test_data(),
+                                "manifests/fedora-boot.json")
+
         with self.osbuild as osb:
-            osb.compile_file("test/pipelines/f30-boot.json")
-            with osb.map_output("f30-boot.qcow2") as qcow2, \
+            osb.compile_file(manifest)
+            with osb.map_output("fedora-boot.qcow2") as qcow2, \
                  tempfile.TemporaryDirectory() as d:
 
                 output_file = os.path.join(d, "output")

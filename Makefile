@@ -126,6 +126,7 @@ $(TEST_MANIFESTS_GEN): $(SRCDIR)/test/data/manifests/%.json: $(SRCDIR)/test/data
 			"--cwd=$(SRCDIR)/test/data/manifests"
 
 $(SRCDIR)/test/data/manifests/f32-base.json: $(SRCDIR)/test/data/manifests/f32-build.json
+$(SRCDIR)/test/data/manifests/fedora-boot.json: $(SRCDIR)/test/data/manifests/f32-build.json
 
 .PHONY: test-data
 test-data: $(TEST_MANIFESTS_GEN)
