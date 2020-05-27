@@ -28,3 +28,8 @@ do not allow comments, this file shortly describes their purpose.
    then stored in the same directory with the `mpp-*` prefix dropped. The
    generated files are committed to the repository. Nevertheless, if you need to
    regenerate them, use `make test-data`.
+
+ * `./sources/`:
+   This directory contains test-data for runtime tests of the source-engines. It
+   contains a directory that is served via HTTP in the tests, and a directory of
+   test-cases what to expect when using the attached `sources.json`.

@@ -1,0 +1,34 @@
+{
+  "org.osbuild.files": {
+    "urls": {
+      "sha256:87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7": "http://localhost/sources/org.osbuild.files/data/a",
+      "sha256:0263829989b6fd954f72baaf2fc64bc2e2f01d692d4de72986ea808f6e99813f": "http://localhost/sources/org.osbuild.files/data/b",
+      "sha256:a3a5e715f0cc574a73c3f9bebb6bc24f32ffd5b67b387244c2c909da779a1478": "http://localhost/sources/org.osbuild.files/data/c",
+      "sha256:8d74beec1be996322ad76813bafb92d40839895d6dd7ee808b17ca201eac98be": "http://localhost/sources/org.osbuild.files/data/d",
+      "sha256:a2bbdb2de53523b8099b37013f251546f3d65dbe7a0774fa41af0a4176992fd4": "http://localhost/sources/org.osbuild.files/data/e",
+      "sha256:092fcfbbcfca3b5be7ae1b5e58538e92c35ab273ae13664fed0d67484c8e78a6": "http://localhost/sources/org.osbuild.files/data/f",
+      "sha256:768c71d785bf6bbbf8c4d6af6582041f2659027140a962cd0c55b11eddfd5e3d": "http://localhost/sources/org.osbuild.files/data/g",
+      "sha256:91ee5e9f42ba3d34e414443b36a27b797a56a47aad6bb1e4c1769e69c77ce0ca": "http://localhost/sources/org.osbuild.files/data/h",
+      "sha256:50c393f158c3de2db92fa9661bfb00eda5b67c3a777c88524ed3417509631625": "http://localhost/sources/org.osbuild.files/data/i",
+      "sha256:cee00b08a818db87e17e703273818e5194f83280e1ef3eae9214ff14675d9e6d": "http://localhost/sources/org.osbuild.files/data/j",
+      "sha256:19732980d68fbd00358a0a4d98246c960400b87e4fa2a2e155db98be2b42ed6c": "http://localhost/sources/org.osbuild.files/data/k",
+      "sha256:6d7ebc44c5bc26207e62f4f628f912e1a0f41ed11764891aa7dd99eab83228e7": "http://localhost/sources/org.osbuild.files/data/l",
+      "sha256:01a60e35df88d8b49546cb3f8f4ba4f406870f9b8e1f394c9d48ab73548d748d": "http://localhost/sources/org.osbuild.files/data/m",
+      "sha256:a4fb621495a0122493b2203591c448903c472e306a1ede54fabad829e01075c0": "http://localhost/sources/org.osbuild.files/data/n",
+      "sha256:7427d152005f9ed0fa31c76ef9963cf4bb47dce6e2768111d9eb0edbfe59c704": "http://localhost/sources/org.osbuild.files/data/o",
+      "sha256:fd6641673e7f3bf6e80e4bc5401fcb2821a1e117206c8e1c65cef23a58dc37ff": "http://localhost/sources/org.osbuild.files/data/p",
+      "sha256:4adc33bd9fe74303c344be46e5916d65182fb218e248fe80452ab3f025b06c64": "http://localhost/sources/org.osbuild.files/data/q",
+      "sha256:8e54b0ca18020275e4aef1ca0eb5e197e066c065c1864817652a8a39c55402cd": "http://localhost/sources/org.osbuild.files/data/r",
+      "sha256:cbc80bb5c0c0f8944bf73b3a429505ac5cde16644978bc9a1e74c5755f8ca556": "http://localhost/sources/org.osbuild.files/data/s",
+      "sha256:fe8edeeb98cc6d3b93cf2d57000254b84bd9eba34b4df7ce4b87db8b937b7703": "http://localhost/sources/org.osbuild.files/data/t",
+      "sha256:ea46748e171abd2dd4dba5b86bb6589334d86bba2df8d50cbb16b36c83b0856a": "http://localhost/sources/org.osbuild.files/data/u",
+      "sha256:73324e1ab1db72ee9eb4fdf1c90a586d67e00ab58330d1cbfea26ecd0a77fa4d": "http://localhost/sources/org.osbuild.files/data/v",
+      "sha256:cf945b5236e101dbe0471d5200f28b1ae64f21c1f35bf55fcf40cd0fe42cd8e7": "http://localhost/sources/org.osbuild.files/data/w",
+      "sha256:73cb3858a687a8494ca3323053016282f3dad39d42cf62ca4e79dda2aac7d9ac": "http://localhost/sources/org.osbuild.files/data/x",
+      "sha256:3bb2abb69ebb27fbfe63c7639624c6ec5e331b841a5bc8c3ebc10b9285e90877": "http://localhost/sources/org.osbuild.files/data/y",
+      "sha256:c865f6c5ab8d1b0bcd383a5e1e3879d22681c96bf462c269b7581d523fbe70ab": "http://localhost/sources/org.osbuild.files/data/z",
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "http://localhost/sources/org.osbuild.files/data/a",
+      "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": "http://localhost/sources/org.osbuild.files/data/missing"
+    }
+  }
+}
