@@ -30,9 +30,17 @@ def mark_checkpoints(pipeline, checkpoints):
             stage.checkpoint = True
             points.remove(c)
 
+    def mark_assembler(assembler):
+        c = assembler.id
+        if c in points:
+            assembler.checkpoint = True
+            points.remove(c)
+
     def mark_pipeline(pl):
         for stage in pl.stages:
             mark_stage(stage)
+        if pl.assembler:
+            mark_assembler(pl.assembler)
         if pl.build:
             mark_pipeline(pl.build)
 
