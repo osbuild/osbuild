@@ -14,6 +14,7 @@ import threading
 import unittest
 
 import osbuild.sources
+from .. import test
 
 
 def errcheck(ret, _func, _args):
@@ -44,27 +45,32 @@ def netns():
 
 
 @contextlib.contextmanager
-def fileServer():
+def fileServer(directory):
     with netns():
         # This is leaked until the program exits, but inaccessible after the with
         # due to the network namespace.
         barrier = threading.Barrier(2)
-        thread = threading.Thread(target=runFileServer, args=(barrier,))
+        thread = threading.Thread(target=runFileServer, args=(barrier, directory))
         thread.daemon = True
         thread.start()
         barrier.wait()
         yield
 
 
-def runFileServer(barrier):
-    httpd = socketserver.TCPServer(('', 80), http.server.SimpleHTTPRequestHandler)
+def runFileServer(barrier, directory):
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, request, client_address, server):
+            super().__init__(request, client_address, server, directory=directory)
+
+    httpd = socketserver.TCPServer(('', 80), Handler)
     barrier.wait()
     httpd.serve_forever()
 
 
-class TestSources(unittest.TestCase):
+@unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+class TestSources(test.TestBase):
     def setUp(self):
-        self.sources = 'test/sources_tests'
+        self.sources = os.path.join(self.locate_test_data(), "sources")
 
 
     def check_case(self, source, case, api_path):
@@ -89,7 +95,7 @@ class TestSources(unittest.TestCase):
                 with open(f"{self.sources}/{source}/cases/{case}") as f:
                     case_options = json.load(f)
                 with tempfile.TemporaryDirectory() as tmpdir, \
-                    fileServer(), \
+                    fileServer(self.locate_test_data()), \
                     osbuild.sources.SourcesServer(
                             f"{tmpdir}/sources-api",
                             "./", source_options,
