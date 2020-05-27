@@ -20,6 +20,9 @@ do not allow comments, this file shortly describes their purpose.
    test-suite needs.
    If they have `build` as part of their name, they have a very restricted
    package set which includes just what is needed in a build-root for osbuild.
+   The `fedora` prefix is used for manifests that are kept up to date to the
+   newest fedora release, and thus do not expose a specific `f30`, `f32`, etc.
+   behavior.
 
    The `rhel` prefix is used for Red Hat Enterprise Linux images. Since they are
    not available publicly, the test-suite usually skips them.
