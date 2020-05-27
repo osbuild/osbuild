@@ -74,11 +74,6 @@ jobs:
           cd osbuild
           python3 -m unittest -v test.test_osbuild
 
-      - name: Run test_objectstore
-        run: |
-          cd osbuild
-          python3 -m unittest -v test.test_objectstore
-
   sample_validation:
     name: "sample validation"
     runs-on: ubuntu-latest

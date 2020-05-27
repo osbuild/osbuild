@@ -120,6 +120,52 @@ class TestBase(unittest.TestCase):
         return True
 
     @staticmethod
+    def can_bind_mount() -> bool:
+        """Check Bind-Mount Capability
+
+        Test whether we can bind-mount file-system objects. If yes, return
+        `True`, otherwise return `False`.
+        """
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original = os.path.join(tmpdir, "original")
+            mnt = os.path.join(tmpdir, "mnt")
+
+            with open(original, "w") as f:
+                f.write("foo")
+            with open(mnt, "w") as f:
+                f.write("bar")
+
+            try:
+                subprocess.run(
+                    [
+                        "mount",
+                        "--make-private",
+                        "-o",
+                        "bind,ro",
+                        original,
+                        mnt,
+                    ],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=True,
+                )
+                with open(mnt, "r") as f:
+                    assert f.read() == "foo"
+                return True
+            except subprocess.CalledProcessError:
+                return False
+            finally:
+                subprocess.run(
+                    ["umount", mnt],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                )
+
+    @staticmethod
     def have_rpm_ostree() -> bool:
         """Check rpm-ostree Availability
 
