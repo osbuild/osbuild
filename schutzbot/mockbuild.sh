@@ -29,14 +29,6 @@ git clone https://github.com/osbuild/osbuild-composer
 make srpm
 make -C osbuild-composer srpm
 
-# Fix RHEL 8 mock template.
-sudo curl --retry 5 -Lsko /etc/mock/templates/rhel-8.tpl \
-    https://gitlab.cee.redhat.com/snippets/2208/raw
-
-# Add fastestmirror to the Fedora template.
-sudo sed -i '/^install_weak_deps.*/a fastestmirror=1' \
-    /etc/mock/templates/fedora-branched.tpl
-
 # Compile RPMs in a mock chroot
 sudo mock -r $MOCK_CONFIG --no-bootstrap-chroot \
     --resultdir $REPO_DIR --with=tests \

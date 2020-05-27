@@ -39,8 +39,8 @@ pipeline {
                         sh "schutzbot/mockbuild.sh"
                     }
                 }
-                stage('RHEL 8.2') {
-                    agent { label "rhel82" }
+                stage('RHEL 8 CDN') {
+                    agent { label "rhel8" }
                     environment {
                         OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
                     }
@@ -55,7 +55,7 @@ pipeline {
             failFast false
 
             parallel {
-                stage('Fedora 31 image') {
+                stage('Fedora 31') {
                     agent { label "fedora31" }
                     environment { TEST_TYPE = "image" }
                     steps {
@@ -67,7 +67,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Fedora 32 image') {
+                stage('Fedora 32') {
                     agent { label "fedora32" }
                     environment { TEST_TYPE = "image" }
                     steps {
@@ -79,15 +79,15 @@ pipeline {
                         }
                     }
                 }
-                stage('RHEL 8.2 image') {
-                    agent { label "rhel82" }
+                stage('RHEL 8 CDN') {
+                    agent { label "rhel8" }
                     environment { TEST_TYPE = "image" }
                     steps {
                         run_tests()
                     }
                     post {
                         always {
-                            preserve_logs('rhel82-image')
+                            preserve_logs('rhel8-image')
                         }
                     }
                 }
