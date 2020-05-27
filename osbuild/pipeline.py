@@ -108,6 +108,7 @@ class Assembler:
         self.build = build
         self.base = base
         self.options = options
+        self.checkpoint = False
 
     @property
     def id(self):
@@ -308,7 +309,8 @@ class Pipeline:
             results["success"] = False
             return results
 
-        object_store.commit(output, self.output_id)
+        if self.assembler.checkpoint:
+            object_store.commit(output, self.assembler.id)
         if output_directory:
             output.export(output_directory)
         output.cleanup()
