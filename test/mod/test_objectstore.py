@@ -1,3 +1,7 @@
+#
+# Tests for the 'osbuild.objectstore' module.
+#
+
 import os
 import shutil
 import tempfile
@@ -5,8 +9,10 @@ import unittest
 
 from pathlib import Path
 from osbuild import objectstore
+from .. import test
 
 
+@unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
 class TestObjectStore(unittest.TestCase):
 
     @classmethod
@@ -279,7 +285,3 @@ class TestObjectStore(unittest.TestCase):
             p = Path(f"{path}/osbuild-test-file")
             with self.assertRaises(OSError):
                 p.touch()
-
-
-if __name__ == "__main__":
-    unittest.main()
