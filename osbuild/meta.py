@@ -25,7 +25,7 @@ import copy
 import os
 import json
 from collections import deque
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, List, Optional
 
 import jsonschema
 
@@ -364,6 +364,18 @@ class Index:
         self.path = path
         self._module_info = {}
         self._schemata = {}
+
+    def list_modules_for_class(self, klass: str) -> List[str]:
+        """List all available modules for the given `klass`"""
+        module_path = ModuleInfo.module_class_to_directory(klass)
+
+        if not module_path:
+            raise ValueError(f"Unsupported nodule class: {klass}")
+
+        path = os.path.join(self.path, module_path)
+        modules = filter(lambda f: os.path.isfile(f"{path}/{f}"),
+                         os.listdir(path))
+        return list(modules)
 
     def get_module_info(self, klass, name) -> Optional[ModuleInfo]:
         """Obtain `ModuleInfo` for a given stage or assembler"""
