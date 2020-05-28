@@ -2,7 +2,6 @@
 import hashlib
 import json
 import os
-import subprocess
 import tempfile
 
 from .api import API
