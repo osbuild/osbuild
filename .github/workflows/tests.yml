@@ -14,14 +14,15 @@ jobs:
       with:
         run: make test-src
 
-  module:
+  module_tests:
     name: "Module Unittests"
     runs-on: ubuntu-latest
-    container: docker.io/library/python:3.7
     steps:
-      - name: Clone repository
-        uses: actions/checkout@v2
-      - name: Run Module Unittests
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Run Module Unittests"
+      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
+      with:
         run: make test-module
 
   documentation:
@@ -53,26 +54,6 @@ jobs:
         run: |
           test -d docs
           test -f docs/osbuild.1
-
-  unit_tests:
-    name: "unit"
-    runs-on: ubuntu-latest
-    container:
-      image: docker.io/library/python:3.7
-      options: --privileged  # Needed for bind mounts in unit tests
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v2
-        with:
-          path: osbuild
-
-      - name: Install Dependencies
-        run: pip install jsonschema
-
-      - name: Run test_osbuild
-        run: |
-          cd osbuild
-          python3 -m unittest -v test.test_osbuild
 
   sample_validation:
     name: "sample validation"
