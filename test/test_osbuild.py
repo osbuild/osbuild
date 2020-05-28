@@ -77,17 +77,17 @@ class TestDescriptions(unittest.TestCase):
             }
             })
 
-    def test_stageinfo(self):
-        def list_stages(base, klass):
+    def test_moduleinfo(self):
+        def list_modules(base, klass):
             return [(klass, f) for f in os.listdir(base) if f.startswith("org.osbuild")]
 
-        stages = list_stages("stages", "Stage")
-        stages += list_stages("assemblers", "Assembler")
+        modules = list_modules("stages", "Stage")
+        modules += list_modules("assemblers", "Assembler")
 
-        for stage in stages:
-            klass, name = stage
+        for module in modules:
+            klass, name = module
             try:
-                info = osbuild.meta.StageInfo.load(os.curdir, klass, name)
+                info = osbuild.meta.ModuleInfo.load(os.curdir, klass, name)
                 schema = osbuild.meta.Schema(info.schema, name)
                 res = schema.check()
                 if not res:

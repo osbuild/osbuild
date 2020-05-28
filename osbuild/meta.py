@@ -7,8 +7,8 @@ this context). Additionally, it provides classes and functions
 to do schema validation of OSBuild manifests and stage options.
 
 A central `Index` class can be used to obtain stage and schema
-information. For the former a `StageInfo` class is returned via
-`Index.get_stage_info`, which contains meta-information about
+information. For the former a `ModuleInfo` class is returned via
+`Index.get_module_info`, which contains meta-information about
 the individual stages. Schemata, obtained via `Index.get_schema`
 is represented via a `Schema` class that can in turn be used
 to validate the individual components.
@@ -260,11 +260,11 @@ class Schema:
         return self.check().valid
 
 
-class StageInfo:
+class ModuleInfo:
     """Meta information about a stage
 
     Represents the information about a osbuild pipeline
-    stage or assembler (here also considered to be a stage).
+    modules, like a stage or an assembler.
     Contains the short description (`desc`), a longer
     description (`info`) and the JSON schema of valid options
     (`opts`). The `validate` method will check a the options
@@ -311,7 +311,7 @@ class StageInfo:
         return schema
 
     @classmethod
-    def load(cls, root, klass, name) -> Optional["StageInfo"]:
+    def load(cls, root, klass, name) -> Optional["ModuleInfo"]:
         names = ['STAGE_INFO', 'STAGE_DESC', 'STAGE_OPTS']
 
         def value(a):
@@ -359,18 +359,18 @@ class Index:
 
     def __init__(self, path: str):
         self.path = path
-        self._stage_info = {}
+        self._module_info = {}
         self._schemata = {}
 
-    def get_stage_info(self, klass, name) -> Optional[StageInfo]:
-        """Obtain `StageInfo` for a given stage or assembler"""
+    def get_module_info(self, klass, name) -> Optional[ModuleInfo]:
+        """Obtain `ModuleInfo` for a given stage or assembler"""
 
-        if (klass, name) not in self._stage_info:
+        if (klass, name) not in self._module_info:
 
-            info = StageInfo.load(self.path, klass, name)
-            self._stage_info[(klass, name)] = info
+            info = ModuleInfo.load(self.path, klass, name)
+            self._module_info[(klass, name)] = info
 
-        return self._stage_info[(klass, name)]
+        return self._module_info[(klass, name)]
 
     def get_schema(self, klass, name=None) -> Schema:
         """Obtain a `Schema` for `klass` and `name` (optional)
@@ -391,7 +391,7 @@ class Index:
                 with open(path, "r") as f:
                     schema = json.load(f)
         elif klass in ["Stage", "Assembler"]:
-            info = self.get_stage_info(klass, name)
+            info = self.get_module_info(klass, name)
             if info:
                 schema = info.schema
         else:

@@ -3,7 +3,7 @@ import json
 import unittest
 from pathlib import Path
 
-class TestStageInfo(unittest.TestCase):
+class TestModuleInfo(unittest.TestCase):
     @staticmethod
     def iter_stages(stagedir):
         '''Yield executable files in `stagedir`'''
@@ -12,7 +12,7 @@ class TestStageInfo(unittest.TestCase):
                 yield p
 
     @staticmethod
-    def get_stage_info(stage: Path) -> dict:
+    def get_module_info(stage: Path) -> dict:
         '''Return the STAGE_* variables from the given stage.'''
         # NOTE: This works for now, but stages should probably have some
         # standard way of dumping this info so we (and other higher-level
@@ -44,9 +44,9 @@ class TestStageInfo(unittest.TestCase):
         self.stages = list(self.iter_stages(self.stages_dir))
         self.assemblers = list(self.iter_stages(self.assemblers_dir))
 
-    def check_stage_info(self, stage):
+    def check_module_info(self, module):
         with self.subTest(check="STAGE_{INFO,DESC,OPTS} vars present"):
-            stage_info = self.get_stage_info(stage)
+            stage_info = self.get_module_info(module)
             self.assertIn("STAGE_DESC", stage_info)
             self.assertIn("STAGE_INFO", stage_info)
             self.assertIn("STAGE_OPTS", stage_info)
@@ -66,10 +66,10 @@ class TestStageInfo(unittest.TestCase):
             for prop in stage_opts.get("required", []):
                 self.assertIn(prop, stage_opts["properties"])
 
-    def test_stage_info(self):
+    def test_module_info(self):
         for stage in self.stages:
             with self.subTest(stage=stage.name):
-                self.check_stage_info(stage)
+                self.check_module_info(stage)
         for assembler in self.assemblers:
             with self.subTest(assembler=assembler.name):
-                self.check_stage_info(assembler)
+                self.check_module_info(assembler)
