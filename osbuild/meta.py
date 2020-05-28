@@ -326,15 +326,9 @@ class ModuleInfo:
         def targets(a):
             return [t.id for t in filter_type(a.targets, ast.Name)]
 
-        mapping = {
-            "Stage": "stages",
-            "Assembler": "assemblers"
-        }
-
-        if klass not in mapping:
+        base = cls.module_class_to_directory(klass)
+        if not base:
             raise ValueError(f"Unsupported type: {klass}")
-
-        base = mapping[klass]
 
         path = os.path.join(root, base, name)
         try:
@@ -348,6 +342,15 @@ class ModuleInfo:
         targets = [(t, a) for a in assigns for t in targets(a)]
         info = {k: value(v) for k, v in targets if k in names}
         return cls(klass, name, info)
+
+    @staticmethod
+    def module_class_to_directory(klass: str) -> str:
+        mapping = {
+            "Stage": "stages",
+            "Assembler": "assemblers"
+        }
+
+        return mapping.get(klass)
 
 
 class Index:
