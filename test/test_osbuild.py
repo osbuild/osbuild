@@ -78,11 +78,14 @@ class TestDescriptions(unittest.TestCase):
             })
 
     def test_moduleinfo(self):
-        def list_modules(base, klass):
-            return [(klass, f) for f in os.listdir(base) if f.startswith("org.osbuild")]
+        index = osbuild.meta.Index(os.curdir)
 
-        modules = list_modules("stages", "Stage")
-        modules += list_modules("assemblers", "Assembler")
+        modules = []
+        for klass in ("Stage", "Assembler"):
+            mods = index.list_modules_for_class(klass)
+            modules += [(klass, module) for module in mods]
+
+        self.assertTrue(modules)
 
         for module in modules:
             klass, name = module
