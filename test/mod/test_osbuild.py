@@ -1,3 +1,7 @@
+#
+# Basic tests for a collection of osbuild modules.
+#
+
 import json
 import os
 import unittest
@@ -224,7 +228,3 @@ class TestDescriptions(unittest.TestCase):
         self.assertEqual(len(lst), 1)  #  missing "filename"
         lst = res[".pipeline.assembler.options.compression"]
         self.assertEqual(len(lst), 1)  #  wrong compression method
-
-
-if __name__ == "__main__":
-    unittest.main()
