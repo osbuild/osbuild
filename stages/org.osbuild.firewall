@@ -1,11 +1,7 @@
 #!/usr/bin/python3
+"""
+Configure firewall
 
-import json
-import subprocess
-import sys
-
-STAGE_DESC = "Configure firewall"
-STAGE_INFO = """
 Configure firewalld using the `firewall-offline-cmd` from inside the target.
 
 This stage adds each of the given `ports` and `enabled_services` to the default
@@ -28,7 +24,13 @@ WARNING: this stage uses `chroot` to run `firewall-offline-cmd` inside the
 target tree, which means it may fail unexpectedly when the buildhost and target
 are different arches or OSes.
 """
-STAGE_OPTS = """
+
+
+import json
+import subprocess
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "ports": {

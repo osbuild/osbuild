@@ -1,17 +1,7 @@
 #!/usr/bin/python3
+"""
+Initialize the sysroot and pull and deploy an OStree commit
 
-import contextlib
-import json
-import os
-import sys
-import subprocess
-
-import osbuild.sources
-from osbuild.util import selinux
-
-
-STAGE_DESC = "Initialize the sysroot and pull and deploy an OStree commit"
-STAGE_INFO = """
 Initializes a clean ostree based system root, pulls the given `commit` and
 creates a deployment from it using `osname` as the new stateroot (see [1]).
 
@@ -29,7 +19,19 @@ the sysroot and the deployments. Additional kernel options can be passed via
 
 [1] https://ostree.readthedocs.io/en/latest/manual/deployment/
 """
-STAGE_OPTS = """
+
+
+import contextlib
+import json
+import os
+import sys
+import subprocess
+
+import osbuild.sources
+from osbuild.util import selinux
+
+
+SCHEMA = """
 "required": ["commit", "osname", "rootfs"],
 "properties": {
   "commit": {

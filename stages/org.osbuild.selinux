@@ -1,12 +1,7 @@
 #!/usr/bin/python3
+"""
+Set SELinux file contexts
 
-import json
-import os
-import subprocess
-import sys
-
-STAGE_DESC = "Set SELinux file contexts"
-STAGE_INFO = """
 Sets correct SELinux labels for every file in the tree, according to the
 SELinux policy installed inside the tree.
 
@@ -23,7 +18,14 @@ This stage should run after all other stages that create (or move) files, since
 labels for newly-created files are determined by the host's SELinux policy and
 may not match the tree's policy.
 """
-STAGE_OPTS = """
+
+
+import json
+import os
+import subprocess
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["file_contexts"],
 "properties": {

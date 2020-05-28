@@ -1,11 +1,7 @@
 #!/usr/bin/python3
+"""
+Execute commands on first-boot
 
-import json
-import os
-import sys
-
-STAGE_DESC = "Execute commands on first-boot"
-STAGE_INFO = """
 Sequentially execute a list of commands on first-boot / instantiation.
 
 This stage uses a logic similar to systemd's first-boot to execute a given
@@ -18,7 +14,13 @@ before executing the given commands.
 If the flag-file cannot be removed, the service fails without executing
 any further first-boot commands.
 """
-STAGE_OPTS = """
+
+
+import json
+import os
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["commands"],
 "properties": {

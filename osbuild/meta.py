@@ -277,10 +277,9 @@ class ModuleInfo:
         self.name = name
         self.type = klass
 
-        opts = info.get("STAGE_OPTS") or ""
-        self.info = info.get("STAGE_INFO")
-        self.desc = info.get("STAGE_DESC")
-        self.opts = info.get("STAGE_OPTS")
+        opts = info.get("schema") or ""
+        self.info = info.get("info")
+        self.desc = info.get("desc")
         self.opts = json.loads("{" + opts + "}")
 
     @property
@@ -312,7 +311,7 @@ class ModuleInfo:
 
     @classmethod
     def load(cls, root, klass, name) -> Optional["ModuleInfo"]:
-        names = ['STAGE_INFO', 'STAGE_DESC', 'STAGE_OPTS']
+        names = ['SCHEMA']
 
         def value(a):
             v = a.value
@@ -338,9 +337,18 @@ class ModuleInfo:
             return None
 
         tree = ast.parse(data, name)
+
+        docstring = ast.get_docstring(tree)
+        doclist = docstring.split("\n")
+
         assigns = filter_type(tree.body, ast.Assign)
         targets = [(t, a) for a in assigns for t in targets(a)]
-        info = {k: value(v) for k, v in targets if k in names}
+        values = {k: value(v) for k, v in targets if k in names}
+        info = {
+            'schema': values.get("SCHEMA"),
+            'desc': doclist[0],
+            'info': "\n".join(doclist[1:])
+        }
         return cls(klass, name, info)
 
     @staticmethod

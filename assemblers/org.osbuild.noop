@@ -1,14 +1,16 @@
 #!/usr/bin/python3
+"""
+No-op assembler
+
+No-op assembler. Produces no output, just prints a JSON dump of its options
+and then exits.
+"""
+
 
 import json
 import sys
 
-STAGE_DESC = "No-op assembler"
-STAGE_INFO = """
-No-op assembler. Produces no output, just prints a JSON dump of its options
-and then exits.
-"""
-STAGE_OPTS = """
+SCHEMA = """
 "additionalProperties": false
 """
 def main(_tree, _output_dir, options):

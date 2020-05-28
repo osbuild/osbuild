@@ -1,16 +1,18 @@
 #!/usr/bin/python3
-import json
-import os
-import sys
+"""
+Configure the kernel command-line parameters
 
-STAGE_DESC = "Configure the kernel command-line parameters"
-STAGE_INFO = """
 Configures the kernel boot parameters, also known as the kernel
 command line.
 
 https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
 """
-STAGE_OPTS = """
+
+import json
+import os
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "root_fs_uuid": {

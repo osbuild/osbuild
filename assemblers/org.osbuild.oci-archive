@@ -1,18 +1,7 @@
 #!/usr/bin/python3
+"""
+Assemble an OCI image archive
 
-import datetime
-import json
-import os
-import subprocess
-import sys
-import tempfile
-
-
-DEFAULT_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-
-
-STAGE_DESC = "Assemble an OCI image archive"
-STAGE_INFO = """
 Assemble an Open Container Initiative[1] image[2] archive, i.e. a
 tarball whose contents is in the OCI image layout.
 
@@ -30,7 +19,20 @@ podman[3] with `podman pull oci-archive:<archive>`.
 [2] https://github.com/opencontainers/image-spec/
 [3] https://podman.io/
 """
-STAGE_OPTS = """
+
+
+import datetime
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+
+DEFAULT_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["architecture", "filename"],
 "properties": {

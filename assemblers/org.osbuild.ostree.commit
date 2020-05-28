@@ -1,16 +1,7 @@
 #!/usr/bin/python3
+"""
+Assemble a file system tree into a ostree commit
 
-import json
-import os
-import subprocess
-import sys
-import tempfile
-
-from osbuild.util import ostree
-
-
-STAGE_DESC = "Assemble a file system tree into a ostree commit"
-STAGE_INFO = """
 Takes a file system tree that is already conforming to the ostree
 system layout[1] and commits it to an archive repository.
 
@@ -26,7 +17,18 @@ in the build root.
 
 [1] https://ostree.readthedocs.io/en/stable/manual/adapting-existing/
 """
-STAGE_OPTS = """
+
+
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+from osbuild.util import ostree
+
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["ref"],
 "properties": {

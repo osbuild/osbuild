@@ -1,10 +1,7 @@
 #!/usr/bin/python3
+"""
+Create /etc/fstab entries for filesystems
 
-import json
-import sys
-
-STAGE_DESC = "Create /etc/fstab entries for filesystems"
-STAGE_INFO = """
 Create /etc/fstab entries for the given `filesystems`.
 
 Each filesystem item must have at least `uuid` or `label` and
@@ -12,7 +9,12 @@ a `path` (mount point).
 
 This stage replaces /etc/fstab, removing any existing entries.
 """
-STAGE_OPTS = """
+
+
+import json
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["filesystems"],
 "properties": {

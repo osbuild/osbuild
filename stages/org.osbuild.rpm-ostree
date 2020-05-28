@@ -1,15 +1,7 @@
 #!/usr/bin/python3
+"""
+Transforms the tree to an ostree layout
 
-import json
-import os
-import subprocess
-import sys
-
-from osbuild.util import ostree
-
-
-STAGE_DESC = "Transforms the tree to an ostree layout"
-STAGE_INFO = """
 Uses `rpm-ostree compose` to transform a "normal" file system tree into
 an OSTree conforming layout (see [1]). Among other things the main steps
 are:
@@ -37,7 +29,17 @@ human users need to be part of.
 [1] https://ostree.readthedocs.io/en/latest/manual/adapting-existing/
 [2] https://rpm-ostree.readthedocs.io/en/latest/manual/treefile/
 """
-STAGE_OPTS = """
+
+
+import json
+import os
+import subprocess
+import sys
+
+from osbuild.util import ostree
+
+
+SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "etc_group_members": {

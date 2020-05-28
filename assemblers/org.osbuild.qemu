@@ -1,18 +1,7 @@
 #!/usr/bin/python3
+"""
+Assemble a bootable partitioned disk image with qemu-img
 
-import contextlib
-import json
-import os
-import shutil
-import struct
-import subprocess
-import sys
-import tempfile
-from typing import List, BinaryIO
-import osbuild.remoteloop as remoteloop
-
-STAGE_DESC = "Assemble a bootable partitioned disk image with qemu-img"
-STAGE_INFO = """
 Assemble a bootable partitioned disk image using `qemu-img`.
 
 Creates a sparse partitioned disk image of type `pttype` of a given `size`,
@@ -29,7 +18,20 @@ sparse image into the format requested with the `fmt` option.
 Buildhost commands used: `truncate`, `mount`, `umount`, `sfdisk`,
 `grub2-mkimage`, `mkfs.ext4` or `mkfs.xfs`, `qemu-img`.
 """
-STAGE_OPTS = """
+
+
+import contextlib
+import json
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
+from typing import List, BinaryIO
+import osbuild.remoteloop as remoteloop
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["format", "filename", "ptuuid", "size"],
 "oneOf": [{

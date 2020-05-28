@@ -1,12 +1,7 @@
 #!/usr/bin/python3
+"""
+Set image's default keymap
 
-import json
-import subprocess
-import sys
-import os
-
-STAGE_DESC = "Set image's default keymap"
-STAGE_INFO = """
 Sets the default console keyboard layout to `keymap`, like 'us' or 'de-latin1'.
 
 Removes any existing /etc/vconsole.conf, then runs `systemd-firstboot` with the
@@ -14,7 +9,14 @@ Removes any existing /etc/vconsole.conf, then runs `systemd-firstboot` with the
 
 Valid keymaps are generally found in /lib/kbd/keymaps.
 """
-STAGE_OPTS = """
+
+
+import json
+import subprocess
+import sys
+import os
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["keymap"],
 "properties": {
