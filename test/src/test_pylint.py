@@ -2,6 +2,7 @@
 # Run `pylint` on all python sources.
 #
 
+import os
 import subprocess
 import unittest
 
@@ -17,13 +18,32 @@ class TestPylint(test.TestBase, unittest.TestCase):
         # modules we have.
         #
 
-        path = self.locate_test_checkout()
+        checkout = self.locate_test_checkout()
 
-        subprocess.run(f"find {path} -type f -name '*.py' | xargs pylint",
-                       shell=True, check=True)
-        subprocess.run("pylint"
-                       + f" {path}/assemblers/*"
-                       + f" {path}/runners/*"
-                       + f" {path}/sources/*"
-                       + f" {path}/stages/*",
-                       shell=True, check=True)
+        # Fetch list of checked-in files from git.
+        cwd = os.getcwd()
+        os.chdir(checkout)
+        files = subprocess.check_output(
+            [
+                "git",
+                "ls-tree",
+                "-rz",
+                "--full-tree",
+                "--name-only",
+                "HEAD",
+            ]
+        ).decode()
+        os.chdir(cwd)
+
+        # File list is separated by NULs, so split into array.
+        files = files.split('\x00')
+
+        # Filter out all our python files (i.e., all modules and files ending in *.py)
+        modules = ("assemblers/", "runners/", "sources/", "stages/")
+        files = filter(lambda p: p.endswith(".py") or p.startswith(modules), files)
+
+        # Append the checkout-path so all paths are absolute.
+        files = map(lambda p: os.path.join(checkout, p), files)
+
+        # Run pylint on all files.
+        subprocess.run(["pylint"] + list(files), check=True)
