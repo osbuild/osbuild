@@ -1,12 +1,7 @@
 #!/usr/bin/python3
+"""
+Fix paths in /boot/loader/entries
 
-import glob
-import json
-import re
-import sys
-
-STAGE_DESC = "Fix paths in /boot/loader/entries"
-STAGE_INFO = """
 Fixes paths in /boot/loader/entries that have incorrect paths for /boot.
 
 This happens because some boot loader config tools (e.g. grub2-mkrelpath)
@@ -21,7 +16,14 @@ By default it is `/boot`, i.e. assumes `/boot` is on the root file-system.
 
 This stage reads and (re)writes all .conf files in /boot/loader/entries.
 """
-STAGE_OPTS = """
+
+
+import glob
+import json
+import re
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "prefix": {

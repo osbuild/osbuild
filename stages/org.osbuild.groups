@@ -1,10 +1,7 @@
 #!/usr/bin/python3
-import json
-import subprocess
-import sys
+"""
+Create group accounts
 
-STAGE_DESC = "Create group accounts"
-STAGE_INFO = """
 Create group accounts, optionally assigning them static GIDs.
 
 Runs `groupadd` from the buildhost to create the groups listed in `groups`.
@@ -12,7 +9,12 @@ If no `gid` is given, `groupadd` will choose one.
 
 If the specified group name or GID is already in use, this stage will fail.
 """
-STAGE_OPTS = """
+
+import json
+import subprocess
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "groups": {

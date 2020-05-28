@@ -1,14 +1,7 @@
 #!/usr/bin/python3
+"""
+Assemble tree into a raw filesystem image
 
-import contextlib
-import json
-import os
-import subprocess
-import sys
-import osbuild.remoteloop as remoteloop
-
-STAGE_DESC = "Assemble tree into a raw filesystem image"
-STAGE_INFO = """
 Assemble the tree into a raw filesystem image named `filename`, with the UUID
 `root_fs_uuid`.
 
@@ -25,7 +18,16 @@ The filesystem UUID should be a standard (RFC4122) UUID, which you can
 generate with uuid.uuid4() in Python, `uuidgen(1)` in a shell script, or
 read from `/proc/sys/kernel/random/uuid` if your kernel provides it.
 """
-STAGE_OPTS = """
+
+
+import contextlib
+import json
+import os
+import subprocess
+import sys
+import osbuild.remoteloop as remoteloop
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["filename", "root_fs_uuid", "size"],
 "properties": {

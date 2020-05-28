@@ -1,12 +1,7 @@
 #!/usr/bin/python3
+"""
+Add or modify user accounts
 
-import json
-import subprocess
-import sys
-import os
-
-STAGE_DESC = "Add or modify user accounts"
-STAGE_INFO = """
 Add or modify user accounts inside the tree.
 
 WARNING: This stage uses chroot() to run the `useradd` or `usermod` binary
@@ -14,7 +9,14 @@ from inside the tree. This will fail for cross-arch builds and may fail or
 misbehave if the `usermod`/`useradd` binary inside the tree makes incorrect
 assumptions about its host system.
 """
-STAGE_OPTS = """
+
+
+import json
+import subprocess
+import sys
+import os
+
+SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "users": {

@@ -1,15 +1,17 @@
 #!/usr/bin/python3
+"""
+Configure the z Initial Program Loader (zipl)
+
+Configures `zipl` with a minimal config so it can be used in
+the assembler to write the bootmap and bootloader code.
+"""
+
 import json
 import os
 import sys
 
 
-STAGE_DESC = "Configure the z Initial Program Loader (zipl)"
-STAGE_INFO = """
-Configures `zipl` with a minimal config so it can be used in
-the assembler to write the bootmap and bootloader code.
-"""
-STAGE_OPTS = """
+SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "timeout": {

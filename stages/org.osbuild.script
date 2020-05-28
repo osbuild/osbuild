@@ -1,13 +1,7 @@
 #!/usr/bin/python3
+"""
+Run an arbitrary script inside the target tree
 
-import atexit
-import json
-import os
-import subprocess
-import sys
-
-STAGE_DESC = "Run an arbitrary script inside the target tree"
-STAGE_INFO = """
 Runs an arbitrary script inside the target tree.
 
 Writes the contents of the `script` item to `/osbuild-script`, sets the
@@ -19,12 +13,21 @@ WARNING: running code inside the tree is unsafe, unreliable, and generally
 discouraged. Using this stage may result in unexplained failures or other
 undefined behavior, and should only be done as a last resort.
 
-NOTE: if `script` does not start with a line like '#!/bin/bash\n', executing
+NOTE: if `script` does not start with a line like '#!/bin/bash
+', executing
 it will fail with ENOEXEC. Some `chroot` binaries will try to run the script
 through `/bin/sh` in that case, so it might still work, but that behavior is
 not guaranteed.
 """
-STAGE_OPTS = """
+
+
+import atexit
+import json
+import os
+import subprocess
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["script"],
 "properties": {

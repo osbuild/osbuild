@@ -1,17 +1,7 @@
 #!/usr/bin/python3
+"""
+Verify, and install RPM packages
 
-import contextlib
-import json
-import os
-import pathlib
-import subprocess
-import sys
-import tempfile
-
-import osbuild.sources
-
-STAGE_DESC = "Verify, and install RPM packages"
-STAGE_INFO = """
 Verify, and install RPM packages.
 
 `gpgkeys` should be an array of strings containing each GPG key to be used
@@ -33,7 +23,19 @@ Uses the following binaries from the host:
     * `sh`, `mkdir`, `mount`, `chmod` to prepare the target tree for `rpm`
     * `rpm` to install packages into the target tree
 """
-STAGE_OPTS = """
+
+
+import contextlib
+import json
+import os
+import pathlib
+import subprocess
+import sys
+import tempfile
+
+import osbuild.sources
+
+SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "gpgkeys": {

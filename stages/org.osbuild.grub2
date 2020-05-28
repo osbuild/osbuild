@@ -1,12 +1,7 @@
 #!/usr/bin/python3
+"""
+Configure GRUB2 bootloader and set boot options
 
-import json
-import os
-import shutil
-import sys
-
-STAGE_DESC = "Configure GRUB2 bootloader and set boot options"
-STAGE_INFO = """
 Configure the system to use GRUB2 as the bootloader, and set boot options.
 
 Sets the GRUB2 boot/root filesystem to `rootfs`. If a separated boot
@@ -41,7 +36,14 @@ and accompanying data can be installed from the built root via `uefi.install`.
 
 Both UEFI and Legacy can be specified at the same time.
 """
-STAGE_OPTS = """
+
+
+import json
+import os
+import shutil
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "oneOf": [{
   "required": ["root_fs_uuid"]

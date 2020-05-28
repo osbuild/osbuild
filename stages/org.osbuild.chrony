@@ -1,16 +1,18 @@
 #!/usr/bin/python3
-import json
-import sys
-import re
+"""
+Configure chrony to set system time from the network
 
-STAGE_DESC = "Configure chrony to set system time from the network"
-STAGE_INFO = """
 Configures `chrony` to set the system time from the given `timeservers`.
 
 Modifies /etc/chrony.conf, removing all "server" or "pool" lines and adding
 a "server" line for each server listed in `timeservers`.
 """
-STAGE_OPTS = """
+
+import json
+import sys
+import re
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["timeservers"],
 "properties": {

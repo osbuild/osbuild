@@ -1,11 +1,7 @@
 #!/usr/bin/python3
+"""
+Enable or disable systemd services
 
-import json
-import subprocess
-import sys
-
-STAGE_DESC = "Enable or disable systemd services"
-STAGE_INFO = """
 Enable or disable systemd units (service, socket, path, etc.)
 
 This stage runs `systemctl enable` for all `enabled_services` items, which may
@@ -15,7 +11,13 @@ items, which will delete _all_ symlinks to the named services.
 
 Uses `systemctl` from the buildhost.
 """
-STAGE_OPTS = """
+
+
+import json
+import subprocess
+import sys
+
+SCHEMA = """
 "additionalProperties": false,
 "required": ["enabled_services"],
 "properties": {

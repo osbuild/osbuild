@@ -1,14 +1,16 @@
 #!/usr/bin/python3
+"""
+Return an error
+
+Error stage. Return the given error. Useful for testing, debugging, and
+wasting time.
+"""
+
 
 import json
 import sys
 
-STAGE_DESC = "Return an error"
-STAGE_INFO = """
-Error stage. Return the given error. Useful for testing, debugging, and
-wasting time.
-"""
-STAGE_OPTS = """
+SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "returncode": {

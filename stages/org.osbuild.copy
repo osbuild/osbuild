@@ -1,16 +1,7 @@
 #!/usr/bin/python3
+"""
+Copy files from a source to the tree
 
-import json
-import os
-import sys
-import subprocess
-import tempfile
-
-import osbuild.sources
-
-
-STAGE_DESC = "Copy files from a source to the tree"
-STAGE_INFO = """
 Copies files obtained via a `source` to the tree. Multiple files or
 directories can be copied by specifying multiple entries in `paths`.
 If no paths are specified the whole contents of `source` is copied.
@@ -25,7 +16,18 @@ Supported sources are currently:
    are supported.
 
 """
-STAGE_OPTS = """
+
+
+import json
+import os
+import sys
+import subprocess
+import tempfile
+
+import osbuild.sources
+
+
+SCHEMA = """
 "additionalProperties": false,
 "definitions": {
   "source-archive": {
