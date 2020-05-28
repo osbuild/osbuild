@@ -46,25 +46,3 @@ jobs:
       run: pip install jsonschema
     - name: "Run Assembler Tests"
       run: sudo env "PATH=$PATH" python3 -m unittest -v test.test_assemblers
-
-  stage_tests:
-    name: "Stage Tests"
-    runs-on: ubuntu-latest
-    steps:
-    - name: "Clone Repository"
-      uses: actions/checkout@v2
-    - name: "Install Dependencies"
-      run: |
-        sudo apt-get update
-        sudo apt-get -y install \
-          systemd-container \
-          tar \
-          yum
-    - name: "Set up Python"
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: Install Python Packages
-      run: pip install jsonschema
-    - name: "Run Stage Tests"
-      run: sudo env "PATH=$PATH" python3 -m unittest -v test.test_stages

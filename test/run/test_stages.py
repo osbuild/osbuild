@@ -1,3 +1,7 @@
+#
+# Runtime tests for the individual stages.
+#
+
 import difflib
 import json
 import os
@@ -5,10 +9,12 @@ import pprint
 import tempfile
 import unittest
 
-from . import test
+from .. import test
 
 
-class TestDescriptions(test.TestBase):
+@unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+@unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
+class TestStages(test.TestBase):
 
     def assertTreeDiffsEqual(self, tree_diff1, tree_diff2):
         """
@@ -113,19 +119,8 @@ class TestDescriptions(test.TestBase):
 
             self.assertTreeDiffsEqual(expected_diff, actual_diff)
 
-
-def generate_test_case(path):
-    @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
-    def test_case(self):
-        self.run_stage_test(path)
-
-    return test_case
-
-
-def init_tests():
-    test_dir = 'test/stages_tests'
-    for name in os.listdir(test_dir):
-        setattr(TestDescriptions, f"test_{name}", generate_test_case(f"{test_dir}/{name}"))
-
-
-init_tests()
+    def test_stages(self):
+        path = os.path.join(self.locate_test_data(), "stages")
+        for name in os.listdir(path):
+            with self.subTest(stage=name):
+                self.run_stage_test(os.path.join(path, name))
