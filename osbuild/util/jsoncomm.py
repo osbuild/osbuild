@@ -299,7 +299,7 @@ class Socket(contextlib.AbstractContextManager):
 
         serialized = json.dumps(payload).encode()
         cmsg = []
-        if fds and len(fds) > 0:
+        if fds:
             cmsg.append((socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds)))
 
         n = self._socket.sendmsg([serialized], cmsg, 0, destination)
