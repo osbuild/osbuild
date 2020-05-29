@@ -6,6 +6,7 @@ import contextlib
 import glob
 import hashlib
 import json
+import os
 import subprocess
 import tempfile
 import time
@@ -14,6 +15,7 @@ import unittest
 from .. import test
 
 
+@unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
 class TestAssemblers(test.TestBase):
     @classmethod
     def setUpClass(cls):
@@ -26,7 +28,8 @@ class TestAssemblers(test.TestBase):
     @contextlib.contextmanager
     def run_assembler(self, name, options, output_path):
         with self.osbuild as osb:
-            with open("test/pipelines/f30-base.json") as f:
+            with open(os.path.join(self.locate_test_data(),
+                                   "manifests/fedora-boot.json")) as f:
                 manifest = json.load(f)
             manifest["pipeline"] = dict(
                 manifest["pipeline"],
@@ -122,7 +125,7 @@ class TestAssemblers(test.TestBase):
                                                   boot_partition=1)
                         self.assertGRUB2(device,
                                          "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
-                                         "18031c9465e3f9ccb9aeb9c8e59dec6b82e91376e2628c8100b5461af62ad67c",
+                                         "9b31c8fbc59602a38582988bf91c3948ae9c6f2a231ab505ea63a7005e302147",
                                          1024 * 1024)
                         self.assertFilesystem(device + "p1", options["root_fs_uuid"], "ext4", tree)
 
