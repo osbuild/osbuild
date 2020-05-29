@@ -11,17 +11,6 @@ env:
   PYTHONUNBUFFERED: 1
 
 jobs:
-  runtime_tests:
-    name: "Runtime Pipeline Execution Tests"
-    runs-on: ubuntu-latest
-    steps:
-    - name: "Clone Repository"
-      uses: actions/checkout@v2
-    - name: "Run Pipeline Tests"
-      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
-      with:
-        run: make test-runtime
-
   assembler_tests:
     name: "Assembler Tests"
     runs-on: ubuntu-latest

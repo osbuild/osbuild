@@ -132,7 +132,7 @@ $(SRCDIR)/test/data/manifests/fedora-boot.json: $(SRCDIR)/test/data/manifests/f3
 test-data: $(TEST_MANIFESTS_GEN)
 
 .PHONY: test-units
-test-module:
+test-mod:
 	@$(PYTHON3) -m unittest \
 		discover \
 			--start=$(SRCDIR)/test/mod \
@@ -140,7 +140,7 @@ test-module:
 			-v
 
 .PHONY: test-runtime
-test-runtime:
+test-run:
 	@[[ $${EUID} -eq 0 ]] || (echo "Error: Root privileges required!"; exit 1)
 	@$(PYTHON3) -m unittest \
 		discover \

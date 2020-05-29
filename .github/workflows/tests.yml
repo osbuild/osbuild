@@ -23,7 +23,18 @@ jobs:
     - name: "Run Module Unittests"
       uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
       with:
-        run: make test-module
+        run: make test-mod
+
+  runtime_tests:
+    name: "Runtime Pipeline Execution Tests"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v2
+    - name: "Run Pipeline Tests"
+      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
+      with:
+        run: make test-run
 
   documentation:
     name: "📚 Documentation"
