@@ -1,4 +1,17 @@
 #!/usr/bin/python3
+"""
+Source for downloading files from URLs.
+
+The files are indexed by their content hash. Can download files
+that require secrets. The only secret provider currently supported
+is `org.osbuild.rhsm` for downloading Red Hat content that requires
+a subscriptions.
+
+Internally use curl to download the files; the files are cached in
+an internal cache. Multiple parallel connections are used to speed
+up the download.
+"""
+
 
 import concurrent.futures
 import glob
@@ -8,6 +21,47 @@ import os
 import subprocess
 import sys
 import tempfile
+
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "urls": {
+    "description": "The files to fetch indexed their content checksum",
+    "type": "object",
+    "additionalProperties": false,
+    "patternProperties": {
+      "(md5|sha1|sha256|sha384|sha512):[0-9a-f]{5,64}": {
+        "oneOf": [{
+          "type": "string",
+          "description": "URL to download the file from."
+        }, {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "URL to download the file from."
+            },
+            "secrets": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the secrets provider."
+                }
+              }
+            }
+          }
+        }]
+      }
+    }
+  }
+}
+"""
 
 
 def verify_checksum(filename, checksum):
