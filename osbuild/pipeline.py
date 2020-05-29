@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import tempfile
+from typing import Optional
 
 from .api import API
 from . import buildroot
@@ -283,7 +284,7 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def assemble(self, object_store, build_tree, tree, interactive, libdir, output_directory=None):
+    def assemble(self, object_store, build_tree, tree, interactive, libdir, output_directory: Optional[str]):
         results = {"success": True}
 
         if not self.assembler:
