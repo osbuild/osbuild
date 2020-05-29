@@ -3,38 +3,32 @@ name: Tests
 on: [pull_request, push]
 
 jobs:
-  source_tests:
-    name: "Source Tests"
+  test_suite:
+    name: "Test Suite"
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+        - "test.mod"
+        - "test.run.test_assemblers"
+        - "test.run.test_boot"
+        - "test.run.test_noop"
+        - "test.run.test_sources"
+        - "test.run.test_stages"
+        - "test.src"
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v2
-    - name: "Run Source Tests"
-      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
+    - name: "Run Tests"
+      uses: osbuild/containers/src/actions/ghci-osbuild@v1
       with:
-        run: make test-src
-
-  module_tests:
-    name: "Module Unittests"
-    runs-on: ubuntu-latest
-    steps:
-    - name: "Clone Repository"
-      uses: actions/checkout@v2
-    - name: "Run Module Unittests"
-      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
-      with:
-        run: make test-mod
-
-  runtime_tests:
-    name: "Runtime Pipeline Execution Tests"
-    runs-on: ubuntu-latest
-    steps:
-    - name: "Clone Repository"
-      uses: actions/checkout@v2
-    - name: "Run Pipeline Tests"
-      uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
-      with:
-        run: make test-run
+        run: |
+          python3 -m unittest discover \
+            -k "${{ matrix.test }}" \
+            -s "test" \
+            -t . \
+            -v
 
   documentation:
     name: "📚 Documentation"
