@@ -1,10 +1,10 @@
 """Introspection and validation for osbuild
 
 This module contains utilities that help to introspect parts
-that constitute the inner parts of osbuild, i.e. its stages
-and assembler (which is also considered a type of stage in
-this context). Additionally, it provides classes and functions
-to do schema validation of OSBuild manifests and stage options.
+that constitute the inner parts of osbuild, i.e. its stages,
+assemblers and sources. Additionally, it provides classes and
+functions to do schema validation of OSBuild manifests and
+module options.
 
 A central `Index` class can be used to obtain stage and schema
 information. For the former a `ModuleInfo` class is returned via
@@ -264,7 +264,7 @@ class ModuleInfo:
     """Meta information about a stage
 
     Represents the information about a osbuild pipeline
-    modules, like a stage or an assembler.
+    modules, like a stage, assembler or source.
     Contains the short description (`desc`), a longer
     description (`info`) and the JSON schema of valid options
     (`opts`). The `validate` method will check a the options
@@ -288,15 +288,19 @@ class ModuleInfo:
             "title": f"Pipeline {self.type}",
             "type": "object",
             "additionalProperties": False,
-            "properties": {
+        }
+
+        if self.type in ("Stage", "Assembler"):
+            schema["properties"] = {
                 "name": {"type": "string"},
                 "options": {
                     "type": "object",
                     **self.opts
                 }
-            },
-            "required": ["name"]
-        }
+            }
+            schema["required"] = ["name"]
+        else:
+            schema.update(self.opts)
 
         # if there are is a definitions node, it needs to be at
         # the top level schema node, since the schema inside the
@@ -355,7 +359,8 @@ class ModuleInfo:
     def module_class_to_directory(klass: str) -> str:
         mapping = {
             "Stage": "stages",
-            "Assembler": "assemblers"
+            "Assembler": "assemblers",
+            "Source": "sources"
         }
 
         return mapping.get(klass)
@@ -413,7 +418,7 @@ class Index:
             with contextlib.suppress(FileNotFoundError):
                 with open(path, "r") as f:
                     schema = json.load(f)
-        elif klass in ["Stage", "Assembler"]:
+        elif klass in ["Stage", "Assembler", "Source"]:
             info = self.get_module_info(klass, name)
             if info:
                 schema = info.schema
