@@ -78,8 +78,8 @@ def main(tree, output_dir, options, loop_client):
     size = options["size"]
     fs_type = options.get("fs_type", "ext4")
 
-    image = f"/var/tmp/osbuild-image.raw"
-    mountpoint = f"/tmp/osbuild-mnt"
+    image = "/var/tmp/osbuild-image.raw"
+    mountpoint = "/tmp/osbuild-mnt"
 
     subprocess.run(["truncate", "--size", str(size), image], check=True)
 

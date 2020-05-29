@@ -132,7 +132,7 @@ SCHEMA = """
 
 def ostree(*args, _input=None, **kwargs):
     args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
-    print(f"ostree " + " ".join(args), file=sys.stderr)
+    print("ostree " + " ".join(args), file=sys.stderr)
     subprocess.run(["ostree"] + args,
                    encoding="utf-8",
                    stdout=sys.stderr,
