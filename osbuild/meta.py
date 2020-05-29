@@ -473,4 +473,11 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
         res = schema.validate(asm)
         result.merge(res, path=["pipeline", "assembler"])
 
+    # sources
+    sources = manifest.get("sources", {})
+    for name, source in sources.items():
+        schema = index.get_schema("Source", name)
+        res = schema.validate(source)
+        result.merge(res, path=["sources", name])
+
     return result
