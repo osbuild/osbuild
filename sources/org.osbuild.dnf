@@ -1,7 +1,16 @@
 #!/usr/bin/python3
+"""
+Download packages via dnf
+"""
+
 
 import json
 import sys
+
+
+SCHEMA = """
+"additionalProperties": true
+"""
 
 
 def main(options, sources, secrets):
