@@ -1,3 +1,6 @@
+#
+# Runtime tests for the individual assemblers.
+#
 
 import contextlib
 import glob
@@ -8,7 +11,7 @@ import tempfile
 import time
 import unittest
 
-from . import test
+from .. import test
 
 
 class TestAssemblers(test.TestBase):
