@@ -1,0 +1,230 @@
+#!/usr/bin/python3
+"""
+Assemble a bootable iso
+"""
+
+import contextlib
+import datetime
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import osbuild.remoteloop as remoteloop
+
+
+SCHEMA = """
+"additionalProperties": true
+"""
+
+
+LORAX_TEMPLATES = "/usr/share/lorax/templates.d/99-generic"
+
+
+@contextlib.contextmanager
+def mount(source, dest):
+    subprocess.run(["mount", source, dest], check=True)
+    try:
+        yield dest
+    finally:
+        subprocess.run(["umount", "-R", dest], check=True)
+
+
+def install(src, dst, mode=None):
+    shutil.copyfile(src, dst)
+    if mode:
+        os.chmod(dst, mode)
+
+
+def replace(target, patterns):
+    finder = [(re.compile(p), s) for p, s in patterns]
+    newfile = target + ".replace"
+
+    with open(target, "r") as i, open(newfile, "w") as o:
+        for line in i:
+            for p, s in finder:
+                line = p.sub(s, line)
+            o.write(line)
+    os.rename(newfile, target)
+
+
+def make_rootfs(tree, image, size, workdir, loop_client):
+    with open(image, "w") as f:
+        os.ftruncate(f.fileno(), size)
+
+    root = os.path.join(workdir, "rootfs")
+    os.makedirs(root)
+
+    with loop_client.device(image, 0, size) as dev:
+        subprocess.run(["mkfs.ext4",
+                        "-L", "Anaconda",
+                        "-b", "4096",
+                        "-m", "0",
+                        dev],
+                       input="y", encoding='utf-8', check=True)
+
+        with mount(dev, root):
+            print("copying tree")
+            subprocess.run(["cp", "-a", f"{tree}/.", root],
+                           check=True)
+            print("done")
+
+
+def write_discinfo(tree, release, arch):
+    """Write a `.discinfo` file to the root of the `tree`"""
+    timestamp = time.time()
+    with open(f"{tree}/.discinfo", "w") as f:
+        f.write(f"{timestamp}\n")
+        f.write(f"{release}\n")
+        f.write(f"{arch}\n")
+
+
+# pylint: disable=too-many-statements
+def main(tree, output_dir, options, workdir, loop_client):
+    arch = options["architecture"]
+    name = options["name"]
+    filename = options["filename"]
+    version = options["version"]
+    kernel = options["kernel"]
+
+    # make the release string
+    now = datetime.datetime.now()
+    release = now.strftime("%Y%m%d.0")
+
+    # be smarter about this?
+    isolabel = f"{name}-{arch}-{version}"
+
+    # input directories
+    configdir = os.path.join(LORAX_TEMPLATES, "config_files", "x86")
+
+    # output directory
+    root = os.path.join(workdir, "iso")
+
+    imgdir = os.path.join(root, "images")
+    pxedir = os.path.join(imgdir, "pxeboot")
+
+    os.makedirs(root)
+    os.makedirs(imgdir)
+
+    # boot loader
+    isolinux = os.path.join(root, "isolinux")
+    os.makedirs(isolinux)
+
+    isolinuxfiles = [("isolinux.bin", 0o755),
+                     ("ldlinux.c32", 0o755),
+                     ("libcom32.c32", 0o755),
+                     ("libutil.c32", 0o755),
+                     ("vesamenu.c32", 0o755)]
+    for target, mode in isolinuxfiles:
+        src = os.path.join("/usr/share/syslinux/", target)
+        dst = os.path.join(isolinux, target)
+        install(src, dst, mode)
+
+    install(os.path.join("/usr/share/syslinux/isolinux-debug.bin"),
+            os.path.join(isolinux, "isolinux.bin"),
+            0o755)
+
+    for target in ["isolinux.cfg", "boot.msg", "grub.conf"]:
+        src = os.path.join(configdir, target)
+        dst = os.path.join(isolinux, target)
+        install(src, dst)
+
+        #  console=tty0 console=ttyS0 systemd.log_target=console systemd.journald.forward_to_console=1
+        replace(dst, [
+            ("@VERSION@", version),
+            ("@PRODUCT@", name),
+            ("@ROOT@", f"inst.stage2=hd:LABEL={isolabel or 'udev'}")
+        ])
+
+    src = os.path.join(tree, "usr/share/anaconda/boot/syslinux-splash.png")
+    dst = os.path.join(isolinux, "splash.png")
+    install(src, dst)
+
+    # install the kernel
+    os.makedirs(pxedir)
+
+    install(os.path.join(tree, "boot", f"vmlinuz-{kernel}"),
+            os.path.join(pxedir, "vmlinuz"))
+    os.link(os.path.join(pxedir, "vmlinuz"),
+            os.path.join(isolinux, "vmlinuz"))
+
+    install(os.path.join(tree, "boot", f"initramfs-{kernel}.img"),
+            os.path.join(pxedir, "initrd.img"))
+    os.link(os.path.join(pxedir, "initrd.img"),
+            os.path.join(isolinux, "initrd.img"))
+
+    # install.img
+    #   rootfs.img
+    liveos_work = os.path.join(workdir, "liveos")
+    liveos = os.path.join(liveos_work, "LiveOS")
+    os.makedirs(liveos)
+
+    rootfs_size = 3 * (1024*1024*1024) # GB
+    rootfs = os.path.join(liveos, "rootfs.img")
+    make_rootfs(tree, rootfs, rootfs_size, workdir, loop_client)
+
+    installimg = os.path.join(imgdir, "install.img")
+    subprocess.run(["mksquashfs", liveos_work, installimg],
+                   check=True)
+
+    # .discinfo
+    write_discinfo(root, release, arch)
+
+    # finally, build the iso
+
+    cmd = [
+        "/usr/bin/xorrisofs"
+    ]
+
+    cmd += [
+        "-verbose",
+        "-V", isolabel,
+    ]
+
+    cmd += [
+        "-b", f"isolinux/isolinux.bin",
+        "-c", f"isolinux/boot.cat",
+        "-no-emul-boot",
+        "-boot-load-size", "4",
+        "-boot-info-table"
+    ]
+
+    cmd += [
+        "-rock", "-joliet"
+    ]
+
+    # efi
+    #cmd += [
+    #    "-eltorito-alt-boot",
+    #    "-e", "images/efiboot.img",
+    #    "-no-emul-boot"
+    #]
+
+    cmd += [
+        "-isohybrid-mbr", "/usr/share/syslinux/isohdpfx.bin",
+    ]
+
+    cmd += [
+        '-o', os.path.join(output_dir, filename),
+        root
+    ]
+
+    print(cmd)
+    subprocess.run(cmd,
+                   cwd=workdir,
+                   check=True)
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    _output_dir = args["output_dir"]
+    with tempfile.TemporaryDirectory(dir=_output_dir) as _workdir:
+        ret = main(args["tree"],
+                   _output_dir,
+                   args["options"],
+                   _workdir,
+                   remoteloop.LoopClient("/run/osbuild/api/remoteloop"))
+    sys.exit(ret)
