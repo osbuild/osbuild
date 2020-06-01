@@ -82,19 +82,19 @@ def getpwnam(root, name):
 
 def useradd(root, name, uid=None, gid=None, groups=None, description=None, home=None, shell=None, password=None):
     arguments = []
-    if uid:
-        arguments += ["--uid", uid]
-    if gid:
-        arguments += ["--gid", gid]
+    if uid is not None:
+        arguments += ["--uid", str(uid)]
+    if gid is not None:
+        arguments += ["--gid", str(gid)]
     if groups:
         arguments += ["--groups", ",".join(groups)]
-    if description:
+    if description is not None:
         arguments += ["--comment", description]
     if home:
         arguments += ["--home-dir", home]
     if shell:
         arguments += ["--shell", shell]
-    if password:
+    if password is not None:
         arguments += ["--password", password]
 
     subprocess.run(["chroot", root, "useradd", *arguments, name], check=True)
@@ -102,17 +102,17 @@ def useradd(root, name, uid=None, gid=None, groups=None, description=None, home=
 
 def usermod(root, name, gid=None, groups=None, description=None, home=None, shell=None, password=None):
     arguments = []
-    if gid:
+    if gid is not None:
         arguments += ["--gid", gid]
     if groups:
         arguments += ["--groups", ",".join(groups)]
-    if description:
+    if description is not None:
         arguments += ["--comment", description]
     if home:
         arguments += ["--home", home]
     if shell:
         arguments += ["--shell", shell]
-    if password:
+    if password is not None:
         arguments += ["--password", password]
 
     if arguments:
@@ -148,8 +148,8 @@ def main(tree, options):
         password = user_options.get("password")
 
         passwd = getpwnam(tree, name)
-        if passwd:
-            if uid:
+        if passwd is not None:
+            if uid is not None:
                 print(f"Error: can't set uid of existing user '{name}'")
                 return 1
             usermod(tree, name, gid, groups, description, home, shell, password)
