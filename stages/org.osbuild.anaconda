@@ -1,0 +1,202 @@
+#!/usr/bin/python3
+"""
+Prepare system for anaconda
+
+TBD
+"""
+
+
+import json
+import os
+import re
+import subprocess
+import sys
+import shutil
+
+import osbuild.sources
+
+
+SCHEMA = """
+"additionalProperties": true,
+"properties": {
+  "checksum": {
+    "type": "string",
+    "description": "The kickstart file to include (checksum)"
+  },
+  "ostree": {
+    "description": "OSTree payload to include",
+    "type": "object",
+    "required": ["commit", "ref"],
+    "additionalProperties": false,
+    "properties": {
+      "commit": {
+        "type": "string",
+         "description": "The checksum of the commit to include."
+      },
+      "ref": {
+        "type": "string",
+        "description": "The reference to create for the commit."
+      }
+    }
+  }
+}
+"""
+
+
+LORAX_TEMPLATES = "/usr/share/lorax/templates.d/99-generic"
+
+
+def install(src, dst, *, mode=None, root=None, tree=None):
+    if root:
+        src = f"{root}/{src}"
+    if tree:
+        dst = f"{tree}/{dst}"
+
+    print(f"install {src} -> {dst}")
+    shutil.copy2(src, dst)
+    if mode:
+        os.chmod(dst, mode)
+
+
+def move(src, dst, *, root=None, tree=None):
+    if root:
+        src = f"{root}/{src}"
+    if tree:
+        dst = f"{tree}/{dst}"
+
+    print(f"move {src} -> {dst}")
+    shutil.move(src, dst)
+
+
+def symlink(src, dst, *, root=None, tree=None):
+    if root:
+        src = f"{root}/{src}"
+    if tree:
+        dst = f"{tree}/{dst}"
+    print(f"symlink {dst} -> {src}")
+    os.symlink(src, dst)
+
+
+def replace(target, patterns):
+    finder = [(re.compile(p), s) for p, s in patterns]
+    newfile = target + ".replace"
+
+    with open(target, "r") as i, open(newfile, "w") as o:
+        for line in i:
+            for p, s in finder:
+                line = p.sub(s, line)
+            o.write(line)
+    os.rename(newfile, target)
+
+
+def ostree(*args, _input=None, _stdout=sys.stderr, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=_stdout,
+                   input=_input,
+                   check=True)
+
+
+def main(tree, sources, options):
+    ostree_options = options.get("ostree", {})
+    kickstart = options.get("kickstart")
+
+    configdir = os.path.join(LORAX_TEMPLATES, "config_files", "common")
+
+    move("/usr/share/anaconda/restart-anaconda", "/usr/bin", tree=tree, root=tree)
+    for stub in ("list-harddrives",): # "raidstart", "raidstop" do not exist
+        move(f"/usr/share/anaconda/{stub}-stub", f"/usr/bin/{stub}",
+             tree=tree, root=tree)
+
+    move("/etc/yum.repos.d", "/etc/anaconda.repos.d",
+         root=tree, tree=tree)
+
+    for service in ["fedora-configure.service",
+                    "fedora-loadmodules.service",
+                    "fedora-autorelabel.service",
+                    "fedora-autorelabel-mark.service",
+                    "fedora-wait-storage.service",
+                    "media.mount",
+                    "systemd-tmpfiles-clean.service",
+                    "systemd-tmpfiles-clean.timer",
+                    "ldconfig.service"]:
+        subprocess.run(["systemctl", "--root", tree, "mask", service],
+                       check=True)
+
+    ## install some basic configuration files
+    os.makedirs(os.path.join(tree, "etc", "ssh"), exist_ok=True)
+    install("sshd_config.anaconda", "/etc/ssh/sshd_config.anaconda",
+            tree=tree, root=configdir)
+
+    os.makedirs("{tree}/etc/NetworkManager/conf.d", exist_ok=True)
+    install("91-anaconda-autoconnect-slaves.conf", "/etc/NetworkManager/conf.d",
+            root=configdir, tree=tree)
+    install("vconsole.conf", "/etc", root=configdir, tree=tree)
+    install("92-anaconda-loglevel-debug.conf", "/etc/NetworkManager/conf.d",
+            root=configdir, tree=tree)
+    install("spice-vdagentd", "/etc/sysconfig",
+            root=configdir, tree=tree)
+    install("sysctl.conf", "/etc/sysctl.d/anaconda.conf",
+            root=configdir, tree=tree)
+    install("profile", "root/.profile",
+            root=configdir, tree=tree)
+
+    os.unlink(f"{tree}/lib/systemd/system/autovt@.service")
+    symlink("anaconda-shell@.service", "/lib/systemd/system/autovt@.service",
+            tree=tree)
+
+    replace(f"{tree}/etc/systemd/logind.conf",
+            [("#ReserveVT=6", "ReserveVT=2")])
+
+    os.makedirs(os.path.join(tree, "etc/pam.d"), exist_ok=True)
+    for f in ("sshd", "login", "remote"):
+        install("pam.sshd", "/etc/pam.d/f", tree=tree, root=configdir)
+
+    # SELinux to permissive mode
+    # actually required otherwise anaconda.service does not start
+    with open(f"{tree}/etc/selinux/config", "w") as f:
+        f.write("SELINUX=permissive\n"
+                "SELINUXTYPE=targeted\n")
+
+    os.unlink(f"{tree}/usr/sbin/auditd")
+    move("/usr/libexec/anaconda/auditd", "/usr/sbin",
+         root=tree, tree=tree)
+
+    symlink("/lib/modules", "/modules", tree=tree)
+    symlink("/lib/firmware", "/firmware", tree=tree)
+    symlink("../run/install", "/mnt/install", tree=tree)
+
+    # payload
+    if ostree_options:
+        commit = ostree_options["commit"]
+        ref = ostree_options["ref"]
+        os.makedirs(f"{tree}/ostree")
+        repo = f"{tree}/ostree/repo"
+        ostree("init", mode="archive-z2", repo=repo)
+
+        print(f"Fetching ostree commit {commit}")
+        osbuild.sources.get("org.osbuild.ostree", [commit])
+
+        source_repo = f"{sources}/org.osbuild.ostree/repo"
+
+        ostree("pull-local", source_repo, commit,
+               repo=f"{tree}/ostree/repo")
+
+        ostree("refs", "--create", ref, commit,
+               repo=f"{tree}/ostree/repo")
+
+    # the default kickstart file
+    if kickstart:
+        osbuild.sources.get("org.osbuild.files", [kickstart])
+        install(kickstart, "/usr/share/anaconda/interactive-defaults.ks",
+                root=f"{sources}/org.osbuild.files",
+                tree=tree)
+
+
+if __name__ == '__main__':
+    stage_args = json.load(sys.stdin)
+    r = main(stage_args["tree"],
+             stage_args["sources"],
+             stage_args["options"])
+    sys.exit(r)
