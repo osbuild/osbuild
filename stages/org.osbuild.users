@@ -83,7 +83,7 @@ def getpwnam(root, name):
 def useradd(root, name, uid=None, gid=None, groups=None, description=None, home=None, shell=None, password=None):
     arguments = []
     if uid is not None:
-        arguments += ["--uid", str(uid)]
+        arguments += ["--uid", str(uid), "-o"]
     if gid is not None:
         arguments += ["--gid", str(gid)]
     if groups:
