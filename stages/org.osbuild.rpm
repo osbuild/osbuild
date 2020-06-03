@@ -7,16 +7,14 @@ Verify, and install RPM packages.
 `gpgkeys` should be an array of strings containing each GPG key to be used
 to verify the packages.
 
-`packages` is an array of RPM checksums. Specifically, the content hash of
-the rpms, not the chucksums found in the rpm header.
+`packages` is an array of objects representing RPMs. Each RPM is identified by
+its checksums. Specifically, the content hash of the rpm, not the checksums
+found in the rpm header. The `check_gpg` property indicates that the RPM's
+must be signed by one of the given GPG keys, and that the transaction should
+fail otherwise.
 
 This stage will fail if any of the packages can't be found, or if any
-RPM has a signature or digest that cannot be verified.
-
-NOTE: this stage currently does _not_ fail if a package is unsigned, only if
-the package is signed but the signature cannot be verified. A future version
-of this stage will fail on unsigned packages by default, but may support a
-flag to skip signature checks for packages that are known to be unsigned.
+RPM fails signature verification.
 
 Uses the following binaries from the host:
     * `rpmkeys` to import keys and to verify signatures for each package
@@ -47,16 +45,47 @@ SCHEMA = """
     "description": "Array of RPM content hashes",
     "type": "array",
     "items": {
-      "type": "string",
-      "description": ".rpm file checksum, prefixed with 'md5:', 'sha1:', 'sha256:', 'sha384:', or 'sha512:', indicating the algorithm used."
+      "oneOf": [
+        {
+          "type": "string",
+          "description": ".rpm file checksum, prefixed with 'md5:', 'sha1:', 'sha256:', 'sha384:', or 'sha512:', indicating the algorithm used."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["checksum"],
+          "properties": {
+            "checksum": {
+              "type": "string",
+              "description": ".rpm file checksum, prefixed with 'md5:', 'sha1:', 'sha256:', 'sha384:', or 'sha512:', indicating the algorithm used."
+            },
+            "check_gpg": {
+              "type": "boolean",
+              "description": "Whether the GPG signatures of the RPM should be verified.",
+              "default": false
+            }
+          }
+        }
+      ]
     }
   }
 }
 """
 
 
+def packages_from_legacy(legacy):
+    packages = []
+    for package in legacy:
+        if isinstance(package, dict):
+            packages.append(package)
+        else:
+            packages.append({"checksum": package, "check_gpg": False})
+    return packages
+
+
 def main(tree, sources, options):
-    packages = options.get("packages", [])
+    packages = packages_from_legacy(options.get("packages", []))
+    checksums = [p["checksum"] for p in packages]
     for key in options.get("gpgkeys", []):
         with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
             keyfile.write(key)
@@ -69,7 +98,15 @@ def main(tree, sources, options):
         print("imported gpg key")
 
     print("fetching sources")
-    osbuild.sources.get("org.osbuild.files", packages)
+    osbuild.sources.get("org.osbuild.files", checksums)
+
+    for pkg in packages:
+        if pkg["check_gpg"]:
+            subprocess.run(
+                ["rpmkeys", "--checksig", pkg["checksum"]],
+                cwd=f"{sources}/org.osbuild.files",
+                stdout=subprocess.DEVNULL,
+                check=True)
 
     script = f"""
         set -e
@@ -92,15 +129,15 @@ def main(tree, sources, options):
     subprocess.run(["/bin/sh", "-c", script], check=True)
 
     with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
-        manifest.writelines(p+'\n' for p in packages)
+        manifest.writelines(c+'\n' for c in checksums)
         manifest.flush()
         subprocess.run([
             "rpm",
             "--verbose",
             "--root", tree,
-            # Make rpm require valid signatures & digests on packages.
-            # (see /usr/lib/rpm/macros for more info)
-            "--define", "_pkgverify_level all",
+            # The content hash of the rpms has been verified, default to not
+            # verifying again (see /usr/lib/rpm/macros for more info)
+            "--define", "_pkgverify_level none",
             "--install", manifest.name
         ], cwd=f"{sources}/org.osbuild.files", check=True)
 
