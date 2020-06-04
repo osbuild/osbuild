@@ -1,6 +1,6 @@
 %global         forgeurl https://github.com/osbuild/osbuild
 
-Version:        15
+Version:        16
 
 %forgemeta
 
