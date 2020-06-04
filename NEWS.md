@@ -1,5 +1,60 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 16:
+
+  * Support for ignition: a new `org.osbuild.ignition` stage has been
+    added together with a new option in the `org.osbuild.grub2` stage,
+    called `ignition`. When used together, a new variable for the
+    kernel command line, called `$ignition_firstboot`, will exist that
+    will trigger the run of `ignition` on the first boot of an image.
+
+  * A new `org.osbuild.copy` stage was added that can be used to copy
+    files and directories from an archive to the file system tree. The
+    archive will be fetched via the existing `org.osbuild.files` source.
+
+  * The result of the assembler will now not automatically be committed
+    to the store anymore, but only when requested via `--checkpoint`;
+    very much like it is already the case for the stages.
+
+  * The `tree_id` and `output_id` identifiers have been dropped from the
+    osbuild result. This reflects the policy that the internals of the
+    store are private. The `--output-directory` command line option can
+    be used to obtain the final artifact instead.
+
+  * The `org.osbuild.files` and `org.osbuild.ostree` sources have been
+    properly documented and the JSON schema for their options was added.
+    osbuild gained support for the validation of the source options in
+    the manifest. As a result the whole manifest is now validated.
+
+  * The GPG signature verification of RPMs in the `org.osbuild.rpm` stage
+    is now optional and opt-in. The GPG key can now also be provided per
+    package.
+
+  * The `org.osbuild.ostree` gained support for pre-populating `/var`
+    like it is done by anaconda.
+    Also its `rootfs` option is not required anymore, since in specific
+    cases, like when ignition is being used, the root file system is
+    identified by its label only.
+
+  * The common term for Stages, Assemblers and Sources shall from now on
+    be "module". Rename the `StageInfo` class to `ModuleInfo`.
+
+  * Small bug fixes, including to the org.osbuild.users stage, that now
+    allows the creation of users with `uid`/`gid`s that are `0` and
+    descriptions and passwords that are empty. The `org.osbuild.files`
+    source got a bug fix to allow the use of URL format but without
+    specifying the `secrets` key.
+
+  * Numerous small fixes throughout the source code to fix all `pylint`
+    warnings. These are now also enabled for the source checks.
+
+  * Lots of improvements to the test infrastructure and the CI.
+
+Contributions from: Christian Kellner, David Rheinsberg, Jacob Kozol,
+                    Major Hayden, Tom Gundersen
+
+— Berlin, 2020-06-04
+
 ## CHANGES WITH 15:
 
   * A new assembler, `org.osbuild.oci-archive`, that will turn a tree
