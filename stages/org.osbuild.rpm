@@ -184,6 +184,25 @@ def enable_dracut(masked_files):
         os.unlink(path)
 
 
+def remove_unowned_etc_kernel(tree):
+    # if installed, /etc/kernel is owned by systemd-udev; but
+    # in case the directory is un-owned, remove it again
+    res = subprocess.run(["rpm",
+                          "--root", tree,
+                          "-qf", "/etc/kernel"],
+                         stdout=subprocess.PIPE,
+                         check=False)
+    owner = res.stdout.strip()
+
+    if res == 0 and owner:
+        print(f"/etc/kernel is owned by {owner}")
+        return
+
+    with contextlib.suppress(OSError):
+        os.rmdir("etc/kernel/install.d")
+        os.rmdir("etc/kernel")
+
+
 def parse_input(inputs):
     packages = inputs["packages"]
     path = packages["path"]
@@ -263,6 +282,7 @@ def main(tree, inputs, options):
     # re-enabled dracut
     if no_dracut:
         enable_dracut(masked_files)
+        remove_unowned_etc_kernel(tree)
 
     # remove temporary machine ID if it was created by us
     if not machine_id_set_previously:
