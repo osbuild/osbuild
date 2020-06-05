@@ -2,11 +2,7 @@ pipeline {
     agent none
 
     environment {
-        // We upload build RPMs and repository files here.
-        OPENSHIFT_CONTAINER = "osbuildci-artifacts"
-        // The files we upload are available under this URL.
-        // This is auto-generated from OpenStack.
-        MOCK_REPO_BASE_URL = "https://rhos-d.infra.prod.upshift.rdu2.redhat.com:13808/v1/AUTH_95e858620fb34bcc9162d9f52367a560/osbuildci-artifacts"
+        AWS_REGION = "us-east-2"
     }
 
     options {
@@ -24,7 +20,7 @@ pipeline {
                 stage('Fedora 31') {
                     agent { label "fedora31" }
                     environment {
-                        OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
                     steps {
                         sh "schutzbot/mockbuild.sh"
@@ -37,7 +33,7 @@ pipeline {
                 stage('Fedora 32') {
                     agent { label "fedora32" }
                     environment {
-                        OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
                     steps {
                         sh "schutzbot/mockbuild.sh"
@@ -50,7 +46,7 @@ pipeline {
                 stage('RHEL 8 CDN') {
                     agent { label "rhel8" }
                     environment {
-                        OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
                     steps {
                         sh "schutzbot/mockbuild.sh"
@@ -60,19 +56,21 @@ pipeline {
                         )
                     }
                 }
-                stage('RHEL 8.3 Nightly') {
-                    agent { label "rhel83" }
-                    environment {
-                        OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
-                    }
-                    steps {
-                        sh "schutzbot/mockbuild.sh"
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'rhel83'
-                        )
-                    }
-                }
+                // NOTE(mhayden): Disabling this for now since we don't have
+                // access to these repositories in AWS.
+                // stage('RHEL 8.3 Nightly') {
+                //     agent { label "rhel83" }
+                //     environment {
+                //         OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
+                //     }
+                //     steps {
+                //         sh "schutzbot/mockbuild.sh"
+                //         stash (
+                //             includes: 'osbuild-mock.repo',
+                //             name: 'rhel83'
+                //         )
+                //     }
+                // }
             }
         }
         stage("Functional Testing") {
