@@ -82,7 +82,7 @@ pipeline {
 
             parallel {
                 stage('Fedora 31') {
-                    agent { label "fedora31" }
+                    agent { label "fedora31 && psi" }
                     environment { TEST_TYPE = "image" }
                     steps {
                         unstash 'fedora31'
@@ -95,7 +95,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32') {
-                    agent { label "fedora32" }
+                    agent { label "fedora32 && psi" }
                     environment { TEST_TYPE = "image" }
                     steps {
                         unstash 'fedora32'
@@ -108,7 +108,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN') {
-                    agent { label "rhel8" }
+                    agent { label "rhel8 && psi" }
                     environment { TEST_TYPE = "image" }
                     steps {
                         unstash 'rhel8cdn'
