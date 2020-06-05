@@ -23,6 +23,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
                     steps {
+                        sh "schutzbot/ci_details.sh"
                         sh "schutzbot/mockbuild.sh"
                         stash (
                             includes: 'osbuild-mock.repo',
@@ -36,6 +37,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
                     steps {
+                        sh "schutzbot/ci_details.sh"
                         sh "schutzbot/mockbuild.sh"
                         stash (
                             includes: 'osbuild-mock.repo',
@@ -49,6 +51,7 @@ pipeline {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
                     steps {
+                        sh "schutzbot/ci_details.sh"
                         sh "schutzbot/mockbuild.sh"
                         stash (
                             includes: 'osbuild-mock.repo',
@@ -125,6 +128,9 @@ pipeline {
 // Set up a function to hold the steps needed to run the tests so we don't
 // need to copy/paste the same lines over and over above.
 void run_tests() {
+
+    // Get CI machine details.
+    sh "schutzbot/ci_details.sh"
 
     // Run the tests from the repository.
     sh "schutzbot/run_tests.sh"
