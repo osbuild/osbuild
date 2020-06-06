@@ -94,6 +94,7 @@ def fetch(url, checksum, directory):
         # some mirrors are sometimes broken. retry manually, because we could be
         # redirected to a different, working, one on retry.
         start_time = time.monotonic()
+        return_code = 0
         for _ in range(20):
             elapsed_time = time.monotonic() - start_time
             if elapsed_time >= 300:
@@ -103,7 +104,6 @@ def fetch(url, checksum, directory):
                 "--silent",
                 "--max-time", f"{300 - elapsed_time}",
                 "--connect-timeout", "60",
-                "--show-error",
                 "--fail",
                 "--location",
                 "--output", checksum,
@@ -119,10 +119,11 @@ def fetch(url, checksum, directory):
             curl_command.append(url_path)
 
             curl = subprocess.run(curl_command, encoding="utf-8", cwd=tmpdir, check=False)
-            if curl.returncode == 0:
+            return_code = curl.returncode
+            if return_code == 0:
                 break
         else:
-            raise RuntimeError(f"error downloading {url}")
+            raise RuntimeError(f"curl: error downloading {url}: error code {return_code}")
 
         if not verify_checksum(f"{tmpdir}/{checksum}", checksum):
             raise RuntimeError(f"checksum mismatch: {checksum} {url}")
