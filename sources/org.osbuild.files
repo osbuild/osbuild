@@ -21,6 +21,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 
 
 SCHEMA = """
@@ -90,13 +91,18 @@ def fetch(url, checksum, directory):
     # Download to a temporary directory until we have verified the checksum. Use a
     # subdirectory, so we avoid copying accross block devices.
     with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=directory) as tmpdir:
-        # some mirrors are broken sometimes. retry manually, because curl doesn't on 404
-        for i in range(10):
+        # some mirrors are sometimes broken. retry manually, because we could be
+        # redirected to a different, working, one on retry.
+        start_time = time.monotonic()
+        for _ in range(20):
+            elapsed_time = time.monotonic() - start_time
+            if elapsed_time >= 300:
+                continue
             curl_command = [
                 "curl",
                 "--silent",
-                "--max-time", f"{30 + i*15}",
-                "--connect-timeout", "10",
+                "--max-time", f"{300 - elapsed_time}",
+                "--connect-timeout", "60",
                 "--show-error",
                 "--fail",
                 "--location",
