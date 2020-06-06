@@ -1,0 +1,85 @@
+#!/usr/bin/python3
+"""
+Create a /.buildstamp file describing the system
+
+This will create a './buildstamp' with the specified parameters.
+"""
+
+import configparser
+import datetime
+import json
+import sys
+
+
+SCHEMA = """
+"additionalProperties": true,
+"required": ["arch", "product", "version", "final"],
+"properties": {
+  "arch": {
+    "description": "Build architecture.",
+    "type": "string"
+  },
+  "product": {
+    "description": "The product name.",
+    "type": "string"
+  },
+  "version": {
+    "description": "The version .",
+    "type": "string"
+  },
+  "final": {
+    "description": "The product.",
+    "type": "string"
+  },
+  "variant": {
+    "description": "The variant of the product.",
+    "type": "string"
+  },
+  "bugurl": {
+    "description": "The bugurl of the product.",
+    "type": "string"
+  }
+}
+"""
+
+
+def main(tree, options):
+    buildarch = options["arch"]
+    product = options["product"]
+    version = options["version"]
+    isfinal = options["final"]
+    variant = options.get("variant")
+    bugurl = options.get("bugurl")
+
+    now = datetime.datetime.now()
+    datestr = now.strftime("%Y%m%d%H%M")
+    uid = f"{datestr}.{buildarch}"
+
+    stamp = configparser.ConfigParser()
+    stamp['Main'] = {
+        "Product": product,
+        "Version": version,
+        "IsFinal": isfinal,
+        "UUID": uid,
+    }
+
+    if bugurl:
+        stamp.set("Main", "BugURL", bugurl)
+
+    if variant:
+        stamp.set("Main", "Variant", variant)
+
+    stamp["Compose"] = {
+        "osbuild": "devel",
+    }
+
+    with open(f"{tree}/.buildstamp", "w") as f:
+        stamp.write(f)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
