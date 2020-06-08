@@ -632,7 +632,7 @@ def main(tree, output_dir, options, loop_client):
 
     # Now assemble the filesystem hierarchy and copy the tree into the image
     with contextlib.ExitStack() as cm:
-        root = cm.enter_context(tempfile.TemporaryDirectory(prefix="osbuild-mnt"))
+        root = cm.enter_context(tempfile.TemporaryDirectory(dir=output_dir, prefix="osbuild-mnt-"))
         disk = cm.enter_context(loop_client.device(image, 0, size))
         # iterate the partition according to their position in the filesystem tree
         for partition in pt.partitions_with_filesystems():
