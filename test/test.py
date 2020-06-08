@@ -176,7 +176,7 @@ class TestBase(unittest.TestCase):
         try:
             r = subprocess.run(["rpm-ostree", "--version"],
                                encoding="utf-8",
-                               capture_output=True,
+                               stdout=subprocess.PIPE,
                                check=False)
         except FileNotFoundError:
             return False

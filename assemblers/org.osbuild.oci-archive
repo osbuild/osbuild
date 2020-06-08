@@ -103,7 +103,7 @@ MEDIA_TYPES = {
 
 def sha256sum(path: str) -> str:
     ret = subprocess.run(["sha256sum", path],
-                         capture_output=True,
+                         stdout=subprocess.PIPE,
                          encoding="utf-8",
                          check=True)
 
