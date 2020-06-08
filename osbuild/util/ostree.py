@@ -2,6 +2,7 @@ import contextlib
 import json
 import os
 import tempfile
+import typing
 
 from typing import List
 
@@ -17,7 +18,7 @@ class Param:
         origin = getattr(self.type, "__origin__", None)
         if origin:
             self.typecheck(value, origin)
-            if origin is list:
+            if origin is list or origin is typing.List:
                 self.check_list(value, self.type)
             else:
                 raise NotImplementedError(origin)
