@@ -78,7 +78,7 @@ class TestObjectStore(unittest.TestCase):
                      "tree",
                      "--print-only",
                      path],
-                    capture_output=True)
+                    stdout=subprocess.PIPE)
             self.assertEqual(r.returncode, 0)
             js = json.loads(r.stdout)
 
