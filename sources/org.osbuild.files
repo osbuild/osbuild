@@ -163,7 +163,7 @@ def main(options, checksums, cache, output):
     os.makedirs(cache, exist_ok=True)
     os.makedirs(output, exist_ok=True)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=15) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         requested_urls = []
         rhsm_secrets = None
 
