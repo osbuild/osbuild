@@ -1,0 +1,95 @@
+
+## <summary>policy for osbuild</summary>
+
+########################################
+## <summary>
+##	Execute osbuild_exec_t in the osbuild domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`osbuild_domtrans',`
+	gen_require(`
+		type osbuild_t, osbuild_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, osbuild_exec_t, osbuild_t)
+')
+
+######################################
+## <summary>
+##	Execute osbuild in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`osbuild_exec',`
+	gen_require(`
+		type osbuild_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, osbuild_exec_t)
+')
+
+########################################
+## <summary>
+##	Execute osbuild in the osbuild domain, and
+##	allow the specified role the osbuild domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed to transition
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	The role to be allowed the osbuild domain.
+##	</summary>
+## </param>
+#
+interface(`osbuild_run',`
+	gen_require(`
+		type osbuild_t;
+		attribute_role osbuild_roles;
+	')
+
+	osbuild_domtrans($1)
+	roleattribute $2 osbuild_roles;
+')
+
+########################################
+## <summary>
+##	Role access for osbuild
+## </summary>
+## <param name="role">
+##	<summary>
+##	Role allowed access
+##	</summary>
+## </param>
+## <param name="domain">
+##	<summary>
+##	User domain for the role
+##	</summary>
+## </param>
+#
+interface(`osbuild_role',`
+	gen_require(`
+		type osbuild_t;
+		attribute_role osbuild_roles;
+	')
+
+	roleattribute $1 osbuild_roles;
+
+	osbuild_domtrans($2)
+
+	ps_process_pattern($2, osbuild_t)
+	allow $2 osbuild_t:process { signull signal sigkill };
+')
