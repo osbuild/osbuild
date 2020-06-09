@@ -112,6 +112,7 @@ class BuildRoot(contextlib.AbstractContextManager):
             "--keep-unit",
             "--as-pid2",
             "--link-journal=no",
+            "--capability=CAP_MAC_ADMIN",  # for SELinux labeling
             f"--directory={self.root}",
             "--setenv=PYTHONPATH=/run/osbuild/lib",
             *[f"--bind-ro={b}" for b in nspawn_ro_binds],
