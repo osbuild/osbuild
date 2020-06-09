@@ -1,0 +1,147 @@
+.TH  "osbuild_selinux"  "8"  "20-06-09" "osbuild" "SELinux Policy osbuild"
+.SH "NAME"
+osbuild_selinux \- Security Enhanced Linux Policy for the osbuild processes
+.SH "DESCRIPTION"
+
+Security-Enhanced Linux secures the osbuild processes via flexible mandatory access control.
+
+The osbuild processes execute with the osbuild_t SELinux type. You can check if you have these processes running by executing the \fBps\fP command with the \fB\-Z\fP qualifier.
+
+For example:
+
+.B ps -eZ | grep osbuild_t
+
+
+.SH "ENTRYPOINTS"
+
+The osbuild_t SELinux type can be entered via the \fBosbuild_exec_t\fP file type.
+
+The default entrypoint paths for the osbuild_t domain are the following:
+
+/usr/lib/osbuild/stages/*, /usr/lib/osbuild/sources/*, /usr/lib/osbuild/assemblers/*, /usr/bin/osbuild
+.SH PROCESS TYPES
+SELinux defines process types (domains) for each process running on the system
+.PP
+You can see the context of a process using the \fB\-Z\fP option to \fBps\bP
+.PP
+Policy governs the access confined processes have to files.
+SELinux osbuild policy is very flexible allowing users to setup their osbuild processes in as secure a method as possible.
+.PP
+The following process types are defined for osbuild:
+
+.EX
+.B osbuild_t
+.EE
+.PP
+Note:
+.B semanage permissive -a osbuild_t
+can be used to make the process type osbuild_t permissive. SELinux does not deny access to permissive process types, but the AVC (SELinux denials) messages are still generated.
+
+.SH BOOLEANS
+SELinux policy is customizable based on least access required.  osbuild policy is extremely flexible and has several booleans that allow you to manipulate the policy and run osbuild with the tightest access possible.
+
+
+.PP
+If you want to deny user domains applications to map a memory region as both executable and writable, this is dangerous and the executable should be reported in bugzilla, you must turn on the deny_execmem boolean. Disabled by default.
+
+.EX
+.B setsebool -P deny_execmem 1
+
+.EE
+
+.PP
+If you want to control the ability to mmap a low area of the address space, as configured by /proc/sys/vm/mmap_min_addr, you must turn on the mmap_low_allowed boolean. Disabled by default.
+
+.EX
+.B setsebool -P mmap_low_allowed 1
+
+.EE
+
+.PP
+If you want to disable kernel module loading, you must turn on the secure_mode_insmod boolean. Disabled by default.
+
+.EX
+.B setsebool -P secure_mode_insmod 1
+
+.EE
+
+.PP
+If you want to allow unconfined executables to make their heap memory executable.  Doing this is a really bad idea. Probably indicates a badly coded executable, but could indicate an attack. This executable should be reported in bugzilla, you must turn on the selinuxuser_execheap boolean. Disabled by default.
+
+.EX
+.B setsebool -P selinuxuser_execheap 1
+
+.EE
+
+.PP
+If you want to allow unconfined executables to make their stack executable.  This should never, ever be necessary. Probably indicates a badly coded executable, but could indicate an attack. This executable should be reported in bugzilla, you must turn on the selinuxuser_execstack boolean. Enabled by default.
+
+.EX
+.B setsebool -P selinuxuser_execstack 1
+
+.EE
+
+.SH "MANAGED FILES"
+
+The SELinux process type osbuild_t can manage files labeled with the following file types.  The paths listed are the default paths for these file types.  Note the processes UID still need to have DAC permissions.
+
+.br
+.B file_type
+
+	all files on the system
+.br
+
+.SH FILE CONTEXTS
+SELinux requires files to have an extended attribute to define the file type.
+.PP
+You can see the context of a file using the \fB\-Z\fP option to \fBls\bP
+.PP
+Policy governs the access confined processes have to these files.
+SELinux osbuild policy is very flexible allowing users to setup their osbuild processes in as secure a method as possible.
+.PP
+
+.I The following file types are defined for osbuild:
+
+
+.EX
+.PP
+.B osbuild_exec_t
+.EE
+
+- Set files with the osbuild_exec_t type, if you want to transition an executable to the osbuild_t domain.
+
+.br
+.TP 5
+Paths:
+/usr/lib/osbuild/stages/*, /usr/lib/osbuild/sources/*, /usr/lib/osbuild/assemblers/*, /usr/bin/osbuild
+
+.PP
+Note: File context can be temporarily modified with the chcon command.  If you want to permanently change the file context you need to use the
+.B semanage fcontext
+command.  This will modify the SELinux labeling database.  You will need to use
+.B restorecon
+to apply the labels.
+
+.SH "COMMANDS"
+.B semanage fcontext
+can also be used to manipulate default file context mappings.
+.PP
+.B semanage permissive
+can also be used to manipulate whether or not a process type is permissive.
+.PP
+.B semanage module
+can also be used to enable/disable/install/remove policy modules.
+
+.B semanage boolean
+can also be used to manipulate the booleans
+
+.PP
+.B system-config-selinux
+is a GUI tool available to customize SELinux policy settings.
+
+.SH AUTHOR
+This manual page was auto-generated using
+.B "sepolicy manpage".
+
+.SH "SEE ALSO"
+selinux(8), osbuild(8), semanage(8), restorecon(8), chcon(1), sepolicy(8), setsebool(8)

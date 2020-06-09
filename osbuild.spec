@@ -1,4 +1,5 @@
 %global         forgeurl https://github.com/osbuild/osbuild
+%global         selinuxtype targeted
 
 Version:        16
 
@@ -34,6 +35,7 @@ Requires:       systemd-container
 Requires:       tar
 Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
+Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 
 # Turn off dependency generators for assemblers, runners and stages.
 # They run in a container, so there's no reason to generate dependencies
@@ -63,12 +65,31 @@ Requires:       rpm-ostree
 Contains the necessary stages, assembler and source
 to build OSTree based images.
 
+%package        selinux
+Summary:        SELinux policies
+Requires:       %{name} = %{version}-%{release}
+BuildRequires:  selinux-policy
+BuildRequires:  selinux-policy-devel
+%{?selinux_requires}
+
+%description    selinux
+Contains the necessary SELinux policies that allows
+osbuild to use labels unknown to the host inside the
+containers it uses to build OS artifacts.
+
 %prep
 %forgesetup
 
 %build
 %py3_build
 make man
+
+# SELinux
+make -f /usr/share/selinux/devel/Makefile osbuild.pp
+bzip2 -9 osbuild.pp
+
+%pre
+%selinux_relabel_pre -s %{selinuxtype}
 
 %install
 %py3_install
@@ -99,6 +120,10 @@ mkdir -p %{buildroot}%{_mandir}/man5
 install -p -m 0644 -t %{buildroot}%{_mandir}/man1/ docs/*.1
 install -p -m 0644 -t %{buildroot}%{_mandir}/man5/ docs/*.5
 
+# SELinux
+install -D -m 644 -t %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype} %{name}.pp.bz2
+install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_selinux.8
+
 %check
 exit 0
 # We have some integration tests, but those require running a VM, so that would
@@ -128,6 +153,23 @@ exit 0
 %{pkgdir}/sources/org.osbuild.ostree
 %{pkgdir}/stages/org.osbuild.ostree
 %{pkgdir}/stages/org.osbuild.rpm-ostree
+
+%files selinux
+%{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
+%{_mandir}/man8/%{name}_selinux.8.*
+%ghost %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
+
+%post selinux
+%selinux_modules_install -s %{selinuxtype} %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
+
+%postun selinux
+if [ $1 -eq 0 ]; then
+    %selinux_modules_uninstall -s %{selinuxtype} %{name}
+fi
+
+%posttrans selinux
+%selinux_relabel_post -s %{selinuxtype}
+
 
 %changelog
 * Mon Aug 19 2019 Miro Hrončok <mhroncok@redhat.com> - 1-3
