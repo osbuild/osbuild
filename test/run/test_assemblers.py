@@ -113,8 +113,21 @@ class TestAssemblers(test.TestBase):
                     compose = json.load(f)
             commit_id = compose["ostree-commit"]
             ref = compose["ref"]
+            rpmostree_inputhash = compose["rpm-ostree-inputhash"]
             assert commit_id
             assert ref
+            assert rpmostree_inputhash
+
+            with osb.map_output("repo") as repo:
+                md = subprocess.check_output(
+                    [
+                        "ostree",
+                        "show",
+                        "--repo", repo,
+                        "--print-metadata-key=rpmostree.inputhash",
+                        commit_id
+                    ], encoding="utf-8").strip()
+            self.assertEqual(md, f"'{rpmostree_inputhash}'")
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_qemu(self):
