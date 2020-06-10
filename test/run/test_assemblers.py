@@ -100,6 +100,23 @@ class TestAssemblers(test.TestBase):
             self.assertFilesystem(image, options["root_fs_uuid"], "ext4", tree)
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
+    def test_ostree(self):
+        with self.osbuild as osb:
+            with open(os.path.join(self.locate_test_data(),
+                                   "manifests/fedora-ostree-commit.json")) as f:
+                manifest = json.load(f)
+
+            data = json.dumps(manifest)
+            osb.compile(data)
+            with osb.map_output("compose.json") as filename:
+                with open(filename) as f:
+                    compose = json.load(f)
+            commit_id = compose["ostree-commit"]
+            ref = compose["ref"]
+            assert commit_id
+            assert ref
+
+    @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_qemu(self):
         loctl = loop.LoopControl()
         for fmt in ["raw", "raw.xz", "qcow2", "vmdk", "vdi"]:
