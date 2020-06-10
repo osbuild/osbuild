@@ -84,6 +84,9 @@ class Stage:
                 "tree": "/run/osbuild/tree",
                 "sources": "/run/osbuild/sources",
                 "options": self.options,
+                "meta": {
+                    "id": self.id
+                }
             }
 
             ro_binds = [f"{sources_output}:/run/osbuild/sources"]
@@ -136,6 +139,9 @@ class Assembler:
             args = {
                 "tree": "/run/osbuild/tree",
                 "options": self.options,
+                "meta": {
+                    "id": self.id
+                }
             }
 
             binds = []
