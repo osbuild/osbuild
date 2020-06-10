@@ -24,6 +24,7 @@
               "grub2-pc",
               "policycoreutils",
               "qemu-img",
+              "rpm-ostree",
               "systemd",
               "tar",
               "xz"
