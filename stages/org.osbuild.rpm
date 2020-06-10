@@ -101,12 +101,13 @@ def main(tree, sources, options):
     osbuild.sources.get("org.osbuild.files", checksums)
 
     for pkg in packages:
-        if pkg["check_gpg"]:
-            subprocess.run(
-                ["rpmkeys", "--checksig", pkg["checksum"]],
-                cwd=f"{sources}/org.osbuild.files",
-                stdout=subprocess.DEVNULL,
-                check=True)
+        if pkg.get("check_gpg"):
+            subprocess.run([
+                "rpmkeys",
+                "--root", tree,
+                "--checksig",
+                pkg["checksum"]
+            ], cwd=f"{sources}/org.osbuild.files", stdout=subprocess.DEVNULL, check=True)
 
     script = f"""
         set -e
