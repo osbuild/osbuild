@@ -1,5 +1,44 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 17:
+
+  * SELinux: When osbuild is creating the file system tree it can happen
+    that the security policy of the new tree contains SELinux labels that
+    are unknown to the host. The kernel will prevent writing and reading
+    those labels unless the caller has the `CAP_MAC_ADMIN` capability.
+    A custom SELinux policy was created that ensures that `setfiles` and
+    `ostree` / `rpm-ostree` can execute in the right SELinux domain and
+    therefore have the correct capability. Additionally, the build root
+    container now retains the `CAP_MAC_ADMIN` capability.
+
+  * The `org.osbuild.ostree.commit` assembler will now set the pipeline
+    id as the value for the `rpm-ostree.inputhash` metadata of the commit.
+
+  * The `org.osbuild.files` source is now more conservative by only using
+    four concurrent downloads. It will also not try to fetch the same URL
+    more than once.
+
+  * Take care not to put large content on `/tmp` which is usually backed
+    by a `tmpfs` and thus memory.
+
+  * Allow `check_gpg` to be omitted in the `org.osbuild.rpm` stage.
+
+  * Restore Python 3.6 support: Replace the usage of features that were
+    introduced in later Python versions and add 3.6 specific code where
+    needed.
+
+  * MPP: add pipeline-import support for the pre-processor and use that
+    for the test data.
+
+  * Tests: Move the all remaining test into the correct sub-directory.
+
+  * As always: improvements to the test infrastructure and the CI.
+
+Contributions from: Christian Kellner, David Rheinsberg, Lars Karlitski,
+                    Major Hayden, Tom Gundersen
+
+— Berlin, 202-06-10
+
 ## CHANGES WITH 16:
 
   * Support for ignition: a new `org.osbuild.ignition` stage has been
