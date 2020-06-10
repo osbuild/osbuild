@@ -32,6 +32,9 @@ The parameters for this pre-processor look like this:
             "dracut-config-generic",
             "grub2-pc",
             "kernel"
+          ],
+          "excludes": [
+            (optional excludes)
           ]
         }
       }
@@ -88,11 +91,12 @@ def _dnf_resolve(state, mpp_depsolve):
     mpid = mpp_depsolve["module-platform-id"]
     repos = mpp_depsolve.get("repos", [])
     packages = mpp_depsolve.get("packages", [])
+    excludes = mpp_depsolve.get("excludes", [])
 
     if len(packages) > 0:
         with tempfile.TemporaryDirectory() as persistdir:
             base = _dnf_base(repos, mpid, persistdir, state.dnf_cache, arch)
-            base.install_specs(packages)
+            base.install_specs(packages, exclude=excludes)
             base.resolve()
 
             for tsi in base.transaction:
