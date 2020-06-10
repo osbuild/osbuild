@@ -102,7 +102,7 @@ def init_rootfs(root, tmp_is_dir):
         os.symlink("tmp", "sysroot/tmp", dir_fd=fd)
 
 
-def main(tree, output_dir, options):
+def main(tree, output_dir, options, meta):
     ref = options["ref"]
     tmp_is_dir = options.get("tmp-is-dir", True)
     parent = options.get("parent", None)
@@ -139,7 +139,10 @@ def main(tree, output_dir, options):
         if parent:
             argv += [f"--parent={parent}"]
 
-        argv += [f"--write-composejson-to={output_dir}/compose.json"]
+        argv += [
+            f"--add-metadata-string=rpmostree.inputhash={meta['id']}",
+            f"--write-composejson-to={output_dir}/compose.json"
+        ]
 
         with treefile.as_tmp_file() as path:
             argv += [path, root]
@@ -166,5 +169,5 @@ def main(tree, output_dir, options):
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
-    r = main(args["tree"], args["output_dir"], args["options"])
+    r = main(args["tree"], args["output_dir"], args["options"], args["meta"])
     sys.exit(r)
