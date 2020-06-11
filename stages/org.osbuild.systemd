@@ -17,6 +17,7 @@ import json
 import subprocess
 import sys
 
+
 SCHEMA = """
 "additionalProperties": false,
 "properties": {
@@ -41,6 +42,7 @@ SCHEMA = """
   }
 }
 """
+
 
 def main(tree, options):
     enabled_services = options.get("enabled_services", [])
