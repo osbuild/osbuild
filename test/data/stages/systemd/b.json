@@ -826,6 +826,9 @@
           "enabled_services": [
             "nftables"
           ],
+          "masked_services": [
+            "ldconfig"
+          ],
           "disabled_services": [
             "sshd"
           ]

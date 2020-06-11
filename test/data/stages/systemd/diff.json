@@ -1,5 +1,6 @@
 {
   "added_files": [
+    "/etc/systemd/system/ldconfig.service",
     "/etc/systemd/system/multi-user.target.wants/nftables.service"
   ],
   "deleted_files": [

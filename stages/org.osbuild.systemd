@@ -31,6 +31,11 @@ SCHEMA = """
     "items": { "type": "string" },
     "description": "Array of systemd unit names to be enabled"
   },
+  "masked_services": {
+    "type": "array",
+    "items": { "type": "string" },
+    "description": "Array of systemd unit names to be masked"
+  },
   "default_target": {
     "type": "string",
     "description": "The default target to boot into"
@@ -41,6 +46,7 @@ SCHEMA = """
 def main(tree, options):
     enabled_services = options["enabled_services"]
     disabled_services = options.get("disabled_services", [])
+    masked_services = options.get("masked_services", [])
     default_target = options.get("default_target")
 
     for service in enabled_services:
@@ -48,6 +54,9 @@ def main(tree, options):
 
     for service in disabled_services:
         subprocess.run(["systemctl", "--root", tree, "disable", service], check=True)
+
+    for service in masked_services:
+        subprocess.run(["systemctl", "--root", tree, "mask", service], check=True)
 
     if default_target:
         subprocess.run(["systemctl", "--root", tree, "set-default", default_target], check=True)
