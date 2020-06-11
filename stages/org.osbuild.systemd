@@ -19,7 +19,6 @@ import sys
 
 SCHEMA = """
 "additionalProperties": false,
-"required": ["enabled_services"],
 "properties": {
   "enabled_services": {
     "type": "array",
@@ -44,7 +43,7 @@ SCHEMA = """
 """
 
 def main(tree, options):
-    enabled_services = options["enabled_services"]
+    enabled_services = options.get("enabled_services", [])
     disabled_services = options.get("disabled_services", [])
     masked_services = options.get("masked_services", [])
     default_target = options.get("default_target")
