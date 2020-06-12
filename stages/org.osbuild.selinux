@@ -33,6 +33,13 @@ SCHEMA = """
   "file_contexts": {
     "type": "string",
     "description": "Path to the active SELinux policy's `file_contexts`"
+  },
+  "labels": {
+    "type": "object",
+    "description": "Labels to set of the specified files or folders",
+    "items": {
+      "type": "object"
+    }
   }
 }
 """
@@ -40,8 +47,13 @@ SCHEMA = """
 
 def main(tree, options):
     file_contexts = os.path.join(f"{tree}", options["file_contexts"])
+    labels = options.get("labels", {})
 
     subprocess.run(["setfiles", "-F", "-r", f"{tree}", f"{file_contexts}", f"{tree}"], check=True)
+
+    for path, label in labels.items():
+        fullpath = os.path.join(tree, path.lstrip("/"))
+        subprocess.run(["chcon", "-v", label, fullpath], check=True)
 
 
 if __name__ == '__main__':
