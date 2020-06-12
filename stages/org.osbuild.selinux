@@ -25,6 +25,7 @@ import os
 import subprocess
 import sys
 
+
 SCHEMA = """
 "additionalProperties": false,
 "required": ["file_contexts"],
@@ -36,10 +37,12 @@ SCHEMA = """
 }
 """
 
+
 def main(tree, options):
     file_contexts = os.path.join(f"{tree}", options["file_contexts"])
 
     subprocess.run(["setfiles", "-F", "-r", f"{tree}", f"{file_contexts}", f"{tree}"], check=True)
+
 
 if __name__ == '__main__':
     args = json.load(sys.stdin)
