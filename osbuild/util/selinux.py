@@ -1,5 +1,6 @@
 """SELinux utility functions"""
 
+import os
 import subprocess
 
 from typing import Dict, TextIO
@@ -46,3 +47,10 @@ def setfiles(spec_file: str, root: str, *paths):
                         spec_file,
                         f"{root}{path}"],
                        check=True)
+
+
+def getfilecon(path: str) -> str:
+    """Get the security context associated with `path`"""
+    label = os.getxattr(path, b"security.selinux",
+                        follow_symlinks=False)
+    return label.decode().strip('\n\0')
