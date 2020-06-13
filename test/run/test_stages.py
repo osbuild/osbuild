@@ -10,6 +10,7 @@ import pprint
 import tempfile
 import unittest
 
+from osbuild.util import selinux
 from .. import test
 
 
@@ -127,3 +128,33 @@ class TestStages(test.TestBase):
             test_name = os.path.basename(test_path)
             with self.subTest(stage=test_name):
                 self.run_stage_diff_test(test_path)
+
+    def test_selinux(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "selinux")
+
+        def load_manifest(manifest_name):
+            with open(os.path.join(datadir, f"manifests/{manifest_name}")) as f:
+                manifest = json.load(f)
+                return manifest
+
+        with self.osbuild as osb:
+
+            for t in glob.glob(f"{testdir}/test_*.json"):
+                manifest = load_manifest("f32-base.json")
+                with open(t) as f:
+                    check = json.load(f)
+                manifest["pipeline"]["stages"].append({
+                    "name": "org.osbuild.selinux",
+                    "options": check["options"]
+                })
+
+                jsdata = json.dumps(manifest)
+                treeid = osb.treeid_from_manifest(jsdata)
+                osb.compile(jsdata, checkpoints=[treeid])
+                ctx = osb.map_object(treeid)
+
+                with ctx as tree:
+                    for path, want in check["labels"].items():
+                        have = selinux.getfilecon(f"{tree}/{path}")
+                        self.assertEqual(have, want)
