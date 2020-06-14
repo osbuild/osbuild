@@ -73,10 +73,7 @@ class TestAssemblers(test.TestBase):
         self.assertEqual(m1.hexdigest(), l1hash)
         self.assertEqual(m2.hexdigest(), l2hash)
 
-    def assertPartitionTable(self, device, label, uuid, n_partitions, boot_partition=None):
-        sfdisk = json.loads(subprocess.check_output(["sfdisk", "--json", device]))
-        ptable = sfdisk["partitiontable"]
-
+    def assertPartitionTable(self, ptable, label, uuid, n_partitions, boot_partition=None):
         self.assertEqual(ptable["label"], label)
         self.assertEqual(ptable["id"][2:], uuid[:8])
         self.assertEqual(len(ptable["partitions"]), n_partitions)
@@ -85,6 +82,12 @@ class TestAssemblers(test.TestBase):
             bootable = [p.get("bootable", False) for p in ptable["partitions"]]
             self.assertEqual(bootable.count(True), 1)
             self.assertEqual(bootable.index(True) + 1, boot_partition)
+
+    def read_partition_table(self, device):
+        sfdisk = json.loads(subprocess.check_output(["sfdisk", "--json", device]))
+        ptable = sfdisk["partitiontable"]
+        self.assertIsNotNone(ptable)
+        return ptable
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_rawfs(self):
@@ -118,7 +121,8 @@ class TestAssemblers(test.TestBase):
                         fmt = "raw"
                     self.assertImageFile(image, fmt, options["size"])
                     with nbd_connect(image) as device:
-                        self.assertPartitionTable(device,
+                        ptable = self.read_partition_table(device)
+                        self.assertPartitionTable(ptable,
                                                   "dos",
                                                   options["ptuuid"],
                                                   1,
