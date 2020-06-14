@@ -3,15 +3,15 @@
 #
 
 import contextlib
-import glob
+import errno
 import hashlib
 import json
 import os
 import subprocess
 import tempfile
-import time
 import unittest
 
+from osbuild import loop
 from .. import test
 
 
@@ -20,7 +20,6 @@ class TestAssemblers(test.TestBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        subprocess.run(["modprobe", "nbd"], check=False)
 
     def setUp(self):
         self.osbuild = test.OSBuild(self)
@@ -102,6 +101,7 @@ class TestAssemblers(test.TestBase):
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_qemu(self):
+        loctl = loop.LoopControl()
         for fmt in ["raw", "raw.xz", "qcow2", "vmdk", "vdi"]:
             with self.subTest(fmt=fmt):
                 print(f"  {fmt}", flush=True)
@@ -120,7 +120,7 @@ class TestAssemblers(test.TestBase):
                         image = image[:-3]
                         fmt = "raw"
                     self.assertImageFile(image, fmt, options["size"])
-                    with nbd_connect(image) as device:
+                    with open_image(loctl, image, fmt) as (target, device):
                         ptable = self.read_partition_table(device)
                         self.assertPartitionTable(ptable,
                                                   "dos",
@@ -131,7 +131,12 @@ class TestAssemblers(test.TestBase):
                                          "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
                                          "9b31c8fbc59602a38582988bf91c3948ae9c6f2a231ab505ea63a7005e302147",
                                          1024 * 1024)
-                        self.assertFilesystem(device + "p1", options["root_fs_uuid"], "ext4", tree)
+
+                        p1 = ptable["partitions"][0]
+                        ssize = ptable.get("sectorsize", 512)
+                        start, size = p1["start"] * ssize, p1["size"] * ssize
+                        with loop_open(loctl, target, offset=start, size=size) as dev:
+                            self.assertFilesystem(dev, options["root_fs_uuid"], "ext4", tree)
 
     def test_tar(self):
         cases = [
@@ -151,6 +156,38 @@ class TestAssemblers(test.TestBase):
 
 
 @contextlib.contextmanager
+def loop_create_device(ctl, fd, offset=None, sizelimit=None):
+    while True:
+        lo = loop.Loop(ctl.get_unbound())
+        try:
+            lo.set_fd(fd)
+        except OSError as e:
+            lo.close()
+            if e.errno == errno.EBUSY:
+                continue
+            raise e
+        try:
+            lo.set_status(offset=offset, sizelimit=sizelimit, autoclear=True)
+        except BlockingIOError:
+            lo.clear_fd()
+            lo.close()
+            continue
+        break
+    try:
+        yield lo
+    finally:
+        lo.close()
+
+
+@contextlib.contextmanager
+def loop_open(ctl, image, *, offset=None, size=None):
+    with open(image, "rb") as f:
+        fd = f.fileno()
+        with loop_create_device(ctl, fd, offset=offset, sizelimit=size) as lo:
+            yield os.path.join("/dev", lo.devname)
+
+
+@contextlib.contextmanager
 def mount(device):
     with tempfile.TemporaryDirectory() as mountpoint:
         subprocess.run(["mount", "-o", "ro", device, mountpoint], check=True)
@@ -161,24 +198,16 @@ def mount(device):
 
 
 @contextlib.contextmanager
-def nbd_connect(image):
-    for device in glob.glob("/dev/nbd*"):
-        r = subprocess.run(["qemu-nbd", "--connect", device, "--read-only", image], check=False).returncode
-        if r == 0:
-            try:
-                # qemu-nbd doesn't wait for the device to be ready
-                for _ in range(100):
-                    if subprocess.run(["nbd-client", "--check", device],
-                                      check=False,
-                                      stdout=subprocess.DEVNULL).returncode == 0:
-                        break
-                    time.sleep(0.2)
+def open_image(ctl, image, fmt):
+    with tempfile.TemporaryDirectory() as tmp:
+        if fmt != "raw":
+            target = os.path.join(tmp, "image.raw")
+            subprocess.run(["qemu-img", "convert", "-O", "raw", image, target],
+                           check=True)
+        else:
+            target = image
 
-                yield device
-            finally:
-                # qemu-nbd doesn't wait until the device is released. nbd-client does
-                subprocess.run(["qemu-nbd", "--disconnect", device], check=True, stdout=subprocess.DEVNULL)
-                subprocess.run(["nbd-client", "--disconnect", device], check=False, stdout=subprocess.DEVNULL)
-            break
-    else:
-        raise RuntimeError("no free network block device")
+        size = os.stat(target).st_size
+
+        with loop_open(ctl, target, offset=0, size=size) as dev:
+            yield target, dev
