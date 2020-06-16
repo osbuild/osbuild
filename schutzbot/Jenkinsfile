@@ -7,6 +7,10 @@ pipeline {
 
     options {
         ansiColor('xterm')
+        timeout(
+            time: 3,
+            unit: "HOURS"
+        )
         timestamps()
     }
 
@@ -59,21 +63,20 @@ pipeline {
                         )
                     }
                 }
-                // NOTE(mhayden): Disabling this for now since we don't have
-                // access to these repositories in AWS.
-                // stage('RHEL 8.3 Nightly') {
-                //     agent { label "rhel83" }
-                //     environment {
-                //         OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
-                //     }
-                //     steps {
-                //         sh "schutzbot/mockbuild.sh"
-                //         stash (
-                //             includes: 'osbuild-mock.repo',
-                //             name: 'rhel83'
-                //         )
-                //     }
-                // }
+                // NOTE(mhayden): RHEL 8.3 is only available in PSI for now.
+                stage('RHEL 8.3 Nightly') {
+                    agent { label "rhel83 && psi" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        sh "schutzbot/mockbuild.sh"
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'rhel83'
+                        )
+                    }
+                }
             }
         }
         stage("Functional Testing") {
@@ -120,6 +123,22 @@ pipeline {
                         }
                     }
                 }
+                stage('RHEL 8.3 Image') {
+                    agent { label "rhel83 && psi" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        unstash 'rhel83'
+                        run_tests()
+                    }
+                    post {
+                        always {
+                            preserve_logs('rhel83-image')
+                        }
+                    }
+                }
             }
         }
     }
@@ -140,6 +159,9 @@ void run_tests() {
 // Move logs to a unique location and tell Jenkins to capture them on success
 // or failure.
 void preserve_logs(test_slug) {
+
+    // Save the systemd journal.
+    sh "journalctl --boot > systemd-journald.log"
 
     // Make a directory for the log files and move the logs there.
     sh "mkdir ${test_slug} && mv *.log ${test_slug}/"
