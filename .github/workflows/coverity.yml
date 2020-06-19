@@ -1,0 +1,39 @@
+name: Coverity
+on:
+  schedule:
+    - cron: '0 5 * * *' # Daily at 05:00 UTC
+
+jobs:
+  coverity:
+    name: "Test Suite"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: osbuild
+    steps:
+
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          path: osbuild
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install python3-setuptools
+
+      - name: Download Coverity Tool
+        run: |
+          make coverity-download
+        env:
+         COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
+
+      - name: Coverity check
+        run: |
+          make coverity-check
+
+      - name: Upload analysis results
+        run: |
+          make coverity-submit
+        env:
+         COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
+         COVERITY_EMAIL: ${{ secrets.COVERITY_EMAIL }}
