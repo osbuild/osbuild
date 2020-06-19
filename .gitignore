@@ -9,3 +9,7 @@ __pycache__
 /.vscode
 /.idea
 /.gdb_history
+
+cov-analysis-linux64/
+cov-analysis-osbuild.xz
+cov-int/
