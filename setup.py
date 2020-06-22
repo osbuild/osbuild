@@ -11,7 +11,7 @@ setuptools.setup(
     ],
     entry_points={
         "console_scripts": [
-            "osbuild = osbuild.main_cli:main_cli"
+            "osbuild = osbuild.main_cli:osbuild_cli"
         ]
     },
 )

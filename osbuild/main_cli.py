@@ -101,8 +101,8 @@ def parse_arguments(sys_argv):
 
 
 # pylint: disable=too-many-branches
-def osbuild_cli(*, sys_argv):
-    args = parse_arguments(sys_argv)
+def osbuild_cli():
+    args = parse_arguments(sys.argv)
     manifest = parse_manifest(args.manifest_path)
 
     # first thing after parsing is validation of the input
@@ -164,14 +164,4 @@ def osbuild_cli(*, sys_argv):
             print()
             print(f"{RESET}{BOLD}{RED}Failed{RESET}")
 
-    return 0 if r["success"] else 1
-
-
-def main_cli():
-    """osbuild-cli entrypoint
-
-    This is the entrypoint used by the `osbuild` executable. We simply fetch the
-    global configuration and parameters necessary and invoke the API entrypoint.
-    """
-
-    sys.exit(osbuild_cli(sys_argv=sys.argv))
+    sys.exit(0 if r["success"] else 1)
