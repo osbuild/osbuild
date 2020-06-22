@@ -132,7 +132,7 @@ $(SRCDIR)/test/data/manifests/fedora-boot.json: $(SRCDIR)/test/data/manifests/f3
 test-data: $(TEST_MANIFESTS_GEN)
 
 .PHONY: test-units
-test-mod:
+test-module:
 	@$(PYTHON3) -m unittest \
 		discover \
 			--start=$(SRCDIR)/test/mod \
