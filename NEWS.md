@@ -1,5 +1,25 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 18:
+
+  * All the RHEL runners now always use platform-python. This is the
+    python3.6 based interpreter that provides a stable platform for
+	system software based on python to be used. It is also always
+    available, in contrast to the python3 binary, that needs to be
+    installed separately.
+
+  * The `org.osbuild.selinux` stage now support label overwrites, i.e.
+    manually specifying the label specific files and directories.
+
+  * Improvements to the testing infrastructure, including new tests for
+    the `org.osbuild.selinux` stage and the `org.osbuild.ostree.commit`
+    assembler. Additionally, the tests do not rely on the `nbd` kernel
+    module, which seems to have stability issues.
+
+Contributions from: Christian Kellner
+
+— Berlin, 2020-06-23
+
 ## CHANGES WITH 17:
 
   * SELinux: When osbuild is creating the file system tree it can happen
