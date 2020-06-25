@@ -17,6 +17,7 @@ import concurrent.futures
 import glob
 import itertools
 import json
+import math
 import os
 import subprocess
 import sys
@@ -102,7 +103,7 @@ def fetch(url, checksum, directory):
             curl_command = [
                 "curl",
                 "--silent",
-                "--max-time", f"{300 - elapsed_time}",
+                "--max-time", f"{int(math.ceil(300 - elapsed_time))}",
                 "--connect-timeout", "60",
                 "--fail",
                 "--location",
