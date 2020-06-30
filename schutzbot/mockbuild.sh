@@ -9,10 +9,26 @@ function greenprint {
 # Get OS details.
 source /etc/os-release
 
+# Prepare dnf on Fedora for performance.
+if [[ $ID == fedora ]]; then
+    sudo rm -f /etc/yum.repos.d/fedora*modular*
+    echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
+fi
+
+# Install requirements for building RPMs in mock.
+greenprint "📦 Installing mock requirements"
+sudo dnf -y install createrepo_c make mock rpm-build
+
 # Install s3cmd if it is not present.
-if ! s3cmd --version; then
+if ! s3cmd --version > /dev/null 2>&1; then
     greenprint "📦 Installing s3cmd"
     sudo pip3 install s3cmd
+fi
+
+# Enable fastestmirror for mock on Fedora.
+if [[ $ID == fedora ]]; then
+    sudo sed -i '/^install_weak_deps=.*/a fastestmirror=1' \
+        /etc/mock/templates/fedora-branched.tpl
 fi
 
 # Jenkins sets a workspace variable as the root of its working directory.
