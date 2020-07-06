@@ -673,7 +673,7 @@ def main(tree, output_dir, options, loop_client):
             "vdi": [],
             "vmdk": ["-c"],
             "vpc": ["-o", "subformat=fixed,force_size"],
-            "vhdx": []
+            "vhdx": ["-o", "subformat=fixed"],
         }
         subprocess.run([
             "qemu-img",
