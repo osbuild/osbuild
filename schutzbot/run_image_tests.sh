@@ -12,11 +12,11 @@ PASSED_TESTS=()
 FAILED_TESTS=()
 
 TEST_CASES=(
+  "vhd-boot.json"
+  "tar-boot.json"
+  "vmdk-boot.json"
   "openstack-boot.json"
   "qcow2-boot.json"
-  "tar-boot.json"
-  "vhd-boot.json"
-  "vmdk-boot.json"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
@@ -34,6 +34,9 @@ run_test_case () {
     TEST_RUNNER=$1
     TEST_CASE_FILENAME=$2
     TEST_NAME=$(basename $TEST_CASE_FILENAME)
+
+    df -h
+    du -hs /var/tmp/*
 
     echo
     test_divider
