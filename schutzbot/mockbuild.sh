@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euxo pipefail
+set -euo pipefail
 
 # Colorful output.
 function greenprint {
@@ -9,10 +9,35 @@ function greenprint {
 # Get OS details.
 source /etc/os-release
 
+# Remove Fedora's modular repositories to speed up dnf.
+sudo rm -f /etc/yum.repos.d/fedora*modular*
+
+# Enable fastestmirror and disable weak dependency installation to speed up
+# dnf operations.
+echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
+
+# Mock is only available in EPEL for RHEL.
+if [[ $ID == rhel ]]; then
+    greenprint "📦 Setting up EPEL repository"
+    curl -Ls --retry 5 --output /tmp/epel.rpm \
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo rpm -Uvh /tmp/epel.rpm
+fi
+
+# Install requirements for building RPMs in mock.
+greenprint "📦 Installing mock requirements"
+sudo dnf -y install createrepo_c make mock rpm-build
+
 # Install s3cmd if it is not present.
-if ! s3cmd --version; then
+if ! s3cmd --version > /dev/null 2>&1; then
     greenprint "📦 Installing s3cmd"
     sudo pip3 install s3cmd
+fi
+
+# Enable fastestmirror for mock on Fedora.
+if [[ $ID == fedora ]]; then
+    sudo sed -i '/^install_weak_deps=.*/a fastestmirror=1' \
+        /etc/mock/templates/fedora-branched.tpl
 fi
 
 # Jenkins sets a workspace variable as the root of its working directory.
@@ -44,23 +69,18 @@ greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
 greenprint "📦 Post merge SHA: ${POST_MERGE_SHA}"
 greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 
-# Clone osbuild-composer.
-# TODO(mhayden): After the next osbuild-composer release, use the latest tag
-# in the osbuild-composer repository. We can't do that right now because
-# osbuild-composer v12 is missing c0ad652db58059e0e99eb7253b6ba85f25bead3f
-# which maks RHEL 8's qemu happy with the image tests.
-git clone https://github.com/osbuild/osbuild-composer
-
 # Build source RPMs.
 greenprint "🔧 Building source RPMs."
 make srpm
+git clone --quiet https://github.com/osbuild/osbuild-composer osbuild-composer
 make -C osbuild-composer srpm
 
 # Fix RHEL 8 mock template for non-subscribed images.
 if [[ $NODE_NAME == *rhel8[23]* ]]; then
     greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
-    sudo curl --retry 5 -Lsko /etc/mock/templates/rhel-8.tpl \
-        https://gitlab.cee.redhat.com/snippets/2208/raw
+    sudo mv $NIGHTLY_MOCK_TEMPLATE /etc/mock/templates/rhel-8.tpl
+    cat $NIGHTLY_REPO | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
+    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
 fi
 
 # Compile RPMs in a mock chroot
@@ -81,7 +101,7 @@ createrepo_c ${REPO_DIR}
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"
 pushd repo
-     s3cmd --acl-public sync . s3://${REPO_BUCKET}/
+    s3cmd --acl-public sync . s3://${REPO_BUCKET}/
 popd
 
 # Create a repository file.

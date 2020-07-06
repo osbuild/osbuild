@@ -26,3 +26,17 @@ CI MACHINE SPECS
 ------------------------------------------------------------------------------
 EOF
 echo -e "\033[0m"
+
+echo "List of installed packages:"
+rpm -qa | sort
+echo "------------------------------------------------------------------------------"
+
+# Ensure cloud-init has completely finished on the instance. This ensures that
+# the instance is fully ready to go.
+while true; do
+  if [[ -f /var/lib/cloud/instance/boot-finished ]]; then
+    break
+  fi
+  echo -e "\n🤔 Waiting for cloud-init to finish running..."
+  sleep 5
+done

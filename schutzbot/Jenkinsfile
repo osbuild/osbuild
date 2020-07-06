@@ -18,7 +18,7 @@ pipeline {
 
             parallel {
                 stage('Fedora 31') {
-                    agent { label "fedora31" }
+                    agent { label "f31 && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -32,7 +32,7 @@ pipeline {
                     }
                 }
                 stage('Fedora 32') {
-                    agent { label "fedora32" }
+                    agent { label "f32 && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -46,7 +46,7 @@ pipeline {
                     }
                 }
                 stage('RHEL 8 CDN') {
-                    agent { label "rhel8" }
+                    agent { label "rhel8cdn && minimal" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
@@ -59,21 +59,23 @@ pipeline {
                         )
                     }
                 }
-                // NOTE(mhayden): Disabling this for now since we don't have
-                // access to these repositories in AWS.
-                // stage('RHEL 8.3 Nightly') {
-                //     agent { label "rhel83" }
-                //     environment {
-                //         OPENSTACK_CREDS = credentials('psi-openstack-clouds-yaml')
-                //     }
-                //     steps {
-                //         sh "schutzbot/mockbuild.sh"
-                //         stash (
-                //             includes: 'osbuild-mock.repo',
-                //             name: 'rhel83'
-                //         )
-                //     }
-                // }
+                // NOTE(mhayden): RHEL 8.3 is only available in PSI for now.
+                stage('RHEL 8.3 Nightly') {
+                    agent { label "rhel83nightly && minimal" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        NIGHTLY_REPO = credentials('rhel8-nightly-repo')
+                        NIGHTLY_MOCK_TEMPLATE = credentials('rhel8-nightly-mock-template')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        sh "schutzbot/mockbuild.sh"
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'rhel83'
+                        )
+                    }
+                }
             }
         }
         stage("Functional Testing") {
@@ -130,10 +132,22 @@ pipeline {
 void run_tests() {
 
     // Get CI machine details.
-    sh "schutzbot/ci_details.sh"
+    sh (
+        label: "Get CI machine details",
+        script: "schutzbot/ci_details.sh"
+    )
 
-    // Run the tests from the repository.
-    sh "schutzbot/run_tests.sh"
+    // Deploy the Image Builder packages and services.
+    sh (
+        label: "Deploy",
+        script: "schutzbot/deploy.sh"
+    )
+
+    // Run the image tests.
+    sh (
+        label: "Image tests",
+        script: "schutzbot/run_image_tests.sh"
+    )
 
 }
 
@@ -141,13 +155,19 @@ void run_tests() {
 // or failure.
 void preserve_logs(test_slug) {
 
+    // Save the systemd journal.
+    sh "sudo journalctl --boot > systemd-journald.log"
+
+    // Find any AVCs in the audit log and save those.
+    sh "sudo grep AVC /var/log/audit/audit.log > selinux-avc.log"
+
     // Make a directory for the log files and move the logs there.
-    sh "mkdir ${test_slug} && mv *.log ${test_slug}/"
+    sh "mkdir ${test_slug} && mv *.log *.jpg ${test_slug}/ || true"
 
     // Artifact the logs.
     archiveArtifacts (
         allowEmptyArchive: true,
-        artifacts: "${test_slug}/*.log"
+        artifacts: "${test_slug}/*.log,${test_slug}/*.jpg"
     )
 
 }
