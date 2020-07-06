@@ -6,6 +6,7 @@ on:
 jobs:
   coverity:
     name: "Test Suite"
+    if: github.repository == 'osbuild/osbuild'
     runs-on: ubuntu-latest
     defaults:
       run:
