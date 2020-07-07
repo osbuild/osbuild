@@ -86,8 +86,6 @@ def parse_arguments(sys_argv):
                         help="directory where intermediary os trees are stored")
     parser.add_argument("--sources", metavar="FILE", type=os.path.abspath,
                         help="json file containing a dictionary of source configuration")
-    parser.add_argument("--secrets", metavar="FILE", type=os.path.abspath,
-                        help="json file containing a dictionary of secrets that are passed to sources")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
                         help="the directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
@@ -127,11 +125,6 @@ def osbuild_cli(*, sys_argv):
 
     pipeline = osbuild.load(pipeline, sources_options)
 
-    secrets = {}
-    if args.secrets:
-        with open(args.secrets) as f:
-            secrets = json.load(f)
-
     if args.checkpoint:
         missed = mark_checkpoints(pipeline, args.checkpoint)
         if missed:
@@ -153,7 +146,6 @@ def osbuild_cli(*, sys_argv):
             args.store,
             interactive=not args.json,
             libdir=args.libdir,
-            secrets=secrets,
             output_directory=args.output_directory
         )
     except KeyboardInterrupt:

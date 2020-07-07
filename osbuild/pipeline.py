@@ -73,8 +73,7 @@ class Stage:
             cache,
             interactive=False,
             libdir=None,
-            var="/var/tmp",
-            secrets=None):
+            var="/var/tmp"):
         with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root, \
             tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var) as sources_output:
             if interactive:
@@ -96,8 +95,7 @@ class Stage:
                                       libdir or "/usr/lib/osbuild",
                                       self.sources,
                                       f"{cache}/sources",
-                                      sources_output,
-                                      secrets):
+                                      sources_output):
                 r = build_root.run(
                     [f"/run/osbuild/lib/stages/{self.name}"],
                     binds=[f"{tree}:/run/osbuild/tree"],
@@ -204,7 +202,7 @@ class Pipeline:
 
         return description
 
-    def build_stages(self, object_store, interactive, libdir, secrets):
+    def build_stages(self, object_store, interactive, libdir):
         results = {"success": True}
 
         # We need a build tree for the stages below, which is either
@@ -220,8 +218,7 @@ class Pipeline:
 
             r, t, tree = build.build_stages(object_store,
                                             interactive,
-                                            libdir,
-                                            secrets)
+                                            libdir)
 
             results["build"] = r
             if not r["success"]:
@@ -275,8 +272,7 @@ class Pipeline:
                               object_store.store,
                               interactive=interactive,
                               libdir=libdir,
-                              var=object_store.store,
-                              secrets=secrets)
+                              var=object_store.store)
 
             results["stages"].append(r.as_dict())
             if not r.success:
@@ -323,7 +319,7 @@ class Pipeline:
 
         return results
 
-    def run(self, store, interactive=False, libdir=None, secrets=None, output_directory=None):
+    def run(self, store, interactive=False, libdir=None, output_directory=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         results = {}
 
@@ -341,8 +337,7 @@ class Pipeline:
             else:
                 results, build_tree, tree = self.build_stages(object_store,
                                                               interactive,
-                                                              libdir,
-                                                              secrets)
+                                                              libdir)
 
                 if not results["success"]:
                     return results
