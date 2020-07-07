@@ -7,13 +7,12 @@ from .util import jsoncomm
 
 class SourcesServer:
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, socket_address, libdir, options, cache, output, secrets=None):
+    def __init__(self, socket_address, libdir, options, cache, output):
         self.socket_address = socket_address
         self.libdir = libdir
         self.cache = cache
         self.output = output
         self.options = options or {}
-        self.secrets = secrets or {}
         self.barrier = threading.Barrier(2)
         self.event_loop = None
         self.thread = None
@@ -21,7 +20,6 @@ class SourcesServer:
     def _run_source(self, source, checksums):
         msg = {
             "options": self.options.get(source, {}),
-            "secrets": self.secrets.get(source, {}),
             "cache": f"{self.cache}/{source}",
             "output": f"{self.output}/{source}",
             "checksums": checksums,
