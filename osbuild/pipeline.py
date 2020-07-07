@@ -240,7 +240,6 @@ class Pipeline:
             tree = object_store.new()
             return results, build_tree, tree
 
-
         # Create a new tree. The base is our tree_id because if that
         # is already in the store, we can short-circuit directly and
         # exit directly; `tree` is then used to read the tree behind
