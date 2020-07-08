@@ -52,9 +52,33 @@ SCHEMA = """
     }
   },
   "format": {
-    "description": "Image file format to use",
-    "type": "string",
-    "enum": ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]
+    "oneOf": [
+      {
+        "description": "Image file format to use (legacy; options and compression are hardcoded for each format, use the object form)",
+        "type": "string",
+        "enum": ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]
+      },
+      {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "description": "Image file format to pass to qemu-img convert -O",
+            "type": "string",
+            "enum": ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]
+          },
+          "options": {
+            "description": "Format options to pass to qemu-img convert -o (ignored for raw and raw.xz)",
+            "type": "string"
+          },
+          "compressed": {
+            "description": "Compress the image using qemu-img convert -c (ignored for raw and raw.xz)",
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    ]
   },
   "filename": {
     "description": "Image filename",
@@ -600,9 +624,20 @@ def install_zipl(root: str, device: str, pt: PartitionTable):
 
 
 def convert_image(image, output_filename, fmt):
-    if fmt == "raw":
+    # convert format to the new object form
+    if isinstance(fmt, str):
+        if fmt in ["raw", "raw.xz", "vdi", "vhdx"]:
+            fmt = {"type": fmt}
+        elif fmt in ["qcow2", "vmdk"]:
+            fmt = {"type": fmt, "compressed": True}
+        elif fmt == "vpc":
+            fmt = {"type": fmt, "options": "subformat=fixed,force_size"}
+        else:
+            raise ValueError("`format` must be one of raw, raw.xz, qcow2, vdi, vmdk, vpc, vhdx")
+
+    if fmt["type"] == "raw":
         subprocess.run(["cp", image, output_filename], check=True)
-    elif fmt == "raw.xz":
+    elif fmt["type"] == "raw.xz":
         with open(output_filename, "w") as f:
             subprocess.run(
                 ["xz", "--keep", "--stdout", "-0", image],
@@ -613,18 +648,16 @@ def convert_image(image, output_filename, fmt):
                 }
             )
     else:
-        extra_args = {
-            "qcow2": ["-c"],
-            "vdi": [],
-            "vmdk": ["-c"],
-            "vpc": ["-o", "subformat=fixed,force_size"],
-            "vhdx": []
-        }
+        extra_args = []
+        if fmt.get("compressed", False):
+            extra_args += ["-c"]
+        if fmt.get("options", ""):
+            extra_args += ["-o", fmt["options"]]
         subprocess.run([
             "qemu-img",
             "convert",
-            "-O", fmt,
-            *extra_args[fmt],
+            "-O", fmt["type"],
+            *extra_args,
             image,
             output_filename
         ], check=True)
