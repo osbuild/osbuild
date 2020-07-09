@@ -640,9 +640,6 @@ def main(tree, output_dir, options, loop_client):
     if size % 512 != 0:
         raise ValueError("`size` must be a multiple of sector size (512)")
 
-    if fmt not in ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]:
-        raise ValueError("`format` must be one of raw, qcow, vdi, vmdk, vpc, vhdx")
-
     image = "/var/tmp/osbuild-image.raw"
 
     # Create an empty image file
