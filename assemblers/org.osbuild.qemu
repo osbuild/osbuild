@@ -599,6 +599,37 @@ def install_zipl(root: str, device: str, pt: PartitionTable):
                    check=True)
 
 
+def convert_image(image, output_filename, fmt):
+    if fmt == "raw":
+        subprocess.run(["cp", image, output_filename], check=True)
+    elif fmt == "raw.xz":
+        with open(output_filename, "w") as f:
+            subprocess.run(
+                ["xz", "--keep", "--stdout", "-0", image],
+                stdout=f,
+                check=True,
+                env={
+                    "XZ_OPT": "--threads 0"
+                }
+            )
+    else:
+        extra_args = {
+            "qcow2": ["-c"],
+            "vdi": [],
+            "vmdk": ["-c"],
+            "vpc": ["-o", "subformat=fixed,force_size"],
+            "vhdx": []
+        }
+        subprocess.run([
+            "qemu-img",
+            "convert",
+            "-O", fmt,
+            *extra_args[fmt],
+            image,
+            output_filename
+        ], check=True)
+
+
 def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
     filename = options["filename"]
@@ -655,34 +686,8 @@ def main(tree, output_dir, options, loop_client):
         if bootloader["type"] == "zipl":
             install_zipl(root, disk, pt)
 
-    if fmt == "raw":
-        subprocess.run(["cp", image, f"{output_dir}/{filename}"], check=True)
-    elif fmt == "raw.xz":
-        with open(f"{output_dir}/{filename}", "w") as f:
-            subprocess.run(
-                ["xz", "--keep", "--stdout", "-0", image],
-                stdout=f,
-                check=True,
-                env={
-                    "XZ_OPT": "--threads 0"
-                }
-            )
-    else:
-        extra_args = {
-            "qcow2": ["-c"],
-            "vdi": [],
-            "vmdk": ["-c"],
-            "vpc": ["-o", "subformat=fixed,force_size"],
-            "vhdx": []
-        }
-        subprocess.run([
-            "qemu-img",
-            "convert",
-            "-O", fmt,
-            *extra_args[fmt],
-            image,
-            f"{output_dir}/{filename}"
-        ], check=True)
+    output_filename = f"{output_dir}/{filename}"
+    convert_image(image, output_filename, fmt)
 
 
 if __name__ == '__main__':
