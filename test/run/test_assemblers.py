@@ -91,15 +91,19 @@ class TestAssemblers(test.TestBase):
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_rawfs(self):
-        options = {
-            "filename": "image.raw",
-            "root_fs_uuid": "016a1cda-5182-4ab3-bf97-426b00b74eb0",
-            "size": 512 * MEBIBYTE
-        }
-        with self.osbuild as osb:
-            with self.run_assembler(osb, "org.osbuild.rawfs", options, "image.raw") as (tree, image):
-                self.assertImageFile(image, "raw", options["size"])
-                self.assertFilesystem(image, options["root_fs_uuid"], "ext4", tree)
+        for fs_type in ["ext4", "xfs", "btrfs"]:
+            with self.subTest(fs_type=fs_type):
+                print(f"  {fs_type}", flush=True)
+                options = {
+                    "filename": "image.raw",
+                    "root_fs_uuid": "016a1cda-5182-4ab3-bf97-426b00b74eb0",
+                    "size": 512 * MEBIBYTE,
+                    "fs_type": fs_type,
+                }
+                with self.osbuild as osb:
+                    with self.run_assembler(osb, "org.osbuild.rawfs", options, "image.raw") as (tree, image):
+                        self.assertImageFile(image, "raw", options["size"])
+                        self.assertFilesystem(image, options["root_fs_uuid"], fs_type, tree)
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_ostree(self):
@@ -138,14 +142,16 @@ class TestAssemblers(test.TestBase):
         loctl = loop.LoopControl()
         with self.osbuild as osb:
             for fmt in ["raw", "raw.xz", "qcow2", "vmdk", "vdi"]:
-                with self.subTest(fmt=fmt):
-                    print(f"  {fmt}", flush=True)
+                for fs_type in ["ext4", "xfs", "btrfs"]:
+                    with self.subTest(fmt=fmt, fs_type=fs_type):
+                        print(f"  {fmt} {fs_type}", flush=True)
                     options = {
                         "format": fmt,
                         "filename": f"image.{fmt}",
                         "ptuuid": "b2c09a39-db93-44c5-846a-81e06b1dc162",
                         "root_fs_uuid": "aff010e9-df95-4f81-be6b-e22317251033",
-                        "size": 512 * MEBIBYTE
+                        "size": 512 * MEBIBYTE,
+                        "root_fs_type": fs_type,
                     }
                     with self.run_assembler(osb,
                                             "org.osbuild.qemu",
@@ -172,7 +178,7 @@ class TestAssemblers(test.TestBase):
                             ssize = ptable.get("sectorsize", 512)
                             start, size = p1["start"] * ssize, p1["size"] * ssize
                             with loop_open(loctl, target, offset=start, size=size) as dev:
-                                self.assertFilesystem(dev, options["root_fs_uuid"], "ext4", tree)
+                                self.assertFilesystem(dev, options["root_fs_uuid"], fs_type, tree)
 
     def test_tar(self):
         cases = [

@@ -107,7 +107,7 @@ SCHEMA = """
             "type": {
               "description": "Type of the filesystem",
               "type": "string",
-              "enum": ["ext4", "xfs", "vfat"]
+              "enum": ["ext4", "xfs", "vfat", "btrfs"]
             },
             "uuid": {
               "description": "UUID for the filesystem",
@@ -138,7 +138,7 @@ SCHEMA = """
   "root_fs_type": {
     "description": "Type of the root filesystem",
     "type": "string",
-    "enum": ["ext4", "xfs"],
+    "enum": ["ext4", "xfs", "btrfs"],
     "default": "ext4"
   }
 }
@@ -169,6 +169,14 @@ def mkfs_xfs(device, uuid, label):
                    encoding='utf-8', check=True)
 
 
+def mkfs_btrfs(device, uuid, label):
+    opts = []
+    if label:
+        opts = ["-L", label]
+    subprocess.run(["mkfs.btrfs", "-U", uuid] + opts + [device],
+                   encoding='utf-8', check=True)
+
+
 def mkfs_vfat(device, uuid, label):
     volid = uuid.replace('-', '')
     opts = []
@@ -196,6 +204,8 @@ class Filesystem:
             maker = mkfs_xfs
         elif fs_type == "vfat":
             maker = mkfs_vfat
+        elif fs_type == "btrfs":
+            maker = mkfs_btrfs
         else:
             raise ValueError(f"Unknown filesystem type '{fs_type}'")
         maker(device, self.uuid, self.label)
@@ -515,6 +525,8 @@ def install_grub2(image: str, pt: PartitionTable, options):
         modules += ["ext2"]
     elif fs_type == "xfs":
         modules += ["xfs"]
+    elif fs_type == "btrfs":
+        modules += ["btrfs"]
     else:
         raise ValueError(f"unknown boot filesystem type: '{fs_type}'")
 
