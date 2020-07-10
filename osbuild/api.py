@@ -2,19 +2,18 @@ import asyncio
 import io
 import json
 import os
-import sys
 import tempfile
 import threading
 from .util import jsoncomm
 
 
 class API:
-    def __init__(self, socket_address, args, interactive):
+    def __init__(self, socket_address, args, monitor):
         self.socket_address = socket_address
         self.input = args
-        self.interactive = interactive
         self._output_data = io.StringIO()
         self._output_pipe = None
+        self.monitor = monitor
         self.event_loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_event_loop)
         self.barrier = threading.Barrier(2)
@@ -41,9 +40,7 @@ class API:
         raw = os.read(self._output_pipe, 4096)
         data = raw.decode("utf-8")
         self._output_data.write(data)
-
-        if self.interactive:
-            sys.stdout.write(data)
+        self.monitor.log(data)
 
     def _setup_stdio(self, server, addr):
         with self._prepare_input() as stdin, \
