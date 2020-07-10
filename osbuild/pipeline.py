@@ -13,10 +13,6 @@ from . import sources
 from .util import osrelease
 
 
-RESET = "\033[0m"
-BOLD = "\033[1m"
-
-
 def cleanup(*objs):
     """Call cleanup method for all objects, filters None values out"""
     _ = map(lambda o: o.cleanup(), filter(None, objs))
@@ -32,12 +28,6 @@ class BuildResult:
 
     def as_dict(self):
         return vars(self)
-
-
-def print_header(title, options):
-    print()
-    print(f"{RESET}{BOLD}{title}{RESET} " + json.dumps(options or {}, indent=2))
-    print()
 
 
 class Stage:
@@ -71,13 +61,11 @@ class Stage:
             runner,
             build_tree,
             cache,
-            interactive=False,
+            monitor,
             libdir=None,
             var="/var/tmp"):
         with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root, \
             tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var) as sources_output:
-            if interactive:
-                print_header(f"{self.name}: {self.id}", self.options)
 
             args = {
                 "tree": "/run/osbuild/tree",
@@ -90,7 +78,7 @@ class Stage:
 
             ro_binds = [f"{sources_output}:/run/osbuild/sources"]
 
-            with API(f"{build_root.api}/osbuild", args, interactive) as api, \
+            with API(f"{build_root.api}/osbuild", args, monitor) as api, \
                 sources.SourcesServer(f"{build_root.api}/sources",
                                       libdir or "/usr/lib/osbuild",
                                       self.sources,
@@ -129,10 +117,8 @@ class Assembler:
             description["id"] = self.id
         return description
 
-    def run(self, tree, runner, build_tree, output_dir=None, interactive=False, libdir=None, var="/var/tmp"):
+    def run(self, tree, runner, build_tree, monitor, output_dir=None, libdir=None, var="/var/tmp"):
         with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root:
-            if interactive:
-                print_header(f"Assembler {self.name}: {self.id}", self.options)
 
             args = {
                 "tree": "/run/osbuild/tree",
@@ -151,7 +137,7 @@ class Assembler:
             ro_binds = [f"{tree}:/run/osbuild/tree"]
 
             with remoteloop.LoopServer(f"{build_root.api}/remoteloop"), \
-                API(f"{build_root.api}/osbuild", args, interactive) as api:
+                API(f"{build_root.api}/osbuild", args, monitor) as api:
                 r = build_root.run(
                     [f"/run/osbuild/lib/assemblers/{self.name}"],
                     binds=binds,
@@ -202,7 +188,7 @@ class Pipeline:
 
         return description
 
-    def build_stages(self, object_store, interactive, libdir):
+    def build_stages(self, object_store, monitor, libdir):
         results = {"success": True}
 
         # We need a build tree for the stages below, which is either
@@ -217,7 +203,7 @@ class Pipeline:
             build = self.build
 
             r, t, tree = build.build_stages(object_store,
-                                            interactive,
+                                            monitor,
                                             libdir)
 
             results["build"] = r
@@ -266,13 +252,18 @@ class Pipeline:
 
         for stage in self.stages[base_idx + 1:]:
             with build_tree.read() as build_path, tree.write() as path:
+
+                monitor.stage(stage)
+
                 r = stage.run(path,
                               self.runner,
                               build_path,
                               object_store.store,
-                              interactive=interactive,
+                              monitor,
                               libdir=libdir,
                               var=object_store.store)
+
+                monitor.result(r)
 
             results["stages"].append(r.as_dict())
             if not r.success:
@@ -285,7 +276,7 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def assemble(self, object_store, build_tree, tree, interactive, libdir, output_directory: Optional[str]):
+    def assemble(self, object_store, build_tree, tree, monitor, libdir, output_directory: Optional[str]):
         results = {"success": True}
 
         if not self.assembler:
@@ -297,13 +288,17 @@ class Pipeline:
              tree.read() as input_dir, \
              output.write() as output_dir:
 
+            monitor.assembler(self.assembler)
+
             r = self.assembler.run(input_dir,
                                    self.runner,
                                    build_dir,
+                                   monitor,
                                    output_dir=output_dir,
-                                   interactive=interactive,
                                    libdir=libdir,
                                    var=object_store.store)
+
+            monitor.result(r)
 
         results["assembler"] = r.as_dict()
         if not r.success:
@@ -319,9 +314,11 @@ class Pipeline:
 
         return results
 
-    def run(self, store, interactive=False, libdir=None, output_directory=None):
+    def run(self, store, monitor, libdir=None, output_directory=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         results = {}
+
+        monitor.begin(self)
 
         with objectstore.ObjectStore(store) as object_store:
             # If the final result is already in the store, no need to attempt
@@ -336,7 +333,7 @@ class Pipeline:
                         output.export(output_directory)
             else:
                 results, build_tree, tree = self.build_stages(object_store,
-                                                              interactive,
+                                                              monitor,
                                                               libdir)
 
                 if not results["success"]:
@@ -345,11 +342,13 @@ class Pipeline:
                 r = self.assemble(object_store,
                                   build_tree,
                                   tree,
-                                  interactive,
+                                  monitor,
                                   libdir,
                                   output_directory)
 
                 results.update(r)  # This will also update 'success'
+
+        monitor.finish(results)
 
         return results
 
