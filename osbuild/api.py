@@ -12,14 +12,15 @@ class API:
         self.socket_address = socket_address
         self.input = args
         self.interactive = interactive
-        self._output = None
+        self._output_data = None
+        self._output_pipe = None
         self.event_loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_event_loop)
         self.barrier = threading.Barrier(2)
 
     @property
     def output(self):
-        return self._output and self._output.read()
+        return self._output_data
 
     def _prepare_input(self):
         with tempfile.TemporaryFile() as fd:
@@ -28,12 +29,19 @@ class API:
             return open(f"/proc/self/fd/{fd.fileno()}", "r")
 
     def _prepare_output(self):
+        r, w = os.pipe()
+        self._output_pipe = r
+        self._output_data = ""
+        self.event_loop.add_reader(r, self._output_ready)
+        return os.fdopen(w)
+
+    def _output_ready(self):
+        raw = os.read(self._output_pipe, 4096)
+        data = raw.decode("utf-8")
+        self._output_data += data
+
         if self.interactive:
-            return os.fdopen(os.dup(sys.stdout.fileno()), 'w')
-        out = tempfile.TemporaryFile(mode="wb")
-        fd = os.open(f"/proc/self/fd/{out.fileno()}", os.O_RDONLY|os.O_CLOEXEC)
-        self._output = os.fdopen(fd)
-        return out
+            sys.stdout.write(data)
 
     def _setup_stdio(self, server, addr):
         with self._prepare_input() as stdin, \
@@ -71,3 +79,6 @@ class API:
         self.event_loop.call_soon_threadsafe(self.event_loop.stop)
         self.thread.join()
         self.event_loop.close()
+        if self._output_pipe:
+            os.close(self._output_pipe)
+            self._output_pipe = None
