@@ -13,6 +13,7 @@ import sys
 
 import osbuild
 import osbuild.meta
+import osbuild.monitor
 
 
 RESET = "\033[0m"
@@ -145,10 +146,13 @@ def osbuild_cli():
         print("No output directory or checkpoints specified, exited without building.")
         return 0
 
+    monitor_name = "NullMonitor" if args.json else "LogMonitor"
+    monitor = osbuild.monitor.make(monitor_name, sys.stdout.fileno())
+
     try:
         r = pipeline.run(
             args.store,
-            interactive=not args.json,
+            monitor,
             libdir=args.libdir,
             output_directory=args.output_directory
         )
