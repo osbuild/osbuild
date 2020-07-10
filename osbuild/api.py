@@ -1,4 +1,5 @@
 import asyncio
+import io
 import json
 import os
 import sys
@@ -12,7 +13,7 @@ class API:
         self.socket_address = socket_address
         self.input = args
         self.interactive = interactive
-        self._output_data = None
+        self._output_data = io.StringIO()
         self._output_pipe = None
         self.event_loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_event_loop)
@@ -20,7 +21,7 @@ class API:
 
     @property
     def output(self):
-        return self._output_data
+        return self._output_data.getvalue()
 
     def _prepare_input(self):
         with tempfile.TemporaryFile() as fd:
@@ -31,14 +32,15 @@ class API:
     def _prepare_output(self):
         r, w = os.pipe()
         self._output_pipe = r
-        self._output_data = ""
+        self._output_data.truncate(0)
+        self._output_data.seek(0)
         self.event_loop.add_reader(r, self._output_ready)
         return os.fdopen(w)
 
     def _output_ready(self):
         raw = os.read(self._output_pipe, 4096)
         data = raw.decode("utf-8")
-        self._output_data += data
+        self._output_data.write(data)
 
         if self.interactive:
             sys.stdout.write(data)
