@@ -40,7 +40,6 @@ def umount(target, lazy=True):
     subprocess.run(["umount"] + args + [target], check=True)
 
 
-# pylint: disable=too-many-instance-attributes
 class Object:
     def __init__(self, store: "ObjectStore"):
         self._init = True

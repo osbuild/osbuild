@@ -6,7 +6,6 @@ from .util import jsoncomm
 
 
 class SourcesServer:
-    # pylint: disable=too-many-instance-attributes
     def __init__(self, socket_address, libdir, options, cache, output):
         self.socket_address = socket_address
         self.libdir = libdir
