@@ -4,3 +4,6 @@ max-line-length=120
 
 [TYPECHECK]
 ignored-classes=osbuild.loop.LoopInfo
+
+[DESIGN]
+max-attributes=10
