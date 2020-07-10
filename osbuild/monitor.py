@@ -116,6 +116,67 @@ class LogMonitor(BaseMonitor):
         self.out.write(message)
 
 
+class JsonLinesMonitor(BaseMonitor):
+    """Monitor that streams status information as JSON Lines
+
+    A Monitor that writes JSON messages before and after
+    a specific module is being built, so that clients can
+    keep track of the status during the build process.
+    """
+    def __init__(self, fd: int):
+        super().__init__(fd)
+        self.modules = {}
+
+    def begin(self, pipeline):
+
+        def register(module):
+            count = len(self.modules) + 1
+            self.modules[module.id] = count
+
+        def collect(pl):
+            if pl.build:
+                collect(pl.build)
+
+            for stage in pl.stages:
+                register(stage)
+
+            if pl.assembler:
+                register(pl.assembler)
+
+        collect(pipeline)
+
+    def stage(self, stage):
+        self.module(stage, "stage")
+
+    def assembler(self, assembler):
+        self.module(assembler, "assembler")
+
+    def module(self, module, module_type):
+        module_id = module.id
+        number = self.modules[module_id]
+
+        status = {
+            "type": "progress",
+            "data": {
+                "module": {
+                    "type": module_type,
+                    "name": module.name,
+                    "id": module_id
+                },
+                "progress": {
+                    "current": number,
+                    "total": len(self.modules)
+                }
+            }
+        }
+
+        self.send(status)
+
+    def send(self, js):
+        json.dump(js, self.out)
+        self.out.write("\n")
+
+
 def make(name, fd):
     module = sys.modules[__name__]
     monitor = getattr(module, name, None)
