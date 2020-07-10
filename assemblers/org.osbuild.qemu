@@ -201,7 +201,6 @@ class Filesystem:
         maker(device, self.uuid, self.label)
 
 
-# pylint: disable=too-many-instance-attributes
 class Partition:
     def __init__(self,
                  pttype: str = None,
