@@ -48,7 +48,7 @@ SCHEMA = """
   "fs_type": {
     "description": "Filesystem type",
     "type": "string",
-    "enum": ["ext4", "xfs"],
+    "enum": ["ext4", "xfs", "btrfs"],
     "default": "ext4"
   }
 }
@@ -72,6 +72,10 @@ def mkfs_xfs(device, uuid):
     subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf-8', check=True)
 
 
+def mkfs_btrfs(device, uuid):
+    subprocess.run(["mkfs.btrfs", "-U", uuid, device], encoding='utf-8', check=True)
+
+
 def main(tree, output_dir, options, loop_client):
     filename = options["filename"]
     root_fs_uuid = options["root_fs_uuid"]
@@ -87,8 +91,10 @@ def main(tree, output_dir, options, loop_client):
         mkfs_ext4(image, root_fs_uuid)
     elif fs_type == "xfs":
         mkfs_xfs(image, root_fs_uuid)
+    elif fs_type == "btrfs":
+        mkfs_btrfs(image, root_fs_uuid)
     else:
-        raise ValueError("`fs_type` must be either ext4 or xfs")
+        raise ValueError("`fs_type` must be ext4, xfs or btrfs")
 
     # Copy the tree into the target image
     with loop_client.device(image) as loop, mount(loop, mountpoint):
