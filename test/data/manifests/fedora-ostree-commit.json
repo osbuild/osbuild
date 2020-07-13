@@ -16,6 +16,7 @@
                 "sha256:22d311f22902d592f72bd0fb4010a682f796e5a4698d5ea209848468a2d5aa96",
                 "sha256:a346990bb07adca8c323a15f31b093ef6e639bde6ca84adf1a3abebc4dc9adce",
                 "sha256:7a97e71cd552285ead303d07dbb6417403edf45c0a531e02cf4ebfb0efda4975",
+                "sha256:b67f1634acc7b84b284bda8afeef546aed4a3388dc7df67417001704aa444af1",
                 "sha256:cd01ae91895e60f189106a159bb551f906a8b663110f421ad6ee83c9e008851e",
                 "sha256:842f7a38be2e8dbb14eff3ede4091db214ebe241e1fde7a128e88c4e686b63b0",
                 "sha256:73f6a9108f7d5ec3cd89c31dbbaa874ae28cd5cb443ef69700a1218903ee2fc4",
@@ -162,6 +163,7 @@
                 "sha256:9465f2f1103697207a52d15edd716ab72dc6c281823c60f424cd064d706c7a51",
                 "sha256:10883ce95852cc9ae9b4e0d435b100a25f8fe5c0ea4677eb4a0b39f4f8def886",
                 "sha256:44cfb58b368fba586981aa838a7f3974ac1d66d2b3b695f88d7b1d2e9c81a0b6",
+                "sha256:4375c398dff722a29bd1700bc8dc8b528345412d1e17d8d9d1176d9774962957",
                 "sha256:640afe5b9d499c9a7efc1d23cce8c54e3e3704d92eb7e7a93a048f97d1e983e1",
                 "sha256:2b098bc6f8004270ee9eac9f63980b364b5fe19394dc73a230b3c846cf488b1b",
                 "sha256:b2e862283ac97b1d8b1ede2034ead452ac7dc4ff308593306275b1b0ae5b4102",
@@ -1057,10 +1059,12 @@
         "sha256:b149e5c36e0327ca9c749b3ac0d3746ff9f9e0df68d6d177c3d13273273077cf": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/y/yum-4.2.19-1.fc32.noarch.rpm",
         "sha256:140708561a2ec1c7709fd38d8b1b115d02da710b80eeecd65c2b8387d9d78ef9": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/z/zchunk-libs-1.1.5-2.fc32.x86_64.rpm",
         "sha256:c0fff40dc1092e18ed3e608bc6143c89a0d7775b9e0553319bb2caca7d324d80": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/z/zlib-1.2.11-21.fc32.x86_64.rpm",
+        "sha256:b67f1634acc7b84b284bda8afeef546aed4a3388dc7df67417001704aa444af1": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/b/btrfs-progs-5.6-1.fc32.x86_64.rpm",
         "sha256:c3f7089ae50f79cf4d2cb59e01091d33c70cab89ae08f95c547339a87404c3ec": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/d/dosfstools-4.1-10.fc32.x86_64.rpm",
         "sha256:1f2ba0fc562864ad1bea31a42da124030fc188d23a84d144be616c2d066e1531": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/f/fedora-release-32-1.noarch.rpm",
         "sha256:129d919e55c09edecaa8edd0fd4058dbf7460aaae5d1c5625ca11f6df7defefe": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/g/glibc-all-langpacks-2.31-2.fc32.x86_64.rpm",
         "sha256:a410db5c56d4f39f6ea71e7d5bb6d4a2bd518015d1e34f38fbc0d7bbd4e872d4": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/l/libaio-0.3.111-7.fc32.x86_64.rpm",
+        "sha256:4375c398dff722a29bd1700bc8dc8b528345412d1e17d8d9d1176d9774962957": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/l/lzo-2.10-2.fc32.x86_64.rpm",
         "sha256:475b6de876914aec2187ac4858a13ae75585f5c4cb5d739c637f79a5ca6f05f9": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/q/qemu-img-4.2.0-7.fc32.x86_64.rpm"
       }
     }
