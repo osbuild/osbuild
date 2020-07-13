@@ -4,10 +4,35 @@
 
 import json
 import os
+import multiprocessing as mp
+import sys
+import tempfile
 import unittest
 
 import osbuild
 import osbuild.meta
+from osbuild.api import API
+from osbuild.monitor import LogMonitor
+from osbuild.util import jsoncomm
+
+
+def setup_stdio(path):
+    with jsoncomm.Socket.new_client(path) as client:
+        req = {'method': 'setup-stdio'}
+        client.send(req)
+        msg, fds, _ = client.recv()
+        for io in ['stdin', 'stdout', 'stderr']:
+            target = getattr(sys, io)
+            source = fds[msg[io]]
+            os.dup2(source, target.fileno())
+        fds.close()
+
+
+def echo(path):
+    setup_stdio(path)
+    data = json.load(sys.stdin)
+    json.dump(data, sys.stdout)
+    sys.exit(0)
 
 
 class TestDescriptions(unittest.TestCase):
@@ -228,3 +253,23 @@ class TestDescriptions(unittest.TestCase):
         self.assertEqual(len(lst), 1)  #  missing "filename"
         lst = res[".pipeline.assembler.options.compression"]
         self.assertEqual(len(lst), 1)  #  wrong compression method
+
+    def test_api_monitor(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = {"foo": "bar"}
+            path = os.path.join(tmpdir, "osbuild-api")
+            logfile = os.path.join(tmpdir, "log.txt")
+
+            with open(logfile, "w") as log, \
+                 API(path, args, LogMonitor(log.fileno())) as api:
+                p = mp.Process(target=echo, args=(path, ))
+                p.start()
+                p.join()
+                self.assertEqual(p.exitcode, 0)
+                output = api.output
+                assert output
+
+            self.assertEqual(json.dumps(args), output)
+            with open(logfile) as f:
+                log = f.read()
+            self.assertEqual(log, output)
