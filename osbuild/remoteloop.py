@@ -101,6 +101,7 @@ class LoopServer:
     def __exit__(self, *args):
         self.event_loop.call_soon_threadsafe(self.event_loop.stop)
         self.thread.join()
+        self.event_loop.close()
         for lo in self.devs:
             lo.close()
 
