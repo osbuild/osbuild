@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euxo pipefail
+set -euo pipefail
 
 # Colorful output.
 function greenprint {
@@ -8,11 +8,37 @@ function greenprint {
 
 # Get OS details.
 source /etc/os-release
+ARCH=$(uname -m)
+
+# Mock is only available in EPEL for RHEL.
+if [[ $ID == rhel ]]; then
+    greenprint "📦 Setting up EPEL repository"
+    curl -Ls --retry 5 --output /tmp/epel.rpm \
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo rpm -Uvh /tmp/epel.rpm
+fi
+
+# Register RHEL if we are provided with a registration script.
+if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+    greenprint "🪙 Registering RHEL instance"
+    sudo chmod +x $RHN_REGISTRATION_SCRIPT
+    sudo $RHN_REGISTRATION_SCRIPT
+fi
+
+# Install requirements for building RPMs in mock.
+greenprint "📦 Installing mock requirements"
+sudo dnf -y install createrepo_c make mock python3-pip rpm-build
 
 # Install s3cmd if it is not present.
-if ! s3cmd --version; then
+if ! s3cmd --version > /dev/null 2>&1; then
     greenprint "📦 Installing s3cmd"
-    sudo pip3 install s3cmd
+    sudo pip3 -q install s3cmd
+fi
+
+# Enable fastestmirror for mock on Fedora.
+if [[ $ID == fedora ]]; then
+    sudo sed -i '/^install_weak_deps=.*/a fastestmirror=1' \
+        /etc/mock/templates/fedora-branched.tpl
 fi
 
 # Jenkins sets a workspace variable as the root of its working directory.
@@ -34,33 +60,28 @@ REPO_BUCKET=osbuild-composer-repos
 MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
 
 # Directory to hold the RPMs temporarily before we upload them.
-REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}
+REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 
 # Full URL to the RPM repository after they are uploaded.
-REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}
+REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
 greenprint "📦 Post merge SHA: ${POST_MERGE_SHA}"
 greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 
-# Clone osbuild-composer.
-# TODO(mhayden): After the next osbuild-composer release, use the latest tag
-# in the osbuild-composer repository. We can't do that right now because
-# osbuild-composer v12 is missing c0ad652db58059e0e99eb7253b6ba85f25bead3f
-# which maks RHEL 8's qemu happy with the image tests.
-git clone https://github.com/osbuild/osbuild-composer
-
 # Build source RPMs.
 greenprint "🔧 Building source RPMs."
 make srpm
+git clone --quiet https://github.com/osbuild/osbuild-composer osbuild-composer
 make -C osbuild-composer srpm
 
 # Fix RHEL 8 mock template for non-subscribed images.
 if [[ $NODE_NAME == *rhel8[23]* ]]; then
     greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
-    sudo curl --retry 5 -Lsko /etc/mock/templates/rhel-8.tpl \
-        https://gitlab.cee.redhat.com/snippets/2208/raw
+    sudo mv $NIGHTLY_MOCK_TEMPLATE /etc/mock/templates/rhel-8.tpl
+    cat $NIGHTLY_REPO | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
+    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
 fi
 
 # Compile RPMs in a mock chroot
@@ -81,7 +102,7 @@ createrepo_c ${REPO_DIR}
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"
 pushd repo
-     s3cmd --acl-public sync . s3://${REPO_BUCKET}/
+    s3cmd --acl-public sync . s3://${REPO_BUCKET}/
 popd
 
 # Create a repository file.
