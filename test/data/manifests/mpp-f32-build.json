@@ -18,6 +18,7 @@
               }
             ],
             "packages": [
+              "btrfs-progs",
               "dnf",
               "dosfstools",
               "e2fsprogs",
