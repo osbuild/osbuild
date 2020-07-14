@@ -234,6 +234,7 @@
                 "sha256:9976e6228a10fa2761f1265a2a7666578d79ca57819837e5d1fbecc53324f1b9",
                 "sha256:82e0d8f1e0dccc6d18acd04b7806350343140d9c91da7a216f93167dcf650a61",
                 "sha256:d027a3ff0712e3e98d7d2358f8c526fb8d143b2386c353aadcc27199cffe125b",
+                "sha256:e3175d0dba977f1cff702498ea68cc13134a0f525a869025e2ee3ede987d7867",
                 "sha256:ec12fef82d73314e3e4cb6e962f8de27e78989fa104dde0599a4480a53817647",
                 "sha256:1bdde5dc99a5588a8983f70b7b3e45e7006215d529c72adfec118c3bcbf7b01c",
                 "sha256:84702d6395a9577c1a268184f123cfd4b15bc2287f01033625ba388a34ec2338",
@@ -891,7 +892,8 @@
         "sha256:475b6de876914aec2187ac4858a13ae75585f5c4cb5d739c637f79a5ca6f05f9": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/q/qemu-img-4.2.0-7.fc32.x86_64.rpm",
         "sha256:ee664c392a97cdd272f57980c6856b2c57567005fa0ad9cb16c388b645d014f1": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/r/rpm-ostree-2020.1-1.fc32.x86_64.rpm",
         "sha256:9d220d8ee28cd0adf28e8fef547af92c3ec66e238747165939cf8e1a413ddf83": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/r/rpm-ostree-libs-2020.1-1.fc32.x86_64.rpm",
-        "sha256:2cee64e12b295b74d2f4b008c7628ef3a01ef4149905fc4a7ae14b304da5f53b": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/t/tar-1.32-4.fc32.x86_64.rpm"
+        "sha256:2cee64e12b295b74d2f4b008c7628ef3a01ef4149905fc4a7ae14b304da5f53b": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/t/tar-1.32-4.fc32.x86_64.rpm",
+        "sha256:e3175d0dba977f1cff702498ea68cc13134a0f525a869025e2ee3ede987d7867": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/Packages/x/xfsprogs-5.4.0-3.fc32.x86_64.rpm"
       }
     }
   }
