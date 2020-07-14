@@ -28,6 +28,7 @@
               "rpm-ostree",
               "systemd",
               "tar",
+              "xfsprogs",
               "xz"
             ]
           }
