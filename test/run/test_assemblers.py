@@ -58,7 +58,11 @@ class TestAssemblers(test.TestBase):
 
         with mount(device) as target_tree:
             diff = self.tree_diff(tree, target_tree)
-            self.assertEqual(diff["added_files"], ["/lost+found"])
+            if fstype == 'ext4':
+                added_files = ["/lost+found"]
+            else:
+                added_files = []
+            self.assertEqual(diff["added_files"], added_files)
             self.assertEqual(diff["deleted_files"], [])
             self.assertEqual(diff["differences"], {})
 
