@@ -169,9 +169,13 @@ class TestAssemblers(test.TestBase):
                                                       options["ptuuid"],
                                                       1,
                                                       boot_partition=1)
+                            if fs_type == "btrfs":
+                                l2hash = "daa74a424a41e2a13c6c4f6bada0e80d84a9865b12d3369470fc5e74004ed329"
+                            else:
+                                l2hash = "9b31c8fbc59602a38582988bf91c3948ae9c6f2a231ab505ea63a7005e302147"
                             self.assertGRUB2(device,
                                              "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
-                                             "9b31c8fbc59602a38582988bf91c3948ae9c6f2a231ab505ea63a7005e302147",
+                                             l2hash,
                                              1024 * 1024)
 
                             p1 = ptable["partitions"][0]
