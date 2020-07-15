@@ -80,6 +80,10 @@ def parse_arguments(sys_argv):
                         help="directory where result objects are stored")
     parser.add_argument("--inspect", action="store_true",
                         help="return the manifest in JSON format including all the ids")
+    parser.add_argument("--monitor", metavar="NAME", default=None,
+                        help="Name of the monitor to be used")
+    parser.add_argument("--monitor-fd", metavar="FD", type=int, default=sys.stdout.fileno(),
+                        help="File descriptor to be used for the monitor")
     parser.add_argument("--stage-timeout", type=int, default=None,
                         help="set the maximal time (in seconds) each stage is allowed to run")
 
@@ -140,8 +144,10 @@ def osbuild_cli():
         print("Need --output-directory for --export")
         return 1
 
-    monitor_name = "NullMonitor" if args.json else "LogMonitor"
-    monitor = osbuild.monitor.make(monitor_name, sys.stdout.fileno())
+    monitor_name = args.monitor
+    if not monitor_name:
+        monitor_name = "NullMonitor" if args.json else "LogMonitor"
+    monitor = osbuild.monitor.make(monitor_name, args.monitor_fd)
 
     try:
         with ObjectStore(args.store) as object_store:
