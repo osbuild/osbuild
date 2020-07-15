@@ -97,6 +97,10 @@ def parse_arguments(sys_argv):
                         help="directory where result objects are stored")
     parser.add_argument("--inspect", action="store_true",
                         help="return the manifest in JSON format including all the ids")
+    parser.add_argument("--monitor", metavar="NAME", default=None,
+                        help="Name of the monitor to be used")
+    parser.add_argument("--monitor-fd", metavar="FD", type=int, default=sys.stdout.fileno(),
+                        help="File descriptor to be used for the monitor")
 
     return parser.parse_args(sys_argv[1:])
 
@@ -142,9 +146,11 @@ def osbuild_cli(*, sys_argv):
         sys.stdout.write("\n")
         return 0
 
+    if not args.monitor:
+        monitor_name = "NullMonitor" if args.json else "LogMonitor"
+        setattr(args, "monitor", monitor_name)
 
-    monitor_name = "NullMonitor" if args.json else "LogMonitor"
-    monitor = osbuild.monitor.make(monitor_name, sys.stdout.fileno())
+    monitor = osbuild.monitor.make(args.monitor, args.monitor_fd)
 
     try:
         r = pipeline.run(
