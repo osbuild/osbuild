@@ -155,6 +155,18 @@ pipeline {
             }
         }
     }
+
+    post {
+        success {
+            when { branch 'master' }
+            telegramSend "💚 CI passed for osbuild-composer master branch!. ${env.BUILD_URL}"
+        }
+        unsuccessful {
+            when { branch 'master' }
+            telegramSend "💣 CI failed for osbuild-composer master branch! ${env.BUILD_URL}"
+        }
+    }
+
 }
 
 // Set up a function to hold the steps needed to run the tests so we don't
