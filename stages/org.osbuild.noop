@@ -11,7 +11,7 @@ import json
 import sys
 
 SCHEMA = """
-"additionalProperties": false
+"additionalProperties": true
 """
 
 def main(_tree, options):

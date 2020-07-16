@@ -7,7 +7,10 @@
   "pipeline": {
     "stages": [
       {
-        "name": "org.osbuild.noop"
+        "name": "org.osbuild.noop",
+        "options": {
+          "sample": "True"
+        }
       }
     ],
     "assembler": {
