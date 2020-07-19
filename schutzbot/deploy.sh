@@ -69,7 +69,6 @@ if [[ "${ID}${VERSION_ID//./}" == rhel82 ]]; then
 fi
 
 # Start services.
-sudo systemctl enable --now osbuild-rcm.socket
 sudo systemctl enable --now osbuild-composer.socket
 
 # Verify that the API is running.
