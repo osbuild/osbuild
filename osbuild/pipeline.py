@@ -86,7 +86,7 @@ class Stage:
                                       sources_output):
                 r = build_root.run(
                     [f"/run/osbuild/lib/stages/{self.name}"],
-                    binds=[f"{tree}:/run/osbuild/tree"],
+                    binds=[os.fspath(tree) + ":/run/osbuild/tree"],
                     readonly_binds=ro_binds,
                 )
                 return BuildResult(self, r.returncode, api.output)
@@ -130,11 +130,12 @@ class Assembler:
 
             binds = []
             if output_dir:
+                output_dir = os.fspath(output_dir)
                 os.makedirs(output_dir, exist_ok=True)
                 binds.append(f"{output_dir}:/run/osbuild/output")
                 args["output_dir"] = "/run/osbuild/output"
 
-            ro_binds = [f"{tree}:/run/osbuild/tree"]
+            ro_binds = [os.fspath(tree) + ":/run/osbuild/tree"]
 
             with remoteloop.LoopServer(f"{build_root.api}/remoteloop"), \
                 API(f"{build_root.api}/osbuild", args, monitor) as api:
