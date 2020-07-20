@@ -215,6 +215,7 @@ $(TEST_MANIFESTS_GEN): $(SRCDIR)/test/data/manifests/%.json: $(SRCDIR)/test/data
 
 $(SRCDIR)/test/data/manifests/f32-base.json: $(SRCDIR)/test/data/manifests/f32-build.json
 $(SRCDIR)/test/data/manifests/fedora-boot.json: $(SRCDIR)/test/data/manifests/f32-build.json
+$(SRCDIR)/test/data/manifests/filesystem.json: $(SRCDIR)/test/data/manifests/f32-build.json
 
 .PHONY: test-data
 test-data: $(TEST_MANIFESTS_GEN)

@@ -27,6 +27,11 @@ do not allow comments, this file shortly describes their purpose.
    The `rhel` prefix is used for Red Hat Enterprise Linux images. Since they are
    not available publicly, the test-suite usually skips them.
 
+   The `filesystem` manifest is used to test assemblers. These tests doesn't
+   need a big filesystem tree representing a whole operating system. Instead,
+   this manifest's tree is constructed just from the filesystem package and is
+   marked using the selinux stage.
+
    Manifests prefixed with `mpp-*` are fed through the ManifestPreProcessors and
    then stored in the same directory with the `mpp-*` prefix dropped. The
    generated files are committed to the repository. Nevertheless, if you need to
