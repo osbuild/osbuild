@@ -59,10 +59,8 @@ class Object:
         if self._init:
             return
 
-        source = self.store.resolve_ref(self._base)
-        subprocess.run(["cp", "--reflink=auto", "-a",
-                        f"{source}/.", self._tree],
-                       check=True)
+        with self.store.new(self._base) as obj:
+            obj.export(self._tree)
         self._init = True
 
     @property
