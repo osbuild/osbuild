@@ -239,11 +239,11 @@ class HostTree:
 
 
 class ObjectStore(contextlib.AbstractContextManager):
-    def __init__(self, store):
+    def __init__(self, store: PathLike):
         self.store = store
-        self.objects = f"{store}/objects"
-        self.refs = f"{store}/refs"
-        self.tmp = f"{store}/tmp"
+        self.objects = os.path.join(store, "objects")
+        self.refs = os.path.join(store, "refs")
+        self.tmp = os.path.join(store, "tmp")
         os.makedirs(self.store, exist_ok=True)
         os.makedirs(self.objects, exist_ok=True)
         os.makedirs(self.refs, exist_ok=True)
@@ -259,7 +259,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         """Returns the path to the given object_id"""
         if not object_id:
             return None
-        return f"{self.refs}/{object_id}"
+        return os.path.join(self.refs, object_id)
 
     def tempdir(self, prefix=None, suffix=None):
         """Return a tempfile.TemporaryDirectory within the store"""
@@ -316,7 +316,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         # will always produce the same content hash, but that is not
         # guaranteed. If an object with the same treesum already exist, us
         # the existing one instead
-        obj.store_tree(f"{self.objects}/{treesum_hash}")
+        obj.store_tree(os.path.join(self.objects, treesum_hash))
 
         # symlink the object_id (config hash) in the refs directory to the
         # treesum (content hash) in the objects directory. If a symlink by
