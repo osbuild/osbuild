@@ -148,6 +148,10 @@ def osbuild_cli(*, sys_argv):
         sys.stdout.write("\n")
         return 0
 
+    if not args.output_directory and not args.checkpoint:
+        print("No output directory or checkpoints specified, exited without building.")
+        return 0
+
     try:
         r = pipeline.run(
             args.store,
