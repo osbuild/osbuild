@@ -5,7 +5,7 @@ import os
 import subprocess
 import tempfile
 import weakref
-from typing import Optional
+from typing import Optional, Union
 
 from osbuild.util import ctx, rmrf
 from . import treesum
@@ -14,6 +14,10 @@ from . import treesum
 __all__ = [
     "ObjectStore",
 ]
+
+
+# Type for valid inputs to `os.fspath`
+PathLike = Union[str, bytes, os.PathLike]
 
 
 def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
@@ -192,7 +196,7 @@ class Object:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.cleanup()
 
-    def export(self, to_directory):
+    def export(self, to_directory: PathLike):
         """Copy object into an external directory"""
         with self.read() as from_directory:
             subprocess.run(
@@ -200,8 +204,8 @@ class Object:
                     "cp",
                     "--reflink=auto",
                     "-a",
-                    f"{from_directory}/.",
-                    to_directory,
+                    os.fspath(from_directory) + "/.",
+                    os.fspath(to_directory),
                 ],
                 check=True,
             )
