@@ -158,12 +158,22 @@ pipeline {
 
     post {
         success {
-            when { branch 'master' }
-            telegramSend "💚 CI passed for osbuild-composer master branch!. ${env.BUILD_URL}"
+            node('schutzbot') {
+                script {
+                    if (env.BRANCH_NAME == 'master') {
+                        telegramSend "💚 CI passed for osbuild master branch ${env.BUILD_URL}"
+                    }
+                }
+            }
         }
         unsuccessful {
-            when { branch 'master' }
-            telegramSend "💣 CI failed for osbuild-composer master branch! ${env.BUILD_URL}"
+            node('schutzbot') {
+                script {
+                    if (env.BRANCH_NAME == 'master') {
+                        telegramSend "💣 CI failed for osbuild master branch ${env.BUILD_URL}"
+                    }
+                }
+            }
         }
     }
 
