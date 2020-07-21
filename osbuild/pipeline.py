@@ -82,7 +82,7 @@ class Stage:
                 sources.SourcesServer(f"{build_root.api}/sources",
                                       libdir or "/usr/lib/osbuild",
                                       self.sources,
-                                      f"{cache}/sources",
+                                      os.path.join(cache, "sources"),
                                       sources_output):
                 r = build_root.run(
                     [f"/run/osbuild/lib/stages/{self.name}"],
