@@ -4,10 +4,15 @@
 
 import json
 import os
+import pathlib
+import sys
+import tempfile
 import unittest
 
 import osbuild
 import osbuild.meta
+from osbuild.monitor import NullMonitor
+from .. import test
 
 
 class TestDescriptions(unittest.TestCase):
@@ -38,6 +43,27 @@ class TestDescriptions(unittest.TestCase):
             with self.subTest(description):
                 self.assertEqual(stage.description(), description)
 
+    @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
+    def test_stage_run(self):
+        stage = osbuild.Stage("org.osbuild.noop", {}, None, None, {})
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+
+            data = pathlib.Path(tmpdir, "data")
+            cache = pathlib.Path(tmpdir, "cache")
+            root = pathlib.Path("/")
+            runner = "org.osbuild.linux"
+            monitor = NullMonitor(sys.stderr.fileno())
+            libdir = os.path.abspath(os.curdir)
+
+            for p in [data, cache]:
+                p.mkdir()
+
+            res = stage.run(data, runner, root, cache, monitor, libdir)
+
+        self.assertEqual(res.success, True)
+        self.assertEqual(res.id, stage.id)
+
     def test_assembler(self):
         name = "org.osbuild.test"
         options = {"one": 1}
@@ -49,6 +75,28 @@ class TestDescriptions(unittest.TestCase):
         for assembler, description in cases:
             with self.subTest(description):
                 self.assertEqual(assembler.description(), description)
+
+    @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
+    def test_assembler_run(self):
+        asm = osbuild.Assembler("org.osbuild.noop", None, None, {})
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+
+            data = pathlib.Path(tmpdir, "data")
+            cache = pathlib.Path(tmpdir, "cache")
+            output = pathlib.Path(tmpdir, "output")
+            root = pathlib.Path("/")
+            runner = "org.osbuild.linux"
+            monitor = NullMonitor(sys.stderr.fileno())
+            libdir = os.path.abspath(os.curdir)
+
+            for p in [data, cache, output]:
+                p.mkdir()
+
+            res = asm.run(data, runner, root, monitor, output, libdir)
+
+        self.assertEqual(res.success, True)
+        self.assertEqual(res.id, asm.id)
 
     def test_pipeline(self):
         build = osbuild.Pipeline("org.osbuild.test")
