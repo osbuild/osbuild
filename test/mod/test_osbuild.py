@@ -79,7 +79,7 @@ class TestDescriptions(unittest.TestCase):
             "assembler": {
                 "name": "org.osbuild.test"
             }
-            })
+        })
 
     def test_moduleinfo(self):
         index = osbuild.meta.Index(os.curdir)
