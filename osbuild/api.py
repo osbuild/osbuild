@@ -3,6 +3,7 @@ import asyncio
 import io
 import json
 import os
+import sys
 import tempfile
 import threading
 from .util import jsoncomm
@@ -131,3 +132,16 @@ class API(BaseAPI):
         if self._output_pipe:
             os.close(self._output_pipe)
             self._output_pipe = None
+
+
+def setup_stdio(path="/run/osbuild/api/osbuild"):
+    """Replace standard i/o with the ones provided by the API"""
+    with jsoncomm.Socket.new_client(path) as client:
+        req = {"method": "setup-stdio"}
+        client.send(req)
+        msg, fds, _ = client.recv()
+        for sio in ["stdin", "stdout", "stderr"]:
+            target = getattr(sys, sio)
+            source = fds[msg[sio]]
+            os.dup2(source, target.fileno())
+        fds.close()
