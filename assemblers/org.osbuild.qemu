@@ -23,6 +23,7 @@ Buildhost commands used: `truncate`, `mount`, `umount`, `sfdisk`,
 import contextlib
 import json
 import os
+import platform
 import shutil
 import struct
 import subprocess
@@ -674,14 +675,31 @@ def main(tree, output_dir, options, loop_client):
             "vpc": ["-o", "subformat=fixed,force_size"],
             "vhdx": []
         }
-        subprocess.run([
-            "qemu-img",
-            "convert",
-            "-O", fmt,
-            *extra_args[fmt],
-            image,
-            f"{output_dir}/{filename}"
-        ], check=True)
+        # A bug exists in qemu that causes the conversion to raw to fail
+        # on aarch64 systems with a LOT of CPUs. A workaround is to use
+        # a single coroutine to do the conversion. It doesn't slow down
+        # the conversion by much, but it hangs about half the time without
+        # the limit set. 😢
+        # Bug: https://bugs.launchpad.net/qemu/+bug/1805256
+        if platform.machine() == 'aarch64' and fmt.startswith('raw'):
+            subprocess.run([
+                "qemu-img",
+                "convert",
+                "-m", "1",
+                "-O", fmt,
+                *extra_args[fmt],
+                image,
+                f"{output_dir}/{filename}"
+            ], check=True)
+        else:
+            subprocess.run([
+                "qemu-img",
+                "convert",
+                "-O", fmt,
+                *extra_args[fmt],
+                image,
+                f"{output_dir}/{filename}"
+            ], check=True)
 
 
 if __name__ == '__main__':
