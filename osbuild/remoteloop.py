@@ -1,11 +1,9 @@
-import asyncio
 import contextlib
 import errno
 import os
-import threading
+from . import api
 from . import loop
 from .util import jsoncomm
-
 
 __all__ = [
     "LoopClient",
@@ -13,7 +11,7 @@ __all__ = [
 ]
 
 
-class LoopServer:
+class LoopServer(api.BaseAPI):
     """Server for creating loopback devices
 
     The server listens for requests on a AF_UNIX/SOCK_DRGAM sockets.
@@ -38,12 +36,9 @@ class LoopServer:
     """
 
     def __init__(self, socket_address):
-        self.socket_address = socket_address
+        super().__init__(socket_address)
         self.devs = []
         self.ctl = loop.LoopControl()
-        self.event_loop = asyncio.new_event_loop()
-        self.thread = threading.Thread(target=self._run_event_loop)
-        self.barrier = threading.Barrier(2)
 
     def _create_device(self, fd, dir_fd, offset=None, sizelimit=None):
         while True:
@@ -85,23 +80,7 @@ class LoopServer:
         server.send({"devname": devname}, destination=addr)
         fds.close()
 
-    def _run_event_loop(self):
-        with jsoncomm.Socket.new_server(self.socket_address) as server:
-            self.barrier.wait()
-            self.event_loop.add_reader(server, self._dispatch, server)
-            asyncio.set_event_loop(self.event_loop)
-            self.event_loop.run_forever()
-            self.event_loop.remove_reader(server)
-
-    def __enter__(self):
-        self.thread.start()
-        self.barrier.wait()
-        return self
-
-    def __exit__(self, *args):
-        self.event_loop.call_soon_threadsafe(self.event_loop.stop)
-        self.thread.join()
-        self.event_loop.close()
+    def _cleanup(self):
         for lo in self.devs:
             lo.close()
 
