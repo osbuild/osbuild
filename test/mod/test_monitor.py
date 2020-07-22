@@ -93,7 +93,7 @@ class TestMonitor(unittest.TestCase):
                 p.start()
                 p.join()
                 self.assertEqual(p.exitcode, 0)
-                output = api.output
+                output = api.output  # pylint: disable=no-member
                 assert output
 
             self.assertEqual(json.dumps(args), output)
