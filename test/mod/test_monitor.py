@@ -15,21 +15,7 @@ import osbuild
 import osbuild.meta
 from osbuild.api import API
 from osbuild.monitor import LogMonitor
-from osbuild.util import jsoncomm
 from .. import test
-
-
-def setup_stdio(path):
-    """Copy of what the osbuild runners do to setup stdio"""
-    with jsoncomm.Socket.new_client(path) as client:
-        req = {'method': 'setup-stdio'}
-        client.send(req)
-        msg, fds, _ = client.recv()
-        for sio in ['stdin', 'stdout', 'stderr']:
-            target = getattr(sys, sio)
-            source = fds[msg[sio]]
-            os.dup2(source, target.fileno())
-        fds.close()
 
 
 def echo(path):
@@ -39,7 +25,7 @@ def echo(path):
     simulating an osbuild runner and a stage run which does
     nothing but returns the supplied options to stdout again.
     """
-    setup_stdio(path)
+    osbuild.api.setup_stdio(path)
     data = json.load(sys.stdin)
     json.dump(data, sys.stdout)
     sys.exit(0)
