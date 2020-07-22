@@ -1,25 +1,12 @@
 #!/usr/bin/python3
 
-import os
 import subprocess
 import sys
-from osbuild.util import jsoncomm
-
-
-def setup_stdio():
-    with jsoncomm.Socket.new_client("/run/osbuild/api/osbuild") as client:
-        req = {'method': 'setup-stdio'}
-        client.send(req)
-        msg, fds, _ = client.recv()
-        for io in ['stdin', 'stdout', 'stderr']:
-            target = getattr(sys, io)
-            source = fds[msg[io]]
-            os.dup2(source, target.fileno())
-        fds.close()
+import osbuild.api
 
 
 if __name__ == "__main__":
-    setup_stdio()
+    osbuild.api.setup_stdio()
 
     r = subprocess.run(sys.argv[1:], check=False)
     sys.exit(r.returncode)
