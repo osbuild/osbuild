@@ -78,18 +78,21 @@ class Stage:
 
             ro_binds = [f"{sources_output}:/run/osbuild/sources"]
 
-            with API(f"{build_root.api}/osbuild", args, monitor) as api, \
-                sources.SourcesServer(f"{build_root.api}/sources",
-                                      libdir or "/usr/lib/osbuild",
-                                      self.sources,
-                                      os.path.join(cache, "sources"),
-                                      sources_output):
-                r = build_root.run(
-                    [f"/run/osbuild/lib/stages/{self.name}"],
-                    binds=[os.fspath(tree) + ":/run/osbuild/tree"],
-                    readonly_binds=ro_binds,
-                )
-                return BuildResult(self, r.returncode, api.output)
+            api = API(f"{build_root.api}/osbuild", args, monitor)
+            build_root.register_api(api)
+
+            src = sources.SourcesServer(f"{build_root.api}/sources",
+                                        libdir or "/usr/lib/osbuild",
+                                        self.sources,
+                                        os.path.join(cache, "sources"),
+                                        sources_output)
+            build_root.register_api(src)
+
+            r = build_root.run([f"/run/osbuild/lib/stages/{self.name}"],
+                               binds=[os.fspath(tree) + ":/run/osbuild/tree"],
+                               readonly_binds=ro_binds)
+
+            return BuildResult(self, r.returncode, api.output)
 
 
 class Assembler:
@@ -137,14 +140,17 @@ class Assembler:
 
             ro_binds = [os.fspath(tree) + ":/run/osbuild/tree"]
 
-            with remoteloop.LoopServer(f"{build_root.api}/remoteloop"), \
-                API(f"{build_root.api}/osbuild", args, monitor) as api:
-                r = build_root.run(
-                    [f"/run/osbuild/lib/assemblers/{self.name}"],
-                    binds=binds,
-                    readonly_binds=ro_binds,
-                )
-                return BuildResult(self, r.returncode, api.output)
+            api = API(f"{build_root.api}/osbuild", args, monitor)
+            build_root.register_api(api)
+
+            rls = remoteloop.LoopServer(f"{build_root.api}/remoteloop")
+            build_root.register_api(rls)
+
+            r = build_root.run([f"/run/osbuild/lib/assemblers/{self.name}"],
+                               binds=binds,
+                               readonly_binds=ro_binds)
+
+            return BuildResult(self, r.returncode, api.output)
 
 
 class Pipeline:
