@@ -40,6 +40,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         self._vardir = var
         self._libdir = libdir
         self._runner = runner
+        self._apis = []
         self.api = None
         self.dev = None
         self.var = None
@@ -92,6 +93,10 @@ class BuildRoot(contextlib.AbstractContextManager):
             self._mknod(self.dev, "tty", 0o666, 5, 0)
             self._mknod(self.dev, "zero", 0o666, 1, 5)
 
+            # Prepare all registered API endpoints
+            for api in self._apis:
+                self._exitstack.enter_context(api)
+
             self._exitstack = self._exitstack.pop_all()
 
         return self
@@ -99,6 +104,17 @@ class BuildRoot(contextlib.AbstractContextManager):
     def __exit__(self, exc_type, exc_value, exc_tb):
         self._exitstack.close()
         self._exitstack = None
+
+    def register_api(self, api: "BaseAPI"):
+        """Register an API endpoint.
+
+        The context of the API endpoint will be bound to the context of
+        this `BuildRoot`.
+        """
+        self._apis.append(api)
+
+        if self._exitstack:
+            self._exitstack.enter_context(api)
 
     def run(self, argv, binds=None, readonly_binds=None):
         """Runs a command in the buildroot.
