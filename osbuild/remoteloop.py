@@ -35,6 +35,8 @@ class LoopServer(api.BaseAPI):
     object.
     """
 
+    endpoint = "remoteloop"
+
     def __init__(self, socket_address):
         super().__init__(socket_address)
         self.devs = []

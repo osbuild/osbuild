@@ -17,6 +17,8 @@ class APITester(osbuild.api.BaseAPI):
         self.clean = False
         self.messages = 0
 
+    endpoint = "test-api"
+
     def _dispatch(self, server):
         msg, _, addr = server.recv()
         self.messages += 1

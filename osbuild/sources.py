@@ -5,6 +5,9 @@ from .util import jsoncomm
 
 
 class SourcesServer(api.BaseAPI):
+
+    endpoint = "sources"
+
     def __init__(self, socket_address, libdir, options, cache, output):
         super().__init__(socket_address)
         self.libdir = libdir
