@@ -36,6 +36,12 @@ class BaseAPI(abc.ABC):
         self.event_loop = None
         self.thread = None
 
+    @property
+    @classmethod
+    @abc.abstractmethod
+    def endpoint(cls):
+        """The name of the API endpoint"""
+
     @abc.abstractmethod
     def _dispatch(self, server):
         """Called for incoming messages on the socket"""
@@ -78,6 +84,9 @@ class BaseAPI(abc.ABC):
 
 class API(BaseAPI):
     """The main OSBuild API"""
+
+    endpoint = "osbuild"
+
     def __init__(self, socket_address, args, monitor):
         super().__init__(socket_address)
         self.input = args
