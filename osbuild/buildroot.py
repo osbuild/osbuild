@@ -61,10 +61,6 @@ class BuildRoot(contextlib.AbstractContextManager):
             #
             # For now, this includes:
             #
-            #   * We create an API directory where the caller can place sockets
-            #     before we bind-mount it into the container on
-            #     `/run/osbuild/api`.
-            #
             #   * We create a tmpfs instance *without* `nodev` which we then use
             #     as `/dev` in the container. This is required for the container
             #     to create device nodes for loop-devices.
@@ -74,6 +70,8 @@ class BuildRoot(contextlib.AbstractContextManager):
             #     create throw-away data that it does not want to put into a
             #     tmpfs.
 
+            # Used to be bound to /run/osbuild/api, but not anymore, still around
+            # as the APIs have yet to be converted to not use temp directory anymore
             api = tempfile.TemporaryDirectory(prefix="osbuild-api-", dir=self._rundir)
             self.api = self._exitstack.enter_context(api)
 
@@ -157,9 +155,6 @@ class BuildRoot(contextlib.AbstractContextManager):
         mounts += ["--proc", "/proc"]
         mounts += ["--bind", "/sys", "/sys"]
 
-        # Make osbuild API-calls accessible to the container.
-        mounts += ["--ro-bind", f"{self.api}", "/run/osbuild/api"]
-
         # We execute our own modules by bind-mounting them from the host into
         # the build-root. We have minimal requirements on the build-root, so
         # these modules can be executed. Everything else we provide ourselves.
@@ -179,6 +174,13 @@ class BuildRoot(contextlib.AbstractContextManager):
             mounts += ["--bind"] + b.split(":")
         for b in readonly_binds or []:
             mounts += ["--ro-bind"] + b.split(":")
+
+        # Prepare all registered API endpoints: bind mount the address with
+        # the `endpoint` name, provided by the API, into the well known path
+        mounts += ["--dir", "/run/osbuild/api"]
+        for api in self._apis:
+            api_path = "/run/osbuild/api/" + api.endpoint
+            mounts += ["--bind", api.socket_address, api_path]
 
         cmd = [
             "bwrap",
