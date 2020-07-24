@@ -159,10 +159,9 @@ class API(BaseAPI):
 
             server.send(msg, fds=fds, destination=addr)
 
-    def _dispatch(self, server):
-        msg, _, addr = server.recv()
+    def _message(self, msg, fds, sock, addr):
         if msg["method"] == 'setup-stdio':
-            self._setup_stdio(server, addr)
+            self._setup_stdio(sock, addr)
 
     def _cleanup(self):
         if self._output_pipe:
