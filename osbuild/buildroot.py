@@ -41,7 +41,6 @@ class BuildRoot(contextlib.AbstractContextManager):
         self._libdir = libdir
         self._runner = runner
         self._apis = []
-        self.api = None
         self.dev = None
         self.var = None
 
@@ -69,11 +68,6 @@ class BuildRoot(contextlib.AbstractContextManager):
             #     it as '/var' in the container. This allows the container to
             #     create throw-away data that it does not want to put into a
             #     tmpfs.
-
-            # Used to be bound to /run/osbuild/api, but not anymore, still around
-            # as the APIs have yet to be converted to not use temp directory anymore
-            api = tempfile.TemporaryDirectory(prefix="osbuild-api-", dir=self._rundir)
-            self.api = self._exitstack.enter_context(api)
 
             dev = tempfile.TemporaryDirectory(prefix="osbuild-dev-", dir=self._rundir)
             self.dev = self._exitstack.enter_context(dev)
