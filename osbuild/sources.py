@@ -36,10 +36,9 @@ class SourcesServer(api.BaseAPI):
         except ValueError:
             return {"error": f"source returned malformed json: {r.stdout}"}
 
-    def _dispatch(self, server):
-        request, _, addr = server.recv()
-        reply = self._run_source(request["source"], request["checksums"])
-        server.send(reply, destination=addr)
+    def _message(self, msg, fds, sock, addr):
+        reply = self._run_source(msg["source"], msg["checksums"])
+        sock.send(reply, destination=addr)
 
 
 def get(source, checksums, api_path="/run/osbuild/api/sources"):
