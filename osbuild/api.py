@@ -27,7 +27,7 @@ class BaseAPI(abc.ABC):
     when the context is left.
 
     New messages are delivered via the `_message` method, that
-    is meant to be implemented by deriving classes.
+    needs to be implemented by deriving classes.
 
     Optionally, the `_cleanup` method can be implemented, to
     clean up resources after the context is left and the
@@ -50,6 +50,7 @@ class BaseAPI(abc.ABC):
     def endpoint(cls):
         """The name of the API endpoint"""
 
+    @abc.abstractmethod
     def _message(self, msg: Dict, fds: jsoncomm.FdSet, sock: jsoncomm.Socket, addr: str):
         """Called for a new incoming message"""
 
