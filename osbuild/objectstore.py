@@ -5,8 +5,9 @@ import os
 import subprocess
 import tempfile
 import weakref
-from typing import Optional, Union
+from typing import Optional
 
+from osbuild.util.types import PathLike
 from osbuild.util import ctx, rmrf
 from . import treesum
 
@@ -14,10 +15,6 @@ from . import treesum
 __all__ = [
     "ObjectStore",
 ]
-
-
-# Type for valid inputs to `os.fspath`
-PathLike = Union[str, bytes, os.PathLike]
 
 
 def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
