@@ -8,7 +8,7 @@ class SourcesServer(api.BaseAPI):
 
     endpoint = "sources"
 
-    def __init__(self, socket_address, libdir, options, cache, output):
+    def __init__(self, libdir, options, cache, output, *, socket_address=None):
         super().__init__(socket_address)
         self.libdir = libdir
         self.cache = cache
