@@ -69,9 +69,11 @@ class BuildRoot(contextlib.AbstractContextManager):
             #     create throw-away data that it does not want to put into a
             #     tmpfs.
 
+            os.makedirs(self._rundir, exist_ok=True)
             dev = tempfile.TemporaryDirectory(prefix="osbuild-dev-", dir=self._rundir)
             self.dev = self._exitstack.enter_context(dev)
 
+            os.makedirs(self._vardir, exist_ok=True)
             var = tempfile.TemporaryDirectory(prefix="osbuild-var-", dir=self._vardir)
             self.var = self._exitstack.enter_context(var)
 
