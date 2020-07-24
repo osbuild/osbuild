@@ -25,24 +25,23 @@ class TestAssemblers(test.TestBase):
         self.osbuild = test.OSBuild(self)
 
     @contextlib.contextmanager
-    def run_assembler(self, name, options, output_path):
-        with self.osbuild as osb:
-            with open(os.path.join(self.locate_test_data(),
-                                   "manifests/filesystem.json")) as f:
-                manifest = json.load(f)
-            manifest["pipeline"] = dict(
-                manifest["pipeline"],
-                assembler={"name": name, "options": options}
-            )
-            data = json.dumps(manifest)
+    def run_assembler(self, osb, name, options, output_path):
+        with open(os.path.join(self.locate_test_data(),
+                               "manifests/filesystem.json")) as f:
+            manifest = json.load(f)
+        manifest["pipeline"] = dict(
+            manifest["pipeline"],
+            assembler={"name": name, "options": options}
+        )
+        data = json.dumps(manifest)
 
-            treeid = osb.treeid_from_manifest(data)
-            assert treeid
+        treeid = osb.treeid_from_manifest(data)
+        assert treeid
 
-            osb.compile(data, checkpoints=[treeid])
-            with osb.map_object(treeid) as tree, \
-                 osb.map_output(output_path) as output:
-                yield tree, output
+        osb.compile(data, checkpoints=[treeid])
+        with osb.map_object(treeid) as tree, \
+             osb.map_output(output_path) as output:
+            yield tree, output
 
     def assertImageFile(self, filename, fmt, expected_size=None):
         info = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", filename]))
@@ -95,9 +94,10 @@ class TestAssemblers(test.TestBase):
             "root_fs_uuid": "016a1cda-5182-4ab3-bf97-426b00b74eb0",
             "size": 2 * 1024 * 1024 * 1024
         }
-        with self.run_assembler("org.osbuild.rawfs", options, "image.raw") as (tree, image):
-            self.assertImageFile(image, "raw", options["size"])
-            self.assertFilesystem(image, options["root_fs_uuid"], "ext4", tree)
+        with self.osbuild as osb:
+            with self.run_assembler(osb, "org.osbuild.rawfs", options, "image.raw") as (tree, image):
+                self.assertImageFile(image, "raw", options["size"])
+                self.assertFilesystem(image, options["root_fs_uuid"], "ext4", tree)
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_ostree(self):
@@ -142,31 +142,33 @@ class TestAssemblers(test.TestBase):
                     "root_fs_uuid": "aff010e9-df95-4f81-be6b-e22317251033",
                     "size": 2 * 1024 * 1024 * 1024
                 }
-                with self.run_assembler("org.osbuild.qemu",
-                                        options,
-                                        f"image.{fmt}") as (tree, image):
-                    if fmt == "raw.xz":
-                        subprocess.run(["unxz", "--keep", "--force", image], check=True)
-                        image = image[:-3]
-                        fmt = "raw"
-                    self.assertImageFile(image, fmt, options["size"])
-                    with open_image(loctl, image, fmt) as (target, device):
-                        ptable = self.read_partition_table(device)
-                        self.assertPartitionTable(ptable,
-                                                  "dos",
-                                                  options["ptuuid"],
-                                                  1,
-                                                  boot_partition=1)
-                        self.assertGRUB2(device,
-                                         "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
-                                         "9b31c8fbc59602a38582988bf91c3948ae9c6f2a231ab505ea63a7005e302147",
-                                         1024 * 1024)
+                with self.osbuild as osb:
+                    with self.run_assembler(osb,
+                                            "org.osbuild.qemu",
+                                            options,
+                                            f"image.{fmt}") as (tree, image):
+                        if fmt == "raw.xz":
+                            subprocess.run(["unxz", "--keep", "--force", image], check=True)
+                            image = image[:-3]
+                            fmt = "raw"
+                        self.assertImageFile(image, fmt, options["size"])
+                        with open_image(loctl, image, fmt) as (target, device):
+                            ptable = self.read_partition_table(device)
+                            self.assertPartitionTable(ptable,
+                                                      "dos",
+                                                      options["ptuuid"],
+                                                      1,
+                                                      boot_partition=1)
+                            self.assertGRUB2(device,
+                                             "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
+                                             "9b31c8fbc59602a38582988bf91c3948ae9c6f2a231ab505ea63a7005e302147",
+                                             1024 * 1024)
 
-                        p1 = ptable["partitions"][0]
-                        ssize = ptable.get("sectorsize", 512)
-                        start, size = p1["start"] * ssize, p1["size"] * ssize
-                        with loop_open(loctl, target, offset=start, size=size) as dev:
-                            self.assertFilesystem(dev, options["root_fs_uuid"], "ext4", tree)
+                            p1 = ptable["partitions"][0]
+                            ssize = ptable.get("sectorsize", 512)
+                            start, size = p1["start"] * ssize, p1["size"] * ssize
+                            with loop_open(loctl, target, offset=start, size=size) as dev:
+                                self.assertFilesystem(dev, options["root_fs_uuid"], "ext4", tree)
 
     def test_tar(self):
         cases = [
@@ -177,12 +179,14 @@ class TestAssemblers(test.TestBase):
             options = {"filename": filename}
             if compression:
                 options["compression"] = compression
-            with self.run_assembler("org.osbuild.tar",
-                                    options,
-                                    filename) as (_, image):
-                output = subprocess.check_output(["file", "--mime-type", image], encoding="utf-8")
-                _, mimetype = output.strip().split(": ") # "filename: mimetype"
-                self.assertIn(mimetype, expected_mimetypes)
+            with self.osbuild as osb:
+                with self.run_assembler(osb,
+                                        "org.osbuild.tar",
+                                        options,
+                                        filename) as (_, image):
+                    output = subprocess.check_output(["file", "--mime-type", image], encoding="utf-8")
+                    _, mimetype = output.strip().split(": ") # "filename: mimetype"
+                    self.assertIn(mimetype, expected_mimetypes)
 
 
 @contextlib.contextmanager
