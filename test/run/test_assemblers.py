@@ -132,17 +132,17 @@ class TestAssemblers(test.TestBase):
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_qemu(self):
         loctl = loop.LoopControl()
-        for fmt in ["raw", "raw.xz", "qcow2", "vmdk", "vdi"]:
-            with self.subTest(fmt=fmt):
-                print(f"  {fmt}", flush=True)
-                options = {
-                    "format": fmt,
-                    "filename": f"image.{fmt}",
-                    "ptuuid": "b2c09a39-db93-44c5-846a-81e06b1dc162",
-                    "root_fs_uuid": "aff010e9-df95-4f81-be6b-e22317251033",
-                    "size": 2 * 1024 * 1024 * 1024
-                }
-                with self.osbuild as osb:
+        with self.osbuild as osb:
+            for fmt in ["raw", "raw.xz", "qcow2", "vmdk", "vdi"]:
+                with self.subTest(fmt=fmt):
+                    print(f"  {fmt}", flush=True)
+                    options = {
+                        "format": fmt,
+                        "filename": f"image.{fmt}",
+                        "ptuuid": "b2c09a39-db93-44c5-846a-81e06b1dc162",
+                        "root_fs_uuid": "aff010e9-df95-4f81-be6b-e22317251033",
+                        "size": 2 * 1024 * 1024 * 1024
+                    }
                     with self.run_assembler(osb,
                                             "org.osbuild.qemu",
                                             options,
@@ -175,11 +175,11 @@ class TestAssemblers(test.TestBase):
             ("tree.tar.gz", None, ["application/x-tar"]),
             ("tree.tar.gz", "gzip", ["application/x-gzip", "application/gzip"])
         ]
-        for filename, compression, expected_mimetypes in cases:
-            options = {"filename": filename}
-            if compression:
-                options["compression"] = compression
-            with self.osbuild as osb:
+        with self.osbuild as osb:
+            for filename, compression, expected_mimetypes in cases:
+                options = {"filename": filename}
+                if compression:
+                    options["compression"] = compression
                 with self.run_assembler(osb,
                                         "org.osbuild.tar",
                                         options,
