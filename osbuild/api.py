@@ -6,6 +6,8 @@ import os
 import sys
 import tempfile
 import threading
+from typing import Optional
+from .util.types import PathLike
 from .util import jsoncomm
 
 
@@ -30,11 +32,12 @@ class BaseAPI(abc.ABC):
     clean up resources after the context is left and the
     communication channel shut down.
     """
-    def __init__(self, socket_address):
+    def __init__(self, socket_address: Optional[PathLike] = None):
         self.socket_address = socket_address
         self.barrier = threading.Barrier(2)
         self.event_loop = None
         self.thread = None
+        self._socketdir = None
 
     @property
     @classmethod
@@ -49,6 +52,11 @@ class BaseAPI(abc.ABC):
     def _cleanup(self):
         """Called after the event loop is shut down"""
 
+    @classmethod
+    def _make_socket_dir(cls):
+        """Called to create the temporary socket dir"""
+        return tempfile.TemporaryDirectory(prefix="api-", dir="/run/osbuild")
+
     def _run_event_loop(self):
         with jsoncomm.Socket.new_server(self.socket_address) as server:
             self.barrier.wait()
@@ -60,6 +68,11 @@ class BaseAPI(abc.ABC):
     def __enter__(self):
         # We are not re-entrant, so complain if re-entered.
         assert self.event_loop is None
+
+        if not self.socket_address:
+            self._socketdir = self._make_socket_dir()
+            address = os.path.join(self._socketdir.name, self.endpoint)
+            self.socket_address = address
 
         self.event_loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_event_loop)
@@ -80,6 +93,11 @@ class BaseAPI(abc.ABC):
 
         self.thread = None
         self.event_loop = None
+
+        if self._socketdir:
+            self._socketdir.cleanup()
+            self._socketdir = None
+            self.socket_address = None
 
 
 class API(BaseAPI):
