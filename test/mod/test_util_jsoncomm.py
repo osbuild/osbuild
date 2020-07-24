@@ -4,6 +4,7 @@
 
 import asyncio
 import os
+import pathlib
 import tempfile
 import unittest
 
@@ -13,7 +14,7 @@ from osbuild.util import jsoncomm
 class TestUtilJsonComm(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()
-        self.address = os.path.join(self.dir.name, "listener")
+        self.address = pathlib.Path(self.dir.name, "listener")
         self.server = jsoncomm.Socket.new_server(self.address)
         self.client = jsoncomm.Socket.new_client(self.address)
 

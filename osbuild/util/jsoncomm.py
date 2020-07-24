@@ -14,6 +14,7 @@ import os
 import socket
 from typing import Any
 from typing import Optional
+from .types import PathLike
 
 
 class FdSet():
@@ -137,7 +138,7 @@ class Socket(contextlib.AbstractContextManager):
             self._unlink = None
 
     @classmethod
-    def new_client(cls, connect_to: Optional[str] = None):
+    def new_client(cls, connect_to: Optional[PathLike] = None):
         """Create Client
 
         Create a new client socket.
@@ -163,7 +164,7 @@ class Socket(contextlib.AbstractContextManager):
             # Connect the socket. This has no effect other than specifying the
             # default destination for send operations.
             if connect_to is not None:
-                sock.connect(connect_to)
+                sock.connect(os.fspath(connect_to))
         except:
             if sock is not None:
                 sock.close()
@@ -172,7 +173,7 @@ class Socket(contextlib.AbstractContextManager):
         return cls(sock, None)
 
     @classmethod
-    def new_server(cls, bind_to: str):
+    def new_server(cls, bind_to: PathLike):
         """Create Server
 
         Create a new listener socket.
@@ -199,7 +200,7 @@ class Socket(contextlib.AbstractContextManager):
             # as well. We do not guarantee atomicity, so you better make sure
             # you do not rely on it.
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-            sock.bind(bind_to)
+            sock.bind(os.fspath(bind_to))
             unlink = os.open(os.path.join(".", path[0]), os.O_CLOEXEC | os.O_PATH)
         except:
             if unlink is not None:
