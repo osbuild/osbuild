@@ -19,13 +19,12 @@ class APITester(osbuild.api.BaseAPI):
 
     endpoint = "test-api"
 
-    def _dispatch(self, server):
-        msg, _, addr = server.recv()
+    def _message(self, msg, _fds, sock, addr):
         self.messages += 1
 
         if msg["method"] == "echo":
             msg["method"] = "reply"
-            server.send(msg, destination=addr)
+            sock.send(msg, destination=addr)
 
     def _cleanup(self):
         self.clean = True
