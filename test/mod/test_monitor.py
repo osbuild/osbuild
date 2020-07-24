@@ -74,7 +74,7 @@ class TestMonitor(unittest.TestCase):
             logfile = os.path.join(tmpdir, "log.txt")
 
             with open(logfile, "w") as log, \
-                 API(path, args, LogMonitor(log.fileno())) as api:
+                 API(args, LogMonitor(log.fileno()), socket_address=path) as api:
                 p = mp.Process(target=echo, args=(path, ))
                 p.start()
                 p.join()

@@ -105,7 +105,7 @@ class API(BaseAPI):
 
     endpoint = "osbuild"
 
-    def __init__(self, socket_address, args, monitor):
+    def __init__(self, args, monitor, *, socket_address=None):
         super().__init__(socket_address)
         self.input = args
         self._output_data = io.StringIO()

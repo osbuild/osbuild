@@ -97,9 +97,9 @@ class TestSources(test.TestBase):
                 with tempfile.TemporaryDirectory() as tmpdir, \
                     fileServer(self.locate_test_data()), \
                     osbuild.sources.SourcesServer(
-                            f"{tmpdir}/sources-api",
                             "./", source_options,
-                            f"{tmpdir}/cache", f"{tmpdir}/dst"):
+                            f"{tmpdir}/cache", f"{tmpdir}/dst",
+                            socket_address=f"{tmpdir}/sources-api"):
                     self.check_case(source, case_options, f"{tmpdir}/sources-api")
                     self.check_case(source, case_options, f"{tmpdir}/sources-api")
 
