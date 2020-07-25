@@ -114,6 +114,21 @@ class Socket(contextlib.AbstractContextManager):
         self.close()
         return False
 
+    @property
+    def blocking(self):
+        """Get the current blocking mode of the socket.
+
+        This is related to the socket's timeout, i.e. if no time out is set
+        the socket is in blocking mode; otherwise it is non-blocking.
+        """
+        timeout = self._socket.gettimeout()
+        return timeout is not None
+
+    @blocking.setter
+    def blocking(self, value: bool):
+        """Set the blocking mode of the socket."""
+        self._socket.setblocking(value)
+
     def close(self):
         """Close Socket
 
