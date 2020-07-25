@@ -129,6 +129,32 @@ class Socket(contextlib.AbstractContextManager):
         """Set the blocking mode of the socket."""
         self._socket.setblocking(value)
 
+    def accept(self) -> Optional["Socket"]:
+        """Accept a new connection on the socket.
+
+        See python's `socket.accept` for more information.
+        """
+        # Since, in the kernel, for AF_UNIX, new connection requests,
+        # i.e. clients connecting, are directly put on the receive
+        # queue of the listener socket, accept here *should* always
+        # return a socket and not block, even if the client meanwhile
+        # disconnected; we don't rely on that kernel behavior though
+        try:
+            conn, _ = self._socket.accept()
+        except (socket.timeout, BlockingIOError):
+            return None
+        return Socket(conn, None)
+
+    def listen(self, backlog: Optional[int] = 2**16):
+        """Enable accepting of incoming connections.
+
+        See python's `socket.listen` for details.
+        """
+
+        # `Socket.listen` accepts an `int` or no argument, but not `None`
+        args = [backlog] if backlog is not None else []
+        self._socket.listen(*args)
+
     def close(self):
         """Close Socket
 
