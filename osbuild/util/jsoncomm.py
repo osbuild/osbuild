@@ -96,8 +96,8 @@ class Socket(contextlib.AbstractContextManager):
     """Communication Socket
 
     This socket object represents a communication channel. It allows sending
-    and receiving JSON-encoded messages. It uses unix-domain-datagram sockets
-    as underlying transport.
+    and receiving JSON-encoded messages. It uses unix-domain sequenced-packet
+    sockets as underlying transport.
     """
 
     _socket = None
@@ -194,7 +194,7 @@ class Socket(contextlib.AbstractContextManager):
         sock = None
 
         try:
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
 
             # Trigger an auto-bind. If you do not do this, you might end up with
             # an unbound unix socket, which cannot receive messages.
@@ -217,7 +217,8 @@ class Socket(contextlib.AbstractContextManager):
     def new_server(cls, bind_to: PathLike):
         """Create Server
 
-        Create a new listener socket.
+        Create a new listener socket. Returned socket is in non-blocking
+        mode by default. See `blocking` property.
 
         Parameters
         ----------
@@ -240,9 +241,10 @@ class Socket(contextlib.AbstractContextManager):
             # creation and open. But then your entire socket creation is racy
             # as well. We do not guarantee atomicity, so you better make sure
             # you do not rely on it.
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
             sock.bind(os.fspath(bind_to))
             unlink = os.open(os.path.join(".", path[0]), os.O_CLOEXEC | os.O_PATH)
+            sock.setblocking(False)
         except:
             if unlink is not None:
                 os.close(unlink)
@@ -264,9 +266,12 @@ class Socket(contextlib.AbstractContextManager):
 
         A tuple consisting of the deserialized message payload, the auxiliary
         file-descriptor set, and the socket-address of the sender is returned.
+
+        In case the peer closed the connection, A tuple of `None` values is
+        returned.
         """
 
-        # On `SOCK_DGRAM`, packets might be arbitrarily sized. There is no
+        # On `SOCK_SEQPACKET`, packets might be arbitrarily sized. There is no
         # hard-coded upper limit, since it is only restricted by the size of
         # the kernel write buffer on sockets (which itself can be modified via
         # sysctl). The only real maximum is probably something like 2^31-1,
@@ -279,6 +284,9 @@ class Socket(contextlib.AbstractContextManager):
         size = 4096
         while True:
             peek = self._socket.recvmsg(size, 0, socket.MSG_PEEK)
+            if not peek[0]:
+                # Connection was closed
+                return None, None, None
             if not (peek[2] & socket.MSG_TRUNC):
                 break
             size *= 2

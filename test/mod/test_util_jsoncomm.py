@@ -7,20 +7,31 @@ import os
 import pathlib
 import tempfile
 import unittest
+from concurrent import futures
 
 from osbuild.util import jsoncomm
 
 
 class TestUtilJsonComm(unittest.TestCase):
     def setUp(self):
+        # Prepare a bi-directional connection between a `client`
+        # and `server`; nb: the nomenclature is a bit unusual in
+        # the sense that the serving socket is called `listener`
         self.dir = tempfile.TemporaryDirectory()
         self.address = pathlib.Path(self.dir.name, "listener")
-        self.server = jsoncomm.Socket.new_server(self.address)
-        self.client = jsoncomm.Socket.new_client(self.address)
+        self.listener = jsoncomm.Socket.new_server(self.address)
+        self.listener.blocking = True  # We want `accept` to block
+        self.listener.listen()
+
+        with futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(self.listener.accept)
+            self.client = jsoncomm.Socket.new_client(self.address)
+            self.server = future.result()
 
     def tearDown(self):
         self.client.close()
         self.server.close()
+        self.listener.close()
         self.dir.cleanup()
 
     def test_fdset(self):

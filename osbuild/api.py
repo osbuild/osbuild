@@ -69,13 +69,24 @@ class BaseAPI(abc.ABC):
     def _dispatch(self, sock: jsoncomm.Socket):
         """Called when data is available on the socket"""
         msg, fds, addr = sock.recv()
+        if msg is None:
+            # Peer closed the connection
+            self.event_loop.remove_reader(sock)
+            return
         self._message(msg, fds, sock, addr)
         fds.close()
 
+    def _accept(self, server):
+        client = server.accept()
+        if client:
+            self.event_loop.add_reader(client, self._dispatch, client)
+
     def _run_event_loop(self):
         with jsoncomm.Socket.new_server(self.socket_address) as server:
+            server.blocking = False
+            server.listen()
             self.barrier.wait()
-            self.event_loop.add_reader(server, self._dispatch, server)
+            self.event_loop.add_reader(server, self._accept, server)
             asyncio.set_event_loop(self.event_loop)
             self.event_loop.run_forever()
             self.event_loop.remove_reader(server)
