@@ -24,11 +24,11 @@ class TestBoot(test.TestBase):
                                 "manifests/fedora-boot.json")
 
         with self.osbuild as osb:
-            osb.compile_file(manifest)
-            with osb.map_output("fedora-boot.qcow2") as qcow2, \
-                 tempfile.TemporaryDirectory() as d:
+            with tempfile.TemporaryDirectory(dir="/var/tmp") as temp_dir:
+                osb.compile_file(manifest, output_dir=temp_dir)
+                qcow2 = os.path.join(temp_dir, "fedora-boot.qcow2")
+                output_file = os.path.join(temp_dir, "output")
 
-                output_file = os.path.join(d, "output")
                 subprocess.run(["qemu-system-x86_64",
                                 "-snapshot",
                                 "-m", "1024",
