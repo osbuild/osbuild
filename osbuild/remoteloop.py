@@ -70,14 +70,14 @@ class LoopServer(api.BaseAPI):
         self.devs.append(lo)
         return lo.devname
 
-    def _message(self, msg, fds, sock, addr):
+    def _message(self, msg, fds, sock):
         fd = fds[msg["fd"]]
         dir_fd = fds[msg["dir_fd"]]
         offset = msg.get("offset")
         sizelimit = msg.get("sizelimit")
 
         devname = self._create_device(fd, dir_fd, offset, sizelimit)
-        sock.send({"devname": devname}, destination=addr)
+        sock.send({"devname": devname})
 
     def _cleanup(self):
         for lo in self.devs:
