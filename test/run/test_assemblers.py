@@ -14,6 +14,8 @@ import unittest
 from osbuild import loop
 from .. import test
 
+MEBIBYTE = 1024 * 1024
+
 
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
 class TestAssemblers(test.TestBase):
@@ -92,7 +94,7 @@ class TestAssemblers(test.TestBase):
         options = {
             "filename": "image.raw",
             "root_fs_uuid": "016a1cda-5182-4ab3-bf97-426b00b74eb0",
-            "size": 2 * 1024 * 1024 * 1024
+            "size": 512 * MEBIBYTE
         }
         with self.osbuild as osb:
             with self.run_assembler(osb, "org.osbuild.rawfs", options, "image.raw") as (tree, image):
@@ -143,7 +145,7 @@ class TestAssemblers(test.TestBase):
                         "filename": f"image.{fmt}",
                         "ptuuid": "b2c09a39-db93-44c5-846a-81e06b1dc162",
                         "root_fs_uuid": "aff010e9-df95-4f81-be6b-e22317251033",
-                        "size": 2 * 1024 * 1024 * 1024
+                        "size": 512 * MEBIBYTE
                     }
                     with self.run_assembler(osb,
                                             "org.osbuild.qemu",
