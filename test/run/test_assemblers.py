@@ -38,10 +38,10 @@ class TestAssemblers(test.TestBase):
         treeid = osb.treeid_from_manifest(data)
         assert treeid
 
-        osb.compile(data, checkpoints=[treeid])
-        with osb.map_object(treeid) as tree, \
-             osb.map_output(output_path) as output:
-            yield tree, output
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as output_dir:
+            osb.compile(data, output_dir=output_dir, checkpoints=[treeid])
+            with osb.map_object(treeid) as tree:
+                yield tree, os.path.join(output_dir, output_path)
 
     def assertImageFile(self, filename, fmt, expected_size=None):
         info = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", filename]))
@@ -107,18 +107,20 @@ class TestAssemblers(test.TestBase):
                 manifest = json.load(f)
 
             data = json.dumps(manifest)
-            osb.compile(data)
-            with osb.map_output("compose.json") as filename:
-                with open(filename) as f:
-                    compose = json.load(f)
-            commit_id = compose["ostree-commit"]
-            ref = compose["ref"]
-            rpmostree_inputhash = compose["rpm-ostree-inputhash"]
-            assert commit_id
-            assert ref
-            assert rpmostree_inputhash
+            with tempfile.TemporaryDirectory(dir="/var/tmp") as output_dir:
+                osb.compile(data, output_dir=output_dir)
+                compose_file = os.path.join(output_dir, "compose.json")
+                repo = os.path.join(output_dir, "repo")
 
-            with osb.map_output("repo") as repo:
+                with open(compose_file) as f:
+                    compose = json.load(f)
+                commit_id = compose["ostree-commit"]
+                ref = compose["ref"]
+                rpmostree_inputhash = compose["rpm-ostree-inputhash"]
+                assert commit_id
+                assert ref
+                assert rpmostree_inputhash
+
                 md = subprocess.check_output(
                     [
                         "ostree",
@@ -127,7 +129,7 @@ class TestAssemblers(test.TestBase):
                         "--print-metadata-key=rpmostree.inputhash",
                         commit_id
                     ], encoding="utf-8").strip()
-            self.assertEqual(md, f"'{rpmostree_inputhash}'")
+                self.assertEqual(md, f"'{rpmostree_inputhash}'")
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_qemu(self):

@@ -221,7 +221,6 @@ class OSBuild(contextlib.AbstractContextManager):
 
     _exitstack = None
     _cachedir = None
-    _outputdir = None
 
     def __init__(self, unit_test, cache_from=None):
         self._unittest = unit_test
@@ -243,10 +242,6 @@ class OSBuild(contextlib.AbstractContextManager):
                                 self._cachedir],
                                check=True)
 
-            # Create a temporary output-directors for assembled artifacts.
-            output = tempfile.TemporaryDirectory(dir="/var/tmp")
-            self._outputdir = self._exitstack.enter_context(output)
-
             # Keep our ExitStack for `__exit__()`.
             self._exitstack = self._exitstack.pop_all()
 
@@ -257,7 +252,6 @@ class OSBuild(contextlib.AbstractContextManager):
         with self._exitstack:
             pass
 
-        self._outputdir = None
         self._cachedir = None
         self._exitstack = None
 
@@ -275,52 +269,57 @@ class OSBuild(contextlib.AbstractContextManager):
         print(data_stderr)
         print("-- END ---------------------------------")
 
-    def compile(self, data_stdin, checkpoints=None):
+    def compile(self, data_stdin, output_dir=None, checkpoints=None):
         """Compile an Artifact
 
         This takes a manifest as `data_stdin`, executes the pipeline, and
         assembles the artifact. No intermediate steps are kept, unless you
         provide suitable checkpoints.
 
-        The produced artifact (if any) is stored in the output directory. Use
-        `map_output()` to temporarily map the file and get access. Note that
-        the output directory becomes invalid when you leave the context-manager
-        of this class.
+        The produced artifact (if any) is stored in the directory passed via
+        the output_dir parameter. If it's set to None, a temporary directory
+        is used and thus the caller cannot access the built artifact.
         """
 
-        cmd_args = []
+        if output_dir is None:
+            output_dir_context = tempfile.TemporaryDirectory(dir="/var/tmp")
+        else:
+            output_dir_context = contextlib.nullcontext(output_dir)
 
-        cmd_args += ["--json"]
-        cmd_args += ["--libdir", "."]
-        cmd_args += ["--output-directory", self._outputdir]
-        cmd_args += ["--store", self._cachedir]
+        with output_dir_context as osbuild_output_dir:
+            cmd_args = []
 
-        for c in (checkpoints or []):
-            cmd_args += ["--checkpoint", c]
+            cmd_args += ["--json"]
+            cmd_args += ["--libdir", "."]
+            cmd_args += ["--output-directory", osbuild_output_dir]
+            cmd_args += ["--store", self._cachedir]
 
-        # Spawn the `osbuild` executable, feed it the specified data on
-        # `STDIN` and wait for completion. If we are interrupted, we always
-        # wait for `osbuild` to shut down, so we can clean up its file-system
-        # trees (they would trigger `EBUSY` if we didn't wait).
-        try:
-            p = subprocess.Popen(
-                ["python3", "-m", "osbuild"] + cmd_args + ["-"],
-                encoding="utf-8",
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            data_stdout, data_stderr = p.communicate(data_stdin)
-        except KeyboardInterrupt:
-            p.wait()
-            raise
+            for c in (checkpoints or []):
+                cmd_args += ["--checkpoint", c]
+
+            # Spawn the `osbuild` executable, feed it the specified data on
+            # `STDIN` and wait for completion. If we are interrupted, we always
+            # wait for `osbuild` to shut down, so we can clean up its file-system
+            # trees (they would trigger `EBUSY` if we didn't wait).
+            try:
+                p = subprocess.Popen(
+                    ["python3", "-m", "osbuild"] + cmd_args + ["-"],
+                    encoding="utf-8",
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                data_stdout, data_stderr = p.communicate(data_stdin)
+            except KeyboardInterrupt:
+                p.wait()
+                raise
 
         # If execution failed, print results to `STDOUT`.
         if p.returncode != 0:
             self._print_result(p.returncode, data_stdout, data_stderr)
             self._unittest.assertEqual(p.returncode, 0)
 
-    def compile_file(self, file_stdin, checkpoints=None):
+    def compile_file(self, file_stdin, output_dir=None, checkpoints=None):
         """Compile an Artifact
 
         This is similar to `compile()` but takes a file-path instead of raw
@@ -330,7 +329,7 @@ class OSBuild(contextlib.AbstractContextManager):
 
         with open(file_stdin, "r") as f:
             data_stdin = f.read()
-            return self.compile(data_stdin, checkpoints=checkpoints)
+            return self.compile(data_stdin, output_dir, checkpoints=checkpoints)
 
     @staticmethod
     def treeid_from_manifest(manifest_data):
@@ -362,20 +361,4 @@ class OSBuild(contextlib.AbstractContextManager):
         # Yield the path to the cache-entry to the caller. This is implemented
         # as a context-manager so the caller does not retain the path for
         # later access.
-        yield path
-
-    @contextlib.contextmanager
-    def map_output(self, filename):
-        """Temporarily Map an Output Object
-
-        This takes a filename (or relative path) and looks it up in the output
-        directory. It then provides the absolute path to that file back to the
-        caller.
-        """
-
-        path = os.path.join(self._outputdir, filename)
-        assert os.access(path, os.R_OK)
-
-        # Similar to `map_object()` we provide the path through a
-        # context-manager so the caller does not retain the path.
         yield path
