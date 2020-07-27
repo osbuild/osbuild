@@ -52,7 +52,11 @@ class BaseAPI(abc.ABC):
 
     @abc.abstractmethod
     def _message(self, msg: Dict, fds: jsoncomm.FdSet, sock: jsoncomm.Socket, addr: str):
-        """Called for a new incoming message"""
+        """Called for a new incoming message
+
+        The file descriptor set `fds` will be closed after the call.
+        Use the `FdSet.steal()` method to extract file descriptors.
+        """
 
     def _cleanup(self):
         """Called after the event loop is shut down"""
@@ -66,6 +70,7 @@ class BaseAPI(abc.ABC):
         """Called when data is available on the socket"""
         msg, fds, addr = sock.recv()
         self._message(msg, fds, sock, addr)
+        fds.close()
 
     def _run_event_loop(self):
         with jsoncomm.Socket.new_server(self.socket_address) as server:

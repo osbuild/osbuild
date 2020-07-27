@@ -78,7 +78,6 @@ class LoopServer(api.BaseAPI):
 
         devname = self._create_device(fd, dir_fd, offset, sizelimit)
         sock.send({"devname": devname}, destination=addr)
-        fds.close()
 
     def _cleanup(self):
         for lo in self.devs:
