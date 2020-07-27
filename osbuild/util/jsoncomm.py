@@ -17,7 +17,7 @@ from typing import Optional
 from .types import PathLike
 
 
-class FdSet():
+class FdSet:
     """File-Descriptor Set
 
     This object wraps an array of file-descriptors. Unlike a normal integer
