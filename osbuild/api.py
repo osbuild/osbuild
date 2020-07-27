@@ -51,7 +51,7 @@ class BaseAPI(abc.ABC):
         """The name of the API endpoint"""
 
     @abc.abstractmethod
-    def _message(self, msg: Dict, fds: jsoncomm.FdSet, sock: jsoncomm.Socket, addr: str):
+    def _message(self, msg: Dict, fds: jsoncomm.FdSet, sock: jsoncomm.Socket):
         """Called for a new incoming message
 
         The file descriptor set `fds` will be closed after the call.
@@ -68,12 +68,12 @@ class BaseAPI(abc.ABC):
 
     def _dispatch(self, sock: jsoncomm.Socket):
         """Called when data is available on the socket"""
-        msg, fds, addr = sock.recv()
+        msg, fds, _ = sock.recv()
         if msg is None:
             # Peer closed the connection
             self.event_loop.remove_reader(sock)
             return
-        self._message(msg, fds, sock, addr)
+        self._message(msg, fds, sock)
         fds.close()
 
     def _accept(self, server):
@@ -162,7 +162,7 @@ class API(BaseAPI):
         self._output_data.write(data)
         self.monitor.log(data)
 
-    def _setup_stdio(self, server, addr):
+    def _setup_stdio(self, server):
         with self._prepare_input() as stdin, \
              self._prepare_output() as stdout:
             msg = {}
@@ -174,11 +174,11 @@ class API(BaseAPI):
             fds.append(stdout.fileno())
             msg['stderr'] = 2
 
-            server.send(msg, fds=fds, destination=addr)
+            server.send(msg, fds=fds)
 
-    def _message(self, msg, fds, sock, addr):
+    def _message(self, msg, fds, sock):
         if msg["method"] == 'setup-stdio':
-            self._setup_stdio(sock, addr)
+            self._setup_stdio(sock)
 
     def _cleanup(self):
         if self._output_pipe:
