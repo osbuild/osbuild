@@ -165,3 +165,14 @@ class TestUtilJsonComm(unittest.TestCase):
 
         msg = self.client.recv()
         assert msg[0] == {}
+
+    def test_accept_timeout(self):
+        #
+        # Test calling `accept` without any connection being ready to be
+        # established will not throw any exceptions but return `None`
+        address = pathlib.Path(self.dir.name, "noblock")
+        listener = jsoncomm.Socket.new_server(address)
+        listener.listen()
+
+        conn = listener.accept()
+        self.assertIsNone(conn)
