@@ -321,7 +321,7 @@ class Socket(contextlib.AbstractContextManager):
 
         return (payload, fdset, msg[3])
 
-    def send(self, payload: object, *, destination: Optional[str] = None, fds: Optional[list] = None):
+    def send(self, payload: object, *, fds: Optional[list] = None):
         """Send Message
 
         Send a new message via this socket. This operation is synchronous. The
@@ -352,5 +352,5 @@ class Socket(contextlib.AbstractContextManager):
         if fds:
             cmsg.append((socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds)))
 
-        n = self._socket.sendmsg([serialized], cmsg, 0, destination)
+        n = self._socket.sendmsg([serialized], cmsg, 0)
         assert n == len(serialized)

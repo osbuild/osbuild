@@ -84,7 +84,7 @@ class TestUtilJsonComm(unittest.TestCase):
         assert msg[0] == data
         assert len(msg[1]) == 0
 
-        self.server.send(data, destination=msg[2])
+        self.server.send(data)
         msg = self.client.recv()
         assert msg[0] == data
         assert len(msg[1]) == 0
@@ -154,7 +154,7 @@ class TestUtilJsonComm(unittest.TestCase):
 
         def echo(socket):
             msg = socket.recv()
-            socket.send(msg[0], destination=msg[2])
+            socket.send(msg[0])
             loop.stop()
 
         self.client.send({})
