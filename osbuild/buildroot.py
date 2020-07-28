@@ -188,6 +188,7 @@ class BuildRoot(contextlib.AbstractContextManager):
             "--setenv", "PYTHONPATH", "/run/osbuild/lib",
             "--unshare-ipc",
             "--unshare-pid",
+            "--unshare-net"
         ]
 
         cmd += mounts
