@@ -62,9 +62,9 @@ class Stage:
             build_tree,
             cache,
             monitor,
-            libdir=None,
+            libdir,
             var="/var/tmp"):
-        with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root, \
+        with buildroot.BuildRoot(build_tree, runner, libdir, var=var) as build_root, \
             tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var) as sources_output:
 
             args = {
@@ -81,7 +81,7 @@ class Stage:
             api = API(args, monitor)
             build_root.register_api(api)
 
-            src = sources.SourcesServer(libdir or "/usr/lib/osbuild",
+            src = sources.SourcesServer(libdir,
                                         self.sources,
                                         os.path.join(cache, "sources"),
                                         sources_output)
@@ -119,8 +119,8 @@ class Assembler:
             description["id"] = self.id
         return description
 
-    def run(self, tree, runner, build_tree, monitor, output_dir=None, libdir=None, var="/var/tmp"):
-        with buildroot.BuildRoot(build_tree, runner, libdir=libdir, var=var) as build_root:
+    def run(self, tree, runner, build_tree, monitor, libdir, output_dir=None, var="/var/tmp"):
+        with buildroot.BuildRoot(build_tree, runner, libdir, var=var) as build_root:
 
             args = {
                 "tree": "/run/osbuild/tree",
@@ -266,7 +266,7 @@ class Pipeline:
                               build_path,
                               object_store.store,
                               monitor,
-                              libdir=libdir,
+                              libdir,
                               var=object_store.store)
 
                 monitor.result(r)
@@ -300,8 +300,8 @@ class Pipeline:
                                    self.runner,
                                    build_dir,
                                    monitor,
+                                   libdir,
                                    output_dir=output_dir,
-                                   libdir=libdir,
                                    var=object_store.store)
 
             monitor.result(r)
@@ -320,7 +320,7 @@ class Pipeline:
 
         return results
 
-    def run(self, store, monitor, libdir=None, output_directory=None):
+    def run(self, store, monitor, libdir, output_directory=None):
         os.makedirs("/run/osbuild", exist_ok=True)
         results = {}
 

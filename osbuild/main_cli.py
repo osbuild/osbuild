@@ -87,7 +87,7 @@ def parse_arguments(sys_argv):
                         help="directory where intermediary os trees are stored")
     parser.add_argument("--sources", metavar="FILE", type=os.path.abspath,
                         help="json file containing a dictionary of source configuration")
-    parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath,
+    parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath, default="/usr/lib/osbuild",
                         help="the directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
                         help="stage to commit to the object store during build (can be passed multiple times)")
@@ -107,7 +107,7 @@ def osbuild_cli():
     manifest = parse_manifest(args.manifest_path)
 
     # first thing after parsing is validation of the input
-    index = osbuild.meta.Index(args.libdir or "/usr/lib/osbuild")
+    index = osbuild.meta.Index(args.libdir)
     res = osbuild.meta.validate(manifest, index)
     if not res:
         if args.json or args.inspect:
@@ -153,7 +153,7 @@ def osbuild_cli():
         r = pipeline.run(
             args.store,
             monitor,
-            libdir=args.libdir,
+            args.libdir,
             output_directory=args.output_directory
         )
     except KeyboardInterrupt:

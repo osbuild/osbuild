@@ -33,7 +33,7 @@ class BuildRoot(contextlib.AbstractContextManager):
     only when exiting the context manager.
     """
 
-    def __init__(self, root, runner, path="/run/osbuild", libdir=None, var="/var/tmp"):
+    def __init__(self, root, runner, libdir, path="/run/osbuild", var="/var/tmp"):
         self._exitstack = None
         self._rootdir = root
         self._rundir = path
@@ -154,13 +154,11 @@ class BuildRoot(contextlib.AbstractContextManager):
         # We execute our own modules by bind-mounting them from the host into
         # the build-root. We have minimal requirements on the build-root, so
         # these modules can be executed. Everything else we provide ourselves.
-        # In case you pass `--libdir`, it must be self-contained and we provide
-        # nothing else. If you use the system libdir, we additionally look for
+        # In case `libdir` contains the python module, it must be self-contained
+        # and we provide nothing else. Otherwise, we additionally look for
         # the installed `osbuild` module and bind-mount it as well.
-        if self._libdir is not None:
-            mounts += ["--ro-bind", f"{self._libdir}", "/run/osbuild/lib"]
-        else:
-            mounts += ["--ro-bind", "/usr/lib/osbuild", "/run/osbuild/lib"]
+        mounts += ["--ro-bind", f"{self._libdir}", "/run/osbuild/lib"]
+        if not os.listdir(os.path.join(self._libdir, "osbuild")):
             modorigin = importlib.util.find_spec("osbuild").origin
             modpath = os.path.dirname(modorigin)
             mounts += ["--ro-bind", f"{modpath}", "/run/osbuild/lib/osbuild"]
