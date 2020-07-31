@@ -93,7 +93,7 @@ class TestDescriptions(unittest.TestCase):
             for p in [data, cache, output]:
                 p.mkdir()
 
-            res = asm.run(data, runner, root, monitor, output, libdir)
+            res = asm.run(data, runner, root, monitor, libdir, output)
 
         self.assertEqual(res.success, True)
         self.assertEqual(res.id, asm.id)
