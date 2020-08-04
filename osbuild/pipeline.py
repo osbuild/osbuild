@@ -3,7 +3,6 @@ import hashlib
 import json
 import os
 import tempfile
-from typing import Optional
 
 from .api import API
 from . import buildroot
@@ -119,7 +118,7 @@ class Assembler:
             description["id"] = self.id
         return description
 
-    def run(self, tree, runner, build_tree, monitor, libdir, output_dir=None, var="/var/tmp"):
+    def run(self, tree, runner, build_tree, monitor, libdir, output_dir, var="/var/tmp"):
         with buildroot.BuildRoot(build_tree, runner, libdir, var=var) as build_root:
 
             args = {
@@ -131,11 +130,11 @@ class Assembler:
             }
 
             binds = []
-            if output_dir:
-                output_dir = os.fspath(output_dir)
-                os.makedirs(output_dir, exist_ok=True)
-                binds.append(f"{output_dir}:/run/osbuild/output")
-                args["output_dir"] = "/run/osbuild/output"
+
+            output_dir = os.fspath(output_dir)
+            os.makedirs(output_dir, exist_ok=True)
+            binds.append(f"{output_dir}:/run/osbuild/output")
+            args["output_dir"] = "/run/osbuild/output"
 
             ro_binds = [os.fspath(tree) + ":/run/osbuild/tree"]
 
@@ -282,7 +281,7 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def assemble(self, object_store, build_tree, tree, monitor, libdir, output_directory: Optional[str]):
+    def assemble(self, object_store, build_tree, tree, monitor, libdir, output_directory):
         results = {"success": True}
 
         if not self.assembler:
@@ -301,7 +300,7 @@ class Pipeline:
                                    build_dir,
                                    monitor,
                                    libdir,
-                                   output_dir=output_dir,
+                                   output_dir,
                                    var=object_store.store)
 
             monitor.result(r)
@@ -320,7 +319,7 @@ class Pipeline:
 
         return results
 
-    def run(self, store, monitor, libdir, output_directory=None):
+    def run(self, store, monitor, libdir, output_directory):
         os.makedirs("/run/osbuild", exist_ok=True)
         results = {}
 
