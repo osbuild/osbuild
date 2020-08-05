@@ -62,6 +62,10 @@ MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 
+# Maintain a directory for the master branch that always contains the latest
+# RPM packages.
+REPO_DIR_LATEST=repo/${JOB_NAME}/latest/${ID}${VERSION_ID//./}_${ARCH}
+
 # Full URL to the RPM repository after they are uploaded.
 REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 
@@ -76,12 +80,17 @@ make srpm
 git clone --quiet https://github.com/osbuild/osbuild-composer osbuild-composer
 make -C osbuild-composer srpm
 
-# Fix RHEL 8 mock template for non-subscribed images.
-if [[ $NODE_NAME == *rhel8[23]* ]]; then
-    greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
-    sudo mv $NIGHTLY_MOCK_TEMPLATE /etc/mock/templates/rhel-8.tpl
-    cat $NIGHTLY_REPO | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
-    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
+# Update the mock configs if we are on 8.3 beta.
+if [[ $VERSION_ID == 8.3 ]]; then
+    # Remove the existing (non-beta) repos from the template.
+    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
+
+    # Add the enabled repos to the template.
+    cat /etc/yum.repos.d/redhat.repo | sudo tee -a /etc/mock/templates/rhel-8.tpl
+
+    # We need triple quotes at the end of the template to mark the end of
+    # the repo list.
+    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
 fi
 
 # Compile RPMs in a mock chroot
@@ -91,6 +100,9 @@ sudo mock -r $MOCK_CONFIG --no-bootstrap-chroot \
     rpmbuild/SRPMS/*.src.rpm osbuild-composer/rpmbuild/SRPMS/*.src.rpm
 sudo chown -R $USER ${REPO_DIR}
 
+# Change the ownership of all of our repo files from root to our CI user.
+sudo chown -R $USER ${REPO_DIR%%/*}
+
 # Move the logs out of the way.
 greenprint "🧹 Retaining logs from mock build"
 mv ${REPO_DIR}/*.log $WORKSPACE
@@ -98,6 +110,14 @@ mv ${REPO_DIR}/*.log $WORKSPACE
 # Create a repo of the built RPMs.
 greenprint "⛓️ Creating dnf repository"
 createrepo_c ${REPO_DIR}
+
+# Copy the current build to the latest directory.
+mkdir -p $REPO_DIR_LATEST
+cp -arv ${REPO_DIR}/ ${REPO_DIR_LATEST}/
+
+# Remove the previous latest build for this branch.
+# Don't fail if the path is missing.
+s3cmd --recursive rm s3://${REPO_BUCKET}/${JOB_NAME}/latest/${ID}${VERSION_ID//./}_${ARCH} || true
 
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"

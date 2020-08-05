@@ -13,6 +13,11 @@ pipeline {
     stages {
         stage("Prepare") {
             agent { label "schutzbot" }
+            options {
+                // Don't checkout the git repository here. It just clogs
+                // up the Jenkins disk space and does nothing for us.
+                skipDefaultCheckout()
+            }
             steps {
                 sh (
                     label: "Get environment variables",
@@ -74,8 +79,7 @@ pipeline {
                     agent { label "rhel83cloudbase && x86_64" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        NIGHTLY_REPO = credentials('rhel8-nightly-repo')
-                        NIGHTLY_MOCK_TEMPLATE = credentials('rhel8-nightly-mock-template')
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
                     }
                     steps {
                         sh "schutzbot/ci_details.sh"
@@ -138,9 +142,10 @@ pipeline {
                     }
                 }
                 stage('RHEL 8.3 Image') {
-                    agent { label "rhel83cloudbase && x86_64" }
+                    agent { label "rhel83cloudbase && x86_64 && psi" }
                     environment {
                         TEST_TYPE = "image"
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
                     }
                     steps {
                         unstash 'rhel83'
