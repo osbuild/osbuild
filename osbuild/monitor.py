@@ -12,6 +12,7 @@ import abc
 import json
 import os
 import sys
+import time
 
 from typing import Dict
 
@@ -90,6 +91,10 @@ class LogMonitor(BaseMonitor):
     the log will get written to. If `fd`  is a `TTY`, escape
     sequences will be used to highlight sections of the log.
     """
+    def result(self, result):
+        duration = int(time.time() - self.timer_start)
+        self.out.write(f"\n⏱  Duration: {duration}s\n")
+
     def stage(self, stage):
         self.module(stage)
 
@@ -111,6 +116,8 @@ class LogMonitor(BaseMonitor):
 
         json.dump(options, self.out, indent=2)
         self.out.write("\n")
+
+        self.timer_start = time.time()
 
     def log(self, message):
         self.out.write(message)
