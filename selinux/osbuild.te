@@ -31,6 +31,7 @@ unconfined_domain(osbuild_t)
 # execute setfiles in the setfiles_mac domain
 # when in the osbuild_t domain
 seutil_domtrans_setfiles_mac(osbuild_t)
+osbuild_nnp_nosuid_trans(setfiles_mac_t)
 
 # Allow sysadm and unconfined to run osbuild
 optional_policy(`
@@ -63,4 +64,5 @@ optional_policy(`
 # allow transitioning to install_t (for ostree)
 optional_policy(`
 	anaconda_domtrans_install(osbuild_t)
+	osbuild_nnp_nosuid_trans(install_t)
 ')
