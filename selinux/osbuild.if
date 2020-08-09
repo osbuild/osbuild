@@ -93,3 +93,22 @@ interface(`osbuild_role',`
 	ps_process_pattern($2, osbuild_t)
 	allow $2 osbuild_t:process { signull signal sigkill };
 ')
+
+########################################
+## <summary>
+##	osbuild nnp / nosuid transitions to domain
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain to be allowed to transition into.
+## </summary>
+## </param>
+#
+interface(`osbuild_nnp_nosuid_trans',`
+	gen_require(`
+		type osbuild_t;
+		class process2 { nnp_transition nosuid_transition };
+	')
+
+	allow osbuild_t $1:process2 {nnp_transition nosuid_transition};
+')
