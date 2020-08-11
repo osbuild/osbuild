@@ -150,6 +150,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         # Setup API file-systems.
         mounts += ["--proc", "/proc"]
         mounts += ["--bind", "/sys", "/sys"]
+        mounts += ["--ro-bind-try", "/sys/fs/selinux", "/sys/fs/selinux"]
 
         # We execute our own modules by bind-mounting them from the host into
         # the build-root. We have minimal requirements on the build-root, so
