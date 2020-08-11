@@ -65,6 +65,7 @@ SCHEMA = """
 }
 """
 
+
 TOPLEVEL_DIRS = ["dev", "proc", "run", "sys", "sysroot", "var"]
 TOPLEVEL_LINKS = {
     "home": "var/home",
@@ -175,7 +176,6 @@ def main(tree, output_dir, options, meta):
         subprocess.run(command,
                        stdout=sys.stderr,
                        check=True)
-
 
 
 if __name__ == '__main__':
