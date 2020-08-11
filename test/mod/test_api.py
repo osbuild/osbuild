@@ -3,6 +3,8 @@
 #
 
 import os
+import multiprocessing as mp
+import sys
 import tempfile
 import unittest
 
@@ -65,3 +67,25 @@ class TestAPI(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 with api:
                     pass
+
+    def test_metadata(self):
+        # Check that `api.metadata` leads to `API.metadata` being
+        # set correctly
+        tmpdir = self.tmp.name
+        path = os.path.join(tmpdir, "osbuild-api")
+        args = {}
+        monitor = osbuild.monitor.BaseMonitor(sys.stderr.fileno())
+
+        def metadata(path):
+            data = {"meta": "42"}
+            osbuild.api.metadata(data, path=path)
+            return 0
+
+        with osbuild.api.API(args, monitor, socket_address=path) as api:
+            p = mp.Process(target=metadata, args=(path, ))
+            p.start()
+            p.join()
+            self.assertEqual(p.exitcode, 0)
+            metadata = api.metadata  # pylint: disable=no-member
+            assert metadata
+            self.assertEqual(metadata, {"meta": "42"})
