@@ -37,6 +37,10 @@ SCHEMA = """
     "type": "string",
     "default": ""
   },
+  "os_version": {
+    "description": "Set the version of the OS as commit metadata",
+    "type": "string"
+  },
   "tmp-is-dir": {
     "description": "Create a regular directory for /tmp",
     "type": "boolean",
@@ -104,6 +108,7 @@ def init_rootfs(root, tmp_is_dir):
 
 def main(tree, output_dir, options, meta):
     ref = options["ref"]
+    os_version = options.get("os_version", None)
     tmp_is_dir = options.get("tmp-is-dir", True)
     parent = options.get("parent", None)
     tar = options.get("tar", None)
@@ -142,7 +147,13 @@ def main(tree, output_dir, options, meta):
         argv += [
             f"--add-metadata-string=rpmostree.inputhash={meta['id']}",
             f"--write-composejson-to={output_dir}/compose.json"
+
         ]
+
+        if os_version:
+            argv += [
+                f"--add-metadata-string=version={os_version}",
+            ]
 
         with treefile.as_tmp_file() as path:
             argv += [path, root]
