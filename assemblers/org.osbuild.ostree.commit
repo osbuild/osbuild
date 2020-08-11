@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 
+from osbuild import api
 from osbuild.util import ostree
 
 
@@ -161,6 +162,11 @@ def main(tree, output_dir, options, meta):
             subprocess.run(argv,
                            stdout=sys.stderr,
                            check=True)
+
+        with open(os.path.join(output_dir, "compose.json"), "r") as f:
+            compose = json.load(f)
+
+        api.metadata({"compose": compose})
 
     if tar:
         filename = tar["filename"]
