@@ -137,6 +137,7 @@ class API(BaseAPI):
         self._output_data = io.StringIO()
         self._output_pipe = None
         self.monitor = monitor
+        self.metadata = {}
 
     @property
     def output(self):
@@ -176,9 +177,14 @@ class API(BaseAPI):
 
             server.send(msg, fds=fds)
 
+    def _set_metadata(self, message):
+        self.metadata.update(message["metadata"])
+
     def _message(self, msg, fds, sock):
         if msg["method"] == 'setup-stdio':
             self._setup_stdio(sock)
+        elif msg["method"] == 'add-metadata':
+            self._set_metadata(msg)
 
     def _cleanup(self):
         if self._output_pipe:
@@ -197,3 +203,13 @@ def setup_stdio(path="/run/osbuild/api/osbuild"):
             source = fds[msg[sio]]
             os.dup2(source, target.fileno())
         fds.close()
+
+
+def metadata(data: Dict, path="/run/osbuild/api/osbuild"):
+    """Update metadata for the current module"""
+    with jsoncomm.Socket.new_client(path) as client:
+        msg = {
+            "method": "add-metadata",
+            "metadata": data
+        }
+        client.send(msg)
