@@ -18,12 +18,13 @@ def cleanup(*objs):
 
 
 class BuildResult:
-    def __init__(self, origin, returncode, output):
+    def __init__(self, origin, returncode, output, metadata):
         self.name = origin.name
         self.id = origin.id
         self.options = origin.options
         self.success = returncode == 0
         self.output = output
+        self.metadata = metadata
 
     def as_dict(self):
         return vars(self)
@@ -90,7 +91,7 @@ class Stage:
                                binds=[os.fspath(tree) + ":/run/osbuild/tree"],
                                readonly_binds=ro_binds)
 
-            return BuildResult(self, r.returncode, api.output)
+            return BuildResult(self, r.returncode, api.output, api.metadata)
 
 
 class Assembler:
@@ -148,7 +149,7 @@ class Assembler:
                                binds=binds,
                                readonly_binds=ro_binds)
 
-            return BuildResult(self, r.returncode, api.output)
+            return BuildResult(self, r.returncode, api.output, api.metadata)
 
 
 class Pipeline:
