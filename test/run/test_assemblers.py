@@ -127,9 +127,11 @@ class TestAssemblers(test.TestBase):
                 commit_id = compose["ostree-commit"]
                 ref = compose["ref"]
                 rpmostree_inputhash = compose["rpm-ostree-inputhash"]
+                os_version = compose["ostree-version"]
                 assert commit_id
                 assert ref
                 assert rpmostree_inputhash
+                assert os_version
 
                 md = subprocess.check_output(
                     [
@@ -140,6 +142,16 @@ class TestAssemblers(test.TestBase):
                         commit_id
                     ], encoding="utf-8").strip()
                 self.assertEqual(md, f"'{rpmostree_inputhash}'")
+
+                md = subprocess.check_output(
+                    [
+                        "ostree",
+                        "show",
+                        "--repo", repo,
+                        "--print-metadata-key=version",
+                        commit_id
+                    ], encoding="utf-8").strip()
+                self.assertEqual(md, f"'{os_version}'")
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_qemu(self):

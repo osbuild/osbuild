@@ -97,7 +97,8 @@
     "assembler": {
       "name": "org.osbuild.ostree.commit",
       "options": {
-        "ref": "fedora/x86_64/osbuild"
+        "ref": "fedora/x86_64/osbuild",
+        "os_version": "32"
       }
     }
   }
