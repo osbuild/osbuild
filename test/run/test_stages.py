@@ -9,9 +9,23 @@ import os
 import pprint
 import tempfile
 import unittest
+from typing import Dict
 
 from osbuild.util import selinux
 from .. import test
+
+
+def find_stage(result, stageid):
+    build = result.get("build")
+    if build:
+        stage = find_stage(build, stageid)
+        if stage:
+            return stage
+
+    for stage in result.get("stages", []):
+        if stage["id"] == stageid:
+            return stage
+    return None
 
 
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
@@ -87,6 +101,26 @@ class TestStages(test.TestBase):
                         and difference1_values[1] != difference2_values[1]:
                     raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
 
+    def assertMetadata(self, metadata: Dict, result: Dict):
+        """Assert all of `metadata` is found in `result`.
+
+        Metadata must be a dictionary with stage ids as keys and
+        the metadata as values. For each of those stage, metadata
+        pairs the corresponding stage is looked up in the result
+        and its metadata compared with the one given in metadata.
+        """
+        for stageid, want in metadata.items():
+            stage = find_stage(result, stageid)
+            if stage is None:
+                js = json.dumps(result, indent=2)
+                self.fail(f"stage {stageid} not found in results:\n{js}\n")
+            have = stage["metadata"]
+            if have != want:
+                diff = difflib.ndiff(pprint.pformat(have).splitlines(),
+                                     pprint.pformat(want).splitlines())
+                txt = "\n".join(diff)
+                self.fail(f"metadata for {stageid} differs:\n{txt}")
+
     def setUp(self):
         self.osbuild = test.OSBuild(self)
 
@@ -105,11 +139,11 @@ class TestStages(test.TestBase):
                     checkpoints += [tree]
                     context = osb.map_object(tree)
 
-                osb.compile(data, checkpoints=checkpoints)
-                return context
+                result = osb.compile(data, checkpoints=checkpoints)
+                return context, result
 
-            ctx_a = run(f"{test_dir}/a.json")
-            ctx_b = run(f"{test_dir}/b.json")
+            ctx_a, _ = run(f"{test_dir}/a.json")
+            ctx_b, res = run(f"{test_dir}/b.json")
             ctx_a = ctx_a or tempfile.TemporaryDirectory()
             ctx_b = ctx_b or tempfile.TemporaryDirectory()
 
@@ -121,6 +155,12 @@ class TestStages(test.TestBase):
 
             self.assertTreeDiffsEqual(expected_diff, actual_diff)
 
+            md_path = os.path.join(test_dir, "metadata.json")
+            if os.path.exists(md_path):
+                with open(md_path, "r") as f:
+                    metadata = json.load(f)
+
+                self.assertMetadata(metadata, res)
     def test_stages(self):
         path = os.path.join(self.locate_test_data(), "stages")
         for t in glob.glob(f"{path}/*/diff.json"):
