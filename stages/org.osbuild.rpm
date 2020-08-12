@@ -33,6 +33,7 @@ import tempfile
 
 import osbuild.sources
 
+
 SCHEMA = """
 "additionalProperties": false,
 "properties": {
