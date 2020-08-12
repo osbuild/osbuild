@@ -80,3 +80,31 @@ class TestBuildRoot(test.TestBase):
             binds = [f"{rw_data}:/rw-data"]
             r = root.run(cmd, binds=binds, readonly_binds=ro_binds)
             self.assertEqual(r.returncode, 1)
+
+    @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+    @unittest.skipUnless(os.path.exists("/sys/fs/selinux"), "no SELinux")
+    def test_selinuxfs_ro(self):
+        # /sys/fs/selinux must never be writable in the container
+        # because RPM and other tools must not assume the policy
+        # of the host is the valid policy
+
+        runner = "org.osbuild.linux"
+        libdir = os.path.abspath(os.curdir)
+        var = pathlib.Path(self.tmp.name, "var")
+        var.mkdir()
+
+        scripts = os.path.join(self.locate_test_data(), "scripts")
+
+        monitor = NullMonitor(sys.stderr.fileno())
+        with BuildRoot("/", runner, libdir=libdir, var=var) as root:
+            api = osbuild.api.API({}, monitor)
+            root.register_api(api)
+
+            ro_binds = [f"{scripts}:/scripts"]
+
+            cmd = ["/scripts/mount_flags.py",
+                   "/sys/fs/selinux",
+                   "ro"]
+
+            r = root.run(cmd, readonly_binds=ro_binds)
+            self.assertEqual(r.returncode, 0)
