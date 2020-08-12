@@ -145,16 +145,15 @@ def main(tree, output_dir, options, meta):
         if parent:
             argv += [f"--parent={parent}"]
 
-        argv += [
-            f"--add-metadata-string=rpmostree.inputhash={meta['id']}",
-            f"--write-composejson-to={output_dir}/compose.json"
-
-        ]
-
         if os_version:
             argv += [
                 f"--add-metadata-string=version={os_version}",
             ]
+
+        argv += [
+            f"--add-metadata-string=rpmostree.inputhash={meta['id']}",
+            f"--write-composejson-to={output_dir}/compose.json"
+        ]
 
         with treefile.as_tmp_file() as path:
             argv += [path, root]
