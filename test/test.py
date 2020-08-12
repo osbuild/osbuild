@@ -279,6 +279,8 @@ class OSBuild(contextlib.AbstractContextManager):
         The produced artifact (if any) is stored in the directory passed via
         the output_dir parameter. If it's set to None, a temporary directory
         is used and thus the caller cannot access the built artifact.
+
+        Returns the build result as dictionary.
         """
 
         if output_dir is None:
@@ -318,6 +320,8 @@ class OSBuild(contextlib.AbstractContextManager):
         if p.returncode != 0:
             self._print_result(p.returncode, data_stdout, data_stderr)
             self._unittest.assertEqual(p.returncode, 0)
+
+        return json.loads(data_stdout)
 
     def compile_file(self, file_stdin, output_dir=None, checkpoints=None):
         """Compile an Artifact
