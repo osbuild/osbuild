@@ -32,6 +32,7 @@ import sys
 import tempfile
 
 import osbuild.sources
+from osbuild import api
 
 
 SCHEMA = """
@@ -82,6 +83,32 @@ def packages_from_legacy(legacy):
         else:
             packages.append({"checksum": package, "check_gpg": False})
     return packages
+
+
+def generate_package_metadata(tree):
+    query = r"""\{
+    "name": "%{NAME}",
+    "version": "%{VERSION}",
+    "release": "%{RELEASE}",
+    "epoch": %|EPOCH?{"%{EPOCH}"}:{null}|,
+    "arch": %|ARCH?{"%{ARCH}"}:{null}|,
+    "sigmd5": %|SIGMD5?{"%{SIGMD5}"}:{null}|
+    \},
+    """
+
+    cmd = [
+        "rpm",
+        "-qa",
+        "--root", tree,
+        "--qf=" + query
+    ]
+
+    res = subprocess.run(cmd, stdout=subprocess.PIPE,
+                         check=True, encoding="utf-8")
+
+    raw = res.stdout.strip()
+    jsdata = '{"packages": [' + raw[:-1] + "]}"
+    return json.loads(jsdata)
 
 
 def main(tree, sources, options):
@@ -153,6 +180,10 @@ def main(tree, sources, options):
     # remove random seed from the tree if exists
     with contextlib.suppress(FileNotFoundError):
         os.unlink(f"{tree}/var/lib/systemd/random-seed")
+
+    # generate the metadata
+    md = generate_package_metadata(tree)
+    api.metadata(md)
 
     return 0
 
