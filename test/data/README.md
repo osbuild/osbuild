@@ -41,3 +41,7 @@ do not allow comments, this file shortly describes their purpose.
    This directory contains test-data for runtime tests of the source-engines. It
    contains a directory that is served via HTTP in the tests, and a directory of
    test-cases what to expect when using the attached `sources.json`.
+
+ * `scripts`:
+   This directory contains scripts used from other tests, i.e. although they are
+   executables they are at the same time test-data to the actual (unit) tests.
