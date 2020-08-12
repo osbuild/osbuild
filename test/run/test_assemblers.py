@@ -118,7 +118,7 @@ class TestAssemblers(test.TestBase):
 
             data = json.dumps(manifest)
             with tempfile.TemporaryDirectory(dir="/var/tmp") as output_dir:
-                osb.compile(data, output_dir=output_dir)
+                result = osb.compile(data, output_dir=output_dir)
                 compose_file = os.path.join(output_dir, "compose.json")
                 repo = os.path.join(output_dir, "repo")
 
@@ -132,6 +132,10 @@ class TestAssemblers(test.TestBase):
                 assert ref
                 assert rpmostree_inputhash
                 assert os_version
+                self.assertIn("metadata", result["assembler"])
+                metadata = result["assembler"]["metadata"]
+                self.assertIn("compose", metadata)
+                self.assertEqual(compose, metadata["compose"])
 
                 md = subprocess.check_output(
                     [
