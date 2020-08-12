@@ -46,3 +46,37 @@ class TestBuildRoot(test.TestBase):
 
             r = root.run(["/usr/bin/false"])
             self.assertNotEqual(r.returncode, 0)
+
+    @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+    def test_bind_mounts(self):
+        runner = "org.osbuild.linux"
+        libdir = os.path.abspath(os.curdir)
+        var = pathlib.Path(self.tmp.name, "var")
+        var.mkdir()
+
+        rw_data = pathlib.Path(self.tmp.name, "data")
+        rw_data.mkdir()
+
+        scripts = os.path.join(self.locate_test_data(), "scripts")
+
+        monitor = NullMonitor(sys.stderr.fileno())
+        with BuildRoot("/", runner, libdir=libdir, var=var) as root:
+            api = osbuild.api.API({}, monitor)
+            root.register_api(api)
+
+            ro_binds = [f"{scripts}:/scripts"]
+
+            cmd = ["/scripts/mount_flags.py",
+                   "/scripts",
+                   "ro"]
+
+            r = root.run(cmd, readonly_binds=ro_binds)
+            self.assertEqual(r.returncode, 0)
+
+            cmd = ["/scripts/mount_flags.py",
+                   "/rw-data",
+                   "ro"]
+
+            binds = [f"{rw_data}:/rw-data"]
+            r = root.run(cmd, binds=binds, readonly_binds=ro_binds)
+            self.assertEqual(r.returncode, 1)
