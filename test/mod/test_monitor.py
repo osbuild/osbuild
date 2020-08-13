@@ -73,12 +73,13 @@ class TestMonitor(unittest.TestCase):
             path = os.path.join(tmpdir, "osbuild-api")
             logfile = os.path.join(tmpdir, "log.txt")
 
-            with open(logfile, "w") as log, \
-                 API(args, LogMonitor(log.fileno()), socket_address=path) as api:
-                p = mp.Process(target=echo, args=(path, ))
-                p.start()
-                p.join()
-                self.assertEqual(p.exitcode, 0)
+            with open(logfile, "w") as log:
+                api = API(args, LogMonitor(log.fileno()), socket_address=path)
+                with api as api:
+                    p = mp.Process(target=echo, args=(path, ))
+                    p.start()
+                    p.join()
+                    self.assertEqual(p.exitcode, 0)
                 output = api.output  # pylint: disable=no-member
                 assert output
 

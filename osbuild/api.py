@@ -91,9 +91,13 @@ class BaseAPI(abc.ABC):
             self.event_loop.run_forever()
             self.event_loop.remove_reader(server)
 
+    @property
+    def running(self):
+        return self.event_loop is not None
+
     def __enter__(self):
         # We are not re-entrant, so complain if re-entered.
-        assert self.event_loop is None
+        assert not self.running
 
         if not self.socket_address:
             self._socketdir = self._make_socket_dir()
@@ -141,6 +145,13 @@ class API(BaseAPI):
 
     @property
     def output(self):
+        # Only once the event-loop was stopped, you are guaranteed that the
+        # api-thread scheduled all outstanding events. Therefore, we disallow
+        # asking for the output-data from a running api context. If we happen
+        # to need live streaming access to the output in the future, we need
+        # to redesign the output-handling, anyway.
+        assert not self.running
+
         return self._output_data.getvalue()
 
     def _prepare_input(self):
