@@ -68,6 +68,17 @@ class TestAPI(unittest.TestCase):
                 with api:
                     pass
 
+    def test_get_arguments(self):
+        tmpdir = self.tmp.name
+        path = os.path.join(tmpdir, "osbuild-api")
+        args = {"options": {"answer": 42}}
+        monitor = osbuild.monitor.BaseMonitor(sys.stderr.fileno())
+
+        with osbuild.api.API(args, monitor, socket_address=path) as _:
+            data = osbuild.api.arguments(path=path)
+            self.assertEqual(data, args)
+
+
     def test_metadata(self):
         # Check that `api.metadata` leads to `API.metadata` being
         # set correctly
