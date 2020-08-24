@@ -184,6 +184,6 @@ def main(tree, output_dir, options, meta):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = api.arguments()
     r = main(args["tree"], args["output_dir"], args["options"], args["meta"])
     sys.exit(r)

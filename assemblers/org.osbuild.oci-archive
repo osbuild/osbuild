@@ -28,6 +28,8 @@ import subprocess
 import sys
 import tempfile
 
+import osbuild.api
+
 
 DEFAULT_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -269,6 +271,6 @@ def main(tree, output_dir, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["output_dir"], args["options"])
     sys.exit(r)
