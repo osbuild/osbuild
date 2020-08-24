@@ -21,11 +21,13 @@ read from `/proc/sys/kernel/random/uuid` if your kernel provides it.
 
 
 import contextlib
-import json
 import os
 import subprocess
 import sys
+
+import osbuild.api
 import osbuild.remoteloop as remoteloop
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -104,6 +106,6 @@ def main(tree, output_dir, options, loop_client):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["output_dir"], args["options"], remoteloop.LoopClient("/run/osbuild/api/remoteloop"))
     sys.exit(r)
