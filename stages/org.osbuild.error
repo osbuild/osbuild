@@ -7,8 +7,10 @@ wasting time.
 """
 
 
-import json
 import sys
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -29,6 +31,6 @@ def main(_tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args.get("options", {}))
     sys.exit(r)

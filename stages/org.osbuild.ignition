@@ -17,8 +17,9 @@ configuration, in case that ignition is run.
 """
 
 
-import json
 import sys
+
+import osbuild.api
 
 
 STAGE_OPTS = """
@@ -52,6 +53,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args.get("options", {}))
     sys.exit(r)

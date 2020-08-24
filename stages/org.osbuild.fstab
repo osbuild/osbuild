@@ -11,8 +11,10 @@ This stage replaces /etc/fstab, removing any existing entries.
 """
 
 
-import json
 import sys
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -67,6 +69,7 @@ SCHEMA = """
 }
 """
 
+
 def main(tree, options):
     filesystems = options["filesystems"]
 
@@ -91,6 +94,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

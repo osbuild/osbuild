@@ -16,9 +16,11 @@ any further first-boot commands.
 """
 
 
-import json
 import os
 import sys
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -38,6 +40,7 @@ SCHEMA = """
   }
 }
 """
+
 
 def add_first_boot(tree, commands, wait_for_network):
     if wait_for_network:
@@ -68,6 +71,7 @@ Type=oneshot
     os.makedirs(f"{tree}/etc", exist_ok=True)
     open(f"{tree}/etc/osbuild-first-boot", 'a').close()
 
+
 def main(tree, options):
     commands = options["commands"]
     wait_for_network = options.get("wait_for_network", False)
@@ -80,6 +84,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

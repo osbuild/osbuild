@@ -10,9 +10,11 @@ Creates `/etc/systemd/system/osbuild-test.service`, and a symlink to it in
 """
 
 
-import json
 import os
 import sys
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -24,6 +26,7 @@ SCHEMA = """
   }
 }
 """
+
 
 def main(tree, options):
     script = options["script"]
@@ -49,6 +52,6 @@ ExecStopPost=/usr/bin/systemctl poweroff
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

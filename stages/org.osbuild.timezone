@@ -10,10 +10,12 @@ the `--timezone` option, which will re-create `/etc/localtime`.
 """
 
 
-import json
 import subprocess
 import sys
 import os
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -25,6 +27,7 @@ SCHEMA = """
   }
 }
 """
+
 
 def main(tree, options):
     zone = options["zone"]
@@ -46,6 +49,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

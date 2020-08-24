@@ -6,9 +6,10 @@ Configures `zipl` with a minimal config so it can be used in
 the assembler to write the bootmap and bootloader code.
 """
 
-import json
 import os
 import sys
+
+import osbuild.api
 
 
 SCHEMA = """
@@ -40,6 +41,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

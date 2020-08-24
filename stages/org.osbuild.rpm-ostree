@@ -31,11 +31,11 @@ human users need to be part of.
 """
 
 
-import json
 import os
 import subprocess
 import sys
 
+import osbuild.api
 from osbuild.util import ostree
 
 
@@ -80,6 +80,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

@@ -8,9 +8,12 @@ Modifies /etc/chrony.conf, removing all "server" or "pool" lines and adding
 a "server" line for each server listed in `timeservers`.
 """
 
-import json
+
 import sys
 import re
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -49,6 +52,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)
