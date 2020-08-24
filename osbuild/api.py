@@ -191,16 +191,37 @@ class API(BaseAPI):
     def _set_metadata(self, message):
         self.metadata.update(message["metadata"])
 
+    def _get_arguments(self, sock):
+        with self._prepare_input() as data:
+            fds = []
+            fds.append(data.fileno())
+            sock.send({"type": "fd", "fd": 0}, fds=fds)
+
     def _message(self, msg, fds, sock):
         if msg["method"] == 'setup-stdio':
             self._setup_stdio(sock)
         elif msg["method"] == 'add-metadata':
             self._set_metadata(msg)
+        elif msg["method"] == 'get-arguments':
+            self._get_arguments(sock)
 
     def _cleanup(self):
         if self._output_pipe:
             os.close(self._output_pipe)
             self._output_pipe = None
+
+
+def arguments(path="/run/osbuild/api/osbuild"):
+    """Retrieve the input arguments that were supplied to API"""
+    with jsoncomm.Socket.new_client(path) as client:
+        req = {"method": "get-arguments"}
+        client.send(req)
+        msg, fds, _ = client.recv()
+        assert msg["type"] == "fd"
+        fd = msg["fd"]
+        with os.fdopen(fds.steal(fd), encoding="utf-8") as f:
+            data = json.load(f)
+        return data
 
 
 def setup_stdio(path="/run/osbuild/api/osbuild"):
