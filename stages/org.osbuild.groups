@@ -10,9 +10,12 @@ If no `gid` is given, `groupadd` will choose one.
 If the specified group name or GID is already in use, this stage will fail.
 """
 
-import json
+
 import subprocess
 import sys
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -36,6 +39,7 @@ SCHEMA = """
 }
 """
 
+
 def groupadd(root, name, gid=None):
     arguments = []
     if gid:
@@ -56,6 +60,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

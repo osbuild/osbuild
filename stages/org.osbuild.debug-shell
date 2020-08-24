@@ -9,9 +9,11 @@ Also symlinks the service file into /etc/systemd/system/sysinit.target.wants/.
 """
 
 
-import json
 import os
 import sys
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -64,6 +66,6 @@ UnsetEnvironment=LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETAR
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

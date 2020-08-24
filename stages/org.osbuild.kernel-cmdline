@@ -8,9 +8,12 @@ command line.
 https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
 """
 
-import json
+
 import os
 import sys
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -56,6 +59,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)
