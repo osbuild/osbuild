@@ -264,12 +264,12 @@ class ObjectStore(contextlib.AbstractContextManager):
                                            prefix=prefix,
                                            suffix=suffix)
 
-    @contextlib.contextmanager
     def get(self, object_id):
-        with Object(self) as obj:
-            obj.base = object_id
-            with obj.read() as path:
-                yield path
+        if not self.contains(object_id):
+            return None
+
+        obj = self.new(base_id=object_id)
+        return obj
 
     def new(self, base_id=None):
         """Creates a new temporary `Object`.
