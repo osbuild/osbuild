@@ -332,11 +332,12 @@ class Pipeline:
             # tree exists, we return it as well, but we do not care if it is
             # missing, since it is not a mandatory part of the result and would
             # usually be needless overhead.
-            if object_store.contains(self.output_id):
+            obj = object_store.get(self.output_id)
+
+            if obj:
                 results = {"success": True}
-                if output_directory:
-                    with object_store.new(base_id=self.output_id) as output:
-                        output.export(output_directory)
+                obj.export(output_directory)
+
             else:
                 results, build_tree, tree = self.build_stages(object_store,
                                                               monitor,
