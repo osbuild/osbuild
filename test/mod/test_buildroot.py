@@ -37,14 +37,14 @@ class TestBuildRoot(test.TestBase):
             api = osbuild.api.API({}, monitor)
             root.register_api(api)
 
-            r = root.run(["/usr/bin/true"])
+            r = root.run(["/usr/bin/true"], monitor)
             self.assertEqual(r.returncode, 0)
 
             # Test we can use `.run` multiple times
-            r = root.run(["/usr/bin/true"])
+            r = root.run(["/usr/bin/true"], monitor)
             self.assertEqual(r.returncode, 0)
 
-            r = root.run(["/usr/bin/false"])
+            r = root.run(["/usr/bin/false"], monitor)
             self.assertNotEqual(r.returncode, 0)
 
     @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
@@ -70,7 +70,7 @@ class TestBuildRoot(test.TestBase):
                    "/scripts",
                    "ro"]
 
-            r = root.run(cmd, readonly_binds=ro_binds)
+            r = root.run(cmd, monitor, readonly_binds=ro_binds)
             self.assertEqual(r.returncode, 0)
 
             cmd = ["/scripts/mount_flags.py",
@@ -78,7 +78,7 @@ class TestBuildRoot(test.TestBase):
                    "ro"]
 
             binds = [f"{rw_data}:/rw-data"]
-            r = root.run(cmd, binds=binds, readonly_binds=ro_binds)
+            r = root.run(cmd, monitor, binds=binds, readonly_binds=ro_binds)
             self.assertEqual(r.returncode, 1)
 
     @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
@@ -106,5 +106,5 @@ class TestBuildRoot(test.TestBase):
                    "/sys/fs/selinux",
                    "ro"]
 
-            r = root.run(cmd, readonly_binds=ro_binds)
+            r = root.run(cmd, monitor, readonly_binds=ro_binds)
             self.assertEqual(r.returncode, 0)
