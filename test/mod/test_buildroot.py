@@ -10,7 +10,7 @@ import unittest
 
 import osbuild
 from osbuild.buildroot import BuildRoot
-from osbuild.monitor import NullMonitor
+from osbuild.monitor import LogMonitor, NullMonitor
 from .. import test
 
 
@@ -46,6 +46,28 @@ class TestBuildRoot(test.TestBase):
 
             r = root.run(["/usr/bin/false"], monitor)
             self.assertNotEqual(r.returncode, 0)
+
+    def test_runner_fail(self):
+        runner = "org.osbuild.nonexistantrunner"
+        libdir = os.path.abspath(os.curdir)
+        var = pathlib.Path(self.tmp.name, "var")
+        var.mkdir()
+
+        logfile = os.path.join(self.tmp.name, "log.txt")
+
+        with BuildRoot("/", runner, libdir=libdir, var=var) as root, \
+             open(logfile, "w") as log:
+
+            monitor = LogMonitor(log.fileno())
+            api = osbuild.api.API({}, monitor)
+            root.register_api(api)
+
+            r = root.run(["/usr/bin/true"], monitor)
+
+        self.assertEqual(r.returncode, 1)
+        with open(logfile) as f:
+            log = f.read()
+        assert log
 
     @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
     def test_bind_mounts(self):
