@@ -88,6 +88,7 @@ class Stage:
             build_root.register_api(src)
 
             r = build_root.run([f"/run/osbuild/lib/stages/{self.name}"],
+                               monitor,
                                binds=[os.fspath(tree) + ":/run/osbuild/tree"],
                                readonly_binds=ro_binds)
 
@@ -146,6 +147,7 @@ class Assembler:
             build_root.register_api(rls)
 
             r = build_root.run([f"/run/osbuild/lib/assemblers/{self.name}"],
+                               monitor,
                                binds=binds,
                                readonly_binds=ro_binds)
 

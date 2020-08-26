@@ -110,7 +110,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self._exitstack:
             self._exitstack.enter_context(api)
 
-    def run(self, argv, binds=None, readonly_binds=None):
+    def run(self, argv, monitor, binds=None, readonly_binds=None):
         """Runs a command in the buildroot.
 
         Takes the command and arguments, as well as bind mounts to mirror
@@ -194,6 +194,22 @@ class BuildRoot(contextlib.AbstractContextManager):
         cmd += ["--", f"/run/osbuild/lib/runners/{self._runner}"]
         cmd += argv
 
-        return subprocess.run(cmd,
-                              check=False,
-                              stdin=subprocess.DEVNULL)
+        proc = subprocess.Popen(cmd,
+                                bufsize=0,
+                                stdin=subprocess.DEVNULL,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                encoding="utf-8",
+                                close_fds=True)
+
+        while True:
+            txt = proc.stdout.read(4096)
+            if not txt:
+                break
+
+            monitor.log(txt)
+
+        txt, _ = proc.communicate()
+        monitor.log(txt)
+
+        return proc
