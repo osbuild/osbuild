@@ -68,6 +68,8 @@ class TestBuildRoot(test.TestBase):
         with open(logfile) as f:
             log = f.read()
         assert log
+        assert r.output
+        self.assertEqual(log, r.output)
 
     @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
     def test_bind_mounts(self):

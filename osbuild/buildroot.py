@@ -8,6 +8,7 @@ little access to the outside as possible.
 import contextlib
 import importlib
 import importlib.util
+import io
 import os
 import stat
 import subprocess
@@ -17,6 +18,31 @@ import tempfile
 __all__ = [
     "BuildRoot",
 ]
+
+
+class CompletedBuild:
+    """The result of a `BuildRoot.run`
+
+    Contains the actual `process` that was executed but also has
+    convenience properties to quickly access the `returncode` and
+    `output`. The latter is also provided via `stderr`, `stdout`
+    properties, making it a drop-in replacement for `CompletedProcess`.
+    """
+    def __init__(self, proc: subprocess.CompletedProcess, output: str):
+        self.process = proc
+        self.output = output
+
+    @property
+    def returncode(self):
+        return self.process.returncode
+
+    @property
+    def stdout(self):
+        return self.output
+
+    @property
+    def stderr(self):
+        return self.output
 
 
 # pylint: disable=too-many-instance-attributes
@@ -118,6 +144,8 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         This must be called from within an active context of this buildroot
         context-manager.
+
+        Returns a `CompletedBuild` object.
         """
 
         if not self._exitstack:
@@ -202,14 +230,20 @@ class BuildRoot(contextlib.AbstractContextManager):
                                 encoding="utf-8",
                                 close_fds=True)
 
+        data = io.StringIO()
+
         while True:
             txt = proc.stdout.read(4096)
             if not txt:
                 break
 
+            data.write(txt)
             monitor.log(txt)
 
         txt, _ = proc.communicate()
         monitor.log(txt)
+        data.write(txt)
+        output = data.getvalue()
+        data.close()
 
-        return proc
+        return CompletedBuild(proc, output)
