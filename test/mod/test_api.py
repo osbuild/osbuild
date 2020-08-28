@@ -92,11 +92,12 @@ class TestAPI(unittest.TestCase):
             osbuild.api.metadata(data, path=path)
             return 0
 
-        with osbuild.api.API(args, monitor, socket_address=path) as api:
+        api = osbuild.api.API(args, monitor, socket_address=path)
+        with api:
             p = mp.Process(target=metadata, args=(path, ))
             p.start()
             p.join()
             self.assertEqual(p.exitcode, 0)
-            metadata = api.metadata  # pylint: disable=no-member
-            assert metadata
-            self.assertEqual(metadata, {"meta": "42"})
+        metadata = api.metadata  # pylint: disable=no-member
+        assert metadata
+        self.assertEqual(metadata, {"meta": "42"})
