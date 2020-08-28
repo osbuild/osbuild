@@ -19,9 +19,11 @@ Buildhost commands used: `tar` and any named `compression` program.
 """
 
 
-import json
 import subprocess
 import sys
+
+import osbuild.api
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -38,6 +40,7 @@ SCHEMA = """
   }
 }
 """
+
 
 def main(tree, output_dir, options):
     filename = options["filename"]
@@ -76,6 +79,6 @@ def main(tree, output_dir, options):
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
+    args = osbuild.api.arguments()
     r = main(args["tree"], args["output_dir"], args["options"])
     sys.exit(r)
