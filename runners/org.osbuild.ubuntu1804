@@ -4,8 +4,6 @@ import os
 import subprocess
 import sys
 
-import osbuild.api
-
 
 def ldconfig():
     # ld.so.conf must exist, or `ldconfig` throws a warning
@@ -38,7 +36,6 @@ def nsswitch():
 
 
 if __name__ == "__main__":
-    osbuild.api.setup_stdio()
     ldconfig()
     sysusers()
     tmpfiles()

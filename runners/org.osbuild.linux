@@ -2,11 +2,8 @@
 
 import subprocess
 import sys
-import osbuild.api
 
 
 if __name__ == "__main__":
-    osbuild.api.setup_stdio()
-
     r = subprocess.run(sys.argv[1:], check=False)
     sys.exit(r.returncode)
