@@ -284,11 +284,11 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def assemble(self, object_store, build_tree, tree, monitor, libdir, output_directory):
+    def assemble(self, object_store, build_tree, tree, monitor, libdir):
         results = {"success": True}
 
         if not self.assembler:
-            return results
+            return results, None
 
         output = object_store.new()
 
@@ -312,19 +312,16 @@ class Pipeline:
         if not r.success:
             output.cleanup()
             results["success"] = False
-            return results
+            return results, None
 
         if self.assembler.checkpoint:
             object_store.commit(output, self.assembler.id)
-        if output_directory:
-            output.export(output_directory)
-        output.cleanup()
 
-        return results
+        return results, output
 
     def run(self, store, monitor, libdir, output_directory):
         os.makedirs("/run/osbuild", exist_ok=True)
-        results = {}
+        results = {"success": True}
 
         monitor.begin(self)
 
@@ -336,11 +333,7 @@ class Pipeline:
             # usually be needless overhead.
             obj = object_store.get(self.output_id)
 
-            if obj:
-                results = {"success": True}
-                obj.export(output_directory)
-
-            else:
+            if not obj:
                 results, build_tree, tree = self.build_stages(object_store,
                                                               monitor,
                                                               libdir)
@@ -348,14 +341,18 @@ class Pipeline:
                 if not results["success"]:
                     return results
 
-                r = self.assemble(object_store,
-                                  build_tree,
-                                  tree,
-                                  monitor,
-                                  libdir,
-                                  output_directory)
+                r, obj = self.assemble(object_store,
+                                       build_tree,
+                                       tree,
+                                       monitor,
+                                       libdir)
 
                 results.update(r)  # This will also update 'success'
+
+            if obj:
+                if output_directory:
+                    obj.export(output_directory)
+                obj.cleanup()
 
         monitor.finish(results)
 
