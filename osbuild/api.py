@@ -3,7 +3,6 @@ import asyncio
 import io
 import json
 import os
-import sys
 import tempfile
 import threading
 from typing import Dict, Optional
@@ -174,20 +173,6 @@ class API(BaseAPI):
         self._output_data.write(data)
         self.monitor.log(data)
 
-    def _setup_stdio(self, server):
-        with self._prepare_input() as stdin, \
-             self._prepare_output() as stdout:
-            msg = {}
-            fds = []
-            fds.append(stdin.fileno())
-            msg['stdin'] = 0
-            fds.append(stdout.fileno())
-            msg['stdout'] = 1
-            fds.append(stdout.fileno())
-            msg['stderr'] = 2
-
-            server.send(msg, fds=fds)
-
     def _set_metadata(self, message):
         self.metadata.update(message["metadata"])
 
@@ -198,9 +183,7 @@ class API(BaseAPI):
             sock.send({"type": "fd", "fd": 0}, fds=fds)
 
     def _message(self, msg, fds, sock):
-        if msg["method"] == 'setup-stdio':
-            self._setup_stdio(sock)
-        elif msg["method"] == 'add-metadata':
+        if msg["method"] == 'add-metadata':
             self._set_metadata(msg)
         elif msg["method"] == 'get-arguments':
             self._get_arguments(sock)
@@ -222,19 +205,6 @@ def arguments(path="/run/osbuild/api/osbuild"):
         with os.fdopen(fds.steal(fd), encoding="utf-8") as f:
             data = json.load(f)
         return data
-
-
-def setup_stdio(path="/run/osbuild/api/osbuild"):
-    """Replace standard i/o with the ones provided by the API"""
-    with jsoncomm.Socket.new_client(path) as client:
-        req = {"method": "setup-stdio"}
-        client.send(req)
-        msg, fds, _ = client.recv()
-        for sio in ["stdin", "stdout", "stderr"]:
-            target = getattr(sys, sio)
-            source = fds[msg[sio]]
-            os.dup2(source, target.fileno())
-        fds.close()
 
 
 def metadata(data: Dict, path="/run/osbuild/api/osbuild"):

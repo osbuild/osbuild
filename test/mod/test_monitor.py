@@ -3,9 +3,7 @@
 #
 
 import io
-import json
 import os
-import multiprocessing as mp
 import sys
 import tempfile
 import unittest
@@ -13,22 +11,8 @@ from collections import defaultdict
 
 import osbuild
 import osbuild.meta
-from osbuild.api import API
 from osbuild.monitor import LogMonitor
 from .. import test
-
-
-def echo(path):
-    """echo stdin to stdout after setting stdio up via API
-
-    Meant to be called as the main function in a process
-    simulating an osbuild runner and a stage run which does
-    nothing but returns the supplied options to stdout again.
-    """
-    osbuild.api.setup_stdio(path)
-    data = json.load(sys.stdin)
-    json.dump(data, sys.stdout)
-    sys.exit(0)
 
 
 class TapeMonitor(osbuild.monitor.BaseMonitor):
@@ -66,28 +50,6 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
 
 
 class TestMonitor(unittest.TestCase):
-    def test_log_monitor_api(self):
-        # Basic log and API integration check
-        with tempfile.TemporaryDirectory() as tmpdir:
-            args = {"foo": "bar"}
-            path = os.path.join(tmpdir, "osbuild-api")
-            logfile = os.path.join(tmpdir, "log.txt")
-
-            with open(logfile, "w") as log:
-                api = API(args, LogMonitor(log.fileno()), socket_address=path)
-                with api as api:
-                    p = mp.Process(target=echo, args=(path, ))
-                    p.start()
-                    p.join()
-                    self.assertEqual(p.exitcode, 0)
-                output = api.output  # pylint: disable=no-member
-                assert output
-
-            self.assertEqual(json.dumps(args), output)
-            with open(logfile) as f:
-                log = f.read()
-            self.assertEqual(log, output)
-
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_log_monitor_vfuncs(self):
         # Checks the basic functioning of the LogMonitor

@@ -8,7 +8,6 @@ import sys
 import tempfile
 import unittest
 
-import osbuild
 from osbuild.buildroot import BuildRoot
 from osbuild.monitor import LogMonitor, NullMonitor
 from .. import test
@@ -24,9 +23,6 @@ class TestBuildRoot(test.TestBase):
         self.tmp.cleanup()
 
     def test_basic(self):
-        # This also checks the API and BuildRoot integration:
-        # the runner will call api.setup_stdio and thus check
-        # that connecting to the api works correctly
         runner = "org.osbuild.linux"
         libdir = os.path.abspath(os.curdir)
         var = pathlib.Path(self.tmp.name, "var")
@@ -34,8 +30,6 @@ class TestBuildRoot(test.TestBase):
 
         monitor = NullMonitor(sys.stderr.fileno())
         with BuildRoot("/", runner, libdir=libdir, var=var) as root:
-            api = osbuild.api.API({}, monitor)
-            root.register_api(api)
 
             r = root.run(["/usr/bin/true"], monitor)
             self.assertEqual(r.returncode, 0)
@@ -59,8 +53,6 @@ class TestBuildRoot(test.TestBase):
              open(logfile, "w") as log:
 
             monitor = LogMonitor(log.fileno())
-            api = osbuild.api.API({}, monitor)
-            root.register_api(api)
 
             r = root.run(["/usr/bin/true"], monitor)
 
@@ -81,8 +73,6 @@ class TestBuildRoot(test.TestBase):
 
         monitor = NullMonitor(sys.stderr.fileno())
         with BuildRoot("/", runner, libdir=libdir, var=var) as root:
-            api = osbuild.api.API({}, monitor)
-            root.register_api(api)
 
             r = root.run(["/usr/bin/echo", data], monitor)
             self.assertEqual(r.returncode, 0)
@@ -103,8 +93,6 @@ class TestBuildRoot(test.TestBase):
 
         monitor = NullMonitor(sys.stderr.fileno())
         with BuildRoot("/", runner, libdir=libdir, var=var) as root:
-            api = osbuild.api.API({}, monitor)
-            root.register_api(api)
 
             ro_binds = [f"{scripts}:/scripts"]
 
@@ -139,8 +127,6 @@ class TestBuildRoot(test.TestBase):
 
         monitor = NullMonitor(sys.stderr.fileno())
         with BuildRoot("/", runner, libdir=libdir, var=var) as root:
-            api = osbuild.api.API({}, monitor)
-            root.register_api(api)
 
             ro_binds = [f"{scripts}:/scripts"]
 
