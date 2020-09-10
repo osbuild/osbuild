@@ -1,5 +1,25 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 21:
+
+  * The way that output of modules is communicated to osbuild was
+    re-factored in a way that now makes it possible to also capture
+    and log the output of the container runtime, i.e. `bubblewrap`.
+    This should prove useful to track down errors where the runner
+    can not be executed.
+
+  * runners: support for Fedora 34 was added
+
+  * A lot of internal re-factoring was done, to make the code nicer
+    and easier to read. For example the way objects are exported in
+    the pipeline is now unified.
+    Additionally, a dedicated API is used to fetch the arguments in
+    the modules, instead of relying on standard input.
+
+Contributions from: chloenayon, Christian Kellner
+
+— Berlin, 2020-09-10
+
 ## CHANGES WITH 20:
 
   * The filesystem assemblers gained support for btrfs. They can
