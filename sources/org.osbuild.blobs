@@ -1,0 +1,164 @@
+#!/usr/bin/python3
+"""
+Source program for extracting file blobs from the manifest
+
+org.osbuils.blobs stores the contents of files in the manifest as an
+ASCII encoeded string which is references by the checksum of the contents
+of the file.
+
+Currently supports base16, base32, base64, and base85 encoding.
+
+eg.
+    "sources": {
+        "org.osbuild.blobs": {
+            "sha256:5ee3272ee76d8289126938c94411033af9f64f1b565e29c46907813252ba0460":
+            "base64:W2Nvbm5lY3Rpb25dCmNvbm5lY3Rpb24uYXV0b2Nvbm5lY3Qtc2xhdmVzPTEK"
+        }
+    }
+"""
+
+import base64
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "blobs": {
+    "description": "ASCII encoded files indexed by their content checksum",
+    "type": "object",
+    "additionalProperties": false,
+    "patternProperties": {
+      "^(md5|sha1|sha256|sha384|sha512):[0-9a-f]{5,64}": {
+        "type": "string",
+        "pattern": "^(base16|base32|base64|base85):"
+      }
+    }
+  }
+}
+"""
+
+DECODERS = {
+        "base16": base64.b16decode,
+        "base32": base64.b32decode,
+        "base64": base64.b64decode,
+        "base85": base64.b85decode
+}
+
+# This really ought to be shared code
+def verify_checksum(filename, checksum):
+    algorithm, checksum = checksum.split(":", 1)
+    if algorithm not in ("md5", "sha1", "sha256", "sha384", "sha512"):
+        raise RuntimeError(f"unsupported checksum algorithm: {algorithm}")
+
+    ret = subprocess.run(
+        [f"{algorithm}sum", "-c"],
+        input=f"{checksum} {filename}",
+        stdout=subprocess.DEVNULL,
+        encoding="utf-8",
+        check=False
+    )
+
+    return ret.returncode == 0
+
+
+def decode(blob, checksum, directory):
+    """Decode a blob into a file under directory
+
+    :param blob: An ascii encoded string
+    :type blob: bytes
+    :param checksum: The checksum of the decoded blob
+    :type checksum: str
+    :param directory: Top level directory to store the decoded file under
+    :type directory: str
+
+    The blob is ascii encoded using one of the base64 encoders, and is prefixed by the
+    encoder name and a ':' to separate it from the data.
+    Currently supported decoders are: base16, base32, base64, base85
+
+    eg.
+        base64:VG9vIE1hbnkgU2VjcmV0cw==
+
+    The checksum is the checksum of the decoded data (as written to disk), and uses the
+    standard osbuild checksum naming with the algorithm as a prefix to the checksum
+    separated by a ':'
+
+    eg.
+        sha256:3ec084369ee630057ece296b6a7a2e5535783ae61ccf172a2db5b6edffa40c40
+
+    """
+    # Already extracted, verify checksum
+    if os.path.exists(f"{directory}/{checksum}"):
+        if verify_checksum(f"{directory}/{checksum}", checksum):
+            return
+
+    decoder, data = blob.split(b":", 1)
+    try:
+        blob_decoder = DECODERS[decoder.decode("utf-8")]
+    except KeyError:
+        raise RuntimeError(f"unknown blob decoder: {decoder}")
+
+    # decode the blob, verify the checksum, store it into directory if ok
+    with tempfile.TemporaryDirectory(prefix="osbuild-unverified-blob-", dir=directory) as tmpdir:
+        with open(f"{tmpdir}/{checksum}", "wb") as f:
+            f.write(blob_decoder(data))
+            f.close()
+
+        if not verify_checksum(f"{tmpdir}/{checksum}", checksum):
+            raise RuntimeError(f"blob checksum mismatch: {checksum}")
+
+        # The checksum has been verified, move the file into place. in case we race
+        # another download of the same file, we simply ignore the error as their
+        # contents are guaranteed to be  the same.
+        try:
+            os.rename(f"{tmpdir}/{checksum}", f"{directory}/{checksum}")
+        except FileExistsError:
+            pass
+
+
+def main(options, checksums, cache, output):
+    blobs = options.get("blobs", {})
+
+    os.makedirs(cache, exist_ok=True)
+    os.makedirs(output, exist_ok=True)
+
+    # Are all of the checksums requested in the blobs store?
+    for checksum in checksums:
+        if checksum not in blobs:
+            json.dump({"error": f"unknown file: {checksum}"}, sys.stdout)
+            return 1
+
+        try:
+            decode(blobs[checksum].encode("utf-8"), checksum, cache)
+        except RuntimeError as e:
+            json.dump({"error": e.args[0]}, sys.stdout)
+            return 1
+
+    # Do this after filling the cache to prevent partial results in output on failure
+    for checksum in checksums:
+        try:
+            subprocess.run(
+                [
+                    "cp",
+                    "--reflink=auto",
+                    f"{cache}/{checksum}",
+                    f"{output}/{checksum}",
+                ],
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            json.dump({"error": e.output}, sys.stdout)
+            return 1
+
+    json.dump({}, sys.stdout)
+    return 0
+
+
+if __name__ == '__main__':
+    args = json.load(sys.stdin)
+    r = main(args["options"], args["checksums"], args["cache"], args["output"])
+    sys.exit(r)
