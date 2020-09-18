@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """
-Source for downloading files from URLs.
+Source for downloading files from URLs or copying from the manifest
 
 The files are indexed by their content hash. Can download files
 that require secrets. The only secret provider currently supported

@@ -2,12 +2,21 @@
 """
 Copy files from a source to the tree
 
-Copies files obtained via a `source` to the tree. Multiple files or
-directories can be copied by specifying multiple entries in `paths`.
-If no paths are specified the whole contents of `source` is copied.
-The source and the target path for each individual path entry might
-optionally be specified via `from` and `to`, respectively; if no
-path is given for any of the two, the root `/` is assumed.
+When using an `archive` source:
+
+It copies files obtained via a source archive to the tree. Multiple files or
+directories can be copied by specifying multiple entries in `paths`.  If no
+paths are specified the whole contents of `source` is copied.  The source and
+the target path for each individual path entry might optionally be specified
+via `from` and `to`, respectively; if no path is given for any of the two, the
+root `/` is assumed.
+
+When using a `blobs` source:
+
+It will extract the file contents from the `org.osbuild.blobs` source entry
+specified by the checksum in the path's `from` field. Intermediate paths
+in the `to` will be created as needed.
+
 
 Supported sources are currently:
 
@@ -15,10 +24,17 @@ Supported sources are currently:
    extract it to a temporary directory. Currently only tar archives
    are supported.
 
+ o `blobs`: Fetch an individual file via the org.osbuild.blobs source
+   and copy it to the destination path, creating any missing
+   intermediate paths.
+
+NOTE: Only one source type per org.osbuild.copy section can be specified.
+      Each type should have its own section.
 """
 
 
 import os
+import shutil
 import sys
 import subprocess
 import tempfile
@@ -33,13 +49,13 @@ SCHEMA = """
   "source-archive": {
     "description": "Fetch an via org.osbuild.files and extract it",
     "type": "object",
-    "required": ["type", "checksum"],
+    "required": ["type"],
     "additionalProperties": false,
     "properties": {
       "type": {
         "type": "string",
          "description": "The type of the source, here 'archive'",
-         "enum": ["archive"]
+         "enum": ["archive","blobs"]
       },
       "checksum": {
         "type": "string",
@@ -47,7 +63,7 @@ SCHEMA = """
       },
       "strip-components": {
         "type": "number",
-        "description": "Strip 'N' leading components from file names on extraction",
+        "description": "Strip 'N' leading components from archive file names on extraction",
         "default": 1
       }
     }
@@ -66,7 +82,7 @@ SCHEMA = """
       "properties": {
         "from": {
           "type": "string",
-          "description": "The source path",
+          "description": "The source path or checksum",
           "default": "/"
         },
         "to": {
@@ -80,8 +96,20 @@ SCHEMA = """
 }
 """
 
+def get_archive(srcdir, options, workdir):
+    """Retrieve and extract the archive into workdir
 
-def get_archive(options, srcdir, workdir):
+    :param srcdir: The path where sources are stored (org.osbuild.files is appended)
+    :type srcdir: str
+    :param options: The options passed to org.osbuild.copy's source object
+    :type options: dict
+    :param workdir: A temporary directory for the archive's contents
+    :type workdir: str
+
+    `checksum` in the options dict is used to select the archive to extract.
+    `strip-components` is the number of leading components to strip from the archive name
+    and it defaults to 1 (passed to tar --strip-components).
+    """
     checksum = options["checksum"]
     strip = options.get("strip-components", 1)
     source_path = os.path.join(srcdir, "org.osbuild.files")
@@ -105,18 +133,27 @@ def get_archive(options, srcdir, workdir):
     return target, res
 
 
-def main(tree, srcdir, options, workdir):
-    source_options = options["source"]
-    source_type = source_options["type"]
+def copy_from_archive(tree, srcdir, options, workdir):
+    """Copy selected files from inside a tar archive
+
+    :param tree: The directory tree top copy files into
+    :type tree: str
+    :param srcdir: The path where sources are stored (org.osbuild.files is appended)
+    :type srcdir: str
+    :param options: The options passed to org.osbuild.copy's source object
+    :type options: dict
+    :param workdir: A temporary directory for the archive's contents
+    :type workdir: str
+
+    The tar is extracted into workdir, and then files are copied from it using
+    cp and the from/to entries in the paths option.
+
+    The list of `paths` dicts from `options` specifes which files to copy and where to
+    copy them to under the tree directory.
+    """
     paths = options.get("paths", [{}])
-
-    if source_type == "archive":
-        source = get_archive
-    else:
-        raise ValueError(f"Unsupported source: {source_type}")
-
     # Fetch the requested data via the selected source
-    source_path, _ = source(source_options, srcdir, workdir)
+    source_path, _ = get_archive(srcdir, options["source"], workdir)
 
     for path in paths:
         src = path.get("from", "/")
@@ -126,6 +163,55 @@ def main(tree, srcdir, options, workdir):
                         f"{source_path}{src}",
                         f"{tree}{dst}"],
                        check=True)
+
+
+def copy_from_blobs(tree, srcdir, paths):
+    """Copy files from the org.osbuild.blobs source
+
+    :param tree: Path to the top of the output directory tree
+    :type tree: str
+    :param srcdir: Top level of the sources directory tree
+    :type srcdir: string
+    :param paths: dict of the checksum:filenames to copy into tree
+    :type paths: dict
+
+    This decodes the files stored in the org.osbuild.blobs source and
+    copies them into their final positions in tree.
+    Intermediate paths are created, and existing files are overwritten.
+    """
+    # Get the files and and store them under srcdir/org.osbuild.blobs/checksum
+    osbuild.sources.get("org.osbuild.blobs", [p["from"] for p in paths])
+
+    # NOTE: both from and to are required and will raise an error if missing
+    for p in paths:
+        src = p["from"]
+        dst = p["to"]
+
+        os.makedirs(os.path.dirname(f"{tree}/{dst}"), exist_ok=True)
+        shutil.copy2(f"{srcdir}/org.osbuild.blobs/{src}", f"{tree}/{dst}")
+
+
+def main(tree, srcdir, options, workdir):
+    """Copy files from a source into the tree
+
+    :param tree: The directory tree top copy files into
+    :type tree: str
+    :param srcdir: The path where sources are stored (org.osbuild.files is appended)
+    :type srcdir: str
+    :param options: The options passed to org.osbuild.copy's source object
+    :type options: dict
+    :param workdir: A temporary directory for the archive's contents
+    :type workdir: str
+    """
+    source_type = options["source"]["type"]
+
+    if source_type == "archive":
+        copy_from_archive(tree, srcdir, options, workdir)
+    elif source_type == "blobs":
+        paths = options.get("paths", [])
+        copy_from_blobs(tree, srcdir, paths)
+    else:
+        raise ValueError(f"Unsupported source: {source_type}")
 
 
 if __name__ == '__main__':
