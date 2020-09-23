@@ -94,6 +94,7 @@ help:
 	@echo "    test-module:        Run all module unit-tests"
 	@echo "    test-run:           Run all osbuild pipeline tests"
 	@echo "    test-run-sources:   Run all osbuild sources tests"
+	@echo "    test-run-stages:    Run all osbuild stages tests"
 	@echo "    test-src:           Run all osbuild source tests"
 	@echo
 	@echo "    test-coverity:      Run coverity and upload the result"
@@ -246,6 +247,15 @@ test-run-sources:
 			--start=$(SRCDIR)/test/run \
 			--top-level-directory=$(SRCDIR) \
 			-v -p test_sources.py
+
+.PHONY: test-run-stages
+test-run-stages:
+	@[[ $${EUID} -eq 0 ]] || (echo "Error: Root privileges required!"; exit 1)
+	@$(PYTHON3) -m unittest \
+		discover \
+			--start=$(SRCDIR)/test/run \
+			--top-level-directory=$(SRCDIR) \
+			-v -p test_stages.py
 
 .PHONY: test-src
 test-src:
