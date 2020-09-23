@@ -1,0 +1,65 @@
+{
+  "sources": {
+    "org.osbuild.blobs": {
+        "blobs": {
+            "sha256:5ee3272ee76d8289126938c94411033af9f64f1b565e29c46907813252ba0460": "base64:W2Nvbm5lY3Rpb25dCmNvbm5lY3Rpb24uYXV0b2Nvbm5lY3Qtc2xhdmVzPTEK",
+            "sha256:2653a784efd98278127d2ad46d3e0b9fb1a0e80dd4ea6f6756626023460c485b": "base64:W2RlZmF1bHRzXQpza2VsZXRvbiA9IC9tbnQvc3lzaW1hZ2UvZXRjL3NrZWwKbWFpbHNwb29sZGlyID0gL21udC9zeXNpbWFnZS92YXIvbWFpbApjcnlwdF9zdHlsZSA9IG1kNQptb2R1bGVzID0gZmlsZXMgc2hhZG93CmNyZWF0ZV9tb2R1bGVzID0gZmlsZXMgc2hhZG93CltmaWxlc10KZGlyZWN0b3J5ID0gL21udC9zeXNpbWFnZS9ldGMKW3NoYWRvd10KZGlyZWN0b3J5ID0gL21udC9zeXNpbWFnZS9ldGMK",
+            "sha256:06239f44789647a8e19ae7fb914fed7b93d0d7a7011b1a59332f66b3d9d9b16d": "base64:IyVQQU0tMS4wCmF1dGggICAgICAgIHJlcXVpcmVkICAgICAgcGFtX2Vudi5zbwphdXRoICAgICAgICBzdWZmaWNpZW50ICAgIHBhbV91bml4LnNvIGxpa2VhdXRoIG51bGxvawphdXRoICAgICAgICByZXF1aXJlZCAgICAgIHBhbV9kZW55LnNvCmFjY291bnQgICAgIHJlcXVpcmVkICAgICAgcGFtX3VuaXguc28KcGFzc3dvcmQgICAgc3VmZmljaWVudCAgICBwYW1fdW5peC5zbyBudWxsb2sgdXNlX2F1dGh0b2sgbWQ1IHNoYWRvdwpwYXNzd29yZCAgICByZXF1aXJlZCAgICAgIHBhbV9kZW55LnNvCnNlc3Npb24gICAgIHJlcXVpcmVkICAgICAgcGFtX2xpbWl0cy5zbwpzZXNzaW9uICAgICByZXF1aXJlZCAgICAgIHBhbV91bml4LnNvCg==",
+            "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": "base64:",
+            "sha256:35aeb4fe8bc9d65ddb7156a00e73f1a888044652d791fd298c5501940273896a": "base16:5B6C6F6767696E675D0A6C6576656C3D44454255470A",
+            "sha256:000b91ba75314efe7e0b82c2d8fa2fc5f9f7437e5f6e7d64c40503e05d90890d": "base32:KNIESQ2FL5LEIQKHIVHFIRC7IVMFIUSBL5AVER2THUWVQCQ=",
+            "sha256:c519818a235b12b3d6b55d4bc2098e44089b6191fefa1b58044bb83ca963a2f2": "base85:YiVq3AT3o>QZXQ4V_|e4FLq&aFLHHmFJW$BV{dL`VJ>iKWMB$wX>4pDEmc!eG9X}MVRRrbc42Zaa&>MmVQyh#Z*F8^E^ujNU<zw#Y-}JcNL5fEU}Ir)ATM@daxZdqZZBbOVPkJ@WMM9FX=Gpub!26BVPtI}X>Mk3AT2FrcyMoWbS-3JAbcQfWpi^1bYW?1AT4GfFLZ5iFLQKna$#p>E^KdS3T0zxZy;hIJ|Hh}a&KcVb9r-eaV>OmX=i6;atdT^b7gdOa3FMHVr*p!ZFOvPX>eh5Xdo?Q3P?{)MLjQaZ*O!UV`y@3Z*(9pZEkcgb9r-VZDD6+AYx&2Xdo?YAT4PMY-MwEATM-na4%tQVPkJ@WMM9BZ)XZ;a%FHJEp{MZd39}HY;R+0ATM-na4&FSV{2h&X>MmOY;R`@"
+        }
+    }
+  },
+  "pipeline": {
+    "stages": [
+        {
+            "name": "org.osbuild.copy",
+            "options": {
+                "source": {
+                    "type": "blobs"
+                },
+                "paths": [
+                    {
+                        "from": "sha256:5ee3272ee76d8289126938c94411033af9f64f1b565e29c46907813252ba0460",
+                        "to": "/etc/NetworkManager/conf.d/91-anaconda-autoconnect-slaves.conf"
+                    },
+                    {
+                        "from": "sha256:2653a784efd98278127d2ad46d3e0b9fb1a0e80dd4ea6f6756626023460c485b",
+                        "to": "/etc/libuser.conf"
+                    },
+                    {
+                        "from": "sha256:06239f44789647a8e19ae7fb914fed7b93d0d7a7011b1a59332f66b3d9d9b16d",
+                        "to": "/etc.pam.d/sshd"
+                    },
+                    {
+                        "from": "sha256:06239f44789647a8e19ae7fb914fed7b93d0d7a7011b1a59332f66b3d9d9b16d",
+                        "to": "/etc.pam.d/login"
+                    },
+                    {
+                        "from": "sha256:06239f44789647a8e19ae7fb914fed7b93d0d7a7011b1a59332f66b3d9d9b16d",
+                        "to": "/etc.pam.d/remote"
+                    },
+                    {
+                        "from": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "to": "/etc/resolv.conf"
+                    },
+                    {
+                        "from": "sha256:35aeb4fe8bc9d65ddb7156a00e73f1a888044652d791fd298c5501940273896a",
+                        "to": "/etc/NetworkManager/conf.d/92-anaconda-loglevel-debug.conf"
+                    },
+                    {
+                        "from": "sha256:000b91ba75314efe7e0b82c2d8fa2fc5f9f7437e5f6e7d64c40503e05d90890d",
+                        "to": "/etc/sysconfig/spice-vdagentd"
+                    },
+                    {
+                        "from": "sha256:c519818a235b12b3d6b55d4bc2098e44089b6191fefa1b58044bb83ca963a2f2",
+                        "to": "/root/.bash_history"
+                    }
+                ]
+            }
+        }
+    ]
+  }
+}
