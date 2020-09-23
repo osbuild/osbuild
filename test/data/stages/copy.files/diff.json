@@ -1,0 +1,12 @@
+{
+  "added_files": ["/NEWS", "/README"],
+  "deleted_files": [],
+  "differences": {
+    "/": {
+      "mode": [
+        16832,
+        16877
+      ]
+    }
+  }
+}

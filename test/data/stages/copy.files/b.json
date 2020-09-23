@@ -1,0 +1,32 @@
+{
+  "sources": {
+    "org.osbuild.files": {
+      "urls": {
+        "sha256:66445d73773c83122be70a9fd94e43a88049fa86095bc9c3ce5a1dcd6e1ef80c": "https://github.com/osbuild/osbuild/archive/2fa594f334be0c66efc2ab472d92fef6c7820054.tar.gz"
+              }
+    }
+  },
+  "pipeline": {
+    "stages": [
+      {
+        "name": "org.osbuild.copy",
+        "options": {
+          "source": {
+            "type": "archive",
+            "checksum": "sha256:66445d73773c83122be70a9fd94e43a88049fa86095bc9c3ce5a1dcd6e1ef80c"
+          },
+          "paths": [
+            {
+              "from": "/NEWS.md",
+              "to": "/NEWS"
+            },
+            {
+              "from": "/README.md",
+              "to": "/README"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
