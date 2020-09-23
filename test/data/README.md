@@ -38,9 +38,28 @@ do not allow comments, this file shortly describes their purpose.
    regenerate them, use `make test-data`.
 
  * `./sources/`:
-   This directory contains test-data for runtime tests of the source-engines. It
-   contains a directory that is served via HTTP in the tests, and a directory of
-   test-cases what to expect when using the attached `sources.json`.
+   This directory contains test-data for runtime tests of the source-engines.
+   Directories should match the name of a source, eg. `org.osbuild.files`, and
+   should contain a `source.json` file. This file is the sources section of
+   the manifest for that particular source type. It should contain a `cases`
+   directory with json files describing the tests to be run on the source. If
+   the `networking` bool is set to true then the `data` directory will be
+   made accessible using a url like:
+       http://localhost/sources/org.osbuild.files/data/FILENAME
+
+   These tests are executed by `test/run/test_sources.py`
+
+ * `./stages/`:
+   This directory contains subdirectories with 2 manifests, `a.json`, and `b.json`,
+   a result `diff.json`, and optionally a `manifest.json` file. The test first runs
+   the pipeline in `a.json` to setup the initial state of the tree. It then runs
+   `b.json` to modify the tree and calculates the difference between the two and
+   checking the results against `diff.json`.
+
+   Directories under `./stages/` without a `diff.json` are not used. eg. selinux
+   has its own test function.
+
+   These tests are executed by `test/run/test_stages.py`
 
  * `scripts`:
    This directory contains scripts used from other tests, i.e. although they are
