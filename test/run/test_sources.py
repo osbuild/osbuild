@@ -94,13 +94,22 @@ class TestSources(test.TestBase):
                 case_options = {}
                 with open(f"{self.sources}/{source}/cases/{case}") as f:
                     case_options = json.load(f)
+
+                # Should networking be setup for this test case?
+                if case_options.get('networking', False):
+                    serverSetup = fileServer
+                else:
+                    serverSetup = contextlib.nullcontext
+
                 with tempfile.TemporaryDirectory() as tmpdir, \
-                    fileServer(self.locate_test_data()), \
+                    serverSetup(self.locate_test_data()), \
                     osbuild.sources.SourcesServer(
                             "./", source_options,
                             f"{tmpdir}/cache", f"{tmpdir}/dst",
                             socket_address=f"{tmpdir}/sources-api"):
+                    # First call saves it to the cache
                     self.check_case(source, case_options, f"{tmpdir}/sources-api")
+                    # Second call makes sure the cached copy matches
                     self.check_case(source, case_options, f"{tmpdir}/sources-api")
 
 

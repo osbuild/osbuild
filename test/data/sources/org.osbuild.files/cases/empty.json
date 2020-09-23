@@ -1,4 +1,5 @@
 {
   "expects": "success",
+  "networking": true,
   "checksums": []
 }

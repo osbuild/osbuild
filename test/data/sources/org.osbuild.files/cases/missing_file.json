@@ -1,5 +1,6 @@
 {
   "expects": "error",
+  "networking": true,
   "checksums": [
       "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   ]
