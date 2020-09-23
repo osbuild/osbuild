@@ -1,0 +1,7 @@
+{
+  "expects": "error",
+  "networking": false,
+  "checksums": [
+      "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  ]
+}
