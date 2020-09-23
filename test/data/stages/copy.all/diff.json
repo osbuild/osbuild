@@ -1,0 +1,29 @@
+{
+  "added_files": [
+      "/NEWS",
+      "/README",
+      "/etc",
+      "/etc.pam.d",
+      "/etc.pam.d/login",
+      "/etc.pam.d/remote",
+      "/etc.pam.d/sshd",
+      "/etc/NetworkManager",
+      "/etc/NetworkManager/conf.d",
+      "/etc/NetworkManager/conf.d/91-anaconda-autoconnect-slaves.conf",
+      "/etc/NetworkManager/conf.d/92-anaconda-loglevel-debug.conf",
+      "/etc/libuser.conf",
+      "/etc/resolv.conf",
+      "/etc/sysconfig",
+      "/etc/sysconfig/spice-vdagentd",
+      "/root",
+      "/root/.bash_history"],
+  "deleted_files": [],
+  "differences": {
+    "/": {
+      "mode": [
+        16832,
+        16877
+      ]
+    }
+  }
+}
