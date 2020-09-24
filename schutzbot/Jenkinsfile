@@ -101,7 +101,11 @@ pipeline {
             parallel {
                 stage('Fedora 31') {
                     agent { label "f31cloudbase && x86_64 && psi" }
-                    environment { TEST_TYPE = "image" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        DISTRO_CODE = "fedora31"
+                    }
                     steps {
                         unstash 'fedora31'
                         run_tests()
@@ -114,7 +118,11 @@ pipeline {
                 }
                 stage('Fedora 32') {
                     agent { label "f32cloudbase && x86_64 && psi" }
-                    environment { TEST_TYPE = "image" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        DISTRO_CODE = "fedora32"
+                    }
                     steps {
                         unstash 'fedora32'
                         run_tests()
@@ -130,6 +138,8 @@ pipeline {
                     environment {
                         TEST_TYPE = "image"
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        DISTRO_CODE = "rhel8"
                     }
                     steps {
                         unstash 'rhel8cdn'
@@ -146,6 +156,8 @@ pipeline {
                     environment {
                         TEST_TYPE = "image"
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production-beta')
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        DISTRO_CODE = "rhel83"
                     }
                     steps {
                         unstash 'rhel83'
