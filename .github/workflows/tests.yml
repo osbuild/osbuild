@@ -24,6 +24,7 @@ jobs:
       uses: osbuild/containers/src/actions/ghci-osbuild@v1
       with:
         run: |
+          PYTHONPATH=$PWD \
           python3 -m unittest discover \
             -k "${{ matrix.test }}" \
             -s "test" \
