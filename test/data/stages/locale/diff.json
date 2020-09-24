@@ -1,7 +1,16 @@
 {
   "added_files": [
-    "/etc/locale.conf"
+      "/etc",
+      "/etc/.pwd.lock",
+      "/etc/locale.conf"
   ],
   "deleted_files": [],
-  "differences": {}
+  "differences": {
+     "/": {
+      "mode": [
+        16832,
+        16877
+      ]
+    }
+ }
 }
