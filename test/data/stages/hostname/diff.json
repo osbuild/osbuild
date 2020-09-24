@@ -1,7 +1,16 @@
 {
   "added_files": [
-    "/etc/hostname"
+      "/etc",
+      "/etc/.pwd.lock",
+      "/etc/hostname"
   ],
   "deleted_files": [],
-  "differences": {}
+  "differences": {
+    "/": {
+      "mode": [
+        16832,
+        16877
+      ]
+    }
+  }
 }
