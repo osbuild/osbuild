@@ -1,7 +1,16 @@
 {
   "added_files": [
-    "/etc/vconsole.conf"
+      "/etc",
+      "/etc/.pwd.lock",
+      "/etc/vconsole.conf"
   ],
   "deleted_files": [],
-  "differences": {}
+  "differences": {
+    "/": {
+      "mode": [
+        16832,
+        16877
+      ]
+    }
+  }
 }
