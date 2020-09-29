@@ -1,9 +1,12 @@
 import abc
 import asyncio
+import contextlib
 import io
 import json
 import os
+import sys
 import tempfile
+import traceback
 import threading
 from typing import Dict, Optional
 from .util.types import PathLike
@@ -141,6 +144,7 @@ class API(BaseAPI):
         self._output_pipe = None
         self.monitor = monitor
         self.metadata = {}
+        self.exception = None
 
     @property
     def output(self):
@@ -182,9 +186,14 @@ class API(BaseAPI):
             fds.append(data.fileno())
             sock.send({"type": "fd", "fd": 0}, fds=fds)
 
+    def _get_exception(self, message):
+        self.exception = message["exception"]
+
     def _message(self, msg, fds, sock):
         if msg["method"] == 'add-metadata':
             self._set_metadata(msg)
+        elif msg["method"] == 'exception':
+            self._get_exception(msg)
         elif msg["method"] == 'get-arguments':
             self._get_arguments(sock)
 
@@ -193,6 +202,29 @@ class API(BaseAPI):
             os.close(self._output_pipe)
             self._output_pipe = None
 
+def exception(e, path="/run/osbuild/api/osbuild"):
+    """Send exception to osbuild"""
+    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+    with jsoncomm.Socket.new_client(path) as client:
+        msg = {
+            "method": "exception",
+            "exception": {
+                "type": str(type(e)),
+                "value": str(e),
+                "traceback": str(e.__traceback__)
+            }
+        }
+        client.send(msg)
+
+    sys.exit(2)
+
+# pylint: disable=broad-except
+@contextlib.contextmanager
+def exception_handler(path="/run/osbuild/api/osbuild"):
+    try:
+        yield
+    except Exception as e:
+        exception(e, path)
 
 def arguments(path="/run/osbuild/api/osbuild"):
     """Retrieve the input arguments that were supplied to API"""

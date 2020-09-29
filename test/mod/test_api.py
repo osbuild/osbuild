@@ -79,6 +79,25 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(data, args)
 
 
+    def test_exception(self):
+        # Check that 'api.exception' correctly sets 'API.exception'
+        tmpdir = self.tmp.name
+        path = os.path.join(tmpdir, "osbuild-api")
+        args = {}
+        monitor = osbuild.monitor.BaseMonitor(sys.stderr.fileno())
+
+        def exception(path):
+            with osbuild.api.exception_handler(path):
+                raise ValueError("osbuild test exception")
+
+        api = osbuild.api.API(args, monitor, socket_address=path)
+        with api:
+            p = mp.Process(target=exception, args=(path, ))
+            p.start()
+            p.join()
+        self.assertIsNotNone(api.exception, "Exception not set")
+        self.assertEqual(api.exception["value"], "osbuild test exception")
+
     def test_metadata(self):
         # Check that `api.metadata` leads to `API.metadata` being
         # set correctly
