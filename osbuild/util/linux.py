@@ -5,7 +5,7 @@ those not provided by the python standard library. The idea is to provide
 universal wrappers with broad access to linux APIs. Convenience helpers and
 higher-level abstractions are beyond the scope of this module.
 
-In some cases it is overly complex to provide universal access to a specifc
+In some cases it is overly complex to provide universal access to a specific
 API. Hence, the API might be restricted to a reduced subset of its
 functionality, just to make sure we can actually implement the wrappers in a
 reasonable manner.
