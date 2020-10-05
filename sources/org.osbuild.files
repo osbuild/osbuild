@@ -90,7 +90,7 @@ def fetch(url, checksum, directory):
     secrets = url.get("secrets")
     url_path = url.get("url")
     # Download to a temporary directory until we have verified the checksum. Use a
-    # subdirectory, so we avoid copying accross block devices.
+    # subdirectory, so we avoid copying across block devices.
     with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=directory) as tmpdir:
         # some mirrors are sometimes broken. retry manually, because we could be
         # redirected to a different, working, one on retry.

@@ -399,7 +399,7 @@ Contributions from: Christian Kellner, David Rheinsberg, Major Hayden,
     immutable directories, which Python 3 fails to clean up.
 
   * Drop custom `os-release` creation from the RHEL 8.2 runner. The
-    issue that made this neccessary got fixed upstream.
+    issue that made this necessary got fixed upstream.
 
   * Ensure the build tree is always being built even if there are no
     stages specified.

@@ -41,7 +41,7 @@ class TestStages(test.TestBase):
 
         There's a special rule for asserting differences where we don't
         know the exact before/after value. This is useful for example if
-        the content of file is dependant on current datetime. You can use this
+        the content of file is dependent on current datetime. You can use this
         feature by putting null value in difference you don't care about.
 
         Example:

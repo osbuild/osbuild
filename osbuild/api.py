@@ -24,7 +24,7 @@ class BaseAPI(abc.ABC):
     This base class provides the basic scaffolding for setting
     up API endpoints, normally to be used for bi-directional
     communication from and to the sandbox. It is to be used as
-    a context manger. The communication channel will only be
+    a context manager. The communication channel will only be
     established on entering the context and will be shut down
     when the context is left.
 
