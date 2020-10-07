@@ -89,6 +89,7 @@ class TestAPI(unittest.TestCase):
         def exception(path):
             with osbuild.api.exception_handler(path):
                 raise ValueError("osbuild test exception")
+            assert False, "api.exception should exit process"
 
         api = osbuild.api.API(args, monitor, socket_address=path)
         with api:
