@@ -103,6 +103,7 @@ class TestAPI(unittest.TestCase):
             self.assertIn(field, e, f"Exception needs '{field}'")
         self.assertEqual(e["value"], "osbuild test exception")
         self.assertEqual(e["type"], "ValueError")
+        self.assertIn("exception", e["traceback"])
 
     def test_metadata(self):
         # Check that `api.metadata` leads to `API.metadata` being
