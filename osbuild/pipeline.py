@@ -93,7 +93,7 @@ class Stage:
                                binds=[os.fspath(tree) + ":/run/osbuild/tree"],
                                readonly_binds=ro_binds)
 
-        return BuildResult(self, r.returncode, r.output, api.metadata, api.exception)
+        return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
 
 
 class Assembler:
@@ -152,7 +152,7 @@ class Assembler:
                                binds=binds,
                                readonly_binds=ro_binds)
 
-        return BuildResult(self, r.returncode, r.output, api.metadata, api.exception)
+        return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
 
 
 class Pipeline:

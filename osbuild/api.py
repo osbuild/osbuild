@@ -144,7 +144,7 @@ class API(BaseAPI):
         self._output_pipe = None
         self.monitor = monitor
         self.metadata = {}
-        self.exception = None
+        self.error = None
 
     @property
     def output(self):
@@ -187,7 +187,10 @@ class API(BaseAPI):
             sock.send({"type": "fd", "fd": 0}, fds=fds)
 
     def _get_exception(self, message):
-        self.exception = message["exception"]
+        self.error = {
+            "type": "exception",
+            "data": message["exception"],
+        }
 
     def _message(self, msg, fds, sock):
         if msg["method"] == 'add-metadata':
