@@ -4,6 +4,8 @@ import os
 import subprocess
 import sys
 
+import osbuild.api
+
 
 def ldconfig():
     # ld.so.conf must exist, or `ldconfig` throws a warning
@@ -48,11 +50,12 @@ def python_alternatives():
         pass
 
 if __name__ == "__main__":
-    ldconfig()
-    sysusers()
-    tmpfiles()
-    nsswitch()
-    python_alternatives()
+    with osbuild.api.exception_handler():
+        ldconfig()
+        sysusers()
+        tmpfiles()
+        nsswitch()
+        python_alternatives()
 
-    r = subprocess.run(sys.argv[1:], check=False)
-    sys.exit(r.returncode)
+        r = subprocess.run(sys.argv[1:], check=False)
+        sys.exit(r.returncode)
