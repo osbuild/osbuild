@@ -78,7 +78,6 @@ class TestAPI(unittest.TestCase):
             data = osbuild.api.arguments(path=path)
             self.assertEqual(data, args)
 
-
     def test_exception(self):
         # Check that 'api.exception' correctly sets 'API.exception'
         tmpdir = self.tmp.name
