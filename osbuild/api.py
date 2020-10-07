@@ -210,12 +210,15 @@ def exception(e, path="/run/osbuild/api/osbuild"):
     """Send exception to osbuild"""
     traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
     with jsoncomm.Socket.new_client(path) as client:
+        with io.StringIO() as out:
+            traceback.print_tb(e.__traceback__, file=out)
+            stacktrace = out.getvalue()
         msg = {
             "method": "exception",
             "exception": {
                 "type": type(e).__name__,
                 "value": str(e),
-                "traceback": str(e.__traceback__)
+                "traceback": stacktrace
             }
         }
         client.send(msg)
