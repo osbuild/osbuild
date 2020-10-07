@@ -95,6 +95,7 @@ class TestAPI(unittest.TestCase):
             p = mp.Process(target=exception, args=(path, ))
             p.start()
             p.join()
+        self.assertEqual(p.exitcode, 2)
         self.assertIsNotNone(api.error, "Error not set")
         self.assertIn("type", api.error, "Error has no 'type' set")
         self.assertEqual("exception", api.error["type"], "Not an exception")
