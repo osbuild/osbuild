@@ -53,6 +53,11 @@ cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 sudo cp osbuild-mock.repo /etc/yum.repos.d/osbuild-mock.repo
 sudo dnf repository-packages osbuild-mock list
 
+if [[ $ID == rhel ]]; then
+    # Set up EPEL repository (for ansible and koji)
+    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+fi
+
 # Install the Image Builder packages.
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install osbuild-composer-tests
