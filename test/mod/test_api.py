@@ -96,8 +96,13 @@ class TestAPI(unittest.TestCase):
             p = mp.Process(target=exception, args=(path, ))
             p.start()
             p.join()
-        self.assertIsNotNone(api.exception, "Exception not set")
-        self.assertEqual(api.exception["value"], "osbuild test exception")
+        self.assertIsNotNone(api.error, "Error not set")
+        self.assertIn("type", api.error, "Error has no 'type' set")
+        self.assertEqual("exception", api.error["type"], "Not an exception")
+        e = api.error["data"]
+        for field in ("type", "value", "traceback"):
+            self.assertIn(field, e, f"Exception needs '{field}'")
+        self.assertEqual(e["value"], "osbuild test exception")
 
     def test_metadata(self):
         # Check that `api.metadata` leads to `API.metadata` being
