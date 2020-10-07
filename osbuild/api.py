@@ -213,7 +213,7 @@ def exception(e, path="/run/osbuild/api/osbuild"):
         msg = {
             "method": "exception",
             "exception": {
-                "type": str(type(e)),
+                "type": type(e).__name__,
                 "value": str(e),
                 "traceback": str(e.__traceback__)
             }
