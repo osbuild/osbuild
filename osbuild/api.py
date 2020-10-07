@@ -202,6 +202,7 @@ class API(BaseAPI):
             os.close(self._output_pipe)
             self._output_pipe = None
 
+
 def exception(e, path="/run/osbuild/api/osbuild"):
     """Send exception to osbuild"""
     traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
@@ -218,6 +219,7 @@ def exception(e, path="/run/osbuild/api/osbuild"):
 
     sys.exit(2)
 
+
 # pylint: disable=broad-except
 @contextlib.contextmanager
 def exception_handler(path="/run/osbuild/api/osbuild"):
@@ -225,6 +227,7 @@ def exception_handler(path="/run/osbuild/api/osbuild"):
         yield
     except Exception as e:
         exception(e, path)
+
 
 def arguments(path="/run/osbuild/api/osbuild"):
     """Retrieve the input arguments that were supplied to API"""
