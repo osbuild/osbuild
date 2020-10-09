@@ -121,8 +121,16 @@ class TestStages(test.TestBase):
                 txt = "\n".join(diff)
                 self.fail(f"metadata for {stageid} differs:\n{txt}")
 
+    @classmethod
+    def setUpClass(cls):
+        cls.cache = tempfile.TemporaryDirectory(dir="/var/tmp")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.cache.cleanup()
+
     def setUp(self):
-        self.osbuild = test.OSBuild(self)
+        self.osbuild = test.OSBuild(self, cache_from=self.cache.name)
 
     def run_stage_diff_test(self, test_dir: str):
         with self.osbuild as osb:
@@ -161,6 +169,12 @@ class TestStages(test.TestBase):
                     metadata = json.load(f)
 
                 self.assertMetadata(metadata, res)
+
+            # cache the downloaded data for the sources by copying
+            # it to self.cache, which is going to be used to initialize
+            # the osbuild cache with.
+            osb.copy_source_data(self.cache.name, "org.osbuild.files")
+
     def test_stages(self):
         path = os.path.join(self.locate_test_data(), "stages")
         for t in glob.glob(f"{path}/*/diff.json"):
@@ -198,3 +212,6 @@ class TestStages(test.TestBase):
                     for path, want in check["labels"].items():
                         have = selinux.getfilecon(f"{tree}/{path}")
                         self.assertEqual(have, want)
+
+            # cache the downloaded data for the files source
+            osb.copy_source_data(self.cache.name, "org.osbuild.files")
