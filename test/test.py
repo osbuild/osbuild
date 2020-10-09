@@ -366,3 +366,25 @@ class OSBuild(contextlib.AbstractContextManager):
         # as a context-manager so the caller does not retain the path for
         # later access.
         yield path
+
+    def copy_source_data(self, target, source):
+        """Copy the cached sources for a `source` to `target`
+
+        This will copy all the downloaded data for a specified source
+        to the `target` directory, with a folder structure in a way so
+        it can be used to initialize the cache, via the constructor's
+        `cache_from` argument. Does nothing if there is no downloaded
+        data for the specified `source`.
+        """
+        from_path = os.path.join(self._cachedir, "sources", source)
+
+        if not os.path.isdir(from_path):
+            return
+
+        to_path = os.path.join(target, "sources", source)
+        os.makedirs(to_path, exist_ok=True)
+
+        subprocess.run(["cp", "--reflink=auto", "-a",
+                        os.path.join(from_path, "."),
+                        to_path],
+                       check=True)
