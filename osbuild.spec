@@ -43,6 +43,16 @@ Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 # by rhel runner.
 %global __requires_exclude_from ^%{pkgdir}/(assemblers|runners|stages)/.*$
 
+# Turn off shebang mangling on RHEL. brp-mangle-shebangs (from package
+# redhat-rpm-config) is run on all executables in a package after the `install`
+# section runs. The below macro turns this behavior off for:
+#   - runners, because they already have the correct shebang for the platform
+#     they're meant for, and
+#   - stages and assemblers, because they are run within osbuild build roots,
+#     which are not required to contain the same OS as the host and might thus
+#     have a different notion of "platform-python".
+%global __brp_mangle_shebangs_exclude_from ^%{pkgdir}/(assemblers|runners|stages)/.*$
+
 %{?python_enable_dependency_generator}
 
 %description
