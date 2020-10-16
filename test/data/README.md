@@ -32,10 +32,10 @@ do not allow comments, this file shortly describes their purpose.
    this manifest's tree is constructed just from the filesystem package and is
    marked using the selinux stage.
 
-   Manifests prefixed with `mpp-*` are fed through the ManifestPreProcessors and
-   then stored in the same directory with the `mpp-*` prefix dropped. The
-   generated files are committed to the repository. Nevertheless, if you need to
-   regenerate them, use `make test-data`.
+   Manifests ending on `.mpp.json` are fed through the ManifestPreProcessors
+   and then stored in the same directory with an `.json` extension (replacing
+   `.mpp.json`). generated files are committed to the repository. Nevertheless,
+   if you need to regenerate them, use `make test-data`.
 
  * `./sources/`:
    This directory contains test-data for runtime tests of the source-engines. It
