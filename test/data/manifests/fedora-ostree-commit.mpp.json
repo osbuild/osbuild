@@ -16,11 +16,11 @@
           "mpp-depsolve": {
             "architecture": "x86_64",
             "module-platform-id": "f32",
-            "baseurl": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os",
+            "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/",
             "repos": [
               {
                 "id": "default",
-                "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-32&arch=$basearch"
+                "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/"
               }
             ],
             "packages": [
