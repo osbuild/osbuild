@@ -1,29 +1,17 @@
 {
-  "added_files": [],
+  "added_files": ["/etc/.pwd.lock", "/etc/group-", "/etc/gshadow-"],
   "deleted_files": [],
   "differences": {
     "/etc/group": {
       "content": [
-        "sha256:302bff1ff0e98dfee5bddea461138a3f584695aceb590f8452e11e343e5eea2d",
-        "sha256:f83b6b92019f26c90ded86754d5e16129a2973c68feb0e1576d2a6e957c56ae4"
-      ]
-    },
-    "/etc/group-": {
-      "content": [
-        "sha256:ca63b6808736bb195f8a0576d0ed96a1d290a5e95da53beba9841ad59e17edc8",
-        "sha256:302bff1ff0e98dfee5bddea461138a3f584695aceb590f8452e11e343e5eea2d"
+        "sha256:5be46faf83078411c18ce0f3cb5e5fc5b56b8cb214a7f5a65dbbef6cb8249e16",
+        "sha256:c8ff04219026d32fbeca942b5493d7571f03f09c0b68d72c99258b7ac99375f7"
       ]
     },
     "/etc/gshadow": {
       "content": [
-        "sha256:10d9da95c3a069b7888c35a85da3a14a7b320b1d629653e7dce52950f605f844",
-        "sha256:a32efd000c0307f19f462c0e88ce4a76c34b4683a579181ca50ddbb653d01a11"
-      ]
-    },
-    "/etc/gshadow-": {
-      "content": [
-        "sha256:1574675f8aa890d70c5cee25a865c094f36c7da3e7d44d44ce2ec0262338c2e0",
-        "sha256:10d9da95c3a069b7888c35a85da3a14a7b320b1d629653e7dce52950f605f844"
+        "sha256:50b56bf2e0d5dd28900aa04478a9d4cc2ca1ea3452a76a71c71b5ade7f2221cd",
+        "sha256:334a86faab6df7cb8425b413f0000da3fb7732ef98b5f5aaacf9712392f4f2ae"
       ]
     }
   }
