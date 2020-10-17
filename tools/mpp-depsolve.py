@@ -78,7 +78,8 @@ def _dnf_repo(conf, desc):
 
 def _dnf_base(repos, module_platform_id, persistdir, cachedir, arch):
     base = dnf.Base()
-    base.conf.cachedir = cachedir
+    if cachedir:
+        base.conf.cachedir = cachedir
     base.conf.config_file_path = "/dev/null"
     base.conf.module_platform_id = module_platform_id
     base.conf.persistdir = persistdir
@@ -194,10 +195,9 @@ def _main_args(argv):
 @contextlib.contextmanager
 def _main_state(args):
     state = State()
-
-    with tempfile.TemporaryDirectory() as dnf_cache:
-        state.dnf_cache = args.dnf_cache or dnf_cache
-        yield state
+    if args.dnf_cache:
+        state.dnf_cache = args.dnf_cache
+    yield state
 
 
 def _main_process(state):
