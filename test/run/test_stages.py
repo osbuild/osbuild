@@ -7,6 +7,7 @@ import glob
 import json
 import os
 import pprint
+import shutil
 import tempfile
 import unittest
 from typing import Dict
@@ -123,18 +124,20 @@ class TestStages(test.TestBase):
 
     @classmethod
     def setUpClass(cls):
-        cls.cache = tempfile.TemporaryDirectory(dir="/var/tmp")
+        cls.store = os.getenv("OSBUILD_TEST_STORE")
+        if not cls.store:
+            cls.store = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
 
     @classmethod
     def tearDownClass(cls):
-        cls.cache.cleanup()
+        if not os.getenv("OSBUILD_TEST_STORE"):
+            shutil.rmtree(cls.store)
 
     def setUp(self):
-        self.osbuild = test.OSBuild(self, cache_from=self.cache.name)
+        self.osbuild = test.OSBuild(self, cache_from=self.store)
 
     def run_stage_diff_test(self, test_dir: str):
         with self.osbuild as osb:
-
             def run(path):
                 checkpoints = []
                 context = None
@@ -173,7 +176,7 @@ class TestStages(test.TestBase):
             # cache the downloaded data for the sources by copying
             # it to self.cache, which is going to be used to initialize
             # the osbuild cache with.
-            osb.copy_source_data(self.cache.name, "org.osbuild.files")
+            osb.copy_source_data(self.store, "org.osbuild.files")
 
     def test_stages(self):
         path = os.path.join(self.locate_test_data(), "stages")
@@ -214,4 +217,4 @@ class TestStages(test.TestBase):
                         self.assertEqual(have, want)
 
             # cache the downloaded data for the files source
-            osb.copy_source_data(self.cache.name, "org.osbuild.files")
+            osb.copy_source_data(self.store, "org.osbuild.files")
