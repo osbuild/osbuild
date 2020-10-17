@@ -49,6 +49,7 @@ import json
 import os
 import sys
 import tempfile
+import urllib.parse
 
 import dnf
 import hawkey
@@ -169,7 +170,11 @@ def _manifest_depsolve(state, stage):
     deps = _dnf_resolve(state, options_mpp)
     for dep in deps:
         options_packages.append(dep["checksum"])
-        state.manifest_urls[dep["checksum"]] = baseurl + "/" + dep["path"]
+        # dep["path"] often starts with a "/", even though it's meant to be
+        # relative to `baseurl`. Strip any leading slashes, but ensure there's
+        # exactly one between `baseurl` and the path.
+        url = urllib.parse.urljoin(baseurl + "/", dep["path"].lstrip("/"))
+        state.manifest_urls[dep["checksum"]] = url
 
 
 def _main_args(argv):
