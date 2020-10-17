@@ -205,7 +205,8 @@ coverity-clean-all: coverity-clean
 # for linters and other tests on the source code.
 #
 
-TEST_MANIFESTS_MPP = $(wildcard $(SRCDIR)/test/data/manifests/*.mpp.json)
+TEST_MANIFESTS_MPP = $(wildcard $(SRCDIR)/test/data/manifests/*.mpp.json) \
+		     $(wildcard $(SRCDIR)/test/data/stages/*/*.mpp.json)
 TEST_MANIFESTS_GEN = $(TEST_MANIFESTS_MPP:%.mpp.json=%.json)
 
 $(TEST_MANIFESTS_GEN): %.json: %.mpp.json
