@@ -64,7 +64,14 @@ class State:
 
 def _dnf_repo(conf, desc):
     repo = dnf.repo.Repo(desc["id"], conf)
-    repo.metalink = desc["metalink"]
+    if "baseurl" in desc:
+        repo.baseurl = desc["baseurl"]
+    elif "metalink" in desc:
+        repo.metalink = desc["metalink"]
+    elif "mirrorlist" in desc:
+        repo.metalink = desc["mirrorlist"]
+    else:
+        raise ValueError("repo description does not contain baseurl, metalink, or mirrorlist keys")
     return repo
 
 
