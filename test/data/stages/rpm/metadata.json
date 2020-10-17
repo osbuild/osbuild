@@ -1,1598 +1,1862 @@
 {
-  "ecc30889f76280f2ff42989450e63c23ba12220747de83da286206c02e0b4e75": {
+  "7eec6872084a74e102e4ff3509967259bd02b24bd6d6ab369c9d1391dd0ade70": {
     "packages": [
       {
         "name": "libgcc",
-        "version": "9.0.1",
-        "release": "0.10.fc30",
+        "version": "10.0.1",
+        "release": "0.11.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "52c6ee669d58d82b70fa8a76f004a1d4"
+        "sigmd5": "84fc907a5047aeebaf8da1642925a417"
       },
       {
         "name": "whois-nls",
-        "version": "5.4.2",
-        "release": "1.fc30",
+        "version": "5.5.6",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "20a5c0f1b5b1dddf644425b8c26b2923"
+        "sigmd5": "f868cd02046630c8ce3a9c48820e2437"
       },
       {
-        "name": "systemd-rpm-macros",
-        "version": "241",
-        "release": "7.gita2eaa1c.fc30",
+        "name": "python-setuptools-wheel",
+        "version": "41.6.0",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "62b10480af8e773faf9f06f359f304e5"
+        "sigmd5": "9b5be12f72d39cf48b4d40bca808f260"
       },
       {
-        "name": "publicsuffix-list-dafsa",
-        "version": "20190128",
-        "release": "2.fc30",
+        "name": "pcre2-syntax",
+        "version": "10.34",
+        "release": "9.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "bf272520850adb1f8eed36e44d28d167"
+        "sigmd5": "cfd9d84fae7087a858f646b813bc8377"
       },
       {
-        "name": "libreport-filesystem",
-        "version": "2.10.0",
-        "release": "1.fc30",
+        "name": "libssh-config",
+        "version": "0.9.3",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "a9fe3af9ebadaa37a357fb54a5788d55"
+        "sigmd5": "a4cbc4d7821b3741a8ebb8ab2134e8a0"
       },
       {
-        "name": "kbd-misc",
-        "version": "2.0.4",
-        "release": "13.fc30",
+        "name": "dnf-data",
+        "version": "4.2.19",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "ee684c3a77d61f68f379d529497e309c"
+        "sigmd5": "383a78ddaed68b4a8f123b9df3a8f4be"
+      },
+      {
+        "name": "kbd-legacy",
+        "version": "2.2.0",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "noarch",
+        "sigmd5": "90ab0fc3c4c1281b02f34eb5a90cda15"
       },
       {
         "name": "fedora-gpg-keys",
-        "version": "30",
+        "version": "32",
         "release": "1",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "087f285cb1ebcaaa331eb7a2a06911ad"
+        "sigmd5": "a4bd23a6b63e5ea2b70ca47d4cb5d876"
       },
       {
         "name": "fedora-repos",
-        "version": "30",
+        "version": "32",
         "release": "1",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "75e955e5279e5718456c992fd2b6b89a"
+        "sigmd5": "153876ee9bb4c98d70e6215ce155b266"
       },
       {
         "name": "setup",
-        "version": "2.13.3",
-        "release": "1.fc30",
+        "version": "2.13.6",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "af78eb1db33fedafa3b9d6e112dbcf7c"
+        "sigmd5": "b5a6d947ff6181bebe630cbefd413e4c"
       },
       {
         "name": "basesystem",
         "version": "11",
-        "release": "7.fc30",
+        "release": "9.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "16b9266485a71b7dd230d14a3986f170"
+        "sigmd5": "83eb9fc106ee34dd1cb12f5184a2c571"
       },
       {
-        "name": "libselinux",
-        "version": "2.9",
-        "release": "1.fc30",
+        "name": "glibc-common",
+        "version": "2.31",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "f58e483f076b520565f330c62bb8b199"
+        "sigmd5": "aecf72b8f59998df69341325efc3b8aa"
       },
       {
-        "name": "glibc-all-langpacks",
-        "version": "2.29",
-        "release": "9.fc30",
+        "name": "ncurses-libs",
+        "version": "6.1",
+        "release": "15.20191109.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "009c9b8779e047e57b5ddaa4f4d21e4b"
+        "sigmd5": "c843fa641ad5beac7dfee38d0ec6b8e2"
       },
       {
-        "name": "glibc",
-        "version": "2.29",
-        "release": "9.fc30",
+        "name": "zlib",
+        "version": "1.2.11",
+        "release": "21.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "b32d256ba608b4989b75db682d7ebf3d"
+        "sigmd5": "979e788c1c3af6ba83d93e914f61c2b0"
       },
       {
-        "name": "libsepol",
-        "version": "2.9",
-        "release": "1.fc30",
+        "name": "bzip2-libs",
+        "version": "1.0.8",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "33f41734056ee96b596211b3b1253d10"
+        "sigmd5": "520e35dc34011aa4dfa7f9420f3fcc09"
       },
       {
-        "name": "xz-libs",
-        "version": "5.2.4",
-        "release": "5.fc30",
+        "name": "libcap",
+        "version": "2.26",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "2d7d12ced369bfa993a2d43db22c0442"
+        "sigmd5": "55fee62d8e13172b8626c6ebf5715438"
       },
       {
-        "name": "libgpg-error",
-        "version": "1.33",
-        "release": "2.fc30",
+        "name": "libzstd",
+        "version": "1.4.4",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "f7fc8fce80c5f1887b3f36c52e83ac8c"
-      },
-      {
-        "name": "libdb",
-        "version": "5.3.28",
-        "release": "37.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "286c03b8cb0954f48067d3207341149a"
-      },
-      {
-        "name": "mkpasswd",
-        "version": "5.4.2",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "234b65a3cd2a27e489296f1294c3b5d7"
-      },
-      {
-        "name": "elfutils-libelf",
-        "version": "0.176",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "072942419104a354b65607b4f1710b68"
-      },
-      {
-        "name": "libuuid",
-        "version": "2.33.2",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "dd4a35e07c40962a4b59ea8bf3d140eb"
-      },
-      {
-        "name": "expat",
-        "version": "2.2.6",
-        "release": "2.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "154562eac3e536224065971ea8e101ab"
-      },
-      {
-        "name": "libunistring",
-        "version": "0.9.10",
-        "release": "5.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "950494f4b989656f4996c9c0dce9008f"
-      },
-      {
-        "name": "libidn2",
-        "version": "2.1.1a",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "2ea22d5d4eed35e72a3ee1489ca1ba08"
+        "sigmd5": "7f3cce4f09aeadf092cdcb9b29740686"
       },
       {
         "name": "libcom_err",
-        "version": "1.44.6",
-        "release": "1.fc30",
+        "version": "1.45.5",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "4806eb4beaf05c93768ec3d3f8b41b8f"
+        "sigmd5": "09b0f7ff3a98e55805dbe6b1ece081e8"
+      },
+      {
+        "name": "libxcrypt",
+        "version": "4.4.16",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "77b5b3600ec61eb0a647660ee00eeef5"
+      },
+      {
+        "name": "readline",
+        "version": "8.0",
+        "release": "4.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "bd9dcef1dab85ea755c2944e08370bd9"
+      },
+      {
+        "name": "popt",
+        "version": "1.16",
+        "release": "19.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "d3132ad93c552aee1f9ad9d6f3f9dbb8"
+      },
+      {
+        "name": "elfutils-libelf",
+        "version": "0.179",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "aeaa27c3fd7cb1366c37c850dd2f7f10"
+      },
+      {
+        "name": "libstdc++",
+        "version": "10.0.1",
+        "release": "0.11.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "6dcdeaaee164378690f3fa0200a9ea97"
       },
       {
         "name": "lua-libs",
         "version": "5.3.5",
-        "release": "5.fc30",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "ecd8807c3baa41145daf521dcf54d378"
+        "sigmd5": "f088c5757d55643e8b551e7e0d832865"
       },
       {
-        "name": "kmod",
-        "version": "25",
-        "release": "5.fc30",
+        "name": "libassuan",
+        "version": "2.5.3",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "847b41fd7bfe4baeef8b7a25cf24ab29"
+        "sigmd5": "58f2cc204d22df3d41f11589b88d2e0b"
       },
       {
         "name": "sqlite-libs",
-        "version": "3.26.0",
-        "release": "3.fc30",
+        "version": "3.31.1",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "9a7f651054a224a019661caae0045d21"
+        "sigmd5": "db4a800b6cb26556f152d5856ce7ddec"
       },
       {
-        "name": "libacl",
-        "version": "2.2.53",
-        "release": "3.fc30",
+        "name": "libsepol",
+        "version": "3.0",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "977414305d9a3ccc7802805e8492da05"
+        "sigmd5": "ad8d9f1eb8a3328db11f81820af56220"
       },
       {
-        "name": "libcap-ng",
-        "version": "0.7.9",
-        "release": "7.fc30",
+        "name": "audit-libs",
+        "version": "3.0",
+        "release": "0.19.20191104git1c2f876.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "5d6166dc8d9143344c4465392e76ee90"
+        "sigmd5": "9243185327624012d9c149454511bfd5"
       },
       {
-        "name": "libffi",
-        "version": "3.1",
-        "release": "19.fc30",
+        "name": "pcre2",
+        "version": "10.34",
+        "release": "9.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "837cab1bc8c0cb823a972d793d1de864"
+        "sigmd5": "aaf10ee5c493b8ec97d30c6c96f04e12"
       },
       {
-        "name": "libsmartcols",
-        "version": "2.33.2",
-        "release": "1.fc30",
+        "name": "fuse-libs",
+        "version": "2.9.9",
+        "release": "9.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "3d8facbc2734917514a3000fcec697f1"
+        "sigmd5": "686b7a80375f54019326e1b58fc3230b"
       },
       {
-        "name": "libksba",
-        "version": "1.3.5",
-        "release": "9.fc30",
+        "name": "libattr",
+        "version": "2.4.48",
+        "release": "8.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "9a770df18626b7f8e0fc8ef0e0fa4741"
+        "sigmd5": "d00fc864f792abaee07631a159715e5b"
       },
       {
-        "name": "grub2-common",
-        "version": "2.02",
-        "release": "75.fc30",
-        "epoch": "1",
-        "arch": "noarch",
-        "sigmd5": "a67e8c45c724671bbd373e9cf6bf4b0c"
-      },
-      {
-        "name": "findutils",
-        "version": "4.6.0",
-        "release": "22.fc30",
-        "epoch": "1",
+        "name": "sed",
+        "version": "4.5",
+        "release": "5.fc32",
+        "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "2a0dc15b01f536ec0edb560cfd26b5d1"
+        "sigmd5": "94ba9ae5b77e9ed10a79132617fb6881"
+      },
+      {
+        "name": "p11-kit",
+        "version": "0.23.20",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "4d68d574bc7852728528c475c73a3765"
+      },
+      {
+        "name": "which",
+        "version": "2.21",
+        "release": "19.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "6ddd0c1a91d90851b01905aeddecdd3c"
+      },
+      {
+        "name": "shadow-utils",
+        "version": "4.8.1",
+        "release": "2.fc32",
+        "epoch": "2",
+        "arch": "x86_64",
+        "sigmd5": "4bd7638d67ef647409603cf22ab84467"
+      },
+      {
+        "name": "nettle",
+        "version": "3.5.1",
+        "release": "5.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "3db1755c724b53edb7f41552427c6f14"
+      },
+      {
+        "name": "e2fsprogs-libs",
+        "version": "1.45.5",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "718d184507bb9e283b4b7d647d49f454"
+      },
+      {
+        "name": "alternatives",
+        "version": "1.11",
+        "release": "6.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "35ec588691e2857cced00f862d23e4d5"
       },
       {
         "name": "keyutils-libs",
         "version": "1.6",
-        "release": "2.fc30",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "2e74336d96c8d3045aaab7cd7389eb0b"
+        "sigmd5": "fdcbbb60d5f24d2e872cddf00063bf99"
       },
       {
-        "name": "p11-kit-trust",
-        "version": "0.23.15",
-        "release": "3.fc30",
+        "name": "libtasn1",
+        "version": "4.16.0",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "ddc38a8cc0011a0888ca052d46d6fdfa"
+        "sigmd5": "bfeccf6c458586d587eecf91f8ea5cea"
+      },
+      {
+        "name": "libyaml",
+        "version": "0.2.2",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "1b89397c12d1fdc1bef5ef6fa5d8b9e6"
       },
       {
         "name": "grep",
-        "version": "3.1",
-        "release": "9.fc30",
+        "version": "3.3",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "1e9a4190a606b6bfd9d2cb011987c62c"
+        "sigmd5": "e9b942392725b8b6b9d029d69a718747"
       },
       {
-        "name": "file",
-        "version": "5.36",
-        "release": "2.fc30",
+        "name": "libutempter",
+        "version": "1.1.6",
+        "release": "18.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "83eebd8390820ac4fd5d1c70a88f0731"
+        "sigmd5": "61ba2533256b9bed7d641db4479beb5c"
       },
       {
         "name": "acl",
         "version": "2.2.53",
-        "release": "3.fc30",
+        "release": "5.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "310836751e5ffcee963fd955120c25ca"
+        "sigmd5": "feb7f313eb6d700982da85b18e10b2f0"
+      },
+      {
+        "name": "findutils",
+        "version": "4.7.0",
+        "release": "3.fc32",
+        "epoch": "1",
+        "arch": "x86_64",
+        "sigmd5": "06ab4e7c4fccfd07d627f95d5e2cdd3b"
+      },
+      {
+        "name": "grub2-pc-modules",
+        "version": "2.04",
+        "release": "12.fc32",
+        "epoch": "1",
+        "arch": "noarch",
+        "sigmd5": "7e126d811ffaf474a4a8c467eb350172"
       },
       {
         "name": "mpfr",
-        "version": "3.1.6",
-        "release": "4.fc30",
+        "version": "4.0.2",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "6bf12acc182be6f4d87ca91192c65870"
+        "sigmd5": "e71b8aaeec7d608563cee8d1c6306213"
       },
       {
-        "name": "libcomps",
-        "version": "0.1.11",
-        "release": "1.fc30",
+        "name": "libmetalink",
+        "version": "0.1.3",
+        "release": "10.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "c4929c8ba58e0029a5b5dcbbe2d2da43"
+        "sigmd5": "f146016e7c8a90ad707de06ecbaae7cd"
       },
       {
-        "name": "libdb-utils",
-        "version": "5.3.28",
-        "release": "37.fc30",
+        "name": "libss",
+        "version": "1.45.5",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "c8ed42205e9ed2bcc875533b96e645f2"
+        "sigmd5": "3e20f00a087f474712ca7d283ed5430f"
       },
       {
-        "name": "brotli",
+        "name": "systemd-rpm-macros",
+        "version": "245.4",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "noarch",
+        "sigmd5": "920288f27afcfda9df48d6f33d1845e9"
+      },
+      {
+        "name": "cpio",
+        "version": "2.13",
+        "release": "4.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "44323b6db976cf920733c5cd1060dec3"
+      },
+      {
+        "name": "libaio",
+        "version": "0.3.111",
+        "release": "7.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "8cf994551ceadfe536d2a550bd3877be"
+      },
+      {
+        "name": "libbrotli",
         "version": "1.0.7",
-        "release": "3.fc30",
+        "release": "10.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "b4323bacab5b55af2051575b0d536670"
+        "sigmd5": "a0b7e4a1e923d4a44e99f230f92fb6ce"
       },
       {
-        "name": "diffutils",
-        "version": "3.7",
-        "release": "2.fc30",
+        "name": "libnfnetlink",
+        "version": "1.0.1",
+        "release": "17.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "8d816d1d0c75105683c191ec0cd5623c"
+        "sigmd5": "bd2fafea9058d88c991f8e1815426a38"
       },
       {
-        "name": "hardlink",
-        "version": "1.3",
-        "release": "8.fc30",
-        "epoch": "1",
-        "arch": "x86_64",
-        "sigmd5": "3260a438edf0f2931c934f8c86246e45"
-      },
-      {
-        "name": "libgomp",
-        "version": "9.0.1",
-        "release": "0.10.fc30",
+        "name": "libnghttp2",
+        "version": "1.40.0",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "e42cf9aca3c574bbf032c627fd538f8b"
+        "sigmd5": "30b2ff84a6632ab57d9bacbc36654055"
       },
       {
-        "name": "libpcap",
-        "version": "1.9.0",
-        "release": "3.fc30",
-        "epoch": "14",
-        "arch": "x86_64",
-        "sigmd5": "953fecbfb6f381cb2335fed40f02e7a2"
-      },
-      {
-        "name": "libseccomp",
-        "version": "2.4.0",
-        "release": "0.fc30",
+        "name": "iptables-libs",
+        "version": "1.8.4",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "4d9fc4b736881eb1dfaa1c744fb903b6"
+        "sigmd5": "c760461e7ab80c7926188a93afc40698"
       },
       {
-        "name": "gawk",
-        "version": "4.2.1",
-        "release": "6.fc30",
+        "name": "libsigsegv",
+        "version": "2.11",
+        "release": "10.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "09e5d4d1ccf9e99c32b72e703e50d913"
+        "sigmd5": "4654ccf8e32b052802218952d05bb45e"
       },
       {
-        "name": "libxkbcommon",
-        "version": "0.8.3",
-        "release": "1.fc30",
+        "name": "libverto",
+        "version": "0.3.0",
+        "release": "9.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "e9f3a8045f4e89723d5cf9d7216d4083"
+        "sigmd5": "efbc9e5733d501e2ee4bcc001bd95c42"
       },
       {
-        "name": "ncurses",
-        "version": "6.1",
-        "release": "10.20180923.fc30",
+        "name": "lzo",
+        "version": "2.10",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "ad5806f7d1d0a4096c8896db9c9af8ce"
+        "sigmd5": "07e80ad99a60c7931b5ec2cb2cb23f3f"
       },
       {
         "name": "qrencode-libs",
-        "version": "3.4.4",
-        "release": "8.fc30",
+        "version": "4.0.2",
+        "release": "5.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "c7fcb5a7db530445f3118af3184c1f21"
-      },
-      {
-        "name": "coreutils-common",
-        "version": "8.31",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "6d5c53db44938167956fe27279ad0eb2"
-      },
-      {
-        "name": "libssh",
-        "version": "0.8.7",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "a139025741ba60be9c4e08ed525fa5bb"
-      },
-      {
-        "name": "shared-mime-info",
-        "version": "1.12",
-        "release": "2.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "9eef8c626c3a05a462e2bc9bba34fb70"
-      },
-      {
-        "name": "libkcapi",
-        "version": "1.1.4",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "b838c12920fd79a1fd6bcf62e2876bb5"
-      },
-      {
-        "name": "libcroco",
-        "version": "0.6.13",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "02f991b7690d50c2e8169d1fb5c7d160"
-      },
-      {
-        "name": "gettext-libs",
-        "version": "0.19.8.1",
-        "release": "18.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "75bcce3ffb1e4823aa5a15ddfc1d6aca"
+        "sigmd5": "0fcac8bf7ea99397a298c623d073977d"
       },
       {
         "name": "krb5-libs",
-        "version": "1.17",
-        "release": "4.fc30",
+        "version": "1.18",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "254f4d27b6251c3043a51a940b543600"
+        "sigmd5": "896aa663ec9e22a157d3192c69000a6a"
       },
       {
         "name": "libnsl2",
         "version": "1.2.0",
-        "release": "4.20180605git4a062cf.fc30",
+        "release": "6.20180605git4a062cf.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "af07adaf5494e9aac5d463e639be5b20"
+        "sigmd5": "e651449dbc1f98f638cdb8f9efb8ee28"
       },
       {
-        "name": "curl",
-        "version": "7.64.0",
-        "release": "6.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "033c36e7da049c89a3eca3b40ffd64b7"
-      },
-      {
-        "name": "elfutils-default-yama-scope",
-        "version": "0.176",
-        "release": "1.fc30",
+        "name": "python-unversioned-command",
+        "version": "3.8.2",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "d96cac444b513dc35a724be8051d58c4"
+        "sigmd5": "72d4675b01c83e1011f6e5589d6e580a"
       },
       {
-        "name": "cracklib-dicts",
-        "version": "2.9.6",
-        "release": "19.fc30",
+        "name": "python3-setuptools",
+        "version": "41.6.0",
+        "release": "2.fc32",
         "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "b57ddb428d0c16efbd95bbf67d4d584d"
+        "arch": "noarch",
+        "sigmd5": "e32a74e803b2f5192165573e35393579"
       },
       {
-        "name": "gzip",
-        "version": "1.9",
-        "release": "9.fc30",
+        "name": "python3",
+        "version": "3.8.2",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "4408cac3439b2ddb76278d8c54efedd3"
-      },
-      {
-        "name": "libpwquality",
-        "version": "1.4.0",
-        "release": "12.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "ca3f9449939aaf86bc9e278a6ecf2a89"
-      },
-      {
-        "name": "kbd",
-        "version": "2.0.4",
-        "release": "13.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "6229d1d20a352d388454be8a322b5f76"
-      },
-      {
-        "name": "kpartx",
-        "version": "0.7.9",
-        "release": "6.git2df6110.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "c513af23e6b67180eb7f14befd3bf341"
+        "sigmd5": "40532ecbdd36fae772182ca68f65e4a7"
       },
       {
         "name": "openssl-pkcs11",
         "version": "0.4.10",
-        "release": "1.fc30",
+        "release": "5.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "e6fb8f884048dfb05b36f53f3d891558"
+        "sigmd5": "53236779094166f07c856fd6930d5441"
       },
       {
-        "name": "libfdisk",
-        "version": "2.33.2",
-        "release": "1.fc30",
+        "name": "coreutils",
+        "version": "8.32",
+        "release": "3.fc32.1",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "700610fb7214694f992f91903f466963"
-      },
-      {
-        "name": "dbus",
-        "version": "1.12.12",
-        "release": "7.fc30",
-        "epoch": "1",
-        "arch": "x86_64",
-        "sigmd5": "70b2e9d295a9da63e6373f2f8c00be93"
-      },
-      {
-        "name": "systemd-libs",
-        "version": "241",
-        "release": "7.gita2eaa1c.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "5154179a41ca7657076797bbbb24963b"
-      },
-      {
-        "name": "device-mapper-libs",
-        "version": "1.02.154",
-        "release": "3.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "4414bb6c40a27d663673363b29abe016"
+        "sigmd5": "a1c44c1a3bf61763de649b72b5fa27c4"
       },
       {
         "name": "ca-certificates",
-        "version": "2018.2.26",
-        "release": "3.fc30",
+        "version": "2020.2.40",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "1c621d41b92bb05bd11bf7afc423bb23"
+        "sigmd5": "815907e9a5acbb2831a785f252dd49ad"
       },
       {
-        "name": "util-linux",
-        "version": "2.33.2",
-        "release": "1.fc30",
+        "name": "libblkid",
+        "version": "2.35.1",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "9a0f8b6eebcb7a467a6493b0897d0496"
+        "sigmd5": "02a4239129d16e090dd7b53a9d53b9ad"
       },
       {
-        "name": "cryptsetup-libs",
-        "version": "2.1.0",
-        "release": "3.fc30",
+        "name": "libmount",
+        "version": "2.35.1",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "7b1c77d32414e905abfe40a2a97edf72"
+        "sigmd5": "a051824e1318316fce26a01279600fdf"
       },
       {
-        "name": "rpm-libs",
-        "version": "4.14.2.1",
-        "release": "4.fc30.1",
+        "name": "glib2",
+        "version": "2.64.1",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "1674b85cb6216681592bf359f16d2199"
+        "sigmd5": "3dbac0d9850164e069afa3ee61561460"
       },
       {
-        "name": "openssl-libs",
-        "version": "1.1.1b",
-        "release": "3.fc30",
-        "epoch": "1",
-        "arch": "x86_64",
-        "sigmd5": "2165eda87e7f6b97e1ceac0c91f8e7fd"
-      },
-      {
-        "name": "crypto-policies",
-        "version": "20190211",
-        "release": "2.gite3eacfc.fc30",
-        "epoch": null,
-        "arch": "noarch",
-        "sigmd5": "02ea2cddf4fa790c6fce5bc2f630f93c"
-      },
-      {
-        "name": "grub2-tools",
-        "version": "2.02",
-        "release": "75.fc30",
-        "epoch": "1",
-        "arch": "x86_64",
-        "sigmd5": "c1f78d97cb0bbf6cd466842255a084a8"
-      },
-      {
-        "name": "systemd",
-        "version": "241",
-        "release": "7.gita2eaa1c.fc30",
+        "name": "kmod",
+        "version": "27",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "56f14905257f077d512d794bf448f97f"
+        "sigmd5": "adf34c8a8f0c54f0aa824234a5045880"
       },
       {
-        "name": "dbus-broker",
-        "version": "20",
-        "release": "3.fc30",
+        "name": "json-glib",
+        "version": "1.4.4",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "1e6c3a6368a756b541334213255755f9"
+        "sigmd5": "f9f34ffcaf63fdcd6df8b8ea922963e0"
       },
       {
-        "name": "systemd-udev",
-        "version": "241",
-        "release": "7.gita2eaa1c.fc30",
+        "name": "gzip",
+        "version": "1.10",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "9e26c5318db7a0780fe50e48b41c815d"
+        "sigmd5": "000f68f341f34fe67160322bc4868754"
+      },
+      {
+        "name": "cracklib-dicts",
+        "version": "2.9.6",
+        "release": "22.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "65daa41a2639e0b8421349adb30c1205"
+      },
+      {
+        "name": "pam",
+        "version": "1.3.1",
+        "release": "24.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "7121535eea1dba07180a810ad248a0d8"
       },
       {
         "name": "libevent",
         "version": "2.1.8",
-        "release": "5.fc30",
+        "release": "8.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "db9513990d58c6811ab7af0c24da50c4"
+        "sigmd5": "dfdbec1a4fa4f38354b4fd318468a5dc"
       },
       {
-        "name": "libsolv",
-        "version": "0.7.4",
-        "release": "2.fc30",
+        "name": "unbound-libs",
+        "version": "1.9.6",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "456b75e26827dec93751c9ebc28ed517"
+        "sigmd5": "3942bcdd062fc4d70f21534424d078a1"
       },
       {
-        "name": "ima-evm-utils",
-        "version": "1.1",
-        "release": "5.fc30",
+        "name": "kbd",
+        "version": "2.2.0",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "6c98846ac55252d45144462fe9015e20"
+        "sigmd5": "1c432919396a929ac4ec717cb41fb51e"
       },
       {
-        "name": "deltarpm",
-        "version": "3.6",
-        "release": "29.fc30",
+        "name": "libtextstyle",
+        "version": "0.20.1",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "a1f538ecd714934852b774aa7ac18846"
+        "sigmd5": "cca521050a0cdca560e85b2fdb6cfe97"
       },
       {
-        "name": "python3-pip",
-        "version": "19.0.3",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "noarch",
-        "sigmd5": "14e600b119d0ef5a12bb249e0bb6fe7a"
-      },
-      {
-        "name": "python3",
-        "version": "3.7.3",
-        "release": "1.fc30",
+        "name": "gettext",
+        "version": "0.20.1",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "0573776f32cae06226e8e9463616bdb0"
-      },
-      {
-        "name": "python3-libcomps",
-        "version": "0.1.11",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "4c8f5d99fa785896acffa6d77d613dc8"
-      },
-      {
-        "name": "python3-unbound",
-        "version": "1.8.3",
-        "release": "4.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "5e889c41d2aa892e55ee104ec1d0c920"
-      },
-      {
-        "name": "rpm-plugin-systemd-inhibit",
-        "version": "4.14.2.1",
-        "release": "4.fc30.1",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "9bd1a347f9a0e0fedf43c1af09ff3278"
+        "sigmd5": "019db10fd1f68b04885cb6a4e6d22a2c"
       },
       {
         "name": "libsecret",
-        "version": "0.18.8",
-        "release": "1.fc30",
+        "version": "0.20.2",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "45dfa7f236e6b0cf76be7e03018f8b46"
+        "sigmd5": "6cdcf3f6a1877b17a65ad5143c6f0dee"
+      },
+      {
+        "name": "dbus-libs",
+        "version": "1.12.16",
+        "release": "4.fc32",
+        "epoch": "1",
+        "arch": "x86_64",
+        "sigmd5": "8850fde1e83ff3f226f51a80bb814d89"
+      },
+      {
+        "name": "procps-ng",
+        "version": "3.3.15",
+        "release": "7.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "1f334b81d2f1373e27d299df3da5dff5"
+      },
+      {
+        "name": "openssl",
+        "version": "1.1.1d",
+        "release": "7.fc32",
+        "epoch": "1",
+        "arch": "x86_64",
+        "sigmd5": "c9e6cc8322d6ee345d0d051156b92826"
+      },
+      {
+        "name": "ima-evm-utils",
+        "version": "1.2.1",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "dc537b733c55508b88e490d951f48104"
+      },
+      {
+        "name": "python3-libcomps",
+        "version": "0.1.14",
+        "release": "4.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "692dc74eafae31f42484cd525e10cc3b"
+      },
+      {
+        "name": "openldap",
+        "version": "2.4.47",
+        "release": "4.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "5612eadde23f9ef98e55e1fa8f647878"
+      },
+      {
+        "name": "curl",
+        "version": "7.69.1",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "3f23e174ba90b3ab5a031bf7da53563c"
+      },
+      {
+        "name": "rpm-libs",
+        "version": "4.15.1",
+        "release": "2.fc32.1",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "fe397eb25368a63ecda725115a788130"
+      },
+      {
+        "name": "libmodulemd",
+        "version": "2.9.1",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "fb6cec338dd341578d0e5d4b1e5c05fb"
+      },
+      {
+        "name": "rpm-plugin-systemd-inhibit",
+        "version": "4.15.1",
+        "release": "2.fc32.1",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "e1f3ab80c4b39e662b7b3fd6552c531a"
+      },
+      {
+        "name": "device-mapper-libs",
+        "version": "1.02.171",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "69d6de09558408e0c3505f56fdbbb7e5"
+      },
+      {
+        "name": "elfutils-debuginfod-client",
+        "version": "0.179",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "bd4e6fd6fbe9b9c9ffbfcfe836d117e1"
+      },
+      {
+        "name": "elfutils-libs",
+        "version": "0.179",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "50c3d713f9607387fec5d87fa092d8bf"
+      },
+      {
+        "name": "systemd-pam",
+        "version": "245.4",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "aff513c2eb0b3b0d2eb0fe3fbc99dd14"
+      },
+      {
+        "name": "systemd",
+        "version": "245.4",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "8f5f454db21c312dbf56021b023fb06a"
+      },
+      {
+        "name": "dbus-broker",
+        "version": "22",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "b6aafe8eff44dc1abab22d006f0ebf9e"
       },
       {
         "name": "gnupg2-smime",
-        "version": "2.2.13",
-        "release": "1.fc30",
+        "version": "2.2.19",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "438d46826aa95ce202b0796440faca14"
+        "sigmd5": "91e870f9e9fd1118b7313d4a1fc88967"
       },
       {
         "name": "gpgme",
-        "version": "1.12.0",
-        "release": "1.fc30",
+        "version": "1.13.1",
+        "release": "6.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "f313d6c69f340aa598b533e501e9753f"
+        "sigmd5": "c58ce06a23e865ab007cdfe5ba48bbad"
       },
       {
-        "name": "libdnf",
-        "version": "0.28.1",
-        "release": "1.fc30",
+        "name": "ostree-libs",
+        "version": "2020.3",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "39f972610f99c7d3610722c8972ee979"
+        "sigmd5": "771d9f0826a14507a364c44d155dfc36"
+      },
+      {
+        "name": "python3-libdnf",
+        "version": "0.45.0",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "bf082039d2fdfe11922f46a5c736e248"
+      },
+      {
+        "name": "grub2-tools-minimal",
+        "version": "2.04",
+        "release": "12.fc32",
+        "epoch": "1",
+        "arch": "x86_64",
+        "sigmd5": "d28b541f255db7d5b0a7747e2ed82542"
       },
       {
         "name": "python3-hawkey",
-        "version": "0.28.1",
-        "release": "1.fc30",
+        "version": "0.45.0",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "2caa6bbecd44ea1ca106e0ead7d73b0d"
+        "sigmd5": "4b4297e3ecb7bcd3f5c04b2096a619aa"
       },
       {
-        "name": "rpm-sign-libs",
-        "version": "4.14.2.1",
-        "release": "4.fc30.1",
+        "name": "python3-gpg",
+        "version": "1.13.1",
+        "release": "6.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "83552e4d2d4d313b5f234e7f1d3af627"
+        "sigmd5": "c69137c705b07297c79fb68ad0e44011"
+      },
+      {
+        "name": "libkcapi",
+        "version": "1.1.5",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "27b221a26534edb01ae2c853c70b65cb"
+      },
+      {
+        "name": "rpm-build-libs",
+        "version": "4.15.1",
+        "release": "2.fc32.1",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "10f4d4985c9fec99e388cd5a0045882a"
       },
       {
         "name": "python3-dnf",
-        "version": "4.2.2",
-        "release": "2.fc30",
+        "version": "4.2.19",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "12dea1bd9c72d8d65ec38fd191e99936"
+        "sigmd5": "40c18ea5c8ceb641d369fa78be6317dd"
+      },
+      {
+        "name": "dracut",
+        "version": "050",
+        "release": "26.git20200316.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "4dfba503b1573d34ef2f482f0772b78c"
+      },
+      {
+        "name": "ostree",
+        "version": "2020.3",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "c5b7435d603cce54b60870e8e718034f"
+      },
+      {
+        "name": "grub2-pc",
+        "version": "2.04",
+        "release": "12.fc32",
+        "epoch": "1",
+        "arch": "x86_64",
+        "sigmd5": "f73371b2b96627a2b8272bccbea83c9d"
+      },
+      {
+        "name": "qemu-img",
+        "version": "4.2.0",
+        "release": "7.fc32",
+        "epoch": "2",
+        "arch": "x86_64",
+        "sigmd5": "a3e28ed2bfc4e5bc84309dacc41e6f00"
+      },
+      {
+        "name": "policycoreutils",
+        "version": "3.0",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "e9185efa1b0a3244b6ba2ef8dfd9c0c9"
+      },
+      {
+        "name": "e2fsprogs",
+        "version": "1.45.5",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "c7185e7d66b9762769fbfc94e94dc9a1"
+      },
+      {
+        "name": "dosfstools",
+        "version": "4.1",
+        "release": "10.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "8ff77652b0fb0d07e13dccc62b7401f8"
       },
       {
         "name": "gpg-pubkey",
-        "version": "cfc659b9",
-        "release": "5b6eac67",
+        "version": "12c944d0",
+        "release": "5d5156ab",
         "epoch": null,
         "arch": null,
         "sigmd5": null
       },
       {
         "name": "xkeyboard-config",
-        "version": "2.24",
-        "release": "5.fc30",
+        "version": "2.29",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "6333653616e42d509e7b1f5b97fe5683"
+        "sigmd5": "83934bcefc2d480b63e2513e2c93adf4"
       },
       {
         "name": "tzdata",
-        "version": "2019a",
-        "release": "1.fc30",
+        "version": "2019c",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "9acfd2721598a8269a4ea39be492be53"
+        "sigmd5": "39629d98c2311afe658e1e343dc37cd7"
       },
       {
-        "name": "python-setuptools-wheel",
-        "version": "40.8.0",
-        "release": "1.fc30",
+        "name": "publicsuffix-list-dafsa",
+        "version": "20190417",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "27caf2e62a8758be111a75a632ec523e"
+        "sigmd5": "c8645cb7bea81f98f327125c3c199f30"
       },
       {
         "name": "ncurses-base",
         "version": "6.1",
-        "release": "10.20180923.fc30",
+        "release": "15.20191109.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "6dcf28a49d39fb633860d00dda8245da"
+        "sigmd5": "bcc888cbe6e1924ebf3c5b8841c177de"
       },
       {
-        "name": "dnf-data",
-        "version": "4.2.2",
-        "release": "2.fc30",
+        "name": "libreport-filesystem",
+        "version": "2.12.0",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "643b460fda84b5932b71ea98ea664c76"
+        "sigmd5": "e2fe02743dbc9fbfba9dca37f6237715"
       },
       {
-        "name": "kbd-legacy",
-        "version": "2.0.4",
-        "release": "13.fc30",
+        "name": "kbd-misc",
+        "version": "2.2.0",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "cce8b4caa8aa4df98b6d683a434d34f4"
+        "sigmd5": "3641a5b4e7aa91c53e550ecb45061549"
+      },
+      {
+        "name": "fuse-common",
+        "version": "3.9.1",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "f76df2a979b21c2519e8739635d326a8"
       },
       {
         "name": "fedora-release",
-        "version": "30",
+        "version": "32",
         "release": "1",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "0b43e4b63adefd5eb12ff4ddbdd140c9"
+        "sigmd5": "b57a30c84fc81fdc9fead7c909bbee29"
       },
       {
         "name": "fedora-release-common",
-        "version": "30",
+        "version": "32",
         "release": "1",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "be222759bec5d4f143f226a67bd6e715"
+        "sigmd5": "d56696ef387b6928f167a00d898fc211"
       },
       {
         "name": "filesystem",
-        "version": "3.10",
-        "release": "1.fc30",
+        "version": "3.14",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "c63518c1714504f7e9cabce15dfcffe3"
+        "sigmd5": "986b23d7a0228d53086eb04b0048afe2"
       },
       {
-        "name": "pcre2",
-        "version": "10.32",
-        "release": "9.fc30",
+        "name": "glibc-all-langpacks",
+        "version": "2.31",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "600bb3ffb28dfb90de4a3bf1f6d2424b"
+        "sigmd5": "cca26c597993d162e8185165b43bde26"
       },
       {
-        "name": "ncurses-libs",
-        "version": "6.1",
-        "release": "10.20180923.fc30",
+        "name": "glibc",
+        "version": "2.31",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "2811582890d1111ff69efe44eb08386a"
-      },
-      {
-        "name": "glibc-common",
-        "version": "2.29",
-        "release": "9.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "a0e2c65e81025f04834a99b4d0a0c431"
+        "sigmd5": "5522db65e482aff36ac6cc1953a4126a"
       },
       {
         "name": "bash",
-        "version": "5.0.2",
-        "release": "1.fc30",
+        "version": "5.0.11",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "dcb7c9d7b851752c5ae1283f2124644a"
+        "sigmd5": "1a7657f32e946c4c51e7159b00d0bd92"
       },
       {
-        "name": "zlib",
-        "version": "1.2.11",
-        "release": "15.fc30",
+        "name": "xz-libs",
+        "version": "5.2.5",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "dff0e3c6d3d6685d3732bcf55a435dae"
-      },
-      {
-        "name": "bzip2-libs",
-        "version": "1.0.6",
-        "release": "29.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "50a52c7c5c2aaffe5cc7d2b58c368561"
+        "sigmd5": "766d32f5c1fb65ead6413ab795d88ece"
       },
       {
         "name": "libxml2",
-        "version": "2.9.9",
-        "release": "2.fc30",
+        "version": "2.9.10",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "e77cfaf54048239c2e0ee54227568cae"
+        "sigmd5": "69f4e908f7a09e52d46fa7e74132e019"
       },
       {
-        "name": "libxcrypt",
-        "version": "4.4.4",
-        "release": "2.fc30",
+        "name": "libgpg-error",
+        "version": "1.36",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "7f3155eda4330416e3c82bdac3a3c9b6"
+        "sigmd5": "b45d5e272d72d261162eec0c89bac551"
       },
       {
-        "name": "libzstd",
-        "version": "1.3.8",
-        "release": "2.fc30",
+        "name": "libuuid",
+        "version": "2.35.1",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "5912802d03fdab00ec61f0848fcd8365"
+        "sigmd5": "9f46496be9a029f05d24e95ecee1d9c9"
       },
       {
-        "name": "libcap",
-        "version": "2.26",
-        "release": "5.fc30",
+        "name": "libdb",
+        "version": "5.3.28",
+        "release": "40.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "082fc3dafcf6c10460863d9d005ad36e"
+        "sigmd5": "e9120935431a448e4063c4e251e6c071"
+      },
+      {
+        "name": "mkpasswd",
+        "version": "5.5.6",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "bcac57cdb42d3327a25b25603c73a94f"
+      },
+      {
+        "name": "expat",
+        "version": "2.2.8",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "6e6f632714e8b1c0ff04253ce4aa696d"
       },
       {
         "name": "libgcrypt",
-        "version": "1.8.4",
-        "release": "3.fc30",
+        "version": "1.8.5",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "3333b598b922c6a7090456603bd5dee6"
+        "sigmd5": "e22dcbc649bd3d05f7bf61378e2619a6"
       },
       {
         "name": "gmp",
         "version": "6.1.2",
-        "release": "10.fc30",
+        "release": "13.fc32",
         "epoch": "1",
         "arch": "x86_64",
-        "sigmd5": "a3a565bfc47f1e16709ed094d3a2cf57"
+        "sigmd5": "b3f50ea7818ec1892d151382a4fa3847"
       },
       {
-        "name": "popt",
-        "version": "1.16",
-        "release": "17.fc30",
+        "name": "libunistring",
+        "version": "0.9.10",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "555a13d2bda34c9da344a8211a14a10d"
+        "sigmd5": "f5a6e89ef6730a68d78ab0c6e1130449"
       },
       {
-        "name": "libassuan",
-        "version": "2.5.2",
-        "release": "2.fc30",
+        "name": "libidn2",
+        "version": "2.3.0",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "609cb220453f80fd14c3ab4634e4a336"
-      },
-      {
-        "name": "libstdc++",
-        "version": "9.0.1",
-        "release": "0.10.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "7fecfa6eae7f5529f49cd9b6678798da"
-      },
-      {
-        "name": "readline",
-        "version": "8.0",
-        "release": "2.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "da2ba923aa76ee6a43ce869b1b5c6a49"
-      },
-      {
-        "name": "kmod-libs",
-        "version": "25",
-        "release": "5.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "bc422386f02947026035d0a942827f76"
-      },
-      {
-        "name": "libattr",
-        "version": "2.4.48",
-        "release": "5.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "fc77eb57f5fe4a3d4d00c5788fcafed2"
-      },
-      {
-        "name": "sed",
-        "version": "4.5",
-        "release": "3.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "21207e26f151df274ad8ba5e09a30e54"
-      },
-      {
-        "name": "audit-libs",
-        "version": "3.0",
-        "release": "0.7.20190326git03e7489.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "11ee0ea54f7943c79dd4c290e2ca200b"
-      },
-      {
-        "name": "p11-kit",
-        "version": "0.23.15",
-        "release": "3.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "9509f521e79e46cd29ef8c700d42d10d"
-      },
-      {
-        "name": "lz4-libs",
-        "version": "1.8.3",
-        "release": "2.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "f835563e6125ca28f7ec802be41fc8bd"
+        "sigmd5": "49345c9171963a7a856a5e8c9363e221"
       },
       {
         "name": "file-libs",
-        "version": "5.36",
-        "release": "2.fc30",
+        "version": "5.38",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "33bea38851955f83d35fb13258cf0bf5"
+        "sigmd5": "816c15aecee06ade94c5e79c17c74f2e"
       },
       {
-        "name": "alternatives",
-        "version": "1.11",
-        "release": "4.fc30",
+        "name": "grub2-common",
+        "version": "2.04",
+        "release": "12.fc32",
+        "epoch": "1",
+        "arch": "noarch",
+        "sigmd5": "bcc5a3ec9721018298e885c422f09e72"
+      },
+      {
+        "name": "libcap-ng",
+        "version": "0.7.10",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "95ca40e1ec4346908b7d5d0c0fb294c4"
+        "sigmd5": "f77c984890268ace764c24420abd529c"
+      },
+      {
+        "name": "libsmartcols",
+        "version": "2.35.1",
+        "release": "7.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "75d7b75186cb2cf3f54cb1064cde081b"
+      },
+      {
+        "name": "libselinux",
+        "version": "3.0",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "a785976854e3d3ba839e550e0d44cffc"
       },
       {
         "name": "json-c",
         "version": "0.13.1",
-        "release": "4.fc30",
+        "release": "9.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "11b0fe7c10d83e2219ac5381c6245e2f"
+        "sigmd5": "6e58b81762f582ab6834e2d77a4451d0"
       },
       {
-        "name": "libtasn1",
-        "version": "4.13",
-        "release": "7.fc30",
+        "name": "libacl",
+        "version": "2.2.53",
+        "release": "5.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "3ee272105c9b8fdd04d2162d8b416112"
+        "sigmd5": "88de7d7d4956cc2518c3e01cc40a2d21"
       },
       {
-        "name": "pcre",
-        "version": "8.43",
-        "release": "1.fc30",
+        "name": "libffi",
+        "version": "3.1",
+        "release": "24.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "d2476908922ee5437035bca6d189ba2d"
+        "sigmd5": "118fb49b78e3d9d8c88ba6c3471f2cdf"
       },
       {
-        "name": "xz",
-        "version": "5.2.4",
-        "release": "5.fc30",
+        "name": "lz4-libs",
+        "version": "1.9.1",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "12b9c90889c66496e1b824e769a6bf39"
+        "sigmd5": "300b5db4aa80e8f24800996e9f97e779"
       },
       {
         "name": "libsemanage",
-        "version": "2.9",
-        "release": "1.fc30",
+        "version": "3.0",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "9c39b9890de6d0eece02837f6a6790a8"
+        "sigmd5": "3370a0ca10a02a0a8ad47627557a71cc"
+      },
+      {
+        "name": "file",
+        "version": "5.38",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "2a8b578dc260824a91e473cf304cc51b"
+      },
+      {
+        "name": "libxcrypt-compat",
+        "version": "4.4.16",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "fb7dee5e0f756d051cfaf1ad430e484f"
+      },
+      {
+        "name": "libksba",
+        "version": "1.3.5",
+        "release": "11.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "6732a6ed8052e9de085c52c343e5cc98"
+      },
+      {
+        "name": "diffutils",
+        "version": "3.7",
+        "release": "4.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "246235295877d5e7c0569ab05ffba11a"
+      },
+      {
+        "name": "libgomp",
+        "version": "10.0.1",
+        "release": "0.11.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "945eab94ebdfe61ff55a9c40a3698b66"
+      },
+      {
+        "name": "p11-kit-trust",
+        "version": "0.23.20",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "ef4dd0997750d8c75d2b9827dfb2dcf0"
+      },
+      {
+        "name": "pcre",
+        "version": "8.44",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "e741483b87934b8d18c6f5f8d39e795e"
+      },
+      {
+        "name": "xz",
+        "version": "5.2.5",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "22d0ea4e9692ade568554098d8e45442"
+      },
+      {
+        "name": "fuse",
+        "version": "2.9.9",
+        "release": "9.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "a5660812547ff60bdfccfd81b2b54f07"
+      },
+      {
+        "name": "bubblewrap",
+        "version": "0.4.1",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "33cd5b2e3cfa7fa415ee38aaf3f3f9af"
+      },
+      {
+        "name": "libselinux-utils",
+        "version": "3.0",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "89f7cbc4feaf8bc12a9190954e2ff5d2"
       },
       {
         "name": "libpsl",
-        "version": "0.20.2",
-        "release": "6.fc30",
+        "version": "0.21.0",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "58f5b8233c9ace4287c7bb1165f4550f"
+        "sigmd5": "57ae1a0193ac4549b2e3f6d33922f56d"
       },
       {
-        "name": "nettle",
-        "version": "3.4.1rc1",
-        "release": "2.fc30",
+        "name": "libcomps",
+        "version": "0.1.14",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "db8d9e6f1ed4f66849791c37bbecc4c8"
+        "sigmd5": "25b1ab8c1b6ae4eab4ebc06fe3cc6d18"
       },
       {
-        "name": "libmetalink",
-        "version": "0.1.3",
-        "release": "8.fc30",
+        "name": "libdb-utils",
+        "version": "5.3.28",
+        "release": "40.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "3973ce817229820d828559174480bd26"
+        "sigmd5": "6b586a9321992a8d2e014a6fc42d2137"
       },
       {
         "name": "pigz",
         "version": "2.4",
-        "release": "4.fc30",
+        "release": "6.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "be871354aee649a86727d527164ea133"
+        "sigmd5": "809f4ec2dc00bd04ce28f51806e3fc45"
       },
       {
-        "name": "cpio",
-        "version": "2.12",
-        "release": "10.fc30",
+        "name": "ncurses",
+        "version": "6.1",
+        "release": "15.20191109.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "dd7c0c5a6f6e7aae5d47d84dd9c2c530"
+        "sigmd5": "613dcbf3f30c2c79cba464d92bdb76ca"
       },
       {
         "name": "gdbm-libs",
-        "version": "1.18",
-        "release": "4.fc30",
+        "version": "1.18.1",
+        "release": "3.fc32",
         "epoch": "1",
         "arch": "x86_64",
-        "sigmd5": "d6d818466f5af43dc8b257515150aebc"
+        "sigmd5": "6ef51d7b1871fc6e3719c0815c144caa"
       },
       {
         "name": "libargon2",
-        "version": "20161029",
-        "release": "8.fc30",
+        "version": "20171227",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "b7260cce3d4ec32258542b4ea3581bf2"
+        "sigmd5": "1bb0ed39117e595a9fe32766a9141977"
       },
       {
-        "name": "libnghttp2",
-        "version": "1.37.0",
-        "release": "1.fc30",
+        "name": "libmnl",
+        "version": "1.0.4",
+        "release": "11.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "15fc41aad3e4d628ed1adb2508e3a78c"
+        "sigmd5": "5b0ae58b5405e9b9df8a5c8070497398"
       },
       {
-        "name": "iptables-libs",
-        "version": "1.8.0",
-        "release": "5.fc30",
+        "name": "libnetfilter_conntrack",
+        "version": "1.0.7",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "9227d0c77f1a2d4e37ae5fb3b86136de"
+        "sigmd5": "711162f65237cd804fe3c4081eba0aef"
       },
       {
-        "name": "libsigsegv",
-        "version": "2.11",
-        "release": "7.fc30",
-        "epoch": null,
+        "name": "libpcap",
+        "version": "1.9.1",
+        "release": "3.fc32",
+        "epoch": "14",
         "arch": "x86_64",
-        "sigmd5": "1c6899f738f09f16fa21315534c0afbf"
+        "sigmd5": "b6611f6ed6c344606284043a9359aa10"
       },
       {
-        "name": "libverto",
-        "version": "0.3.0",
-        "release": "7.fc30",
+        "name": "libseccomp",
+        "version": "2.4.2",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "451262c3d1288440f817da72acfc7fbe"
+        "sigmd5": "6cbda391c1d0c716d54a5f5a46f29527"
       },
       {
-        "name": "libyaml",
-        "version": "0.2.1",
-        "release": "5.fc30",
+        "name": "gawk",
+        "version": "5.0.1",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "2012de44898fd094c1ccc27c297f298c"
+        "sigmd5": "06195f61c9f7a33c3abd058d55b000b7"
+      },
+      {
+        "name": "libxkbcommon",
+        "version": "0.10.0",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "6ed2ed09532bd913463e8294fc1c9255"
       },
       {
         "name": "npth",
         "version": "1.6",
-        "release": "2.fc30",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "cd412d35d60ee2a97053863ae601f5db"
+        "sigmd5": "f9053cc093db1bde58ebe1f4dfa7f968"
       },
       {
-        "name": "which",
-        "version": "2.21",
-        "release": "14.fc30",
+        "name": "coreutils-common",
+        "version": "8.32",
+        "release": "3.fc32.1",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "95675070b4f04d0c2c807e5d63d61df4"
-      },
-      {
-        "name": "cyrus-sasl-lib",
-        "version": "2.1.27",
-        "release": "0.6rc7.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "e1fe30dee8d5b3e9f1942cca082e67ac"
-      },
-      {
-        "name": "openldap",
-        "version": "2.4.47",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "38ba4968a49472346324c5d6a484d4ef"
-      },
-      {
-        "name": "libcurl",
-        "version": "7.64.0",
-        "release": "6.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "c1db9adbfb50aaceb9c82fcba738b8f5"
-      },
-      {
-        "name": "libkcapi-hmaccalc",
-        "version": "1.1.4",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "b39d450d0e3d67f2ecda31d8b7eb0fc5"
-      },
-      {
-        "name": "glib2",
-        "version": "2.60.1",
-        "release": "2.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "bd382b6d9f33e394f29a8a5a818a22fd"
-      },
-      {
-        "name": "gettext",
-        "version": "0.19.8.1",
-        "release": "18.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "062543c1f56c2780d5d568b3bf75a214"
+        "sigmd5": "96bccc652c222686b5fdc9a839f00764"
       },
       {
         "name": "libtirpc",
-        "version": "1.1.4",
-        "release": "2.rc2.fc30.1",
+        "version": "1.2.5",
+        "release": "1.rc2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "3681bc42a28e5c24fa9d4ae24820eec8"
+        "sigmd5": "a740cfdbcd0d40c7a193213eedc30020"
+      },
+      {
+        "name": "python-pip-wheel",
+        "version": "19.3.1",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "noarch",
+        "sigmd5": "b0044c5027acae817c9ea80982b330a8"
+      },
+      {
+        "name": "python3-pip",
+        "version": "19.3.1",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "noarch",
+        "sigmd5": "583c2e11af6dc6f031072bcb1b793c77"
+      },
+      {
+        "name": "python3-libs",
+        "version": "3.8.2",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "ede1f3d18c4e923da471a2c29c1db3db"
+      },
+      {
+        "name": "crypto-policies-scripts",
+        "version": "20191128",
+        "release": "5.gitcd267a5.fc32",
+        "epoch": null,
+        "arch": "noarch",
+        "sigmd5": "ee95ee1661dfb42d060760703eecdf04"
+      },
+      {
+        "name": "openssl-libs",
+        "version": "1.1.1d",
+        "release": "7.fc32",
+        "epoch": "1",
+        "arch": "x86_64",
+        "sigmd5": "37029f65aef4cda953f75e93ab408857"
+      },
+      {
+        "name": "crypto-policies",
+        "version": "20191128",
+        "release": "5.gitcd267a5.fc32",
+        "epoch": null,
+        "arch": "noarch",
+        "sigmd5": "62b12eb82af0e42dedfa43ad1d619043"
+      },
+      {
+        "name": "systemd-libs",
+        "version": "245.4",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "0e362d28a0a5a1d7a8c45198d75239cd"
       },
       {
         "name": "libarchive",
-        "version": "3.3.3",
-        "release": "6.fc30",
+        "version": "3.4.2",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "e7785d9c80eb282bea0ab086dec04623"
+        "sigmd5": "8333dc298a55f93a0fa109135a186bfa"
       },
       {
-        "name": "openssl",
-        "version": "1.1.1b",
-        "release": "3.fc30",
-        "epoch": "1",
-        "arch": "x86_64",
-        "sigmd5": "7615c40ecea7231e6a29118af16b3d42"
-      },
-      {
-        "name": "elfutils-libs",
-        "version": "0.176",
-        "release": "1.fc30",
+        "name": "shared-mime-info",
+        "version": "1.15",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "f5808fbe17c2d8724a9a2b3912adb03e"
+        "sigmd5": "17e85dbf9ff581eef05ac83e14f67b80"
+      },
+      {
+        "name": "libfdisk",
+        "version": "2.35.1",
+        "release": "7.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "faee41946bc939b651b7a1f66efcbf9a"
+      },
+      {
+        "name": "kmod-libs",
+        "version": "27",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "24c779673725a81450ef6358d6db74bc"
+      },
+      {
+        "name": "polkit-libs",
+        "version": "0.116",
+        "release": "7.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "39d0ffacc1751901e85b7ebca840e327"
       },
       {
         "name": "cracklib",
         "version": "2.9.6",
-        "release": "19.fc30",
+        "release": "22.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "7952690f78ae558b3cb8481a5fada30e"
+        "sigmd5": "b175fc11fdd5c893b1552ed1bf8f4e4c"
       },
       {
-        "name": "procps-ng",
-        "version": "3.3.15",
-        "release": "5.fc30",
+        "name": "libpwquality",
+        "version": "1.4.2",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "351336aea5ecd19a749d2d192f66e4a0"
+        "sigmd5": "0970d16e8b40004c30902af32b0527af"
       },
       {
-        "name": "pam",
-        "version": "1.3.1",
-        "release": "17.fc30",
+        "name": "util-linux",
+        "version": "2.35.1",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "f4004fe272a54f4581c309143e6cc0d3"
-      },
-      {
-        "name": "grub2-tools-minimal",
-        "version": "2.02",
-        "release": "75.fc30",
-        "epoch": "1",
-        "arch": "x86_64",
-        "sigmd5": "90b66de4e5ba78a94a649f2fc40d1da4"
-      },
-      {
-        "name": "device-mapper",
-        "version": "1.02.154",
-        "release": "3.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "3c4a03264c278c9a4dff83f654445512"
-      },
-      {
-        "name": "rpm",
-        "version": "4.14.2.1",
-        "release": "4.fc30.1",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "df678a7bc578d058bfed9bb4513d342c"
-      },
-      {
-        "name": "libmount",
-        "version": "2.33.2",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "e5490dc92d162fbe919f1562ba0896a6"
-      },
-      {
-        "name": "coreutils",
-        "version": "8.31",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "12b1a1c233a3d33f4ebe0642d985dfe1"
-      },
-      {
-        "name": "libblkid",
-        "version": "2.33.2",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "dfd73d3251bd732ecc42fef0f2fe7c6f"
-      },
-      {
-        "name": "shadow-utils",
-        "version": "4.6",
-        "release": "8.fc30",
-        "epoch": "2",
-        "arch": "x86_64",
-        "sigmd5": "57e452d182742849faea7e4253b59ded"
-      },
-      {
-        "name": "libutempter",
-        "version": "1.1.6",
-        "release": "16.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "5dd0cb594e59253a0682d95a5c2b3fc6"
-      },
-      {
-        "name": "systemd-pam",
-        "version": "241",
-        "release": "7.gita2eaa1c.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "2f9807eef0a9df7b8cb93a36d3235726"
-      },
-      {
-        "name": "dracut",
-        "version": "049",
-        "release": "26.git20181204.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "23d54d236461ef9272c371ac00a94af7"
-      },
-      {
-        "name": "trousers-lib",
-        "version": "0.3.13",
-        "release": "12.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "a58e404fad70b1996017867c1d28ede3"
-      },
-      {
-        "name": "grubby",
-        "version": "8.40",
-        "release": "30.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "565afe2e2aba236f7e3e7678aa54c3ce"
-      },
-      {
-        "name": "os-prober",
-        "version": "1.74",
-        "release": "8.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "98af4d3fdeabb91671afb75fdc3c9a08"
-      },
-      {
-        "name": "gnutls",
-        "version": "3.6.7",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "1b28f047dff8e9b6886d2ecaf9068f9e"
-      },
-      {
-        "name": "dbus-common",
-        "version": "1.12.12",
-        "release": "7.fc30",
-        "epoch": "1",
-        "arch": "noarch",
-        "sigmd5": "4bd5b0101d71efd4868e67a28e4252d7"
-      },
-      {
-        "name": "systemd-bootchart",
-        "version": "233",
-        "release": "4.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "b7879faf448062a3282de38b2a131692"
-      },
-      {
-        "name": "trousers",
-        "version": "0.3.13",
-        "release": "12.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "5ec034c0b4a099c087797d4d5ef57f82"
+        "sigmd5": "70c0c6a33d0da284c9d2a9260ae9623f"
       },
       {
         "name": "zchunk-libs",
-        "version": "1.1.1",
-        "release": "3.fc30",
+        "version": "1.1.5",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "40dadf8858e76e708f0637471eb3a14c"
+        "sigmd5": "32c98bb34dd679a12e7d52741728d5cc"
+      },
+      {
+        "name": "python3-unbound",
+        "version": "1.9.6",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "b86f838fd8c69d6ca77570dbd4f6c6a7"
+      },
+      {
+        "name": "libcroco",
+        "version": "0.6.13",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "205d7ea55cbf4a1816189c2cc1627eaa"
+      },
+      {
+        "name": "gettext-libs",
+        "version": "0.20.1",
+        "release": "4.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "56e92ca004eabf724bb9513ea75ee902"
       },
       {
         "name": "libmodulemd1",
-        "version": "1.8.6",
-        "release": "3.fc30",
+        "version": "1.8.16",
+        "release": "2.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "a2318d33927f562bc969da2a1a82da54"
-      },
-      {
-        "name": "rpm-build-libs",
-        "version": "4.14.2.1",
-        "release": "4.fc30.1",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "34b123d7c75c1aa31b976dd1a7d10740"
-      },
-      {
-        "name": "python-pip-wheel",
-        "version": "19.0.3",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "noarch",
-        "sigmd5": "d4d849dd499eb76f9e0c953e352046cf"
-      },
-      {
-        "name": "python3-setuptools",
-        "version": "40.8.0",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "noarch",
-        "sigmd5": "7d634972f6b29e54f9212ea01ae08841"
-      },
-      {
-        "name": "python3-libs",
-        "version": "3.7.3",
-        "release": "1.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "bfe6f4d7cb204af0c6c5c44dd6c479a6"
-      },
-      {
-        "name": "unbound-libs",
-        "version": "1.8.3",
-        "release": "4.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "9eb2f9525b6a39bd0e768a30da48c29e"
-      },
-      {
-        "name": "dbus-libs",
-        "version": "1.12.12",
-        "release": "7.fc30",
-        "epoch": "1",
-        "arch": "x86_64",
-        "sigmd5": "cb4c18b76ef0a0206b6d045a0a02a772"
-      },
-      {
-        "name": "libusbx",
-        "version": "1.0.22",
-        "release": "2.fc30",
-        "epoch": null,
-        "arch": "x86_64",
-        "sigmd5": "738e8a7fa5d3711f9257dcebb407f362"
+        "sigmd5": "666b860c8d881d1de49a3cfbe24c31b5"
       },
       {
         "name": "pinentry",
         "version": "1.1.0",
-        "release": "5.fc30",
+        "release": "7.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "898a0d2943c7d767319e3cb332232f7a"
+        "sigmd5": "f87987781a81e04aa5b88e1fa7e8e6ae"
+      },
+      {
+        "name": "libusbx",
+        "version": "1.0.23",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "3175fa0eadf7a64afb547735949ce8a5"
+      },
+      {
+        "name": "libssh",
+        "version": "0.9.3",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "369cf82d163da2af1c6df16fd47ad566"
+      },
+      {
+        "name": "tss2",
+        "version": "1331",
+        "release": "4.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "6e2a9a29ac68021f2e8f3c3e9c0e1e3f"
+      },
+      {
+        "name": "trousers-lib",
+        "version": "0.3.13",
+        "release": "13.fc31",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "8f0a461068ab8275ecd4e951e5f69e66"
+      },
+      {
+        "name": "cyrus-sasl-lib",
+        "version": "2.1.27",
+        "release": "4.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "74b403dfdec1777ec1b4e33b37217e1d"
+      },
+      {
+        "name": "libcurl",
+        "version": "7.69.1",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "a24cf33e4d8d83bbea9845a4ecd2f8eb"
+      },
+      {
+        "name": "rpm",
+        "version": "4.15.1",
+        "release": "2.fc32.1",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "1eaafcc1c0a09c142dae91dbbd3cbe65"
+      },
+      {
+        "name": "libsolv",
+        "version": "0.7.11",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "518200dcd79efda935d6f4b052291252"
+      },
+      {
+        "name": "deltarpm",
+        "version": "3.6.2",
+        "release": "5.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "f4d442bd7cf5cef0d591eb1534f12a69"
+      },
+      {
+        "name": "device-mapper",
+        "version": "1.02.171",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "01deb4c3961682bd2c28db384fd244e8"
+      },
+      {
+        "name": "cryptsetup-libs",
+        "version": "2.3.0",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "33f3c8984c8e03f4ccd9d0c9d01d0342"
+      },
+      {
+        "name": "elfutils-default-yama-scope",
+        "version": "0.179",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "noarch",
+        "sigmd5": "c9461b427137b5e50d56557b33604077"
+      },
+      {
+        "name": "dbus",
+        "version": "1.12.16",
+        "release": "4.fc32",
+        "epoch": "1",
+        "arch": "x86_64",
+        "sigmd5": "c18418b188338c49e26570363f7a6079"
+      },
+      {
+        "name": "gnutls",
+        "version": "3.6.13",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "738af3167d12530c60d502bb0d92d5ba"
+      },
+      {
+        "name": "dbus-common",
+        "version": "1.12.16",
+        "release": "4.fc32",
+        "epoch": "1",
+        "arch": "noarch",
+        "sigmd5": "0b3a5c5d81762a9de91f609263c6ea64"
+      },
+      {
+        "name": "trousers",
+        "version": "0.3.13",
+        "release": "13.fc31",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "eaa0467e1b72ba59abc2dc3ced36ca01"
       },
       {
         "name": "gnupg2",
-        "version": "2.2.13",
-        "release": "1.fc30",
+        "version": "2.2.19",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "74c0fe355e80c47150b07c0502340b3a"
+        "sigmd5": "92c7c82b45e88a18853ea5c6700cdfa6"
       },
       {
         "name": "librepo",
-        "version": "1.9.6",
-        "release": "2.fc30",
+        "version": "1.11.1",
+        "release": "4.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "4e24dcd802efe0815d941a9b942493b3"
+        "sigmd5": "4664ffb9975ac56d0b5124b318d30a68"
       },
       {
-        "name": "python3-libdnf",
-        "version": "0.28.1",
-        "release": "1.fc30",
+        "name": "libdnf",
+        "version": "0.45.0",
+        "release": "3.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "b34153f3a3dec3c71fcba6f513480e6f"
+        "sigmd5": "83d2287a47bfce2e2c5e98fcc7cf7486"
       },
       {
-        "name": "python3-gpg",
-        "version": "1.12.0",
-        "release": "1.fc30",
+        "name": "systemd-udev",
+        "version": "245.4",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "5c16ff772f433d05c290e0e6f01ba520"
+        "sigmd5": "da488cf31b3b1f96ad888313a0905bb5"
+      },
+      {
+        "name": "os-prober",
+        "version": "1.77",
+        "release": "4.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "b4a1c49d87383146dc7649703f6e72cf"
+      },
+      {
+        "name": "rpm-ostree-libs",
+        "version": "2020.1",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "59dc888911a53ab89cdc5b2a2ad07343"
+      },
+      {
+        "name": "rpm-sign-libs",
+        "version": "4.15.1",
+        "release": "2.fc32.1",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "d8bed149c1d41c6aac244444c64344fd"
+      },
+      {
+        "name": "libkcapi-hmaccalc",
+        "version": "1.1.5",
+        "release": "2.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "a585c4abb928002f46f54f50c0af36a0"
       },
       {
         "name": "python3-rpm",
-        "version": "4.14.2.1",
-        "release": "4.fc30.1",
+        "version": "4.15.1",
+        "release": "2.fc32.1",
         "epoch": null,
         "arch": "x86_64",
-        "sigmd5": "4fbd62083cebb27aeefb540ba138badb"
+        "sigmd5": "65be4d34de2263d49c4e0a289b7bea4f"
+      },
+      {
+        "name": "kpartx",
+        "version": "0.8.2",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "a97269fe80d93ea98249089df229b495"
+      },
+      {
+        "name": "grub2-tools",
+        "version": "2.04",
+        "release": "12.fc32",
+        "epoch": "1",
+        "arch": "x86_64",
+        "sigmd5": "90331ab04fec69a0d84518b96a2dfd17"
+      },
+      {
+        "name": "rpm-ostree",
+        "version": "2020.1",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "f1cc45f3b922657b19369a537498a1b0"
       },
       {
         "name": "dnf",
-        "version": "4.2.2",
-        "release": "2.fc30",
+        "version": "4.2.19",
+        "release": "1.fc32",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "6dccfa0abef0b49ef03d72224e64a530"
+        "sigmd5": "5f043511ca8520c7e55ea9cba62a344b"
+      },
+      {
+        "name": "xfsprogs",
+        "version": "5.4.0",
+        "release": "3.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "330b3eafb46b863876ef590265983dec"
+      },
+      {
+        "name": "btrfs-progs",
+        "version": "5.6",
+        "release": "1.fc32",
+        "epoch": null,
+        "arch": "x86_64",
+        "sigmd5": "ca2745dc7ecaa155fcfa4139a507f48f"
+      },
+      {
+        "name": "tar",
+        "version": "1.32",
+        "release": "4.fc32",
+        "epoch": "2",
+        "arch": "x86_64",
+        "sigmd5": "4003d96e972547b842794cf12166447a"
       }
     ]
   },
-  "c0aafd26057080f873c2ef0629065eea039704815cec14e7dd8811dd4e98374e": {
+  "2101af93f7a9ec3d1b01445f91d4ab3237efa47aa4d23fb0107b1c9ea9c59052": {
     "packages": [
       {
         "name": "fedora-gpg-keys",
-        "version": "30",
+        "version": "32",
         "release": "1",
         "epoch": null,
         "arch": "noarch",
-        "sigmd5": "087f285cb1ebcaaa331eb7a2a06911ad"
+        "sigmd5": "a4bd23a6b63e5ea2b70ca47d4cb5d876"
       },
       {
         "name": "gpg-pubkey",
-        "version": "cfc659b9",
-        "release": "5b6eac67",
+        "version": "12c944d0",
+        "release": "5d5156ab",
         "epoch": null,
         "arch": null,
         "sigmd5": null
