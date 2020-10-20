@@ -360,6 +360,12 @@ class Pipeline:
         return results
 
 
+def detect_host_runner():
+    """Use os-release(5) to detect the runner for the host"""
+    osname = osrelease.describe_os("/etc/os-release", "/usr/lib/os-release")
+    return "org.osbuild." + osname
+
+
 def load_build(description, sources_options):
     pipeline = description.get("pipeline")
     if pipeline:
@@ -375,7 +381,7 @@ def load(description, sources_options):
     if build:
         build_pipeline, runner = load_build(build, sources_options)
     else:
-        build_pipeline, runner = None, "org.osbuild." + osrelease.describe_os("/etc/os-release", "/usr/lib/os-release")
+        build_pipeline, runner = None, detect_host_runner()
 
     pipeline = Pipeline(runner, build_pipeline)
 
