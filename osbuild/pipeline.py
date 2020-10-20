@@ -362,7 +362,7 @@ class Pipeline:
 
 def detect_host_runner():
     """Use os-release(5) to detect the runner for the host"""
-    osname = osrelease.describe_os("/etc/os-release", "/usr/lib/os-release")
+    osname = osrelease.describe_os(*osrelease.DEFAULT_PATHS)
     return "org.osbuild." + osname
 
 
