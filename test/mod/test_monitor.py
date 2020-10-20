@@ -12,6 +12,7 @@ from collections import defaultdict
 import osbuild
 import osbuild.meta
 from osbuild.monitor import LogMonitor
+from osbuild.pipeline import detect_host_runner
 from .. import test
 
 
@@ -53,7 +54,8 @@ class TestMonitor(unittest.TestCase):
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_log_monitor_vfuncs(self):
         # Checks the basic functioning of the LogMonitor
-        pipeline = osbuild.Pipeline("org.osbuild.linux")
+        runner = detect_host_runner()
+        pipeline = osbuild.Pipeline(runner=runner)
         pipeline.add_stage("org.osbuild.noop", {}, {
             "isthisthereallife": False
         })
@@ -83,7 +85,8 @@ class TestMonitor(unittest.TestCase):
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_monitor_integration(self):
         # Checks the monitoring API is called properly from the pipeline
-        pipeline = osbuild.Pipeline("org.osbuild.linux")
+        runner = detect_host_runner()
+        pipeline = osbuild.Pipeline(runner=runner)
         pipeline.add_stage("org.osbuild.noop", {}, {
             "isthisthereallife": False
         })

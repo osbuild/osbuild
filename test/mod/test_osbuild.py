@@ -12,6 +12,7 @@ import unittest
 import osbuild
 import osbuild.meta
 from osbuild.monitor import NullMonitor
+from osbuild.pipeline import detect_host_runner
 from .. import test
 
 
@@ -52,7 +53,7 @@ class TestDescriptions(unittest.TestCase):
             data = pathlib.Path(tmpdir, "data")
             cache = pathlib.Path(tmpdir, "cache")
             root = pathlib.Path("/")
-            runner = "org.osbuild.linux"
+            runner = detect_host_runner()
             monitor = NullMonitor(sys.stderr.fileno())
             libdir = os.path.abspath(os.curdir)
 
@@ -86,7 +87,7 @@ class TestDescriptions(unittest.TestCase):
             cache = pathlib.Path(tmpdir, "cache")
             output = pathlib.Path(tmpdir, "output")
             root = pathlib.Path("/")
-            runner = "org.osbuild.linux"
+            runner = detect_host_runner()
             monitor = NullMonitor(sys.stderr.fileno())
             libdir = os.path.abspath(os.curdir)
 
