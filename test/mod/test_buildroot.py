@@ -10,6 +10,7 @@ import unittest
 
 from osbuild.buildroot import BuildRoot
 from osbuild.monitor import LogMonitor, NullMonitor
+from osbuild.pipeline import detect_host_runner
 from .. import test
 
 
@@ -23,7 +24,7 @@ class TestBuildRoot(test.TestBase):
         self.tmp.cleanup()
 
     def test_basic(self):
-        runner = "org.osbuild.linux"
+        runner = detect_host_runner()
         libdir = os.path.abspath(os.curdir)
         var = pathlib.Path(self.tmp.name, "var")
         var.mkdir()
@@ -64,7 +65,7 @@ class TestBuildRoot(test.TestBase):
         self.assertEqual(log, r.output)
 
     def test_output(self):
-        runner = "org.osbuild.linux"
+        runner = detect_host_runner()
         libdir = os.path.abspath(os.curdir)
         var = pathlib.Path(self.tmp.name, "var")
         var.mkdir()
@@ -81,7 +82,7 @@ class TestBuildRoot(test.TestBase):
 
     @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
     def test_bind_mounts(self):
-        runner = "org.osbuild.linux"
+        runner = detect_host_runner()
         libdir = os.path.abspath(os.curdir)
         var = pathlib.Path(self.tmp.name, "var")
         var.mkdir()
@@ -118,7 +119,7 @@ class TestBuildRoot(test.TestBase):
         # because RPM and other tools must not assume the policy
         # of the host is the valid policy
 
-        runner = "org.osbuild.linux"
+        runner = detect_host_runner()
         libdir = os.path.abspath(os.curdir)
         var = pathlib.Path(self.tmp.name, "var")
         var.mkdir()
