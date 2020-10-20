@@ -77,7 +77,7 @@ class TestBuildRoot(test.TestBase):
             r = root.run(["/usr/bin/echo", data], monitor)
             self.assertEqual(r.returncode, 0)
 
-        self.assertEqual(data, r.output.strip())
+        self.assertIn(data, r.output.strip())
 
     @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
     def test_bind_mounts(self):
