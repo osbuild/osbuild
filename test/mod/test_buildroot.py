@@ -29,7 +29,7 @@ class TestBuildRoot(test.TestBase):
         var.mkdir()
 
         monitor = NullMonitor(sys.stderr.fileno())
-        with BuildRoot("/", runner, libdir=libdir, var=var) as root:
+        with BuildRoot("/", runner, libdir, var=var) as root:
 
             r = root.run(["/usr/bin/true"], monitor)
             self.assertEqual(r.returncode, 0)
@@ -49,7 +49,7 @@ class TestBuildRoot(test.TestBase):
 
         logfile = os.path.join(self.tmp.name, "log.txt")
 
-        with BuildRoot("/", runner, libdir=libdir, var=var) as root, \
+        with BuildRoot("/", runner, libdir, var=var) as root, \
              open(logfile, "w") as log:
 
             monitor = LogMonitor(log.fileno())
@@ -72,7 +72,7 @@ class TestBuildRoot(test.TestBase):
         data = "42. cats are superior to dogs"
 
         monitor = NullMonitor(sys.stderr.fileno())
-        with BuildRoot("/", runner, libdir=libdir, var=var) as root:
+        with BuildRoot("/", runner, libdir, var=var) as root:
 
             r = root.run(["/usr/bin/echo", data], monitor)
             self.assertEqual(r.returncode, 0)
@@ -92,7 +92,7 @@ class TestBuildRoot(test.TestBase):
         scripts = os.path.join(self.locate_test_data(), "scripts")
 
         monitor = NullMonitor(sys.stderr.fileno())
-        with BuildRoot("/", runner, libdir=libdir, var=var) as root:
+        with BuildRoot("/", runner, libdir, var=var) as root:
 
             ro_binds = [f"{scripts}:/scripts"]
 
@@ -126,7 +126,7 @@ class TestBuildRoot(test.TestBase):
         scripts = os.path.join(self.locate_test_data(), "scripts")
 
         monitor = NullMonitor(sys.stderr.fileno())
-        with BuildRoot("/", runner, libdir=libdir, var=var) as root:
+        with BuildRoot("/", runner, libdir, var=var) as root:
 
             ro_binds = [f"{scripts}:/scripts"]
 
