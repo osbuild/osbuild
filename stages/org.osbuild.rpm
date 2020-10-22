@@ -2,8 +2,6 @@
 """
 Verify, and install RPM packages
 
-Verify, and install RPM packages.
-
 `gpgkeys` should be an array of strings containing each GPG key to be used
 to verify the packages.
 
