@@ -10,7 +10,7 @@ function greenprint {
 source /etc/os-release
 ARCH=$(uname -m)
 
-# Mock is only available in EPEL for RHEL.
+# mock and s3cmd are only available in EPEL for RHEL.
 if [[ $ID == rhel ]]; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \
@@ -27,13 +27,7 @@ fi
 
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
-sudo dnf -y install createrepo_c make mock python3-pip rpm-build
-
-# Install s3cmd if it is not present.
-if ! s3cmd --version > /dev/null 2>&1; then
-    greenprint "📦 Installing s3cmd"
-    sudo pip3 -q install s3cmd
-fi
+sudo dnf -y install createrepo_c make mock python3-pip rpm-build s3cmd
 
 # Enable fastestmirror for mock on Fedora.
 if [[ $ID == fedora ]]; then
