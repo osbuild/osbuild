@@ -46,6 +46,20 @@ pipeline {
                         )
                     }
                 }
+                stage('Fedora 33') {
+                    agent { label "f33cloudbase && x86_64" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        sh "schutzbot/mockbuild.sh"
+                        stash (
+                            includes: 'osbuild-mock.repo',
+                            name: 'fedora33'
+                        )
+                    }
+                }
                 stage('RHEL 8 CDN') {
                     agent { label "rhel8cloudbase && x86_64" }
                     environment {
@@ -99,6 +113,23 @@ pipeline {
                     post {
                         always {
                             preserve_logs('fedora32-image')
+                        }
+                    }
+                }
+                stage('Fedora 33') {
+                    agent { label "f33cloudbase && x86_64 && psi" }
+                    environment {
+                        TEST_TYPE = "image"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        DISTRO_CODE = "fedora33"
+                    }
+                    steps {
+                        unstash 'fedora33'
+                        run_tests()
+                    }
+                    post {
+                        always {
+                            preserve_logs('fedora33-image')
                         }
                     }
                 }
