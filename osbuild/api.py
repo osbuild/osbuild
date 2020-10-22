@@ -177,8 +177,11 @@ class API(BaseAPI):
         self._output_data.write(data)
         self.monitor.log(data)
 
-    def _set_metadata(self, message):
-        self.metadata.update(message["metadata"])
+    def _set_metadata(self, message, fds):
+        fd = message["metadata"]
+        with os.fdopen(fds.steal(fd), encoding="utf-8") as f:
+            data = json.load(f)
+        self.metadata.update(data)
 
     def _get_arguments(self, sock):
         with self._prepare_input() as data:
@@ -194,7 +197,7 @@ class API(BaseAPI):
 
     def _message(self, msg, fds, sock):
         if msg["method"] == 'add-metadata':
-            self._set_metadata(msg)
+            self._set_metadata(msg, fds)
         elif msg["method"] == 'exception':
             self._get_exception(msg)
         elif msg["method"] == 'get-arguments':
@@ -250,9 +253,16 @@ def arguments(path="/run/osbuild/api/osbuild"):
 
 def metadata(data: Dict, path="/run/osbuild/api/osbuild"):
     """Update metadata for the current module"""
-    with jsoncomm.Socket.new_client(path) as client:
+
+    def data_to_file():
+        with tempfile.TemporaryFile() as f:
+            f.write(json.dumps(data).encode('utf-8'))
+            # re-open the file to get a read-only file descriptor
+            return open(f"/proc/self/fd/{f.fileno()}", "r")
+
+    with jsoncomm.Socket.new_client(path) as client, data_to_file() as f:
         msg = {
             "method": "add-metadata",
-            "metadata": data
+            "metadata": 0
         }
-        client.send(msg)
+        client.send(msg, fds=[f.fileno()])
