@@ -18,6 +18,13 @@ Uses the following binaries from the host:
     * `rpmkeys` to import keys and to verify signatures for each package
     * `sh`, `mkdir`, `mount`, `chmod` to prepare the target tree for `rpm`
     * `rpm` to install packages into the target tree
+
+This stage will return the following metadata via the osbuild API:
+  packages: a list of objects representing the installed packages,
+            with information about:
+              name, version, release,
+            and optionally:
+              epoch, arch, sigmd5, sigpgp, siggpg
 """
 
 
