@@ -90,7 +90,9 @@ def generate_package_metadata(tree):
     "release": "%{RELEASE}",
     "epoch": %|EPOCH?{"%{EPOCH}"}:{null}|,
     "arch": %|ARCH?{"%{ARCH}"}:{null}|,
-    "sigmd5": %|SIGMD5?{"%{SIGMD5}"}:{null}|
+    "sigmd5": %|SIGMD5?{"%{SIGMD5}"}:{null}|,
+    "sigpgp": %|SIGPGP?{"%{SIGPGP}"}:{null}|,
+    "siggpg": %|SIGGPG?{"%{SIGGPG}"}:{null}|
     \},
     """
 
