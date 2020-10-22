@@ -32,20 +32,6 @@ pipeline {
             failFast true
 
             parallel {
-                stage('Fedora 31') {
-                    agent { label "f31cloudbase && x86_64" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/mockbuild.sh"
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'fedora31'
-                        )
-                    }
-                }
                 stage('Fedora 32') {
                     agent { label "f32cloudbase && x86_64" }
                     environment {
@@ -99,23 +85,6 @@ pipeline {
             failFast false
 
             parallel {
-                stage('Fedora 31') {
-                    agent { label "f31cloudbase && x86_64 && psi" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        DISTRO_CODE = "fedora31"
-                    }
-                    steps {
-                        unstash 'fedora31'
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora31-image')
-                        }
-                    }
-                }
                 stage('Fedora 32') {
                     agent { label "f32cloudbase && x86_64 && psi" }
                     environment {
