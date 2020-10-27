@@ -232,11 +232,13 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         data = io.StringIO()
 
+        fd = proc.stdout.fileno()
         while True:
-            txt = proc.stdout.read(4096)
-            if not txt:
+            buf = os.read(fd, 32768)
+            if not buf:
                 break
 
+            txt = buf.decode("utf-8")
             data.write(txt)
             monitor.log(txt)
 
