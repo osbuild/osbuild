@@ -172,4 +172,4 @@ def osbuild_cli():
             print()
             print(f"{RESET}{BOLD}{RED}Failed{RESET}")
 
-    sys.exit(0 if r["success"] else 1)
+    return 0 if r["success"] else 1
