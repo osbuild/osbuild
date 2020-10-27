@@ -227,9 +227,6 @@ void preserve_logs(test_slug) {
     // Save the systemd journal.
     sh "sudo journalctl --boot > systemd-journald.log"
 
-    // Find any AVCs in the audit log and save those.
-    sh "sudo grep AVC /var/log/audit/audit.log > selinux-avc.log"
-
     // Make a directory for the log files and move the logs there.
     sh "mkdir ${test_slug} && mv *.log *.jpg ${test_slug}/ || true"
 
