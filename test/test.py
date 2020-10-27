@@ -269,7 +269,7 @@ class OSBuild(contextlib.AbstractContextManager):
         print(data_stderr)
         print("-- END ---------------------------------")
 
-    def compile(self, data_stdin, output_dir=None, checkpoints=None):
+    def compile(self, data_stdin, output_dir=None, checkpoints=None, check=False):
         """Compile an Artifact
 
         This takes a manifest as `data_stdin`, executes the pipeline, and
@@ -280,6 +280,10 @@ class OSBuild(contextlib.AbstractContextManager):
         the output_dir parameter. If it's set to None, a temporary directory
         is used and thus the caller cannot access the built artifact.
 
+        `check` determines what happens when running osbuild fails. If it is
+        true, subprocess.CalledProcessError is raised. Otherwise, osbuild's
+        output is printed to stdout and a test assertion is raised.
+
         Returns the build result as dictionary.
         """
 
@@ -289,7 +293,7 @@ class OSBuild(contextlib.AbstractContextManager):
             output_dir_context = contextlib.nullcontext(output_dir)
 
         with output_dir_context as osbuild_output_dir:
-            cmd_args = []
+            cmd_args = ["python3", "-m", "osbuild"]
 
             cmd_args += ["--json"]
             cmd_args += ["--libdir", "."]
@@ -299,13 +303,15 @@ class OSBuild(contextlib.AbstractContextManager):
             for c in (checkpoints or []):
                 cmd_args += ["--checkpoint", c]
 
+            cmd_args += ["-"]
+
             # Spawn the `osbuild` executable, feed it the specified data on
             # `STDIN` and wait for completion. If we are interrupted, we always
             # wait for `osbuild` to shut down, so we can clean up its file-system
             # trees (they would trigger `EBUSY` if we didn't wait).
             try:
                 p = subprocess.Popen(
-                    ["python3", "-m", "osbuild"] + cmd_args + ["-"],
+                    cmd_args,
                     encoding="utf-8",
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
@@ -316,8 +322,10 @@ class OSBuild(contextlib.AbstractContextManager):
                 p.wait()
                 raise
 
-        # If execution failed, print results to `STDOUT`.
+        # If execution failed, raise exception or print results to `STDOUT`.
         if p.returncode != 0:
+            if check:
+                raise subprocess.CalledProcessError(p.returncode, cmd_args, data_stdout, data_stderr)
             self._print_result(p.returncode, data_stdout, data_stderr)
             self._unittest.assertEqual(p.returncode, 0)
 
