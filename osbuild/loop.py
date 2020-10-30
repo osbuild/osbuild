@@ -14,7 +14,7 @@ __all__ = [
 
 class UnexpectedDevice(Exception):
     def __init__(self, expected_minor, rdev, mode):
-        super(UnexpectedDevice, self).__init__()
+        super().__init__()
         self.expected_minor = expected_minor
         self.rdev = rdev
         self.mode = mode
