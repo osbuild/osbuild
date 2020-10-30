@@ -316,8 +316,8 @@ class Socket(contextlib.AbstractContextManager):
 
         try:
             payload = json.loads(msg[0])
-        except json.JSONDecodeError:
-            raise BufferError
+        except json.JSONDecodeError as e:
+            raise BufferError from e
 
         return (payload, fdset, msg[3])
 
