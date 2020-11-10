@@ -47,11 +47,15 @@ REPO_BUCKET=osbuild-composer-repos
 # Public URL for the S3 bucket with our artifacts.
 MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
 
+# Relative path of the repository – used for constructing both the local and
+# remote paths below, so that they're consistent.
+REPO_PATH=${JOB_NAME}/${COMMIT}/${ID}${VERSION_ID//./}_${ARCH}
+
 # Directory to hold the RPMs temporarily before we upload them.
-REPO_DIR=repo/${JOB_NAME}/${COMMIT}/${ID}${VERSION_ID//./}_${ARCH}
+REPO_DIR=repo/${REPO_PATH}
 
 # Full URL to the RPM repository after they are uploaded.
-REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${COMMIT}/${ID}${VERSION_ID//./}_${ARCH}
+REPO_URL=${MOCK_REPO_BASE_URL}/${REPO_PATH}
 
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
