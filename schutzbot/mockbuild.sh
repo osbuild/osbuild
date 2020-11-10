@@ -49,7 +49,7 @@ MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws
 
 # Relative path of the repository – used for constructing both the local and
 # remote paths below, so that they're consistent.
-REPO_PATH=${JOB_NAME}/${COMMIT}/${ID}${VERSION_ID//./}_${ARCH}
+REPO_PATH=osbuild/${ID}-${VERSION_ID}/${ARCH}/${COMMIT}
 
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${REPO_PATH}
@@ -108,7 +108,7 @@ popd
 greenprint "📜 Generating dnf repository file"
 tee osbuild-mock.repo << EOF
 [osbuild-mock]
-name=osbuild mock ${JOB_NAME}-${COMMIT} ${ID}${VERSION_ID//./}
+name=osbuild mock ${COMMIT}
 baseurl=${REPO_URL}
 enabled=1
 gpgcheck=0
