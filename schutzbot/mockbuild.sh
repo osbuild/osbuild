@@ -41,11 +41,8 @@ WORKSPACE=${WORKSPACE:-$(pwd)}
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
-# Jenkins takes the proposed PR and merges it onto master. Although this
-# creates a new SHA (which is slightly confusing), it ensures that the code
-# merges properly against master and it tests the code against the latest
-# commit in master, which is certainly good.
-POST_MERGE_SHA=$(git rev-parse --short HEAD)
+# The commit this script operates on.
+COMMIT=$(git rev-parse --short HEAD)
 
 # Bucket in S3 where our artifacts are uploaded
 REPO_BUCKET=osbuild-composer-repos
@@ -54,18 +51,18 @@ REPO_BUCKET=osbuild-composer-repos
 MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
 
 # Directory to hold the RPMs temporarily before we upload them.
-REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
+REPO_DIR=repo/${JOB_NAME}/${COMMIT}/${ID}${VERSION_ID//./}_${ARCH}
 
 # Maintain a directory for the master branch that always contains the latest
 # RPM packages.
 REPO_DIR_LATEST=repo/${JOB_NAME}/latest/${ID}${VERSION_ID//./}_${ARCH}
 
 # Full URL to the RPM repository after they are uploaded.
-REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
+REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${COMMIT}/${ID}${VERSION_ID//./}_${ARCH}
 
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
-greenprint "📦 Post merge SHA: ${POST_MERGE_SHA}"
+greenprint "📦 SHA: ${COMMIT}"
 greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 
 # Build source RPMs.
@@ -110,7 +107,7 @@ popd
 greenprint "📜 Generating dnf repository file"
 tee osbuild-mock.repo << EOF
 [osbuild-mock]
-name=osbuild mock ${JOB_NAME}-${POST_MERGE_SHA} ${ID}${VERSION_ID//./}
+name=osbuild mock ${JOB_NAME}-${COMMIT} ${ID}${VERSION_ID//./}
 baseurl=${REPO_URL}
 enabled=1
 gpgcheck=0
