@@ -53,10 +53,6 @@ MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${JOB_NAME}/${COMMIT}/${ID}${VERSION_ID//./}_${ARCH}
 
-# Maintain a directory for the master branch that always contains the latest
-# RPM packages.
-REPO_DIR_LATEST=repo/${JOB_NAME}/latest/${ID}${VERSION_ID//./}_${ARCH}
-
 # Full URL to the RPM repository after they are uploaded.
 REPO_URL=${MOCK_REPO_BASE_URL}/${JOB_NAME}/${COMMIT}/${ID}${VERSION_ID//./}_${ARCH}
 
@@ -88,14 +84,6 @@ mv ${REPO_DIR}/*.log $WORKSPACE
 # Create a repo of the built RPMs.
 greenprint "⛓️ Creating dnf repository"
 createrepo_c ${REPO_DIR}
-
-# Copy the current build to the latest directory.
-mkdir -p $REPO_DIR_LATEST
-cp -arv ${REPO_DIR}/ ${REPO_DIR_LATEST}/
-
-# Remove the previous latest build for this branch.
-# Don't fail if the path is missing.
-s3cmd --recursive rm s3://${REPO_BUCKET}/${JOB_NAME}/latest/${ID}${VERSION_ID//./}_${ARCH} || true
 
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"
