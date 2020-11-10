@@ -35,9 +35,6 @@ if [[ $ID == fedora ]]; then
         /etc/mock/templates/fedora-branched.tpl
 fi
 
-# Jenkins sets a workspace variable as the root of its working directory.
-WORKSPACE=${WORKSPACE:-$(pwd)}
-
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
