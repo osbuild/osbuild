@@ -39,7 +39,7 @@ fi
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
 # The commit this script operates on.
-COMMIT=$(git rev-parse --short HEAD)
+COMMIT=$(git rev-parse HEAD)
 
 # Bucket in S3 where our artifacts are uploaded
 REPO_BUCKET=osbuild-composer-repos
