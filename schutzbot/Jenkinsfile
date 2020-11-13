@@ -142,8 +142,8 @@ pipeline {
         success {
             node('schutzbot') {
                 script {
-                    if (env.BRANCH_NAME == 'master') {
-                        telegramSend "💚 CI passed for osbuild master branch ${env.BUILD_URL}"
+                    if (env.BRANCH_NAME == 'main') {
+                        telegramSend "💚 CI passed for osbuild main branch ${env.BUILD_URL}"
                     }
                 }
             }
@@ -151,8 +151,8 @@ pipeline {
         unsuccessful {
             node('schutzbot') {
                 script {
-                    if (env.BRANCH_NAME == 'master') {
-                        telegramSend "💣 CI failed for osbuild master branch ${env.BUILD_URL}"
+                    if (env.BRANCH_NAME == 'main') {
+                        telegramSend "💣 CI failed for osbuild main branch ${env.BUILD_URL}"
                     }
                 }
             }
