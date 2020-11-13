@@ -74,19 +74,6 @@ make srpm
 git clone --quiet https://github.com/osbuild/osbuild-composer osbuild-composer
 make -C osbuild-composer srpm
 
-# Update the mock configs if we are on 8.3 beta.
-if [[ $VERSION_ID == 8.3 ]]; then
-    # Remove the existing (non-beta) repos from the template.
-    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
-
-    # Add the enabled repos to the template.
-    cat /etc/yum.repos.d/redhat.repo | sudo tee -a /etc/mock/templates/rhel-8.tpl
-
-    # We need triple quotes at the end of the template to mark the end of
-    # the repo list.
-    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
-fi
-
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
 sudo mock -r $MOCK_CONFIG --no-bootstrap-chroot \
