@@ -10,25 +10,6 @@ function greenprint {
 source /etc/os-release
 ARCH=$(uname -m)
 
-# mock and s3cmd are only available in EPEL for RHEL.
-if [[ $ID == rhel ]]; then
-    greenprint "📦 Setting up EPEL repository"
-    curl -Ls --retry 5 --output /tmp/epel.rpm \
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-    sudo rpm -Uvh /tmp/epel.rpm
-fi
-
-# Register RHEL if we are provided with a registration script.
-if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
-    greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x $RHN_REGISTRATION_SCRIPT
-    sudo $RHN_REGISTRATION_SCRIPT
-fi
-
-# Install requirements for building RPMs in mock.
-greenprint "📦 Installing mock requirements"
-sudo dnf -y install createrepo_c make mock python3-pip rpm-build s3cmd
-
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
@@ -56,6 +37,25 @@ if curl --silent --fail --head --output /dev/null "${REPO_URL}/repodata/repomd.x
   greenprint "🎁 Repository already exists. Exiting."
   exit 0
 fi
+
+# mock and s3cmd are only available in EPEL for RHEL.
+if [[ $ID == rhel ]]; then
+    greenprint "📦 Setting up EPEL repository"
+    curl -Ls --retry 5 --output /tmp/epel.rpm \
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo rpm -Uvh /tmp/epel.rpm
+fi
+
+# Register RHEL if we are provided with a registration script.
+if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+    greenprint "🪙 Registering RHEL instance"
+    sudo chmod +x $RHN_REGISTRATION_SCRIPT
+    sudo $RHN_REGISTRATION_SCRIPT
+fi
+
+# Install requirements for building RPMs in mock.
+greenprint "📦 Installing mock requirements"
+sudo dnf -y install createrepo_c make mock python3-pip rpm-build s3cmd
 
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
