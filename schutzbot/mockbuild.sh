@@ -29,12 +29,6 @@ fi
 greenprint "📦 Installing mock requirements"
 sudo dnf -y install createrepo_c make mock python3-pip rpm-build s3cmd
 
-# Enable fastestmirror for mock on Fedora.
-if [[ $ID == fedora ]]; then
-    sudo sed -i '/^install_weak_deps=.*/a fastestmirror=1' \
-        /etc/mock/templates/fedora-branched.tpl
-fi
-
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
