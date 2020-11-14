@@ -57,6 +57,12 @@ REPO_DIR=repo/${REPO_PATH}
 # Full URL to the RPM repository after they are uploaded.
 REPO_URL=${MOCK_REPO_BASE_URL}/${REPO_PATH}
 
+# Don't rerun the build if it already exists
+if curl --silent --fail --head --output /dev/null "${REPO_URL}/repodata/repomd.xml"; then
+  greenprint "🎁 Repository already exists. Exiting."
+  exit 0
+fi
+
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
 greenprint "📦 SHA: ${COMMIT}"
