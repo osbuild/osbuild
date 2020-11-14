@@ -40,10 +40,6 @@ pipeline {
                     steps {
                         sh "schutzbot/ci_details.sh"
                         sh "schutzbot/mockbuild.sh"
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'fedora32'
-                        )
                     }
                 }
                 stage('Fedora 33') {
@@ -54,10 +50,6 @@ pipeline {
                     steps {
                         sh "schutzbot/ci_details.sh"
                         sh "schutzbot/mockbuild.sh"
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'fedora33'
-                        )
                     }
                 }
                 stage('RHEL 8 CDN') {
@@ -69,10 +61,6 @@ pipeline {
                     steps {
                         sh "schutzbot/ci_details.sh"
                         sh "schutzbot/mockbuild.sh"
-                        stash (
-                            includes: 'osbuild-mock.repo',
-                            name: 'rhel8cdn'
-                        )
                     }
                 }
             }
@@ -90,7 +78,6 @@ pipeline {
                         DISTRO_CODE = "fedora32"
                     }
                     steps {
-                        unstash 'fedora32'
                         run_tests()
                     }
                     post {
@@ -107,7 +94,6 @@ pipeline {
                         DISTRO_CODE = "fedora33"
                     }
                     steps {
-                        unstash 'fedora33'
                         run_tests()
                     }
                     post {
@@ -125,7 +111,6 @@ pipeline {
                         DISTRO_CODE = "rhel8"
                     }
                     steps {
-                        unstash 'rhel8cdn'
                         run_tests()
                     }
                     post {
