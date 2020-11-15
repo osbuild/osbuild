@@ -11,13 +11,6 @@ if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status
     sudo $RHN_REGISTRATION_SCRIPT
 fi
 
-# Remove Fedora's modular repositories to speed up dnf.
-sudo rm -f /etc/yum.repos.d/fedora*modular*
-
-# Enable fastestmirror and disable weak dependency installation to speed up
-# dnf operations.
-echo -e "fastestmirror=1\ninstall_weak_deps=0" | sudo tee -a /etc/dnf/dnf.conf
-
 # Ensure we are using the latest dnf since early revisions of Fedora 31 had
 # some dnf repo priority bugs like BZ 1733582.
 # NOTE(mhayden): We can exclude kernel updates here to save time with dracut
