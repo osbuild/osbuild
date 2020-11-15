@@ -65,14 +65,12 @@ greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 # Build source RPMs.
 greenprint "🔧 Building source RPMs."
 make srpm
-git clone --quiet https://github.com/osbuild/osbuild-composer osbuild-composer
-make -C osbuild-composer srpm
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
 sudo mock -r $MOCK_CONFIG --no-bootstrap-chroot \
-    --resultdir $REPO_DIR --with=tests \
-    rpmbuild/SRPMS/*.src.rpm osbuild-composer/rpmbuild/SRPMS/*.src.rpm
+    --resultdir $REPO_DIR \
+    rpmbuild/SRPMS/*.src.rpm
 sudo chown -R $USER ${REPO_DIR}
 
 # Change the ownership of all of our repo files from root to our CI user.
