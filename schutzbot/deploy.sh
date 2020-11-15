@@ -1,23 +1,6 @@
 #!/bin/bash
 set -euxo pipefail
 
-function retry {
-    local count=0
-    local retries=5
-    until "$@"; do
-        exit=$?
-        count=$(($count + 1))
-        if [[ $count -lt $retries ]]; then
-            echo "Retrying command..."
-            sleep 1
-        else
-            echo "Command failed after ${retries} retries. Giving up."
-            return $exit
-        fi
-    done
-    return 0
-}
-
 # Get OS details.
 source /etc/os-release
 ARCH=$(uname -m)
@@ -68,7 +51,7 @@ fi
 
 # Install the Image Builder packages.
 # Note: installing only -tests to catch missing dependencies
-retry sudo dnf -y install osbuild-composer-tests
+sudo dnf -y install osbuild-composer-tests
 
 # Set up a directory to hold repository overrides.
 sudo mkdir -p /etc/osbuild-composer/repositories
