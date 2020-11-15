@@ -11,9 +11,6 @@ if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status
     sudo $RHN_REGISTRATION_SCRIPT
 fi
 
-# Restart systemd to work around some Fedora issues in cloud images.
-sudo systemctl restart systemd-journald
-
 # Remove Fedora's modular repositories to speed up dnf.
 sudo rm -f /etc/yum.repos.d/fedora*modular*
 
