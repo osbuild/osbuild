@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euxo pipefail
 
+DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
+
+# The osbuild-composer commit to run reverse-dependency test against.
+OSBUILD_COMPOSER_COMMIT=692a8076bb4bf38dae05ce99631ebcdd3f0ab054
+
 # Get OS details.
 source /etc/os-release
 ARCH=$(uname -m)
@@ -14,15 +19,23 @@ fi
 # Add osbuild team ssh keys.
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 
-# Set up a dnf repository with the RPMs we want to test
+# Set up dnf repositories with the RPMs we want to test
 sudo tee /etc/yum.repos.d/osbuild.repo << EOF
 [osbuild]
 name=osbuild ${GIT_COMMIT}
-baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild/${ID}-${VERSION_ID}/${ARCH}/${GIT_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/osbuild/${ID}-${VERSION_ID}/${ARCH}/${GIT_COMMIT}
 enabled=1
 gpgcheck=0
 # Default dnf repo priority is 99. Lower number means higher priority.
 priority=5
+
+[osbuild-composer]
+name=osbuild-composer ${OSBUILD_COMPOSER_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
+enabled=1
+gpgcheck=0
+# Give this a slightly lower priority, because we used to have osbuild in this repo as well.
+priority=10
 EOF
 
 if [[ $ID == rhel ]]; then
