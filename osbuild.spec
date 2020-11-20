@@ -37,11 +37,10 @@ Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
 Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 
-# Turn off dependency generators for assemblers, runners and stages.
-# They run in a container, so there's no reason to generate dependencies
-# from them. As of 2020-03-25 this filters out python3.6 dependency generated
-# by rhel runner.
-%global __requires_exclude_from ^%{pkgdir}/(assemblers|runners|stages)/.*$
+# Turn off dependency generators for runners. The reason is that runners are
+# tailored to the platform, e.g. on RHEL they are using platform-python. We
+# don't want to pick up those dependencies on other platform.
+%global __requires_exclude_from ^%{pkgdir}/(runners)/.*$
 
 # Turn off shebang mangling on RHEL. brp-mangle-shebangs (from package
 # redhat-rpm-config) is run on all executables in a package after the `install`
@@ -51,6 +50,10 @@ Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 #   - stages and assemblers, because they are run within osbuild build roots,
 #     which are not required to contain the same OS as the host and might thus
 #     have a different notion of "platform-python".
+# RHEL NB: Since assemblers and stages are not excluded from the dependency
+# generator, this also means that an additional dependency on /usr/bin/python3
+# will be added. This is intended and needed, so that in the host build root
+# /usr/bin/python3 is present so stages and assemblers can be run.
 %global __brp_mangle_shebangs_exclude_from ^%{pkgdir}/(assemblers|runners|stages)/.*$
 
 %{?python_enable_dependency_generator}
