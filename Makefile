@@ -221,7 +221,7 @@ $(SRCDIR)/test/data/manifests/filesystem.json: $(SRCDIR)/test/data/manifests/f32
 .PHONY: test-data
 test-data: $(TEST_MANIFESTS_GEN)
 
-.PHONY: test-units
+.PHONY: test-module
 test-module:
 	@$(PYTHON3) -m unittest \
 		discover \
