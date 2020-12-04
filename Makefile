@@ -223,35 +223,31 @@ test-data: $(TEST_MANIFESTS_GEN)
 
 .PHONY: test-module
 test-module:
-	@$(PYTHON3) -m unittest \
-		discover \
-			--start=$(SRCDIR)/test/mod \
-			--top-level-directory=$(SRCDIR) \
+	@$(PYTHON3) -m pytest \
+			$(SRCDIR)/test/mod \
+			--rootdir=$(SRCDIR) \
 			-v
 
-.PHONY: test-runtime
+.PHONY: test-run
 test-run:
 	@[[ $${EUID} -eq 0 ]] || (echo "Error: Root privileges required!"; exit 1)
-	@$(PYTHON3) -m unittest \
-		discover \
-			--start=$(SRCDIR)/test/run \
-			--top-level-directory=$(SRCDIR) \
+	@$(PYTHON3) -m pytest \
+			$(SRCDIR)/test/run \
+			--rootdir=$(SRCDIR) \
 			-v
 
 .PHONY: test-src
 test-src:
-	@$(PYTHON3) -m unittest \
-		discover \
-			--start=$(SRCDIR)/test/src \
-			--top-level-directory=$(SRCDIR) \
+	@$(PYTHON3) -m pytest \
+			$(SRCDIR)/test/src \
+			--rootdir=$(SRCDIR) \
 			-v
 
-.PHONY: test
+.PHONY: test-all
 test-all:
-	@$(PYTHON3) -m unittest \
-		discover \
-			--start=$(SRCDIR)/test \
-			--top-level-directory=$(SRCDIR) \
+	@$(PYTHON3) -m pytest \
+			$(SRCDIR)/test \
+			--rootdir=$(SRCDIR) \
 			-v
 
 #
