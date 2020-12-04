@@ -317,7 +317,7 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         # symlink the object_id (config hash) in the refs directory to the
         # treesum (content hash) in the objects directory. If a symlink by
-        # that name alreday exists, atomically replace it, but leave the
+        # that name already exists, atomically replace it, but leave the
         # backing object in place (it may be in use).
         with self.tempdir() as tmp:
             link = f"{tmp}/link"
