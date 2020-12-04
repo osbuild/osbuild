@@ -321,7 +321,6 @@ class Pipeline:
         return results, output
 
     def run(self, store, monitor, libdir, output_directory):
-        os.makedirs("/run/osbuild", exist_ok=True)
         results = {"success": True}
 
         monitor.begin(self)
