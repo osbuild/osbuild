@@ -18,6 +18,7 @@ MEBIBYTE = 1024 * 1024
 
 
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+@unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
 class TestAssemblers(test.TestBase):
     @classmethod
     def setUpClass(cls):
