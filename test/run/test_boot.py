@@ -11,6 +11,7 @@ from .. import test
 
 
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+@unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
 class TestBoot(test.TestBase):
     def setUp(self):
         self.osbuild = test.OSBuild(self)
