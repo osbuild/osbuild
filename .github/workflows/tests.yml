@@ -27,7 +27,10 @@ jobs:
           python3 -m pytest \
             --pyargs "${{ matrix.test }}" \
             --rootdir=. \
+            --cov-report=xml --cov=osbuild \
             -v
+    - name: Send coverage to codecov.io
+      run: bash <(curl -s https://codecov.io/bash)
 
   documentation:
     name: "📚 Documentation"
