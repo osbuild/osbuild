@@ -64,9 +64,10 @@ class BaseAPI(abc.ABC):
         """Called after the event loop is shut down"""
 
     @classmethod
-    def _make_socket_dir(cls):
+    def _make_socket_dir(cls, rundir: PathLike = "/run/osbuild"):
         """Called to create the temporary socket dir"""
-        return tempfile.TemporaryDirectory(prefix="api-", dir="/run/osbuild")
+        os.makedirs(rundir, exist_ok=True)
+        return tempfile.TemporaryDirectory(prefix="api-", dir=rundir)
 
     def _dispatch(self, sock: jsoncomm.Socket):
         """Called when data is available on the socket"""
