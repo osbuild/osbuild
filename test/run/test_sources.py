@@ -57,6 +57,14 @@ def fileServer(directory):
         yield
 
 
+def can_setup_netns() -> bool:
+    try:
+        with netns():
+            return True
+    except:  # pylint: disable=bare-except
+        return False
+
+
 def runFileServer(barrier, directory):
     class Handler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, request, client_address, server):
@@ -68,6 +76,7 @@ def runFileServer(barrier, directory):
 
 
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+@unittest.skipUnless(can_setup_netns(), "network namespace setup failed")
 class TestSources(test.TestBase):
     def setUp(self):
         self.sources = os.path.join(self.locate_test_data(), "sources")
