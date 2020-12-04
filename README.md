@@ -38,6 +38,10 @@ At build-time, the following software is required:
  * `python-docutils >= 0.13`
  * `pkg-config >= 0.29`
 
+Testing requires additional software:
+
+ * `pytest`
+
 ### Build
 
 The standard python package system is used. Consult upstream documentation for
