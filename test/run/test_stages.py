@@ -31,6 +31,7 @@ def find_stage(result, stageid):
 
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
 @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
+@unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
 class TestStages(test.TestBase):
 
     def assertTreeDiffsEqual(self, tree_diff1, tree_diff2):
