@@ -8,8 +8,8 @@ The utility module `osbuild.util` provides access to common functionality
 independent of osbuild but used across the osbuild codebase.
 """
 
-
-from .pipeline import Assembler, load, load_build, Pipeline, Stage
+from .formats.v1 import load, load_build
+from .pipeline import Assembler, Pipeline, Stage
 
 
 __all__ = [
