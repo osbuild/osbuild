@@ -39,8 +39,6 @@ is not listed here, **osbuild** will deny startup and exit with an error.
 -h, --help                      print usage information and exit immediately
 --store=DIR                     directory where intermediary file system trees
                                 are stored
---sources=PATH                  json file containing a dictionary of source
-                                configuration
 --secrets=PATH                  json file containing a dictionary of secrets
                                 that are passed to sources
 -l DIR, --libdir=DIR            directory containing stages, assemblers, and

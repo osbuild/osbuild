@@ -85,8 +85,6 @@ def parse_arguments(sys_argv):
     parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
                         default=".osbuild",
                         help="directory where intermediary os trees are stored")
-    parser.add_argument("--sources", metavar="FILE", type=os.path.abspath,
-                        help="json file containing a dictionary of source configuration")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath, default="/usr/lib/osbuild",
                         help="the directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
@@ -119,10 +117,6 @@ def osbuild_cli():
 
     pipeline = manifest.get("pipeline", {})
     sources_options = manifest.get("sources", {})
-
-    if args.sources:
-        with open(args.sources) as f:
-            sources_options = json.load(f)
 
     pipeline = osbuild.load(pipeline, sources_options)
 
