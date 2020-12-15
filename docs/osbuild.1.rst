@@ -48,6 +48,9 @@ is not listed here, **osbuild** will deny startup and exit with an error.
 --json                          output results in JSON format
 --output-directory=DIR          directory where result objects are stored
 
+NB: If neither ``--output-directory`` nor ``--checkpoint`` is specified, no
+attempt to build the manifest will be made.
+
 MANIFEST
 ========
 
