@@ -14,6 +14,7 @@ import sys
 import osbuild
 import osbuild.meta
 import osbuild.monitor
+from osbuild.formats import v1 as fmt
 
 
 RESET = "\033[0m"
@@ -106,7 +107,7 @@ def osbuild_cli():
 
     # first thing after parsing is validation of the input
     index = osbuild.meta.Index(args.libdir)
-    res = osbuild.meta.validate(manifest, index)
+    res = fmt.validate(manifest, index)
     if not res:
         if args.json or args.inspect:
             json.dump(res.as_dict(), sys.stdout)

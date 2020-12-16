@@ -25,7 +25,7 @@ import copy
 import os
 import json
 from collections import deque
-from typing import Dict, Iterable, List, Optional
+from typing import Iterable, List, Optional
 
 import jsonschema
 
@@ -429,55 +429,3 @@ class Index:
         self._schemata[(klass, name)] = schema
 
         return schema
-
-
-def validate(manifest: Dict, index: Index) -> ValidationResult:
-    """Validate a OSBuild manifest
-
-    This function will validate a OSBuild manifest, including
-    all its stages and assembler and build manifests. It will
-    try to validate as much as possible and not stop on errors.
-    The result is a `ValidationResult` object that can be used
-    to check the overall validation status and iterate all the
-    individual validation errors.
-    """
-
-    schema = index.get_schema("Manifest")
-    result = schema.validate(manifest)
-
-    # main pipeline
-    pipeline = manifest.get("pipeline", {})
-
-    # recursively validate the build pipeline  as a "normal"
-    # pipeline in order to validate its stages and assembler
-    # options; for this it is being re-parented in a new plain
-    # {"pipeline": ...} dictionary. NB: Any nested structural
-    # errors might be detected twice, but de-duplicated by the
-    # `ValidationResult.merge` call
-    build = pipeline.get("build", {}).get("pipeline")
-    if build:
-        res = validate({"pipeline": build}, index=index)
-        result.merge(res, path=["pipeline", "build"])
-
-    stages = pipeline.get("stages", [])
-    for i, stage in enumerate(stages):
-        name = stage["name"]
-        schema = index.get_schema("Stage", name)
-        res = schema.validate(stage)
-        result.merge(res, path=["pipeline", "stages", i])
-
-    asm = pipeline.get("assembler", {})
-    if asm:
-        name = asm["name"]
-        schema = index.get_schema("Assembler", name)
-        res = schema.validate(asm)
-        result.merge(res, path=["pipeline", "assembler"])
-
-    # sources
-    sources = manifest.get("sources", {})
-    for name, source in sources.items():
-        schema = index.get_schema("Source", name)
-        res = schema.validate(source)
-        result.merge(res, path=["sources", name])
-
-    return result

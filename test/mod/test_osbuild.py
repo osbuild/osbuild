@@ -11,6 +11,7 @@ import unittest
 
 import osbuild
 import osbuild.meta
+from osbuild.formats import v1 as fmt
 from osbuild.monitor import NullMonitor
 from osbuild.pipeline import detect_host_runner
 from .. import test
@@ -174,7 +175,7 @@ class TestDescriptions(unittest.TestCase):
         index = osbuild.meta.Index(os.curdir)
 
         # an empty manifest is OK
-        res = osbuild.meta.validate({}, index)
+        res = fmt.validate({}, index)
         self.assertEqual(res.valid, True)
 
         # something totally invalid (by Ondřej Budai)
@@ -187,7 +188,7 @@ class TestDescriptions(unittest.TestCase):
             }
         }
 
-        res = osbuild.meta.validate(totally_invalid, index)
+        res = fmt.validate(totally_invalid, index)
         self.assertEqual(res.valid, False)
         # The top-level 'osbuild' is an additional property
         self.assertEqual(len(res), 1)
@@ -201,7 +202,7 @@ class TestDescriptions(unittest.TestCase):
             }
         }
 
-        res = osbuild.meta.validate(no_runner, index)
+        res = fmt.validate(no_runner, index)
         self.assertEqual(res.valid, False)
         self.assertEqual(len(res), 1)  # missing runner
         lst = res[".pipeline.build"]
@@ -227,7 +228,7 @@ class TestDescriptions(unittest.TestCase):
             }
         }
 
-        res = osbuild.meta.validate(no_runner_extra, index)
+        res = fmt.validate(no_runner_extra, index)
         self.assertEqual(res.valid, False)
         self.assertEqual(len(res), 3)
         lst = res[".pipeline.build.pipeline"]
@@ -251,7 +252,7 @@ class TestDescriptions(unittest.TestCase):
             }
         }
 
-        res = osbuild.meta.validate(stage_check, index)
+        res = fmt.validate(stage_check, index)
         self.assertEqual(res.valid, False)
         self.assertEqual(len(res), 2)
         lst = res[".pipeline.stages[0].options"]
@@ -270,7 +271,7 @@ class TestDescriptions(unittest.TestCase):
             }
         }
 
-        res = osbuild.meta.validate(assembler_check, index)
+        res = fmt.validate(assembler_check, index)
         self.assertEqual(res.valid, False)
         self.assertEqual(len(res), 2)
         lst = res[".pipeline.assembler.options"]
