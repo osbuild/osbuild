@@ -103,11 +103,11 @@ def parse_arguments(sys_argv):
 # pylint: disable=too-many-branches
 def osbuild_cli():
     args = parse_arguments(sys.argv)
-    manifest = parse_manifest(args.manifest_path)
+    desc = parse_manifest(args.manifest_path)
 
     # first thing after parsing is validation of the input
     index = osbuild.meta.Index(args.libdir)
-    res = fmt.validate(manifest, index)
+    res = fmt.validate(desc, index)
     if not res:
         if args.json or args.inspect:
             json.dump(res.as_dict(), sys.stdout)
@@ -116,7 +116,7 @@ def osbuild_cli():
             show_validation(res, args.manifest_path)
         return 2
 
-    pipeline = fmt.load(manifest)
+    pipeline = fmt.load(desc)
 
     if args.checkpoint:
         missed = mark_checkpoints(pipeline, args.checkpoint)
@@ -128,8 +128,8 @@ def osbuild_cli():
 
     if args.inspect:
         result = {"pipeline": fmt.describe(pipeline, with_id=True)}
-        if manifest.get("sources_options"):
-            result["sources"] = manifest["sources_options"]
+        if desc.get("sources_options"):
+            result["sources"] = desc["sources_options"]
         json.dump(result, sys.stdout)
         sys.stdout.write("\n")
         return 0
