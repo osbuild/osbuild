@@ -30,8 +30,9 @@ class TestDescriptions(unittest.TestCase):
             {"build": None}
         ]
         for pipeline in cases:
+            manifest = {"pipeline": pipeline}
             with self.subTest(pipeline):
-                self.assertEqual(fmt.load(pipeline, {}).description(), {})
+                self.assertEqual(fmt.load(manifest).description(), {})
 
     def test_stage(self):
         name = "org.osbuild.test"

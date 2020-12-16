@@ -353,10 +353,8 @@ class OSBuild(contextlib.AbstractContextManager):
         """
 
         manifest_json = json.loads(manifest_data)
-        manifest_pipeline = manifest_json.get("pipeline", {})
-        manifest_sources = manifest_json.get("sources", {})
 
-        manifest_parsed = fmt.load(manifest_pipeline, manifest_sources)
+        manifest_parsed = fmt.load(manifest_json)
         return manifest_parsed.tree_id
 
     @contextlib.contextmanager
