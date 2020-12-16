@@ -119,7 +119,7 @@ def osbuild_cli():
     pipeline = manifest.get("pipeline", {})
     sources_options = manifest.get("sources", {})
 
-    pipeline = osbuild.load(pipeline, sources_options)
+    pipeline = fmt.load(pipeline, sources_options)
 
     if args.checkpoint:
         missed = mark_checkpoints(pipeline, args.checkpoint)
