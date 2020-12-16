@@ -8,11 +8,12 @@ The utility module `osbuild.util` provides access to common functionality
 independent of osbuild but used across the osbuild codebase.
 """
 
-from .pipeline import Assembler, Pipeline, Stage
+from .pipeline import Assembler, Manifest, Pipeline, Stage
 
 
 __all__ = [
     "Assembler",
+    "Manifest",
     "Pipeline",
     "Stage",
 ]

@@ -32,7 +32,7 @@ class TestDescriptions(unittest.TestCase):
         for pipeline in cases:
             manifest = {"pipeline": pipeline}
             with self.subTest(pipeline):
-                desc = fmt.describe(fmt.load(manifest))
+                desc = fmt.describe(fmt.load(manifest).pipeline)
                 self.assertEqual(desc, {})
 
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")

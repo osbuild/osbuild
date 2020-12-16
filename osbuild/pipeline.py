@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import tempfile
+from typing import Dict
 
 from .api import API
 from . import buildroot
@@ -325,6 +326,17 @@ class Pipeline:
         monitor.finish(results)
 
         return results
+
+
+class Manifest:
+    """Representation of a pipeline and its sources"""
+
+    def __init__(self, pipeline: Pipeline, source_options: Dict):
+        self.pipeline = pipeline
+        self.sources = source_options
+
+    def build(self, store, monitor, libdir, output_directory):
+        return self.pipeline.run(store, monitor, libdir, output_directory)
 
 
 def detect_host_runner():

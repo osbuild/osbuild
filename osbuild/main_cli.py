@@ -116,7 +116,8 @@ def osbuild_cli():
             show_validation(res, args.manifest_path)
         return 2
 
-    pipeline = fmt.load(desc)
+    manifest = fmt.load(desc)
+    pipeline = manifest.pipeline
 
     if args.checkpoint:
         missed = mark_checkpoints(pipeline, args.checkpoint)
@@ -142,7 +143,7 @@ def osbuild_cli():
     monitor = osbuild.monitor.make(monitor_name, sys.stdout.fileno())
 
     try:
-        r = pipeline.run(
+        r = manifest.build(
             args.store,
             monitor,
             args.libdir,
