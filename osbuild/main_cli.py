@@ -128,9 +128,7 @@ def osbuild_cli():
             return 1
 
     if args.inspect:
-        result = {"pipeline": fmt.describe(pipeline, with_id=True)}
-        if desc.get("sources_options"):
-            result["sources"] = desc["sources_options"]
+        result = fmt.describe(manifest, with_id=True)
         json.dump(result, sys.stdout)
         sys.stdout.write("\n")
         return 0

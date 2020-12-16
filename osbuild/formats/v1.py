@@ -5,7 +5,7 @@ from osbuild.meta import Index, ValidationResult
 from ..pipeline import Manifest, Pipeline, detect_host_runner
 
 
-def describe(pipeline: Pipeline, *, with_id=False) -> Dict:
+def describe(manifest: Manifest, *, with_id=False) -> Dict:
     """Create the manifest description for the pipeline"""
     def describe_stage(stage):
         description = {"name": stage.name}
@@ -15,21 +15,30 @@ def describe(pipeline: Pipeline, *, with_id=False) -> Dict:
             description["id"] = stage.id
         return description
 
-    description = {}
-    if pipeline.build:
-        build = pipeline.build
-        description["build"] = {
-            "pipeline": describe(build, with_id=with_id),
-            "runner": pipeline.runner
-        }
+    def describe_pipeline(pipeline: Pipeline) -> Dict:
+        description = {}
+        if pipeline.build:
+            build = pipeline.build
+            description["build"] = {
+                "pipeline": describe_pipeline(build),
+                "runner": pipeline.runner
+            }
 
-    if pipeline.stages:
-        stages = [describe_stage(s) for s in pipeline.stages]
-        description["stages"] = stages
+        if pipeline.stages:
+            stages = [describe_stage(s) for s in pipeline.stages]
+            description["stages"] = stages
 
-    if pipeline.assembler:
-        assembler = describe_stage(pipeline.assembler)
-        description["assembler"] = assembler
+        if pipeline.assembler:
+            assembler = describe_stage(pipeline.assembler)
+            description["assembler"] = assembler
+        return description
+
+    description = {
+        "pipeline": describe_pipeline(manifest.pipeline)
+    }
+
+    if manifest.sources:
+        description["sources"] = manifest.sources
 
     return description
 
