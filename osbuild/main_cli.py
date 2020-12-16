@@ -116,10 +116,7 @@ def osbuild_cli():
             show_validation(res, args.manifest_path)
         return 2
 
-    pipeline = manifest.get("pipeline", {})
-    sources_options = manifest.get("sources", {})
-
-    pipeline = fmt.load(pipeline, sources_options)
+    pipeline = fmt.load(manifest)
 
     if args.checkpoint:
         missed = mark_checkpoints(pipeline, args.checkpoint)
@@ -131,8 +128,8 @@ def osbuild_cli():
 
     if args.inspect:
         result = {"pipeline": pipeline.description(with_id=True)}
-        if sources_options:
-            result["sources"] = sources_options
+        if manifest.get("sources_options"):
+            result["sources"] = manifest["sources_options"]
         json.dump(result, sys.stdout)
         sys.stdout.write("\n")
         return 0

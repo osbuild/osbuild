@@ -8,14 +8,14 @@ from ..pipeline import Pipeline, detect_host_runner
 def load_build(description: Dict, sources_options: Dict):
     pipeline = description.get("pipeline")
     if pipeline:
-        build_pipeline = load(pipeline, sources_options)
+        build_pipeline = load_pipeline(pipeline, sources_options)
     else:
         build_pipeline = None
 
     return build_pipeline, description["runner"]
 
 
-def load(description: Dict, sources_options: Dict) -> Pipeline:
+def load_pipeline(description: Dict, sources_options: Dict) -> Pipeline:
     build = description.get("build")
     if build:
         build_pipeline, runner = load_build(build, sources_options)
@@ -32,6 +32,15 @@ def load(description: Dict, sources_options: Dict) -> Pipeline:
         pipeline.set_assembler(a["name"], a.get("options", {}))
 
     return pipeline
+
+
+def load(description: Dict) -> Pipeline:
+    """Load a manifest description"""
+
+    pipeline = description.get("pipeline", {})
+    sources = description.get("sources", {})
+
+    return load_pipeline(pipeline, sources)
 
 
 def validate(manifest: Dict, index: Index) -> ValidationResult:
