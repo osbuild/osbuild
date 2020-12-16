@@ -2,7 +2,7 @@
 
 from typing import Dict
 from osbuild.meta import Index, ValidationResult
-from ..pipeline import Pipeline, detect_host_runner
+from ..pipeline import Manifest, Pipeline, detect_host_runner
 
 
 def describe(pipeline: Pipeline, *, with_id=False) -> Dict:
@@ -63,13 +63,16 @@ def load_pipeline(description: Dict, sources_options: Dict) -> Pipeline:
     return pipeline
 
 
-def load(description: Dict) -> Pipeline:
+def load(description: Dict) -> Manifest:
     """Load a manifest description"""
 
     pipeline = description.get("pipeline", {})
     sources = description.get("sources", {})
 
-    return load_pipeline(pipeline, sources)
+    pipeline = load_pipeline(pipeline, sources)
+    manifest = Manifest(pipeline, sources)
+
+    return manifest
 
 
 def validate(manifest: Dict, index: Index) -> ValidationResult:
