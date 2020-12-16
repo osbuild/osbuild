@@ -11,7 +11,7 @@ import sys
 import tempfile
 import unittest
 
-import osbuild
+from osbuild.formats import v1 as fmt
 from osbuild.util import linux
 
 
@@ -356,7 +356,7 @@ class OSBuild(contextlib.AbstractContextManager):
         manifest_pipeline = manifest_json.get("pipeline", {})
         manifest_sources = manifest_json.get("sources", {})
 
-        manifest_parsed = osbuild.load(manifest_pipeline, manifest_sources)
+        manifest_parsed = fmt.load(manifest_pipeline, manifest_sources)
         return manifest_parsed.tree_id
 
     @contextlib.contextmanager
