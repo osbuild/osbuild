@@ -49,14 +49,6 @@ class Stage:
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def description(self, *, with_id=False):
-        description = {"name": self.name}
-        if self.options:
-            description["options"] = self.options
-        if with_id:
-            description["id"] = self.id
-        return description
-
     def run(self,
             tree,
             runner,
@@ -112,14 +104,6 @@ class Assembler:
         m.update(json.dumps(self.base, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
-
-    def description(self, *, with_id=False):
-        description = {"name": self.name}
-        if self.options:
-            description["options"] = self.options
-        if with_id:
-            description["id"] = self.id
-        return description
 
     def run(self, tree, runner, build_tree, monitor, libdir, output_dir, var="/var/tmp"):
         with buildroot.BuildRoot(build_tree, runner, libdir, var=var) as build_root:
@@ -180,22 +164,6 @@ class Pipeline:
     def set_assembler(self, name, options=None):
         build = self.build.tree_id if self.build else None
         self.assembler = Assembler(name, build, self.tree_id, options or {})
-
-    def description(self, *, with_id=False):
-        description = {}
-        if self.build:
-            description["build"] = {
-                "pipeline": self.build.description(with_id=with_id),
-                "runner": self.runner
-            }
-        if self.stages:
-            stages = [s.description(with_id=with_id) for s in self.stages]
-            description["stages"] = stages
-        if self.assembler:
-            assembler = self.assembler.description(with_id=with_id)
-            description["assembler"] = assembler
-
-        return description
 
     def build_stages(self, object_store, monitor, libdir):
         results = {"success": True}

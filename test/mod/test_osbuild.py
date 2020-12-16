@@ -32,19 +32,8 @@ class TestDescriptions(unittest.TestCase):
         for pipeline in cases:
             manifest = {"pipeline": pipeline}
             with self.subTest(pipeline):
-                self.assertEqual(fmt.load(manifest).description(), {})
-
-    def test_stage(self):
-        name = "org.osbuild.test"
-        options = {"one": 1}
-        cases = [
-            (osbuild.Stage(name, {}, None, None, {}), {"name": name}),
-            (osbuild.Stage(name, {}, None, None, None), {"name": name}),
-            (osbuild.Stage(name, {}, None, None, options), {"name": name, "options": options}),
-        ]
-        for stage, description in cases:
-            with self.subTest(description):
-                self.assertEqual(stage.description(), description)
+                desc = fmt.describe(fmt.load(manifest))
+                self.assertEqual(desc, {})
 
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_stage_run(self):
@@ -66,18 +55,6 @@ class TestDescriptions(unittest.TestCase):
 
         self.assertEqual(res.success, True)
         self.assertEqual(res.id, stage.id)
-
-    def test_assembler(self):
-        name = "org.osbuild.test"
-        options = {"one": 1}
-        cases = [
-            (osbuild.Assembler(name, None, None, {}), {"name": name}),
-            (osbuild.Assembler(name, None, None, None), {"name": name}),
-            (osbuild.Assembler(name, None, None, options), {"name": name, "options": options}),
-        ]
-        for assembler, description in cases:
-            with self.subTest(description):
-                self.assertEqual(assembler.description(), description)
 
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_assembler_run(self):
@@ -109,7 +86,7 @@ class TestDescriptions(unittest.TestCase):
         pipeline.add_stage("org.osbuild.test", {}, {"one": 2})
         pipeline.set_assembler("org.osbuild.test")
 
-        self.assertEqual(pipeline.description(), {
+        self.assertEqual(fmt.describe(pipeline), {
             "build": {
                 "pipeline": {
                     "stages": [
