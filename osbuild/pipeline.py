@@ -327,6 +327,17 @@ class Pipeline:
         return results
 
 
+class Manifest:
+    """A Pipeline with its source options"""
+
+    def __init__(self, pipeline: Pipeline):
+        self.pipeline = pipeline
+        self.source_options = {}
+
+    def build(self, store, monitor, libdir, output_directory):
+        return self.pipeline.run(store, monitor, libdir, output_directory)
+
+
 def detect_host_runner():
     """Use os-release(5) to detect the runner for the host"""
     osname = osrelease.describe_os(*osrelease.DEFAULT_PATHS)
