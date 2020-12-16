@@ -32,8 +32,8 @@ class TestDescriptions(unittest.TestCase):
         for pipeline in cases:
             manifest = {"pipeline": pipeline}
             with self.subTest(pipeline):
-                desc = fmt.describe(fmt.load(manifest).pipeline)
-                self.assertEqual(desc, {})
+                desc = fmt.describe(fmt.load(manifest))
+                self.assertEqual(desc["pipeline"], {})
 
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_stage_run(self):
@@ -86,26 +86,30 @@ class TestDescriptions(unittest.TestCase):
         pipeline.add_stage("org.osbuild.test", {}, {"one": 2})
         pipeline.set_assembler("org.osbuild.test")
 
-        self.assertEqual(fmt.describe(pipeline), {
-            "build": {
-                "pipeline": {
-                    "stages": [
-                        {
-                            "name": "org.osbuild.test",
-                            "options": {"one": 1}
-                        }
-                    ]
+        manifest = osbuild.Manifest(pipeline, {})
+
+        self.assertEqual(fmt.describe(manifest), {
+            "pipeline": {
+                "build": {
+                    "pipeline": {
+                        "stages": [
+                            {
+                                "name": "org.osbuild.test",
+                                "options": {"one": 1}
+                            }
+                        ]
+                    },
+                    "runner": "org.osbuild.test"
                 },
-                "runner": "org.osbuild.test"
-            },
-            "stages": [
-                {
-                    "name": "org.osbuild.test",
-                    "options": {"one": 2}
+                "stages": [
+                    {
+                        "name": "org.osbuild.test",
+                        "options": {"one": 2}
+                    }
+                ],
+                "assembler": {
+                    "name": "org.osbuild.test"
                 }
-            ],
-            "assembler": {
-                "name": "org.osbuild.test"
             }
         })
 
