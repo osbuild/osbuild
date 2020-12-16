@@ -23,33 +23,6 @@ RED = "\033[31m"
 GREEN = "\033[32m"
 
 
-def mark_checkpoints(pipeline, checkpoints):
-    points = set(checkpoints)
-
-    def mark_stage(stage):
-        c = stage.id
-        if c in points:
-            stage.checkpoint = True
-            points.remove(c)
-
-    def mark_assembler(assembler):
-        c = assembler.id
-        if c in points:
-            assembler.checkpoint = True
-            points.remove(c)
-
-    def mark_pipeline(pl):
-        for stage in pl.stages:
-            mark_stage(stage)
-        if pl.assembler:
-            mark_assembler(pl.assembler)
-        if pl.build:
-            mark_pipeline(pl.build)
-
-    mark_pipeline(pipeline)
-    return points
-
-
 def parse_manifest(path):
     if path == "-":
         manifest = json.load(sys.stdin)
@@ -120,7 +93,7 @@ def osbuild_cli():
     pipeline = manifest.pipeline
 
     if args.checkpoint:
-        missed = mark_checkpoints(pipeline, args.checkpoint)
+        missed = manifest.mark_checkpoints(args.checkpoint)
         if missed:
             for checkpoint in missed:
                 print(f"Checkpoint {BOLD}{checkpoint}{RESET} not found!")
