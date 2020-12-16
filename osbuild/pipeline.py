@@ -338,6 +338,33 @@ class Manifest:
         return self.pipeline.run(store, monitor, libdir, output_directory)
 
 
+    def mark_checkpoints(self, checkpoints):
+        points = set(checkpoints)
+
+        def mark_stage(stage):
+            c = stage.id
+            if c in points:
+                stage.checkpoint = True
+                points.remove(c)
+
+        def mark_assembler(assembler):
+            c = assembler.id
+            if c in points:
+                assembler.checkpoint = True
+                points.remove(c)
+
+        def mark_pipeline(pl):
+            for stage in pl.stages:
+                mark_stage(stage)
+            if pl.assembler:
+                mark_assembler(pl.assembler)
+            if pl.build:
+                mark_pipeline(pl.build)
+
+        mark_pipeline(self.pipeline)
+        return points
+
+
 def detect_host_runner():
     """Use os-release(5) to detect the runner for the host"""
     osname = osrelease.describe_os(*osrelease.DEFAULT_PATHS)
