@@ -1,6 +1,6 @@
 # Version 1 of the manifest description
 
-from typing import Dict
+from typing import Dict, List, Optional, Tuple
 from osbuild.meta import Index, ValidationResult
 from ..pipeline import Manifest, Pipeline, detect_host_runner
 
@@ -18,7 +18,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     def describe_pipeline(pipeline: Pipeline) -> Dict:
         description = {}
         if pipeline.build:
-            build = pipeline.build
+            build = manifest[pipeline.build]
             description["build"] = {
                 "pipeline": describe_pipeline(build),
                 "runner": pipeline.runner
@@ -34,7 +34,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return description
 
     description = {
-        "pipeline": describe_pipeline(manifest.pipeline)
+        "pipeline": describe_pipeline(manifest.pipelines[-1])
     }
 
     if manifest.source_options:
@@ -43,24 +43,25 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     return description
 
 
-def load_build(description: Dict, sources_options: Dict):
+def load_build(description: Dict, sources_options: Dict, result: List[Pipeline]):
     pipeline = description.get("pipeline")
     if pipeline:
-        build_pipeline = load_pipeline(pipeline, sources_options)
+        build_pipeline = load_pipeline(pipeline, sources_options, result)
     else:
         build_pipeline = None
 
     return build_pipeline, description["runner"]
 
 
-def load_pipeline(description: Dict, sources_options: Dict) -> Pipeline:
+def load_pipeline(description: Dict, sources_options: Dict, result: List[Pipeline]) -> Pipeline:
     build = description.get("build")
     if build:
-        build_pipeline, runner = load_build(build, sources_options)
+        build_pipeline, runner = load_build(build, sources_options, result)
     else:
         build_pipeline, runner = None, detect_host_runner()
 
-    pipeline = Pipeline(runner, build_pipeline)
+
+    pipeline = Pipeline(runner, build_pipeline and build_pipeline.tree_id)
 
     for s in description.get("stages", []):
         pipeline.add_stage(s["name"], sources_options, s.get("options", {}))
@@ -68,6 +69,8 @@ def load_pipeline(description: Dict, sources_options: Dict) -> Pipeline:
     a = description.get("assembler")
     if a:
         pipeline.set_assembler(a["name"], a.get("options", {}))
+
+    result.append(pipeline)
 
     return pipeline
 
@@ -78,11 +81,39 @@ def load(description: Dict) -> Manifest:
     pipeline = description.get("pipeline", {})
     sources = description.get("sources", {})
 
-    pipeline = load_pipeline(pipeline, sources)
-    manifest = Manifest(pipeline)
+    pipelines = []
+
+    load_pipeline(pipeline, sources, pipelines)
+
+    manifest = Manifest(pipelines)
     manifest.source_options = sources
 
     return manifest
+
+
+def get_ids(manifest: Manifest) -> Tuple[Optional[str], Optional[str]]:
+    pipeline = manifest.pipelines[-1]
+    return pipeline.tree_id, pipeline.output_id
+
+
+def output(manifest: Manifest, res: Dict) -> Dict:
+    """Convert a result into the v1 format"""
+
+    def result_for_pipeline(pipeline):
+        current = res[pipeline.id]
+        retval = {"success": current["success"]}
+        if pipeline.build:
+            build = manifest[pipeline.build]
+            retval["build"] = result_for_pipeline(build)
+        stages = current.get("stages")
+        if stages:
+            retval["stages"] = stages
+        assembler = current.get("assembler")
+        if assembler:
+            retval["assembler"] = assembler
+        return retval
+
+    return result_for_pipeline(manifest.pipelines[-1])
 
 
 def validate(manifest: Dict, index: Index) -> ValidationResult:

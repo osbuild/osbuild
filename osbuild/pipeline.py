@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import tempfile
+from typing import List
 
 from .api import API
 from . import buildroot
@@ -159,15 +160,13 @@ class Pipeline:
         return self.assembler.id if self.assembler else None
 
     def add_stage(self, name, sources_options=None, options=None):
-        build = self.build.tree_id if self.build else None
-        stage = Stage(name, sources_options, build, self.tree_id, options or {})
+        stage = Stage(name, sources_options, self.build, self.tree_id, options or {})
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id
 
     def set_assembler(self, name, options=None):
-        build = self.build.tree_id if self.build else None
-        self.assembler = Assembler(name, build, self.tree_id, options or {})
+        self.assembler = Assembler(name, self.build, self.tree_id, options or {})
 
     def build_stages(self, object_store, monitor, libdir):
         results = {"success": True}
@@ -181,22 +180,10 @@ class Pipeline:
         if not self.build:
             build_tree = objectstore.HostTree(object_store)
         else:
-            build = self.build
+            build_tree = object_store.get(self.build)
 
-            r, t, tree = build.build_stages(object_store,
-                                            monitor,
-                                            libdir)
-
-            results["build"] = r
-            if not r["success"]:
-                results["success"] = False
-                return results, None, None
-
-            # Cleanup the build tree (`t`) which was used to
-            # build `tree`; it is now not needed anymore
-            t.cleanup()
-
-            build_tree = tree
+        if not build_tree:
+            raise AssertionError(f"build tree {self.build} not found")
 
         # If there are no stages, just return build tree we just
         # obtained and a new, clean `tree`
@@ -337,13 +324,21 @@ class Pipeline:
 class Manifest:
     """A Pipeline with its source options"""
 
-    def __init__(self, pipeline: Pipeline):
-        self.pipeline = pipeline
+    def __init__(self, pipelines: List[Pipeline]):
+        self.pipelines = pipelines
         self.source_options = {}
 
     def build(self, store, monitor, libdir, output_directory):
-        return self.pipeline.run(store, monitor, libdir, output_directory)
+        results = {"success": True}
 
+        for pl in self.pipelines:
+            res = pl.run(store, monitor, libdir, output_directory)
+            results[pl.id] = res
+            if not res["success"]:
+                results["success"] = False
+                return results
+
+        return results
 
     def mark_checkpoints(self, checkpoints):
         points = set(checkpoints)
@@ -365,11 +360,17 @@ class Manifest:
                 mark_stage(stage)
             if pl.assembler:
                 mark_assembler(pl.assembler)
-            if pl.build:
-                mark_pipeline(pl.build)
 
-        mark_pipeline(self.pipeline)
+        for pl in self.pipelines:
+            mark_pipeline(pl)
+
         return points
+
+    def __getitem__(self, pipeline_id):
+        for pl in self.pipelines:
+            if pl.id == pipeline_id:
+                return pl
+        raise KeyError("{pipeline_id} not found")
 
 
 def detect_host_runner():
