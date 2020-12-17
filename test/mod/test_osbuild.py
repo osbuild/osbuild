@@ -82,11 +82,11 @@ class TestDescriptions(unittest.TestCase):
         build = osbuild.Pipeline("org.osbuild.test")
         build.add_stage("org.osbuild.test", {}, {"one": 1})
 
-        pipeline = osbuild.Pipeline("org.osbuild.test", build)
+        pipeline = osbuild.Pipeline("org.osbuild.test", build.tree_id)
         pipeline.add_stage("org.osbuild.test", {}, {"one": 2})
         pipeline.set_assembler("org.osbuild.test")
 
-        manifest = osbuild.Manifest(pipeline, {})
+        manifest = osbuild.Manifest([build, pipeline], {})
 
         self.assertEqual(fmt.describe(manifest), {
             "pipeline": {

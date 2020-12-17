@@ -91,7 +91,6 @@ def osbuild_cli():
         return 2
 
     manifest = fmt.load(desc)
-    pipeline = manifest.pipeline
 
     if args.checkpoint:
         missed = manifest.mark_checkpoints(args.checkpoint)
@@ -128,12 +127,14 @@ def osbuild_cli():
         return 130
 
     if args.json:
+        r = fmt.output(manifest, r)
         json.dump(r, sys.stdout)
         sys.stdout.write("\n")
     else:
         if r["success"]:
-            print("tree id:", pipeline.tree_id)
-            print("output id:", pipeline.output_id)
+            tree_id, output_id = fmt.get_ids(manifest)
+            print("tree id:", tree_id)
+            print("output id:", output_id)
         else:
             print()
             print(f"{RESET}{BOLD}{RED}Failed{RESET}")

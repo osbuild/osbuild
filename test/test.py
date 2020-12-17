@@ -355,7 +355,8 @@ class OSBuild(contextlib.AbstractContextManager):
         manifest_json = json.loads(manifest_data)
 
         manifest = fmt.load(manifest_json)
-        return manifest.pipeline.tree_id
+        tree_id, _ = fmt.get_ids(manifest)
+        return tree_id
 
     @contextlib.contextmanager
     def map_object(self, obj):
