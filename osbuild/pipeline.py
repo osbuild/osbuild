@@ -255,6 +255,11 @@ class Pipeline:
             if stage.checkpoint:
                 object_store.commit(tree, stage.id)
 
+        # The for loop will always have done at least iteration since
+        # both other cases, i.e. an empty list of stages or the last
+        # stage being in the store, are handled before
+        tree.id = stage.id  # pylint: disable=undefined-loop-variable
+
         return results, build_tree, tree
 
     def assemble(self, object_store, build_tree, tree, monitor, libdir):
