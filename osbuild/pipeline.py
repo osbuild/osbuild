@@ -148,6 +148,10 @@ class Pipeline:
         self.assembler = None
 
     @property
+    def id(self):
+        return self.output_id or self.tree_id
+
+    @property
     def tree_id(self):
         return self.stages[-1].id if self.stages else None
 
