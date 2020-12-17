@@ -49,6 +49,7 @@ class Object:
         self._base = None
         self._workdir = None
         self._tree = None
+        self.id = None
         self.store = store
         self.reset()
 
@@ -96,6 +97,7 @@ class Object:
         self._check_writable()
         self._check_readers()
         self._check_writer()
+        self._check_locked()
         self.init()
         with self.tempdir("writer") as target:
             mount(self._path, target, ro=False)
@@ -153,6 +155,11 @@ class Object:
         if self._workdir:
             self._workdir.cleanup()
             self._workdir = None
+
+    def _check_locked(self):
+        """Internal: Raise a ValueError if tree is locked"""
+        if self.id:
+            raise ValueError("Object is locked (has an id)")
 
     def _check_readers(self):
         """Internal: Raise a ValueError if there are readers"""
@@ -338,6 +345,7 @@ class ObjectStore(contextlib.AbstractContextManager):
     def cleanup(self):
         """Cleanup all created Objects that are still alive"""
         for obj in self._objs:
+            obj.id = None  # this unlocks the object
             obj.cleanup()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
