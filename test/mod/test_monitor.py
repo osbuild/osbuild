@@ -12,6 +12,7 @@ from collections import defaultdict
 import osbuild
 import osbuild.meta
 from osbuild.monitor import LogMonitor
+from osbuild.objectstore import ObjectStore
 from osbuild.pipeline import detect_host_runner
 from .. import test
 
@@ -67,9 +68,9 @@ class TestMonitor(unittest.TestCase):
 
             logfile = os.path.join(tmpdir, "log.txt")
 
-            with open(logfile, "w") as log:
+            with open(logfile, "w") as log, ObjectStore(storedir) as store:
                 monitor = LogMonitor(log.fileno())
-                res = pipeline.run(storedir,
+                res = pipeline.run(store,
                                    monitor,
                                    libdir=os.path.abspath(os.curdir),
                                    output_directory=outputdir)
@@ -100,10 +101,11 @@ class TestMonitor(unittest.TestCase):
             outputdir = os.path.join(tmpdir, "output")
 
             tape = TapeMonitor()
-            res = pipeline.run(storedir,
-                               tape,
-                               libdir=os.path.abspath(os.curdir),
-                               output_directory=outputdir)
+            with ObjectStore(storedir) as store:
+                res = pipeline.run(store,
+                                   tape,
+                                   libdir=os.path.abspath(os.curdir),
+                                   output_directory=outputdir)
 
         assert res
         self.assertEqual(tape.counter["begin"], 1)

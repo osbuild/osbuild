@@ -293,34 +293,33 @@ class Pipeline:
 
         monitor.begin(self)
 
-        with objectstore.ObjectStore(store) as object_store:
-            # If the final result is already in the store, no need to attempt
-            # building it. Just fetch the cached information. If the associated
-            # tree exists, we return it as well, but we do not care if it is
-            # missing, since it is not a mandatory part of the result and would
-            # usually be needless overhead.
-            obj = object_store.get(self.output_id)
+        # If the final result is already in the store, no need to attempt
+        # building it. Just fetch the cached information. If the associated
+        # tree exists, we return it as well, but we do not care if it is
+        # missing, since it is not a mandatory part of the result and would
+        # usually be needless overhead.
+        obj = store.get(self.output_id)
 
-            if not obj:
-                results, build_tree, tree = self.build_stages(object_store,
-                                                              monitor,
-                                                              libdir)
+        if not obj:
+            results, build_tree, tree = self.build_stages(store,
+                                                          monitor,
+                                                          libdir)
 
-                if not results["success"]:
-                    return results
+            if not results["success"]:
+                return results
 
-                r, obj = self.assemble(object_store,
-                                       build_tree,
-                                       tree,
-                                       monitor,
-                                       libdir)
+            r, obj = self.assemble(store,
+                                   build_tree,
+                                   tree,
+                                   monitor,
+                                   libdir)
 
-                results.update(r)  # This will also update 'success'
+            results.update(r)  # This will also update 'success'
 
-            if obj:
-                if output_directory:
-                    obj.export(output_directory)
-                obj.cleanup()
+        if obj:
+            if output_directory:
+                obj.export(output_directory)
+            obj.cleanup()
 
         monitor.finish(results)
 
