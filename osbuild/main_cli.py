@@ -14,6 +14,7 @@ import sys
 import osbuild
 import osbuild.meta
 import osbuild.monitor
+from osbuild.objectstore import ObjectStore
 from osbuild.formats import v1 as fmt
 
 
@@ -114,12 +115,13 @@ def osbuild_cli():
     monitor = osbuild.monitor.make(monitor_name, sys.stdout.fileno())
 
     try:
-        r = manifest.build(
-            args.store,
-            monitor,
-            args.libdir,
-            output_directory=args.output_directory
-        )
+        with ObjectStore(args.store) as object_store:
+            r = manifest.build(
+                object_store,
+                monitor,
+                args.libdir,
+                output_directory=args.output_directory
+            )
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
