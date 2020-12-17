@@ -4,7 +4,6 @@ import hashlib
 import os
 import subprocess
 import tempfile
-import weakref
 from typing import Optional
 
 from osbuild.util.types import PathLike
@@ -249,7 +248,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         os.makedirs(self.objects, exist_ok=True)
         os.makedirs(self.refs, exist_ok=True)
         os.makedirs(self.tmp, exist_ok=True)
-        self._objs = weakref.WeakSet()
+        self._objs = set()
 
     def _get_floating(self, object_id: str) -> Optional[Object]:
         """Internal: get a non-committed object"""
