@@ -251,9 +251,20 @@ class ObjectStore(contextlib.AbstractContextManager):
         os.makedirs(self.tmp, exist_ok=True)
         self._objs = weakref.WeakSet()
 
+    def _get_floating(self, object_id: str) -> Optional[Object]:
+        """Internal: get a non-committed object"""
+        for obj in self._objs:
+            if obj.id == object_id:
+                return obj
+        return None
+
     def contains(self, object_id):
         if not object_id:
             return False
+
+        if self._get_floating(object_id):
+            return True
+
         return os.access(self.resolve_ref(object_id), os.F_OK)
 
     def resolve_ref(self, object_id: Optional[str]) -> Optional[str]:
@@ -269,6 +280,10 @@ class ObjectStore(contextlib.AbstractContextManager):
                                            suffix=suffix)
 
     def get(self, object_id):
+        obj = self._get_floating(object_id)
+        if obj:
+            return obj
+
         if not self.contains(object_id):
             return None
 
