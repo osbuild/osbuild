@@ -319,7 +319,6 @@ class Pipeline:
         if obj:
             if output_directory:
                 obj.export(output_directory)
-            obj.cleanup()
 
         monitor.finish(results)
 
