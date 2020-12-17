@@ -49,6 +49,7 @@ class Object:
         self._base = None
         self._workdir = None
         self._tree = None
+        self.id = None
         self.store = store
         self.reset()
 
@@ -72,6 +73,7 @@ class Object:
     def base(self, base_id: Optional[str]):
         self._init = not base_id
         self._base = base_id
+        self.id = base_id
 
     @property
     def treesum(self) -> str:
@@ -97,6 +99,7 @@ class Object:
         self._check_readers()
         self._check_writer()
         self.init()
+        self.id = None
         with self.tempdir("writer") as target:
             mount(self._path, target, ro=False)
             try:
@@ -153,6 +156,7 @@ class Object:
         if self._workdir:
             self._workdir.cleanup()
             self._workdir = None
+        self.id = None
 
     def _check_readers(self):
         """Internal: Raise a ValueError if there are readers"""
