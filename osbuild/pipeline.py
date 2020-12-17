@@ -249,6 +249,10 @@ class Pipeline:
                 results["success"] = False
                 return results, None, None
 
+            # The content of the tree now corresponds to the stage that
+            # was build and this can can be identified via the id of it
+            tree.id = stage.id
+
             if stage.checkpoint:
                 object_store.commit(tree, stage.id)
 
