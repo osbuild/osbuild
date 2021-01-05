@@ -273,9 +273,10 @@ class ModuleInfo:
     Normally this class is instantiated via its `load` method.
     """
 
-    def __init__(self, klass: str, name: str, info: str):
+    def __init__(self, klass: str, name: str, path: str, info: str):
         self.name = name
         self.type = klass
+        self.path = path
 
         opts = info.get("schema") or ""
         self.info = info.get("info")
@@ -353,7 +354,7 @@ class ModuleInfo:
             'desc': doclist[0],
             'info': "\n".join(doclist[1:])
         }
-        return cls(klass, name, info)
+        return cls(klass, name, path, info)
 
     @staticmethod
     def module_class_to_directory(klass: str) -> str:
