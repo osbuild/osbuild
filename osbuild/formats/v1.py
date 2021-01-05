@@ -44,7 +44,8 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
 
 class Loader:
-    def __init__(self, sources_options: Dict):
+    def __init__(self, index: Index, sources_options: Dict):
+        self.index = index
         self.sources_options = sources_options
         self.pipelines: List[Pipeline] = []
 
@@ -68,7 +69,8 @@ class Loader:
         pipeline = Pipeline(runner, build_pipeline and build_pipeline.tree_id)
 
         for s in description.get("stages", []):
-            pipeline.add_stage(s["name"], self.sources_options, s.get("options", {}))
+            info = self.index.get_module_info("Stage", s["name"])
+            pipeline.add_stage(info, self.sources_options, s.get("options", {}))
 
         a = description.get("assembler")
         if a:
@@ -79,13 +81,13 @@ class Loader:
         return pipeline
 
 
-def load(description: Dict) -> Manifest:
+def load(description: Dict, index: Index) -> Manifest:
     """Load a manifest description"""
 
     pipeline = description.get("pipeline", {})
     sources = description.get("sources", {})
 
-    loader = Loader(sources)
+    loader = Loader(index, sources)
     loader.load_pipeline(pipeline)
 
     manifest = Manifest(loader.pipelines)

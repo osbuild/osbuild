@@ -55,9 +55,12 @@ class TestMonitor(unittest.TestCase):
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_log_monitor_vfuncs(self):
         # Checks the basic functioning of the LogMonitor
+        index = osbuild.meta.Index(os.curdir)
+
         runner = detect_host_runner()
         pipeline = osbuild.Pipeline(runner=runner)
-        pipeline.add_stage("org.osbuild.noop", {}, {
+        info = index.get_module_info("Stage", "org.osbuild.noop")
+        pipeline.add_stage(info, {}, {
             "isthisthereallife": False
         })
         pipeline.set_assembler("org.osbuild.noop")
@@ -87,11 +90,14 @@ class TestMonitor(unittest.TestCase):
     def test_monitor_integration(self):
         # Checks the monitoring API is called properly from the pipeline
         runner = detect_host_runner()
+        index = osbuild.meta.Index(os.curdir)
+
         pipeline = osbuild.Pipeline(runner=runner)
-        pipeline.add_stage("org.osbuild.noop", {}, {
+        noop_info = index.get_module_info("Stage", "org.osbuild.noop")
+        pipeline.add_stage(noop_info, {}, {
             "isthisthereallife": False
         })
-        pipeline.add_stage("org.osbuild.noop", {}, {
+        pipeline.add_stage(noop_info, {}, {
             "isthisjustfantasy": True
         })
         pipeline.set_assembler("org.osbuild.noop")
