@@ -33,13 +33,17 @@ class BuildResult:
 
 
 class Stage:
-    def __init__(self, name, source_options, build, base, options):
-        self.name = name
+    def __init__(self, info, source_options, build, base, options):
+        self.info = info
         self.sources = source_options
         self.build = build
         self.base = base
         self.options = options
         self.checkpoint = False
+
+    @property
+    def name(self):
+        return self.info.name
 
     @property
     def id(self):
@@ -159,8 +163,8 @@ class Pipeline:
     def output_id(self):
         return self.assembler.id if self.assembler else None
 
-    def add_stage(self, name, options, sources_options=None):
-        stage = Stage(name, sources_options, self.build, self.tree_id, options or {})
+    def add_stage(self, info, options, sources_options=None):
+        stage = Stage(info, sources_options, self.build, self.tree_id, options or {})
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id

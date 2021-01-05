@@ -11,6 +11,7 @@ import sys
 import tempfile
 import unittest
 
+import osbuild.meta
 from osbuild.formats import v1 as fmt
 from osbuild.util import linux
 
@@ -352,9 +353,11 @@ class OSBuild(contextlib.AbstractContextManager):
         are defined.
         """
 
+        index = osbuild.meta.Index(os.curdir)
+
         manifest_json = json.loads(manifest_data)
 
-        manifest = fmt.load(manifest_json)
+        manifest = fmt.load(manifest_json, index)
         tree_id, _ = fmt.get_ids(manifest)
         return tree_id
 
