@@ -74,7 +74,10 @@ class Stage:
                 }
             }
 
-            ro_binds = [f"{sources_output}:/run/osbuild/sources"]
+            ro_binds = [
+                f"{self.info.path}:/run/osbuild/bin/{self.name}",
+                f"{sources_output}:/run/osbuild/sources"
+            ]
 
             api = API(args, monitor)
             build_root.register_api(api)
@@ -85,7 +88,7 @@ class Stage:
                                         sources_output)
             build_root.register_api(src)
 
-            r = build_root.run([f"/run/osbuild/lib/stages/{self.name}"],
+            r = build_root.run([f"/run/osbuild/bin/{self.name}"],
                                monitor,
                                binds=[os.fspath(tree) + ":/run/osbuild/tree"],
                                readonly_binds=ro_binds)
