@@ -702,5 +702,7 @@ def main(tree, output_dir, options, loop_client):
 
 if __name__ == '__main__':
     args = osbuild.api.arguments()
-    ret = main(args["tree"], args["output_dir"], args["options"], remoteloop.LoopClient("/run/osbuild/api/remoteloop"))
+    args_input = args["inputs"]["tree"]["path"]
+    args_output = args["tree"]
+    ret = main(args_input, args_output, args["options"], remoteloop.LoopClient("/run/osbuild/api/remoteloop"))
     sys.exit(ret)

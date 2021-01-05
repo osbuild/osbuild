@@ -38,7 +38,7 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         self.counter["stages"] += 1
         self.stages.add(stage.id)
 
-    def assembler(self, assembler: osbuild.Assembler):
+    def assembler(self, assembler: osbuild.Stage):
         self.counter["assembler"] += 1
         self.asm = assembler.id
 
@@ -63,7 +63,9 @@ class TestMonitor(unittest.TestCase):
         pipeline.add_stage(info, {}, {
             "isthisthereallife": False
         })
-        pipeline.set_assembler("org.osbuild.noop")
+
+        info = index.get_module_info("Assembler", "org.osbuild.noop")
+        pipeline.set_assembler(info)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
@@ -100,7 +102,9 @@ class TestMonitor(unittest.TestCase):
         pipeline.add_stage(noop_info, {}, {
             "isthisjustfantasy": True
         })
-        pipeline.set_assembler("org.osbuild.noop")
+
+        noop_info = index.get_module_info("Assembler", "org.osbuild.noop")
+        pipeline.set_assembler(noop_info)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")

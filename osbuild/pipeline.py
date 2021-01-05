@@ -1,4 +1,5 @@
 
+import contextlib
 import hashlib
 import json
 import os
@@ -32,6 +33,13 @@ class BuildResult:
         return vars(self)
 
 
+class Input:
+    def __init__(self, name, input_type, options):
+        self.name = name
+        self.type = input_type
+        self.options = options
+
+
 class Stage:
     def __init__(self, info, source_options, build, base, options):
         self.info = info
@@ -40,6 +48,7 @@ class Stage:
         self.base = base
         self.options = options
         self.checkpoint = False
+        self.inputs = []
 
     @property
     def name(self):
@@ -55,9 +64,14 @@ class Stage:
         return m.hexdigest()
 
     def run(self, tree, runner, build_tree, store, monitor, libdir):
-        var = store.store
-        with buildroot.BuildRoot(build_tree, runner, libdir, var) as build_root, \
-            tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var) as sources_output:
+        with contextlib.ExitStack() as cm:
+            var = store.store
+
+            build_root = buildroot.BuildRoot(build_tree, runner, libdir, var)
+            cm.enter_context(build_root)
+
+            sources_tmp = tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var)
+            sources_output = cm.enter_context(sources_tmp)
 
             args = {
                 "tree": "/run/osbuild/tree",
@@ -73,6 +87,31 @@ class Stage:
                 f"{sources_output}:/run/osbuild/sources"
             ]
 
+            inputs = {}
+            for ip in self.inputs:
+                assert ip.type == "pipeline"
+                pid = ip.options["id"]
+                if not pid:
+                    obj = store.new()
+                else:
+                    obj = store.get(pid)
+                path = cm.enter_context(obj.read())
+
+                mapped = f"/run/osbuild/inputs/{ip.name}"
+                inputs[ip.name] = {
+                    "type": ip.type,
+                    "path": mapped,
+                    "meta": {
+                        "options": ip.options
+                    }
+                }
+
+                ro_binds += [
+                    f"{path}:{mapped}"
+                ]
+
+            args["inputs"] = inputs
+
             api = API(args, monitor)
             build_root.register_api(api)
 
@@ -82,60 +121,12 @@ class Stage:
                                         sources_output)
             build_root.register_api(src)
 
-            r = build_root.run([f"/run/osbuild/bin/{self.name}"],
-                               monitor,
-                               binds=[os.fspath(tree) + ":/run/osbuild/tree"],
-                               readonly_binds=ro_binds)
-
-        return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
-
-
-class Assembler:
-    def __init__(self, name, build, base, options):
-        self.name = name
-        self.build = build
-        self.base = base
-        self.options = options
-        self.checkpoint = False
-
-    @property
-    def id(self):
-        m = hashlib.sha256()
-        m.update(json.dumps(self.name, sort_keys=True).encode())
-        m.update(json.dumps(self.build, sort_keys=True).encode())
-        m.update(json.dumps(self.base, sort_keys=True).encode())
-        m.update(json.dumps(self.options, sort_keys=True).encode())
-        return m.hexdigest()
-
-    def run(self, tree, runner, build_tree, monitor, libdir, output_dir, var="/var/tmp"):
-        with buildroot.BuildRoot(build_tree, runner, libdir, var=var) as build_root:
-
-            args = {
-                "tree": "/run/osbuild/tree",
-                "options": self.options,
-                "meta": {
-                    "id": self.id
-                }
-            }
-
-            binds = []
-
-            output_dir = os.fspath(output_dir)
-            os.makedirs(output_dir, exist_ok=True)
-            binds.append(f"{output_dir}:/run/osbuild/output")
-            args["output_dir"] = "/run/osbuild/output"
-
-            ro_binds = [os.fspath(tree) + ":/run/osbuild/tree"]
-
-            api = API(args, monitor)
-            build_root.register_api(api)
-
             rls = remoteloop.LoopServer()
             build_root.register_api(rls)
 
-            r = build_root.run([f"/run/osbuild/lib/assemblers/{self.name}"],
+            r = build_root.run([f"/run/osbuild/bin/{self.name}"],
                                monitor,
-                               binds=binds,
+                               binds=[os.fspath(tree) + ":/run/osbuild/tree"],
                                readonly_binds=ro_binds)
 
         return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
@@ -166,8 +157,9 @@ class Pipeline:
         if self.assembler:
             self.assembler.base = stage.id
 
-    def set_assembler(self, name, options=None):
-        self.assembler = Assembler(name, self.build, self.tree_id, options or {})
+    def set_assembler(self, info, options=None):
+        self.assembler = Stage(info, {}, self.build, self.tree_id, options or {})
+        self.assembler.inputs = [Input("tree", "pipeline", {"id": self.tree_id})]
 
     def build_stages(self, object_store, monitor, libdir):
         results = {"success": True}
@@ -249,7 +241,7 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def assemble(self, object_store, build_tree, tree, monitor, libdir):
+    def assemble(self, object_store, build_tree, monitor, libdir):
         results = {"success": True}
 
         if not self.assembler:
@@ -258,18 +250,16 @@ class Pipeline:
         output = object_store.new()
 
         with build_tree.read() as build_dir, \
-             tree.read() as input_dir, \
              output.write() as output_dir:
 
             monitor.assembler(self.assembler)
 
-            r = self.assembler.run(input_dir,
+            r = self.assembler.run(output_dir,
                                    self.runner,
                                    build_dir,
+                                   object_store,
                                    monitor,
-                                   libdir,
-                                   output_dir,
-                                   var=object_store.store)
+                                   libdir)
 
             monitor.result(r)
 
@@ -297,16 +287,15 @@ class Pipeline:
         obj = store.get(self.output_id)
 
         if not obj:
-            results, build_tree, tree = self.build_stages(store,
-                                                          monitor,
-                                                          libdir)
+            results, build_tree, _ = self.build_stages(store,
+                                                       monitor,
+                                                       libdir)
 
             if not results["success"]:
                 return results
 
             r, obj = self.assemble(store,
                                    build_tree,
-                                   tree,
                                    monitor,
                                    libdir)
 

@@ -60,28 +60,6 @@ class TestDescriptions(unittest.TestCase):
         self.assertEqual(res.success, True)
         self.assertEqual(res.id, stage.id)
 
-    @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
-    def test_assembler_run(self):
-        asm = osbuild.Assembler("org.osbuild.noop", None, None, {})
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-
-            data = pathlib.Path(tmpdir, "data")
-            cache = pathlib.Path(tmpdir, "cache")
-            output = pathlib.Path(tmpdir, "output")
-            root = pathlib.Path("/")
-            runner = detect_host_runner()
-            monitor = NullMonitor(sys.stderr.fileno())
-            libdir = os.path.abspath(os.curdir)
-
-            for p in [data, cache, output]:
-                p.mkdir()
-
-            res = asm.run(data, runner, root, monitor, libdir, output)
-
-        self.assertEqual(res.success, True)
-        self.assertEqual(res.id, asm.id)
-
     def test_pipeline(self):
         index = osbuild.meta.Index(os.curdir)
 
@@ -91,7 +69,9 @@ class TestDescriptions(unittest.TestCase):
 
         pipeline = osbuild.Pipeline("org.osbuild.test", build.tree_id)
         pipeline.add_stage(test_info, {}, {"one": 2})
-        pipeline.set_assembler("org.osbuild.test")
+
+        test_info = index.get_module_info("Assembler", "org.osbuild.noop")
+        pipeline.set_assembler(test_info)
 
         manifest = osbuild.Manifest([build, pipeline])
 
@@ -115,7 +95,7 @@ class TestDescriptions(unittest.TestCase):
                     }
                 ],
                 "assembler": {
-                    "name": "org.osbuild.test"
+                    "name": "org.osbuild.noop"
                 }
             }
         })
