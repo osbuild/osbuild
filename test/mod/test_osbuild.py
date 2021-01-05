@@ -13,6 +13,7 @@ import osbuild
 import osbuild.meta
 from osbuild.formats import v1 as fmt
 from osbuild.monitor import NullMonitor
+from osbuild.objectstore import ObjectStore
 from osbuild.pipeline import detect_host_runner
 from .. import test
 
@@ -46,16 +47,15 @@ class TestDescriptions(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
 
             data = pathlib.Path(tmpdir, "data")
-            cache = pathlib.Path(tmpdir, "cache")
+            storedir = pathlib.Path(tmpdir, "store")
             root = pathlib.Path("/")
             runner = detect_host_runner()
             monitor = NullMonitor(sys.stderr.fileno())
             libdir = os.path.abspath(os.curdir)
+            store = ObjectStore(storedir)
+            data.mkdir()
 
-            for p in [data, cache]:
-                p.mkdir()
-
-            res = stage.run(data, runner, root, cache, monitor, libdir)
+            res = stage.run(data, runner, root, store, monitor, libdir)
 
         self.assertEqual(res.success, True)
         self.assertEqual(res.id, stage.id)
