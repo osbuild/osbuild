@@ -43,36 +43,40 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     return description
 
 
-def load_build(description: Dict, sources_options: Dict, result: List[Pipeline]):
-    pipeline = description.get("pipeline")
-    if pipeline:
-        build_pipeline = load_pipeline(pipeline, sources_options, result)
-    else:
-        build_pipeline = None
+class Loader:
+    def __init__(self, sources_options: Dict):
+        self.sources_options = sources_options
+        self.pipelines: List[Pipeline] = []
 
-    return build_pipeline, description["runner"]
+    def load_build(self, description: Dict):
+        pipeline = description.get("pipeline")
+        if pipeline:
+            build_pipeline = self.load_pipeline(pipeline)
+        else:
+            build_pipeline = None
+
+        return build_pipeline, description["runner"]
+
+    def load_pipeline(self, description: Dict) -> Pipeline:
+        build = description.get("build")
+        if build:
+            build_pipeline, runner = self.load_build(build)
+        else:
+            build_pipeline, runner = None, detect_host_runner()
 
 
-def load_pipeline(description: Dict, sources_options: Dict, result: List[Pipeline]) -> Pipeline:
-    build = description.get("build")
-    if build:
-        build_pipeline, runner = load_build(build, sources_options, result)
-    else:
-        build_pipeline, runner = None, detect_host_runner()
+        pipeline = Pipeline(runner, build_pipeline and build_pipeline.tree_id)
 
+        for s in description.get("stages", []):
+            pipeline.add_stage(s["name"], self.sources_options, s.get("options", {}))
 
-    pipeline = Pipeline(runner, build_pipeline and build_pipeline.tree_id)
+        a = description.get("assembler")
+        if a:
+            pipeline.set_assembler(a["name"], a.get("options", {}))
 
-    for s in description.get("stages", []):
-        pipeline.add_stage(s["name"], sources_options, s.get("options", {}))
+        self.pipelines.append(pipeline)
 
-    a = description.get("assembler")
-    if a:
-        pipeline.set_assembler(a["name"], a.get("options", {}))
-
-    result.append(pipeline)
-
-    return pipeline
+        return pipeline
 
 
 def load(description: Dict) -> Manifest:
@@ -81,11 +85,10 @@ def load(description: Dict) -> Manifest:
     pipeline = description.get("pipeline", {})
     sources = description.get("sources", {})
 
-    pipelines = []
+    loader = Loader(sources)
+    loader.load_pipeline(pipeline)
 
-    load_pipeline(pipeline, sources, pipelines)
-
-    manifest = Manifest(pipelines)
+    manifest = Manifest(loader.pipelines)
     manifest.source_options = sources
 
     return manifest
