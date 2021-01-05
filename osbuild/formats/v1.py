@@ -43,20 +43,20 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     return description
 
 
-def load_build(description: Dict, result: List[Pipeline]):
+def load_build(description: Dict, index: Index, result: List[Pipeline]):
     pipeline = description.get("pipeline")
     if pipeline:
-        build_pipeline = load_pipeline(pipeline, result)
+        build_pipeline = load_pipeline(pipeline, index, result)
     else:
         build_pipeline = None
 
     return build_pipeline, description["runner"]
 
 
-def load_pipeline(description: Dict, result: List[Pipeline]) -> Pipeline:
+def load_pipeline(description: Dict, index: Index, result: List[Pipeline]) -> Pipeline:
     build = description.get("build")
     if build:
-        build_pipeline, runner = load_build(build, result)
+        build_pipeline, runner = load_build(build, index, result)
     else:
         build_pipeline, runner = None, detect_host_runner()
 
@@ -64,7 +64,8 @@ def load_pipeline(description: Dict, result: List[Pipeline]) -> Pipeline:
     pipeline = Pipeline(runner, build_id)
 
     for s in description.get("stages", []):
-        pipeline.add_stage(s["name"], s.get("options", {}))
+        info = index.get_module_info("Stage", s["name"])
+        pipeline.add_stage(info, s.get("options", {}))
 
     a = description.get("assembler")
     if a:
@@ -75,7 +76,7 @@ def load_pipeline(description: Dict, result: List[Pipeline]) -> Pipeline:
     return pipeline
 
 
-def load(description: Dict) -> Manifest:
+def load(description: Dict, index: Index) -> Manifest:
     """Load a manifest description"""
 
     pipeline = description.get("pipeline", {})
@@ -83,7 +84,7 @@ def load(description: Dict) -> Manifest:
 
     pipelines = []
 
-    load_pipeline(pipeline, pipelines)
+    load_pipeline(pipeline, index, pipelines)
 
     for pipeline in pipelines:
         for stage in pipeline.stages:

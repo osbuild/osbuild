@@ -90,7 +90,7 @@ def osbuild_cli():
             show_validation(res, args.manifest_path)
         return 2
 
-    manifest = fmt.load(desc)
+    manifest = fmt.load(desc, index)
 
     if args.checkpoint:
         missed = manifest.mark_checkpoints(args.checkpoint)

@@ -22,6 +22,8 @@ class TestDescriptions(unittest.TestCase):
         """Degenerate case. Make sure we always return the same canonical
         description when passing empty or null values."""
 
+        index = osbuild.meta.Index(os.curdir)
+
         cases = [
             {},
             {"assembler": None},
@@ -32,12 +34,14 @@ class TestDescriptions(unittest.TestCase):
         for pipeline in cases:
             manifest = {"pipeline": pipeline}
             with self.subTest(pipeline):
-                desc = fmt.describe(fmt.load(manifest))
+                desc = fmt.describe(fmt.load(manifest, index))
                 self.assertEqual(desc["pipeline"], {})
 
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_stage_run(self):
-        stage = osbuild.Stage("org.osbuild.noop", {}, None, None, {})
+        index = osbuild.meta.Index(os.curdir)
+        info = index.get_module_info("Stage", "org.osbuild.noop")
+        stage = osbuild.Stage(info, {}, None, None, {})
 
         with tempfile.TemporaryDirectory() as tmpdir:
 
@@ -79,11 +83,14 @@ class TestDescriptions(unittest.TestCase):
         self.assertEqual(res.id, asm.id)
 
     def test_pipeline(self):
+        index = osbuild.meta.Index(os.curdir)
+
+        test_info = index.get_module_info("Stage", "org.osbuild.test")
         build = osbuild.Pipeline("org.osbuild.test")
-        build.add_stage("org.osbuild.test", {"one": 1})
+        build.add_stage(test_info, {"one": 1})
 
         pipeline = osbuild.Pipeline("org.osbuild.test", build.tree_id)
-        pipeline.add_stage("org.osbuild.test", {"one": 2})
+        pipeline.add_stage(test_info, {"one": 2})
         pipeline.set_assembler("org.osbuild.test")
 
         manifest = osbuild.Manifest([build, pipeline], {})
