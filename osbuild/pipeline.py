@@ -54,15 +54,9 @@ class Stage:
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def run(self,
-            tree,
-            runner,
-            build_tree,
-            cache,
-            monitor,
-            libdir,
-            var="/var/tmp"):
-        with buildroot.BuildRoot(build_tree, runner, libdir, var=var) as build_root, \
+    def run(self, tree, runner, build_tree, store, monitor, libdir):
+        var = store.store
+        with buildroot.BuildRoot(build_tree, runner, libdir, var) as build_root, \
             tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var) as sources_output:
 
             args = {
@@ -84,7 +78,7 @@ class Stage:
 
             src = sources.SourcesServer(libdir,
                                         self.sources,
-                                        os.path.join(cache, "sources"),
+                                        os.path.join(store.store, "sources"),
                                         sources_output)
             build_root.register_api(src)
 
@@ -231,10 +225,9 @@ class Pipeline:
                 r = stage.run(path,
                               self.runner,
                               build_path,
-                              object_store.store,
+                              object_store,
                               monitor,
-                              libdir,
-                              var=object_store.store)
+                              libdir)
 
                 monitor.result(r)
 
