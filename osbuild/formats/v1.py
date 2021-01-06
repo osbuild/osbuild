@@ -81,6 +81,14 @@ class Loader:
 
         return pipeline
 
+    def load(self, description: Dict) -> Manifest:
+        self.pipelines = []
+        self.load_pipeline(description)
+
+        manifest = Manifest(self.pipelines)
+        manifest.source_options = self.sources_options
+        return manifest
+
 
 def load(description: Dict, index: Index) -> Manifest:
     """Load a manifest description"""
@@ -89,10 +97,7 @@ def load(description: Dict, index: Index) -> Manifest:
     sources = description.get("sources", {})
 
     loader = Loader(index, sources)
-    loader.load_pipeline(pipeline)
-
-    manifest = Manifest(loader.pipelines)
-    manifest.source_options = sources
+    manifest = loader.load(pipeline)
 
     return manifest
 
