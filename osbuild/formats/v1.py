@@ -76,6 +76,7 @@ def load_pipeline(description: Dict, index: Index, manifest: Manifest) -> Pipeli
         asm.inputs = {
             "tree": Input(info, {"pipeline": {"id": pipeline.tree_id}})
         }
+        pipeline.export = True
 
     return pipeline
 
