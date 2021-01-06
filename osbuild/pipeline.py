@@ -316,6 +316,7 @@ class Manifest:
     def __init__(self, pipelines: List[Pipeline]):
         self.pipelines = pipelines
         self.source_options = {}
+        self.loader = None
 
     def build(self, store, monitor, libdir, output_directory):
         results = {"success": True}

@@ -87,6 +87,8 @@ class Loader:
 
         manifest = Manifest(self.pipelines)
         manifest.source_options = self.sources_options
+        manifest.loader = self
+
         return manifest
 
 
