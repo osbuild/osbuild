@@ -93,7 +93,8 @@ def osbuild_cli():
     manifest = fmt.load(desc, index)
 
     if args.checkpoint:
-        missed = manifest.mark_checkpoints(args.checkpoint)
+        checkpoints = fmt.map_ids(manifest, args.checkpoint)
+        missed = manifest.mark_checkpoints(checkpoints)
         if missed:
             for checkpoint in missed:
                 print(f"Checkpoint {BOLD}{checkpoint}{RESET} not found!")

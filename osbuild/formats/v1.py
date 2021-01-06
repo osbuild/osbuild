@@ -1,9 +1,19 @@
 # Version 1 of the manifest description
+import hashlib
+import json
 
 from typing import Dict, List, Optional, Tuple
 from osbuild.meta import Index, ValidationResult
-from ..pipeline import Manifest, Pipeline, detect_host_runner
+from ..pipeline import Input, Manifest, Pipeline, detect_host_runner
 
+
+def calc_id(name, build, base, options):
+    m = hashlib.sha256()
+    m.update(json.dumps(name, sort_keys=True).encode())
+    m.update(json.dumps(build, sort_keys=True).encode())
+    m.update(json.dumps(base, sort_keys=True).encode())
+    m.update(json.dumps(options, sort_keys=True).encode())
+    return m.hexdigest()
 
 def describe(manifest: Manifest, *, with_id=False) -> Dict:
     """Create the manifest description for the pipeline"""
@@ -12,12 +22,14 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     assert isinstance(manifest.loader, Loader), "Unexpected Loader"
     loader = manifest.loader
 
+    ids = {v: k for k, v in loader.ids.items()}
+
     def describe_stage(stage):
         description = {"name": stage.name}
         if stage.options:
             description["options"] = stage.options
         if with_id:
-            description["id"] = stage.id
+            description["id"] = ids.get(stage.id, stage.id)
         return description
 
     def describe_pipeline(pipeline: Pipeline) -> Dict:
@@ -33,13 +45,16 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
             stages = [describe_stage(s) for s in pipeline.stages]
             description["stages"] = stages
 
-        if pipeline.assembler:
-            assembler = describe_stage(pipeline.assembler)
-            description["assembler"] = assembler
         return description
 
+    pipeline = describe_pipeline(loader.pipeline)
+
+    if loader.assembler:
+        assembler = describe_stage(loader.assembler.stages[0])
+        pipeline["assembler"] = assembler
+
     description = {
-        "pipeline": describe_pipeline(loader.pipeline)
+        "pipeline": pipeline
     }
 
     if manifest.source_options:
@@ -57,7 +72,34 @@ class Loader:
         self.pipelines: List[Pipeline] = []
 
         # mapping
+        self.ids = {}
         self.pipeline = None # The main pipeline
+        self.assembler = None # The old assembler
+
+    def add_assembler(self, desc: Dict):
+        if not desc:
+            return
+
+        build = self.pipeline.build
+        base = self.pipeline.tree_id
+
+        name = desc["name"]
+        options = desc.get("options", {})
+
+        pipeline = Pipeline(self.pipeline.runner, self.pipeline.build)
+        pipeline.export = True
+        self.pipelines.append(pipeline)
+
+        info = self.index.get_module_info("Assembler", name)
+
+        stage = pipeline.add_stage(info, self.sources_options, options)
+        stage.inputs = [Input("tree", "pipeline", {"id": base})]
+
+        new_id = stage.id
+        old_id = calc_id(name, build, base, options)
+
+        self.ids[old_id] = new_id
+        self.assembler = pipeline
 
     def load_build(self, description: Dict):
         pipeline = description.get("pipeline")
@@ -82,12 +124,6 @@ class Loader:
             info = self.index.get_module_info("Stage", s["name"])
             pipeline.add_stage(info, self.sources_options, s.get("options", {}))
 
-        a = description.get("assembler")
-        if a:
-            info = self.index.get_module_info("Assembler", a["name"])
-            pipeline.set_assembler(info, a.get("options", {}))
-            pipeline.export = True
-
         self.pipelines.append(pipeline)
 
         return pipeline
@@ -95,6 +131,8 @@ class Loader:
     def load(self, description: Dict) -> Manifest:
         self.pipelines = []
         self.pipeline = self.load_pipeline(description)
+
+        self.add_assembler(description.get("assembler"))
 
         manifest = Manifest(self.pipelines)
         manifest.source_options = self.sources_options
@@ -115,13 +153,18 @@ def load(description: Dict, index: Index) -> Manifest:
     return manifest
 
 
+def map_ids(manifest: Manifest, ids: List[str]) -> List[str]:
+    assert isinstance(manifest.loader, Loader), "Unexpected Loader"
+    return [manifest.loader.ids.get(i, i) for i in ids]
+
 def get_ids(manifest: Manifest) -> Tuple[Optional[str], Optional[str]]:
     # Can only get ids for what we loaded
     assert isinstance(manifest.loader, Loader), "Unexpected Loader"
     loader = manifest.loader
     pipeline = loader.pipeline
+    assembler = loader.assembler
 
-    return pipeline.tree_id, pipeline.output_id
+    return pipeline.tree_id, assembler and assembler.tree_id
 
 
 def output(manifest: Manifest, res: Dict) -> Dict:
@@ -143,7 +186,13 @@ def output(manifest: Manifest, res: Dict) -> Dict:
 
     assert isinstance(manifest.loader, Loader), "Unexpected Loader"
 
-    return result_for_pipeline(manifest.loader.pipeline)
+    result = result_for_pipeline(manifest.loader.pipeline)
+
+    if manifest.loader.assembler:
+        current = res[manifest.loader.assembler.id]
+        result["assembler"] = current["stages"][0]
+
+    return result
 
 
 def validate(manifest: Dict, index: Index) -> ValidationResult:

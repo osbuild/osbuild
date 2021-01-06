@@ -23,7 +23,6 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         super().__init__(sys.stderr.fileno())
         self.counter = defaultdict(int)
         self.stages = set()
-        self.asm = None
         self.results = set()
         self.logger = io.StringIO()
 
@@ -37,10 +36,6 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
     def stage(self, stage: osbuild.Stage):
         self.counter["stages"] += 1
         self.stages.add(stage.id)
-
-    def assembler(self, assembler: osbuild.Stage):
-        self.counter["assembler"] += 1
-        self.asm = assembler.id
 
     def result(self, result: osbuild.pipeline.BuildResult):
         self.counter["result"] += 1
@@ -64,9 +59,6 @@ class TestMonitor(unittest.TestCase):
             "isthisthereallife": False
         })
 
-        info = index.get_module_info("Assembler", "org.osbuild.noop")
-        pipeline.set_assembler(info)
-
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
             outputdir = os.path.join(tmpdir, "output")
@@ -85,7 +77,6 @@ class TestMonitor(unittest.TestCase):
 
             assert res
             self.assertIn(pipeline.stages[0].id, log)
-            self.assertIn(pipeline.assembler.id, log)
             self.assertIn("isthisthereallife", log)
 
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
@@ -103,9 +94,6 @@ class TestMonitor(unittest.TestCase):
             "isthisjustfantasy": True
         })
 
-        noop_info = index.get_module_info("Assembler", "org.osbuild.noop")
-        pipeline.set_assembler(noop_info)
-
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
             outputdir = os.path.join(tmpdir, "output")
@@ -121,10 +109,8 @@ class TestMonitor(unittest.TestCase):
         self.assertEqual(tape.counter["begin"], 1)
         self.assertEqual(tape.counter["finish"], 1)
         self.assertEqual(tape.counter["stages"], 2)
-        self.assertEqual(tape.counter["assembler"], 1)
         self.assertEqual(tape.counter["stages"], 2)
-        self.assertEqual(tape.counter["result"], 3)
+        self.assertEqual(tape.counter["result"], 2)
         self.assertIn(pipeline.stages[0].id, tape.stages)
-        self.assertIn(pipeline.assembler.id, tape.asm)
         self.assertIn("isthisthereallife", tape.output)
         self.assertIn("isthisjustfantasy", tape.output)
