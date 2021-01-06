@@ -7,6 +7,11 @@ from ..pipeline import Manifest, Pipeline, detect_host_runner
 
 def describe(manifest: Manifest, *, with_id=False) -> Dict:
     """Create the manifest description for the pipeline"""
+
+    # Can only describe what we loaded
+    assert isinstance(manifest.loader, Loader), "Unexpected Loader"
+    loader = manifest.loader
+
     def describe_stage(stage):
         description = {"name": stage.name}
         if stage.options:
@@ -34,7 +39,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return description
 
     description = {
-        "pipeline": describe_pipeline(manifest.pipelines[-1])
+        "pipeline": describe_pipeline(loader.pipeline)
     }
 
     if manifest.source_options:
@@ -47,7 +52,12 @@ class Loader:
     def __init__(self, index: Index, sources_options: Dict):
         self.index = index
         self.sources_options = sources_options
+
+        # state
         self.pipelines: List[Pipeline] = []
+
+        # mapping
+        self.pipeline = None # The main pipeline
 
     def load_build(self, description: Dict):
         pipeline = description.get("pipeline")
@@ -83,7 +93,7 @@ class Loader:
 
     def load(self, description: Dict) -> Manifest:
         self.pipelines = []
-        self.load_pipeline(description)
+        self.pipeline = self.load_pipeline(description)
 
         manifest = Manifest(self.pipelines)
         manifest.source_options = self.sources_options
@@ -105,7 +115,11 @@ def load(description: Dict, index: Index) -> Manifest:
 
 
 def get_ids(manifest: Manifest) -> Tuple[Optional[str], Optional[str]]:
-    pipeline = manifest.pipelines[-1]
+    # Can only get ids for what we loaded
+    assert isinstance(manifest.loader, Loader), "Unexpected Loader"
+    loader = manifest.loader
+    pipeline = loader.pipeline
+
     return pipeline.tree_id, pipeline.output_id
 
 
@@ -126,7 +140,9 @@ def output(manifest: Manifest, res: Dict) -> Dict:
             retval["assembler"] = assembler
         return retval
 
-    return result_for_pipeline(manifest.pipelines[-1])
+    assert isinstance(manifest.loader, Loader), "Unexpected Loader"
+
+    return result_for_pipeline(manifest.loader.pipeline)
 
 
 def validate(manifest: Dict, index: Index) -> ValidationResult:
