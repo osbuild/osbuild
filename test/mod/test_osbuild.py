@@ -60,46 +60,6 @@ class TestDescriptions(unittest.TestCase):
         self.assertEqual(res.success, True)
         self.assertEqual(res.id, stage.id)
 
-    def test_pipeline(self):
-        index = osbuild.meta.Index(os.curdir)
-
-        test_info = index.get_module_info("Stage", "org.osbuild.test")
-        build = osbuild.Pipeline("org.osbuild.test")
-        build.add_stage(test_info, {}, {"one": 1})
-
-        pipeline = osbuild.Pipeline("org.osbuild.test", build.tree_id)
-        pipeline.add_stage(test_info, {}, {"one": 2})
-
-        test_info = index.get_module_info("Assembler", "org.osbuild.noop")
-        pipeline.set_assembler(test_info)
-
-        manifest = osbuild.Manifest([build, pipeline])
-
-        self.assertEqual(fmt.describe(manifest), {
-            "pipeline": {
-                "build": {
-                    "pipeline": {
-                        "stages": [
-                            {
-                                "name": "org.osbuild.test",
-                                "options": {"one": 1}
-                            }
-                        ]
-                    },
-                    "runner": "org.osbuild.test"
-                },
-                "stages": [
-                    {
-                        "name": "org.osbuild.test",
-                        "options": {"one": 2}
-                    }
-                ],
-                "assembler": {
-                    "name": "org.osbuild.noop"
-                }
-            }
-        })
-
     def test_moduleinfo(self):
         index = osbuild.meta.Index(os.curdir)
 
