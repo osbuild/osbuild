@@ -157,6 +157,7 @@ class Pipeline:
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id
+        return stage
 
     def set_assembler(self, info, options=None):
         self.assembler = Stage(info, {}, self.build, self.tree_id, options or {})
