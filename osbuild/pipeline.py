@@ -138,6 +138,7 @@ class Pipeline:
         self.runner = runner
         self.stages = []
         self.assembler = None
+        self.export = False
 
     @property
     def id(self):
@@ -301,7 +302,7 @@ class Pipeline:
 
             results.update(r)  # This will also update 'success'
 
-        if obj:
+        if self.export and obj:
             if output_directory:
                 obj.export(output_directory)
 

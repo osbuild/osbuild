@@ -86,6 +86,7 @@ class Loader:
         if a:
             info = self.index.get_module_info("Assembler", a["name"])
             pipeline.set_assembler(info, a.get("options", {}))
+            pipeline.export = True
 
         self.pipelines.append(pipeline)
 
