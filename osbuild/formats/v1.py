@@ -65,8 +65,8 @@ class Loader:
         else:
             build_pipeline, runner = None, detect_host_runner()
 
-
-        pipeline = Pipeline(runner, build_pipeline and build_pipeline.tree_id)
+        build_id = build_pipeline and build_pipeline.tree_id
+        pipeline = Pipeline(runner, build_id)
 
         for s in description.get("stages", []):
             info = self.index.get_module_info("Stage", s["name"])
