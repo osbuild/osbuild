@@ -1,0 +1,95 @@
+#!/usr/bin/python3
+"""
+Configure Red Hat Subscription Management (RHSM)
+
+The stage currently supports configuring only RHSM DNF plugins,
+specifically enabling and disabling them. In the future, this
+stage may be extended to configure also other aspects of RHSM.
+
+In case the stage is configured to enable/disable specific
+DNF plugins, it expects that the appropriate configuration files
+exist in the filesystem tree. Non-existence of the configuration
+files will make the stage fail.
+"""
+
+import sys
+import iniparse
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "dnf-plugins": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "RHSM DNF plugins configuration",
+    "properties": {
+      "product-id": {
+        "additionalProperties": false,
+        "type": "object",
+        "description": "'product-id' DNF plugin configuration",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "enablement state of the plugin"
+          }
+        }
+      },
+      "subscription-manager": {
+        "additionalProperties": false,
+        "type": "object",
+        "description": "'subscription-manager' DNF plugin configuration",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "enablement state of the plugin"
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def configure_dnf_plugins(tree, dnf_plugins_options):
+    for plugin, plugin_options in dnf_plugins_options.items():
+        plugin_conf_path = f"{tree}/etc/dnf/plugins/{plugin}.conf"
+        plugin_conf = iniparse.SafeConfigParser()
+
+        try:
+            with open(plugin_conf_path, "r") as f:
+                plugin_conf.readfp(f)
+        except FileNotFoundError as _:
+            print(f"Error: {plugin} configuration file '{plugin_conf_path}' does not exist.")
+            return 1
+
+        for option, value in plugin_options.items():
+            # defined by the "enabled" boolean option in the "main" section
+            if option == "enabled":
+                if not plugin_conf.has_section("main"):
+                    plugin_conf.add_section("main")
+                # rhsm plugins tend to use 0/1 for boolean values
+                plugin_conf.set("main", "enabled", str(int(value)))
+            else:
+                # schema does not allow any additional properties, but keeping this for completenes
+                print(f"Error: unknown property {option} specified for {plugin} plugin.")
+                return 1
+
+        with open(plugin_conf_path, "w") as f:
+            plugin_conf.write(f)
+
+    return 0
+
+
+def main(tree, options):
+    dnf_plugins_options = options.get("dnf-plugins", {})
+    return configure_dnf_plugins(tree, dnf_plugins_options)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args.get("options", {}))
+    sys.exit(r)
