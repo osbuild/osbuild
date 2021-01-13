@@ -24,6 +24,7 @@
               "e2fsprogs",
               "grub2-pc",
               "policycoreutils",
+              "python3-iniparse",
               "qemu-img",
               "rpm-ostree",
               "systemd",
