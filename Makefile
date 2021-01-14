@@ -209,6 +209,7 @@ TEST_MANIFESTS_MPP = $(wildcard $(SRCDIR)/test/data/manifests/*.mpp.json) \
 		     $(wildcard $(SRCDIR)/test/data/stages/*/*.mpp.json)
 TEST_MANIFESTS_GEN = $(TEST_MANIFESTS_MPP:%.mpp.json=%.json)
 
+.PHONY: $(TEST_MANIFESTS_GEN)
 $(TEST_MANIFESTS_GEN): %.json: %.mpp.json
 	$(SRCDIR)/tools/mpp-depsolve.py <"$<" \
 		| $(SRCDIR)/tools/mpp-import-pipeline.py >"$@" \
