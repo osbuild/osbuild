@@ -94,7 +94,7 @@ jobs:
       uses: osbuild/containers/ghci/actions/ghci-osbuild@ghci/v1
       with:
         run: |
-          make --always-make test-data
+          make test-data
           git diff --exit-code -- ./test/data
 
   codespell:
