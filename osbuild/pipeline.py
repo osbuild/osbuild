@@ -101,6 +101,9 @@ class Stage:
                                         sources_output)
             build_root.register_api(src)
 
+            rls = remoteloop.LoopServer()
+            build_root.register_api(rls)
+
             r = build_root.run([f"/run/osbuild/bin/{self.name}"],
                                monitor,
                                binds=[os.fspath(tree) + ":/run/osbuild/tree"],
