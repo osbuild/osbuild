@@ -57,7 +57,7 @@ class TestMonitor(unittest.TestCase):
         # Checks the basic functioning of the LogMonitor
         runner = detect_host_runner()
         pipeline = osbuild.Pipeline(runner=runner)
-        pipeline.add_stage("org.osbuild.noop", {}, {
+        pipeline.add_stage("org.osbuild.noop", {
             "isthisthereallife": False
         })
         pipeline.set_assembler("org.osbuild.noop")
@@ -88,10 +88,10 @@ class TestMonitor(unittest.TestCase):
         # Checks the monitoring API is called properly from the pipeline
         runner = detect_host_runner()
         pipeline = osbuild.Pipeline(runner=runner)
-        pipeline.add_stage("org.osbuild.noop", {}, {
+        pipeline.add_stage("org.osbuild.noop", {
             "isthisthereallife": False
         })
-        pipeline.add_stage("org.osbuild.noop", {}, {
+        pipeline.add_stage("org.osbuild.noop", {
             "isthisjustfantasy": True
         })
         pipeline.set_assembler("org.osbuild.noop")

@@ -64,7 +64,7 @@ def load_pipeline(description: Dict, sources_options: Dict, result: List[Pipelin
     pipeline = Pipeline(runner, build_pipeline and build_pipeline.tree_id)
 
     for s in description.get("stages", []):
-        pipeline.add_stage(s["name"], sources_options, s.get("options", {}))
+        pipeline.add_stage(s["name"], s.get("options", {}), sources_options)
 
     a = description.get("assembler")
     if a:
