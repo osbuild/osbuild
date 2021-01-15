@@ -359,9 +359,10 @@ class ModuleInfo:
     @staticmethod
     def module_class_to_directory(klass: str) -> str:
         mapping = {
-            "Stage": "stages",
             "Assembler": "assemblers",
-            "Source": "sources"
+            "Input": "inputs",
+            "Source": "sources",
+            "Stage": "stages",
         }
 
         return mapping.get(klass)
@@ -419,7 +420,7 @@ class Index:
             with contextlib.suppress(FileNotFoundError):
                 with open(path, "r") as f:
                     schema = json.load(f)
-        elif klass in ["Stage", "Assembler", "Source"]:
+        elif klass in ["Assembler", "Input", "Source", "Stage"]:
             info = self.get_module_info(klass, name)
             if info:
                 schema = info.schema
