@@ -2,6 +2,7 @@
 
 from typing import Dict, List, Optional, Tuple
 from osbuild.meta import Index, ValidationResult
+from ..inputs import Input
 from ..pipeline import Manifest, Pipeline, detect_host_runner
 
 
@@ -69,7 +70,12 @@ def load_pipeline(description: Dict, index: Index, result: List[Pipeline]) -> Pi
 
     a = description.get("assembler")
     if a:
-        pipeline.set_assembler(a["name"], a.get("options", {}))
+        info = index.get_module_info("Assembler", a["name"])
+        asm = pipeline.set_assembler(info, a.get("options", {}))
+        info = index.get_module_info("Input", "org.osbuild.tree")
+        asm.inputs = {
+            "tree": Input(info, {"pipeline": {"id": pipeline.tree_id}})
+        }
 
     result.append(pipeline)
 

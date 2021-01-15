@@ -80,5 +80,7 @@ def main(tree, output_dir, options):
 
 if __name__ == '__main__':
     args = osbuild.api.arguments()
-    r = main(args["tree"], args["output_dir"], args["options"])
+    args_input = args["inputs"]["tree"]["path"]
+    args_output = args["tree"]
+    r = main(args_input, args_output, args["options"])
     sys.exit(r)
