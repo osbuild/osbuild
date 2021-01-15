@@ -47,6 +47,8 @@ is not listed here, **osbuild** will deny startup and exit with an error.
                                 build (can be passed multiple times)
 --json                          output results in JSON format
 --output-directory=DIR          directory where result objects are stored
+--inspect                       return the manifest in JSON format including
+                                all the ids
 
 NB: If neither ``--output-directory`` nor ``--checkpoint`` is specified, no
 attempt to build the manifest will be made.
