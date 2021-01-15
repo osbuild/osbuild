@@ -63,7 +63,8 @@ class TestMonitor(unittest.TestCase):
         pipeline.add_stage(info, {
             "isthisthereallife": False
         })
-        pipeline.set_assembler("org.osbuild.noop")
+        info = index.get_module_info("Assembler", "org.osbuild.noop")
+        pipeline.set_assembler(info)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
@@ -100,7 +101,8 @@ class TestMonitor(unittest.TestCase):
         pipeline.add_stage(noop_info, {
             "isthisjustfantasy": True
         })
-        pipeline.set_assembler("org.osbuild.noop")
+        info = index.get_module_info("Assembler", "org.osbuild.noop")
+        pipeline.set_assembler(info)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")

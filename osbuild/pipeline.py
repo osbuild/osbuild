@@ -187,8 +187,8 @@ class Pipeline:
             self.assembler.base = stage.id
         return stage
 
-    def set_assembler(self, name, options=None):
-        self.assembler = Assembler(name, self.build, self.tree_id, options or {})
+    def set_assembler(self, info, options=None):
+        self.assembler = Stage(info, {}, self.build, self.tree_id, options or {})
         return self.assembler
 
     def build_stages(self, object_store, monitor, libdir):
@@ -268,7 +268,7 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def assemble(self, object_store, build_tree, tree, monitor, libdir):
+    def assemble(self, object_store, build_tree, monitor, libdir):
         results = {"success": True}
 
         if not self.assembler:
@@ -277,18 +277,16 @@ class Pipeline:
         output = object_store.new()
 
         with build_tree.read() as build_dir, \
-             tree.read() as input_dir, \
              output.write() as output_dir:
 
             monitor.assembler(self.assembler)
 
-            r = self.assembler.run(input_dir,
+            r = self.assembler.run(output_dir,
                                    self.runner,
                                    build_dir,
+                                   object_store,
                                    monitor,
-                                   libdir,
-                                   output_dir,
-                                   var=object_store.store)
+                                   libdir)
 
             monitor.result(r)
 
@@ -316,16 +314,13 @@ class Pipeline:
         obj = store.get(self.output_id)
 
         if not obj:
-            results, build_tree, tree = self.build_stages(store,
-                                                          monitor,
-                                                          libdir)
+            results, build_tree, _ = self.build_stages(store, monitor, libdir)
 
             if not results["success"]:
                 return results
 
             r, obj = self.assemble(store,
                                    build_tree,
-                                   tree,
                                    monitor,
                                    libdir)
 
