@@ -40,6 +40,7 @@ class Stage:
         self.base = base
         self.options = options
         self.checkpoint = False
+        self.inputs = {}
 
     @property
     def name(self):
@@ -68,6 +69,7 @@ class Stage:
                 "tree": "/run/osbuild/tree",
                 "sources": "/run/osbuild/sources",
                 "options": self.options,
+                "inputs": {},
                 "meta": {
                     "id": self.id
                 }
@@ -77,6 +79,18 @@ class Stage:
                 f"{self.info.path}:/run/osbuild/bin/{self.name}",
                 f"{sources_output}:/run/osbuild/sources"
             ]
+
+            storeapi = objectstore.StoreServer(store)
+            cm.enter_context(storeapi)
+
+            for key, ip in self.inputs.items():
+                path, data = ip.run(storeapi)
+
+                # bind mount the returned path into the container
+                mapped = f"/run/osbuild/inputs/{key}"
+                ro_binds += [f"{path}:{mapped}"]
+
+                args["inputs"][key] = {"path": mapped, "data": data}
 
             api = API(args, monitor)
             build_root.register_api(api)
