@@ -185,9 +185,11 @@ class Pipeline:
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id
+        return stage
 
     def set_assembler(self, name, options=None):
         self.assembler = Assembler(name, self.build, self.tree_id, options or {})
+        return self.assembler
 
     def build_stages(self, object_store, monitor, libdir):
         results = {"success": True}
