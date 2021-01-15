@@ -60,8 +60,8 @@ def load_pipeline(description: Dict, result: List[Pipeline]) -> Pipeline:
     else:
         build_pipeline, runner = None, detect_host_runner()
 
-
-    pipeline = Pipeline(runner, build_pipeline and build_pipeline.tree_id)
+    build_id = build_pipeline and build_pipeline.tree_id
+    pipeline = Pipeline(runner, build_id)
 
     for s in description.get("stages", []):
         pipeline.add_stage(s["name"], s.get("options", {}))
