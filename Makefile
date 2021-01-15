@@ -92,10 +92,8 @@ help:
 	@echo "    test-all:           Run all tests"
 	@echo "    test-data:          Generate test data"
 	@echo "    test-module:        Run all module unit-tests"
-	@echo "    test-runtime:       Run all osbuild pipeline tests"
+	@echo "    test-run:           Run all osbuild pipeline tests"
 	@echo "    test-src:           Run all osbuild source tests"
-	@echo
-	@echo "    test-coverity:      Run coverity and upload the result"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
