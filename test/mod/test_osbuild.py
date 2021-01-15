@@ -124,7 +124,7 @@ class TestDescriptions(unittest.TestCase):
         index = osbuild.meta.Index(os.curdir)
 
         modules = []
-        for klass in ("Stage", "Assembler", "Source"):
+        for klass in ("Assembler", "Input", "Source", "Stage"):
             mods = index.list_modules_for_class(klass)
             modules += [(klass, module) for module in mods]
 
