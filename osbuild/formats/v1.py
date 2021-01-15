@@ -43,20 +43,20 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     return description
 
 
-def load_build(description: Dict, sources_options: Dict, result: List[Pipeline]):
+def load_build(description: Dict, result: List[Pipeline]):
     pipeline = description.get("pipeline")
     if pipeline:
-        build_pipeline = load_pipeline(pipeline, sources_options, result)
+        build_pipeline = load_pipeline(pipeline, result)
     else:
         build_pipeline = None
 
     return build_pipeline, description["runner"]
 
 
-def load_pipeline(description: Dict, sources_options: Dict, result: List[Pipeline]) -> Pipeline:
+def load_pipeline(description: Dict, result: List[Pipeline]) -> Pipeline:
     build = description.get("build")
     if build:
-        build_pipeline, runner = load_build(build, sources_options, result)
+        build_pipeline, runner = load_build(build, result)
     else:
         build_pipeline, runner = None, detect_host_runner()
 
@@ -64,7 +64,7 @@ def load_pipeline(description: Dict, sources_options: Dict, result: List[Pipelin
     pipeline = Pipeline(runner, build_pipeline and build_pipeline.tree_id)
 
     for s in description.get("stages", []):
-        pipeline.add_stage(s["name"], s.get("options", {}), sources_options)
+        pipeline.add_stage(s["name"], s.get("options", {}))
 
     a = description.get("assembler")
     if a:
@@ -83,7 +83,11 @@ def load(description: Dict) -> Manifest:
 
     pipelines = []
 
-    load_pipeline(pipeline, sources, pipelines)
+    load_pipeline(pipeline, pipelines)
+
+    for pipeline in pipelines:
+        for stage in pipeline.stages:
+            stage.sources = sources
 
     manifest = Manifest(pipelines, sources)
 
