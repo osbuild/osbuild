@@ -159,7 +159,7 @@ class Pipeline:
     def output_id(self):
         return self.assembler.id if self.assembler else None
 
-    def add_stage(self, name, sources_options=None, options=None):
+    def add_stage(self, name, options, sources_options=None):
         stage = Stage(name, sources_options, self.build, self.tree_id, options or {})
         self.stages.append(stage)
         if self.assembler:
