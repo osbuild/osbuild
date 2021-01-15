@@ -1,0 +1,58 @@
+#!/usr/bin/python3
+"""
+Tree inputs
+
+Resolve the given pipeline `id` to a path and return that. If
+`id` is `null` or the empty string it returns an empty tree.
+"""
+
+
+import json
+import sys
+
+from osbuild.objectstore import StoreClient
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["pipeline"],
+"properties": {
+  "pipeline": {
+    "description": "The Pipeline that built the desired tree",
+    "type": "object",
+    "required": ["id"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "description": "Identifier for the pipeline",
+        "type": "string"
+      }
+    }
+  }
+}
+"""
+
+
+def main():
+    args = json.load(sys.stdin)
+    options = args["options"]
+
+    store = StoreClient(connect_to=args["api"]["store"])
+    pid = options["pipeline"]["id"]
+
+    if not pid:
+        path = store.mkdtemp(prefix="empty")
+    else:
+        path = store.read_tree(pid)
+
+    if not path:
+        json.dump({"error": "Could find target"}, sys.stdout)
+        return 1
+
+    json.dump({"path": path}, sys.stdout)
+    return 0
+
+
+if __name__ == '__main__':
+    r = main()
+    sys.exit(r)
