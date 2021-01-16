@@ -7,7 +7,8 @@ import tempfile
 from typing import Optional
 
 from osbuild.util.types import PathLike
-from osbuild.util import ctx, rmrf
+from osbuild.util import ctx, jsoncomm, rmrf
+from . import api
 from . import treesum
 
 
@@ -360,3 +361,79 @@ class ObjectStore(contextlib.AbstractContextManager):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.cleanup()
+
+
+class StoreServer(api.BaseAPI):
+
+    endpoint = "store"
+
+    def __init__(self, store: ObjectStore, *, socket_address=None):
+        super().__init__(socket_address)
+        self.store = store
+        self.tmproot = store.tempdir(prefix="store-server-")
+        self._stack = contextlib.ExitStack()
+
+    def _cleanup(self):
+        self.tmproot.cleanup()
+        self.tmproot = None
+        self._stack.close()
+        self._stack = None
+
+    def _read_tree(self, msg, sock):
+        object_id = msg["object-id"]
+        obj = self.store.get(object_id)
+        if not obj:
+            sock.send({"path": None})
+            return
+
+        reader = obj.read()
+        path = self._stack.enter_context(reader)
+        sock.send({"path": path})
+
+    def _mkdtemp(self, msg, sock):
+        args = {
+            "suffix": msg.get("suffix"),
+            "prefix": msg.get("prefix"),
+            "dir": self.tmproot.name
+        }
+
+        path = tempfile.mkdtemp(**args)
+        sock.send({"path": path})
+
+    def _message(self, msg, _fds, sock):
+        if msg["method"] == "read-tree":
+            self._read_tree(msg, sock)
+        if msg["method"] == "mkdtemp":
+            self._mkdtemp(msg, sock)
+
+
+class StoreClient:
+    def __init__(self, connect_to="/run/osbuild/api/store"):
+        self.client = jsoncomm.Socket.new_client(connect_to)
+
+    def __del__(self):
+        if self.client is not None:
+            self.client.close()
+
+    def mkdtemp(self, suffix=None, prefix=None):
+        msg = {
+            "method": "mkdtemp",
+            "suffix": suffix,
+            "prefix": prefix
+        }
+
+        self.client.send(msg)
+        msg, _, _ = self.client.recv()
+
+        return msg["path"]
+
+    def read_tree(self, object_id: str):
+        msg = {
+            "method": "read-tree",
+            "object-id": object_id
+        }
+
+        self.client.send(msg)
+        msg, _, _ = self.client.recv()
+
+        return msg["path"]
