@@ -1,4 +1,4 @@
-
+import contextlib
 import hashlib
 import json
 import os
@@ -56,8 +56,13 @@ class Stage:
 
     def run(self, tree, runner, build_tree, store, monitor, libdir):
         var = store.store
-        with buildroot.BuildRoot(build_tree, runner, libdir, var) as build_root, \
-            tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var) as sources_output:
+        with contextlib.ExitStack() as cm:
+
+            build_root = buildroot.BuildRoot(build_tree, runner, libdir, var)
+            cm.enter_context(build_root)
+
+            sources_tmp = tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var)
+            sources_output = cm.enter_context(sources_tmp)
 
             args = {
                 "tree": "/run/osbuild/tree",
