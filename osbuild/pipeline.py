@@ -2,7 +2,6 @@ import contextlib
 import hashlib
 import json
 import os
-import tempfile
 from typing import Dict, List
 
 from .api import API
@@ -56,13 +55,12 @@ class Stage:
         return m.hexdigest()
 
     def run(self, tree, runner, build_tree, store, monitor, libdir):
-        var = store.store
         with contextlib.ExitStack() as cm:
 
-            build_root = buildroot.BuildRoot(build_tree, runner, libdir, var)
+            build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
             cm.enter_context(build_root)
 
-            sources_tmp = tempfile.TemporaryDirectory(prefix="osbuild-sources-output-", dir=var)
+            sources_tmp = store.tempdir(prefix="osbuild-sources-output-")
             sources_output = cm.enter_context(sources_tmp)
 
             args = {
