@@ -110,57 +110,6 @@ class Stage:
         return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
 
 
-class Assembler:
-    def __init__(self, name, build, base, options):
-        self.name = name
-        self.build = build
-        self.base = base
-        self.options = options
-        self.checkpoint = False
-
-    @property
-    def id(self):
-        m = hashlib.sha256()
-        m.update(json.dumps(self.name, sort_keys=True).encode())
-        m.update(json.dumps(self.build, sort_keys=True).encode())
-        m.update(json.dumps(self.base, sort_keys=True).encode())
-        m.update(json.dumps(self.options, sort_keys=True).encode())
-        return m.hexdigest()
-
-    def run(self, tree, runner, build_tree, monitor, libdir, output_dir, var="/var/tmp"):
-        with buildroot.BuildRoot(build_tree, runner, libdir, var=var) as build_root:
-
-            args = {
-                "tree": "/run/osbuild/tree",
-                "options": self.options,
-                "meta": {
-                    "id": self.id
-                }
-            }
-
-            binds = []
-
-            output_dir = os.fspath(output_dir)
-            os.makedirs(output_dir, exist_ok=True)
-            binds.append(f"{output_dir}:/run/osbuild/output")
-            args["output_dir"] = "/run/osbuild/output"
-
-            ro_binds = [os.fspath(tree) + ":/run/osbuild/tree"]
-
-            api = API(args, monitor)
-            build_root.register_api(api)
-
-            rls = remoteloop.LoopServer()
-            build_root.register_api(rls)
-
-            r = build_root.run([f"/run/osbuild/lib/assemblers/{self.name}"],
-                               monitor,
-                               binds=binds,
-                               readonly_binds=ro_binds)
-
-        return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
-
-
 class Pipeline:
     def __init__(self, runner=None, build=None):
         self.build = build
