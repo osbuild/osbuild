@@ -66,7 +66,7 @@ class BaseMonitor(abc.ABC):
     def stage(self, stage: osbuild.Stage):
         """Called when a stage is being built"""
 
-    def assembler(self, assembler: osbuild.Assembler):
+    def assembler(self, assembler: osbuild.Stage):
         """Called when an assembler is being built"""
 
     def result(self, result: osbuild.pipeline.BuildResult):

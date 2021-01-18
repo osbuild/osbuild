@@ -38,7 +38,7 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         self.counter["stages"] += 1
         self.stages.add(stage.id)
 
-    def assembler(self, assembler: osbuild.Assembler):
+    def assembler(self, assembler: osbuild.Stage):
         self.counter["assembler"] += 1
         self.asm = assembler.id
 
