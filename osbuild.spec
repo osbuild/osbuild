@@ -119,6 +119,9 @@ install -p -m 0755 $(find runners -type f -or -type l) %{buildroot}%{pkgdir}/run
 mkdir -p %{buildroot}%{pkgdir}/sources
 install -p -m 0755 $(find sources -type f) %{buildroot}%{pkgdir}/sources
 
+mkdir -p %{buildroot}%{pkgdir}/inputs
+install -p -m 0755 $(find inputs -type f) %{buildroot}%{pkgdir}/inputs
+
 # mount point for bind mounting the osbuild library
 mkdir -p %{buildroot}%{pkgdir}/osbuild
 
