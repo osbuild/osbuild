@@ -4,7 +4,7 @@ setuptools.setup(
     name="osbuild",
     version="23",
     description="A build system for OS images",
-    packages=["osbuild", "osbuild.util"],
+    packages=["osbuild", "osbuild.formats", "osbuild.util"],
     license='Apache-2.0',
     install_requires=[
         "jsonschema",
