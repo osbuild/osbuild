@@ -4,6 +4,7 @@
 
 import os
 import unittest
+from typing import Dict
 
 import osbuild
 import osbuild.meta
@@ -11,6 +12,7 @@ from osbuild.formats import v1 as fmt
 
 
 class TestFormatV1(unittest.TestCase):
+
 
     def test_canonical(self):
         """Degenerate case. Make sure we always return the same canonical
@@ -31,6 +33,47 @@ class TestFormatV1(unittest.TestCase):
             with self.subTest(pipeline):
                 desc = fmt.describe(fmt.load(manifest, index))
                 self.assertEqual(desc["pipeline"], {})
+
+    def test_load(self):
+        # Load a pipeline and check the resulting manifest
+        def check_stage(have: osbuild.Stage, want: Dict):
+            self.assertEqual(have.name, want["name"])
+            self.assertEqual(have.options, want["options"])
+
+        index = osbuild.meta.Index(os.curdir)
+
+        description = BASIC_PIPELINE
+
+        # load the manifest description, that will check all
+        # the stages can be found in the index and have valid
+        # arguments, i.e. the schema is correct
+
+        manifest = fmt.load(description, index)
+        self.assertIsNotNone(manifest)
+
+        # We have to have a build pipeline and a main pipeline
+        self.assertTrue(manifest.pipelines)
+        self.assertTrue(len(manifest.pipelines) == 2)
+
+        build = description["pipeline"]["build"]
+        pl = manifest.pipelines[0]
+        have = pl.stages[0]
+        want = build["pipeline"]["stages"][0]
+        check_stage(have, want)
+
+        runner = build["runner"]
+
+        # main pipeline is the next one
+        pl = manifest.pipelines[1]
+        have = pl.stages[0]
+        want = description["pipeline"]["stages"][0]
+        self.assertEqual(pl.runner, runner)
+        check_stage(have, want)
+
+        # the assembler
+        have = pl.assembler
+        want = description["pipeline"]["assembler"]
+        self.assertEqual(have.name, want["name"])
 
     def test_pipeline(self):
         index = osbuild.meta.Index(os.curdir)
