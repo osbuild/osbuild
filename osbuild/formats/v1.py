@@ -1,6 +1,6 @@
 # Version 1 of the manifest description
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 from osbuild.meta import Index, ValidationResult
 from ..inputs import Input
 from ..pipeline import Manifest, Pipeline, detect_host_runner
@@ -44,25 +44,25 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     return description
 
 
-def load_build(description: Dict, index: Index, result: List[Pipeline]):
+def load_build(description: Dict, index: Index, manifest: Manifest):
     pipeline = description.get("pipeline")
     if pipeline:
-        build_pipeline = load_pipeline(pipeline, index, result)
+        build_pipeline = load_pipeline(pipeline, index, manifest)
     else:
         build_pipeline = None
 
     return build_pipeline, description["runner"]
 
 
-def load_pipeline(description: Dict, index: Index, result: List[Pipeline]) -> Pipeline:
+def load_pipeline(description: Dict, index: Index, manifest: Manifest) -> Pipeline:
     build = description.get("build")
     if build:
-        build_pipeline, runner = load_build(build, index, result)
+        build_pipeline, runner = load_build(build, index, manifest)
     else:
         build_pipeline, runner = None, detect_host_runner()
 
     build_id = build_pipeline and build_pipeline.tree_id
-    pipeline = Pipeline(runner, build_id)
+    pipeline = manifest.add_pipeline(runner, build_id)
 
     for s in description.get("stages", []):
         info = index.get_module_info("Stage", s["name"])
@@ -77,8 +77,6 @@ def load_pipeline(description: Dict, index: Index, result: List[Pipeline]) -> Pi
             "tree": Input(info, {"pipeline": {"id": pipeline.tree_id}})
         }
 
-    result.append(pipeline)
-
     return pipeline
 
 
@@ -88,15 +86,13 @@ def load(description: Dict, index: Index) -> Manifest:
     pipeline = description.get("pipeline", {})
     sources = description.get("sources", {})
 
-    pipelines = []
+    manifest = Manifest(sources)
 
-    load_pipeline(pipeline, index, pipelines)
+    load_pipeline(pipeline, index, manifest)
 
-    for pipeline in pipelines:
+    for pipeline in manifest.pipelines:
         for stage in pipeline.stages:
             stage.sources = sources
-
-    manifest = Manifest(pipelines, sources)
 
     return manifest
 
