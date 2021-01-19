@@ -3,12 +3,18 @@
 #
 
 import os
+import pathlib
+import sys
+import tempfile
 import unittest
 from typing import Dict
 
 import osbuild
 import osbuild.meta
 from osbuild.formats import v1 as fmt
+from osbuild.monitor import NullMonitor
+from osbuild.objectstore import ObjectStore
+from .. import test
 
 
 BASIC_PIPELINE = {
@@ -38,6 +44,20 @@ BASIC_PIPELINE = {
 
 
 class TestFormatV1(unittest.TestCase):
+
+    @staticmethod
+    def build_manifest(manifest: osbuild.pipeline.Manifest, tmpdir: str):
+        """Build a manifest and return the result"""
+        storedir = pathlib.Path(tmpdir, "store")
+        monitor = NullMonitor(sys.stderr.fileno())
+        libdir = os.path.abspath(os.curdir)
+        print(libdir)
+        store = ObjectStore(storedir)
+        outdir = pathlib.Path(tmpdir, "out")
+        outdir.mkdir()
+
+        res = manifest.build(store, monitor, libdir, outdir)
+        return res
 
     def test_canonical(self):
         """Degenerate case. Make sure we always return the same canonical
@@ -107,6 +127,78 @@ class TestFormatV1(unittest.TestCase):
         self.assertIsNotNone(manifest)
 
         self.assertEqual(fmt.describe(manifest), BASIC_PIPELINE)
+
+    @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
+    def test_format_output(self):
+        """Test that output formatting is as expected"""
+        index = osbuild.meta.Index(os.curdir)
+
+        description = {
+            "pipeline": {
+                "stages": [
+                    {
+                        "name": "org.osbuild.noop"
+                    },
+                    {
+                        "name": "org.osbuild.error"
+                    }
+                ]
+            }
+        }
+
+        manifest = fmt.load(description, index)
+        self.assertIsNotNone(manifest)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            res = self.build_manifest(manifest, tmpdir)
+
+        self.assertIsNotNone(res)
+        result = fmt.output(manifest, res)
+        self.assertIsNotNone(result)
+        self.assertIn("success", result)
+        self.assertFalse(result["success"])
+        self.assertIn("stages", result)
+        stages = result["stages"]
+        self.assertEqual(len(stages), 2)
+        self.assertTrue(stages[0]["success"])
+        self.assertFalse(stages[1]["success"])
+
+        # check we get results for the build pipeline
+        description = {
+            "pipeline": {
+                "build": {
+                    "pipeline": {
+                        "stages": [
+                            {
+                                "name": "org.osbuild.error"
+                            }
+                        ]
+                    },
+                    "runner": "org.osbuild.test",
+                    "stages": [
+                        {
+                            "name": "org.osbuild.noop"
+                        }
+                    ]
+                }
+            }
+        }
+
+        manifest = fmt.load(description, index)
+        self.assertIsNotNone(manifest)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            res = self.build_manifest(manifest, tmpdir)
+
+        self.assertIsNotNone(res)
+        result = fmt.output(manifest, res)
+        self.assertIsNotNone(result)
+        self.assertIn("success", result)
+        self.assertFalse(result["success"])
+
+        self.assertIn("build", result)
+        self.assertIn("success", result["build"])
+        self.assertFalse(result["build"]["success"])
 
     def test_validation(self):
         index = osbuild.meta.Index(os.curdir)
