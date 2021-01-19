@@ -11,8 +11,33 @@ import osbuild.meta
 from osbuild.formats import v1 as fmt
 
 
-class TestFormatV1(unittest.TestCase):
+BASIC_PIPELINE = {
+    "pipeline": {
+        "build": {
+            "pipeline": {
+                "stages": [
+                    {
+                        "name": "org.osbuild.test",
+                        "options": {"one": 1}
+                    }
+                ]
+            },
+            "runner": "org.osbuild.test"
+        },
+        "stages": [
+            {
+                "name": "org.osbuild.test",
+                "options": {"one": 2}
+            }
+        ],
+        "assembler": {
+            "name": "org.osbuild.noop"
+        }
+    }
+}
 
+
+class TestFormatV1(unittest.TestCase):
 
     def test_canonical(self):
         """Degenerate case. Make sure we always return the same canonical
@@ -89,30 +114,7 @@ class TestFormatV1(unittest.TestCase):
 
         manifest = osbuild.Manifest([build, pipeline], {})
 
-        self.assertEqual(fmt.describe(manifest), {
-            "pipeline": {
-                "build": {
-                    "pipeline": {
-                        "stages": [
-                            {
-                                "name": "org.osbuild.test",
-                                "options": {"one": 1}
-                            }
-                        ]
-                    },
-                    "runner": "org.osbuild.test"
-                },
-                "stages": [
-                    {
-                        "name": "org.osbuild.test",
-                        "options": {"one": 2}
-                    }
-                ],
-                "assembler": {
-                    "name": "org.osbuild.noop"
-                }
-            }
-        })
+        self.assertEqual(fmt.describe(manifest), BASIC_PIPELINE)
 
     def test_validation(self):
         index = osbuild.meta.Index(os.curdir)
