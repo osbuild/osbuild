@@ -2,7 +2,7 @@ import contextlib
 import hashlib
 import json
 import os
-from typing import Dict, List
+from typing import Dict
 
 from .api import API
 from . import buildroot
@@ -287,9 +287,14 @@ class Pipeline:
 class Manifest:
     """Representation of a pipeline and its sources"""
 
-    def __init__(self, pipelines: List[Pipeline], source_options: Dict):
-        self.pipelines = pipelines
+    def __init__(self, source_options: Dict):
+        self.pipelines = []
         self.sources = source_options
+
+    def add_pipeline(self, runner: str, build: str) -> Pipeline:
+        pipeline = Pipeline(runner, build)
+        self.pipelines.append(pipeline)
+        return pipeline
 
     def build(self, store, monitor, libdir, output_directory):
         results = {"success": True}
