@@ -72,7 +72,6 @@ class TestFormatV1(unittest.TestCase):
         # load the manifest description, that will check all
         # the stages can be found in the index and have valid
         # arguments, i.e. the schema is correct
-
         manifest = fmt.load(description, index)
         self.assertIsNotNone(manifest)
 
@@ -100,19 +99,12 @@ class TestFormatV1(unittest.TestCase):
         want = description["pipeline"]["assembler"]
         self.assertEqual(have.name, want["name"])
 
-    def test_pipeline(self):
+
+    def test_describe(self):
         index = osbuild.meta.Index(os.curdir)
 
-        test_info = index.get_module_info("Stage", "org.osbuild.test")
-        build = osbuild.Pipeline("org.osbuild.test")
-        build.add_stage(test_info, {"one": 1})
-
-        pipeline = osbuild.Pipeline("org.osbuild.test", build.tree_id)
-        pipeline.add_stage(test_info, {"one": 2})
-        info = index.get_module_info("Assembler", "org.osbuild.noop")
-        pipeline.set_assembler(info)
-
-        manifest = osbuild.Manifest([build, pipeline], {})
+        manifest = fmt.load(BASIC_PIPELINE, index)
+        self.assertIsNotNone(manifest)
 
         self.assertEqual(fmt.describe(manifest), BASIC_PIPELINE)
 
