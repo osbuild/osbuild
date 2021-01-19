@@ -1,0 +1,25 @@
+{
+  "pipeline": {
+    "build": {
+      "mpp-import-pipeline": {
+        "path": "../manifests/f32-build.json"
+      },
+      "runner": "org.osbuild.fedora32"
+    },
+    "stages": [
+      {
+        "name": "org.osbuild.sysconfig",
+        "options": {
+          "kernel": {
+            "update_default": false,
+            "default_kernel": "default"
+          },
+          "network": {
+            "networking": false,
+            "no_zero_conf": false
+          }
+        }
+      }
+    ]
+  }
+}

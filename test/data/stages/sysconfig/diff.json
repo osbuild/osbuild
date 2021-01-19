@@ -1,0 +1,18 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/sysconfig/network": {
+      "content": [
+        "sha256:05823c747729a65a07859f6b4dbd8107c0f109eb63966f65b75dc64e76c651db",
+        "sha256:75cf7fcd56aa910091036df4f6dc0493716ea556307e09f2bff5ba88597e2755"
+      ]
+    },
+    "/etc/sysconfig/kernel": {
+      "content": [
+        "sha256:c06a6223f5eb10dca37f20b6afdd7c4d0bed309e7588990bad3e10feeb20887b",
+        "sha256:e5c145573d93461b44f5303d83577e44bc4d093f2271f3da2e8e094a243f10ef"
+      ]
+    }
+  }
+}
