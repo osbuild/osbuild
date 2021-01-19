@@ -1,0 +1,121 @@
+#!/usr/bin/python3
+"""
+
+Configure sysconfig files
+
+The sysconfig directory contains a variety of system configuration files.
+The values found in each of the configuration files may need to be specified
+before first boot.
+
+Currently, only the kernel and network configs can be modified.
+
+Kernel supports the params:
+  - update_default(UPDATEDEFAULT) of type boolean
+  - default_kernel(DEFAULTKERNEL) of type string
+
+Network supports the params:
+  - networking(NETWORKING) of type boolean
+  - no_zero_conf(NOZEROCONF) of type boolean
+
+
+This stage will overwrite existing files.
+
+"""
+
+import sys
+import os
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "kernel": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "sysconfig kernel options",
+    "properties": {
+      "update_default": {
+        "type": "boolean",
+        "description": "This option makes a newly installed kernel as the default in the boot entry selection."
+      },
+      "default_kernel": {
+        "type": "string",
+        "description": "This option specifies what package type will be used as the default."
+      }
+    }
+  },
+  "network": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "sysconfig network options",
+    "properties": {
+      "networking": {
+        "type": "boolean",
+        "description": "Enables or disables networking"
+      },
+      "no_zero_conf": {
+        "type": "boolean",
+        "description": "Disables the zero configuration network suite"
+      }
+    }
+  }
+}
+"""
+
+
+# sysconfig uses yes and no instead of true and false
+def bool_to_string(value):
+    return "yes" if value else "no"
+
+
+def configure_kernel(tree, kernel_options):
+    with open(f"{tree}/etc/sysconfig/kernel", 'w') as kernel_file:
+        for option, value in kernel_options.items():
+            if option == "update_default":
+                kernel_file.write(f"UPDATEDEFAULT={bool_to_string(value)}\n")
+            elif option == "default_kernel":
+                kernel_file.write(f"DEFAULTKERNEL={value}\n")
+            else:
+                # schema does not currently allow any additional properties but it may at some point
+                print(f"Error: unknown property {option} specified for sysconfig kernel config.")
+                return 1
+
+    return 0
+
+
+def configure_network(tree, network_options):
+    with open(f"{tree}/etc/sysconfig/network", 'w') as network_file:
+        for option, value in network_options.items():
+            if option == "networking":
+                network_file.write(f"NETWORKING={bool_to_string(value)}\n")
+            elif option == "no_zero_conf":
+                network_file.write(f"NOZEROCONF={bool_to_string(value)}\n")
+            else:
+                # schema does not currently allow any additional properties but it may at some point
+                print(f"Error: unknown property {option} specified for sysconfig network config.")
+                return 1
+
+    return 0
+
+
+def main(tree, options):
+    # if the sysconfig dir does not yet exist create it
+    os.makedirs(f"{tree}/etc/sysconfig/", exist_ok=True)
+
+    kernel_options = options.get("kernel", {})
+    network_options = options.get("network", {})
+
+    if configure_kernel(tree, kernel_options):
+        return 1
+    if configure_network(tree, network_options):
+        return 1
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
