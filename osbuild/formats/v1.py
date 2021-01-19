@@ -110,8 +110,14 @@ def output(manifest: Manifest, res: Dict) -> Dict:
     """Convert a result into the v1 format"""
 
     def result_for_pipeline(pipeline):
-        current = res[pipeline.id]
-        retval = {"success": current["success"]}
+        # The pipeline might not have been built one of its
+        # dependencies, i.e. its build pipeline, failed to
+        # build. We thus need to be tolerant of a missing
+        # result but still need to to recurse
+        current = res.get(pipeline.id, {})
+        retval = {
+            "success": current.get("success", False)
+        }
         if pipeline.build:
             build = manifest[pipeline.build]
             retval["build"] = result_for_pipeline(build)
