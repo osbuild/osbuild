@@ -35,7 +35,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return description
 
     description = {
-        "pipeline": describe_pipeline(manifest.pipelines[-1])
+        "pipeline": describe_pipeline(manifest["tree"])
     }
 
     if manifest.sources:
@@ -44,25 +44,34 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     return description
 
 
-def load_build(description: Dict, index: Index, manifest: Manifest):
+def load_build(description: Dict, index: Index, manifest: Manifest, n: int):
     pipeline = description.get("pipeline")
     if pipeline:
-        build_pipeline = load_pipeline(pipeline, index, manifest)
+        build_pipeline = load_pipeline(pipeline, index, manifest, n + 1)
     else:
         build_pipeline = None
 
     return build_pipeline, description["runner"]
 
 
-def load_pipeline(description: Dict, index: Index, manifest: Manifest) -> Pipeline:
+def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 0) -> Pipeline:
     build = description.get("build")
     if build:
-        build_pipeline, runner = load_build(build, index, manifest)
+        build_pipeline, runner = load_build(build, index, manifest, n)
     else:
         build_pipeline, runner = None, detect_host_runner()
 
+    # the "main" pipeline is called `tree`, since it is building the
+    # tree that will later be used by the `assembler`. Nested build
+    # pipelines will get call "build", and "build-build-...", where
+    # the number of repetitions is equal their level of nesting
+    if not n:
+        name = "tree"
+    else:
+        name = "-".join(["build"] * n)
+
     build_id = build_pipeline and build_pipeline.tree_id
-    pipeline = manifest.add_pipeline(runner, build_id)
+    pipeline = manifest.add_pipeline(name, runner, build_id)
 
     for s in description.get("stages", []):
         info = index.get_module_info("Stage", s["name"])
@@ -91,7 +100,7 @@ def load(description: Dict, index: Index) -> Manifest:
 
     load_pipeline(pipeline, index, manifest)
 
-    for pipeline in manifest.pipelines:
+    for pipeline in manifest.pipelines.values():
         for stage in pipeline.stages:
             stage.sources = sources
 
@@ -99,7 +108,7 @@ def load(description: Dict, index: Index) -> Manifest:
 
 
 def get_ids(manifest: Manifest) -> Tuple[Optional[str], Optional[str]]:
-    pipeline = manifest.pipelines[-1]
+    pipeline = manifest["tree"]
     return pipeline.tree_id, pipeline.output_id
 
 
@@ -126,7 +135,7 @@ def output(manifest: Manifest, res: Dict) -> Dict:
             retval["assembler"] = assembler
         return retval
 
-    return result_for_pipeline(manifest.pipelines[-1])
+    return result_for_pipeline(manifest["tree"])
 
 
 def validate(manifest: Dict, index: Index) -> ValidationResult:

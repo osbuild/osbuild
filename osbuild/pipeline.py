@@ -1,8 +1,9 @@
+import collections
 import contextlib
 import hashlib
 import json
 import os
-from typing import Dict
+from typing import Dict, Iterator
 
 from .api import API
 from . import buildroot
@@ -111,7 +112,8 @@ class Stage:
 
 
 class Pipeline:
-    def __init__(self, runner=None, build=None):
+    def __init__(self, name: str, runner=None, build=None):
+        self.name = name
         self.build = build
         self.runner = runner
         self.stages = []
@@ -289,18 +291,20 @@ class Manifest:
     """Representation of a pipeline and its sources"""
 
     def __init__(self, source_options: Dict):
-        self.pipelines = []
+        self.pipelines = collections.OrderedDict()
         self.sources = source_options
 
-    def add_pipeline(self, runner: str, build: str) -> Pipeline:
-        pipeline = Pipeline(runner, build)
-        self.pipelines.append(pipeline)
+    def add_pipeline(self, name: str, runner: str, build: str) -> Pipeline:
+        pipeline = Pipeline(name, runner, build)
+        if name in self.pipelines:
+            raise ValueError(f"Name {name} already exists")
+        self.pipelines[name] = pipeline
         return pipeline
 
     def build(self, store, monitor, libdir, output_directory):
         results = {"success": True}
 
-        for pl in self.pipelines:
+        for pl in self.pipelines.values():
             res = pl.run(store, monitor, libdir, output_directory)
             results[pl.id] = res
             if not res["success"]:
@@ -330,16 +334,22 @@ class Manifest:
             if pl.assembler:
                 mark_assembler(pl.assembler)
 
-        for pl in self.pipelines:
+        for pl in self.pipelines.values():
             mark_pipeline(pl)
 
         return points
 
-    def __getitem__(self, pipeline_id):
-        for pl in self.pipelines:
-            if pl.id == pipeline_id:
+    def __getitem__(self, name_or_id: str) -> Pipeline:
+        pl = self.pipelines.get(name_or_id)
+        if pl:
+            return pl
+        for pl in self.pipelines.values():
+            if pl.id == name_or_id:
                 return pl
-        raise KeyError("{pipeline_id} not found")
+        raise KeyError("{name_or_id} not found")
+
+    def __iter__(self) -> Iterator[Pipeline]:
+        return iter(self.pipelines.values())
 
 
 def detect_host_runner():
