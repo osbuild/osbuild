@@ -58,7 +58,7 @@ class TestMonitor(unittest.TestCase):
         index = osbuild.meta.Index(os.curdir)
 
         runner = detect_host_runner()
-        pipeline = osbuild.Pipeline(runner=runner)
+        pipeline = osbuild.Pipeline("pipeline", runner=runner)
         info = index.get_module_info("Stage", "org.osbuild.noop")
         pipeline.add_stage(info, {
             "isthisthereallife": False
@@ -93,7 +93,7 @@ class TestMonitor(unittest.TestCase):
         runner = detect_host_runner()
         index = osbuild.meta.Index(os.curdir)
 
-        pipeline = osbuild.Pipeline(runner=runner)
+        pipeline = osbuild.Pipeline("pipeline", runner=runner)
         noop_info = index.get_module_info("Stage", "org.osbuild.noop")
         pipeline.add_stage(noop_info, {
             "isthisthereallife": False

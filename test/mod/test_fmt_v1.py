@@ -100,7 +100,7 @@ class TestFormatV1(unittest.TestCase):
         self.assertTrue(len(manifest.pipelines) == 2)
 
         build = description["pipeline"]["build"]
-        pl = manifest.pipelines[0]
+        pl = manifest["build"]
         have = pl.stages[0]
         want = build["pipeline"]["stages"][0]
         check_stage(have, want)
@@ -108,7 +108,7 @@ class TestFormatV1(unittest.TestCase):
         runner = build["runner"]
 
         # main pipeline is the next one
-        pl = manifest.pipelines[1]
+        pl = manifest["tree"]
         have = pl.stages[0]
         want = description["pipeline"]["stages"][0]
         self.assertEqual(pl.runner, runner)
