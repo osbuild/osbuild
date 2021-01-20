@@ -34,9 +34,9 @@ def netns():
     with open("/proc/self/ns/net") as oldnet:
         # Create a new namespace and enter it.
         libc.unshare(CLONE_NEWNET)
-        # Up the loopback device in the new namespace.
-        subprocess.run(["ip", "link", "set", "up", "dev", "lo"], check=True)
         try:
+            # Up the loopback device in the new namespace.
+            subprocess.run(["ip", "link", "set", "up", "dev", "lo"], check=True)
             yield
         finally:
             # Revert to the old namespace, dropping our
