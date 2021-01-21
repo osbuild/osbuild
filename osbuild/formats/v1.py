@@ -29,19 +29,42 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
             stages = [describe_stage(s) for s in pipeline.stages]
             description["stages"] = stages
 
-        if pipeline.assembler:
-            assembler = describe_stage(pipeline.assembler)
-            description["assembler"] = assembler
         return description
 
-    description = {
-        "pipeline": describe_pipeline(manifest["tree"])
-    }
+    pipeline = describe_pipeline(manifest["tree"])
+
+    assembler = manifest.get("assembler")
+    if assembler:
+        description = describe_stage(assembler.stages[0])
+        pipeline["assembler"] = description
+
+    description = {"pipeline": pipeline}
 
     if manifest.sources:
         description["sources"] = manifest.sources
 
     return description
+
+
+def load_assembler(description: Dict, index: Index, manifest: Manifest):
+    pipeline = manifest["tree"]
+
+    build, base, runner = pipeline.build, pipeline.tree_id, pipeline.runner
+    name, options = description["name"], description.get("options", {})
+
+    # Add a pipeline with one stage for our assembler
+    pipeline = manifest.add_pipeline("assembler", runner, build)
+    pipeline.export = True
+
+    info = index.get_module_info("Assembler", name)
+
+    stage = pipeline.add_stage(info, options, {})
+    info = index.get_module_info("Input", "org.osbuild.tree")
+    stage.inputs = {
+        "tree": Input(info, {"pipeline": {"id": base}})
+    }
+
+    return pipeline
 
 
 def load_build(description: Dict, index: Index, manifest: Manifest, n: int):
@@ -77,16 +100,6 @@ def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 
         info = index.get_module_info("Stage", s["name"])
         pipeline.add_stage(info, s.get("options", {}))
 
-    a = description.get("assembler")
-    if a:
-        info = index.get_module_info("Assembler", a["name"])
-        asm = pipeline.set_assembler(info, a.get("options", {}))
-        info = index.get_module_info("Input", "org.osbuild.tree")
-        asm.inputs = {
-            "tree": Input(info, {"pipeline": {"id": pipeline.tree_id}})
-        }
-        pipeline.export = True
-
     return pipeline
 
 
@@ -100,6 +113,11 @@ def load(description: Dict, index: Index) -> Manifest:
 
     load_pipeline(pipeline, index, manifest)
 
+    # load the assembler, if any
+    assembler = pipeline.get("assembler")
+    if assembler:
+        load_assembler(assembler, index, manifest)
+
     for pipeline in manifest.pipelines.values():
         for stage in pipeline.stages:
             stage.sources = sources
@@ -109,7 +127,8 @@ def load(description: Dict, index: Index) -> Manifest:
 
 def get_ids(manifest: Manifest) -> Tuple[Optional[str], Optional[str]]:
     pipeline = manifest["tree"]
-    return pipeline.tree_id, pipeline.output_id
+    assembler = manifest.get("assembler")
+    return pipeline.tree_id, assembler and assembler.tree_id
 
 
 def output(manifest: Manifest, res: Dict) -> Dict:
@@ -135,7 +154,15 @@ def output(manifest: Manifest, res: Dict) -> Dict:
             retval["assembler"] = assembler
         return retval
 
-    return result_for_pipeline(manifest["tree"])
+    result = result_for_pipeline(manifest["tree"])
+
+    assembler = manifest.get("assembler")
+    if assembler:
+        current = res.get(assembler.id)
+        if current:
+            result["assembler"] = current["stages"][0]
+
+    return result
 
 
 def validate(manifest: Dict, index: Index) -> ValidationResult:
