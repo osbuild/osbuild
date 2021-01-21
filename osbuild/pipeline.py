@@ -122,15 +122,11 @@ class Pipeline:
 
     @property
     def id(self):
-        return self.output_id or self.tree_id
+        return self.tree_id
 
     @property
     def tree_id(self):
         return self.stages[-1].id if self.stages else None
-
-    @property
-    def output_id(self):
-        return self.assembler.id if self.assembler else None
 
     def add_stage(self, info, options, sources_options=None):
         stage = Stage(info, sources_options, self.build, self.tree_id, options or {})
@@ -138,10 +134,6 @@ class Pipeline:
         if self.assembler:
             self.assembler.base = stage.id
         return stage
-
-    def set_assembler(self, info, options=None):
-        self.assembler = Stage(info, {}, self.build, self.tree_id, options or {})
-        return self.assembler
 
     def build_stages(self, object_store, monitor, libdir):
         results = {"success": True}
@@ -220,39 +212,6 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def assemble(self, object_store, build_tree, monitor, libdir):
-        results = {"success": True}
-
-        if not self.assembler:
-            return results, None
-
-        output = object_store.new()
-
-        with build_tree.read() as build_dir, \
-             output.write() as output_dir:
-
-            monitor.assembler(self.assembler)
-
-            r = self.assembler.run(output_dir,
-                                   self.runner,
-                                   build_dir,
-                                   object_store,
-                                   monitor,
-                                   libdir)
-
-            monitor.result(r)
-
-        results["assembler"] = r.as_dict()
-        if not r.success:
-            output.cleanup()
-            results["success"] = False
-            return results, None
-
-        if self.assembler.checkpoint:
-            object_store.commit(output, self.assembler.id)
-
-        return results, output
-
     def run(self, store, monitor, libdir, output_directory):
         results = {"success": True}
 
@@ -263,20 +222,13 @@ class Pipeline:
         # tree exists, we return it as well, but we do not care if it is
         # missing, since it is not a mandatory part of the result and would
         # usually be needless overhead.
-        obj = store.get(self.output_id)
+        obj = store.get(self.tree_id)
 
         if not obj:
-            results, build_tree, _ = self.build_stages(store, monitor, libdir)
+            results, _, obj = self.build_stages(store, monitor, libdir)
 
             if not results["success"]:
                 return results
-
-            r, obj = self.assemble(store,
-                                   build_tree,
-                                   monitor,
-                                   libdir)
-
-            results.update(r)  # This will also update 'success'
 
         if self.export and obj:
             if output_directory:
@@ -322,17 +274,9 @@ class Manifest:
                 stage.checkpoint = True
                 points.remove(c)
 
-        def mark_assembler(assembler):
-            c = assembler.id
-            if c in points:
-                assembler.checkpoint = True
-                points.remove(c)
-
         def mark_pipeline(pl):
             for stage in pl.stages:
                 mark_stage(stage)
-            if pl.assembler:
-                mark_assembler(pl.assembler)
 
         for pl in self.pipelines.values():
             mark_pipeline(pl)

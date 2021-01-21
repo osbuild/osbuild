@@ -62,7 +62,6 @@ class TestFormatV1(unittest.TestCase):
         storedir = pathlib.Path(tmpdir, "store")
         monitor = NullMonitor(sys.stderr.fileno())
         libdir = os.path.abspath(os.curdir)
-        print(libdir)
         store = ObjectStore(storedir)
         outdir = pathlib.Path(tmpdir, "out")
         outdir.mkdir()
@@ -94,7 +93,7 @@ class TestFormatV1(unittest.TestCase):
         # Load a pipeline and check the resulting manifest
         def check_stage(have: osbuild.Stage, want: Dict):
             self.assertEqual(have.name, want["name"])
-            self.assertEqual(have.options, want["options"])
+            self.assertEqual(have.options, want.get("options", {}))
 
         index = osbuild.meta.Index(os.curdir)
 
@@ -108,7 +107,7 @@ class TestFormatV1(unittest.TestCase):
 
         # We have to have two build pipelines and a main pipeline
         self.assertTrue(manifest.pipelines)
-        self.assertTrue(len(manifest.pipelines) == 3)
+        self.assertTrue(len(manifest.pipelines) == 4)
 
         # access the individual pipelines via their names
 
@@ -131,17 +130,19 @@ class TestFormatV1(unittest.TestCase):
 
         runner = build["runner"]
 
-        # main pipeline is the next one
+        # the main, aka 'tree', pipeline
         pl = manifest["tree"]
         have = pl.stages[0]
         want = description["pipeline"]["stages"][0]
         self.assertEqual(pl.runner, runner)
         check_stage(have, want)
 
-        # the assembler
-        have = pl.assembler
+        # the assembler pipeline
+        pl = manifest["assembler"]
+        have = pl.stages[0]
         want = description["pipeline"]["assembler"]
-        self.assertEqual(have.name, want["name"])
+        self.assertEqual(pl.runner, runner)
+        check_stage(have, want)
 
 
     def test_describe(self):

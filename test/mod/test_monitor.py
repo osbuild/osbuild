@@ -38,10 +38,6 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         self.counter["stages"] += 1
         self.stages.add(stage.id)
 
-    def assembler(self, assembler: osbuild.Stage):
-        self.counter["assembler"] += 1
-        self.asm = assembler.id
-
     def result(self, result: osbuild.pipeline.BuildResult):
         self.counter["result"] += 1
         self.results.add(result.id)
@@ -63,8 +59,6 @@ class TestMonitor(unittest.TestCase):
         pipeline.add_stage(info, {
             "isthisthereallife": False
         })
-        info = index.get_module_info("Assembler", "org.osbuild.noop")
-        pipeline.set_assembler(info)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
@@ -84,7 +78,6 @@ class TestMonitor(unittest.TestCase):
 
             assert res
             self.assertIn(pipeline.stages[0].id, log)
-            self.assertIn(pipeline.assembler.id, log)
             self.assertIn("isthisthereallife", log)
 
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
@@ -101,8 +94,6 @@ class TestMonitor(unittest.TestCase):
         pipeline.add_stage(noop_info, {
             "isthisjustfantasy": True
         })
-        info = index.get_module_info("Assembler", "org.osbuild.noop")
-        pipeline.set_assembler(info)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
@@ -119,10 +110,8 @@ class TestMonitor(unittest.TestCase):
         self.assertEqual(tape.counter["begin"], 1)
         self.assertEqual(tape.counter["finish"], 1)
         self.assertEqual(tape.counter["stages"], 2)
-        self.assertEqual(tape.counter["assembler"], 1)
         self.assertEqual(tape.counter["stages"], 2)
-        self.assertEqual(tape.counter["result"], 3)
+        self.assertEqual(tape.counter["result"], 2)
         self.assertIn(pipeline.stages[0].id, tape.stages)
-        self.assertIn(pipeline.assembler.id, tape.asm)
         self.assertIn("isthisthereallife", tape.output)
         self.assertIn("isthisjustfantasy", tape.output)
