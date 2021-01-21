@@ -13,7 +13,7 @@ import osbuild
 import osbuild.meta
 from osbuild.monitor import NullMonitor
 from osbuild.objectstore import ObjectStore
-from osbuild.pipeline import detect_host_runner
+from osbuild.pipeline import Manifest, detect_host_runner
 from .. import test
 
 
@@ -40,6 +40,73 @@ class TestDescriptions(unittest.TestCase):
 
         self.assertEqual(res.success, True)
         self.assertEqual(res.id, stage.id)
+
+    def test_manifest(self):
+        index = osbuild.meta.Index(os.curdir)
+
+        info = index.get_module_info("Stage", "org.osbuild.noop")
+
+        manifest = Manifest({})
+
+        # each pipeline gets a noop stage with different
+        # options so that their ids are different
+        build = manifest.add_pipeline("build", None, None)
+        build.add_stage(info, {"option": 1})
+
+        tree = manifest.add_pipeline("tree",
+                                     "org.osbuild.linux",
+                                     build.id)
+        tree.add_stage(info, {"option": 2})
+
+        assmelber = manifest.add_pipeline("assembler",
+                                          "org.osbuild.inux",
+                                          build.id)
+        assmelber.add_stage(info, {"option": 3})
+
+        self.assertEqual(len(manifest.pipelines), 3)
+
+        self.assertIn("build", manifest.pipelines)
+        self.assertIn("tree", manifest.pipelines)
+        self.assertIn("assembler", manifest.pipelines)
+
+        self.assertIn("build", manifest)
+        self.assertIn("tree", manifest)
+        self.assertIn("assembler", manifest)
+
+        # make sure the order is correct
+        lst = ["build", "tree", "assembler"]
+        for a, b in zip(manifest.pipelines, lst):
+            self.assertEqual(a, b)
+
+        for a, b in zip(manifest, [build, tree, assmelber]):
+            self.assertEqual(a.name, b.name)
+
+        # check we get exceptions on unknown names
+        with self.assertRaises(KeyError):
+            _ = manifest.pipelines["foo"]
+
+        with self.assertRaises(KeyError):
+            _ = manifest["foo"]
+
+        # check helper functions
+        #  access by name
+        check = manifest["build"]
+        self.assertEqual(build.name, check.name)
+
+        check = manifest["tree"]
+        self.assertEqual(tree.name, check.name)
+
+        check = manifest["assembler"]
+        self.assertEqual(assmelber.name, check.name)
+
+        #  `None` return for unknown items
+        check = manifest.get("foo")
+        self.assertIsNone(check)
+
+        #  id based access
+        for i in [build, tree, assmelber]:
+            check = manifest[i.id]
+            self.assertEqual(i.name, check.name)
 
     def test_moduleinfo(self):
         index = osbuild.meta.Index(os.curdir)
