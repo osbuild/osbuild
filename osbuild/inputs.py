@@ -37,6 +37,7 @@ class Input:
         self.info = info
         self.options = options or {}
 
+    @property
     def name(self) -> str:
         return self.info.name
 
