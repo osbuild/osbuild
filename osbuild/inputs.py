@@ -17,6 +17,7 @@ osbuild is the path. The input options are just passed to the
 """
 
 
+import hashlib
 import importlib
 import json
 import os
@@ -36,6 +37,13 @@ class Input:
     def __init__(self, info: ModuleInfo, options: Dict):
         self.info = info
         self.options = options or {}
+        self.id = self.calc_id()
+
+    def calc_id(self):
+        m = hashlib.sha256()
+        m.update(json.dumps(self.name, sort_keys=True).encode())
+        m.update(json.dumps(self.options, sort_keys=True).encode())
+        return m.hexdigest()
 
     @property
     def name(self) -> str:
