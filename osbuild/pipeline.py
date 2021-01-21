@@ -348,6 +348,9 @@ class Manifest:
                 return pl
         return None
 
+    def __contains__(self, name_or_id: str) -> bool:
+        return self.get(name_or_id) is not None
+
     def __getitem__(self, name_or_id: str) -> Pipeline:
         pl = self.get(name_or_id)
         if pl:
