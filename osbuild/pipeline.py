@@ -3,7 +3,7 @@ import contextlib
 import hashlib
 import json
 import os
-from typing import Dict, Iterator
+from typing import Dict, Iterator, Optional
 
 from .api import API
 from . import buildroot
@@ -339,14 +339,20 @@ class Manifest:
 
         return points
 
-    def __getitem__(self, name_or_id: str) -> Pipeline:
+    def get(self, name_or_id: str) -> Optional[Pipeline]:
         pl = self.pipelines.get(name_or_id)
         if pl:
             return pl
         for pl in self.pipelines.values():
             if pl.id == name_or_id:
                 return pl
-        raise KeyError("{name_or_id} not found")
+        return None
+
+    def __getitem__(self, name_or_id: str) -> Pipeline:
+        pl = self.get(name_or_id)
+        if pl:
+            return pl
+        raise KeyError(f"'{name_or_id}' not found")
 
     def __iter__(self) -> Iterator[Pipeline]:
         return iter(self.pipelines.values())
