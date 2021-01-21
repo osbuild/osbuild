@@ -53,6 +53,9 @@ class Stage:
         m.update(json.dumps(self.build, sort_keys=True).encode())
         m.update(json.dumps(self.base, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
+        if self.inputs:
+            data = {n: i.id for n, i in self.inputs.items()}
+            m.update(json.dumps(data, sort_keys=True).encode())
         return m.hexdigest()
 
     def run(self, tree, runner, build_tree, store, monitor, libdir):
