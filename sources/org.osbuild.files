@@ -158,12 +158,7 @@ def get_rhsm_secrets():
     raise RuntimeError("no matching rhsm key and cert")
 
 
-def main(options, checksums, cache, output):
-    urls = options.get("urls", {})
-
-    os.makedirs(cache, exist_ok=True)
-    os.makedirs(output, exist_ok=True)
-
+def download(checksums, urls, cache):
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         requested_urls = []
         rhsm_secrets = None
@@ -200,6 +195,10 @@ def main(options, checksums, cache, output):
             json.dump({"error": e.args[0]}, sys.stdout)
             return 1
 
+        return 0
+
+
+def export(checksums, cache, output):
     for checksum in checksums:
         try:
             subprocess.run(
@@ -219,7 +218,31 @@ def main(options, checksums, cache, output):
     return 0
 
 
+def main(options, checksums, cache, output):
+    urls = options.get("urls", {})
+
+    download_only = not output
+
+    if urls:
+        if not checksums and download_only:
+            checksums = [k for k, _ in urls.items()]
+
+        os.makedirs(cache, exist_ok=True)
+        res = download(checksums, urls, cache)
+        if res != 0:
+            return res
+
+    if download_only:
+        json.dump({}, sys.stdout)
+        return 0
+
+    os.makedirs(output, exist_ok=True)
+    res = export(checksums, cache, output)
+
+    return res
+
+
 if __name__ == '__main__':
     args = json.load(sys.stdin)
-    r = main(args["options"], args["checksums"], args["cache"], args["output"])
+    r = main(args["options"], args["checksums"], args["cache"], args.get("output"))
     sys.exit(r)
