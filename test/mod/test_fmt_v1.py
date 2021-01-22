@@ -21,6 +21,17 @@ BASIC_PIPELINE = {
     "pipeline": {
         "build": {
             "pipeline": {
+                "build": {
+                    "pipeline": {
+                        "stages": [
+                            {
+                                "name": "org.osbuild.noop",
+                                "options": {"zero": 0}
+                            }
+                        ]
+                    },
+                    "runner": "org.osbuild.linux"
+                },
                 "stages": [
                     {
                         "name": "org.osbuild.test",
@@ -95,14 +106,27 @@ class TestFormatV1(unittest.TestCase):
         manifest = fmt.load(description, index)
         self.assertIsNotNone(manifest)
 
-        # We have to have a build pipeline and a main pipeline
+        # We have to have two build pipelines and a main pipeline
         self.assertTrue(manifest.pipelines)
-        self.assertTrue(len(manifest.pipelines) == 2)
+        self.assertTrue(len(manifest.pipelines) == 3)
 
+        # access the individual pipelines via their names
+
+        # the inner most build pipeline
+        build = description["pipeline"]["build"]["pipeline"]["build"]
+        pl = manifest["build-build"]
+        have = pl.stages[0]
+        want = build["pipeline"]["stages"][0]
+        check_stage(have, want)
+
+        runner = build["runner"]
+
+        # the build pipeline for the 'tree' pipeline
         build = description["pipeline"]["build"]
         pl = manifest["build"]
         have = pl.stages[0]
         want = build["pipeline"]["stages"][0]
+        self.assertEqual(pl.runner, runner)
         check_stage(have, want)
 
         runner = build["runner"]
