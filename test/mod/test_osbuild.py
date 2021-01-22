@@ -46,7 +46,7 @@ class TestDescriptions(unittest.TestCase):
 
         info = index.get_module_info("Stage", "org.osbuild.noop")
 
-        manifest = Manifest({})
+        manifest = Manifest()
 
         # each pipeline gets a noop stage with different
         # options so that their ids are different
