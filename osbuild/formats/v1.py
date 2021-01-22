@@ -49,7 +49,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 def load_assembler(description: Dict, index: Index, manifest: Manifest):
     pipeline = manifest["tree"]
 
-    build, base, runner = pipeline.build, pipeline.tree_id, pipeline.runner
+    build, base, runner = pipeline.build, pipeline.id, pipeline.runner
     name, options = description["name"], description.get("options", {})
 
     # Add a pipeline with one stage for our assembler
@@ -93,7 +93,7 @@ def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 
     else:
         name = "-".join(["build"] * n)
 
-    build_id = build_pipeline and build_pipeline.tree_id
+    build_id = build_pipeline and build_pipeline.id
     pipeline = manifest.add_pipeline(name, runner, build_id)
 
     for s in description.get("stages", []):
@@ -128,7 +128,7 @@ def load(description: Dict, index: Index) -> Manifest:
 def get_ids(manifest: Manifest) -> Tuple[Optional[str], Optional[str]]:
     pipeline = manifest["tree"]
     assembler = manifest.get("assembler")
-    return pipeline.tree_id, assembler and assembler.tree_id
+    return pipeline.id, assembler and assembler.id
 
 
 def output(manifest: Manifest, res: Dict) -> Dict:
