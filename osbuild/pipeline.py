@@ -3,13 +3,14 @@ import contextlib
 import hashlib
 import json
 import os
-from typing import Dict, Iterator, Optional
+from typing import Dict, Iterator, List, Optional
 
 from .api import API
 from . import buildroot
 from . import objectstore
 from . import remoteloop
 from . import sources
+from .sources import Source
 from .util import osrelease
 
 
@@ -252,9 +253,9 @@ class Pipeline:
 class Manifest:
     """Representation of a pipeline and its sources"""
 
-    def __init__(self, source_options: Dict):
+    def __init__(self):
         self.pipelines = collections.OrderedDict()
-        self.sources = source_options
+        self.sources: List[Source] = []
 
     def add_pipeline(self, name: str, runner: str, build: str) -> Pipeline:
         pipeline = Pipeline(name, runner, build)
@@ -263,8 +264,16 @@ class Manifest:
         self.pipelines[name] = pipeline
         return pipeline
 
+    def add_source(self, info, options: Dict) -> Source:
+        source = Source(info, options)
+        self.sources.append(source)
+        return source
+
     def build(self, store, monitor, libdir, output_directory):
         results = {"success": True}
+
+        for source in self.sources:
+            source.download(store, libdir)
 
         for pl in self.pipelines.values():
             res = pl.run(store, monitor, libdir, output_directory)

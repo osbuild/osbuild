@@ -41,7 +41,11 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     description = {"pipeline": pipeline}
 
     if manifest.sources:
-        description["sources"] = manifest.sources
+        sources = {
+            s.info.name: s.options
+            for s in manifest.sources
+        }
+        description["sources"] = sources
 
     return description
 
@@ -109,7 +113,7 @@ def load(description: Dict, index: Index) -> Manifest:
     pipeline = description.get("pipeline", {})
     sources = description.get("sources", {})
 
-    manifest = Manifest(sources)
+    manifest = Manifest()
 
     load_pipeline(pipeline, index, manifest)
 
@@ -117,6 +121,11 @@ def load(description: Dict, index: Index) -> Manifest:
     assembler = pipeline.get("assembler")
     if assembler:
         load_assembler(assembler, index, manifest)
+
+    # load the sources
+    for name, options in sources.items():
+        info = index.get_module_info("Source", name)
+        manifest.add_source(info, options)
 
     for pipeline in manifest.pipelines.values():
         for stage in pipeline.stages:
