@@ -122,14 +122,21 @@ class Pipeline:
 
     @property
     def id(self):
-        return self.tree_id
+        """
+        Pipeline id: corresponds to the `id` of the last stage
 
-    @property
-    def tree_id(self):
+        In contrast to `name` this identifies the pipeline via
+        the tree, i.e. the content, it produces. Therefore two
+        pipelines that produce the same `tree`, i.e. have the
+        same exact stages and build pipeline, will have the
+        same `id`; thus the `id`, in contrast to `name` does
+        not uniquely identify a pipeline.
+        In case a Pipeline has no stages, its `id` is `None`.
+        """
         return self.stages[-1].id if self.stages else None
 
     def add_stage(self, info, options, sources_options=None):
-        stage = Stage(info, sources_options, self.build, self.tree_id, options or {})
+        stage = Stage(info, sources_options, self.build, self.id, options or {})
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id
@@ -160,7 +167,7 @@ class Pipeline:
 
         # Check if the tree that we are supposed to build does
         # already exist. If so, short-circuit here
-        tree = object_store.get(self.tree_id)
+        tree = object_store.get(self.id)
 
         if tree:
             return results, build_tree, tree
@@ -222,7 +229,7 @@ class Pipeline:
         # tree exists, we return it as well, but we do not care if it is
         # missing, since it is not a mandatory part of the result and would
         # usually be needless overhead.
-        obj = store.get(self.tree_id)
+        obj = store.get(self.id)
 
         if not obj:
             results, _, obj = self.build_stages(store, monitor, libdir)
