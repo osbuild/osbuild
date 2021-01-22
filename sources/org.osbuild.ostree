@@ -63,12 +63,7 @@ def ostree(*args, _input=None, **kwargs):
                    check=True)
 
 
-def main(options, checksums, cache, output):
-    commits = options["commits"]
-
-    os.makedirs(output, exist_ok=True)
-    os.makedirs(cache, exist_ok=True)
-
+def download(commits, checksums, cache):
     # Prepare the cache and the output repo
     repo_cache = os.path.join(cache, "repo")
     ostree("init", mode="archive", repo=repo_cache)
@@ -78,51 +73,63 @@ def main(options, checksums, cache, output):
     # explicitly here.
     ostree("config", "set", "repo.locking", "true", repo=repo_cache)
 
-    repo_out = os.path.join(output, "repo")
-    ostree("init", mode="archive", repo=repo_out)
-
     for commit in checksums:
         remote = commits[commit]["remote"]
         url = remote["url"]
         gpg = remote.get("gpgkeys", [])
         uid = str(uuid.uuid4())
 
-        ostree("remote", "add",
-               "--no-gpg-verify",
-               uid, url,
-               repo=repo_cache)
+        verify_args = []
+        if not gpg:
+            verify_args = ["--no-gpg-verify"]
 
-        # this temporary remote is needed to verify
-        # the commit signatures via gpg below
         ostree("remote", "add",
-               uid, repo_cache,
-               repo=repo_out)
+               uid, url,
+               *verify_args,
+               repo=repo_cache)
 
         for key in gpg:
             ostree("remote", "gpg-import", "--stdin", uid,
-                   repo=repo_out, _input=key)
+                   repo=repo_cache, _input=key)
 
         # Transfer the commit: remote → cache
         print(f"pulling {commit}", file=sys.stderr)
         ostree("pull", uid, commit, repo=repo_cache)
 
-        # Transfer the commit: cache → output
-        verify_args = []
-        if gpg:
-            verify_args = ["--gpg-verify", "--remote", uid]
-
-        ostree("pull-local", repo_cache, commit,
-               *verify_args,
-               repo=repo_out)
-
         # Remove the temporary remotes again
         ostree("remote", "delete", uid,
                repo=repo_cache)
 
-        ostree("remote", "delete", uid,
+
+def export(checksums, cache, output):
+    repo_cache = os.path.join(cache, "repo")
+
+    repo_out = os.path.join(output, "repo")
+    ostree("init", mode="archive", repo=repo_out)
+
+    for commit in checksums:
+        # Transfer the commit: remote → cache
+        print(f"exporting {commit}", file=sys.stderr)
+
+        ostree("pull-local", repo_cache, commit,
                repo=repo_out)
 
     json.dump({}, sys.stdout)
+
+
+def main(options, checksums, cache, output):
+    commits = options["commits"]
+
+    os.makedirs(cache, exist_ok=True)
+    download(commits, checksums, cache)
+
+    if not output:
+        json.dump({}, sys.stdout)
+        return 0
+
+    os.makedirs(output, exist_ok=True)
+    export(checksums, cache, output)
+
     return 0
 
 
