@@ -207,6 +207,7 @@ class TestAssemblers(test.TestBase):
                             with loop_open(loctl, target, offset=start, size=size) as dev:
                                 self.assertFilesystem(dev, options["root_fs_uuid"], fs_type, tree)
 
+    @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_tar(self):
         cases = [
             ("tree.tar.gz", None, ["application/x-tar"]),
@@ -220,11 +221,29 @@ class TestAssemblers(test.TestBase):
                 with self.run_assembler(osb,
                                         "org.osbuild.tar",
                                         options,
-                                        filename) as (_, image):
+                                        filename) as (tree, image):
                     output = subprocess.check_output(["file", "--mime-type", image], encoding="utf-8")
                     _, mimetype = output.strip().split(": ") # "filename: mimetype"
                     self.assertIn(mimetype, expected_mimetypes)
 
+                    if compression:
+                        continue
+
+                    # In the non-compression case, we verify the tree's content
+                    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+                        args = [
+                            "tar",
+                            "--numeric-owner",
+                            "--selinux",
+                            "--acls",
+                            "--xattrs", "--xattrs-include", "*",
+                            "-xaf", image,
+                            "-C", tmp]
+                        subprocess.check_output(args, encoding="utf-8")
+                        diff = self.tree_diff(tree, tmp)
+                        self.assertEqual(diff["added_files"], [])
+                        self.assertEqual(diff["deleted_files"], [])
+                        self.assertEqual(diff["differences"], {})
 
 @contextlib.contextmanager
 def loop_create_device(ctl, fd, offset=None, sizelimit=None):
