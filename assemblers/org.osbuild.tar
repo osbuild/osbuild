@@ -58,6 +58,13 @@ def main(tree, output_dir, options):
         "XZ_OPT": "--threads 0"
     }
 
+    # SELinux context, ACLs and extended attributes
+    extra_args += [
+        "--selinux",
+        "--acls",
+        "--xattrs", "--xattrs-include", "*",
+    ]
+
     # Set up the tar command.
     tar_cmd = [
         "tar",
