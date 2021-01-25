@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -32,11 +33,14 @@ def stat_diff(stat1, stat2, path, differences):
 
 
 def selinux_diff(path1, path2, path, differences):
-    try:
+    label1, label2 = "", ""
+
+    with contextlib.suppress(OSError):
         label1 = os.getxattr(path1, b"security.selinux", follow_symlinks=False).decode()
+
+    with contextlib.suppress(OSError):
         label2 = os.getxattr(path2, b"security.selinux", follow_symlinks=False).decode()
-    except OSError:
-        return True
+
     if label1 != label2:
         props = differences.setdefault(path, {})
         props["selinux"] = [label1.strip('\n\0'), label2.strip('\n\0')]
