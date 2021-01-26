@@ -23,7 +23,7 @@ import json
 import os
 import subprocess
 
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from .meta import ModuleInfo
 from .objectstore import StoreServer
@@ -34,14 +34,22 @@ class Input:
     A single input with its corresponding options.
     """
 
-    def __init__(self, info: ModuleInfo, options: Dict):
+    def __init__(self, info: ModuleInfo, origin: str, options: Dict):
         self.info = info
+        self.origin = origin
+        self.refs = {}
         self.options = options or {}
+        self.id = self.calc_id()
+
+    def add_reference(self, ref, options: Optional[Dict] = None):
+        self.refs[ref] = options or {}
         self.id = self.calc_id()
 
     def calc_id(self):
         m = hashlib.sha256()
         m.update(json.dumps(self.name, sort_keys=True).encode())
+        m.update(json.dumps(self.origin, sort_keys=True).encode())
+        m.update(json.dumps(self.refs, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
@@ -52,8 +60,14 @@ class Input:
     def run(self, storeapi: StoreServer) -> Tuple[str, Dict]:
         name = self.info.name
         msg = {
+            # mandatory bits
+            "origin": self.origin,
+            "refs": self.refs,
+
+            # global options
             "options": self.options,
-            "origin": name,
+
+            # API endpoints
             "api": {
                 "store": storeapi.socket_address
             }

@@ -2,8 +2,10 @@
 """
 Tree inputs
 
-Resolve the given pipeline `id` to a path and return that. If
-`id` is `null` or the empty string it returns an empty tree.
+Open the tree produced by the pipeline supplied via the
+first and only entry in `references`. The tree is opened
+in read only mode. If the id is `null` or the empty 
+string it returns an empty tree.
 """
 
 
@@ -15,30 +17,53 @@ from osbuild.objectstore import StoreClient
 
 SCHEMA = """
 "additionalProperties": false,
-"required": ["pipeline"],
+"required": ["origin", "references"],
 "properties": {
-  "pipeline": {
-    "description": "The Pipeline that built the desired tree",
-    "type": "object",
-    "required": ["id"],
-    "additionalProperties": false,
-    "properties": {
-      "id": {
-        "description": "Identifier for the pipeline",
+  "origin": {
+    "description": "The origin of the input (must be 'org.osbuild.pipeline')",
+    "type": "string",
+    "enum": ["org.osbuild.pipeline"]
+  },
+  "references": {
+    "description": "Exactly one pipeline identifier to ues as tree input",
+    "oneOf": [{
+      "type": "array",
+      "additionalItems": false,
+      "items": [{
         "type": "string"
-      }
-    }
+      }]
+    }, {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+         ".*": {
+           "type": "object",
+           "additionalProperties": false
+         }
+       },
+       "minProperties": 1,
+       "maxProperties": 1
+    }]
   }
 }
 """
 
 
+def error(msg):
+    json.dump({"error": msg}, sys.stdout)
+    sys.exit(1)
+
+
 def main():
     args = json.load(sys.stdin)
-    options = args["options"]
+    refs = args["refs"]
+
+    # input verification *must* have been done via schema
+    # verification. It is expected that origin is a pipeline
+    # and we have exactly one reference, i.e. a pipeline id
+    pid, _ = refs.popitem()
 
     store = StoreClient(connect_to=args["api"]["store"])
-    pid = options["pipeline"]["id"]
 
     if not pid:
         path = store.mkdtemp(prefix="empty")
@@ -46,8 +71,7 @@ def main():
         path = store.read_tree(pid)
 
     if not path:
-        json.dump({"error": "Could find target"}, sys.stdout)
-        return 1
+        error(f"Could not find pipeline with id '{pid}'")
 
     json.dump({"path": path}, sys.stdout)
     return 0
