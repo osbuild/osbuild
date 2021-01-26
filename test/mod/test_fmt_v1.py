@@ -250,6 +250,10 @@ class TestFormatV1(unittest.TestCase):
         res = fmt.validate({}, index)
         self.assertEqual(res.valid, True)
 
+        # the basic test manifest
+        res = fmt.validate(BASIC_PIPELINE, index)
+        self.assertEqual(res.valid, True)
+
         # something totally invalid (by Ondřej Budai)
         totally_invalid = {
             "osbuild": {
