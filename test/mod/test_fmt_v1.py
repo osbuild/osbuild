@@ -18,6 +18,24 @@ from .. import test
 
 
 BASIC_PIPELINE = {
+    "sources": {
+        "org.osbuild.files": {
+            "urls": {
+                "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4":
+                "https://internet/curl-7.69.1-1.fc32.x86_64.rpm",
+            }
+        },
+        "org.osbuild.ostree": {
+            "commits": {
+                "439911411ce7868a7b058c2a660e421991eb2df10e2bdce1fa559bd4390105d1": {
+                    "remote": {
+                        "url": "file:///repo",
+                        "gpgkeys": ["data"]
+                    }
+                }
+            }
+        }
+    },
     "pipeline": {
         "build": {
             "pipeline": {
