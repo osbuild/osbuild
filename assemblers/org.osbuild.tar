@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 """
-Assemble a tar archive
-
 Assembles the tree into a tar archive named `filename`.
 
 Uses the buildhost's `tar` command, like: `tar -cf $FILENAME -C $TREE`
