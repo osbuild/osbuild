@@ -52,7 +52,7 @@ BASIC_PIPELINE = {
                 },
                 "stages": [
                     {
-                        "name": "org.osbuild.test",
+                        "name": "org.osbuild.noop",
                         "options": {"one": 1}
                     }
                 ]
@@ -61,7 +61,7 @@ BASIC_PIPELINE = {
         },
         "stages": [
             {
-                "name": "org.osbuild.test",
+                "name": "org.osbuild.noop",
                 "options": {"one": 2}
             }
         ],
