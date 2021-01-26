@@ -64,10 +64,9 @@ def load_assembler(description: Dict, index: Index, manifest: Manifest):
 
     stage = pipeline.add_stage(info, options, {})
     info = index.get_module_info("Input", "org.osbuild.tree")
-    stage.inputs = {
-        "tree": Input(info, {"pipeline": {"id": base}})
-    }
-
+    ip = Input(info, "org.osbuild.pipeline", {})
+    ip.add_reference(base)
+    stage.inputs = {"tree": ip}
     return pipeline
 
 
