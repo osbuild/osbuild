@@ -400,11 +400,21 @@ class StoreServer(api.BaseAPI):
         path = tempfile.mkdtemp(**args)
         sock.send({"path": path})
 
+    def _source(self, msg, sock):
+        name = msg["name"]
+        base = self.store.store
+        path = os.path.join(base, "sources", name)
+        sock.send({"path": path})
+
     def _message(self, msg, _fds, sock):
         if msg["method"] == "read-tree":
             self._read_tree(msg, sock)
-        if msg["method"] == "mkdtemp":
+        elif msg["method"] == "mkdtemp":
             self._mkdtemp(msg, sock)
+        elif msg["method"] == "source":
+            self._source(msg, sock)
+        else:
+            raise ValueError("Invalid RPC call", msg)
 
 
 class StoreClient:
@@ -431,6 +441,17 @@ class StoreClient:
         msg = {
             "method": "read-tree",
             "object-id": object_id
+        }
+
+        self.client.send(msg)
+        msg, _, _ = self.client.recv()
+
+        return msg["path"]
+
+    def source(self, name: str) -> str:
+        msg = {
+            "method": "source",
+            "name": name
         }
 
         self.client.send(msg)
