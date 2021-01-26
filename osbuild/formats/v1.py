@@ -80,6 +80,13 @@ def load_build(description: Dict, index: Index, manifest: Manifest, n: int):
     return build_pipeline, description["runner"]
 
 
+def load_stage(description: Dict, index: Index, pipeline: Pipeline):
+    name = description["name"]
+    opts = description.get("options", {})
+    info = index.get_module_info("Stage", name)
+    pipeline.add_stage(info, opts)
+
+
 def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 0) -> Pipeline:
     build = description.get("build")
     if build:
@@ -99,9 +106,8 @@ def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 
     build_id = build_pipeline and build_pipeline.id
     pipeline = manifest.add_pipeline(name, runner, build_id)
 
-    for s in description.get("stages", []):
-        info = index.get_module_info("Stage", s["name"])
-        pipeline.add_stage(info, s.get("options", {}))
+    for stage in description.get("stages", []):
+        load_stage(stage, index, pipeline)
 
     return pipeline
 
