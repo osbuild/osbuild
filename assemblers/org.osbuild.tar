@@ -13,6 +13,10 @@ Known options for `compression`: "bzip2", "xz", "lzip", "lzma", "lzop", "gzip".
 Note that using `compression` does not add an extension to `filename`, so the
 caller is responsible for making sure that `compression` and `filename` match.
 
+By default POSIX ACLs, SELinux contexts and extended attributes are included,
+in order to preserve the tree as closely as possible. It is possible to opt
+out of any of those by supplying the corresponding option.
+
 Buildhost commands used: `tar` and any named `compression` program.
 """
 
@@ -35,6 +39,21 @@ SCHEMA = """
     "description": "Name of compression program",
     "type": "string",
     "enum": ["bzip2", "xz", "lzip", "lzma", "lzop", "gzip"]
+  },
+  "acls": {
+      "description": "Enable support for POSIX ACLs",
+      "type": "boolean",
+      "default": true
+  },
+  "selinux": {
+      "description": "Enable support for SELinux contexts",
+      "type": "boolean",
+      "default": true
+  },
+  "xattrs": {
+      "description": "Enable support for extended attributes",
+      "type": "boolean",
+      "default": true
   }
 }
 """
@@ -57,11 +76,14 @@ def main(tree, output_dir, options):
     }
 
     # SELinux context, ACLs and extended attributes
-    extra_args += [
-        "--selinux",
-        "--acls",
-        "--xattrs", "--xattrs-include", "*",
-    ]
+    if options.get("acls", True):
+        extra_args += ["--acls"]
+
+    if options.get("selinux", True):
+        extra_args += ["--selinux"]
+
+    if options.get("xattrs", True):
+        extra_args += ["--xattrs", "--xattrs-include", "*"]
 
     # Set up the tar command.
     tar_cmd = [
