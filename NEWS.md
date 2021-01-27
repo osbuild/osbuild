@@ -1,5 +1,66 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 24:
+
+  * Add a new `org.osbuild.rhsm` stage to configure the Red Hat
+    subscription management. Currently the stage supports only
+    enabling or disabling the RHSM DNF plugins.
+
+  * Add a new `org.osbuild.sysconfig` stage that allows for the
+    configuration of basic aspects of the system via the files
+    located in `/etc/sysconfig`. Currently only a small subset
+    of possbile configuration values is supported, for example
+    the default kernel.
+
+  * runners: add a runner for CentOS 8. It is currently based on
+    the same runner used for RHEL 8.2 and newer.
+
+  * The `org.osbuild.tar` assembler now by default also includes
+    the SELinux contexts, POSIX ACLs and extended attributes.
+    New stage options can be used to opt-out of any of those.
+
+  * Add support for developing osbuild via Visual Studio Code
+    Remote - Containers. This allows easy onboarding as well as
+    cross-platform development of osbuild inside VS Code. When
+    the osbuild source code folder is opened in VS Code it can
+    detect the support for container based development and
+    build and use the provided container environment. The
+    container itself is based on Fedora.
+
+  * Documentation: describe `--inspect` in the man page
+
+  * Fix a bug so that log text is continuously stream to standard
+    out when using osbuild in interactive, i.e. non JSON, mode.
+
+  * spec file: only disable the dep. generator for runners.
+    Don't detect dependencies for runners, because they are hand
+    crafted to work on a specific platform, i.e. platform-python
+    on RHEL. Do pick up dependencies for stages, assemblers, and
+    sources, since they are also run on the host.
+
+  * osbuild has seen massive refactoring so that now the internal
+    manifest representation is a more generic direct a-cyclic graph
+    of pipelines. Additionally a new concept called `Inputs` has
+    been introduced. They provide resources to stages in a unified
+    way, independently of their origin, i.e. if they were fetched
+    via a source or built via a pipeline.
+    The reading of the manifest description and the writing of
+    results is now done in a format specific way to prepare for
+    a new version of the description where the new generic, "dag"
+    pipelines can be expressed.
+
+  * Various big improvements to testing, like verifying the tar
+    assembler output, using `pytest` as testing framework.
+
+  * As always, CI has been improved, especially the mock build
+    phase and how reverse dependency testing against composer
+    is done.
+
+Contributions from: Achilleas Koutsou, Christian Kellner, Jacob Kozol,
+                    Lars Karlitski, Ondřej Budai, Tomas Hozza
+
+— Berlin, 2021-01-27
+
 ## CHANGES WITH 23:
 
   * The `org.osbuild.rpm` stage now includes the `SIGPGP` and `SIGGPG`
