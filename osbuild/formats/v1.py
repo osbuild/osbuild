@@ -2,7 +2,6 @@
 
 from typing import Dict, Optional, Tuple
 from osbuild.meta import Index, ValidationResult
-from ..inputs import Input
 from ..pipeline import Manifest, Pipeline, detect_host_runner
 
 
@@ -64,9 +63,8 @@ def load_assembler(description: Dict, index: Index, manifest: Manifest):
 
     stage = pipeline.add_stage(info, options, {})
     info = index.get_module_info("Input", "org.osbuild.tree")
-    ip = Input(info, "org.osbuild.pipeline", {})
+    ip = stage.add_input("tree", info, "org.osbuild.pipeline")
     ip.add_reference(base)
-    stage.inputs = {"tree": ip}
     return pipeline
 
 
