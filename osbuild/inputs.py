@@ -25,7 +25,6 @@ import subprocess
 
 from typing import Dict, Optional, Tuple
 
-from .meta import ModuleInfo
 from .objectstore import StoreServer
 
 
@@ -34,7 +33,7 @@ class Input:
     A single input with its corresponding options.
     """
 
-    def __init__(self, info: ModuleInfo, origin: str, options: Dict):
+    def __init__(self, info, origin: str, options: Dict):
         self.info = info
         self.origin = origin
         self.refs = {}
