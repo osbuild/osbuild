@@ -10,6 +10,7 @@ from . import buildroot
 from . import objectstore
 from . import remoteloop
 from . import sources
+from .inputs import Input
 from .sources import Source
 from .util import osrelease
 
@@ -58,6 +59,11 @@ class Stage:
             data = {n: i.id for n, i in self.inputs.items()}
             m.update(json.dumps(data, sort_keys=True).encode())
         return m.hexdigest()
+
+    def add_input(self, name, info, origin, options=None):
+        ip = Input(info, origin, options or {})
+        self.inputs[name] = ip
+        return ip
 
     def run(self, tree, runner, build_tree, store, monitor, libdir):
         with contextlib.ExitStack() as cm:
