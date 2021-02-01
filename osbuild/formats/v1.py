@@ -96,6 +96,12 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline):
                     options = {"metadata": {"rpm.check_gpg": gpg}}
                 pkg = pkg["checksum"]
             ip.add_reference(pkg, options)
+    elif stage.name == "org.osbuild.ostree":
+        info = index.get_module_info("Input", "org.osbuild.ostree")
+        ip = stage.add_input("commits", info, "org.osbuild.source")
+        commit, ref = opts["commit"], opts.get("ref")
+        options = {"ref": ref} if ref else None
+        ip.add_reference(commit, options)
 
 
 def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 0) -> Pipeline:

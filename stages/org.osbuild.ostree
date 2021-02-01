@@ -27,7 +27,6 @@ import sys
 import subprocess
 
 import osbuild.api
-import osbuild.sources
 from osbuild.util import selinux
 
 
@@ -217,31 +216,36 @@ def populate_var(sysroot):
             raise RuntimeError(f"Failed to provision /var/{target}")
 
 
+def parse_input(inputs):
+    commits = inputs["commits"]
+    data = commits["data"]
+    refs = data["refs"]
+    assert refs, "Need at least one commit"
+    return commits["path"], data["refs"]
+
+
 # pylint: disable=too-many-statements
-def main(tree, sources, options):
-    commit = options["commit"]
+def main(tree, inputs, options):
+    source_repo, commits = parse_input(inputs)
     osname = options["osname"]
     rootfs = options.get("rootfs")
     mounts = options.get("mounts", [])
     kopts = options.get("kernel_opts", [])
-    ref = options.get("ref", commit)
     remotes = options.get("remotes", [])
     pop_var = options.get("populate_var", False)
 
     ostree("admin", "init-fs", "--modern", tree,
            sysroot=tree)
 
-    print(f"Fetching ostree commit {commit}")
-    osbuild.sources.get("org.osbuild.ostree", [commit])
+    ref, commit = None, None  # keep pylint happy
+    for commit, data in commits.items():
+        ref = data.get("ref", commit)
 
-    source_repo = f"{sources}/org.osbuild.ostree/repo"
-
-    ostree("pull-local", source_repo, commit,
-           repo=f"{tree}/ostree/repo")
-
-    if ref != commit:
-        ostree("refs", "--create", ref, commit,
+        ostree("pull-local", source_repo, ref,
                repo=f"{tree}/ostree/repo")
+
+    #NB: if there are multiple commits, we deploy only
+    # the latest one
 
     ostree("admin", "os-init", osname, sysroot=tree)
     # this created a state root at `osname`
@@ -335,6 +339,6 @@ def main(tree, sources, options):
 if __name__ == '__main__':
     stage_args = osbuild.api.arguments()
     r = main(stage_args["tree"],
-             stage_args["sources"],
+             stage_args["inputs"],
              stage_args["options"])
     sys.exit(r)
