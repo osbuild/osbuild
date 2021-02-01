@@ -36,7 +36,6 @@ import subprocess
 import sys
 import tempfile
 
-import osbuild.sources
 from osbuild import api
 
 
@@ -80,16 +79,6 @@ SCHEMA = """
 """
 
 
-def packages_from_legacy(legacy):
-    packages = []
-    for package in legacy:
-        if isinstance(package, dict):
-            packages.append(package)
-        else:
-            packages.append({"checksum": package, "check_gpg": False})
-    return packages
-
-
 def generate_package_metadata(tree):
     query = r"""\{
     "name": "%{NAME}",
@@ -118,9 +107,17 @@ def generate_package_metadata(tree):
     return json.loads(jsdata)
 
 
-def main(tree, sources, options):
-    packages = packages_from_legacy(options.get("packages", []))
-    checksums = [p["checksum"] for p in packages]
+def parse_input(inputs):
+    packages = inputs["packages"]
+    path = packages["path"]
+    data = packages["data"]
+    refs = data["refs"]
+    return path, refs
+
+
+def main(tree, inputs, options):
+    pkgpath, packages = parse_input(inputs)
+
     for key in options.get("gpgkeys", []):
         with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
             keyfile.write(key)
@@ -132,17 +129,14 @@ def main(tree, sources, options):
             ], check=True)
         print("imported gpg key")
 
-    print("fetching sources")
-    osbuild.sources.get("org.osbuild.files", checksums)
-
-    for pkg in packages:
-        if pkg.get("check_gpg"):
+    for checksum, data in packages.items():
+        if data.get("rpm.check_gpg"):
             subprocess.run([
                 "rpmkeys",
                 "--root", tree,
                 "--checksig",
-                pkg["checksum"]
-            ], cwd=f"{sources}/org.osbuild.files", stdout=subprocess.DEVNULL, check=True)
+                checksum
+            ], cwd=pkgpath, stdout=subprocess.DEVNULL, check=True)
 
     script = f"""
         set -e
@@ -165,7 +159,7 @@ def main(tree, sources, options):
     subprocess.run(["/bin/sh", "-c", script], check=True)
 
     with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
-        manifest.writelines(c+'\n' for c in checksums)
+        manifest.writelines(c+'\n' for c in packages)
         manifest.flush()
         subprocess.run([
             "rpm",
@@ -175,7 +169,7 @@ def main(tree, sources, options):
             # verifying again (see /usr/lib/rpm/macros for more info)
             "--define", "_pkgverify_level none",
             "--install", manifest.name
-        ], cwd=f"{sources}/org.osbuild.files", check=True)
+        ], cwd=pkgpath, check=True)
 
     # remove temporary machine ID if it was created by us
     if not machine_id_set_previously:
@@ -197,5 +191,5 @@ def main(tree, sources, options):
 
 if __name__ == '__main__':
     args = api.arguments()
-    r = main(args["tree"], args["sources"], args["options"])
+    r = main(args["tree"], args["inputs"], args["options"])
     sys.exit(r)

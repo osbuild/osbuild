@@ -82,7 +82,20 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline):
     name = description["name"]
     opts = description.get("options", {})
     info = index.get_module_info("Stage", name)
-    pipeline.add_stage(info, opts)
+
+    stage = pipeline.add_stage(info, opts)
+
+    if stage.name == "org.osbuild.rpm":
+        info = index.get_module_info("Input", "org.osbuild.files")
+        ip = stage.add_input("packages", info, "org.osbuild.source")
+        for pkg in stage.options["packages"]:
+            options = None
+            if isinstance(pkg, dict):
+                gpg = pkg.get("check_gpg")
+                if gpg:
+                    options = {"metadata": {"rpm.check_gpg": gpg}}
+                pkg = pkg["checksum"]
+            ip.add_reference(pkg, options)
 
 
 def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 0) -> Pipeline:
