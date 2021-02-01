@@ -1,0 +1,121 @@
+#!/usr/bin/python3
+"""
+Inputs for ostree commits
+
+Pull the commits specified by `references` into a newly created
+repository. Optionally, if `ref` was specified, create an new
+reference for that commit.
+
+The returned data in `refs` is a dictionary where the keys are
+commit ids and the values are dictionries. The latter will
+contain `ref` it was specified.
+"""
+
+
+import os
+import json
+import sys
+import subprocess
+
+from osbuild.objectstore import StoreClient
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["origin", "references"],
+"properties": {
+  "origin": {
+    "description": "The origin of the input (must be 'org.osbuild.source')",
+    "type": "string",
+    "enum": ["org.osbuild.source"]
+  },
+  "references": {
+    "description": "Commit identifier",
+    "oneOf": [{
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }, {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "patternProperties": {
+        ".*": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ref": {
+                "type": "string",
+                "description": "OSTree reference to create for this commit"
+            }
+          }
+        }
+      }
+    }]
+  }
+}
+"""
+
+
+def ostree(*args, _input=None, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   input=_input,
+                   check=True)
+
+
+def export(checksums, cache, output):
+    repo_cache = os.path.join(cache, "repo")
+
+    repo_out = os.path.join(output, "repo")
+    ostree("init", mode="archive", repo=repo_out)
+
+    refs = {}
+    for commit, options in checksums.items():
+        # Transfer the commit: remote → cache
+        print(f"exporting {commit}", file=sys.stderr)
+
+        ostree("pull-local", repo_cache, commit,
+               repo=repo_out)
+
+        ref = options.get("ref")
+        if ref:
+            ostree("refs", "--create", ref, commit,
+                   repo=repo_out)
+
+        refs[commit] = options
+
+    reply = {
+        "path": repo_out,
+        "data": {
+            "refs": refs
+        }
+    }
+
+    json.dump(reply, sys.stdout)
+
+
+def main():
+    args = json.load(sys.stdin)
+    refs = args["refs"]
+
+    origin = args["origin"]
+    store = StoreClient(connect_to=args["api"]["store"])
+    source = store.source("org.osbuild.files")
+    output = store.mkdtemp(prefix="files-output")
+
+    # input verification must have happened via schema
+    # validation to ensure that `origin` is a source
+    source = store.source("org.osbuild.ostree")
+
+    export(refs, source, output)
+    return 0
+
+
+if __name__ == '__main__':
+    r = main()
+    sys.exit(r)
