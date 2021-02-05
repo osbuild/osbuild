@@ -15,7 +15,6 @@ import osbuild
 import osbuild.meta
 import osbuild.monitor
 from osbuild.objectstore import ObjectStore
-from osbuild.formats import v1 as fmt
 
 
 RESET = "\033[0m"
@@ -74,13 +73,21 @@ def parse_arguments(sys_argv):
     return parser.parse_args(sys_argv[1:])
 
 
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-return-statements
 def osbuild_cli():
     args = parse_arguments(sys.argv)
     desc = parse_manifest(args.manifest_path)
 
-    # first thing after parsing is validation of the input
     index = osbuild.meta.Index(args.libdir)
+
+    # detect the format from the manifest description
+    info = index.detect_format_info(desc)
+    if not info:
+        print("Unsupported manifest format")
+        return 2
+    fmt = info.module
+
+    # first thing is validation of the manifest
     res = fmt.validate(desc, index)
     if not res:
         if args.json or args.inspect:
