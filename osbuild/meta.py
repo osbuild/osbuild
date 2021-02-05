@@ -12,18 +12,22 @@ information. For the former a `ModuleInfo` class is returned via
 the individual stages. Schemata, obtained via `Index.get_schema`
 is represented via a `Schema` class that can in turn be used
 to validate the individual components.
-
-The high level `validate` function can be used to check a given
-manifest (parsed form JSON input in dictionary form) against all
-available schemata. The result is a `ValidationResult` which
-contains a single `ValidationError` for each error detected in
-the manifest. See the individual documentation for details.
+Additionally, the `Index` also provides meta information about
+the different formats and version that are supported to read
+manifest descriptions and write output data. Fir this a class
+called `FormatInfo` together with `Index.get_format_inf` and
+`Index.list_formats` is provided. A `FormatInfo` can also be
+inferred for a specific manifest description via a helper
+method called `detect_format_info`
 """
 import ast
 import contextlib
 import copy
+import importlib.util
 import os
+import pkgutil
 import json
+import sys
 from collections import deque
 from typing import Iterable, List, Optional
 
@@ -368,17 +372,75 @@ class ModuleInfo:
         return mapping.get(klass)
 
 
+class FormatInfo:
+    """Meta information about a format
+
+    Class the can be used to get meta information about
+    the the different formats in which osbuild accepts
+    manifest descriptions and writes results.
+    """
+
+    def __init__(self, module):
+        self.module = module
+        self.version = getattr(module, "VERSION")
+        docs = getattr(module, "__doc__")
+        info, desc = docs.split("\n", 1)
+        self.info = info.strip()
+        self.desc = desc.strip()
+
+    @classmethod
+    def load(cls, name):
+        mod = sys.modules.get(name)
+        if not mod:
+            mod = importlib.import_module(name)
+        if not mod:
+            raise ValueError(f"Could not load module {name}")
+        return cls(mod)
+
+
 class Index:
-    """Index of stages and assemblers
+    """Index of modules and formats
 
     Class that can be used to get the meta information about
-    osbuild stages and assemblers as well as JSON schemata.
+    osbuild modules as well as JSON schemata.
     """
 
     def __init__(self, path: str):
         self.path = path
         self._module_info = {}
+        self._format_info = {}
         self._schemata = {}
+
+    @staticmethod
+    def list_formats() -> List[str]:
+        """List all known formats for manifest descriptions"""
+        base = "osbuild.formats"
+        spec = importlib.util.find_spec(base)
+        locations = spec.submodule_search_locations
+        modinfo = [
+            mod for mod in pkgutil.walk_packages(locations)
+            if not mod.ispkg
+        ]
+
+        return [base + "." + m.name for m in modinfo]
+
+    def get_format_info(self, name) -> FormatInfo:
+        """Get the `FormatInfo` for the format called `name`"""
+        info = self._format_info.get(name)
+        if not info:
+            info = FormatInfo.load(name)
+            self._format_info[name] = info
+        return info
+
+    def detect_format_info(self, data) -> Optional[FormatInfo]:
+        """Obtain a `FormatInfo` for the format that can handle `data`"""
+        formats = self.list_formats()
+        version = data.get("version", "1")
+        for fmt in formats:
+            info = self.get_format_info(fmt)
+            if info.version == version:
+                return info
+        return None
 
     def list_modules_for_class(self, klass: str) -> List[str]:
         """List all available modules for the given `klass`"""
