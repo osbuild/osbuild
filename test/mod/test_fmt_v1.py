@@ -171,6 +171,22 @@ class TestFormatV1(unittest.TestCase):
 
         self.assertEqual(fmt.describe(manifest), BASIC_PIPELINE)
 
+    def test_format_info(self):
+        index = osbuild.meta.Index(os.curdir)
+
+        lst = index.list_formats()
+        self.assertIn("osbuild.formats.v1", lst)
+
+        # an empty manifest is format "1"
+        info = index.detect_format_info({})
+        self.assertEqual(info.version, "1")
+        self.assertEqual(info.module, fmt)
+
+        # the basic test manifest
+        info = index.detect_format_info(BASIC_PIPELINE)
+        self.assertEqual(info.version, "1")
+        self.assertEqual(info.module, fmt)
+
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_format_output(self):
         """Test that output formatting is as expected"""
