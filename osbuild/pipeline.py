@@ -270,8 +270,8 @@ class Manifest:
         self.pipelines[name] = pipeline
         return pipeline
 
-    def add_source(self, info, options: Dict) -> Source:
-        source = Source(info, options)
+    def add_source(self, info, items: List, options: Dict) -> Source:
+        source = Source(info, items, options)
         self.sources.append(source)
         return source
 
