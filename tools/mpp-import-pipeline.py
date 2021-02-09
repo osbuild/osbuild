@@ -41,7 +41,7 @@ def _manifest_enter(manifest, key, default):
     return manifest[key]
 
 
-def _manifest_parse(state, data):
+def _manifest_parse_v1(state, data):
     manifest = data
 
     # Resolve "sources"."org.osbuild.files"."urls".
@@ -70,7 +70,7 @@ def _manifest_parse(state, data):
     state.manifest_todo = manifest_todo
 
 
-def _manifest_process(state, todo):
+def _manifest_process_v1(state, todo):
     mpp = _manifest_enter(todo, "mpp-import-pipeline", {})
     mpp_path = mpp["path"]
 
@@ -105,6 +105,13 @@ def _manifest_process(state, todo):
     del(todo["mpp-import-pipeline"])
 
 
+def _manifest_import_v1(state, src):
+    _manifest_parse_v1(state, src)
+
+    for todo in state.manifest_todo:
+        _manifest_process_v1(state, todo)
+
+
 def _main_args(argv):
     parser = argparse.ArgumentParser(description="Generate Test Manifests")
 
@@ -128,21 +135,23 @@ def _main_state(args):
 
 def _main_process(state):
     src = json.load(sys.stdin)
-    _manifest_parse(state, src)
-
-    for todo in state.manifest_todo:
-        _manifest_process(state, todo)
+    version = src.get("version", "1")
+    if version == "1":
+        _manifest_import_v1(state, src)
+    else:
+        return 1
 
     json.dump(state.manifest, sys.stdout, indent=2)
     sys.stdout.write("\n")
+    return 0
 
 
 def main() -> int:
     args = _main_args(sys.argv)
     with _main_state(args) as state:
-        _main_process(state)
+        res = _main_process(state)
 
-    return 0
+    return res
 
 
 if __name__ == "__main__":
