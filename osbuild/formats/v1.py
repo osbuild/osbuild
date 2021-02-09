@@ -114,6 +114,11 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline):
         ip.add_reference(commit, options)
 
 
+def load_source(name: str, description: Dict, index: Index, manifest: Manifest):
+    info = index.get_module_info("Source", name)
+    manifest.add_source(info, description)
+
+
 def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 0) -> Pipeline:
     build = description.get("build")
     if build:
@@ -155,9 +160,8 @@ def load(description: Dict, index: Index) -> Manifest:
         load_assembler(assembler, index, manifest)
 
     # load the sources
-    for name, options in sources.items():
-        info = index.get_module_info("Source", name)
-        manifest.add_source(info, options)
+    for name, desc in sources.items():
+        load_source(name, desc, index, manifest)
 
     for pipeline in manifest.pipelines.values():
         for stage in pipeline.stages:
