@@ -13,14 +13,16 @@ class Source:
     """
     A single source with is corresponding options.
     """
-    def __init__(self, info, options) -> None:
+    def __init__(self, info, items, options) -> None:
         self.info = info
+        self.items = items or {}
         self.options = options
 
     def download(self, store: ObjectStore, libdir: PathLike):
         source = self.info.name
         cache = os.path.join(store.store, "sources", source)
         msg = {
+            "items": self.items,
             "options": self.options,
             "cache": cache,
             "output": None,
@@ -69,6 +71,7 @@ class SourcesServer(api.BaseAPI):
 
     def _run_source(self, source, checksums):
         msg = {
+            "items": {},
             "options": self.options.get(source, {}),
             "cache": f"{self.cache}/{source}",
             "output": f"{self.output}/{source}",

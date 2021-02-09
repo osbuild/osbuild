@@ -117,8 +117,10 @@ def export(checksums, cache, output):
     json.dump({}, sys.stdout)
 
 
-def main(options, checksums, cache, output):
-    commits = options["commits"]
+def main(commits, options, checksums, cache, output):
+
+    if not commits:
+        commits = options.get("commits", {})
 
     os.makedirs(cache, exist_ok=True)
     download(commits, checksums, cache)
@@ -135,7 +137,8 @@ def main(options, checksums, cache, output):
 
 if __name__ == '__main__':
     source_args = json.load(sys.stdin)
-    r = main(source_args["options"],
+    r = main(source_args["items"],
+             source_args["options"],
              source_args["checksums"],
              source_args["cache"],
              source_args["output"])

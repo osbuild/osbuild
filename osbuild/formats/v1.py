@@ -116,7 +116,20 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline):
 
 def load_source(name: str, description: Dict, index: Index, manifest: Manifest):
     info = index.get_module_info("Source", name)
-    manifest.add_source(info, description)
+
+    if name == "org.osbuild.files":
+        items = description["urls"]
+    elif name == "org.osbuild.ostree":
+        items = description["commits"]
+    else:
+        raise ValueError(f"Unknown source type: {name}")
+
+    # NB: the entries, i.e. `urls`, `commits` are left in the
+    # description dict, although the sources are not using
+    # it anymore. The reason is that it makes `describe` work
+    # without any special casing
+
+    manifest.add_source(info, items, description)
 
 
 def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 0) -> Pipeline:
