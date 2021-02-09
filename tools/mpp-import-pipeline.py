@@ -9,12 +9,25 @@ This tool imports a pipeline from another file and inserts it into a manifest
 at the same position the import instruction is located. Sources from the
 imported manifest are merged with the existing sources.
 
-The parameters for this pre-processor look like this:
+Manifest format version "1" and "2" are supported.
+
+The parameters for this pre-processor for format version "1" look like this:
 
 ```
 ...
     "mpp-import-pipeline": {
       "path": "./manifest.json"
+    }
+...
+```
+
+The parameters for this pre-processor for format version "2" look like this:
+
+```
+...
+    "mpp-import-pipeline": {
+      "path": "./manifest.json",
+      "id:" "build"
     }
 ...
 ```
@@ -112,6 +125,69 @@ def _manifest_import_v1(state, src):
         _manifest_process_v1(state, todo)
 
 
+def _manifest_parse_v2(state, manifest):
+    todo = []
+
+    pipelines = manifest.get("pipelines", [])
+
+    for pipeline in pipelines:
+        current = pipeline.get("mpp-import-pipeline")
+        if current:
+            todo.append(pipeline)
+
+    state.manifest = manifest
+    state.manifest_todo = todo
+
+
+def _manifest_process_v2(state, todo):
+    manifest = state.manifest
+    sources = _manifest_enter(manifest, "sources", {})
+
+    mpp = todo["mpp-import-pipeline"]
+    path = mpp["path"]
+
+    with open(os.path.join(state.cwd, path), "r") as f:
+        imp = json.load(f)
+
+    # merge the sources
+    for source, desc in imp.get("sources", {}).items():
+        target = sources.get(source)
+        if not target:
+            # new source, just copy everything
+            sources[source] = desc
+            continue
+
+        if desc.get("options"):
+            options = _manifest_enter(target, "options", {})
+            options.update(desc["options"])
+
+        items = _manifest_enter(target, "items", {})
+        items.update(desc.get("items", {}))
+
+    # get the pipeline
+    pipelines = imp.get("pipelines", [])
+
+    pid = mpp["id"]
+
+    target = None
+    for pipeline in pipelines:
+        if pipeline["name"] == pid:
+            target = pipeline
+            break
+
+    if not target:
+        raise ValueError(f"Pipeline '{pid}' not found in {path}")
+
+    todo.update(target)
+    del(todo["mpp-import-pipeline"])
+
+
+def _manifest_import_v2(state, src):
+    _manifest_parse_v2(state, src)
+    for todo in state.manifest_todo:
+        _manifest_process_v2(state, todo)
+
+
 def _main_args(argv):
     parser = argparse.ArgumentParser(description="Generate Test Manifests")
 
@@ -138,6 +214,8 @@ def _main_process(state):
     version = src.get("version", "1")
     if version == "1":
         _manifest_import_v1(state, src)
+    elif version == "2":
+        _manifest_import_v2(state, src)
     else:
         return 1
 
