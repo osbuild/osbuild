@@ -130,7 +130,7 @@ def _manifest_enter(manifest, key, default):
     return manifest[key]
 
 
-def _manifest_parse(state, data):
+def _manifest_parse_v1(state, data):
     manifest = data
 
     # Resolve "sources"."org.osbuild.files"."url".
@@ -160,7 +160,7 @@ def _manifest_parse(state, data):
     state.manifest_todo = manifest_todo
 
 
-def _manifest_depsolve(state, stage):
+def _manifest_process_v1(state, stage):
     options = _manifest_enter(stage, "options", {})
     options_mpp = _manifest_enter(options, "mpp-depsolve", {})
     options_packages = _manifest_enter(options, "packages", [])
@@ -176,6 +176,13 @@ def _manifest_depsolve(state, stage):
         # exactly one between `baseurl` and the path.
         url = urllib.parse.urljoin(baseurl + "/", dep["path"].lstrip("/"))
         state.manifest_urls[dep["checksum"]] = url
+
+
+def _manifest_depsolve_v1(state, src):
+    _manifest_parse_v1(state, src)
+
+    for stage in state.manifest_todo:
+        _manifest_process_v1(state, stage)
 
 
 def _main_args(argv):
@@ -202,13 +209,16 @@ def _main_state(args):
 
 def _main_process(state):
     src = json.load(sys.stdin)
-    _manifest_parse(state, src)
-
-    for stage in state.manifest_todo:
-        _manifest_depsolve(state, stage)
+    version = src.get("version", "1")
+    if version == "1":
+        _manifest_depsolve_v1(state, src)
+    else:
+        print(f"Unknown manifest version {version}", file=sys.stderr)
+        return 1
 
     json.dump(state.manifest, sys.stdout, indent=2)
     sys.stdout.write("\n")
+    return 0
 
 
 def main() -> int:
