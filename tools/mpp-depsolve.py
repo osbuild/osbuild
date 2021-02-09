@@ -8,7 +8,9 @@ produces the resulting manifest on stdout.
 This tool adjusts the `org.osbuild.rpm` stage. It consumes the `mpp-depsolve`
 option and produces a package-list and source-entries.
 
-The parameters for this pre-processor look like this:
+It supports version "1" and version "2" of the manifest description format.
+
+The parameters for this pre-processor, version "1", look like this:
 
 ```
 ...
@@ -36,6 +38,24 @@ The parameters for this pre-processor look like this:
           "excludes": [
             (optional excludes)
           ]
+        }
+      }
+    }
+...
+```
+
+The parameters for this pre-processor, version "2", look like this:
+
+```
+...
+    {
+      "name": "org.osbuild.rpm",
+      ...
+      "inputs": {
+        packages: {
+          "mpp-depsolve": {
+              see above
+          }
         }
       }
     }
@@ -185,6 +205,60 @@ def _manifest_depsolve_v1(state, src):
         _manifest_process_v1(state, stage)
 
 
+def _manifest_parse_v2(state, manifest):
+    todo = []
+
+    for pipeline in manifest.get("pipelines", {}):
+        for stage in pipeline.get("stages", []):
+            if stage["type"] != "org.osbuild.rpm":
+                continue
+
+            inputs = _manifest_enter(stage, "inputs", {})
+            packages = _manifest_enter(inputs, "packages", {})
+
+            if "mpp-depsolve" not in packages:
+                continue
+
+            todo.append(packages)
+
+    sources = _manifest_enter(manifest, "sources", {})
+    files = _manifest_enter(sources, "org.osbuild.files", {})
+    urls = _manifest_enter(files, "items", {})
+
+    state.manifest = manifest
+    state.manifest_todo = todo
+    state.manifest_urls = urls
+
+
+def _manifest_process_v2(state, ip):
+    urls = state.manifest_urls
+    refs = _manifest_enter(ip, "references", {})
+
+    mpp = ip["mpp-depsolve"]
+    baseurl = mpp["baseurl"]
+
+    deps = _dnf_resolve(state, mpp)
+
+    for dep in deps:
+        checksum = dep["checksum"]
+        refs[checksum] = {}
+
+        # dep["path"] often starts with a "/", even though it's meant to be
+        # relative to `baseurl`. Strip any leading slashes, but ensure there's
+        # exactly one between `baseurl` and the path.
+        url = urllib.parse.urljoin(baseurl + "/", dep["path"].lstrip("/"))
+        urls[checksum] = url
+
+    del ip["mpp-depsolve"]
+
+
+def _manifest_depsolve_v2(state, src):
+    _manifest_parse_v2(state, src)
+
+    for todo in state.manifest_todo:
+        _manifest_process_v2(state, todo)
+
+
 def _main_args(argv):
     parser = argparse.ArgumentParser(description="Generate Test Manifests")
 
@@ -212,6 +286,8 @@ def _main_process(state):
     version = src.get("version", "1")
     if version == "1":
         _manifest_depsolve_v1(state, src)
+    elif version == "2":
+        _manifest_depsolve_v2(state, src)
     else:
         print(f"Unknown manifest version {version}", file=sys.stderr)
         return 1
