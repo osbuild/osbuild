@@ -51,6 +51,15 @@ def show_validation(result, name):
         print(f"  {error.message}\n")
 
 
+def export(name_or_id, output_directory, store, manifest):
+    pipeline = manifest[name_or_id]
+    obj = store.get(pipeline.id)
+    dest = os.path.join(output_directory, name_or_id)
+
+    os.makedirs(dest, exist_ok=True)
+    obj.export(dest)
+
+
 def parse_arguments(sys_argv):
     parser = argparse.ArgumentParser(description="Build operating system images")
 
@@ -63,6 +72,8 @@ def parse_arguments(sys_argv):
                         help="the directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
                         help="stage to commit to the object store during build (can be passed multiple times)")
+    parser.add_argument("--export", metavar="ID", action="append", type=str, default=None,
+                        help="object to export, can be passed multiple times")
     parser.add_argument("--json", action="store_true",
                         help="output results in JSON format")
     parser.add_argument("--output-directory", metavar="DIRECTORY", type=os.path.abspath,
@@ -121,13 +132,21 @@ def osbuild_cli():
     monitor = osbuild.monitor.make(monitor_name, sys.stdout.fileno())
 
     try:
+        output_directory = args.output_directory
         with ObjectStore(args.store) as object_store:
             r = manifest.build(
                 object_store,
                 monitor,
                 args.libdir,
-                output_directory=args.output_directory
+                output_directory=output_directory
             )
+
+            if r["success"] and args.export:
+                if not output_directory:
+                    raise ValueError("Need --output-directory for --export")
+                for pid in args.export:
+                    export(pid, output_directory, object_store, manifest)
+
     except KeyboardInterrupt:
         print()
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
