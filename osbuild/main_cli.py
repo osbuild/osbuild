@@ -139,9 +139,8 @@ def osbuild_cli():
         sys.stdout.write("\n")
     else:
         if r["success"]:
-            tree_id, output_id = fmt.get_ids(manifest)
-            print("tree id:", tree_id)
-            print("output id:", output_id)
+            for name, pl in manifest.pipelines.items():
+                print(f"{name + ':': <10}\t{pl.id}")
         else:
             print()
             print(f"{RESET}{BOLD}{RED}Failed{RESET}")
