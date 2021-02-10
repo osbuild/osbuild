@@ -297,7 +297,7 @@ class ModuleInfo:
 
         if self.type in ("Stage", "Assembler"):
             schema["properties"] = {
-                "name": {"type": "string"},
+                "name": {"enum": [self.name]},
                 "options": {
                     "type": "object",
                     **self.opts
