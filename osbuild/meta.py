@@ -270,9 +270,10 @@ class ModuleInfo:
     Represents the information about a osbuild pipeline
     modules, like a stage, assembler or source.
     Contains the short description (`desc`), a longer
-    description (`info`) and the JSON schema of valid options
-    (`opts`). The `validate` method will check a the options
-    of a stage instance against the JSON schema.
+    description (`info`) and the raw schema data for
+    its valid options (`opts`). To use the schema data
+    the `get_schema` method can be used to obtain a
+    `Schema` object.
 
     Normally this class is instantiated via its `load` method.
     """
@@ -282,10 +283,9 @@ class ModuleInfo:
         self.type = klass
         self.path = path
 
-        opts = info.get("schema") or ""
-        self.info = info.get("info")
-        self.desc = info.get("desc")
-        self.opts = json.loads("{" + opts + "}")
+        self.info = info["info"]
+        self.desc = info["desc"]
+        self.opts = info["schema"]
 
     def get_schema(self):
         schema = {
@@ -294,23 +294,26 @@ class ModuleInfo:
             "additionalProperties": False,
         }
 
+        raw = self.opts["1"]
+        opts = json.loads("{" + raw + "}")
+
         if self.type in ("Stage", "Assembler"):
             schema["properties"] = {
                 "name": {"enum": [self.name]},
                 "options": {
                     "type": "object",
-                    **self.opts
+                    **opts
                 }
             }
             schema["required"] = ["name"]
         else:
-            schema.update(self.opts)
+            schema.update(opts)
 
         # if there are is a definitions node, it needs to be at
         # the top level schema node, since the schema inside the
         # stages is written as-if they were the root node and
         # so are the references
-        definitions = self.opts.get("definitions")
+        definitions = opts.get("definitions")
         if definitions:
             schema["definitions"] = definitions
             del schema["properties"]["options"]["definitions"]
@@ -352,8 +355,12 @@ class ModuleInfo:
         assigns = filter_type(tree.body, ast.Assign)
         targets = [(t, a) for a in assigns for t in targets(a)]
         values = {k: value(v) for k, v in targets if k in names}
+
+
         info = {
-            'schema': values.get("SCHEMA"),
+            'schema': {
+                "1": values.get("SCHEMA", "")
+                },
             'desc': doclist[0],
             'info': "\n".join(doclist[1:])
         }
