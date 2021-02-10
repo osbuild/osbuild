@@ -79,6 +79,32 @@ SCHEMA = """
 """
 
 
+SCHEMA_2 = """
+"options": {
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "gpgkeys": {
+      "description": "Array of GPG key contents to import",
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["packages"],
+  "properties": {
+    "packages": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
 def generate_package_metadata(tree):
     query = r"""\{
     "name": "%{NAME}",
