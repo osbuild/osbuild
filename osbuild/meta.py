@@ -489,7 +489,7 @@ class Index:
 
         return self._module_info[(klass, name)]
 
-    def get_schema(self, klass, name=None) -> Schema:
+    def get_schema(self, klass, name=None, version="1") -> Schema:
         """Obtain a `Schema` for `klass` and `name` (optional)
 
         Returns a `Schema` for the entity identified via `klass`
@@ -498,23 +498,23 @@ class Index:
         that case the actual schema data for `Schema` will be
         `None` and any validation will fail.
         """
-        schema = self._schemata.get((klass, name))
+        schema = self._schemata.get((klass, name, version))
         if schema is not None:
             return schema
 
         if klass == "Manifest":
-            path = f"{self.path}/schemas/osbuild1.json"
+            path = f"{self.path}/schemas/osbuild{version}.json"
             with contextlib.suppress(FileNotFoundError):
                 with open(path, "r") as f:
                     schema = json.load(f)
         elif klass in ["Assembler", "Input", "Source", "Stage"]:
             info = self.get_module_info(klass, name)
             if info:
-                schema = info.get_schema()
+                schema = info.get_schema(version)
         else:
             raise ValueError(f"Unknown klass: {klass}")
 
         schema = Schema(schema, name or klass)
-        self._schemata[(klass, name)] = schema
+        self._schemata[(klass, name, version)] = schema
 
         return schema
