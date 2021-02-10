@@ -287,42 +287,60 @@ class ModuleInfo:
         self.desc = info["desc"]
         self.opts = info["schema"]
 
-    def get_schema(self):
+    def _load_opts(self, version, fallback=None):
+        raw = self.opts[version]
+        if not raw and fallback:
+            raw = self.opts[fallback]
+        if not raw:
+            raise ValueError(f"Unsupported version: {version}")
+
+        return json.loads("{" + raw + "}")
+
+    def _make_options(self, version):
+        if version == "2":
+            raw = self.opts["2"]
+            if not raw:
+                return self._make_options("1")
+        elif version == "1":
+            raw = '"options": {' + self.opts["1"] + '}'
+        else:
+            raise ValueError(f"Unsupported version: {version}")
+
+        return json.loads("{" + raw + "}")
+
+    def get_schema(self, version="1"):
         schema = {
             "title": f"Pipeline {self.type}",
             "type": "object",
             "additionalProperties": False,
         }
 
-        raw = self.opts["1"]
-        opts = json.loads("{" + raw + "}")
-
         if self.type in ("Stage", "Assembler"):
+            type_id = "type" if version == "2" else "name"
+            opts = self._make_options(version)
             schema["properties"] = {
-                "name": {"enum": [self.name]},
-                "options": {
-                    "type": "object",
-                    **opts
-                }
+                type_id: {"enum": [self.name]},
+                **opts,
             }
-            schema["required"] = ["name"]
+            schema["required"] = [type_id]
         else:
+            opts = self._load_opts(version, "1")
             schema.update(opts)
 
         # if there are is a definitions node, it needs to be at
         # the top level schema node, since the schema inside the
         # stages is written as-if they were the root node and
         # so are the references
-        definitions = opts.get("definitions")
-        if definitions:
-            schema["definitions"] = definitions
-            del schema["properties"]["options"]["definitions"]
+        options = schema.get("properties", {}).get("options", {})
+        if "definitions" in options:
+            schema["definitions"] = options["definitions"]
+            del options["definitions"]
 
         return schema
 
     @classmethod
     def load(cls, root, klass, name) -> Optional["ModuleInfo"]:
-        names = ['SCHEMA']
+        names = ["SCHEMA", "SCHEMA_2"]
 
         def value(a):
             v = a.value
@@ -359,7 +377,8 @@ class ModuleInfo:
 
         info = {
             'schema': {
-                "1": values.get("SCHEMA", "")
+                "1": values.get("SCHEMA", ""),
+                "2": values.get("SCHEMA_2")
                 },
             'desc': doclist[0],
             'info': "\n".join(doclist[1:])
