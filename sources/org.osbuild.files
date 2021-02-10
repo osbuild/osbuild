@@ -27,42 +27,58 @@ import time
 
 SCHEMA = """
 "additionalProperties": false,
-"properties": {
-  "urls": {
+"definitions": {
+  "item": {
     "description": "The files to fetch indexed their content checksum",
     "type": "object",
     "additionalProperties": false,
     "patternProperties": {
       "(md5|sha1|sha256|sha384|sha512):[0-9a-f]{5,64}": {
-        "oneOf": [{
-          "type": "string",
-          "description": "URL to download the file from."
-        }, {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["url"],
-          "properties": {
-            "url": {
-              "type": "string",
-              "description": "URL to download the file from."
-            },
-            "secrets": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["name"],
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "Name of the secrets provider."
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "URL to download the file from."
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "URL to download the file from."
+              },
+              "secrets": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the secrets provider."
+                  }
                 }
               }
             }
           }
-        }]
+        ]
       }
     }
   }
-}
+},
+"properties": {
+  "items": {"$ref": "#/definitions/item"},
+  "urls": {"$ref": "#/definitions/item"}
+},
+"oneOf": [{
+  "required": ["items"]
+}, {
+  "required": ["urls"]
+}]
 """
 
 
