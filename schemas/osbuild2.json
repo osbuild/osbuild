@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "https://osbuild.org/schemas/osbuild2.json",
+
+  "title": "OSBuild Manifest",
+  "description": "OSBuild manifest describing a pipeline and all parameters",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "pipelines": { "$ref": "#/definitions/pipelines" },
+    "sources": { "$ref": "#/definitions/sources" },
+    "version": {
+      "enum": ["2"]
+    }
+  },
+
+  "definitions": {
+
+    "inputs": {
+      "title": "Collection of inputs for a stage",
+      "additionalProperties": {
+        "$ref": "#/definitions/input"
+      }
+    },
+
+    "input": {
+      "title": "Single input for a stage",
+      "additionalProperties": false,
+      "required": ["type", "origin", "references"],
+      "properties": {
+        "type": { "type": "string" },
+        "origin": { "enum": ["org.osbuild.source", "org.osbuild.pipeline"] },
+        "references": { "$ref": "#/definitions/reference" },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "pipelines": {
+      "title": "Collection of pipelines to execute",
+      "description": "Array of pipelines to execute one after another",
+      "type": "array",
+      "items": { "$ref": "#/definitions/pipeline" }
+    },
+
+    "pipeline": {
+      "title": "Pipeline Description",
+      "description": "Full description of a pipeline to execute",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type:": "string" },
+        "build": { "type": "string" },
+        "runner": { "type": "string" },
+        "stages": { "$ref": "#/definitions/stages" }
+      }
+    },
+
+    "reference": {
+      "oneOf":[
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        },{
+          "type": "object",
+          "additionalProperties": true
+        }
+      ]
+    },
+
+    "source": {
+      "title": "External Source",
+      "description": "External source to be passed to the pipeline",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": { "$ref": "#/definitions/reference" },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": ["items"]
+    },
+
+    "sources": {
+      "title": "Collection of External Sources",
+      "description": "Collection of external sources to be passed to the pipeline",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/source" }
+    },
+
+    "stage": {
+      "title": "Pipeline Stage",
+      "description": "Single stage of a pipeline executing one step",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string" },
+        "inputs": {"$ref": "#/definitions/inputs" },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [ "type" ]
+    },
+
+    "stages": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/stage" }
+    }
+  }
+}
