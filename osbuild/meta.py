@@ -29,7 +29,7 @@ import pkgutil
 import json
 import sys
 from collections import deque
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 import jsonschema
 
@@ -277,7 +277,7 @@ class ModuleInfo:
     Normally this class is instantiated via its `load` method.
     """
 
-    def __init__(self, klass: str, name: str, path: str, info: str):
+    def __init__(self, klass: str, name: str, path: str, info: Dict):
         self.name = name
         self.type = klass
         self.path = path
