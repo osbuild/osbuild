@@ -22,8 +22,11 @@ from osbuild.objectstore import StoreClient
 
 SCHEMA = """
 "additionalProperties": false,
-"required": ["origin", "references"],
+"required": ["type", "origin", "references"],
 "properties": {
+  "type": {
+    "enum": ["org.osbuild.ostree"]
+  },
   "origin": {
     "description": "The origin of the input (must be 'org.osbuild.source')",
     "type": "string",
