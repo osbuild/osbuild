@@ -167,7 +167,7 @@ def blobs_add_layer(blobs: str, tree: str):
     layer_file += suffix
 
     info = blobs_add_file(blobs, layer_file, "layer")
-    info["mediaType"] += compression
+    info["mediaType"] += "+" + compression
 
     return digest, info
 
