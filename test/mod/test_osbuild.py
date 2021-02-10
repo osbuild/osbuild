@@ -108,7 +108,7 @@ class TestDescriptions(unittest.TestCase):
             check = manifest[i.id]
             self.assertEqual(i.name, check.name)
 
-    def test_moduleinfo(self):
+    def check_moduleinfo(self, version):
         index = osbuild.meta.Index(os.curdir)
 
         modules = []
@@ -122,14 +122,21 @@ class TestDescriptions(unittest.TestCase):
             klass, name = module
             try:
                 info = osbuild.meta.ModuleInfo.load(os.curdir, klass, name)
-                schema = osbuild.meta.Schema(info.get_schema(), name)
+                schema = osbuild.meta.Schema(info.get_schema(version), name)
                 res = schema.check()
                 if not res:
-                    err = "\n  ".join(str(e) for e in res)
+                    err = "SCHEMA: " + json.dumps(schema.data, indent=2) + "\n"
+                    err += "\n  ".join(str(e) for e in res)
                     self.fail(str(res) + "\n  " + err)
             except json.decoder.JSONDecodeError as e:
                 msg = f"{klass} '{name}' has invalid STAGE_OPTS\n\t" + str(e)
                 self.fail(msg)
+
+    def test_moduleinfo(self):
+        for version in ["1", "2"]:
+            with self.subTest(version=version):
+                self.check_moduleinfo(version)
+
 
     def test_schema(self):
         schema = osbuild.meta.Schema(None)
