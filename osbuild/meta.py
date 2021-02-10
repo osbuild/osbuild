@@ -287,8 +287,7 @@ class ModuleInfo:
         self.desc = info.get("desc")
         self.opts = json.loads("{" + opts + "}")
 
-    @property
-    def schema(self):
+    def get_schema(self):
         schema = {
             "title": f"Pipeline {self.type}",
             "type": "object",
@@ -485,7 +484,7 @@ class Index:
         elif klass in ["Assembler", "Input", "Source", "Stage"]:
             info = self.get_module_info(klass, name)
             if info:
-                schema = info.schema
+                schema = info.get_schema()
         else:
             raise ValueError(f"Unknown klass: {klass}")
 
