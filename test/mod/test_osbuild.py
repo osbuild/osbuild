@@ -122,7 +122,7 @@ class TestDescriptions(unittest.TestCase):
             klass, name = module
             try:
                 info = osbuild.meta.ModuleInfo.load(os.curdir, klass, name)
-                schema = osbuild.meta.Schema(info.schema, name)
+                schema = osbuild.meta.Schema(info.get_schema(), name)
                 res = schema.check()
                 if not res:
                     err = "\n  ".join(str(e) for e in res)
