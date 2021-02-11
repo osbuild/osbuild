@@ -1,0 +1,82 @@
+#!/usr/bin/python3
+"""
+Pull OSTree commits into an existing repo
+
+This stage pulls one or more commits, provided via
+the `commits` input into an existing repository at
+a location specified via `repo`.
+
+If the returned a reference via `ref` it will use
+that to pull the commits.
+"""
+
+
+import os
+import sys
+import subprocess
+
+import osbuild.api
+
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "required": ["repo"],
+  "properties": {
+    "repo": {
+      "description": "Location of the OSTree repo.",
+      "type": "string"
+    }
+  }
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["commits"],
+  "properties": {
+    "commits": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
+def ostree(*args, _input=None, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   input=_input,
+                   check=True)
+
+
+def parse_input(inputs):
+    commits = inputs["commits"]
+    data = commits["data"]
+    refs = data["refs"]
+    assert refs, "Need at least one commit"
+    return commits["path"], data["refs"]
+
+
+# pylint: disable=too-many-statements
+def main(tree, inputs, options):
+    source_repo, commits = parse_input(inputs)
+    repo = options["repo"]
+    target = os.path.join(tree, repo.lstrip("/"))
+
+    for commit, data in commits.items():
+        ref = data.get("ref", commit)
+
+        ostree("pull-local", source_repo, ref,
+               repo=target)
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"],
+             stage_args["inputs"],
+             stage_args["options"])
+    sys.exit(r)
