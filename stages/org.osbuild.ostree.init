@@ -1,0 +1,58 @@
+#!/usr/bin/python3
+"""
+Create an ostree repository
+
+Uses `ostree init` to create an ostree repository. The
+mode and location can be specified via the `mode` and
+`path` option.
+
+See the ostree-init(1) man page for more details.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "mode": {
+    "description": "The mode to initialize the repo in.",
+    "enum": ["bare", "bare-user", "bare-user-only", "archive"],
+    "default": "archive"
+  },
+  "path": {
+    "description": "Location where to create the repo at.",
+    "type": "string",
+    "default": "/repo"
+  }
+}
+"""
+
+
+def main(tree, options):
+    mode = options.get("mode", "archive")
+    path = options.get("path", "repo")
+
+    repo = os.path.join(tree, path.lstrip("/"))
+
+    parent = os.path.dirname(repo)
+    os.makedirs(parent, exist_ok=True)
+
+    subprocess.run(["ostree",
+                    "init",
+                    "-v",
+                    f"--mode={mode}",
+                    f"--repo={repo}"],
+                   stdout=sys.stderr,
+                   check=True)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    args_tree = args["tree"]
+    r = main(args_tree, args["options"])
+    sys.exit(r)
