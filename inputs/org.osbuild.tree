@@ -4,7 +4,7 @@ Tree inputs
 
 Open the tree produced by the pipeline supplied via the
 first and only entry in `references`. The tree is opened
-in read only mode. If the id is `null` or the empty 
+in read only mode. If the id is `null` or the empty
 string it returns an empty tree.
 """
 
