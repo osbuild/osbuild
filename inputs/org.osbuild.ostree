@@ -30,7 +30,7 @@ SCHEMA = """
   "origin": {
     "description": "The origin of the input (must be 'org.osbuild.source')",
     "type": "string",
-    "enum": ["org.osbuild.source"]
+    "enum": ["org.osbuild.source", "org.osbuild.pipeline"]
   },
   "references": {
     "description": "Commit identifier",
@@ -111,11 +111,17 @@ def main():
     source = store.source("org.osbuild.files")
     output = store.mkdtemp(prefix="files-output")
 
-    # input verification must have happened via schema
-    # validation to ensure that `origin` is a source
-    source = store.source("org.osbuild.ostree")
+    if origin == "org.osbuild.pipeline":
+        for ref, options in refs.items():
+            source = store.read_tree(ref)
+            with open(os.path.join(source, "compose.json"), "r") as f:
+                compose = json.load(f)
+            commit_id = compose["ostree-commit"]
+            export({commit_id: options}, source, output)
+    else:
+        source = store.source("org.osbuild.ostree")
+        export(refs, source, output)
 
-    export(refs, source, output)
     return 0
 
 
