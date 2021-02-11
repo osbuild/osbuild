@@ -1,0 +1,162 @@
+#!/usr/bin/python3
+"""
+Transforms the tree to an ostree layout
+
+Creates a basic fs tree in OSTree layout[1] from scratch and then picks
+the relevenat bits from the tree and moves them over.
+
+Then uses `rpm-ostree compose` to transform a "normal" file system tree
+into an OSTree conforming layout (see [1]). Among other things the main
+steps are:
+  - moves /etc to /usr/etc
+  - move /boot to /usr/lib/ostree-boot
+  - potentially moving /var/lib/rpm
+  - re-creates the initramfs (via dracut)
+  - adds altfiles module to NSS
+  - Re-compiles SELinux policy (semodule -nB)
+  - Migrates /usr/etc/{passwd, group} to /usr/lib/
+  - Postprocess SELinux policy
+  - Convert /var to use tmpfiles.d
+  - Prepares symlinks
+    - /usr/local -> /var/usrlocal
+    - /var/lib/alternatives -> /usr/lib/alternatives
+    - /var/lib/vagrant -> /usr/lib/vagrant
+  - copies the rpmdb
+
+The configuration options, `etc_group_members` corresponds to the
+Treefile[2] option of rpm-ostree. In brief: The groups mentioned
+in `etc_group_members` will be stored in /etc/groups instead of
+/usr/etc/groups (which is read-only). Therefore all groups that
+human users need to be part of.
+
+[1] https://ostree.readthedocs.io/en/latest/manual/adapting-existing/
+[2] https://rpm-ostree.readthedocs.io/en/latest/manual/treefile/
+"""
+
+
+import os
+import subprocess
+import sys
+import tempfile
+
+from osbuild import api
+from osbuild.util import ostree
+
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "etc_group_members": {
+    "description": "Array of group names to still keep in /etc/group",
+    "type": "array",
+    "items": { "type": "string" }
+  },
+  "initramfs-args": {
+    "description": "Array of arguments passed to dracut",
+    "type": "array",
+    "items": { "type": "string" }
+  },
+  "tmp-is-dir": {
+    "description": "Create a regular directory for /tmp",
+    "type": "boolean",
+    "default": true
+  }
+}
+"""
+
+
+TOPLEVEL_DIRS = ["dev", "proc", "run", "sys", "sysroot", "var"]
+TOPLEVEL_LINKS = {
+    "home": "var/home",
+    "media": "run/media",
+    "mnt": "var/mnt",
+    "opt": "var/opt",
+    "ostree": "sysroot/ostree",
+    "root": "var/roothome",
+    "srv": "var/srv",
+}
+
+
+def move(name, source, dest):
+    os.rename(os.path.join(source, name), os.path.join(dest, name))
+
+
+def init_rootfs(root, tmp_is_dir):
+    """Initialize a pristine root file-system"""
+
+    fd = os.open(root, os.O_DIRECTORY)
+
+    os.fchmod(fd, 0o755)
+
+    for d in TOPLEVEL_DIRS:
+        os.mkdir(d, mode=0o755, dir_fd=fd)
+        os.chmod(d, mode=0o755, dir_fd=fd)
+
+    for l, t in TOPLEVEL_LINKS.items():
+        # <dir_fd>/l -> t
+        os.symlink(t, l, dir_fd=fd)
+
+    if tmp_is_dir:
+        os.mkdir("tmp", mode=0o1777, dir_fd=fd)
+        os.chmod("tmp", mode=0o1777, dir_fd=fd)
+    else:
+        os.symlink("tmp", "sysroot/tmp", dir_fd=fd)
+
+
+def main(tree, options):
+    etc_group_members = options.get("etc_group_members", [])
+    initramfs = options.get("initramfs-args", [])
+    tmp_is_dir = options.get("tmp-is-dir", True)
+
+    # Move /etc to /usr
+    os.rename(f"{tree}/etc", f"{tree}/usr/etc")
+
+    # NB: need to create the temporary direct at the same
+    # device as the tree is located on, so we can rename(2);
+    # since tree is a bind mount, it basically means it
+    # needs to be at the root of tree. So do that and then
+    # filter that directory out when moving stuff
+    with tempfile.TemporaryDirectory(dir=tree) as root:
+        print("Moving tree to temporary root")
+        for entry in os.scandir(tree):
+            if entry.path == root:
+                continue
+
+            dest = os.path.join(root, entry.name)
+            os.rename(entry.path, dest)
+
+        print("Initializing new root filesystem")
+        init_rootfs(tree, tmp_is_dir)
+
+        print("Moving data back from temporary root")
+        move("usr", root, tree)
+        move("boot", root, tree)
+        move("var", root, tree)
+
+        for name in ["bin", "lib", "lib32", "lib64", "sbin"]:
+            if os.path.lexists(f"{root}/{name}"):
+                move(name, root, tree)
+
+    # rpm-ostree will either ensure that machine-id is empty
+    # when machineid-compat is 'true' is or will remove it
+    # otherwise. Since we have to decide, detect the current
+    # state and make rpm-ostree follow suit
+    machineid_compat = os.path.exists(f"{tree}/etc/machine-id")
+    print(f"ostree: machineid-compat: {machineid_compat}")
+
+    treefile = ostree.Treefile()
+    treefile["boot-location"] = "new"
+    treefile["machineid-compat"] = machineid_compat
+    treefile["etc-group-members"] = etc_group_members
+    treefile["initramfs-args"] = initramfs
+
+    with treefile.as_tmp_file() as path:
+        subprocess.run(["rpm-ostree", "compose", "postprocess",
+                        tree, path],
+                       check=True)
+
+
+if __name__ == '__main__':
+    args = api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
