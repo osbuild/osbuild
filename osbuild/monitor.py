@@ -95,6 +95,12 @@ class LogMonitor(BaseMonitor):
         duration = int(time.time() - self.timer_start)
         self.out.write(f"\n⏱  Duration: {duration}s\n")
 
+    def begin(self, pipeline):
+        self.out.term(BOLD, clear=True)
+        self.out.write(f"Pipeline {pipeline.name}: {pipeline.id}")
+        self.out.term(RESET)
+        self.out.write("\n")
+
     def stage(self, stage):
         self.module(stage)
 
