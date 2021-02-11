@@ -59,10 +59,10 @@ class BuildRoot(contextlib.AbstractContextManager):
     only when exiting the context manager.
     """
 
-    def __init__(self, root, runner, libdir, var, path="/run/osbuild"):
+    def __init__(self, root, runner, libdir, var, *, rundir="/run/osbuild"):
         self._exitstack = None
         self._rootdir = root
-        self._rundir = path
+        self._rundir = rundir
         self._vardir = var
         self._libdir = libdir
         self._runner = runner
