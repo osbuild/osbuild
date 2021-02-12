@@ -222,7 +222,7 @@ def _manifest_parse_v2(state, manifest):
             todo.append(packages)
 
     sources = _manifest_enter(manifest, "sources", {})
-    files = _manifest_enter(sources, "org.osbuild.files", {})
+    files = _manifest_enter(sources, "org.osbuild.curl", {})
     urls = _manifest_enter(files, "items", {})
 
     state.manifest = manifest

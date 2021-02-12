@@ -947,7 +947,7 @@
     }
   ],
   "sources": {
-    "org.osbuild.files": {
+    "org.osbuild.curl": {
       "items": {
         "sha256:342bdf0143d9145f8846e1b5c3401685e0d1274b66df39ac8cbfb78013313861": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/Packages/n/NetworkManager-1.22.10-1.fc32.x86_64.rpm",
         "sha256:fd2a2dd726d855f877296227fb351883d647df28b1b0085f525d87df622d49e4": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/Packages/n/NetworkManager-libnm-1.22.10-1.fc32.x86_64.rpm",
