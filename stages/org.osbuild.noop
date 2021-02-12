@@ -13,16 +13,24 @@ import sys
 import osbuild.api
 
 
-SCHEMA = """
-"additionalProperties": true
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": true
+},
+"inputs": {
+  "additionalProperties": true
+}
 """
 
 
-def main(_tree, options):
+def main(_tree, inputs, options):
     print("Not doing anything with these options:", json.dumps(options))
+
+    for name, desc in inputs.items():
+        print(f"Not doing anything with Input '{name}'", json.dumps(desc))
 
 
 if __name__ == '__main__':
     args = osbuild.api.arguments()
-    r = main(args["tree"], args.get("options", {}))
+    r = main(args["tree"], args.get("inputs", {}), args.get("options", {}))
     sys.exit(r)
