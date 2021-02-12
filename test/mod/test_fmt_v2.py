@@ -56,7 +56,16 @@ BASIC_PIPELINE = {
             "stages": [
                 {
                     "type": "org.osbuild.noop",
-                    "options": {"one": 3}
+                    "options": {"one": 3},
+                    "inputs": {
+                        "tree": {
+                            "type": "org.osbuild.tree",
+                            "origin": "org.osbuild.pipeline",
+                            "references": {
+                                "name:tree": {}
+                            }
+                        }
+                    }
                 }
             ]
         }
