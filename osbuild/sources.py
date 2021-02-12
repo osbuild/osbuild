@@ -20,7 +20,7 @@ class Source:
 
     def download(self, store: ObjectStore, libdir: PathLike):
         source = self.info.name
-        cache = os.path.join(store.store, "sources", source)
+        cache = os.path.join(store.store, "sources")
         msg = {
             "items": self.items,
             "options": self.options,
@@ -73,7 +73,7 @@ class SourcesServer(api.BaseAPI):
         msg = {
             "items": {},
             "options": self.options.get(source, {}),
-            "cache": f"{self.cache}/{source}",
+            "cache": self.cache,
             "output": f"{self.output}/{source}",
             "checksums": checksums,
             "libdir": self.libdir
