@@ -235,6 +235,7 @@ def export(checksums, cache, output):
 
 
 def main(urls, options, checksums, cache, output):
+    cache = os.path.join(cache, "org.osbuild.files")
     download_only = not output
 
     if not urls:
