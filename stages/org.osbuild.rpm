@@ -2,6 +2,8 @@
 """
 Verify, and install RPM packages
 
+The `exclude.docs` option can be used to tell rpm to not install docs.
+
 `gpgkeys` should be an array of strings containing each GPG key to be used
 to verify the packages.
 
@@ -42,6 +44,17 @@ from osbuild import api
 SCHEMA = """
 "additionalProperties": false,
 "properties": {
+  "exclude": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "docs": {
+        "type": "boolean",
+        "description": "Do not install documentation.",
+        "default": false
+      }
+    }
+  },
   "gpgkeys": {
     "description": "Array of GPG key contents to import",
     "type": "array",
@@ -88,6 +101,17 @@ SCHEMA_2 = """
       "description": "Array of GPG key contents to import",
       "type": "array",
       "items": { "type": "string" }
+    },
+    "exclude": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "docs": {
+          "type": "boolean",
+          "description": "Do not install documentation.",
+          "default": false
+        }
+      }
     }
   }
 },
@@ -184,6 +208,11 @@ def main(tree, inputs, options):
 
     subprocess.run(["/bin/sh", "-c", script], check=True)
 
+    extra_args = []
+
+    if options.get("exclude", {}).get("docs"):
+        extra_args += ["--excludedocs"]
+
     with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
         manifest.writelines(c+'\n' for c in packages)
         manifest.flush()
@@ -191,6 +220,7 @@ def main(tree, inputs, options):
             "rpm",
             "--verbose",
             "--root", tree,
+            *extra_args,
             # The content hash of the rpms has been verified, default to not
             # verifying again (see /usr/lib/rpm/macros for more info)
             "--define", "_pkgverify_level none",
