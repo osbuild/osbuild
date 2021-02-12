@@ -270,7 +270,7 @@ class OSBuild(contextlib.AbstractContextManager):
         print(data_stderr)
         print("-- END ---------------------------------")
 
-    def compile(self, data_stdin, output_dir=None, checkpoints=None, check=False):
+    def compile(self, data_stdin, output_dir=None, checkpoints=None, check=False, exports=None):
         """Compile an Artifact
 
         This takes a manifest as `data_stdin`, executes the pipeline, and
@@ -304,6 +304,9 @@ class OSBuild(contextlib.AbstractContextManager):
             for c in (checkpoints or []):
                 cmd_args += ["--checkpoint", c]
 
+            for e in (exports or []):
+                cmd_args += ["--export", e]
+
             cmd_args += ["-"]
 
             # Spawn the `osbuild` executable, feed it the specified data on
@@ -332,7 +335,7 @@ class OSBuild(contextlib.AbstractContextManager):
 
         return json.loads(data_stdout)
 
-    def compile_file(self, file_stdin, output_dir=None, checkpoints=None):
+    def compile_file(self, file_stdin, output_dir=None, checkpoints=None, exports=None):
         """Compile an Artifact
 
         This is similar to `compile()` but takes a file-path instead of raw
@@ -342,7 +345,7 @@ class OSBuild(contextlib.AbstractContextManager):
 
         with open(file_stdin, "r") as f:
             data_stdin = f.read()
-            return self.compile(data_stdin, output_dir, checkpoints=checkpoints)
+            return self.compile(data_stdin, output_dir, checkpoints=checkpoints, exports=exports)
 
     @staticmethod
     def treeid_from_manifest(manifest_data):
