@@ -14,6 +14,7 @@ jobs:
         - "test.run.test_assemblers"
         - "test.run.test_boot"
         - "test.run.test_noop"
+        - "test.run.test_ostree"
         - "test.run.test_sources"
         - "test.run.test_stages"
         - "test.src"
