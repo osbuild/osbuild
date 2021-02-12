@@ -67,6 +67,7 @@ BASIC_PIPELINE = {
 class TestFormatV1(unittest.TestCase):
     def setUp(self):
         self.index = osbuild.meta.Index(os.curdir)
+        self.maxDiff = None
 
     def load_manifest(self, desc):
         info = self.index.detect_format_info(desc)
@@ -123,6 +124,13 @@ class TestFormatV1(unittest.TestCase):
         # the basic test manifest
         info = index.detect_format_info(BASIC_PIPELINE)
         self.assertEqual(info.version, "2")
+
+    def test_describe(self):
+        manifest, fmt = self.load_manifest(BASIC_PIPELINE)
+        desc = fmt.describe(manifest)
+        self.assertIsNotNone(desc)
+
+        self.assertEqual(BASIC_PIPELINE, desc)
 
     def test_validation(self):
         desc = BASIC_PIPELINE
