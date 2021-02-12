@@ -68,6 +68,22 @@ class TestFormatV1(unittest.TestCase):
     def setUp(self):
         self.index = osbuild.meta.Index(os.curdir)
 
+    def load_manifest(self, desc):
+        info = self.index.detect_format_info(desc)
+        self.assertIsNotNone(info)
+        fmt = info.module
+        self.assertIsNotNone(fmt)
+        manifest = fmt.load(desc, self.index)
+        return manifest, fmt
+
+    def assert_validation(self, result):
+        if result.valid:
+            return
+
+        msg = "Validation failed:\n"
+        msg += "\n".join(str(e) for e in result.errors)
+        self.fail(msg)
+
     def test_load(self):
 
         desc = BASIC_PIPELINE
@@ -107,3 +123,10 @@ class TestFormatV1(unittest.TestCase):
         # the basic test manifest
         info = index.detect_format_info(BASIC_PIPELINE)
         self.assertEqual(info.version, "2")
+
+    def test_validation(self):
+        desc = BASIC_PIPELINE
+        _, fmt = self.load_manifest(desc)
+
+        res = fmt.validate(desc, self.index)
+        self.assert_validation(res)
