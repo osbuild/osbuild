@@ -12,7 +12,7 @@ import osbuild.meta
 BASIC_PIPELINE = {
     "version": "2",
     "sources": {
-        "org.osbuild.files": {
+        "org.osbuild.curl": {
             "items": {
                 "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4":
                 "https://internet/curl-7.69.1-1.fc32.x86_64.rpm",

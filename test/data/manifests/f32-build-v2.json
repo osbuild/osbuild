@@ -255,7 +255,7 @@
     }
   ],
   "sources": {
-    "org.osbuild.files": {
+    "org.osbuild.curl": {
       "items": {
         "sha256:705bdb96aab3a0f9d9e2ff48ead1208e2dbc1927d713d8637632af936235217b": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/Packages/a/acl-2.2.53-5.fc32.x86_64.rpm",
         "sha256:c574c5432197acbe08ea15c7837be7577cd0b49902a3e65227792f051d73ce5c": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/Packages/a/alternatives-1.11-6.fc32.x86_64.rpm",

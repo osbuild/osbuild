@@ -40,6 +40,12 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         return description
 
+    def get_source_name(source):
+        name = source.info.name
+        if name == "org.osbuild.curl":
+            name = "org.osbuild.files"
+        return name
+
     pipeline = describe_pipeline(manifest["tree"])
 
     assembler = manifest.get("assembler")
@@ -51,7 +57,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
     if manifest.sources:
         sources = {
-            s.info.name: s.options
+            get_source_name(s): s.options
             for s in manifest.sources
         }
         description["sources"] = sources
@@ -115,9 +121,12 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline):
 
 
 def load_source(name: str, description: Dict, index: Index, manifest: Manifest):
+    if name == "org.osbuild.files":
+        name = "org.osbuild.curl"
+
     info = index.get_module_info("Source", name)
 
-    if name == "org.osbuild.files":
+    if name == "org.osbuild.curl":
         items = description["urls"]
     elif name == "org.osbuild.ostree":
         items = description["commits"]
@@ -268,6 +277,8 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
     # sources
     sources = manifest.get("sources", {})
     for name, source in sources.items():
+        if name == "org.osbuild.files":
+            name = "org.osbuild.curl"
         schema = index.get_schema("Source", name)
         res = schema.validate(source)
         result.merge(res, path=["sources", name])
