@@ -1,5 +1,89 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 25:
+
+  * **Tech preview** of the new manifest format version 2!
+    This format can describe the generic direct a-cyclic
+    pipeline graphs that were introduced internally in the
+    last version (25). The schema validation code has been
+    reworked so it supports multiple format versions. Format
+    detection code was added so different format modules can
+    be used transparently. The format version 2 schema was
+    added and a new format module to load and describe the
+    format was added. Basic checks were added to the tests
+    to check validation, loading and describing the new
+    format.
+    The Manifest Marco Preprocessor (MPP) now also supports
+    format version 2.
+    NB: This is indeed a preview of the format and it might
+    still change, especially the output produce by it most
+    certainly will.
+
+  * Add `--export <name_or_id>` command line switch, which
+    can be invoked multiple times to request the exporting
+    of one or more artifacts that were built. They will be
+    placed under a sub-directory of `--output-directory`,
+    with the name or id that was specified.
+
+  * The schema of the `org.osbuild.rpm` stage as well as the
+    `org.osbuild.ostree` and `org.osbuild.files` sources
+    was ported to format version 2.
+
+  * The `org.osbuild.oci-archve` & `org.osbuild.ostree.commit`
+    assemblers were ported to new assembler like stages with
+    tree inputs so they can be used in the new format v2.
+
+  * A new `org.osbuild.ostree.init` stage was added to
+    create a OSTree repo in a given format at a given location.
+
+  * A new `org.osbuild.ostree.pull` stage was added that can
+    be used to pull commits, specified via inputs, into a
+    pre-existing repository.
+
+  * A new `org.osbuild.ostree.preptree` stage was added that
+    replaces the `org.osbuild.ostree.rpm-ostree`, which is
+    now deprecated and should not be used in new manifests.
+
+  * A new `org.osbuild.files` input was added that provides
+    file-like resources to stages. Currently only supports
+    source origins.
+
+  * A new `org.osbuild.ostree` input was added that provides
+    ostree commits to stages. It can handle sources as well
+    as pipeline origins, i.e. it can provide previously
+    build commits to other stages.
+
+  * A new `org.osbuild.noop` input was added, that like the
+    noop stage, does nothing but forward the supplied data
+    to the stage.
+
+  * A new integration test was added that uses the new
+    manifest format that builds an OSTree commit, then builds
+    a container with that commit into. This will test all new
+    assembler like stages that were added as well as the new
+    `--export` command line option.
+
+  * The `org.osbuild.files` stage was renamed after the
+    underlying tool to `org.osbuild.curl`, since other
+    sources might in the future provide resources of type
+    `org.osbuild.files`.
+
+  * The `org.osbuild.rpm` stage gained support to not install
+    documentation via a new `exclude.docs` option.
+
+  * The `org.osbuild.copy` stage was removed since it does no
+    longer fit in the inputs model. It will be re-added with
+    proper support for inputs later.
+
+  * Fix a bug where osbuild would create temporary build
+    directories in `/var/tmp` instead of a directory within
+    the store.
+
+Contributions from: Christian Kellner, Lars Karlitski,
+                    Tom Gundersen, Ondřej Budai
+
+— Berlin, 2021-02-12
+
 ## CHANGES WITH 24:
 
   * Add a new `org.osbuild.rhsm` stage to configure the Red Hat
