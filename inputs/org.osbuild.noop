@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+"""
+No-op inputs
+
+Does nothing with the supplied data but just forwards
+it to the stage.
+"""
+
+
+import json
+import sys
+
+from osbuild.objectstore import StoreClient
+
+
+SCHEMA = """
+"additionalProperties": true
+"""
+
+
+def main():
+    args = json.load(sys.stdin)
+    refs = args["refs"]
+
+    store = StoreClient(connect_to=args["api"]["store"])
+
+    path = store.mkdtemp(prefix="empty")
+    data = {"path": path, "data": {"refs": refs}}
+    json.dump(data, sys.stdout)
+    return 0
+
+
+if __name__ == '__main__':
+    r = main()
+    sys.exit(r)
