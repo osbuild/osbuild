@@ -21,16 +21,26 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         if p.build
     }
 
+    def pipeline_ref(pid):
+        if with_id:
+            return pid
+
+        pl = manifest[pid]
+        return f"name:{pl.name}"
+
     def describe_input(ip: Input):
+        origin = ip.origin
         desc = {
             "type": ip.info.name,
-            "origin": ip.origin,
+            "origin": origin,
             }
         if ip.options:
             desc["options"] = ip.options
 
         refs = {}
         for name, ref in ip.refs.items():
+            if  origin == "org.osbuild.pipeline":
+                name = pipeline_ref(name)
             refs[name] = ref
 
         if refs:
@@ -64,7 +74,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         }
 
         if p.build:
-            desc["build"] = p.build
+            desc["build"] = pipeline_ref(p.build)
 
         runner = runners.get(p.id)
         if runner:
