@@ -16,8 +16,8 @@ import uuid
 
 SCHEMA = """
 "additionalProperties": false,
-"properties": {
-  "commits": {
+"definitions": {
+  "item": {
     "description": "The commits to fetch indexed their checksum",
     "type": "object",
     "additionalProperties": false,
@@ -49,7 +49,16 @@ SCHEMA = """
       }
     }
   }
-}
+},
+"properties": {
+  "items": {"$ref": "#/definitions/item"},
+  "commits": {"$ref": "#/definitions/item"}
+},
+"oneOf": [{
+  "required": ["items"]
+}, {
+  "required": ["commits"]
+}]
 """
 
 
