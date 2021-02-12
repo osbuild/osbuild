@@ -2,10 +2,36 @@
 # Runtime Tests for No-op Pipelines
 #
 
+import json
 import unittest
+import tempfile
 
 from .. import test
 
+
+NOOP_V2 = {
+    "version": "2",
+    "pipelines": [
+        {
+            "name": "noop",
+            "stages": [
+                {
+                    "type": "org.osbuild.noop",
+                    "options": {"zero": 0},
+                    "inputs": {
+                        "tree": {
+                            "type": "org.osbuild.noop",
+                            "origin": "org.osbuild.pipeline",
+                            "references": {
+                                "foo": {}
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
 
 class TestNoop(unittest.TestCase):
     def setUp(self):
@@ -28,3 +54,9 @@ class TestNoop(unittest.TestCase):
         with self.osbuild as osb:
             osb.compile("{}")
             osb.compile("{}")
+
+
+    def test_noop_v2(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.osbuild as osb:
+                osb.compile(json.dumps(NOOP_V2), output_dir=tmp)
