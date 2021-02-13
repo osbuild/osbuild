@@ -300,6 +300,10 @@ class Manifest:
                 points.remove(c)
 
         def mark_pipeline(pl):
+            if pl.name in points and pl.stages:
+                pl.stages[-1].checkpoint = True
+                points.remove(pl.name)
+
             for stage in pl.stages:
                 mark_stage(stage)
 
