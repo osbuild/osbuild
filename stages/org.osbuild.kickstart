@@ -1,0 +1,98 @@
+#!/usr/bin/python3
+"""
+Create an Anaconda kickstart file
+
+Kickstart files are a way to program the Anaconda
+installer.  This stage can be used to create such
+a kickstart file at the location given by `path`.
+
+Only a very limited set of available kickstart
+commands are supported here.
+"""
+
+import sys
+import os
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["path"],
+"properties": {
+  "path": {
+    "type": "string",
+    "description": "Where to place the kickstart file"
+  },
+  "ostree": {
+    "type": "object",
+    "required": ["osname", "url", "ref"],
+    "additionalProperties": false,
+    "properties": {
+      "osname": {
+        "type": "string"
+      },
+      "url": {
+        "type": "string"
+      },
+      "ref": {
+        "type": "string"
+      },
+      "gpg": {
+        "type": "boolean",
+        "default": true
+      }
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    path = options["path"].lstrip("/")
+    ostree = options.get("ostree")
+
+    anaconda = []
+    config = []
+    post = []
+
+    if ostree:
+        osname, url, ref = ostree["osname"], ostree["url"], ostree["ref"]
+        remote = ostree.get("remote")
+
+        cmd = f"ostreesetup --osname={osname} --url={url} --ref={ref}"
+
+        if remote:
+            cmd += " --remote=" + remote
+        if not ostree.get("gpg", True):
+            cmd += " --nogpg"
+
+        config += [cmd]
+
+    target = os.path.join(tree, path)
+    base = os.path.dirname(target)
+    os.makedirs(base, exist_ok=True)
+
+    with open(target, "w") as f:
+        if anaconda:
+            f.write(r"%anaconda\n")
+            f.write("\n".join(anaconda))
+            f.write(r"%end\n")
+        if config:
+            f.write("\n".join(config))
+        if post:
+            f.write(r"%post --erroronfail")
+            f.write("\n".join(post))
+            f.write(r"%end")
+
+    print(f"created kickstarted at: {path}\n")
+    with open(target, "r") as f:
+        print(f.read())
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
