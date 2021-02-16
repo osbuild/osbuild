@@ -43,6 +43,15 @@ SCHEMA = """
         "default": true
       }
     }
+  },
+  "liveimg": {
+    "type": "object",
+    "required": ["url"],
+    "properties": {
+      "url": {
+        "type": "string"
+      }
+    }
   }
 }
 """
@@ -68,6 +77,11 @@ def main(tree, options):
             cmd += " --nogpg"
 
         config += [cmd]
+
+    liveimg = options.get("liveimg")
+    if liveimg:
+        url = liveimg["url"]
+        config += [f"liveimg --url {url}"]
 
     target = os.path.join(tree, path)
     base = os.path.dirname(target)
