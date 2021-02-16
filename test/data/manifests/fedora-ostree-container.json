@@ -893,7 +893,13 @@
           "options": {
             "language": "en_US"
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "container-ostree",
+      "build": "name:build",
+      "stages": [
         {
           "type": "org.osbuild.ostree.init",
           "options": {
@@ -931,6 +937,13 @@
               "origin": "org.osbuild.pipeline",
               "references": [
                 "name:container-tree"
+              ]
+            },
+            "layer.1": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:container-ostree"
               ]
             }
           },
