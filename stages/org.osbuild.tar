@@ -1,0 +1,109 @@
+#!/usr/bin/python3
+"""
+Assembles the tree into a tar archive named `filename`.
+
+Uses the buildhost's `tar` command, like: `tar -cf $FILENAME -C $TREE`
+
+The compression of the tar archive if determined by the suffix, i.e.
+the `--auto-compress` option is used. See tar(1) for details.
+
+By default POSIX ACLs, SELinux contexts and extended attributes are included,
+in order to preserve the tree as closely as possible. It is possible to opt
+out of any of those by supplying the corresponding option.
+
+Buildhost commands used: `tar` and any needed compression program.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "required": ["filename"],
+  "properties": {
+    "filename": {
+      "description": "Filename for tar archive",
+      "type": "string"
+    },
+    "acls": {
+      "description": "Enable support for POSIX ACLs",
+       "type": "boolean",
+       "default": true
+    },
+    "selinux": {
+      "description": "Enable support for SELinux contexts",
+      "type": "boolean",
+      "default": true
+    },
+    "xattrs": {
+      "description": "Enable support for extended attributes",
+      "type": "boolean",
+      "default": true
+    }
+  }
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tree"],
+  "properties": {
+    "tree": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
+def main(inputs, output_dir, options):
+    tree = inputs["tree"]["path"]
+    filename = options["filename"].lstrip("/")
+
+    extra_args = []
+    # Set environment variables for the tar operation.
+    tar_env = {
+        # Speed up xz by allowing it to use all CPU cores for compression.
+        "XZ_OPT": "--threads 0"
+    }
+
+    # SELinux context, ACLs and extended attributes
+    if options.get("acls", True):
+        extra_args += ["--acls"]
+
+    if options.get("selinux", True):
+        extra_args += ["--selinux"]
+
+    if options.get("xattrs", True):
+        extra_args += ["--xattrs", "--xattrs-include", "*"]
+
+    # Set up the tar command.
+    tar_cmd = [
+        "tar",
+        "--auto-compress",
+        *extra_args,
+        "-cf", os.path.join(output_dir, filename),
+        "-C", tree,
+        "."
+    ]
+
+    # Make a tarball of the tree.
+    subprocess.run(
+        tar_cmd,
+        stdout=subprocess.DEVNULL,
+        check=True,
+        env=tar_env
+    )
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"], args["options"])
+    sys.exit(r)
