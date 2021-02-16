@@ -1,0 +1,97 @@
+#!/usr/bin/python3
+"""
+Run a lorax template script on the tree
+
+This stage can be use to run a lorax template script on the tree.
+The location that is specified in `path` will be interpreted to be
+relative to `/usr/share/lorax/templates.d` on the build root.
+
+The use case for this stage is primarily to run the post install
+scripts to create bootable isos, provided by Lorax. Depending on
+the script, `basearch`, `product` or both have to be specified.
+
+The stage uses the `osbuild.utils.lorax` helpers internally, so all
+operations supported by the helpers are supported by this stage.
+NB: This is only a subset of the Lorax ones, i.e. it is missing the
+commands to create disks and images.
+"""
+
+import collections
+import os
+import sys
+
+from osbuild.util.lorax import render_template, Script
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["path"],
+"properties": {
+  "path": {
+
+  },
+  "basearch": {
+    "type": "string",
+    "description": "The basic architecture param to supply to the template"
+  },
+  "product": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "version": {
+        "type": "string"
+      }
+    },
+    "libdir": {
+      "type": "string",
+      "default": "lib64"
+    }
+  }
+}
+"""
+
+
+LORAX_TEMPLATES = "/usr/share/lorax/templates.d"
+
+
+Product = collections.namedtuple("Product", ["name", "version"])
+
+
+def main(tree, options):
+    filename = options["path"]
+    basearch = options.get("basearch", "x86_64")
+    product = options.get("product", {})
+    libdir = options.get("libdir", "lib64")
+
+    fullpath = os.path.join(LORAX_TEMPLATES, filename)
+    basepath = os.path.dirname(fullpath)
+    configdir = os.path.join(basepath, "config_files")
+
+    name = product.get("name", "")
+    version = product.get("version", "")
+    product = Product(name, version)
+
+    args = {
+        "root": tree,
+        "basearch": basearch,
+        "configdir": configdir,
+        "libdir": libdir,
+        "product": product
+    }
+
+    tpl = render_template(fullpath, args)
+    script = Script(tpl, "/", tree)
+    print(f"running script: {os.path.dirname(filename)}")
+    script()
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"],
+             stage_args["options"])
+    sys.exit(r)
