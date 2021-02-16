@@ -5,6 +5,10 @@ Assemble an OCI image archive
 Assemble an Open Container Initiative[1] image[2] archive, i.e. a
 tarball whose contents is in the OCI image layout.
 
+The content of the container will consist of the base layer provided
+via the `base` layer. On top of that further inputs provided via the
+`layer.X` inputs that are sorted in ascending order.
+
 Currently the only required options are `filename` and `architecture`.
 The execution parameters for the image, which then should form the base
 for the container, can be given via `config`. They have the same format
@@ -34,7 +38,7 @@ import osbuild.api
 DEFAULT_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 
-SCHEMA_2 = """
+SCHEMA_2 = r"""
 "options": {
   "additionalProperties": false,
   "required": ["architecture", "filename"],
@@ -104,7 +108,13 @@ SCHEMA_2 = """
       "type": "object",
       "additionalProperties": true
     }
-  }
+  },
+  "patternProperties": {
+    "layer\\.[1-9]\\d*": {
+      "type": "object",
+        "additionalProperties": true
+      }
+   }
 }
 """
 
@@ -208,7 +218,7 @@ def config_from_options(options):
     return config
 
 
-def create_oci_dir(tree, output_dir, options):
+def create_oci_dir(inputs, output_dir, options):
     architecture = options["architecture"]
 
     config = {
@@ -237,11 +247,12 @@ def create_oci_dir(tree, output_dir, options):
     os.makedirs(blobs)
 
     ## layers / rootfs
+    for ip in sorted(inputs.keys()):
+        tree = inputs[ip]["path"]
+        digest, info = blobs_add_layer(blobs, tree)
 
-    digest, info = blobs_add_layer(blobs, tree)
-
-    config["rootfs"]["diff_ids"] = [digest]
-    manifest["layers"].append(info)
+        config["rootfs"]["diff_ids"] = [digest]
+        manifest["layers"].append(info)
 
     ## write config
     info = blobs_add_json(blobs, config, "config")
@@ -262,15 +273,13 @@ def create_oci_dir(tree, output_dir, options):
 
 
 def main(inputs, output_dir, options):
-    base = inputs["base"]["path"]
-
     filename = options["filename"]
 
     with tempfile.TemporaryDirectory(dir=output_dir) as tmpdir:
         workdir = os.path.join(tmpdir, "output")
         os.makedirs(workdir)
 
-        create_oci_dir(base, workdir, options)
+        create_oci_dir(inputs, workdir, options)
 
         command = [
             "tar",
