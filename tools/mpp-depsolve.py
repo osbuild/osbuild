@@ -121,6 +121,11 @@ def _dnf_resolve(state, mpp_depsolve):
     repos = mpp_depsolve.get("repos", [])
     packages = mpp_depsolve.get("packages", [])
     excludes = mpp_depsolve.get("excludes", [])
+    baseurl = mpp_depsolve.get("baseurl")
+
+    baseurls = {
+        repo["id"]: repo.get("baseurl", baseurl) for repo in repos
+    }
 
     if len(packages) > 0:
         with tempfile.TemporaryDirectory() as persistdir:
@@ -134,10 +139,18 @@ def _dnf_resolve(state, mpp_depsolve):
 
                 checksum_type = hawkey.chksum_name(tsi.pkg.chksum[0])
                 checksum_hex = tsi.pkg.chksum[1].hex()
+
+                path = tsi.pkg.relativepath
+                base = baseurls[tsi.pkg.reponame]
+                # dep["path"] often starts with a "/", even though it's meant to be
+                # relative to `baseurl`. Strip any leading slashes, but ensure there's
+                # exactly one between `baseurl` and the path.
+                url = urllib.parse.urljoin(base + "/", path.lstrip("/"))
+
                 pkg = {
                     "checksum": f"{checksum_type}:{checksum_hex}",
                     "name": tsi.pkg.name,
-                    "path": tsi.pkg.relativepath,
+                    "url": url,
                 }
                 deps.append(pkg)
 
@@ -184,18 +197,13 @@ def _manifest_process_v1(state, stage):
     options = _manifest_enter(stage, "options", {})
     options_mpp = _manifest_enter(options, "mpp-depsolve", {})
     options_packages = _manifest_enter(options, "packages", [])
-    baseurl = options_mpp["baseurl"]
 
     del(options["mpp-depsolve"])
 
     deps = _dnf_resolve(state, options_mpp)
     for dep in deps:
         options_packages.append(dep["checksum"])
-        # dep["path"] often starts with a "/", even though it's meant to be
-        # relative to `baseurl`. Strip any leading slashes, but ensure there's
-        # exactly one between `baseurl` and the path.
-        url = urllib.parse.urljoin(baseurl + "/", dep["path"].lstrip("/"))
-        state.manifest_urls[dep["checksum"]] = url
+        state.manifest_urls[dep["checksum"]] = dep["url"]
 
 
 def _manifest_depsolve_v1(state, src):
@@ -235,19 +243,13 @@ def _manifest_process_v2(state, ip):
     refs = _manifest_enter(ip, "references", {})
 
     mpp = ip["mpp-depsolve"]
-    baseurl = mpp["baseurl"]
 
     deps = _dnf_resolve(state, mpp)
 
     for dep in deps:
         checksum = dep["checksum"]
         refs[checksum] = {}
-
-        # dep["path"] often starts with a "/", even though it's meant to be
-        # relative to `baseurl`. Strip any leading slashes, but ensure there's
-        # exactly one between `baseurl` and the path.
-        url = urllib.parse.urljoin(baseurl + "/", dep["path"].lstrip("/"))
-        urls[checksum] = url
+        urls[checksum] = dep["url"]
 
     del ip["mpp-depsolve"]
 
