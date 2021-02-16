@@ -71,7 +71,7 @@ class Initrd:
         with self.open() as image:
             hdr = read_header(image)
             if hdr.startswith(b'\x71\xc7') or hdr == b'070701':
-                cmd = f"cpio --extract --quiet --to-stdout -- 'early_cpio'"
+                cmd = "cpio --extract --quiet --to-stdout -- 'early_cpio'"
                 data = self.run(cmd, image)
                 self.early_cpio = data == '1'
 
