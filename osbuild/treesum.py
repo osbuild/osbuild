@@ -1,7 +1,10 @@
 import errno
 import json
 import os
+import stat
 
+
+#pylint: disable=too-many-branches
 def treesum(m, dir_fd):
     """Compute a content hash of a filesystem tree
 
@@ -52,7 +55,9 @@ def treesum(m, dir_fd):
                         # hash a page at a time (using f with fd as default is a hack to please pylint)
                         for byte_block in iter(lambda f=fd: os.read(f, 4096), b""):
                             m.update(byte_block)
+                    elif stat.S_ISCHR(stat_result.st_mode) or stat.S_ISBLK(stat_result.st_mode):
+                        m.update(json.dumps({"dev": stat_result.st_rdev}).encode())
                     else:
-                        raise ValueError("Found unexpected filetype on OS image")
+                        raise ValueError("Found unexpected filetype on OS image.")
                 finally:
                     os.close(fd)
