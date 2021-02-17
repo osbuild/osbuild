@@ -1,0 +1,49 @@
+#!/usr/bin/python3
+"""
+Create a `.discinfo` file describing disk
+
+This will create a `.discinfo` file with the specified parameters.
+"""
+
+import os
+import time
+import sys
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": true,
+"required": ["basearch", "release"],
+"properties": {
+  "basearch": {
+    "description": "Build architecture.",
+    "type": "string"
+  },
+  "release": {
+    "description": "The product name.",
+    "type": "string"
+  }
+}
+"""
+
+
+def main(tree, options):
+    basearch = options["basearch"]
+    release = options["release"]
+
+    # Based on `pylorax/discinfo.py`
+
+    timestamp = time.time()
+    with open(os.path.join(tree, ".discinfo"), "w") as f:
+        f.write(f"{timestamp}\n")
+        f.write(f"{release}\n")
+        f.write(f"{basearch}\n")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
