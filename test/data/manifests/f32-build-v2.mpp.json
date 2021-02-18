@@ -33,7 +33,28 @@
                   "systemd",
                   "tar",
                   "xfsprogs",
-                  "xz"
+                  "xz",
+
+                  "selinux-policy-targeted",
+                  "genisoimage",
+                  "isomd5sum",
+                  "xorriso",
+                  "syslinux",
+                  "lorax-templates-generic",
+                  "syslinux-nonlinux",
+                  "squashfs-tools",
+                  "grub2-pc-modules",
+                  "grub2-tools",
+                  "grub2-efi-x64",
+                  "shim-x64",
+                  "efibootmgr",
+                  "grub2-tools-minimal",
+                  "grub2-tools-extra",
+                  "grub2-tools-efi",
+                  "grub2-efi-x64",
+                  "grub2-efi-x64-cdboot",
+                  "shim-ia32",
+                  "grub2-efi-ia32-cdboot"
                 ]
               }
             }
