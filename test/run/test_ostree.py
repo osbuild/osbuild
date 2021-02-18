@@ -11,22 +11,32 @@ from .. import test
 
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
-class TestBoot(test.TestBase):
+class TestOSTree(test.TestBase):
     def setUp(self):
         self.osbuild = test.OSBuild(self)
 
-    def test_ostree_container_updates(self):
-        #
-        # Build a container.
-        #
-
-        manifest = os.path.join(self.locate_test_data(),
-                                "manifests/fedora-ostree-container.json")
-
+    def test_ostree(self):
         with self.osbuild as osb:
-            exports = ["container"]
             with tempfile.TemporaryDirectory(dir="/var/tmp") as temp_dir:
-                osb.compile_file(manifest, output_dir=temp_dir, exports=exports)
+
+                # Build a container
+                manifest = os.path.join(self.locate_test_data(),
+                                        "manifests/fedora-ostree-container.json")
+                osb.compile_file(manifest,
+                                 output_dir=temp_dir,
+                                 checkpoints=["build", "ostree-tree", "ostree-commit"],
+                                 exports=["container"])
 
                 oci_archive = os.path.join(temp_dir, "container", "fedora-container.tar")
                 self.assertTrue(os.path.exists(oci_archive))
+
+                # build a bootable ISO
+                manifest = os.path.join(self.locate_test_data(),
+                                        "manifests/fedora-ostree-bootiso.json")
+                osb.compile_file(manifest,
+                                 output_dir=temp_dir,
+                                 checkpoints=["build", "ostree-tree", "ostree-commit"],
+                                 exports=["bootiso"])
+
+                bootiso = os.path.join(temp_dir, "bootiso", "fedora-ostree-boot.iso")
+                self.assertTrue(os.path.exists(bootiso))
