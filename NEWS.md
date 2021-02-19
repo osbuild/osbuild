@@ -1,5 +1,87 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 26:
+
+  * Support the creation of boot iso installation media:
+    Various new stages were added that make it possible
+    to generate bootable installation media (bootisos).
+    The stages are the following:
+
+  * A new `org.osbuild.kickstart` stage was added which
+    can be used to create an Anaconda kickstart file with
+    the given option. For now only the `ostreesetup` and
+    `liveimg` options can be configured.
+
+  * A new `org.osbuild.buildstamp` stage was added to
+    write a `.buildstamp` file, which is used to inform
+    the Anaconda installer about the product to be
+    installed, like its name, version, etc.
+
+  * A new `org.osbuild.anaconda` stage was added which
+    can be used to configure basic aspects of the
+    installer. Right now, this allows the selection of
+    enabled kickstart modules.
+
+  * A new `org.osbuild.lorax-script` stage was added
+    that can execute a Lorax template specified by
+    `path` with a specified set of variables. A
+    prominent use case is the post installation script
+    of the lorax-templates package that will transform
+    an OS installation into one suitable for the
+    Ananconda installer.
+
+  * A new `org.osbuild.bootiso.mono` stage was added
+    that will prepare a file system tree that is
+    suitable to create a bootlable installer medium.
+
+  * A new `org.osbuild.xorrisofs` stage was added
+    that will take a suitable file system tree and
+    create a Rock Ridge enhanced ISO 9660 medium.
+
+  * A new `org.osbuild.implantisomd5` stage was added
+    that can implant md5 checksums into ISO 9660 media.
+    These are used by a dracut module to check the
+    installation medium.
+
+  * A new `org.osbuild.discinfo` stage that writes a
+    `.discinfo` file to the root of the installation
+    medium to identify its content.
+
+  * `osbuild` gained the ability to checkpoint via pipeline
+     names, e.g., `--checkpoint build`, will checkpoint the
+     last stage in the pipeline called `build`.
+
+  * A new `org.osbuild.dracut` stage was added that
+    can create an initrd image. The stage supports various
+    options that allow a very fine-grained customization
+    of the contents of the initrd.
+
+  * The `org.osbuild.rpm` stage gained new options to
+    prevent documentation from being installed as well
+    as to prevent the generation of the initrd during the
+    kernel package's install scripts.
+
+  * The `org.osbuild.oci-archive` stage now supports additional
+    layers via option inputs. This can be used to e.g.
+    share a base image but have different content in
+    separate layers.
+
+  * The `org.osbuild.grub2` stage gained support for the
+    standard grub2 machinery to select the menu entry to
+    be booted. This is done by having a `saved_entry`
+    variable in the `grubenv` file and the corresponding
+    logic in the grub configuration, to select the default
+    boot entry based on that variable. A new `saved_entry`
+    stage option can be used to set the variable at image
+    creation time.
+
+  * The macro pre-processor (MPP) now properly supports
+    multiple repos in `mpp-depsolve`
+
+Contributions from: Christian Kellner, David Rheinsberg
+
+— Berlin, 2021-02-19
+
 ## CHANGES WITH 25:
 
   * **Tech preview** of the new manifest format version 2!
