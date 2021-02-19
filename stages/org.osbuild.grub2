@@ -36,6 +36,16 @@ and accompanying data can be installed from the built root via `uefi.install`.
 
 Both UEFI and Legacy can be specified at the same time.
 
+If the `saved_entry` option is present it will result in an entry in the
+`grubenv` file of the same name. The grub config file contains logic so
+that this variable will be used to select the next boot entry. This will
+also make grub2-reboot and grub2-set-default tools work. It will also
+prevent newly installed non-default kernels (like e.g. the debug kernel)
+to be selected as default. The contents of variable needs to match the
+corresponding loader entry, which currently is a combination of the
+machine id and kernel NVRA, like e.g.:
+  `ffffffffffffffffffffffffffffffff-5.6.6-300.fc32.x86_64`
+
 Support for ignition (https://github.com/coreos/ignition) can be turned
 on via the `ignition` option. If enabled, a 'ignition_firstboot' variable
 will be created, which is meant to be included in the kernel command line.
@@ -141,6 +151,10 @@ SCHEMA = """
       }
     }
   },
+  "saved_entry": {
+    "description": "Set the variable of the same name in `grubenv`.",
+    "type": "string"
+  },
   "write_defaults": {
     "description": "Whether to write /etc/defaults/grub",
     "type": "boolean",
@@ -163,7 +177,23 @@ SCHEMA = """
 #     is enabled
 GRUB_CFG_TEMPLATE = """
 set timeout=0
+
+# load the grubenv file
 load_env
+
+# selection of the next boot entry via variables 'next_entry' and
+# `saved_entry` present in the 'grubenv' file. Both variables are
+# set by grub tools, like grub2-reboot, grub2-set-default
+
+if [ "${next_entry}" ] ; then
+   set default="${next_entry}"
+   set next_entry=
+   save_env next_entry
+   set boot_once=true
+else
+   set default="${saved_entry}"
+fi
+
 search --no-floppy --set=root $search
 set boot=$${root}
 function load_video {
@@ -321,6 +351,7 @@ class GrubConfig:
             cfg.write(data)
 
 
+#pylint: disable=too-many-statements
 def main(tree, options):
     root_fs = options.get("rootfs")
     boot_fs = options.get("bootfs")
@@ -329,6 +360,7 @@ def main(tree, options):
     uefi = options.get("uefi", None)
     write_defaults = options.get("write_defaults", True)
     ignition = options.get("ignition", False)
+    saved_entry = options.get("saved_entry")
 
     # backwards compatibility
     if not root_fs:
@@ -377,6 +409,9 @@ def main(tree, options):
             "# GRUB Environment Block\n"
             f"kernelopts=root={fs_type}={fs_id} {kernel_opts}\n"
         )
+
+        if saved_entry:
+            data += f"saved_entry={saved_entry}\n"
 
         # The 'grubenv' file is, according to the documentation,
         # a 'preallocated 1024-byte file'. The empty space is
