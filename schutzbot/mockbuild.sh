@@ -6,12 +6,16 @@ function greenprint {
   echo -e "\033[1;32m${1}\033[0m"
 }
 
-# Get OS details.
+# Get OS and architecture details.
 source /etc/os-release
 ARCH=$(uname -m)
 
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
+
+if [[ $ID == centos ]]; then
+  MOCK_CONFIG="centos-stream-$(uname -m)"
+fi
 
 # The commit this script operates on.
 COMMIT=$(git rev-parse HEAD)
@@ -38,8 +42,8 @@ if curl --silent --fail --head --output /dev/null "${REPO_URL}/repodata/repomd.x
   exit 0
 fi
 
-# mock and s3cmd are only available in EPEL for RHEL.
-if [[ $ID == rhel ]]; then
+# Mock and s3cmd is only available in EPEL for RHEL.
+if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
@@ -49,8 +53,8 @@ fi
 # Register RHEL if we are provided with a registration script.
 if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x $RHN_REGISTRATION_SCRIPT
-    sudo $RHN_REGISTRATION_SCRIPT
+    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
+    sudo "$RHN_REGISTRATION_SCRIPT"
 fi
 
 # Install requirements for building RPMs in mock.
@@ -65,6 +69,16 @@ greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 # Build source RPMs.
 greenprint "🔧 Building source RPMs."
 make srpm
+# rhel 8.4 will run off of the nightly repos and does not have a redhat subscription
+if [[ $VERSION_ID == 8.4 ]]; then
+    greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
+    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
+    # remove the subscription check
+    sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
+    cat "$RHEL84_NIGHTLY_REPO" | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
+    # We need triple quotes at the end of the template to mark the end of the repo list.
+    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
+fi
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
@@ -74,14 +88,14 @@ sudo mock -r $MOCK_CONFIG --no-bootstrap-chroot \
 sudo chown -R $USER ${REPO_DIR}
 
 # Change the ownership of all of our repo files from root to our CI user.
-sudo chown -R $USER ${REPO_DIR%%/*}
+sudo chown -R "$USER" "${REPO_DIR%%/*}"
 
 greenprint "🧹 Remove logs from mock build"
-rm ${REPO_DIR}/*.log
+rm "${REPO_DIR}"/*.log
 
 # Create a repo of the built RPMs.
 greenprint "⛓️ Creating dnf repository"
-createrepo_c ${REPO_DIR}
+createrepo_c "${REPO_DIR}"
 
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"
