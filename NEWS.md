@@ -95,7 +95,7 @@ Contributions from: Christian Kellner, David Rheinsberg
     format was added. Basic checks were added to the tests
     to check validation, loading and describing the new
     format.
-    The Manifest Marco Preprocessor (MPP) now also supports
+    The Manifest Pre-processor (MPP) now also supports
     format version 2.
     NB: This is indeed a preview of the format and it might
     still change, especially the output produce by it most
@@ -123,7 +123,7 @@ Contributions from: Christian Kellner, David Rheinsberg
     pre-existing repository.
 
   * A new `org.osbuild.ostree.preptree` stage was added that
-    replaces the `org.osbuild.ostree.rpm-ostree`, which is
+    replaces the `org.osbuild.rpm-ostree`, which is
     now deprecated and should not be used in new manifests.
 
   * A new `org.osbuild.files` input was added that provides
@@ -145,7 +145,7 @@ Contributions from: Christian Kellner, David Rheinsberg
     assembler like stages that were added as well as the new
     `--export` command line option.
 
-  * The `org.osbuild.files` stage was renamed after the
+  * The `org.osbuild.files` source was renamed after the
     underlying tool to `org.osbuild.curl`, since other
     sources might in the future provide resources of type
     `org.osbuild.files`.
@@ -441,7 +441,7 @@ Contributions from: Christian Kellner
 Contributions from: Christian Kellner, David Rheinsberg, Lars Karlitski,
                     Major Hayden, Tom Gundersen
 
-— Berlin, 202-06-10
+— Berlin, 2020-06-10
 
 ## CHANGES WITH 16:
 
