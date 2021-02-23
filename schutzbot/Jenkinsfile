@@ -73,6 +73,17 @@ pipeline {
                         sh "schutzbot/mockbuild.sh"
                     }
                 }
+                stage('RHEL 8 aarch64 CDN') {
+                    agent { label "rhel8cloudbase && aarch64 && aws" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        sh "schutzbot/mockbuild.sh"
+                    }
+                }
                 stage('RHEL 8.4') {
                     agent { label "rhel84cloudbase && x86_64 && psi" }
                     environment {
@@ -86,6 +97,16 @@ pipeline {
                 }
                 stage('CS8') {
                     agent { label "cs8cloudbase && x86_64 && aws" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        sh "schutzbot/mockbuild.sh"
+                    }
+                }
+                stage('CS8 aarch64') {
+                    agent { label "cs8cloudbase && aarch64 && aws" }
                     environment {
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                     }
