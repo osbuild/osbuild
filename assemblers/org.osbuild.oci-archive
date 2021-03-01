@@ -142,7 +142,7 @@ def blobs_add_layer(blobs: str, tree: str):
 
     command = [
         "tar",
-        "--selinux",
+        "--no-selinux",
         "--acls",
         "--xattrs",
         "-cf", layer_file,
