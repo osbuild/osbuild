@@ -14,7 +14,7 @@ ARCH=$(uname -m)
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
 if [[ $ID == centos ]]; then
-  MOCK_CONFIG="centos-stream-$(uname -m)"
+  MOCK_CONFIG="centos-stream-8-$(uname -m)"
 fi
 
 # The commit this script operates on.
