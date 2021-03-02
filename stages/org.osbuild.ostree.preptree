@@ -108,6 +108,13 @@ def main(tree, options):
     initramfs = options.get("initramfs-args", [])
     tmp_is_dir = options.get("tmp-is-dir", True)
 
+    # rpm-ostree will either ensure that machine-id is empty
+    # when machineid-compat is 'true' is or will remove it
+    # otherwise. Since we have to decide, detect the current
+    # state and make rpm-ostree follow suit
+    machineid_compat = os.path.exists(f"{tree}/etc/machine-id")
+    print(f"ostree: machineid-compat: {machineid_compat}")
+
     # Move /etc to /usr
     os.rename(f"{tree}/etc", f"{tree}/usr/etc")
 
@@ -136,13 +143,6 @@ def main(tree, options):
         for name in ["bin", "lib", "lib32", "lib64", "sbin"]:
             if os.path.lexists(f"{root}/{name}"):
                 move(name, root, tree)
-
-    # rpm-ostree will either ensure that machine-id is empty
-    # when machineid-compat is 'true' is or will remove it
-    # otherwise. Since we have to decide, detect the current
-    # state and make rpm-ostree follow suit
-    machineid_compat = os.path.exists(f"{tree}/etc/machine-id")
-    print(f"ostree: machineid-compat: {machineid_compat}")
 
     treefile = ostree.Treefile()
     treefile["boot-location"] = "new"
