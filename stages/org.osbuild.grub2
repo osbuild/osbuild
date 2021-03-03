@@ -388,7 +388,10 @@ def main(tree, options):
     if write_defaults:
         os.makedirs(f"{tree}/etc/default", exist_ok=True)
         with open(f"{tree}/etc/default/grub", "w") as default:
-            default.write("GRUB_TIMEOUT=0\n"
+            # NB: The "GRUB_CMDLINE_LINUX" variable contains the kernel command
+            # line but without the `root=` part, thus we just use `kernel_opts`.
+            default.write(f'GRUB_CMDLINE_LINUX="{kernel_opts}"\n'
+                          "GRUB_TIMEOUT=0\n"
                           "GRUB_ENABLE_BLSCFG=true\n")
 
     os.makedirs(f"{tree}/boot/grub2", exist_ok=True)
