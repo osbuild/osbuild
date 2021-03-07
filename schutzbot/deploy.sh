@@ -4,7 +4,8 @@ set -euxo pipefail
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
-OSBUILD_COMPOSER_COMMIT=692a8076bb4bf38dae05ce99631ebcdd3f0ab054
+# Currently: osbuild-composer 29
+OSBUILD_COMPOSER_COMMIT=bb235deb6279a0886c0324d61a2511485e6b44f8
 
 # Get OS details.
 source /etc/os-release
