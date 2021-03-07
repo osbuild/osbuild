@@ -51,14 +51,6 @@ sudo dnf -y install osbuild-composer-tests
 # Set up a directory to hold repository overrides.
 sudo mkdir -p /etc/osbuild-composer/repositories
 
-# NOTE(mhayden): RHEL 8.3 is the release we are currently targeting, but the
-# release is in beta right now. For RHEL 8.2 (latest release), ensure that
-# the production (non-beta content) is used.
-if [[ "${ID}${VERSION_ID//./}" == rhel82 ]]; then
-    sudo cp ${WORKSPACE}/test/external-repos/rhel-8.json \
-        /etc/osbuild-composer/repositories/rhel-8.json
-fi
-
 # Start services.
 sudo systemctl enable --now osbuild-composer.socket
 
