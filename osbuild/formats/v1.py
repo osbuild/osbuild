@@ -216,18 +216,23 @@ def output(manifest: Manifest, res: Dict) -> Dict:
         stages = current.get("stages")
         if stages:
             retval["stages"] = stages
-        assembler = current.get("assembler")
-        if assembler:
-            retval["assembler"] = assembler
         return retval
 
     result = result_for_pipeline(manifest["tree"])
 
     assembler = manifest.get("assembler")
-    if assembler:
-        current = res.get(assembler.id)
-        if current:
-            result["assembler"] = current["stages"][0]
+    if not assembler:
+        return result
+
+    current = res.get(assembler.id)
+    # if there was an error before getting to the assembler
+    # pipeline, there might not be a result present
+    if not current:
+        return result
+
+    result["assembler"] = current["stages"][0]
+    if not result["assembler"]["success"]:
+        result["success"] = False
 
     return result
 
