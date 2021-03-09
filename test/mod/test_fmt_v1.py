@@ -259,6 +259,38 @@ class TestFormatV1(unittest.TestCase):
         self.assertIn("success", result["build"])
         self.assertFalse(result["build"]["success"])
 
+        # check we get results for the assembler pipeline
+        description = {
+            "pipeline": {
+                "stages": [
+                    {
+                        "name": "org.osbuild.noop"
+                    },
+                ],
+                "assembler": {
+                    "name": "org.osbuild.error"
+                }
+            }
+        }
+
+        manifest = fmt.load(description, index)
+        self.assertIsNotNone(manifest)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            res = self.build_manifest(manifest, tmpdir)
+
+        self.assertIsNotNone(res)
+        result = fmt.output(manifest, res)
+        self.assertIsNotNone(result)
+
+        self.assertIn("assembler", result)
+        self.assertIn("success", result["assembler"])
+        self.assertFalse(result["assembler"]["success"])
+
+        # check the overall result is False as well
+        self.assertIn("success", result)
+        self.assertFalse(result["success"], result)
+
     def test_validation(self):
         index = osbuild.meta.Index(os.curdir)
 
