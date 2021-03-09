@@ -187,6 +187,7 @@ class TestFormatV1(unittest.TestCase):
         self.assertEqual(info.version, "1")
         self.assertEqual(info.module, fmt)
 
+    #pylint: disable=too-many-statements
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_format_output(self):
         """Test that output formatting is as expected"""
@@ -290,6 +291,39 @@ class TestFormatV1(unittest.TestCase):
         # check the overall result is False as well
         self.assertIn("success", result)
         self.assertFalse(result["success"], result)
+
+        # check we get all the output nodes for a successful build
+        description = {
+            "pipeline": {
+                "stages": [
+                    {
+                        "name": "org.osbuild.noop"
+                    },
+                ],
+                "assembler": {
+                    "name": "org.osbuild.noop"
+                }
+            }
+        }
+
+        manifest = fmt.load(description, index)
+        self.assertIsNotNone(manifest)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            res = self.build_manifest(manifest, tmpdir)
+
+        self.assertIsNotNone(res)
+        result = fmt.output(manifest, res)
+        self.assertIsNotNone(result)
+
+        self.assertIn("stages", result)
+        for stage in result["stages"]:
+            self.assertIn("success", stage)
+            self.assertTrue(stage["success"])
+
+        self.assertIn("assembler", result)
+        self.assertIn("success", result["assembler"])
+        self.assertTrue(result["assembler"]["success"])
 
     def test_validation(self):
         index = osbuild.meta.Index(os.curdir)
