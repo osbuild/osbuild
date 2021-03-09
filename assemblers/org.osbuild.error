@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+"""
+Return an error
+
+Error assembler. Return the given error. Very much like the error stage this
+is useful for testing, debugging, and wasting time.
+"""
+
+
+import sys
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "returncode": {
+    "description": "What to return code to use",
+    "type": "number",
+    "default": 255
+  }
+}
+"""
+
+
+def main(options):
+    errno = options.get("returncode", 255)
+    print(f"Error assembler will now return error: {errno}")
+    return errno
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args.get("options", {}))
+    sys.exit(r)
