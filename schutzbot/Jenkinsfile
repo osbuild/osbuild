@@ -232,10 +232,13 @@ void preserve_logs(test_slug) {
     // Make a directory for the log files and move the logs there.
     sh "mkdir ${test_slug} && mv *.log *.jpg ${test_slug}/ || true"
 
+    // Artifact the repo file.
+    sh "cp /etc/yum.repos.d/osbuild.repo ${test_slug}/ || true"
+
     // Artifact the logs.
     archiveArtifacts (
         allowEmptyArchive: true,
-        artifacts: "${test_slug}/*.log,${test_slug}/*.jpg"
+        artifacts: "${test_slug}/*.log,${test_slug}/*.jpg,${test_slug}/*.repo"
     )
 
 }
