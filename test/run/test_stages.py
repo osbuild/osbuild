@@ -30,9 +30,20 @@ def find_stage(result, stageid):
     return None
 
 
+def make_stage_tests(klass):
+    path = os.path.join(test.TestBase.locate_test_data(), "stages")
+    for t in glob.glob(f"{path}/*/diff.json"):
+        test_path = os.path.dirname(t)
+        test_name = os.path.basename(test_path).replace("-", "_")
+        setattr(klass, f"test_{test_name}",
+                lambda s, path=test_path: s.run_stage_diff_test(path))
+    return klass
+
+
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
 @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
+@make_stage_tests
 class TestStages(test.TestBase):
 
     def assertTreeDiffsEqual(self, tree_diff1, tree_diff2):
@@ -179,14 +190,6 @@ class TestStages(test.TestBase):
             # it to self.cache, which is going to be used to initialize
             # the osbuild cache with.
             osb.copy_source_data(self.store, "org.osbuild.files")
-
-    def test_stages(self):
-        path = os.path.join(self.locate_test_data(), "stages")
-        for t in glob.glob(f"{path}/*/diff.json"):
-            test_path = os.path.dirname(t)
-            test_name = os.path.basename(test_path)
-            with self.subTest(stage=test_name):
-                self.run_stage_diff_test(test_path)
 
     def test_dracut(self):
         datadir = self.locate_test_data()
