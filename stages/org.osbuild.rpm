@@ -254,7 +254,6 @@ def main(tree, inputs, options):
 
     subprocess.run(["/bin/sh", "-c", script], check=True)
 
-
     extra_args = []
 
     if options.get("exclude", {}).get("docs"):
@@ -284,12 +283,11 @@ def main(tree, inputs, options):
         enable_dracut(masked_files)
         remove_unowned_etc_kernel(tree)
 
-    # remove temporary machine ID if it was created by us
+    # if we created a temporary machine id, replace it with an empty one
     if not machine_id_set_previously:
-        print("deleting the fake machine id")
+        print("replacing fake machine id with empty one")
         machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
-        machine_id_file.unlink()
-        machine_id_file.touch()
+        machine_id_file.write_bytes(b"")
 
     # remove random seed from the tree if exists
     with contextlib.suppress(FileNotFoundError):
