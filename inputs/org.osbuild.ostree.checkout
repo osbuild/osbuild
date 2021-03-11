@@ -1,0 +1,114 @@
+#!/usr/bin/python3
+"""
+Inputs for checkouts of ostree commits
+
+This input takes a number of commits and will check them out to a
+temporary directory. The name of the directory is the commit id.
+Internally uses `ostree checkout`
+"""
+
+
+import os
+import json
+import sys
+import subprocess
+
+from osbuild import inputs
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["type", "origin", "references"],
+"properties": {
+  "type": {
+    "enum": ["org.osbuild.ostree.checkout"]
+  },
+  "origin": {
+    "description": "The origin of the input",
+    "type": "string",
+    "enum": ["org.osbuild.source", "org.osbuild.pipeline"]
+  },
+  "references": {
+    "description": "Commit identifier to check out",
+    "oneOf": [{
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }, {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "patternProperties": {
+        ".*": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    }]
+  }
+}
+"""
+
+
+def ostree(*args, _input=None, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   input=_input,
+                   check=True)
+
+
+def checkout(checksums, cache, output):
+    repo_cache = os.path.join(cache, "repo")
+
+    refs = []
+    for commit in checksums:
+        print(f"checkout {commit}", file=sys.stderr)
+
+        dest = os.path.join(output, commit)
+
+        ostree("checkout", commit, dest,
+               repo=repo_cache)
+
+        refs.append(commit)
+
+    return refs
+
+
+class OSTreeCheckoutInput(inputs.InputService):
+
+    def map(self, store, origin, refs, target, _options):
+
+        refs = []
+
+        if origin == "org.osbuild.pipeline":
+            for ref, options in refs.items():
+                source = store.read_tree(ref)
+                with open(os.path.join(source, "compose.json"), "r") as f:
+                    compose = json.load(f)
+                commit_id = compose["ostree-commit"]
+                refs.append(checkout({commit_id: options}, source, target))
+        else:
+            source = store.source("org.osbuild.ostree")
+            refs = checkout(refs, source, target)
+
+        reply = {
+          "path": target,
+          "data": {
+            "refs": {ref: {"path": ref} for ref in refs}
+          }
+        }
+
+        return reply
+
+
+def main():
+    service = OSTreeCheckoutInput.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()
