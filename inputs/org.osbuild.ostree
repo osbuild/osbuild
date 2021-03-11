@@ -28,7 +28,7 @@ SCHEMA = """
     "enum": ["org.osbuild.ostree"]
   },
   "origin": {
-    "description": "The origin of the input (must be 'org.osbuild.source')",
+    "description": "The origin of the input (pipeline or source)",
     "type": "string",
     "enum": ["org.osbuild.source", "org.osbuild.pipeline"]
   },
@@ -108,8 +108,7 @@ def main():
 
     origin = args["origin"]
     store = StoreClient(connect_to=args["api"]["store"])
-    source = store.source("org.osbuild.files")
-    output = store.mkdtemp(prefix="files-output")
+    output = store.mkdtemp(prefix="ostree-output")
 
     if origin == "org.osbuild.pipeline":
         for ref, options in refs.items():
