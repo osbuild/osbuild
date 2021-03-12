@@ -128,14 +128,24 @@ def export(checksums, cache, output):
 
 def main(commits, options, checksums, cache, output):
     cache = os.path.join(cache, "org.osbuild.ostree")
+    download_only = not output
 
     if not commits:
         commits = options.get("commits", {})
 
-    os.makedirs(cache, exist_ok=True)
-    download(commits, checksums, cache)
+    if commits:
+        if not checksums and download_only:
+            checksums = [k for k, _ in commits.items()]
 
-    if not output:
+        os.makedirs(cache, exist_ok=True)
+        try:
+            download(commits, checksums, cache)
+        except subprocess.CalledProcessError as e:
+            output = e.output.strip()
+            json.dump({"error": output}, sys.stdout)
+            return 1
+
+    if download_only:
         json.dump({}, sys.stdout)
         return 0
 
@@ -151,5 +161,5 @@ if __name__ == '__main__':
              source_args["options"],
              source_args["checksums"],
              source_args["cache"],
-             source_args["output"])
+             source_args.get("output"))
     sys.exit(r)
