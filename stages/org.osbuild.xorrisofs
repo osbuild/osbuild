@@ -36,6 +36,11 @@ SCHEMA_2 = r"""
       "description": "Volume id to set",
       "pattern": "[A-Z0-9_-]{1,32}"
     },
+    "sysid": {
+      "type": "string",
+      "description": "System id to set",
+      "pattern": "[A-Z0-9_-]{1,32}"
+    },
     "boot": {
       "type": "object",
       "additionalProperties": false,
@@ -85,6 +90,7 @@ def main(inputs, output_dir, options):
     boot = options.get("boot", {})
     filename = options["filename"]
     vol_id = options["volid"]
+    sys_id = options.get("sysid")
     efi = options.get("efi")
     isohybrid = options.get("isohybridmbr")
     isolevel = options.get("isolevel")
@@ -100,8 +106,13 @@ def main(inputs, output_dir, options):
         ]
 
     cmd += [
-        "-V", vol_id,
+        "-V", vol_id
     ]
+
+    if sys_id:
+        cmd += [
+            "-sysid", sys_id
+        ]
 
     if isohybrid:
         cmd += [
