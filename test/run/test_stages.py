@@ -133,7 +133,10 @@ class TestStages(test.TestBase):
                 diff = difflib.ndiff(pprint.pformat(have).splitlines(),
                                      pprint.pformat(want).splitlines())
                 txt = "\n".join(diff)
-                self.fail(f"metadata for {stageid} differs:\n{txt}")
+                path = f"/tmp/osbuild.metadata.{stageid}.json"
+                with open(path, "w") as f:
+                    json.dump(have, f, indent=2)
+                self.fail(f"metadata for {stageid} differs:\n{txt}\n{path}")
 
     @classmethod
     def setUpClass(cls):
