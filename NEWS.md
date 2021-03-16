@@ -1,5 +1,52 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 27:
+
+ * Add new `org.osbuild.resolv-conf` stage that can be used to
+   configure the resolver(3) via the /etc/resolv.conf(5)
+   configuration file.
+
+ * Do not include SELinux labels in the `org.osbuild.oci-archive`
+   when creating the archives for the file system layers. Since
+   SELinux labels are not namespaced, the labelling is up to the
+   host, not the container itself. Since podman does not adjust
+   the labels after unpacking the archive, having labels might
+   actually render the container unusable.
+
+ * Fix the `org.osbuild.ostree.preptree` stage to properly detect
+   the existence of`/etc/machine-id`, i.e. do it before the move
+   of `/etc` to `/usr/etc` not after.
+
+ * In the `org.osbuild.grub2` stage, write the kernel command
+   line options also to `/etc/default/grub` (`GRUB_CMDLINE_LINUX`).
+   This is used by `grub2-mkconfig` to assemble the full kernel
+   command line when generating the menu entries.
+
+ * Add a new runner for RHEL 8.5 (`org.osbuild.rhel85`) which is
+   currently a symlink to the 8.2 runner as well as a new runner
+   for RHEL 9.0 (`org.osbuild.rhel90`).
+
+ * Fix the version 1 formatting code to properly set the overall
+   result status to *failed* in case the assembler failed.
+
+ * Fix the `org.osbuild.ostree` source to properly handle pre-
+   fetching of commits.
+
+ * Ability to set the system id in the `org.osbuild.xorrisofs`
+   stage.
+
+ * The `org.osbuild.ostree.preptree` stage now moves `/home` to
+   `/var/home` after initializing the new root file system. This
+   ensures that home directories of existing users are preserved.
+   NB: This does not capture files and their contents only dirs.
+
+ * Various improvements to testing and CI.
+
+Contributions from: Achilleas Koutsou, Aleksandar Todorov, Christian
+                    Kellner,Jozef Mikovic, Ondřej Budai, Tom Gundersen
+
+— Berlin, 2021-03-16
+
 ## CHANGES WITH 26:
 
   * Support the creation of boot iso installation media:
