@@ -140,6 +140,14 @@ def main(tree, options):
         move("boot", root, tree)
         move("var", root, tree)
 
+        # move /home over to /var in case it is not empty
+        # rpm-ostree compose postprocess will convert the
+        # home dirs (and sub-dirs) to systemd-tmpfiles.
+        # NB: files and their content will not be converted
+
+        if any(os.scandir(f"{root}/home")):
+            move("home", root, f"{tree}/var")
+
         for name in ["bin", "lib", "lib32", "lib64", "sbin"]:
             if os.path.lexists(f"{root}/{name}"):
                 move(name, root, tree)
