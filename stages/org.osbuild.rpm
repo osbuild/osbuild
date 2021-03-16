@@ -37,6 +37,7 @@ import pathlib
 import subprocess
 import sys
 import tempfile
+from operator import itemgetter
 
 from osbuild import api
 
@@ -162,7 +163,12 @@ def generate_package_metadata(tree):
 
     raw = res.stdout.strip()
     jsdata = '{"packages": [' + raw[:-1] + "]}"
-    return json.loads(jsdata)
+    data = json.loads(jsdata)
+
+    data["packages"] = sorted(data["packages"],
+                              key=itemgetter("name"))
+
+    return data
 
 
 def disable_dracut(tree):
@@ -253,7 +259,6 @@ def main(tree, inputs, options):
         """
 
     subprocess.run(["/bin/sh", "-c", script], check=True)
-
 
     extra_args = []
 
