@@ -128,6 +128,10 @@ pipeline {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         DISTRO_CODE = "fedora32"
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials('psi-openstack-creds')
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
                         run_tests()
@@ -144,6 +148,10 @@ pipeline {
                         TEST_TYPE = "image"
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         DISTRO_CODE = "fedora33"
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials('psi-openstack-creds')
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
                         run_tests()
@@ -161,6 +169,10 @@ pipeline {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                         AWS_CREDS = credentials('aws-credentials-osbuildci')
                         DISTRO_CODE = "rhel8"
+                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
+                        AZURE_CREDS = credentials('azure')
+                        OPENSTACK_CREDS = credentials('psi-openstack-creds')
+                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
                     }
                     steps {
                         run_tests()
@@ -217,7 +229,7 @@ void run_tests() {
     // Run the image tests.
     sh (
         label: "Image tests",
-        script: "schutzbot/run_image_tests.sh"
+        script: "/usr/libexec/tests/osbuild-composer/image_tests.sh"
     )
 
 }

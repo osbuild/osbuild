@@ -50,10 +50,3 @@ sudo dnf -y install osbuild-composer-tests
 
 # Set up a directory to hold repository overrides.
 sudo mkdir -p /etc/osbuild-composer/repositories
-
-# Start services.
-sudo systemctl enable --now osbuild-composer.socket
-
-# Verify that the API is running.
-sudo composer-cli status show
-sudo composer-cli sources list
