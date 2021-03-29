@@ -221,15 +221,18 @@ def config_from_options(options):
 def create_oci_dir(inputs, output_dir, options):
     architecture = options["architecture"]
 
+    now = datetime.datetime.utcnow().isoformat() + "Z"
+
     config = {
-        "created": datetime.datetime.utcnow().isoformat() + "Z",
+        "created": now,
         "architecture": architecture,
         "os": "linux",
         "config": config_from_options(options["config"]),
         "rootfs": {
             "type": "layers",
             "diff_ids": []
-        }
+        },
+        "history": []
     }
 
     manifest = {
@@ -251,8 +254,12 @@ def create_oci_dir(inputs, output_dir, options):
         tree = inputs[ip]["path"]
         digest, info = blobs_add_layer(blobs, tree)
 
-        config["rootfs"]["diff_ids"] = [digest]
         manifest["layers"].append(info)
+        config["rootfs"]["diff_ids"] = [digest]
+        config["history"].append({
+            "created": now,
+            "created_by": f"/bin/sh -c #(nop) osbuild input '{ip}'"
+        })
 
     ## write config
     info = blobs_add_json(blobs, config, "config")
