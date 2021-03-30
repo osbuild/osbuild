@@ -289,11 +289,12 @@ def main(tree, inputs, options):
         enable_dracut(masked_files)
         remove_unowned_etc_kernel(tree)
 
-    # if we created a temporary machine id, replace it with an empty one
+    # remove temporary machine ID if it was created by us
     if not machine_id_set_previously:
-        print("replacing fake machine id with empty one")
+        print("deleting the fake machine id")
         machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
-        machine_id_file.write_bytes(b"")
+        machine_id_file.unlink()
+        machine_id_file.touch()
 
     # remove random seed from the tree if exists
     with contextlib.suppress(FileNotFoundError):
