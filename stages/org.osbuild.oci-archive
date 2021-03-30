@@ -126,6 +126,14 @@ MEDIA_TYPES = {
 }
 
 
+# The extended attributes that should be recorded for the
+# contents of file system layers:
+#  - user.*: user specified extended attributes
+#  - security.ima: Integrity Measurement Architecture (IMA)
+#  - security.capability: Linux capabilities(7)
+XATTRS_WANT = r"^(user.|security\.ima|security\.capability)"
+
+
 def sha256sum(path: str) -> str:
     ret = subprocess.run(["sha256sum", path],
                          stdout=subprocess.PIPE,
@@ -168,6 +176,7 @@ def blobs_add_layer(blobs: str, tree: str):
         "--no-selinux",
         "--acls",
         "--xattrs",
+        "--xattrs-include=" + XATTRS_WANT,
         "-cf", layer_file,
         "-C", tree,
     ] + os.listdir(tree)
@@ -284,6 +293,8 @@ def main(inputs, output_dir, options):
         command = [
             "tar",
             "--remove-files",
+            "--no-selinux",
+            "--no-xattrs",
             "-cf", os.path.join(output_dir, filename),
             f"--directory={workdir}",
         ] + os.listdir(workdir)
