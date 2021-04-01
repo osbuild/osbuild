@@ -1,5 +1,19 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 27.1:
+
+ * Add history entries to the layers of OCI archives produced by the
+   `org.osbuild.oci-archive` stage. This fixes push failures to quay.io.
+
+ * Include only a specific, limited set of xattrs in OCI archives produced by
+   the `org.osbuild.oci-archive` stage. This is specifically meant to exclude
+   SELinux-related attributes (`security.selinux`) which are sometimes added
+   even when invoking  `tar` with the `--no-selinux` option.
+
+Contributions from: Christian Kellner
+
+— Berlin, 2021-04-01
+
 ## CHANGES WITH 27:
 
  * Add new `org.osbuild.resolv-conf` stage that can be used to
