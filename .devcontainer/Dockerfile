@@ -32,3 +32,5 @@ RUN dnf install -y \
     skopeo \
     the_silver_searcher \
     tree
+
+WORKDIR /workspaces/osbuild
