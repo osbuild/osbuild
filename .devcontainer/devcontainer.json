@@ -4,6 +4,9 @@
     "dockerfile": "Dockerfile",
     "context": "..",
   },
+  "mounts": [
+    "source=osbuild-share,target=/root/.local/share,type=volume"
+  ],
   "runArgs": [
     "--privileged"
   ],
