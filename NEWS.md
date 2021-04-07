@@ -1,5 +1,14 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 27.2:
+
+ * Add a new option to the `org.osbuild.qemu` assembler that controls
+   the qcow2 format version (`qcow2_compat`).
+
+Contributions from: Christian Kellner
+
+— Berlin, 2021-04-07
+
 ## CHANGES WITH 27.1:
 
  * Add history entries to the layers of OCI archives produced by the
