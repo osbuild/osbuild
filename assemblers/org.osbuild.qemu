@@ -59,6 +59,10 @@ SCHEMA = """
     "type": "string",
     "enum": ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]
   },
+  "qcow2_compat": {
+    "description": "The qcow2-compatibility-version to use",
+    "type": "string"
+  },
   "filename": {
     "description": "Image filename",
     "type": "string"
@@ -690,6 +694,11 @@ def main(tree, output_dir, options, loop_client):
             "vpc": ["-o", "subformat=fixed,force_size"],
             "vhdx": []
         }
+
+        compat = options.get("qcow2_compat")
+        if compat:
+            extra_args["qcow2"] += ["-o", f"compat={compat}"]
+
         subprocess.run([
             "qemu-img",
             "convert",
