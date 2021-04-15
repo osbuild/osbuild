@@ -69,13 +69,21 @@ greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 # Build source RPMs.
 greenprint "🔧 Building source RPMs."
 make srpm
-# rhel 8.4 will run off of the nightly repos and does not have a redhat subscription
+# rhel 8.4 and 8.5 will run off of the internal repos and does not have a redhat subscription
 if [[ $VERSION_ID == 8.4 ]]; then
     greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
     sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
     # remove the subscription check
     sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
     cat "$RHEL84_NIGHTLY_REPO" | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
+    # We need triple quotes at the end of the template to mark the end of the repo list.
+    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
+elif [[ $VERSION_ID == 8.5 ]]; then
+    greenprint "📋 Updating RHEL 8 mock template for unsubscribed image"
+    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
+    # remove the subscription check
+    sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
+    cat "$RHEL85_NIGHTLY_REPO" | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
     # We need triple quotes at the end of the template to mark the end of the repo list.
     echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
 fi

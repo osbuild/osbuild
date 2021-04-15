@@ -95,6 +95,17 @@ pipeline {
                         sh "schutzbot/mockbuild.sh"
                     }
                 }
+                stage('RHEL 8.5') {
+                    agent { label "rhel85cloudbase && x86_64 && psi" }
+                    environment {
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        RHEL85_NIGHTLY_REPO = credentials('rhel85-nightly-repo')
+                    }
+                    steps {
+                        sh "schutzbot/ci_details.sh"
+                        sh "schutzbot/mockbuild.sh"
+                    }
+                }
                 stage('CS8') {
                     agent { label "cs8cloudbase && x86_64 && aws" }
                     environment {
