@@ -1,0 +1,191 @@
+#!/usr/bin/python3
+"""
+Host service for providing access to LVM2 logical volumes
+
+This host service can be used to activate logical volumes
+so that they can be accessed from osbuild stages.
+The parent volume group is identified via the physical
+device which must be passed to this service as parent.
+
+Example usage, where `lvm` here is the lvm partition and
+`root` then the logical volume named `root`:
+```
+"lvm": {
+  "type": "org.osbuild.loopback",
+  "options": {
+  "filename": "disk.img",
+  "start": ...,
+},
+"root": {
+  "type": "org.osbuild.lvm2.lv",
+  "parent": "lvm",
+    "options": {
+    "volume": "root"
+  }
+}
+```
+
+Required host tools: lvchange, pvdisplay, lvdisplay
+"""
+
+import json
+import os
+import stat
+import subprocess
+import sys
+import time
+
+from typing import Dict, Tuple
+
+from osbuild import devices
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["volume"],
+"properties": {
+  "volume": {
+    "type": "string",
+    "description": "Logical volume to active"
+  }
+}
+"""
+
+
+class LVService(devices.DeviceService):
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.target = None
+
+    @staticmethod
+    def lv_set_active(fullname: str, status: bool):
+        mode = "y" if status else "n"
+        cmd = [
+            "lvchange", "--activate", mode, fullname
+        ]
+        res = subprocess.run(cmd,
+                             check=False,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT,
+                             encoding="UTF-8")
+
+        if res.returncode != 0:
+            data = res.stdout.strip()
+            msg = f"Failed to set LV device ({fullname}) status: {data}"
+            raise RuntimeError(msg)
+
+    @staticmethod
+    def volume_group_for_device(device: str) -> str:
+        # Find the volume group that belongs to the device specified via `parent`
+        vg_name = None
+        count = 0
+
+        cmd = [
+            "pvdisplay", "-C", "--noheadings", "-o", "vg_name", device
+        ]
+
+        while True:
+            res = subprocess.run(cmd,
+                                 check=False,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT,
+                                 encoding="UTF-8")
+
+            if res.returncode == 5:
+                if count == 10:
+                    raise RuntimeError("Could not find parent device")
+                time.sleep(1*count)
+                count += 1
+                continue
+
+            if res.returncode != 0:
+                json.dump({"error": res.stdout.strip()}, sys.stdout)
+                return 1
+
+            vg_name = res.stdout.strip()
+            if vg_name:
+                break
+
+        return vg_name
+
+    @staticmethod
+    def device_for_logical_volume(vg_name: str, volume: str) -> Tuple[int, int]:
+        # Now that we have the volume group, find the specified logical volume and its device path
+
+        cmd = [
+            "lvdisplay", "-C", "--noheadings",
+            "-o", "lv_kernel_major,lv_kernel_minor",
+            "--separator", ";",
+            "-S", f"lv_name={volume}",
+            vg_name
+        ]
+
+        res = subprocess.run(cmd,
+                             check=False,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT,
+                             encoding="UTF-8")
+
+        if res.returncode != 0:
+            raise RuntimeError(res.stdout.strip())
+
+        data = res.stdout.strip()
+        devnum = list(map(int, data.split(";")))
+        assert len(devnum) == 2
+        major, minor = devnum[0], devnum[1]
+
+        return major, minor
+
+    def open(self, devpath: str, parent: str, tree: str, options: Dict):
+        lv = options["volume"]
+
+        assert not parent.startswith("/")
+        parent_path = os.path.join("/dev", parent)
+
+        # Find the volume group that belongs to the device specified
+        # via `parent`
+        vg = self.volume_group_for_device(parent_path)
+
+        # Activate the logical volume
+        self.fullname = f"{vg}/{lv}"
+        self.lv_set_active(self.fullname, True)
+
+        # Now that we have the volume group, find the major and minor
+        # device numbers for the logical volume
+        major, minor = self.device_for_logical_volume(vg, lv)
+
+        # Create the device node for the LV in the build root's /dev
+        devname = os.path.join(vg, lv)
+        fullpath = os.path.join(devpath, devname)
+
+        os.makedirs(os.path.join(devpath, vg), exist_ok=True)
+        os.mknod(fullpath, 0o666 | stat.S_IFBLK, os.makedev(major, minor))
+
+        data = {
+            "path": devname,
+            "node": {
+                "major": major,
+                "minor": minor
+            },
+            "lvm": {
+                "vg_name": vg,
+                "lv_name": lv
+            }
+        }
+        return data
+
+    def close(self):
+        if self.fullname:
+            self.lv_set_active(self.fullname, False)
+            self.fullname = None
+
+
+def main():
+    service = LVService.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    r = main()
+    sys.exit(r)
