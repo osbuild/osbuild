@@ -1,0 +1,54 @@
+#!/usr/bin/python3
+"""
+Change file mode bits
+
+Change the file mode bits of one or more files or directories inside the tree.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["paths", "mode"],
+"properties": {
+  "paths": {
+    "type": "array",
+    "description": "Paths to operate on for changing mode bits",
+    "items": {
+      "type": "string"
+    }
+  },
+  "mode": {
+    "type": "string",
+    "description": "Symbolic or numeric octal mode"
+  },
+  "recursive": {
+    "type": "boolean"
+  }
+}
+
+"""
+
+def main(tree, options):
+    paths = options["paths"]
+    mode = options["mode"]
+    recursive = options.get("recursive", False)
+
+    paths = [os.path.join(tree, p.lstrip("/")) for p in paths]
+
+    arguments = [mode]
+    if recursive:
+        arguments += ["--recursive"]
+    arguments += ["--"] + paths
+
+    subprocess.run(["chmod", *arguments], check=True)
+    return 0
+
+
+if __name__ == "__main__":
+    args = osbuild.api.arguments()
+    sys.exit(main(args["tree"], args["options"]))
