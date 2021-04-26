@@ -1,0 +1,96 @@
+#!/usr/bin/python3
+"""
+Create LVM2 physical volumes, volume groups and logical volumes
+
+For the logical volumes `name` and `size` need to be provided.
+
+NB: The name of the volume group is chosen at random and should
+be changed via the `org.osbuild.lvm2.metadata` stage after the
+image has been completely assembled.
+"""
+
+
+import os
+import subprocess
+import sys
+import uuid
+
+
+import osbuild.api
+
+
+SCHEMA_2 = r"""
+"devices": {
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["device"],
+  "properties": {
+    "device": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": true,
+  "required": ["volumes"],
+  "properties": {
+    "volumes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "description": "Logical volume",
+        "type": "object",
+        "required": ["name", "size"],
+        "properties": {
+          "name": {
+            "description": "The logical volume name",
+            "type": "string",
+            "pattern": "[a-zA-Z09+_.][a-zA-Z0-9+_.-]*"
+          },
+          "size": {
+            "description": "The size of the logical volume",
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def main(devices, options):
+    device = devices["device"]
+    volumes = options["volumes"]
+    path = os.path.join("/dev", device["path"])
+
+    vg_name = str(uuid.uuid4())
+
+    print(f"LVM2: using vg name '{vg_name}'")
+
+    subprocess.run(["pvcreate", path],
+                   encoding='utf-8',
+                   check=True)
+
+    subprocess.run(["vgcreate", vg_name, path],
+                   encoding='utf-8',
+                   check=True)
+
+    for volume in volumes:
+        name = volume["name"]
+        size = volume.get("size")
+        cmd = ["lvcreate", "-an"]
+
+        if size:
+            cmd += ["-l", size]
+
+        cmd += ["-n", name, vg_name]
+
+        subprocess.run(cmd, encoding='utf-8', check=True)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    ret = main(args["devices"], args["options"])
+    sys.exit(ret)
