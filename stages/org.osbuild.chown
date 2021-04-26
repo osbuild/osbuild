@@ -1,0 +1,57 @@
+#!/usr/bin/python3
+"""
+Change file owner and group
+
+Change the file user and/or group ownership of one or more files or directories inside the tree.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["paths"],
+"properties": {
+  "paths": {
+    "type": "array",
+    "description": "Paths to operate on for changing ownership",
+    "items": {
+      "type": "string"
+    }
+  },
+  "user": {
+    "type": "string"
+  },
+  "group": {
+    "type": "string"
+  },
+  "recursive": {
+    "type": "boolean"
+  }
+}
+"""
+
+def main(tree, options):
+    paths = options["paths"]
+    user = options.get("user", "")
+    group = options.get("group", "")
+    recursive = options.get("recursive", False)
+
+    paths = [os.path.join(tree, p.lstrip("/")) for p in paths]
+
+    arguments = [f"{user}:{group}"]
+    if recursive:
+        arguments += ["--recursive"]
+
+    arguments += ["--"] + paths
+
+    subprocess.run(["chown", *arguments], check=True)
+    return 0
+
+
+if __name__ == "__main__":
+    args = osbuild.api.arguments()
+    sys.exit(main(args["tree"], args["options"]))
