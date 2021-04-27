@@ -1,6 +1,10 @@
 {
   "expects": "error",
-  "checksums": [
-      "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-  ]
+  "org.osbuild.curl": {
+    "items": {
+      "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": {
+        "url": "http://localhost/sources/org.osbuild.curl/data/missing"
+      }
+    }
+  }
 }

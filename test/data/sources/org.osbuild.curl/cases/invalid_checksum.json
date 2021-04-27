@@ -1,6 +1,10 @@
 {
   "expects": "error",
-  "checksums": [
-      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-  ]
+  "org.osbuild.curl": {
+    "items": {
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+        "url": "http://localhost/sources/org.osbuild.curl/data/a"
+      }
+    }
+  }
 }
