@@ -14,6 +14,8 @@ import threading
 
 import pytest
 
+import osbuild.objectstore
+import osbuild.meta
 import osbuild.sources
 from .. import test
 
@@ -76,36 +78,36 @@ def runFileServer(barrier, directory):
     httpd.serve_forever()
 
 
-def check_case(source, case, api_path):
+def check_case(source, case, store, libdir):
     expects = case["expects"]
     if expects == "error":
         with pytest.raises(RuntimeError):
-            osbuild.sources.get(
-                source, case["checksums"], api_path=api_path)
+            source.download(store, libdir)
     elif expects == "success":
-        r = osbuild.sources.get(
-            source, case["checksums"], api_path=api_path)
-        assert r == {}
+        source.download(store, libdir)
     else:
         raise ValueError(f"invalid expectation: {expects}")
 
 
 def check_source(source, sources):
-    source_options = {}
-    with open(f"{sources}/{source}/sources.json") as f:
-        source_options = json.load(f)
+    index = osbuild.meta.Index(os.curdir)
+
     for case in os.listdir(f"{sources}/{source}/cases"):
-        case_options = {}
         with open(f"{sources}/{source}/cases/{case}") as f:
             case_options = json.load(f)
+
+        info = index.get_module_info("Source", source)
+        desc = case_options[source]
+        items = desc.get("items", {})
+        options = desc.get("options", {})
+
+        src = osbuild.sources.Source(info, items, options)
+
         with tempfile.TemporaryDirectory() as tmpdir, \
-            fileServer(test.TestBase.locate_test_data()), \
-            osbuild.sources.SourcesServer(
-            "./", source_options,
-            f"{tmpdir}/cache", f"{tmpdir}/dst",
-                socket_address=f"{tmpdir}/sources-api"):
-            check_case(source, case_options, f"{tmpdir}/sources-api")
-            check_case(source, case_options, f"{tmpdir}/sources-api")
+            osbuild.objectstore.ObjectStore(tmpdir) as store, \
+                fileServer(test.TestBase.locate_test_data()):
+            check_case(src, case_options, store, index.path)
+            check_case(src, case_options, store, index.path)
 
 
 @pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")

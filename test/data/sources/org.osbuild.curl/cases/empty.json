@@ -1,4 +1,6 @@
 {
   "expects": "success",
-  "checksums": []
+  "org.osbuild.curl": {
+      "items": {}
+  }
 }
