@@ -78,6 +78,14 @@ def runFileServer(barrier, directory):
     httpd.serve_forever()
 
 
+def make_test_cases():
+    sources = os.path.join(test.TestBase.locate_test_data(), "sources")
+    if os.path.exists(sources):
+        for source in os.listdir(sources):
+            for case in os.listdir(f"{sources}/{source}/cases"):
+                yield source, case
+
+
 def check_case(source, case, store, libdir):
     expects = case["expects"]
     if expects == "error":
@@ -89,31 +97,24 @@ def check_case(source, case, store, libdir):
         raise ValueError(f"invalid expectation: {expects}")
 
 
-def check_source(source, sources):
-    index = osbuild.meta.Index(os.curdir)
-
-    for case in os.listdir(f"{sources}/{source}/cases"):
-        with open(f"{sources}/{source}/cases/{case}") as f:
-            case_options = json.load(f)
-
-        info = index.get_module_info("Source", source)
-        desc = case_options[source]
-        items = desc.get("items", {})
-        options = desc.get("options", {})
-
-        src = osbuild.sources.Source(info, items, options)
-
-        with tempfile.TemporaryDirectory() as tmpdir, \
-            osbuild.objectstore.ObjectStore(tmpdir) as store, \
-                fileServer(test.TestBase.locate_test_data()):
-            check_case(src, case_options, store, index.path)
-            check_case(src, case_options, store, index.path)
-
-
-@pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not can_setup_netns(), reason="network namespace setup failed")
-def test_sources():
+@pytest.mark.parametrize("source,case", make_test_cases())
+def test_sources(source, case):
+    index = osbuild.meta.Index(os.curdir)
     sources = os.path.join(test.TestBase.locate_test_data(), "sources")
 
-    for source in os.listdir(sources):
-        check_source(source, sources)
+    with open(f"{sources}/{source}/cases/{case}") as f:
+        case_options = json.load(f)
+
+    info = index.get_module_info("Source", source)
+    desc = case_options[source]
+    items = desc.get("items", {})
+    options = desc.get("options", {})
+
+    src = osbuild.sources.Source(info, items, options)
+
+    with tempfile.TemporaryDirectory() as tmpdir, \
+        osbuild.objectstore.ObjectStore(tmpdir) as store, \
+            fileServer(test.TestBase.locate_test_data()):
+        check_case(src, case_options, store, index.path)
+        check_case(src, case_options, store, index.path)
