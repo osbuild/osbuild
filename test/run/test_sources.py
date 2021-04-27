@@ -11,7 +11,8 @@ import socketserver
 import subprocess
 import tempfile
 import threading
-import unittest
+
+import pytest
 
 import osbuild.sources
 from .. import test
@@ -75,45 +76,42 @@ def runFileServer(barrier, directory):
     httpd.serve_forever()
 
 
-@unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
-@unittest.skipUnless(can_setup_netns(), "network namespace setup failed")
-class TestSources(test.TestBase):
-    def setUp(self):
-        self.sources = os.path.join(self.locate_test_data(), "sources")
+def check_case(source, case, api_path):
+    expects = case["expects"]
+    if expects == "error":
+        with pytest.raises(RuntimeError):
+            osbuild.sources.get(
+                source, case["checksums"], api_path=api_path)
+    elif expects == "success":
+        r = osbuild.sources.get(
+            source, case["checksums"], api_path=api_path)
+        assert r == {}
+    else:
+        raise ValueError(f"invalid expectation: {expects}")
 
 
-    def check_case(self, source, case, api_path):
-        expects = case["expects"]
-        if expects == "error":
-            with self.assertRaises(RuntimeError):
-                osbuild.sources.get(source, case["checksums"], api_path=api_path)
-        elif expects == "success":
-            r = osbuild.sources.get(source, case["checksums"], api_path=api_path)
-            self.assertEqual(r, {})
-        else:
-            raise ValueError(f"invalid expectation: {expects}")
+def check_source(source, sources):
+    source_options = {}
+    with open(f"{sources}/{source}/sources.json") as f:
+        source_options = json.load(f)
+    for case in os.listdir(f"{sources}/{source}/cases"):
+        case_options = {}
+        with open(f"{sources}/{source}/cases/{case}") as f:
+            case_options = json.load(f)
+        with tempfile.TemporaryDirectory() as tmpdir, \
+            fileServer(test.TestBase.locate_test_data()), \
+            osbuild.sources.SourcesServer(
+            "./", source_options,
+            f"{tmpdir}/cache", f"{tmpdir}/dst",
+                socket_address=f"{tmpdir}/sources-api"):
+            check_case(source, case_options, f"{tmpdir}/sources-api")
+            check_case(source, case_options, f"{tmpdir}/sources-api")
 
 
-    def check_source(self, source):
-        source_options = {}
-        with open(f"{self.sources}/{source}/sources.json") as f:
-            source_options = json.load(f)
-        for case in os.listdir(f"{self.sources}/{source}/cases"):
-            with self.subTest(case=case):
-                case_options = {}
-                with open(f"{self.sources}/{source}/cases/{case}") as f:
-                    case_options = json.load(f)
-                with tempfile.TemporaryDirectory() as tmpdir, \
-                    fileServer(self.locate_test_data()), \
-                    osbuild.sources.SourcesServer(
-                            "./", source_options,
-                            f"{tmpdir}/cache", f"{tmpdir}/dst",
-                            socket_address=f"{tmpdir}/sources-api"):
-                    self.check_case(source, case_options, f"{tmpdir}/sources-api")
-                    self.check_case(source, case_options, f"{tmpdir}/sources-api")
+@pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
+@pytest.mark.skipif(not can_setup_netns(), reason="network namespace setup failed")
+def test_sources():
+    sources = os.path.join(test.TestBase.locate_test_data(), "sources")
 
-
-    def test_sources(self):
-        for source in os.listdir(self.sources):
-            with self.subTest(source=source):
-                self.check_source(source)
+    for source in os.listdir(sources):
+        check_source(source, sources)
