@@ -1,0 +1,6 @@
+{
+  "expects": "success",
+  "org.osbuild.ostree": {
+    "items": {}
+  }
+}

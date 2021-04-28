@@ -1,0 +1,12 @@
+{
+  "expects": "error",
+  "org.osbuild.ostree": {
+    "items": {
+      "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": {
+        "remote": {
+          "url": "http://localhost/sources/org.osbuild.curl/data/missing"
+        }
+      }
+    }
+  }
+}
