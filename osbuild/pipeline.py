@@ -9,7 +9,6 @@ from .api import API
 from . import buildroot
 from . import objectstore
 from . import remoteloop
-from . import sources
 from .inputs import Input
 from .sources import Source
 from .util import osrelease
@@ -103,12 +102,6 @@ class Stage:
 
             api = API(args, monitor)
             build_root.register_api(api)
-
-            src = sources.SourcesServer(libdir,
-                                        self.sources,
-                                        os.path.join(store.store, "sources"),
-                                        sources_output)
-            build_root.register_api(src)
 
             rls = remoteloop.LoopServer()
             build_root.register_api(rls)
