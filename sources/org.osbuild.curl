@@ -176,35 +176,30 @@ def get_rhsm_secrets():
     raise RuntimeError("no matching rhsm key and cert")
 
 
-def download(checksums, urls, cache):
+def download(items, cache):
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         requested_urls = []
         rhsm_secrets = None
 
-        for checksum in checksums:
-            try:
-                url = urls[checksum]
-            except KeyError:
-                json.dump({"error": f"unknown file: {checksum}"}, sys.stdout)
-                return 1
+        for url in items.values():
 
-            if isinstance(url, dict):
-                # check if url needs rhsm secrets
-                if url.get("secrets", {}).get("name") == "org.osbuild.rhsm":
-                    # rhsm secrets only need to be retrieved once and can then be reused
-                    if rhsm_secrets is None:
-                        try:
-                            rhsm_secrets = get_rhsm_secrets()
-                        except RuntimeError as e:
-                            json.dump({"error": e.args[0]}, sys.stdout)
-                            return 1
-                    url["secrets"] = rhsm_secrets
-            else:
+            if not isinstance(url, dict):
                 url = {"url": url}
+
+            # check if url needs rhsm secrets
+            if url.get("secrets", {}).get("name") == "org.osbuild.rhsm":
+                # rhsm secrets only need to be retrieved once and can then be reused
+                if rhsm_secrets is None:
+                    try:
+                        rhsm_secrets = get_rhsm_secrets()
+                    except RuntimeError as e:
+                        json.dump({"error": e.args[0]}, sys.stdout)
+                        return 1
+                url["secrets"] = rhsm_secrets
 
             requested_urls.append(url)
 
-        results = executor.map(fetch, requested_urls, checksums, itertools.repeat(cache))
+        results = executor.map(fetch, requested_urls, items.keys(), itertools.repeat(cache))
 
         try:
             for _ in results:
@@ -216,15 +211,15 @@ def download(checksums, urls, cache):
         return 0
 
 
-def main(urls: Dict, cache: str):
+def main(items: Dict, cache: str):
     cache = os.path.join(cache, "org.osbuild.files")
 
-    if not urls:
+    if not items:
         json.dump({}, sys.stdout)
         return 0
 
     os.makedirs(cache, exist_ok=True)
-    res = download(urls.keys(), urls, cache)
+    res = download(items, cache)
     if res != 0:
         return res
 
