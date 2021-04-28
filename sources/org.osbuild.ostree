@@ -13,6 +13,8 @@ import sys
 import subprocess
 import uuid
 
+from typing import Dict
+
 
 SCHEMA = """
 "additionalProperties": false,
@@ -73,7 +75,7 @@ def ostree(*args, _input=None, **kwargs):
                    check=True)
 
 
-def download(commits, checksums, cache):
+def download(items, cache):
     # Prepare the cache and the output repo
     repo_cache = os.path.join(cache, "repo")
     ostree("init", mode="archive", repo=repo_cache)
@@ -83,8 +85,8 @@ def download(commits, checksums, cache):
     # explicitly here.
     ostree("config", "set", "repo.locking", "true", repo=repo_cache)
 
-    for commit in checksums:
-        remote = commits[commit]["remote"]
+    for commit, item in items.items():
+        remote = item["remote"]
         url = remote["url"]
         gpg = remote.get("gpgkeys", [])
         uid = str(uuid.uuid4())
@@ -111,56 +113,26 @@ def download(commits, checksums, cache):
                repo=repo_cache)
 
 
-def export(checksums, cache, output):
-    repo_cache = os.path.join(cache, "repo")
-
-    repo_out = os.path.join(output, "repo")
-    ostree("init", mode="archive", repo=repo_out)
-
-    for commit in checksums:
-        # Transfer the commit: remote → cache
-        print(f"exporting {commit}", file=sys.stderr)
-
-        ostree("pull-local", repo_cache, commit,
-               repo=repo_out)
-
-    json.dump({}, sys.stdout)
-
-
-def main(commits, options, checksums, cache, output):
+def main(items: Dict, cache: str):
     cache = os.path.join(cache, "org.osbuild.ostree")
-    download_only = not output
 
-    if not commits:
-        commits = options.get("commits", {})
-
-    if commits:
-        if not checksums and download_only:
-            checksums = [k for k, _ in commits.items()]
-
-        os.makedirs(cache, exist_ok=True)
-        try:
-            download(commits, checksums, cache)
-        except subprocess.CalledProcessError as e:
-            output = e.output.strip()
-            json.dump({"error": output}, sys.stdout)
-            return 1
-
-    if download_only:
+    if not items:
         json.dump({}, sys.stdout)
         return 0
 
-    os.makedirs(output, exist_ok=True)
-    export(checksums, cache, output)
+    os.makedirs(cache, exist_ok=True)
+    try:
+        download(items, cache)
+    except subprocess.CalledProcessError as e:
+        output = e.output.strip()
+        json.dump({"error": output}, sys.stdout)
+        return 1
 
+    json.dump({}, sys.stdout)
     return 0
 
 
 if __name__ == '__main__':
     source_args = json.load(sys.stdin)
-    r = main(source_args["items"],
-             source_args["options"],
-             source_args["checksums"],
-             source_args["cache"],
-             source_args.get("output"))
+    r = main(source_args["items"], source_args["cache"])
     sys.exit(r)
