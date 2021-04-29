@@ -1,0 +1,102 @@
+#!/usr/bin/python3
+"""Source for binary data encoded inline in the manifest
+
+This source can be used to transport data in the source
+section of the manifest. Each resource is ascii-encoded
+in the `data` property, where the encoding is specified
+in the `encoding` property. The resources is content
+addressed via the hash value of the raw data before the
+ascii encoding. This hash value is verified after the
+resource is decoded and written to the store.
+"""
+
+
+import base64
+import contextlib
+import json
+import os
+import sys
+import tempfile
+
+from typing import Dict
+
+from osbuild.util.checksum import verify_file
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["items"],
+"properties": {
+  "item": {
+    "description": "Inline data indexed by their checksum",
+    "type": "object",
+    "additionalProperties": false,
+    "patternProperties": {
+      "(md5|sha1|sha256|sha384|sha512):[0-9a-f]{32,128}": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["method", "data"],
+        "properties": {
+          "encoding": {
+            "description": "The specific encoding of `data`",
+            "enum": ["base64"]
+          },
+          "data": {
+            "description": "The ascii encoded raw data",
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def process(items: Dict, cache: str, tmpdir):
+    for checksum, item in items.items():
+        target = os.path.join(cache, checksum)
+        floating = os.path.join(tmpdir, checksum)
+
+        if os.path.isfile(target):
+            return
+
+        data = base64.b64decode(item["data"])
+
+        # Write the bits to disk and then verify the checksum
+        # This ensures that 1) the data is ok and that 2) we
+        # wrote them correctly as well
+        with open(floating, "wb") as f:
+            f.write(data)
+
+        if not verify_file(floating, checksum):
+            json.dump({"error": f"checksum mismatch: {checksum}"}, sys.stdout)
+            sys.exit(1)
+
+        with contextlib.suppress(FileExistsError):
+            os.rename(floating, target)
+
+
+def main(items: Dict, base: str):
+    cache = os.path.join(base, "org.osbuild.files")
+
+    if not items:
+        json.dump({}, sys.stdout)
+        return 0
+
+    try:
+        os.makedirs(cache, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix=".unverified-", dir=base) as tmpdir:
+            process(items, cache, tmpdir)
+    except Exception as e:  # pylint: disable=broad-except
+        json.dump({"error": str(e)}, sys.stdout)
+        return 0
+
+    json.dump({}, sys.stdout)
+    return 0
+
+
+if __name__ == '__main__':
+    source_args = json.load(sys.stdin)
+    r = main(source_args["items"], source_args["cache"])
+    sys.exit(r)
