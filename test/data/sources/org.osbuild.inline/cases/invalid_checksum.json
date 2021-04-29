@@ -1,0 +1,11 @@
+{
+  "expects": "error",
+  "org.osbuild.inline": {
+    "items": {
+      "sha256:d2a84f4b8b650937ec8f73cd8be2c74add5a911ba64df27458ed8229da804a27": {
+        "encoding": "base64",
+        "data": "SGVsbG8gV29ybGQK"
+      }
+    }
+  }
+}
