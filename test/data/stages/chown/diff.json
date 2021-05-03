@@ -1,0 +1,10 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+      "/usr/bin/chown": {
+          "uid": [0, 65534],
+          "gid": [0, 998]
+      }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/usr/bin/chmod": {
+      "mode": [
+        33261,
+        33188
+      ]
+    }
+  }
+}
