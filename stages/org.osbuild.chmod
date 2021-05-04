@@ -11,7 +11,7 @@ import sys
 
 import osbuild.api
 
-SCHEMA = """
+SCHEMA = r"""
 "additionalProperties": false,
 "required": ["paths", "mode"],
 "properties": {
@@ -19,7 +19,8 @@ SCHEMA = """
     "type": "array",
     "description": "Paths to operate on for changing mode bits",
     "items": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
     }
   },
   "mode": {
