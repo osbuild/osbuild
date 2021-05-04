@@ -10,6 +10,7 @@ import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util.path import in_tree
 
 SCHEMA = r"""
 "additionalProperties": false,
@@ -39,12 +40,19 @@ def main(tree, options):
     mode = options["mode"]
     recursive = options.get("recursive", False)
 
-    paths = [os.path.join(tree, p.lstrip("/")) for p in paths]
+    realpaths = list()
+    for p in paths:
+        realpath = os.path.join(tree, p.lstrip("/"))
+        if not in_tree(realpath, tree, must_exist=True):
+            print(f"Error: path {p} not in tree")
+            return 1
+        realpaths.append(realpath)
 
     arguments = [mode]
     if recursive:
-        arguments += ["--recursive"]
-    arguments += ["--"] + paths
+        arguments.append("--recursive")
+    arguments.append("--")
+    arguments.extend(realpaths)
 
     subprocess.run(["chmod", *arguments], check=True)
     return 0
