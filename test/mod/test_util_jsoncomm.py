@@ -203,3 +203,16 @@ class TestUtilJsonComm(unittest.TestCase):
         a.send(ping)
         pong, _, _ = b.recv()
         self.assertEqual(ping, pong)
+
+    def test_send_and_recv(self):
+        #
+        # Test for the send and receive helper method
+
+        a, b = jsoncomm.Socket.new_pair()
+
+        ping = {"osbuild": "yes"}
+        a.send(ping)
+        pong, _, _ = b.send_and_recv(ping)
+        self.assertEqual(ping, pong)
+        pong, _, _ = a.recv()
+        self.assertEqual(ping, pong)

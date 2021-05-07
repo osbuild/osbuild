@@ -393,3 +393,13 @@ class Socket(contextlib.AbstractContextManager):
 
         n = self._socket.sendmsg([serialized], cmsg, 0)
         assert n == len(serialized)
+
+    def send_and_recv(self, payload: object, *, fds: Optional[list] = None):
+        """Send a message and wait for a reply
+
+        This is a convenience helper that combines `send` and `recv`.
+        See the individual methods for details about the parameters.
+        """
+
+        self.send(payload, fds=fds)
+        return self.recv()
