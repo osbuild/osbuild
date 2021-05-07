@@ -186,3 +186,20 @@ class TestUtilJsonComm(unittest.TestCase):
         a.send(ping)
         pong, _, _ = b.recv()
         self.assertEqual(ping, pong)
+
+    def test_from_fd(self):
+        #
+        # Test creating a Socket from an existing file descriptor
+        a, x = jsoncomm.Socket.new_pair()
+        fd = os.dup(x.fileno())
+
+        b = jsoncomm.Socket.new_from_fd(fd)
+
+        # x should be closed and thus raise "Bad file descriptor"
+        with self.assertRaises(OSError):
+            os.write(fd, b"test")
+
+        ping = {"osbuild": "yes"}
+        a.send(ping)
+        pong, _, _ = b.recv()
+        self.assertEqual(ping, pong)

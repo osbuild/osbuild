@@ -272,6 +272,27 @@ class Socket(contextlib.AbstractContextManager):
 
         return cls(a, None), cls(b, None)
 
+    @classmethod
+    def new_from_fd(cls, fd: int, *, blocking=True, close_fd=True):
+        """Create a socket for an existing file descriptor
+
+        Duplicate the file descriptor and return a `Socket` for it.
+        The blocking mode can be set via `blocking`. If `close_fd`
+        is True (the default) `fd` will be closed.
+
+        Parameters
+        ----------
+        fd
+            The file descriptor to use.
+        blocking
+            The blocking mode for the socket pair.
+        """
+        sock = socket.fromfd(fd, socket.AF_UNIX, socket.SOCK_SEQPACKET)
+        sock.setblocking(blocking)
+        if close_fd:
+            os.close(fd)
+        return cls(sock, None)
+
     def fileno(self) -> int:
         assert self._socket is not None
         return self._socket.fileno()
