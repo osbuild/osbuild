@@ -234,6 +234,11 @@
               "ExposedPorts": [
                 "80"
               ]
+            },
+            "annotations": {
+              "org.osbuild.ostree.repo": "/var/www/html/repo",
+              "org.osbuild.ostree.ref": "fedora/x86_64/osbuild",
+              "org.osbuild.ostree.layer": "1"
             }
           }
         }
