@@ -16,6 +16,10 @@ as the `config` option for the "OCI Image Configuration" (see [2]),
 except those that map to the "Go type map[string]struct{}", which are
 represented as array of strings.
 
+Manifest annotations can be included via the `annotation` options. Any
+`key`, `value` pair is allowed, with the exception of the pre-defined
+`org.osbuild` and `org.opencontainer` namespaces.
+
 The final resulting tarball, aka a "orci-archive", can be imported via
 podman[3] with `podman pull oci-archive:<archive>`.
 
@@ -94,6 +98,15 @@ SCHEMA_2 = r"""
         },
         "WorkingDir": {
           "type": "string"
+        }
+      }
+    },
+    "annotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(?!org.osbuild|org.opencontainer).+": {
+           "type": "string"
         }
       }
     }
@@ -249,6 +262,10 @@ def create_oci_dir(inputs, output_dir, options):
         "config": None,
         "layers": []
     }
+
+    annotations = options.get("annotations", {})
+    if annotations:
+        manifest["annotations"] = annotations
 
     index = {
         "schemaVersion": 2,
