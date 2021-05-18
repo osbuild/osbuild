@@ -235,7 +235,6 @@ class BuildRoot(contextlib.AbstractContextManager):
                                 stdin=subprocess.DEVNULL,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
-                                encoding="utf-8",
                                 close_fds=True)
 
         data = io.StringIO()
@@ -250,7 +249,8 @@ class BuildRoot(contextlib.AbstractContextManager):
             data.write(txt)
             monitor.log(txt)
 
-        txt, _ = proc.communicate()
+        buf, _ = proc.communicate()
+        txt = buf.decode("utf-8")
         monitor.log(txt)
         data.write(txt)
         output = data.getvalue()
