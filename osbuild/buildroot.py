@@ -221,6 +221,7 @@ class BuildRoot(contextlib.AbstractContextManager):
             "--new-session",
             "--setenv", "PATH", "/usr/sbin:/usr/bin",
             "--setenv", "PYTHONPATH", "/run/osbuild/lib",
+            "--setenv", "PYTHONUNBUFFERED", "1",
             "--unshare-ipc",
             "--unshare-pid",
             "--unshare-net"
