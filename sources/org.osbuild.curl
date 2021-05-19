@@ -14,7 +14,6 @@ up the download.
 
 
 import concurrent.futures
-import glob
 import itertools
 import json
 import math
@@ -27,6 +26,7 @@ import time
 from typing import Dict
 
 from osbuild.util.checksum import verify_file
+from osbuild.util.rhsm import Subscriptions
 
 
 SCHEMA = """
@@ -142,30 +142,10 @@ def fetch(url, checksum, directory):
             pass
 
 
-def get_rhsm_secrets():
-    rhsm_secrets = {
-        'ssl_ca_cert': "/etc/rhsm/ca/redhat-uep.pem",
-        'ssl_client_key': "",
-        'ssl_client_cert': ""
-    }
-
-    keys = glob.glob("/etc/pki/entitlement/*-key.pem")
-    for key in keys:
-        # The key and cert have the same prefix
-        cert = key.rstrip("-key.pem") + ".pem"
-        # The key is only valid if it has a matching cert
-        if os.path.exists(cert):
-            rhsm_secrets['ssl_client_key'] = key
-            rhsm_secrets['ssl_client_cert'] = cert
-            return rhsm_secrets
-
-    raise RuntimeError("no matching rhsm key and cert")
-
-
 def download(items, cache):
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         requested_urls = []
-        rhsm_secrets = None
+        subscriptions = None
 
         for url in items.values():
 
@@ -174,14 +154,14 @@ def download(items, cache):
 
             # check if url needs rhsm secrets
             if url.get("secrets", {}).get("name") == "org.osbuild.rhsm":
-                # rhsm secrets only need to be retrieved once and can then be reused
-                if rhsm_secrets is None:
-                    try:
-                        rhsm_secrets = get_rhsm_secrets()
-                    except RuntimeError as e:
-                        json.dump({"error": e.args[0]}, sys.stdout)
-                        return 1
-                url["secrets"] = rhsm_secrets
+                try:
+                    # rhsm secrets only need to be retrieved once and can then be reused
+                    if subscriptions is None:
+                        subscriptions = Subscriptions.from_host_system()
+                    url["secrets"] = subscriptions.get_secrets(url.get("url"))
+                except RuntimeError as e:
+                    json.dump({"error": e.args[0]}, sys.stdout)
+                    return 1
 
             requested_urls.append(url)
 
