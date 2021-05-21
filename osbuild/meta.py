@@ -278,6 +278,15 @@ class ModuleInfo:
     Normally this class is instantiated via its `load` method.
     """
 
+    # Known modules and their corresponding directory name
+    MODULES = {
+        "Assembler": "assemblers",
+        "Device": "devices",
+        "Input": "inputs",
+        "Source": "sources",
+        "Stage": "stages",
+    }
+
     def __init__(self, klass: str, name: str, path: str, info: Dict):
         self.name = name
         self.type = klass
@@ -354,7 +363,7 @@ class ModuleInfo:
         def targets(a):
             return [t.id for t in filter_type(a.targets, ast.Name)]
 
-        base = cls.module_class_to_directory(klass)
+        base = cls.MODULES.get(klass)
         if not base:
             raise ValueError(f"Unsupported type: {klass}")
 
@@ -384,17 +393,6 @@ class ModuleInfo:
             'info': "\n".join(doclist[1:])
         }
         return cls(klass, name, path, info)
-
-    @staticmethod
-    def module_class_to_directory(klass: str) -> str:
-        mapping = {
-            "Assembler": "assemblers",
-            "Input": "inputs",
-            "Source": "sources",
-            "Stage": "stages",
-        }
-
-        return mapping.get(klass)
 
 
 class FormatInfo:
@@ -469,7 +467,7 @@ class Index:
 
     def list_modules_for_class(self, klass: str) -> List[str]:
         """List all available modules for the given `klass`"""
-        module_path = ModuleInfo.module_class_to_directory(klass)
+        module_path = ModuleInfo.MODULES.get(klass)
 
         if not module_path:
             raise ValueError(f"Unsupported nodule class: {klass}")
@@ -507,7 +505,7 @@ class Index:
             with contextlib.suppress(FileNotFoundError):
                 with open(path, "r") as f:
                     schema = json.load(f)
-        elif klass in ["Assembler", "Input", "Source", "Stage"]:
+        elif klass in ModuleInfo.MODULES:
             info = self.get_module_info(klass, name)
             if info:
                 schema = info.get_schema(version)
