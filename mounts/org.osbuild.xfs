@@ -1,0 +1,33 @@
+#!/usr/bin/python3
+"""
+XFS mount service
+
+Mount a XFS filesystem at the given location.
+
+Host commands used: mount
+"""
+
+import sys
+from typing import Dict
+
+from osbuild import mounts
+
+
+SCHEMA = """
+"additionalProperties": false
+"""
+
+
+class XfsMount(mounts.MountService):
+
+    def translate_options(self, _options: Dict):
+        return ["-t", "xfs"]
+
+
+def main():
+    service = XfsMount.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()
