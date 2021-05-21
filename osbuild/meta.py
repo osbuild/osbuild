@@ -383,12 +383,11 @@ class ModuleInfo:
         targets = [(t, a) for a in assigns for t in targets(a)]
         values = {k: value(v) for k, v in targets if k in names}
 
-
         info = {
             'schema': {
                 "1": values.get("SCHEMA", ""),
                 "2": values.get("SCHEMA_2")
-                },
+            },
             'desc': doclist[0],
             'info': "\n".join(doclist[1:])
         }
