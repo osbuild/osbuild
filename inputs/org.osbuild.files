@@ -34,6 +34,26 @@ SCHEMA = r"""
         "additionalProperties": false
       }
     }
+  },
+  "plain-ref": {
+    "type": "array",
+    "items": {
+      "type": "string"
+    }
+  },
+  "object-ref": {
+    "type": "object",
+    "additionalProperties": false,
+    "minProperties": 1,
+    "patternProperties": {
+      ".*": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "metadata": {"$ref": "#/definitions/metadata"}
+        }
+      }
+    }
   }
 },
 "required": ["type", "origin", "references"],
@@ -48,25 +68,10 @@ SCHEMA = r"""
   },
   "references": {
     "description": "Checksums of files to use as files input",
-    "oneOf": [{
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    }, {
-      "type": "object",
-      "additionalProperties": false,
-      "minProperties": 1,
-      "patternProperties": {
-        ".*": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "metadata": {"$ref": "#/definitions/metadata"}
-          }
-        }
-      }
-    }]
+    "oneOf": [
+      {"$ref": "#/definitions/plain-ref"},
+      {"$ref": "#/definitions/object-ref"}
+    ]
   }
 }
 """
