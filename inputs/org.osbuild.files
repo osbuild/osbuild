@@ -24,6 +24,18 @@ from osbuild.objectstore import StoreClient
 
 SCHEMA = r"""
 "additionalProperties": false,
+"definitions": {
+  "metadata": {
+    "description": "Additional metadata to forward to the stage",
+    "type": "object",
+    "additionalProperties": false,
+    "patternProperties": {
+      "^\\w+[.]{1}\\w+$": {
+        "additionalProperties": false
+      }
+    }
+  }
+},
 "required": ["type", "origin", "references"],
 "properties": {
   "type": {
@@ -50,16 +62,7 @@ SCHEMA = r"""
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "metadata": {
-              "description": "Additinal metadata to forward to the stage",
-              "type": "object",
-              "additionalProperties": false,
-              "patternProperties": {
-                "^\\w+[.]{1}\\w+$": {
-                  "additionalProperties": false
-                }
-              }
-            }
+            "metadata": {"$ref": "#/definitions/metadata"}
           }
         }
       }
@@ -90,7 +93,6 @@ def main():
         except subprocess.CalledProcessError as e:
             json.dump({"error": e.output}, sys.stdout)
             return 1
-
 
     reply = {
         "path": output,
