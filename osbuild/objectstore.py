@@ -111,16 +111,22 @@ class Object:
 
     @contextlib.contextmanager
     def read(self) -> str:
+        with self.tempdir("reader") as target:
+            with self.read_at(target) as path:
+                yield path
+
+    @contextlib.contextmanager
+    def read_at(self, target: PathLike) -> str:
         self._check_writable()
         self._check_writer()
-        with self.tempdir("reader") as target:
-            mount(self._path, target)
-            try:
-                self._readers += 1
-                yield target
-            finally:
-                umount(target)
-                self._readers -= 1
+
+        mount(self._path, target)
+        try:
+            self._readers += 1
+            yield target
+        finally:
+            umount(target)
+            self._readers -= 1
 
     def store_tree(self, destination: str):
         """Store the tree at destination and reset itself
@@ -219,6 +225,7 @@ class HostTree:
     `objectstore.Object` that can be used to read
     the host file-system.
     """
+
     def __init__(self, store):
         self.store = store
 
@@ -390,6 +397,18 @@ class StoreServer(api.BaseAPI):
         path = self._stack.enter_context(reader)
         sock.send({"path": path})
 
+    def _read_tree_at(self, msg, sock):
+        object_id = msg["object-id"]
+        target = msg["target"]
+        obj = self.store.get(object_id)
+        if not obj:
+            sock.send({"path": None})
+            return
+
+        reader = obj.read_at(target)
+        path = self._stack.enter_context(reader)
+        sock.send({"path": path})
+
     def _mkdtemp(self, msg, sock):
         args = {
             "suffix": msg.get("suffix"),
@@ -409,6 +428,8 @@ class StoreServer(api.BaseAPI):
     def _message(self, msg, _fds, sock):
         if msg["method"] == "read-tree":
             self._read_tree(msg, sock)
+        elif msg["method"] == "read-tree-at":
+            self._read_tree_at(msg, sock)
         elif msg["method"] == "mkdtemp":
             self._mkdtemp(msg, sock)
         elif msg["method"] == "source":
@@ -441,6 +462,18 @@ class StoreClient:
         msg = {
             "method": "read-tree",
             "object-id": object_id
+        }
+
+        self.client.send(msg)
+        msg, _, _ = self.client.recv()
+
+        return msg["path"]
+
+    def read_tree_at(self, object_id: str, target: str):
+        msg = {
+            "method": "read-tree-at",
+            "object-id": object_id,
+            "target": target
         }
 
         self.client.send(msg)
