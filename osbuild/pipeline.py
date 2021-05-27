@@ -70,12 +70,8 @@ class Stage:
             build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
             cm.enter_context(build_root)
 
-            sources_tmp = store.tempdir(prefix="osbuild-sources-output-")
-            sources_output = cm.enter_context(sources_tmp)
-
             args = {
                 "tree": "/run/osbuild/tree",
-                "sources": "/run/osbuild/sources",
                 "options": self.options,
                 "inputs": {},
                 "meta": {
@@ -84,8 +80,7 @@ class Stage:
             }
 
             ro_binds = [
-                f"{self.info.path}:/run/osbuild/bin/{self.name}",
-                f"{sources_output}:/run/osbuild/sources"
+                f"{self.info.path}:/run/osbuild/bin/{self.name}"
             ]
 
             storeapi = objectstore.StoreServer(store)
