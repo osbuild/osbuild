@@ -33,8 +33,9 @@ class Input:
     A single input with its corresponding options.
     """
 
-    def __init__(self, info, origin: str, options: Dict):
+    def __init__(self, info, name, origin: str, options: Dict):
         self.info = info
+        self.name = name
         self.origin = origin
         self.refs = {}
         self.options = options or {}
@@ -47,6 +48,7 @@ class Input:
     def calc_id(self):
         m = hashlib.sha256()
         m.update(json.dumps(self.info.name, sort_keys=True).encode())
+        m.update(json.dumps(self.name, sort_keys=True).encode())
         m.update(json.dumps(self.origin, sort_keys=True).encode())
         m.update(json.dumps(self.refs, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())

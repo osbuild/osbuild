@@ -60,7 +60,7 @@ class Stage:
         return m.hexdigest()
 
     def add_input(self, name, info, origin, options=None):
-        ip = Input(info, origin, options or {})
+        ip = Input(info, name, origin, options or {})
         self.inputs[name] = ip
         return ip
 
