@@ -70,30 +70,35 @@ class Stage:
             build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
             cm.enter_context(build_root)
 
+            inputs_tmpdir = store.tempdir(prefix="inputs-")
+            inputs_tmpdir = cm.enter_context(inputs_tmpdir)
+            inputs_mapped = "/run/osbuild/inputs"
+            inputs = {}
+
             args = {
                 "tree": "/run/osbuild/tree",
                 "options": self.options,
-                "inputs": {},
+                "paths": {
+                    "input": inputs_mapped
+                },
+                "inputs": inputs,
                 "meta": {
                     "id": self.id
                 }
             }
 
             ro_binds = [
-                f"{self.info.path}:/run/osbuild/bin/{self.name}"
+                f"{self.info.path}:/run/osbuild/bin/{self.name}",
+                f"{inputs_tmpdir}:{inputs_mapped}"
             ]
 
             storeapi = objectstore.StoreServer(store)
             cm.enter_context(storeapi)
 
             for key, ip in self.inputs.items():
-                path, data = ip.run(storeapi)
-
-                # bind mount the returned path into the container
-                mapped = f"/run/osbuild/inputs/{key}"
-                ro_binds += [f"{path}:{mapped}"]
-
-                args["inputs"][key] = {"path": mapped, "data": data}
+                path, data = ip.run(storeapi, inputs_tmpdir)
+                path = os.path.join(inputs_mapped, path)
+                inputs[key] = {"path": path, "data": data}
 
             api = API(args, monitor)
             build_root.register_api(api)

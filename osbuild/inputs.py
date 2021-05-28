@@ -25,6 +25,7 @@ import subprocess
 
 from typing import Dict, Optional, Tuple
 
+from osbuild.util.types import PathLike
 from .objectstore import StoreServer
 
 
@@ -54,12 +55,18 @@ class Input:
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def run(self, storeapi: StoreServer) -> Tuple[str, Dict]:
+    def run(self, storeapi: StoreServer, root: PathLike) -> Tuple[str, Dict]:
         name = self.info.name
+
+        target = os.path.join(root, self.name)
+        os.makedirs(target)
+
         msg = {
             # mandatory bits
             "origin": self.origin,
             "refs": self.refs,
+
+            "target": target,
 
             # global options
             "options": self.options,
@@ -97,6 +104,11 @@ class Input:
         if r.returncode != 0:
             raise RuntimeError(f"{name}: error {r.returncode}")
 
-        path, data = reply["path"], reply.get("data", {})
+        path, data = reply["path"], reply.get("data", None)
+
+        if not path.startswith(root):
+            raise RuntimeError(f"returned {path} has wrong prefix")
+
+        path = os.path.relpath(path, root)
 
         return path, data
