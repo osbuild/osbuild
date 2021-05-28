@@ -46,15 +46,11 @@ class Input:
 
     def calc_id(self):
         m = hashlib.sha256()
-        m.update(json.dumps(self.name, sort_keys=True).encode())
+        m.update(json.dumps(self.info.name, sort_keys=True).encode())
         m.update(json.dumps(self.origin, sort_keys=True).encode())
         m.update(json.dumps(self.refs, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
-
-    @property
-    def name(self) -> str:
-        return self.info.name
 
     def run(self, storeapi: StoreServer) -> Tuple[str, Dict]:
         name = self.info.name
