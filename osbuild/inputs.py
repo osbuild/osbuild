@@ -16,17 +16,16 @@ osbuild is the path. The input options are just passed to the
 `Input` as is and the result is forwarded to the `Stage`.
 """
 
-
+import abc
 import hashlib
-import importlib
 import json
 import os
-import subprocess
 
 from typing import Dict, Optional, Tuple
 
+from osbuild import host
 from osbuild.util.types import PathLike
-from .objectstore import StoreServer
+from .objectstore import StoreClient, StoreServer
 
 
 class Input:
@@ -55,13 +54,15 @@ class Input:
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def run(self, storeapi: StoreServer, root: PathLike) -> Tuple[str, Dict]:
-        name = self.info.name
+    def run(self,
+            mgr: host.ServiceManager,
+            storeapi: StoreServer,
+            root: PathLike) -> Tuple[str, Dict]:
 
         target = os.path.join(root, self.name)
         os.makedirs(target)
 
-        msg = {
+        args = {
             # mandatory bits
             "origin": self.origin,
             "refs": self.refs,
@@ -77,32 +78,8 @@ class Input:
             }
         }
 
-        # We want the `osbuild` python package that contains this
-        # very module, which might be different from the system wide
-        # installed one, to be accessible to the Input programs so
-        # we detect our origin and set the `PYTHONPATH` accordingly
-        modorigin = importlib.util.find_spec("osbuild").origin
-        modpath = os.path.dirname(modorigin)
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.path.dirname(modpath)
-
-        r = subprocess.run([self.info.path],
-                           env=env,
-                           input=json.dumps(msg),
-                           stdout=subprocess.PIPE,
-                           encoding="utf-8",
-                           check=False)
-
-        try:
-            reply = json.loads(r.stdout)
-        except ValueError:
-            raise RuntimeError(f"{name}: error: {r.stderr}") from None
-
-        if "error" in reply:
-            raise RuntimeError(f"{name}: " + reply["error"])
-
-        if r.returncode != 0:
-            raise RuntimeError(f"{name}: error {r.returncode}")
+        client = mgr.start(f"input/{self.name}", self.info.path)
+        reply = client.call("map", args)
 
         path, data = reply["path"], reply.get("data", None)
 
@@ -112,3 +89,29 @@ class Input:
         path = os.path.relpath(path, root)
 
         return path, data
+
+
+class InputService(host.Service):
+    """Input host service"""
+
+    @abc.abstractmethod
+    def map(self, store, origin, refs, target, options):
+        pass
+
+    def unmap(self):
+        pass
+
+    def stop(self):
+        self.unmap()
+
+    def dispatch(self, method: str, args, _fds):
+        if method == "map":
+            store = StoreClient(connect_to=args["api"]["store"])
+            r = self.map(store,
+                         args["origin"],
+                         args["refs"],
+                         args["target"],
+                         args["options"])
+            return r, None
+
+        raise host.ProtocolError("Unknown method")
