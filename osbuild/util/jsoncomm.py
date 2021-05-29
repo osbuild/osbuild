@@ -254,6 +254,24 @@ class Socket(contextlib.AbstractContextManager):
 
         return cls(sock, (unlink, path[1]))
 
+    @classmethod
+    def new_pair(cls, *, blocking=True):
+        """Create a connected socket pair
+
+        Create a pair of connected sockets and return both as a tuple.
+
+        Parameters
+        ----------
+        blocking
+            The blocking mode for the socket pair.
+        """
+        a, b = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+
+        a.setblocking(blocking)
+        b.setblocking(blocking)
+
+        return cls(a, None), cls(b, None)
+
     def fileno(self) -> int:
         assert self._socket is not None
         return self._socket.fileno()
