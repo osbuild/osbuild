@@ -176,3 +176,13 @@ class TestUtilJsonComm(unittest.TestCase):
 
         conn = listener.accept()
         self.assertIsNone(conn)
+
+    def test_socket_pair(self):
+        #
+        # Test creating a socket pair and sending, receiving of a simple message
+        a, b = jsoncomm.Socket.new_pair()
+
+        ping = {"osbuild": "yes"}
+        a.send(ping)
+        pong, _, _ = b.recv()
+        self.assertEqual(ping, pong)
