@@ -14,8 +14,8 @@ like `rpm.` to avoid namespace clashes. This is enforced via
 schema validation.
 """
 
+import os
 import sys
-import subprocess
 
 from osbuild import inputs
 
@@ -81,14 +81,7 @@ class FilesInput(inputs.InputService):
 
         source = store.source("org.osbuild.files")
         for checksum in refs:
-            subprocess.run(
-                [
-                    "ln",
-                    f"{source}/{checksum}",
-                    f"{target}/{checksum}",
-                ],
-                check=True,
-            )
+            os.link(f"{source}/{checksum}", f"{target}/{checksum}")
 
         reply = {
             "path": target,
