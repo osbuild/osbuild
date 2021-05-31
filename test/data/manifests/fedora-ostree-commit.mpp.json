@@ -2,9 +2,9 @@
   "pipeline": {
     "build": {
       "mpp-import-pipeline": {
-        "path": "f32-build.json"
+        "path": "f34-build.json"
       },
-      "runner": "org.osbuild.fedora32"
+      "runner": "org.osbuild.fedora34"
     },
     "stages": [
       {
@@ -15,12 +15,12 @@
           ],
           "mpp-depsolve": {
             "architecture": "x86_64",
-            "module-platform-id": "f32",
-            "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/",
+            "module-platform-id": "f34",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/",
             "repos": [
               {
                 "id": "default",
-                "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/"
+                "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
               }
             ],
             "packages": [
@@ -98,7 +98,7 @@
       "name": "org.osbuild.ostree.commit",
       "options": {
         "ref": "fedora/x86_64/osbuild",
-        "os_version": "32"
+        "os_version": "34"
       }
     }
   }

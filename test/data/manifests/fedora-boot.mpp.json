@@ -2,11 +2,18 @@
   "pipeline": {
     "build": {
       "mpp-import-pipeline": {
-        "path": "f32-build.json"
+        "path": "f34-build.json"
       },
-      "runner": "org.osbuild.fedora32"
+      "runner": "org.osbuild.fedora34"
     },
     "stages": [
+      {
+        "name": "org.osbuild.kernel-cmdline",
+        "options": {
+          "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+          "kernel_opts": "ro biosdevname=0 net.ifnames=0"
+        }
+      },
       {
         "name": "org.osbuild.rpm",
         "options": {
@@ -15,12 +22,12 @@
           ],
           "mpp-depsolve": {
             "architecture": "x86_64",
-            "module-platform-id": "f32",
-            "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/",
+            "module-platform-id": "f34",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/",
             "repos": [
               {
                 "id": "default",
-                "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/"
+                "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
               }
             ],
             "packages": [
@@ -63,7 +70,7 @@
           "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
           "kernel_opts": "ro biosdevname=0 net.ifnames=0",
           "legacy": "i386-pc",
-          "saved_entry": "ffffffffffffffffffffffffffffffff-5.6.6-300.fc32.x86_64"
+          "saved_entry": "ffffffffffffffffffffffffffffffff-5.11.12-300.fc34.x86_64"
         }
       },
       {

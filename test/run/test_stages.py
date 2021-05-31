@@ -233,7 +233,7 @@ class TestStages(test.TestBase):
         with self.osbuild as osb:
 
             for t in glob.glob(f"{testdir}/test_*.json"):
-                manifest = load_manifest("f32-base.json")
+                manifest = load_manifest("f34-base.json")
                 with open(t) as f:
                     check = json.load(f)
                 manifest["pipeline"]["stages"].append({

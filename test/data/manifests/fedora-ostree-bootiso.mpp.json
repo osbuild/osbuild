@@ -3,10 +3,10 @@
   "pipelines": [
     {
       "mpp-import-pipeline": {
-        "path": "f32-build-v2.json",
+        "path": "f34-build-v2.json",
         "id": "build"
       },
-      "runner": "org.osbuild.fedora32"
+      "runner": "org.osbuild.fedora34"
     },
     {
       "name": "ostree-tree",
@@ -25,12 +25,12 @@
               "origin": "org.osbuild.source",
               "mpp-depsolve": {
                 "architecture": "x86_64",
-                "module-platform-id": "f32",
-                "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/",
+                "module-platform-id": "f34",
+                "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/",
                 "repos": [
                   {
                     "id": "default",
-                    "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/"
+                    "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
                   }
                 ],
                 "packages": [
@@ -40,7 +40,7 @@
                   "kernel",
                   "dracut-config-generic", "dracut-network",
                   "rpm-ostree", "polkit", "lvm2",
-                  "chrony", "zram",
+                  "chrony", "zram-generator-defaults",
                   "cryptsetup", "pinentry",
                   "keyutils",
                   "e2fsprogs", "dosfstools",
@@ -96,7 +96,7 @@
           "type": "org.osbuild.systemd",
           "options": {
             "enabled_services": [
-              "NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service", "zram-swap.service"
+              "NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service"
             ]
           }
         },
@@ -147,7 +147,7 @@
           },
           "options": {
             "ref": "fedora/x86_64/osbuild",
-            "os_version": "32"
+            "os_version": "34"
           }
         }
       ]
@@ -164,12 +164,12 @@
               "origin": "org.osbuild.source",
               "mpp-depsolve": {
                 "architecture": "x86_64",
-                "module-platform-id": "f32",
-                "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/",
+                "module-platform-id": "f34",
+                "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/",
                 "repos": [
                   {
                     "id": "default",
-                    "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/"
+                    "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
                   }
                 ],
                 "packages": [
@@ -331,7 +331,7 @@
           "options": {
             "arch": "x86_64",
             "product": "Fedora-IoT",
-            "version": "32",
+            "version": "34",
             "variant": "osbuild",
             "final": true,
             "bugurl": "https://github.com/gicmo/ostree-osbuild-demo/issues"
@@ -341,7 +341,7 @@
           "type": "org.osbuild.dracut",
           "options": {
             "kernel": [
-              "5.6.6-300.fc32.x86_64"
+              "5.11.12-300.fc34.x86_64"
             ],
             "add_modules": [
               "anaconda",
@@ -452,10 +452,10 @@
           "options": {
             "product": {
               "name": "Fedora-IoT",
-              "version": "32"
+              "version": "34"
             },
-            "isolabel": "Fedora-32-X86_64",
-            "kernel": "5.6.6-300.fc32.x86_64",
+            "isolabel": "Fedora-34-X86_64",
+            "kernel": "5.11.12-300.fc34.x86_64",
             "efi": {
               "architectures": [
                 "IA32",
@@ -505,7 +505,7 @@
           },
           "options": {
             "filename": "fedora-ostree-boot.iso",
-            "volid": "Fedora-32-X86_64",
+            "volid": "Fedora-34-X86_64",
             "boot": {
               "image": "isolinux/isolinux.bin",
               "catalog": "isolinux/boot.cat"

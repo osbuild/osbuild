@@ -191,11 +191,11 @@ class TestAssemblers(test.TestBase):
                                                       1,
                                                       boot_partition=1)
                             if fs_type == "btrfs":
-                                l2hash = "daa74a424a41e2a13c6c4f6bada0e80d84a9865b12d3369470fc5e74004ed329"
+                                l2hash = "919aad44d37aa9fdbb8cb1bbd8ce2a44e64aee76f4dceb805eaab041b7f62348"
                             elif fs_type == "xfs":
-                                l2hash = "58ebc5a9b594607f49c290572e027c353a6359da83099020e6f3b9b1f22a897a"
+                                l2hash = "1729f531281e4c3cbcde2a39b587c9dd5334ea1335bb860905556d5b73603de6"
                             else:
-                                l2hash = "9b31c8fbc59602a38582988bf91c3948ae9c6f2a231ab505ea63a7005e302147"
+                                l2hash = "24c3ad6be9a5687d5140e0bf66d25953c4f0c7eeb6aaced4cc64685f5b3cfa9e"
                             self.assertGRUB2(device,
                                              "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
                                              l2hash,

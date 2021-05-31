@@ -213,11 +213,11 @@ $(TEST_MANIFESTS_GEN): %.json: %.mpp.json
 		| $(SRCDIR)/tools/mpp-import-pipeline.py >"$@" \
 			"--cwd=$(SRCDIR)/test/data/manifests"
 
-$(SRCDIR)/test/data/manifests/f32-base.json: $(SRCDIR)/test/data/manifests/f32-build.json
-$(SRCDIR)/test/data/manifests/fedora-boot.json: $(SRCDIR)/test/data/manifests/f32-build.json
-$(SRCDIR)/test/data/manifests/filesystem.json: $(SRCDIR)/test/data/manifests/f32-build.json
-$(SRCDIR)/test/data/manifests/fedora-container.json: $(SRCDIR)/test/data/manifests/f32-build-v2.json
-$(SRCDIR)/test/data/manifests/fedora-ostree-container.json: $(SRCDIR)/test/data/manifests/f32-build-v2.json
+$(SRCDIR)/test/data/manifests/f34-base.json: $(SRCDIR)/test/data/manifests/f34-build.json
+$(SRCDIR)/test/data/manifests/fedora-boot.json: $(SRCDIR)/test/data/manifests/f34-build.json
+$(SRCDIR)/test/data/manifests/filesystem.json: $(SRCDIR)/test/data/manifests/f34-build.json
+$(SRCDIR)/test/data/manifests/fedora-container.json: $(SRCDIR)/test/data/manifests/f34-build-v2.json
+$(SRCDIR)/test/data/manifests/fedora-ostree-container.json: $(SRCDIR)/test/data/manifests/f34-build-v2.json
 
 .PHONY: test-data
 test-data: $(TEST_MANIFESTS_GEN)
