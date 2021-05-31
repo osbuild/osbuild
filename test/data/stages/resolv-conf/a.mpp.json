@@ -2,9 +2,9 @@
   "pipeline": {
     "build": {
       "mpp-import-pipeline": {
-        "path": "../manifests/f32-build.json"
+        "path": "../manifests/f34-build.json"
       },
-      "runner": "org.osbuild.fedora32"
+      "runner": "org.osbuild.fedora34"
     },
     "stages": [
       {

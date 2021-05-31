@@ -1,11 +1,5 @@
 {
   "pipeline": {
-    "build": {
-      "mpp-import-pipeline": {
-        "path": "f32-build.json"
-      },
-      "runner": "org.osbuild.fedora32"
-    },
     "stages": [
       {
         "name": "org.osbuild.rpm",
@@ -15,19 +9,28 @@
           ],
           "mpp-depsolve": {
             "architecture": "x86_64",
-            "module-platform-id": "f32",
-            "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/",
+            "module-platform-id": "f34",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/",
             "repos": [
               {
                 "id": "default",
-                "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010/"
+                "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
               }
             ],
             "packages": [
-              "@core",
-              "dracut-config-generic",
+              "btrfs-progs",
+              "dnf",
+              "dosfstools",
+              "e2fsprogs",
               "grub2-pc",
-              "kernel"
+              "policycoreutils",
+              "python3-iniparse",
+              "qemu-img",
+              "rpm-ostree",
+              "systemd",
+              "tar",
+              "xfsprogs",
+              "xz"
             ]
           }
         }

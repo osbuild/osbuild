@@ -2,9 +2,9 @@
   "pipeline": {
     "build": {
       "mpp-import-pipeline": {
-        "path": "../manifests/f32-build.json"
+        "path": "../manifests/f34-build.json"
       },
-      "runner": "org.osbuild.fedora32"
+      "runner": "org.osbuild.fedora34"
     },
     "stages": [
       {
@@ -16,12 +16,12 @@
           ],
           "mpp-depsolve": {
             "architecture": "x86_64",
-            "module-platform-id": "f32",
-            "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010",
+            "module-platform-id": "f34",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/",
             "repos": [
               {
                 "id": "default",
-                "baseurl": "https://rpmrepo.osbuild.org/v1/anon/f32/f32-x86_64-fedora-20201010"
+                "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
               }
             ],
             "packages": [
@@ -35,7 +35,7 @@
         "name": "org.osbuild.dracut",
         "options": {
           "kernel": [
-            "5.6.6-300.fc32.x86_64"
+            "5.11.12-300.fc34.x86_64"
           ]
         }
       }
