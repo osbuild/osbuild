@@ -338,7 +338,12 @@ class ModuleInfo:
         # the top level schema node, since the schema inside the
         # stages is written as-if they were the root node and
         # so are the references
-        options = schema.get("properties", {}).get("options", {})
+        props = schema.get("properties", {})
+        if "definitions" in props:
+            schema["definitions"] = props["definitions"]
+            del props["definitions"]
+
+        options = props.get("options", {})
         if "definitions" in options:
             schema["definitions"] = options["definitions"]
             del options["definitions"]
