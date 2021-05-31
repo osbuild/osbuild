@@ -52,6 +52,11 @@ SCHEMA = r"""
         }
       }
     }
+  },
+  "source-origin": {
+    "type": "string",
+    "description": "When the origin of the input is a source",
+    "enum": ["org.osbuild.source"]
   }
 },
 "required": ["type", "origin", "references"],
@@ -61,8 +66,7 @@ SCHEMA = r"""
   },
   "origin": {
     "description": "The origin of the input (must be 'org.osbuild.source')",
-    "type": "string",
-    "enum": ["org.osbuild.source"]
+    "$ref": "#/definitions/source-origin"
   },
   "references": {
     "description": "Checksums of files to use as files input",
