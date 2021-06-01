@@ -1,0 +1,79 @@
+stages:
+  - init
+  - rpmbuild
+  - test
+  - finish
+
+.terraform:
+  after_script:
+    - schutzbot/update_github_status.sh update
+    - schutzbot/save_journal.sh
+  tags:
+    - terraform
+  artifacts:
+    paths:
+      - journal-log
+    when: always
+
+init:
+  stage: init
+  tags:
+    - shell
+  script:
+    - schutzbot/update_github_status.sh start
+
+RPM:
+  stage: rpmbuild
+  extends: .terraform
+  variables:
+    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
+  script:
+    - sh "schutzbot/mockbuild.sh"
+  parallel:
+    matrix:
+      - RUNNER:
+#          - aws/fedora-32-x86_64
+          - aws/fedora-33-x86_64
+#          - aws/fedora-33-aarch64
+#          - aws/fedora-34-x86_64
+#          - aws/fedora-34-aarch64
+#          - aws/rhel-8-x86_64
+#          - aws/rhel-8-aarch64
+#          - aws/centos-stream-8-x86_64
+#          - aws/centos-stream-8-aarch64
+#      - RUNNER:
+#          - aws/rhel-8.4-x86_64
+#          - aws/rhel-8.4-aarch64
+#        INTERNAL_NETWORK: ["true"]
+
+Testing:
+  stage: test
+  extends: .terraform
+  variables:
+    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/image_tests.sh
+  parallel:
+    matrix:
+      - RUNNER:
+#          - aws/fedora-32-x86_64
+          - aws/fedora-33-x86_64
+#          - aws/fedora-33-aarch64
+#          - aws/fedora-34-x86_64
+#          - aws/fedora-34-aarch64
+#          - aws/rhel-8-x86_64
+#          - aws/rhel-8-aarch64
+#          - aws/centos-stream-8-x86_64
+#          - aws/centos-stream-8-aarch64
+#      - RUNNER:
+#          - aws/rhel-8.4-x86_64
+#          - aws/rhel-8.4-aarch64
+#        INTERNAL_NETWORK: ["true"]
+
+finish:
+  stage: finish
+  tags:
+    - shell
+  script:
+    - schutzbot/update_github_status.sh finish

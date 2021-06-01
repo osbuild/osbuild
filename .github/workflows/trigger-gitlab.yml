@@ -1,0 +1,55 @@
+# inspired by rhinstaller/anaconda
+
+name: Trigger GitLab CI
+on: [push, pull_request_target]
+
+jobs:
+  pr-info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query author repository permissions
+        uses: octokit/request-action@v2.x
+        id: user_permission
+        with:
+          route: GET /repos/${{ github.repository }}/collaborators/${{ github.event.sender.login }}/permission
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # restrict running of tests to users with admin or write permission for the repository
+      # see https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#get-repository-permissions-for-a-user
+      # store output if user is allowed in allowed_user job output so it has to be checked in downstream job
+      - name: Check if user does have correct permissions
+        if: contains('admin write', fromJson(steps.user_permission.outputs.data).permission)
+        id: check_user_perm
+        run: |
+          echo "User '${{ github.event.sender.login }}' has permission '${{ fromJson(steps.user_permission.outputs.data).permission }}' allowed values: 'admin', 'write'"
+          echo "::set-output name=allowed_user::true"
+    outputs:
+      allowed_user: ${{ steps.check_user_perm.outputs.allowed_user }}
+
+  trigger-gitlab:
+    needs: pr-info
+    if: needs.pr-info.outputs.allowed_user == 'true'
+    runs-on: ubuntu-latest
+    env:
+      SCHUTZBOT_SSH_KEY: ${{ secrets.SCHUTZBOT_SSH_KEY }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          # otherwise we are testing target branch instead of the PR branch (see pull_request_target trigger)
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Push to gitlab
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SCHUTZBOT_SSH_KEY}" > ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          touch ~/.ssh/known_hosts
+          ssh-keyscan -t rsa gitlab.com >> ~/.ssh/known_hosts
+          git remote add ci git@gitlab.com:osbuild/ci/osbuild.git
+          if [ ${{ github.event.pull_request.number }} ]; then
+            git checkout -b PR-${{ github.event.pull_request.number }}
+          fi
+          git push -f ci

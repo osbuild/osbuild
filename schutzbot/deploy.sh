@@ -7,12 +7,18 @@ DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.co
 # Currently: osbuild-composer 29
 OSBUILD_COMPOSER_COMMIT=bb235deb6279a0886c0324d61a2511485e6b44f8
 
+# Different path if ran in gitlab CI
+extra_repo_path_segment="${EXTRA_REPO_PATH_SEGMENT:-}"
+
+# fallback for gitlab
+GIT_COMMIT="${GIT_COMMIT:-${CI_COMMIT_SHA}}"
+
 # Get OS details.
 source /etc/os-release
 ARCH=$(uname -m)
 
 # Register RHEL if we are provided with a registration script.
-if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     sudo chmod +x $RHN_REGISTRATION_SCRIPT
     sudo $RHN_REGISTRATION_SCRIPT
 fi
@@ -24,7 +30,7 @@ cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 sudo tee /etc/yum.repos.d/osbuild.repo << EOF
 [osbuild]
 name=osbuild ${GIT_COMMIT}
-baseurl=${DNF_REPO_BASEURL}/osbuild/${ID}-${VERSION_ID}/${ARCH}/${GIT_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/${extra_repo_path_segment}/osbuild/${ID}-${VERSION_ID}/${ARCH}/${GIT_COMMIT}
 enabled=1
 gpgcheck=0
 # Default dnf repo priority is 99. Lower number means higher priority.

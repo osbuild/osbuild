@@ -26,9 +26,12 @@ REPO_BUCKET=osbuild-composer-repos
 # Public URL for the S3 bucket with our artifacts.
 MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
 
+# Change location for rpms built by gitlab CI
+EXTRA_REPO_PATH_SEGMENT="${EXTRA_REPO_PATH_SEGMENT:-}"
+
 # Relative path of the repository – used for constructing both the local and
 # remote paths below, so that they're consistent.
-REPO_PATH=osbuild/${ID}-${VERSION_ID}/${ARCH}/${COMMIT}
+REPO_PATH=${EXTRA_REPO_PATH_SEGMENT}osbuild/${ID}-${VERSION_ID}/${ARCH}/${COMMIT}
 
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${REPO_PATH}
@@ -51,7 +54,7 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
 fi
 
 # Register RHEL if we are provided with a registration script.
-if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+if [[ $ID == "rhel" && $VERSION_ID == "8.3" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "🪙 Registering RHEL instance"
     sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
     sudo "$RHN_REGISTRATION_SCRIPT"
@@ -108,5 +111,5 @@ createrepo_c "${REPO_DIR}"
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"
 pushd repo
-    s3cmd --acl-public sync . s3://${REPO_BUCKET}/
+    s3cmd --acl-public put --recursive . s3://${REPO_BUCKET}/
 popd
