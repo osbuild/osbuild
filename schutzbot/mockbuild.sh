@@ -24,7 +24,7 @@ COMMIT=$(git rev-parse HEAD)
 REPO_BUCKET=osbuild-composer-repos
 
 # Public URL for the S3 bucket with our artifacts.
-MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com"
+MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3.amazonaws.com"
 
 # Relative path of the repository – used for constructing both the local and
 # remote paths below, so that they're consistent.
@@ -50,8 +50,9 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
-# Register RHEL if we are provided with a registration script.
-if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+# Register RHEL if we are provided with a registration script and intend to do that.
+REGISTER="${REGISTER:-'false'}"
+if [[ $REGISTER == "true" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "🪙 Registering RHEL instance"
     sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
     sudo "$RHN_REGISTRATION_SCRIPT"
