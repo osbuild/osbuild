@@ -80,10 +80,10 @@ SCHEMA = r"""
 def main():
     args = json.load(sys.stdin)
     refs = args["refs"]
+    target = args["target"]
 
     store = StoreClient(connect_to=args["api"]["store"])
     source = store.source("org.osbuild.files")
-    output = store.mkdtemp(prefix="files-input-")
 
     for checksum in refs:
         try:
@@ -91,7 +91,7 @@ def main():
                 [
                     "ln",
                     f"{source}/{checksum}",
-                    f"{output}/{checksum}",
+                    f"{target}/{checksum}",
                 ],
                 check=True,
             )
@@ -100,9 +100,9 @@ def main():
             return 1
 
     reply = {
-        "path": output,
+        "path": target,
         "data": {
-          "refs": refs
+            "refs": refs
         }
     }
 
