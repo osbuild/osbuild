@@ -2,6 +2,7 @@
 # Tests for the 'osbuild.objectstore' module.
 #
 
+import contextlib
 import os
 import shutil
 import tempfile
@@ -285,3 +286,63 @@ class TestObjectStore(unittest.TestCase):
             p = Path(path, "osbuild-test-file")
             with self.assertRaises(OSError):
                 p.touch()
+
+    # pylint: disable=too-many-statements
+    def test_store_server(self):
+
+        with contextlib.ExitStack() as stack:
+
+            store = objectstore.ObjectStore(self.store)
+            stack.enter_context(stack)
+
+            tmpdir = tempfile.TemporaryDirectory()
+            tmpdir = stack.enter_context(tmpdir)
+
+            server = objectstore.StoreServer(store)
+            stack.enter_context(server)
+
+            client = objectstore.StoreClient(server.socket_address)
+
+            have = client.source("org.osbuild.files")
+            want = os.path.join(self.store, "sources")
+            assert have.startswith(want)
+
+            tmp = client.mkdtemp(suffix="suffix", prefix="prefix")
+            assert tmp.startswith(store.tmp)
+            name = os.path.basename(tmp)
+            assert name.startswith("prefix")
+            assert name.endswith("suffix")
+
+            path = client.read_tree("42")
+            assert path is None
+
+            obj = store.new()
+            with obj.write() as path:
+                p = Path(path, "file.txt")
+                p.write_text("osbuild")
+
+                p = Path(path, "directory")
+                p.mkdir()
+
+            obj.id = "42"
+
+            mountpoint = Path(tmpdir, "mountpoint")
+            mountpoint.mkdir()
+
+            assert store.contains("42")
+            path = client.read_tree_at("42", mountpoint)
+            assert Path(path) == mountpoint
+            filepath = Path(mountpoint, "file.txt")
+            assert filepath.exists()
+            txt = filepath.read_text()
+            assert txt == "osbuild"
+
+            with self.assertRaises(RuntimeError):
+                nonexistent = os.path.join(tmpdir, "nonexistent")
+                _ = client.read_tree_at("42", nonexistent)
+
+            # The tree is being read via the client, should
+            # not be able to write to it
+            with self.assertRaises(ValueError):
+                with obj.write() as _:
+                    pass
