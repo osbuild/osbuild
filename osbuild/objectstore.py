@@ -126,11 +126,18 @@ class Object:
                 yield path
 
     @contextlib.contextmanager
-    def read_at(self, target: PathLike) -> str:
+    def read_at(self, target: PathLike, path: str = "/") -> str:
+        """Read the object or a part of it at given location
+
+        Map the tree or a part of it specified via `path` at the
+        specified path `target`.
+        """
         self._check_writable()
         self._check_writer()
 
-        mount(self._path, target)
+        path = os.path.join(self._path, path.lstrip("/"))
+
+        mount(path, target)
         try:
             self._readers += 1
             yield target
@@ -410,6 +417,7 @@ class StoreServer(api.BaseAPI):
     def _read_tree_at(self, msg, sock):
         object_id = msg["object-id"]
         target = msg["target"]
+        subtree = msg["subtree"]
 
         obj = self.store.get(object_id)
         if not obj:
@@ -417,7 +425,7 @@ class StoreServer(api.BaseAPI):
             return
 
         try:
-            reader = obj.read_at(target)
+            reader = obj.read_at(target, subtree)
             path = self._stack.enter_context(reader)
         # pylint: disable=broad-except
         except Exception as e:
@@ -486,11 +494,12 @@ class StoreClient:
 
         return msg["path"]
 
-    def read_tree_at(self, object_id: str, target: str):
+    def read_tree_at(self, object_id: str, target: str, path="/"):
         msg = {
             "method": "read-tree-at",
             "object-id": object_id,
-            "target": os.fspath(target)
+            "target": os.fspath(target),
+            "subtree": os.fspath(path)
         }
 
         self.client.send(msg)
