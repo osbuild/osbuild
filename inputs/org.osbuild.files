@@ -5,8 +5,8 @@ Inputs for individual files
 Provides all the files, named via their content hash, specified
 via `references` in a new directory.
 
-The returned data in `refs` is a dictionary where the keys are
-the content hash of a file and the values dictionaries with
+The returned data in `files` is a dictionary where the keys are
+paths to the provided files and the values dictionaries with
 metadata for it. The input itself currently does not set any
 metadata itself, but will forward any metadata set via the
 `metadata` property. Keys in that must start with a prefix,
@@ -86,7 +86,7 @@ class FilesInput(inputs.InputService):
         reply = {
             "path": target,
             "data": {
-                "refs": refs
+                "files": refs
             }
         }
         return reply
