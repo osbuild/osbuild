@@ -33,7 +33,8 @@ class Input:
     A single input with its corresponding options.
     """
 
-    def __init__(self, info, origin: str, options: Dict):
+    def __init__(self, name, info, origin: str, options: Dict):
+        self.name = name
         self.info = info
         self.origin = origin
         self.refs = {}
@@ -45,6 +46,11 @@ class Input:
         self.id = self.calc_id()
 
     def calc_id(self):
+
+        # NB: The input `name` is not included here on purpose since it
+        # is either prescribed by the stage itself and thus not actual
+        # parameter or arbitrary and chosen by the manifest generator
+        # and thus can be changed without affecting the contents
         m = hashlib.sha256()
         m.update(json.dumps(self.info.name, sort_keys=True).encode())
         m.update(json.dumps(self.origin, sort_keys=True).encode())
