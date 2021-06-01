@@ -1,0 +1,122 @@
+#!/usr/bin/python3
+"""
+Install the Z Initial Program Loader (zipl)
+
+This will install the Z Initial Program Loader for the
+specified `kernel`. The other required parameter is
+the `location`, which specifies is the offset of the
+partition containing `/boot` within the device that
+is specified via `disk`. Since the kernel and initrd
+are read, the file system tree needs to be mounted
+and thus the `root` mount point must be given.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "required": ["kernel", "location"],
+  "properties": {
+    "kernel": {
+      "type": "string"
+    },
+    "location": {
+      "type": "number"
+    },
+    "blocksize": {
+      "type": "number",
+      "default": 512
+    }
+  }
+},
+"devices": {
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["disk"],
+  "properties": {
+    "disk": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"mounts": {
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["root"],
+  "properties": {
+    "root": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
+def parse_blsfile(blsfile):
+    params = {}
+    with open(blsfile, "r") as bls:
+        for line in bls:
+            key, value = line.split(' ', 1)
+            params[key] = value.strip()
+    return params
+
+
+def find_kernel(root, kernel: str):
+    base = f"{root}/boot/loader/entries"
+    for dirent in os.scandir(base):
+        fn, ext = os.path.splitext(dirent.name)
+        if ext != ".conf" or fn.endswith("rescue"):
+            continue
+        blsfile = f"{base}/{dirent.name}"
+        params = parse_blsfile(blsfile)
+
+        version = params["version"]
+        if version != kernel:
+            continue
+
+        linux = root + params["linux"]
+        initrd = root + params["initrd"]
+        options = params.get("options", "")
+        return linux, initrd, options
+
+    raise ValueError(f"Unknown kernel: {kernel}")
+
+
+def main(paths, devices, options):
+    kver = options["kernel"]
+    location = options["location"]
+    blocksize = options.get("blocksize", 512)
+
+    root = paths["mounts"]
+    dev = paths["devices"]
+
+    disk = devices["disk"]
+    device = os.path.join(dev, disk["path"])
+
+    kernel, initrd, kopts = find_kernel(root, kver)
+
+    subprocess.run(["/usr/sbin/zipl",
+                    "--verbose",
+                    "--target", f"{root}/boot",
+                    "--image", kernel,
+                    "--ramdisk", initrd,
+                    "--parameters", kopts,
+                    "--targetbase", device,
+                    "--targettype", "SCSI",
+                    "--targetblocksize", str(blocksize),
+                    "--targetoffset", str(location)],
+                   check=True)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["paths"], args["devices"], args["options"])
+    sys.exit(r)
