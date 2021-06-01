@@ -1,18 +1,19 @@
 #!/bin/bash
 set -euxo pipefail
 
-DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
+DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
-# Currently: osbuild-composer 29
-OSBUILD_COMPOSER_COMMIT=bb235deb6279a0886c0324d61a2511485e6b44f8
+# Currently: ci: remove EXTRA_REPO_PATH_SEGMENT
+OSBUILD_COMPOSER_COMMIT=cca5c9fd4002a02ae509416a6cbc3e60e697e6dd
 
 # Get OS details.
 source /etc/os-release
 ARCH=$(uname -m)
 
-# Register RHEL if we are provided with a registration script.
-if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+# Register RHEL if we are provided with a registration script and intend to do that.
+REGISTER="${REGISTER:-'false'}"
+if [[ $REGISTER == "true" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     sudo chmod +x $RHN_REGISTRATION_SCRIPT
     sudo $RHN_REGISTRATION_SCRIPT
 fi
@@ -23,8 +24,8 @@ cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 # Set up dnf repositories with the RPMs we want to test
 sudo tee /etc/yum.repos.d/osbuild.repo << EOF
 [osbuild]
-name=osbuild ${GIT_COMMIT}
-baseurl=${DNF_REPO_BASEURL}/osbuild/${ID}-${VERSION_ID}/${ARCH}/${GIT_COMMIT}
+name=osbuild ${CI_COMMIT_SHA}
+baseurl=${DNF_REPO_BASEURL}/osbuild/${ID}-${VERSION_ID}/${ARCH}/${CI_COMMIT_SHA}
 enabled=1
 gpgcheck=0
 # Default dnf repo priority is 99. Lower number means higher priority.
