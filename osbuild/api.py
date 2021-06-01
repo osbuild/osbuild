@@ -249,6 +249,21 @@ def arguments(path="/run/osbuild/api/osbuild"):
         fd = msg["fd"]
         with os.fdopen(fds.steal(fd), encoding="utf-8") as f:
             data = json.load(f)
+
+        # Root relative paths: since paths are different on the
+        # host and in the container they are transmitted not as
+        # absolute but relative paths. For all items that have
+        # registered roots, re-root their path entries here
+        for name, root in data.get("paths", {}).items():
+            group = data.get(name)
+            if not group or not isinstance(group, dict):
+                continue
+            for item in group.values():
+                path = item.get("path")
+                if not path:
+                    continue
+                item["path"] = os.path.join(root, path)
+
         return data
 
 
