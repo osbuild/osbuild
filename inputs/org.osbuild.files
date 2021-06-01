@@ -15,13 +15,13 @@ schema validation.
 """
 
 import os
+import pathlib
 import sys
 
 from osbuild import inputs
 
 
 SCHEMA = r"""
-"additionalProperties": false,
 "definitions": {
   "metadata": {
     "description": "Additional metadata to forward to the stage",
@@ -32,6 +32,10 @@ SCHEMA = r"""
         "additionalProperties": false
       }
     }
+  },
+  "file": {
+    "description": "File to access with in a pipeline",
+    "type": "string"
   },
   "plain-ref": {
     "type": "array",
@@ -62,40 +66,115 @@ SCHEMA = r"""
     "type": "string",
     "description": "When the origin of the input is a source",
     "enum": ["org.osbuild.source"]
+  },
+  "pipeline-options": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "metadata": {
+        "$ref": "#/definitions/metadata"
+      },
+      "file": {
+        "$ref": "#/definitions/file"
+      }
+    }
+  },
+  "pipeline-object-ref": {
+    "type": "object",
+    "additionalProperties": false,
+    "minProperties": 1,
+    "patternProperties": {
+      ".*": {
+        "$ref": "#/definitions/pipeline-options"
+      }
+    }
+  },
+  "pipeline-origin": {
+    "type": "string",
+    "description": "When the origin of the input is a pipeline",
+    "enum": ["org.osbuild.pipeline"]
   }
 },
-"required": ["type", "origin", "references"],
-"properties": {
-  "type": {
-    "enum": ["org.osbuild.files"]
+"additionalProperties": true,
+"oneOf": [
+  {
+    "additionalProperties": false,
+    "required": ["type", "origin", "references"],
+    "properties": {
+      "type": {
+        "enum": ["org.osbuild.files"]
+      },
+      "origin": {
+        "description": "The org.osbuild.source origin case",
+        "$ref": "#/definitions/source-origin"
+      },
+      "references": {
+        "description": "Checksums of files to use as files input",
+        "oneOf": [
+          {"$ref": "#/definitions/plain-ref"},
+          {"$ref": "#/definitions/source-object-ref"}
+        ]
+      }
+    }
   },
-  "origin": {
-    "description": "The origin of the input (must be 'org.osbuild.source')",
-    "$ref": "#/definitions/source-origin"
-  },
-  "references": {
-    "description": "Checksums of files to use as files input",
-    "oneOf": [
-      {"$ref": "#/definitions/plain-ref"},
-      {"$ref": "#/definitions/source-object-ref"}
-    ]
+  {
+    "additionalProperties": false,
+    "required": ["type", "origin", "references"],
+    "properties": {
+      "type": {
+        "enum": ["org.osbuild.files"]
+      },
+      "origin": {
+        "description": "The org.osbuild.pipeline origin case",
+        "$ref": "#/definitions/pipeline-origin"
+      },
+      "references": {
+        "description": "References to pipelines",
+        "$ref": "#/definitions/pipeline-object-ref"
+      }
+    }
   }
-}
+]
 """
 
 
 class FilesInput(inputs.InputService):
 
-    def map(self, store, _origin, refs, target, _options):
+    @staticmethod
+    def map_pipeline_ref(store, ref, data, target):
+        filepath = data["file"].lstrip("/")
+
+        # prepare the mount point
+        filename = pathlib.Path(target, filepath)
+        os.makedirs(filename.parent, exist_ok=True)
+        filename.touch()
+
+        store.read_tree_at(ref, filename, filepath)
+
+        return filepath, data.get("metadata", {})
+
+    @staticmethod
+    def map_source_ref(source, ref, data, target):
+        os.link(f"{source}/{ref}", f"{target}/{ref}")
+        data = data.get("metadata", {})
+        return ref, data
+
+    def map(self, store, origin, refs, target, _options):
 
         source = store.source("org.osbuild.files")
-        for checksum in refs:
-            os.link(f"{source}/{checksum}", f"{target}/{checksum}")
+        files = {}
+
+        for ref, data in refs.items():
+            if origin == "org.osbuild.source":
+                ref, data = self.map_source_ref(source, ref, data, target)
+            else:
+                ref, data = self.map_pipeline_ref(store, ref, data, target)
+            files[ref] = data
 
         reply = {
             "path": target,
             "data": {
-                "files": refs
+                "files": files
             }
         }
         return reply
