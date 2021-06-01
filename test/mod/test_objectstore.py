@@ -337,9 +337,33 @@ class TestObjectStore(unittest.TestCase):
             txt = filepath.read_text()
             assert txt == "osbuild"
 
+            # check we can mount subtrees via `read_tree_at`
+
+            filemount = Path(tmpdir, "file")
+            filemount.touch()
+
+            path = client.read_tree_at("42", filemount, "/file.txt")
+            filepath = Path(path)
+            assert filepath.is_file()
+            txt = filepath.read_text()
+            assert txt == "osbuild"
+
+            dirmount = Path(tmpdir, "dir")
+            dirmount.mkdir()
+
+            path = client.read_tree_at("42", dirmount, "/directory")
+            dirpath = Path(path)
+            assert dirpath.is_dir()
+
+            # check proper exceptions are raised for non existent
+            # mount points and sub-trees
+
             with self.assertRaises(RuntimeError):
                 nonexistent = os.path.join(tmpdir, "nonexistent")
                 _ = client.read_tree_at("42", nonexistent)
+
+            with self.assertRaises(RuntimeError):
+                _ = client.read_tree_at("42", tmpdir, "/nonexistent")
 
             # The tree is being read via the client, should
             # not be able to write to it
