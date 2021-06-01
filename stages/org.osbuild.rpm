@@ -213,8 +213,8 @@ def parse_input(inputs):
     packages = inputs["packages"]
     path = packages["path"]
     data = packages["data"]
-    refs = data["refs"]
-    return path, refs
+    files = data["files"]
+    return path, files
 
 
 def main(tree, inputs, options):
@@ -231,13 +231,13 @@ def main(tree, inputs, options):
             ], check=True)
         print("imported gpg key")
 
-    for checksum, data in packages.items():
+    for filename, data in packages.items():
         if data.get("rpm.check_gpg"):
             subprocess.run([
                 "rpmkeys",
                 "--root", tree,
                 "--checksig",
-                checksum
+                filename
             ], cwd=pkgpath, stdout=subprocess.DEVNULL, check=True)
 
     script = f"""
