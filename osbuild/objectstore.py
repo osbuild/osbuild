@@ -31,7 +31,17 @@ def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
         args += ["--make-private"]
     if options:
         args += ["-o", ",".join(options)]
-    subprocess.run(["mount"] + args + [source, target], check=True)
+
+    r = subprocess.run(["mount"] + args + [source, target],
+                       stderr=subprocess.STDOUT,
+                       stdout=subprocess.PIPE,
+                       encoding="utf-8",
+                       check=False)
+
+    if r.returncode != 0:
+        code = r.returncode
+        msg = r.stdout.strip()
+        raise RuntimeError(f"{msg} (code: {code})")
 
 
 def umount(target, lazy=True):
