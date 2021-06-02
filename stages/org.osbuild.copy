@@ -1,0 +1,133 @@
+#!/usr/bin/python3
+"""
+Copy items
+
+Stage to copy items, that is files or trees, from inputs to mount
+points or the tree. Multiple items can be copied. The source and
+destination is an url. Supported locations ('schemes') are `tree`,
+`mount` and `input`.
+The path format follows the rsync convention that if the paths
+ends with a slash `/` the content of that directory is copied not
+the directory itself.
+"""
+
+import os
+import subprocess
+import sys
+
+from typing import Dict
+from urllib.parse import urlparse, ParseResult
+
+import osbuild.api
+
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "required": ["paths"],
+  "properties": {
+    "paths": {
+    "description": "Array of items to copy",
+    "type": "array",
+    "minItems": 1,
+    "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "The source",
+          "pattern": "^input:\/\/[^\/]+\/"
+        },
+        "to": {
+          "type": "string",
+          "description": "The destination",
+          "pattern": "^(tree|mount):\/\/[^\/]+\/"
+        }
+      }
+    }
+  }
+  }
+},
+"devices": {
+  "type": "object",
+  "additionalProperties": true
+},
+"mounts": {
+  "type": "object",
+  "additionalProperties": true
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": true
+}
+"""
+
+
+def parse_mount(url: ParseResult, args: Dict):
+    name = url.netloc
+    if name:
+        root = args["mounts"].get(name, {}).get("path")
+        if not root:
+            raise ValueError(f"Unknown mount '{root}'")
+    else:
+        root = args["paths"]["mounts"]
+
+    return root
+
+
+def parse_input(url: ParseResult, args: Dict):
+    name = url.netloc
+    root = args["inputs"].get(name, {}).get("path")
+    if root is None:
+        raise ValueError(f"Unknown input '{root}'")
+
+    return os.path.join(root, url.path.lstrip("/"))
+
+
+def parse_location(location, args):
+    url = urlparse(location)
+
+    scheme = url.scheme
+    if scheme == "tree":
+        root = args["tree"]
+    elif scheme == "mount":
+        root = parse_mount(url, args)
+    elif scheme == "input":
+        root = parse_input(url, args)
+    else:
+        raise ValueError(f"Unsupported scheme '{scheme}'")
+
+    assert url.path.startswith("/")
+
+    path = os.path.relpath(url.path, "/")
+    path = os.path.join(root, path)
+    path = os.path.normpath(path)
+
+    if url.path.endswith("/"):
+        path = os.path.join(path, ".")
+
+    return path
+
+
+def main(args, options):
+    items = options["paths"]
+
+    for path in items:
+        src = parse_location(path["from"], args)
+        dst = parse_location(path["to"], args)
+
+        print(f"copying '{src}' -> '{dst}'")
+
+        subprocess.run(["cp", "-a", "--reflink=auto",
+                        src, dst],
+                       check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    _args = osbuild.api.arguments()
+    r = main(_args, _args["options"])
+    sys.exit(r)
