@@ -40,3 +40,14 @@ class TestOSTree(test.TestBase):
 
                 bootiso = os.path.join(temp_dir, "bootiso", "fedora-ostree-boot.iso")
                 self.assertTrue(os.path.exists(bootiso))
+
+                # build a qemu image
+                manifest = os.path.join(self.locate_test_data(),
+                                        "manifests/fedora-ostree-image.json")
+                osb.compile_file(manifest,
+                                 output_dir=temp_dir,
+                                 checkpoints=["build", "ostree-tree", "ostree-commit"],
+                                 exports=["qcow2"])
+
+                bootiso = os.path.join(temp_dir, "qcow2", "disk.qcow2")
+                self.assertTrue(os.path.exists(bootiso))
