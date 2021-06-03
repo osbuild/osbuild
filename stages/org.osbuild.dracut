@@ -144,7 +144,7 @@ def main(tree, options):
     include = options.get("include", [])
     install = options.get("install", [])
     early_microcode = options.get("early_microcode", False)
-    reproducible = options.get("reproducible")
+    reproducible = options.get("reproducible", True)
     extra = options.get("extra", [])
 
     # initrds may have already been created, force the recreation
@@ -195,6 +195,7 @@ def main(tree, options):
 
         subprocess.run(["/usr/sbin/chroot", tree,
                         "/usr/bin/dracut",
+                        "--no-hostonly",
                         "--kver", kver]
                        + opts,
                        check=True)
