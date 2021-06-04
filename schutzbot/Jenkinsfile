@@ -84,17 +84,6 @@ pipeline {
                         sh "schutzbot/mockbuild.sh"
                     }
                 }
-                stage('RHEL 8.4') {
-                    agent { label "rhel84cloudbase && x86_64 && psi" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        RHEL84_NIGHTLY_REPO = credentials('rhel84-nightly-repo')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/mockbuild.sh"
-                    }
-                }
                 stage('RHEL 8.5') {
                     agent { label "rhel85cloudbase && x86_64 && psi" }
                     environment {
@@ -191,26 +180,6 @@ pipeline {
                     post {
                         always {
                             preserve_logs('rhel8-image')
-                        }
-                    }
-                }
-                stage('RHEL 8.4') {
-                    agent { label "rhel84cloudbase && x86_64 && psi" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        DISTRO_CODE = "rhel8"
-                        AWS_IMAGE_TEST_CREDS = credentials('aws-credentials-osbuild-image-test')
-                        AZURE_CREDS = credentials('azure')
-                        OPENSTACK_CREDS = credentials('psi-openstack-creds')
-                        VCENTER_CREDS = credentials('vmware-vcenter-credentials')
-                    }
-                    steps {
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('rhel84-image')
                         }
                     }
                 }
