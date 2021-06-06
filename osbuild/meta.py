@@ -301,8 +301,7 @@ class ModuleInfo:
             raw = self.opts[fallback]
         if not raw:
             raise ValueError(f"Unsupported version: {version}")
-
-        return json.loads("{" + raw + "}")
+        return raw
 
     def _make_options(self, version):
         if version == "2":
@@ -310,11 +309,11 @@ class ModuleInfo:
             if not raw:
                 return self._make_options("1")
         elif version == "1":
-            raw = '"options": {' + self.opts["1"] + '}'
+            raw = {"options": self.opts["1"]}
         else:
             raise ValueError(f"Unsupported version: {version}")
 
-        return json.loads("{" + raw + "}")
+        return raw
 
     def get_schema(self, version="1"):
         schema = {
@@ -347,14 +346,27 @@ class ModuleInfo:
         return schema
 
     @classmethod
+    def _parse_schema(cls, klass, name, node):
+        if not node:
+            return {}
+
+        value = node.value
+        if not isinstance(value, ast.Str):
+            return {}
+
+        try:
+            return json.loads("{" + value.s + "}")
+        except json.decoder.JSONDecodeError as e:
+            msg = "Invalid schema: " + e.msg
+            line = e.doc.splitlines()[e.lineno - 1]
+            fullname = cls.MODULES[klass] + "/" + name
+            lineno = e.lineno + node.lineno - 1
+            detail = fullname, lineno, e.colno, line
+            raise SyntaxError(msg, detail) from None
+
+    @classmethod
     def load(cls, root, klass, name) -> Optional["ModuleInfo"]:
         names = ["SCHEMA", "SCHEMA_2"]
-
-        def value(a):
-            v = a.value
-            if isinstance(v, ast.Str):
-                return v.s
-            return ""
 
         def filter_type(lst, target):
             return [x for x in lst if isinstance(x, target)]
@@ -379,13 +391,20 @@ class ModuleInfo:
         doclist = docstring.split("\n")
 
         assigns = filter_type(tree.body, ast.Assign)
-        targets = [(t, a) for a in assigns for t in targets(a)]
-        values = {k: value(v) for k, v in targets if k in names}
+        values = {
+            t: a
+            for a in assigns
+            for t in targets(a)
+            if t in names
+        }
+
+        def parse_schema(node):
+            return cls._parse_schema(klass, name, node)
 
         info = {
             'schema': {
-                "1": values.get("SCHEMA", ""),
-                "2": values.get("SCHEMA_2")
+                "1": parse_schema(values.get("SCHEMA")),
+                "2": parse_schema(values.get("SCHEMA_2")),
             },
             'desc': doclist[0],
             'info': "\n".join(doclist[1:])
