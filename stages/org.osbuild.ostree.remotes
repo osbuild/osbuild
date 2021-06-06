@@ -1,0 +1,102 @@
+#!/usr/bin/python3
+"""
+Configure OSTree remotes for a repository.
+"""
+
+
+import os
+import sys
+import subprocess
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["repo"],
+"properties": {
+  "repo": {
+    "description": "Location of the OSTree repo.",
+    "type": "string"
+  },
+  "remotes": {
+    "description": "Configure remotes for the system repository",
+    "type": "array",
+    "items": {
+      "description": "Description of a remote",
+      "type": "object",
+      "required": ["name", "url"],
+      "properties": {
+        "name": {
+          "description": "Identifier for the remote",
+          "type": "string"
+        },
+        "url": {
+          "description": "URL of the remote",
+          "type": "string"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "description": "Configured branches for the remote",
+            "type": "string"
+          }
+        },
+        "gpgkeys": {
+          "type": "array",
+          "items": {
+            "description": "GPG keys for the remote to verify commits",
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def ostree(*args, _input=None, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   input=_input,
+                   check=True)
+
+
+def main(tree, options):
+    repo = options["repo"]
+    remotes = options.get("remotes", [])
+
+    target = os.path.join(tree, repo.lstrip("/"))
+
+    for remote in remotes:
+        name = remote["name"]
+        url = remote["url"]
+        branches = remote.get("branches", [])
+        gpgkeys = remote.get("gpgkeys", [])
+
+        extra_args = []
+        if not gpgkeys:
+            extra_args += ["--no-gpg-verify"]
+
+        ostree("remote", "add",
+               "--if-not-exists",
+               *extra_args,
+               name, url,
+               *branches,
+               repo=target)
+
+        for key in gpgkeys:
+            ostree("remote", "gpg-import", "--stdin", name,
+                   repo=target,
+                   _input=key)
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"],
+             stage_args["options"])
+    sys.exit(r)
