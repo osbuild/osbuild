@@ -1,0 +1,165 @@
+#!/usr/bin/python3
+"""
+Deploy an OStree commit
+
+Create an OSTree deployment[1] for a given ref.
+
+Since OStree internally uses a hardlink farm to create the file system tree
+for the deployment from the commit data, the mountpoints for the final image
+need to be supplied via the `mounts` option, as hardlinks must not span
+across file systems and therefore the boundaries need to be known when doing
+the deployment.
+
+Creating a deployment also entails generating the Boot Loader Specification
+entries to boot the system, which contain this the kernel command line.
+The `rootfs` option can be used to indicate the root file system, containing
+the sysroot and the deployments. Additional kernel options can be passed via
+`kernel_opts`.
+
+[1] https://ostree.readthedocs.io/en/latest/manual/deployment/
+"""
+
+import contextlib
+import os
+import sys
+import subprocess
+
+import osbuild.api
+
+
+SCHEMA = """
+"required": ["osname", "rootfs", "ref"],
+"properties": {
+  "mounts": {
+    "description": "Mount points of the final file system",
+    "type": "array",
+    "items": {
+      "description": "Description of one mount point",
+      "type": "string"
+    }
+  },
+  "osname": {
+    "description": "Name of the stateroot to be used in the deployment",
+    "type": "string"
+  },
+  "kernel_opts": {
+    "description": "Additional kernel command line options",
+    "type": "array",
+    "items": {
+      "description": "A single kernel command line option",
+      "type": "string"
+    }
+  },
+  "ref": {
+    "description": "OStree ref to use for the deployment",
+    "type": "string"
+  },
+  "rootfs": {
+    "description": "Identifier to locate the root file system",
+    "type": "object",
+    "oneOf": [{
+      "required": ["uuid"]
+    }, {
+      "required": ["label"]
+    }],
+    "properties": {
+      "label": {
+        "description": "Identify the root file system by label",
+        "type": "string"
+      },
+      "uuid": {
+        "description": "Identify the root file system by UUID",
+        "type": "string"
+      }
+    }
+  }
+}
+"""
+
+
+def ostree(*args, _input=None, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   input=_input,
+                   check=True)
+
+
+class MountGuard(contextlib.AbstractContextManager):
+    def __init__(self):
+        self.mounts = []
+
+    def mount(self, source, target, bind=True, ro=False, mode="0755"):
+        options = []
+        if bind:
+            options += ["bind"]
+        if ro:
+            options += ["ro"]
+        if mode:
+            options += [mode]
+
+        args = ["--make-private"]
+        if options:
+            args += ["-o", ",".join(options)]
+
+        subprocess.run(["mount"] + args + [source, target], check=True)
+        self.mounts += [{"source": source, "target": target}]
+
+    def umount(self):
+
+        while self.mounts:
+            mount = self.mounts.pop()  # FILO: get the last mount
+            target = mount["target"]
+            # The sync should in theory not be needed but in rare
+            # cases `target is busy` error has been spotted.
+            # Calling  `sync` does not hurt so we keep it for now.
+            subprocess.run(["sync", "-f", target], check=True)
+            subprocess.run(["umount", target], check=True)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.umount()
+
+
+def make_fs_identifier(desc):
+    for key in ["uuid", "label"]:
+        val = desc.get(key)
+        if val:
+            return f"{key.upper()}={val}"
+    raise ValueError("unknown rootfs type")
+
+
+def main(tree, options):
+    osname = options["osname"]
+    rootfs = options.get("rootfs")
+    mounts = options.get("mounts", [])
+    kopts = options.get("kernel_opts", [])
+    ref = options["ref"]
+
+    kargs = []
+
+    if rootfs:
+        rootfs_id = make_fs_identifier(rootfs)
+        kargs += [f"--karg=root={rootfs_id}"]
+
+    for opt in kopts:
+        kargs += [f"--karg-append={opt}"]
+
+    with MountGuard() as mounter:
+        for mount in mounts:
+            path = mount.lstrip("/")
+            path = os.path.join(tree, path)
+            mounter.mount(path, path)
+
+        ostree("admin", "deploy", ref,
+               *kargs,
+               sysroot=tree,
+               os=osname)
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"],
+             stage_args["options"])
+    sys.exit(r)
