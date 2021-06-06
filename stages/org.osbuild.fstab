@@ -2,24 +2,53 @@
 """
 Create /etc/fstab entries for filesystems
 
-Create /etc/fstab entries for the given `filesystems`.
-
 Each filesystem item must have at least `uuid` or `label` and
 a `path` (mount point).
 
 This stage replaces /etc/fstab, removing any existing entries.
+
+NB: The ostree configuration options are experimental and might
+be replaced with a different mechanism in the near future.
 """
 
 
 import sys
 
 import osbuild.api
+from osbuild.util import ostree
 
 
 SCHEMA = """
 "additionalProperties": false,
 "required": ["filesystems"],
 "properties": {
+  "ostree": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["deployment"],
+    "properties": {
+      "deployment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["osname","ref"],
+        "properties": {
+          "osname": {
+            "description": "Name of the stateroot to be used in the deployment",
+            "type": "string"
+          },
+          "ref": {
+            "description": "OStree ref to create and use for deployment",
+            "type": "string"
+          },
+          "serial": {
+            "description": "The deployment serial (usually '0')",
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    }
+  },
   "filesystems": {
     "type": "array",
     "description": "array of filesystem objects",
@@ -72,8 +101,23 @@ SCHEMA = """
 
 def main(tree, options):
     filesystems = options["filesystems"]
+    ostree_options = options.get("ostree")
 
-    with open(f"{tree}/etc/fstab", "w") as f:
+    path = f"{tree}/etc/fstab"
+
+    if ostree_options:
+        deployment = ostree_options["deployment"]
+        osname = deployment["osname"]
+        ref = deployment["ref"]
+        serial = deployment.get("serial", 0)
+
+        root = ostree.deployment_path(tree, osname, ref, serial)
+
+        print(f"ostree support active: {root}")
+
+        path = f"{root}/etc/fstab"
+
+    with open(path, "w") as f:
         for filesystem in filesystems:
             uuid = filesystem.get("uuid")
             path = filesystem["path"]
