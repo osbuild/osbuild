@@ -1,0 +1,49 @@
+#!/usr/bin/python3
+"""
+Initialize a new stateroot for a new OS
+
+Initializes a new stateroot (see [1]) for the OS with the
+name `osname`.
+
+[1] https://ostree.readthedocs.io/en/latest/manual/deployment/
+"""
+
+import sys
+import subprocess
+
+import osbuild.api
+
+SCHEMA = """
+"required": ["osname"],
+"properties": {
+  "osname": {
+    "description": "Name of the stateroot to be used in the deployment",
+    "type": "string"
+  }
+}
+"""
+
+
+def ostree(*args, _input=None, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   input=_input,
+                   check=True)
+
+
+def main(tree, options):
+    osname = options["osname"]
+
+    ostree("admin", "os-init", osname, sysroot=tree)
+
+    return 0
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"],
+             stage_args["options"])
+    sys.exit(r)
