@@ -1,0 +1,41 @@
+#!/usr/bin/python3
+"""
+Initialize a new root file system
+
+Creates the basic file system layout for an OSTree based system.
+"""
+
+
+import sys
+import subprocess
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false
+"""
+
+
+def ostree(*args, _input=None, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   input=_input,
+                   check=True)
+
+
+def main(tree):
+
+    ostree("admin", "init-fs", "--modern", tree,
+           sysroot=tree)
+
+    return 0
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"])
+    sys.exit(r)
