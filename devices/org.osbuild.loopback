@@ -1,0 +1,133 @@
+#!/usr/bin/python3
+"""
+Loopback device host service
+
+This service can be used to expose a file or a subset of it as a
+device node. The file is specified via the `filename`, and the
+subset can be specified via `offset` and `size`.
+The resulting device name is returned together with the device
+node numbers (`major`, `minor`). The device is closed when the
+service is shut down.
+A typical use case is formatting the file or a partition in the
+file with a file system or mounting a previously created file
+system contained in the file.
+"""
+
+
+import argparse
+import errno
+import os
+import sys
+
+from typing import Dict
+
+from osbuild import devices
+from osbuild import loop
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["filename"],
+"properties": {
+  "filename": {
+    "type": "string",
+    "description": "File to associate with the loopback device"
+  },
+  "start": {
+    "type": "number",
+    "description": "Start of the data segment (in sectors)",
+    "default": 0
+  },
+  "size": {
+    "type": "number",
+    "description": "Size limit of the data segment (in sectors)"
+  },
+  "sector-size": {
+    "type": "number",
+    "description": "Sector size (in bytes)",
+    "default": 512
+  }
+}
+"""
+
+
+class LoopbackService(devices.DeviceService):
+
+    def __init__(self, args: argparse.Namespace):
+        super().__init__(args)
+        self.lo = None
+        self.ctl = loop.LoopControl()
+
+    def make_loop(self, fd: int, offset, sizelimit):
+        lo = loop.Loop(self.ctl.get_unbound())
+
+        if not sizelimit:
+            stat = os.fstat(fd)
+            sizelimit = stat.st_size - offset
+        else:
+            sizelimit *= self.sector_size
+
+        while True:
+            try:
+                lo.set_fd(fd)
+            except OSError as e:
+                lo.close()
+                if e.errno == errno.EBUSY:
+                    continue
+                raise e
+            # `set_status` returns EBUSY when the pages from the previously
+            # bound file have not been fully cleared yet.
+            try:
+                lo.set_status(offset=offset,
+                              sizelimit=sizelimit,
+                              autoclear=True)
+            except BlockingIOError:
+                lo.clear_fd()
+                lo.close()
+                continue
+            break
+
+        return lo
+
+    def open(self, devpath: str, tree: str, options: Dict):
+        filename = options["filename"]
+        self.sector_size = options.get("sector-size", 512)
+        start = options.get("start", 0) * self.sector_size
+        size = options.get("size")
+
+        path = os.path.join(tree, filename.lstrip("/"))
+
+        with open(path, "r+b") as fd:
+            self.lo = self.make_loop(fd.fileno(), start, size)
+
+        dir_fd = -1
+        try:
+            dir_fd = os.open(devpath, os.O_CLOEXEC | os.O_PATH)
+            self.lo.mknod(dir_fd)
+        finally:
+            if dir_fd > -1:
+                os.close(dir_fd)
+
+        res = {
+            "path": self.lo.devname,
+            "node": {
+                "major": self.lo.LOOP_MAJOR,
+                "minor": self.lo.minor,
+            }
+        }
+
+        return res
+
+    def close(self):
+        if self.lo:
+            self.lo.close()
+            self.lo = None
+
+
+def main():
+    service = LoopbackService.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()
