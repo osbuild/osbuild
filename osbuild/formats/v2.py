@@ -3,7 +3,7 @@
 Second, and current, version of the manifest description
 """
 from typing import Dict
-from osbuild.meta import Index, ValidationResult
+from osbuild.meta import Index, ModuleInfo, ValidationResult
 from ..inputs import Input
 from ..pipeline import Manifest, Pipeline, Stage, detect_host_runner
 from ..sources import Source
@@ -301,11 +301,17 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
     schema = index.get_schema("Manifest", version="2")
     result = schema.validate(manifest)
 
-    def validate_input(ip, path):
-        name = ip["type"]
-        schema = index.get_schema("Input", name, version="2")
-        res = schema.validate(ip)
+    def validate_module(mod, klass, path):
+        name = mod["type"]
+        schema = index.get_schema(klass, name, version="2")
+        res = schema.validate(mod)
         result.merge(res, path=path)
+
+    def validate_stage_modules(klass, stage, path):
+        group = ModuleInfo.MODULES[klass]
+        items = stage.get(group, {})
+        for name, mod in items.items():
+            validate_module(mod, klass, path + [group, name])
 
     def validate_stage(stage, path):
         name = stage["type"]
@@ -313,9 +319,7 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
         res = schema.validate(stage)
         result.merge(res, path=path)
 
-        inputs = stage.get("inputs", {})
-        for name, ip in inputs.items():
-            validate_input(ip, path + ["inputs", name])
+        validate_stage_modules("Input", stage, path)
 
     def validate_pipeline(pipeline, path):
         stages = pipeline.get("stages", [])
