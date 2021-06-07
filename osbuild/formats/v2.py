@@ -33,13 +33,13 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         desc = {
             "type": ip.info.name,
             "origin": origin,
-            }
+        }
         if ip.options:
             desc["options"] = ip.options
 
         refs = {}
         for name, ref in ip.refs.items():
-            if  origin == "org.osbuild.pipeline":
+            if origin == "org.osbuild.pipeline":
                 name = pipeline_ref(name)
             refs[name] = ref
 
