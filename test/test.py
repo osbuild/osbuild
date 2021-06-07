@@ -217,14 +217,12 @@ class OSBuild(contextlib.AbstractContextManager):
     when exiting.
     """
 
-    _unittest = None
     _cache_from = None
 
     _exitstack = None
     _cachedir = None
 
-    def __init__(self, unit_test, cache_from=None):
-        self._unittest = unit_test
+    def __init__(self, *, cache_from=None):
         self._cache_from = cache_from
 
     def __enter__(self):
@@ -331,7 +329,7 @@ class OSBuild(contextlib.AbstractContextManager):
             if check:
                 raise subprocess.CalledProcessError(p.returncode, cmd_args, data_stdout, data_stderr)
             self._print_result(p.returncode, data_stdout, data_stderr)
-            self._unittest.assertEqual(p.returncode, 0)
+            assert p.returncode == 0
 
         return json.loads(data_stdout)
 

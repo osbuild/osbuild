@@ -25,7 +25,7 @@ class TestAssemblers(test.TestBase):
         super().setUpClass()
 
     def setUp(self):
-        self.osbuild = test.OSBuild(self)
+        self.osbuild = test.OSBuild()
 
     @contextlib.contextmanager
     def run_assembler(self, osb, name, options, output_path):
@@ -223,7 +223,7 @@ class TestAssemblers(test.TestBase):
                                         options,
                                         filename) as (tree, image):
                     output = subprocess.check_output(["file", "--mime-type", image], encoding="utf-8")
-                    _, mimetype = output.strip().split(": ") # "filename: mimetype"
+                    _, mimetype = output.strip().split(": ")  # "filename: mimetype"
                     self.assertIn(mimetype, expected_mimetypes)
 
                     if compression:
@@ -244,6 +244,7 @@ class TestAssemblers(test.TestBase):
                         self.assertEqual(diff["added_files"], [])
                         self.assertEqual(diff["deleted_files"], [])
                         self.assertEqual(diff["differences"], {})
+
 
 @contextlib.contextmanager
 def loop_create_device(ctl, fd, offset=None, sizelimit=None):

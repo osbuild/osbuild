@@ -150,7 +150,7 @@ class TestStages(test.TestBase):
             shutil.rmtree(cls.store)
 
     def setUp(self):
-        self.osbuild = test.OSBuild(self, cache_from=self.store)
+        self.osbuild = test.OSBuild(cache_from=self.store)
 
     def run_stage_diff_test(self, test_dir: str):
         with self.osbuild as osb:

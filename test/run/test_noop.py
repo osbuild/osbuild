@@ -33,9 +33,10 @@ NOOP_V2 = {
     ]
 }
 
+
 class TestNoop(unittest.TestCase):
     def setUp(self):
-        self.osbuild = test.OSBuild(self)
+        self.osbuild = test.OSBuild()
 
     def test_noop(self):
         #
@@ -54,7 +55,6 @@ class TestNoop(unittest.TestCase):
         with self.osbuild as osb:
             osb.compile("{}")
             osb.compile("{}")
-
 
     def test_noop_v2(self):
         with tempfile.TemporaryDirectory() as tmp:
