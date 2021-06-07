@@ -16,6 +16,26 @@
 
   "definitions": {
 
+    "devices": {
+      "title": "Collection of devices for a stage",
+      "additionalProperties": {
+        "$ref": "#/definitions/device"
+      }
+    },
+
+    "device": {
+      "title": "Device for a stage",
+      "additionalProperties": false,
+      "required": ["type", "options"],
+      "properties": {
+        "type": { "type": "string" },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+
     "inputs": {
       "title": "Collection of inputs for a stage",
       "additionalProperties": false,
@@ -102,6 +122,7 @@
       "additionalProperties": false,
       "properties": {
         "type": { "type": "string" },
+        "devices": { "$ref": "#/definitions/devices" },
         "inputs": {"$ref": "#/definitions/inputs" },
         "options": {
           "type": "object",

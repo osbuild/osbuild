@@ -28,6 +28,23 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         pl = manifest[pid]
         return f"name:{pl.name}"
 
+    def describe_device(dev):
+        desc = {
+            "type": dev.info.name
+        }
+
+        if dev.options:
+            desc["options"] = dev.options
+
+        return desc
+
+    def describe_devices(devs: Dict):
+        desc = {
+            name: describe_device(dev)
+            for name, dev in devs.items()
+        }
+        return desc
+
     def describe_input(ip: Input):
         origin = ip.origin
         desc = {
@@ -65,6 +82,10 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         if s.options:
             desc["options"] = s.options
+
+        devs = describe_devices(s.devices)
+        if devs:
+            desc["devices"] = devs
 
         ips = describe_inputs(s.inputs)
         if ips:
@@ -130,6 +151,16 @@ def resolve_ref(name: str, manifest: Manifest) -> str:
     return target.id
 
 
+def load_device(name: str, description: Dict, index: Index, stage: Stage):
+    device_type = description["type"]
+    options = description.get("options", {})
+
+    info = index.get_module_info("Device", device_type)
+    if not info:
+        raise TypeError(f"Missing meta information for {device_type}")
+    stage.add_device(name, info, options)
+
+
 def load_input(name: str, description: Dict, index: Index, stage: Stage, manifest: Manifest):
     input_type = description["type"]
     origin = description["origin"]
@@ -162,6 +193,10 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
     info = index.get_module_info("Stage", stage_type)
 
     stage = pipeline.add_stage(info, opts)
+
+    devs = description.get("devices", {})
+    for name, desc in devs.items():
+        load_device(name, desc, index, stage)
 
     ips = description.get("inputs", {})
     for name, desc in ips.items():
@@ -319,6 +354,7 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
         res = schema.validate(stage)
         result.merge(res, path=path)
 
+        validate_stage_modules("Device", stage, path)
         validate_stage_modules("Input", stage, path)
 
     def validate_pipeline(pipeline, path):

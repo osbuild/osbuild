@@ -281,6 +281,7 @@ class ModuleInfo:
     # Known modules and their corresponding directory name
     MODULES = {
         "Assembler": "assemblers",
+        "Device": "devices",
         "Input": "inputs",
         "Source": "sources",
         "Stage": "stages",
@@ -330,6 +331,13 @@ class ModuleInfo:
                 **opts,
             }
             schema["required"] = [type_id]
+        elif self.type in ("Device", ):
+            schema["additionalProperties"] = True
+            opts = self._load_opts(version, "1")
+            schema["properties"] = {
+                "type": {"enum": [self.name]},
+                "options": opts
+            }
         else:
             opts = self._load_opts(version, "1")
             schema.update(opts)

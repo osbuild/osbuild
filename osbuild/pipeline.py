@@ -10,6 +10,7 @@ from . import buildroot
 from . import host
 from . import objectstore
 from . import remoteloop
+from .devices import Device
 from .inputs import Input
 from .sources import Source
 from .util import osrelease
@@ -43,6 +44,7 @@ class Stage:
         self.options = options
         self.checkpoint = False
         self.inputs = {}
+        self.devices = {}
 
     @property
     def name(self):
@@ -65,6 +67,11 @@ class Stage:
         self.inputs[name] = ip
         return ip
 
+    def add_device(self, name, info, options):
+        dev = Device(name, info, options)
+        self.devices[name] = dev
+        return dev
+
     def run(self, tree, runner, build_tree, store, monitor, libdir):
         with contextlib.ExitStack() as cm:
 
@@ -76,12 +83,17 @@ class Stage:
             inputs_mapped = "/run/osbuild/inputs"
             inputs = {}
 
+            devices_mapped = "/dev"
+            devices = {}
+
             args = {
                 "tree": "/run/osbuild/tree",
                 "options": self.options,
                 "paths": {
+                    "devices": devices_mapped,
                     "inputs": inputs_mapped
                 },
+                "devices": devices,
                 "inputs": inputs,
                 "meta": {
                     "id": self.id
@@ -102,6 +114,10 @@ class Stage:
             for key, ip in self.inputs.items():
                 data = ip.map(mgr, storeapi, inputs_tmpdir)
                 inputs[key] = data
+
+            for key, dev in self.devices.items():
+                reply = dev.open(mgr, build_root.dev, tree)
+                devices[key] = reply
 
             api = API(args, monitor)
             build_root.register_api(api)
