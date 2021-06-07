@@ -699,6 +699,11 @@ def main(tree, output_dir, options, loop_client):
         if compat:
             extra_args["qcow2"] += ["-o", f"compat={compat}"]
 
+        coroutines = os.environ.get("OSBUILD_QEMU_IMG_COROUTINES")
+        if coroutines:
+            print(f"qemu-img coroutines: {coroutines}")
+            extra_args[fmt] += ["-m", coroutines]
+
         subprocess.run([
             "qemu-img",
             "convert",
