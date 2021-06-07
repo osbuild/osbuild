@@ -48,6 +48,13 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         return desc
 
+    def describe_inputs(ips: Dict[str, Input]):
+        desc = {
+            name: describe_input(ip)
+            for name, ip in ips.items()
+        }
+        return desc
+
     def describe_stage(s: Stage):
         desc = {
             "type": s.info.name
@@ -59,10 +66,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         if s.options:
             desc["options"] = s.options
 
-        ips = {}
-        for name, i in s.inputs.items():
-            ips[name] = describe_input(i)
-
+        ips = describe_inputs(s.inputs)
         if ips:
             desc["inputs"] = ips
 
