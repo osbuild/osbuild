@@ -283,6 +283,7 @@ class ModuleInfo:
         "Assembler": "assemblers",
         "Device": "devices",
         "Input": "inputs",
+        "Mount": "mounts",
         "Source": "sources",
         "Stage": "stages",
     }
@@ -331,7 +332,7 @@ class ModuleInfo:
                 **opts,
             }
             schema["required"] = [type_id]
-        elif self.type in ("Device", ):
+        elif self.type in ("Device", "Mount"):
             schema["additionalProperties"] = True
             opts = self._load_opts(version, "1")
             schema["properties"] = {
