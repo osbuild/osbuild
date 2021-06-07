@@ -12,6 +12,7 @@ from ..sources import Source
 VERSION = "2"
 
 
+# pylint: disable=too-many-statements
 def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
     # Undo the build, runner pairing introduce by the loading
@@ -72,6 +73,24 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         }
         return desc
 
+    def describe_mount(mnt):
+        desc = {
+            "type": mnt.info.name,
+            "device": mnt.device.name,
+            "target": mnt.target
+        }
+
+        if mnt.options:
+            desc["options"] = mnt.options
+        return desc
+
+    def describe_mounts(mounts: Dict):
+        desc = {
+            name: describe_mount(mnt)
+            for name, mnt in mounts.items()
+        }
+        return desc
+
     def describe_stage(s: Stage):
         desc = {
             "type": s.info.name
@@ -86,6 +105,10 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         devs = describe_devices(s.devices)
         if devs:
             desc["devices"] = devs
+
+        mounts = describe_mounts(s.mounts)
+        if mounts:
+            desc["mounts"] = mounts
 
         ips = describe_inputs(s.inputs)
         if ips:
@@ -187,6 +210,22 @@ def load_input(name: str, description: Dict, index: Index, stage: Stage, manifes
         ip.add_reference(r, desc)
 
 
+def load_mount(name: str, description: Dict, index: Index, stage: Stage):
+    mount_type = description["type"]
+    info = index.get_module_info("Mount", mount_type)
+
+    source = description["source"]
+    target = description["target"]
+
+    options = description.get("options", {})
+
+    device = stage.devices.get(source)
+    if not device:
+        raise ValueError(f"Unknown device '{source}' for mount '{name}'")
+
+    stage.add_mount(name, info, device, target, options)
+
+
 def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Manifest):
     stage_type = description["type"]
     opts = description.get("options", {})
@@ -201,6 +240,10 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
     ips = description.get("inputs", {})
     for name, desc in ips.items():
         load_input(name, desc, index, stage, manifest)
+
+    mounts = description.get("mounts", {})
+    for name, desc in mounts.items():
+        load_mount(name, desc, index, stage)
 
     return stage
 
@@ -354,8 +397,8 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
         res = schema.validate(stage)
         result.merge(res, path=path)
 
-        validate_stage_modules("Device", stage, path)
-        validate_stage_modules("Input", stage, path)
+        for mod in ("Device", "Input", "Mount"):
+            validate_stage_modules(mod, stage, path)
 
     def validate_pipeline(pipeline, path):
         stages = pipeline.get("stages", [])

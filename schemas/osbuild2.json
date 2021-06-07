@@ -61,6 +61,32 @@
       }
     },
 
+    "mounts": {
+      "title": "Collection of mount points for a stage",
+      "additionalProperties": {
+        "$ref": "#/definitions/mount"
+      }
+    },
+
+    "mount": {
+      "title": "Mount point for a stage",
+      "additionalProperties": false,
+      "required": ["type", "source", "target"],
+      "properties": {
+        "type": { "type": "string" },
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+
     "pipelines": {
       "title": "Collection of pipelines to execute",
       "description": "Array of pipelines to execute one after another",
@@ -124,6 +150,7 @@
         "type": { "type": "string" },
         "devices": { "$ref": "#/definitions/devices" },
         "inputs": {"$ref": "#/definitions/inputs" },
+        "mounts": {"$ref": "#/definitions/mounts" },
         "options": {
           "type": "object",
           "additionalProperties": true

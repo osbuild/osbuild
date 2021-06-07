@@ -12,6 +12,7 @@ from . import objectstore
 from . import remoteloop
 from .devices import Device
 from .inputs import Input
+from .mounts import Mount
 from .sources import Source
 from .util import osrelease
 
@@ -45,6 +46,7 @@ class Stage:
         self.checkpoint = False
         self.inputs = {}
         self.devices = {}
+        self.mounts = {}
 
     @property
     def name(self):
@@ -72,10 +74,16 @@ class Stage:
         self.devices[name] = dev
         return dev
 
+    def add_mount(self, name, info, device, target, options):
+        mount = Mount(name, info, device, target, options)
+        self.mounts[name] = mount
+        return mount
+
     def run(self, tree, runner, build_tree, store, monitor, libdir):
         with contextlib.ExitStack() as cm:
 
-            build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
+            build_root = buildroot.BuildRoot(
+                build_tree, runner, libdir, store.tmp)
             cm.enter_context(build_root)
 
             inputs_tmpdir = store.tempdir(prefix="inputs-")
@@ -86,15 +94,22 @@ class Stage:
             devices_mapped = "/dev"
             devices = {}
 
+            mounts_tmpdir = store.tempdir(prefix="mounts-")
+            mounts_tmpdir = cm.enter_context(mounts_tmpdir)
+            mounts_mapped = "/run/osbuild/mounts"
+            mounts = {}
+
             args = {
                 "tree": "/run/osbuild/tree",
                 "options": self.options,
                 "paths": {
                     "devices": devices_mapped,
-                    "inputs": inputs_mapped
+                    "inputs": inputs_mapped,
+                    "mounts": mounts_mapped,
                 },
                 "devices": devices,
                 "inputs": inputs,
+                "mounts": mounts,
                 "meta": {
                     "id": self.id
                 }
@@ -103,6 +118,11 @@ class Stage:
             ro_binds = [
                 f"{self.info.path}:/run/osbuild/bin/{self.name}",
                 f"{inputs_tmpdir}:{inputs_mapped}"
+            ]
+
+            binds = [
+                os.fspath(tree) + ":/run/osbuild/tree",
+                f"{mounts_tmpdir}:{mounts_mapped}"
             ]
 
             storeapi = objectstore.StoreServer(store)
@@ -119,6 +139,12 @@ class Stage:
                 reply = dev.open(mgr, build_root.dev, tree)
                 devices[key] = reply
 
+            for key, mount in self.mounts.items():
+                relpath = devices[mount.device.name]["path"]
+                abspath = os.path.join(build_root.dev, relpath)
+                data = mount.mount(mgr, abspath, mounts_tmpdir)
+                mounts[key] = data
+
             api = API(args, monitor)
             build_root.register_api(api)
 
@@ -127,7 +153,7 @@ class Stage:
 
             r = build_root.run([f"/run/osbuild/bin/{self.name}"],
                                monitor,
-                               binds=[os.fspath(tree) + ":/run/osbuild/tree"],
+                               binds=binds,
                                readonly_binds=ro_binds)
 
         return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
@@ -158,7 +184,8 @@ class Pipeline:
         return self.stages[-1].id if self.stages else None
 
     def add_stage(self, info, options, sources_options=None):
-        stage = Stage(info, sources_options, self.build, self.id, options or {})
+        stage = Stage(info, sources_options, self.build,
+                      self.id, options or {})
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id
