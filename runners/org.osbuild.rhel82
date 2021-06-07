@@ -1,10 +1,24 @@
 #!/usr/libexec/platform-python
 
 import os
+import platform
 import subprocess
 import sys
 
 import osbuild.api
+
+
+def quirks():
+    # Platform specific quirks
+    env = os.environ.copy()
+
+    if platform.machine() == "aarch64":
+        # Work around a bug in qemu-img on aarch64 that can lead to qemu-img
+        # hangs when more then one coroutine is use (which is the default)
+        # See https://bugs.launchpad.net/qemu/+bug/1805256
+        env["OSBUILD_QEMU_IMG_COROUTINES"] = "1"
+
+    return env
 
 
 def ldconfig():
@@ -57,7 +71,11 @@ def main():
         nsswitch()
         python_alternatives()
 
-        r = subprocess.run(sys.argv[1:], check=False)
+        env = quirks()
+
+        r = subprocess.run(sys.argv[1:],
+                           env=env,
+                           check=False)
         sys.exit(r.returncode)
 
 
