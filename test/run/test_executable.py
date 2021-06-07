@@ -11,7 +11,7 @@ from .. import test
 
 class TestExecutable(unittest.TestCase):
     def setUp(self):
-        self.osbuild = test.OSBuild(self)
+        self.osbuild = test.OSBuild()
 
     def test_invalid_manifest(self):
         invalid = json.dumps({"foo": 42})
