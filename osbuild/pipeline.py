@@ -7,6 +7,7 @@ from typing import Dict, Iterator, List, Optional
 
 from .api import API
 from . import buildroot
+from . import host
 from . import objectstore
 from . import remoteloop
 from .inputs import Input
@@ -95,8 +96,11 @@ class Stage:
             storeapi = objectstore.StoreServer(store)
             cm.enter_context(storeapi)
 
+            mgr = host.ServiceManager(monitor=monitor)
+            cm.enter_context(mgr)
+
             for key, ip in self.inputs.items():
-                data = ip.run(storeapi, inputs_tmpdir)
+                data = ip.map(mgr, storeapi, inputs_tmpdir)
                 inputs[key] = data
 
             api = API(args, monitor)
