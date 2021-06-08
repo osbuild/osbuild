@@ -2,14 +2,24 @@
 """
 Configure Red Hat Subscription Management (RHSM)
 
-The stage currently supports configuring only RHSM DNF plugins,
-specifically enabling and disabling them. In the future, this
-stage may be extended to configure also other aspects of RHSM.
+The stage currently supports configuring the enablement status of
+RHSM DNF plugins, and subset of RHSM configuration options.
 
 In case the stage is configured to enable/disable specific
 DNF plugins, it expects that the appropriate configuration files
 exist in the filesystem tree. Non-existence of the configuration
 files will make the stage fail.
+
+In case the stage is configured to change subscription-manager configuration,
+it expects that the /etc/rhsm/rhsm.conf file exists. Non-existence of the
+configuration file will make the stage fail. The stage uses iniparse module
+to change the configuration directly, because this does not require running
+subscription-manager command in a chroot. The only benefit of running the
+subscription-manager command would be in case of removing configuration options,
+because it may set default values if they exist for the removed option.
+Since the stage does not support removing configuration options, using iniparse
+directly is considered OK. In addition, iniparse module is used also by
+subscription-manager to modify its configuration file.
 """
 
 import sys
@@ -49,6 +59,35 @@ SCHEMA = """
         }
       }
     }
+  },
+  "subscription-manager": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "Subscription-manager configuration",
+    "properties": {
+      "rhsm": {
+        "additionalProperties": false,
+        "type": "object",
+        "description": "RHSM configuration section",
+        "properties": {
+          "manage_repos": {
+            "type": "boolean",
+            "description": "Whether subscription-manager should manage DNF repos file"
+          }
+        }
+      },
+      "rhsmcertd": {
+        "additionalProperties": false,
+        "type": "object",
+        "description": "RHSMCERTD configuration section",
+        "properties": {
+          "auto_registration": {
+            "type": "boolean",
+            "description": "Automatic system registration"
+          }
+        }
+      }
+    }
   }
 }
 """
@@ -56,13 +95,17 @@ SCHEMA = """
 
 def configure_dnf_plugins(tree, dnf_plugins_options):
     for plugin, plugin_options in dnf_plugins_options.items():
+        # don't touch the configuration file if there is nothing to do
+        if not plugin_options:
+            continue
+
         plugin_conf_path = f"{tree}/etc/dnf/plugins/{plugin}.conf"
         plugin_conf = iniparse.SafeConfigParser()
 
         try:
             with open(plugin_conf_path, "r") as f:
                 plugin_conf.readfp(f)
-        except FileNotFoundError as _:
+        except FileNotFoundError:
             print(f"Error: {plugin} configuration file '{plugin_conf_path}' does not exist.")
             return 1
 
@@ -74,7 +117,7 @@ def configure_dnf_plugins(tree, dnf_plugins_options):
                 # rhsm plugins tend to use 0/1 for boolean values
                 plugin_conf.set("main", "enabled", str(int(value)))
             else:
-                # schema does not allow any additional properties, but keeping this for completenes
+                # schema does not allow any additional properties, but keeping this for completeness
                 print(f"Error: unknown property {option} specified for {plugin} plugin.")
                 return 1
 
@@ -84,9 +127,46 @@ def configure_dnf_plugins(tree, dnf_plugins_options):
     return 0
 
 
+def configure_rhsm(tree, rhsm_configuration_options):
+    # don't touch the configuration file if there is nothing to do
+    if not rhsm_configuration_options:
+        return 0
+
+    rhsm_config_path = f"{tree}/etc/rhsm/rhsm.conf"
+    rhsm_conf = iniparse.SafeConfigParser()
+
+    try:
+        with open(rhsm_config_path, "r") as f:
+            rhsm_conf.readfp(f)
+    except FileNotFoundError:
+        print(f"Error: RHSM configuration file '{rhsm_config_path}' does not exist.")
+        return 1
+
+    for config_section, config_options in rhsm_configuration_options.items():
+        for option, value in config_options.items():
+            if isinstance(value, bool):
+                # set boolean values as integers
+                value = int(value)
+            # values must be strings
+            value = str(value)
+            rhsm_conf.set(config_section, option, value)
+
+    with open(rhsm_config_path, "w") as f:
+        rhsm_conf.write(f)
+
+    return 0
+
+
 def main(tree, options):
     dnf_plugins_options = options.get("dnf-plugins", {})
-    return configure_dnf_plugins(tree, dnf_plugins_options)
+    rhsm_configuration = options.get("subscription-manager", {})
+
+    if configure_dnf_plugins(tree, dnf_plugins_options):
+        return 1
+    if configure_rhsm(tree, rhsm_configuration):
+        return 1
+
+    return 0
 
 
 if __name__ == '__main__':
