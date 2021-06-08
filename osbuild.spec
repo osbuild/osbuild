@@ -153,9 +153,10 @@ exit 0
 %{_datadir}/osbuild/schemas
 %{pkgdir}
 # the following files are in the ostree sub-package
-%exclude %{pkgdir}/assemblers/org.osbuild.ostree.commit
-%exclude %{pkgdir}/sources/org.osbuild.ostree
-%exclude %{pkgdir}/stages/org.osbuild.ostree
+%exclude %{pkgdir}/assemblers/org.osbuild.ostree*
+%exclude %{pkgdir}/inputs/org.osbuild.ostree*
+%exclude %{pkgdir}/sources/org.osbuild.ostree*
+%exclude %{pkgdir}/stages/org.osbuild.ostree*
 %exclude %{pkgdir}/stages/org.osbuild.rpm-ostree
 
 %files -n       python3-%{pypi_name}
@@ -165,9 +166,10 @@ exit 0
 %{python3_sitelib}/%{pypi_name}/
 
 %files ostree
-%{pkgdir}/assemblers/org.osbuild.ostree.commit
-%{pkgdir}/sources/org.osbuild.ostree
-%{pkgdir}/stages/org.osbuild.ostree
+%{pkgdir}/assemblers/org.osbuild.ostree*
+%{pkgdir}/inputs/org.osbuild.ostree*
+%{pkgdir}/sources/org.osbuild.ostree*
+%{pkgdir}/stages/org.osbuild.ostree*
 %{pkgdir}/stages/org.osbuild.rpm-ostree
 
 %files selinux
