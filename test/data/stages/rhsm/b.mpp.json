@@ -39,6 +39,14 @@
             "subscription-manager": {
               "enabled": false
             }
+          },
+          "subscription-manager": {
+            "rhsm": {
+              "manage_repos": false
+            },
+            "rhsmcertd": {
+              "auto_registration": true
+            }
           }
         }
       }
