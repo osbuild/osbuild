@@ -49,7 +49,7 @@ def python_alternatives():
         pass
 
 
-if __name__ == "__main__":
+def main():
     with osbuild.api.exception_handler():
         ldconfig()
         sysusers()
@@ -59,3 +59,7 @@ if __name__ == "__main__":
 
         r = subprocess.run(sys.argv[1:], check=False)
         sys.exit(r.returncode)
+
+
+if __name__ == "__main__":
+    main()
