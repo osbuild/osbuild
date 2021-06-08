@@ -37,7 +37,6 @@ def nsswitch():
         pass
 
 
-
 def python_alternatives():
     """/usr/bin/python3 is a symlink to /etc/alternatives/python3, which points
     to /usr/bin/python3.6 by default. Recreate the link in /etc, so that
@@ -48,6 +47,7 @@ def python_alternatives():
         os.symlink("/usr/bin/python3.6", "/etc/alternatives/python3")
     except FileExistsError:
         pass
+
 
 if __name__ == "__main__":
     with osbuild.api.exception_handler():
