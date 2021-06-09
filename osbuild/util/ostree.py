@@ -1,10 +1,13 @@
 import contextlib
 import json
 import os
+import subprocess
 import tempfile
 import typing
 
 from typing import List
+
+from .types import PathLike
 
 
 class Param:
@@ -104,3 +107,21 @@ class Treefile:
         finally:
             if name:
                 os.unlink(name)
+
+
+def rev_parse(repo: PathLike, ref: str) -> str:
+    """Resolve an OSTree reference `ref` in the repository at `repo`"""
+
+    repo = os.fspath(repo)
+
+    r = subprocess.run(["ostree", "rev-parse", ref, f"--repo={repo}"],
+                       encoding="utf-8",
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT,
+                       check=False)
+
+    msg = r.stdout.strip()
+    if r.returncode != 0:
+        raise RuntimeError(msg)
+
+    return msg
