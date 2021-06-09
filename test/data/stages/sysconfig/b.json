@@ -267,6 +267,28 @@
           "network": {
             "networking": true,
             "no_zero_conf": true
+          },
+          "network-scripts": {
+            "ifcfg": {
+              "eth0": {
+                "device": "eth0",
+                "bootproto": "dhcp",
+                "onboot": true,
+                "type": "Ethernet",
+                "userctl": true,
+                "peerdns": true,
+                "ipv6init": false
+              },
+              "eth1": {
+                "device": "eth1",
+                "bootproto": "dhcp",
+                "onboot": true,
+                "type": "Ethernet",
+                "userctl": false,
+                "peerdns": true,
+                "ipv6init": true
+              }
+            }
           }
         }
       }
