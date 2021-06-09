@@ -1,5 +1,9 @@
 {
-  "added_files": [],
+  "added_files": [
+    "/etc/sysconfig/network-scripts",
+    "/etc/sysconfig/network-scripts/ifcfg-eth0",
+    "/etc/sysconfig/network-scripts/ifcfg-eth1"
+  ],
   "deleted_files": [],
   "differences": {
     "/etc/sysconfig/network": {
