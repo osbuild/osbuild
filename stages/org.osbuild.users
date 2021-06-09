@@ -22,48 +22,48 @@ SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "users": {
+    "additionalProperties": false,
     "type": "object",
     "description": "Keys are usernames, values are objects giving user info.",
-    "propertyNames": {
-      "pattern": "^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$"
-    },
-    "additionalProperties": {
-      "type": "object",
-      "properties": {
-        "uid": {
-          "description": "User UID",
-          "type": "number"
-        },
-        "gid": {
-          "description": "User GID",
-          "type": "number"
-        },
-        "groups": {
-          "description": "Array of group names for this user",
-          "type": "array",
-          "items": {
+    "patternProperties": {
+      "^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "description": "User UID",
+            "type": "number"
+          },
+          "gid": {
+            "description": "User GID",
+            "type": "number"
+          },
+          "groups": {
+            "description": "Array of group names for this user",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "description": "User account description (or full name)",
+            "type": "string"
+          },
+          "home": {
+            "description": "Path to user's home directory",
+            "type": "string"
+          },
+          "shell": {
+            "description": "User's login shell",
+            "type": "string"
+          },
+          "password": {
+            "description": "User's encrypted password, as returned by crypt(3)",
+            "type": "string"
+          },
+          "key": {
+            "description": "SSH Public Key to add to ~/.ssh/authorized_keys",
             "type": "string"
           }
-        },
-        "description": {
-          "description": "User account description (or full name)",
-          "type": "string"
-        },
-        "home": {
-          "description": "Path to user's home directory",
-          "type": "string"
-        },
-        "shell": {
-          "description": "User's login shell",
-          "type": "string"
-        },
-        "password": {
-          "description": "User's encrypted password, as returned by crypt(3)",
-          "type": "string"
-        },
-        "key": {
-          "description": "SSH Public Key to add to ~/.ssh/authorized_keys",
-          "type": "string"
         }
       }
     }
