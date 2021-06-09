@@ -1,7 +1,9 @@
 {
   "added_files": [
     "/etc/systemd/system/ldconfig.service",
-    "/etc/systemd/system/multi-user.target.wants/nftables.service"
+    "/etc/systemd/system/multi-user.target.wants/nftables.service",
+    "/usr/lib/systemd/system/nm-cloud-setup.service.d",
+    "/usr/lib/systemd/system/nm-cloud-setup.service.d/10-rh-enable-for-ec2.conf"
   ],
   "deleted_files": [
     "/etc/systemd/system/multi-user.target.wants/sshd.service"
