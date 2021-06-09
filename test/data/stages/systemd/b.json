@@ -456,7 +456,16 @@
           ],
           "disabled_services": [
             "sshd"
-          ]
+          ],
+          "unit_dropins": {
+            "nm-cloud-setup.service": {
+              "10-rh-enable-for-ec2.conf": {
+                "Service": {
+                  "Environment": "NM_CLOUD_SETUP_EC2=yes"
+                }
+              }
+            }
+          }
         }
       }
     ]
