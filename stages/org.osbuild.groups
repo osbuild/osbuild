@@ -22,16 +22,16 @@ SCHEMA = """
 "properties": {
   "groups": {
     "type": "object",
+    "additionalProperties": false,
     "description": "Keys are group names, values are objects with group info",
-    "propertyNames": {
-      "pattern": "^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$"
-    },
-    "additionalProperties": {
-      "type": "object",
-      "properties": {
-        "gid": {
-          "type": "number",
-          "description": "GID for this group"
+    "patternProperties": {
+      "^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "number",
+            "description": "GID for this group"
+          }
         }
       }
     }
