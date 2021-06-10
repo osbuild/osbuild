@@ -100,5 +100,5 @@ createrepo_c "${REPO_DIR}"
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"
 pushd repo
-    s3cmd --acl-public sync . s3://${REPO_BUCKET}/
+    s3cmd --acl-public put --recursive . s3://${REPO_BUCKET}/
 popd
