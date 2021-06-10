@@ -1,0 +1,97 @@
+#!/usr/bin/python3
+"""
+Configure systemd-logind
+
+The 'configuration_dropins' option allows to create systemd-logind configuration
+drop-in files in `/usr/lib/systemd/logind.conf.d`. Value of this option is
+an dictionary with keys specifying the name od the `.conf` drop-in configuration
+file to create. The dictionary must have at least one `.conf` file defined.
+Value of each such key is dictionary representing the systemd-logind
+configuration.
+
+Drop-in configuration files can currently specify the following subset of
+options:
+  - 'Login' section
+    - 'NAutoVTs' option
+
+At least one option must be specified in the 'Login' section.
+"""
+
+
+import os
+import sys
+import configparser
+
+import osbuild.api
+
+
+SCHEMA = r"""
+"additionalProperties": false,
+"properties": {
+  "configuration_dropins": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "systemd-logind configuration drop-ins.",
+    "minProperties": 1,
+    "patternProperties": {
+      "^[\\w.-]{1,250}\\.conf$": {
+        "additionalProperties": false,
+        "type": "object",
+        "description": "Drop-in configuration for systemd-logind.",
+        "required": ["Login"],
+        "properties": {
+          "Login": {
+            "additionalProperties": false,
+            "type": "object",
+            "description": "'Login' configuration section.",
+            "minProperties": 1,
+            "properties": {
+              "NAutoVTs": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Configures how many virtual terminals (VTs) to allocate by default."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def create_configuration_dropins(tree, configuration_dropins_options):
+    if not configuration_dropins_options:
+        return
+
+    dropins_dir = f"{tree}/usr/lib/systemd/logind.conf.d"
+    os.makedirs(dropins_dir, exist_ok=True)
+
+    for dropin_file, dropin_config in configuration_dropins_options.items():
+        config = configparser.ConfigParser()
+        # prevent conversion of the option name to lowercase
+        config.optionxform = lambda option: option
+
+        for section, options in dropin_config.items():
+            if not config.has_section(section):
+                config.add_section(section)
+            for option, value in options.items():
+                config.set(section, option, str(value))
+
+        with open(f"{dropins_dir}/{dropin_file}", "w") as f:
+            config.write(f, space_around_delimiters=False)
+
+
+def main(tree, options):
+    configuration_dropins_options = options.get("configuration_dropins", {})
+
+    create_configuration_dropins(tree, configuration_dropins_options)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
