@@ -163,6 +163,11 @@ def main(inputs, output, options):
     if callable(extra_args):
         extra_args = extra_args(fmt)
 
+    coroutines = os.environ.get("OSBUILD_QEMU_IMG_COROUTINES")
+    if coroutines:
+        print(f"qemu-img coroutines: {coroutines}")
+        extra_args += ["-m", coroutines]
+
     cmd = [
         "qemu-img", "convert",
         "-O", fmt["type"],
