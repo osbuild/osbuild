@@ -1,0 +1,98 @@
+#!/usr/bin/python3
+"""
+Configure modprobe
+
+The option 'configuration_files' allows to create `.conf` configuration files
+for modprobe in `/usr/lib/modprobe.d`. At least one configuration file must
+be defined. Value os the options is a dictionary with keys being the names
+of `.conf` files which will be created. Value of each key is a list
+of "command" objects with at least the 'command' property and additional
+properties specific for each command type. The list must contain at least one
+"command" object.
+
+Currently supported "command" objects are:
+  - for 'blacklist' command
+    - 'command' property value: "blacklist"
+    - 'modulename' property value: a non-empty string with the name of a module
+"""
+
+
+import os
+import sys
+
+import osbuild.api
+
+
+SCHEMA = r"""
+"additionalProperties": false,
+"properties": {
+  "configuration_files": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "modprobe configuration files.",
+    "minProperties": 1,
+    "patternProperties": {
+      "^[\\w.-]{1,250}\\.conf$": {
+        "additionalProperties": false,
+        "type": "array",
+        "description": "modprobe configuration file.",
+        "items": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "type": "object",
+              "description": "'blacklist' command",
+              "required": ["command", "modulename"],
+              "properties": {
+                "command": {
+                  "type": "string",
+                  "enum": ["blacklist"],
+                  "description": "modprobe command."
+                },
+                "modulename": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "name of the module to blacklist."
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def create_configuration_files(tree, configuration_files_options):
+    if not configuration_files_options:
+        return
+
+    config_dir = f"{tree}/usr/lib/modprobe.d"
+    os.makedirs(config_dir, exist_ok=True)
+
+    for config_file, config_commands in configuration_files_options.items():
+        lines = []
+        for config_command in config_commands:
+            if config_command["command"] == "blacklist":
+                lines.append(f'{config_command["command"]} {config_command["modulename"]}\n')
+            else:
+                raise ValueError()
+
+        with open(f"{config_dir}/{config_file}", "w") as f:
+            f.writelines(lines)
+
+
+def main(tree, options):
+    configuration_files_options = options.get("configuration_files", {})
+
+    create_configuration_files(tree, configuration_files_options)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
