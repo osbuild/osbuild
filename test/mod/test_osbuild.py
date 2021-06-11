@@ -58,10 +58,10 @@ class TestDescriptions(unittest.TestCase):
                                      build.id)
         tree.add_stage(info, {"option": 2})
 
-        assmelber = manifest.add_pipeline("assembler",
+        assembler = manifest.add_pipeline("assembler",
                                           "org.osbuild.inux",
                                           build.id)
-        assmelber.add_stage(info, {"option": 3})
+        assembler.add_stage(info, {"option": 3})
 
         self.assertEqual(len(manifest.pipelines), 3)
 
@@ -78,7 +78,7 @@ class TestDescriptions(unittest.TestCase):
         for a, b in zip(manifest.pipelines, lst):
             self.assertEqual(a, b)
 
-        for a, b in zip(manifest, [build, tree, assmelber]):
+        for a, b in zip(manifest, [build, tree, assembler]):
             self.assertEqual(a.name, b.name)
 
         # check we get exceptions on unknown names
@@ -97,14 +97,14 @@ class TestDescriptions(unittest.TestCase):
         self.assertEqual(tree.name, check.name)
 
         check = manifest["assembler"]
-        self.assertEqual(assmelber.name, check.name)
+        self.assertEqual(assembler.name, check.name)
 
         #  `None` return for unknown items
         check = manifest.get("foo")
         self.assertIsNone(check)
 
         #  id based access
-        for i in [build, tree, assmelber]:
+        for i in [build, tree, assembler]:
             check = manifest[i.id]
             self.assertEqual(i.name, check.name)
 
@@ -136,7 +136,6 @@ class TestDescriptions(unittest.TestCase):
         for version in ["1", "2"]:
             with self.subTest(version=version):
                 self.check_moduleinfo(version)
-
 
     def test_schema(self):
         schema = osbuild.meta.Schema(None)
