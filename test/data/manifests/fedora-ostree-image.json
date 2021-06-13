@@ -840,8 +840,15 @@
         },
         {
           "type": "org.osbuild.sfdisk",
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img"
+              }
+            }
+          },
           "options": {
-            "filename": "disk.img",
             "uuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
             "label": "gpt",
             "partitions": [
