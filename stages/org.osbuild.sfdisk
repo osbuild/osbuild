@@ -145,7 +145,7 @@ class PartitionTable:
 
         print(command)
 
-        subprocess.run(["sfdisk", "-q", target],
+        subprocess.run(["sfdisk", "-q", "--no-tell-kernel", target],
                        input=command,
                        encoding='utf-8',
                        check=True)
