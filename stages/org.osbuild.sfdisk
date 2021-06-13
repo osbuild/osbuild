@@ -173,22 +173,17 @@ def partition_from_json(js) -> Partition:
     return p
 
 
-def partition_table_from_options(options) -> PartitionTable:
-    ptuuid = options["uuid"]
-    pttype = options.get("label", "dos")
-    partitions = options.get("partitions")
-
-    if pttype == "mbr":
-        pttype = "dos"
-
-    parts = [partition_from_json(p) for p in partitions]
-    return PartitionTable(pttype, ptuuid, parts)
-
-
 def main(tree, options):
     filename = options["filename"]
+    ptuuid = options["uuid"]
+    pttype = options["label"]
+    partitions = options.get("partitions")
+
     dest = os.path.join(tree, filename.lstrip("/"))
-    pt = partition_table_from_options(options)
+
+    parts = [partition_from_json(p) for p in partitions]
+    pt = PartitionTable(pttype, ptuuid, parts)
+
     pt.write_to(dest)
 
     subprocess.run(["sfdisk", "--json", dest],
