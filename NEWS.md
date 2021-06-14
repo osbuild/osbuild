@@ -1,3 +1,120 @@
+## CHANGES WITH 29:
+
+#### Host services
+
+  * This release adds support for building raw images via the new manifest
+    format version 2. To support this a new generic concept of a **host
+    service** is introduced: Stages are executed in a container that
+    isolates them from the hosts and thus limits their access to devices,
+    the osbuild store, and and most privileged operations. But certain
+    stages also require access to all of those. Previously, osbuild provided
+    several APIs to stages for these kinds of operations. In format version
+    2 the sources API concept was generalized to `inputs` and was also made
+    declarative, i.e. the inputs are now defined at the manifest level and
+    prepared by osbuild *before* the stage is executed.
+    In this release, a generic framework for such services provided by
+    *osbuild* to the stages was created: the *host services*. The existing
+    inputs were ported to the new framework and two new services were
+    introduced: **device services**: can provide stages with access to
+    devices and **mount services** can provide stages with access to
+    mounts of file systems of e.g. devices:
+
+  * `devices/org.osbuild.loopback`: a new *device host service* that can
+    be used to access a file or parts of it as a device. This replaces
+    the `LoopServer` and `RemoteLoop` API.
+
+  * `mounts/org.osbuild.{btrfs,ext4,fat,xfs}`: new *mount host services*
+    that can be used to mount the corresponding file system transparently
+    for the stages. All mounts are exposed in `/run/osbuild/mounts` to
+    the stages.
+
+  * Various new stages were created to support creating raw images via
+    the new format and the new device and mount host services:
+
+  * `stages/org.osbuild.truncate`, a new stage to truncate a file, i.e.
+    create or resize a (sparse) file.
+
+  * `stages/org.osbuild.sfdisk`, a new stage to create a partition with
+    a given layout.
+
+  * `stages/org.osbuild.mkfs.{btrfs,xfs,fat,xfs}`, new stages to create
+    a file system on a device. The latter is provided via the device
+    host service.
+
+  * `stages/org.osbuild.copy`, new generic copy stage that allows copying
+    of artifacts from inputs to trees and mounts. The latter are provided
+    by the mount host service.
+
+  * `stages/org.osbuild.grub2.inst`, a new stage to install the boot and
+    core grub2 image to a device.
+
+  * `stages/org.osbuild.zipl.inst`, a new stage to install the Z initial
+    program loader to a device.
+
+  * `stages/org.osbuild.qemu`, a new stage that can convert a raw image
+    into a vm image such as a `qcow2`.
+
+#### New stages:
+
+  * `stages/org.osbuild.modprobe`, a new stage for configuring
+    module loading via modprobe. For now only the `blacklist` command
+    is implemented.
+
+  * `stages/org.osbuild.logind`, add new stage for configuring
+    `systemd-logind` via drop-ins. Currently only setting the `NAutoVTs`
+    key in the `Login` section is supported.
+
+#### Improvements and bug fixes for existing *stages*
+
+  * stages: extend org.osbuild.systemd to create .service unit drop-ins
+
+    Extend the `org.osbuild.systemd` stage to create drop-in configuration
+    files for systemd `.service` units under `/usr/lib/systemd/system`.
+    Currently only the `Environment` option in the `Service` section can be
+    configured.
+
+  * The `org.osbuild.sysconfig` stage was extended to be able to create
+    `network-scripts/ifcfg-*` files.
+
+  * The `org.osbuild.rhsm` stage was extended to be able to configure
+    the subscription-manager.
+
+  * stages/oci-archive: support for specifying annotations to the
+    container manifest.
+
+  * stages/groups and stages/users: fix user names schema validation
+    so that invalid user and group names are caught when the schema
+    is validated.
+
+  * aarch64: use single qemu-img thread because converting an image
+    might hang due to an bug in qemu.
+
+  * stages/dracut: disable hostonly mode and default to reproducible images
+
+#### Improvements and fixes for *sources*
+
+  * sources/curl: Implement new way of getting RHSM secrets. This
+    now matches subscription entitelments to repositories.
+
+  * sources: introduce new `org.osbuild.inline` source that can be
+    used to embed files directly into the manifest.
+
+#### General *osbuild* bug fixes and improvements
+
+  * Disable buffering for the python based stages so that print statements
+    and output of tools are properly ordered.
+
+  * meta: proper error reporting for schema parsing
+
+  * test: update test manifests to use Fedora 34
+
+  * Various improvements to testing and CI.
+
+Contributions from: Achilleas Koutsou, Christian Kellner, Martin Sehnoutka,
+                    Ondřej Budai, Tomas Hozza
+
+— Berlin, 2021-06-14
+
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
 ## CHANGES WITH 28:
