@@ -28,6 +28,22 @@ def testdata_fixture():
 
 @pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
+def test_ostree_tarball(osb, tmpdir, testdata):
+
+    # Build a container
+    manifest = os.path.join(testdata,
+                            "manifests/fedora-ostree-tarball.json")
+    osb.compile_file(manifest,
+                     output_dir=tmpdir,
+                     checkpoints=["build", "ostree-tree", "ostree-commit"],
+                     exports=["tarball"])
+
+    tarball = os.path.join(tmpdir, "tarball", "fedora-commit.tar")
+    assert os.path.exists(tarball)
+
+
+@pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
+@pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 def test_ostree_container(osb, tmpdir, testdata):
 
     # Build a container
