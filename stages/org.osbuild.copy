@@ -83,7 +83,7 @@ def parse_input(url: ParseResult, args: Dict):
     if root is None:
         raise ValueError(f"Unknown input '{root}'")
 
-    return os.path.join(root, url.path.lstrip("/"))
+    return root
 
 
 def parse_location(location, args):
