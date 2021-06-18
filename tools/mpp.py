@@ -285,11 +285,17 @@ class ManifestFile:
         checksums = []
 
         for dep in deps:
-            checksum = dep["checksum"]
+            checksum, url = dep["checksum"], dep["url"]
 
-            data = {"url": dep["url"]}
-            if "secrets" in dep:
-                data["secrets"] = dep["secrets"]
+            secretes = dep.get("secrets")
+            if secretes:
+                data = {
+                    "url": url,
+                    "secrets": secretes
+                }
+            else:
+                data = url
+
             self.source_urls[checksum] = data
             checksums.append(checksum)
 
