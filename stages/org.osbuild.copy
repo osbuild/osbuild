@@ -41,9 +41,18 @@ SCHEMA_2 = r"""
             "pattern": "^input:\/\/[^\/]+\/"
           },
           "to": {
-            "type": "string",
-            "description": "The destination",
-            "pattern": "^(tree|mount):\/\/[^\/]+\/"
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "The destination, if a mount",
+                "pattern": "^mount:\/\/[^\/]+\/"
+              },
+              {
+                "type": "string",
+                "description": "The destination, if a tree",
+                "pattern": "^tree:\/\/\/"
+              }
+            ]
           }
         }
       }
