@@ -27,27 +27,27 @@ SCHEMA_2 = r"""
   "required": ["paths"],
   "properties": {
     "paths": {
-    "description": "Array of items to copy",
-    "type": "array",
-    "minItems": 1,
-    "items": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["from", "to"],
-      "properties": {
-        "from": {
-          "type": "string",
-          "description": "The source",
-          "pattern": "^input:\/\/[^\/]+\/"
-        },
-        "to": {
-          "type": "string",
-          "description": "The destination",
-          "pattern": "^(tree|mount):\/\/[^\/]+\/"
+      "description": "Array of items to copy",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "The source",
+            "pattern": "^input:\/\/[^\/]+\/"
+          },
+          "to": {
+            "type": "string",
+            "description": "The destination",
+            "pattern": "^(tree|mount):\/\/[^\/]+\/"
+          }
         }
       }
     }
-  }
   }
 },
 "devices": {
