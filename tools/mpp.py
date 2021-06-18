@@ -117,9 +117,12 @@ def element_enter(element, key, default):
         element[key] = default.copy()
     return element[key]
 
+
 host_subscriptions = None
 
 # Expand non-uris as paths relative to basedir into a file:/// uri
+
+
 def _dnf_expand_baseurl(baseurl, basedir):
     try:
         result = urllib.parse.urlparse(baseurl)
@@ -129,6 +132,7 @@ def _dnf_expand_baseurl(baseurl, basedir):
     except:
         pass
     return baseurl
+
 
 def _dnf_repo(conf, desc, basedir):
     repo = dnf.repo.Repo(desc["id"], conf)
@@ -141,7 +145,7 @@ def _dnf_repo(conf, desc, basedir):
 
     for key in desc.keys():
         if key in skip_keys:
-            continue # We handled this already
+            continue  # We handled this already
 
         if key in url_keys:
             url = desc[key]
@@ -178,6 +182,7 @@ def _dnf_repo(conf, desc, basedir):
 
     return repo
 
+
 def _dnf_base(mpp_depsolve, persistdir, cachedir, basedir):
     arch = mpp_depsolve["architecture"]
     module_platform_id = mpp_depsolve["module-platform-id"]
@@ -199,6 +204,7 @@ def _dnf_base(mpp_depsolve, persistdir, cachedir, basedir):
 
     base.fill_sack(load_system_repo=False)
     return base
+
 
 def _dnf_resolve(mpp_depsolve, basedir):
     deps = []
@@ -248,6 +254,7 @@ def _dnf_resolve(mpp_depsolve, basedir):
 
     return deps
 
+
 class ManifestFile:
     @staticmethod
     def load(path):
@@ -274,10 +281,10 @@ class ManifestFile:
             raise ValueError(f"Incompatible manifest version {m.version}")
         return m
 
-
     def write(self, file, sort_keys=False):
         json.dump(self.root, file, indent=2, sort_keys=sort_keys)
         file.write("\n")
+
 
 class ManifestFileV1(ManifestFile):
     def __init__(self, path, data):
@@ -342,12 +349,12 @@ class ManifestFileV1(ManifestFile):
 
             packages.append(checksum)
 
-            data = { "url": dep["url"] }
+            data = {"url": dep["url"]}
             if "secrets" in dep:
                 data["secrets"] = dep["secrets"]
             self.source_urls[checksum] = data
 
-    def process_depsolves(self, pipeline = None):
+    def process_depsolves(self, pipeline=None):
         if pipeline == None:
             pipeline = self.pipeline
         stages = element_enter(pipeline, "stages", [])
@@ -357,6 +364,7 @@ class ManifestFileV1(ManifestFile):
         if build:
             if "pipeline" in build:
                 self.process_depsolves(build["pipeline"])
+
 
 class ManifestFileV2(ManifestFile):
     def __init__(self, path, data):
@@ -419,7 +427,7 @@ class ManifestFileV2(ManifestFile):
             checksum = dep["checksum"]
             refs[checksum] = {}
 
-            data = { "url": dep["url"] }
+            data = {"url": dep["url"]}
             if "secrets" in dep:
                 data["secrets"] = dep["secrets"]
             self.source_urls[checksum] = data
@@ -431,6 +439,7 @@ class ManifestFileV2(ManifestFile):
             stages = element_enter(pipeline, "stages", [])
             for stage in stages:
                 self._process_depsolve(stage)
+
 
 dnf_cache = None
 
