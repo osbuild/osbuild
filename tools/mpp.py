@@ -120,10 +120,9 @@ def element_enter(element, key, default):
 
 host_subscriptions = None
 
-# Expand non-uris as paths relative to basedir into a file:/// uri
-
 
 def _dnf_expand_baseurl(baseurl, basedir):
+    """Expand non-uris as paths relative to basedir into a file:/// uri"""
     try:
         result = urllib.parse.urlparse(baseurl)
         if not result.scheme:
