@@ -273,7 +273,6 @@
   "sources": {
     "org.osbuild.files": {
       "urls": {
-        "sha256:dd5ca5ff04cb6d566655ae546b2926368f6d2c158601f1427f8971e7cb7d375e": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/f/fedora-gpg-keys-34-1.noarch.rpm",
         "sha256:c540ca8c5e21ba5f063286c94a088af2aac0b15bc40df6fd562d40154c10f4a1": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/acl-2.3.1-1.fc34.x86_64.rpm",
         "sha256:15a654d32efaa75b5df3e2481939d0393fe1746696cc858ca094ccf8b76073cd": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/alternatives-1.15-2.fc34.x86_64.rpm",
         "sha256:fa2b16953b3d347c17d957dd82d0ccfef1f71cb452be85675e638a07c17e7660": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/audit-libs-3.0.1-2.fc34.x86_64.rpm",
@@ -312,6 +311,7 @@
         "sha256:2cf7d3b34d16b3bff216f8361c414026145072cf984725dca819cc0a430b2ed3": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/e/elfutils-libelf-0.183-1.fc34.x86_64.rpm",
         "sha256:2cb016530a4fb54cdec71c77a5fdab31832b38b4aec1e965941b20125fa3e8af": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/e/elfutils-libs-0.183-1.fc34.x86_64.rpm",
         "sha256:d517c8852f6048e736af6f795398a93a62d575143cd7679b48614e000476aba4": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/e/expat-2.2.10-2.fc34.x86_64.rpm",
+        "sha256:dd5ca5ff04cb6d566655ae546b2926368f6d2c158601f1427f8971e7cb7d375e": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/f/fedora-gpg-keys-34-1.noarch.rpm",
         "sha256:dbfae66636e48aaa3ec2b20144fe608e2c7925ff009c4afa156592975686444d": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/f/fedora-release-34-1.noarch.rpm",
         "sha256:5afcc6d5b486019d019e1e425340a1d5c1055f2f45fd48e9bf0a7098d4b03463": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/f/fedora-release-common-34-1.noarch.rpm",
         "sha256:35f316ba2981a7d050130049c6153e1b7550dfaa6613decb293c9e8b434ed730": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/f/fedora-release-identity-basic-34-1.noarch.rpm",

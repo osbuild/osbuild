@@ -34,10 +34,13 @@ The parameters for this pre-processor for format version "2" look like this:
 """
 
 import argparse
+import collections
 import contextlib
 import json
 import os
 import sys
+
+from typing import Dict
 
 
 class State:
@@ -52,6 +55,21 @@ def _manifest_enter(manifest, key, default):
     if key not in manifest:
         manifest[key] = default
     return manifest[key]
+
+
+def _sort_urls(urls: Dict):
+    def get_sort_key(item):
+        key = item[1]
+        if isinstance(key, dict):
+            key = key["url"]
+        return key
+
+    if not urls:
+        return urls
+
+    urls_sorted = sorted(urls.items(), key=get_sort_key)
+    urls.clear()
+    urls.update(collections.OrderedDict(urls_sorted))
 
 
 def _manifest_parse_v1(state, data):
@@ -218,6 +236,8 @@ def _main_process(state):
         _manifest_import_v2(state, src)
     else:
         return 1
+
+    _sort_urls(state.manifest_urls)
 
     json.dump(state.manifest, sys.stdout, indent=2)
     sys.stdout.write("\n")
