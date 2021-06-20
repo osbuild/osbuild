@@ -99,6 +99,7 @@ The parameters for this pre-processor, version "2", look like this:
 
 
 import argparse
+import contextlib
 import json
 import os
 import sys
@@ -258,8 +259,13 @@ class ManifestFile:
     @staticmethod
     def load(path):
         with open(path) as f:
-            # We use OrderedDict to preserve key order (for python < 3.6)
-            data = json.load(f, object_pairs_hook=collections.OrderedDict)
+            return ManifestFile.load_from_fd(f, path)
+
+    @staticmethod
+    def load_from_fd(f, path):
+        # We use OrderedDict to preserve key order (for python < 3.6)
+        data = json.load(f, object_pairs_hook=collections.OrderedDict)
+
         version = int(data.get("version", "1"))
         if version == 1:
             return ManifestFileV1(path, data)
@@ -275,11 +281,20 @@ class ManifestFile:
         self.sources = element_enter(self.root, "sources", {})
         self.source_urls = {}
 
-    def load_import(self, path):
-        m = ManifestFile.load(self.basedir.joinpath(path))
+    def load_import(self, path, search_dirs):
+        m = self.find_and_load_manifest(path, search_dirs)
         if m.version != self.version:
             raise ValueError(f"Incompatible manifest version {m.version}")
         return m
+
+    def find_and_load_manifest(self, path, dirs):
+        for p in [self.basedir] + dirs:
+            with contextlib.suppress(FileNotFoundError):
+                fullpath = os.path.join(p, path)
+                with open(fullpath, "r") as f:
+                    return ManifestFile.load_from_fd(f, path)
+
+        raise FileNotFoundError(f"Could not find manifest '{path}'")
 
     def add_packages(self, deps):
         checksums = []
@@ -314,13 +329,13 @@ class ManifestFileV1(ManifestFile):
         files = element_enter(self.sources, "org.osbuild.files", {})
         self.source_urls = element_enter(files, "urls", {})
 
-    def _process_import(self, build):
+    def _process_import(self, build, search_dirs):
         mpp = build.get("mpp-import-pipeline")
         if not mpp:
             return
 
         path = mpp["path"]
-        imp = self.load_import(path)
+        imp = self.load_import(path, search_dirs)
 
         # We only support importing manifests with URL sources. Other sources are
         # not supported, yet. This can be extended in the future, but we should
@@ -343,10 +358,10 @@ class ManifestFileV1(ManifestFile):
         build["pipeline"] = imp.pipeline
         del(build["mpp-import-pipeline"])
 
-    def process_imports(self):
+    def process_imports(self, search_dirs):
         current = self.root
         while current:
-            self._process_import(current)
+            self._process_import(current, search_dirs)
             current = current.get("pipeline", {}).get("build")
 
     def _process_depsolve(self, stage):
@@ -395,13 +410,13 @@ class ManifestFileV2(ManifestFile):
 
         raise ValueError(f"Pipeline '{name}' not found in {self.path}")
 
-    def _process_import(self, pipeline):
+    def _process_import(self, pipeline, search_dirs):
         mpp = pipeline.get("mpp-import-pipeline")
         if not mpp:
             return
 
         path = mpp["path"]
-        imp = self.load_import(path)
+        imp = self.load_import(path, search_dirs)
 
         for source, desc in imp.sources.items():
             target = self.sources.get(source)
@@ -421,9 +436,9 @@ class ManifestFileV2(ManifestFile):
         target = imp.get_pipeline_by_name(mpp["id"])
         pipeline.update(target)
 
-    def process_imports(self):
+    def process_imports(self, search_dirs):
         for pipeline in self.pipelines:
-            self._process_import(pipeline)
+            self._process_import(pipeline, search_dirs)
 
     def _process_depsolve(self, stage):
         if stage.get("type", "") != "org.osbuild.rpm":
@@ -463,6 +478,13 @@ if __name__ == "__main__":
         help="Path to DNF cache-directory to use",
     )
     parser.add_argument(
+        "-I,--import-dir",
+        dest="searchdirs",
+        default=[],
+        action="append",
+        help="Search for import in that directory",
+    )
+    parser.add_argument(
         "--sort-keys",
         dest="sort_keys",
         action='store_true',
@@ -486,7 +508,7 @@ if __name__ == "__main__":
     m = ManifestFile.load(args.src)
 
     # First resolve all imports
-    m.process_imports()
+    m.process_imports(args.searchdirs)
 
     m.process_depsolves()
 
