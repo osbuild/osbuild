@@ -316,7 +316,23 @@ class ManifestFile:
 
         return checksums
 
+    def sort_urls(self):
+        def get_sort_key(item):
+            key = item[1]
+            if isinstance(key, dict):
+                key = key["url"]
+            return key
+
+        urls = self.source_urls
+        if not urls:
+            return urls
+
+        urls_sorted = sorted(urls.items(), key=get_sort_key)
+        urls.clear()
+        urls.update(collections.OrderedDict(urls_sorted))
+
     def write(self, file, sort_keys=False):
+        self.sort_urls()
         json.dump(self.root, file, indent=2, sort_keys=sort_keys)
         file.write("\n")
 
