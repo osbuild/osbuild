@@ -1,0 +1,16 @@
+# https://packit.dev/docs/configuration/
+
+specfile_path: osbuild.spec
+
+synced_files:
+    - osbuild.spec
+    - .packit.yaml
+
+upstream_package_name: osbuild
+downstream_package_name: osbuild
+
+jobs:
+- job: copr_build
+  trigger: pull_request
+  metadata:
+    targets: fedora-all
