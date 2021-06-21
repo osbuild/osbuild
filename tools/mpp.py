@@ -273,12 +273,27 @@ class ManifestFile:
         self.root = root
         self.version = version
         self.sources = element_enter(self.root, "sources", {})
+        self.source_urls = {}
 
     def load_import(self, path):
         m = ManifestFile.load(self.basedir.joinpath(path))
         if m.version != self.version:
             raise ValueError(f"Incompatible manifest version {m.version}")
         return m
+
+    def add_packages(self, deps):
+        checksums = []
+
+        for dep in deps:
+            checksum = dep["checksum"]
+
+            data = {"url": dep["url"]}
+            if "secrets" in dep:
+                data["secrets"] = dep["secrets"]
+            self.source_urls[checksum] = data
+            checksums.append(checksum)
+
+        return checksums
 
     def write(self, file, sort_keys=False):
         json.dump(self.root, file, indent=2, sort_keys=sort_keys)
@@ -343,15 +358,9 @@ class ManifestFileV1(ManifestFile):
         packages = element_enter(options, "packages", [])
 
         deps = _dnf_resolve(mpp, self.basedir)
-        for dep in deps:
-            checksum = dep["checksum"]
+        checksums = self.add_packages(deps)
 
-            packages.append(checksum)
-
-            data = {"url": dep["url"]}
-            if "secrets" in dep:
-                data["secrets"] = dep["secrets"]
-            self.source_urls[checksum] = data
+        packages += checksums
 
     def process_depsolves(self, pipeline=None):
         if pipeline == None:
@@ -419,19 +428,15 @@ class ManifestFileV2(ManifestFile):
         if not mpp:
             return
 
+        del(packages["mpp-depsolve"])
+
         refs = element_enter(packages, "references", {})
 
         deps = _dnf_resolve(mpp, self.basedir)
-        for dep in deps:
-            checksum = dep["checksum"]
+        checksums = self.add_packages(deps)
+
+        for checksum in checksums:
             refs[checksum] = {}
-
-            data = {"url": dep["url"]}
-            if "secrets" in dep:
-                data["secrets"] = dep["secrets"]
-            self.source_urls[checksum] = data
-
-        del(packages["mpp-depsolve"])
 
     def process_depsolves(self):
         for pipeline in self.pipelines:
