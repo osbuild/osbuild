@@ -222,9 +222,12 @@
                 "sha256:38731e49cb0ee6a0d98f736ec1ee5605ed3a12cf3c119bb3f140ccf42500d6b3",
                 "sha256:fb161a1fc5f66d5348ac825337625e9a9c6730c306a60f649e8121dce87e74ef",
                 "sha256:23aacd1730cc1a5b615097eb10e6b2abdb6e8cdacd360e40813cf443037cc0b1",
+                "sha256:eb364f59cee096d59098939b2260db3f8cec8d3a5762b62a347e2c70db20d998",
                 "sha256:af7e6d438ee1773df790f32d12093e4e7ff94537ce556679145e58dcf345a4ae",
                 "sha256:83dd0474d7e81226936f35ce59a27dc69d01060f052775216151b39f6d0f4365",
                 "sha256:a0b294cdc4585a0ac04fdc6f84a4fdc08f10afcaebe28ec60370622d43bfe33d",
+                "sha256:7331e3b3e4032ef7a4107f83be4e776ca4d4eb02481223d80028a6a7879a712e",
+                "sha256:612063f1259382e10d37dbefebd768586590bfb8b5583e5ec6f4528d40cfddfe",
                 "sha256:3dcf5a6091d96a71cb45ff0896d0520e798ab1a7df34cac040311dbb0bb81ab5",
                 "sha256:92b03c69c045156029870b17f8526caf77848326e785aaa93a182e36a878b91c",
                 "sha256:ea9851b961b645165a931d3953ec4f0c6d35eb917ac7a982fd52fa847768fc31",
@@ -251,6 +254,16 @@
                 "sha256:aa2696cbb562dccf02732a581d94b33da26c682d53b5611095c4b130a2b41635",
                 "sha256:0ebe43a9bef7ec2dc4cb98350fbde2e55dae886f905e2d9cea837da3fb613c87"
               ]
+            }
+          },
+          {
+            "name": "org.osbuild.selinux",
+            "options": {
+              "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts",
+              "labels": {
+                "/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
+                "/usr/bin/tar": "system_u:object_r:install_exec_t:s0"
+              }
             }
           }
         ]
