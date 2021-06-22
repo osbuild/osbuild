@@ -9,6 +9,9 @@ synced_files:
 upstream_package_name: osbuild
 downstream_package_name: osbuild
 
+actions:
+  get-current-version: bash -c "git describe --tags --abbrev=0 | sed 's|v||'"
+
 jobs:
 - job: copr_build
   trigger: pull_request
