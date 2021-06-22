@@ -156,6 +156,10 @@ def _manifest_parse_v2(state, manifest):
     state.manifest = manifest
     state.manifest_todo = todo
 
+    sources = _manifest_enter(manifest, "sources", {})
+    curl_source = _manifest_enter(sources, "org.osbuild.curl", {})
+    state.manifest_urls = _manifest_enter(curl_source, "items", {})
+
 
 def _manifest_process_v2(state, todo):
     manifest = state.manifest
