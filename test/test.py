@@ -395,7 +395,7 @@ class OSBuild(contextlib.AbstractContextManager):
         to_path = os.path.join(target, "sources", source)
         os.makedirs(to_path, exist_ok=True)
 
-        subprocess.run(["cp", "--reflink=auto", "-a",
-                        os.path.join(from_path, "."),
-                        to_path],
-                       check=True)
+        subprocess.run([
+            "cp", "--reflink=auto", "-a",
+            os.path.join(from_path, "."), to_path
+        ], check=True)
