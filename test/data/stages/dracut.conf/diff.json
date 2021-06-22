@@ -1,0 +1,7 @@
+{
+  "added_files": [
+    "/usr/lib/dracut/dracut.conf.d/sgdisk.conf"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
