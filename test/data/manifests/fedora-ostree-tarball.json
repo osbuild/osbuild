@@ -831,8 +831,6 @@
   "sources": {
     "org.osbuild.curl": {
       "items": {
-        "sha256:dfc8ca110d39ca6c1cd860da87e9b586fbe35192b294a20c52dc79628f117ae0": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/n/NetworkManager-1.30.2-1.fc34.x86_64.rpm",
-        "sha256:9986001c0a4856ff479d9d0a64ff5a526e3f6079b5ef0efe088acc8a8235fc69": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/n/NetworkManager-libnm-1.30.2-1.fc34.x86_64.rpm",
         "sha256:c540ca8c5e21ba5f063286c94a088af2aac0b15bc40df6fd562d40154c10f4a1": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/acl-2.3.1-1.fc34.x86_64.rpm",
         "sha256:15a654d32efaa75b5df3e2481939d0393fe1746696cc858ca094ccf8b76073cd": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/alternatives-1.15-2.fc34.x86_64.rpm",
         "sha256:ba7a5c0e3f849352fff090f70255afa865af0d6947b710a5eb85bd110cf6f537": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/audit-3.0.1-2.fc34.x86_64.rpm",
@@ -1058,6 +1056,8 @@
         "sha256:600a1aef64c4aad9e401f5f26e71d826b398deb7cd29bcc1c19a44f04c20bb69": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/m/mozjs78-78.9.0-2.fc34.x86_64.rpm",
         "sha256:e4c954cbf7cb005ed2709b65ca85ab5ddce3292a9d568b6b9b14dee95dcc51e4": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/m/mpfr-4.1.0-5.fc34.x86_64.rpm",
         "sha256:0f493ca91514ba69fd9479acf68d31dfbc02ee1f9c653fd13dea29f4a1f690b6": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/m/mtools-4.0.26-2.fc34.x86_64.rpm",
+        "sha256:dfc8ca110d39ca6c1cd860da87e9b586fbe35192b294a20c52dc79628f117ae0": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/n/NetworkManager-1.30.2-1.fc34.x86_64.rpm",
+        "sha256:9986001c0a4856ff479d9d0a64ff5a526e3f6079b5ef0efe088acc8a8235fc69": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/n/NetworkManager-libnm-1.30.2-1.fc34.x86_64.rpm",
         "sha256:a823a3f73c688a0a0bd9f049ece18574d15f361e0f4cbc5b66d1fa953b33b659": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/n/ncurses-6.2-4.20200222.fc34.x86_64.rpm",
         "sha256:f8940f08214a129c11bd8fd00090a2bd28dd52b4fc2bc69f66105ce34a06d2b3": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/n/ncurses-base-6.2-4.20200222.fc34.noarch.rpm",
         "sha256:8c9400c01548aa4d4dcfe464bf266ff2fdd31a14c2b5d2b06000084871b54db7": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/n/ncurses-libs-6.2-4.20200222.fc34.x86_64.rpm",
