@@ -19,6 +19,7 @@ jobs:
     - epel-8-aarch64
     - epel-8-x86_64
     - fedora-all-aarch64
+    - fedora-all-s390x
     - fedora-all
 - job: copr_build
   trigger: commit
@@ -32,4 +33,5 @@ jobs:
     - epel-8-aarch64
     - epel-8-x86_64
     - fedora-all-aarch64
+    - fedora-all-s390x
     - fedora-all
