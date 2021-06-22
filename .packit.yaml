@@ -14,3 +14,16 @@ jobs:
   trigger: pull_request
   metadata:
     targets: fedora-all
+- job: copr_build
+  trigger: commit
+  metadata:
+    branch: main
+    owner: "@osbuild" # copr repo namespace
+    project: osbuild  # copr repo name so you can consume the builds
+    targets:
+    - centos-stream-8-aarch64
+    - centos-stream-8-x86_64
+    - epel-8-aarch64
+    - epel-8-x86_64
+    - fedora-all-aarch64
+    - fedora-all
