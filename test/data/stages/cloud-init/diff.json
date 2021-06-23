@@ -1,0 +1,7 @@
+{
+  "added_files": [
+    "/etc/cloud/cloud.cfg.d/00-default_user.cfg"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}

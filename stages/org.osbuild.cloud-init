@@ -1,0 +1,96 @@
+#!/usr/bin/python3
+"""
+Configure cloud-init
+
+'configuration_files' option allows to create cloud-init `.cfg` configuration
+files under `/etc/cloud/cloud.cfg.d`. Its value is a dictionary which keys
+represent filenames of `.cfg` configuration files, which will be created.
+Value of each configuration file key is a dictionary representing the
+cloud-init configuration.
+
+Constrains:
+  - If 'configuration_files' option is specified, it must contain at least one
+    definition of a configuration file.
+  - Each configuration file definition must contain at least one configuration
+    section definition, which is not empty (must be setting a configuration
+    option).
+
+Currently supported subset of cloud-init configuration:
+  - 'system_info' section
+    - 'default_user' section
+      - 'name' option
+"""
+
+
+import sys
+import yaml
+
+
+import osbuild.api
+
+
+SCHEMA = r"""
+"additionalProperties": false,
+"properties": {
+  "configuration_files": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "cloud-init configuration files.",
+    "minProperties": 1,
+    "patternProperties": {
+      "^[\\w.-]{1,251}\\.cfg$": {
+        "additionalProperties": false,
+        "type": "object",
+        "description": "cloud-init configuration file.",
+        "minProperties": 1,
+        "properties": {
+          "system_info": {
+            "additionalProperties": false,
+            "type": "object",
+            "description": "'system_info' configuration section.",
+            "minProperties": 1,
+            "properties": {
+              "default_user": {
+                "additionalProperties": false,
+                "type": "object",
+                "description": "Configuration of the 'default' user created by cloud-init.",
+                "minProperties": 1,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "username of the 'default' user."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+# Writes the passed `options` object as is into the configuration file in YAML format.
+# The validity of the `options` content is assured by the SCHEMA.
+def create_configuration_file(tree, filename, options):
+    config_files_dir = f"{tree}/etc/cloud/cloud.cfg.d"
+
+    with open(f"{config_files_dir}/{filename}", "w") as f:
+        yaml.dump(options, f)
+
+
+def main(tree, options):
+    configuration_files_options = options.get("configuration_files", {})
+
+    for configuration_file, configuration_options in configuration_files_options.items():
+        create_configuration_file(tree, configuration_file, configuration_options)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
