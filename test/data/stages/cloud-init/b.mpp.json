@@ -1,5 +1,11 @@
 {
   "pipeline": {
+    "build": {
+      "mpp-import-pipeline": {
+        "path": "../manifests/f34-build.json"
+      },
+      "runner": "org.osbuild.fedora34"
+    },
     "stages": [
       {
         "name": "org.osbuild.rpm",
@@ -18,32 +24,22 @@
               }
             ],
             "packages": [
-              "btrfs-progs",
-              "dnf",
-              "dosfstools",
-              "e2fsprogs",
-              "grub2-pc",
-              "policycoreutils",
-              "python3-iniparse",
-              "python3-pyyaml",
-              "qemu-img",
-              "rpm-ostree",
-              "selinux-policy-targeted",
-              "systemd",
-              "tar",
-              "xfsprogs",
-              "xz"
+              "cloud-init"
             ]
           }
         }
       },
       {
-        "name": "org.osbuild.selinux",
+        "name": "org.osbuild.cloud-init",
         "options": {
-          "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts",
-          "labels": {
-            "/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
-            "/usr/bin/tar": "system_u:object_r:install_exec_t:s0"
+          "configuration_files": {
+            "00-default_user.cfg": {
+              "system_info": {
+                "default_user": {
+                  "name": "ec2-user"
+                }
+              }
+            }
           }
         }
       }
