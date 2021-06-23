@@ -44,7 +44,7 @@ def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
         raise RuntimeError(f"{msg} (code: {code})")
 
 
-def umount(target, lazy=True):
+def umount(target, lazy=False):
     args = []
     if lazy:
         args += ["--lazy"]
