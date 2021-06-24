@@ -1,0 +1,12 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/chrony.conf": {
+      "content": [
+        "sha256:9e28a49de55e57a2d104516d3ae06389899377f59004ea4caf2d768f96f60ce2",
+        "sha256:31a77b519a474ab8a9df93b4fa0475bfa5fcbf0f0c786a79d03f34e7e96d863b"
+      ]
+    }
+  }
+}
