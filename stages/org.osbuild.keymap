@@ -1,11 +1,18 @@
 #!/usr/bin/python3
 """
-Set image's default keymap
+Set image's default keymap for vconsole and X11 keyboard.
 
-Sets the default console keyboard layout to `keymap`, like 'us' or 'de-latin1'.
+The 'keymap' option sets the default console keyboard layout for vconsole.
+Its value is a keymap, such as 'us' or 'de-latin1'.
 
 Removes any existing /etc/vconsole.conf, then runs `systemd-firstboot` with the
 `--keymap` option, which sets KEYMAP in /etc/vconsole.conf.
+
+The 'x11-keymap' option configures the X11 keyboard settings. The value of
+the option is a dictionary with keys representing settings which can be
+configured. Currently, only the 'layouts' setting can be configured. Its value
+is a list of strings, representing the specific layouts, which should
+be configured for the X11 keyboard.
 
 Valid keymaps are generally found in /lib/kbd/keymaps.
 """
@@ -24,14 +31,50 @@ SCHEMA = """
 "properties": {
   "keymap": {
     "type": "string",
-    "description": "Name of keymap to use"
+    "description": "Name of keymap to use for vconsole."
+  },
+  "x11-keymap": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "Configure X11 keyboard.",
+    "required": ["layouts"],
+    "properties": {
+      "layouts": {
+        "type": "array",
+        "description": "List of keyboard mappings to configure.",
+        "minItems": 1,
+        "items": {
+          "type": "string",
+          "minLength": 2
+        }
+      }
+    }
   }
 }
 """
 
-def main(tree, options):
-    keymap = options["keymap"]
 
+# We can not use 'localectl', because it required 'systemd-localed' accessible
+# over DBus.
+# We can not use 'setxkbmap', because it can not be used on a different
+# filesystem tree. If run in chroot, it would have to be installed on the
+# image.
+def configure_xkb(tree, xkb_options):
+    layouts = ",".join(xkb_options["layouts"])
+
+    file_content = f"""# Created by osbuild. Do not edit manually, use localectl(1).
+Section "InputClass"
+        Identifier "system-keyboard"
+        MatchIsKeyboard "on"
+        Option "XkbLayout" "{layouts}"
+EndSection
+"""
+
+    with open(f"{tree}/etc/X11/xorg.conf.d/00-keyboard.conf", "w") as f:
+        f.write(file_content)
+
+
+def configure_vconsole(tree, vconsole_keymap):
     # We need to remove the /etc/vconsole.conf file first, because it is created while we install RPM packages.
     # systemd-firstboot expects that if /etc/vconsole.conf exists it is a user-defined value and does not change it, but
     # the assumption is wrong, because it contains a default value from RPM package.
@@ -41,7 +84,16 @@ def main(tree, options):
     except FileNotFoundError:
         pass
 
-    subprocess.run(["systemd-firstboot", f"--root={tree}", f"--keymap={keymap}"], check=True)
+    subprocess.run(["systemd-firstboot", f"--root={tree}", f"--keymap={vconsole_keymap}"], check=True)
+
+
+def main(tree, options):
+    keymap = options["keymap"]
+    x11_keymap = options.get("x11-keymap", {})
+
+    configure_vconsole(tree, keymap)
+    if x11_keymap:
+        configure_xkb(tree, x11_keymap)
 
     return 0
 

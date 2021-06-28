@@ -32,7 +32,12 @@
       {
         "name": "org.osbuild.keymap",
         "options": {
-          "keymap": "se-dvorak"
+          "keymap": "se-dvorak",
+          "x11-keymap": {
+            "layouts": [
+              "cz"
+            ]
+          }
         }
       }
     ]
