@@ -12,25 +12,27 @@ import sys
 import osbuild.api
 from osbuild.util.path import in_tree
 
-SCHEMA = r"""
-"additionalProperties": false,
-"properties": {
-  "items": {
-    "type": "object",
-    "additionalProperties": false,
-    "patternProperties": {
-      "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$": {
-        "type": "object",
-        "required": ["mode"],
-        "properties": {
-          "mode": {
-            "type": "string",
-            "description": "Symbolic or numeric octal mode"
-          },
-          "recursive": {
-            "type": "boolean",
-            "description": "Change modes recursively",
-            "default": false
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$": {
+          "type": "object",
+          "required": ["mode"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "description": "Symbolic or numeric octal mode"
+            },
+            "recursive": {
+              "type": "boolean",
+              "description": "Change modes recursively",
+              "default": false
+            }
           }
         }
       }
