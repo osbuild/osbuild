@@ -1,6 +1,7 @@
 {
   "added_files": [
-    "/etc/vconsole.conf"
+    "/etc/vconsole.conf",
+    "/etc/X11/xorg.conf.d/00-keyboard.conf"
   ],
   "deleted_files": [],
   "differences": {}
