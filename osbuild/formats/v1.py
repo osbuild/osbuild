@@ -7,7 +7,7 @@ the created tree into an artefact. The pipeline can have any
 number of nested build pipelines. A sources section is used
 to fetch resources.
 """
-from typing import Dict, Optional, Tuple
+from typing import Dict
 from osbuild.meta import Index, ValidationResult
 from ..pipeline import Manifest, Pipeline, detect_host_runner
 
@@ -190,12 +190,6 @@ def load(description: Dict, index: Index) -> Manifest:
             stage.sources = sources
 
     return manifest
-
-
-def get_ids(manifest: Manifest) -> Tuple[Optional[str], Optional[str]]:
-    pipeline = manifest["tree"]
-    assembler = manifest.get("assembler")
-    return pipeline.id, assembler and assembler.id
 
 
 def output(manifest: Manifest, res: Dict) -> Dict:
