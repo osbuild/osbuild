@@ -12,7 +12,6 @@ import tempfile
 import unittest
 
 import osbuild.meta
-from osbuild.formats import v1 as fmt
 from osbuild.util import linux
 
 
@@ -356,10 +355,17 @@ class OSBuild(contextlib.AbstractContextManager):
 
         index = osbuild.meta.Index(os.curdir)
 
+
         manifest_json = json.loads(manifest_data)
 
+        info = index.detect_format_info(manifest_json)
+        if not info:
+            raise RuntimeError("Unsupported manifest format")
+
+        fmt = info.module
+
         manifest = fmt.load(manifest_json, index)
-        tree_id, _ = fmt.get_ids(manifest)
+        tree_id = manifest["tree"].id
         return tree_id
 
     @contextlib.contextmanager
