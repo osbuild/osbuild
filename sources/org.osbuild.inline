@@ -24,9 +24,7 @@ from osbuild.util.checksum import verify_file
 
 
 SCHEMA = """
-"additionalProperties": false,
-"required": ["items"],
-"properties": {
+"definitions": {
   "item": {
     "description": "Inline data indexed by their checksum",
     "type": "object",
@@ -35,7 +33,7 @@ SCHEMA = """
       "(md5|sha1|sha256|sha384|sha512):[0-9a-f]{32,128}": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["method", "data"],
+        "required": ["encoding", "data"],
         "properties": {
           "encoding": {
             "description": "The specific encoding of `data`",
@@ -49,6 +47,11 @@ SCHEMA = """
       }
     }
   }
+},
+"additionalProperties": false,
+"required": ["items"],
+"properties": {
+  "items": {"$ref": "#/definitions/item"}
 }
 """
 
