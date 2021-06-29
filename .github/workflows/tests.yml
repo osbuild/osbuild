@@ -111,21 +111,3 @@ jobs:
         with:
           ignore_words_list: msdos
           skip: ./.git,coverity,rpmbuild,samples
-
-  schutzbot:
-    name: "🍌 Trigger Schutzbot"
-    runs-on: ubuntu-latest
-    container:
-      image: docker.io/library/python:3.7
-    steps:
-      - uses: actions/checkout@v2
-      - name: Trigger Schutzbot
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          WEBHOOK_PAYLOAD: ${{ toJSON(github.event) }}
-          SQS_REGION: us-east-1
-          SQS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/933752197999/schutzbot_webhook_sqs-staging"
-        run: |
-          #!/bin/bash
-          pip3 install boto3 botocore
-          schutzbot/send_webhook.py
