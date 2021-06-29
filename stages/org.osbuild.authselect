@@ -1,0 +1,64 @@
+#!/usr/bin/python3
+"""
+Select system identity and authentication sources with authselect.
+
+Sets system identity and authentication sources.
+
+The stage calls `authselect select` to set authselect profile to 'profile_id'.
+Optionally a list of profile features to enable may be provided using 'features'
+option. The list of available profile features can be obtained by running
+`authselect list-features <profile_id>`.
+
+Notes:
+  - Requires 'chroot' in the buildroot.
+  - Runs the 'authselect' binary from the image in the chroot.
+"""
+
+
+import subprocess
+import sys
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["profile_id"],
+"description": "Select system identity and authentication sources.",
+"properties": {
+  "profile_id": {
+    "type": "string",
+    "description": "Desired authselect profile to activate."
+  },
+  "features": {
+    "type": "array",
+    "description": "Features of the selected profile to activate.",
+    "minItems": 1,
+    "items": {
+      "type": "string"
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    profile_id = options["profile_id"]
+    features = options.get("features", [])
+
+    cmd = [
+        "/usr/sbin/chroot", tree,
+        # force authselect to overwrite existing files without making a backup
+        "/usr/bin/authselect", "select", "--force", "--nobackup", profile_id
+    ]
+    cmd.extend(features)
+
+    subprocess.run(cmd, check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
