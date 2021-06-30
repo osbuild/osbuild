@@ -282,6 +282,7 @@ class DepSolver:
             pkg = {
                 "checksum": f"{checksum_type}:{checksum_hex}",
                 "name": tsi.pkg.name,
+                "nevra": str(tsi.pkg),
                 "url": url,
             }
 
@@ -372,7 +373,7 @@ class ManifestFile:
         for dep in deps:
             name, checksum, url = dep["name"], dep["checksum"], dep["url"]
 
-            pkginfos[name] = urllib.parse.urlparse(url).path.rsplit("/", 1)[1]
+            pkginfos[name] = dep["nevra"]
 
             secretes = dep.get("secrets")
             if secretes:
