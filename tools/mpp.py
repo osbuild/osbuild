@@ -156,7 +156,7 @@ def _dnf_repo(conf, desc, basedir):
             setattr(repo, key, value)
         else:
             raise ValueError(f"Unknown repo config option {key}")
-    if url == None:
+    if not url:
         raise ValueError("repo description does not contain baseurl, metalink, or mirrorlist keys")
 
     global host_subscriptions
@@ -400,7 +400,7 @@ class ManifestFileV1(ManifestFile):
         packages += checksums
 
     def process_depsolves(self, pipeline=None):
-        if pipeline == None:
+        if pipeline is None:
             pipeline = self.pipeline
         stages = element_enter(pipeline, "stages", [])
         for stage in stages:
