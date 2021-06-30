@@ -511,7 +511,7 @@ class ManifestFileV2(ManifestFile):
                 self._process_depsolve(solver, stage)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Manifest pre processor")
     parser.add_argument(
         "--dnf-cache",
@@ -557,3 +557,7 @@ if __name__ == "__main__":
 
     with sys.stdout if args.dst == "-" else open(args.dst, "w") as f:
         m.write(f, args.sort_keys)
+
+
+if __name__ == "__main__":
+    main()
