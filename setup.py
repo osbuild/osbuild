@@ -14,4 +14,7 @@ setuptools.setup(
             "osbuild = osbuild.main_cli:osbuild_cli"
         ]
     },
+    scripts=[
+        "tools/osbuild-mpp"
+    ],
 )
