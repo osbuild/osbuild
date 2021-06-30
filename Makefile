@@ -209,7 +209,7 @@ TEST_MANIFESTS_GEN = $(TEST_MANIFESTS_MPP:%.mpp.json=%.json)
 
 .PHONY: $(TEST_MANIFESTS_GEN)
 $(TEST_MANIFESTS_GEN): %.json: %.mpp.json
-	$(SRCDIR)/tools/mpp.py -I "$(SRCDIR)/test/data/manifests" "$<" "$@"
+	$(SRCDIR)/tools/osbuild-mpp -I "$(SRCDIR)/test/data/manifests" "$<" "$@"
 
 $(SRCDIR)/test/data/manifests/f34-base.json: $(SRCDIR)/test/data/manifests/f34-build.json
 $(SRCDIR)/test/data/manifests/fedora-boot.json: $(SRCDIR)/test/data/manifests/f34-build.json
