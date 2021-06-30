@@ -129,7 +129,7 @@ def _dnf_expand_baseurl(baseurl, basedir):
         if not result.scheme:
             path = basedir.joinpath(baseurl)
             return path.as_uri()
-    except:
+    except:  # pylint: disable=bare-except
         pass
     return baseurl
 
