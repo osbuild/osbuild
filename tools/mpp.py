@@ -170,7 +170,7 @@ def _dnf_repo(conf, desc, basedir):
                     host_subscriptions = Subscriptions.from_host_system()
                 secrets = host_subscriptions.get_secrets(url)
             except RuntimeError as e:
-                raise ValueError(f"Error gettting secrets: {e.args[0]}")
+                raise ValueError(f"Error getting secrets: {e.args[0]}") from None
 
     if secrets:
         if "ssl_ca_cert" in secrets:
