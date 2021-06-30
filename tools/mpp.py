@@ -105,6 +105,7 @@ import os
 import sys
 import pathlib
 import tempfile
+from typing import Dict
 import urllib.parse
 import collections
 import dnf
@@ -119,140 +120,152 @@ def element_enter(element, key, default):
     return element[key]
 
 
-host_subscriptions = None
+class DepSolver:
+    def __init__(self, cachedir, persistdir):
+        self.cachedir = cachedir
+        self.persistdir = persistdir
+        self.basedir = None
 
+        self.subscriptions = None
+        self.secrets = {}
 
-def _dnf_expand_baseurl(baseurl, basedir):
-    """Expand non-uris as paths relative to basedir into a file:/// uri"""
-    try:
-        result = urllib.parse.urlparse(baseurl)
-        if not result.scheme:
-            path = basedir.joinpath(baseurl)
-            return path.as_uri()
-    except:  # pylint: disable=bare-except
-        pass
-    return baseurl
+        self.base = dnf.Base()
 
+    def reset(self, basedir):
+        base = self.base
+        base.reset(goal=True, repos=True, sack=True)
+        self.secrets.clear()
 
-def _dnf_repo(conf, desc, basedir):
-    repo = dnf.repo.Repo(desc["id"], conf)
-    url = None
-    url_keys = ["baseurl", "metalink", "mirrorlist"]
-    skip_keys = ["id", "secrets"]
-    supported = ["baseurl", "metalink", "mirrorlist",
-                 "enabled", "metadata_expire", "gpgcheck", "username", "password", "priority",
-                 "sslverify", "sslcacert", "sslclientkey", "sslclientcert"]
+        if self.cachedir:
+            base.conf.cachedir = self.cachedir
+        base.conf.config_file_path = "/dev/null"
+        base.conf.persistdir = self.persistdir
 
-    for key in desc.keys():
-        if key in skip_keys:
-            continue  # We handled this already
+        self.base = base
+        self.basedir = basedir
 
-        if key in url_keys:
-            url = desc[key]
-        if key in supported:
-            value = desc[key]
-            if key == "baseurl":
-                value = _dnf_expand_baseurl(value, basedir)
-            setattr(repo, key, value)
-        else:
-            raise ValueError(f"Unknown repo config option {key}")
-    if not url:
-        raise ValueError("repo description does not contain baseurl, metalink, or mirrorlist keys")
+    def setup(self, arch, module_platform_id, ignore_weak_deps):
+        base = self.base
 
-    global host_subscriptions
-    secrets = None
-    if "secrets" in desc:
-        secrets_desc = desc["secrets"]
-        if "name" in secrets_desc and secrets_desc["name"] == "org.osbuild.rhsm":
-            try:
-                # rhsm secrets only need to be retrieved once and can then be reused
-                if host_subscriptions is None:
-                    host_subscriptions = Subscriptions.from_host_system()
-                secrets = host_subscriptions.get_secrets(url)
-            except RuntimeError as e:
-                raise ValueError(f"Error getting secrets: {e.args[0]}") from None
+        base.conf.module_platform_id = module_platform_id
+        base.conf.substitutions['arch'] = arch
+        base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
+        base.conf.install_weak_deps = not ignore_weak_deps
 
-    if secrets:
-        if "ssl_ca_cert" in secrets:
-            repo.sslcacert = secrets["ssl_ca_cert"]
-        if "ssl_client_key" in secrets:
-            repo.sslclientkey = secrets["ssl_client_key"]
-        if "ssl_client_cert" in secrets:
-            repo.sslclientcert = secrets["ssl_client_cert"]
+    def expand_baseurl(self, baseurl):
+        """Expand non-uris as paths relative to basedir into a file:/// uri"""
+        basedir = self.basedir
+        try:
+            result = urllib.parse.urlparse(baseurl)
+            if not result.scheme:
+                path = basedir.joinpath(baseurl)
+                return path.as_uri()
+        except:  # pylint: disable=bare-except
+            pass
+        return baseurl
 
-    return repo
+    def get_secrets(self, url, desc):
+        if not desc:
+            return None
 
+        name = desc.get("name")
+        if name != "org.osbuild.rhsm":
+            raise ValueError(f"Unknown secret type: {name}")
 
-def _dnf_base(mpp_depsolve, persistdir, cachedir, basedir):
-    arch = mpp_depsolve["architecture"]
-    module_platform_id = mpp_depsolve["module-platform-id"]
-    ignore_weak_deps = bool(mpp_depsolve.get("ignore-weak-deps", False))
-    repos = mpp_depsolve.get("repos", [])
+        try:
+            # rhsm secrets only need to be retrieved once and can then be reused
+            if not self.subscriptions:
+                self.subscriptions = Subscriptions.from_host_system()
+            secrets = self.subscriptions.get_secrets(url)
+        except RuntimeError as e:
+            raise ValueError(f"Error getting secrets: {e.args[0]}") from None
 
-    base = dnf.Base()
-    if cachedir:
-        base.conf.cachedir = cachedir
-    base.conf.config_file_path = "/dev/null"
-    base.conf.module_platform_id = module_platform_id
-    base.conf.persistdir = persistdir
-    base.conf.substitutions['arch'] = arch
-    base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
-    base.conf.install_weak_deps = not ignore_weak_deps
+        secrets["type"] = "org.osbuild.rhsm"
 
-    for repo in repos:
-        base.repos.add(_dnf_repo(base.conf, repo, basedir))
+        return secrets
 
-    base.fill_sack(load_system_repo=False)
-    return base
+    def add_repo(self, desc, baseurl):
+        repo = dnf.repo.Repo(desc["id"], self.base.conf)
+        url = None
+        url_keys = ["baseurl", "metalink", "mirrorlist"]
+        skip_keys = ["id", "secrets"]
+        supported = ["baseurl", "metalink", "mirrorlist",
+                     "enabled", "metadata_expire", "gpgcheck", "username", "password", "priority",
+                     "sslverify", "sslcacert", "sslclientkey", "sslclientcert"]
 
+        for key in desc.keys():
+            if key in skip_keys:
+                continue  # We handled this already
 
-def _dnf_resolve(mpp_depsolve, basedir):
-    deps = []
+            if key in url_keys:
+                url = desc[key]
+            if key in supported:
+                value = desc[key]
+                if key == "baseurl":
+                    value = self.expand_baseurl(value)
+                setattr(repo, key, value)
+            else:
+                raise ValueError(f"Unknown repo config option {key}")
 
-    repos = mpp_depsolve.get("repos", [])
-    packages = mpp_depsolve.get("packages", [])
-    excludes = mpp_depsolve.get("excludes", [])
-    baseurl = mpp_depsolve.get("baseurl")
+        if not url:
+            url = self.expand_baseurl(baseurl)
 
-    baseurls = {
-        repo["id"]: repo.get("baseurl", baseurl) for repo in repos
-    }
-    secrets = {
-        repo["id"]: repo.get("secrets", None) for repo in repos
-    }
+        if not url:
+            raise ValueError("repo description does not contain baseurl, metalink, or mirrorlist keys")
 
-    if len(packages) > 0:
-        with tempfile.TemporaryDirectory() as persistdir:
-            base = _dnf_base(mpp_depsolve, persistdir, dnf_cache, basedir)
-            base.install_specs(packages, exclude=excludes)
-            base.resolve()
+        secrets = self.get_secrets(url, desc.get("secrets"))
 
-            for tsi in base.transaction:
-                if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
-                    continue
+        if secrets:
+            if "ssl_ca_cert" in secrets:
+                repo.sslcacert = secrets["ssl_ca_cert"]
+            if "ssl_client_key" in secrets:
+                repo.sslclientkey = secrets["ssl_client_key"]
+            if "ssl_client_cert" in secrets:
+                repo.sslclientcert = secrets["ssl_client_cert"]
+            self.secrets[repo.id] = secrets["type"]
 
-                checksum_type = hawkey.chksum_name(tsi.pkg.chksum[0])
-                checksum_hex = tsi.pkg.chksum[1].hex()
+        self.base.repos.add(repo)
 
-                path = tsi.pkg.relativepath
-                reponame = tsi.pkg.reponame
-                base = _dnf_expand_baseurl(baseurls[reponame], basedir)
-                # dep["path"] often starts with a "/", even though it's meant to be
-                # relative to `baseurl`. Strip any leading slashes, but ensure there's
-                # exactly one between `baseurl` and the path.
-                url = urllib.parse.urljoin(base + "/", path.lstrip("/"))
-                secret = secrets[reponame]
+        return repo
 
-                pkg = {
-                    "checksum": f"{checksum_type}:{checksum_hex}",
-                    "name": tsi.pkg.name,
-                    "url": url,
-                }
-                if secret:
-                    pkg["secrets"] = secret
-                deps.append(pkg)
+    def resolve(self, packages, excludes):
+        base = self.base
 
-    return deps
+        base.reset(goal=True, sack=True)
+        base.fill_sack(load_system_repo=False)
+
+        base.install_specs(packages, exclude=excludes)
+        base.resolve()
+
+        deps = []
+
+        for tsi in base.transaction:
+            if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
+                continue
+
+            checksum_type = hawkey.chksum_name(tsi.pkg.chksum[0])
+            checksum_hex = tsi.pkg.chksum[1].hex()
+
+            path = tsi.pkg.relativepath
+            reponame = tsi.pkg.reponame
+            baseurl = self.base.repos[reponame].baseurl[0]  # self.expand_baseurl(baseurls[reponame])
+            # dep["path"] often starts with a "/", even though it's meant to be
+            # relative to `baseurl`. Strip any leading slashes, but ensure there's
+            # exactly one between `baseurl` and the path.
+            url = urllib.parse.urljoin(baseurl + "/", path.lstrip("/"))
+            secret = self.secrets.get(reponame)
+
+            pkg = {
+                "checksum": f"{checksum_type}:{checksum_hex}",
+                "name": tsi.pkg.name,
+                "url": url,
+            }
+
+            if secret:
+                pkg["secrets"] = secret
+            deps.append(pkg)
+
+        return deps
 
 
 class ManifestFile:
@@ -295,6 +308,22 @@ class ManifestFile:
                     return ManifestFile.load_from_fd(f, path)
 
         raise FileNotFoundError(f"Could not find manifest '{path}'")
+
+    def depsolve(self, solver: DepSolver, desc: Dict):
+        repos = desc.get("repos", [])
+        packages = desc.get("packages", [])
+        excludes = desc.get("excludes", [])
+        baseurl = desc.get("baseurl")
+
+        if not packages:
+            return []
+
+        solver.reset(self.basedir)
+
+        for repo in repos:
+            solver.add_repo(repo, baseurl)
+
+        return solver.resolve(packages, excludes)
 
     def add_packages(self, deps):
         checksums = []
@@ -380,7 +409,7 @@ class ManifestFileV1(ManifestFile):
             self._process_import(current, search_dirs)
             current = current.get("pipeline", {}).get("build")
 
-    def _process_depsolve(self, stage):
+    def _process_depsolve(self, solver, stage):
         if stage.get("name", "") != "org.osbuild.rpm":
             return
         options = stage.get("options")
@@ -394,21 +423,21 @@ class ManifestFileV1(ManifestFile):
 
         packages = element_enter(options, "packages", [])
 
-        deps = _dnf_resolve(mpp, self.basedir)
+        deps = self.depsolve(solver, mpp)
         checksums = self.add_packages(deps)
 
         packages += checksums
 
-    def process_depsolves(self, pipeline=None):
+    def process_depsolves(self, solver, pipeline=None):
         if pipeline is None:
             pipeline = self.pipeline
         stages = element_enter(pipeline, "stages", [])
         for stage in stages:
-            self._process_depsolve(stage)
+            self._process_depsolve(solver, stage)
         build = pipeline.get("build")
         if build:
             if "pipeline" in build:
-                self.process_depsolves(build["pipeline"])
+                self.process_depsolves(solver, build["pipeline"])
 
 
 class ManifestFileV2(ManifestFile):
@@ -456,7 +485,7 @@ class ManifestFileV2(ManifestFile):
         for pipeline in self.pipelines:
             self._process_import(pipeline, search_dirs)
 
-    def _process_depsolve(self, stage):
+    def _process_depsolve(self, solver, stage):
         if stage.get("type", "") != "org.osbuild.rpm":
             return
         inputs = element_enter(stage, "inputs", {})
@@ -469,20 +498,18 @@ class ManifestFileV2(ManifestFile):
 
         refs = element_enter(packages, "references", {})
 
-        deps = _dnf_resolve(mpp, self.basedir)
+        deps = self.depsolve(solver, mpp)
         checksums = self.add_packages(deps)
 
         for checksum in checksums:
             refs[checksum] = {}
 
-    def process_depsolves(self):
+    def process_depsolves(self, solver):
         for pipeline in self.pipelines:
             stages = element_enter(pipeline, "stages", [])
             for stage in stages:
-                self._process_depsolve(stage)
+                self._process_depsolve(solver, stage)
 
-
-dnf_cache = None
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manifest pre processor")
@@ -519,14 +546,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args(sys.argv[1:])
 
-    dnf_cache = args.dnf_cache
-
     m = ManifestFile.load(args.src)
 
     # First resolve all imports
     m.process_imports(args.searchdirs)
 
-    m.process_depsolves()
+    with tempfile.TemporaryDirectory() as persistdir:
+        solver = DepSolver(args.dnf_cache, persistdir)
+        m.process_depsolves(solver)
 
     with sys.stdout if args.dst == "-" else open(args.dst, "w") as f:
         m.write(f, args.sort_keys)
