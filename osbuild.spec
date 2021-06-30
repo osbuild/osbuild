@@ -90,6 +90,14 @@ Contains the necessary SELinux policies that allows
 osbuild to use labels unknown to the host inside the
 containers it uses to build OS artifacts.
 
+%package        tools
+Summary:        Extra tools and utilities
+Requires:       %{name} = %{version}-%{release}
+
+%description    tools
+Contains additional tools and utilities for development of
+manifests and osbuild.
+
 %prep
 %forgesetup
 
@@ -193,6 +201,9 @@ fi
 
 %posttrans selinux
 %selinux_relabel_post -s %{selinuxtype}
+
+%files tools
+%{_bindir}/osbuild-mpp
 
 
 %changelog
