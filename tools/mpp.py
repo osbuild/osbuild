@@ -282,7 +282,7 @@ class ManifestFile:
         version = int(data.get("version", "1"))
         if version == 1:
             return ManifestFileV1(path, data)
-        elif version == 2:
+        if version == 2:
             return ManifestFileV2(path, data)
         raise ValueError(f"Unknown manfest version {version}")
 
