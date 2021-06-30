@@ -30,6 +30,12 @@ SCHEMA_2 = """
       "description": "Filename for tar archive",
       "type": "string"
     },
+    "format": {
+      "description": "Archive format to use",
+      "type": "string",
+      "enum": ["gnu", "oldngu", "posix", "ustar", "v7"],
+      "default": "gnu"
+    },
     "acls": {
       "description": "Enable support for POSIX ACLs",
        "type": "boolean",
@@ -64,6 +70,7 @@ SCHEMA_2 = """
 def main(inputs, output_dir, options):
     tree = inputs["tree"]["path"]
     filename = options["filename"].lstrip("/")
+    tarfmt = options.get("format", "gnu")
 
     extra_args = []
     # Set environment variables for the tar operation.
@@ -86,6 +93,7 @@ def main(inputs, output_dir, options):
     tar_cmd = [
         "tar",
         "--auto-compress",
+        f"--format={tarfmt}",
         *extra_args,
         "-cf", os.path.join(output_dir, filename),
         "-C", tree,
