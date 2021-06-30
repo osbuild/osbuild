@@ -339,7 +339,7 @@ class ManifestFile:
 
 class ManifestFileV1(ManifestFile):
     def __init__(self, path, data):
-        super(ManifestFileV1, self).__init__(path, data, 1)
+        super().__init__(path, data, 1)
         self.pipeline = element_enter(self.root, "pipeline", {})
 
         files = element_enter(self.sources, "org.osbuild.files", {})
@@ -413,7 +413,7 @@ class ManifestFileV1(ManifestFile):
 
 class ManifestFileV2(ManifestFile):
     def __init__(self, path, data):
-        super(ManifestFileV2, self).__init__(path, data, 2)
+        super().__init__(path, data, 2)
         self.pipelines = element_enter(self.root, "pipelines", {})
 
         files = element_enter(self.sources, "org.osbuild.curl", {})
