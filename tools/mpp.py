@@ -95,6 +95,30 @@ The parameters for this pre-processor, version "2", look like this:
 ...
 ```
 
+String expansion:
+
+You can expand string with using python f-string formatting and variables. The variables
+can be set in the mpp-vars toplevel dict (which is removed from the final results) or
+overridden by the --var commandline option.
+
+Example:
+
+
+```
+    {
+      "mpp-vars": {
+        "variable": "some string",
+        "rootfs_size": 20480
+     },
+...
+    {
+      "foo": "a value",
+      "bar": { "mpp-format-string": "This expands {variable} but can also eval like {variable.upper()}" }
+      "disk_size": { "mpp-format-int": "{rootfs_size * 512}" }
+    }
+...
+```
+
 """
 
 
@@ -294,6 +318,21 @@ class ManifestFile:
         self.sources = element_enter(self.root, "sources", {})
         self.source_urls = {}
 
+        self.vars = {}
+        if "mpp-vars" in root:
+            self.vars = root["mpp-vars"]
+            del root["mpp-vars"]
+
+    def set_vars(self, args):
+        for arg in args:
+            if "=" in arg:
+                key, value_s = arg.split("=", 1)
+                value = json.loads(value_s)
+            else:
+                key = arg
+                value = True
+            self.vars[key] = value
+
     def load_import(self, path, search_dirs):
         m = self.find_and_load_manifest(path, search_dirs)
         if m.version != self.version:
@@ -365,6 +404,40 @@ class ManifestFile:
         json.dump(self.root, file, indent=2, sort_keys=sort_keys)
         file.write("\n")
 
+    def _process_format(self, node):
+        def _is_format(node):
+            if not isinstance(node, dict):
+                return False
+            return "mpp-format-string" in node or "mpp-format-int" in node
+        def _eval_format(node, local_vars):
+            if "mpp-format-string" in node:
+                is_int = False
+                format_string = node["mpp-format-string"]
+            else:
+                is_int = True
+                format_string = node["mpp-format-int"]
+            res = eval(f'f\'\'\'{format_string}\'\'\'', local_vars) # pylint: disable=eval-used  # yolo this is fine!
+
+            if is_int:
+                return int(res)
+            return res
+
+        if isinstance(node, dict):
+            for key in list(node.keys()):
+                value = node[key]
+                if _is_format(value):
+                    node[key] = _eval_format(value, self.vars)
+                else:
+                    self._process_format(value)
+        if isinstance(node, list):
+            for i, value in enumerate(node):
+                if _is_format(value):
+                    node[i] = _eval_format(value, self.vars)
+                else:
+                    self._process_format(value)
+
+    def process_format(self):
+        self._process_format(self.root)
 
 class ManifestFileV1(ManifestFile):
     def __init__(self, path, data):
@@ -381,6 +454,8 @@ class ManifestFileV1(ManifestFile):
 
         path = mpp["path"]
         imp = self.load_import(path, search_dirs)
+
+        self.vars.update(imp.vars)
 
         # We only support importing manifests with URL sources. Other sources are
         # not supported, yet. This can be extended in the future, but we should
@@ -463,6 +538,8 @@ class ManifestFileV2(ManifestFile):
         path = mpp["path"]
         imp = self.load_import(path, search_dirs)
 
+        self.vars.update(imp.vars)
+
         for source, desc in imp.sources.items():
             target = self.sources.get(source)
             if not target:
@@ -534,6 +611,12 @@ def main():
         help="Sort keys in generated json",
     )
     parser.add_argument(
+        "-D,--define",
+        dest="vars",
+        action='append',
+        help="Set/Override variable, format is key=Json"
+    )
+    parser.add_argument(
         "src",
         metavar="SRCPATH",
         help="Input manifest",
@@ -551,9 +634,15 @@ def main():
     # First resolve all imports
     m.process_imports(args.searchdirs)
 
+    # Override variables from the main of imported files
+    if args.vars:
+        m.set_vars(args.vars)
+
     with tempfile.TemporaryDirectory() as persistdir:
         solver = DepSolver(args.dnf_cache, persistdir)
         m.process_depsolves(solver)
+
+    m.process_format()
 
     with sys.stdout if args.dst == "-" else open(args.dst, "w") as f:
         m.write(f, args.sort_keys)
