@@ -1,5 +1,10 @@
 {
   "version": "2",
+  "mpp-vars": {
+    "efi_size": 204800,
+    "boot_size": 204800,
+    "root_size": 20557791
+  },
   "pipelines": [
     {
       "mpp-import-pipeline": {
@@ -166,7 +171,7 @@
           "type": "org.osbuild.truncate",
           "options": {
             "filename": "disk.img",
-            "size": "10737418240"
+            "size":  {"mpp-format-string": "{(4096 + efi_size + boot_size + root_size + 33) * 512}"}
           }
         },
         {
@@ -192,19 +197,19 @@
               },
               {
                 "start": 4096,
-                "size": 204800,
+                "size":  {"mpp-format-int": "{efi_size}"},
                 "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
                 "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
               },
               {
-                "start": 208896,
-                "size": 204800,
+                "start":  {"mpp-format-int": "{4096 + efi_size}"},
+                "size":  {"mpp-format-int": "{boot_size}"},
                 "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                 "uuid": "61B2905B-DF3E-4FB3-80FA-49D1E773AA32"
               },
               {
-                "start": 413696,
-                "size": 20557791,
+                "start":  {"mpp-format-int": "{4096 + efi_size + boot_size}"},
+                "size":  {"mpp-format-int": "{root_size}"},
                 "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                 "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
               }
@@ -219,7 +224,7 @@
               "options": {
                 "filename": "disk.img",
                 "start": 4096,
-                "size": 204800
+                "size":  {"mpp-format-int": "{efi_size}"}
               }
             }
           },
@@ -235,8 +240,8 @@
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start": 208896,
-                "size": 204800
+                "start":  {"mpp-format-int": "{4096 + efi_size}"},
+                "size":  {"mpp-format-int": "{boot_size}"}
               }
             }
           },
@@ -252,8 +257,8 @@
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start": 413696,
-                "size": 20557791
+                "start":  {"mpp-format-int": "{4096 + efi_size + boot_size}"},
+                "size":  {"mpp-format-int": "{root_size}"}
               }
             }
           },
@@ -287,23 +292,23 @@
               "options": {
                 "filename": "disk.img",
                 "start": 4096,
-                "size": 204800
+                "size":  {"mpp-format-int": "{efi_size}"}
               }
             },
             "boot": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start": 208896,
-                "size": 204800
+                "start":  {"mpp-format-int": "{4096 + efi_size}"},
+                "size":  {"mpp-format-int": "{boot_size}"}
               }
             },
             "root": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start": 413696,
-                "size": 20557791
+                "start":  {"mpp-format-int": "{4096 + efi_size + boot_size}"},
+                "size":  {"mpp-format-int": "{root_size}"}
               }
             }
           },
