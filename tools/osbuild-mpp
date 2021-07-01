@@ -144,6 +144,36 @@ def element_enter(element, key, default):
     return element[key]
 
 
+class PkgInfo:
+    def __init__(self, checksum, name, evr, arch):
+        self.checksum = checksum
+        self.name = name
+        self.evr = evr
+        self.arch = arch
+        self.url = None
+        self.secrets = None
+
+    @classmethod
+    def from_dnf_package(cls, pkg: dnf.package.Package):
+        checksum_type = hawkey.chksum_name(pkg.chksum[0])
+        checksum_hex = pkg.chksum[1].hex()
+
+        checksum = f"{checksum_type}:{checksum_hex}"
+
+        return cls(checksum, pkg.name, pkg.evr, pkg.arch)
+
+    @property
+    def evra(self):
+        return f"{self.evr}.{self.arch}"
+
+    @property
+    def nevra(self):
+        return f"{self.name}-{self.evra}"
+
+    def __str__(self):
+        return self.nevra
+
+
 class DepSolver:
     def __init__(self, cachedir, persistdir):
         self.cachedir = cachedir
@@ -267,9 +297,6 @@ class DepSolver:
             if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
                 continue
 
-            checksum_type = hawkey.chksum_name(tsi.pkg.chksum[0])
-            checksum_hex = tsi.pkg.chksum[1].hex()
-
             path = tsi.pkg.relativepath
             reponame = tsi.pkg.reponame
             baseurl = self.base.repos[reponame].baseurl[0]  # self.expand_baseurl(baseurls[reponame])
@@ -277,17 +304,11 @@ class DepSolver:
             # relative to `baseurl`. Strip any leading slashes, but ensure there's
             # exactly one between `baseurl` and the path.
             url = urllib.parse.urljoin(baseurl + "/", path.lstrip("/"))
-            secret = self.secrets.get(reponame)
 
-            pkg = {
-                "checksum": f"{checksum_type}:{checksum_hex}",
-                "name": tsi.pkg.name,
-                "nevra": str(tsi.pkg),
-                "url": url,
-            }
+            pkg = PkgInfo.from_dnf_package(tsi.pkg)
+            pkg.url = url
+            pkg.secrets = self.secrets.get(reponame)
 
-            if secret:
-                pkg["secrets"] = secret
             deps.append(pkg)
 
         return deps
@@ -371,15 +392,14 @@ class ManifestFile:
         pkginfos = {}
 
         for dep in deps:
-            name, checksum, url = dep["name"], dep["checksum"], dep["url"]
+            name, checksum, url = dep.name, dep.checksum, dep.url
 
-            pkginfos[name] = dep["nevra"]
+            pkginfos[name] = dep
 
-            secretes = dep.get("secrets")
-            if secretes:
+            if dep.secrets:
                 data = {
                     "url": url,
-                    "secrets": { "name": secretes }
+                    "secrets": {"name": dep.secrets}
                 }
             else:
                 data = url
