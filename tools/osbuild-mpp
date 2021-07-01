@@ -417,6 +417,7 @@ class ManifestFile:
             if not isinstance(node, dict):
                 return False
             return "mpp-format-string" in node or "mpp-format-int" in node
+
         def _eval_format(node, local_vars):
             if "mpp-format-string" in node:
                 is_int = False
@@ -424,7 +425,9 @@ class ManifestFile:
             else:
                 is_int = True
                 format_string = node["mpp-format-int"]
-            res = eval(f'f\'\'\'{format_string}\'\'\'', local_vars) # pylint: disable=eval-used  # yolo this is fine!
+
+            # pylint: disable=eval-used  # yolo this is fine!
+            res = eval(f'f\'\'\'{format_string}\'\'\'', local_vars)
 
             if is_int:
                 return int(res)
@@ -446,6 +449,7 @@ class ManifestFile:
 
     def process_format(self):
         self._process_format(self.root)
+
 
 class ManifestFileV1(ManifestFile):
     def __init__(self, path, data):
@@ -511,7 +515,7 @@ class ManifestFileV1(ManifestFile):
 
         packages += checksums
 
-    def process_depsolves(self, solver, pipeline=None, depth = 0):
+    def process_depsolves(self, solver, pipeline=None, depth=0):
         if pipeline is None:
             pipeline = self.pipeline
 
