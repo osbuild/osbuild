@@ -341,7 +341,7 @@
           "type": "org.osbuild.dracut",
           "options": {
             "kernel": [
-              "5.11.12-300.fc34.x86_64"
+              {"mpp-format-string": "{rpms['ostree-tree']['kernel'][7:-4]}" }
             ],
             "add_modules": [
               "anaconda",
@@ -455,7 +455,7 @@
               "version": "34"
             },
             "isolabel": "Fedora-34-X86_64",
-            "kernel": "5.11.12-300.fc34.x86_64",
+            "kernel": {"mpp-format-string": "{rpms['ostree-tree']['kernel'][7:-4]}" },
             "efi": {
               "architectures": [
                 "IA32",
