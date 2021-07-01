@@ -1,9 +1,11 @@
 FROM fedora:latest
 RUN dnf install -y \
+    bat \
     findutils \
     fish \
     fpaste \
     git \
+    glibc-langpack-en \
     hostname \
     jq \
     libguestfs-tools libguestfs \
@@ -26,10 +28,12 @@ RUN dnf install -y \
     python3-pycodestyle \
     python3-pylint \
     python3-pytest \
+    python3-pyyaml \
     rpm-build \
     rpmlint \
     selinux-policy-devel \
     skopeo \
+    strace \
     the_silver_searcher \
     tree
 
