@@ -174,10 +174,10 @@ class TestBase(unittest.TestCase):
         """
 
         try:
-            r = subprocess.run(["rpm-ostree", "--version"],
-                               encoding="utf-8",
-                               stdout=subprocess.PIPE,
-                               check=False)
+            r = subprocess.run(
+                ["rpm-ostree", "--version"],
+                encoding="utf-8", stdout=subprocess.PIPE, check=False
+            )
         except FileNotFoundError:
             return False
 
@@ -235,10 +235,11 @@ class OSBuild(contextlib.AbstractContextManager):
             cache = tempfile.TemporaryDirectory(dir="/var/tmp")
             self._cachedir = self._exitstack.enter_context(cache)
             if self._cache_from is not None:
-                subprocess.run(["cp", "--reflink=auto", "-a",
-                                os.path.join(self._cache_from, "."),
-                                self._cachedir],
-                               check=True)
+                subprocess.run([
+                    "cp", "--reflink=auto", "-a",
+                    os.path.join(self._cache_from, "."),
+                    self._cachedir
+                ], check=True)
 
             # Keep our ExitStack for `__exit__()`.
             self._exitstack = self._exitstack.pop_all()
