@@ -71,7 +71,7 @@
           "kernel_opts": "ro biosdevname=0 net.ifnames=0",
           "legacy": "i386-pc",
           "saved_entry": {
-            "mpp-format-string": "{'f'*32}-{rpms['stages']['kernel-core'][12:]}"
+            "mpp-format-string": "{'f'*32}-{rpms['stages']['kernel-core'].evra}"
           }
         }
       },
