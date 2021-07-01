@@ -364,11 +364,15 @@ class ManifestFile:
 
         return solver.resolve(packages, excludes)
 
-    def add_packages(self, deps):
+    def add_packages(self, deps, pipeline_name):
         checksums = []
 
+        pkginfos = {}
+
         for dep in deps:
-            checksum, url = dep["checksum"], dep["url"]
+            name, checksum, url = dep["name"], dep["checksum"], dep["url"]
+
+            pkginfos[name] = urllib.parse.urlparse(url).path.rsplit("/", 1)[1]
 
             secretes = dep.get("secrets")
             if secretes:
@@ -381,6 +385,10 @@ class ManifestFile:
 
             self.source_urls[checksum] = data
             checksums.append(checksum)
+
+        if "rpms" not in self.vars:
+            self.vars["rpms"] = {}
+        self.vars["rpms"][pipeline_name] = pkginfos
 
         return checksums
 
@@ -484,7 +492,7 @@ class ManifestFileV1(ManifestFile):
             self._process_import(current, search_dirs)
             current = current.get("pipeline", {}).get("build")
 
-    def _process_depsolve(self, solver, stage):
+    def _process_depsolve(self, solver, stage, pipeline_name):
         if stage.get("name", "") != "org.osbuild.rpm":
             return
         options = stage.get("options")
@@ -499,20 +507,28 @@ class ManifestFileV1(ManifestFile):
         packages = element_enter(options, "packages", [])
 
         deps = self.depsolve(solver, mpp)
-        checksums = self.add_packages(deps)
+        checksums = self.add_packages(deps, pipeline_name)
 
         packages += checksums
 
-    def process_depsolves(self, solver, pipeline=None):
+    def process_depsolves(self, solver, pipeline=None, depth = 0):
         if pipeline is None:
             pipeline = self.pipeline
+
+        if depth == 0:
+            pipeline_name = "stages"
+        elif depth == 1:
+            pipeline_name = "build"
+        else:
+            pipeline_name = "build" + str(depth)
+
         stages = element_enter(pipeline, "stages", [])
         for stage in stages:
-            self._process_depsolve(solver, stage)
+            self._process_depsolve(solver, stage, pipeline_name)
         build = pipeline.get("build")
         if build:
             if "pipeline" in build:
-                self.process_depsolves(solver, build["pipeline"])
+                self.process_depsolves(solver, build["pipeline"], depth+1)
 
 
 class ManifestFileV2(ManifestFile):
@@ -562,7 +578,7 @@ class ManifestFileV2(ManifestFile):
         for pipeline in self.pipelines:
             self._process_import(pipeline, search_dirs)
 
-    def _process_depsolve(self, solver, stage):
+    def _process_depsolve(self, solver, stage, pipeline_name):
         if stage.get("type", "") != "org.osbuild.rpm":
             return
         inputs = element_enter(stage, "inputs", {})
@@ -576,16 +592,17 @@ class ManifestFileV2(ManifestFile):
         refs = element_enter(packages, "references", {})
 
         deps = self.depsolve(solver, mpp)
-        checksums = self.add_packages(deps)
+        checksums = self.add_packages(deps, pipeline_name)
 
         for checksum in checksums:
             refs[checksum] = {}
 
     def process_depsolves(self, solver):
         for pipeline in self.pipelines:
+            name = pipeline.get("name", "")
             stages = element_enter(pipeline, "stages", [])
             for stage in stages:
-                self._process_depsolve(solver, stage)
+                self._process_depsolve(solver, stage, name)
 
 
 def main():
