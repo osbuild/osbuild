@@ -378,7 +378,7 @@ class ManifestFile:
             if secretes:
                 data = {
                     "url": url,
-                    "secrets": secretes
+                    "secrets": { "name": secretes }
                 }
             else:
                 data = url
