@@ -185,7 +185,7 @@ class DepSolver:
 
         self.base = dnf.Base()
 
-    def reset(self, basedir):
+    def reset(self, basedir, module_platform_id, ignore_weak_deps):
         base = self.base
         base.reset(goal=True, repos=True, sack=True)
         self.secrets.clear()
@@ -194,6 +194,8 @@ class DepSolver:
             base.conf.cachedir = self.cachedir
         base.conf.config_file_path = "/dev/null"
         base.conf.persistdir = self.persistdir
+        base.conf.module_platform_id = module_platform_id
+        base.conf.install_weak_deps = not ignore_weak_deps
 
         self.base = base
         self.basedir = basedir
@@ -379,7 +381,10 @@ class ManifestFile:
         if not packages:
             return []
 
-        solver.reset(self.basedir)
+        module_platform_id = desc["module-platform-id"]
+        ignore_weak_deps = bool(desc.get("ignore-weak-deps"))
+
+        solver.reset(self.basedir, module_platform_id, ignore_weak_deps)
 
         for repo in repos:
             solver.add_repo(repo, baseurl)
