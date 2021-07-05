@@ -40,6 +40,7 @@ RPM:
         REGISTER: "true"
       - RUNNER:
           - aws/rhel-8.5-x86_64
+          - aws/rhel-8.5-aarch64
         INTERNAL_NETWORK: "true"
 
 Testing:
