@@ -126,6 +126,7 @@ import argparse
 import contextlib
 import json
 import os
+import string
 import sys
 import pathlib
 import tempfile
@@ -200,13 +201,15 @@ class DepSolver:
         self.base = base
         self.basedir = basedir
 
-    def setup(self, arch, module_platform_id, ignore_weak_deps):
+    def set_substitutions(self, arch, releasever):
         base = self.base
 
-        base.conf.module_platform_id = module_platform_id
-        base.conf.substitutions['arch'] = arch
-        base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
-        base.conf.install_weak_deps = not ignore_weak_deps
+        if arch:
+            base.conf.substitutions['arch'] = arch
+            base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
+
+        if releasever:
+            base.conf.substitutions['releasever'] = releasever
 
     def expand_baseurl(self, baseurl):
         """Expand non-uris as paths relative to basedir into a file:/// uri"""
@@ -218,6 +221,7 @@ class DepSolver:
                 return path.as_uri()
         except:  # pylint: disable=bare-except
             pass
+
         return baseurl
 
     def get_secrets(self, url, desc):
@@ -301,7 +305,8 @@ class DepSolver:
 
             path = tsi.pkg.relativepath
             reponame = tsi.pkg.reponame
-            baseurl = self.base.repos[reponame].baseurl[0]  # self.expand_baseurl(baseurls[reponame])
+            baseurl = string.Template(self.base.repos[reponame].baseurl[0])
+            baseurl = baseurl.substitute(self.base.conf.substitutions)
             # dep["path"] often starts with a "/", even though it's meant to be
             # relative to `baseurl`. Strip any leading slashes, but ensure there's
             # exactly one between `baseurl` and the path.
@@ -385,6 +390,11 @@ class ManifestFile:
         ignore_weak_deps = bool(desc.get("ignore-weak-deps"))
 
         solver.reset(self.basedir, module_platform_id, ignore_weak_deps)
+
+        arch = desc["architecture"]
+        releasever = desc.get("releasever")
+
+        solver.set_substitutions(arch, releasever)
 
         for repo in repos:
             solver.add_repo(repo, baseurl)
