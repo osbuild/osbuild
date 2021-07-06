@@ -68,18 +68,104 @@
                   }
                 ],
                 "packages": [
-                  "@cloud-server-environment",
-                  "chrony",
-                  "dracut-config-generic",
-                  "grub2-pc",
-                  "kernel-core",
-                  "langpacks-en",
+                  "fedora-release-iot",
+                  "glibc",
+                  "glibc-minimal-langpack",
                   "nss-altfiles",
-                  "ostree",
-                  "polkit",
+                  "sssd-client",
+                  "libsss_sudo",
+                  "shadow-utils",
+                  "kernel",
+                  "dracut-config-generic",
+                  "dracut-network",
                   "rpm-ostree",
+                  "polkit",
+                  "lvm2",
+                  "cryptsetup",
+                  "pinentry",
+                  "keyutils",
+                  "cracklib-dicts",
+                  "e2fsprogs",
+                  "xfsprogs",
+                  "dosfstools",
+                  "gnupg2",
+                  "basesystem",
+                  "python3",
+                  "bash",
+                  "xz",
+                  "gzip",
+                  "coreutils",
+                  "which",
+                  "curl",
+                  "firewalld",
+                  "iptables",
+                  "NetworkManager",
+                  "NetworkManager-wifi",
+                  "NetworkManager-wwan",
+                  "wpa_supplicant",
+                  "wireless-regdb",
+                  "iwd",
+                  "tpm2-pkcs11",
+                  "dnsmasq",
+                  "traceroute",
+                  "hostname",
+                  "iproute",
+                  "iputils",
+                  "openssh-clients",
+                  "openssh-server",
+                  "passwd",
+                  "policycoreutils",
+                  "procps-ng",
+                  "rootfiles",
+                  "rpm",
                   "selinux-policy-targeted",
-                  "systemd-udev"
+                  "setup",
+                  "shadow-utils",
+                  "sudo",
+                  "systemd",
+                  "util-linux",
+                  "vim-minimal",
+                  "less",
+                  "tar",
+                  "greenboot",
+                  "greenboot-grub2",
+                  "greenboot-rpm-ostree-grub2",
+                  "greenboot-reboot",
+                  "greenboot-status",
+                  "ignition",
+                  "zezere-ignition",
+                  "zram-generator",
+                  "zram-generator-defaults",
+                  "rsync",
+                  "attr",
+                  "ima-evm-utils",
+                  "openssl",
+                  "bash-completion",
+                  "tmux",
+                  "screen",
+                  "policycoreutils-python-utils",
+                  "setools-console",
+                  "usbguard",
+                  "audit",
+                  "rng-tools",
+                  "chrony",
+                  "bluez",
+                  "bluez-libs",
+                  "bluez-mesh",
+                  "kernel-tools",
+                  "libgpiod-utils",
+                  "podman",
+                  "podman-plugins",
+                  "container-selinux",
+                  "skopeo",
+                  "criu",
+                  "slirp4netns",
+                  "fuse-overlayfs",
+                  "grub2",
+                  "grub2-efi-x64",
+                  "efibootmgr",
+                  "shim-x64",
+                  "microcode_ctl"
                 ],
                 "excludes": [
                   "dracut-config-rescue"
@@ -92,6 +178,28 @@
           "type": "org.osbuild.locale",
           "options": {
             "language": "en_US"
+          }
+        },
+        {
+          "type": "org.osbuild.systemd",
+          "options": {
+            "enabled_services": [
+              "NetworkManager.service",
+              "firewalld.service"
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.users",
+          "options": {
+            "users": {
+              "root": {
+                "password": ""
+              },
+              "core": {
+                "password": ""
+              }
+            }
           }
         },
         {
@@ -144,30 +252,64 @@
       "build": "name:build",
       "stages": [
         {
-          "type": "org.osbuild.ostree",
+          "type": "org.osbuild.ostree.init-fs"
+        },
+        {
+          "type": "org.osbuild.ostree.pull",
+          "options": {
+            "repo": "/ostree/repo"
+          },
           "inputs": {
-            "commit": {
+            "commits": {
               "type": "org.osbuild.ostree",
               "origin": "org.osbuild.pipeline",
-              "references": [
-                "name:ostree-commit"
-              ]
+              "references": {
+                "name:ostree-commit": {
+                  "ref": "fedora/x86_64/osbuild"
+                }
+              }
             }
-          },
+          }
+        },
+        {
+          "type": "org.osbuild.ostree.os-init",
           "options": {
-            "osname": "fedora",
-            "ref": "fedora/x86_64/osbuild",
-            "mounts": [
-              {
-                "path": "/boot"
-              },
+            "osname": "fedora"
+          }
+        },
+        {
+          "type": "org.osbuild.ostree.config",
+          "options": {
+            "repo": "/ostree/repo",
+            "config": {
+              "sysroot": {
+                "readonly": true
+              }
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.mkdir",
+          "options": {
+            "paths": [
               {
                 "path": "/boot/efi",
                 "mode": 448
               }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.ostree.deploy",
+          "options": {
+            "osname": "fedora",
+            "ref": "fedora/x86_64/osbuild",
+            "mounts": [
+              "/boot",
+              "/boot/efi"
             ],
             "rootfs": {
-              "uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac"
+              "label": "root"
             },
             "kernel_opts": [
               "console=tty0",
@@ -178,10 +320,67 @@
           }
         },
         {
+          "type": "org.osbuild.ostree.fillvar",
+          "options": {
+            "deployment": {
+              "osname": "fedora",
+              "ref": "fedora/x86_64/osbuild"
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.fstab",
+          "options": {
+            "ostree": {
+              "deployment": {
+                "osname": "fedora",
+                "ref": "fedora/x86_64/osbuild"
+              }
+            },
+            "filesystems": [
+              {
+                "label": "boot",
+                "vfs_type": "ext4",
+                "path": "/boot",
+                "freq": 1,
+                "passno": 1
+              },
+              {
+                "label": "root",
+                "vfs_type": "xfs",
+                "path": "/",
+                "freq": 1,
+                "passno": 1
+              },
+              {
+                "label": "ESP",
+                "vfs_type": "vfat",
+                "path": "/boot/efi",
+                "options": "umask=0077,shortname=winnt",
+                "freq": 0,
+                "passno": 2
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.ostree.selinux",
+          "options": {
+            "deployment": {
+              "osname": "fedora",
+              "ref": "fedora/x86_64/osbuild"
+            }
+          }
+        },
+        {
           "type": "org.osbuild.grub2",
           "options": {
-            "root_fs_uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-            "boot_fs_uuid": "156f0420-627b-4151-ae6f-fda298097515",
+            "rootfs": {
+              "label": "root"
+            },
+            "bootfs": {
+              "label": "boot"
+            },
             "uefi": {
               "vendor": "fedora",
               "install": true
