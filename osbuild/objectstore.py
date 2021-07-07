@@ -48,6 +48,7 @@ def umount(target, lazy=False):
     args = []
     if lazy:
         args += ["--lazy"]
+    subprocess.run(["sync", "-f", target], check=True)
     subprocess.run(["umount"] + args + [target], check=True)
 
 
