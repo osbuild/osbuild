@@ -85,16 +85,19 @@ class Stage:
             build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
             cm.enter_context(build_root)
 
-            inputs_tmpdir = store.tempdir(prefix="inputs-")
-            inputs_tmpdir = cm.enter_context(inputs_tmpdir)
+            tmpdir = store.tempdir(prefix="buildroot-tmp-")
+            tmpdir = cm.enter_context(tmpdir)
+
+            inputs_tmpdir = os.path.join(tmpdir, "inputs")
+            os.makedirs(inputs_tmpdir)
             inputs_mapped = "/run/osbuild/inputs"
             inputs = {}
 
             devices_mapped = "/dev"
             devices = {}
 
-            mounts_tmpdir = store.tempdir(prefix="mounts-")
-            mounts_tmpdir = cm.enter_context(mounts_tmpdir)
+            mounts_tmpdir = os.path.join(tmpdir, "mounts")
+            os.makedirs(mounts_tmpdir)
             mounts_mapped = "/run/osbuild/mounts"
             mounts = {}
 
