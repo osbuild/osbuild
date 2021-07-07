@@ -82,8 +82,7 @@ class Stage:
     def run(self, tree, runner, build_tree, store, monitor, libdir):
         with contextlib.ExitStack() as cm:
 
-            build_root = buildroot.BuildRoot(
-                build_tree, runner, libdir, store.tmp)
+            build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
             cm.enter_context(build_root)
 
             inputs_tmpdir = store.tempdir(prefix="inputs-")
