@@ -55,6 +55,7 @@ class LoopbackService(devices.DeviceService):
 
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
+        self.fd = None
         self.lo = None
         self.ctl = loop.LoopControl()
 
@@ -97,8 +98,12 @@ class LoopbackService(devices.DeviceService):
 
         path = os.path.join(tree, filename.lstrip("/"))
 
-        with open(path, "r+b") as fd:
-            self.lo = self.make_loop(fd.fileno(), start, size)
+        self.fd = os.open(path, os.O_RDWR | os.O_CLOEXEC)
+        try:
+            self.lo = self.make_loop(self.fd, start, size)
+        except Exception as error:  # pylint: disable: broad-except
+            self.close()
+            raise error from None
 
         dir_fd = -1
         try:
@@ -122,6 +127,14 @@ class LoopbackService(devices.DeviceService):
         if self.lo:
             self.lo.close()
             self.lo = None
+
+        if self.fd is not None:
+            fd = self.fd
+            self.fd = None
+            try:
+                os.fsync(fd)
+            finally:
+                os.close(fd)
 
 
 def main():
