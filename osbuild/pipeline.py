@@ -79,6 +79,29 @@ class Stage:
         self.mounts[name] = mount
         return mount
 
+    def prepare_arguments(self, args, location):
+        args["options"] = self.options
+        args["meta"] = {
+            "id": self.id
+        }
+
+        # Root relative paths: since paths are different on the
+        # host and in the container they need to be mapped to
+        # their path within the container. For all items that
+        # have registered roots, re-root their path entries here
+        for name, root in args.get("paths", {}).items():
+            group = args.get(name)
+            if not group or not isinstance(group, dict):
+                continue
+            for item in group.values():
+                path = item.get("path")
+                if not path:
+                    continue
+                item["path"] = os.path.join(root, path)
+
+        with open(location, "w", encoding="utf-8") as fp:
+            json.dump(args, fp)
+
     def run(self, tree, runner, build_tree, store, monitor, libdir):
         with contextlib.ExitStack() as cm:
 
@@ -101,9 +124,11 @@ class Stage:
             mounts_mapped = "/run/osbuild/mounts"
             mounts = {}
 
+            os.makedirs(os.path.join(tmpdir, "api"))
+            args_path = os.path.join(tmpdir, "api", "arguments")
+
             args = {
                 "tree": "/run/osbuild/tree",
-                "options": self.options,
                 "paths": {
                     "devices": devices_mapped,
                     "inputs": inputs_mapped,
@@ -112,14 +137,12 @@ class Stage:
                 "devices": devices,
                 "inputs": inputs,
                 "mounts": mounts,
-                "meta": {
-                    "id": self.id
-                }
             }
 
             ro_binds = [
                 f"{self.info.path}:/run/osbuild/bin/{self.name}",
-                f"{inputs_tmpdir}:{inputs_mapped}"
+                f"{inputs_tmpdir}:{inputs_mapped}",
+                f"{args_path}:/run/osbuild/api/arguments"
             ]
 
             binds = [
@@ -146,6 +169,8 @@ class Stage:
                 abspath = os.path.join(build_root.dev, relpath)
                 data = mount.mount(mgr, abspath, mounts_tmpdir)
                 mounts[key] = data
+
+            self.prepare_arguments(args, args_path)
 
             api = API(args)
             build_root.register_api(api)
