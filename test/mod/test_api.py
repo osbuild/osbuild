@@ -72,9 +72,8 @@ class TestAPI(unittest.TestCase):
         tmpdir = self.tmp.name
         path = os.path.join(tmpdir, "osbuild-api")
         args = {"options": {"answer": 42}}
-        monitor = osbuild.monitor.BaseMonitor(sys.stderr.fileno())
 
-        with osbuild.api.API(args, monitor, socket_address=path) as _:
+        with osbuild.api.API(args, socket_address=path) as _:
             data = osbuild.api.arguments(path=path)
             self.assertEqual(data, args)
 
@@ -83,14 +82,13 @@ class TestAPI(unittest.TestCase):
         tmpdir = self.tmp.name
         path = os.path.join(tmpdir, "osbuild-api")
         args = {}
-        monitor = osbuild.monitor.BaseMonitor(sys.stderr.fileno())
 
         def exception(path):
             with osbuild.api.exception_handler(path):
                 raise ValueError("osbuild test exception")
             assert False, "api.exception should exit process"
 
-        api = osbuild.api.API(args, monitor, socket_address=path)
+        api = osbuild.api.API(args, socket_address=path)
         with api:
             p = mp.Process(target=exception, args=(path, ))
             p.start()
@@ -112,14 +110,13 @@ class TestAPI(unittest.TestCase):
         tmpdir = self.tmp.name
         path = os.path.join(tmpdir, "osbuild-api")
         args = {}
-        monitor = osbuild.monitor.BaseMonitor(sys.stderr.fileno())
 
         def metadata(path):
             data = {"meta": "42"}
             osbuild.api.metadata(data, path=path)
             return 0
 
-        api = osbuild.api.API(args, monitor, socket_address=path)
+        api = osbuild.api.API(args, socket_address=path)
         with api:
             p = mp.Process(target=metadata, args=(path, ))
             p.start()

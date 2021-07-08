@@ -147,7 +147,7 @@ class Stage:
                 data = mount.mount(mgr, abspath, mounts_tmpdir)
                 mounts[key] = data
 
-            api = API(args, monitor)
+            api = API(args)
             build_root.register_api(api)
 
             rls = remoteloop.LoopServer()
