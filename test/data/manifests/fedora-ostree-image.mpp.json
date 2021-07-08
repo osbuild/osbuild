@@ -185,7 +185,17 @@
           "options": {
             "enabled_services": [
               "NetworkManager.service",
-              "firewalld.service"
+              "firewalld.service",
+              "rngd.service",
+              "sshd.service",
+              "zezere_ignition.timer",
+              "zezere_ignition_banner.service",
+              "greenboot-grub2-set-counter.service",
+              "greenboot-grub2-set-success.service",
+              "greenboot-healthcheck.service",
+              "greenboot-rpm-ostree-grub2-check-fallback.service",
+              "greenboot-status.service",
+              "greenboot-task-runner.service"
             ]
           }
         },
