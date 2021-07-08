@@ -1,9 +1,37 @@
 {
   "version": "2",
-  "mpp-vars": {
-    "efi_size": 204800,
-    "boot_size": 204800,
-    "root_size": 20557791
+  "mpp-define-image": {
+    "size": "10737418240",
+    "table": {
+      "uuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+      "label": "gpt",
+      "partitions": [
+        {
+          "id": "bios-boot",
+          "size": 2048,
+          "type": "21686148-6449-6E6F-744E-656564454649",
+          "bootable": true,
+          "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+        },
+        {
+          "id": "efi",
+          "size": 204800,
+          "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+          "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
+        },
+        {
+          "id": "boot",
+          "size": 204800,
+          "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+          "uuid": "61B2905B-DF3E-4FB3-80FA-49D1E773AA32"
+        },
+        {
+          "id": "root",
+          "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+          "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
+        }
+      ]
+    }
   },
   "pipelines": [
     {
@@ -171,7 +199,9 @@
           "type": "org.osbuild.truncate",
           "options": {
             "filename": "disk.img",
-            "size":  {"mpp-format-string": "{(4096 + efi_size + boot_size + root_size + 33) * 512}"}
+            "size": {
+              "mpp-format-string": "{image.size}"
+            }
           }
         },
         {
@@ -185,35 +215,7 @@
             }
           },
           "options": {
-            "uuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-            "label": "gpt",
-            "partitions": [
-              {
-                "start": 2048,
-                "size": 2048,
-                "type": "21686148-6449-6E6F-744E-656564454649",
-                "bootable": true,
-                "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
-              },
-              {
-                "start": 4096,
-                "size":  {"mpp-format-int": "{efi_size}"},
-                "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
-                "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
-              },
-              {
-                "start":  {"mpp-format-int": "{4096 + efi_size}"},
-                "size":  {"mpp-format-int": "{boot_size}"},
-                "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-                "uuid": "61B2905B-DF3E-4FB3-80FA-49D1E773AA32"
-              },
-              {
-                "start":  {"mpp-format-int": "{4096 + efi_size + boot_size}"},
-                "size":  {"mpp-format-int": "{root_size}"},
-                "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-                "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
-              }
-            ]
+            "mpp-format-json": "{image.layout}"
           }
         },
         {
@@ -223,8 +225,12 @@
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start": 4096,
-                "size":  {"mpp-format-int": "{efi_size}"}
+                "start": {
+                  "mpp-format-int": "{image.layout['efi'].start}"
+                },
+                "size": {
+                  "mpp-format-int": "{image.layout['efi'].size}"
+                }
               }
             }
           },
@@ -240,8 +246,12 @@
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start":  {"mpp-format-int": "{4096 + efi_size}"},
-                "size":  {"mpp-format-int": "{boot_size}"}
+                "start": {
+                  "mpp-format-int": "{image.layout['boot'].start}"
+                },
+                "size": {
+                  "mpp-format-int": "{image.layout['boot'].size}"
+                }
               }
             }
           },
@@ -257,8 +267,12 @@
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start":  {"mpp-format-int": "{4096 + efi_size + boot_size}"},
-                "size":  {"mpp-format-int": "{root_size}"}
+                "start": {
+                  "mpp-format-int": "{image.layout['root'].start}"
+                },
+                "size": {
+                  "mpp-format-int": "{image.layout['root'].size}"
+                }
               }
             }
           },
@@ -291,24 +305,36 @@
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start": 4096,
-                "size":  {"mpp-format-int": "{efi_size}"}
+                "start": {
+                  "mpp-format-int": "{image.layout['efi'].start}"
+                },
+                "size": {
+                  "mpp-format-int": "{image.layout['efi'].size}"
+                }
               }
             },
             "boot": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start":  {"mpp-format-int": "{4096 + efi_size}"},
-                "size":  {"mpp-format-int": "{boot_size}"}
+                "start": {
+                  "mpp-format-int": "{image.layout['boot'].start}"
+                },
+                "size": {
+                  "mpp-format-int": "{image.layout['boot'].size}"
+                }
               }
             },
             "root": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start":  {"mpp-format-int": "{4096 + efi_size + boot_size}"},
-                "size":  {"mpp-format-int": "{root_size}"}
+                "start": {
+                  "mpp-format-int": "{image.layout['root'].start}"
+                },
+                "size": {
+                  "mpp-format-int": "{image.layout['root'].size}"
+                }
               }
             }
           },
@@ -335,7 +361,9 @@
           "options": {
             "platform": "i386-pc",
             "filename": "disk.img",
-            "location": 2048,
+            "location": {
+              "mpp-format-int": "{image.layout['bios-boot'].start}"
+            },
             "core": {
               "type": "mkimage",
               "partlabel": "gpt",
@@ -343,8 +371,12 @@
             },
             "prefix": {
               "type": "partition",
-              "partlabel": "gpt",
-              "number": 2,
+              "partlabel": {
+                "mpp-format-string": "{image.layout.label}"
+              },
+              "number": {
+                "mpp-format-int": "{image.layout['boot'].index}"
+              },
               "path": "/grub2"
             }
           }
