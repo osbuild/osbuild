@@ -39,6 +39,7 @@ class BaseAPI(abc.ABC):
     called; the default implementation will receive the message
     call `_message.`
     """
+
     def __init__(self, socket_address: Optional[PathLike] = None):
         self.socket_address = socket_address
         self.barrier = threading.Barrier(2)
@@ -141,42 +142,15 @@ class API(BaseAPI):
     def __init__(self, args, monitor, *, socket_address=None):
         super().__init__(socket_address)
         self.input = args
-        self._output_data = io.StringIO()
-        self._output_pipe = None
         self.monitor = monitor
         self.metadata = {}
         self.error = None
-
-    @property
-    def output(self):
-        # Only once the event-loop was stopped, you are guaranteed that the
-        # api-thread scheduled all outstanding events. Therefore, we disallow
-        # asking for the output-data from a running api context. If we happen
-        # to need live streaming access to the output in the future, we need
-        # to redesign the output-handling, anyway.
-        assert not self.running
-
-        return self._output_data.getvalue()
 
     def _prepare_input(self):
         with tempfile.TemporaryFile() as fd:
             fd.write(json.dumps(self.input).encode('utf-8'))
             # re-open the file to get a read-only file descriptor
             return open(f"/proc/self/fd/{fd.fileno()}", "r")
-
-    def _prepare_output(self):
-        r, w = os.pipe()
-        self._output_pipe = r
-        self._output_data.truncate(0)
-        self._output_data.seek(0)
-        self.event_loop.add_reader(r, self._output_ready)
-        return os.fdopen(w)
-
-    def _output_ready(self):
-        raw = os.read(self._output_pipe, 4096)
-        data = raw.decode("utf-8")
-        self._output_data.write(data)
-        self.monitor.log(data)
 
     def _set_metadata(self, message, fds):
         fd = message["metadata"]
@@ -203,11 +177,6 @@ class API(BaseAPI):
             self._get_exception(msg)
         elif msg["method"] == 'get-arguments':
             self._get_arguments(sock)
-
-    def _cleanup(self):
-        if self._output_pipe:
-            os.close(self._output_pipe)
-            self._output_pipe = None
 
 
 def exception(e, path="/run/osbuild/api/osbuild"):
