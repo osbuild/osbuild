@@ -257,7 +257,10 @@ class Service(abc.ABC):
                 _, val, tb = sys.exc_info()
                 reply = self.protocol.encode_exception(val, tb)
 
-            self.sock.send(reply, fds=fds)
+            try:
+                self.sock.send(reply, fds=fds)
+            except BrokenPipeError:
+                break
 
     def _handle_message(self, msg, fds):
         """
