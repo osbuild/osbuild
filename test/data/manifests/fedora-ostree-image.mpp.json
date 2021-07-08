@@ -200,19 +200,6 @@
           }
         },
         {
-          "type": "org.osbuild.users",
-          "options": {
-            "users": {
-              "root": {
-                "password": ""
-              },
-              "core": {
-                "password": ""
-              }
-            }
-          }
-        },
-        {
           "type": "org.osbuild.selinux",
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
