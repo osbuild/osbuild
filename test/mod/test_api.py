@@ -4,7 +4,6 @@
 
 import os
 import multiprocessing as mp
-import sys
 import tempfile
 import unittest
 
@@ -68,27 +67,17 @@ class TestAPI(unittest.TestCase):
                 with api:
                     pass
 
-    def test_get_arguments(self):
-        tmpdir = self.tmp.name
-        path = os.path.join(tmpdir, "osbuild-api")
-        args = {"options": {"answer": 42}}
-
-        with osbuild.api.API(args, socket_address=path) as _:
-            data = osbuild.api.arguments(path=path)
-            self.assertEqual(data, args)
-
     def test_exception(self):
         # Check that 'api.exception' correctly sets 'API.exception'
         tmpdir = self.tmp.name
         path = os.path.join(tmpdir, "osbuild-api")
-        args = {}
 
         def exception(path):
             with osbuild.api.exception_handler(path):
                 raise ValueError("osbuild test exception")
             assert False, "api.exception should exit process"
 
-        api = osbuild.api.API(args, socket_address=path)
+        api = osbuild.api.API(socket_address=path)
         with api:
             p = mp.Process(target=exception, args=(path, ))
             p.start()
@@ -109,14 +98,13 @@ class TestAPI(unittest.TestCase):
         # set correctly
         tmpdir = self.tmp.name
         path = os.path.join(tmpdir, "osbuild-api")
-        args = {}
 
         def metadata(path):
             data = {"meta": "42"}
             osbuild.api.metadata(data, path=path)
             return 0
 
-        api = osbuild.api.API(args, socket_address=path)
+        api = osbuild.api.API(socket_address=path)
         with api:
             p = mp.Process(target=metadata, args=(path, ))
             p.start()

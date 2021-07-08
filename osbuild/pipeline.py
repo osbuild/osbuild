@@ -172,7 +172,7 @@ class Stage:
 
             self.prepare_arguments(args, args_path)
 
-            api = API(args)
+            api = API()
             build_root.register_api(api)
 
             rls = remoteloop.LoopServer()

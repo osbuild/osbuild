@@ -139,29 +139,16 @@ class API(BaseAPI):
 
     endpoint = "osbuild"
 
-    def __init__(self, args, *, socket_address=None):
+    def __init__(self, *, socket_address=None):
         super().__init__(socket_address)
-        self.input = args
         self.metadata = {}
         self.error = None
-
-    def _prepare_input(self):
-        with tempfile.TemporaryFile() as fd:
-            fd.write(json.dumps(self.input).encode('utf-8'))
-            # re-open the file to get a read-only file descriptor
-            return open(f"/proc/self/fd/{fd.fileno()}", "r")
 
     def _set_metadata(self, message, fds):
         fd = message["metadata"]
         with os.fdopen(fds.steal(fd), encoding="utf-8") as f:
             data = json.load(f)
         self.metadata.update(data)
-
-    def _get_arguments(self, sock):
-        with self._prepare_input() as data:
-            fds = []
-            fds.append(data.fileno())
-            sock.send({"type": "fd", "fd": 0}, fds=fds)
 
     def _get_exception(self, message):
         self.error = {
@@ -174,8 +161,6 @@ class API(BaseAPI):
             self._set_metadata(msg, fds)
         elif msg["method"] == 'exception':
             self._get_exception(msg)
-        elif msg["method"] == 'get-arguments':
-            self._get_arguments(sock)
 
 
 def exception(e, path="/run/osbuild/api/osbuild"):
