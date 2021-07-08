@@ -1,0 +1,10 @@
+{
+  "added_files": [
+    "/a/b",
+    "/b",
+    "/b/c",
+    "/b/c/d"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}

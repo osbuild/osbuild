@@ -1,0 +1,71 @@
+#!/usr/bin/python3
+"""
+Create directories within the tree.
+
+Can create one or more directories, optionally also the
+intermediate directories.
+"""
+
+import os
+import sys
+
+import osbuild.api
+from osbuild.util.path import in_tree
+
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "properties": {
+    "paths": {
+      "type": "array",
+      "additionalItems": false,
+      "paths": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+          },
+          "mode": {
+            "type": "number",
+            "description": "Numeric octal mode"
+          },
+          "parents": {
+            "type": "boolean",
+            "description": "Create intermediate directories",
+            "default": false
+          }
+
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    for item in options["paths"]:
+        path = item["path"]
+        mode = item.get("mode", 0o777)
+
+        parents = item.get("parents", False)
+
+        target = os.path.join(tree, path.lstrip("/"))
+        if not in_tree(target, tree):
+            raise ValueError(f"path {path} not in tree")
+
+        if parents:
+            os.makedirs(target, mode=mode)
+        else:
+            os.mkdir(target, mode)
+
+    return 0
+
+
+if __name__ == "__main__":
+    args = osbuild.api.arguments()
+    sys.exit(main(args["tree"], args["options"]))
