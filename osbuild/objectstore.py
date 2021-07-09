@@ -19,16 +19,16 @@ __all__ = [
 
 def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
     options = []
-    if bind:
-        options += ["bind"]
     if ro:
         options += ["ro"]
     if mode:
         options += [mode]
 
     args = []
+    if bind:
+        args += ["--rbind"]
     if private:
-        args += ["--make-private"]
+        args += ["--make-rprivate"]
     if options:
         args += ["-o", ",".join(options)]
 
@@ -49,7 +49,7 @@ def umount(target, lazy=False):
     if lazy:
         args += ["--lazy"]
     subprocess.run(["sync", "-f", target], check=True)
-    subprocess.run(["umount"] + args + [target], check=True)
+    subprocess.run(["umount", "-R"] + args + [target], check=True)
 
 
 class Object:
