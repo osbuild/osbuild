@@ -26,69 +26,69 @@ SCHEMA_2 = r"""
     "type": "object",
     "required": ["type"],
     "additionalProperties": false,
-	  "properties": {
-	    "type": {
-	      "description": "The type of the format, here 'qcow2'",
-	      "type": "string",
-	      "enum": ["qcow2"]
-	    },
-	    "compat": {
-	      "description": "The qcow2-compatibility-version to use",
-	      "type": "string"
-	    }
-	  }
+    "properties": {
+      "type": {
+        "description": "The type of the format, here 'qcow2'",
+        "type": "string",
+        "enum": ["qcow2"]
+      },
+      "compat": {
+        "description": "The qcow2-compatibility-version to use",
+        "type": "string"
+      }
+    }
   },
   "vdi": {
     "description": "Create a vdi image",
     "type": "object",
     "required": ["type"],
     "additionalProperties": false,
-	  "properties": {
-	    "type": {
-	      "description": "The type of the format, here 'vdi'",
-	      "type": "string",
-	      "enum": ["vdi"]
-	    }
-	  }
+    "properties": {
+      "type": {
+        "description": "The type of the format, here 'vdi'",
+        "type": "string",
+        "enum": ["vdi"]
+      }
+    }
   },
   "vmdk": {
     "description": "Create a vmdk image",
     "type": "object",
     "required": ["type"],
     "additionalProperties": false,
-	  "properties": {
-	    "type": {
-	      "description": "The type of the format, here 'vmdk'",
-	      "type": "string",
-	      "enum": ["vmdk"]
-	    }
-	  }
+    "properties": {
+      "type": {
+        "description": "The type of the format, here 'vmdk'",
+        "type": "string",
+        "enum": ["vmdk"]
+      }
+    }
   },
   "vpc": {
     "description": "Create a vpc image",
     "type": "object",
     "required": ["type"],
     "additionalProperties": false,
-	  "properties": {
-	    "type": {
-	      "description": "The type of the format, here 'vpc'",
-	      "type": "string",
-	      "enum": ["vpc"]
-	    }
-	  }
+    "properties": {
+      "type": {
+        "description": "The type of the format, here 'vpc'",
+        "type": "string",
+        "enum": ["vpc"]
+      }
+    }
   },
   "vhdx": {
     "description": "Create a vhdx image",
     "type": "object",
     "required": ["type"],
     "additionalProperties": false,
-	  "properties": {
-	    "type": {
-	      "description": "The type of the format, here 'vhdx'",
-	      "type": "string",
-	      "enum": ["vhdx"]
-	    }
-	  }
+    "properties": {
+      "type": {
+        "description": "The type of the format, here 'vhdx'",
+        "type": "string",
+        "enum": ["vhdx"]
+      }
+    }
   }
 },
 "inputs": {
