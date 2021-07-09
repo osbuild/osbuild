@@ -691,7 +691,8 @@ class ManifestFile:
 
         del self.root["mpp-define-image"]
 
-        self.vars["image"] = Image.from_dict(desc)
+        name = desc.get("id", "image")
+        self.vars[name] = Image.from_dict(desc)
 
 
 class ManifestFileV1(ManifestFile):

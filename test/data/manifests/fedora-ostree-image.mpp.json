@@ -1,6 +1,7 @@
 {
   "version": "2",
   "mpp-define-image": {
+    "id": "image",
     "size": "10737418240",
     "table": {
       "uuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
