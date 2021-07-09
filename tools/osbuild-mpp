@@ -283,7 +283,8 @@ class DepSolver:
         skip_keys = ["id", "secrets"]
         supported = ["baseurl", "metalink", "mirrorlist",
                      "enabled", "metadata_expire", "gpgcheck", "username", "password", "priority",
-                     "sslverify", "sslcacert", "sslclientkey", "sslclientcert"]
+                     "sslverify", "sslcacert", "sslclientkey", "sslclientcert",
+                     "skip_if_unavailable"]
 
         for key in desc.keys():
             if key in skip_keys:
