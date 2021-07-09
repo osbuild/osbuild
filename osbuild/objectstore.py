@@ -254,7 +254,13 @@ class HostTree:
     @contextlib.contextmanager
     def read(self):
         with self.store.tempdir() as tmp:
-            mount("/", tmp)
+            # Create a bare bones root file system
+            # with just /usr mounted from the host
+            usr = os.path.join(tmp, "usr")
+            os.makedirs(usr)
+
+            mount(tmp, tmp)  # ensure / is read-only
+            mount("/usr", usr)
             try:
                 yield tmp
             finally:
