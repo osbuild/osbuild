@@ -10,6 +10,14 @@ function greenprint {
 source /etc/os-release
 ARCH=$(uname -m)
 
+# Register RHEL if we are provided with a registration script and intend to do that.
+REGISTER="${REGISTER:-'false'}"
+if [[ $REGISTER == "true" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+    greenprint "🪙 Registering RHEL instance"
+    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
+    sudo "$RHN_REGISTRATION_SCRIPT"
+fi
+
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
@@ -48,14 +56,6 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
     sudo rpm -Uvh /tmp/epel.rpm
-fi
-
-# Register RHEL if we are provided with a registration script and intend to do that.
-REGISTER="${REGISTER:-'false'}"
-if [[ $REGISTER == "true" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
-    greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
 fi
 
 # Install requirements for building RPMs in mock.
