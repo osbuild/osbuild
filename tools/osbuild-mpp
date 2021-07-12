@@ -154,20 +154,20 @@ Example:
 
 
 import argparse
+import collections
 import contextlib
 import json
 import os
+import pathlib
 import string
 import subprocess
 import sys
-import pathlib
 import tempfile
 import urllib.parse
-import collections
+from typing import Dict, Optional
+
 import dnf
 import hawkey
-
-from typing import Dict, Optional
 
 from osbuild.util.rhsm import Subscriptions
 
