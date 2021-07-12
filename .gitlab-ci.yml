@@ -53,6 +53,7 @@ Testing:
     matrix:
       - RUNNER:
           - aws/fedora-33-x86_64
+          - aws/fedora-33-aarch64
         INTERNAL_NETWORK: "true"
       - RUNNER:
           - aws/rhel-8-x86_64
