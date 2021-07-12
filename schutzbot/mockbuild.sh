@@ -34,9 +34,19 @@ REPO_BUCKET=osbuild-composer-repos
 # Public URL for the S3 bucket with our artifacts.
 MOCK_REPO_BASE_URL="http://${REPO_BUCKET}.s3.amazonaws.com"
 
+# Distro version in whose buildroot was the RPM built.
+DISTRO_VERSION=${ID}-${VERSION_ID}
+
+if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
+  # If this script runs on a subscribed RHEL, the RPMs are actually built
+  # using the latest CDN content, therefore rhel-*-cdn is used as the distro
+  # version.
+  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+fi
+
 # Relative path of the repository – used for constructing both the local and
 # remote paths below, so that they're consistent.
-REPO_PATH=osbuild/${ID}-${VERSION_ID}/${ARCH}/${COMMIT}
+REPO_PATH=osbuild/${DISTRO_VERSION}/${ARCH}/${COMMIT}
 
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${REPO_PATH}
