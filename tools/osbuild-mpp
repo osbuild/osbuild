@@ -162,11 +162,12 @@ import subprocess
 import sys
 import pathlib
 import tempfile
-from typing import Dict
 import urllib.parse
 import collections
 import dnf
 import hawkey
+
+from typing import Dict, Optional
 
 from osbuild.util.rhsm import Subscriptions
 
@@ -540,13 +541,23 @@ class ManifestFile:
         self.vars = {}
         self.init_vars()
 
+    def get_mpp_node(self, parent: Dict, name: str) -> Optional[Dict]:
+        name = "mpp-" + name
+
+        desc = parent.get(name)
+        if not desc:
+            return None
+
+        del parent[name]
+        return desc
+
     def init_vars(self):
-        variables = self.root.get("mpp-vars")
+        variables = self.get_mpp_node(self.root, "vars")
+
         if not variables:
             return
 
         self.vars.update(variables)
-        del self.root["mpp-vars"]
 
     def set_vars(self, args):
         for arg in args:
@@ -691,11 +702,10 @@ class ManifestFile:
         self._process_format(self.root)
 
     def process_partition(self):
-        desc = self.root.get("mpp-define-image")
+        desc = self.get_mpp_node(self.root, "define-image")
+
         if not desc:
             return
-
-        del self.root["mpp-define-image"]
 
         name = desc.get("id", "image")
         self.vars[name] = Image.from_dict(desc)
@@ -710,7 +720,7 @@ class ManifestFileV1(ManifestFile):
         self.source_urls = element_enter(files, "urls", {})
 
     def _process_import(self, build, search_dirs):
-        mpp = build.get("mpp-import-pipeline")
+        mpp = self.get_mpp_node(build, "import-pipeline")
         if not mpp:
             return
 
@@ -738,7 +748,6 @@ class ManifestFileV1(ManifestFile):
         self.source_urls.update(imp.source_urls)
 
         build["pipeline"] = imp.pipeline
-        del(build["mpp-import-pipeline"])
 
     def process_imports(self, search_dirs):
         current = self.root
@@ -752,11 +761,10 @@ class ManifestFileV1(ManifestFile):
         options = stage.get("options")
         if not options:
             return
-        mpp = options.get("mpp-depsolve")
+
+        mpp = self.get_mpp_node(options, "depsolve")
         if not mpp:
             return
-
-        del(options["mpp-depsolve"])
 
         packages = element_enter(options, "packages", [])
 
@@ -801,7 +809,7 @@ class ManifestFileV2(ManifestFile):
         raise ValueError(f"Pipeline '{name}' not found in {self.path}")
 
     def _process_import(self, pipeline, search_dirs):
-        mpp = pipeline.get("mpp-import-pipeline")
+        mpp = self.get_mpp_node(pipeline, "import-pipeline")
         if not mpp:
             return
 
@@ -824,7 +832,6 @@ class ManifestFileV2(ManifestFile):
             items = element_enter(target, "items", {})
             items.update(desc.get("items", {}))
 
-        del(pipeline["mpp-import-pipeline"])
         target = imp.get_pipeline_by_name(mpp["id"])
         pipeline.update(target)
 
@@ -837,11 +844,10 @@ class ManifestFileV2(ManifestFile):
             return
         inputs = element_enter(stage, "inputs", {})
         packages = element_enter(inputs, "packages", {})
-        mpp = packages.get("mpp-depsolve")
+
+        mpp = self.get_mpp_node(packages, "depsolve")
         if not mpp:
             return
-
-        del(packages["mpp-depsolve"])
 
         refs = element_enter(packages, "references", {})
 
