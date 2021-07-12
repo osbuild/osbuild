@@ -24,7 +24,7 @@ COMMIT=$(git rev-parse HEAD)
 REPO_BUCKET=osbuild-composer-repos
 
 # Public URL for the S3 bucket with our artifacts.
-MOCK_REPO_BASE_URL="http://osbuild-composer-repos.s3.amazonaws.com"
+MOCK_REPO_BASE_URL="http://${REPO_BUCKET}.s3.amazonaws.com"
 
 # Relative path of the repository – used for constructing both the local and
 # remote paths below, so that they're consistent.
