@@ -538,9 +538,15 @@ class ManifestFile:
         self.source_urls = {}
 
         self.vars = {}
-        if "mpp-vars" in root:
-            self.vars = root["mpp-vars"]
-            del root["mpp-vars"]
+        self.init_vars()
+
+    def init_vars(self):
+        variables = self.root.get("mpp-vars")
+        if not variables:
+            return
+
+        self.vars.update(variables)
+        del self.root["mpp-vars"]
 
     def set_vars(self, args):
         for arg in args:
