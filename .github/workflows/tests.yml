@@ -66,28 +66,6 @@ jobs:
           test -d docs
           test -f docs/osbuild.1
 
-  sample_validation:
-    name: "sample validation"
-    runs-on: ubuntu-latest
-    container:
-      image: docker.io/library/python:3.7
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v2
-        with:
-          path: osbuild
-
-      - name: Install Dependencies
-        run: |
-          pip install jsonschema
-
-      - name: Validate the samples
-        run: |
-          cd osbuild
-          for f in samples/*; do
-            python3 -m osbuild --libdir . --inspect "$f" > /dev/null
-          done
-
   test_data:
     name: "Regenerate Test Data"
     runs-on: ubuntu-latest
