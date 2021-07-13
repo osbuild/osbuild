@@ -1,0 +1,156 @@
+#!/usr/bin/python3
+"""
+Create a boot filesystem tree, can be consumed to create
+an efiboot.img.
+
+"""
+import os
+import shutil
+import sys
+import string
+import osbuild.api
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "required": ["product", "kernel", "isolabel"],
+  "properties": {
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"}
+       }
+    },
+    "kernel": {
+      "type": "string"
+    },
+    "isolabel": {
+      "type": "string"
+    },
+    "efi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["architectures", "vendor"],
+      "properties": {
+        "architectures": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "vendor": {
+            "type": "string"
+        }
+      }
+    },
+    "kernel_opts": {
+      "description": "Additional kernel boot options",
+      "type": "string"
+    } 
+  }
+}
+"""
+
+# The main grub2 configuration file template. Used for UEFI.
+GRUB2_EFI_CFG_TEMPLATE = """
+function load_video {
+  insmod efi_gop
+  insmod efi_uga
+  insmod video_bochs
+  insmod video_cirrus
+  insmod all_video
+}
+
+load_video
+set gfxpayload=keep
+insmod gzio
+insmod part_gpt
+insmod ext2
+
+set timeout=60
+### END /etc/grub.d/00_header ###
+
+search --no-floppy --set=root -l '${isolabel}'
+
+### BEGIN /etc/grub.d/10_linux ###
+menuentry 'Install ${product} ${version}' --class fedora --class gnu-linux --class gnu --class os {
+	linuxefi ${kernelpath} ${root} quiet
+	initrdefi ${initrdpath}
+}
+menuentry 'Test this media & install ${product} ${version}' --class fedora --class gnu-linux --class gnu --class os {
+	linuxefi ${kernelpath} ${root} rd.live.check quiet
+	initrdefi ${initrdpath}
+}
+submenu 'Troubleshooting -->' {
+	menuentry 'Install ${product} ${version} in basic graphics mode' --class fedora --class gnu-linux --class gnu --class os {
+		linuxefi ${kernelpath} ${root} nomodeset quiet
+		initrdefi ${initrdpath}
+	}
+	menuentry 'Rescue a ${product} system' --class fedora --class gnu-linux --class gnu --class os {
+		linuxefi ${kernelpath} ${root} inst.rescue quiet
+		initrdefi ${initrdpath}
+	}
+}
+"""
+
+def main(root, options):
+    name = options["product"]["name"]
+    version = options["product"]["version"]
+    isolabel = options["isolabel"]
+    efi = options.get("efi")
+    kopts = options.get("kernel_opts")
+
+    # output directories
+    imgdir = os.path.join(root, "images")
+    pxedir = os.path.join(imgdir, "pxeboot")
+
+    os.makedirs(imgdir)
+
+    efidir = os.path.join(root, "EFI", "BOOT")
+    os.makedirs(efidir)
+
+    #arch related data
+    for arch in efi["architectures"]:
+        arch = arch.lower()
+        targets = [
+            (f"shim{arch}.efi", f"BOOT{arch}.EFI".upper()),
+            (f"mm{arch}.efi", f"mm{arch}.efi"),
+            (f"gcd{arch}.efi", f"grub{arch}.efi")
+        ]
+
+        for src, dst in targets:
+            shutil.copy2(os.path.join("/boot/efi/EFI/", efi["vendor"], src),
+                         os.path.join(efidir, dst))
+
+    # the font
+    fontdir = os.path.join(efidir, "fonts")
+    os.makedirs(fontdir, exist_ok=True)
+    shutil.copy2("/usr/share/grub/unicode.pf2", fontdir)
+
+    kdir = "/" + os.path.relpath(pxedir, start=root)
+    print(f"kernel dir at {kdir}")
+
+    tplt = string.Template(GRUB2_EFI_CFG_TEMPLATE)
+    data = tplt.safe_substitute({
+        "version": version,
+        "product": name,
+        "kernelpath": os.path.join(kdir, "vmlinuz"),
+        "initrdpath": os.path.join(kdir, "initrd.img"),
+        "isolabel": isolabel,
+        "root": kopts
+    })
+
+    config = os.path.join(efidir, "grub.cfg")
+    with open(config, "w") as cfg:
+        cfg.write(data)
+
+    if "IA32" in efi["architectures"]:
+        shutil.copy2(config, os.path.join(efidir, "BOOT.cfg"))
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    ret = main(args["tree"], args["options"])
+    sys.exit(ret)
