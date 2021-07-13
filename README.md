@@ -43,21 +43,26 @@ Testing requires additional software:
 
  * `pytest`
 
-### Build
+### Install
 
-The standard python package system is used. Consult upstream documentation for
-detailed help. In most situations the following commands are sufficient to
-build and install from source:
+Installing `osbuild` requires to not only install the `osbuild` module, but also
+additional artifacts such as tools (i.e: `osbuild-mpp`) sources, stages, schemas
+and SELinux policies.
+
+For this reason, doing an installation from source is not trivial and the easier
+way to install it is to create the set of RPMs that contain all these components.
+
+This can be done with the `rpm` make target, i.e:
 
 ```sh
-python setup.py build
-python setup.py install --skip-build --root=/
+make rpm
 ```
 
-The man-pages require `python-docutils` and can be built via:
+A set of RPMs will be created in the `./rpmbuild/RPMS/noarch/` directory and can
+be installed in the system using the distribution package manager, i.e:
 
 ```sh
-rst2man docs/<input-file>.rst <output-file>
+sudo dnf install ./rpmbuild/RPMS/noarch/*.rpm
 ```
 
 ### Repository:
