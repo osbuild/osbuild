@@ -776,7 +776,7 @@
         {
           "type": "org.osbuild.locale",
           "options": {
-            "language": "en_US"
+            "language": "en_US.UTF-8"
           }
         },
         {
@@ -1695,7 +1695,7 @@
         {
           "type": "org.osbuild.locale",
           "options": {
-            "language": "en_US"
+            "language": "en_US.UTF-8"
           }
         },
         {
