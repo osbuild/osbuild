@@ -791,19 +791,6 @@
           }
         },
         {
-          "type": "org.osbuild.users",
-          "options": {
-            "users": {
-              "root": {
-                "password": ""
-              },
-              "core": {
-                "password": ""
-              }
-            }
-          }
-        },
-        {
           "type": "org.osbuild.ostree.preptree",
           "options": {
             "etc_group_members": [
@@ -1722,7 +1709,8 @@
             "kickstart-modules": [
               "org.fedoraproject.Anaconda.Modules.Network",
               "org.fedoraproject.Anaconda.Modules.Payloads",
-              "org.fedoraproject.Anaconda.Modules.Storage"
+              "org.fedoraproject.Anaconda.Modules.Storage",
+              "org.fedoraproject.Anaconda.Modules.Users"
             ]
           }
         },
@@ -1742,6 +1730,14 @@
               "url": "file:///ostree/repo",
               "ref": "fedora/x86_64/osbuild",
               "gpg": false
+            },
+            "users": {
+              "core": {
+                "password": "edge",
+                "groups": [
+                  "wheel"
+                ]
+              }
             }
           }
         }
