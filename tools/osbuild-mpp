@@ -95,11 +95,15 @@ The parameters for this pre-processor, version "2", look like this:
 ...
 ```
 
-String expansion:
+Variable expansion and substitution:
 
-You can expand string with using python f-string formatting and variables. The variables
-can be set in the mpp-vars toplevel dict (which is removed from the final results) or
-overridden by the --var commandline option.
+The variables can be set in the mpp-vars toplevel dict (which is removed from
+the final results) or overridden by the -D,--define commandline option.
+They can then be used from within the manifest via f-string formatting using
+the `mpp-format-{int,string,json}` directives. Additionally the variables
+will be substituted via template string substitution a la `$variable` inside
+the mpp blocks.
+
 
 Example:
 
@@ -108,7 +112,9 @@ Example:
     {
       "mpp-vars": {
         "variable": "some string",
-        "rootfs_size": 20480
+        "rootfs_size": 20480,
+        "arch:": "x86_64",
+        "ref": "fedora/$arch/osbuild"
      },
 ...
     {
@@ -219,7 +225,7 @@ class DepSolver:
 
         self.base = dnf.Base()
 
-    def reset(self, basedir, module_platform_id, ignore_weak_deps):
+    def reset(self, arch, basedir, module_platform_id, ignore_weak_deps):
         base = self.base
         base.reset(goal=True, repos=True, sack=True)
         self.secrets.clear()
@@ -230,19 +236,10 @@ class DepSolver:
         base.conf.persistdir = self.persistdir
         base.conf.module_platform_id = module_platform_id
         base.conf.install_weak_deps = not ignore_weak_deps
+        base.conf.arch = arch
 
         self.base = base
         self.basedir = basedir
-
-    def set_substitutions(self, arch, releasever):
-        base = self.base
-
-        if arch:
-            base.conf.substitutions['arch'] = arch
-            base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
-
-        if releasever:
-            base.conf.substitutions['releasever'] = releasever
 
     def expand_baseurl(self, baseurl):
         """Expand non-uris as paths relative to basedir into a file:/// uri"""
@@ -339,8 +336,7 @@ class DepSolver:
 
             path = tsi.pkg.relativepath
             reponame = tsi.pkg.reponame
-            baseurl = string.Template(self.base.repos[reponame].baseurl[0])
-            baseurl = baseurl.substitute(self.base.conf.substitutions)
+            baseurl = self.base.repos[reponame].baseurl[0]
             # dep["path"] often starts with a "/", even though it's meant to be
             # relative to `baseurl`. Strip any leading slashes, but ensure there's
             # exactly one between `baseurl` and the path.
@@ -549,7 +545,8 @@ class ManifestFile:
             return None
 
         del parent[name]
-        return desc
+
+        return self.substitute_vars(desc)
 
     def init_vars(self):
         variables = self.get_mpp_node(self.root, "vars")
@@ -558,6 +555,7 @@ class ManifestFile:
             return
 
         self.vars.update(variables)
+        self.substitute_vars(self.vars)
 
     def set_vars(self, args):
         for arg in args:
@@ -568,6 +566,21 @@ class ManifestFile:
                 key = arg
                 value = True
             self.vars[key] = value
+
+    def substitute_vars(self, node):
+        """Expand variables in `node` with the manifest variables"""
+
+        if isinstance(node, dict):
+            for k, v in node.items():
+                node[k] = self.substitute_vars(v)
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                node[i] = self.substitute_vars(v)
+        elif isinstance(node, str):
+            tpl = string.Template(node)
+            node = tpl.safe_substitute(self.vars)
+
+        return node
 
     def load_import(self, path, search_dirs):
         m = self.find_and_load_manifest(path, search_dirs)
@@ -589,6 +602,7 @@ class ManifestFile:
         packages = desc.get("packages", [])
         excludes = desc.get("excludes", [])
         baseurl = desc.get("baseurl")
+        arch = desc.get("architecture")
 
         if not packages:
             return []
@@ -596,12 +610,7 @@ class ManifestFile:
         module_platform_id = desc["module-platform-id"]
         ignore_weak_deps = bool(desc.get("ignore-weak-deps"))
 
-        solver.reset(self.basedir, module_platform_id, ignore_weak_deps)
-
-        arch = desc["architecture"]
-        releasever = desc.get("releasever")
-
-        solver.set_substitutions(arch, releasever)
+        solver.reset(arch, self.basedir, module_platform_id, ignore_weak_deps)
 
         for repo in repos:
             solver.add_repo(repo, baseurl)
