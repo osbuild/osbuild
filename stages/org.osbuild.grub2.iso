@@ -4,11 +4,13 @@ Create a boot filesystem tree, can be consumed to create
 an efiboot.img.
 
 """
+
 import os
 import shutil
 import sys
 import string
 import osbuild.api
+
 
 SCHEMA_2 = """
 "options": {
@@ -25,34 +27,37 @@ SCHEMA_2 = """
        }
     },
     "kernel": {
-      "type": "string"
+      "type": "object",
+      "required": ["dir"],
+      "properties": {
+        "dir": {
+          "type": "string"
+        },
+        "opts": {
+          "description": "Array of group names for this user",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "isolabel": {
       "type": "string"
     },
-    "efi": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["architectures", "vendor"],
-      "properties": {
-        "architectures": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
-        },
-        "vendor": {
+    "architectures": {
+        "type": "array",
+        "items": {
             "type": "string"
         }
-      }
     },
-    "kernel_opts": {
-      "description": "Additional kernel boot options",
-      "type": "string"
-    } 
+    "vendor": {
+        "type": "string"
+    }
   }
 }
 """
+
 
 # The main grub2 configuration file template. Used for UEFI.
 GRUB2_EFI_CFG_TEMPLATE = """
@@ -77,43 +82,40 @@ search --no-floppy --set=root -l '${isolabel}'
 
 ### BEGIN /etc/grub.d/10_linux ###
 menuentry 'Install ${product} ${version}' --class fedora --class gnu-linux --class gnu --class os {
-	linuxefi ${kernelpath} ${root} quiet
-	initrdefi ${initrdpath}
+	linux ${kernelpath} ${root} quiet
+	initrd ${initrdpath}
 }
 menuentry 'Test this media & install ${product} ${version}' --class fedora --class gnu-linux --class gnu --class os {
-	linuxefi ${kernelpath} ${root} rd.live.check quiet
-	initrdefi ${initrdpath}
+	linux ${kernelpath} ${root} rd.live.check quiet
+	initrd ${initrdpath}
 }
 submenu 'Troubleshooting -->' {
 	menuentry 'Install ${product} ${version} in basic graphics mode' --class fedora --class gnu-linux --class gnu --class os {
-		linuxefi ${kernelpath} ${root} nomodeset quiet
-		initrdefi ${initrdpath}
+		linux ${kernelpath} ${root} nomodeset quiet
+		initrd ${initrdpath}
 	}
 	menuentry 'Rescue a ${product} system' --class fedora --class gnu-linux --class gnu --class os {
-		linuxefi ${kernelpath} ${root} inst.rescue quiet
-		initrdefi ${initrdpath}
+		linux ${kernelpath} ${root} inst.rescue quiet
+		initrd ${initrdpath}
 	}
 }
 """
+
 
 def main(root, options):
     name = options["product"]["name"]
     version = options["product"]["version"]
     isolabel = options["isolabel"]
-    efi = options.get("efi")
-    kopts = options.get("kernel_opts")
-
-    # output directories
-    imgdir = os.path.join(root, "images")
-    pxedir = os.path.join(imgdir, "pxeboot")
-
-    os.makedirs(imgdir)
+    architectures = options["architectures"]
+    vendor = options["vendor"]
+    kdir = options["kernel"].get("dir", "/images/pxeboot")
+    kopts = options["kernel"].get("opts")
 
     efidir = os.path.join(root, "EFI", "BOOT")
     os.makedirs(efidir)
 
-    #arch related data
-    for arch in efi["architectures"]:
+    # arch related data
+    for arch in architectures:
         arch = arch.lower()
         targets = [
             (f"shim{arch}.efi", f"BOOT{arch}.EFI".upper()),
@@ -122,7 +124,7 @@ def main(root, options):
         ]
 
         for src, dst in targets:
-            shutil.copy2(os.path.join("/boot/efi/EFI/", efi["vendor"], src),
+            shutil.copy2(os.path.join("/boot/efi/EFI/", vendor, src),
                          os.path.join(efidir, dst))
 
     # the font
@@ -130,7 +132,6 @@ def main(root, options):
     os.makedirs(fontdir, exist_ok=True)
     shutil.copy2("/usr/share/grub/unicode.pf2", fontdir)
 
-    kdir = "/" + os.path.relpath(pxedir, start=root)
     print(f"kernel dir at {kdir}")
 
     tplt = string.Template(GRUB2_EFI_CFG_TEMPLATE)
@@ -140,15 +141,16 @@ def main(root, options):
         "kernelpath": os.path.join(kdir, "vmlinuz"),
         "initrdpath": os.path.join(kdir, "initrd.img"),
         "isolabel": isolabel,
-        "root": kopts
+        "root": " ".join(kopts)
     })
 
     config = os.path.join(efidir, "grub.cfg")
     with open(config, "w") as cfg:
         cfg.write(data)
 
-    if "IA32" in efi["architectures"]:
+    if "IA32" in architectures:
         shutil.copy2(config, os.path.join(efidir, "BOOT.cfg"))
+
 
 if __name__ == '__main__':
     args = osbuild.api.arguments()
