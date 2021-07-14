@@ -1658,29 +1658,6 @@
           }
         },
         {
-          "type": "org.osbuild.ostree.init",
-          "options": {
-            "path": "/ostree/repo"
-          }
-        },
-        {
-          "type": "org.osbuild.ostree.pull",
-          "options": {
-            "repo": "/ostree/repo"
-          },
-          "inputs": {
-            "commits": {
-              "type": "org.osbuild.ostree",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:ostree-commit": {
-                  "ref": "fedora/x86_64/osbuild"
-                }
-              }
-            }
-          }
-        },
-        {
           "type": "org.osbuild.locale",
           "options": {
             "language": "en_US.UTF-8"
@@ -1728,12 +1705,35 @@
       "build": "name:build",
       "stages": [
         {
+          "type": "org.osbuild.ostree.init",
+          "options": {
+            "path": "/ostree"
+          }
+        },
+        {
+          "type": "org.osbuild.ostree.pull",
+          "options": {
+            "repo": "/ostree"
+          },
+          "inputs": {
+            "commits": {
+              "type": "org.osbuild.ostree",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:ostree-commit": {
+                  "ref": "fedora/x86_64/osbuild"
+                }
+              }
+            }
+          }
+        },
+        {
           "type": "org.osbuild.kickstart",
           "options": {
             "path": "install.ks",
             "ostree": {
               "osname": "fedora",
-              "url": "file:///ostree/repo",
+              "url": "file:///run/install/repo/ostree",
               "ref": "fedora/x86_64/osbuild",
               "gpg": false
             },
