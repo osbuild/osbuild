@@ -1720,11 +1720,17 @@
             "path": "99-generic/runtime-postinstall.tmpl",
             "basearch": "x86_64"
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "bootiso-tree",
+      "build": "name:build",
+      "stages": [
         {
           "type": "org.osbuild.kickstart",
           "options": {
-            "path": "/usr/share/anaconda/interactive-defaults.ks",
+            "path": "install.ks",
             "ostree": {
               "osname": "fedora",
               "url": "file:///ostree/repo",
@@ -1740,13 +1746,7 @@
               }
             }
           }
-        }
-      ]
-    },
-    {
-      "name": "bootiso-tree",
-      "build": "name:build",
-      "stages": [
+        },
         {
           "type": "org.osbuild.bootiso.mono",
           "inputs": {
@@ -1785,7 +1785,8 @@
                   "bcj": "x86"
                 }
               }
-            }
+            },
+            "kernel_opts": "inst.ks=hd:LABEL=Fedora-34-X86_64:/install.ks"
           }
         },
         {
