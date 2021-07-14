@@ -4,8 +4,8 @@ set -euxo pipefail
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
-# Currently: ci: remove EXTRA_REPO_PATH_SEGMENT
-OSBUILD_COMPOSER_COMMIT=cca5c9fd4002a02ae509416a6cbc3e60e697e6dd
+# Currently: test/fedora33: use rpmrepo instead of kernel mirrors
+OSBUILD_COMPOSER_COMMIT=f8fd3d04b8db210ba1f2cabb41f5079ce20e3d81
 
 # Get OS details.
 source /etc/os-release
