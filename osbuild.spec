@@ -141,7 +141,7 @@ mkdir -p %{buildroot}%{pkgdir}/osbuild
 
 # schemata
 mkdir -p %{buildroot}%{_datadir}/osbuild/schemas
-install -p -m 0755 $(find schemas/*.json) %{buildroot}%{_datadir}/osbuild/schemas
+install -p -m 0644 $(find schemas/*.json) %{buildroot}%{_datadir}/osbuild/schemas
 ln -s %{_datadir}/osbuild/schemas %{buildroot}%{pkgdir}/schemas
 
 # documentation
