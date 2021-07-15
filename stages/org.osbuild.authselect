@@ -4,10 +4,10 @@ Select system identity and authentication sources with authselect.
 
 Sets system identity and authentication sources.
 
-The stage calls `authselect select` to set authselect profile to 'profile_id'.
+The stage calls `authselect select` to set authselect profile to 'profile'.
 Optionally a list of profile features to enable may be provided using 'features'
 option. The list of available profile features can be obtained by running
-`authselect list-features <profile_id>`.
+`authselect list-features <profile>`.
 
 Notes:
   - Requires 'chroot' in the buildroot.
@@ -23,10 +23,10 @@ import osbuild.api
 
 SCHEMA = """
 "additionalProperties": false,
-"required": ["profile_id"],
+"required": ["profile"],
 "description": "Select system identity and authentication sources.",
 "properties": {
-  "profile_id": {
+  "profile": {
     "type": "string",
     "description": "Desired authselect profile to activate."
   },
@@ -43,13 +43,13 @@ SCHEMA = """
 
 
 def main(tree, options):
-    profile_id = options["profile_id"]
+    profile = options["profile"]
     features = options.get("features", [])
 
     cmd = [
         "/usr/sbin/chroot", tree,
         # force authselect to overwrite existing files without making a backup
-        "/usr/bin/authselect", "select", "--force", "--nobackup", profile_id
+        "/usr/bin/authselect", "select", "--force", "--nobackup", profile
     ]
     cmd.extend(features)
 
