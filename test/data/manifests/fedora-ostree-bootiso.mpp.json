@@ -472,9 +472,282 @@
       ]
     },
     {
+      "name": "rootfs-image",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.mkdir",
+          "options": {
+            "paths": [
+              {
+                "path": "LiveOS"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.truncate",
+          "options": {
+            "filename": "LiveOS/rootfs.img",
+            "size": "3GB"
+          }
+        },
+        {
+          "type": "org.osbuild.mkfs.ext4",
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "LiveOS/rootfs.img"
+              }
+            }
+          },
+          "options": {
+            "label": "Anaconda",
+            "uuid": "383367fa-6a09-4def-8c30-507e0b3cf1f7"
+          }
+        },
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:anaconda-tree"
+              ]
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": "input://tree/",
+                "to": "mount://root/"
+              }
+            ]
+          },
+          "devices": {
+            "root": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "LiveOS/rootfs.img"
+              }
+            }
+          },
+          "mounts": {
+            "root": {
+              "type": "org.osbuild.ext4",
+              "source": "root",
+              "target": "/"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "efiboot-tree",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.grub2.iso",
+          "options": {
+            "product": {
+              "name": "Fedora-IoT",
+              "version": {
+                "mpp-format-string": "{version}"
+              }
+            },
+            "isolabel": {
+              "mpp-format-string": "{isolabel}"
+            },
+            "kernel": {
+              "dir": "/images/pxeboot",
+              "opts": [
+                {
+                  "mpp-format-string": "inst.ks=hd:LABEL={isolabel}:/install.ks"
+                }
+              ]
+            },
+            "architectures": [
+              "IA32",
+              "X64"
+            ],
+            "vendor": "fedora"
+          }
+        }
+      ]
+    },
+    {
       "name": "bootiso-tree",
       "build": "name:build",
       "stages": [
+        {
+          "type": "org.osbuild.mkdir",
+          "options": {
+            "paths": [
+              {
+                "path": "images"
+              },
+              {
+                "path": "images/pxeboot"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "base": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:anaconda-tree"
+              ]
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": {
+                  "mpp-format-string": "input://base/boot/vmlinuz-{rpms['anaconda-tree']['kernel'].evra}"
+                },
+                "to": "tree:///images/pxeboot/vmlinuz"
+              },
+              {
+                "from": {
+                  "mpp-format-string": "input://base/boot/initramfs-{rpms['anaconda-tree']['kernel'].evra}.img"
+                },
+                "to": "tree:///images/pxeboot/initrd.img"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.squashfs",
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:rootfs-image"
+              ]
+            }
+          },
+          "options": {
+            "filename": "images/install.img",
+            "compression": {
+              "method": "xz",
+              "options": {
+                "bcj": "x86"
+              }
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.isolinux",
+          "inputs": {
+            "data": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:anaconda-tree"
+              ]
+            }
+          },
+          "options": {
+            "product": {
+              "name": "Fedora-IoT",
+              "version": {
+                "mpp-format-string": "{version}"
+              }
+            },
+            "kernel": {
+              "dir": "/images/pxeboot",
+              "opts": [
+                {
+                  "mpp-format-string": "inst.ks=hd:LABEL={isolabel}:/install.ks"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.truncate",
+          "options": {
+            "filename": "images/efiboot.img",
+            "size": "20MB"
+          }
+        },
+        {
+          "type": "org.osbuild.mkfs.fat",
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "images/efiboot.img"
+              }
+            }
+          },
+          "options": {
+            "label": "ANACONDA",
+            "volid": "7B7795E7"
+          }
+        },
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:efiboot-tree"
+              ]
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": "input://tree/",
+                "to": "mount://efi/"
+              }
+            ]
+          },
+          "devices": {
+            "efi": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "images/efiboot.img"
+              }
+            }
+          },
+          "mounts": {
+            "efi": {
+              "type": "org.osbuild.fat",
+              "source": "efi",
+              "target": "/"
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "base": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:efiboot-tree"
+              ]
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": "input://base/EFI",
+                "to": "tree:///"
+              }
+            ]
+          }
+        },
         {
           "type": "org.osbuild.ostree.init",
           "options": {
@@ -519,56 +792,6 @@
                   "wheel"
                 ]
               }
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.bootiso.mono",
-          "inputs": {
-            "rootfs": {
-              "type": "org.osbuild.tree",
-              "origin": "org.osbuild.pipeline",
-              "references": [
-                "name:anaconda-tree"
-              ]
-            }
-          },
-          "options": {
-            "product": {
-              "name": "Fedora-IoT",
-              "version": {
-                "mpp-format-string": "{version}"
-              }
-            },
-            "isolabel": {
-              "mpp-format-string": "{isolabel}"
-            },
-            "kernel": {
-              "mpp-format-string": "{rpms['ostree-tree']['kernel'].evra}"
-            },
-            "efi": {
-              "architectures": [
-                "IA32",
-                "X64"
-              ],
-              "vendor": "fedora"
-            },
-            "isolinux": {
-              "enabled": true,
-              "debug": false
-            },
-            "templates": "99-generic",
-            "rootfs": {
-              "size": 3584,
-              "compression": {
-                "method": "xz",
-                "options": {
-                  "bcj": "x86"
-                }
-              }
-            },
-            "kernel_opts": {
-              "mpp-format-string": "inst.ks=hd:LABEL={isolabel}:/install.ks"
             }
           }
         },
