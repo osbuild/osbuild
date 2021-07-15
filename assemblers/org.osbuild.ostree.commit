@@ -81,8 +81,8 @@ TOPLEVEL_LINKS = {
 
 def copy(name, source, dest):
     subprocess.run(["cp", "--reflink=auto", "-a",
-                    os.path.join(source, name, "."),
-                    os.path.join(dest, name)],
+                    os.path.join(source, name),
+                    "-t", os.path.join(dest)],
                    check=True)
 
 
