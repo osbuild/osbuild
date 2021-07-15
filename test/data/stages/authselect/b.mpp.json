@@ -32,7 +32,7 @@
       {
         "name": "org.osbuild.authselect",
         "options": {
-          "profile_id": "nis",
+          "profile": "nis",
           "features": [
             "with-ecryptfs",
             "with-mkhomedir"
