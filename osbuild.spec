@@ -151,8 +151,8 @@ install -p -m 0644 -t %{buildroot}%{_mandir}/man1/ docs/*.1
 install -p -m 0644 -t %{buildroot}%{_mandir}/man5/ docs/*.5
 
 # SELinux
-install -D -m 644 -t %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype} %{name}.pp.bz2
-install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_selinux.8
+install -D -m 0644 -t %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype} %{name}.pp.bz2
+install -D -m 0644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_selinux.8
 
 %check
 exit 0
