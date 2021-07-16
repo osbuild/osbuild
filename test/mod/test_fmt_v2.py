@@ -72,6 +72,37 @@ BASIC_PIPELINE = {
     ]
 }
 
+BAD_SHA = "sha256:15a654d32efaa75b5df3e2481939d0393fe1746696cc858ca094ccf8b76073cd"
+
+BAD_REF_PIPELINE = {
+  "version": "2",
+  "sources": {
+    "org.osbuild.curl": {
+      "items": {
+        "sha256:c540ca8c5e21ba5f063286c94a088af2aac0b15bc40df6fd562d40154c10f4a1": "",
+      }
+    }
+  },
+  "pipelines": [
+    {
+      "name": "build",
+      "stages": [
+        {
+          "type": "org.osbuild.rpm",
+          "inputs": {
+            "packages": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.source",
+              "references": {
+                BAD_SHA: {}
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
 
 class TestFormatV1(unittest.TestCase):
     def setUp(self):
@@ -147,3 +178,17 @@ class TestFormatV1(unittest.TestCase):
 
         res = fmt.validate(desc, self.index)
         self.assert_validation(res)
+
+    def test_load_bad_ref_manifest(self):
+        desc = BAD_REF_PIPELINE
+
+        info = self.index.detect_format_info(desc)
+        self.assertIsNotNone(info)
+        fmt = info.module
+        self.assertIsNotNone(fmt)
+
+        with self.assertRaises(ValueError) as ex:
+            fmt.load(desc, self.index)
+
+        self.assertTrue(str(ex.exception).find(BAD_SHA) > -1,
+            "The unknown source reference is not included in the exception")
