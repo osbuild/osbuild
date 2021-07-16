@@ -248,7 +248,7 @@ class DepSolver:
             result = urllib.parse.urlparse(baseurl)
             if not result.scheme:
                 path = basedir.joinpath(baseurl)
-                return path.as_uri()
+                return path.resolve().as_uri()
         except:  # pylint: disable=bare-except
             pass
 
@@ -337,6 +337,7 @@ class DepSolver:
             path = tsi.pkg.relativepath
             reponame = tsi.pkg.reponame
             baseurl = self.base.repos[reponame].baseurl[0]
+            baseurl = self.expand_baseurl(baseurl)
             # dep["path"] often starts with a "/", even though it's meant to be
             # relative to `baseurl`. Strip any leading slashes, but ensure there's
             # exactly one between `baseurl` and the path.
