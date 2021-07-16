@@ -184,7 +184,7 @@ def load_device(name: str, description: Dict, index: Index, stage: Stage):
     stage.add_device(name, info, options)
 
 
-def load_input(name: str, description: Dict, index: Index, stage: Stage, manifest: Manifest):
+def load_input(name: str, description: Dict, index: Index, stage: Stage, manifest: Manifest, source_refs: set):
     input_type = description["type"]
     origin = description["origin"]
     options = description.get("options", {})
@@ -205,6 +205,10 @@ def load_input(name: str, description: Dict, index: Index, stage: Stage, manifes
             target = resolve_ref(r, manifest)
             resolved[target] = desc
         refs = resolved
+    elif origin == "org.osbuild.source":
+        unknown_refs = set(refs.keys()) - source_refs
+        if unknown_refs:
+            raise ValueError(f"Unknown source reference(s) {unknown_refs}")
 
     for r, desc in refs.items():
         ip.add_reference(r, desc)
@@ -226,7 +230,7 @@ def load_mount(name: str, description: Dict, index: Index, stage: Stage):
     stage.add_mount(name, info, device, target, options)
 
 
-def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Manifest):
+def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Manifest, source_refs):
     stage_type = description["type"]
     opts = description.get("options", {})
     info = index.get_module_info("Stage", stage_type)
@@ -239,7 +243,7 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
 
     ips = description.get("inputs", {})
     for name, desc in ips.items():
-        load_input(name, desc, index, stage, manifest)
+        load_input(name, desc, index, stage, manifest, source_refs)
 
     mounts = description.get("mounts", {})
     for name, desc in mounts.items():
@@ -248,7 +252,7 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
     return stage
 
 
-def load_pipeline(description: Dict, index: Index, manifest: Manifest):
+def load_pipeline(description: Dict, index: Index, manifest: Manifest, source_refs: set):
     name = description["name"]
     build = description.get("build")
     runner = description.get("runner")
@@ -260,7 +264,7 @@ def load_pipeline(description: Dict, index: Index, manifest: Manifest):
     pl = manifest.add_pipeline(name, runner, build)
 
     for desc in description.get("stages", []):
-        load_stage(desc, index, pl, manifest)
+        load_stage(desc, index, pl, manifest, source_refs)
 
 
 def load(description: Dict, index: Index) -> Manifest:
@@ -270,6 +274,7 @@ def load(description: Dict, index: Index) -> Manifest:
     pipelines = description.get("pipelines", [])
 
     manifest = Manifest()
+    source_refs = set()
 
     # load the sources
     for name, desc in sources.items():
@@ -277,9 +282,10 @@ def load(description: Dict, index: Index) -> Manifest:
         items = desc.get("items", {})
         options = desc.get("options", {})
         manifest.add_source(info, items, options)
+        source_refs.update(items.keys())
 
     for desc in pipelines:
-        load_pipeline(desc, index, manifest)
+        load_pipeline(desc, index, manifest, source_refs)
 
     # The "runner" property in the manifest format is the
     # runner to the run the pipeline with. In osbuild the
