@@ -63,9 +63,32 @@
 
     "mounts": {
       "title": "Collection of mount points for a stage",
-      "additionalProperties": {
-        "$ref": "#/definitions/mount"
-      }
+      "oneOf": [
+        {
+          "description": "Older format, not recommended because the order of object keys might be undefined",
+          "additionalProperties": {
+            "$ref": "#/definitions/mount"
+          }
+        },
+        {
+          "description": "Recommended format",
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "required": ["name"],
+                "properties": {
+                  "name": {"type": "string"}
+                }
+              },
+              {
+                "$ref": "#/definitions/mount"
+              }
+            ]
+          }
+        }
+      ]
     },
 
     "mount": {

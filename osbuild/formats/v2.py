@@ -242,8 +242,12 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
         load_input(name, desc, index, stage, manifest)
 
     mounts = description.get("mounts", {})
-    for name, desc in mounts.items():
-        load_mount(name, desc, index, stage)
+    if isinstance(mounts, list):
+        for desc in mounts:
+            load_mount(desc["name"], desc, index, stage)
+    else:
+        for name, desc in mounts.items():
+            load_mount(name, desc, index, stage)
 
     return stage
 
@@ -391,14 +395,26 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
         for name, mod in items.items():
             validate_module(mod, klass, path + [group, name])
 
+    def validate_mounts(stage, path):
+        group = ModuleInfo.MODULES["Mount"]
+        items = stage.get(group, {})
+
+        if isinstance(items, list):
+            for i, mod in enumerate(items):
+                validate_module(mod, "Mount", path + [group, i])
+        else:
+            validate_stage_modules("Mount", stage, path)
+
     def validate_stage(stage, path):
         name = stage["type"]
         schema = index.get_schema("Stage", name, version="2")
         res = schema.validate(stage)
         result.merge(res, path=path)
 
-        for mod in ("Device", "Input", "Mount"):
+        for mod in ("Device", "Input"):
             validate_stage_modules(mod, stage, path)
+
+        validate_mounts(stage, path)
 
     def validate_pipeline(pipeline, path):
         stages = pipeline.get("stages", [])

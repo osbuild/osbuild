@@ -64,8 +64,15 @@ SCHEMA_2 = r"""
   "additionalProperties": true
 },
 "mounts": {
-  "type": "object",
-  "additionalProperties": true
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": true
+    },
+    {
+      "type": "array"
+    }
+  ]
 },
 "inputs": {
   "type": "object",

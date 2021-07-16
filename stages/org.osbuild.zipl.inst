@@ -47,15 +47,15 @@ SCHEMA_2 = r"""
   }
 },
 "mounts": {
-  "type": "object",
-  "additionalProperties": true,
-  "required": ["root"],
-  "properties": {
-    "root": {
+  "oneOf": [
+    {
       "type": "object",
       "additionalProperties": true
+    },
+    {
+      "type": "array"
     }
-  }
+  ]
 }
 """
 
