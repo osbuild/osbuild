@@ -79,8 +79,18 @@ class SourcesServer(api.BaseAPI):
             "libdir": self.libdir
         }
 
+        # We want the `osbuild` python package that contains this
+        # very module, which might be different from the system wide
+        # installed one, to be accessible to the Input programs so
+        # we detect our origin and set the `PYTHONPATH` accordingly
+        modorigin = importlib.util.find_spec("osbuild").origin
+        modpath = os.path.dirname(modorigin)
+        env = os.environ.copy()
+        env["PYTHONPATH"] = os.path.dirname(modpath)
+
         r = subprocess.run(
             [f"{self.libdir}/sources/{source}"],
+            env=env,
             input=json.dumps(msg),
             stdout=subprocess.PIPE,
             encoding="utf-8",
