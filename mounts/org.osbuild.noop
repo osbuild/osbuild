@@ -1,0 +1,47 @@
+#!/usr/bin/python3
+"""
+No-op mount service
+
+Does not mount anything, but only creates an empty directory.
+Useful for testing.
+
+Host commands used: mount
+"""
+
+import os
+import sys
+from typing import Dict
+
+from osbuild import mounts
+
+
+SCHEMA = """
+"additionalProperties": false
+"""
+
+
+class NoOpMount(mounts.MountService):
+
+    def mount(self, _source: str, root: str, target: str, _options: Dict):
+
+        mountpoint = os.path.join(root, target.lstrip("/"))
+
+        os.makedirs(mountpoint, exist_ok=True)
+        self.mountpoint = mountpoint
+
+        return mountpoint
+
+    def umount(self):
+        self.mountpoint = None
+
+    def sync(self):
+        pass
+
+
+def main():
+    service = NoOpMount.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()
