@@ -534,23 +534,26 @@
               }
             }
           },
-          "mounts": {
-            "root": {
+          "mounts": [
+            {
+              "name": "root",
               "type": "org.osbuild.xfs",
               "source": "root",
               "target": "/"
             },
-            "boot": {
+            {
+              "name": "boot",
               "type": "org.osbuild.ext4",
               "source": "boot",
               "target": "/boot"
             },
-            "efi": {
+            {
+              "name": "efi",
               "type": "org.osbuild.fat",
               "source": "efi",
               "target": "/boot/efi"
             }
-          }
+          ]
         },
         {
           "type": "org.osbuild.grub2.inst",

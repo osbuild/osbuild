@@ -75,6 +75,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
     def describe_mount(mnt):
         desc = {
+            "name": mnt.name,
             "type": mnt.info.name,
             "device": mnt.device.name,
             "target": mnt.target
@@ -85,10 +86,10 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return desc
 
     def describe_mounts(mounts: Dict):
-        desc = {
-            name: describe_mount(mnt)
-            for name, mnt in mounts.items()
-        }
+        desc = [
+            describe_mount(mnt)
+            for mnt in mounts.values()
+        ]
         return desc
 
     def describe_stage(s: Stage):
@@ -214,9 +215,14 @@ def load_input(name: str, description: Dict, index: Index, stage: Stage, manifes
         ip.add_reference(r, desc)
 
 
-def load_mount(name: str, description: Dict, index: Index, stage: Stage):
+def load_mount(description: Dict, index: Index, stage: Stage):
     mount_type = description["type"]
     info = index.get_module_info("Mount", mount_type)
+
+    name = description["name"]
+
+    if name in stage.mounts:
+        raise ValueError(f"Duplicated mount '{name}'")
 
     source = description["source"]
     target = description["target"]
@@ -245,9 +251,9 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
     for name, desc in ips.items():
         load_input(name, desc, index, stage, manifest, source_refs)
 
-    mounts = description.get("mounts", {})
-    for name, desc in mounts.items():
-        load_mount(name, desc, index, stage)
+    mounts = description.get("mounts", [])
+    for mount in mounts:
+        load_mount(mount, index, stage)
 
     return stage
 
@@ -394,6 +400,10 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
     def validate_stage_modules(klass, stage, path):
         group = ModuleInfo.MODULES[klass]
         items = stage.get(group, {})
+
+        if isinstance(items, list):
+            items = {i["name"]: i for i in items}
+
         for name, mod in items.items():
             validate_module(mod, klass, path + [group, name])
 

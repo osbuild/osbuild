@@ -534,13 +534,14 @@
               }
             }
           },
-          "mounts": {
-            "root": {
+          "mounts": [
+            {
+              "name": "root",
               "type": "org.osbuild.ext4",
               "source": "root",
               "target": "/"
             }
-          }
+          ]
         }
       ]
     },
@@ -720,13 +721,14 @@
               }
             }
           },
-          "mounts": {
-            "efi": {
+          "mounts": [
+            {
+              "name": "efi",
               "type": "org.osbuild.fat",
               "source": "efi",
               "target": "/"
             }
-          }
+          ]
         },
         {
           "type": "org.osbuild.copy",
