@@ -2,6 +2,7 @@
 # Tests specific for version 2 of the format
 #
 
+import copy
 import os
 import unittest
 
@@ -103,34 +104,35 @@ BASIC_PIPELINE = {
 BAD_SHA = "sha256:15a654d32efaa75b5df3e2481939d0393fe1746696cc858ca094ccf8b76073cd"
 
 BAD_REF_PIPELINE = {
-  "version": "2",
-  "sources": {
-    "org.osbuild.curl": {
-      "items": {
-        "sha256:c540ca8c5e21ba5f063286c94a088af2aac0b15bc40df6fd562d40154c10f4a1": "",
-      }
-    }
-  },
-  "pipelines": [
-    {
-      "name": "build",
-      "stages": [
-        {
-          "type": "org.osbuild.rpm",
-          "inputs": {
-            "packages": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "references": {
-                BAD_SHA: {}
-              }
+    "version": "2",
+    "sources": {
+        "org.osbuild.curl": {
+            "items": {
+                "sha256:c540ca8c5e21ba5f063286c94a088af2aac0b15bc40df6fd562d40154c10f4a1": "",
             }
-          }
         }
-      ]
-    }
-  ]
+    },
+    "pipelines": [
+        {
+            "name": "build",
+            "stages": [
+                {
+                    "type": "org.osbuild.rpm",
+                    "inputs": {
+                        "packages": {
+                            "type": "org.osbuild.files",
+                            "origin": "org.osbuild.source",
+                            "references": {
+                                BAD_SHA: {}
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
 }
+
 
 class TestFormatV1(unittest.TestCase):
     def setUp(self):
@@ -219,4 +221,88 @@ class TestFormatV1(unittest.TestCase):
             fmt.load(desc, self.index)
 
         self.assertTrue(str(ex.exception).find(BAD_SHA) > -1,
-            "The unknown source reference is not included in the exception")
+                        "The unknown source reference is not included in the exception")
+
+    def test_mounts(self):
+        BASE = {
+            "version": "2",
+
+            "pipelines": [
+                {
+                    "name": "test",
+                    "runner": "org.osbuild.linux",
+                    "stages": [
+                        {
+                            "type": "org.osbuild.noop",
+                            "options": {"zero": 0},
+                            "devices": {
+                                "root": {
+                                    "type": "org.osbuild.loopback",
+                                    "options": {
+                                        "filename": "empty.img"
+                                    }
+                                }
+                            },
+                            "mounts": []
+                        }
+                    ]
+                }
+            ]
+        }
+
+        # verify the device
+        pipeline = copy.deepcopy(BASE)
+        stage = pipeline["pipelines"][0]["stages"][0]
+        mounts = stage["mounts"]
+
+        mounts.extend([{
+            "name": "root",
+            "type": "org.osbuild.noop",
+            "source": "root",
+            "target": "/",
+        }])
+
+        manifest, _ = self.load_manifest(pipeline)
+        self.assertIsNotNone(manifest)
+        test = manifest["test"]
+        self.assertIsNotNone(test)
+        stage = test.stages[0]
+        root = stage.mounts["root"]
+        self.assertIsNotNone(root)
+        self.assertIsNotNone(root.device)
+        self.assertEqual(root.device.name, "root")
+
+        # duplicated mount
+        pipeline = copy.deepcopy(BASE)
+        stage = pipeline["pipelines"][0]["stages"][0]
+        mounts = stage["mounts"]
+
+        mounts.extend([{
+            "name": "root",
+            "type": "org.osbuild.noop",
+            "source": "root",
+            "target": "/",
+        }, {
+            "name": "root",
+            "type": "org.osbuild.noop",
+            "source": "root",
+            "target": "/",
+        }])
+
+        with self.assertRaises(ValueError):
+            self.load_manifest(pipeline)
+
+        # mount without a device
+        pipeline = copy.deepcopy(BASE)
+        stage = pipeline["pipelines"][0]["stages"][0]
+        mounts = stage["mounts"]
+
+        mounts.extend([{
+            "name": "boot",
+            "type": "org.osbuild.noop",
+            "source": "boot",
+            "target": "/boot",
+        }])
+
+        with self.assertRaises(ValueError):
+            self.load_manifest(pipeline)
