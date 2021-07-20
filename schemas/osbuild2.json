@@ -63,16 +63,16 @@
 
     "mounts": {
       "title": "Collection of mount points for a stage",
-      "additionalProperties": {
-        "$ref": "#/definitions/mount"
-      }
+      "type": "array",
+      "items": { "$ref": "#/definitions/mount"}
     },
 
     "mount": {
       "title": "Mount point for a stage",
       "additionalProperties": false,
-      "required": ["type", "source", "target"],
+      "required": ["name", "type", "source", "target"],
       "properties": {
+        "name": { "type": "string" },
         "type": { "type": "string" },
         "source": {
           "type": "string"
