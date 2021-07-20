@@ -32,6 +32,9 @@
         "options": {
           "type": "object",
           "additionalProperties": true
+        },
+        "order": {
+          "type": "integer"
         }
       }
     },
@@ -83,6 +86,9 @@
         "options": {
           "type": "object",
           "additionalProperties": true
+        },
+        "order": {
+          "type": "integer"
         }
       }
     },

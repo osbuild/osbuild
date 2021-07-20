@@ -2,7 +2,7 @@
 
 Second, and current, version of the manifest description
 """
-from typing import Dict
+from typing import Dict, Optional
 from osbuild.meta import Index, ModuleInfo, ValidationResult
 from ..inputs import Input
 from ..pipeline import Manifest, Pipeline, Stage, detect_host_runner
@@ -76,7 +76,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     def describe_mount(mnt):
         desc = {
             "type": mnt.info.name,
-            "device": mnt.device.name,
+            "source": mnt.device.name,
             "target": mnt.target
         }
 
@@ -174,6 +174,14 @@ def resolve_ref(name: str, manifest: Manifest) -> str:
     return target.id
 
 
+def sort_dict_by_order(d: Optional[Dict]) -> Dict:
+    """Sort a dictionary by via optional `order` values"""
+    keys = [(k, v.get("order", 0)) for k, v in d.items()]
+    keys = sorted(keys, key=lambda k: k[1])
+
+    return {k: d[k] for k, _ in keys}
+
+
 def load_device(name: str, description: Dict, index: Index, stage: Stage):
     device_type = description["type"]
     options = description.get("options", {})
@@ -234,6 +242,7 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
     stage = pipeline.add_stage(info, opts)
 
     devs = description.get("devices", {})
+    devs = sort_dict_by_order(devs)
     for name, desc in devs.items():
         load_device(name, desc, index, stage)
 
@@ -242,6 +251,7 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
         load_input(name, desc, index, stage, manifest)
 
     mounts = description.get("mounts", {})
+    mounts = sort_dict_by_order(mounts)
     for name, desc in mounts.items():
         load_mount(name, desc, index, stage)
 

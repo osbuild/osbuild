@@ -173,3 +173,65 @@ class TestFormatV1(unittest.TestCase):
 
         res = fmt.validate(desc, self.index)
         self.assert_validation(res)
+
+    def test_sort_by_order(self):
+        PIPELINE = {
+            "version": "2",
+            "pipelines": [
+                {
+                    "name": "test",
+                    "stages": [
+                        {
+                            "type": "org.osbuild.noop",
+                            "devices": {
+                                "boot": {
+                                    "type": "org.osbuild.zero",
+                                    "order": 2
+                                },
+                                "root": {
+                                    "type": "org.osbuild.zero",
+                                    "order": 1
+                                }
+                            },
+                            "mounts": {
+                                "boot": {
+                                    "type": "org.osbuild.noop",
+                                    "source": "boot",
+                                    "target": "/boot",
+                                    "order": 2
+                                },
+                                "root": {
+                                    "type": "org.osbuild.noop",
+                                    "source": "root",
+                                    "target": "/",
+                                    "order": 1
+                                },
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+
+        manifest, _ = self.load_manifest(PIPELINE)
+        self.assertIsNotNone(manifest)
+
+        test = manifest["test"]
+        self.assertIsNotNone(test)
+
+        stages = test.stages
+        self.assertIsNotNone(stages)
+        self.assertEqual(len(stages), 1)
+
+        stage = stages[0]
+        self.assertIsNotNone(stage)
+
+        devices = stage.devices
+        self.assertIsNotNone(devices)
+        self.assertEqual(len(devices), 2)
+        self.assertEqual(list(devices.keys()), ["root", "boot"])
+
+        mounts = stage.mounts
+        self.assertIsNotNone(mounts)
+        self.assertEqual(len(mounts), 2)
+        self.assertEqual(list(mounts.keys()), ["root", "boot"])
