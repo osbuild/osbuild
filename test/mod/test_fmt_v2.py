@@ -134,7 +134,7 @@ BAD_REF_PIPELINE = {
 }
 
 
-class TestFormatV1(unittest.TestCase):
+class TestFormatV2(unittest.TestCase):
     def setUp(self):
         self.index = osbuild.meta.Index(os.curdir)
         self.maxDiff = None
