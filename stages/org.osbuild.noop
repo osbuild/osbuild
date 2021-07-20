@@ -17,7 +17,13 @@ SCHEMA_2 = """
 "options": {
   "additionalProperties": true
 },
+"devices": {
+  "additionalProperties": true
+},
 "inputs": {
+  "additionalProperties": true
+},
+"mounts": {
   "additionalProperties": true
 }
 """
