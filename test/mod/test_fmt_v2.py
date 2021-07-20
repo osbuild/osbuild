@@ -65,7 +65,35 @@ BASIC_PIPELINE = {
                                 "name:tree": {}
                             }
                         }
-                    }
+                    },
+                    "devices": {
+                        "root": {
+                            "type": "org.osbuild.loopback",
+                            "options": {
+                                "filename": "empty.img"
+                            }
+                        },
+                        "boot": {
+                            "type": "org.osbuild.loopback",
+                            "options": {
+                                "filename": "empty.img"
+                            }
+                        },
+                    },
+                    "mounts": [
+                        {
+                            "name": "root",
+                            "type": "org.osbuild.noop",
+                            "source": "root",
+                            "target": "/",
+                        },
+                        {
+                            "name": "boot",
+                            "type": "org.osbuild.noop",
+                            "source": "boot",
+                            "target": "/boot",
+                        }
+                    ]
                 }
             ]
         }
