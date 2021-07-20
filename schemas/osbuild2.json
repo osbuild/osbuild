@@ -26,7 +26,7 @@
     "device": {
       "title": "Device for a stage",
       "additionalProperties": false,
-      "required": ["type", "options"],
+      "required": ["type"],
       "properties": {
         "type": { "type": "string" },
         "options": {
