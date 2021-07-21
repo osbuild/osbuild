@@ -2,11 +2,8 @@
 """
 Configure modprobe
 
-The 'config' option allows the creation of one ore more `.conf` configuration
-files for modprobe in `/usr/lib/modprobe.d`. The value of each key is a list
-of "command" objects with at least the 'command' property and additional
-properties specific for each command type. The list must contain at least one
-"command" object.
+The 'config' option allows the creation of a `.conf` configuration
+file for modprobe in `/usr/lib/modprobe.d` with the name `filename`.
 
 Currently supported "command" objects are:
   - for 'blacklist' command
@@ -23,69 +20,60 @@ import osbuild.api
 
 SCHEMA = r"""
 "additionalProperties": false,
+"required": ["commands", "filename"],
 "properties": {
-  "config": {
+  "filename": {
+    "type": "string",
+    "description": "Name of the modprobe configuration file.",
+    "pattern": "^[\\w.-]{1,250}\\.conf$"
+  },
+  "commands": {
     "additionalProperties": false,
-    "type": "object",
-    "description": "modprobe configuration files.",
-    "minProperties": 1,
-    "patternProperties": {
-      "^[\\w.-]{1,250}\\.conf$": {
-        "additionalProperties": false,
-        "type": "array",
-        "description": "modprobe configuration file.",
-        "items": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "type": "object",
-              "description": "'blacklist' command",
-              "required": ["command", "modulename"],
-              "properties": {
-                "command": {
-                  "type": "string",
-                  "enum": ["blacklist"],
-                  "description": "modprobe command."
-                },
-                "modulename": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "name of the module to blacklist."
-                }
-              }
+    "type": "array",
+    "description": "Array of modprobe commands",
+    "minLength": 1,
+    "items": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "type": "object",
+          "description": "'blacklist' command",
+          "required": ["command","modulename"],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": ["blacklist"],
+              "description": "modprobe command."
+            },
+            "modulename": {
+              "type": "string",
+              "minLength": 1,
+              "description": "name of the module to blacklist."
             }
-          ]
+          }
         }
-      }
+      ]
     }
   }
 }
 """
 
 
-def create_configuration_files(tree, configuration_files_options):
-    if not configuration_files_options:
-        return
+def main(tree, options):
+    config_file = options["filename"]
 
     config_dir = f"{tree}/usr/lib/modprobe.d"
     os.makedirs(config_dir, exist_ok=True)
 
-    for config_file, config_commands in configuration_files_options.items():
-        lines = []
-        for config_command in config_commands:
-            if config_command["command"] == "blacklist":
-                lines.append(f'{config_command["command"]} {config_command["modulename"]}\n')
-            else:
-                raise ValueError()
+    lines = []
+    for config_command in options["commands"]:
+        if config_command["command"] == "blacklist":
+            lines.append(f'{config_command["command"]} {config_command["modulename"]}\n')
+        else:
+            raise ValueError()
 
-        with open(f"{config_dir}/{config_file}", "w") as f:
-            f.writelines(lines)
-
-
-def main(tree, options):
-    configuration_files_options = options.get("config", {})
-
-    create_configuration_files(tree, configuration_files_options)
+    with open(f"{config_dir}/{config_file}", "w") as f:
+        f.writelines(lines)
 
     return 0
 

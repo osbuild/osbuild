@@ -457,24 +457,29 @@
       {
         "name": "org.osbuild.modprobe",
         "options": {
-          "config": {
-            "disallow-modules.conf": [
-              {
-                "command": "blacklist",
-                "modulename": "nouveau"
-              },
-              {
-                "command": "blacklist",
-                "modulename": "floppy"
-              }
-            ],
-            "disallow-additional-modules.conf": [
-              {
-                "command": "blacklist",
-                "modulename": "my-module"
-              }
-            ]
-          }
+          "filename": "disallow-modules.conf",
+          "commands": [
+            {
+              "command": "blacklist",
+              "modulename": "nouveau"
+            },
+            {
+              "command": "blacklist",
+              "modulename": "floppy"
+            }
+          ]
+        }
+      },
+      {
+        "name": "org.osbuild.modprobe",
+        "options": {
+          "filename": "disallow-additional-modules.conf",
+          "commands": [
+            {
+              "command": "blacklist",
+              "modulename": "my-module"
+            }
+          ]
         }
       }
     ]
