@@ -2,8 +2,8 @@
 """
 Create /etc/fstab entries for filesystems
 
-Each filesystem item must have at least `uuid` or `label` and
-a `path` (mount point).
+Each filesystem item must have at least the fs_spec, i.e `uuid`,
+`label`, `partlabel` or `device` and a `path` (mount point).
 
 This stage replaces /etc/fstab, removing any existing entries.
 
@@ -55,17 +55,29 @@ SCHEMA = """
     "items": {
       "type": "object",
       "oneOf": [{
+        "required": ["device", "path"]
+      }, {
         "required": ["uuid", "path"]
       }, {
         "required": ["label", "path"]
+      }, {
+        "required": ["partlabel", "path"]
       }],
       "properties": {
+        "device": {
+          "description": "Device node",
+          "type": "string"
+        },
         "uuid": {
           "description": "Filesystem UUID",
           "type": "string"
         },
         "label": {
           "description": "Filesystem label",
+          "type": "string"
+        },
+        "partlabel": {
+          "description": "Partition label.",
           "type": "string"
         },
         "path": {
@@ -122,6 +134,8 @@ def main(tree, options):
             uuid = filesystem.get("uuid")
             path = filesystem["path"]
             label = filesystem.get("label")
+            partlabel = filesystem.get("partlabel")
+            device = filesystem.get("device")
             vfs_type = filesystem.get("vfs_type", "none")
             options = filesystem.get("options", "defaults")
             freq = filesystem.get("freq", 0)
@@ -131,6 +145,10 @@ def main(tree, options):
                 fs_spec = f"UUID={uuid}"
             elif label:
                 fs_spec = f"LABEL={label}"
+            elif partlabel:
+                fs_spec = f"PARTLABEL={label}"
+            elif device:
+                fs_spec = device
             else:
                 raise ValueError("Need 'uuid' or 'label'")
 
