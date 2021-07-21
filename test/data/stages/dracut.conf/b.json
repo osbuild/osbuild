@@ -457,7 +457,7 @@
       {
         "name": "org.osbuild.dracut.conf",
         "options": {
-          "configuration_files": {
+          "config": {
             "sgdisk.conf": {
               "install_items": [
                 "sgdisk"
