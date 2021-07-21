@@ -39,6 +39,27 @@
               "path": "/",
               "freq": 1,
               "passno": 1
+            },
+            {
+              "device": "/dev/root",
+              "vfs_type": "ext4",
+              "path": "/sysroot",
+              "freq": 1,
+              "passno": 1
+            },
+            {
+              "partlabel": "THEPARTITION",
+              "vfs_type": "ext4",
+              "path": "/thepart",
+              "freq": 1,
+              "passno": 1
+            },
+            {
+              "label": "LABEL",
+              "vfs_type": "ext4",
+              "path": "/label",
+              "freq": 1,
+              "passno": 1
             }
           ]
         }
