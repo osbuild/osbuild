@@ -1,0 +1,91 @@
+#!/usr/bin/python3
+"""
+Configure Systemd services via unit file dropins
+
+This stage allows to create Systemd unit drop-in configuration files in
+`/usr/lib/systemd/system/<unit_name>.d/`. The `unit` property specifies the
+'.service' file to be modified using the drop-ins. These names are validated
+using the same rules as specified by systemd.unit(5) and they must contain the
+'.service' suffix (other types of unit files are not supported).
+The `filename` must end in `.conf` and specifies the name to use for the
+drop-in file.
+
+The Drop-in configuration can currently specify the following subset
+of options:
+  - 'Service' section
+    - 'Environment' option
+"""
+
+import os
+import sys
+import configparser
+
+import osbuild.api
+
+
+SCHEMA = r"""
+"additionalProperties": false,
+"required": ["unit", "dropin", "config"],
+"properties": {
+  "unit": {
+    "type": "string",
+    "pattern": "^[\\w:.\\\\-]+[@]{0,1}[\\w:.\\\\-]*\\.service$"
+  },
+  "dropin": {
+    "type": "string",
+    "pattern": "^[\\w.-]{1,250}\\.conf$"
+  },
+  "config": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "Drop-in configuration for a '.service' unit.",
+    "properties": {
+      "Service": {
+        "additionalProperties": false,
+        "type": "object",
+        "description": "'Service' configuration section of a unit file.",
+        "properties": {
+          "Environment": {
+            "type": "string",
+            "description": "Sets environment variables for executed process."
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    unit = options["unit"]
+    dropin_file = options["dropin"]
+    cfg = options["config"]
+
+    # ensure the unit name + ".d" does not exceed maximum filename length
+    if len(unit+".d") > 255:
+        raise ValueError(f"Error: the {unit} unit drop-in directory exceeds the maximum filename length.")
+
+    unit_dropins_dir = f"{tree}/usr/lib/systemd/system/{unit}.d"
+    os.makedirs(unit_dropins_dir, exist_ok=True)
+
+    config = configparser.ConfigParser()
+    # prevent conversion of the option name to lowercase
+    config.optionxform = lambda option: option
+
+    for section, opts in cfg.items():
+        if not config.has_section(section):
+            config.add_section(section)
+        for option, value in opts.items():
+            config.set(section, option, str(value))
+
+    with open(f"{unit_dropins_dir}/{dropin_file}", "w") as f:
+        config.write(f, space_around_delimiters=False)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
