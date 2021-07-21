@@ -32,12 +32,11 @@
       {
         "name": "org.osbuild.cloud-init",
         "options": {
+          "filename": "00-default_user.cfg",
           "config": {
-            "00-default_user.cfg": {
-              "system_info": {
-                "default_user": {
-                  "name": "ec2-user"
-                }
+            "system_info": {
+              "default_user": {
+                "name": "ec2-user"
               }
             }
           }

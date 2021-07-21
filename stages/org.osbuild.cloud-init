@@ -2,18 +2,12 @@
 """
 Configure cloud-init
 
-The 'config' option allows to create cloud-init `.cfg` configuration
-files under `/etc/cloud/cloud.cfg.d`. Its value is a dictionary which keys
-represent filenames of `.cfg` configuration files, which will be created.
-Value of each configuration file key is a dictionary representing the
-cloud-init configuration.
+The 'config' option allows to configure cloud-init by creating a
+configuration file under `/etc/cloud/cloud.cfg.d` with the name
+specified by `filename`.
 
 Constrains:
-  - If 'config' option is specified, it must contain at least one definition
-    of a configuration file.
   - Each configuration file definition must contain at least one configuration
-    section definition, which is not empty (must be setting a configuration
-    option).
 
 Currently supported subset of cloud-init configuration:
   - 'system_info' section
@@ -31,36 +25,33 @@ import osbuild.api
 
 SCHEMA = r"""
 "additionalProperties": false,
+"required": ["config", "filename"],
 "properties": {
+  "filename": {
+    "type": "string",
+    "description": "Name of the cloud-init configuration file.",
+    "pattern": "^[\\w.-]{1,251}\\.cfg$"
+  },
   "config": {
     "additionalProperties": false,
     "type": "object",
-    "description": "cloud-init configuration file.",
-    "minProperties": 1,
-    "patternProperties": {
-      "^[\\w.-]{1,251}\\.cfg$": {
+    "description": "cloud-init configuration",
+    "properties": {
+      "system_info": {
         "additionalProperties": false,
         "type": "object",
-        "description": "cloud-init configuration file.",
+        "description": "'system_info' configuration section.",
         "minProperties": 1,
         "properties": {
-          "system_info": {
+          "default_user": {
             "additionalProperties": false,
             "type": "object",
-            "description": "'system_info' configuration section.",
+            "description": "Configuration of the 'default' user created by cloud-init.",
             "minProperties": 1,
             "properties": {
-              "default_user": {
-                "additionalProperties": false,
-                "type": "object",
-                "description": "Configuration of the 'default' user created by cloud-init.",
-                "minProperties": 1,
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "username of the 'default' user."
-                  }
-                }
+              "name": {
+                "type": "string",
+                "description": "username of the 'default' user."
               }
             }
           }
@@ -72,20 +63,16 @@ SCHEMA = r"""
 """
 
 
-# Writes the passed `options` object as is into the configuration file in YAML format.
-# The validity of the `options` content is assured by the SCHEMA.
-def create_configuration_file(tree, filename, options):
+# Writes the passed `config` object as is into the configuration file in YAML format.
+# The validity of the `config` content is assured by the SCHEMA.
+def main(tree, options):
+    filename = options.get("filename")
+    config = options.get("config", {})
+
     config_files_dir = f"{tree}/etc/cloud/cloud.cfg.d"
 
     with open(f"{config_files_dir}/{filename}", "w") as f:
-        yaml.dump(options, f)
-
-
-def main(tree, options):
-    configuration_files_options = options.get("config", {})
-
-    for configuration_file, configuration_options in configuration_files_options.items():
-        create_configuration_file(tree, configuration_file, configuration_options)
+        yaml.dump(config, f)
 
     return 0
 
