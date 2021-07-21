@@ -32,7 +32,7 @@
       {
         "name": "org.osbuild.cloud-init",
         "options": {
-          "configuration_files": {
+          "config": {
             "00-default_user.cfg": {
               "system_info": {
                 "default_user": {
