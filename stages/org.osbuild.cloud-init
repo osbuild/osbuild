@@ -2,15 +2,15 @@
 """
 Configure cloud-init
 
-'configuration_files' option allows to create cloud-init `.cfg` configuration
+The 'config' option allows to create cloud-init `.cfg` configuration
 files under `/etc/cloud/cloud.cfg.d`. Its value is a dictionary which keys
 represent filenames of `.cfg` configuration files, which will be created.
 Value of each configuration file key is a dictionary representing the
 cloud-init configuration.
 
 Constrains:
-  - If 'configuration_files' option is specified, it must contain at least one
-    definition of a configuration file.
+  - If 'config' option is specified, it must contain at least one definition
+    of a configuration file.
   - Each configuration file definition must contain at least one configuration
     section definition, which is not empty (must be setting a configuration
     option).
@@ -32,10 +32,10 @@ import osbuild.api
 SCHEMA = r"""
 "additionalProperties": false,
 "properties": {
-  "configuration_files": {
+  "config": {
     "additionalProperties": false,
     "type": "object",
-    "description": "cloud-init configuration files.",
+    "description": "cloud-init configuration file.",
     "minProperties": 1,
     "patternProperties": {
       "^[\\w.-]{1,251}\\.cfg$": {
@@ -82,7 +82,7 @@ def create_configuration_file(tree, filename, options):
 
 
 def main(tree, options):
-    configuration_files_options = options.get("configuration_files", {})
+    configuration_files_options = options.get("config", {})
 
     for configuration_file, configuration_options in configuration_files_options.items():
         create_configuration_file(tree, configuration_file, configuration_options)
