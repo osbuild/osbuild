@@ -2,12 +2,9 @@
 """
 Configure systemd-logind
 
-The 'config' option allows to create one or more systemd-logind configuration
-drop-in files in `/usr/lib/systemd/logind.conf.d`. Value of this option is
-an dictionary with keys specifying the name od the `.conf` drop-in configuration
-file to create. The dictionary must have at least one `.conf` file defined.
-Value of each such key is dictionary representing the systemd-logind
-configuration.
+The 'config' option allows to create a systemd-logind configuration
+drop-in file in `/usr/lib/systemd/logind.conf.d` with the name
+`filename`.
 
 Drop-in configuration files can currently specify the following subset of
 options:
@@ -27,31 +24,29 @@ import osbuild.api
 
 SCHEMA = r"""
 "additionalProperties": false,
+"required": ["config", "filename"],
 "properties": {
+  "filename": {
+    "type": "string",
+    "description": "Name of the systemd-logind drop-in.",
+    "pattern": "^[\\w.-]{1,250}\\.conf$"
+  },
   "config": {
     "additionalProperties": false,
     "type": "object",
-    "description": "systemd-logind configuration drop-ins.",
+    "description": "systemd-logind configuration",
     "minProperties": 1,
-    "patternProperties": {
-      "^[\\w.-]{1,250}\\.conf$": {
+    "properties": {
+      "Login": {
         "additionalProperties": false,
         "type": "object",
-        "description": "Drop-in configuration for systemd-logind.",
-        "required": ["Login"],
+        "description": "'Login' configuration section.",
+        "minProperties": 1,
         "properties": {
-          "Login": {
-            "additionalProperties": false,
-            "type": "object",
-            "description": "'Login' configuration section.",
-            "minProperties": 1,
-            "properties": {
-              "NAutoVTs": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "Configures how many virtual terminals (VTs) to allocate by default."
-              }
-            }
+          "NAutoVTs": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Configures how many virtual terminals (VTs) to allocate by default."
           }
         }
       }
@@ -61,32 +56,25 @@ SCHEMA = r"""
 """
 
 
-def create_configuration_dropins(tree, configuration_dropins_options):
-    if not configuration_dropins_options:
-        return
+def main(tree, options):
+    dropin_file = options["filename"]
+    dropin_config = options["config"]
 
     dropins_dir = f"{tree}/usr/lib/systemd/logind.conf.d"
     os.makedirs(dropins_dir, exist_ok=True)
 
-    for dropin_file, dropin_config in configuration_dropins_options.items():
-        config = configparser.ConfigParser()
-        # prevent conversion of the option name to lowercase
-        config.optionxform = lambda option: option
+    config = configparser.ConfigParser()
+    # prevent conversion of the option name to lowercase
+    config.optionxform = lambda option: option
 
-        for section, options in dropin_config.items():
-            if not config.has_section(section):
-                config.add_section(section)
-            for option, value in options.items():
-                config.set(section, option, str(value))
+    for section, opts in dropin_config.items():
+        if not config.has_section(section):
+            config.add_section(section)
+        for option, value in opts.items():
+            config.set(section, option, str(value))
 
-        with open(f"{dropins_dir}/{dropin_file}", "w") as f:
-            config.write(f, space_around_delimiters=False)
-
-
-def main(tree, options):
-    configuration_dropins_options = options.get("config", {})
-
-    create_configuration_dropins(tree, configuration_dropins_options)
+    with open(f"{dropins_dir}/{dropin_file}", "w") as f:
+        config.write(f, space_around_delimiters=False)
 
     return 0
 
