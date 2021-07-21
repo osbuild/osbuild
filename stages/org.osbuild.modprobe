@@ -2,10 +2,8 @@
 """
 Configure modprobe
 
-The option 'configuration_files' allows to create `.conf` configuration files
-for modprobe in `/usr/lib/modprobe.d`. At least one configuration file must
-be defined. Value os the options is a dictionary with keys being the names
-of `.conf` files which will be created. Value of each key is a list
+The 'config' option allows the creation of one ore more `.conf` configuration
+files for modprobe in `/usr/lib/modprobe.d`. The value of each key is a list
 of "command" objects with at least the 'command' property and additional
 properties specific for each command type. The list must contain at least one
 "command" object.
@@ -26,7 +24,7 @@ import osbuild.api
 SCHEMA = r"""
 "additionalProperties": false,
 "properties": {
-  "configuration_files": {
+  "config": {
     "additionalProperties": false,
     "type": "object",
     "description": "modprobe configuration files.",
@@ -85,7 +83,7 @@ def create_configuration_files(tree, configuration_files_options):
 
 
 def main(tree, options):
-    configuration_files_options = options.get("configuration_files", {})
+    configuration_files_options = options.get("config", {})
 
     create_configuration_files(tree, configuration_files_options)
 
