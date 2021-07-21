@@ -1,0 +1,199 @@
+#!/usr/bin/python3
+"""
+Configure Network Manager Connections
+
+This stage allows to create system connections for network manager.
+Currently the connections are created in directory for shipped
+system connections; `/usr/lib/NetworkManager/system-connections`.
+
+Currently only configuring "ethernet" connections is supported,
+and here only a subset of the available options. See the schema
+for more information.
+"""
+
+import os
+import sys
+import configparser
+
+import osbuild.api
+
+
+SCHEMA = r"""
+"definitions": {
+  "connection": {
+    "additionalProperties": false,
+    "required": ["id","uuid","type"],
+    "type": "object",
+    "properties": {
+      "uuid": {
+        "type": "string"
+      },
+      "id": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      },
+      "autoconnect": {
+        "type": "boolean"
+      },
+      "interface-name": {
+        "type": "string"
+      },
+      "autoconnect-priority": {
+        "type": "number"
+      }
+    }
+  },
+  "ethernet": {
+    "additionalProperties": false,
+    "required": ["connection"],
+    "type": "object",
+    "properties": {
+      "connection": {
+        "allOf": [
+          {"$ref": "#/definitions/connection"},
+          {"$ref": "#/definitions/802-3-ethernet-connection"}
+        ]
+      },
+      "ipv4": {
+        "$ref": "#/definitions/ipv4"
+      },
+      "ipv6": {
+        "$ref": "#/definitions/ipv6"
+      },
+      "ethernet": {
+        "$ref": "#/definitions/802-3-ethernet"
+      }
+    }
+  },
+  "802-3-ethernet-connection": {
+    "additionalProperties": true,
+    "required": ["type"],
+    "type": "object",
+    "properties": {
+      "type": {
+        "enum": ["802-3-ethernet","ethernet"]
+      }
+    }
+  },
+  "ipv4": {
+    "oneOf": [
+      {"$ref": "#/definitions/ipv4-ignore"},
+      {"$ref": "#/definitions/ipv4-auto"},
+      {"$ref": "#/definitions/ipv4-manual"}
+    ]
+  },
+  "ipv4-ignore": {
+    "additionalProperties": false,
+    "required": ["method"],
+    "properties": {
+      "method": {
+        "enum": ["ignore"]
+      }
+    }
+  },
+  "ipv4-auto": {
+    "additionalProperties": false,
+    "required": ["method"],
+    "properties": {
+      "method": {
+        "enum": ["auto"]
+      },
+      "dns-search": {
+        "type": "string"
+      }
+    }
+  },
+  "ipv4-manual": {
+    "additionalProperties": false,
+    "required": ["method"],
+    "properties": {
+      "method": {
+        "enum": ["manual"]
+      },
+      "address": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ipv4-address"
+        }
+      }
+    }
+  },
+  "ipv4-address": {
+    "type": "string"
+  },
+  "ipv6": {
+    "oneOf": [{"$ref": "#/definitions/ipv6-ignore"}]
+  },
+  "ipv6-ignore": {
+    "additionalProperties": false,
+    "required": ["method"],
+    "properties": {
+      "method": {
+        "enum": ["ignore"]
+      }
+    }
+  },
+  "802-3-ethernet": {
+    "additionalProperties": true,
+    "type": "object",
+    "properties": {
+      "mac-address": {
+        "type": "string"
+      }
+    }
+  }
+},
+"additionalProperties": false,
+"required": ["filename", "settings"],
+"properties": {
+  "filename": {
+    "type": "string",
+    "pattern": "^[\\w.-]{1,255}$"
+  },
+  "settings": {
+    "oneOf": [{"$ref": "#/definitions/ethernet"}]
+  }
+}
+"""
+
+
+USR_PATH = "usr/lib/NetworkManager/system-connections"
+
+
+def main(tree, options):
+    filename = options["filename"]
+    settings = options["settings"]
+
+    cfgdir = os.path.join(tree, USR_PATH)
+    os.makedirs(cfgdir, exist_ok=True)
+
+    config = configparser.ConfigParser()
+    # prevent conversion of the option name to lowercase
+    config.optionxform = lambda option: option
+
+    for name, values in settings.items():
+
+        if not config.has_section(name):
+            config.add_section(name)
+
+        for option, value in values.items():
+            if isinstance(value, list):
+                val = ",".join(value)
+            elif isinstance(value, bool):
+                val = "true" if value else "false"
+            else:
+                val = str(value)
+            config.set(name, option, val)
+
+    with open(os.path.join(cfgdir, filename), "w") as f:
+        config.write(f, space_around_delimiters=False)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
