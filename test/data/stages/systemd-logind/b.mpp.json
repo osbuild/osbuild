@@ -32,7 +32,7 @@
       {
         "name": "org.osbuild.systemd-logind",
         "options": {
-          "configuration_dropins": {
+          "config": {
             "10-ec2-getty-fix.conf": {
               "Login": {
                 "NAutoVTs": 0

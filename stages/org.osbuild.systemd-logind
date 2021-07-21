@@ -2,7 +2,7 @@
 """
 Configure systemd-logind
 
-The 'configuration_dropins' option allows to create systemd-logind configuration
+The 'config' option allows to create one or more systemd-logind configuration
 drop-in files in `/usr/lib/systemd/logind.conf.d`. Value of this option is
 an dictionary with keys specifying the name od the `.conf` drop-in configuration
 file to create. The dictionary must have at least one `.conf` file defined.
@@ -28,7 +28,7 @@ import osbuild.api
 SCHEMA = r"""
 "additionalProperties": false,
 "properties": {
-  "configuration_dropins": {
+  "config": {
     "additionalProperties": false,
     "type": "object",
     "description": "systemd-logind configuration drop-ins.",
@@ -84,7 +84,7 @@ def create_configuration_dropins(tree, configuration_dropins_options):
 
 
 def main(tree, options):
-    configuration_dropins_options = options.get("configuration_dropins", {})
+    configuration_dropins_options = options.get("config", {})
 
     create_configuration_dropins(tree, configuration_dropins_options)
 
