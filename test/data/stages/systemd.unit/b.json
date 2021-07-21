@@ -460,17 +460,15 @@
         }
       },
       {
-        "name": "org.osbuild.systemd",
+        "name": "org.osbuild.systemd.unit",
         "options": {
-          "enabled_services": [
-            "nftables"
-          ],
-          "masked_services": [
-            "ldconfig"
-          ],
-          "disabled_services": [
-            "sshd"
-          ]
+          "unit": "nm-cloud-setup.service",
+          "dropin": "10-rh-enable-for-ec2.conf",
+          "config": {
+            "Service": {
+              "Environment": "NM_CLOUD_SETUP_EC2=yes"
+            }
+          }
         }
       }
     ]

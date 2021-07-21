@@ -24,10 +24,8 @@ the following subset of options:
     - 'Environment' option
 """
 
-import os
 import subprocess
 import sys
-import configparser
 
 import osbuild.api
 
@@ -53,65 +51,9 @@ SCHEMA = r"""
   "default_target": {
     "type": "string",
     "description": "The default target to boot into"
-  },
-  "unit_dropins": {
-    "additionalProperties": false,
-    "type": "object",
-    "description": "Systemd unit drop-in configurations.",
-    "patternProperties": {
-      "^[\\w:.\\\\-]+[@]{0,1}[\\w:.\\\\-]*\\.service$": {
-        "additionalProperties": false,
-        "type": "object",
-        "description": "Drop-in configurations for a '.service' unit.",
-        "patternProperties": {
-          "^[\\w.-]{1,250}\\.conf$": {
-            "additionalProperties": false,
-            "type": "object",
-            "description": "Drop-in configuration for a '.service' unit.",
-            "properties": {
-              "Service": {
-                "additionalProperties": false,
-                "type": "object",
-                "description": "'Service' configuration section of a unit file.",
-                "properties": {
-                  "Environment": {
-                    "type": "string",
-                    "description": "Sets environment variables for executed process."
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
   }
 }
 """
-
-
-def configure_unit_dropins(tree, unit_dropins_options):
-    for unit, unit_dropins in unit_dropins_options.items():
-        # ensure the unit name + ".d" does not exceed maximum filename length
-        if len(unit+".d") > 255:
-            raise ValueError(f"Error: the {unit} unit drop-in directory exceeds the maximum filename length.")
-
-        unit_dropins_dir = f"{tree}/usr/lib/systemd/system/{unit}.d"
-        os.makedirs(unit_dropins_dir, exist_ok=True)
-
-        for dropin_file, dropin_config in unit_dropins.items():
-            config = configparser.ConfigParser()
-            # prevent conversion of the option name to lowercase
-            config.optionxform = lambda option: option
-
-            for section, options in dropin_config.items():
-                if not config.has_section(section):
-                    config.add_section(section)
-                for option, value in options.items():
-                    config.set(section, option, str(value))
-
-            with open(f"{unit_dropins_dir}/{dropin_file}", "w") as f:
-                config.write(f, space_around_delimiters=False)
 
 
 def main(tree, options):
@@ -119,7 +61,6 @@ def main(tree, options):
     disabled_services = options.get("disabled_services", [])
     masked_services = options.get("masked_services", [])
     default_target = options.get("default_target")
-    unit_dropins_options = options.get("unit_dropins", {})
 
     for service in enabled_services:
         subprocess.run(["systemctl", "--root", tree, "enable", service], check=True)
@@ -132,8 +73,6 @@ def main(tree, options):
 
     if default_target:
         subprocess.run(["systemctl", "--root", tree, "set-default", default_target], check=True)
-
-    configure_unit_dropins(tree, unit_dropins_options)
 
     return 0
 
