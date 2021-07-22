@@ -99,6 +99,7 @@ class LoopbackService(devices.DeviceService):
         path = os.path.join(tree, filename.lstrip("/"))
 
         self.fd = os.open(path, os.O_RDWR | os.O_CLOEXEC)
+        print(f"file '{filename}'' opened as {self.fd}")
         try:
             self.lo = self.make_loop(self.fd, start, size)
         except Exception as error:  # pylint: disable: broad-except
