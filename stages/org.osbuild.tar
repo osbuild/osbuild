@@ -50,6 +50,10 @@ SCHEMA_2 = """
       "description": "Enable support for extended attributes",
       "type": "boolean",
       "default": true
+    },
+    "root-node": {
+      "description": "How to handle the root node: include or omit",
+      "enum": ["include", "omit"]
     }
   }
 },
@@ -71,6 +75,7 @@ def main(inputs, output_dir, options):
     tree = inputs["tree"]["path"]
     filename = options["filename"].lstrip("/")
     tarfmt = options.get("format", "gnu")
+    root_node = options.get("root-node", "include")
 
     extra_args = []
     # Set environment variables for the tar operation.
@@ -97,8 +102,15 @@ def main(inputs, output_dir, options):
         *extra_args,
         "-cf", os.path.join(output_dir, filename),
         "-C", tree,
-        "."
     ]
+
+    # Should we include the root inode or not
+    # This will change the way files are listed:
+    # `./file` (include) vs `file` (omit)
+    if root_node == "include":
+        tar_cmd += ["."]
+    else:
+        tar_cmd += os.listdir(tree)
 
     # Make a tarball of the tree.
     subprocess.run(
