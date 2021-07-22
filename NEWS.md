@@ -1,3 +1,127 @@
+## CHANGES WITH 30:
+
+  * Add support for building **OSTree based raw images**. This
+    means creating a raw image and deploying a commit in it. For
+    this various stages have been added:
+
+  * `stage/org.osbuild.ostree.init-fs`: initializes a file
+    system in OSTree layout.
+
+  * `stages/org.osbuild.ostree.init-os`: initializes a new
+    state root with a given name.
+
+  * `stages/org.osbuild.ostree.config`: allows changing the
+    configuration for an OSTree repo.
+
+  * `stages/org.osbuild.ostree.deploy`: deploy an existing
+    commit.
+
+  * `stages/org.osbuild.ostree.fillvar`: use `systemd-tmpfiles`
+    to provision `/var` for a stateroot and deployment.
+
+  * `stages/org.osbuild.ostree.remotes`: allows to configure
+    remotes for an OSTree repository.
+
+  * `stages/org.osbuild.ostree.selinux`: re-label (parts) of
+    an OSTree deployment.
+
+  * `stages/org.osbuild.fstab`: support for creating an fstab file in
+    an OSTree deployment. NB: this is a temporary solution and will
+    very likely be removed in the next release.
+
+  * **Manifest-Pre-Processor**: the various mpp tools got unified into a
+    single tool which is now shipped as `osbuild-mpp` in the `osbuild-tools`
+    package. Additionally, it supports variable expansion via `mpp-vars`
+    together with `mpp-format-{int,string,json}` as well as defining a
+    partition table via `mpp-image`.
+
+  * `stages/org.osbuild.tar`: option to not include the root node. When
+    building the tar archive, the command that is used normally includes
+    the root node as ./ and also leads to all files having a "./" prefix.
+    On the other hand, the oci stage as well as the old ostree.commit
+    assembler, with the tarball option, would enumerate the contents
+    instead of passing ., thus not including the root node and also
+    avoiding the ./ prefix.
+
+  * `stages: add org.osbuild.nm.conn`: Add a new stage to configure
+    NetworkManager system connections. Currently only ethernet
+    connections are supported with a limited set of options.
+
+  * `stages/org.osbuild.fstab`: support device nodes and partlabel.
+    Add two new options to the fstab stage so that plain device nodes
+    and also `PARTLABEL`s are supported for the fs spec field.
+
+  * `util/rhsm`: Implement a fallback to the previous behaviour. This
+    is useful if `redhat.repo` is not present, due to `manage_repos=0`,
+    because it will pick up certificates with matching urls.
+
+  * `mounts`: Change the format how mounts are specified from dictionary
+    to arrays.
+
+  * osbuild will now validate whether the source references are properly
+    specified in the `sources` section of the manifest.
+
+  * `stages/org.osbuild.grub.iso`: New stage to configure grub in EFI
+    mode for the boot iso. This code used to be part of `bootiso.mono`
+    stage but is now split out.
+
+  * `stages/org.osbuild.isolinux`: New stage to configure the isolinux
+    bootloader. This code used to be part of the `bootiso.mono` stage
+    but is now split out.
+
+  * NB: **The `bootiso.mono` stage is now deprecated**.
+
+  * `assembler/org.osbuild.ostree.commit`: fix copying of links. A patch
+    in version 29 lead to the contents of links being copied not the
+    link itself. This broke OSTree upgrades.
+
+  * `stages/org.osbuild.kickstart`: add support for creating users and
+    groups. These new options will insert the corresponding commands
+    in the kickstart file embedded into the boot iso.
+
+  * objectstore: for the host object osbuild now uses recursive bind
+    mounts. Additionally, it only exposes `/usr` from the host.
+
+  * `stages/org.osbuild.mkdir`: new stage to create directories.
+
+  * `stages/org.osbuild.tar`: support for choosing the tar format.
+
+  * `stages/org.osbuild.xz`: new stage to compress files via `xz`.
+
+  * `stages/org.osbuild.authselect`: new stage to select system
+    identity and auth sources.
+
+  * `stages/org.osbuild.keymap`: add new option to the stage to
+    configure X11 keyboard.
+
+  * `stages/org.osuild.nginx.conf`: add new stage to configure the
+    `nginx` web server.
+
+  * `stages/org.osbuild.chmod`: add new stage that uses `chmod` to
+    change the mode for multiple files.
+
+  * buildroot: mount `/sys` as read-only inside the container. That
+    fixed a bug triggered by a scriptlet that would write to `/sys`.
+
+  * `stages/org.osbuild.chrony`: extend the stage to allow for more
+    configuration options.
+
+  * `stages/org.osbuild.cloud-init`: add new stage to configure the
+    `cloud-init` service.
+
+  * `stages/org.osbuild.dracut.conf`: add new stage for creating
+    dracut config files. The options are very similar to the ones
+    in the existing dracut stage.
+
+  * Various improvements to CI and testing.
+
+Contributions from: Achilleas Koutsou, Alexander Larsson, Alexander Todorov,
+                    Antonio Murdaca, Christian Kellner, Diaa Sami, Jakub Rusz,
+                    Javier Martinez Canillas, Martin Sehnoutka, Ondřej Budai,
+                    Paul Wayper, Tomas Hozza
+
+— Berlin, 2021-07-22
+
 ## CHANGES WITH 29:
 
 #### Host services
