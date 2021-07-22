@@ -21,7 +21,7 @@ fi
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
-if [[ $ID == centos ]]; then
+if [[ $ID == centos && ${VERSION_ID%.*} == 8 ]]; then
   MOCK_CONFIG="centos-stream-8-$(uname -m)"
 fi
 
@@ -61,11 +61,18 @@ if curl --silent --fail --head --output /dev/null "${REPO_URL}/repodata/repomd.x
 fi
 
 # Mock and s3cmd is only available in EPEL for RHEL.
-if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
+if [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 8 ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
     sudo rpm -Uvh /tmp/epel.rpm
+elif [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
+    # we have our own small epel for EL9, let's install it
+
+    # install Red Hat certificate, otherwise dnf copr fails
+    curl -LO --insecure https://hdn.corp.redhat.com/rhel8-csb/RPMS/noarch/redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm
+    sudo dnf install -y ./redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm dnf-plugins-core
+    sudo dnf copr enable -y copr.devel.redhat.com/osbuild-team/epel-el9 "rhel-9.dev-$ARCH"
 fi
 
 # Install requirements for building RPMs in mock.
@@ -89,6 +96,10 @@ if [[ $VERSION_ID == 8.5 ]]; then
     cat "$RHEL85_NIGHTLY_REPO" | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
     # We need triple quotes at the end of the template to mark the end of the repo list.
     echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
+elif [[ $VERSION_ID == 9.0 ]]; then
+    greenprint "📋 Inserting RHEL 9 mock template"
+    sudo cp schutzbot/rhel-9-mock-configs/templates/rhel-9.tpl /etc/mock/templates/
+    sudo cp schutzbot/rhel-9-mock-configs/*.cfg /etc/mock/
 fi
 
 # Compile RPMs in a mock chroot
