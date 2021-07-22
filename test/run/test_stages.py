@@ -8,6 +8,7 @@ import json
 import os
 import pprint
 import shutil
+import tarfile
 import tempfile
 import unittest
 from typing import Dict
@@ -250,6 +251,36 @@ class TestStages(test.TestBase):
                     for path, want in check["labels"].items():
                         have = selinux.getfilecon(f"{tree}/{path}")
                         self.assertEqual(have, want)
+
+            # cache the downloaded data for the files source
+            osb.copy_source_data(self.store, "org.osbuild.files")
+
+    def test_tar(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "tar")
+
+        with open(os.path.join(testdir, "tar.json"), "r") as f:
+            manifest = f.read()
+
+        with self.osbuild as osb:
+            treeid = osb.treeid_from_manifest(manifest)
+
+            osb.compile(manifest, checkpoints=["tree"])
+
+            ctx = osb.map_object(treeid)
+            with ctx as tree:
+                tp = os.path.join(tree, "tarfile.tar")
+                assert os.path.exists(tp)
+                assert tarfile.is_tarfile(tp)
+                tf = tarfile.open(tp)
+                names = tf.getnames()
+                assert "testfile" in names
+                assert "." not in names
+
+                # Check that we do not create entries with a `./` prefix
+                # since the `root-node` option is specified
+                dot_slash = list(filter(lambda x: x.startswith("./"), names))
+                assert not dot_slash
 
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")
