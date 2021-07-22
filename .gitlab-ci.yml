@@ -43,6 +43,8 @@ RPM:
       - RUNNER:
           - aws/rhel-8.5-x86_64
           - aws/rhel-8.5-aarch64
+          - aws/rhel-9.0-beta-nightly-x86_64
+          - aws/rhel-9.0-beta-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
 Testing:
