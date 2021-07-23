@@ -53,6 +53,10 @@ SCHEMA = """
                 "type": "string",
                 "description": "URL to download the file from."
               },
+              "proxy": {
+                "type": "string",
+                "description": "curl proxy URL to use when downloading the file."
+              },
               "secrets": {
                 "type": "object",
                 "additionalProperties": false,
@@ -85,12 +89,17 @@ SCHEMA = """
 """
 
 
+#pylint: disable=too-many-branches
 def fetch(url, checksum, directory):
     secrets = url.get("secrets")
     url_path = url.get("url")
+    proxy = url.get("proxy")
     # Download to a temporary directory until we have verified the checksum. Use a
     # subdirectory, so we avoid copying across block devices.
     with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=directory) as tmpdir:
+        # Inherit the environment
+        env = os.environ.copy()
+
         # some mirrors are sometimes broken. retry manually, because we could be
         # redirected to a different, working, one on retry.
         start_time = time.monotonic()
@@ -118,7 +127,11 @@ def fetch(url, checksum, directory):
             # url must follow options
             curl_command.append(url_path)
 
-            curl = subprocess.run(curl_command, encoding="utf-8", cwd=tmpdir, check=False)
+            if proxy:
+                # Use curl's ALL_PROXY
+                env["ALL_PROXY"] = proxy
+
+            curl = subprocess.run(curl_command, encoding="utf-8", cwd=tmpdir, check=False, env=env)
             return_code = curl.returncode
             if return_code == 0:
                 break
