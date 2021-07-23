@@ -8,9 +8,11 @@
   "pipeline": {
     "build": {
       "mpp-import-pipeline": {
-        "path": "f34-build.json"
+        "path": "fedora-build.mpp.json"
       },
-      "runner": "org.osbuild.fedora34"
+      "runner": {
+        "mpp-format-string": "org.osbuild.fedora{release}"
+      }
     },
     "stages": [
       {
@@ -28,8 +30,8 @@
           ],
           "mpp-depsolve": {
             "architecture": "$arch",
-            "module-platform-id": "f34",
-            "releasever": "f34",
+            "module-platform-id": "$releasever",
+            "releasever": "$releasever",
             "repos": [
               {
                 "id": "default",
