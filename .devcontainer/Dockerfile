@@ -7,10 +7,13 @@ RUN dnf install -y \
     git \
     glibc-langpack-en \
     hostname \
+    ipython3 \
     jq \
     libguestfs-tools libguestfs \
     libosinfo \
+    lsof \
     make \
+    packit \
     qemu-img \
     qemu-system-x86 \
     osbuild \
@@ -18,6 +21,7 @@ RUN dnf install -y \
     podman \
     pylint \
     python3-autopep8 \
+    python3-boto3 \
     python3-devel \
     python3-docutils \
     python3-enchant \
