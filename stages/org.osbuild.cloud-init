@@ -36,6 +36,7 @@ SCHEMA = r"""
     "additionalProperties": false,
     "type": "object",
     "description": "cloud-init configuration",
+    "minProperties": 1,
     "properties": {
       "system_info": {
         "additionalProperties": false,
