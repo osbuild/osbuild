@@ -1,0 +1,84 @@
+#!/usr/bin/python3
+"""
+Set LVM2 volume group metadata
+
+This stage allows you to modify the LVM2 volume group
+metadata. This data describes various properties about
+the volume group, physical volume and logical volumes.
+Most importantly it contains the volume group name, so
+this stage can be used to rename the volume group.
+"""
+
+
+import os
+import sys
+
+import osbuild.api
+import osbuild.util.lvm2 as lvm2
+
+SCHEMA_2 = r"""
+"devices": {
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["device"],
+  "properties": {
+    "device": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": true,
+  "required": ["vg_name"],
+  "properties": {
+    "creation_host": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "creation_time": {
+      "type": "string",
+      "pattern": "[0-9]+",
+      "description": "Creation time (uint64 represented as string)"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "vg_name": {
+      "type": "string",
+      "pattern": "[a-zA-Z09+_.][a-zA-Z0-9+_.-]*"
+    }
+  }
+}
+"""
+
+
+def main(devices, options):
+    device = devices["device"]
+    path = os.path.join("/dev", device["path"])
+
+    vg_name = options["vg_name"]
+    creation_host = options.get("creation_host")
+    creation_time = options.get("creation_time")
+    description = options.get("description")
+
+    with lvm2.Disk.open(path) as disk:
+        disk.rename_vg(vg_name)
+
+        if creation_host:
+            disk.set_creation_host(creation_host)
+        if creation_time is not None:
+            ct = int(creation_time)
+            disk.set_creation_time(ct)
+        if description:
+            disk.set_description(description)
+
+        disk.flush_metadata()
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    ret = main(args["devices"], args["options"])
+    sys.exit(ret)
