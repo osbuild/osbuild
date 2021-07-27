@@ -1,0 +1,18 @@
+{
+  "added_files": [
+    "/etc",
+    "/etc/NetworkManager",
+    "/etc/NetworkManager/NetworkManager.conf",
+    "/etc/NetworkManager/conf.d",
+    "/etc/NetworkManager/conf.d/99-unmanaged-devices.conf"
+  ],
+  "deleted_files": [],
+  "differences": {
+    "/": {
+      "mode": [
+        16832,
+        16877
+      ]
+    }
+  }
+}
