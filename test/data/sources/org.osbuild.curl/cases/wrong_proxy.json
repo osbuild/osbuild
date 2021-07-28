@@ -1,0 +1,11 @@
+{
+  "expects": "error",
+  "org.osbuild.curl": {
+    "items": {
+      "sha256:87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7": {
+        "url": "http://localhost/sources/org.osbuild.curl/data/a",
+        "proxy": "http://localhost:8888"
+      }
+    }
+  }
+}
