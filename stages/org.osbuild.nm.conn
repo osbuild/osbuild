@@ -4,7 +4,9 @@ Configure Network Manager Connections
 
 This stage allows to create system connections for network manager.
 Currently the connections are created in directory for shipped
-system connections; `/usr/lib/NetworkManager/system-connections`.
+system connections, `/usr/lib/NetworkManager/system-connections`,
+if `filename` is used. Otherwise, `path` can be used to create
+connections in any directory with any suffix.
 
 Currently only configuring "ethernet" connections is supported,
 and here only a subset of the available options. See the schema
@@ -145,17 +147,33 @@ SCHEMA = r"""
     }
   }
 },
-"additionalProperties": false,
-"required": ["filename", "settings"],
-"properties": {
-  "filename": {
-    "type": "string",
-    "pattern": "^[\\w.-]{1,255}$"
+"oneOf": [
+  {
+    "additionalProperties": false,
+    "required": ["filename", "settings"],
+    "properties": {
+      "filename": {
+        "type": "string",
+        "pattern": "^[\\w.-]{1,242}.nmconnection$"
+      },
+      "settings": {
+        "oneOf": [{"$ref": "#/definitions/ethernet"}]
+      }
+    }
   },
-  "settings": {
-    "oneOf": [{"$ref": "#/definitions/ethernet"}]
+  {
+    "additionalProperties": false,
+    "required": ["path", "settings"],
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "settings": {
+        "oneOf": [{"$ref": "#/definitions/ethernet"}]
+      }
+    }
   }
-}
+]
 """
 
 
@@ -163,10 +181,15 @@ USR_PATH = "usr/lib/NetworkManager/system-connections"
 
 
 def main(tree, options):
-    filename = options["filename"]
     settings = options["settings"]
+    cfgfile = options.get("path")
 
-    cfgdir = os.path.join(tree, USR_PATH)
+    if not cfgfile:
+        filename = options["filename"]
+        cfgfile = os.path.join(USR_PATH, filename)
+
+    cfgfile = os.path.join(tree, cfgfile.lstrip("/"))
+    cfgdir = os.path.dirname(cfgfile)
     os.makedirs(cfgdir, exist_ok=True)
 
     config = configparser.ConfigParser()
@@ -187,7 +210,7 @@ def main(tree, options):
                 val = str(value)
             config.set(name, option, val)
 
-    with open(os.path.join(cfgdir, filename), "w") as f:
+    with open(cfgfile, "w") as f:
         # need restrictive permissions
         os.fchmod(f.fileno(), 0o600)
         config.write(f, space_around_delimiters=False)
