@@ -11,6 +11,8 @@ import socketserver
 import subprocess
 import tempfile
 import threading
+from urllib.error import HTTPError
+from urllib.request import urlopen
 
 import pytest
 
@@ -53,10 +55,18 @@ def fileServer(directory):
     with netns():
         # This is leaked until the program exits, but inaccessible after the with
         # due to the network namespace.
-        barrier = threading.Barrier(2)
+        barrier = threading.Barrier(3)
+
+        # Start the file server on directory
         thread = threading.Thread(target=runFileServer, args=(barrier, directory))
         thread.daemon = True
         thread.start()
+
+        # Start the proxy server
+        thread = threading.Thread(target=runProxyServer, args=(barrier,))
+        thread.daemon = True
+        thread.start()
+
         barrier.wait()
         yield
 
@@ -75,6 +85,27 @@ def runFileServer(barrier, directory):
             super().__init__(request, client_address, server, directory=directory)
 
     httpd = socketserver.TCPServer(('', 80), Handler)
+    barrier.wait()
+    httpd.serve_forever()
+
+
+# Forward received requests to the url passed in GET
+def runProxyServer(barrier):
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            try:
+                with urlopen(self.path) as url:
+                    self.send_response(200)
+                    self.end_headers()
+                    self.copyfile(url, self.wfile)
+            except HTTPError as e:
+                self.send_response(e.code, e.reason)
+                self.end_headers()
+            except Exception:  # pylint: disable=broad-except
+                self.send_response(500)
+                self.end_headers()
+
+    httpd = socketserver.TCPServer(('', 3128), Handler)
     barrier.wait()
     httpd.serve_forever()
 
