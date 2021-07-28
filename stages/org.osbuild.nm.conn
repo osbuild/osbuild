@@ -188,6 +188,8 @@ def main(tree, options):
             config.set(name, option, val)
 
     with open(os.path.join(cfgdir, filename), "w") as f:
+        # need restrictive permissions
+        os.fchmod(f.fileno(), 0o600)
         config.write(f, space_around_delimiters=False)
 
     return 0
