@@ -392,7 +392,9 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
     result = schema.validate(manifest)
 
     def validate_module(mod, klass, path):
-        name = mod["type"]
+        name = mod.get("type")
+        if not name:
+            return
         schema = index.get_schema(klass, name, version="2")
         res = schema.validate(mod)
         result.merge(res, path=path)
