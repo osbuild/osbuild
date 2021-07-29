@@ -1035,7 +1035,7 @@
           }
         },
         {
-          "type": "org.osbuild.mkfs.xfs",
+          "type": "org.osbuild.lvm2.create",
           "devices": {
             "device": {
               "type": "org.osbuild.loopback",
@@ -1043,6 +1043,34 @@
                 "filename": "disk.img",
                 "start": 413696,
                 "size": 20557791
+              }
+            }
+          },
+          "options": {
+            "volumes": [
+              {
+                "name": "root",
+                "size": "100%FREE"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.mkfs.xfs",
+          "devices": {
+            "lvm": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 413696,
+                "size": 20557791
+              }
+            },
+            "device": {
+              "type": "org.osbuild.lvm2.lv",
+              "parent": "lvm",
+              "options": {
+                "volume": "root"
               }
             }
           },
@@ -1087,12 +1115,19 @@
                 "size": 204800
               }
             },
-            "root": {
+            "lvm": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
                 "start": 413696,
                 "size": 20557791
+              }
+            },
+            "root": {
+              "type": "org.osbuild.lvm2.lv",
+              "parent": "lvm",
+              "options": {
+                "volume": "root"
               }
             }
           },
@@ -1134,6 +1169,25 @@
               "number": 2,
               "path": "/grub2"
             }
+          }
+        },
+        {
+          "type": "org.osbuild.lvm2.metadata",
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 413696,
+                "size": 20557791,
+                "lock": true
+              }
+            }
+          },
+          "options": {
+            "vg_name": "osbuild",
+            "creation_host": "osbuild",
+            "description": "Built with osbuild"
           }
         }
       ]

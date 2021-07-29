@@ -27,7 +27,7 @@
           "uuid": "61B2905B-DF3E-4FB3-80FA-49D1E773AA32"
         },
         {
-          "id": "root",
+          "id": "lvm",
           "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
           "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
         }
@@ -457,18 +457,50 @@
           }
         },
         {
-          "type": "org.osbuild.mkfs.xfs",
+          "type": "org.osbuild.lvm2.create",
           "devices": {
             "device": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
                 "start": {
-                  "mpp-format-int": "{image.layout['root'].start}"
+                  "mpp-format-int": "{image.layout['lvm'].start}"
                 },
                 "size": {
-                  "mpp-format-int": "{image.layout['root'].size}"
+                  "mpp-format-int": "{image.layout['lvm'].size}"
                 }
+              }
+            }
+          },
+          "options": {
+            "volumes": [
+              {
+                "name": "root",
+                "size": "100%FREE"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.mkfs.xfs",
+          "devices": {
+            "lvm": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": {
+                  "mpp-format-int": "{image.layout['lvm'].start}"
+                },
+                "size": {
+                  "mpp-format-int": "{image.layout['lvm'].size}"
+                }
+              }
+            },
+            "device": {
+              "type": "org.osbuild.lvm2.lv",
+              "parent": "lvm",
+              "options": {
+                "volume": "root"
               }
             }
           },
@@ -521,16 +553,23 @@
                 }
               }
             },
-            "root": {
+            "lvm": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
                 "start": {
-                  "mpp-format-int": "{image.layout['root'].start}"
+                  "mpp-format-int": "{image.layout['lvm'].start}"
                 },
                 "size": {
-                  "mpp-format-int": "{image.layout['root'].size}"
+                  "mpp-format-int": "{image.layout['lvm'].size}"
                 }
+              }
+            },
+            "root": {
+              "type": "org.osbuild.lvm2.lv",
+              "parent": "lvm",
+              "options": {
+                "volume": "root"
               }
             }
           },
@@ -578,6 +617,29 @@
               },
               "path": "/grub2"
             }
+          }
+        },
+        {
+          "type": "org.osbuild.lvm2.metadata",
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": {
+                  "mpp-format-int": "{image.layout['lvm'].start}"
+                },
+                "size": {
+                  "mpp-format-int": "{image.layout['lvm'].size}"
+                },
+                "lock": true
+              }
+            }
+          },
+          "options": {
+            "vg_name": "osbuild",
+            "creation_host": "osbuild",
+            "description": "Built with osbuild"
           }
         }
       ]
