@@ -21,6 +21,7 @@
                 "sha256:96b69aefaddfebbac3f9b6361b01cc71196e604a56fd9a6236317e63fb68664a": {},
                 "sha256:9a698a5991a08e23e87b4bce2f3e447eafdc7fd4d84a49d91c65c6045ead1e8e": {},
                 "sha256:bc66918c24175415a0f65803bccbb3d796d733acd319577a2417371a178ce193": {},
+                "sha256:d23395e2614654c4cb717ec29cba2e61beec36bf815e74729ada20be41633caa": {},
                 "sha256:775b1498ba72e9d05a1c131fdbc2f4aabb8fd00d9c7c13ab996154e99660f92b": {},
                 "sha256:29cf7e97d6476fcfe80088a4c9cbc113d9b73e37dc9ec34967a958cef2d04e0c": {},
                 "sha256:9bff70d51ecec129854ef62d82204db3e01706c444b966cb048bc7fd8ec8b524": {},
@@ -37,7 +38,10 @@
                 "sha256:b2ffc9785842ccc76ca187d8b922fb3b91da2257341fb115ed6bdbfedb24c1eb": {},
                 "sha256:f8b418b88b30d28c911d26f6f0b9c1ede8be00fa71d28c789328dfd7c58eea67": {},
                 "sha256:5fb88eb681e996ab2199251a68c79b2797fa03d31a36dae698de393b85e1f89e": {},
+                "sha256:a657bd57bcdee99766d2076ec3b751f96670794c3dc10e20b94f917be4018281": {},
+                "sha256:7f1001c3e61932f826b3c7f87bf20efe79cd9a797f3598613c10cd1e6a49961c": {},
                 "sha256:f5f5c988604aa5c870eee7efff6d40f26acb908cf82991d762ade18c8b46aff6": {},
+                "sha256:2ad21916943c245819c1586f2841673c35f73c38bc0bbfa24e7c4f3892d73d28": {},
                 "sha256:c58752e2529cf0ea4aabb0476ef53ca7748091aa936513affc1245928ae5b1b8": {},
                 "sha256:be09e345d175a5dd6535a69db12429072ddc453874792b75446370fc4eb196a1": {},
                 "sha256:d8aa8d1e0db5f32658af8c236f06853421e4bd4618f86c9e05e121b9b805b0dc": {},
@@ -195,6 +199,8 @@
                 "sha256:5ed9093c6368733f9aecfe56b029246929047c1de33ca035fbcd0c210bae4051": {},
                 "sha256:b14d332c9d9fd66afeb9c3064db3955b7667f4cf3e85d7f76439eeba63fff488": {},
                 "sha256:1a2aaf60c22453df0c306a5618aca20a2ce19090525445037a667f468b8ceaab": {},
+                "sha256:6b215bdf0227e676436a3056969d68acbd329ee3fcccb46873fee31d6f1bafe8": {},
+                "sha256:b4c0a61643aa825845887cf39f780fa2862f629f980c095704c059b5418dba20": {},
                 "sha256:da676955f475492f17c573bc526d47c37e34919d2a6ed33ec4573a4de0cab2a7": {},
                 "sha256:ba2916d48b3a28e9bc2c9fbde19770c204b6ad4cdc94471c3c6bdbfbe8669461": {},
                 "sha256:0214ae16ef6a92843a4973aeda93db85584ad7840b1dd6e225bc57b594f58961": {},
@@ -321,6 +327,16 @@
             ],
             "exclude": {
               "docs": true
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.selinux",
+          "options": {
+            "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts",
+            "labels": {
+              "/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
+              "/usr/bin/tar": "system_u:object_r:install_exec_t:s0"
             }
           }
         }
@@ -540,6 +556,7 @@
         "sha256:96b69aefaddfebbac3f9b6361b01cc71196e604a56fd9a6236317e63fb68664a": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/b/bubblewrap-0.4.1-3.fc34.x86_64.rpm",
         "sha256:9a698a5991a08e23e87b4bce2f3e447eafdc7fd4d84a49d91c65c6045ead1e8e": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/b/bzip2-libs-1.0.8-6.fc34.x86_64.rpm",
         "sha256:bc66918c24175415a0f65803bccbb3d796d733acd319577a2417371a178ce193": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/c/ca-certificates-2020.2.41-7.fc34.noarch.rpm",
+        "sha256:d23395e2614654c4cb717ec29cba2e61beec36bf815e74729ada20be41633caa": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/c/compat-readline5-5.2-39.fc34.x86_64.rpm",
         "sha256:775b1498ba72e9d05a1c131fdbc2f4aabb8fd00d9c7c13ab996154e99660f92b": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/c/coreutils-8.32-21.fc34.x86_64.rpm",
         "sha256:29cf7e97d6476fcfe80088a4c9cbc113d9b73e37dc9ec34967a958cef2d04e0c": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/c/coreutils-common-8.32-21.fc34.x86_64.rpm",
         "sha256:9bff70d51ecec129854ef62d82204db3e01706c444b966cb048bc7fd8ec8b524": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/c/cpio-2.13-10.fc34.x86_64.rpm",
@@ -556,7 +573,10 @@
         "sha256:b2ffc9785842ccc76ca187d8b922fb3b91da2257341fb115ed6bdbfedb24c1eb": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/dbus-libs-1.12.20-3.fc34.x86_64.rpm",
         "sha256:f8b418b88b30d28c911d26f6f0b9c1ede8be00fa71d28c789328dfd7c58eea67": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/deltarpm-3.6.2-8.fc34.x86_64.rpm",
         "sha256:5fb88eb681e996ab2199251a68c79b2797fa03d31a36dae698de393b85e1f89e": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/device-mapper-1.02.175-1.fc34.x86_64.rpm",
+        "sha256:a657bd57bcdee99766d2076ec3b751f96670794c3dc10e20b94f917be4018281": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/device-mapper-event-1.02.175-1.fc34.x86_64.rpm",
+        "sha256:7f1001c3e61932f826b3c7f87bf20efe79cd9a797f3598613c10cd1e6a49961c": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/device-mapper-event-libs-1.02.175-1.fc34.x86_64.rpm",
         "sha256:f5f5c988604aa5c870eee7efff6d40f26acb908cf82991d762ade18c8b46aff6": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/device-mapper-libs-1.02.175-1.fc34.x86_64.rpm",
+        "sha256:2ad21916943c245819c1586f2841673c35f73c38bc0bbfa24e7c4f3892d73d28": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/device-mapper-persistent-data-0.9.0-3.fc34.x86_64.rpm",
         "sha256:c58752e2529cf0ea4aabb0476ef53ca7748091aa936513affc1245928ae5b1b8": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/diffutils-3.7-8.fc34.x86_64.rpm",
         "sha256:be09e345d175a5dd6535a69db12429072ddc453874792b75446370fc4eb196a1": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/dnf-4.6.1-1.fc34.noarch.rpm",
         "sha256:d8aa8d1e0db5f32658af8c236f06853421e4bd4618f86c9e05e121b9b805b0dc": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/dnf-data-4.6.1-1.fc34.noarch.rpm",
@@ -721,6 +741,8 @@
         "sha256:5ed9093c6368733f9aecfe56b029246929047c1de33ca035fbcd0c210bae4051": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/l/lorax-34.9-5.fc34.x86_64.rpm",
         "sha256:b14d332c9d9fd66afeb9c3064db3955b7667f4cf3e85d7f76439eeba63fff488": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/l/lorax-templates-generic-34.9-5.fc34.x86_64.rpm",
         "sha256:1a2aaf60c22453df0c306a5618aca20a2ce19090525445037a667f468b8ceaab": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/l/lua-libs-5.4.2-2.fc34.x86_64.rpm",
+        "sha256:6b215bdf0227e676436a3056969d68acbd329ee3fcccb46873fee31d6f1bafe8": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/l/lvm2-2.03.11-1.fc34.x86_64.rpm",
+        "sha256:b4c0a61643aa825845887cf39f780fa2862f629f980c095704c059b5418dba20": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/l/lvm2-libs-2.03.11-1.fc34.x86_64.rpm",
         "sha256:da676955f475492f17c573bc526d47c37e34919d2a6ed33ec4573a4de0cab2a7": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/l/lz4-libs-1.9.3-2.fc34.x86_64.rpm",
         "sha256:ba2916d48b3a28e9bc2c9fbde19770c204b6ad4cdc94471c3c6bdbfbe8669461": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/l/lzo-2.10-4.fc34.x86_64.rpm",
         "sha256:0214ae16ef6a92843a4973aeda93db85584ad7840b1dd6e225bc57b594f58961": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/m/memstrack-0.2.2-1.fc34.x86_64.rpm",
