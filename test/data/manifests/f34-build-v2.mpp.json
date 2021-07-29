@@ -33,7 +33,7 @@
                   "tar",
                   "xfsprogs",
                   "xz",
-
+                  "lvm2",
                   "selinux-policy-targeted",
                   "genisoimage",
                   "isomd5sum",
