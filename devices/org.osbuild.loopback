@@ -60,8 +60,6 @@ class LoopbackService(devices.DeviceService):
         self.ctl = loop.LoopControl()
 
     def make_loop(self, fd: int, offset, sizelimit):
-        lo = loop.Loop(self.ctl.get_unbound())
-
         if not sizelimit:
             stat = os.fstat(fd)
             sizelimit = stat.st_size - offset
@@ -69,6 +67,10 @@ class LoopbackService(devices.DeviceService):
             sizelimit *= self.sector_size
 
         while True:
+            # Getting an unbound loopback device and attaching a backing
+            # file descriptor to it is racy, so we must use a retry loop
+            lo = loop.Loop(self.ctl.get_unbound())
+
             try:
                 lo.set_fd(fd)
             except OSError as e:
