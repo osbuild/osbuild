@@ -1,5 +1,6 @@
 import contextlib
 import ctypes
+import errno
 import fcntl
 import os
 import stat
@@ -383,3 +384,43 @@ class LoopControl:
 
         self._check_open()
         return fcntl.ioctl(self.fd, self.LOOP_CTL_GET_FREE)
+
+    def loop_for_fd(self, fd: int, **kwargs):
+        """
+        Get or create an unbound loopback device and bind it to an fd
+
+        Getting an unbound loopback device, attaching a backing file
+        descriptor and setting the loop device status is racy so this
+        method will retry until it succeeds or it fails to get an
+        unbound loop device.
+
+        All given keyword arguments are forwarded to `Loop.set_status`.
+        """
+
+        self._check_open()
+
+        if fd < 0:
+            raise ValueError(f"Invalid file descriptor '{fd}'")
+
+        while True:
+            lo = Loop(self.get_unbound())
+
+            try:
+                lo.set_fd(fd)
+            except OSError as e:
+                lo.close()
+                if e.errno == errno.EBUSY:
+                    continue
+                raise e
+
+            # `set_status` returns EBUSY when the pages from the
+            # previously bound file have not been fully cleared yet.
+            try:
+                lo.set_status(**kwargs)
+            except BlockingIOError:
+                lo.clear_fd()
+                lo.close()
+                continue
+            break
+
+        return lo
