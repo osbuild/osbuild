@@ -82,6 +82,7 @@ class LoopServer(api.BaseAPI):
     def _cleanup(self):
         for lo in self.devs:
             lo.close()
+        self.ctl.close()
 
 
 class LoopClient:
