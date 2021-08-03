@@ -127,6 +127,10 @@ class LoopbackService(devices.DeviceService):
         return res
 
     def close(self):
+        # Calling `close` is valid on closed
+        # `LoopControl` and `Loop` objects
+        self.ctl.close()
+
         if self.lo:
             self.lo.close()
             self.lo = None
