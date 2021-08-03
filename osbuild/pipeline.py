@@ -344,11 +344,12 @@ class Manifest:
         self.sources.append(source)
         return source
 
-    def build(self, store, monitor, libdir, output_directory):
-        results = {"success": True}
-
+    def download(self, store, libdir):
         for source in self.sources:
             source.download(store, libdir)
+
+    def build(self, store, monitor, libdir, output_directory):
+        results = {"success": True}
 
         for pl in self.pipelines.values():
             res = pl.run(store, monitor, libdir, output_directory)
