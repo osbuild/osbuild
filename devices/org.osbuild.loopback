@@ -66,29 +66,10 @@ class LoopbackService(devices.DeviceService):
         else:
             sizelimit *= self.sector_size
 
-        while True:
-            # Getting an unbound loopback device and attaching a backing
-            # file descriptor to it is racy, so we must use a retry loop
-            lo = loop.Loop(self.ctl.get_unbound())
-
-            try:
-                lo.set_fd(fd)
-            except OSError as e:
-                lo.close()
-                if e.errno == errno.EBUSY:
-                    continue
-                raise e
-            # `set_status` returns EBUSY when the pages from the previously
-            # bound file have not been fully cleared yet.
-            try:
-                lo.set_status(offset=offset,
-                              sizelimit=sizelimit,
-                              autoclear=True)
-            except BlockingIOError:
-                lo.clear_fd()
-                lo.close()
-                continue
-            break
+        lo = self.ctl.loop_for_fd(fd,
+                                  offset=offset,
+                                  sizelimit=sizelimit,
+                                  autoclear=True)
 
         return lo
 
