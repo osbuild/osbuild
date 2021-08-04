@@ -87,10 +87,6 @@ SCHEMA = """
 
 
 def fetch(url, checksum, directory):
-    # Invariant: all files in @directory must be named after their (verified) checksum.
-    if os.path.isfile(f"{directory}/{checksum}"):
-        return
-
     secrets = url.get("secrets")
     url_path = url.get("url")
     # Download to a temporary directory until we have verified the checksum. Use a
@@ -145,9 +141,15 @@ def fetch(url, checksum, directory):
 def download(items, cache):
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         requested_urls = []
+        requested_checksums = []
         subscriptions = None
 
-        for url in items.values():
+        for (checksum, url) in items.items():
+
+            # Invariant: all files in @directory must be named after their (verified) checksum.
+            # Check this before secrets so that if everything is pre-downloaded we don't need secrets
+            if os.path.isfile(f"{cache}/{checksum}"):
+                continue
 
             if not isinstance(url, dict):
                 url = {"url": url}
@@ -164,8 +166,9 @@ def download(items, cache):
                     return 1
 
             requested_urls.append(url)
+            requested_checksums.append(checksum)
 
-        results = executor.map(fetch, requested_urls, items.keys(), itertools.repeat(cache))
+        results = executor.map(fetch, requested_urls, requested_checksums, itertools.repeat(cache))
 
         try:
             for _ in results:
