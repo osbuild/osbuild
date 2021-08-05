@@ -99,7 +99,7 @@ SCHEMA = r"""
   }
 },
 "additionalProperties": false,
-"required": ["filename", "platform", "core", "prefix"],
+"required": ["filename", "platform", "location", "core", "prefix"],
 "properties": {
   "filename": {
     "type": "string",
