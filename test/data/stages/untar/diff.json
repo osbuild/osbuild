@@ -1,0 +1,18 @@
+{
+  "added_files": [
+    "/hello",
+    "/hello/world.txt",
+    "/test",
+    "/test/hello",
+    "/test/hello/world.txt"
+  ],
+  "deleted_files": [],
+  "differences": {
+    "/": {
+      "mode": [
+        16832,
+        16877
+      ]
+    }
+  }
+}
