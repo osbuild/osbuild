@@ -146,7 +146,7 @@ def main(tree, options):
             elif label:
                 fs_spec = f"LABEL={label}"
             elif partlabel:
-                fs_spec = f"PARTLABEL={label}"
+                fs_spec = f"PARTLABEL={partlabel}"
             elif device:
                 fs_spec = device
             else:
