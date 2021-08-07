@@ -208,8 +208,7 @@ class Loop:
             unchanged (default is None)
         """
 
-        info = LoopInfo()
-        fcntl.ioctl(self.fd, self.LOOP_GET_STATUS64, info)
+        info = self.get_status()
         if offset:
             info.lo_offset = offset
         if sizelimit:
@@ -225,6 +224,17 @@ class Loop:
             else:
                 info.lo_flags &= ~self.LO_FLAGS_PARTSCAN
         fcntl.ioctl(self.fd, self.LOOP_SET_STATUS64, info)
+
+    def get_status(self) -> LoopInfo:
+        """Get properties of the loopback device
+
+        Return a `LoopInfo` structure with the information of this
+        loopback device. See loop(4) for more information.
+        """
+
+        info = LoopInfo()
+        fcntl.ioctl(self.fd, self.LOOP_GET_STATUS64, info)
+        return info
 
     def set_direct_io(self, dio=True):
         """Set the direct-IO property on the loopback device
