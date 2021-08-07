@@ -80,5 +80,8 @@ class DeviceService(host.Service):
         if method == "open":
             r = self.open(args["dev"], args["tree"], args["options"])
             return r, None
+        if method == "close":
+            r = self.close()
+            return r, None
 
         raise host.ProtocolError("Unknown method")
