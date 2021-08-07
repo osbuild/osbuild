@@ -4,8 +4,6 @@
 
 import contextlib
 import os
-
-
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -39,8 +37,14 @@ def test_basic(tempdir):
         f.flush()
         lo = ctl.loop_for_fd(f.fileno())
 
+        sb = os.fstat(f.fileno())
+
         assert lo
         assert lo.devname
+
+        info = lo.get_status()
+        assert info.lo_inode == sb.st_ino
+        assert info.lo_number == lo.minor
 
     finally:
         if lo:
