@@ -4,6 +4,7 @@ import errno
 import fcntl
 import os
 import stat
+import time
 
 
 __all__ = [
@@ -159,6 +160,61 @@ class Loop:
         """
 
         fcntl.ioctl(self.fd, self.LOOP_CLR_FD)
+
+    def clear_fd_wait(self, fd: int, timeout: float, wait: float = 0.1) -> None:
+        """Wait until the file descriptor is cleared
+
+        When clearing the file descriptor of the loopback device the
+        kernel will check if the loop device has a reference count
+        greater then one(!), i.e. if another fd besied the one trying
+        to clear the loopback device is open. If so it will only set
+        the `LO_FLAGS_AUTOCLEAR` flag and wait until the the device
+        is released. This means we cannot be sure the loopback device
+        is actually cleared.
+        To alleviated this situation we wait until the the loop is not
+        bound anymore or not bound to `fd` anymore (in case someone
+        else bound it between checks).
+
+        Raises a `TimeoutError` if the file descriptor when `timeout`
+        is reached.
+
+        Parameters
+        ----------
+        fd : int
+            the file descriptor to wait for
+        timeout : float
+            the maximum time to wait in seconds
+        wait : float
+            the time to wait between each check in seconds
+        """
+
+        file_info = os.fstat(fd)
+        endtime = time.monotonic() + timeout
+
+        # wait until the loop device is unbound, which means calling
+        # `get_status` will fail with `ENXIO` or if someone raced us
+        # and bound the loop device again, it is not backed by "our"
+        # file descriptor specified via `fd` anymore
+        while True:
+
+            try:
+                self.clear_fd()
+                loop_info = self.get_status()
+
+            except OSError as err:
+
+                # check if the loop is still bound
+                if err.errno == errno.ENXIO:
+                    return
+
+            # check if it is backed by the fd
+            if not loop_info.is_bound_to(file_info):
+                return
+
+            if time.monotonic() > endtime:
+                raise TimeoutError("waiting for loop device timed out")
+
+            time.sleep(wait)
 
     def change_fd(self, fd):
         """Replace the bound filedescriptor
