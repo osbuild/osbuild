@@ -35,7 +35,7 @@ def test_basic(tempdir):
         f = open(path, "wb+")
         f.truncate(1024)
         f.flush()
-        lo = ctl.loop_for_fd(f.fileno())
+        lo = ctl.loop_for_fd(f.fileno(), autoclear=True)
 
         sb = os.fstat(f.fileno())
 
@@ -45,6 +45,13 @@ def test_basic(tempdir):
         info = lo.get_status()
         assert info.lo_inode == sb.st_ino
         assert info.lo_number == lo.minor
+
+        # check for autoclear flags setting and helpers
+        assert info.autoclear
+
+        lo.set_status(autoclear=False)
+        info = lo.get_status()
+        assert not info.autoclear
 
     finally:
         if lo:
