@@ -69,6 +69,7 @@ class LoopbackService(devices.DeviceService):
         lo = self.ctl.loop_for_fd(fd,
                                   offset=offset,
                                   sizelimit=sizelimit,
+                                  partscan=False,
                                   autoclear=True)
 
         return lo
