@@ -38,6 +38,11 @@ class LoopInfo(ctypes.Structure):
         ('lo_init', ctypes.c_uint64 * 2)
     ]
 
+    @property
+    def autoclear(self) -> bool:
+        """Return if `LO_FLAGS_AUTOCLEAR` is set in `lo_flags`"""
+        return bool(self.lo_flags & Loop.LO_FLAGS_AUTOCLEAR)
+
 
 class Loop:
     """Loopback device
