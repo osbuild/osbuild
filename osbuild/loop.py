@@ -317,9 +317,12 @@ class LoopControl:
             or None to use /dev (default is None)
         """
 
-        if not dir_fd:
-            dir_fd = os.open("/dev", os.O_DIRECTORY)
-        self.fd = os.open("loop-control", os.O_RDWR, dir_fd=dir_fd)
+        with contextlib.ExitStack() as stack:
+            if not dir_fd:
+                dir_fd = os.open("/dev", os.O_DIRECTORY)
+                stack.callback(lambda: os.close(dir_fd))
+
+            self.fd = os.open("loop-control", os.O_RDWR, dir_fd=dir_fd)
 
     def __del__(self):
         self.close()
