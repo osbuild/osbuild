@@ -13,3 +13,5 @@ __pycache__
 cov-analysis-linux64/
 cov-analysis-osbuild.xz
 cov-int/
+
+**/.DS_Store
