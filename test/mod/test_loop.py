@@ -4,7 +4,7 @@
 
 import contextlib
 import os
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, TemporaryFile
 
 import pytest
 
@@ -45,6 +45,16 @@ def test_basic(tempdir):
         info = lo.get_status()
         assert info.lo_inode == sb.st_ino
         assert info.lo_number == lo.minor
+
+        # check for `LoopInfo.is_bound_to` helper
+        assert info.is_bound_to(sb)
+
+        with TemporaryFile(dir=tempdir) as t:
+            t.write(b"")
+            t.flush()
+
+            st = os.fstat(t.fileno())
+            assert not info.is_bound_to(st)
 
         # check for autoclear flags setting and helpers
         assert info.autoclear

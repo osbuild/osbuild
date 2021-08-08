@@ -43,6 +43,11 @@ class LoopInfo(ctypes.Structure):
         """Return if `LO_FLAGS_AUTOCLEAR` is set in `lo_flags`"""
         return bool(self.lo_flags & Loop.LO_FLAGS_AUTOCLEAR)
 
+    def is_bound_to(self, info: os.stat_result) -> bool:
+        """Return if the loop device is bound to the file `info`"""
+        return (self.lo_device == info.st_dev and
+                self.lo_inode == info.st_ino)
+
 
 class Loop:
     """Loopback device
