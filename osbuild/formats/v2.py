@@ -175,14 +175,64 @@ def resolve_ref(name: str, manifest: Manifest) -> str:
     return target.id
 
 
+def sort_devices(devices: Dict) -> Dict:
+    """Sort the devices so that dependencies are in the correct order
+
+    We need to ensure that parents are sorted before the devices that
+    depend on them. For this we keep a list of devices that need to
+    be processed and iterate over that list as long as it has devices
+    in them and we make progress, i.e. the length changes.
+    """
+    result = {}
+    todo = list(devices.keys())
+
+    while todo:
+        before = len(todo)
+
+        for i, name in enumerate(todo):
+            desc = devices[name]
+
+            parent = desc.get("parent")
+            if parent and not parent in result:
+                # if the parent is not in the `result` list, it must
+                # be in `todo`; otherwise it is missing
+                if parent not in todo:
+                    msg = f"Missing parent device '{parent}' for '{name}'"
+                    raise ValueError(msg)
+
+                continue
+
+            # no parent, or parent already present, ok to add to the
+            # result and "remove" from the todo list, by setting the
+            # contents to `None`.
+            result[name] = desc
+            todo[i] = None
+
+        todo = list(filter(bool, todo))
+        if len(todo) == before:
+            # we made no progress, which means that all devices in todo
+            # depend on other devices in todo, hence we have a cycle
+            raise ValueError("Cycle detected in 'devices'")
+
+    return result
+
+
 def load_device(name: str, description: Dict, index: Index, stage: Stage):
     device_type = description["type"]
     options = description.get("options", {})
+    parent = description.get("parent")
+
+    if parent:
+        device = stage.devices.get(parent)
+        if not parent:
+            raise ValueError(f"Unknown parent device: {parent}")
+        parent = device
 
     info = index.get_module_info("Device", device_type)
+
     if not info:
         raise TypeError(f"Missing meta information for {device_type}")
-    stage.add_device(name, info, options)
+    stage.add_device(name, info, parent, options)
 
 
 def load_input(name: str, description: Dict, index: Index, stage: Stage, manifest: Manifest, source_refs: set):
@@ -244,6 +294,8 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
     stage = pipeline.add_stage(info, opts)
 
     devs = description.get("devices", {})
+    devs = sort_devices(devs)
+
     for name, desc in devs.items():
         load_device(name, desc, index, stage)
 

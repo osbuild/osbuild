@@ -69,8 +69,8 @@ class Stage:
         self.inputs[name] = ip
         return ip
 
-    def add_device(self, name, info, options):
-        dev = Device(name, info, options)
+    def add_device(self, name, info, parent, options):
+        dev = Device(name, info, parent, options)
         self.devices[name] = dev
         return dev
 
@@ -161,7 +161,10 @@ class Stage:
                 inputs[key] = data
 
             for key, dev in self.devices.items():
-                reply = dev.open(mgr, build_root.dev, tree)
+                parent = None
+                if dev.parent:
+                    parent = devices[dev.parent.name]["path"]
+                reply = dev.open(mgr, build_root.dev, parent, tree)
                 devices[key] = reply
 
             for key, mount in self.mounts.items():

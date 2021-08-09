@@ -45,10 +45,10 @@ def test_loopback_basic(tmpdir):
         "size": size // 512  # size is in sectors / blocks
     }
 
-    dev = devices.Device("loop", info, options)
+    dev = devices.Device("loop", info, None, options)
 
     with host.ServiceManager() as mgr:
-        reply = dev.open(mgr, devpath, tree)
+        reply = dev.open(mgr, devpath, None, tree)
         assert reply
         assert reply["path"]
 

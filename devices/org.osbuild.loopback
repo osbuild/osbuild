@@ -78,7 +78,7 @@ class LoopbackService(devices.DeviceService):
 
         return lo
 
-    def open(self, devpath: str, tree: str, options: Dict):
+    def open(self, devpath: str, parent: str, tree: str, options: Dict):
         filename = options["filename"]
         self.sector_size = options.get("sector-size", 512)
         start = options.get("start", 0) * self.sector_size

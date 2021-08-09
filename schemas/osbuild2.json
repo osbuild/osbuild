@@ -29,6 +29,7 @@
       "required": ["type"],
       "properties": {
         "type": { "type": "string" },
+        "parent": { "type": "string" },
         "options": {
           "type": "object",
           "additionalProperties": true
