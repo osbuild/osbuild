@@ -3,6 +3,7 @@
 #
 
 import copy
+import itertools
 import os
 import unittest
 
@@ -306,3 +307,54 @@ class TestFormatV2(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.load_manifest(pipeline)
+
+    def test_device_sorting(self):
+        fmt = self.index.get_format_info("osbuild.formats.v2").module
+        assert(fmt)
+
+        self_cycle = {
+            "a": {"parent": "a"},
+        }
+
+        with self.assertRaises(ValueError):
+            fmt.sort_devices(self_cycle)
+
+        cycle = {
+            "a": {"parent": "b"},
+            "b": {"parent": "a"},
+        }
+
+        with self.assertRaises(ValueError):
+            fmt.sort_devices(cycle)
+
+        missing_parent = {
+            "a": {"parent": "b"},
+            "b": {"parent": "c"},
+        }
+
+        with self.assertRaises(ValueError):
+            fmt.sort_devices(missing_parent)
+
+        def ensure_sorted(devices):
+            check = {}
+
+            for name, dev in devices.items():
+
+                parent = dev.get("parent")
+                if parent:
+                    assert parent in check
+
+                check[name] = dev
+
+            assert devices == check
+
+        devices = {
+            "a": {"parent": "d"},
+            "b": {"parent": "a"},
+            "c": {"parent": None},
+            "d": {"parent": "c"},
+        }
+
+        for check in itertools.permutations(devices.keys()):
+            before = {name: devices[name] for name in check}
+            ensure_sorted(fmt.sort_devices(before))

@@ -26,9 +26,10 @@ class Device:
     A single device with its corresponding options
     """
 
-    def __init__(self, name, info, options: Dict):
+    def __init__(self, name, info, parent, options: Dict):
         self.name = name
         self.info = info
+        self.parent = parent
         self.options = options or {}
         self.id = self.calc_id()
 
@@ -36,15 +37,20 @@ class Device:
         # NB: Since the name of the device is arbitrary or prescribed
         # by the stage, it is not included in the id calculation.
         m = hashlib.sha256()
+
         m.update(json.dumps(self.info.name, sort_keys=True).encode())
+        if self.parent:
+            m.update(json.dumps(self.parent.id, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def open(self, mgr: host.ServiceManager, dev: str, tree: str) -> Dict:
+    def open(self, mgr: host.ServiceManager, dev: str, parent: str, tree: str) -> Dict:
         args = {
             # global options
             "dev": dev,
             "tree": tree,
+
+            "parent": parent,
 
             # per device options
             "options": self.options,
@@ -60,7 +66,7 @@ class DeviceService(host.Service):
     """Device host service"""
 
     @abc.abstractmethod
-    def open(self, devpath: str, tree: str, options: Dict):
+    def open(self, devpath: str, parent: str, tree: str, options: Dict):
         """Open a specific device
 
         This method must be implemented by the specific device service.
@@ -78,7 +84,10 @@ class DeviceService(host.Service):
 
     def dispatch(self, method: str, args, _fds):
         if method == "open":
-            r = self.open(args["dev"], args["tree"], args["options"])
+            r = self.open(args["dev"],
+                          args["parent"],
+                          args["tree"],
+                          args["options"])
             return r, None
         if method == "close":
             r = self.close()
