@@ -114,6 +114,11 @@ class LoopbackService(devices.DeviceService):
         self.ctl.close()
 
         if self.lo:
+            # clear the fd. Since it might not immediately be
+            # cleared (due to a race with udev or some other
+            # process still having a reference to the loop dev)
+            # we give it some time and wait for the clearing
+            self.lo.clear_fd_wait(self.fd, 30)
             self.lo.close()
             self.lo = None
 
