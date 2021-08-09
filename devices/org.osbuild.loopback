@@ -46,6 +46,10 @@ SCHEMA = """
     "type": "number",
     "description": "Sector size (in bytes)",
     "default": 512
+  },
+  "lock": {
+    "type": "boolean",
+    "description": "Lock the device after opening it"
   }
 }
 """
@@ -59,14 +63,14 @@ class LoopbackService(devices.DeviceService):
         self.lo = None
         self.ctl = loop.LoopControl()
 
-    def make_loop(self, fd: int, offset, sizelimit):
+    def make_loop(self, fd: int, offset, sizelimit, lock):
         if not sizelimit:
             stat = os.fstat(fd)
             sizelimit = stat.st_size - offset
         else:
             sizelimit *= self.sector_size
 
-        lo = self.ctl.loop_for_fd(fd,
+        lo = self.ctl.loop_for_fd(fd, lock=lock,
                                   offset=offset,
                                   sizelimit=sizelimit,
                                   partscan=False,
@@ -79,13 +83,14 @@ class LoopbackService(devices.DeviceService):
         self.sector_size = options.get("sector-size", 512)
         start = options.get("start", 0) * self.sector_size
         size = options.get("size")
+        lock = options.get("lock", False)
 
         path = os.path.join(tree, filename.lstrip("/"))
 
         self.fd = os.open(path, os.O_RDWR | os.O_CLOEXEC)
         print(f"file '{filename}'' opened as {self.fd}")
         try:
-            self.lo = self.make_loop(self.fd, start, size)
+            self.lo = self.make_loop(self.fd, start, size, lock)
         except Exception as error:  # pylint: disable: broad-except
             self.close()
             raise error from None
