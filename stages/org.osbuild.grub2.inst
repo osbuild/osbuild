@@ -251,7 +251,9 @@ def prefix_partition(options: Dict):
     number += 1
     path = path.lstrip("/")
 
-    prefix = f"(,{pt_label}{number})/{path}"
+    label = grub2_partition_id(pt_label)
+
+    prefix = f"(,{label}{number})/{path}"
     return prefix
 
 
