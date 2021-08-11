@@ -3,6 +3,7 @@
 #
 
 import contextlib
+import fcntl
 import os
 import time
 import threading
@@ -153,6 +154,47 @@ def test_clear_fd_wait(tempdir):
         if lo:
             with contextlib.suppress(OSError):
                 lo.clear_fd()
+            lo.close()
+        if f:
+            f.close()
+
+        ctl.close()
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_lock(tempdir):
+
+    path = os.path.join(tempdir, "test.img")
+    ctl = loop.LoopControl()
+
+    assert ctl
+
+    lo, lo2, f = None, None, None
+    try:
+        f = open(path, "wb+")
+        f.truncate(1024)
+        f.flush()
+        lo = ctl.loop_for_fd(f.fileno(), autoclear=True, lock=True)
+        assert lo
+
+        lo2 = loop.Loop(lo.minor)
+        assert lo2
+
+        with pytest.raises(BlockingIOError):
+            lo2.flock(fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+        lo.close()
+        lo = None
+
+        # after lo is closed, the lock should be release and
+        # we should be able to obtain the lock
+        lo2.flock(fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lo2.clear_fd()
+
+    finally:
+        if lo2:
+            lo2.close()
+        if lo:
             lo.close()
         if f:
             f.close()
