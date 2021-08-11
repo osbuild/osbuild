@@ -133,6 +133,36 @@ class Loop:
             self.fd = -1
             self.devname = "<closed>"
 
+    def flock(self, op: int) -> None:
+        """Add or remove an advisory lock on the loopback device
+
+        Perform a lock operation on the loopback device via `flock(2)`.
+
+        The locks are per file-descriptor and thus duplicated fds share
+        the same lock. The lock is automatically released when all of
+        those duplicated fds are closed or an explicit `LOCK_UN` call
+        was made on any of them.
+
+        NB: These locks are advisory only and are not preventing anyone
+        from actually accessing the device, but they will prevent udev
+        probing the device, see https://systemd.io/BLOCK_DEVICE_LOCKING
+
+        If the file is already locked any attempt to lock it again via
+        a different (non-duped) fd will block or, if `fcntl.LOCK_NB`
+        is specified, will raise a `BlockingIOError`.
+
+        Parameters
+        ----------
+        op : int
+            the lock operation to perform; one, or a combination, of:
+                `fcntl.LOCK_EX`: exclusive lock
+                `fcntl.LOCK_SH`: shared lock
+                `fcntl.LOCK_NB`: don't block on lock acquisition
+                `fcntl.LOCK_UN`: unlock
+        """
+
+        fcntl.flock(self.fd, op)
+
     def set_fd(self, fd):
         """Bind a file descriptor to the loopback device
 
@@ -495,7 +525,7 @@ class LoopControl:
         self._check_open()
         return fcntl.ioctl(self.fd, self.LOOP_CTL_GET_FREE)
 
-    def loop_for_fd(self, fd: int, **kwargs):
+    def loop_for_fd(self, fd: int, lock: bool = False, **kwargs):
         """
         Get or create an unbound loopback device and bind it to an fd
 
@@ -504,7 +534,15 @@ class LoopControl:
         method will retry until it succeeds or it fails to get an
         unbound loop device.
 
-        All given keyword arguments are forwarded to `Loop.set_status`.
+        If `lock` is set, an exclusive advisory lock will be taken
+        on the device before the device gets configured. If this
+        fails, the next loop device will be tried.
+        Locking the device can be helpful to prevent systemd-udevd from
+        reacting to changes to the device, like processing udev rules.
+        See https://systemd.io/BLOCK_DEVICE_LOCKING/
+
+        All given keyword arguments except `lock` are forwarded to the
+        `Loop.set_status` call.
         """
 
         self._check_open()
@@ -514,6 +552,15 @@ class LoopControl:
 
         while True:
             lo = Loop(self.get_unbound())
+
+            # try to lock the device if requested and use a
+            # different one if it fails
+            if lock:
+                try:
+                    lo.flock(fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    lo.close()
+                    continue
 
             try:
                 lo.set_fd(fd)
