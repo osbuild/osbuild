@@ -180,6 +180,37 @@ class Loop:
 
         fcntl.ioctl(self.fd, self.LOOP_CHANGE_FD, fd)
 
+    def is_bound_to(self, fd: int) -> bool:
+        """Check if the loopback device is bound to `fd`
+
+        Checks if the loopback device is bound and, if so, whether the
+        backing file refers to the same file as `fd`. The latter is
+        done by comparing the device and inode information.
+
+        Parameters
+        ----------
+        fd : int
+            the file descriptor to check
+
+        Returns
+        -------
+        bool
+            True if the loopback device is bound to the file descriptor
+        """
+
+        try:
+            loop_info = self.get_status()
+        except OSError as err:
+
+            # raised if the loopback is bound at all
+            if err.errno == errno.ENXIO:
+                return False
+
+        file_info = os.fstat(fd)
+
+        # it is bound, check if it is bound by `fd`
+        return loop_info.is_bound_to(file_info)
+
     def set_status(self, offset=None, sizelimit=None, autoclear=None, partscan=None):
         """Set properties of the loopback device
 

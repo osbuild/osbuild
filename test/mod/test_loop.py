@@ -37,6 +37,8 @@ def test_basic(tempdir):
         f.flush()
         lo = ctl.loop_for_fd(f.fileno(), autoclear=True)
 
+        assert lo.is_bound_to(f.fileno())
+
         sb = os.fstat(f.fileno())
 
         assert lo
