@@ -1,5 +1,13 @@
 # OSBuild - Build-Pipelines for Operating System Artifacts
 
+## CHANGES WITH 27.3:
+
+ * Add a new way of getting RHSM secrets with a fallback to the previous one.
+
+Contributions from: Martin Sehnoutka
+
+— Brno, 2021-08-11
+
 ## CHANGES WITH 27.2:
 
  * Add a new option to the `org.osbuild.qemu` assembler that controls
