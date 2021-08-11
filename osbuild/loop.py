@@ -310,6 +310,24 @@ class LoopControl:
             dir_fd = os.open("/dev", os.O_DIRECTORY)
         self.fd = os.open("loop-control", os.O_RDWR, dir_fd=dir_fd)
 
+    def __del__(self):
+        self.close()
+
+    def _check_open(self):
+        if self.fd < 0:
+            raise RuntimeError("LoopControl closed")
+
+    def close(self):
+        """Close the loop control file-descriptor
+
+        No operations on this object are valid after this call,
+        with the exception of this `close` method which then
+        is a no-op.
+        """
+        if self.fd >= 0:
+            os.close(self.fd)
+            self.fd = -1
+
     def add(self, minor=-1):
         """Add a new loopback device
 
@@ -330,6 +348,7 @@ class LoopControl:
             The minor number of the created device
         """
 
+        self._check_open()
         return fcntl.ioctl(self.fd, self.LOOP_CTL_ADD, minor)
 
     def remove(self, minor=-1):
@@ -347,6 +366,7 @@ class LoopControl:
             unspecified (default is -1)
         """
 
+        self._check_open()
         fcntl.ioctl(self.fd, self.LOOP_CTL_REMOVE, minor)
 
     def get_unbound(self):
@@ -361,4 +381,5 @@ class LoopControl:
             The minor number of the returned device
         """
 
+        self._check_open()
         return fcntl.ioctl(self.fd, self.LOOP_CTL_GET_FREE)
