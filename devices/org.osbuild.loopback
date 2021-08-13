@@ -119,6 +119,12 @@ class LoopbackService(devices.DeviceService):
         self.ctl.close()
 
         if self.lo:
+            # Flush the buffer cache of the loop device. This
+            # seems to be required when clearing the fd of the
+            # loop device (as of kernel 5.13.8) or otherwise
+            # it leads to data loss.
+            self.lo.flushbuf()
+
             # clear the fd. Since it might not immediately be
             # cleared (due to a race with udev or some other
             # process still having a reference to the loop dev)
