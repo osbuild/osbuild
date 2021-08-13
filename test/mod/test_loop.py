@@ -25,6 +25,8 @@ def tempdir_fixture():
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
 def test_basic(tempdir):
 
+    test_data = b"osbuild"
+
     path = os.path.join(tempdir, "test.img")
     ctl = loop.LoopControl()
 
@@ -68,6 +70,15 @@ def test_basic(tempdir):
         info = lo.get_status()
         assert not info.autoclear
 
+        with open(os.path.join("/dev", lo.devname), "wb") as f:
+            f.write(test_data)
+
+        # the `flush_buf` seems to be necessary when calling
+        # `LoopInfo.clear_fd`, otherwise the data integrity
+        # check later will fail
+        lo.flush_buf()
+        lo.clear_fd()
+
     finally:
         if lo:
             with contextlib.suppress(OSError):
@@ -77,6 +88,11 @@ def test_basic(tempdir):
             f.close()
 
         ctl.close()
+
+    # check for data integrity, i.e. that what we wrote via the
+    # loop device was actually written to the underlying file
+    with open(path, "rb") as f:
+        assert f.read(len(test_data)) == test_data
 
     # closing must be a no-op on a closed LoopControl
     ctl.close()
