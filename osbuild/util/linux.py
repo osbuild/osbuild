@@ -32,6 +32,8 @@ FS_IOC_SETFLAGS = 0x40086602
 
 FS_IMMUTABLE_FL = 0x00000010
 
+BLK_IOC_FLSBUF = 0x00001261
+
 
 def ioctl_get_immutable(fd: int):
     """Query FS_IMMUTABLE_FL
@@ -91,3 +93,26 @@ def ioctl_toggle_immutable(fd: int, set_to: bool):
     else:
         flags[0] &= ~FS_IMMUTABLE_FL
     fcntl.ioctl(fd, FS_IOC_SETFLAGS, flags, False)
+
+
+def ioctl_blockdev_flushbuf(fd: int):
+    """Flush the block device buffer cache
+
+    NB: This function needs the `CAP_SYS_ADMIN` capability.
+
+    Arguments
+    ---------
+    fd
+        File-descriptor of a block device to operate on.
+
+    Raises
+    ------
+    OSError
+        If the underlying ioctl fails, a matching `OSError`
+        will be raised.
+    """
+
+    if not isinstance(fd, int) or fd < 0:
+        raise ValueError(f"Invalid file descriptor: '{fd}'")
+
+    fcntl.ioctl(fd, BLK_IOC_FLSBUF, 0)
