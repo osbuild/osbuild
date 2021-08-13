@@ -6,6 +6,7 @@ import os
 import stat
 import time
 
+from .util import linux
 
 __all__ = [
     "Loop",
@@ -162,6 +163,19 @@ class Loop:
         """
 
         fcntl.flock(self.fd, op)
+
+    def flush_buf(self) -> None:
+        """Flush the buffer cache of the loopback device
+
+        This function might be required to be called before the usage
+        of `clear_fd`. It seems that the kernel (as of version 5.13.8)
+        is not clearing the buffer cache of the block device layer in
+        case the fd is manually cleared.
+
+        NB: This function needs the `CAP_SYS_ADMIN` capability.
+        """
+
+        linux.ioctl_blockdev_flushbuf(self.fd)
 
     def set_fd(self, fd):
         """Bind a file descriptor to the loopback device
