@@ -1,0 +1,92 @@
+#!/usr/bin/python3
+"""
+Populate buildroot with /etc/passwd and /etc/group from an OSTree checkout
+
+Using the OSTree checkout provided as in input, copy /usr/etc/passwd and
+/usr/lib/passwd, merge them and store the result into /etc/passwd in the
+buildroot. Do the same for /etc/group file.
+
+The use case for this stage is when one wants to preserve UIDs and GIDs
+which might change when the system is build from scratch. Creating these
+files before any RPMs (or other packages) are installed will prevent changes
+in UIDs and GIDs.
+"""
+
+import os
+import sys
+import subprocess
+
+import osbuild.api
+
+from osbuild.util.ostree import PasswdLike
+
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["commits"],
+  "properties": {
+    "commits": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
+def ostree(*args, _input=None, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   input=_input,
+                   check=True)
+
+
+def parse_input(inputs):
+    commits = inputs["commits"]
+    source_root = commits["path"]
+    data = commits["data"]
+    refs = data["refs"]
+    assert refs, "Need at least one commit"
+    assert len(refs) == 1, "Only one commit is currently supported"
+    return source_root, refs
+
+
+# pylint: disable=too-many-statements
+def main(tree, inputs, _options):
+    source_root, refs = parse_input(inputs)
+
+    os.makedirs(os.path.join(tree, "etc"), exist_ok=True)
+    # Only once ref (commit) is currently supported, so this loop will run exactly once
+    for commit, data in refs.items():
+        ref = data.get("path", commit).lstrip("/")
+        checkout_root = os.path.join(source_root, ref)
+
+        # Merge /usr/etc/passwd with /usr/lib/passwd from the checkout and store it in the buildroot
+        # "tree" directory. Entries in /usr/etc/passwd have a precedence, but the file does not
+        # necessarily exist.
+        passwd = PasswdLike.from_file(os.path.join(checkout_root, "usr/etc/passwd"), allow_missing_file=True)
+        passwd.merge_with_file(os.path.join(checkout_root, "usr/lib/passwd"), allow_missing_file=False)
+        passwd.dump_to_file(os.path.join(tree, "etc/passwd"))
+
+        # Merge /usr/etc/group with /usr/lib/group from the checkout and store it in the buildroot
+        # "tree" directory. Entries in /usr/etc/group have a precedence, but the file does not
+        # necessarily exist.
+        passwd = PasswdLike.from_file(os.path.join(checkout_root, "usr/etc/group"), allow_missing_file=True)
+        passwd.merge_with_file(os.path.join(checkout_root, "usr/lib/group"), allow_missing_file=False)
+        passwd.dump_to_file(os.path.join(tree, "etc/group"))
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"],
+             stage_args["inputs"],
+             stage_args["options"])
+    sys.exit(r)

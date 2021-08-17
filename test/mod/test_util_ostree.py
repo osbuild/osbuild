@@ -3,8 +3,10 @@
 #
 
 import json
-import unittest
+import os
 import subprocess
+import tempfile
+import unittest
 
 from osbuild.util import ostree
 
@@ -84,3 +86,64 @@ class TestObjectStore(unittest.TestCase):
 
         for p, v in params.items():
             self.assertEqual(v, js[p])
+
+
+class TestPasswdLike(unittest.TestCase):
+
+    def test_merge_passwd(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            primary_file_lines = [
+                "root:x:0:0:root:/root:/bin/bash\n",
+                "bin:x:1:1:bin:/bin:/sbin/nologin\n",
+                "daemon:x:2:2:daemon:/sbin:/sbin/nologin\n"
+            ]
+            secondary_file_lines = [
+                "daemon:x:9:9:daemon:/sbin:/sbin/nologin\n"
+                "lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin\n",
+                "sync:x:5:0:sync:/sbin:/bin/sync\n"
+            ]
+            result_file_lines = [
+                "root:x:0:0:root:/root:/bin/bash\n",
+                "bin:x:1:1:bin:/bin:/sbin/nologin\n",
+                "daemon:x:2:2:daemon:/sbin:/sbin/nologin\n",
+                "lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin\n",
+                "sync:x:5:0:sync:/sbin:/bin/sync\n"
+            ]
+            with open(os.path.join(tmpdir, "primary"), "w") as f:
+                f.writelines(primary_file_lines)
+            with open(os.path.join(tmpdir, "secondary"), "w") as f:
+                f.writelines(secondary_file_lines)
+
+            passwd = ostree.PasswdLike.from_file(os.path.join(tmpdir, "primary"))
+            passwd.merge_with_file(os.path.join(tmpdir, "secondary"))
+            passwd.dump_to_file(os.path.join(tmpdir, "result"))
+
+            with open(os.path.join(tmpdir, "result"), "r") as f:
+                self.assertEqual(sorted(f.readlines()), sorted(result_file_lines))
+
+    def test_merge_group(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            primary_file_lines = [
+                "root:x:0:\n",
+                "bin:x:1:\n"
+            ]
+            secondary_file_lines = [
+                "bin:x:4:\n",
+                "daemon:x:2:\n"
+            ]
+            result_file_lines = [
+                "root:x:0:\n",
+                "bin:x:1:\n",
+                "daemon:x:2:\n"
+            ]
+            with open(os.path.join(tmpdir, "primary"), "w") as f:
+                f.writelines(primary_file_lines)
+            with open(os.path.join(tmpdir, "secondary"), "w") as f:
+                f.writelines(secondary_file_lines)
+
+            passwd = ostree.PasswdLike.from_file(os.path.join(tmpdir, "primary"))
+            passwd.merge_with_file(os.path.join(tmpdir, "secondary"))
+            passwd.dump_to_file(os.path.join(tmpdir, "result"))
+
+            with open(os.path.join(tmpdir, "result"), "r") as f:
+                self.assertEqual(sorted(f.readlines()), sorted(result_file_lines))
