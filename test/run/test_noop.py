@@ -1,11 +1,13 @@
 #
 # Runtime Tests for No-op Pipelines
 #
+
 import json
 import tempfile
 import pytest
 
 from .. import test
+
 
 @pytest.fixture(name="jsondata", scope="module")
 def jsondata_fixture():
@@ -33,6 +35,7 @@ def jsondata_fixture():
         ]
     })
 
+
 @pytest.fixture(name="tmpdir", scope="module")
 def tmpdir_fixture():
     with tempfile.TemporaryDirectory() as tmp:
@@ -52,14 +55,18 @@ def osbuild_fixture():
 # Then run the entire thing again, to verify our own `osbuild` executor
 # tears things down properly and allows to be executed multiple times.
 #
+
+
 def test_noop(osb):
-    osb.compile("{}")
-    osb.compile("{}")
+    osb.compile("{}", checkpoints=[])
+    osb.compile("{}", checkpoints=[])
+
 
 def test_noop2(osb):
-    osb.compile("{}")
-    osb.compile("{}")
+    osb.compile("{}", checkpoints=[])
+    osb.compile("{}", checkpoints=[])
+
 
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 def test_noop_v2(osb, tmpdir, jsondata):
-    osb.compile(jsondata, output_dir=tmpdir)
+    osb.compile(jsondata, output_dir=tmpdir, exports=["noop"])

@@ -41,9 +41,9 @@ class TestAssemblers(test.TestBase):
         assert treeid
 
         with tempfile.TemporaryDirectory(dir="/var/tmp") as output_dir:
-            osb.compile(data, output_dir=output_dir, checkpoints=[treeid])
+            osb.compile(data, output_dir=output_dir, checkpoints=[treeid], exports=["assembler"])
             with osb.map_object(treeid) as tree:
-                yield tree, os.path.join(output_dir, output_path)
+                yield tree, os.path.join(output_dir, "assembler", output_path)
 
     def assertImageFile(self, filename, fmt, expected_size=None):
         info = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", filename]))
@@ -118,9 +118,9 @@ class TestAssemblers(test.TestBase):
 
             data = json.dumps(manifest)
             with tempfile.TemporaryDirectory(dir="/var/tmp") as output_dir:
-                result = osb.compile(data, output_dir=output_dir)
-                compose_file = os.path.join(output_dir, "compose.json")
-                repo = os.path.join(output_dir, "repo")
+                result = osb.compile(data, output_dir=output_dir, exports=["assembler"])
+                compose_file = os.path.join(output_dir, "assembler", "compose.json")
+                repo = os.path.join(output_dir, "assembler", "repo")
 
                 with open(compose_file) as f:
                     compose = json.load(f)

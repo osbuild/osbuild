@@ -288,6 +288,9 @@ class OSBuild(contextlib.AbstractContextManager):
         Returns the build result as dictionary.
         """
 
+        if checkpoints is None and exports is None:
+            raise ValueError("Need `checkpoints` or `exports` argument")
+
         if output_dir is None:
             output_dir_context = tempfile.TemporaryDirectory(dir="/var/tmp")
         else:
