@@ -139,3 +139,50 @@ def deployment_path(root: PathLike, osname: str, ref: str, serial: int):
     sysroot = f"{stateroot}/deploy/{commit}.{serial}"
 
     return sysroot
+
+
+class PasswdLike:
+    """Representation of a file with structure like /etc/passwd
+
+    If each line in a file contains a key-value pair separated by the
+    first colon on the line, it can be considered "passwd"-like. This
+    class can parse the the list, manipulate it, and export it to file
+    again.
+    """
+    def __init__(self):
+        """Initialize an empty PasswdLike object"""
+        self.db = dict()
+
+    @classmethod
+    def from_file(cls, path: PathLike, allow_missing_file: bool=False):
+        """Initialize a PasswdLike object from an existing file"""
+        ret = cls()
+        if allow_missing_file:
+            if not os.path.isfile(path):
+                return ret
+
+        with open(path, "r") as p:
+            ret.db = cls._passwd_lines_to_dict(p.readlines())
+        return ret
+
+    def merge_with_file(self, path: PathLike, allow_missing_file: bool=False):
+        """Extend the database with entries from another file"""
+        if allow_missing_file:
+            if not os.path.isfile(path):
+                return
+
+        with open(path, "r") as p:
+            additional_passwd_dict = self._passwd_lines_to_dict(p.readlines())
+            for name, passwd_line in additional_passwd_dict.items():
+                if name not in self.db:
+                    self.db[name] = passwd_line
+
+    def dump_to_file(self, path: PathLike):
+        """Write the current database to a file"""
+        with open(path, "w") as p:
+            p.writelines(list(self.db.values()))
+
+    @staticmethod
+    def _passwd_lines_to_dict(lines):
+        """Take a list of passwd lines and produce a "name": "line" dictionary"""
+        return {line.split(':')[0]: line for line in lines}
