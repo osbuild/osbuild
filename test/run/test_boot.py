@@ -26,8 +26,8 @@ class TestBoot(test.TestBase):
 
         with self.osbuild as osb:
             with tempfile.TemporaryDirectory(dir="/var/tmp") as temp_dir:
-                osb.compile_file(manifest, output_dir=temp_dir)
-                qcow2 = os.path.join(temp_dir, "fedora-boot.qcow2")
+                osb.compile_file(manifest, output_dir=temp_dir, exports=["assembler"])
+                qcow2 = os.path.join(temp_dir, "assembler", "fedora-boot.qcow2")
                 output_file = os.path.join(temp_dir, "output")
 
                 subprocess.run(["qemu-system-x86_64",
