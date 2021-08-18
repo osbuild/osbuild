@@ -1,3 +1,60 @@
+## CHANGES WITH 31:
+
+  * **LVM2 support** was added. For this new stages and host services
+    were added:
+
+  * Support for parent devices was added to the `devices` host
+    service: a device can now specify a device it depends on. An
+    example is an LVM2 volume on a partition. When loading, the
+    devices are pre-sorted so that all dependencies are in the
+    correct order.
+
+  * `stages/org.osbuild.lvm2.create`: new stage to create logical
+     volumes, the volume group and the physical volume in one
+     operation.
+
+  * `devices/org.osbuild.lvm2.lv`: new device host service to activate
+     a LVM2 logical volume. The logical volume is identified via the
+     underlying device, so there is no need to know the logical
+     volume's name or uuid.
+
+  * `stages/org.osbuild.lvm2.metadata`: new stage to modify LVM2
+     metadata.
+
+  * `stages/org.osbuild.untar`: new stage that can be used to extract
+    a tarball.
+
+  * `runners/org.osbuild.rhel86`: new runner for RHEL 8.6, based on
+    the current RHEL 8.2 runner.
+
+  * `stages/org.osbuild.nm.conf`: new stage to create NetworkManager
+    configuration files. Currently only a subset of settings are
+    supported.
+
+  * `inputs/org.osbuild.ostree.checkout`: new input to checkout an
+    OSTree commit so that stages can use its contents.
+
+  * `stages/org.osbuild.ostree.passwd` new stage to merge the groups
+    and passwords from one or more existing commits into the
+    corresponding files in the tree. This is needed to make sure that
+    uids/gids stay stable between commits.
+
+  * `stages/org.osbuild.grub2.inst`: fix prefix for dos layouts: When
+    the partition layout is `dos` or `mbr`, the correct name for it in
+    the prefix is `msdos`.
+
+  * Loop controller improvements: various new helper methods to close
+    and flush the loop devices.
+
+  * `devices/org.osbuild.loopback`: explicitly flush the device buffer
+    cache and clear the fd to ensure that all data is properly written
+    to the backing file.
+
+Contributions from: Tomas Hozza, Martin Sehnoutka, Christian Kellner,
+                    Ondřej Budai, Thomas Lavocat
+
+— Berlin, 2021-08-18
+
 ## CHANGES WITH 30:
 
   * Add support for building **OSTree based raw images**. This
