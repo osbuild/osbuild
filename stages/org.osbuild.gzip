@@ -55,7 +55,7 @@ def main(inputs, output, options):
 
     with open(target, "w") as f:
         cmd = [
-            "gzip", "--stdout", "-1", source
+            "gzip", "--no-name", "--stdout", "-1", source
         ]
 
         subprocess.run(
