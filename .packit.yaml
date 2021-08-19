@@ -40,3 +40,8 @@ jobs:
     - fedora-all-aarch64
     - fedora-all-s390x
     - fedora-all
+- job: propose_downstream
+  trigger: release
+  metadata:
+    dist_git_branches:
+      - fedora-rawhide
