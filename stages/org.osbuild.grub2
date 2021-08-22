@@ -34,7 +34,11 @@ If UEFI support is enabled via `uefi: {"vendor": "<vendor>"}` this stage will
 also write the `grub.cfg` to `boot/efi/EFI/<vendor>/grub.cfg`. EFI binaries
 and accompanying data can be installed from the built root via `uefi.install`.
 
-Both UEFI and Legacy can be specified at the same time.
+Both UEFI and Legacy can be specified at the same time (hybrid boot).
+
+If `uefi.unified` is specified or hybrid boot is enabled, the main grub config
+will be written to `boot/grub2/grub.cfg` and a redirect config will be placed
+in the EFI directory.
 
 If the `saved_entry` option is present it will result in an entry in the
 `grubenv` file of the same name. The grub config file contains logic so
@@ -146,6 +150,11 @@ SCHEMA = """
       },
       "install": {
         "description": "Install EFI binaries and data from the build root",
+        "type": "boolean",
+        "default": false
+      },
+      "unified": {
+        "description": "Main grub config in 'boot/grub2/grub.cfg'",
         "type": "boolean",
         "default": false
       }
@@ -337,7 +346,8 @@ class GrubConfig:
 
     def write_redirect(self, tree, path):
         """Write a grub config pointing to the other cfg"""
-        print("hybrid boot support enabled. Writing alias grub config")
+        print("hybrid boot or unified grub config enabled. "
+              "Writing alias grub config")
 
         # configuration options for the template
         config = {
@@ -436,6 +446,7 @@ def main(tree, options):
         #     or a shim one that redirects to the canonical one in
         #     /boot/grub2 in case of hybrid boot (see above)
         vendor = uefi["vendor"]
+        unified = uefi.get("unified", False)
 
         # EFI binaries and accompanying data can be installed from
         # the build root instead of using an rpm package
@@ -443,7 +454,7 @@ def main(tree, options):
             copy_efi_data(tree, vendor)
 
         grubcfg = f"boot/efi/EFI/{vendor}/grub.cfg"
-        if hybrid:
+        if hybrid or unified:
             config.write_redirect(tree, grubcfg)
         else:
             config.path = grubcfg
