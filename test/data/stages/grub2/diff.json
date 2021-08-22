@@ -1,0 +1,42 @@
+{
+  "added_files": [
+    "/boot",
+    "/boot/efi",
+    "/boot/efi/EFI",
+    "/boot/efi/EFI/BOOT",
+    "/boot/efi/EFI/BOOT/BOOTIA32.EFI",
+    "/boot/efi/EFI/BOOT/BOOTX64.EFI",
+    "/boot/efi/EFI/BOOT/fbia32.efi",
+    "/boot/efi/EFI/BOOT/fbx64.efi",
+    "/boot/efi/EFI/fedora",
+    "/boot/efi/EFI/fedora/BOOTIA32.CSV",
+    "/boot/efi/EFI/fedora/BOOTX64.CSV",
+    "/boot/efi/EFI/fedora/fonts",
+    "/boot/efi/EFI/fedora/fonts/unicode.pf2",
+    "/boot/efi/EFI/fedora/gcdia32.efi",
+    "/boot/efi/EFI/fedora/gcdx64.efi",
+    "/boot/efi/EFI/fedora/grub.cfg",
+    "/boot/efi/EFI/fedora/grubia32.efi",
+    "/boot/efi/EFI/fedora/grubx64.efi",
+    "/boot/efi/EFI/fedora/mmia32.efi",
+    "/boot/efi/EFI/fedora/mmx64.efi",
+    "/boot/efi/EFI/fedora/shim.efi",
+    "/boot/efi/EFI/fedora/shimia32.efi",
+    "/boot/efi/EFI/fedora/shimx64.efi",
+    "/boot/grub2",
+    "/boot/grub2/grub.cfg",
+    "/boot/grub2/grubenv",
+    "/etc",
+    "/etc/default",
+    "/etc/default/grub"
+  ],
+  "deleted_files": [],
+  "differences": {
+    "/": {
+      "mode": [
+        16832,
+        16877
+      ]
+    }
+  }
+}
