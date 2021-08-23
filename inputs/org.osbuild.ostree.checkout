@@ -82,7 +82,7 @@ class OSTreeCheckoutInput(inputs.InputService):
 
     def map(self, store, origin, refs, target, _options):
 
-        refs = []
+        ids = []
 
         if origin == "org.osbuild.pipeline":
             for ref, options in refs.items():
@@ -90,16 +90,16 @@ class OSTreeCheckoutInput(inputs.InputService):
                 with open(os.path.join(source, "compose.json"), "r") as f:
                     compose = json.load(f)
                 commit_id = compose["ostree-commit"]
-                refs.append(checkout({commit_id: options}, source, target))
+                ids.append(checkout({commit_id: options}, source, target))
         else:
             source = store.source("org.osbuild.ostree")
-            refs = checkout(refs, source, target)
+            ids = checkout(refs, source, target)
 
         reply = {
-          "path": target,
-          "data": {
-            "refs": {ref: {"path": ref} for ref in refs}
-          }
+            "path": target,
+            "data": {
+                "refs": {i: {"path": i} for i in ids}
+            }
         }
 
         return reply
