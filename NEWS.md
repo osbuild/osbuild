@@ -1,3 +1,12 @@
+## CHANGES WITH 32:
+
+  * `stages/org.osbuild.grub2`: allow the unified grub config scheme
+    to be configured even in pure UEFI configurations.
+
+Contributions from: Christian Kellner
+
+- Asker, 2021-08-24
+
 ## CHANGES WITH 31:
 
   * **LVM2 support** was added. For this new stages and host services
