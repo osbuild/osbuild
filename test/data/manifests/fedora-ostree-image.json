@@ -942,7 +942,8 @@
               "install": true
             },
             "legacy": "i386-pc",
-            "write_defaults": false
+            "write_defaults": false,
+            "greenboot": true
           }
         }
       ]
