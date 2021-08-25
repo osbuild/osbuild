@@ -50,6 +50,19 @@ corresponding loader entry, which currently is a combination of the
 machine id and kernel NVRA, like e.g.:
   `ffffffffffffffffffffffffffffffff-5.6.6-300.fc32.x86_64`
 
+Support for "greenboot" can be turned on via the `greenboot` option.
+Greenboot is the idea of automatically rolling back bad updates,
+i.e. updates that do not boot successfully. The implementation
+is split between the boot loader and a user space component.
+The latter sets two variables `boot_counter`, which indicates
+the maximum number of boot attempts and `boot_success` which
+tells the boot laoder if a previous boot was successful. The
+bootloader on the other hand will decrement the counter variable
+and reset the success indicator one.
+An implementation of the user space component for rpm-ostree is
+called `greenboot`.
+
+
 Support for ignition (https://github.com/coreos/ignition) can be turned
 on via the `ignition` option. If enabled, a 'ignition_firstboot' variable
 will be created, which is meant to be included in the kernel command line.
@@ -173,6 +186,11 @@ SCHEMA = """
     "description": "Include ignition support in the grub.cfg",
     "type": "boolean",
     "default": false
+  },
+  "greenboot": {
+    "description": "Include support for fallback counting",
+    "type": "boolean",
+    "default": false
   }
 }
 """
@@ -208,7 +226,7 @@ set boot=$${root}
 function load_video {
   insmod all_video
 }
-${ignition}
+${features}
 blscfg
 """
 
@@ -255,6 +273,29 @@ fi
 """
 
 
+GREENBOOT = """
+# greenboot support, aka boot counter and boot success reporting
+insmod increment
+# Check if boot_counter exists and boot_success=0 to activate this behaviour.
+if [ -n "${boot_counter}" -a "${boot_success}" = "0" ]; then
+  # if countdown has ended, choose to boot rollback deployment,
+  # i.e. default=1 on OSTree-based systems.
+  if  [ "${boot_counter}" = "0" -o "${boot_counter}" = "-1" ]; then
+    set default=1
+    set boot_counter=-1
+  # otherwise decrement boot_counter
+  else
+    decrement boot_counter
+  fi
+  save_env boot_counter
+fi
+
+# Reset boot_success for current boot
+set boot_success=0
+save_env boot_success
+"""
+
+
 def fs_spec_decode(spec):
     for key in ["uuid", "label"]:
         val = spec.get(key)
@@ -298,6 +339,7 @@ class GrubConfig:
         self.bootfs = bootfs
         self.path = "boot/grub2/grub.cfg"
         self.ignition = False
+        self.greenboot = False
 
     @property
     def grubfs(self):
@@ -332,10 +374,16 @@ class GrubConfig:
             subs = {"root": self.grub_home}
             ignition = tplt.safe_substitute(subs)
 
+        greenboot = ""
+        if self.greenboot:
+            greenboot = GREENBOOT
+
+        features = "\n".join(filter(bool, [ignition, greenboot]))
+
         # configuration options for the main template
         config = {
             "search": type2opt[fs_type] + " " + fs_id,
-            "ignition": ignition
+            "features": features,
         }
 
         tplt = string.Template(GRUB_CFG_TEMPLATE)
@@ -393,6 +441,7 @@ def main(tree, options):
     # Prepare the actual grub configuration file, will be written further down
     config = GrubConfig(root_fs, boot_fs)
     config.ignition = ignition
+    config.greenboot = options.get("greenboot", False)
 
     # Create the configuration file that determines how grub.cfg is generated.
     if write_defaults:
