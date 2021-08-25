@@ -1,3 +1,15 @@
+## CHANGES WITH 33:
+
+  * `stages/org.osbuild.grub2`: add support for greenboot, i.e.
+    automatically rolling back bad updates, i.e. updates that do not
+    boot successfully.
+
+  * `stages/org.osbuild.gzip`: new stage to compress files via gzip.
+
+Contributions from: Christian Kellner, Diaa Sami
+
+— Vöcklabruck, 2021-08-25
+
 ## CHANGES WITH 32:
 
   * `stages/org.osbuild.grub2`: allow the unified grub config scheme
