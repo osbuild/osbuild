@@ -813,7 +813,8 @@
         {
           "type": "org.osbuild.ostree.pull",
           "options": {
-            "repo": "/ostree/repo"
+            "repo": "/ostree/repo",
+            "remote": "osbuild"
           },
           "inputs": {
             "commits": {
