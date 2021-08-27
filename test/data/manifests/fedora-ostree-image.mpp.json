@@ -132,7 +132,6 @@
                   "greenboot-reboot",
                   "greenboot-status",
                   "ignition",
-                  "zezere-ignition",
                   "zram-generator",
                   "zram-generator-defaults",
                   "rsync",
@@ -164,7 +163,8 @@
                   "grub2-efi-x64",
                   "efibootmgr",
                   "shim-x64",
-                  "microcode_ctl"
+                  "microcode_ctl",
+                  "cloud-init"
                 ],
                 "excludes": [
                   "dracut-config-rescue"
@@ -184,11 +184,13 @@
           "options": {
             "enabled_services": [
               "NetworkManager.service",
+              "cloud-config",
+              "cloud-final",
+              "cloud-init",
+              "cloud-init-local",
               "firewalld.service",
               "rngd.service",
               "sshd.service",
-              "zezere_ignition.timer",
-              "zezere_ignition_banner.service",
               "greenboot-grub2-set-counter.service",
               "greenboot-grub2-set-success.service",
               "greenboot-healthcheck.service",
