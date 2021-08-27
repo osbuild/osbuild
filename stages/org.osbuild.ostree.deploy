@@ -54,6 +54,10 @@ SCHEMA = """
     "description": "OStree ref to use for the deployment",
     "type": "string"
   },
+  "remote": {
+    "description": "optional OStree remote to use for the deployment",
+    "type": "string"
+  },
   "rootfs": {
     "description": "Identifier to locate the root file system",
     "type": "object",
@@ -136,6 +140,10 @@ def main(tree, options):
     mounts = options.get("mounts", [])
     kopts = options.get("kernel_opts", [])
     ref = options["ref"]
+    remote = options.get("remote")
+
+    if remote:
+        ref = f"{remote}:{ref}"
 
     kargs = []
 
