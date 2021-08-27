@@ -301,6 +301,7 @@
           "options": {
             "osname": "fedora",
             "ref": "fedora/x86_64/osbuild",
+            "remote": "osbuild",
             "mounts": [
               "/boot",
               "/boot/efi"
