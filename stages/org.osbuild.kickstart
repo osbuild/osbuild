@@ -40,6 +40,10 @@ SCHEMA = """
       "ref": {
         "type": "string"
       },
+      "remote": {
+        "type": "string",
+        "description": "The remote to tie tie commit to"
+      },
       "gpg": {
         "type": "boolean",
         "default": true
