@@ -182,7 +182,7 @@ def make_users(users: Dict) -> List[str]:
 
         key = opts.get("key")
         if key:
-            res.append(f"sshkey --username {name} {key}")
+            res.append(f'sshkey --username {name} "{key}"')
 
     return res
 
