@@ -349,7 +349,16 @@ def main(inputs, root, options, workdir, loop_client):
 
     # input directories
     templatedir = os.path.join(LORAX_TEMPLATES, templates)
-    configdir = os.path.join(templatedir, "config_files", "x86")
+
+    # select the template based on the architecture, where
+    # we reuse the efi setting, since we only support efi
+    # on aarch64 this is good enough for now
+    if efi and "AA64" in efi["architectures"]:
+        arch = "aarch64"
+    else:
+        arch = "x86"
+
+    configdir = os.path.join(templatedir, "config_files", arch)
 
     # output directories
     imgdir = os.path.join(root, "images")
