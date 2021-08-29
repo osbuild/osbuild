@@ -1,3 +1,12 @@
+## CHANGES WITH 34:
+
+  * `stages/bootiso.mono`: support for aarch64
+
+  * `stages/ostree.{pull,deploy}`: support for specifying ostree
+    remotes.
+
+— Oslo, 2021-08-29
+
 ## CHANGES WITH 33:
 
   * `stages/org.osbuild.grub2`: add support for greenboot, i.e.
