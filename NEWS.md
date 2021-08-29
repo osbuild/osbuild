@@ -1,3 +1,10 @@
+## CHANGES WITH 35:
+  * Bug fix release.
+
+Contributions from: Christian Kellner
+
+— Oslo, 2021-08-29
+
 ## CHANGES WITH 34:
 
   * `stages/bootiso.mono`: support for aarch64
