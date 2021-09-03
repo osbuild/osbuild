@@ -156,7 +156,7 @@ def make_users(users: Dict) -> List[str]:
 
         password = opts.get("password")
         if password is not None:
-            arguments += ["--password", password or '""']
+            arguments += ["--password", password or '""', "--iscrypted"]
 
         shell = opts.get("shell")
         if shell:
