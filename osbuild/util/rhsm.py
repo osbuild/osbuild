@@ -93,13 +93,14 @@ class Subscriptions:
 
     def get_secrets(self, url):
         # Try to find a matching URL from redhat.repo file first
-        for parameters in self.repositories.values():
-            if parameters["matchurl"].match(url) is not None:
-                return {
-                    "ssl_ca_cert": parameters["sslcacert"],
-                    "ssl_client_key": parameters["sslclientkey"],
-                    "ssl_client_cert": parameters["sslclientcert"]
-                }
+        if self.repositories is not None:
+            for parameters in self.repositories.values():
+                if parameters["matchurl"].match(url) is not None:
+                    return {
+                        "ssl_ca_cert": parameters["sslcacert"],
+                        "ssl_client_key": parameters["sslclientkey"],
+                        "ssl_client_cert": parameters["sslclientcert"]
+                    }
 
         # In case there is no matching URL, try the fallback
         if self.secrets:
