@@ -1,0 +1,121 @@
+#!/usr/bin/python3
+"""
+Create tmpfiles.d configuration.
+
+This stage creates a tmpfiles.d configuration file with the given name in
+/usr/lib/tmpfiles.d. Provided list of configuration directives is written
+as separate lines into the configuration file. At least one configuration
+directive must be specified.
+"""
+
+
+import sys
+
+import osbuild.api
+
+
+SCHEMA = r"""
+"definitions": {
+  "configuration": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["type", "path"],
+    "description": "tmpfiles.d configuration directive representing one line in the configuration.",
+    "properties": {
+      "type": {
+        "type": "string",
+        "description": "The file system path type.",
+        "pattern": "^([fwpLcbaA]\\+?|[dDevqQCxXrRzZtThH]){1}((!?-?)|(-?!?)){0,1}$"
+      },
+      "path": {
+        "type": "string",
+        "description": "Absolute file system path."
+      },
+      "mode": {
+        "type": "string",
+        "description": "The file access mode when creating the file or directory.",
+        "pattern": "^~?[0-7]{4}$"
+      },
+      "user": {
+        "type": "string",
+        "description": "The user to use for the file or directory."
+      },
+      "group": {
+        "type": "string",
+        "description": "The group to use for the file or directory."
+      },
+      "age": {
+        "type": "string",
+        "description": "Date field used to decide what files to delete when cleaning."
+      },
+      "argument": {
+        "type": "string",
+        "description": "Argument with its meaning being specific to the path type."
+      }
+    }
+  }
+},
+"additionalProperties": false,
+"required": ["filename", "config"],
+"properties": {
+  "filename": {
+    "type": "string",
+    "description": "Name of the tmpfiles.d configuration file to create.",
+    "pattern": "^[\\w.-]{1,250}\\.conf$"
+  },
+  "config": {
+    "additionalProperties": false,
+    "type": "array",
+    "description": "List of configuration directives written into the configuration file.",
+    "minItems": 1,
+    "items": {
+      "$ref": "#/definitions/configuration"
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    filename = options["filename"]
+    cfg = options["config"]
+
+    tmpfilesd_config_dir = f"{tree}/usr/lib/tmpfiles.d"
+
+    cfg_lines = []
+    for cfg_item in cfg:
+        cfg_type = cfg_item["type"]
+        cfg_path = cfg_item["path"]
+
+        cfg_line = f"{cfg_type} {cfg_path}"
+
+        optional_properties = ["mode", "user", "group", "age", "argument"]
+        cfg_line_optional_part = ""
+        for optional_property in reversed(optional_properties):
+            cfg_property_value = cfg_item.get(optional_property)
+            if cfg_property_value:
+                if cfg_line_optional_part:
+                    cfg_line_optional_part = " ".join([cfg_property_value, cfg_line_optional_part])
+                else:
+                    cfg_line_optional_part = cfg_property_value
+            elif cfg_line_optional_part:
+                # if there were already some optional properties provided, then
+                # we must use "-" for any not provided optional values preceding
+                # them on the configuration line.
+                cfg_line_optional_part = " ".join(["-", cfg_line_optional_part])
+
+        if cfg_line_optional_part:
+            cfg_line += " " + cfg_line_optional_part
+        cfg_line += "\n"
+        cfg_lines.append(cfg_line)
+
+    with open(f"{tmpfilesd_config_dir}/{filename}", "w") as f:
+        f.writelines(cfg_lines)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
