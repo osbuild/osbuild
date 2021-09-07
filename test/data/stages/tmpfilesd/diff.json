@@ -1,0 +1,8 @@
+{
+  "added_files": [
+    "/usr/lib/tmpfiles.d/sap.conf",
+    "/usr/lib/tmpfiles.d/example.conf"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
