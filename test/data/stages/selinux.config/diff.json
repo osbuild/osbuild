@@ -1,0 +1,12 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/selinux/config": {
+      "content": [
+        "sha256:80134a263d874d1687a43513a09b6cc8fdc2998e623c1c1670cb5769a85ce942",
+        "sha256:ddeca16e356725c1d6cbd8fd21f32e811e9fa9237923a46a29d90f978b4c7b67"
+      ]
+    }
+  }
+}
