@@ -1,3 +1,16 @@
+## CHANGES WITH 36:
+
+  * `stages/org.osbuild.selinux.config`: new stage for configuring SELinux on the system
+  * `stages/org.osbuild.dnf.config`: new stage for changing persistent DNF configuration
+  * `stages/org.osbuild.tuned`: new stage for setting active TuneD profile
+  * `stages/org.osbuild.kickstart`: set passwords with --iscrypted
+  * `stages/org.osbuild.tmpfilesd`: new stage for configuring tmpfiles.d
+  * `util/rhsm`: Check if repositories is None before iterating
+
+Contributions from: Achilleas Koutsou, Sanne Raymaekers, Tomas Hozza
+
+— Berlin, 2021-09-08
+
 ## CHANGES WITH 35:
   * Bug fix release.
 
