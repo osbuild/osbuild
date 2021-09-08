@@ -32,36 +32,6 @@ pipeline {
             failFast true
 
             parallel {
-                stage('Fedora 32') {
-                    agent { label "f32cloudbase && x86_64" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/mockbuild.sh"
-                    }
-                }
-                stage('Fedora 33') {
-                    agent { label "f33cloudbase && x86_64" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/mockbuild.sh"
-                    }
-                }
-                stage('Fedora 33 aarch64') {
-                    agent { label "f33cloudbase && aarch64 && aws" }
-                    environment {
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/mockbuild.sh"
-                    }
-                }
                 stage('RHEL 8 CDN') {
                     agent { label "rhel8cloudbase && x86_64" }
                     environment {
@@ -122,38 +92,6 @@ pipeline {
             failFast false
 
             parallel {
-                stage('Fedora 32') {
-                    agent { label "f32cloudbase && x86_64 && psi" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        DISTRO_CODE = "fedora32"
-                    }
-                    steps {
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora32-image')
-                        }
-                    }
-                }
-                stage('Fedora 33') {
-                    agent { label "f33cloudbase && x86_64 && psi" }
-                    environment {
-                        TEST_TYPE = "image"
-                        AWS_CREDS = credentials('aws-credentials-osbuildci')
-                        DISTRO_CODE = "fedora33"
-                    }
-                    steps {
-                        run_tests()
-                    }
-                    post {
-                        always {
-                            preserve_logs('fedora33-image')
-                        }
-                    }
-                }
                 stage('RHEL 8 CDN') {
                     agent { label "rhel8cloudbase && x86_64 && psi" }
                     environment {
