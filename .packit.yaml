@@ -44,4 +44,4 @@ jobs:
   trigger: release
   metadata:
     dist_git_branches:
-      - fedora-rawhide
+      - fedora-all
