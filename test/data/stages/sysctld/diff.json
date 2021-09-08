@@ -1,0 +1,8 @@
+{
+  "added_files": [
+    "/usr/lib/sysctl.d/sap.conf",
+    "/usr/lib/sysctl.d/example.conf"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
