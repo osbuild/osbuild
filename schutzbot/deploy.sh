@@ -4,8 +4,7 @@ set -euxo pipefail
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
-# Currently: osbuild-composer 29
-OSBUILD_COMPOSER_COMMIT=bb235deb6279a0886c0324d61a2511485e6b44f8
+OSBUILD_COMPOSER_COMMIT=9d2aa19f0540abe3bf3b574febb57b68fd125c20
 
 # Get OS details.
 source /etc/os-release
@@ -32,7 +31,7 @@ priority=5
 
 [osbuild-composer]
 name=osbuild-composer ${OSBUILD_COMPOSER_COMMIT}
-baseurl=${DNF_REPO_BASEURL}/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/osbuild-composer/rhel-8-cdn/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
 enabled=1
 gpgcheck=0
 # Give this a slightly lower priority, because we used to have osbuild in this repo as well.
