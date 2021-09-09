@@ -870,7 +870,8 @@
             "repo": "/ostree/repo",
             "config": {
               "sysroot": {
-                "readonly": true
+                "readonly": true,
+                "bootloader": "none"
               }
             }
           }
