@@ -30,7 +30,7 @@
         }
       },
       {
-        "name": "org.osbuild.pam_limits.conf",
+        "name": "org.osbuild.pam.limits.conf",
         "options": {
           "filename": "99-sap.conf",
           "config": [
