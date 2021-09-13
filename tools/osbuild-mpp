@@ -555,7 +555,10 @@ class ManifestFile:
         if not variables:
             return
 
-        self.vars.update(variables)
+        for k, v in variables.items():
+            fakeroot = [v]
+            self._process_format(fakeroot)
+            self.vars[k] = fakeroot[0]
         self.substitute_vars(self.vars)
 
     def set_vars(self, args):
