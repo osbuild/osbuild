@@ -160,8 +160,10 @@ Example:
 
 
 import argparse
+import base64
 import collections
 import contextlib
+import hashlib
 import json
 import os
 import pathlib
@@ -509,6 +511,54 @@ class Image:
         return cls(size, table)
 
 
+class LocalFile:
+    def __init__(self, base64_content, sha256, sha512):
+        self.base64_content = base64_content
+        self.sha256 = sha256
+        self.sha512 = sha512
+
+    @property
+    def digest(self):
+        return f"sha256:{self.sha256}"
+
+    @classmethod
+    def from_dict(cls, js):
+        path = js["path"]
+        try:
+            with open(path, 'rb') as stream:
+                data = stream.read()
+        except:
+            print(f"Failed to read the local file: {path} in mpp-include-base64")
+            raise
+
+        base64_content = base64.b64encode(data).decode("utf-8")
+        sha256 = hashlib.sha256(data).hexdigest()
+        sha512 = hashlib.sha512(data).hexdigest()
+
+        # If the user wants to check that the file embedded is the expected one
+        if js.get("sha256"):
+            if sha256 != js.get("sha256"):
+                raise ValueError(
+                    "SHASUM 256 provided for %s (%s) does not correspond to the computed one (%s).",
+                    path, js.get("sha256"), sha256
+                )
+        elif js.get("sha512"):
+            if sha512 != js.get("sha512"):
+                raise ValueError(
+                    "SHASUM 512 provided for %s (%s) does not correspond to the computed one (%s).",
+                    path, js.get("sha512"), sha512
+                )
+
+        return cls(base64_content, sha256, sha512)
+
+    def to_dict(self, args=None) -> dict:
+        if args is None:
+            args = {}
+        data = {f"sha256:{self.sha256}": args}
+
+        return data
+
+
 class ManifestFile:
     @staticmethod
     def load(path):
@@ -672,7 +722,7 @@ class ManifestFile:
         def _is_format(node):
             if not isinstance(node, dict):
                 return False
-            for m in ("int", "string", "json"):
+            for m in ("int", "string", "json", "references"):
                 if f"mpp-format-{m}" in node:
                     return True
             return False
@@ -684,13 +734,21 @@ class ManifestFile:
             elif "mpp-format-json" in node:
                 res_type = "json"
                 format_string = node["mpp-format-json"]
+            elif "mpp-format-references" in node:
+                res_type = "references"
+                format_string = node["mpp-format-references"]
             else:
                 res_type = "int"
                 format_string = node["mpp-format-int"]
 
-            # pylint: disable=eval-used  # yolo this is fine!
-            # Note, we copy local_vars here to avoid eval modifying it
-            res = eval(f'f\'\'\'{format_string}\'\'\'', dict(local_vars))
+            if res_type == "references":
+                res = {}
+                for fstring in format_string:
+                    res.update(local_vars[fstring["id"]].to_dict(args=fstring.get("args")))
+            else:
+                # pylint: disable=eval-used  # yolo this is fine!
+                # Note, we copy local_vars here to avoid eval modifying it
+                res = eval(f'f\'\'\'{format_string}\'\'\'', dict(local_vars))
 
             if res_type == "int":
                 return int(res)
@@ -723,6 +781,24 @@ class ManifestFile:
 
         name = desc.get("id", "image")
         self.vars[name] = Image.from_dict(desc)
+
+    def process_local_files(self):
+        local_files = self.get_mpp_node(self.root, "include-base64")
+
+        if not local_files:
+            return
+
+        inline_files = element_enter(self.sources, "org.osbuild.inline", {})
+        self.inline_files = element_enter(inline_files, "items", {})
+
+        for local_file in local_files:
+            name = local_file["id"]
+            self.vars[name] = LocalFile.from_dict(local_file)
+
+            self.inline_files[self.vars[name].digest] = {
+                "encoding": "base64",
+                "data": self.vars[name].base64_content
+            }
 
 
 class ManifestFileV1(ManifestFile):
@@ -926,6 +1002,8 @@ def main():
     m.process_imports(args.searchdirs)
 
     m.process_partition()
+
+    m.process_local_files()
 
     # Override variables from the main of imported files
     if args.vars:
