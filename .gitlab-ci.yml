@@ -66,6 +66,10 @@ Testing:
         REGISTER: "true"
         DISTRO_CODE: "rhel_8"
         INTERNAL_NETWORK: "true"
+      - RUNNER:
+          - aws/rhel-8.5-x86_64
+          - aws/rhel-9.0-beta-nightly-x86_64
+        INTERNAL_NETWORK: "true"
 
 finish:
   stage: finish

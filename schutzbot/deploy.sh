@@ -4,8 +4,8 @@ set -euxo pipefail
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
-# Currently: test/fedora33: use rpmrepo instead of kernel mirrors
-OSBUILD_COMPOSER_COMMIT=f8fd3d04b8db210ba1f2cabb41f5079ce20e3d81
+# Currently: Test: regenerate all image test cases
+OSBUILD_COMPOSER_COMMIT=2aedd3da05975cbd3ed507f0edcc3a973804d6ff
 
 # Get OS details.
 source /etc/os-release
@@ -31,7 +31,6 @@ if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
 fi
 
 # Set up dnf repositories with the RPMs we want to test
-# TODO: use DISTRO_VERSION also for osbuild-composer (not yet supported though)
 sudo tee /etc/yum.repos.d/osbuild.repo << EOF
 [osbuild]
 name=osbuild ${CI_COMMIT_SHA}
@@ -43,16 +42,23 @@ priority=5
 
 [osbuild-composer]
 name=osbuild-composer ${OSBUILD_COMPOSER_COMMIT}
-baseurl=${DNF_REPO_BASEURL}/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/osbuild-composer/${DISTRO_VERSION}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
 enabled=1
 gpgcheck=0
 # Give this a slightly lower priority, because we used to have osbuild in this repo as well.
 priority=10
 EOF
 
-if [[ $ID == rhel ]]; then
+if [[ $ID == rhel ]] && [[ ${VERSION_ID%.*} == 8 ]]; then
     # Set up EPEL repository (for ansible and koji)
     sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+elif [[ $ID == rhel ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
+    # we have our own small epel for EL9, let's install it
+
+    # install Red Hat certificate, otherwise dnf copr fails
+    curl -LO --insecure https://hdn.corp.redhat.com/rhel8-csb/RPMS/noarch/redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm
+    sudo dnf install -y ./redhat-internal-cert-install-0.1-23.el7.csb.noarch.rpm dnf-plugins-core
+    sudo dnf copr enable -y copr.devel.redhat.com/osbuild-team/epel-el9 "rhel-9.dev-$ARCH"
 fi
 
 # Install the Image Builder packages.
