@@ -689,7 +689,8 @@ class ManifestFile:
                 format_string = node["mpp-format-int"]
 
             # pylint: disable=eval-used  # yolo this is fine!
-            res = eval(f'f\'\'\'{format_string}\'\'\'', local_vars)
+            # Note, we copy local_vars here to avoid eval modifying it
+            res = eval(f'f\'\'\'{format_string}\'\'\'', dict(local_vars))
 
             if res_type == "int":
                 return int(res)
