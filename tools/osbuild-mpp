@@ -748,7 +748,7 @@ class ManifestFileV1(ManifestFile):
         # We import `sources` from the manifest, as well as a pipeline description
         # from the `pipeline` entry. Make sure nothing else is in the manifest, so
         # we do not accidentally miss new features.
-        assert list(imp.root.keys()).sort() == ["pipeline", "sources"].sort()
+        assert sorted(imp.root) == sorted(["pipeline", "sources"])
 
         # Now with everything imported and verified, we can merge the pipeline back
         # into the original manifest. We take all URLs and merge them in the pinned
