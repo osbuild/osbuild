@@ -30,17 +30,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-33-x86_64
-          - aws/fedora-33-aarch64
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
-      - RUNNER:
-          - aws/rhel-8-x86_64
-          - aws/rhel-8-aarch64
-        REGISTER: "true"
-      - RUNNER:
           - aws/rhel-8.5-x86_64
           - aws/rhel-8.5-aarch64
           - aws/rhel-9.0-beta-nightly-x86_64
@@ -56,13 +45,11 @@ Testing:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-33-x86_64
-          - aws/fedora-33-aarch64
-        INTERNAL_NETWORK: "true"
-      - RUNNER:
-          - aws/rhel-8-x86_64
+          - aws/rhel-8.5-x86_64
+          - aws/rhel-8.5-aarch64
+          - aws/rhel-9.0-beta-nightly-x86_64
+          - aws/rhel-9.0-beta-nightly-aarch64
         REGISTER: "true"
-        DISTRO_CODE: "rhel_8"
         INTERNAL_NETWORK: "true"
 
 finish:

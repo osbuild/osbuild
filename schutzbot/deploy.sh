@@ -5,7 +5,7 @@ DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
 # Currently: test/fedora33: use rpmrepo instead of kernel mirrors
-OSBUILD_COMPOSER_COMMIT=f8fd3d04b8db210ba1f2cabb41f5079ce20e3d81
+OSBUILD_COMPOSER_COMMIT=6392e9d524d240f4ca693b985199a5f9d84fdb61
 
 # Get OS details.
 source /etc/os-release
