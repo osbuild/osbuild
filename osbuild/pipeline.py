@@ -344,9 +344,10 @@ class Manifest:
         self.sources.append(source)
         return source
 
-    def download(self, store, libdir):
-        for source in self.sources:
-            source.download(store, libdir)
+    def download(self, store, monitor, libdir):
+        with host.ServiceManager(monitor=monitor) as mgr:
+            for source in self.sources:
+                source.download(mgr, store, libdir)
 
     def build(self, store, monitor, libdir, output_directory):
         results = {"success": True}

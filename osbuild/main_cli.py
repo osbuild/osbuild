@@ -135,7 +135,7 @@ def osbuild_cli():
         output_directory = args.output_directory
         with ObjectStore(args.store) as object_store:
 
-            manifest.download(object_store, args.libdir)
+            manifest.download(object_store, monitor, args.libdir)
 
             r = manifest.build(
                 object_store,
