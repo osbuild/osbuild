@@ -5,6 +5,7 @@ DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
 # Currently: 34
+# NEEDS TO BE CHANGED
 OSBUILD_COMPOSER_COMMIT=aa08e29243a92bdad46088f1c6702387a092f9c8
 
 # Get OS details.
@@ -43,7 +44,7 @@ priority=5
 
 [osbuild-composer]
 name=osbuild-composer ${OSBUILD_COMPOSER_COMMIT}
-baseurl=${DNF_REPO_BASEURL}/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/osbuild-composer/${DISTRO_VERSION}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
 enabled=1
 gpgcheck=0
 # Give this a slightly lower priority, because we used to have osbuild in this repo as well.
