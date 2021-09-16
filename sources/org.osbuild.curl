@@ -15,7 +15,6 @@ up the download.
 
 import concurrent.futures
 import itertools
-import json
 import math
 import os
 import subprocess
@@ -23,7 +22,7 @@ import sys
 import tempfile
 import time
 
-from typing import Dict
+from osbuild import sources
 
 from osbuild.util.checksum import verify_file
 from osbuild.util.rhsm import Subscriptions
@@ -156,47 +155,33 @@ def download(items, cache):
 
             # check if url needs rhsm secrets
             if url.get("secrets", {}).get("name") == "org.osbuild.rhsm":
-                try:
-                    # rhsm secrets only need to be retrieved once and can then be reused
-                    if subscriptions is None:
-                        subscriptions = Subscriptions.from_host_system()
-                    url["secrets"] = subscriptions.get_secrets(url.get("url"))
-                except RuntimeError as e:
-                    json.dump({"error": e.args[0]}, sys.stdout)
-                    return 1
+                # rhsm secrets only need to be retrieved once and can then be reused
+                if subscriptions is None:
+                    subscriptions = Subscriptions.from_host_system()
+                url["secrets"] = subscriptions.get_secrets(url.get("url"))
 
             requested_urls.append(url)
             requested_checksums.append(checksum)
 
         results = executor.map(fetch, requested_urls, requested_checksums, itertools.repeat(cache))
 
-        try:
-            for _ in results:
-                pass
-        except RuntimeError as e:
-            json.dump({"error": e.args[0]}, sys.stdout)
-            return 1
-
-        return 0
+        for _ in results:
+            pass
 
 
-def main(items: Dict, cache: str):
-    cache = os.path.join(cache, "org.osbuild.files")
+class CurlSource(sources.SourceService):
 
-    if not items:
-        json.dump({}, sys.stdout)
-        return 0
+    def download(self, items, cache, _options):
+        cache = os.path.join(cache, "org.osbuild.files")
+        os.makedirs(cache, exist_ok=True)
 
-    os.makedirs(cache, exist_ok=True)
-    res = download(items, cache)
-    if res != 0:
-        return res
+        download(items, cache)
 
-    json.dump({}, sys.stdout)
-    return 0
+
+def main():
+    service = CurlSource.from_args(sys.argv[1:])
+    service.main()
 
 
 if __name__ == '__main__':
-    args = json.load(sys.stdin)
-    r = main(args["items"], args["cache"])
-    sys.exit(r)
+    main()

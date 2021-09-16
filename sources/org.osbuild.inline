@@ -13,13 +13,13 @@ resource is decoded and written to the store.
 
 import base64
 import contextlib
-import json
 import os
 import sys
 import tempfile
 
 from typing import Dict
 
+from osbuild import sources
 from osbuild.util.checksum import verify_file
 
 
@@ -73,33 +73,26 @@ def process(items: Dict, cache: str, tmpdir):
             f.write(data)
 
         if not verify_file(floating, checksum):
-            json.dump({"error": f"checksum mismatch: {checksum}"}, sys.stdout)
-            sys.exit(1)
+            raise RuntimeError("Checksum mismatch for {}".format(checksum))
 
         with contextlib.suppress(FileExistsError):
             os.rename(floating, target)
 
 
-def main(items: Dict, base: str):
-    cache = os.path.join(base, "org.osbuild.files")
+class InlineSource(sources.SourceService):
 
-    if not items:
-        json.dump({}, sys.stdout)
-        return 0
-
-    try:
+    def download(self, items, cache, _options):
+        cache = os.path.join(cache, "org.osbuild.files")
         os.makedirs(cache, exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix=".unverified-", dir=base) as tmpdir:
-            process(items, cache, tmpdir)
-    except Exception as e:  # pylint: disable=broad-except
-        json.dump({"error": str(e)}, sys.stdout)
-        return 0
 
-    json.dump({}, sys.stdout)
-    return 0
+        with tempfile.TemporaryDirectory(prefix=".unverified-", dir=cache) as tmpdir:
+            process(items, cache, tmpdir)
+
+
+def main():
+    service = InlineSource.from_args(sys.argv[1:])
+    service.main()
 
 
 if __name__ == '__main__':
-    source_args = json.load(sys.stdin)
-    r = main(source_args["items"], source_args["cache"])
-    sys.exit(r)
+    main()

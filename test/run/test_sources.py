@@ -17,6 +17,7 @@ import pytest
 import osbuild.objectstore
 import osbuild.meta
 import osbuild.sources
+from osbuild import host
 from .. import test
 
 
@@ -87,14 +88,15 @@ def make_test_cases():
 
 
 def check_case(source, case, store, libdir):
-    expects = case["expects"]
-    if expects == "error":
-        with pytest.raises(RuntimeError):
-            source.download(store, libdir)
-    elif expects == "success":
-        source.download(store, libdir)
-    else:
-        raise ValueError(f"invalid expectation: {expects}")
+    with host.ServiceManager() as mgr:
+        expects = case["expects"]
+        if expects == "error":
+            with pytest.raises(host.RemoteError):
+                source.download(mgr, store, libdir)
+        elif expects == "success":
+            source.download(mgr, store, libdir)
+        else:
+            raise ValueError(f"invalid expectation: {expects}")
 
 
 @pytest.fixture(name="tmpdir")

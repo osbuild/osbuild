@@ -7,13 +7,12 @@ gpg keys are provided via `gpgkeys`.
 """
 
 
-import json
 import os
 import sys
 import subprocess
 import uuid
 
-from typing import Dict
+from osbuild import sources
 
 
 SCHEMA = """
@@ -113,26 +112,19 @@ def download(items, cache):
                repo=repo_cache)
 
 
-def main(items: Dict, cache: str):
-    cache = os.path.join(cache, "org.osbuild.ostree")
+class OSTreeSource(sources.SourceService):
 
-    if not items:
-        json.dump({}, sys.stdout)
-        return 0
+    def download(self, items, cache, _options):
+        cache = os.path.join(cache, "org.osbuild.ostree")
+        os.makedirs(cache, exist_ok=True)
 
-    os.makedirs(cache, exist_ok=True)
-    try:
         download(items, cache)
-    except subprocess.CalledProcessError as e:
-        output = e.output.strip()
-        json.dump({"error": output}, sys.stdout)
-        return 1
 
-    json.dump({}, sys.stdout)
-    return 0
+
+def main():
+    service = OSTreeSource.from_args(sys.argv[1:])
+    service.main()
 
 
 if __name__ == '__main__':
-    source_args = json.load(sys.stdin)
-    r = main(source_args["items"], source_args["cache"])
-    sys.exit(r)
+    main()
