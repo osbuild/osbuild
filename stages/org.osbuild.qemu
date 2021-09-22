@@ -126,7 +126,7 @@ SCHEMA_2 = r"""
 
 def qcow2_arguments(options):
     argv = ["-c"]
-    compat = options.get("qcow2_compat")
+    compat = options.get("compat")
 
     if compat:
         argv += ["-o", f"compat={compat}"]
