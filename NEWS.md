@@ -1,3 +1,16 @@
+## CHANGES WITH 37:
+
+  * Port sources to the host service infrastructure
+  * `stages/org.osbuild.ostree.config`: add `bootloader` config option
+  * `stages/org.osbuild.sysctld`: new stage for setting kernel parameters via sysctl.d
+  * `stages/org.osbuild.pam.limits.conf`: new stage for configuring `pam_limits` module
+
+Contributions from: Achilleas Koutsou, Alexander Larsson, Christian Kellner, Diaa Sami,
+                    Martin Sehnoutka, Pierre-Yves Chibon, Sanne Raymaekers, Simon Steinbeiss,
+                    Tomas Hozza
+
+— Brno, 2021-09-22
+
 ## CHANGES WITH 36:
 
   * `stages/org.osbuild.selinux.config`: new stage for configuring SELinux on the system
