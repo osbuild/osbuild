@@ -1,5 +1,8 @@
 import abc
+import contextlib
 import os
+import json
+import tempfile
 
 from . import host
 from .objectstore import ObjectStore
@@ -21,7 +24,6 @@ class Source:
         cache = os.path.join(store.store, "sources")
 
         args = {
-            "items": self.items,
             "options": self.options,
             "cache": cache,
             "output": None,
@@ -31,9 +33,18 @@ class Source:
 
         client = mgr.start(f"source/{source}", self.info.path)
 
-        reply = client.call("download", args)
+        with self.make_items_file(store.tmp) as fd:
+            fds = [fd]
+            reply = client.call_with_fds("download", args, fds)
 
         return reply
+
+    @contextlib.contextmanager
+    def make_items_file(self, tmp):
+        with tempfile.TemporaryFile("w+", dir=tmp, encoding="utf-8") as f:
+            json.dump(self.items, f)
+            f.seek(0)
+            yield f.fileno()
 
 
 class SourceService(host.Service):
@@ -43,9 +54,12 @@ class SourceService(host.Service):
     def download(self, items, cache, options):
         pass
 
-    def dispatch(self, method: str, args, _fds):
+    def dispatch(self, method: str, args, fds):
         if method == "download":
-            r = self.download(args["items"],
+            with os.fdopen(fds.steal(0)) as f:
+                items = json.load(f)
+
+            r = self.download(items,
                               args["cache"],
                               args["options"])
             return r, None
