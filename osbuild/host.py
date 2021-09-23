@@ -250,17 +250,22 @@ class Service(abc.ABC):
                 break
 
             try:
-                reply, fds = self._handle_message(msg, fds)
+                reply, reply_fds = self._handle_message(msg, fds)
 
             except:  # pylint: disable=bare-except
-                fds = None
+                reply_fds = None
                 _, val, tb = sys.exc_info()
                 reply = self.protocol.encode_exception(val, tb)
 
+            finally:
+                fds.close()
+
             try:
-                self.sock.send(reply, fds=fds)
+                self.sock.send(reply, fds=reply_fds)
             except BrokenPipeError:
                 break
+            finally:
+                self._close_all(reply_fds)
 
     def _handle_message(self, msg, fds):
         """
@@ -277,6 +282,17 @@ class Service(abc.ABC):
         msg = self.protocol.encode_reply(ret)
 
         return msg, fds
+
+    @staticmethod
+    def _close_all(fds: Optional[List[int]]):
+        if not fds:
+            return
+
+        for fd in fds:
+            try:
+                os.close(fd)
+            except OSError as e:
+                print(f"error closing fd '{fd}': {e!s}")
 
 
 class ServiceClient:
