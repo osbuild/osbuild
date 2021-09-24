@@ -38,6 +38,7 @@ their clean up, independent of any control of osbuild.
 import abc
 import argparse
 import asyncio
+import fcntl
 import importlib
 import io
 import os
@@ -252,11 +253,17 @@ class Service(abc.ABC):
             if not msg:
                 break
 
+            reply_fds = None
             try:
                 reply, reply_fds = self._handle_message(msg, fds)
 
+                # Catch invalid file descriptors early so that
+                # we send an error reply instead of throwing
+                # an exception in `sock.send` later.
+                self._check_fds(reply_fds)
+
             except:  # pylint: disable=bare-except
-                reply_fds = None
+                reply_fds = self._close_all(reply_fds)
                 _, val, tb = sys.exc_info()
                 reply = self.protocol.encode_exception(val, tb)
 
@@ -289,13 +296,22 @@ class Service(abc.ABC):
     @staticmethod
     def _close_all(fds: Optional[List[int]]):
         if not fds:
-            return
+            return []
 
         for fd in fds:
             try:
                 os.close(fd)
             except OSError as e:
                 print(f"error closing fd '{fd}': {e!s}")
+        return []
+
+    @staticmethod
+    def _check_fds(fds: Optional[List[int]]):
+        if not fds:
+            return
+
+        for fd in fds:
+            fcntl.fcntl(fd, fcntl.F_GETFD)
 
 
 class ServiceClient:
