@@ -78,6 +78,9 @@ class ServiceProtocol:
 
     @staticmethod
     def decode_message(msg: Dict) -> Tuple[str, Dict]:
+        if not msg:
+            raise ProtocolError("message empty")
+
         t = msg.get("type")
         if not t:
             raise ProtocolError("'type' field missing")
