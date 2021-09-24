@@ -1,3 +1,15 @@
+## CHANGES WITH 38:
+
+  * host services: make file descriptor passing more robust by checking the fds
+    before sending them.
+
+  * sources: fix a bug introduced in osbuild 37, where osbuild would fail to communicated with
+    the sources host service for certain manifests with very large lists of items
+
+Contributions from: Christian Kellner, Pierre-Yves Chibon
+
+— Vienna, 2021-09-24
+
 ## CHANGES WITH 37:
 
   * Port sources to the host service infrastructure
