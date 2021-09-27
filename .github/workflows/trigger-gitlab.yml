@@ -17,22 +17,31 @@ jobs:
       - name: Report status
         uses: haya14busa/action-workflow_run-status@v1
 
+      - name: Install Dependencies
+        run: |
+          sudo apt install -y jq
+
       - name: Clone repository
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      # If the parent workflow belongs to a PR, create a new PR-# branch
-      - name: Checkout branch (PR)
-        if: ${{ github.event.workflow_run.pull_requests[0] != null }}
-        run: |
-          git checkout -b PR-${{ github.event.workflow_run.pull_requests[0].number }}
+      - uses: octokit/request-action@v2.x
+        id: fetch_pulls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          route: GET /repos/${{ github.repository }}/pulls
 
-      - name: Checkout branch (branch)
-        if: ${{ github.event.workflow_run.pull_requests[0] == null }}
+      - name: Checkout branch
         run: |
-          git checkout ${{ github.event.workflow_run.head_branch }}
+          PR=$(echo '${{ steps.fetch_pulls.outputs.data }}' | jq -rc '.[] | select(.head.sha | contains("${{ github.event.workflow_run.head_sha }}")) | select(.state | contains("open"))' | jq -r .number)
+          if [ ! -z "$PR" ]; then
+            git checkout -b PR-$PR
+          else
+            git checkout ${{ github.event.workflow_run.head_branch }}
+          fi
 
       - name: Push to gitlab
         run: |
