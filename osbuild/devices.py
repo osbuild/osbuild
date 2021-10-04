@@ -15,8 +15,9 @@ support in osbuild itself is abstract.
 import abc
 import hashlib
 import json
+import os
 
-from typing import Dict
+from typing import Dict, Optional
 
 from osbuild import host
 
@@ -57,12 +58,20 @@ class DeviceManager:
         self.tree = tree
         self.devices = {}
 
+    def device_relpath(self, dev: Optional[Device]) -> Optional[str]:
+        if dev is None:
+            return None
+        return self.devices[dev.name]["path"]
+
+    def device_abspath(self, dev: Optional[Device]) -> Optional[str]:
+        relpath = self.device_relpath(dev)
+        if relpath is None:
+            return None
+        return os.path.join(self.devpath, relpath)
+
     def open(self, dev: Device) -> Dict:
 
-        if dev.parent:
-            parent = self.devices[dev.parent.name]["path"]
-        else:
-            parent = None
+        parent = self.device_relpath(dev.parent)
 
         args = {
             # global options
