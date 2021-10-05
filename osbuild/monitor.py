@@ -289,6 +289,43 @@ class LogMonitor(BaseMonitor):
         self.out.write(message)
 
 
+class JSONProgressMonitor(BaseMonitor):
+    """Monitor that prints the log output of modules wrapped in a JSON object with context and progress metadata"""
+
+    def __init__(self, fd: int, manifest: osbuild.Manifest):
+        super().__init__(fd)
+        self._ctx_ids: Set[str] = set()
+        self._progress = Progress("pipelines", len(manifest.pipelines))
+        self._context = Context(origin="org.osbuild")
+
+    def result(self, result):
+        pass
+
+    def begin(self, pipeline: osbuild.Pipeline):
+        self._context.pipeline(pipeline)
+        self._progress.sub_progress(Progress("stages", len(pipeline.stages)))
+        self._progress.incr()
+
+    def stage(self, stage: osbuild.Stage):
+        self._context.stage(stage)
+        self._progress.incr(depth=1)
+
+    def assembler(self, assembler):
+        self.module(assembler)
+
+    def module(self, module):
+        self.stage(module)
+
+    def log(self, message, origin: Optional[str] = None):
+        oo = self._context.origin
+        if origin is not None:
+            self._context.origin = origin
+        line = LogLine(message=message, context=self._context, progress=self._progress)
+        json.dump(line.as_dict(), self.out)
+        self.out.write("\n")
+        self._context.origin = oo
+
+
 def make(name, fd):
     module = sys.modules[__name__]
     monitor = getattr(module, name, None)
