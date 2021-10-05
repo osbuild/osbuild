@@ -198,6 +198,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         if not self._exitstack:
             raise RuntimeError("No active context")
 
+        stage_name = os.path.basename(argv[0])
         mounts = []
 
         # Import directories from the caller-provided root.
@@ -335,6 +336,8 @@ class BuildRoot(contextlib.AbstractContextManager):
         READ_ONLY = select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR
         poller = select.poll()
         poller.register(proc.stdout.fileno(), READ_ONLY)
+
+        stage_origin = "stages/" + stage_name
         while True:
             buf = self.read_with_timeout(proc, poller, start, timeout)
             if not buf:
@@ -342,12 +345,12 @@ class BuildRoot(contextlib.AbstractContextManager):
 
             txt = buf.decode("utf-8")
             data.write(txt)
-            monitor.log(txt)
+            monitor.log(txt, origin=stage_origin)
 
         poller.unregister(proc.stdout.fileno())
         buf, _ = proc.communicate()
         txt = buf.decode("utf-8")
-        monitor.log(txt)
+        monitor.log(txt, origin=stage_origin)
         data.write(txt)
         output = data.getvalue()
         data.close()
