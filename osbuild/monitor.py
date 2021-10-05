@@ -10,14 +10,160 @@ are called on the monitor object at certain events. Consult the
 
 import abc
 import datetime
+import hashlib
 import json
 import os
 import sys
 import time
-from typing import Dict
+from typing import Dict, Optional, Set
 
 import osbuild
 from osbuild.util.term import fmt as vt
+
+
+class Context:
+    """Context for a single log line. Automatically calculates hash/id when read."""
+
+    def __init__(self,
+                 origin: Optional[str] = None,
+                 pipeline: Optional[osbuild.Pipeline] = None,
+                 stage: Optional[osbuild.Stage] = None):
+        self._origin = origin
+        self._pipeline_name = pipeline.name if pipeline else None
+        self._pipeline_id = pipeline.id if pipeline else None
+        self._stage_name = stage.name if stage else None
+        self._stage_id = stage.id if stage else None
+        self._id = None
+        self._id_history: Set[str] = set()
+
+    @property
+    def origin(self):
+        return self._origin
+
+    @origin.setter
+    def origin(self, origin: str):
+        self._id = None
+        self._origin = origin
+
+    @property
+    def pipeline_name(self):
+        return self._pipeline_name
+
+    @property
+    def pipeline_id(self):
+        return self._pipeline_id
+
+    def pipeline(self, pipeline: osbuild.Pipeline):
+        self._id = None
+        self._pipeline_name = pipeline.name
+        self._pipeline_id = pipeline.id
+
+    @property
+    def stage_name(self):
+        return self._stage_name
+
+    @property
+    def stage_id(self):
+        return self._stage_id
+
+    def stage(self, stage: osbuild.Stage):
+        self._id = None
+        self._stage_name = stage.name
+        self._stage_id = stage.id
+
+    @property
+    def id(self):
+        if self._id is None:
+            self._id = hashlib.sha256(json.dumps(self._dict()).encode()).hexdigest()
+        return self._id
+
+    def _dict(self):
+        return {
+            "origin": self._origin,
+            "pipeline": {
+                "name": self._pipeline_name,
+                "id": self._pipeline_id,
+                "stage": {
+                    "name": self._stage_name,
+                    "id": self._stage_id,
+                },
+            },
+        }
+
+    def as_dict(self):
+        d = self._dict()
+        ctxid = self.id
+        if ctxid in self._id_history:
+            return {"id": self.id}
+        d["id"] = self.id
+        self._id_history.add(self.id)
+        return d
+
+
+class Progress:
+    def __init__(self, name: str, total: int, unit: Optional[str] = None):
+        self.name = name
+        self.total = total
+        self.unit = unit
+        self.done = None
+        self._sub_progress: Optional[Progress] = None
+
+    def incr(self, depth=0):
+        if depth > 0:
+            self._sub_progress.incr(depth - 1)
+        else:
+            if self.done is None:
+                self.done = 0
+            else:
+                self.done += 1
+            if self._sub_progress:
+                self._sub_progress.reset()
+
+    def reset(self):
+        self.done = None
+        if self._sub_progress:
+            self._sub_progress.reset()
+
+    def sub_progress(self, prog: "Progress"):
+        self._sub_progress = prog
+
+    def as_dict(self):
+        d = {
+            "name": self.name,
+            "total": self.total,
+            "done": self.done,
+            "unit": self.unit,
+        }
+        if self._sub_progress:
+            d["progress"] = self._sub_progress.as_dict()
+        return d
+
+
+class LogLine:
+    """A single JSON serializable log line
+
+    Create a single log line with a given message, error message, context, and progress objects.
+    All arguments are optional. A timestamp is added to the dictionary when calling the 'as_dict()' method.
+    """
+
+    def __init__(self, *,
+                 message: Optional[str] = None,
+                 error: Optional[str] = None,
+                 context: Optional[Context] = None,
+                 progress: Optional[Progress] = None):
+        self.message = message
+        self.error = error
+        self.context = context
+        self.progress = progress
+
+    def as_dict(self):
+        return {
+            "message": self.message,
+            "error": self.error,
+            "context": self.context.as_dict(),
+            "progress": self.progress.as_dict(),
+            "timestamp": time.time(),
+        }
 
 
 class TextWriter:
