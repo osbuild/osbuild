@@ -87,6 +87,10 @@ def parse_arguments(sys_argv: List[str]) -> argparse.Namespace:
                         help="object to export, can be passed multiple times")
     parser.add_argument("--json", action="store_true",
                         help="output results in JSON format")
+    parser.add_argument("--json-mode", metavar="MODE", type=str, default="batch",
+                        help=("output mode for JSON format; "
+                              "'batch' (default if unspecified) mode prints all the results when the build ends "
+                              "'progress' prints status updates while building with each line being a JSON object"))
     parser.add_argument("--output-directory", metavar="DIRECTORY", type=os.path.abspath,
                         help="directory where result objects are stored")
     parser.add_argument("--inspect", action="store_true",
@@ -163,7 +167,19 @@ def osbuild_cli() -> int:
     monitor_name = args.monitor
     if not monitor_name:
         monitor_name = "NullMonitor" if args.json else "LogMonitor"
-    monitor = osbuild.monitor.make(monitor_name, args.monitor_fd)
+
+    outfd = sys.stdout.fileno()
+    if args.json:
+        if args.json_mode == "progress":
+            monitor = osbuild.monitor.JSONProgressMonitor(outfd, manifest)
+            monitor.log("start", origin="org.osbuild.main")
+        elif args.json_mode == "batch":
+            monitor = osbuild.monitor.NullMonitor(outfd)
+        else:
+            print(f"unknown json mode {args.json_mode}")
+            return 1
+    else:
+        monitor = osbuild.monitor.make(monitor_name, args.monitor_fd)
 
     try:
         with ObjectStore(args.store) as object_store:
@@ -191,9 +207,10 @@ def osbuild_cli() -> int:
                     export(pid, output_directory, object_store, manifest)
 
             if args.json:
-                r = fmt.output(manifest, r, object_store)
-                json.dump(r, sys.stdout)
-                sys.stdout.write("\n")
+                if args.json_mode == "batch":
+                    r = fmt.output(manifest, r, object_store)
+                    json.dump(r, sys.stdout)
+                    sys.stdout.write("\n")
             else:
                 if r["success"]:
                     for name, pl in manifest.pipelines.items():
