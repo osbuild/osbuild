@@ -216,7 +216,7 @@ class BaseMonitor(abc.ABC):
     def result(self, result: osbuild.pipeline.BuildResult):
         """Called when a module (stage/assembler) is done with its result"""
 
-    def log(self, message: str):
+    def log(self, message: str, origin: Optional[str] = None):
         """Called for all module log outputs"""
 
 
@@ -285,7 +285,7 @@ class LogMonitor(BaseMonitor):
 
         self.timer_start = time.time()
 
-    def log(self, message):
+    def log(self, message, origin: Optional[str] = None):
         self.out.write(message)
 
 
