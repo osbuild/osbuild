@@ -219,11 +219,11 @@ class NullMonitor(BaseMonitor):
 
 
 class LogMonitor(BaseMonitor):
-    """Monitor that follows show the log output of modules
+    """Monitor that follows the log output of modules
 
     This monitor will print a header with `name: id` followed
     by the options for each module as it is being built. The
-    full log messages of the modules will be print as soon as
+    full log messages of the modules will be printed as soon as
     they become available.
     The constructor argument `fd` is a file descriptor, where
     the log will get written to. If `fd`  is a `TTY`, escape
