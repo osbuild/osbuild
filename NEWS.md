@@ -1,3 +1,13 @@
+## CHANGES WITH 39:
+
+  * document osbuild and selinux integration
+  * improvements to the CI
+
+Contributions from: Achilleas Koutsou, Christian Kellner, Sanne Raymaekers,
+                    Tomas Hozza
+
+— Grenoble, 2021-10-06
+
 ## CHANGES WITH 38:
 
   * host services: make file descriptor passing more robust by checking the fds
