@@ -17,6 +17,10 @@ of the pipeline description, and more.
  * **Bug Tracker**: <https://github.com/osbuild/osbuild/issues>
  * **IRC**: #osbuild on [Libera.Chat](https://libera.chat/)
 
+#### Contributing
+
+Please refer to the [developer guide](https://www.osbuild.org/guides/developer-guide/developer-guide.html) to learn about our workflow, code style and more.
+
 ### Requirements
 
 The requirements for this project are:
