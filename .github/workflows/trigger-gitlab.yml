@@ -36,7 +36,13 @@ jobs:
 
       - name: Checkout branch
         run: |
-          PR=$(echo '${{ steps.fetch_pulls.outputs.data }}' | jq -rc '.[] | select(.head.sha | contains("${{ github.event.workflow_run.head_sha }}")) | select(.state | contains("open"))' | jq -r .number)
+          PR_DATA=$(mktemp)
+          # use uuid as a file terminator to avoid conflicts with data content
+          cat > "$PR_DATA" <<a21b3e7f-d5eb-44a3-8be0-c2412851d2e6
+          ${{ steps.fetch_pulls.outputs.data }}
+          a21b3e7f-d5eb-44a3-8be0-c2412851d2e6
+
+          PR=$(jq -rc '.[] | select(.head.sha | contains("${{ github.event.workflow_run.head_sha }}")) | select(.state | contains("open"))' "$PR_DATA" | jq -r .number)
           if [ ! -z "$PR" ]; then
             git checkout -b PR-$PR
           else
