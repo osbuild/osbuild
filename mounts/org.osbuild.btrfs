@@ -33,7 +33,7 @@ SCHEMA_2 = """
 """
 
 
-class BtrfsMount(mounts.MountService):
+class BtrfsMount(mounts.FileSystemMountService):
 
     def translate_options(self, _options: Dict):
         return ["-t", "btrfs"]

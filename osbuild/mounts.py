@@ -87,6 +87,28 @@ class MountManager:
 class MountService(host.Service):
     """Mount host service"""
 
+    @abc.abstractmethod
+    def mount(self, args: Dict):
+        """Mount a device"""
+
+    @abc.abstractmethod
+    def umount(self):
+        """Unmount all mounted resources"""
+
+    def stop(self):
+        self.umount()
+
+    def dispatch(self, method: str, args, _fds):
+        if method == "mount":
+            r = self.mount(args)
+            return r, None
+
+        raise host.ProtocolError("Unknown method")
+
+
+class FileSystemMountService(MountService):
+    """Specialized mount host service for file system mounts"""
+
     def __init__(self, args):
         super().__init__(args)
 
@@ -97,7 +119,12 @@ class MountService(host.Service):
     def translate_options(self, options: Dict):
         return []
 
-    def mount(self, source: str, root: str, target: str, options: Dict):
+    def mount(self, args: Dict):
+
+        source = args["source"]
+        target = args["target"]
+        root = args["root"]
+        options = args["options"]
 
         mountpoint = os.path.join(root, target.lstrip("/"))
         args = self.translate_options(options)
@@ -132,16 +159,3 @@ class MountService(host.Service):
     def sync(self):
         subprocess.run(["sync", "-f", self.mountpoint],
                        check=self.check)
-
-    def stop(self):
-        self.umount()
-
-    def dispatch(self, method: str, args, _fds):
-        if method == "mount":
-            r = self.mount(args["source"],
-                           args["root"],
-                           args["target"],
-                           args["options"])
-            return r, None
-
-        raise host.ProtocolError("Unknown method")

@@ -33,7 +33,7 @@ SCHEMA_2 = """
 """
 
 
-class XfsMount(mounts.MountService):
+class XfsMount(mounts.FileSystemMountService):
 
     def translate_options(self, _options: Dict):
         return ["-t", "vfat"]
