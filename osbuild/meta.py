@@ -331,6 +331,10 @@ class ModuleInfo:
                 type_id: {"enum": [self.name]},
                 **opts,
             }
+            if "mounts" not in schema["properties"]:
+                schema["properties"]["mounts"] = {
+                    "type": "array"
+                }
             schema["required"] = [type_id]
         elif self.type in ("Device"):
             schema["additionalProperties"] = True
