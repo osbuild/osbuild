@@ -74,6 +74,11 @@ class MountManager:
         client = mgr.start(f"mount/{mount.name}", mount.info.path)
         path = client.call("mount", args)
 
+        if not path:
+            res = {}
+            self.mounts[mount.name] = res
+            return res
+
         if not path.startswith(self.root):
             raise RuntimeError(f"returned path '{path}' has wrong prefix")
 
