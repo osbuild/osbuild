@@ -71,7 +71,7 @@
     "mount": {
       "title": "Mount point for a stage",
       "additionalProperties": false,
-      "required": ["name", "type", "source", "target"],
+      "required": ["name", "type"],
       "properties": {
         "name": { "type": "string" },
         "type": { "type": "string" },
