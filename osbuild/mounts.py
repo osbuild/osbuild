@@ -63,8 +63,10 @@ class MountManager:
 
         args = {
             "source": source,
-            "root": self.root,
             "target": mount.target,
+
+            "root": self.root,
+            "tree": self.devices.tree,
 
             "options": mount.options,
         }
