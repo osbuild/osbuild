@@ -199,6 +199,7 @@ def core_mkimage(platform: str, prefix: str, options: Dict,):
     pt_label = options["partlabel"]
     fs_type = options["filesystem"]
 
+    os.makedirs("/var/tmp", exist_ok=True)
     core_path = "/var/tmp/grub2-core.img"
 
     # Create the level-2 & 3 stages of the bootloader, aka the core
