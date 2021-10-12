@@ -8,6 +8,7 @@ import json
 import os
 import pprint
 import shutil
+import subprocess
 import tarfile
 import tempfile
 import unittest
@@ -16,6 +17,22 @@ from typing import Dict
 from osbuild.util import selinux
 from .. import initrd
 from .. import test
+
+
+def have_sfdisk_with_json():
+    r = subprocess.run(["sfdisk", "--version"],
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE,
+                       encoding="utf-8",
+                       check=False)
+
+    if r.returncode != 0:
+        return False
+
+    data = r.stdout.strip()
+    vstr = data.split(" ")[-1]
+    ver = list(map(int, vstr.split(".")))
+    return ver[0] >= 2 and ver[1] >= 27
 
 
 def find_stage(result, stageid):
@@ -281,6 +298,57 @@ class TestStages(test.TestBase):
                 # since the `root-node` option is specified
                 dot_slash = list(filter(lambda x: x.startswith("./"), names))
                 assert not dot_slash
+
+            # cache the downloaded data for the files source
+            osb.copy_source_data(self.store, "org.osbuild.files")
+
+    @unittest.skipUnless(have_sfdisk_with_json(), "Need sfdisk with JSON support")
+    def test_parted(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "parted")
+
+        imgname = "disk.img"
+
+        with open(os.path.join(testdir, "parted.json"), "r") as f:
+            manifest = f.read()
+
+        with open(os.path.join(testdir, f"{imgname}.json"), "r") as f:
+            want = json.load(f)
+
+        with self.osbuild as osb:
+            treeid = osb.treeid_from_manifest(manifest)
+
+            osb.compile(manifest, checkpoints=["tree"])
+
+            ctx = osb.map_object(treeid)
+            with ctx as tree:
+                target = os.path.join(tree, imgname)
+
+                assert os.path.exists(target)
+
+                r = subprocess.run(["sfdisk", "--json", target],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   encoding="utf-8",
+                                   check=False)
+
+                have = json.loads(r.stdout)
+
+            table = have["partitiontable"]
+
+            # remove entries that are not stable across `parted`
+            # invocations: "device", "id" and uuids in general
+            if "device" in table:
+                del table["device"]
+            if "id" in table:
+                del table["id"]
+
+            for p in table["partitions"]:
+                if "uuid" in p:
+                    del p["uuid"]
+                p["node"] = os.path.basename(p["node"])
+
+            self.assertEqual(have, want)
 
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")
