@@ -4,8 +4,8 @@ set -euxo pipefail
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
-# Currently: ostree: change the URL for OC client temporarily
-OSBUILD_COMPOSER_COMMIT=ece191f73e319bbcc885bcc983fb0e6cefe6014a
+# Currently: tests/regression: skip satellite regression test on subscribed RHEl
+OSBUILD_COMPOSER_COMMIT=c38ebb16431be3df782862c6b0e9b611a50b2350
 
 # Get OS details.
 source /etc/os-release
