@@ -16,6 +16,7 @@ of the pipeline description, and more.
  * **Website**: <https://www.osbuild.org>
  * **Bug Tracker**: <https://github.com/osbuild/osbuild/issues>
  * **IRC**: #osbuild on [Libera.Chat](https://libera.chat/)
+ * **Changelog**: <https://github.com/osbuild/osbuild/releases>
 
 #### Contributing
 
