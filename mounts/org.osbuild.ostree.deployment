@@ -1,0 +1,122 @@
+#!/usr/bin/python3
+"""
+OSTree deployment mount service
+
+This mount service will setup all needed bind mounts so
+that a given `tree` will look like an active OSTree
+deployment, very much as OSTree does during early boot.
+
+More specifically it will:
+  - setup the sysroot bindmount to the deployment
+  - setup the shared var directory
+  - bind the boot directory into the deployment
+
+Host commands used: mount
+"""
+
+import os
+import sys
+import subprocess
+from typing import Dict
+
+from osbuild import mounts
+from osbuild.util import ostree
+
+
+SCHEMA_2 = """
+"additionalProperties": false,
+"required": ["name", "type"],
+"properties": {
+  "name": { "type": "string" },
+  "type": { "type": "string" },
+  "options": {
+    "type": "object",
+    "required": ["deployment"],
+    "properties": {
+      "deployment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["osname", "ref"],
+        "properties": {
+          "osname": {
+            "description": "Name of the stateroot to be used in the deployment",
+            "type": "string"
+          },
+          "ref": {
+            "description": "OStree ref to create and use for deployment",
+            "type": "string"
+          },
+          "serial": {
+            "description": "The deployment serial (usually '0')",
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+class OSTreeDeploymentMount(mounts.MountService):
+
+    @staticmethod
+    def bind_mount(source, target):
+        subprocess.run([
+            "mount", "--bind", "--make-private", source, target,
+        ], check=True)
+
+    def mount(self, args: Dict):
+
+        tree = args["tree"]
+        options = args["options"]
+
+        deployment = options["deployment"]
+        osname = deployment["osname"]
+        ref = deployment["ref"]
+        serial = deployment.get("serial", 0)
+
+        root = ostree.deployment_path(tree, osname, ref, serial)
+
+        print(f"Deployment root at '{os.path.relpath(root, tree)}'")
+
+        var = os.path.join(tree, "ostree", "deploy", osname, "var")
+        boot = os.path.join(tree, "boot")
+
+        self.mountpoint = root
+        self.bind_mount(root, root)  # prepare to move it later
+
+        self.bind_mount(tree, os.path.join(root, "sysroot"))
+        self.bind_mount(var, os.path.join(root, "var"))
+        self.bind_mount(boot, os.path.join(root, "boot"))
+
+        subprocess.run([
+            "mount", "--move", root, tree,
+        ], check=True)
+
+        self.mountpoint = tree
+        self.check = True
+
+        return None
+
+    def umount(self):
+
+        if not self.mountpoint:
+            return
+
+        subprocess.run(["sync", "-f", self.mountpoint],
+                       check=self.check)
+
+        subprocess.run(["umount", "-R", self.mountpoint],
+                       check=self.check)
+        self.mountpoint = None
+
+
+def main():
+    service = OSTreeDeploymentMount.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()
