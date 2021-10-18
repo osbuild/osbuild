@@ -48,7 +48,8 @@ def test_loopback_basic(tmpdir):
     dev = devices.Device("loop", info, None, options)
 
     with host.ServiceManager() as mgr:
-        reply = dev.open(mgr, devpath, None, tree)
+        devmgr = devices.DeviceManager(mgr, devpath, tree)
+        reply = devmgr.open(dev)
         assert reply
         assert reply["path"]
 
