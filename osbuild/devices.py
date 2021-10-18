@@ -44,21 +44,43 @@ class Device:
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def open(self, mgr: host.ServiceManager, dev: str, parent: str, tree: str) -> Dict:
+
+class DeviceManager:
+    """Manager for Devices
+
+    Uses a `host.ServiceManager` to open `Device` instances.
+    """
+
+    def __init__(self, mgr: host.ServiceManager, devpath: str, tree: str) -> Dict:
+        self.service_manager = mgr
+        self.devpath = devpath
+        self.tree = tree
+        self.devices = {}
+
+    def open(self, dev: Device) -> Dict:
+
+        if dev.parent:
+            parent = self.devices[dev.parent.name]["path"]
+        else:
+            parent = None
+
         args = {
             # global options
-            "dev": dev,
-            "tree": tree,
+            "dev": self.devpath,
+            "tree": self.tree,
 
             "parent": parent,
 
             # per device options
-            "options": self.options,
+            "options": dev.options,
         }
 
-        client = mgr.start(f"device/{self.name}", self.info.path)
+        mgr = self.service_manager
+
+        client = mgr.start(f"device/{dev.name}", dev.info.path)
         res = client.call("open", args)
 
+        self.devices[dev.name] = res
         return res
 
 

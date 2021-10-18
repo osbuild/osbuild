@@ -10,7 +10,7 @@ from . import buildroot
 from . import host
 from . import objectstore
 from . import remoteloop
-from .devices import Device
+from .devices import Device, DeviceManager
 from .inputs import Input
 from .mounts import Mount
 from .sources import Source
@@ -164,12 +164,9 @@ class Stage:
                 data = ip.map(mgr, storeapi, inputs_tmpdir)
                 inputs[key] = data
 
-            for key, dev in self.devices.items():
-                parent = None
-                if dev.parent:
-                    parent = devices[dev.parent.name]["path"]
-                reply = dev.open(mgr, build_root.dev, parent, tree)
-                devices[key] = reply
+            devmgr = DeviceManager(mgr, build_root.dev, tree)
+            for name, dev in self.devices.items():
+                devices[name] = devmgr.open(dev)
 
             for key, mount in self.mounts.items():
                 relpath = devices[mount.device.name]["path"]
