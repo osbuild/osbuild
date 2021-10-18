@@ -12,7 +12,7 @@ from . import objectstore
 from . import remoteloop
 from .devices import Device, DeviceManager
 from .inputs import Input
-from .mounts import Mount
+from .mounts import Mount, MountManager
 from .sources import Source
 from .util import osrelease
 
@@ -168,10 +168,9 @@ class Stage:
             for name, dev in self.devices.items():
                 devices[name] = devmgr.open(dev)
 
+            mntmgr = MountManager(devmgr, mounts_tmpdir)
             for key, mount in self.mounts.items():
-                relpath = devices[mount.device.name]["path"]
-                abspath = os.path.join(build_root.dev, relpath)
-                data = mount.mount(mgr, abspath, mounts_tmpdir)
+                data = mntmgr.mount(mount)
                 mounts[key] = data
 
             self.prepare_arguments(args, args_path)

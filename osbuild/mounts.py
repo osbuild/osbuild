@@ -13,9 +13,10 @@ import json
 import os
 import subprocess
 
-from typing import Dict, Tuple
+from typing import Dict
 
 from osbuild import host
+from osbuild.devices import DeviceManager
 
 
 class Mount:
@@ -39,23 +40,45 @@ class Mount:
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def mount(self, mgr: host.ServiceManager, dev: str, root: str) -> Tuple[Dict]:
+
+class MountManager:
+    """Manager for Mounts
+
+    Uses a `host.ServiceManager` to activate `Mount` instances.
+    Takes a `DeviceManager` to access devices and a directory
+    called `root`, which is the root of all the specified mount
+    points.
+    """
+
+    def __init__(self, devices: DeviceManager, root: str) -> None:
+        self.devices = devices
+        self.root = root
+        self.mounts = {}
+
+    def mount(self, mount: Mount) -> Dict:
+
+        source = self.devices.device_abspath(mount.device)
 
         args = {
-            "source": dev,
-            "root": root,
-            "target": self.target,
+            "source": source,
+            "root": self.root,
+            "target": mount.target,
 
-            "options": self.options,
+            "options": mount.options,
         }
 
-        client = mgr.start(f"mount/{self.name}", self.info.path)
+        mgr = self.devices.service_manager
+
+        client = mgr.start(f"mount/{mount.name}", mount.info.path)
         path = client.call("mount", args)
 
-        if not path.startswith(root):
+        if not path.startswith(self.root):
             raise RuntimeError(f"returned path '{path}' has wrong prefix")
 
-        path = os.path.relpath(path, root)
+        path = os.path.relpath(path, self.root)
+
+        self.mounts[mount.name] = path
+
         return {"path": path}
 
 
