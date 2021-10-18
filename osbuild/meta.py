@@ -332,12 +332,18 @@ class ModuleInfo:
                 **opts,
             }
             schema["required"] = [type_id]
-        elif self.type in ("Device", "Mount"):
+        elif self.type in ("Device"):
             schema["additionalProperties"] = True
             opts = self._load_opts(version, "1")
             schema["properties"] = {
                 "type": {"enum": [self.name]},
                 "options": opts
+            }
+        elif self.type in ("Mount"):
+            opts = self._load_opts("2")
+            schema.update(opts)
+            schema["properties"]["type"] = {
+                "enum": [self.name],
             }
         else:
             opts = self._load_opts(version, "1")

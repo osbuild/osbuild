@@ -15,8 +15,23 @@ from typing import Dict
 from osbuild import mounts
 
 
-SCHEMA = """
-"additionalProperties": false
+SCHEMA_2 = """
+"additionalProperties": false,
+"required": ["name", "type", "source", "target"],
+"properties": {
+  "name": { "type": "string" },
+  "type": { "type": "string" },
+  "source": {
+    "type": "string"
+  },
+  "target": {
+    "type": "string"
+  },
+  "options": {
+    "type": "object",
+    "additionalProperties": true
+  }
+}
 """
 
 
