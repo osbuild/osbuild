@@ -514,23 +514,23 @@ class Image:
 
 class ManifestFile:
     @staticmethod
-    def load(path, overrides):
+    def load(path, overrides, default_vars):
         with open(path) as f:
-            return ManifestFile.load_from_fd(f, path, overrides)
+            return ManifestFile.load_from_fd(f, path, overrides, default_vars)
 
     @staticmethod
-    def load_from_fd(f, path, overrides):
+    def load_from_fd(f, path, overrides, default_vars):
         # We use OrderedDict to preserve key order (for python < 3.6)
         data = json.load(f, object_pairs_hook=collections.OrderedDict)
 
         version = int(data.get("version", "1"))
         if version == 1:
-            return ManifestFileV1(path, overrides, data)
+            return ManifestFileV1(path, overrides, default_vars, data)
         if version == 2:
-            return ManifestFileV2(path, overrides, data)
+            return ManifestFileV2(path, overrides, default_vars, data)
         raise ValueError(f"Unknown manfest version {version}")
 
-    def __init__(self, path, overrides, root, version):
+    def __init__(self, path, overrides, default_vars, root, version):
         self.path = pathlib.Path(path)
         self.basedir = self.path.parent
         self.root = root
@@ -538,7 +538,7 @@ class ManifestFile:
         self.sources = element_enter(self.root, "sources", {})
         self.source_urls = {}
 
-        self.vars = {}
+        self.vars = default_vars.copy()
         self.overrides = overrides
         self.init_vars()
 
@@ -594,7 +594,7 @@ class ManifestFile:
             with contextlib.suppress(FileNotFoundError):
                 fullpath = os.path.join(p, path)
                 with open(fullpath, "r") as f:
-                    return ManifestFile.load_from_fd(f, path, self.overrides)
+                    return ManifestFile.load_from_fd(f, path, self.overrides, self.vars)
 
         raise FileNotFoundError(f"Could not find manifest '{path}'")
 
@@ -741,8 +741,8 @@ class ManifestFile:
 
 
 class ManifestFileV1(ManifestFile):
-    def __init__(self, path, overrides, data):
-        super().__init__(path, overrides, data, 1)
+    def __init__(self, path, overrides, default_vars, data):
+        super().__init__(path, overrides, default_vars, data, 1)
         self.pipeline = element_enter(self.root, "pipeline", {})
 
         files = element_enter(self.sources, "org.osbuild.files", {})
@@ -825,8 +825,8 @@ class ManifestFileV1(ManifestFile):
 
 
 class ManifestFileV2(ManifestFile):
-    def __init__(self, path, overrides, data):
-        super().__init__(path, overrides, data, 2)
+    def __init__(self, path, overrides, default_vars, data):
+        super().__init__(path, overrides, default_vars, data, 2)
         self.pipelines = element_enter(self.root, "pipelines", {})
 
         files = element_enter(self.sources, "org.osbuild.curl", {})
@@ -940,6 +940,9 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
 
+    defaults = {
+    }
+
     # Override variables from the main of imported files
     overrides = {}
     for arg in args.vars:
@@ -951,7 +954,7 @@ def main():
             value = True
         overrides[key] = value
 
-    m = ManifestFile.load(args.src, overrides)
+    m = ManifestFile.load(args.src, overrides, defaults)
 
     # First resolve all imports
     m.process_imports(args.searchdirs)
