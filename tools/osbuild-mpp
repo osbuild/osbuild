@@ -175,6 +175,7 @@ import tempfile
 import urllib.parse
 from typing import Dict, Optional
 
+import rpm
 import dnf
 import hawkey
 
@@ -941,6 +942,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     defaults = {
+        "arch": rpm.expandMacro("%{_arch}")
     }
 
     # Override variables from the main of imported files
