@@ -675,14 +675,23 @@ class ManifestFile:
         def _is_format(node):
             if not isinstance(node, dict):
                 return False
-            if "mpp-eval" in node:
-                return True
+            for m in ("mpp-eval", "mpp-join"):
+                if m in node:
+                    return True
             for m in ("int", "string", "json"):
                 if f"mpp-format-{m}" in node:
                     return True
             return False
 
         def _eval_format(node, local_vars):
+            if "mpp-join" in node:
+                to_merge_list = node["mpp-join"]
+                self._process_format(to_merge_list)
+                res = []
+                for to_merge in to_merge_list:
+                    res.extend(to_merge)
+                return res
+
             if "mpp-eval" in node:
                 code = node["mpp-eval"]
 
