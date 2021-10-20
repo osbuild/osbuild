@@ -160,8 +160,11 @@ Example:
 
 
 import argparse
+import base64
+import binascii
 import collections
 import contextlib
+import hashlib
 import json
 import os
 import pathlib
@@ -511,23 +514,23 @@ class Image:
 
 class ManifestFile:
     @staticmethod
-    def load(path):
+    def load(path, user_vars=None):
         with open(path) as f:
-            return ManifestFile.load_from_fd(f, path)
+            return ManifestFile.load_from_fd(f, path, user_vars=user_vars)
 
     @staticmethod
-    def load_from_fd(f, path):
+    def load_from_fd(f, path, user_vars=None):
         # We use OrderedDict to preserve key order (for python < 3.6)
         data = json.load(f, object_pairs_hook=collections.OrderedDict)
 
         version = int(data.get("version", "1"))
         if version == 1:
-            return ManifestFileV1(path, data)
+            return ManifestFileV1(path, data, user_vars=user_vars)
         if version == 2:
-            return ManifestFileV2(path, data)
+            return ManifestFileV2(path, data, user_vars=user_vars)
         raise ValueError(f"Unknown manfest version {version}")
 
-    def __init__(self, path, root, version):
+    def __init__(self, path, root, version, user_vars=None):
         self.path = pathlib.Path(path)
         self.basedir = self.path.parent
         self.root = root
@@ -536,7 +539,7 @@ class ManifestFile:
         self.source_urls = {}
 
         self.vars = {}
-        self.init_vars()
+        self.init_vars(user_vars)
 
     def get_mpp_node(self, parent: Dict, name: str) -> Optional[Dict]:
         name = "mpp-" + name
@@ -549,11 +552,15 @@ class ManifestFile:
 
         return self.substitute_vars(desc)
 
-    def init_vars(self):
+    def init_vars(self, user_vars=None):
         variables = self.get_mpp_node(self.root, "vars")
 
         if not variables:
             return
+
+        if user_vars:
+            for user_var_name, user_var_value in user_vars.items():
+                variables[user_var_name] = self.eval_user_var(user_var_value)
 
         for k, v in variables.items():
             fakeroot = [v]
@@ -561,15 +568,45 @@ class ManifestFile:
             self.vars[k] = fakeroot[0]
         self.substitute_vars(self.vars)
 
-    def set_vars(self, args):
-        for arg in args:
-            if "=" in arg:
-                key, value_s = arg.split("=", 1)
-                value = json.loads(value_s)
-            else:
-                key = arg
-                value = True
-            self.vars[key] = value
+    @staticmethod
+    def eval_user_var(var_value):
+        if var_value.startswith("{") and var_value.endswith("}"):
+            try:
+                return json.loads(var_value)
+            except json.JSONDecodeError:
+                pass
+        elif var_value.startswith("base64:"):
+            try:
+                return base64.b64decode(var_value.split(":", 1)[1]).decode('utf-8')
+            except binascii.Error:
+                pass
+        elif var_value.startswith("base64+json:"):
+            try:
+                return json.loads(base64.b64decode(var_value.split(":", 1)[1]).decode('utf-8'))
+            except [binascii.Error, json.JSONDecodeError]:
+                pass
+        elif var_value.startswith("file:"):
+            file_path = pathlib.Path(var_value.split(":", 1)[1])
+            if file_path.exists() and file_path.is_file():
+                with open(file_path, 'r') as fd:
+                    file_metadata = {}
+                    content = fd.read()
+                    b64_content = base64.b64encode(content.encode('utf-8'))
+
+                    file_metadata["name"] = file_path.name
+                    file_metadata["raw"] = content
+                    file_metadata["sha256"] = hashlib.sha256(content.encode('utf-8')).hexdigest()
+                    file_metadata["b64"] = b64_content
+
+                    if file_path.suffix == ".json":
+                        try:
+                            file_metadata["json"] = json.loads(content)
+                        except json.JSONDecodeError:
+                            pass
+
+                    return file_metadata
+
+        return var_value
 
     def substitute_vars(self, node):
         """Expand variables in `node` with the manifest variables"""
@@ -726,8 +763,8 @@ class ManifestFile:
 
 
 class ManifestFileV1(ManifestFile):
-    def __init__(self, path, data):
-        super().__init__(path, data, 1)
+    def __init__(self, path, data, user_vars=None):
+        super().__init__(path, data, 1, user_vars=user_vars)
         self.pipeline = element_enter(self.root, "pipeline", {})
 
         files = element_enter(self.sources, "org.osbuild.files", {})
@@ -808,8 +845,8 @@ class ManifestFileV1(ManifestFile):
 
 
 class ManifestFileV2(ManifestFile):
-    def __init__(self, path, data):
-        super().__init__(path, data, 2)
+    def __init__(self, path, data, user_vars=None):
+        super().__init__(path, data, 2, user_vars=user_vars)
         self.pipelines = element_enter(self.root, "pipelines", {})
 
         files = element_enter(self.sources, "org.osbuild.curl", {})
@@ -905,7 +942,8 @@ def main():
         "-D,--define",
         dest="vars",
         action='append',
-        help="Set/Override variable, format is key=Json"
+        help="Set/Override variable, format is "
+             "(key=Json | key=base64:<str> | key=base64+json:<str> | key=file:<path> | key=str)"
     )
     parser.add_argument(
         "src",
@@ -920,16 +958,28 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
 
-    m = ManifestFile.load(args.src)
+    # Collect user defined variables from cli or environ
+    user_defined_vars = {}
+    for env_var_key, env_var_value in os.environ.items():
+        if env_var_key.startswith("OBMPP_VARS_"):
+            var_name = env_var_key.replace("OBMPP_VARS_", "")
+            user_defined_vars[var_name] = env_var_value
+
+    if args.vars:
+        for arg in args.vars:
+            if "=" in arg:
+                var_name, var_value = arg.split("=", 1)
+                user_defined_vars[var_name] = var_value
+            else:
+                user_defined_vars[var_name] = True
+
+    # Load Osbuild Manifest
+    m = ManifestFile.load(args.src, user_defined_vars)
 
     # First resolve all imports
     m.process_imports(args.searchdirs)
 
     m.process_partition()
-
-    # Override variables from the main of imported files
-    if args.vars:
-        m.set_vars(args.vars)
 
     with tempfile.TemporaryDirectory() as persistdir:
         solver = DepSolver(args.dnf_cache, persistdir)
