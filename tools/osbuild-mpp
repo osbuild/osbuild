@@ -514,23 +514,23 @@ class Image:
 
 class ManifestFile:
     @staticmethod
-    def load(path):
+    def load(path, overrides):
         with open(path) as f:
-            return ManifestFile.load_from_fd(f, path)
+            return ManifestFile.load_from_fd(f, path, overrides)
 
     @staticmethod
-    def load_from_fd(f, path):
+    def load_from_fd(f, path, overrides):
         # We use OrderedDict to preserve key order (for python < 3.6)
         data = json.load(f, object_pairs_hook=collections.OrderedDict)
 
         version = int(data.get("version", "1"))
         if version == 1:
-            return ManifestFileV1(path, data)
+            return ManifestFileV1(path, overrides, data)
         if version == 2:
-            return ManifestFileV2(path, data)
+            return ManifestFileV2(path, overrides, data)
         raise ValueError(f"Unknown manfest version {version}")
 
-    def __init__(self, path, root, version):
+    def __init__(self, path, overrides, root, version):
         self.path = pathlib.Path(path)
         self.basedir = self.path.parent
         self.root = root
@@ -539,6 +539,7 @@ class ManifestFile:
         self.source_urls = {}
 
         self.vars = {}
+        self.overrides = overrides
         self.init_vars()
 
     def get_mpp_node(self, parent: Dict, name: str) -> Optional[Dict]:
@@ -564,15 +565,8 @@ class ManifestFile:
             self.vars[k] = fakeroot[0]
         self.substitute_vars(self.vars)
 
-    def set_vars(self, args):
-        for arg in args:
-            if "=" in arg:
-                key, value_s = arg.split("=", 1)
-                value = json.loads(value_s)
-            else:
-                key = arg
-                value = True
-            self.vars[key] = value
+    def get_vars(self):
+        return {**self.vars, **self.overrides}
 
     def substitute_vars(self, node):
         """Expand variables in `node` with the manifest variables"""
@@ -585,7 +579,7 @@ class ManifestFile:
                 node[i] = self.substitute_vars(v)
         elif isinstance(node, str):
             tpl = string.Template(node)
-            node = tpl.safe_substitute(self.vars)
+            node = tpl.safe_substitute(self.get_vars())
 
         return node
 
@@ -600,7 +594,7 @@ class ManifestFile:
             with contextlib.suppress(FileNotFoundError):
                 fullpath = os.path.join(p, path)
                 with open(fullpath, "r") as f:
-                    return ManifestFile.load_from_fd(f, path)
+                    return ManifestFile.load_from_fd(f, path, self.overrides)
 
         raise FileNotFoundError(f"Could not find manifest '{path}'")
 
@@ -723,13 +717,13 @@ class ManifestFile:
             for key in list(node.keys()):
                 value = node[key]
                 if _is_format(value):
-                    node[key] = _eval_format(value, self.vars)
+                    node[key] = _eval_format(value, self.get_vars())
                 else:
                     self._process_format(value)
         if isinstance(node, list):
             for i, value in enumerate(node):
                 if _is_format(value):
-                    node[i] = _eval_format(value, self.vars)
+                    node[i] = _eval_format(value, self.get_vars())
                 else:
                     self._process_format(value)
 
@@ -747,8 +741,8 @@ class ManifestFile:
 
 
 class ManifestFileV1(ManifestFile):
-    def __init__(self, path, data):
-        super().__init__(path, data, 1)
+    def __init__(self, path, overrides, data):
+        super().__init__(path, overrides, data, 1)
         self.pipeline = element_enter(self.root, "pipeline", {})
 
         files = element_enter(self.sources, "org.osbuild.files", {})
@@ -831,8 +825,8 @@ class ManifestFileV1(ManifestFile):
 
 
 class ManifestFileV2(ManifestFile):
-    def __init__(self, path, data):
-        super().__init__(path, data, 2)
+    def __init__(self, path, overrides, data):
+        super().__init__(path, overrides, data, 2)
         self.pipelines = element_enter(self.root, "pipelines", {})
 
         files = element_enter(self.sources, "org.osbuild.curl", {})
@@ -928,6 +922,7 @@ def main():
     )
     parser.add_argument(
         "-D,--define",
+        default=[],
         dest="vars",
         action='append',
         help="Set/Override variable, format is key=Json"
@@ -945,16 +940,23 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
 
-    m = ManifestFile.load(args.src)
+    # Override variables from the main of imported files
+    overrides = {}
+    for arg in args.vars:
+        if "=" in arg:
+            key, value_s = arg.split("=", 1)
+            value = json.loads(value_s)
+        else:
+            key = arg
+            value = True
+        overrides[key] = value
+
+    m = ManifestFile.load(args.src, overrides)
 
     # First resolve all imports
     m.process_imports(args.searchdirs)
 
     m.process_partition()
-
-    # Override variables from the main of imported files
-    if args.vars:
-        m.set_vars(args.vars)
 
     with tempfile.TemporaryDirectory() as persistdir:
         solver = DepSolver(args.dnf_cache, persistdir)
