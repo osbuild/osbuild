@@ -100,7 +100,8 @@ Variable expansion and substitution:
 The variables can be set in the mpp-vars toplevel dict (which is removed from
 the final results) or overridden by the -D,--define commandline option.
 They can then be used from within the manifest via f-string formatting using
-the `mpp-format-{int,string,json}` directives. Additionally the variables
+the `mpp-format-{int,string,json}` directives. You can also use `mpp-eval`
+directive to just eval an expression with the variable. Additionally the variables
 will be substituted via template string substitution a la `$variable` inside
 the mpp blocks.
 
@@ -114,13 +115,15 @@ Example:
         "variable": "some string",
         "rootfs_size": 20480,
         "arch:": "x86_64",
-        "ref": "fedora/$arch/osbuild"
+        "ref": "fedora/$arch/osbuild",
+        "some_keys": { "a": True, "b": "$ref" }
      },
 ...
     {
       "foo": "a value",
       "bar": { "mpp-format-string": "This expands {variable} but can also eval like {variable.upper()}" }
       "disk_size": { "mpp-format-int": "{rootfs_size * 512}" }
+      "details": { "mpp-eval": "some_keys" }
     }
 ...
 ```
@@ -672,12 +675,21 @@ class ManifestFile:
         def _is_format(node):
             if not isinstance(node, dict):
                 return False
+            if "mpp-eval" in node:
+                return True
             for m in ("int", "string", "json"):
                 if f"mpp-format-{m}" in node:
                     return True
             return False
 
         def _eval_format(node, local_vars):
+            if "mpp-eval" in node:
+                code = node["mpp-eval"]
+
+                # pylint: disable=eval-used  # yolo this is fine!
+                # Note, we copy local_vars here to avoid eval modifying it
+                return eval(code, dict(local_vars))
+
             if "mpp-format-string" in node:
                 res_type = "string"
                 format_string = node["mpp-format-string"]
