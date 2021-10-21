@@ -38,7 +38,7 @@ jobs:
         run: |
           PR_DATA=$(mktemp)
           # use uuid as a file terminator to avoid conflicts with data content
-          cat > "$PR_DATA" <<a21b3e7f-d5eb-44a3-8be0-c2412851d2e6
+          cat > "$PR_DATA" <<'a21b3e7f-d5eb-44a3-8be0-c2412851d2e6'
           ${{ steps.fetch_pulls.outputs.data }}
           a21b3e7f-d5eb-44a3-8be0-c2412851d2e6
 
