@@ -4,8 +4,8 @@ set -euxo pipefail
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
-# Currently: Image tests: skip rpm-ostree-1-autovar.conf tmpfiles.d config on Fedora
-OSBUILD_COMPOSER_COMMIT=9497ef8ca9e05a177dc8ec5cbb80b98ad450b041
+# Currently: ostree: change the URL for OC client temporarily
+OSBUILD_COMPOSER_COMMIT=ece191f73e319bbcc885bcc983fb0e6cefe6014a
 
 # Get OS details.
 source /etc/os-release
