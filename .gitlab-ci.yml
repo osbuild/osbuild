@@ -7,13 +7,8 @@ stages:
 .terraform:
   after_script:
     - schutzbot/update_github_status.sh update
-    - schutzbot/save_journal.sh
   tags:
     - terraform
-  artifacts:
-    paths:
-      - journal-log
-    when: always
 
 init:
   stage: init
