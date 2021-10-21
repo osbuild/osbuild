@@ -11,13 +11,6 @@ OSBUILD_COMPOSER_COMMIT=9497ef8ca9e05a177dc8ec5cbb80b98ad450b041
 source /etc/os-release
 ARCH=$(uname -m)
 
-# Register RHEL if we are provided with a registration script and intend to do that.
-REGISTER="${REGISTER:-'false'}"
-if [[ $REGISTER == "true" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
-    sudo chmod +x $RHN_REGISTRATION_SCRIPT
-    sudo $RHN_REGISTRATION_SCRIPT
-fi
-
 # Add osbuild team ssh keys.
 cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
 
