@@ -36,10 +36,8 @@ RPM:
           - aws/fedora-34-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
-      - RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-        REGISTER: "true"
       - RUNNER:
           - aws/rhel-8.5-nightly-x86_64
           - aws/rhel-8.5-nightly-aarch64
@@ -60,15 +58,8 @@ Testing:
       - RUNNER:
           - aws/fedora-33-x86_64
           - aws/fedora-33-aarch64
-        INTERNAL_NETWORK: "true"
-      - RUNNER:
           - aws/rhel-8.4-ga-x86_64
-        REGISTER: "true"
-        INTERNAL_NETWORK: "true"
-      - RUNNER:
           - aws/rhel-8.5-nightly-x86_64
-        INTERNAL_NETWORK: "true"
-      - RUNNER:
           - aws/rhel-9.0-beta-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
