@@ -138,10 +138,6 @@ def osbuild_cli():
         print("Need --output-directory for --export")
         return 1
 
-    if not args.output_directory and not args.checkpoint:
-        print("No output directory or checkpoints specified, exited without building.")
-        return 0
-
     monitor_name = "NullMonitor" if args.json else "LogMonitor"
     monitor = osbuild.monitor.make(monitor_name, sys.stdout.fileno())
 
