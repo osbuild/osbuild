@@ -72,7 +72,7 @@ def parse_arguments(sys_argv):
                         help="the directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
                         help="stage to commit to the object store during build (can be passed multiple times)")
-    parser.add_argument("--export", metavar="ID", action="append", type=str, default=None,
+    parser.add_argument("--export", metavar="ID", action="append", type=str, default=[],
                         help="object to export, can be passed multiple times")
     parser.add_argument("--json", action="store_true",
                         help="output results in JSON format")
@@ -110,6 +110,13 @@ def osbuild_cli():
 
     manifest = fmt.load(desc, index)
 
+    unresolved = [e for e in args.export if e not in manifest]
+    if unresolved:
+        for name in unresolved:
+            print(f"Export {BOLD}{name}{RESET} not found!")
+        print(f"{RESET}{BOLD}{RED}Failed{RESET}")
+        return 1
+
     if args.checkpoint:
         missed = manifest.mark_checkpoints(args.checkpoint)
         if missed:
@@ -124,6 +131,12 @@ def osbuild_cli():
         sys.stdout.write("\n")
         return 0
 
+    output_directory = args.output_directory
+
+    if args.export and not output_directory:
+        print("Need --output-directory for --export")
+        return 1
+
     if not args.output_directory and not args.checkpoint:
         print("No output directory or checkpoints specified, exited without building.")
         return 0
@@ -132,7 +145,6 @@ def osbuild_cli():
     monitor = osbuild.monitor.make(monitor_name, sys.stdout.fileno())
 
     try:
-        output_directory = args.output_directory
         with ObjectStore(args.store) as object_store:
 
             manifest.download(object_store, monitor, args.libdir)
@@ -145,8 +157,6 @@ def osbuild_cli():
             )
 
             if r["success"] and args.export:
-                if not output_directory:
-                    raise ValueError("Need --output-directory for --export")
                 for pid in args.export:
                     export(pid, output_directory, object_store, manifest)
 
