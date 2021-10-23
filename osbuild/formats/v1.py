@@ -73,7 +73,6 @@ def load_assembler(description: Dict, index: Index, manifest: Manifest):
 
     # Add a pipeline with one stage for our assembler
     pipeline = manifest.add_pipeline("assembler", runner, build)
-    pipeline.export = True
 
     info = index.get_module_info("Assembler", name)
 

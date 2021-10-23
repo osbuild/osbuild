@@ -19,6 +19,7 @@ from .. import test
 
 class TapeMonitor(osbuild.monitor.BaseMonitor):
     """Record the usage of all called functions"""
+
     def __init__(self):
         super().__init__(sys.stderr.fileno())
         self.counter = defaultdict(int)
@@ -62,7 +63,6 @@ class TestMonitor(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
-            outputdir = os.path.join(tmpdir, "output")
 
             logfile = os.path.join(tmpdir, "log.txt")
 
@@ -70,8 +70,7 @@ class TestMonitor(unittest.TestCase):
                 monitor = LogMonitor(log.fileno())
                 res = pipeline.run(store,
                                    monitor,
-                                   libdir=os.path.abspath(os.curdir),
-                                   output_directory=outputdir)
+                                   libdir=os.path.abspath(os.curdir))
 
                 with open(logfile) as f:
                     log = f.read()
@@ -97,14 +96,12 @@ class TestMonitor(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
-            outputdir = os.path.join(tmpdir, "output")
 
             tape = TapeMonitor()
             with ObjectStore(storedir) as store:
                 res = pipeline.run(store,
                                    tape,
-                                   libdir=os.path.abspath(os.curdir),
-                                   output_directory=outputdir)
+                                   libdir=os.path.abspath(os.curdir))
 
         assert res
         self.assertEqual(tape.counter["begin"], 1)
