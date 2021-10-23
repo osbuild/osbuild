@@ -152,8 +152,7 @@ def osbuild_cli():
             r = manifest.build(
                 object_store,
                 monitor,
-                args.libdir,
-                output_directory=output_directory
+                args.libdir
             )
 
             if r["success"] and args.export:

@@ -196,7 +196,6 @@ class Pipeline:
         self.runner = runner
         self.stages = []
         self.assembler = None
-        self.export = False
 
     @property
     def id(self):
@@ -298,7 +297,7 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def run(self, store, monitor, libdir, output_directory):
+    def run(self, store, monitor, libdir):
         results = {"success": True}
 
         monitor.begin(self)
@@ -315,10 +314,6 @@ class Pipeline:
 
             if not results["success"]:
                 return results
-
-        if self.export and obj:
-            if output_directory:
-                obj.export(output_directory)
 
         monitor.finish(results)
 
@@ -349,11 +344,11 @@ class Manifest:
             for source in self.sources:
                 source.download(mgr, store, libdir)
 
-    def build(self, store, monitor, libdir, output_directory):
+    def build(self, store, monitor, libdir):
         results = {"success": True}
 
         for pl in self.pipelines.values():
-            res = pl.run(store, monitor, libdir, output_directory)
+            res = pl.run(store, monitor, libdir)
             results[pl.id] = res
             if not res["success"]:
                 results["success"] = False
