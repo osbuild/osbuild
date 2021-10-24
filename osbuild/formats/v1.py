@@ -201,11 +201,14 @@ def output(manifest: Manifest, res: Dict) -> Dict:
         # result but still need to to recurse
         current = res.get(pipeline.id, {})
         retval = {
-            "success": current.get("success", False)
+            "success": current.get("success", True)
         }
+
         if pipeline.build:
             build = manifest[pipeline.build]
             retval["build"] = result_for_pipeline(build)
+            retval["success"] = retval["build"]["success"]
+
         stages = current.get("stages")
         if stages:
             retval["stages"] = stages
