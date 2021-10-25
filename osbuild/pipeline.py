@@ -405,10 +405,10 @@ class Manifest:
 
         return list(map(lambda x: x.name, reversed(build.values())))
 
-    def build(self, store, monitor, libdir):
+    def build(self, store, pipelines, monitor, libdir):
         results = {"success": True}
 
-        for pl in self.pipelines.values():
+        for pl in map(self.get, pipelines):
             res = pl.run(store, monitor, libdir)
             results[pl.id] = res
             if not res["success"]:

@@ -82,7 +82,7 @@ class TestFormatV1(unittest.TestCase):
         libdir = os.path.abspath(os.curdir)
         store = ObjectStore(storedir)
 
-        res = manifest.build(store, monitor, libdir)
+        res = manifest.build(store, manifest.pipelines, monitor, libdir)
         return res
 
     def test_canonical(self):
