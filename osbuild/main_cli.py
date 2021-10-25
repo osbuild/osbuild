@@ -84,7 +84,7 @@ def parse_arguments(sys_argv):
     return parser.parse_args(sys_argv[1:])
 
 
-# pylint: disable=too-many-branches,too-many-return-statements
+# pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
 def osbuild_cli():
     args = parse_arguments(sys.argv)
     desc = parse_manifest(args.manifest_path)
@@ -110,7 +110,8 @@ def osbuild_cli():
 
     manifest = fmt.load(desc, index)
 
-    unresolved = [e for e in args.export if e not in manifest]
+    exports = set(args.export)
+    unresolved = [e for e in exports if e not in manifest]
     if unresolved:
         for name in unresolved:
             print(f"Export {BOLD}{name}{RESET} not found!")
@@ -133,7 +134,7 @@ def osbuild_cli():
 
     output_directory = args.output_directory
 
-    if args.export and not output_directory:
+    if exports and not output_directory:
         print("Need --output-directory for --export")
         return 1
 
@@ -147,16 +148,19 @@ def osbuild_cli():
     try:
         with ObjectStore(args.store) as object_store:
 
+            pipelines = manifest.depsolve(object_store, exports)
+
             manifest.download(object_store, monitor, args.libdir)
 
             r = manifest.build(
                 object_store,
+                pipelines,
                 monitor,
                 args.libdir
             )
 
-            if r["success"] and args.export:
-                for pid in args.export:
+            if r["success"] and exports:
+                for pid in exports:
                     export(pid, output_directory, object_store, manifest)
 
     except KeyboardInterrupt:

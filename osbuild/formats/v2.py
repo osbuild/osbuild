@@ -405,7 +405,7 @@ def output(manifest: Manifest, res: Dict) -> Dict:
         # gather all the metadata
         for p in manifest.pipelines.values():
             data = {}
-            r = res[p.id]
+            r = res.get(p.id, {})
             for stage in r.get("stages", []):
                 md = stage.get("metadata")
                 if not md:
