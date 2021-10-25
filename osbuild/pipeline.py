@@ -3,7 +3,7 @@ import contextlib
 import hashlib
 import json
 import os
-from typing import Dict, Iterator, List, Optional
+from typing import Dict, Generator, Iterable, Iterator, List, Optional
 
 from .api import API
 from . import buildroot
@@ -63,6 +63,18 @@ class Stage:
             data = {n: i.id for n, i in self.inputs.items()}
             m.update(json.dumps(data, sort_keys=True).encode())
         return m.hexdigest()
+
+    @property
+    def dependencies(self) -> Generator[str, None, None]:
+        """Return a list of pipeline ids this stage depends on"""
+
+        for ip in self.inputs.values():
+
+            if ip.origin != "org.osbuild.pipeline":
+                continue
+
+            for ref in ip.refs:
+                yield ref
 
     def add_input(self, name, info, origin, options=None):
         ip = Input(name, info, origin, options or {})
@@ -343,6 +355,55 @@ class Manifest:
         with host.ServiceManager(monitor=monitor) as mgr:
             for source in self.sources:
                 source.download(mgr, store, libdir)
+
+    def depsolve(self, store, targets: Iterable[str]) -> List[str]:
+        """Return the list of pipelines that need to be built
+
+        Given a list of target pipelines, return the names
+        of all pipelines and their dependencies that are not
+        already present in the store.
+        """
+
+        # A stack of pipelines to check if they need to be built
+        check = list(map(self.get, targets))
+
+        # The ordered result "set", will be reversed at the end
+        build = collections.OrderedDict()
+
+        while check:
+            pl = check.pop()  # get the last(!) item
+
+            if store.contains(pl.id):
+                continue
+
+            # The store does not have this pipeline, it needs to
+            # be built, add it to the ordered result set and
+            # ensure it is at the end, i.e. built before previously
+            # checked items. NB: the result set is reversed before
+            # it gets returned. This ensures that a dependency that
+            # gets checked multiple times, like a build pipeline,
+            # always gets built before its dependent pipeline.
+            build[pl.id] = pl
+            build.move_to_end(pl.id)
+
+            # Add all dependencies to the stack of things to check,
+            # starting with the build pipeline, if there is one
+            if pl.build:
+                check.append(self.get(pl.build))
+
+            # Stages depend on other pipeline via pipeline inputs.
+            # We check in reversed order until we hit a checkpoint
+            for stage in reversed(pl.stages):
+
+                # we stop if we have a checkpoint, i.e. we don't
+                # need to build any stages after that checkpoint
+                if store.contains(stage.id):
+                    break
+
+                pls = map(self.get, stage.dependencies)
+                check.extend(pls)
+
+        return list(map(lambda x: x.name, reversed(build.values())))
 
     def build(self, store, monitor, libdir):
         results = {"success": True}
