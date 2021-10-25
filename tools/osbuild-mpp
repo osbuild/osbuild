@@ -909,7 +909,7 @@ def main():
         help="Path to DNF cache-directory to use",
     )
     parser.add_argument(
-        "-I,--import-dir",
+        "-I", "--import-dir",
         dest="searchdirs",
         default=[],
         action="append",
@@ -922,7 +922,7 @@ def main():
         help="Sort keys in generated json",
     )
     parser.add_argument(
-        "-D,--define",
+        "-D", "--define",
         default=[],
         dest="vars",
         action='append',
