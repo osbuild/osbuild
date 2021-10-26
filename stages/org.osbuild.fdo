@@ -1,0 +1,55 @@
+#!/usr/bin/python3
+"""
+FDO stage to write down the initial DIUN pub key root certificates
+to be read by the manufacturer client
+
+This will create a '/fdo_diun_root_certs.pem' with content
+specified via the `rootcerts` input.
+"""
+
+import shutil
+import os
+import sys
+
+import osbuild.api
+
+
+SCHEMA_2 = r"""
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rootcerts"],
+  "properties": {
+    "rootcerts": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": false
+}
+"""
+
+
+def parse_input(inputs):
+    image = inputs["rootcerts"]
+    files = image["data"]["files"]
+    assert len(files) == 1
+
+    filename, _ = files.popitem()
+    filepath = os.path.join(image["path"], filename)
+    return filepath
+
+
+def main(inputs, tree):
+    certs = parse_input(inputs)
+    shutil.copy(certs, f"{tree}/fdo_diun_pub_key_root_certs.pem")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"])
+    sys.exit(r)
