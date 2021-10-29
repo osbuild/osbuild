@@ -1,0 +1,542 @@
+#!/usr/bin/python3
+"""
+Configure GRUB2 bootloader and set boot options (legacy, i.e. non-BLS)
+
+This stage creates traditional menu entries for systems that are not
+capable of using the Booloader Specific (BLS).
+
+Sets the GRUB2 boot/root filesystem to `rootfs`. If a separated boot
+partition is used it can be specified via `bootfs`. The file-systems
+can be identified either via
+  - uuid (`{"uuid": "<uuid>"}`)
+  - label (`{"label": "<label>"}`)
+  - device (`{"device": "<device>"}`, only for the root file system)
+
+The kernel boot argument will be composed of the root file system id
+and additional options specified in `config.cmdline`, if any.
+
+This stage will overwrite `/etc/default/grub`, `/boot/grub2/grubenv`;
+leading directories will be created if not present.
+
+The stage supports configuring grub for BIOS boot and UEFI systems:
+
+If BIOS boot support is requested via `bios` this stage will also
+overwrite `/boot/grub2/grub.cfg` and will copy the GRUB2 files from the
+buildhost into the target tree:
+* `/usr/share/grub/unicode.pf2`          -> `/boot/grub2/fonts/`
+* `/usr/lib/grub/$platform/*.{mod,lst}` -> `/boot/grub2/$platform/`
+  * NOTE: skips `fdt.lst`, which is an empty file
+
+NB: with bios support enabled, this stage will fail if the buildhost
+doesn't have `/usr/lib/grub/$platform/` and `/usr/share/grub/unicode.pf2`.
+
+If UEFI support is enabled via `uefi: {"vendor": "<vendor>"}` this stage will
+also write the `grub.cfg` to `boot/efi/EFI/<vendor>/grub.cfg`. EFI binaries
+and accompanying data can be installed from the built root via `uefi.install`.
+
+Both UEFI and Legacy can be specified at the same time (hybrid boot).
+"""
+
+
+import os
+import shutil
+import string
+import sys
+
+import osbuild.api
+
+
+SCHEMA = """
+
+"definitions": {
+  "filesystem": {
+    "description": "Description of how to locate a file system",
+    "type": "object",
+    "oneOf": [{
+      "required": ["uuid"]
+    }, {
+      "required": ["label"]
+    }, {
+      "required": ["device"]
+    }],
+    "properties": {
+      "device": {
+        "description": "Identify the file system by device node",
+        "type": "string"
+      },
+      "label": {
+        "description": "Identify the file system by label",
+        "type": "string"
+      },
+      "uuid": {
+        "description": "Identify the file system by UUID",
+        "type": "string",
+        "oneOf": [
+          { "pattern": "^[0-9A-Za-z]{8}(-[0-9A-Za-z]{4}){3}-[0-9A-Za-z]{12}$",
+            "examples": ["9c6ae55b-cf88-45b8-84e8-64990759f39d"] },
+          { "pattern": "^[0-9A-Za-z]{4}-[0-9A-Za-z]{4}$",
+            "examples": ["6699-AFB5"] }
+        ]
+      }
+    }
+  },
+  "terminal": {
+    "description": "Terminal device",
+    "type": "array",
+    "items": {
+      "type": "string"
+    }
+  }
+},
+"additionalProperties": false,
+"required": ["rootfs", "architecture", "entries"],
+"anyOf": [{
+  "required": ["bios"]
+}, {
+  "required": ["uefi"]
+}],
+"properties": {
+  "architecture": {
+    "enum": ["x64", "aarch64", "ppc64le"]
+  },
+  "rootfs": { "$ref": "#/definitions/filesystem" },
+  "bootfs": { "$ref": "#/definitions/filesystem" },
+  "bios": {
+    "description": "Include bios boot support",
+    "type": "string"
+  },
+  "uefi": {
+    "description": "Include UEFI boot support",
+    "type": "object",
+    "required": ["vendor"],
+    "properties": {
+      "vendor": {
+        "type": "string",
+         "description": "The vendor of the UEFI binaries (this is us)",
+         "examples": ["fedora"],
+         "pattern": "^(.+)$"
+      },
+      "install": {
+        "description": "Install EFI binaries and data from the build root",
+        "type": "boolean",
+        "default": false
+      }
+    }
+  },
+  "write_defaults": {
+    "description": "Whether to write /etc/defaults/grub",
+    "type": "boolean",
+    "default": true
+  },
+  "entries": {
+    "description": "List of entries to add to the boot menu",
+    "type": "array",
+    "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "boolean",
+          "description": "Make this entry the default entry"
+        },
+        "id": {
+          "description": "UUID for the entry (grub uses the root fs uuid)",
+          "type": "string"
+        },
+        "product": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": {"type": "string"},
+            "nick": {"type": "string"},
+            "version": {"type": "string"}
+          }
+        },
+        "kernel": {
+          "description": "The kernel (EVRA)",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "config": {
+    "description": "Configuration options for grub itself",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "cmdline": {
+        "description": "Additional kernel command line options",
+        "type": "string"
+      },
+      "distributor": {
+        "description": "Name of the distributor",
+        "type": "string"
+      },
+      "terminal_input": {
+         "$ref": "#/definitions/terminal"
+      },
+      "terminal_output": {
+         "$ref": "#/definitions/terminal"
+      },
+      "timeout": {
+        "description": "Timeout in seconds",
+        "type": "integer",
+        "minimum": 0,
+        "default": 0
+      },
+      "serial": {
+        "description": "The command to configure the serial console",
+        "type": "string"
+      }
+    }
+  }
+}
+"""
+
+
+# The main grub2 configuration file template. Used for UEFI and legacy
+GRUB_CFG_TEMPLATE = """
+# Created by osbuild
+
+set timeout=${timeout}
+
+# load the grubenv file
+load_env
+
+# selection of the next boot entry
+if [ "${next_entry}" ] ; then
+   set default="${next_entry}"
+   set next_entry=
+   save_env next_entry
+   set boot_once=true
+else
+   set default="${saved_entry}"
+fi
+
+if [ "${prev_saved_entry}" ]; then
+  set saved_entry="${prev_saved_entry}"
+  save_env saved_entry
+  set prev_saved_entry=
+  save_env prev_saved_entry
+  set boot_once=true
+fi
+
+function savedefault {
+  if [ -z "${boot_once}" ]; then
+    saved_entry="${chosen}"
+    save_env saved_entry
+  fi
+}
+${serial}${terminal_input}${terminal_output}
+"""
+
+GRUB_ENTRY_TEMPLATE = """
+menuentry '${title}' --class red --class gnu-linux --class gnu --class os --unrestricted --id 'gnulinux-${kernel}-advanced-${id}' {
+	insmod all_video
+	set gfxpayload=keep
+	search --no-floppy --set=root ${search}
+	linux${loader} /vmlinuz-${kernel} ${cmdline}
+	initrd${loader} /initramfs-${kernel}.img
+}
+"""
+
+
+def fs_spec_decode(spec):
+    for key in ["uuid", "label", "device"]:
+        val = spec.get(key)
+        if not val:
+            continue
+        if key == "device":
+            return None, val
+        return key.upper(), val
+
+    raise ValueError("unknown filesystem type")
+
+
+def copy_modules(tree, platform):
+    """Copy all modules from the build image to /boot"""
+    target = f"{tree}/boot/grub2/{platform}"
+    source = f"/usr/lib/grub/{platform}"
+    os.makedirs(target, exist_ok=True)
+    for dirent in os.scandir(source):
+        (_, ext) = os.path.splitext(dirent.name)
+        if ext not in ('.mod', '.lst'):
+            continue
+        if dirent.name == "fdt.lst":
+            continue
+        shutil.copy2(f"/{source}/{dirent.name}", target)
+
+
+def copy_font(tree):
+    """Copy a unicode font into /boot"""
+    os.makedirs(f"{tree}/boot/grub2/fonts", exist_ok=True)
+    shutil.copy2("/usr/share/grub/unicode.pf2", f"{tree}/boot/grub2/fonts/")
+
+
+def copy_efi_data(tree, vendor):
+    """Copy the EFI binaries & data into /boot/efi"""
+    for d in ['BOOT', vendor]:
+        source = f"/boot/efi/EFI/{d}"
+        target = f"{tree}/boot/efi/EFI/{d}/"
+        shutil.copytree(source, target,
+                        symlinks=False)
+
+
+def architecture_to_platform(architecture):
+    platform_map = {
+        "x64": "i386-pc",
+        "ppc64le": "powerpc-ieee1275"
+    }
+
+    platform = platform_map.get(architecture)
+    if not platform:
+        raise ValueError(f"Unsupported architecture: {architecture}")
+
+    return platform
+
+
+class GrubEntry:
+
+    class Product:
+        def __init__(self, name, version, nick=None):
+            self.name = name
+            self.nick = nick
+            self.version = version
+
+        @classmethod
+        def from_json(cls, data):
+            name = data["name"]
+            version = data["version"]
+            nick = data.get("nick")
+            return cls(name, version, nick)
+
+    def __init__(self, uid, product, kernel):
+        self.id = uid
+        self.product = product
+        self.kernel = kernel
+        self.default = False
+
+    @property
+    def title(self):
+        p = self.product
+        res = f"{p.name} ({self.kernel}) {p.version}"
+        if p.nick:
+            res += f" ({p.nick})"
+        return res
+
+    @property
+    def menu_id(self):
+        return f"gnulinux-${self.kernel}-advanced-{self.id}"
+
+    @classmethod
+    def from_json(cls, data):
+        uid = data["id"]
+        product = cls.Product.from_json(data["product"])
+        kernel = data["kernel"]
+        entry = cls(uid, product, kernel)
+        entry.default = data.get("default", False)
+        return entry
+
+
+class GrubConfig:
+    def __init__(self, architecture, rootfs, bootfs):
+        self.architecture = architecture
+        self.rootfs = rootfs
+        self.bootfs = bootfs
+        self.entries = []
+        self.cmdline = ""
+        self.distributor = ""
+        self.serial = ""
+        self.terminal_input = None
+        self.terminal_output = None
+        self.timeout = 0
+
+    @property
+    def grubfs(self):
+        """The filesystem containing the grub files,
+
+        This is  either a separate partition (self.bootfs if set) or
+        the root file system (self.rootfs)
+        """
+        return self.bootfs or self.rootfs
+
+    @property
+    def separate_boot(self):
+        return self.bootfs is not None
+
+    @property
+    def grub_home(self):
+        return "/" if self.separate_boot else "/boot/"
+
+    def make_terminal_config(self, terminal):
+        config = getattr(self, terminal)
+        if not config:
+            return {}
+
+        val = (
+            "\n" +
+            terminal +
+            " " +
+            " ".join(config)
+        )
+        return {terminal: val}
+
+    def write(self, tree, path, uefi):
+        """Write the grub config to `tree` at `path`"""
+        path = os.path.join(tree, path)
+
+        fs_type, fs_id = fs_spec_decode(self.grubfs)
+        type2opt = {
+            "UUID": "--fs-uuid",
+            "LABEL": "--label"
+        }
+        search = type2opt[fs_type] + " " + fs_id if fs_type else fs_id
+
+        fs_type, fs_id = fs_spec_decode(self.rootfs)
+        rootfs = f"{fs_type}={fs_id}" if fs_type else fs_id
+
+        loader = ""
+        if self.architecture == "x64":
+            loader = "efi" if uefi else "16"
+
+        # configuration options for the main template
+        config = {
+            "timeout": self.timeout,
+            "cmdline": f"root={rootfs} {self.cmdline}",
+            "search": search,
+            "loader": loader,
+        }
+
+        if self.serial:
+            config["serial"] = "\n" + self.serial
+
+        config.update(self.make_terminal_config("terminal_input"))
+        config.update(self.make_terminal_config("terminal_output"))
+
+        tplt = string.Template(GRUB_CFG_TEMPLATE)
+        data = tplt.safe_substitute(config)
+
+        for entry in self.entries:
+            config.update({
+                "id": entry.id,
+                "title": entry.title,
+                "kernel": entry.kernel,
+            })
+
+            tplt = string.Template(GRUB_ENTRY_TEMPLATE)
+            data += "\n" + tplt.safe_substitute(config).lstrip("\n")
+
+        data += "\n"
+
+        with open(path, "w") as cfg:
+            print(data)
+            cfg.write(data)
+
+    def defaults(self):
+      # NB: The "GRUB_CMDLINE_LINUX" variable contains the kernel command
+        # line but without the `root=` part, thus we just use `cmdline`.
+        data = (
+            f"GRUB_TIMEOUT={self.timeout}\n"
+            f'GRUB_CMDLINE_LINUX="{self.cmdline}"\n'
+            "GRUB_DISABLE_SUBMENU=true\n"
+            "GRUB_DISABLE_RECOVERY=true\n"
+            "GRUB_TIMEOUT_STYLE=countdown\n"
+            "GRUB_DEFAULT=saved\n"
+        )
+
+        if self.distributor:
+            data += f'GRUB_DISTRIBUTOR="{self.distributor}"\n'
+
+        if self.serial:
+            data += f'GRUB_SERIAL_COMMAND="{self.serial}"\n'
+
+        if self.terminal_input:
+            val = " ".join(self.terminal_input)
+            data += f'GRUB_TERMINAL_INPUT="{val}"\n'
+
+        if self.terminal_output:
+            val = " ".join(self.terminal_output)
+            data += f'GRUB_TERMINAL_OUTPUT="{val}"\n'
+
+        return data
+
+
+# pylint: disable=too-many-statements
+def main(tree, options):
+    architecture = options["architecture"]
+    root_fs = options["rootfs"]
+    boot_fs = options.get("bootfs")
+    bios = options.get("bios")
+    uefi = options.get("uefi", None)
+    write_defaults = options.get("write_defaults", True)
+
+    # Prepare the actual grub configuration file, will be written further down
+    cfg = options.get("config", {})
+    config = GrubConfig(architecture, root_fs, boot_fs)
+    config.cmdline = cfg.get("cmdline", "")
+    config.distributor = cfg.get("distributor")
+    config.serial = cfg.get("serial")
+    config.terminal_input = cfg.get("terminal_input")
+    config.terminal_output = cfg.get("terminal_output")
+    config.timeout = cfg.get("timeout", 0)
+    config.entries = [GrubEntry.from_json(e) for e in options["entries"]]
+
+    # Create the configuration file that determines how grub.cfg is generated.
+    if write_defaults:
+        os.makedirs(f"{tree}/etc/default", exist_ok=True)
+        with open(f"{tree}/etc/default/grub", "w") as default:
+            default.write(config.defaults())
+
+    os.makedirs(f"{tree}/boot/grub2", exist_ok=True)
+    grubenv = f"{tree}/boot/grub2/grubenv"
+
+    with open(grubenv, "w") as env:
+        data = (
+            "# GRUB Environment Block\n"
+        )
+
+        saved_entry = [
+            e for e in config.entries if e.default
+        ]
+
+        assert len(saved_entry) <= 1, "Multiple default entries"
+
+        if saved_entry:
+            data += f"saved_entry={saved_entry[0].menu_id}\n"
+
+        # The 'grubenv' file is, according to the documentation,
+        # a 'preallocated 1024-byte file'. The empty space is
+        # needs to be filled with '#' as padding
+        data += '#' * (1024 - len(data))
+        assert len(data) == 1024
+
+        print(data)
+        env.write(data)
+
+    if uefi is not None:
+        # UEFI support:
+        vendor = uefi["vendor"]
+
+        # EFI binaries and accompanying data can be installed from
+        # the build root instead of using an rpm package
+        if uefi.get('install', False):
+            copy_efi_data(tree, vendor)
+
+        grubcfg = f"boot/efi/EFI/{vendor}/grub.cfg"
+        config.write(tree, grubcfg, True)
+
+    if bios:
+        # Now actually write the main grub.cfg file
+        config.write(tree, "boot/grub2/grub.cfg", False)
+        platform = architecture_to_platform(architecture)
+        copy_modules(tree, platform)
+        copy_font(tree)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
