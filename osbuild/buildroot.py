@@ -69,6 +69,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         self._apis = []
         self.dev = None
         self.var = None
+        self.mount_boot = True
 
     @staticmethod
     def _mknod(path, name, mode, major, minor):
@@ -154,7 +155,11 @@ class BuildRoot(contextlib.AbstractContextManager):
         mounts = []
 
         # Import directories from the caller-provided root.
-        for p in ["boot", "usr"]:
+        imports = ["usr"]
+        if self.mount_boot:
+            imports.insert(0, "boot")
+
+        for p in imports:
             source = os.path.join(self._rootdir, p)
             if os.path.isdir(source) and not os.path.islink(source):
                 mounts += ["--ro-bind", source, os.path.join("/", p)]
