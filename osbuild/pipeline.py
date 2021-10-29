@@ -108,6 +108,10 @@ class Stage:
             build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
             cm.enter_context(build_root)
 
+            # if we have a build root, then also bind-mount the boot
+            # directory from it, since it may contain efi binaries
+            build_root.mount_boot = bool(self.build)
+
             tmpdir = store.tempdir(prefix="buildroot-tmp-")
             tmpdir = cm.enter_context(tmpdir)
 
