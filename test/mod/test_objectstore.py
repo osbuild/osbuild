@@ -101,7 +101,7 @@ class TestObjectStore(unittest.TestCase):
             assert os.path.exists(f"{object_store.refs}/b/A")
 
             assert len(os.listdir(object_store.refs)) == 2
-            assert len(os.listdir(object_store.objects)) == 1
+            assert len(os.listdir(object_store.objects)) == 2
             assert len(os.listdir(f"{object_store.refs}/a/")) == 1
             assert len(os.listdir(f"{object_store.refs}/b/")) == 1
 
@@ -133,7 +133,7 @@ class TestObjectStore(unittest.TestCase):
             assert os.path.exists(f"{object_store.refs}/c/C")
 
             assert len(os.listdir(object_store.refs)) == 3
-            assert len(os.listdir(object_store.objects)) == 2
+            assert len(os.listdir(object_store.objects)) == 3
 
     def test_object_copy_on_write(self):
         # operate with a clean object store
@@ -152,7 +152,7 @@ class TestObjectStore(unittest.TestCase):
                     st = os.fstat(f.fileno())
                     data_inode = st.st_ino
                 # commit the object as "x"
-                x_hash = object_store.commit(tree, "x")
+                object_store.commit(tree, "x")
                 # after the commit, "x" is now the base
                 # of "tree"
                 self.assertEqual(tree.base, "x")
@@ -171,7 +171,6 @@ class TestObjectStore(unittest.TestCase):
             # the very same content
             with object_store.new(base_id="x") as tree:
                 self.assertEqual(tree.base, "x")
-                self.assertEqual(tree.treesum, x_hash)
                 with tree.read() as path:
                     with open(os.path.join(path, "data"), "r") as f:
                         # copy-on-write: since we have not written
@@ -189,9 +188,6 @@ class TestObjectStore(unittest.TestCase):
                     self.assertNotEqual(st.st_ino, data_inode)
                     p = Path(path, "other_data")
                     p.touch()
-                # now that we have written, the treesum
-                # should have changed
-                self.assertNotEqual(tree.treesum, x_hash)
 
     def test_object_mode(self):
         object_store = objectstore.ObjectStore(self.store)
@@ -205,9 +201,7 @@ class TestObjectStore(unittest.TestCase):
 
                 # check multiple readers are ok
                 with tree.read() as _:
-                    # calculating the treesum also is reading,
-                    # so this is 3 nested readers
-                    _ = tree.treesum
+                    pass
 
                 # writing should still fail
                 with self.assertRaises(ValueError):
