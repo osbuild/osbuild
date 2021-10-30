@@ -1,15 +1,13 @@
 import contextlib
-import errno
-import hashlib
 import os
 import subprocess
 import tempfile
+import uuid
 from typing import Optional
 
 from osbuild.util.types import PathLike
-from osbuild.util import ctx, jsoncomm, rmrf
+from osbuild.util import jsoncomm, rmrf
 from . import api
-from . import treesum
 
 
 __all__ = [
@@ -87,15 +85,6 @@ class Object:
         self.id = base_id
 
     @property
-    def treesum(self) -> str:
-        """Calculate the treesum of the object"""
-        with self._open() as fd:
-            m = hashlib.sha256()
-            treesum.treesum(m, fd)
-            treesum_hash = m.hexdigest()
-            return treesum_hash
-
-    @property
     def _path(self) -> str:
         if self._base and not self._init:
             path = self.store.resolve_ref(self._base)
@@ -146,20 +135,21 @@ class Object:
             umount(target)
             self._readers -= 1
 
-    def store_tree(self, destination: str):
-        """Store the tree at destination and reset itself
+    def store_tree(self):
+        """Store the tree with a fresh name and reset itself
 
-        Moves the tree atomically by using rename(2). If the
-        target already exist, does nothing. Afterwards it
-        resets itself and can be used as if it was new.
+        Moves the tree atomically by using rename(2), to a
+        randomly generated unique name. Afterwards it resets
+        itself and can be used as if it was new.
         """
         self._check_writable()
         self._check_readers()
         self._check_writer()
         self.init()
-        with ctx.suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
-            os.rename(self._tree, destination)
+        destination = str(uuid.uuid4())
+        os.rename(self._tree, os.path.join(self.store.objects, destination))
         self.reset()
+        return destination
 
     def reset(self):
         self.cleanup()
@@ -349,41 +339,34 @@ class ObjectStore(contextlib.AbstractContextManager):
         """Commits a Object to the object store
 
         Move the contents of the obj (Object) to object directory
-        of the store with the content hash (obj.treesum) as its name.
-        Creates a symlink to that ('objects/{hash}') in the references
+        of the store with a universally unique name. Creates a
+        symlink to that ('objects/{hash}') in the references
         directory with the object_id as the name ('refs/{object_id}).
         If the link already exists, it will be atomically replaced.
 
-        Returns: The treesum of the object
+        Returns: The name of the object
         """
-        treesum_hash = obj.treesum
 
-        # the object is stored in the objects directory using its content
-        # hash as its name, ideally a given object_id (i.e., given config)
-        # will always produce the same content hash, but that is not
-        # guaranteed. If an object with the same treesum already exist, us
-        # the existing one instead
-        obj.store_tree(os.path.join(self.objects, treesum_hash))
+        # the object is stored in the objects directory using its unique
+        # name. This means that eatch commit will always result in a new
+        # object in the store, even if an identical one exists.
+        object_name = obj.store_tree()
 
         # symlink the object_id (config hash) in the refs directory to the
-        # treesum (content hash) in the objects directory. If a symlink by
-        # that name already exists, atomically replace it, but leave the
-        # backing object in place (it may be in use).
+        # object name in the objects directory. If a symlink by that name
+        # already exists, atomically replace it, but leave the backing object
+        # in place (it may be in use).
         with self.tempdir() as tmp:
             link = f"{tmp}/link"
-            os.symlink(f"../objects/{treesum_hash}", link)
+            os.symlink(f"../objects/{object_name}", link)
             os.replace(link, self.resolve_ref(object_id))
 
-        # the reference that is pointing to `treesum_hash` is now the base
+        # the reference that is pointing to `object_name` is now the base
         # of `obj`. It is not actively initialized but any subsequent calls
         # to `obj.write()` will initialize it again
-        # NB: in the case that an object with the same treesum as `obj`
-        # already existed in the store obj.store_tree() will not actually
-        # have written anything to the store. In this case `obj` will then
-        # be initialized with the content of the already existing object.
         obj.base = object_id
 
-        return treesum_hash
+        return object_name
 
     def cleanup(self):
         """Cleanup all created Objects that are still alive"""
