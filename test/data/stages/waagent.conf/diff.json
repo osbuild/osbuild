@@ -1,0 +1,30 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/waagent.conf": {
+      "content": [
+        "sha256:a7e9101a548ba77d9fa16f35bcd158d06353e769ee650dc3c92115bb4b2be5a5",
+        "sha256:0a7d801d411a677fe53a0bd0b24d0589bb51567545deb9e2d9243f6b6924c226"
+      ]
+    },
+    "/etc/pki/ca-trust/extracted/java/cacerts": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/var/cache/ldconfig/aux-cache": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/var/lib/rpm/rpmdb.sqlite": {
+      "content": [
+        null,
+        null
+      ]
+    }
+  }
+}
