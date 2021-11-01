@@ -12,4 +12,4 @@ jobs:
       - name: Upstream release
         uses: osbuild/release-action@main
         with:
-          token: "${{ secrets.GITHUB_TOKEN }}"
+          token: "${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}"
