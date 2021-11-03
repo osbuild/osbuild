@@ -24,6 +24,12 @@ import osbuild.api
 
 
 SCHEMA = r"""
+"definitions": {
+  "reporting_handlers": {
+    "type": "string",
+    "enum": ["log", "print", "webhook", "hyperv"]
+  }
+},
 "additionalProperties": false,
 "required": ["config", "filename"],
 "properties": {
@@ -53,6 +59,32 @@ SCHEMA = r"""
               "name": {
                 "type": "string",
                 "description": "username of the 'default' user."
+              }
+            }
+          }
+        }
+      },
+      "reporting": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Define reporting endpoints.",
+        "minProperties": 1,
+        "properties": {
+          "logging": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "$ref": "#/definitions/reporting_handlers"
+              }
+            }
+          },
+          "telemetry": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "$ref": "#/definitions/reporting_handlers"
               }
             }
           }
