@@ -515,6 +515,49 @@
             }
           }
         }
+      },
+      {
+        "name": "org.osbuild.cloud-init",
+        "options": {
+          "filename": "10-azure-kfp.cfg",
+          "config": {
+            "reporting": {
+              "logging": {
+                "type": "log"
+              },
+              "telemetry": {
+                "type": "hyperv"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "org.osbuild.cloud-init",
+        "options": {
+          "filename": "91-azure_datasource.cfg",
+          "config": {
+            "datasource_list": [
+              "Azure"
+            ],
+            "datasource": {
+              "Azure": {
+                "apply_network_config": false
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "org.osbuild.cloud-init",
+        "options": {
+          "filename": "06_logging_override.cfg",
+          "config": {
+            "output": {
+              "all": ">> /var/log/cloud-init-all.log"
+            }
+          }
+        }
       }
     ]
   },
