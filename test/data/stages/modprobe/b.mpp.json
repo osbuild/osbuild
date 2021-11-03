@@ -56,6 +56,19 @@
             }
           ]
         }
+      },
+      {
+        "name": "org.osbuild.modprobe",
+        "options": {
+          "filename": "firewalld-sysctls.conf",
+          "commands": [
+            {
+              "command": "install",
+              "modulename": "nf_conntrack",
+              "cmdline": "/usr/sbin/modprobe --ignore-install nf_conntrack $CMDLINE_OPTS && /usr/sbin/sysctl --quiet --pattern 'net[.]netfilter[.]nf_conntrack.*' --system"
+            }
+          ]
+        }
       }
     ]
   }
