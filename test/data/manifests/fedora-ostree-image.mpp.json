@@ -488,7 +488,7 @@
             "volumes": [
               {
                 "name": "root",
-                "size": "100%FREE"
+                "extents": "100%FREE"
               }
             ]
           }

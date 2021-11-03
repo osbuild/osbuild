@@ -41,16 +41,29 @@ SCHEMA_2 = r"""
       "items": {
         "description": "Logical volume",
         "type": "object",
-        "required": ["name", "size"],
+        "required": ["name"],
+        "oneOf": [
+          {
+            "required": ["size"]
+          }, {
+            "required": ["extents"]
+          }
+        ],
         "properties": {
           "name": {
             "description": "The logical volume name",
             "type": "string",
             "pattern": "[a-zA-Z09+_.][a-zA-Z0-9+_.-]*"
           },
+          "extents": {
+            "description": "The logical extents of the volume",
+            "type": "string",
+            "pattern": "[1-9][0-9]*(%(VG|PVS|FREE|ORIGIN))?"
+          },
           "size": {
             "description": "The size of the logical volume",
-            "type": "string"
+            "type": "string",
+            "pattern": "[1-9][0-9]*[bBsSkKmMgGtTpPeE]?"
           }
         }
       }
@@ -80,10 +93,14 @@ def main(devices, options):
     for volume in volumes:
         name = volume["name"]
         size = volume.get("size")
+        extents = volume.get("extents")
         cmd = ["lvcreate", "-an"]
 
+        if extents:
+            cmd += ["--extents", extents]
+
         if size:
-            cmd += ["-l", size]
+            cmd += ["--size", size]
 
         cmd += ["-n", name, vg_name]
 
