@@ -1,7 +1,8 @@
 {
   "added_files": [
     "/usr/lib/modprobe.d/disallow-modules.conf",
-    "/usr/lib/modprobe.d/disallow-additional-modules.conf"
+    "/usr/lib/modprobe.d/disallow-additional-modules.conf",
+    "/usr/lib/modprobe.d/firewalld-sysctls.conf"
   ],
   "deleted_files": [],
   "differences": {}

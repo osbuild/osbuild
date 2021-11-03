@@ -9,6 +9,11 @@ Currently supported "command" objects are:
   - for 'blacklist' command
     - 'command' property value: "blacklist"
     - 'modulename' property value: a non-empty string with the name of a module
+  - for 'install' command
+    - 'command' property value: "install"
+    - 'modulename' property value: a non-empty string with the name of a module
+    - 'cmdline' property value: a non-empty string representing the command to
+      run instead of inserting the specified module.
 """
 
 
@@ -38,7 +43,7 @@ SCHEMA = r"""
           "additionalProperties": false,
           "type": "object",
           "description": "'blacklist' command",
-          "required": ["command","modulename"],
+          "required": ["command", "modulename"],
           "properties": {
             "command": {
               "type": "string",
@@ -49,6 +54,29 @@ SCHEMA = r"""
               "type": "string",
               "minLength": 1,
               "description": "name of the module to blacklist."
+            }
+          }
+        },
+        {
+          "additionalProperties": false,
+          "type": "object",
+          "description": "'install' command",
+          "required": ["command", "modulename", "cmdline"],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": ["install"],
+              "description": "modprobe command."
+            },
+            "modulename": {
+              "type": "string",
+              "minLength": 1,
+              "description": "name of the module to blacklis."
+            },
+            "cmdline": {
+              "type": "string",
+              "minLength": 1,
+              "description": "command to run instead of inserting the specified module as normal."
             }
           }
         }
@@ -69,6 +97,8 @@ def main(tree, options):
     for config_command in options["commands"]:
         if config_command["command"] == "blacklist":
             lines.append(f'{config_command["command"]} {config_command["modulename"]}\n')
+        elif config_command["command"] == "install":
+            lines.append(f'{config_command["command"]} {config_command["modulename"]} {config_command["cmdline"]}\n')
         else:
             raise ValueError()
 
