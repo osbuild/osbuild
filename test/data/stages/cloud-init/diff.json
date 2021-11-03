@@ -1,6 +1,9 @@
 {
   "added_files": [
-    "/etc/cloud/cloud.cfg.d/00-default_user.cfg"
+    "/etc/cloud/cloud.cfg.d/00-default_user.cfg",
+    "/etc/cloud/cloud.cfg.d/06_logging_override.cfg",
+    "/etc/cloud/cloud.cfg.d/10-azure-kfp.cfg",
+    "/etc/cloud/cloud.cfg.d/91-azure_datasource.cfg"
   ],
   "deleted_files": [],
   "differences": {}
