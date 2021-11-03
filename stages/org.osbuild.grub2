@@ -113,6 +113,13 @@ SCHEMA = """
         ]
       }
     }
+  },
+  "terminal": {
+    "description": "Terminal device",
+    "type": "array",
+    "items": {
+      "type": "string"
+    }
   }
 },
 "properties": {
@@ -191,6 +198,29 @@ SCHEMA = """
     "description": "Include support for fallback counting",
     "type": "boolean",
     "default": false
+  },
+  "config": {
+    "description": "Configuration options for grub itself",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "terminal_input": {
+         "$ref": "#/definitions/terminal"
+      },
+      "terminal_output": {
+         "$ref": "#/definitions/terminal"
+      },
+      "timeout": {
+        "description": "Timeout in seconds",
+        "type": "integer",
+        "minimum": 0,
+        "default": 0
+      },
+      "serial": {
+        "description": "The command to configure the serial console",
+        "type": "string"
+      }
+    }
   }
 }
 """
@@ -203,7 +233,7 @@ SCHEMA = """
 #   - $ignition: configuration for ignition, if support for ignition
 #     is enabled
 GRUB_CFG_TEMPLATE = """
-set timeout=0
+set timeout=${timeout}
 
 # load the grubenv file
 load_env
@@ -226,7 +256,7 @@ set boot=$${root}
 function load_video {
   insmod all_video
 }
-${features}
+${features}${serial}${terminal_input}${terminal_output}
 blscfg
 """
 
@@ -340,6 +370,11 @@ class GrubConfig:
         self.path = "boot/grub2/grub.cfg"
         self.ignition = False
         self.greenboot = False
+        self.kernel_opts = ""
+        self.serial = ""
+        self.terminal_input = None
+        self.terminal_output = None
+        self.timeout = 0
 
     @property
     def grubfs(self):
@@ -357,6 +392,19 @@ class GrubConfig:
     @property
     def grub_home(self):
         return "/" if self.separate_boot else "/boot/"
+
+    def make_terminal_config(self, terminal):
+        config = getattr(self, terminal)
+        if not config:
+            return {}
+
+        val = (
+            "\n" +
+            terminal +
+            " " +
+            " ".join(config)
+        )
+        return {terminal: val}
 
     def write(self, tree):
         """Write the grub config to `tree` at `self.path`"""
@@ -382,9 +430,16 @@ class GrubConfig:
 
         # configuration options for the main template
         config = {
+            "timeout": self.timeout,
             "search": type2opt[fs_type] + " " + fs_id,
             "features": features,
         }
+
+        if self.serial:
+            config["serial"] = "\n" + self.serial
+
+        config.update(self.make_terminal_config("terminal_input"))
+        config.update(self.make_terminal_config("terminal_output"))
 
         tplt = string.Template(GRUB_CFG_TEMPLATE)
         data = tplt.safe_substitute(config)
@@ -408,6 +463,28 @@ class GrubConfig:
         with open(os.path.join(tree, path), "w") as cfg:
             cfg.write(data)
 
+    def defaults(self):
+        # NB: The "GRUB_CMDLINE_LINUX" variable contains the kernel command
+        # line but without the `root=` part, thus we just use `kernel_opts`.
+        data = (
+            f'GRUB_CMDLINE_LINUX="{self.kernel_opts}"\n'
+            f"GRUB_TIMEOUT={self.timeout}\n"
+            "GRUB_ENABLE_BLSCFG=true\n"
+        )
+
+        if self.serial:
+            data += f'GRUB_SERIAL_COMMAND="{self.serial}"\n'
+
+        if self.terminal_input:
+            val = " ".join(self.terminal_input)
+            data += f'GRUB_TERMINAL_INPUT="{val}"\n'
+
+        if self.terminal_output:
+            val = " ".join(self.terminal_output)
+            data += f'GRUB_TERMINAL_OUTPUT="{val}"\n'
+
+        return data
+
 
 #pylint: disable=too-many-statements
 def main(tree, options):
@@ -419,6 +496,7 @@ def main(tree, options):
     write_defaults = options.get("write_defaults", True)
     ignition = options.get("ignition", False)
     saved_entry = options.get("saved_entry")
+    cfg = options.get("config", {})
 
     # backwards compatibility
     if not root_fs:
@@ -442,16 +520,17 @@ def main(tree, options):
     config = GrubConfig(root_fs, boot_fs)
     config.ignition = ignition
     config.greenboot = options.get("greenboot", False)
+    config.kernel_opts = kernel_opts
+    config.serial = cfg.get("serial")
+    config.terminal_input = cfg.get("terminal_input")
+    config.terminal_output = cfg.get("terminal_output")
+    config.timeout = cfg.get("timeout", 0)
 
     # Create the configuration file that determines how grub.cfg is generated.
     if write_defaults:
         os.makedirs(f"{tree}/etc/default", exist_ok=True)
         with open(f"{tree}/etc/default/grub", "w") as default:
-            # NB: The "GRUB_CMDLINE_LINUX" variable contains the kernel command
-            # line but without the `root=` part, thus we just use `kernel_opts`.
-            default.write(f'GRUB_CMDLINE_LINUX="{kernel_opts}"\n'
-                          "GRUB_TIMEOUT=0\n"
-                          "GRUB_ENABLE_BLSCFG=true\n")
+            default.write(config.defaults())
 
     os.makedirs(f"{tree}/boot/grub2", exist_ok=True)
     grubenv = f"{tree}/boot/grub2/grubenv"
