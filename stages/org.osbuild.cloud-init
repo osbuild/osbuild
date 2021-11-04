@@ -114,6 +114,28 @@ SCHEMA = r"""
             }
           }
         }
+      },
+      "output": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "init": {
+            "description": "Redirect the output of the init stage",
+            "type": "string"
+          },
+          "config": {
+            "description": "Redirect the output of the config stage",
+            "type": "string"
+          },
+          "final": {
+            "description": "Redirect the output of the final stage",
+            "type": "string"
+          },
+          "all": {
+            "description": "Redirect the output of all stages",
+            "type": "string"
+          }
+        }
       }
     }
   }
