@@ -21,6 +21,7 @@ may not match the tree's policy.
 
 
 import os
+import pathlib
 import subprocess
 import sys
 
@@ -41,6 +42,11 @@ SCHEMA = """
     "items": {
       "type": "object"
     }
+  },
+  "force_autorelabel": {
+    "type": "boolean",
+    "description": "Do not use. Forces auto-relabelling on first boot.",
+    "default": false
   }
 }
 """
@@ -55,6 +61,10 @@ def main(tree, options):
     for path, label in labels.items():
         fullpath = os.path.join(tree, path.lstrip("/"))
         subprocess.run(["chcon", "-v", label, fullpath], check=True)
+
+    if options.get("force_autorelabel", False):
+        stamp = pathlib.Path(tree, ".autorelabel")
+        stamp.touch()
 
 
 if __name__ == '__main__':
