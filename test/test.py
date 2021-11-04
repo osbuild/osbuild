@@ -22,6 +22,8 @@ class TestBase(unittest.TestCase):
     to common functionality.
     """
 
+    maxDiff = None
+
     @staticmethod
     def have_test_checkout() -> bool:
         """Check Test-Checkout Access
@@ -355,7 +357,6 @@ class OSBuild(contextlib.AbstractContextManager):
         """
 
         index = osbuild.meta.Index(os.curdir)
-
 
         manifest_json = json.loads(manifest_data)
 
