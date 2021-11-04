@@ -1,0 +1,30 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/cron.daily/osbuild": {
+      "content": [
+        "sha256:83295306cc9de4124f31502285f9b267176209c277266215bcae8c32b4e808dd",
+        "sha256:2c47ddd511edc29ee4aaee93761e58d853cc3676689657a588fe3b4684e410cc"
+      ]
+    },
+    "/etc/pki/ca-trust/extracted/java/cacerts": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/var/cache/ldconfig/aux-cache": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/var/lib/rpm/rpmdb.sqlite": {
+      "content": [
+        null,
+        null
+      ]
+    }
+  }
+}
