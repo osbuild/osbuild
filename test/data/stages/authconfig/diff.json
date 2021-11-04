@@ -1,0 +1,67 @@
+{
+  "added_files": [
+    "/etc/authselect/authselect.conf",
+    "/etc/authselect/dconf-db",
+    "/etc/authselect/dconf-locks",
+    "/etc/authselect/fingerprint-auth",
+    "/etc/authselect/nsswitch.conf",
+    "/etc/authselect/password-auth",
+    "/etc/authselect/postlogin",
+    "/etc/authselect/smartcard-auth",
+    "/etc/authselect/system-auth",
+    "/etc/dconf",
+    "/etc/dconf/db",
+    "/etc/dconf/db/distro.d",
+    "/etc/dconf/db/distro.d/20-authselect",
+    "/etc/dconf/db/distro.d/locks",
+    "/etc/dconf/db/distro.d/locks/20-authselect",
+    "/etc/sysconfig/authconfig",
+    "/var/lib/authselect/dconf-db",
+    "/var/lib/authselect/dconf-locks",
+    "/var/lib/authselect/fingerprint-auth",
+    "/var/lib/authselect/nsswitch.conf",
+    "/var/lib/authselect/password-auth",
+    "/var/lib/authselect/postlogin",
+    "/var/lib/authselect/smartcard-auth",
+    "/var/lib/authselect/system-auth"
+  ],
+  "deleted_files": [],
+  "differences": {
+    "/etc/nsswitch.conf": {
+      "mode": [
+        33188,
+        41471
+      ]
+    },
+    "/etc/pam.d/fingerprint-auth": {
+      "mode": [
+        33188,
+        41471
+      ]
+    },
+    "/etc/pam.d/password-auth": {
+      "mode": [
+        33188,
+        41471
+      ]
+    },
+    "/etc/pam.d/postlogin": {
+      "mode": [
+        33188,
+        41471
+      ]
+    },
+    "/etc/pam.d/smartcard-auth": {
+      "mode": [
+        33188,
+        41471
+      ]
+    },
+    "/etc/pam.d/system-auth": {
+      "mode": [
+        33188,
+        41471
+      ]
+    }
+  }
+}
