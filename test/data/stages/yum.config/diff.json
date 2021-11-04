@@ -1,6 +1,9 @@
 {
   "added_files": [
-    "/etc/yum.conf"
+    "/etc/yum.conf",
+    "/etc/yum",
+    "/etc/yum/pluginconf.d",
+    "/etc/yum/pluginconf.d/langpacks.conf"
   ],
   "deleted_files": [],
   "differences": {}
