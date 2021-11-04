@@ -1,0 +1,84 @@
+#!/usr/bin/python3
+"""
+Run a script at regular intervals.
+
+Execute a script at regular intervals. This uses the cron drop-in
+directories in etc, which correspond to the supported intervals:
+  `cron.hourly/`, `cron.daily/`, `cron.weekly/`, `cron.monthly/`
+
+NB: Does itself not create the directories so they must be created
+via the package that provides the facility, like `cronie` or on
+older systems `crontabs`.
+"""
+
+
+import os
+import sys
+
+import osbuild.api
+
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "required": ["interval", "filename"],
+  "oneOf": [
+    {"required": ["simple"]}
+  ],
+  "properties": {
+    "interval": {
+      "type": "string",
+      "enum": ["hourly", "daily", "weekly", "monthly"]
+    },
+    "filename": {
+      "type": "string",
+      "description": "Name of the cron script",
+      "pattern": "^[\\w.-]{1,255}$"
+    },
+    "simple": {
+      "type": "object",
+      "description": "A simple command to run.",
+      "required": ["command"],
+      "properties": {
+        "comment": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "command": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def format_comment(comment):
+    lines = comment.split("\n")
+    return "\n".join(map(lambda c: f"# {c}", lines))
+
+
+def main(tree, options):
+    interval = options["interval"]
+    filename = options["filename"]
+    filepath = os.path.join(tree, "etc", f"cron.{interval}", filename)
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        cmd = options["simple"]
+        cmdline = cmd["command"]
+        comment = cmd.get("comment")
+        f.write("!/bin/bash\n")
+        if comment:
+            comment = "\n".join(map(lambda c: f"# {c}", comment))
+            f.write(f"{comment}\n")
+        f.write(f"{cmdline}\n")
+        os.fchmod(f.fileno(), 0o755)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args.get("options", {}))
+    sys.exit(r)
