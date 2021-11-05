@@ -29,9 +29,8 @@ import osbuild.api
 
 
 SCHEMA = """
-"additionalProperties": false,
-"properties": {
-  "dnf-plugins": {
+"definitions": {
+  "plugins": {
     "additionalProperties": false,
     "type": "object",
     "description": "RHSM DNF plugins configuration",
@@ -59,6 +58,12 @@ SCHEMA = """
         }
       }
     }
+  }
+},
+"additionalProperties": false,
+"properties": {
+  "dnf-plugins": {
+    "$ref": "#/definitions/plugins"
   },
   "subscription-manager": {
     "additionalProperties": false,
