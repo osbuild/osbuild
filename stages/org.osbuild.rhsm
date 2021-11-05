@@ -38,7 +38,7 @@ SCHEMA = """
       "product-id": {
         "additionalProperties": false,
         "type": "object",
-        "description": "'product-id' DNF plugin configuration",
+        "description": "'product-id' DNF/YUM plugin configuration",
         "properties": {
           "enabled": {
             "type": "boolean",
@@ -49,7 +49,7 @@ SCHEMA = """
       "subscription-manager": {
         "additionalProperties": false,
         "type": "object",
-        "description": "'subscription-manager' DNF plugin configuration",
+        "description": "'subscription-manager' DNF/YUM plugin configuration",
         "properties": {
           "enabled": {
             "type": "boolean",
@@ -63,6 +63,9 @@ SCHEMA = """
 "additionalProperties": false,
 "properties": {
   "dnf-plugins": {
+    "$ref": "#/definitions/plugins"
+  },
+  "yum-plugins": {
     "$ref": "#/definitions/plugins"
   },
   "subscription-manager": {
@@ -98,13 +101,13 @@ SCHEMA = """
 """
 
 
-def configure_dnf_plugins(tree, dnf_plugins_options):
-    for plugin, plugin_options in dnf_plugins_options.items():
+def configure_plugins(tree, path, plugins_options):
+    for plugin, plugin_options in plugins_options.items():
         # don't touch the configuration file if there is nothing to do
         if not plugin_options:
             continue
 
-        plugin_conf_path = f"{tree}/etc/dnf/plugins/{plugin}.conf"
+        plugin_conf_path = f"{tree}/etc/{path}/{plugin}.conf"
         plugin_conf = iniparse.SafeConfigParser()
 
         try:
@@ -164,9 +167,12 @@ def configure_rhsm(tree, rhsm_configuration_options):
 
 def main(tree, options):
     dnf_plugins_options = options.get("dnf-plugins", {})
+    yum_plugins_options = options.get("yum-plugins", {})
     rhsm_configuration = options.get("subscription-manager", {})
 
-    if configure_dnf_plugins(tree, dnf_plugins_options):
+    if configure_plugins(tree, "dnf/plugins", dnf_plugins_options):
+        return 1
+    if configure_plugins(tree, "yum/pluginconf.d", yum_plugins_options):
         return 1
     if configure_rhsm(tree, rhsm_configuration):
         return 1
