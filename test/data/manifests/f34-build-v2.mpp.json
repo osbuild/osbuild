@@ -21,6 +21,7 @@
                 ],
                 "packages": [
                   "btrfs-progs",
+                  "cryptsetup",
                   "dnf",
                   "dosfstools",
                   "e2fsprogs",

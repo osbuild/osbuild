@@ -27,9 +27,9 @@
           "uuid": "61B2905B-DF3E-4FB3-80FA-49D1E773AA32"
         },
         {
-          "id": "lvm",
+          "id": "luks",
           "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-          "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
+          "uuid": "CA7D7CCB-63ED-4C53-861C-1742536059CC"
         }
       ]
     }
@@ -316,7 +316,8 @@
               "console=tty0",
               "console=ttyS0",
               "systemd.log_target=console",
-              "systemd.journald.forward_to_console=1"
+              "systemd.journald.forward_to_console=1",
+              "luks.uuid=aedd1eef-f24e-425e-a9f3-bb5a1c996a95"
             ]
           }
         },
@@ -438,7 +439,8 @@
                 },
                 "size": {
                   "mpp-format-int": "{image.layout['efi'].size}"
-                }
+                },
+                "lock": true
               }
             }
           },
@@ -459,7 +461,8 @@
                 },
                 "size": {
                   "mpp-format-int": "{image.layout['boot'].size}"
-                }
+                },
+                "lock": true
               }
             }
           },
@@ -469,18 +472,54 @@
           }
         },
         {
-          "type": "org.osbuild.lvm2.create",
+          "type": "org.osbuild.luks2.format",
           "devices": {
             "device": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
                 "start": {
-                  "mpp-format-int": "{image.layout['lvm'].start}"
+                  "mpp-format-int": "{image.layout['luks'].start}"
                 },
                 "size": {
-                  "mpp-format-int": "{image.layout['lvm'].size}"
+                  "mpp-format-int": "{image.layout['luks'].size}"
+                },
+                "lock": true
+              }
+            }
+          },
+          "options": {
+            "passphrase": "osbuild",
+            "uuid": "aedd1eef-f24e-425e-a9f3-bb5a1c996a95",
+            "label": "luks",
+            "pbkdf": {
+              "method": "argon2i",
+              "memory": 32,
+              "parallelism": 1,
+              "iterations": 4
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.lvm2.create",
+          "devices": {
+            "luks": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": {
+                  "mpp-format-int": "{image.layout['luks'].start}"
+                },
+                "size": {
+                  "mpp-format-int": "{image.layout['luks'].size}"
                 }
+              }
+            },
+            "device": {
+              "type": "org.osbuild.luks2",
+              "parent": "luks",
+              "options": {
+                "passphrase": "osbuild"
               }
             }
           },
@@ -496,16 +535,23 @@
         {
           "type": "org.osbuild.mkfs.xfs",
           "devices": {
-            "lvm": {
+            "luks": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
                 "start": {
-                  "mpp-format-int": "{image.layout['lvm'].start}"
+                  "mpp-format-int": "{image.layout['luks'].start}"
                 },
                 "size": {
-                  "mpp-format-int": "{image.layout['lvm'].size}"
+                  "mpp-format-int": "{image.layout['luks'].size}"
                 }
+              }
+            },
+            "lvm": {
+              "type": "org.osbuild.luks2",
+              "parent": "luks",
+              "options": {
+                "passphrase": "osbuild"
               }
             },
             "device": {
@@ -565,16 +611,23 @@
                 }
               }
             },
-            "lvm": {
+            "luks": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
                 "start": {
-                  "mpp-format-int": "{image.layout['lvm'].start}"
+                  "mpp-format-int": "{image.layout['luks'].start}"
                 },
                 "size": {
-                  "mpp-format-int": "{image.layout['lvm'].size}"
+                  "mpp-format-int": "{image.layout['luks'].size}"
                 }
+              }
+            },
+            "lvm": {
+              "type": "org.osbuild.luks2",
+              "parent": "luks",
+              "options": {
+                "passphrase": "osbuild"
               }
             },
             "root": {
@@ -634,17 +687,23 @@
         {
           "type": "org.osbuild.lvm2.metadata",
           "devices": {
-            "device": {
+            "luks": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
                 "start": {
-                  "mpp-format-int": "{image.layout['lvm'].start}"
+                  "mpp-format-int": "{image.layout['luks'].start}"
                 },
                 "size": {
-                  "mpp-format-int": "{image.layout['lvm'].size}"
-                },
-                "lock": true
+                  "mpp-format-int": "{image.layout['luks'].size}"
+                }
+              }
+            },
+            "device": {
+              "type": "org.osbuild.luks2",
+              "parent": "luks",
+              "options": {
+                "passphrase": "osbuild"
               }
             }
           },
