@@ -77,9 +77,11 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         desc = {
             "name": mnt.name,
             "type": mnt.info.name,
-            "source": mnt.device.name,
             "target": mnt.target
         }
+
+        if mnt.device:
+            desc["source"] = mnt.device.name
 
         if mnt.options:
             desc["options"] = mnt.options
