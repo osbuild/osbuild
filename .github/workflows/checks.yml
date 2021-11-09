@@ -42,7 +42,7 @@ jobs:
     - name: "Regenerate Test Data"
       uses: osbuild/containers/src/actions/privdocker@e4de123f43b95e99dfe8eed0bd5a1cd58db50715
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202102191311
+        image: ghcr.io/osbuild/osbuild-ci:latest-202111091120
         run: |
           make test-data
           git diff --exit-code -- ./test/data
