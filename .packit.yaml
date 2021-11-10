@@ -9,6 +9,8 @@ synced_files:
 upstream_package_name: osbuild
 downstream_package_name: osbuild
 
+copy_upstream_release_description: true
+
 upstream_tag_template: v{version}
 
 actions:
