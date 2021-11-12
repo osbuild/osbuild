@@ -257,7 +257,7 @@ class OSBuild(contextlib.AbstractContextManager):
         self._exitstack = None
 
     @staticmethod
-    def _print_result(code, data_stdout, data_stderr):
+    def _print_result(code, data_stdout, data_stderr, log):
         print(f"osbuild failed with: {code}")
         try:
             json_stdout = json.loads(data_stdout)
@@ -268,6 +268,9 @@ class OSBuild(contextlib.AbstractContextManager):
             print(data_stdout)
         print("-- STDERR ------------------------------")
         print(data_stderr)
+        if log:
+            print("-- LOG ---------------------------------")
+            print(log)
         print("-- END ---------------------------------")
 
     def compile(self, data_stdin, output_dir=None, checkpoints=None, check=False, exports=None):
@@ -291,17 +294,17 @@ class OSBuild(contextlib.AbstractContextManager):
         if checkpoints is None and exports is None:
             raise ValueError("Need `checkpoints` or `exports` argument")
 
-        if output_dir is None:
-            output_dir_context = tempfile.TemporaryDirectory(dir="/var/tmp")
-        else:
-            output_dir_context = contextlib.nullcontext(output_dir)
+        with contextlib.ExitStack() as cm:
 
-        with output_dir_context as osbuild_output_dir:
+            if output_dir is None:
+                output_dir_context = tempfile.TemporaryDirectory(dir="/var/tmp")
+                output_dir = cm.enter_context(output_dir_context)
+
             cmd_args = ["python3", "-m", "osbuild"]
 
             cmd_args += ["--json"]
             cmd_args += ["--libdir", "."]
-            cmd_args += ["--output-directory", osbuild_output_dir]
+            cmd_args += ["--output-directory", output_dir]
             cmd_args += ["--store", self._cachedir]
 
             for c in (checkpoints or []):
@@ -311,6 +314,11 @@ class OSBuild(contextlib.AbstractContextManager):
                 cmd_args += ["--export", e]
 
             cmd_args += ["-"]
+
+            logfile_context = tempfile.NamedTemporaryFile(dir="/var/tmp", mode="w+", encoding="utf-8")
+            logfile = cm.enter_context(logfile_context)
+
+            cmd_args += ["--monitor", "LogMonitor", "--monitor-fd", str(logfile.fileno())]
 
             # Spawn the `osbuild` executable, feed it the specified data on
             # `STDIN` and wait for completion. If we are interrupted, we always
@@ -323,17 +331,21 @@ class OSBuild(contextlib.AbstractContextManager):
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
+                    pass_fds=[logfile.fileno()],
                 )
                 data_stdout, data_stderr = p.communicate(data_stdin)
             except KeyboardInterrupt:
                 p.wait()
                 raise
 
+            logfile.seek(0)
+            full_log = logfile.read()
+
         # If execution failed, raise exception or print results to `STDOUT`.
         if p.returncode != 0:
             if check:
                 raise subprocess.CalledProcessError(p.returncode, cmd_args, data_stdout, data_stderr)
-            self._print_result(p.returncode, data_stdout, data_stderr)
+            self._print_result(p.returncode, data_stdout, data_stderr, full_log)
             assert p.returncode == 0
 
         return json.loads(data_stdout)
