@@ -2,7 +2,6 @@
 # Test for the util.lvm2 module
 #
 
-import errno
 import os
 import json
 import subprocess
@@ -41,8 +40,6 @@ def tempdir_fixture():
 
 
 def make_loop(ctl, fd: int, offset, sizelimit, sector_size=512):
-    lo = loop.Loop(ctl.get_unbound())
-
     if not sizelimit:
         stat = os.fstat(fd)
         sizelimit = stat.st_size - offset
@@ -50,27 +47,7 @@ def make_loop(ctl, fd: int, offset, sizelimit, sector_size=512):
     else:
         sizelimit *= sector_size
 
-    while True:
-        try:
-            lo.set_fd(fd)
-        except OSError as e:
-            lo.close()
-            if e.errno == errno.EBUSY:
-                continue
-            raise e
-        # `set_status` returns EBUSY when the pages from the previously
-        # bound file have not been fully cleared yet.
-        try:
-            lo.set_status(offset=offset,
-                          sizelimit=sizelimit,
-                          autoclear=True)
-        except BlockingIOError:
-            lo.clear_fd()
-            lo.close()
-            continue
-        break
-
-    return lo
+    return ctl.loop_for_fd(fd, offset, sizelimit=sizelimit, autoclear=True)
 
 
 def pvcreate(path: PathLike):
