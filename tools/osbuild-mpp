@@ -561,9 +561,7 @@ class ManifestFile:
             return
 
         for k, v in variables.items():
-            fakeroot = [v]
-            self._process_format(fakeroot)
-            self.vars[k] = fakeroot[0]
+            self.vars[k] = self._rewrite_node(v)
         self.substitute_vars(self.vars)
 
     def get_vars(self):
@@ -665,6 +663,11 @@ class ManifestFile:
         self.sort_urls()
         json.dump(self.root, file, indent=2, sort_keys=sort_keys)
         file.write("\n")
+
+    def _rewrite_node(self, node):
+        fakeroot = [node]
+        self._process_format(fakeroot)
+        return fakeroot[0]
 
     def _process_format(self, node):
         def _is_format(node):
