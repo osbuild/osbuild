@@ -1,0 +1,66 @@
+#!/usr/bin/python3
+"""
+Extract a gzipped file
+
+Buildhost commands used: `gunzip`.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+
+SCHEMA_2 = r"""
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["file"],
+  "properties": {
+    "file": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": false,
+  "required": ["path"],
+  "properties": {
+    "path": {
+      "description": "Unzip here.",
+      "type": "string"
+    }
+  }
+}
+"""
+
+
+def parse_input(inputs):
+    image = inputs["file"]
+    files = image["data"]["files"]
+    assert len(files) == 1
+
+    filename, _ = files.popitem()
+    filepath = os.path.join(image["path"], filename)
+    return filepath
+
+
+def main(inputs, output, options):
+    path = options["path"]
+    source = parse_input(inputs)
+    target = os.path.join(output, path.lstrip("/"))
+
+    with open(target, "w") as f:
+        cmd = ["gunzip", "--stdout", source]
+        subprocess.run(cmd, stdout=f,
+                       check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"], args["options"])
+    sys.exit(r)
