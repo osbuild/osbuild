@@ -128,6 +128,35 @@ Example:
 ...
 ```
 
+Optional parts:
+
+Similar to mpp-eval there is mpp-if, which also runs the code specified in the value, but
+rather than inserting the return value it uses it as a boolean to select the return
+value from the "then" (when true) or the "else" (when false) keys. If said key is not set
+the entire if not is removed from the manifest.
+
+
+Example:
+
+
+```
+    {
+      "mpp-if": "arch == 'x86_64'"
+       "then": {
+         "key1: "value1"
+       },
+       "else": {
+         "key1: "value2"
+       }
+     },
+...
+     "foo": {
+        "key1": "val1"
+        "key2": { "mpp-if": "arch == 'aarch64'" "then": "key2-special" }
+     },
+```
+
+
 Defining partition layouts for disk images:
 
 It is possbile to define a partition layout via `mpp-define-image`. The defined layout
@@ -561,7 +590,7 @@ class ManifestFile:
             return
 
         for k, v in variables.items():
-            self.vars[k] = self._rewrite_node(v)
+            self.vars[k], _ = self._rewrite_node(v)
         self.substitute_vars(self.vars)
 
     def get_vars(self):
@@ -667,13 +696,16 @@ class ManifestFile:
     def _rewrite_node(self, node):
         fakeroot = [node]
         self._process_format(fakeroot)
-        return fakeroot[0]
+        if not fakeroot:
+            return None, True
+        else:
+            return fakeroot[0], False
 
     def _process_format(self, node):
         def _is_format(node):
             if not isinstance(node, dict):
                 return False
-            for m in ("mpp-eval", "mpp-join"):
+            for m in ("mpp-eval", "mpp-join", "mpp-if"):
                 if m in node:
                     return True
             for m in ("int", "string", "json"):
@@ -688,14 +720,29 @@ class ManifestFile:
                 res = []
                 for to_merge in to_merge_list:
                     res.extend(to_merge)
-                return res
+                return res, False
+
+            if "mpp-if" in node:
+                code = node["mpp-if"]
+
+                # pylint: disable=eval-used  # yolo this is fine!
+                # Note, we copy local_vars here to avoid eval modifying it
+                if eval(code, dict(local_vars)):
+                    key = "then"
+                else:
+                    key = "else"
+
+                if key in node:
+                    return self._rewrite_node(node[key])
+                return None, True
 
             if "mpp-eval" in node:
                 code = node["mpp-eval"]
 
                 # pylint: disable=eval-used  # yolo this is fine!
                 # Note, we copy local_vars here to avoid eval modifying it
-                return eval(code, dict(local_vars))
+                res = eval(code, dict(local_vars))
+                return res, False
 
             if "mpp-format-string" in node:
                 res_type = "string"
@@ -712,24 +759,35 @@ class ManifestFile:
             res = eval(f'f\'\'\'{format_string}\'\'\'', dict(local_vars))
 
             if res_type == "int":
-                return int(res)
+                res = int(res)
             elif res_type == "json":
-                return json.loads(res)
-            return res
+                res = json.loads(res)
+            return res, False
 
         if isinstance(node, dict):
             for key in list(node.keys()):
                 value = node[key]
                 if _is_format(value):
-                    node[key] = _eval_format(value, self.get_vars())
+                    val, remove = _eval_format(value, self.get_vars())
+                    if remove:
+                        del node[key]
+                    else:
+                        node[key] = val
                 else:
                     self._process_format(value)
         if isinstance(node, list):
+            to_remove = []
             for i, value in enumerate(node):
                 if _is_format(value):
-                    node[i] = _eval_format(value, self.get_vars())
+                    val, remove = _eval_format(value, self.get_vars())
+                    if remove:
+                        to_remove.append(i)
+                    else:
+                        node[i] = val
                 else:
                     self._process_format(value)
+            for i in reversed(to_remove):
+                del node[i]
 
     def process_format(self):
         self._process_format(self.root)
