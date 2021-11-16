@@ -617,14 +617,16 @@ class ManifestFile:
             raise ValueError(f"Incompatible manifest version {m.version}")
         return m
 
-    def find_and_load_manifest(self, path, dirs):
+    def find_and_open_file(self, path, dirs, mode="r"):
         for p in [self.basedir] + dirs:
             with contextlib.suppress(FileNotFoundError):
                 fullpath = os.path.join(p, path)
-                with open(fullpath, "r") as f:
-                    return ManifestFile.load_from_fd(f, path, self.overrides, self.vars)
+                return open(fullpath, mode)
+        raise FileNotFoundError(f"Could not find file '{path}'")
 
-        raise FileNotFoundError(f"Could not find manifest '{path}'")
+    def find_and_load_manifest(self, path, dirs):
+        with self.find_and_open_file(path, dirs) as f:
+            return ManifestFile.load_from_fd(f, path, self.overrides, self.vars)
 
     def depsolve(self, solver: DepSolver, desc: Dict):
         repos = desc.get("repos", [])
