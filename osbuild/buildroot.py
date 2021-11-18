@@ -69,6 +69,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         self._apis = []
         self.dev = None
         self.var = None
+        self.tmp = None
         self.mount_boot = True
 
     @staticmethod
@@ -101,8 +102,11 @@ class BuildRoot(contextlib.AbstractContextManager):
             self.dev = self._exitstack.enter_context(dev)
 
             os.makedirs(self._vardir, exist_ok=True)
-            var = tempfile.TemporaryDirectory(prefix="osbuild-var-", dir=self._vardir)
-            self.var = self._exitstack.enter_context(var)
+            tmp = tempfile.TemporaryDirectory(prefix="osbuild-tmp-", dir=self._vardir)
+            self.tmp = self._exitstack.enter_context(tmp)
+
+            self.var = os.path.join(self.tmp, "var")
+            os.makedirs(self.var, exist_ok=True)
 
             subprocess.run(["mount", "-t", "tmpfs", "-o", "nosuid", "none", self.dev], check=True)
             self._exitstack.callback(lambda: subprocess.run(["umount", "--lazy", self.dev], check=True))
