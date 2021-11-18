@@ -45,6 +45,25 @@ class CompletedBuild:
         return self.output
 
 
+class ProcOverrides:
+    """Overrides for /proc inside the buildroot"""
+
+    def __init__(self, path) -> None:
+        self.path = path
+        self.overrides = set()
+
+    @property
+    def cmdline(self) -> str:
+        with open(os.path.join(self.path, "cmdline"), "r") as f:
+            return f.read().strip()
+
+    @cmdline.setter
+    def cmdline(self, value) -> None:
+        with open(os.path.join(self.path, "cmdline"), "w") as f:
+            f.write(value + "\n")
+        self.overrides.add("cmdline")
+
+
 # pylint: disable=too-many-instance-attributes
 class BuildRoot(contextlib.AbstractContextManager):
     """Build Root
@@ -69,6 +88,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         self._apis = []
         self.dev = None
         self.var = None
+        self.proc = None
         self.tmp = None
         self.mount_boot = True
 
@@ -107,6 +127,11 @@ class BuildRoot(contextlib.AbstractContextManager):
 
             self.var = os.path.join(self.tmp, "var")
             os.makedirs(self.var, exist_ok=True)
+
+            proc = os.path.join(self.tmp, "proc")
+            os.makedirs(proc)
+            self.proc = ProcOverrides(proc)
+            self.proc.cmdline = "root=/dev/osbuild"
 
             subprocess.run(["mount", "-t", "tmpfs", "-o", "nosuid", "none", self.dev], check=True)
             self._exitstack.callback(lambda: subprocess.run(["umount", "--lazy", self.dev], check=True))
@@ -208,6 +233,14 @@ class BuildRoot(contextlib.AbstractContextManager):
             modorigin = importlib.util.find_spec("osbuild").origin
             modpath = os.path.dirname(modorigin)
             mounts += ["--ro-bind", f"{modpath}", "/run/osbuild/lib/osbuild"]
+
+        # Setup /proc overrides
+        for override in self.proc.overrides:
+            mounts += [
+                "--ro-bind",
+                os.path.join(self.proc.path, override),
+                os.path.join("/proc", override)
+            ]
 
         # Make caller-provided mounts available as well.
         for b in binds or []:

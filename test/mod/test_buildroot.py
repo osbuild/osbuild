@@ -145,3 +145,22 @@ def test_selinuxfs_ro(tempdir):
 
         r = root.run(cmd, monitor, readonly_binds=ro_binds)
         assert r.returncode == 0
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_proc_overrides(tempdir):
+    runner = detect_host_runner()
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
+
+    cmdline = "is-this-the-real-world"
+
+    monitor = NullMonitor(sys.stderr.fileno())
+    with BuildRoot("/", runner, libdir, var) as root:
+
+        root.proc.cmdline = cmdline
+
+        r = root.run(["cat", "/proc/cmdline"], monitor)
+        assert r.returncode == 0
+        assert cmdline in r.output.strip()
