@@ -603,7 +603,11 @@ class ManifestFile:
     @staticmethod
     def load_from_fd(f, path, overrides, default_vars):
         # We use OrderedDict to preserve key order (for python < 3.6)
-        data = json.load(f, object_pairs_hook=collections.OrderedDict)
+        try:
+            data = json.load(f, object_pairs_hook=collections.OrderedDict)
+        except json.decoder.JSONDecodeError as err:
+            print (f"Invalid json in \"{path}\": {err.msg} at line {err.lineno} (col {err.colno})")
+            sys.exit(1)
 
         version = int(data.get("version", "1"))
         if version == 1:
