@@ -1,0 +1,9 @@
+{
+  "added_files": [
+    "/uncompressed.txt"
+  ],
+  "deleted_files": [
+    "/compressed.gz"
+  ],
+  "differences": {}
+}
