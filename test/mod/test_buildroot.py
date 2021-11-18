@@ -5,135 +5,143 @@
 import pathlib
 import os
 import sys
-import tempfile
-import unittest
+
+from tempfile import TemporaryDirectory
+
+import pytest
 
 from osbuild.buildroot import BuildRoot
 from osbuild.monitor import LogMonitor, NullMonitor
 from osbuild.pipeline import detect_host_runner
-from .. import test
+
+from ..test import TestBase
 
 
-@unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
-class TestBuildRoot(test.TestBase):
-    """Check BuildRoot"""
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
+@pytest.fixture(name="tempdir")
+def tempdir_fixture():
+    with TemporaryDirectory(prefix="lvm2-") as tmp:
+        yield tmp
 
-    def tearDown(self):
-        self.tmp.cleanup()
 
-    def test_basic(self):
-        runner = detect_host_runner()
-        libdir = os.path.abspath(os.curdir)
-        var = pathlib.Path(self.tmp.name, "var")
-        var.mkdir()
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_basic(tempdir):
+    runner = detect_host_runner()
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
 
-        monitor = NullMonitor(sys.stderr.fileno())
-        with BuildRoot("/", runner, libdir, var) as root:
+    monitor = NullMonitor(sys.stderr.fileno())
+    with BuildRoot("/", runner, libdir, var) as root:
 
-            r = root.run(["/usr/bin/true"], monitor)
-            self.assertEqual(r.returncode, 0)
+        r = root.run(["/usr/bin/true"], monitor)
+        assert r.returncode == 0
 
-            # Test we can use `.run` multiple times
-            r = root.run(["/usr/bin/true"], monitor)
-            self.assertEqual(r.returncode, 0)
+        # Test we can use `.run` multiple times
+        r = root.run(["/usr/bin/true"], monitor)
+        assert r.returncode == 0
 
-            r = root.run(["/usr/bin/false"], monitor)
-            self.assertNotEqual(r.returncode, 0)
+        r = root.run(["/usr/bin/false"], monitor)
+        assert r.returncode != 0
 
-    def test_runner_fail(self):
-        runner = "org.osbuild.nonexistantrunner"
-        libdir = os.path.abspath(os.curdir)
-        var = pathlib.Path(self.tmp.name, "var")
-        var.mkdir()
 
-        logfile = os.path.join(self.tmp.name, "log.txt")
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_runner_fail(tempdir):
+    runner = "org.osbuild.nonexistantrunner"
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
 
-        with BuildRoot("/", runner, libdir, var) as root, \
-             open(logfile, "w") as log:
+    logfile = os.path.join(tempdir, "log.txt")
 
-            monitor = LogMonitor(log.fileno())
+    with BuildRoot("/", runner, libdir, var) as root, \
+            open(logfile, "w") as log:
 
-            r = root.run(["/usr/bin/true"], monitor)
+        monitor = LogMonitor(log.fileno())
 
-        self.assertEqual(r.returncode, 1)
-        with open(logfile) as f:
-            log = f.read()
-        assert log
-        assert r.output
-        self.assertEqual(log, r.output)
+        r = root.run(["/usr/bin/true"], monitor)
 
-    def test_output(self):
-        runner = detect_host_runner()
-        libdir = os.path.abspath(os.curdir)
-        var = pathlib.Path(self.tmp.name, "var")
-        var.mkdir()
+    assert r.returncode == 1
+    with open(logfile) as f:
+        log = f.read()
+    assert log
+    assert r.output
+    assert log == r.output
 
-        data = "42. cats are superior to dogs"
 
-        monitor = NullMonitor(sys.stderr.fileno())
-        with BuildRoot("/", runner, libdir, var) as root:
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_output(tempdir):
+    runner = detect_host_runner()
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
 
-            r = root.run(["/usr/bin/echo", data], monitor)
-            self.assertEqual(r.returncode, 0)
+    data = "42. cats are superior to dogs"
 
-        self.assertIn(data, r.output.strip())
+    monitor = NullMonitor(sys.stderr.fileno())
+    with BuildRoot("/", runner, libdir, var) as root:
 
-    @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
-    def test_bind_mounts(self):
-        runner = detect_host_runner()
-        libdir = os.path.abspath(os.curdir)
-        var = pathlib.Path(self.tmp.name, "var")
-        var.mkdir()
+        r = root.run(["/usr/bin/echo", data], monitor)
+        assert r.returncode == 0
 
-        rw_data = pathlib.Path(self.tmp.name, "data")
-        rw_data.mkdir()
+    assert data in r.output.strip()
 
-        scripts = os.path.join(self.locate_test_data(), "scripts")
 
-        monitor = NullMonitor(sys.stderr.fileno())
-        with BuildRoot("/", runner, libdir, var) as root:
+@pytest.mark.skipif(not TestBase.have_test_data(), reason="no test-data access")
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_bind_mounts(tempdir):
+    runner = detect_host_runner()
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
 
-            ro_binds = [f"{scripts}:/scripts"]
+    rw_data = pathlib.Path(tempdir, "data")
+    rw_data.mkdir()
 
-            cmd = ["/scripts/mount_flags.py",
-                   "/scripts",
-                   "ro"]
+    scripts = os.path.join(TestBase.locate_test_data(), "scripts")
 
-            r = root.run(cmd, monitor, readonly_binds=ro_binds)
-            self.assertEqual(r.returncode, 0)
+    monitor = NullMonitor(sys.stderr.fileno())
+    with BuildRoot("/", runner, libdir, var) as root:
 
-            cmd = ["/scripts/mount_flags.py",
-                   "/rw-data",
-                   "ro"]
+        ro_binds = [f"{scripts}:/scripts"]
 
-            binds = [f"{rw_data}:/rw-data"]
-            r = root.run(cmd, monitor, binds=binds, readonly_binds=ro_binds)
-            self.assertEqual(r.returncode, 1)
+        cmd = ["/scripts/mount_flags.py",
+               "/scripts",
+               "ro"]
 
-    @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
-    @unittest.skipUnless(os.path.exists("/sys/fs/selinux"), "no SELinux")
-    def test_selinuxfs_ro(self):
-        # /sys/fs/selinux must never be writable in the container
-        # because RPM and other tools must not assume the policy
-        # of the host is the valid policy
+        r = root.run(cmd, monitor, readonly_binds=ro_binds)
+        assert r.returncode == 0
 
-        runner = detect_host_runner()
-        libdir = os.path.abspath(os.curdir)
-        var = pathlib.Path(self.tmp.name, "var")
-        var.mkdir()
+        cmd = ["/scripts/mount_flags.py",
+               "/rw-data",
+               "ro"]
 
-        scripts = os.path.join(self.locate_test_data(), "scripts")
+        binds = [f"{rw_data}:/rw-data"]
+        r = root.run(cmd, monitor, binds=binds, readonly_binds=ro_binds)
+        assert r.returncode == 1
 
-        monitor = NullMonitor(sys.stderr.fileno())
-        with BuildRoot("/", runner, libdir, var) as root:
 
-            ro_binds = [f"{scripts}:/scripts"]
+@pytest.mark.skipif(not TestBase.have_test_data(), reason="no test-data access")
+@pytest.mark.skipif(not os.path.exists("/sys/fs/selinux"), reason="no SELinux")
+def test_selinuxfs_ro(tempdir):
+    # /sys/fs/selinux must never be writable in the container
+    # because RPM and other tools must not assume the policy
+    # of the host is the valid policy
 
-            cmd = ["/scripts/mount_flags.py",
-                   "/sys/fs/selinux",
-                   "ro"]
+    runner = detect_host_runner()
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
 
-            r = root.run(cmd, monitor, readonly_binds=ro_binds)
-            self.assertEqual(r.returncode, 0)
+    scripts = os.path.join(TestBase.locate_test_data(), "scripts")
+
+    monitor = NullMonitor(sys.stderr.fileno())
+    with BuildRoot("/", runner, libdir, var) as root:
+
+        ro_binds = [f"{scripts}:/scripts"]
+
+        cmd = ["/scripts/mount_flags.py",
+               "/sys/fs/selinux",
+               "ro"]
+
+        r = root.run(cmd, monitor, readonly_binds=ro_binds)
+        assert r.returncode == 0
