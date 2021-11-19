@@ -93,6 +93,7 @@ containers it uses to build OS artifacts.
 %package        tools
 Summary:        Extra tools and utilities
 Requires:       %{name} = %{version}-%{release}
+Requires:       python3-pyyaml
 
 %description    tools
 Contains additional tools and utilities for development of
