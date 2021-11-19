@@ -184,3 +184,44 @@ def test_timeout(tempdir):
 
         with pytest.raises(TimeoutError):
             root.run(["/bin/sleep", "1"], monitor, timeout=0.1)
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_env_isolation(tempdir):
+    runner = detect_host_runner()
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
+
+    monitor = NullMonitor(sys.stderr.fileno())
+
+    ipc = pathlib.Path(tempdir, "ipc")
+    ipc.mkdir()
+
+    # Set some env variable to make sure it is not leaked into
+    # the container
+    os.environ["OSBUILD_TEST_ENV_ISOLATION"] = "42"
+
+    with BuildRoot("/", runner, libdir, var) as root:
+        cmd = ["/bin/sh", "-c", "/usr/bin/env > /ipc/env.txt"]
+        r = root.run(cmd, monitor, binds=[f"{ipc}:/ipc"])
+
+    assert r.returncode == 0
+    with open(os.path.join(ipc, "env.txt")) as f:
+        data = f.read().strip()
+    assert data
+    have = dict(map(lambda x: x.split("=", 1), data.split("\n")))
+
+    allowed = [
+        "_",      # added by `env` itself
+        "LC_CTYPE",
+        "PATH",
+        "PWD",
+        "PYTHONPATH",
+        "PYTHONUNBUFFERED",
+        "SHLVL",  # added by the shell wrapper
+        "TERM",
+    ]
+
+    for k in have:
+        assert k in allowed
