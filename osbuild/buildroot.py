@@ -264,9 +264,6 @@ class BuildRoot(contextlib.AbstractContextManager):
             "--chdir", "/",
             "--die-with-parent",
             "--new-session",
-            "--setenv", "PATH", "/usr/sbin:/usr/bin",
-            "--setenv", "PYTHONPATH", "/run/osbuild/lib",
-            "--setenv", "PYTHONUNBUFFERED", "1",
             "--unshare-ipc",
             "--unshare-pid",
             "--unshare-net"
@@ -276,8 +273,18 @@ class BuildRoot(contextlib.AbstractContextManager):
         cmd += ["--", f"/run/osbuild/lib/runners/{self._runner}"]
         cmd += argv
 
+        # Setup a new environment for the container.
+        env = {
+            "LC_CTYPE": "C.UTF-8",
+            "PATH": "/usr/sbin:/usr/bin",
+            "PYTHONPATH": "/run/osbuild/lib",
+            "PYTHONUNBUFFERED": "1",
+            "TERM": os.getenv("TERM", "dumb"),
+        }
+
         proc = subprocess.Popen(cmd,
                                 bufsize=0,
+                                env=env,
                                 stdin=subprocess.DEVNULL,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
