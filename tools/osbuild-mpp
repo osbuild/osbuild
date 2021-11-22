@@ -35,6 +35,25 @@ The parameters for this pre-processor for format version "2" look like this:
 ...
 ```
 
+Version "2" also supports including multiple (or all) pipelines from a manifest:
+
+```
+...
+    "mpp-import-pipelines": {
+      "path": "./manifest2.json",
+    }
+...
+```
+```
+...
+    "mpp-import-pipelines": {
+      "path": "./manifest3.json",
+      "ids:" ["build", "image"]
+    }
+...
+```
+
+
 
 Depsolving:
 
@@ -1002,9 +1021,14 @@ class ManifestFileV2(ManifestFile):
         raise ValueError(f"Pipeline '{name}' not found in {self.path}")
 
     def _process_import(self, pipeline, search_dirs):
-        mpp = self.get_mpp_node(pipeline, "import-pipeline")
-        if not mpp:
-            return
+        mpp = self.get_mpp_node(pipeline, "import-pipelines")
+        if mpp:
+            ids = mpp.get("ids")
+        else:
+            mpp = self.get_mpp_node(pipeline, "import-pipeline")
+            if not mpp:
+                return [pipeline] # Not an import
+            ids = [mpp["id"]]
 
         path = mpp["path"]
         imp = self.load_import(path, search_dirs)
@@ -1025,12 +1049,19 @@ class ManifestFileV2(ManifestFile):
             items = element_enter(target, "items", {})
             items.update(desc.get("items", {}))
 
-        target = imp.get_pipeline_by_name(mpp["id"])
-        pipeline.update(target)
+        # Copy order from included file
+        imp_pipelines = []
+        for imp_pipeline in imp.pipelines:
+            if not ids or imp_pipeline.get("name") in ids:
+                # Merge whatever keys was in the mpp-import-pipelines into the imported pipelines
+                imp_pipelines.append({**pipeline, **imp_pipeline})
+        return imp_pipelines
 
     def process_imports(self, search_dirs):
-        for pipeline in self.pipelines:
-            self._process_import(pipeline, search_dirs)
+        old_pipelines = self.pipelines.copy()
+        self.pipelines.clear()
+        for pipeline in old_pipelines:
+            self.pipelines.extend(self._process_import(pipeline, search_dirs))
 
     def _process_depsolve(self, solver, stage, pipeline_name):
         if stage.get("type", "") != "org.osbuild.rpm":
