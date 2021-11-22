@@ -643,12 +643,12 @@ class Image:
 
 class ManifestFile:
     @staticmethod
-    def load(path, overrides, default_vars):
+    def load(path, overrides, default_vars, searchdirs):
         with open(path) as f:
-            return ManifestFile.load_from_fd(f, path, overrides, default_vars)
+            return ManifestFile.load_from_fd(f, path, overrides, default_vars, searchdirs)
 
     @staticmethod
-    def load_from_fd(f, path, overrides, default_vars):
+    def load_from_fd(f, path, overrides, default_vars, searchdirs):
         # We use OrderedDict to preserve key order (for python < 3.6)
         if path.endswith(".yml") or path.endswith(".yaml"):
             try:
@@ -669,14 +669,20 @@ class ManifestFile:
 
         version = int(data.get("version", "1"))
         if version == 1:
-            return ManifestFileV1(path, overrides, default_vars, data)
-        if version == 2:
-            return ManifestFileV2(path, overrides, default_vars, data)
-        raise ValueError(f"Unknown manfest version {version}")
+            m = ManifestFileV1(path, overrides, default_vars, data, searchdirs)
+        elif version == 2:
+            m = ManifestFileV2(path, overrides, default_vars, data, searchdirs)
+        else:
+            raise ValueError(f"Unknown manfest version {version}")
 
-    def __init__(self, path, overrides, default_vars, root, version):
+        m.process_imports()
+
+        return m
+
+    def __init__(self, path, overrides, default_vars, root, searchdirs, version):
         self.path = pathlib.Path(path)
         self.basedir = self.path.parent
+        self.searchdirs = searchdirs
         self.root = root
         self.version = version
         self.sources = element_enter(self.root, "sources", {})
@@ -725,8 +731,8 @@ class ManifestFile:
 
         return node
 
-    def load_import(self, path, search_dirs):
-        m = self.find_and_load_manifest(path, search_dirs)
+    def load_import(self, path):
+        m = self.find_and_load_manifest(path)
         if m.version != self.version:
             raise ValueError(f"Incompatible manifest version {m.version}")
         return m
@@ -735,12 +741,13 @@ class ManifestFile:
         for p in [self.basedir] + dirs:
             with contextlib.suppress(FileNotFoundError):
                 fullpath = os.path.join(p, path)
-                return open(fullpath, mode)
+                return open(fullpath, mode), os.path.normpath(fullpath)
         raise FileNotFoundError(f"Could not find file '{path}'")
 
-    def find_and_load_manifest(self, path, dirs):
-        with self.find_and_open_file(path, dirs) as f:
-            return ManifestFile.load_from_fd(f, path, self.overrides, self.vars)
+    def find_and_load_manifest(self, path):
+        f, fullpath = self.find_and_open_file(path, self.searchdirs)
+        with f:
+            return ManifestFile.load_from_fd(f, fullpath, self.overrides, self.vars, self.searchdirs)
 
     def depsolve(self, solver: DepSolver, desc: Dict):
         repos = desc.get("repos", [])
@@ -919,20 +926,20 @@ class ManifestFile:
 
 
 class ManifestFileV1(ManifestFile):
-    def __init__(self, path, overrides, default_vars, data):
-        super().__init__(path, overrides, default_vars, data, 1)
+    def __init__(self, path, overrides, default_vars, data, searchdirs):
+        super().__init__(path, overrides, default_vars, data, searchdirs, 1)
         self.pipeline = element_enter(self.root, "pipeline", {})
 
         files = element_enter(self.sources, "org.osbuild.files", {})
         self.source_urls = element_enter(files, "urls", {})
 
-    def _process_import(self, build, search_dirs):
+    def _process_import(self, build):
         mpp = self.get_mpp_node(build, "import-pipeline")
         if not mpp:
             return
 
         path = mpp["path"]
-        imp = self.load_import(path, search_dirs)
+        imp = self.load_import(path)
 
         self.vars.update(imp.vars)
 
@@ -956,10 +963,10 @@ class ManifestFileV1(ManifestFile):
 
         build["pipeline"] = imp.pipeline
 
-    def process_imports(self, search_dirs):
+    def process_imports(self):
         current = self.root
         while current:
-            self._process_import(current, search_dirs)
+            self._process_import(current)
             current = current.get("pipeline", {}).get("build")
 
     def _process_depsolve(self, solver, stage, pipeline_name):
@@ -1006,8 +1013,8 @@ class ManifestFileV1(ManifestFile):
 
 
 class ManifestFileV2(ManifestFile):
-    def __init__(self, path, overrides, default_vars, data):
-        super().__init__(path, overrides, default_vars, data, 2)
+    def __init__(self, path, overrides, default_vars, data, searchdirs):
+        super().__init__(path, overrides, default_vars, data, searchdirs, 2)
         self.pipelines = element_enter(self.root, "pipelines", [])
 
         files = element_enter(self.sources, "org.osbuild.curl", {})
@@ -1020,7 +1027,7 @@ class ManifestFileV2(ManifestFile):
 
         raise ValueError(f"Pipeline '{name}' not found in {self.path}")
 
-    def _process_import(self, pipeline, search_dirs):
+    def _process_import(self, pipeline):
         mpp = self.get_mpp_node(pipeline, "import-pipelines")
         if mpp:
             ids = mpp.get("ids")
@@ -1031,7 +1038,7 @@ class ManifestFileV2(ManifestFile):
             ids = [mpp["id"]]
 
         path = mpp["path"]
-        imp = self.load_import(path, search_dirs)
+        imp = self.load_import(path)
 
         self.vars.update(imp.vars)
 
@@ -1057,11 +1064,11 @@ class ManifestFileV2(ManifestFile):
                 imp_pipelines.append({**pipeline, **imp_pipeline})
         return imp_pipelines
 
-    def process_imports(self, search_dirs):
+    def process_imports(self):
         old_pipelines = self.pipelines.copy()
         self.pipelines.clear()
         for pipeline in old_pipelines:
-            self.pipelines.extend(self._process_import(pipeline, search_dirs))
+            self.pipelines.extend(self._process_import(pipeline))
 
     def _process_depsolve(self, solver, stage, pipeline_name):
         if stage.get("type", "") != "org.osbuild.rpm":
@@ -1105,7 +1112,8 @@ class ManifestFileV2(ManifestFile):
                 raise ValueError(f"Cannot specify both 'path' and 'text' for '{uid}'")
 
             if path:
-                with self.find_and_open_file(path, [], mode="rb") as f:
+                f, _ = self.find_and_open_file(path, [], mode="rb")
+                with f:
                     data = f.read()
             else:
                 data = bytes(text, "utf-8")
@@ -1200,10 +1208,8 @@ def main():
             value = True
         overrides[key] = value
 
-    m = ManifestFile.load(args.src, overrides, defaults)
+    m = ManifestFile.load(args.src, overrides, defaults, args.searchdirs)
 
-    # First resolve all imports
-    m.process_imports(args.searchdirs)
 
     m.process_embed_files()
 
