@@ -1130,10 +1130,10 @@ class ManifestFileV2(ManifestFile):
             for stage in pipeline.get("stages", []):
                 for ip in stage.get("inputs", {}).values():
 
-                    if ip["type"] != "org.osbuild.files":
+                    if ip.get("type") != "org.osbuild.files":
                         continue
 
-                    if ip["origin"] != "org.osbuild.source":
+                    if ip.get("origin") != "org.osbuild.source":
                         continue
 
                     mpp = self.get_mpp_node(ip, "embed")
