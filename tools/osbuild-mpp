@@ -1008,7 +1008,7 @@ class ManifestFileV1(ManifestFile):
 class ManifestFileV2(ManifestFile):
     def __init__(self, path, overrides, default_vars, data):
         super().__init__(path, overrides, default_vars, data, 2)
-        self.pipelines = element_enter(self.root, "pipelines", {})
+        self.pipelines = element_enter(self.root, "pipelines", [])
 
         files = element_enter(self.sources, "org.osbuild.curl", {})
         self.source_urls = element_enter(files, "items", {})
