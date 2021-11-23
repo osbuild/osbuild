@@ -40,7 +40,7 @@ RPM:
           - aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
-Testing:
+Composer Tests:
   stage: test
   extends: .terraform
   script:
@@ -58,6 +58,21 @@ Testing:
           # See https://github.com/osbuild/osbuild-composer/issues/1819 and related issues
           # - aws/rhel-9.0-nightly-x86_64
           # - aws/rhel-9.0-nightly-aarch64
+        INTERNAL_NETWORK: "true"
+
+OSTree Images:
+  stage: test
+  extends: .terraform
+  script:
+    - schutzbot/deploy.sh
+    - sudo test/cases/ostree-images
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/fedora-34-x86_64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.6-nightly-x86_64
+          - aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
 finish:
