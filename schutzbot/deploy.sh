@@ -60,3 +60,6 @@ sudo dnf -y install osbuild-composer-tests
 
 # Set up a directory to hold repository overrides.
 sudo mkdir -p /etc/osbuild-composer/repositories
+
+# Temp fix until composer gains these dependencies
+sudo dnf -y install osbuild-luks2 osbuild-lvm2

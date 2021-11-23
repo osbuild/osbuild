@@ -1,0 +1,171 @@
+#!/usr/bin/python3
+
+"""OSTree Image Tests"""
+
+import argparse
+import os
+import tempfile
+import time
+import subprocess
+import sys
+
+
+RESET = "\033[0m"
+GREEN = "\033[32m"
+BOLD = "\033[1m"
+RED = "\033[31m"
+
+
+class OSBuild:
+    def __init__(self, store, outdir):
+        self.store = store
+        self.outdir = outdir
+        self.checkpoints = []
+
+    def run(self, manifest, exports, checkpoints=None):
+        cmd = [
+            "osbuild",
+            "--store", os.fspath(self.store),
+            "--output-dir", os.fspath(self.outdir),
+            os.fspath(manifest)
+        ]
+
+        for checkpoint in self.checkpoints + (checkpoints or []):
+            cmd += [
+                "--checkpoint", checkpoint
+            ]
+
+        for export in exports:
+            cmd += [
+                "--export", export
+            ]
+
+        subprocess.run(cmd, check=True)
+
+
+def run_tests(args, tmpdir):
+    tests = {
+        "fedora-ostree-tarball": {
+            "manifest": "fedora-ostree-tarball.json",
+            "exports": {
+                "tarball": {
+                    "artifact": "fedora-commit.tar"
+                }
+            }
+        },
+        "fedora-ostree-container": {
+            "manifest": "fedora-ostree-container.json",
+            "exports": {
+                "container": {
+                    "artifact": "fedora-container.tar"
+                }
+            },
+        },
+        "fedora-ostree-bootiso": {
+            "manifest": "fedora-ostree-bootiso.json",
+            "exports": {
+                "bootiso": {
+                    "artifact": "fedora-ostree-boot.iso"
+                }
+            },
+        },
+        "fedora-ostree-image": {
+            "manifest": "fedora-ostree-image.json",
+            "exports": {
+                "qcow2": {
+                    "artifact": "disk.qcow2"
+                }
+            },
+        }
+    }
+
+    outdir, store = args.output_directory, args.store
+
+    if not outdir:
+        outdir = os.path.join(tmpdir, "outdir")
+        os.makedirs(outdir)
+
+    if not store:
+        store = os.path.join(tmpdir, "store")
+        os.makedirs(store)
+
+    print(f"Store at:  {os.path.realpath(store)}")
+    print(f"Output at: {os.path.realpath(outdir)}")
+
+    osbuild = OSBuild(store, outdir)
+
+    osbuild.checkpoints = [
+        "build",
+        "ostree-tree",
+        "ostree-commit"
+    ]
+
+    results = []
+
+    for testname, test in tests.items():
+        print(f"Testing {BOLD}{testname}{RESET}", flush=True)
+        manifest = test["manifest"]
+
+        start = time.monotonic()
+        result = {
+            "test": manifest
+        }
+        path = os.path.join("test", "data", "manifests", manifest)
+        exports = test["exports"]
+
+        try:
+            osbuild.run(path, exports.keys())
+            for name, data in exports.items():
+                artifact = data["artifact"]
+                path = os.path.join(outdir, name, artifact)
+                assert os.path.exists(path)
+                print(f"{GREEN}success{RESET}", flush=True)
+        except Exception as e:  # pylint: disable=broad-except
+            print(f"{RED}Error{RESET}: {e}")
+            result["error"] = str(e)
+
+        duration = time.monotonic() - start
+        result["duration"] = duration
+        print(f"Test duration: {duration}", flush=True)
+
+        results.append(result)
+
+    return results
+
+
+def main():
+    parser = argparse.ArgumentParser(description="ostree image tests")
+    parser.add_argument(
+        "--store",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        default=None,
+        help="directory where intermediary os trees are stored")
+    parser.add_argument(
+        "--output-directory",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        default=None,
+        help="directory where result objects are stored")
+    args = parser.parse_args()
+
+    print(f"Running in {os.path.realpath(os.curdir)}")
+
+    tmpdir = "/var/osbuild/tmp"
+    os.makedirs(tmpdir, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=tmpdir) as tmp:
+        results = run_tests(args, tmp)
+
+    n = len(results)
+    failed = len(list(filter(lambda x: x.get("error"), results)))
+    ok = n - failed
+
+    print("tests/ok/failed", end=": ")
+    print(f"{n}/{GREEN}{ok}{RESET}/{RED}{failed}{RESET}")
+
+    if failed:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
