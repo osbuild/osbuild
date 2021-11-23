@@ -78,6 +78,15 @@ Requires:       lvm2
 Contains the necessary stages and device host
 services to build LVM2 based images.
 
+%package        luks2
+Summary:        LUKS2 support
+Requires:       %{name} = %{version}-%{release}
+Requires:       cryptsetup
+
+%description luks2
+Contains the necessary stages and device host
+services to build LUKS2 encrypted images.
+
 %package        ostree
 Summary:        OSTree support
 Requires:       %{name} = %{version}-%{release}
@@ -185,6 +194,10 @@ exit 0
 # the following files are in the lvm2 sub-package
 %exclude %{pkgdir}/devices/org.osbuild.lvm2*
 %exclude %{pkgdir}/stages/org.osbuild.lvm2*
+# the following files are in the luks2 sub-package
+%exclude %{pkgdir}/devices/org.osbuild.luks2*
+%exclude %{pkgdir}/stages/org.osbuild.crypttab
+%exclude %{pkgdir}/stages/org.osbuild.luks2*
 # the following files are in the ostree sub-package
 %exclude %{pkgdir}/assemblers/org.osbuild.ostree*
 %exclude %{pkgdir}/inputs/org.osbuild.ostree*
@@ -201,6 +214,11 @@ exit 0
 %files lvm2
 %{pkgdir}/devices/org.osbuild.lvm2*
 %{pkgdir}/stages/org.osbuild.lvm2*
+
+%files luks2
+%{pkgdir}/devices/org.osbuild.luks2*
+%{pkgdir}/stages/org.osbuild.crypttab
+%{pkgdir}/stages/org.osbuild.luks2*
 
 %files ostree
 %{pkgdir}/assemblers/org.osbuild.ostree*
