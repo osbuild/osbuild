@@ -68,6 +68,15 @@ Summary:        %{summary}
 %description -n python3-%{pypi_name}
 A build system for OS images
 
+%package        lvm2
+Summary:        LVM2 support
+Requires:       %{name} = %{version}-%{release}
+Requires:       lvm2
+
+%description lvm2
+Contains the necessary stages and device host
+services to build LVM2 based images.
+
 %package        ostree
 Summary:        OSTree support
 Requires:       %{name} = %{version}-%{release}
@@ -167,6 +176,9 @@ exit 0
 %{_mandir}/man5/%{name}-manifest.5*
 %{_datadir}/osbuild/schemas
 %{pkgdir}
+# the following files are in the lvm2 sub-package
+%exclude %{pkgdir}/devices/org.osbuild.lvm2*
+%exclude %{pkgdir}/stages/org.osbuild.lvm2*
 # the following files are in the ostree sub-package
 %exclude %{pkgdir}/assemblers/org.osbuild.ostree*
 %exclude %{pkgdir}/inputs/org.osbuild.ostree*
@@ -179,6 +191,10 @@ exit 0
 %doc README.md
 %{python3_sitelib}/%{pypi_name}-*.egg-info/
 %{python3_sitelib}/%{pypi_name}/
+
+%files lvm2
+%{pkgdir}/devices/org.osbuild.lvm2*
+%{pkgdir}/stages/org.osbuild.lvm2*
 
 %files ostree
 %{pkgdir}/assemblers/org.osbuild.ostree*
