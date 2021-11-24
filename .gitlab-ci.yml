@@ -16,12 +16,14 @@ init:
     - shell
   script:
     - schutzbot/update_github_status.sh start
+  interruptible: true
 
 RPM:
   stage: rpmbuild
   extends: .terraform
   script:
     - sh "schutzbot/mockbuild.sh"
+  interruptible: true
   parallel:
     matrix:
       - RUNNER:
