@@ -80,6 +80,8 @@ def parse_arguments(sys_argv):
                         help="directory where result objects are stored")
     parser.add_argument("--inspect", action="store_true",
                         help="return the manifest in JSON format including all the ids")
+    parser.add_argument("--stage-timeout", type=int, default=None,
+                        help="set the timeout in seconds for building an image")
 
     return parser.parse_args(sys_argv[1:])
 
@@ -143,6 +145,7 @@ def osbuild_cli():
 
     try:
         with ObjectStore(args.store) as object_store:
+            stage_timeout = args.stage_timeout
 
             pipelines = manifest.depsolve(object_store, exports)
 
@@ -152,7 +155,8 @@ def osbuild_cli():
                 object_store,
                 pipelines,
                 monitor,
-                args.libdir
+                args.libdir,
+                stage_timeout=stage_timeout
             )
 
             if r["success"] and exports:
