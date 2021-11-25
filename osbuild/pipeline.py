@@ -114,7 +114,7 @@ class Stage:
         with open(location, "w", encoding="utf-8") as fp:
             json.dump(args, fp)
 
-    def run(self, tree, runner, build_tree, store, monitor, libdir):
+    def run(self, tree, runner, build_tree, store, monitor, libdir, stage_timeout=None):
         with contextlib.ExitStack() as cm:
 
             build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
@@ -195,6 +195,7 @@ class Stage:
 
             r = build_root.run([f"/run/osbuild/bin/{self.name}"],
                                monitor,
+                               stage_timeout=stage_timeout,
                                binds=binds,
                                readonly_binds=ro_binds)
 
@@ -232,7 +233,7 @@ class Pipeline:
             self.assembler.base = stage.id
         return stage
 
-    def build_stages(self, object_store, monitor, libdir):
+    def build_stages(self, object_store, monitor, libdir, stage_timeout=None):
         results = {"success": True}
 
         # We need a build tree for the stages below, which is either
@@ -290,7 +291,8 @@ class Pipeline:
                               build_path,
                               object_store,
                               monitor,
-                              libdir)
+                              libdir,
+                              stage_timeout)
 
                 monitor.result(r)
 
@@ -309,7 +311,7 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def run(self, store, monitor, libdir):
+    def run(self, store, monitor, libdir,stage_timeout=None):
         results = {"success": True}
 
         monitor.begin(self)
@@ -322,7 +324,7 @@ class Pipeline:
         obj = store.get(self.id)
 
         if not obj:
-            results, _, obj = self.build_stages(store, monitor, libdir)
+            results, _, obj = self.build_stages(store, monitor, libdir, stage_timeout)
 
             if not results["success"]:
                 return results
@@ -405,11 +407,11 @@ class Manifest:
 
         return list(map(lambda x: x.name, reversed(build.values())))
 
-    def build(self, store, pipelines, monitor, libdir):
+    def build(self, store, pipelines, monitor, libdir, stage_timeout=None):
         results = {"success": True}
 
         for pl in map(self.get, pipelines):
-            res = pl.run(store, monitor, libdir)
+            res = pl.run(store, monitor, libdir, stage_timeout)
             results[pl.id] = res
             if not res["success"]:
                 results["success"] = False
