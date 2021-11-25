@@ -15,3 +15,6 @@ cov-analysis-osbuild.xz
 cov-int/
 
 **/.DS_Store
+
+/docs/osbuild.1
+/docs/osbuild-manifest.5
