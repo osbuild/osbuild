@@ -1,0 +1,43 @@
+#!/usr/bin/python3
+"""
+Run mkinitcpio for Arch based distributions
+
+WARNING: This stage uses chroot() to run the `mkinitcpio` binary
+from inside the tree.
+"""
+
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "preset": {
+    "type": "string",
+    "description": "mkinitcpio preset file to use",
+    "default": "linux"
+  }
+}
+"""
+
+
+def main(tree, options):
+    preset = options.get("preset", "linux")
+
+    subprocess.run(["mount", "-o", "bind", "/proc", f"{tree}/proc"], check=True)
+    subprocess.run(["mount", "-o", "bind", "/dev", f"{tree}/dev"], check=True)
+
+    # https://github.com/archlinux/mkinitcpio/blob/93325dd7802238359405e4decb601650efc61d22/mkinitcpio#L628
+    subprocess.run(["ln", "-s", "/proc/self/fd", "/dev/fd"], check=True)
+    # https://github.com/archlinux/mkinitcpio/blob/ca7796a27aa62bae94fe180e6f3717a0d6171101/libalpm/scripts/mkinitcpio-install#L26
+    subprocess.run(["ln", "-s", "/proc/self/fd/0", "/dev/stdin"], check=True)
+
+    subprocess.run(["chroot", tree, "mkinitcpio", "-p", preset], check=True)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

@@ -43,7 +43,8 @@
                   "xfsprogs",
                   "xz",
                   "python",
-                  "pyalpm"
+                  "pyalpm",
+                  "mkinitcpio"
                 ]
               }
             }
@@ -100,6 +101,9 @@
             }
           },
           "options": {}
+        },
+        {
+          "type": "org.osbuild.mkinitcpio"
         }
       ]
     },
