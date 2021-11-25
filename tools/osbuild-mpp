@@ -676,6 +676,7 @@ class ManifestFile:
             raise ValueError(f"Unknown manfest version {version}")
 
         m.process_imports()
+        m.process_partition()
 
         return m
 
@@ -1210,10 +1211,7 @@ def main():
 
     m = ManifestFile.load(args.src, overrides, defaults, args.searchdirs)
 
-
     m.process_embed_files()
-
-    m.process_partition()
 
     with tempfile.TemporaryDirectory() as persistdir:
         solver = DepSolver(args.dnf_cache, persistdir)
