@@ -922,6 +922,8 @@ class ManifestFile:
         if not desc:
             return
 
+        self._process_format(desc)
+
         name = desc.get("id", "image")
         self.vars[name] = Image.from_dict(desc)
 
