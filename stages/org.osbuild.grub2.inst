@@ -70,6 +70,11 @@ SCHEMA = r"""
       "filesystem": {
         "type": "string",
         "enum": ["ext4", "xfs", "btrfs"]
+      },
+      "binary": {
+        "description": "grub-mkimage binary name",
+        "type": "string",
+        "default": "grub2-mkimage"
       }
     }
   },
@@ -231,7 +236,7 @@ def core_mkimage(platform: str, prefix: str, options: Dict,):
         raise ValueError(f"unknown boot filesystem type: '{fs_type}'")
 
     # now created the core image
-    subprocess.run(["grub2-mkimage",
+    subprocess.run([options.get("binary", "grub2-mkimage"),
                     "--verbose",
                     "--directory", f"/usr/lib/grub/{platform}",
                     "--prefix", prefix,
