@@ -111,9 +111,10 @@ def main(tree, options):
     serial = dep.get("serial", 0)
 
     deployment = ostree.deployment_path(tree, osname, ref, serial)
+    var = os.path.join(tree, "ostree", "deploy", osname, "var")
 
     with MountGuard() as mgr:
-        mgr.mount(f"{deployment}/var", f"{deployment}/var")
+        mgr.mount(var, f"{deployment}/var")
         populate_var(deployment)
 
 
