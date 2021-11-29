@@ -4,7 +4,10 @@
 
 import pathlib
 import os
+import select
+import subprocess
 import sys
+import time
 
 from tempfile import TemporaryDirectory
 
@@ -164,3 +167,30 @@ def test_proc_overrides(tempdir):
         r = root.run(["cat", "/proc/cmdline"], monitor)
         assert r.returncode == 0
         assert cmdline in r.output.strip()
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_timeout(tempdir):
+    runner = detect_host_runner()
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
+
+    with BuildRoot("/", runner, libdir, var) as root:
+
+        READ_ONLY = select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR
+        poller = select.poll()
+
+        proc = subprocess.Popen(['python3', libdir + '/stages/org.osbuild.test.timeout'], stdout = subprocess.PIPE)
+        start = time.monotonic()
+        timeout = 4
+        poller.register(proc.stdout.fileno(), READ_ONLY)
+        with pytest.raises(TimeoutError):
+            root.read_with_timeout(proc, poller, start, timeout)
+
+        proc = subprocess.Popen(['python3', libdir + '/stages/org.osbuild.test.timeout'], stdout = subprocess.PIPE)
+        start = time.monotonic()
+        timeout = 0
+        poller.register(proc.stdout.fileno(), READ_ONLY)
+        with pytest.raises(TimeoutError):
+            root.read_with_timeout(proc, poller, start, timeout)
