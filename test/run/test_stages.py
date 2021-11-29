@@ -2,6 +2,7 @@
 # Runtime tests for the individual stages.
 #
 
+import contextlib
 import difflib
 import glob
 import json
@@ -171,31 +172,25 @@ class TestStages(test.TestBase):
         self.osbuild = test.OSBuild(cache_from=self.store)
 
     def run_stage_diff_test(self, test_dir: str):
-        with self.osbuild as osb:
-            def run(path):
-                checkpoints = []
-                context = None
+        with contextlib.ExitStack() as stack:
+            osb = stack.enter_context(self.osbuild)
 
-                with open(path, "r") as f:
-                    data = f.read()
+            out_a = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
+            _ = osb.compile_file(os.path.join(test_dir, "a.json"),
+                                 checkpoints=["tree"],
+                                 exports=["tree"], output_dir=out_a)
 
-                tree = osb.treeid_from_manifest(data)
-                if tree:
-                    checkpoints += [tree]
-                    context = osb.map_object(tree)
+            out_b = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
+            res = osb.compile_file(os.path.join(test_dir, "b.json"),
+                                   checkpoints=["tree"],
+                                   exports=["tree"], output_dir=out_b)
 
-                result = osb.compile(data, checkpoints=checkpoints)
-                return context, result
+            tree1 = os.path.join(out_a, "tree")
+            tree2 = os.path.join(out_b, "tree")
 
-            ctx_a, _ = run(f"{test_dir}/a.json")
-            ctx_b, res = run(f"{test_dir}/b.json")
-            ctx_a = ctx_a or tempfile.TemporaryDirectory()
-            ctx_b = ctx_b or tempfile.TemporaryDirectory()
+            actual_diff = self.tree_diff(tree1, tree2)
 
-            with ctx_a as tree1, ctx_b as tree2:
-                actual_diff = self.tree_diff(tree1, tree2)
-
-            with open(f"{test_dir}/diff.json") as f:
+            with open(os.path.join(test_dir, "diff.json")) as f:
                 expected_diff = json.load(f)
 
             self.assertTreeDiffsEqual(expected_diff, actual_diff)
@@ -219,22 +214,22 @@ class TestStages(test.TestBase):
         with open(f"{base}/vanilla.json", "r") as f:
             refs = json.load(f)
 
-        with self.osbuild as osb:
-            with open(f"{base}/template.json", "r") as f:
-                manifest = f.read()
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
-            tree = osb.treeid_from_manifest(manifest)
-            osb.compile(manifest, checkpoints=[tree])
+            osb.compile_file(f"{base}/template.json",
+                             checkpoints=["tree"],
+                             exports=["tree"],
+                             output_dir=outdir)
+            tree = os.path.join(outdir, "tree")
 
-            with osb.map_object(tree) as tree:
-                for name, want in refs.items():
-                    image = initrd.Initrd(f"{tree}/boot/{name}")
-                    have = image.as_dict()
+            for name, want in refs.items():
+                image = initrd.Initrd(f"{tree}/boot/{name}")
+                have = image.as_dict()
 
-                    for key in ["modules", "kmods"]:
-                        a = set(have[key])
-                        b = set(want[key])
-                        self.assertEqual(a, b, msg=key)
+                for key in ["modules", "kmods"]:
+                    a = set(have[key])
+                    b = set(want[key])
+                    self.assertEqual(a, b, msg=key)
 
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")
@@ -248,7 +243,7 @@ class TestStages(test.TestBase):
                 manifest = json.load(f)
                 return manifest
 
-        with self.osbuild as osb:
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
             for t in glob.glob(f"{testdir}/test_*.json"):
                 manifest = load_manifest("f34-base.json")
@@ -260,14 +255,15 @@ class TestStages(test.TestBase):
                 })
 
                 jsdata = json.dumps(manifest)
-                treeid = osb.treeid_from_manifest(jsdata)
-                osb.compile(jsdata, checkpoints=[treeid])
-                ctx = osb.map_object(treeid)
+                osb.compile(jsdata,
+                            checkpoints=["tree"],
+                            exports=["tree"],
+                            output_dir=outdir)
+                tree = os.path.join(outdir, "tree")
 
-                with ctx as tree:
-                    for path, want in check["labels"].items():
-                        have = selinux.getfilecon(f"{tree}/{path}")
-                        self.assertEqual(have, want)
+                for path, want in check["labels"].items():
+                    have = selinux.getfilecon(f"{tree}/{path}")
+                    self.assertEqual(have, want)
 
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")
@@ -276,28 +272,25 @@ class TestStages(test.TestBase):
         datadir = self.locate_test_data()
         testdir = os.path.join(datadir, "stages", "tar")
 
-        with open(os.path.join(testdir, "tar.json"), "r") as f:
-            manifest = f.read()
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
-        with self.osbuild as osb:
-            treeid = osb.treeid_from_manifest(manifest)
+            osb.compile_file(os.path.join(testdir, "tar.json"),
+                             exports=["tree"],
+                             output_dir=outdir)
 
-            osb.compile(manifest, checkpoints=["tree"])
+            tree = os.path.join(outdir, "tree")
+            tp = os.path.join(tree, "tarfile.tar")
+            assert os.path.exists(tp)
+            assert tarfile.is_tarfile(tp)
+            tf = tarfile.open(tp)
+            names = tf.getnames()
+            assert "testfile" in names
+            assert "." not in names
 
-            ctx = osb.map_object(treeid)
-            with ctx as tree:
-                tp = os.path.join(tree, "tarfile.tar")
-                assert os.path.exists(tp)
-                assert tarfile.is_tarfile(tp)
-                tf = tarfile.open(tp)
-                names = tf.getnames()
-                assert "testfile" in names
-                assert "." not in names
-
-                # Check that we do not create entries with a `./` prefix
-                # since the `root-node` option is specified
-                dot_slash = list(filter(lambda x: x.startswith("./"), names))
-                assert not dot_slash
+            # Check that we do not create entries with a `./` prefix
+            # since the `root-node` option is specified
+            dot_slash = list(filter(lambda x: x.startswith("./"), names))
+            assert not dot_slash
 
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")
@@ -309,30 +302,27 @@ class TestStages(test.TestBase):
 
         imgname = "disk.img"
 
-        with open(os.path.join(testdir, "parted.json"), "r") as f:
-            manifest = f.read()
-
         with open(os.path.join(testdir, f"{imgname}.json"), "r") as f:
             want = json.load(f)
 
-        with self.osbuild as osb:
-            treeid = osb.treeid_from_manifest(manifest)
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
-            osb.compile(manifest, checkpoints=["tree"])
+            osb.compile_file(os.path.join(testdir, "parted.json"),
+                             checkpoints=["tree"],
+                             exports=["tree"],
+                             output_dir=outdir)
 
-            ctx = osb.map_object(treeid)
-            with ctx as tree:
-                target = os.path.join(tree, imgname)
+            target = os.path.join(outdir, "tree", imgname)
 
-                assert os.path.exists(target)
+            assert os.path.exists(target)
 
-                r = subprocess.run(["sfdisk", "--json", target],
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   encoding="utf-8",
-                                   check=False)
+            r = subprocess.run(["sfdisk", "--json", target],
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE,
+                               encoding="utf-8",
+                               check=False)
 
-                have = json.loads(r.stdout)
+            have = json.loads(r.stdout)
 
             table = have["partitiontable"]
 
