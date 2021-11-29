@@ -48,6 +48,7 @@ Composer Tests:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/image_tests.sh
+    - /usr/lib/test/test_integration.py
   parallel:
     matrix:
       - RUNNER:
