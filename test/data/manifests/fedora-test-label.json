@@ -1,0 +1,14 @@
+{
+  "pipeline": {
+    "stages": [
+      {
+        "name": "org.osbuild.testlabel"
+      }
+    ]
+  },
+  "sources": {
+    "org.osbuild.files": {
+      "urls": {}
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "pipeline": {
+    "stages": [
+      {
+        "name": "org.osbuild.testmac"
+      }
+    ]
+  },
+  "sources": {
+    "org.osbuild.files": {
+      "urls": {}
+    }
+  }
+}

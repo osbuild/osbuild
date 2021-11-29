@@ -1,0 +1,9 @@
+{
+  "pipeline": {
+    "stages": [
+      {
+        "name": "org.osbuild.testmac"
+      }
+    ]
+  }
+}
