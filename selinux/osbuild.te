@@ -10,8 +10,12 @@ roleattribute system_r osbuild_roles;
 
 type osbuild_t;
 type osbuild_exec_t;
+type osbuild_mac_t;
+type osbuild_mac_exec_t;
 application_domain(osbuild_t, osbuild_exec_t)
+application_domain(osbuild_mac_t, osbuild_mac_exec_t)
 role osbuild_roles types osbuild_t;
+role osbuild_roles types osbuild_mac_t;
 
 ########################################
 #
@@ -21,16 +25,20 @@ role osbuild_roles types osbuild_t;
 allow osbuild_t self:fifo_file manage_fifo_file_perms;
 allow osbuild_t self:unix_stream_socket create_stream_socket_perms;
 
+allow osbuild_mac_t self:fifo_file manage_fifo_file_perms;
+allow osbuild_mac_t self:unix_stream_socket create_stream_socket_perms;
+
 # #####################################
 # Customization
 #
 
 # make an osbuild_t unconfined domain
 unconfined_domain(osbuild_t)
+unconfined_domain(osbuild_mac_t)
 
 # execute setfiles in the setfiles_mac domain
 # when in the osbuild_t domain
-seutil_domtrans_setfiles_mac(osbuild_t)
+seutil_domtrans_setfiles_mac(osbuild_mac_t)
 osbuild_nnp_nosuid_trans(setfiles_mac_t)
 
 # Allow sysadm and unconfined to run osbuild
@@ -61,8 +69,36 @@ optional_policy(`
         osbuild_run(unconfined_service_t, system_r)
 ')
 
+# Allow sysadm and unconfined to run osbuild_mac
+optional_policy(`
+        gen_require(`
+                type sysadm_t;
+                role sysadm_r;
+        ')
+
+        osbuild_mac_run(sysadm_t, sysadm_r)
+')
+
+optional_policy(`
+        gen_require(`
+                type unconfined_t;
+                role unconfined_r;
+        ')
+
+        osbuild_mac_run(unconfined_t, unconfined_r)
+')
+
+optional_policy(`
+        gen_require(`
+                type unconfined_service_t;
+                role system_r;
+        ')
+
+        osbuild_mac_run(unconfined_service_t, system_r)
+')
+
 # allow transitioning to install_t (for ostree)
 optional_policy(`
-	anaconda_domtrans_install(osbuild_t)
+	anaconda_domtrans_install(osbuild_mac_t)
 	osbuild_nnp_nosuid_trans(install_t)
 ')

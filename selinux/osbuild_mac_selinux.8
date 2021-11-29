@@ -1,44 +1,44 @@
-.TH  "osbuild_selinux"  "8"  "21-10-21" "osbuild" "SELinux Policy osbuild"
+.TH  "osbuild_mac_selinux"  "8"  "21-10-21" "osbuild_mac" "SELinux Policy osbuild_mac"
 .SH "NAME"
-osbuild_selinux \- Security Enhanced Linux Policy for the osbuild processes
+osbuild_mac_selinux \- Security Enhanced Linux Policy for the osbuild_mac processes
 .SH "DESCRIPTION"
 
-Security-Enhanced Linux secures the osbuild processes via flexible mandatory access control.
+Security-Enhanced Linux secures the osbuild_mac processes via flexible mandatory access control.
 
-The osbuild processes execute with the osbuild_t SELinux type. You can check if you have these processes running by executing the \fBps\fP command with the \fB\-Z\fP qualifier.
+The osbuild_mac processes execute with the osbuild_mac_t SELinux type. You can check if you have these processes running by executing the \fBps\fP command with the \fB\-Z\fP qualifier.
 
 For example:
 
-.B ps -eZ | grep osbuild_t
+.B ps -eZ | grep osbuild_mac_t
 
 
 .SH "ENTRYPOINTS"
 
-The osbuild_t SELinux type can be entered via the \fBosbuild_exec_t\fP file type.
+The osbuild_mac_t SELinux type can be entered via the \fBosbuild_mac_exec_t\fP file type.
 
-The default entrypoint paths for the osbuild_t domain are the following:
+The default entrypoint paths for the osbuild_mac_t domain are the following:
 
-/usr/lib/osbuild/stages/.*, /usr/lib/osbuild/sources/.*, /usr/lib/osbuild/assemblers/.*, /usr/bin/osbuild
+/usr/lib/osbuild/stages/org.osbuild.copy, /usr/lib/osbuild/stages/org.osbuild.selinux, /usr/lib/osbuild/stages/org.osbuild.ostree.deploy
 .SH PROCESS TYPES
 SELinux defines process types (domains) for each process running on the system
 .PP
 You can see the context of a process using the \fB\-Z\fP option to \fBps\bP
 .PP
 Policy governs the access confined processes have to files.
-SELinux osbuild policy is very flexible allowing users to setup their osbuild processes in as secure a method as possible.
+SELinux osbuild_mac policy is very flexible allowing users to setup their osbuild_mac processes in as secure a method as possible.
 .PP
-The following process types are defined for osbuild:
+The following process types are defined for osbuild_mac:
 
 .EX
-.B osbuild_t, osbuild_mac_t
+.B osbuild_mac_t
 .EE
 .PP
 Note:
-.B semanage permissive -a osbuild_t
-can be used to make the process type osbuild_t permissive. SELinux does not deny access to permissive process types, but the AVC (SELinux denials) messages are still generated.
+.B semanage permissive -a osbuild_mac_t
+can be used to make the process type osbuild_mac_t permissive. SELinux does not deny access to permissive process types, but the AVC (SELinux denials) messages are still generated.
 
 .SH BOOLEANS
-SELinux policy is customizable based on least access required.  osbuild policy is extremely flexible and has several booleans that allow you to manipulate the policy and run osbuild with the tightest access possible.
+SELinux policy is customizable based on least access required.  osbuild_mac policy is extremely flexible and has several booleans that allow you to manipulate the policy and run osbuild_mac with the tightest access possible.
 
 
 .PP
@@ -83,7 +83,7 @@ If you want to allow unconfined executables to make their stack executable.  Thi
 
 .SH "MANAGED FILES"
 
-The SELinux process type osbuild_t can manage files labeled with the following file types.  The paths listed are the default paths for these file types.  Note the processes UID still need to have DAC permissions.
+The SELinux process type osbuild_mac_t can manage files labeled with the following file types.  The paths listed are the default paths for these file types.  Note the processes UID still need to have DAC permissions.
 
 .br
 .B file_type
@@ -97,23 +97,11 @@ SELinux requires files to have an extended attribute to define the file type.
 You can see the context of a file using the \fB\-Z\fP option to \fBls\bP
 .PP
 Policy governs the access confined processes have to these files.
-SELinux osbuild policy is very flexible allowing users to setup their osbuild processes in as secure a method as possible.
+SELinux osbuild_mac policy is very flexible allowing users to setup their osbuild_mac processes in as secure a method as possible.
 .PP
 
-.I The following file types are defined for osbuild:
+.I The following file types are defined for osbuild_mac:
 
-
-.EX
-.PP
-.B osbuild_exec_t
-.EE
-
-- Set files with the osbuild_exec_t type, if you want to transition an executable to the osbuild_t domain.
-
-.br
-.TP 5
-Paths:
-/usr/lib/osbuild/stages/.*, /usr/lib/osbuild/sources/.*, /usr/lib/osbuild/assemblers/.*, /usr/bin/osbuild
 
 .EX
 .PP
@@ -156,4 +144,4 @@ This manual page was auto-generated using
 .B "sepolicy manpage".
 
 .SH "SEE ALSO"
-selinux(8), osbuild(8), semanage(8), restorecon(8), chcon(1), sepolicy(8), setsebool(8), osbuild_mac_selinux(8)
+selinux(8), osbuild_mac(8), semanage(8), restorecon(8), chcon(1), sepolicy(8), setsebool(8)
