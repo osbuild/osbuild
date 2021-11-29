@@ -178,6 +178,12 @@ install -D -m 0644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_selinux.8
 mkdir -p %{buildroot}%{_udevrulesdir}
 install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
 
+# Integration tests
+mkdir -p %{buildroot}%{pkgdir}/test/data/manifests
+install -p -m 0755 test/test_integration.py -t %{buildroot}%{pkgdir}/test
+install -p -m 0755 test/data/manifests/fedora-test-label.json -t %{buildroot}%{pkgdir}/test/data/manifests
+install -p -m 0755 test/data/manifests/fedora-test-label-mac.json -t %{buildroot}%{pkgdir}/test/data/manifests
+
 %check
 exit 0
 # We have some integration tests, but those require running a VM, so that would
