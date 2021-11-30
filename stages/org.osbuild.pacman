@@ -1,0 +1,142 @@
+#!/usr/bin/python3
+"""
+Verify, and install pacman packages
+
+`packages` is an array of objects representing pacman packages. Each package is
+identified by its checksums. Specifically, the content hash of the package.
+
+This stage will fail if any of the packages can't be found.
+"""
+
+
+import contextlib
+import os
+import pathlib
+import shutil
+import subprocess
+import sys
+import tempfile
+from operator import itemgetter
+
+# pylint: disable=import-error
+import pyalpm
+
+from osbuild import api
+
+
+SCHEMA_2 = """
+"options": {
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+  }
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["packages"],
+  "properties": {
+    "packages": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
+def generate_package_metadata(tree):
+    handle = pyalpm.Handle("/", f"{tree}/var/lib/pacman")
+    db = handle.get_localdb()
+    packages = []
+    for pkg in db.pkgcache:
+        epoch = 0
+        version = pkg.version
+        pkgver, pkgrel = version.rsplit('-', 2)
+        if ':' in version:
+            epoch, pkgver = pkgver.split(':')
+
+        packages.append({
+            "name": pkg.name,
+            "version": pkgver,
+            "release": pkgrel,
+            "epoch": epoch,
+            "arch": pkg.arch,
+            "sigmd5": "",
+            "sigpgp": "",
+            "siggpg": ""
+        })
+
+    data = {"packages": packages}
+    data["packages"] = sorted(data["packages"],
+                              key=itemgetter("name"))
+
+    return data
+
+
+def parse_input(inputs):
+    packages = inputs["packages"]
+    path = packages["path"]
+    data = packages["data"]
+    files = data["files"]
+    return path, files
+
+
+def main(tree, inputs):
+    pkgpath, packages = parse_input(inputs)
+
+    script = f"""
+        set -e
+        mkdir -p {tree}/dev {tree}/sys {tree}/proc
+        mount -o bind /dev {tree}/dev
+        mount -o bind /sys {tree}/sys
+        mount -o bind /proc {tree}/proc
+    """
+
+    machine_id_set_previously = os.path.exists(f"{tree}/etc/machine-id")
+    if not machine_id_set_previously:
+        # create a fake machine ID to improve reproducibility
+        print("creating a fake machine id")
+        script += f"""
+            mkdir -p {tree}/etc
+            echo "ffffffffffffffffffffffffffffffff" > {tree}/etc/machine-id
+            chmod 0444 {tree}/etc/machine-id
+        """
+
+    subprocess.run(["/bin/sh", "-c", script], check=True)
+
+    os.makedirs(os.path.join(tree, "var/lib/pacman"), exist_ok=True)
+
+    with tempfile.TemporaryDirectory(dir=tree) as tmpdir:
+        install_pkgs = []
+        for p in packages:
+            plink = os.path.join(tmpdir, p)
+            install_pkgs.append(os.path.relpath(plink, start=tree))
+            shutil.copy2(os.path.join(pkgpath, p), plink)
+
+        subprocess.run([
+            "pacman", "-U", "--noconfirm", "--verbose", "--sysroot", tree, *install_pkgs
+        ], check=True)
+
+    # remove temporary machine ID if it was created by us
+    if not machine_id_set_previously:
+        print("deleting the fake machine id")
+        machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
+        machine_id_file.unlink()
+        machine_id_file.touch()
+
+    # remove random seed from the tree if exists
+    with contextlib.suppress(FileNotFoundError):
+        os.unlink(f"{tree}/var/lib/systemd/random-seed")
+
+    # generate the metadata
+    md = generate_package_metadata(tree)
+    api.metadata(md)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = api.arguments()
+    r = main(args["tree"], args["inputs"])
+    sys.exit(r)
