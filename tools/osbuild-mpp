@@ -74,6 +74,7 @@ The parameters for this pre-processor, version "1", look like this:
         "mpp-depsolve": {
           "architecture": "x86_64",
           "module-platform-id": "f32",
+          "solver": "dnf",
           "baseurl": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os",
           "repos": [
             {
@@ -353,6 +354,73 @@ class PkgInfo:
         return self.nevra
 
 
+class PacmanSolver():
+
+    def __init__(self, cachedir, persistdir):
+        self._cachedir = cachedir or "/tmp/pacsolve"
+        self._persistdir = persistdir
+
+    def setup_root(self):
+        root = self._cachedir
+        os.makedirs(root, exist_ok=True)
+        os.makedirs(os.path.join(root, "var", "lib", "pacman"), exist_ok=True)
+        os.makedirs(os.path.join(root, "etc"), exist_ok=True)
+
+    def reset(self, arch, _, module_platform_id, ignore_weak_deps):
+        self.setup_root()
+        cfg = f"""
+[options]
+Architecture = {arch}
+CheckSpace
+SigLevel    = Required DatabaseOptional
+LocalFileSigLevel = Optional
+"""
+        cfgpath = os.path.join(self._cachedir, "etc", "pacman.conf")
+        with open(cfgpath, "w", encoding="utf-8") as cfgfile:
+            cfgfile.write(cfg)
+
+    def add_repo(self, desc, _):
+        rid = desc["id"]
+        url = desc["baseurl"]
+        cfgpath = os.path.join(self._cachedir, "etc", "pacman.conf")
+        with open(cfgpath, "a", encoding="utf-8") as cfgfile:
+            cfgfile.write("\n")
+            cfgfile.write(f"[{rid}]\n")
+            cfgfile.write(f"Server = {url}\n")
+
+    def _pacman(self, *args):
+        return subprocess.check_output(["pacman", *args], encoding="utf-8")
+
+    def resolve(self, packages, _):
+        self._pacman("-Sy", "--root", self._cachedir, "--config", os.path.join(self._cachedir, "etc", "pacman.conf"))
+        res = self._pacman("-S", "--print", "--print-format", r'{"url": "%l", "version": "%v", "name": "%n"},',
+                           "--sysroot", self._cachedir, *packages)
+        res = "[" + res.strip().rstrip(",") + "]"
+        data = json.loads(res)
+        packages = []
+        for pkg in data:
+            pkginfo = self._pacman("-Sii", "--sysroot", self._cachedir, pkg["name"])
+            pkgdata = self.parse_pkg_info(pkginfo)
+            p = PkgInfo(
+                "sha256:"+pkgdata["SHA-256 Sum"],
+                pkg["name"],
+                pkg["version"],
+                pkgdata["Architecture"],
+            )
+            p.url = pkg["url"]
+            packages.append(p)
+        return packages
+
+    @staticmethod
+    def parse_pkg_info(info):
+        lines = info.split("\n")
+
+        def parse_line(l):
+            k, v = l.split(":", maxsplit=1)
+            return k.strip(), v.strip()
+        return dict([parse_line(line) for line in lines if ":" in line])
+
+
 class DepSolver:
     def __init__(self, cachedir, persistdir):
         self.cachedir = cachedir
@@ -489,6 +557,23 @@ class DepSolver:
             deps.append(pkg)
 
         return deps
+
+
+class DepSolverFactory():
+
+    def __init__(self, cachedir, persistdir):
+        self._cachedir = cachedir
+        self._persistdir = persistdir
+        self._solvers = {}
+
+    def get_depsolver(self, solver):
+        if solver not in self._solvers:
+            if solver == "alpm":
+                klass = PacmanSolver
+            else:
+                klass = DepSolver
+            self._solvers[solver] = klass(self._cachedir, self._persistdir)
+        return self._solvers[solver]
 
 
 class Partition:
@@ -757,12 +842,13 @@ class ManifestFile:
         with f:
             return ManifestFile.load_from_fd(f, fullpath, self.overrides, self.vars, self.searchdirs)
 
-    def depsolve(self, solver: DepSolver, desc: Dict):
+    def depsolve(self, solver_factory: DepSolverFactory, desc: Dict):
         repos = desc.get("repos", [])
         packages = desc.get("packages", [])
         excludes = desc.get("excludes", [])
         baseurl = desc.get("baseurl")
         arch = desc.get("architecture")
+        solver = solver_factory.get_depsolver(desc.get("solver", "dnf"))
 
         if not packages:
             return []
@@ -979,8 +1065,8 @@ class ManifestFileV1(ManifestFile):
             self._process_import(current)
             current = current.get("pipeline", {}).get("build")
 
-    def _process_depsolve(self, solver, stage, pipeline_name):
-        if stage.get("name", "") != "org.osbuild.rpm":
+    def _process_depsolve(self, solver_factory, stage, pipeline_name):
+        if stage.get("name", "") not in ("org.osbuild.pacman", "org.osbuild.rpm"):
             return
         options = stage.get("options")
         if not options:
@@ -994,12 +1080,12 @@ class ManifestFileV1(ManifestFile):
 
         packages = element_enter(options, "packages", [])
 
-        deps = self.depsolve(solver, mpp)
+        deps = self.depsolve(solver_factory, mpp)
         checksums = self.add_packages(deps, pipeline_name)
 
         packages += checksums
 
-    def process_depsolves(self, solver, pipeline=None, depth=0):
+    def process_depsolves(self, solver_factory, pipeline=None, depth=0):
         if pipeline is None:
             pipeline = self.pipeline
 
@@ -1012,11 +1098,11 @@ class ManifestFileV1(ManifestFile):
 
         stages = element_enter(pipeline, "stages", [])
         for stage in stages:
-            self._process_depsolve(solver, stage, pipeline_name)
+            self._process_depsolve(solver_factory, stage, pipeline_name)
         build = pipeline.get("build")
         if build:
             if "pipeline" in build:
-                self.process_depsolves(solver, build["pipeline"], depth+1)
+                self.process_depsolves(solver_factory, build["pipeline"], depth+1)
 
     def process_embed_files(self):
         "Embedding files is not supported for v1 manifests"
@@ -1080,8 +1166,8 @@ class ManifestFileV2(ManifestFile):
         for pipeline in old_pipelines:
             self.pipelines.extend(self._process_import(pipeline))
 
-    def _process_depsolve(self, solver, stage, pipeline_name):
-        if stage.get("type", "") != "org.osbuild.rpm":
+    def _process_depsolve(self, solver_factory, stage, pipeline_name):
+        if stage.get("type", "") not in ("org.osbuild.pacman", "org.osbuild.rpm"):
             return
         inputs = element_enter(stage, "inputs", {})
         packages = element_enter(inputs, "packages", {})
@@ -1094,18 +1180,18 @@ class ManifestFileV2(ManifestFile):
 
         refs = element_enter(packages, "references", {})
 
-        deps = self.depsolve(solver, mpp)
+        deps = self.depsolve(solver_factory, mpp)
         checksums = self.add_packages(deps, pipeline_name)
 
         for checksum in checksums:
             refs[checksum] = {}
 
-    def process_depsolves(self, solver):
+    def process_depsolves(self, solver_factory):
         for pipeline in self.pipelines:
             name = pipeline.get("name", "")
             stages = element_enter(pipeline, "stages", [])
             for stage in stages:
-                self._process_depsolve(solver, stage, name)
+                self._process_depsolve(solver_factory, stage, name)
 
     def process_embed_files(self):
 
@@ -1164,11 +1250,13 @@ class ManifestFileV2(ManifestFile):
 def main():
     parser = argparse.ArgumentParser(description="Manifest pre processor")
     parser.add_argument(
+        "--cache",
         "--dnf-cache",
+        dest="cachedir",
         metavar="PATH",
         type=os.path.abspath,
         default=None,
-        help="Path to DNF cache-directory to use",
+        help="Path to package cache-directory to use",
     )
     parser.add_argument(
         "-I", "--import-dir",
@@ -1223,8 +1311,8 @@ def main():
     m.process_embed_files()
 
     with tempfile.TemporaryDirectory() as persistdir:
-        solver = DepSolver(args.dnf_cache, persistdir)
-        m.process_depsolves(solver)
+        solver_factory = DepSolverFactory(args.cachedir, persistdir)
+        m.process_depsolves(solver_factory)
 
     m.process_format()
 
