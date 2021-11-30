@@ -11,12 +11,5 @@
     "/usr/lib/systemd/system/osbuild-first-boot.service"
   ],
   "deleted_files": [],
-  "differences": {
-    "/": {
-      "mode": [
-        16832,
-        16877
-      ]
-    }
-  }
+  "differences": {}
 }

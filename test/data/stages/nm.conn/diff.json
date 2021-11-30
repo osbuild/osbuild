@@ -11,12 +11,5 @@
     "/usr/lib/NetworkManager/system-connections/osbuild.nmconnection"
   ],
   "deleted_files": [],
-  "differences": {
-    "/": {
-      "mode": [
-        16832,
-        16877
-      ]
-    }
-  }
+  "differences": {}
 }

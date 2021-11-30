@@ -6,6 +6,10 @@
       },
       "runner": "org.osbuild.fedora34"
     },
-    "stages": []
+    "stages": [
+      {
+        "name": "org.osbuild.noop"
+      }
+    ]
   }
 }

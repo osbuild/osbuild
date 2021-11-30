@@ -11,7 +11,11 @@
     {
       "name": "tree",
       "build": "name:build",
-      "stages": []
+      "stages": [
+        {
+          "type": "org.osbuild.noop"
+        }
+      ]
     }
   ]
 }
