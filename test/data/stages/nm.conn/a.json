@@ -270,7 +270,11 @@
         ]
       }
     },
-    "stages": []
+    "stages": [
+      {
+        "name": "org.osbuild.noop"
+      }
+    ]
   },
   "sources": {
     "org.osbuild.files": {

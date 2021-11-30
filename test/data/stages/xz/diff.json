@@ -3,12 +3,5 @@
     "/compressed.xz"
   ],
   "deleted_files": [],
-  "differences": {
-    "/": {
-      "mode": [
-        16832,
-        16877
-      ]
-    }
-  }
+  "differences": {}
 }
