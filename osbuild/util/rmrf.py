@@ -55,7 +55,19 @@ def rmtree(path: str):
     def fixperms(p):
         fd = None
         try:
-            fd = os.open(p, os.O_RDONLY)
+
+            # if we can't open the file, we just return and let the unlink
+            # fail (again) with `EPERM`.
+            # A notable case of why open would fail is symlinks; since we
+            # want the symlink and not the target we pass the `O_NOFOLLOW`
+            # flag, but this will result in `ELOOP`, thus we never change
+            # symlinks. This should be fine though since "on Linux, the
+            # permissions of an ordinary symbolic link are not used in any
+            # operations"; see symlinks(7).
+            try:
+                fd = os.open(p, os.O_RDONLY | os.O_NOFOLLOW)
+            except OSError:
+                return
 
             # The root-only immutable flag prevents files from being unlinked
             # or modified. Clear it, so we can unlink the file-system tree.
