@@ -223,6 +223,15 @@ class TestDescriptions(unittest.TestCase):
         res = manifest.depsolve(store, names(image))
         assert res == names(build, rootfs, dep, image)
 
+        # ensure the order of inputs is preserved during
+        # the depsolving so that we build things in the
+        # same way they were requested
+        res = manifest.depsolve(store, names(ul, image))
+        assert res == names(build, dep, ul, rootfs, image)
+
+        res = manifest.depsolve(store, names(image, ul))
+        assert res == names(build, rootfs, dep, image, ul)
+
         # if we have the 'dep' dependency in the store,
         # we should be not be building that
         store.have.add(dep.id)
