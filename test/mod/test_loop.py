@@ -216,3 +216,40 @@ def test_lock(tempdir):
             f.close()
 
         ctl.close()
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_on_close(tempdir):
+
+    path = os.path.join(tempdir, "test.img")
+    ctl = loop.LoopControl()
+
+    assert ctl
+
+    lo, f = None, None
+    invoked = False
+
+    def on_close(l):
+        nonlocal invoked
+        invoked = True
+
+        # check that this is a no-op
+        l.close()
+
+    try:
+        f = open(path, "wb+")
+        f.truncate(1024)
+        f.flush()
+        lo = ctl.loop_for_fd(f.fileno(), autoclear=True, lock=True)
+        assert lo
+
+        lo.on_close = on_close
+        lo.close()
+
+        assert invoked
+
+    finally:
+        if lo:
+            lo.close()
+
+        ctl.close()
