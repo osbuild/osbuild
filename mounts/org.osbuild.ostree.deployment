@@ -61,6 +61,12 @@ SCHEMA_2 = """
 
 class OSTreeDeploymentMount(mounts.MountService):
 
+    def __init__(self, args):
+        super().__init__(args)
+
+        self.mountpoint = None
+        self.check = False
+
     @staticmethod
     def bind_mount(source, target):
         subprocess.run([
