@@ -277,33 +277,40 @@ import hawkey
 
 from osbuild.util.rhsm import Subscriptions
 
+
 class YamlOrderedLoader(yaml.Loader):
     def construct_mapping(self, node, deep=False):
         if not isinstance(node, yaml.MappingNode):
             raise ConstructorError(None, None,
-                    "expected a mapping node, but found %s" % node.id,
-                    node.start_mark)
+                                   "expected a mapping node, but found %s" % node.id,
+                                   node.start_mark)
         mapping = collections.OrderedDict()
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
             if not isinstance(key, collections.abc.Hashable):
                 raise ConstructorError("while constructing a mapping", node.start_mark,
-                        "found unhashable key", key_node.start_mark)
+                                       "found unhashable key", key_node.start_mark)
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
         return mapping
+
     def construct_yaml_map(self, node):
         data = collections.OrderedDict()
         yield data
         value = self.construct_mapping(node)
         data.update(value)
+
+
 yaml.add_constructor('tag:yaml.org,2002:map', YamlOrderedLoader.construct_yaml_map)
+
 
 def yaml_load_ordered(source):
     return yaml.load(source, YamlOrderedLoader)
 
+
 def json_load_ordered(source):
     return json.load(source, object_pairs_hook=collections.OrderedDict)
+
 
 def element_enter(element, key, default):
     if key not in element:
@@ -652,12 +659,12 @@ class ManifestFile:
         # We use OrderedDict to preserve key order (for python < 3.6)
         if path.endswith(".yml") or path.endswith(".yaml"):
             try:
-                data =  yaml_load_ordered(f)
+                data = yaml_load_ordered(f)
             except yaml.YAMLError as err:
                 pos = ""
                 if hasattr(err, 'problem_mark'):
                     mark = err.problem_mark
-                    pos =  f" at line {mark.line+1} (col {mark.column+1})"
+                    pos = f" at line {mark.line+1} (col {mark.column+1})"
                 print(f"Invalid yaml in \"{path}\": {err.problem}{pos}")
                 sys.exit(1)
         else:
@@ -1037,7 +1044,7 @@ class ManifestFileV2(ManifestFile):
         else:
             mpp = self.get_mpp_node(pipeline, "import-pipeline")
             if not mpp:
-                return [pipeline] # Not an import
+                return [pipeline]  # Not an import
             ids = [mpp["id"]]
 
         path = mpp["path"]
