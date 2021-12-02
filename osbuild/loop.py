@@ -5,6 +5,7 @@ import fcntl
 import os
 import stat
 import time
+from typing import Callable, Optional
 
 from .util import linux
 
@@ -108,6 +109,7 @@ class Loop:
 
         self.devname = f"loop{minor}"
         self.minor = minor
+        self.on_close: Optional[Callable[["Loop"], None]] = None
 
         with contextlib.ExitStack() as stack:
             if not dir_fd:
@@ -129,9 +131,11 @@ class Loop:
 
         No operations on this object are valid after this call.
         """
-        if self.fd >= 0:
-            os.close(self.fd)
-            self.fd = -1
+        fd, self.fd = self.fd, -1
+        if fd >= 0:
+            if callable(self.on_close):
+                self.on_close(self)  # pylint: disable=not-callable
+            os.close(fd)
             self.devname = "<closed>"
 
     def flock(self, op: int) -> None:
