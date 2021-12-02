@@ -543,7 +543,11 @@ class LoopControl:
         self._check_open()
         return fcntl.ioctl(self.fd, self.LOOP_CTL_GET_FREE)
 
-    def loop_for_fd(self, fd: int, lock: bool = False, **kwargs):
+    def loop_for_fd(self,
+                    fd: int,
+                    lock: bool = False,
+                    setup: Optional[Callable[[Loop], None]] = None,
+                    **kwargs):
         """
         Get or create an unbound loopback device and bind it to an fd
 
@@ -559,6 +563,10 @@ class LoopControl:
         reacting to changes to the device, like processing udev rules.
         See https://systemd.io/BLOCK_DEVICE_LOCKING/
 
+        A callback can be specified via `setup` that will be invoked
+        after the loop device is opened but before any other operation
+        is done, such as setting the backing file.
+
         All given keyword arguments except `lock` are forwarded to the
         `Loop.set_status` call.
         """
@@ -570,6 +578,14 @@ class LoopControl:
 
         while True:
             lo = Loop(self.get_unbound())
+
+            # if a setup callback is specified invoke it now
+            if callable(setup):
+                try:
+                    setup(lo)
+                except:
+                    lo.close()
+                    raise
 
             # try to lock the device if requested and use a
             # different one if it fails
