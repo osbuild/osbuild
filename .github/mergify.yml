@@ -82,6 +82,11 @@ pull_request_rules:
         update_method: rebase
         rebase_fallback: none
         require_branch_protection: false
+  - name: Remove label after merge or close
+    conditions:
+      - merged
+      - closed
+    actions:
       label:
         remove:
           - ci:automerge
