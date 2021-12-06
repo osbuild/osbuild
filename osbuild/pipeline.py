@@ -195,7 +195,7 @@ class Stage:
 
             r = build_root.run([f"/run/osbuild/bin/{self.name}"],
                                monitor,
-                               stage_timeout=stage_timeout,
+                               timeout=stage_timeout,
                                binds=binds,
                                readonly_binds=ro_binds)
 
