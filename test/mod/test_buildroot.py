@@ -4,10 +4,7 @@
 
 import pathlib
 import os
-import select
-import subprocess
 import sys
-import time
 
 from tempfile import TemporaryDirectory
 
@@ -176,21 +173,14 @@ def test_timeout(tempdir):
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
 
+    monitor = NullMonitor(sys.stderr.fileno())
+
     with BuildRoot("/", runner, libdir, var) as root:
 
-        READ_ONLY = select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR
-        poller = select.poll()
+        root.run(["/bin/sleep", "1"], monitor, timeout=2)
 
-        proc = subprocess.Popen(['python3', libdir + '/stages/org.osbuild.test.timeout'], stdout = subprocess.PIPE)
-        start = time.monotonic()
-        timeout = 4
-        poller.register(proc.stdout.fileno(), READ_ONLY)
         with pytest.raises(TimeoutError):
-            root.read_with_timeout(proc, poller, start, timeout)
+            root.run(["/bin/sleep", "1"], monitor, timeout=0.1)
 
-        proc = subprocess.Popen(['python3', libdir + '/stages/org.osbuild.test.timeout'], stdout = subprocess.PIPE)
-        start = time.monotonic()
-        timeout = 0
-        poller.register(proc.stdout.fileno(), READ_ONLY)
         with pytest.raises(TimeoutError):
-            root.read_with_timeout(proc, poller, start, timeout)
+            root.run(["/bin/sleep", "1"], monitor, timeout=0.1)
