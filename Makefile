@@ -262,6 +262,11 @@ test-all:
 # ./rpmbuild, using rpmbuild's usual directory structure.
 #
 
+.PHONY: git-diff-check
+git-diff-check:
+	@git diff --exit-code
+	@git diff --cached --exit-code
+
 RPM_SPECFILE=rpmbuild/SPECS/osbuild-$(COMMIT).spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-$(COMMIT).tar.gz
 
@@ -274,13 +279,13 @@ $(RPM_TARBALL):
 	git archive --prefix=osbuild-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
 
 .PHONY: srpm
-srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bs \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
 
 .PHONY: rpm
-rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+rpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
