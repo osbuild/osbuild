@@ -114,7 +114,7 @@ class Stage:
         with open(location, "w", encoding="utf-8") as fp:
             json.dump(args, fp)
 
-    def run(self, tree, runner, build_tree, store, monitor, libdir, stage_timeout=None):
+    def run(self, tree, runner, build_tree, store, monitor, libdir, timeout=None):
         with contextlib.ExitStack() as cm:
 
             build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
@@ -195,7 +195,7 @@ class Stage:
 
             r = build_root.run([f"/run/osbuild/bin/{self.name}"],
                                monitor,
-                               timeout=stage_timeout,
+                               timeout=timeout,
                                binds=binds,
                                readonly_binds=ro_binds)
 
