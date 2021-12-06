@@ -30,6 +30,7 @@ class CompletedBuild:
     `output`. The latter is also provided via `stderr`, `stdout`
     properties, making it a drop-in replacement for `CompletedProcess`.
     """
+
     def __init__(self, proc: subprocess.CompletedProcess, output: str):
         self.process = proc
         self.output = output
