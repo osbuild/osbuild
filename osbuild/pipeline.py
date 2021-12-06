@@ -311,7 +311,7 @@ class Pipeline:
 
         return results, build_tree, tree
 
-    def run(self, store, monitor, libdir,stage_timeout=None):
+    def run(self, store, monitor, libdir, stage_timeout=None):
         results = {"success": True}
 
         monitor.begin(self)
