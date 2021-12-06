@@ -168,7 +168,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self._exitstack:
             self._exitstack.enter_context(api)
 
-    def run(self, argv, monitor, stage_timeout=None, binds=None, readonly_binds=None):
+    def run(self, argv, monitor, timeout=None, binds=None, readonly_binds=None):
         """Runs a command in the buildroot.
 
         Takes the command and arguments, as well as bind mounts to mirror
@@ -288,7 +288,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         poller = select.poll()
         poller.register(proc.stdout.fileno(), READ_ONLY)
         while True:
-            buf = self.read_with_timeout(proc, poller, start, stage_timeout)
+            buf = self.read_with_timeout(proc, poller, start, timeout)
             if not buf:
                 break
 
@@ -307,13 +307,13 @@ class BuildRoot(contextlib.AbstractContextManager):
         return CompletedBuild(proc, output)
 
     @classmethod
-    def read_with_timeout(cls, proc, poller, start, stage_timeout):
+    def read_with_timeout(cls, proc, poller, start, timeout):
         fd = proc.stdout.fileno()
-        if stage_timeout is None:
+        if timeout is None:
             return os.read(fd, 32768)
 
-        # convert stage_timeout to milliseconds
-        remaining = (stage_timeout * 1000) - (time.monotonic() - start)
+        # convert timeout to milliseconds
+        remaining = (timeout * 1000) - (time.monotonic() - start)
         if remaining <= 0:
             proc.terminate()
             raise TimeoutError
