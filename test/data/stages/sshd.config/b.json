@@ -462,7 +462,8 @@
           "config": {
             "PasswordAuthentication": false,
             "ChallengeResponseAuthentication": false,
-            "ClientAliveInterval": 180
+            "ClientAliveInterval": 180,
+            "PermitRootLogin": "forced-commands-only"
           }
         }
       },
@@ -472,7 +473,8 @@
           "config": {
             "PasswordAuthentication": false,
             "ChallengeResponseAuthentication": true,
-            "ClientAliveInterval": 200
+            "ClientAliveInterval": 200,
+            "PermitRootLogin": false
           }
         }
       }
