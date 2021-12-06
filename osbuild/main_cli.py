@@ -81,7 +81,7 @@ def parse_arguments(sys_argv):
     parser.add_argument("--inspect", action="store_true",
                         help="return the manifest in JSON format including all the ids")
     parser.add_argument("--stage-timeout", type=int, default=None,
-                        help="set the timeout in seconds for building an image")
+                        help="set the maximal time (in seconds) each stage is allowed to run")
 
     return parser.parse_args(sys_argv[1:])
 
