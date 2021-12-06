@@ -16,7 +16,9 @@ queue_rules:
       - check-success=Test Suite (test.src)
       - check-success=Regenerate Test Data
       - check-success=Spell check
-      - "check-success=LGTM analysis: Python"
+      - or:
+        - "check-success=LGTM analysis: Python"
+        - "check-neutral=LGTM analysis: Python"
       - check-success=codecov/project
       - "check-success~=rpm-build:.*"
 
@@ -38,7 +40,9 @@ pull_request_rules:
       - check-success=Test Suite (test.src)
       - check-success=Regenerate Test Data
       - check-success=Spell check
-      - "check-success=LGTM analysis: Python"
+      - or:
+        - "check-success=LGTM analysis: Python"
+        - "check-neutral=LGTM analysis: Python"
       - check-success=codecov/project
       - "check-success~=rpm-build:.*"
     actions:
@@ -66,7 +70,9 @@ pull_request_rules:
       - check-success=Test Suite (test.src)
       - check-success=Regenerate Test Data
       - check-success=Spell check
-      - "check-success=LGTM analysis: Python"
+      - or:
+        - "check-success=LGTM analysis: Python"
+        - "check-neutral=LGTM analysis: Python"
       - check-success=codecov/project
       - "check-success~=rpm-build:.*"
     actions:
