@@ -10,6 +10,7 @@ queue_rules:
       - check-success=Test Suite (test.run.test_assemblers)
       - check-success=Test Suite (test.run.test_boot)
       - check-success=Test Suite (test.run.test_noop)
+      - check-success=Test Suite (test.run.test_ostree)
       - check-success=Test Suite (test.run.test_sources)
       - check-success=Test Suite (test.run.test_stages)
       - check-success=Test Suite (test.src)
@@ -31,6 +32,7 @@ pull_request_rules:
       - check-success=Test Suite (test.run.test_assemblers)
       - check-success=Test Suite (test.run.test_boot)
       - check-success=Test Suite (test.run.test_noop)
+      - check-success=Test Suite (test.run.test_ostree)
       - check-success=Test Suite (test.run.test_sources)
       - check-success=Test Suite (test.run.test_stages)
       - check-success=Test Suite (test.src)
@@ -45,18 +47,35 @@ pull_request_rules:
         method: rebase
         update_method: rebase
         rebase_fallback: none
+        require_branch_protection: false
   - name: Automatic merge on green via label
     conditions:
       - base=main
       - "check-success~=rpm-build:.*"
       - "label=ci:automerge"
+      - base=main
+      - check-success=📚 Documentation
+      - check-success=Schutzbot on GitLab
+      - check-success=Test Suite (test.mod)
+      - check-success=Test Suite (test.run.test_assemblers)
+      - check-success=Test Suite (test.run.test_boot)
+      - check-success=Test Suite (test.run.test_noop)
+      - check-success=Test Suite (test.run.test_ostree)
+      - check-success=Test Suite (test.run.test_sources)
+      - check-success=Test Suite (test.run.test_stages)
+      - check-success=Test Suite (test.src)
+      - check-success=Regenerate Test Data
+      - check-success=Spell check
+      - "check-success=LGTM analysis: Python"
+      - check-success=codecov/project
+      - "check-success~=rpm-build:.*"
     actions:
       queue:
         name: default
         method: rebase
         update_method: rebase
         rebase_fallback: none
-        require_branch_protection: true
+        require_branch_protection: false
       label:
         remove:
           - ci:automerge
