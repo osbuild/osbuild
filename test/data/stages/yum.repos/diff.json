@@ -1,0 +1,8 @@
+{
+  "added_files": [
+    "/etc/yum.repos.d/google-cloud.repo",
+    "/etc/yum.repos.d/my-cool-repo.repo"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
