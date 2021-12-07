@@ -11,6 +11,9 @@ service is shut down.
 A typical use case is formatting the file or a partition in the
 file with a file system or mounting a previously created file
 system contained in the file.
+NB: This will use the custom osbuild udev rules inhibitor to
+suppress problematic udev rules. For more details see the
+documentation for `osbuil.util.udev.UdevInhibitor`.
 """
 
 
@@ -23,6 +26,7 @@ from typing import Dict
 
 from osbuild import devices
 from osbuild import loop
+from osbuild.util.udev import UdevInhibitor
 
 
 SCHEMA = """
@@ -63,6 +67,11 @@ class LoopbackService(devices.DeviceService):
         self.lo = None
         self.ctl = loop.LoopControl()
 
+    @staticmethod
+    def setup_loop(lo: loop.Loop):
+        lock = UdevInhibitor.for_device(lo.LOOP_MAJOR, lo.minor)
+        lo.on_close = lambda _l: lock.release()
+
     def make_loop(self, fd: int, offset, sizelimit, lock):
         if not sizelimit:
             stat = os.fstat(fd)
@@ -71,6 +80,7 @@ class LoopbackService(devices.DeviceService):
             sizelimit *= self.sector_size
 
         lo = self.ctl.loop_for_fd(fd, lock=lock,
+                                  setup=self.setup_loop,
                                   offset=offset,
                                   sizelimit=sizelimit,
                                   partscan=False,
