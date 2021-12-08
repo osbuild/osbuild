@@ -214,6 +214,7 @@ def test_env_isolation(tempdir):
 
     allowed = [
         "_",      # added by `env` itself
+        "container",
         "LC_CTYPE",
         "PATH",
         "PWD",
