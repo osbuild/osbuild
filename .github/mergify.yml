@@ -1,24 +1,3 @@
-queue_rules:
-  - name: default
-    conditions:
-      - base=main
-      - check-success=📚 Documentation
-      - check-success=Schutzbot on GitLab
-      - check-success=Test Suite (test.mod)
-      - check-success=Test Suite (test.run.test_assemblers)
-      - check-success=Test Suite (test.run.test_boot)
-      - check-success=Test Suite (test.run.test_noop)
-      - check-success=Test Suite (test.run.test_ostree)
-      - check-success=Test Suite (test.run.test_sources)
-      - check-success=Test Suite (test.run.test_stages)
-      - check-success=Test Suite (test.src)
-      - check-success=Regenerate Test Data
-      - check-success=Spell check
-      - or:
-        - "check-success=LGTM analysis: Python"
-        - "check-neutral=LGTM analysis: Python"
-      - check-success=codecov/project
-      - "check-success~=rpm-build:.*"
 
 pull_request_rules:
   - name: Automatic review for Dependabot pull requests
@@ -35,46 +14,11 @@ pull_request_rules:
         add:
           - ci:automerge
 
-  - name: Automatic merge on green via label
+  - name: Dismiss reviews for non trusted authors
     conditions:
       - base=main
-      - "#approved-reviews-by>=1"
-      - "#changes-requested-reviews-by=0"
-      - "check-success~=rpm-build:.*"
-      - "label=ci:automerge"
-      - base=main
-      - check-success=📚 Documentation
-      - check-success=Schutzbot on GitLab
-      - check-success=Test Suite (test.mod)
-      - check-success=Test Suite (test.run.test_assemblers)
-      - check-success=Test Suite (test.run.test_boot)
-      - check-success=Test Suite (test.run.test_noop)
-      - check-success=Test Suite (test.run.test_ostree)
-      - check-success=Test Suite (test.run.test_sources)
-      - check-success=Test Suite (test.run.test_stages)
-      - check-success=Test Suite (test.src)
-      - check-success=Regenerate Test Data
-      - check-success=Spell check
-      - or:
-        - "check-success=LGTM analysis: Python"
-        - "check-neutral=LGTM analysis: Python"
-      - check-success=codecov/project
-      - "check-success~=rpm-build:.*"
+      - author!=@Schutzbot
     actions:
-      queue:
-        name: default
-        method: rebase
-        update_method: rebase
-        rebase_fallback: none
-        require_branch_protection: false
-      review:
-        type: APPROVE
-        message: Automatic review via mergify
-  - name: Remove label after merge or close
-    conditions:
-      - merged
-      - closed
-    actions:
-      label:
-        remove:
-          - ci:automerge
+      dismiss_reviews:
+        approved: True
+        changes_requested: True
