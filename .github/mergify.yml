@@ -67,6 +67,9 @@ pull_request_rules:
         update_method: rebase
         rebase_fallback: none
         require_branch_protection: false
+      review:
+        type: APPROVE
+        message: Automatic review via mergify
   - name: Remove label after merge or close
     conditions:
       - merged
