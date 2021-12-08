@@ -1,0 +1,39 @@
+# This file is part of osbuild
+#
+# A set of rules that implements an inhibition mechanism that allows
+# osbuild to suppress the execution of certain udev rules for block
+# devices that are known to cause problems for its use case.
+#
+# osbuild indicates that it wants to inhibit a device by creating a
+# lock file in a special lock folder which is then in turn detected
+# by this set of rules. As a result various environment variables
+# are set that should inhibit the other udev rules.
+#
+# A udev property called 'OSBUILD_INHIBIT' will be set for devices
+# that are inhibited via this set of rules.
+
+SUBSYSTEM!="block", GOTO="osbuild_end"
+ACTION=="remove", GOTO="osbuild_end"
+
+# Support locking via device major and minor numbers
+TEST=="/run/osbuild/locks/udev/device-$major:$minor", ENV{OSBUILD_INHIBIT}="1"
+
+# Support locking via the "device mapper" device name
+ENV{DM_NAME}=="?*", TEST=="/run/osbuild/locks/udev/dm-$env{DM_NAME}", ENV{OSBUILD_INHIBIT}="1"
+
+# Setting `DM_UDEV_DISABLE_OTHER_RULES_FLAG` should prevent the processing
+# of the device by device mapper related rules; specifically it should
+# prevent lvm2 from scanning the device and activating its volume groups
+# and logival volumes.
+# On Fedora/RHEL these rules are in '69-dm-lvm-metad.rules'
+ENV{OSBUILD_INHIBIT}=="1", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
+
+# Setting `UDEV_DISABLE_PERSISTENT_STORAGE_RULES_FLAG` should opt-out of
+# the creation of various links in udev that are useful for host devices
+# but are not needed by osbuild and might even conflict if multiple
+# concurrent builds are ongoing which use the same device labels, like
+# like "disk/by-label".
+# On Fedora/RHEL these rules are in '60-persistent-storage.rules'
+ENV{OSBUILD_INHIBIT}=="1", ENV{UDEV_DISABLE_PERSISTENT_STORAGE_RULES_FLAG}="1"
+
+LABEL="osbuild_end"
