@@ -275,6 +275,7 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         # Setup a new environment for the container.
         env = {
+            "container": "bwrap-osbuild",
             "LC_CTYPE": "C.UTF-8",
             "PATH": "/usr/sbin:/usr/bin",
             "PYTHONPATH": "/run/osbuild/lib",
