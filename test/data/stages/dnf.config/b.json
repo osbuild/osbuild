@@ -500,7 +500,12 @@
               "name": "releasever",
               "value": "8.4"
             }
-          ]
+          ],
+          "config": {
+            "main": {
+              "ip_resolve": "4"
+            }
+          }
         }
       }
     ]
