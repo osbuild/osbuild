@@ -21,6 +21,7 @@ Summary:        A build system for OS images
 BuildRequires:  make
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
+BuildRequires:  systemd
 
 Requires:       bash
 Requires:       bubblewrap
@@ -164,6 +165,10 @@ install -p -m 0644 -t %{buildroot}%{_mandir}/man5/ docs/*.5
 install -D -m 0644 -t %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype} %{name}.pp.bz2
 install -D -m 0644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_selinux.8
 
+# Udev rules
+mkdir -p %{buildroot}%{_udevrulesdir}
+install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
+
 %check
 exit 0
 # We have some integration tests, but those require running a VM, so that would
@@ -176,6 +181,7 @@ exit 0
 %{_mandir}/man5/%{name}-manifest.5*
 %{_datadir}/osbuild/schemas
 %{pkgdir}
+%{_udevrulesdir}/*.rules
 # the following files are in the lvm2 sub-package
 %exclude %{pkgdir}/devices/org.osbuild.lvm2*
 %exclude %{pkgdir}/stages/org.osbuild.lvm2*
