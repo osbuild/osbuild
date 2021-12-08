@@ -94,6 +94,7 @@ def useradd(root, name, uid=None, gid=None, groups=None, description=None, home=
         arguments += ["--comment", description]
     if home:
         arguments += ["--home-dir", home]
+        arguments += ["--create-home"]
     if shell:
         arguments += ["--shell", shell]
     if password is not None:
