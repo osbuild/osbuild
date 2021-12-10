@@ -169,7 +169,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self._exitstack:
             self._exitstack.enter_context(api)
 
-    def run(self, argv, monitor, timeout=None, binds=None, readonly_binds=None):
+    def run(self, argv, monitor, caps = None, timeout=None, binds=None, readonly_binds=None):
         """Runs a command in the buildroot.
 
         Takes the command and arguments, as well as bind mounts to mirror
@@ -260,7 +260,6 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         cmd = [
             "bwrap",
-            "--cap-add", "CAP_MAC_ADMIN",
             "--chdir", "/",
             "--die-with-parent",
             "--new-session",
@@ -269,6 +268,8 @@ class BuildRoot(contextlib.AbstractContextManager):
             "--unshare-net"
         ]
 
+        capabilities = caps or {}
+        cmd += self.build_caps_cmd(capabilities)
         cmd += mounts
         cmd += ["--", f"/run/osbuild/lib/runners/{self._runner}"]
         cmd += argv
@@ -314,6 +315,18 @@ class BuildRoot(contextlib.AbstractContextManager):
         data.close()
 
         return CompletedBuild(proc, output)
+
+    def build_caps_cmd(self, capabilities):
+        cmd = []
+        bwrap_caps = ["CAP_SYS_ADMIN", "CAP_SYS_CHROOT", "CAP_NET_ADMIN", "CAP_SETUID", "CAP_SETGID", "CAP_SYS_PTRACE"]
+        drop_caps = ", ".join(set(bwrap_caps) - set(capabilities))
+        if drop_caps:
+            cmd += ["--cap-drop", drop_caps]
+
+        add_caps = ", ".join(set(capabilities) - set(bwrap_caps))
+        if add_caps:
+            cmd +=["--cap-add", add_caps]
+        return cmd
 
     @classmethod
     def read_with_timeout(cls, proc, poller, start, timeout):

@@ -296,6 +296,7 @@ class ModuleInfo:
         self.info = info["info"]
         self.desc = info["desc"]
         self.opts = info["schema"]
+        self.caps = info["caps"]
 
     def _load_opts(self, version, fallback=None):
         raw = self.opts[version]
@@ -389,8 +390,19 @@ class ModuleInfo:
             raise SyntaxError(msg, detail) from None
 
     @classmethod
+    def _parse_caps(cls, node):
+        if not node:
+            return {}
+
+        value = node.value
+        caps = list()
+        for x in value.elts:
+            caps.append(x.value)
+        return caps
+
+    @classmethod
     def load(cls, root, klass, name) -> Optional["ModuleInfo"]:
-        names = ["SCHEMA", "SCHEMA_2"]
+        names = ["SCHEMA", "SCHEMA_2", "CAPABILITIES"]
 
         def filter_type(lst, target):
             return [x for x in lst if isinstance(x, target)]
@@ -425,13 +437,17 @@ class ModuleInfo:
         def parse_schema(node):
             return cls._parse_schema(klass, name, node)
 
+        def parse_caps(node):
+            return cls._parse_caps(node)
+
         info = {
             'schema': {
                 "1": parse_schema(values.get("SCHEMA")),
                 "2": parse_schema(values.get("SCHEMA_2")),
             },
             'desc': doclist[0],
-            'info': "\n".join(doclist[1:])
+            'info': "\n".join(doclist[1:]),
+            'caps': parse_caps(values.get("CAPABILITIES"))
         }
         return cls(klass, name, path, info)
 
