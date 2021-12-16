@@ -165,6 +165,9 @@ def bool_to_string(value):
 
 
 def configure_kernel(tree, kernel_options):
+    if not kernel_options:
+        return
+
     with open(f"{tree}/etc/sysconfig/kernel", 'w') as kernel_file:
         for option, value in kernel_options.items():
             if option == "update_default":
@@ -177,6 +180,9 @@ def configure_kernel(tree, kernel_options):
 
 
 def configure_network(tree, network_options):
+    if not network_options:
+        return
+
     with open(f"{tree}/etc/sysconfig/network", 'w') as network_file:
         for option, value in network_options.items():
             if option == "networking":
