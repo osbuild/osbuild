@@ -171,6 +171,11 @@ SCHEMA = """
     "type": "boolean",
     "default": true
   },
+  "write_cmdline": {
+    "description": "Include the kernel command line in `grubenv`",
+    "type": "boolean",
+    "default": true
+  },
   "ignition": {
     "description": "Include ignition support in the grub.cfg",
     "type": "boolean",
@@ -468,13 +473,14 @@ class GrubConfig:
         return data
 
 
-#pylint: disable=too-many-statements
+#pylint: disable=too-many-statements,too-many-branches
 def main(tree, options):
     root_fs = options.get("rootfs")
     boot_fs = options.get("bootfs")
     kernel_opts = options.get("kernel_opts", "")
     legacy = options.get("legacy", None)
     uefi = options.get("uefi", None)
+    write_cmdline = options.get("write_cmdline", True)
     write_defaults = options.get("write_defaults", True)
     ignition = options.get("ignition", False)
     saved_entry = options.get("saved_entry")
@@ -528,10 +534,10 @@ def main(tree, options):
 
     with open(grubenv, "w") as env:
         fs_type, fs_id = fs_spec_decode(root_fs)
-        data = (
-            "# GRUB Environment Block\n"
-            f"kernelopts=root={fs_type}={fs_id} {kernel_opts}\n"
-        )
+        data = "# GRUB Environment Block\n"
+
+        if write_cmdline:
+            data += f"kernelopts=root={fs_type}={fs_id} {kernel_opts}\n"
 
         if saved_entry:
             data += f"saved_entry={saved_entry}\n"
