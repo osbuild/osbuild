@@ -62,7 +62,6 @@ and reset the success indicator one.
 An implementation of the user space component for rpm-ostree is
 called `greenboot`.
 
-
 Support for ignition (https://github.com/coreos/ignition) can be turned
 on via the `ignition` option. If enabled, a 'ignition_firstboot' variable
 will be created, which is meant to be included in the kernel command line.
