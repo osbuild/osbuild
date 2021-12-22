@@ -33,7 +33,7 @@ SCHEMA_2 = """
     "format": {
       "description": "Archive format to use",
       "type": "string",
-      "enum": ["gnu", "oldngu", "posix", "ustar", "v7"],
+      "enum": ["gnu", "oldgnu", "posix", "ustar", "v7"],
       "default": "gnu"
     },
     "acls": {
