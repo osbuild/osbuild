@@ -236,8 +236,8 @@ menuentry '${title}' --class red --class gnu-linux --class gnu --class os --unre
 	insmod all_video
 	set gfxpayload=keep
 	search --no-floppy --set=root ${search}
-	linux${loader} /vmlinuz-${kernel} ${cmdline}
-	initrd${loader} /initramfs-${kernel}.img
+	linux${loader} ${grub_home}vmlinuz-${kernel} ${cmdline}
+	initrd${loader} ${grub_home}initramfs-${kernel}.img
 }
 """
 
@@ -406,6 +406,7 @@ class GrubConfig:
             "cmdline": f"root={rootfs} {self.cmdline}",
             "search": search,
             "loader": loader,
+            "grub_home": self.grub_home
         }
 
         if self.serial:
