@@ -85,18 +85,20 @@ def parse_input(inputs):
 def main(tree, inputs):
     pkgpath, packages = parse_input(inputs)
 
+    # The hook to generate kernel preset files requires /dev/stdin
+    # https://github.com/archlinux/svntogit-packages/blob/7f2711a77579a72414cef323bb5e914921177b38/linux/repos/core-i686/PKGBUILD#L114
     script = f"""
         set -e
         mkdir -p {tree}/dev {tree}/sys {tree}/proc
         mount -o bind /dev {tree}/dev
         mount -o bind /sys {tree}/sys
         mount -o bind /proc {tree}/proc
+        ln -s /proc/self/fd/0 /dev/stdin
     """
 
     machine_id_set_previously = os.path.exists(f"{tree}/etc/machine-id")
     if not machine_id_set_previously:
         # create a fake machine ID to improve reproducibility
-        print("creating a fake machine id")
         script += f"""
             mkdir -p {tree}/etc
             echo "ffffffffffffffffffffffffffffffff" > {tree}/etc/machine-id
