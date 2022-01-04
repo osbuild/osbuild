@@ -221,6 +221,7 @@ def main(tree, options):
     with open(target, "w") as f:
         if config:
             f.write("\n".join(config))
+        f.write("\n")
 
     print(f"created kickstarted at: {path}\n")
     with open(target, "r") as f:
