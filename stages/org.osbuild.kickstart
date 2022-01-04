@@ -191,9 +191,7 @@ def main(tree, options):
     path = options["path"].lstrip("/")
     ostree = options.get("ostree")
 
-    anaconda = []
     config = []
-    post = []
 
     if ostree:
         osname, url, ref = ostree["osname"], ostree["url"], ostree["ref"]
@@ -221,16 +219,8 @@ def main(tree, options):
     os.makedirs(base, exist_ok=True)
 
     with open(target, "w") as f:
-        if anaconda:
-            f.write(r"%anaconda\n")
-            f.write("\n".join(anaconda))
-            f.write(r"%end\n")
         if config:
             f.write("\n".join(config))
-        if post:
-            f.write(r"%post --erroronfail")
-            f.write("\n".join(post))
-            f.write(r"%end")
 
     print(f"created kickstarted at: {path}\n")
     with open(target, "r") as f:
