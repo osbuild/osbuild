@@ -380,7 +380,7 @@ class GrubConfig:
     def grubfs(self):
         """The filesystem containing the grub files,
 
-        This is  either a separate partition (self.bootfs if set) or
+        This is either a separate partition (self.bootfs if set) or
         the root file system (self.rootfs)
         """
         return self.bootfs or self.rootfs
