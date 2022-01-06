@@ -29,6 +29,8 @@ RPM:
           - aws/fedora-33-aarch64
           - aws/fedora-34-x86_64
           - aws/fedora-34-aarch64
+          - aws/fedora-35-x86_64
+          - aws/fedora-35-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
           - aws/rhel-8.4-ga-x86_64
