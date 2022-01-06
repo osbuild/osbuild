@@ -41,6 +41,7 @@ from operator import itemgetter
 
 from osbuild import api
 
+CAPABILITIES = ["CAP_SYS_ADMIN", "CAP_SYS_CHROOT"]
 
 SCHEMA = """
 "additionalProperties": false,

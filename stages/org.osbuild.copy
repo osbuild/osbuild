@@ -20,6 +20,7 @@ from urllib.parse import urlparse, ParseResult
 
 import osbuild.api
 
+CAPABILITIES = ["CAP_MAC_ADMIN"]
 
 SCHEMA_2 = r"""
 "options": {
