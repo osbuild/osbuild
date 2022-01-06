@@ -4,6 +4,8 @@
 
 import pathlib
 import os
+import re
+import subprocess
 import sys
 
 from tempfile import TemporaryDirectory
@@ -192,7 +194,6 @@ def test_env_isolation(tempdir):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
-
     monitor = NullMonitor(sys.stderr.fileno())
 
     ipc = pathlib.Path(tempdir, "ipc")
@@ -226,3 +227,41 @@ def test_env_isolation(tempdir):
 
     for k in have:
         assert k in allowed
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_caps(tempdir):
+    runner = detect_host_runner()
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
+    caps = ["CAP_SYS_ADMIN"]
+
+    monitor = NullMonitor(sys.stderr.fileno())
+    with BuildRoot("/", runner, libdir, var, caps = caps) as root:
+        root.run(["cat", "/proc/cmdline"], monitor)
+
+        pid = '/proc/' + str(os.getpid()) + '/status'
+        temp = subprocess.Popen(['cat', pid], stdout = subprocess.PIPE)
+        # get the output as a string
+        output = str(temp.communicate())
+        # Split the output on the following delimiters
+        # , | \\n | :\\t | ' | (b' | None)
+        output = re.split(',|\\\\n|:\\\\t|\'|\\(b\'|None\\)' , output)
+
+        bitmask = None
+        for i, val in enumerate(output):
+            if val == 'CapBnd':
+                bitmask = output[i+1]
+
+        cmd = '--decode=' + bitmask
+        temp = subprocess.Popen(['capsh', cmd], stdout = subprocess.PIPE)
+        capsh = str(temp.communicate())
+        capsh = re.split(',', capsh)
+
+        found = False
+        for index in capsh:
+            if index == 'cap_mac_admin':
+                found = True
+
+        assert found is True
