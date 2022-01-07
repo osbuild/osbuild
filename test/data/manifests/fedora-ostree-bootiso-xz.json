@@ -1873,7 +1873,10 @@
           "options": {
             "filename": "images/install.img",
             "compression": {
-              "method": "lz4"
+              "method": "xz",
+              "options": {
+                "bcj": "x86"
+              }
             }
           }
         },

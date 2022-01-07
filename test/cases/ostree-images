@@ -69,6 +69,14 @@ def run_tests(args, tmpdir):
                 }
             },
         },
+        "fedora-ostree-bootiso-xz": {
+            "manifest": "fedora-ostree-bootiso-xz.json",
+            "exports": {
+                "bootiso": {
+                    "artifact": "fedora-ostree-boot-xz.iso"
+                }
+            },
+        },
         "fedora-ostree-image": {
             "manifest": "fedora-ostree-image.json",
             "exports": {
