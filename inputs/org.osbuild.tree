@@ -26,7 +26,7 @@ SCHEMA = """
     "enum": ["org.osbuild.pipeline"]
   },
   "references": {
-    "description": "Exactly one pipeline identifier to ues as tree input",
+    "description": "Exactly one pipeline identifier to use as tree input",
     "oneOf": [{
       "type": "array",
       "additionalItems": false,
