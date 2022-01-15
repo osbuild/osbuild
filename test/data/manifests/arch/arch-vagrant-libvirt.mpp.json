@@ -21,15 +21,15 @@
                 "repos": [
                   {
                     "id": "core",
-                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
+                    "baseurl": "https://archive.archlinux.org/repos/2022/04/14/$repo/os/$arch"
                   },
                   {
                     "id": "community",
-                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
+                    "baseurl": "https://archive.archlinux.org/repos/2022/04/14/$repo/os/$arch"
                   },
                   {
                     "id": "extra",
-                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
+                    "baseurl": "https://archive.archlinux.org/repos/2022/04/14/$repo/os/$arch"
                   }
                 ],
                 "packages": [
@@ -62,16 +62,27 @@
           "type": "org.osbuild.pacman.conf",
           "options": {
             "repositories": [
-              {"name": "core", "include": "/etc/pacman.d/mirrorlist"},
-              {"name": "extra", "include": "/etc/pacman.d/mirrorlist"},
-              {"name": "community", "include": "/etc/pacman.d/mirrorlist"}
+              {
+                "name": "core",
+                "include": "/etc/pacman.d/mirrorlist"
+              },
+              {
+                "name": "extra",
+                "include": "/etc/pacman.d/mirrorlist"
+              },
+              {
+                "name": "community",
+                "include": "/etc/pacman.d/mirrorlist"
+              }
             ]
           }
         },
         {
           "type": "org.osbuild.pacman.mirrorlist.conf",
           "options": {
-            "mirrors": ["https://europe.mirror.pkgbuild.com/$repo/os/$arch"]
+            "mirrors": [
+              "https://europe.mirror.pkgbuild.com/$repo/os/$arch"
+            ]
           }
         },
         {
@@ -108,12 +119,16 @@
                   "systemd",
                   "linux",
                   "mkinitcpio",
-                  "networkmanager",
-                  "sudo",
-                  "rsync",
                   "tar",
                   "grub",
-                  "openssh"
+                  "openssh",
+                  "sudo",
+                  "nfs-utils",
+                  "ntp",
+                  "virtualbox-guest-utils-nox",
+                  "polkit",
+                  "networkmanager",
+                  "rsync"
                 ]
               }
             }
@@ -121,12 +136,26 @@
           "options": {}
         },
         {
+          "type": "org.osbuild.pacman-keyring"
+        },
+        {
+          "type": "org.osbuild.systemd",
+          "options": {
+            "enabled_services": [
+              "vboxservice.service",
+              "sshd.service",
+              "NetworkManager.service"
+            ]
+          }
+        },
+        {
           "type": "org.osbuild.users",
           "options": {
             "users": {
-            "arch": {
-              "password": "$6$.Pkz378k0geWPWsH$IhFEP1WmQUEkmfMLbf14C./LUYJqsKBVXsNZ2mrOAcKY4wjMN8e/r8TwQmqpm/xPIpfPq1l0PpKD7YQyVHvuD/",
-              "home": "/home/arch"
+            "vagrant": {
+              "password": "$6$8dbFyte9oE3ugPHO$q0cTMv1oAgK/ZVXUTSUqj1aXzrhniNqfylqbcW.LgElYRJNRGSr4hBE7hghu2oP1nKn68u13/YmDkKH.s6yil0",
+              "home": "/home/vagrant",
+              "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"
             }
             }
           }
@@ -154,11 +183,12 @@
         {
           "type": "org.osbuild.grub2.legacy",
           "options": {
-            "architecture": "x64",
             "rootfs": {
               "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
             },
-            "bios": "i386-pc",
+            "bios": {
+              "platform": "i386-pc"
+            },
             "entries": [
               {
                 "id": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
@@ -190,27 +220,26 @@
           "type": "org.osbuild.mkinitcpio"
         },
         {
-          "type": "org.osbuild.pacman-keyring"
-        }
-      ]
-    },
-    {
-      "name": "root-tar",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.tar",
-          "options": {
-            "filename": "arch.tar.zst"
-          },
+          "type": "org.osbuild.copy",
           "inputs": {
-            "tree": {
-              "type": "org.osbuild.tree",
-              "origin": "org.osbuild.pipeline",
-              "references": [
-                "name:os"
-              ]
+            "inlinefile": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.source",
+              "mpp-embed": {
+                "id": "vagrant-sudoers",
+                "text": "Defaults:vagrant !requiretty\nvagrant ALL=(ALL) NOPASSWD: ALL"
+              }
             }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": {
+                  "mpp-format-string": "input://inlinefile/{embedded['vagrant-sudoers']}"
+                },
+                "to": "tree:////etc/sudoers.d/vagrant"
+              }
+            ]
           }
         }
       ]
@@ -368,6 +397,77 @@
             }
           }
       ]
-    }
+    },
+    {
+      "name": "qcow2",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.qemu",
+          "inputs": {
+            "image": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:image": {
+                  "file": "disk.img"
+                }
+              }
+            }
+          },
+          "options": {
+            "filename": "disk.qcow2",
+            "format": {
+              "type": "qcow2",
+              "compat": "1.1"
+            }
+          }
+        }
+      ]
+     },
+    {
+      "name": "vagrant",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.vagrant",
+          "inputs": {
+            "image": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:qcow2": {
+                  "file": "disk.qcow2"
+                }
+              }
+            }
+          },
+          "options": {
+            "provider": "libvirt"
+          }
+        }
+      ]
+    },
+      {
+        "name": "vagrant-libvirt",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.tar",
+            "options": {
+              "filename": "vagrant-libvirt.box"
+            },
+            "inputs": {
+              "tree": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:vagrant"
+                ]
+              }
+            }
+          }
+        ]
+      }
   ]
 }
