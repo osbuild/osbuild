@@ -113,6 +113,7 @@ def usermod(root, name, gid=None, groups=None, description=None, home=None, shel
         arguments += ["--comment", description]
     if home:
         arguments += ["--home", home]
+        arguments += ["--move-home"]
     if shell:
         arguments += ["--shell", shell]
     if password is not None:
