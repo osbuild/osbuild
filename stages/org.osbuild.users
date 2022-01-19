@@ -73,7 +73,11 @@ SCHEMA = """
 
 
 def getpwnam(root, name):
-    """Similar to pwd.getpwnam, but takes a @root parameter"""
+    """Similar to pwd.getpwnam, but takes a @root parameter
+
+    The returned values are:
+    login name, encrypted password, uid, gid, name or comment, home directory, user command interpreter (shell)
+    """
     with open(f"{root}/etc/passwd") as f:
         for line in f:
             passwd = line.split(":")
