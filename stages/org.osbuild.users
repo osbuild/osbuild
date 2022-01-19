@@ -156,6 +156,11 @@ def main(tree, options):
             if uid is not None:
                 print(f"Error: can't set uid of existing user '{name}'")
                 return 1
+            # create and chown existing home directory in case it doesn't exist
+            # this happens in ostree deployments with existing users
+            _, _, old_uid, old_gid, _, old_home, _ = passwd
+            os.makedirs(old_home, 0o700, exist_ok=True)
+            os.chown(old_home, int(old_uid), int(old_gid))
             usermod(tree, name, gid, groups, description, home, shell, password)
         else:
             useradd(tree, name, uid, gid, groups, description, home, shell, password)
