@@ -300,12 +300,12 @@ class Pipeline:
         # an intermediate checkpoint exists: Find the last stage that
         # already exists in the store and use that as the base.
         tree = object_store.new()
-        base_idx = -1
-        for i in reversed(range(len(self.stages))):
-            if object_store.contains(self.stages[i].id):
-                tree.base = self.stages[i].id
-                base_idx = i
+        todo = collections.deque()
+        for stage in reversed(self.stages):
+            if object_store.contains(stage.id):
+                tree.base = stage.id
                 break
+            todo.append(stage)  # append right side of the deque
 
         # If two run() calls race each-other, two trees will get built
         # and it is nondeterministic which of them will end up
@@ -314,7 +314,8 @@ class Pipeline:
         # trees will be based on the winner.
         results["stages"] = []
 
-        for stage in self.stages[base_idx + 1:]:
+        while todo:
+            stage = todo.pop()
             with build_tree.read() as build_path, tree.write() as path:
 
                 monitor.stage(stage)
