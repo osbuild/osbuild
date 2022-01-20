@@ -287,17 +287,14 @@ class Pipeline:
         if not build_tree:
             raise AssertionError(f"build tree {self.build} not found")
 
-        # If there are no stages, just return a clean `tree`
+        # If there are no stages, just return here
         if not self.stages:
-            tree = object_store.new()
-            return results, tree
+            return results
 
         # Check if the tree that we are supposed to build does
         # already exist. If so, short-circuit here
-        tree = object_store.get(self.id)
-
-        if tree:
-            return results, tree
+        if object_store.contains(self.id):
+            return results
 
         # Not in the store yet, need to actually build it, but maybe
         # an intermediate checkpoint exists: Find the last stage that
@@ -336,7 +333,7 @@ class Pipeline:
             if not r.success:
                 cleanup(build_tree, tree)
                 results["success"] = False
-                return results, None
+                return results
 
             # The content of the tree now corresponds to the stage that
             # was build and this can can be identified via the id of it
@@ -345,7 +342,7 @@ class Pipeline:
             if stage.checkpoint:
                 object_store.commit(tree, stage.id)
 
-        return results, tree
+        return results
 
     def run(self, store, monitor, libdir, stage_timeout=None):
         results = {"success": True}
@@ -357,10 +354,10 @@ class Pipeline:
         # tree exists, we return it as well, but we do not care if it is
         # missing, since it is not a mandatory part of the result and would
         # usually be needless overhead.
-        obj = store.get(self.id)
+        have_object = store.contains(self.id)
 
-        if not obj:
-            results, obj = self.build_stages(store, monitor, libdir, stage_timeout)
+        if not have_object:
+            results = self.build_stages(store, monitor, libdir, stage_timeout)
 
             if not results["success"]:
                 return results
