@@ -287,18 +287,17 @@ class Pipeline:
         if not build_tree:
             raise AssertionError(f"build tree {self.build} not found")
 
-        # If there are no stages, just return build tree we just
-        # obtained and a new, clean `tree`
+        # If there are no stages, just return a clean `tree`
         if not self.stages:
             tree = object_store.new()
-            return results, build_tree, tree
+            return results, tree
 
         # Check if the tree that we are supposed to build does
         # already exist. If so, short-circuit here
         tree = object_store.get(self.id)
 
         if tree:
-            return results, build_tree, tree
+            return results, tree
 
         # Not in the store yet, need to actually build it, but maybe
         # an intermediate checkpoint exists: Find the last stage that
@@ -337,7 +336,7 @@ class Pipeline:
             if not r.success:
                 cleanup(build_tree, tree)
                 results["success"] = False
-                return results, None, None
+                return results, None
 
             # The content of the tree now corresponds to the stage that
             # was build and this can can be identified via the id of it
@@ -346,7 +345,7 @@ class Pipeline:
             if stage.checkpoint:
                 object_store.commit(tree, stage.id)
 
-        return results, build_tree, tree
+        return results, tree
 
     def run(self, store, monitor, libdir, stage_timeout=None):
         results = {"success": True}
@@ -361,7 +360,7 @@ class Pipeline:
         obj = store.get(self.id)
 
         if not obj:
-            results, _, obj = self.build_stages(store, monitor, libdir, stage_timeout)
+            results, obj = self.build_stages(store, monitor, libdir, stage_timeout)
 
             if not results["success"]:
                 return results
