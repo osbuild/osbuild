@@ -213,6 +213,11 @@ class BaseMonitor(abc.ABC):
     def log(self, message: str, origin: str = None):
         """Called for all module log outputs"""
 
+    def dump_json(self, json_object):
+        """Called to output any json object on self.out"""
+        json.dump(json_object, self.out)
+        self.out.write("\n")
+
 
 class NullMonitor(BaseMonitor):
     """Monitor class that does not report anything"""
@@ -302,7 +307,6 @@ class JSONProgressMonitor(BaseMonitor):
         json.dump(line.as_dict(), self.out)
         self.out.write("\n")
         self._context.origin = oo
-
 
 def make(name, fd):
     module = sys.modules[__name__]

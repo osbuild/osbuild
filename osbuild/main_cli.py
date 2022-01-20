@@ -187,10 +187,9 @@ def osbuild_cli():
         return 130
 
     if args.json:
-        if args.json_mode == "batch":
-            r = fmt.output(manifest, r)
-            json.dump(r, sys.stdout)
-            sys.stdout.write("\n")
+        monitor.log("dump manifest")
+        monitor.dump_json(fmt.output(manifest, r))
+        monitor.log("manifest dumped")
     else:
         if r["success"]:
             for name, pl in manifest.pipelines.items():
