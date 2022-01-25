@@ -80,11 +80,10 @@ SonarQube:
   extends: .terraform
   script:
     - schutzbot/sonarqube.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/centos-stream-8-x86_64
-        INTERNAL_NETWORK: "true"
+  variables:
+    RUNNER: aws/centos-stream-8-x86_64
+    INTERNAL_NETWORK: "true"
+    GIT_DEPTH: 0
 
 finish:
   stage: finish
