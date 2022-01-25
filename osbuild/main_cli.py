@@ -99,18 +99,34 @@ def osbuild_cli():
     args = parse_arguments(sys.argv)
     desc = parse_manifest(args.manifest_path)
 
+    # First thing first, let's get a Monitor to log out events.
+    outfd = sys.stdout.fileno()
+    if args.json:
+        if args.json_mode == "progress":
+            monitor = osbuild.monitor.JSONProgressMonitor(outfd)
+            monitor.log("start", origin="org.osbuild.main")
+        elif args.json_mode == "batch":
+            monitor = osbuild.monitor.NullMonitor(outfd)
+        else:
+            print(f"unknown json mode {args.json_mode}")
+            return 1
+    else:
+        monitor = osbuild.monitor.LogMonitor(outfd)
+
     index = osbuild.meta.Index(args.libdir)
 
     # detect the format from the manifest description
     info = index.detect_format_info(desc)
     if not info:
-        print("Unsupported manifest format")
+        monitor.log("Unsupported manifest format")
         return 2
     fmt = info.module
+    monitor.log("Manifest's format properly detected")
 
     # first thing is validation of the manifest
     res = fmt.validate(desc, index)
     if not res:
+        monitor.log("Failed to validate the manifest")
         if args.json or args.inspect:
             json.dump(res.as_dict(), sys.stdout)
             sys.stdout.write("\n")
@@ -124,16 +140,16 @@ def osbuild_cli():
     unresolved = [e for e in exports if e not in manifest]
     if unresolved:
         for name in unresolved:
-            print(f"Export {BOLD}{name}{RESET} not found!")
-        print(f"{RESET}{BOLD}{RED}Failed{RESET}")
+            monitor.log(f"Export {BOLD}{name}{RESET} not found!")
+        monitor.log(f"{RESET}{BOLD}{RED}Failed{RESET}")
         return 1
 
     if args.checkpoint:
         missed = manifest.mark_checkpoints(args.checkpoint)
         if missed:
             for checkpoint in missed:
-                print(f"Checkpoint {BOLD}{checkpoint}{RESET} not found!")
-            print(f"{RESET}{BOLD}{RED}Failed{RESET}")
+                monitor.log(f"Checkpoint {BOLD}{checkpoint}{RESET} not found!")
+            monitor.log(f"{RESET}{BOLD}{RED}Failed{RESET}")
             return 1
 
     if args.inspect:
@@ -145,23 +161,15 @@ def osbuild_cli():
     output_directory = args.output_directory
 
     if exports and not output_directory:
-        print("Need --output-directory for --export")
+        monitor.log("Need --output-directory for --export")
         return 1
 
-    outfd = sys.stdout.fileno()
-    if args.json:
-        if args.json_mode == "progress":
-            monitor = osbuild.monitor.JSONProgressMonitor(outfd, manifest)
-            monitor.log("start", origin="org.osbuild.main")
-        elif args.json_mode == "batch":
-            monitor = osbuild.monitor.NullMonitor(outfd)
-        else:
-            print(f"unknown json mode {args.json_mode}")
-            return 1
-    else:
-        monitor = osbuild.monitor.LogMonitor(outfd)
+    # Set the manifest of the monitor (if we are in progress mode)
+    if args.json and args.json_mode == "progress":
+        monitor.manifest = manifest
 
     try:
+        monitor.log("Starting the build", origin="org.osbuild.main")
         with ObjectStore(args.store) as object_store:
             stage_timeout = args.stage_timeout
 
@@ -182,20 +190,20 @@ def osbuild_cli():
                     export(pid, output_directory, object_store, manifest)
 
     except KeyboardInterrupt:
-        print()
-        print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
+        monitor.log("")
+        monitor.log(f"{RESET}{BOLD}{RED}Aborted{RESET}")
         return 130
 
     if args.json:
         monitor.log("dump manifest")
         monitor.dump_json(fmt.output(manifest, r))
-        monitor.log("manifest dumped")
+        monitor.log("dump manifest")
     else:
         if r["success"]:
             for name, pl in manifest.pipelines.items():
-                print(f"{name + ':': <10}\t{pl.id}")
+                monitor.log(f"{name + ':': <10}\t{pl.id}")
         else:
-            print()
-            print(f"{RESET}{BOLD}{RED}Failed{RESET}")
+            monitor.log("")
+            monitor.log(f"{RESET}{BOLD}{RED}Failed{RESET}")
 
     return 0 if r["success"] else 1

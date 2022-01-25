@@ -275,11 +275,21 @@ class LogMonitor(BaseMonitor):
 class JSONProgressMonitor(BaseMonitor):
     """Monitor that prints the log output of modules wrapped in a JSON object with context and progress metadata"""
 
-    def __init__(self, fd: int, manifest: osbuild.Manifest):
+    def __init__(self, fd: int):
         super().__init__(fd)
         self._ctx_ids = set()
-        self._progress = Progress("pipelines", len(manifest.pipelines))
+        self._manifest = None
         self._context = Context(origin="org.osbuild")
+        self._progress = Progress("pipelines", 0)
+
+    @property
+    def manifest(self):
+        return self._manifest
+
+    @manifest.setter
+    def manifest(self, manifest: osbuild.Manifest):
+        self._manifest = manifest
+        self._progress = Progress("pipelines", len(self._manifest.pipelines))
 
     def result(self, result):
         pass
