@@ -102,7 +102,7 @@ SCHEMA_2 = """
           "required": ["method"],
           "properties": {
             "method": {
-              "enum": ["gzip", "xz"]
+              "enum": ["gzip", "xz", "lz4"]
             },
             "options": {
               "type": "object",
