@@ -38,6 +38,7 @@ Additionally, the built-in stages require:
  * `rpm >= 4.15`
  * `tar >= 1.32`
  * `util-linux >= 235`
+ * `skopeo`
 
 At build-time, the following software is required:
 

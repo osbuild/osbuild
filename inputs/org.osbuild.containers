@@ -1,0 +1,180 @@
+#!/usr/bin/python3
+"""Inputs for container images
+
+This reads images from the `org.osbuild.containers` directory in the
+sources store.
+
+The store is indexed by the "container image id", which is the digest
+of the container configuration file (rather than the outer manifest)
+and is what will be shown in the "podman images" output when the image
+is installed. This digest is stable as opposed to the manifest digest
+which can change during transfer and storage due to
+e.g. recompression.
+
+"""
+
+import os
+import sys
+import pathlib
+
+from osbuild import inputs
+
+
+SCHEMA = r"""
+"definitions": {
+  "source-options": {
+    "type": "object",
+    "required": ["name"],
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "The name to use for the image"
+      }
+    }
+  },
+  "source-object-ref": {
+    "type": "object",
+    "additionalProperties": false,
+    "minProperties": 1,
+    "patternProperties": {
+      ".*": {
+        "$ref": "#/definitions/source-options"
+      }
+    }
+  },
+  "source-origin": {
+    "type": "string",
+    "description": "When the origin of the input is a source",
+    "enum": ["org.osbuild.source"]
+  },
+  "pipeline-options": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["name", "file", "format"],
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "The name to use for the image"
+      },
+      "file": {
+        "description": "File to access with in a pipeline",
+        "type": "string"
+      },
+      "format": {
+        "description": "Container archive format",
+        "enum": ["oci-archive", "docker-archive"]
+      }
+    }
+  },
+  "pipeline-object-ref": {
+    "type": "object",
+    "additionalProperties": false,
+    "minProperties": 1,
+    "patternProperties": {
+      ".*": {
+        "$ref": "#/definitions/pipeline-options"
+      }
+    }
+  },
+  "pipeline-origin": {
+    "type": "string",
+    "description": "When the origin of the input is a pipeline",
+    "enum": ["org.osbuild.pipeline"]
+  }
+},
+"additionalProperties": true,
+"oneOf": [
+  {
+    "additionalProperties": false,
+    "required": ["type", "origin", "references"],
+    "properties": {
+      "type": {
+        "enum": ["org.osbuild.containers"]
+      },
+      "origin": {
+        "description": "The org.osbuild.source origin case",
+        "$ref": "#/definitions/source-origin"
+      },
+      "references": {
+        "description": "Container image id",
+        "$ref": "#/definitions/source-object-ref"
+      }
+    }
+  },
+  {
+    "additionalProperties": false,
+    "required": ["type", "origin", "references"],
+    "properties": {
+      "type": {
+        "enum": ["org.osbuild.containers"]
+      },
+      "origin": {
+        "description": "The org.osbuild.source origin case",
+        "$ref": "#/definitions/pipeline-origin"
+      },
+      "references": {
+        "description": "References to pipelines",
+        "$ref": "#/definitions/pipeline-object-ref"
+      }
+    }
+  }
+]
+"""
+
+
+class ContainersInput(inputs.InputService):
+
+    @staticmethod
+    def map_source_ref(source, ref, data, target):
+        cache_dir = os.path.join(source, ref)
+        os.link(os.path.join(cache_dir, "container-image.tar"), os.path.join(target, ref))
+
+        return ref, "docker-archive"
+
+    @staticmethod
+    def map_pipeline_ref(store, ref, data, target):
+        filepath = data["file"].lstrip("/")
+        container_format = data["format"]
+
+        # prepare the mount point
+        filename = pathlib.Path(target, filepath)
+        os.makedirs(filename.parent, exist_ok=True)
+        filename.touch()
+
+        store.read_tree_at(ref, filename, filepath)
+
+        return filepath, container_format
+
+    def map(self, store, origin, refs, target, _options):
+        source = store.source("org.osbuild.containers")
+        images = {}
+
+        for ref, data in refs.items():
+            if origin == "org.osbuild.source":
+                ref, container_format = self.map_source_ref(source, ref, data, target)
+            else:
+                ref, container_format = self.map_pipeline_ref(store, ref, data, target)
+
+            images[ref] = {
+                "format": container_format,
+                "name": data["name"]
+            }
+            images[ref]["name"] = data["name"]
+
+        reply = {
+            "path": target,
+            "data": {
+                "archives": images
+            }
+        }
+        return reply
+
+
+def main():
+    service = ContainersInput.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()

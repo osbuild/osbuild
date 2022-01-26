@@ -225,6 +225,11 @@ class BuildRoot(contextlib.AbstractContextManager):
                    os.path.join(self._rootdir, "etc/mke2fs.conf"),
                    "/etc/mke2fs.conf"]
 
+        # Skopeo needs things like /etc/containers/policy.json, so take them from buildroot
+        mounts += ["--ro-bind-try",
+                   os.path.join(self._rootdir, "etc/containers"),
+                   "/etc/containers"]
+
         # We execute our own modules by bind-mounting them from the host into
         # the build-root. We have minimal requirements on the build-root, so
         # these modules can be executed. Everything else we provide ourselves.
