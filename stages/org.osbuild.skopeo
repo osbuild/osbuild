@@ -1,0 +1,107 @@
+#!/usr/bin/python3
+"""
+Install an container image into the container store.
+This supports both oci archives and docker archives, and uses the containers
+input (reading from a skopeo source or a file in a pipeline).
+
+Buildhost commands used: `skopeo`.
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+
+import osbuild.api
+
+
+SCHEMA_2 = r"""
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["images"],
+  "properties": {
+    "images": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": false,
+  "required": ["destination"],
+  "properties": {
+    "destination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": ["containers-storage"]
+        },
+        "storage-path": {
+          "description": "Container storage location (default /var/lib/containers/storage).",
+          "type": "string"
+        },
+        "storage-driver": {
+          "description": "The container storage driver to use (default overlay).",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def parse_input(inputs):
+    images = inputs["images"]
+    archives = images["data"]["archives"]
+
+    res = []
+    for filename, data in archives.items():
+        filepath = os.path.join(images["path"], filename)
+
+        res.append((filepath, data))
+    return res
+
+
+def main(inputs, output, options):
+    files = parse_input(inputs)
+
+    destination = options["destination"]
+    # The destination type is always containers-storage atm, so ignore "type"
+
+    storage_root = destination.get("storage-path", "/var/lib/containers/storage")
+    storage_driver = destination.get("storage-driver", "overlay")
+
+    for source, source_data in files:
+        container_format = source_data["format"]
+        image_name = source_data["name"]
+
+        # We can't have special characters like ":" in the source names because containers/image
+        # treats them special, like e.g. /some/path:tag, so we make a symlink to the real name
+        # and pass the symlink name to skopeo to make it work with anything
+        with tempfile.TemporaryDirectory() as tmpdir:
+            linkname = os.path.join(tmpdir, "image.tar")
+            os.symlink(source, linkname)
+
+            if container_format == "docker-archive":
+                source = f"docker-archive:{linkname}"
+            elif container_format == "oci-archive":
+                source = f"oci-archive:{linkname}"
+            else:
+                raise RuntimeError(f"Unknown container format {container_format}")
+
+            dest = f"containers-storage:[{storage_driver}@{output}{storage_root}+/run/containers/storage]{image_name}"
+
+            subprocess.run(["skopeo", "copy", source, dest],
+                           check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"], args["options"])
+    sys.exit(r)
