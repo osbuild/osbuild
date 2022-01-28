@@ -1,0 +1,42 @@
+#!/usr/bin/python3
+"""
+Initialize the Arch Linux keyring for Arch based distributions
+
+WARNING: This stage uses chroot() to run the `archlinux-keyring` binary
+from inside the tree.
+"""
+
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "keyrings": {
+    "type": "array",
+    "description": "keyrings",
+    "default": "archlinux"
+  }
+}
+"""
+
+
+def main(tree, options):
+    keyrings = options.get("keyrings", ["archlinux"])
+
+    subprocess.run(["mount", "-o", "bind", "/proc", f"{tree}/proc"], check=True)
+    subprocess.run(["mount", "-o", "bind", "/dev", f"{tree}/dev"], check=True)
+
+    subprocess.run(["ln", "-s", "/proc/self/fd", "/dev/fd"], check=True)
+    subprocess.run(["ln", "-s", "/proc/self/fd/0", "/dev/stdin"], check=True)
+
+    subprocess.run(["chroot", tree, "pacman-key", "--init"], check=True)
+    subprocess.run(["chroot", tree, "pacman-key", "--populate"] + keyrings, check=True)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
