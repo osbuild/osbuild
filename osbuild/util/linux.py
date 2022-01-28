@@ -14,6 +14,7 @@ reasonable manner.
 
 import array
 import fcntl
+import platform
 
 
 __all__ = [
@@ -32,7 +33,11 @@ FS_IOC_SETFLAGS = 0x40086602
 
 FS_IMMUTABLE_FL = 0x00000010
 
-BLK_IOC_FLSBUF = 0x00001261
+
+if platform.machine() == "ppc64le":
+    BLK_IOC_FLSBUF = 0x20001261
+else:
+    BLK_IOC_FLSBUF = 0x00001261
 
 
 def ioctl_get_immutable(fd: int):
