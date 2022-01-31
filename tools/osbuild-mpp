@@ -1020,6 +1020,10 @@ class ManifestFile:
         name = desc.get("id", "image")
         self.vars[name] = Image.from_dict(desc)
 
+    def _process_stage(self, solver_factory, stage, pipeline_name):
+        self._process_depsolve(solver_factory, stage, pipeline_name)
+        self._process_embed_files(stage)
+
 
 class ManifestFileV1(ManifestFile):
     def __init__(self, path, overrides, default_vars, data, searchdirs):
@@ -1085,7 +1089,7 @@ class ManifestFileV1(ManifestFile):
 
         packages += checksums
 
-    def process_depsolves(self, solver_factory, pipeline=None, depth=0):
+    def process_stages(self, solver_factory, pipeline=None, depth=0):
         if pipeline is None:
             pipeline = self.pipeline
 
@@ -1098,13 +1102,13 @@ class ManifestFileV1(ManifestFile):
 
         stages = element_enter(pipeline, "stages", [])
         for stage in stages:
-            self._process_depsolve(solver_factory, stage, pipeline_name)
+            self._process_stage(solver_factory, stage, pipeline_name)
         build = pipeline.get("build")
         if build:
             if "pipeline" in build:
-                self.process_depsolves(solver_factory, build["pipeline"], depth+1)
+                self.process_stages(solver_factory, build["pipeline"], depth+1)
 
-    def process_embed_files(self):
+    def _process_embed_files(self, stage):
         "Embedding files is not supported for v1 manifests"
 
 
@@ -1186,14 +1190,14 @@ class ManifestFileV2(ManifestFile):
         for checksum in checksums:
             refs[checksum] = {}
 
-    def process_depsolves(self, solver_factory):
+    def process_stages(self, solver_factory):
         for pipeline in self.pipelines:
             name = pipeline.get("name", "")
             stages = element_enter(pipeline, "stages", [])
             for stage in stages:
-                self._process_depsolve(solver_factory, stage, name)
+                self._process_stage(solver_factory, stage, name)
 
-    def process_embed_files(self):
+    def _process_embed_files(self, stage):
 
         class Embedded(collections.namedtuple("Embedded", ["id", "checksum"])):
             def __str__(self):
@@ -1230,21 +1234,18 @@ class ManifestFileV2(ManifestFile):
             ef = element_enter(self.vars, "embedded", {})
             ef[uid] = Embedded(uid, digest)
 
-        for pipeline in self.pipelines:
-            for stage in pipeline.get("stages", []):
-                for ip in stage.get("inputs", {}).values():
+        for ip in stage.get("inputs", {}).values():
+            if ip.get("type") != "org.osbuild.files":
+                continue
 
-                    if ip.get("type") != "org.osbuild.files":
-                        continue
+            if ip.get("origin") != "org.osbuild.source":
+                continue
 
-                    if ip.get("origin") != "org.osbuild.source":
-                        continue
+            mpp = self.get_mpp_node(ip, "embed")
+            if not mpp:
+                continue
 
-                    mpp = self.get_mpp_node(ip, "embed")
-                    if not mpp:
-                        continue
-
-                    embed_data(ip, mpp)
+            embed_data(ip, mpp)
 
 
 def main():
@@ -1308,11 +1309,9 @@ def main():
 
     m = ManifestFile.load(args.src, overrides, defaults, args.searchdirs)
 
-    m.process_embed_files()
-
     with tempfile.TemporaryDirectory() as persistdir:
         solver_factory = DepSolverFactory(args.cachedir, persistdir)
-        m.process_depsolves(solver_factory)
+        m.process_stages(solver_factory)
 
     m.process_format()
 
