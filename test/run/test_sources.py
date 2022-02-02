@@ -74,6 +74,14 @@ def runFileServer(barrier, directory):
         def __init__(self, request, client_address, server):
             super().__init__(request, client_address, server, directory=directory)
 
+        def guess_type(self, path):
+            try:
+                with open(path + ".mimetype", "r") as f:
+                    return f.read().strip()
+            except FileNotFoundError:
+                pass
+            return super().guess_type(path)
+
     httpd = socketserver.TCPServer(('', 80), Handler)
     barrier.wait()
     httpd.serve_forever()
