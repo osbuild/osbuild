@@ -10,14 +10,15 @@ curl "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scan
 unzip -q sonar-scanner-cli.zip
 
 SONAR_SCANNER_CMD="sonar-scanner-$SONAR_SCANNER_CLI_VERSION-linux/bin/sonar-scanner"
+SCANNER_OPTS="-Dsonar.projectKey=osbuild:osbuild -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.corp.redhat.com -Dsonar.login=$SONAR_SCANNER_TOKEN"
 
-$SONAR_SCANNER_CMD -Dsonar.projectKey=osbuild:osbuild \
-                   -Dsonar.sources=. \
-                   -Dsonar.host.url=https://sonarqube.corp.redhat.com \
-                   -Dsonar.login="$SONAR_SCANNER_TOKEN" \
-                   -Dsonar.pullrequest.branch="$CI_COMMIT_BRANCH" \
-                   -Dsonar.pullrequest.key="$CI_COMMIT_SHA" \
-                   -Dsonar.pullrequest.base="main"
+# add options for branch analysis if not running on main
+if [ "$CI_COMMIT_BRANCH" != "main" ];then
+    SCANNER_OPTS="$SCANNER_OPTS -Dsonar.pullrequest.branch=$CI_COMMIT_BRANCH -Dsonar.pullrequest.key=$CI_COMMIT_SHA -Dsonar.pullrequest.base=main"
+fi
+
+# run the sonar-scanner
+eval "$SONAR_SCANNER_CMD $SCANNER_OPTS"
 
 SONARQUBE_URL="https://sonarqube.corp.redhat.com/dashboard?id=osbuild%3Aosbuild&pullRequest=$CI_COMMIT_SHA"
 # Report back to GitHub
