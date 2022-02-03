@@ -40,6 +40,7 @@
                   "isomd5sum",
                   "xorriso",
                   "syslinux",
+                  "skopeo",
                   "lorax-templates-generic",
                   "syslinux-nonlinux",
                   "squashfs-tools",
