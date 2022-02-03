@@ -111,6 +111,10 @@ SCHEMA_2 = """
       "description": "Prevent dracut from running",
       "type": "boolean"
     },
+    "first_boot": {
+      "description": "Trigger the FirstBoot condition of systemd on boot.",
+      "type": "boolean"
+    },
     "exclude": {
       "type": "object",
       "additionalProperties": false,
@@ -219,6 +223,7 @@ def parse_input(inputs):
 
 def main(tree, inputs, options):
     pkgpath, packages = parse_input(inputs)
+    first_boot = options.get("first_boot", False)
 
     for key in options.get("gpgkeys", []):
         with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
@@ -294,7 +299,8 @@ def main(tree, inputs, options):
         print("deleting the fake machine id")
         machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
         machine_id_file.unlink()
-        machine_id_file.touch()
+        if not first_boot:
+            machine_id_file.touch()
 
     # remove random seed from the tree if exists
     with contextlib.suppress(FileNotFoundError):

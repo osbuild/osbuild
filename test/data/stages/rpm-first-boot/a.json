@@ -1,0 +1,10 @@
+{
+  "sources": {},
+  "pipeline": {
+    "stages": [
+      {
+        "name": "org.osbuild.noop"
+      }
+    ]
+  }
+}
