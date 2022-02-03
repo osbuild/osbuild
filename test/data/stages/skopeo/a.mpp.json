@@ -1,0 +1,69 @@
+{
+  "version": "2",
+  "pipelines": [
+    {
+      "mpp-import-pipeline": {
+        "path": "../manifests/f34-build-v2.json",
+        "id": "build"
+      },
+      "runner": "org.osbuild.fedora34"
+    },
+    {
+      "name": "input-tree",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "inlinefile": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.source",
+              "mpp-embed": {
+                "id": "hello.img",
+                "path": "hello.img"
+              }
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": {
+                  "mpp-format-string": "input://inlinefile/{embedded['hello.img']}"
+                },
+                "to": "tree:///hello.img"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "tree",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.skopeo",
+          "inputs": {
+            "images": {
+              "type": "org.osbuild.containers",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:input-tree": {
+                  "file": "/hello.img",
+                  "format": "docker-archive",
+                  "name": "localhost/hello"
+                }
+              }
+            }
+          },
+          "options": {
+            "destination": {
+              "type": "containers-storage",
+              "storage-driver": "vfs"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

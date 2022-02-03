@@ -1,0 +1,14 @@
+{
+  "expects": "success",
+  "org.osbuild.skopeo": {
+    "items": {
+      "sha256:805e972fbc4dfa74a616dcaafe0d9e9b4c548b8909b14ffb032aa20fa23d9ad6": {
+        "image": {
+          "name": "localhost/osbuild/hello",
+          "digest": "sha256:a606d2a723b78633e33932fdc201ec3546c4cf1887fb45f8d3198dde7a39b3f4",
+          "tls-verify": false
+        }
+      }
+    }
+  }
+}
