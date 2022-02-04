@@ -37,12 +37,13 @@ class BuildResult:
 
 
 class Stage:
-    def __init__(self, info, source_options, build, base, options):
+    def __init__(self, info, source_options, build, base, options, source_epoch):
         self.info = info
         self.sources = source_options
         self.build = build
         self.base = base
         self.options = options
+        self.source_epoch = source_epoch
         self.checkpoint = False
         self.inputs = {}
         self.devices = {}
@@ -59,6 +60,8 @@ class Stage:
         m.update(json.dumps(self.build, sort_keys=True).encode())
         m.update(json.dumps(self.base, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
+        if self.source_epoch is not None:
+            m.update(json.dumps(self.source_epoch, sort_keys=True).encode())
         if self.inputs:
             data = {n: i.id for n, i in self.inputs.items()}
             m.update(json.dumps(data, sort_keys=True).encode())
@@ -193,22 +196,28 @@ class Stage:
             rls = remoteloop.LoopServer()
             build_root.register_api(rls)
 
+            extra_env = {}
+            if self.source_epoch is not None:
+                extra_env["SOURCE_DATE_EPOCH"] = str(self.source_epoch)
+
             r = build_root.run([f"/run/osbuild/bin/{self.name}"],
                                monitor,
                                timeout=timeout,
                                binds=binds,
-                               readonly_binds=ro_binds)
+                               readonly_binds=ro_binds,
+                               extra_env=extra_env)
 
         return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
 
 
 class Pipeline:
-    def __init__(self, name: str, runner=None, build=None):
+    def __init__(self, name: str, runner=None, build=None, source_epoch=None):
         self.name = name
         self.build = build
         self.runner = runner
         self.stages = []
         self.assembler = None
+        self.source_epoch = source_epoch
 
     @property
     def id(self):
@@ -227,7 +236,7 @@ class Pipeline:
 
     def add_stage(self, info, options, sources_options=None):
         stage = Stage(info, sources_options, self.build,
-                      self.id, options or {})
+                      self.id, options or {}, self.source_epoch)
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id
@@ -341,8 +350,8 @@ class Manifest:
         self.pipelines = collections.OrderedDict()
         self.sources: List[Source] = []
 
-    def add_pipeline(self, name: str, runner: str, build: str) -> Pipeline:
-        pipeline = Pipeline(name, runner, build)
+    def add_pipeline(self, name: str, runner: str, build: str, source_epoch: Optional[int] = None) -> Pipeline:
+        pipeline = Pipeline(name, runner, build, source_epoch)
         if name in self.pipelines:
             raise ValueError(f"Name {name} already exists")
         self.pipelines[name] = pipeline

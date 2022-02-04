@@ -35,7 +35,7 @@ class TestDescriptions(unittest.TestCase):
     def test_stage_run(self):
         index = osbuild.meta.Index(os.curdir)
         info = index.get_module_info("Stage", "org.osbuild.noop")
-        stage = osbuild.Stage(info, {}, None, None, {})
+        stage = osbuild.Stage(info, {}, None, None, {}, None)
 
         with tempfile.TemporaryDirectory() as tmpdir:
 
