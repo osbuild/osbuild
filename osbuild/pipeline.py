@@ -97,7 +97,8 @@ class Stage:
     def prepare_arguments(self, args, location):
         args["options"] = self.options
         args["meta"] = {
-            "id": self.id
+            "id": self.id,
+            "source-epoch": self.source_epoch
         }
 
         # Root relative paths: since paths are different on the
