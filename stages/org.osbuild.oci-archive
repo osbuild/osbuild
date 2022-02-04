@@ -38,6 +38,7 @@ podman[3] with `podman pull oci-archive:<archive>`.
 
 
 import datetime
+import time
 import json
 import os
 import subprocess
@@ -262,13 +263,13 @@ def config_from_options(options):
     return config
 
 
-def create_oci_dir(inputs, output_dir, options):
+def create_oci_dir(inputs, output_dir, options, create_time):
     architecture = options["architecture"]
 
-    now = datetime.datetime.utcnow().isoformat() + "Z"
+    created = create_time.isoformat() + "Z"
 
     config = {
-        "created": now,
+        "created": created,
         "architecture": architecture,
         "os": "linux",
         "config": config_from_options(options["config"]),
@@ -305,7 +306,7 @@ def create_oci_dir(inputs, output_dir, options):
         manifest["layers"].append(info)
         config["rootfs"]["diff_ids"] = [digest]
         config["history"].append({
-            "created": now,
+            "created": created,
             "created_by": f"/bin/sh -c #(nop) osbuild input '{ip}'"
         })
 
@@ -327,14 +328,16 @@ def create_oci_dir(inputs, output_dir, options):
         json.dump({"imageLayoutVersion": "1.0.0"}, f)
 
 
-def main(inputs, output_dir, options):
+def main(inputs, output_dir, options, meta):
     filename = options["filename"]
 
+    source_time = int(meta.get("source-epoch", time.time()))
+    create_time = datetime.datetime.fromtimestamp(source_time, datetime.timezone.utc)
     with tempfile.TemporaryDirectory(dir=output_dir) as tmpdir:
         workdir = os.path.join(tmpdir, "output")
         os.makedirs(workdir)
 
-        create_oci_dir(inputs, workdir, options)
+        create_oci_dir(inputs, workdir, options, create_time)
 
         command = [
             "tar",
@@ -353,5 +356,5 @@ def main(inputs, output_dir, options):
 
 if __name__ == '__main__':
     args = osbuild.api.arguments()
-    r = main(args["inputs"], args["tree"], args["options"])
+    r = main(args["inputs"], args["tree"], args["options"], args["meta"])
     sys.exit(r)
