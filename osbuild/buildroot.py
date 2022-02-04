@@ -169,7 +169,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self._exitstack:
             self._exitstack.enter_context(api)
 
-    def run(self, argv, monitor, timeout=None, binds=None, readonly_binds=None):
+    def run(self, argv, monitor, timeout=None, binds=None, readonly_binds=None, extra_env=None):
         """Runs a command in the buildroot.
 
         Takes the command and arguments, as well as bind mounts to mirror
@@ -282,6 +282,8 @@ class BuildRoot(contextlib.AbstractContextManager):
             "PYTHONUNBUFFERED": "1",
             "TERM": os.getenv("TERM", "dumb"),
         }
+        if extra_env:
+            env.update(extra_env)
 
         proc = subprocess.Popen(cmd,
                                 bufsize=0,
