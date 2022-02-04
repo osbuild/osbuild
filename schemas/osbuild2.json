@@ -104,6 +104,7 @@
         "name": { "type:": "string" },
         "build": { "type": "string" },
         "runner": { "type": "string" },
+        "source-epoch": { "type": "integer" },
         "stages": { "$ref": "#/definitions/stages" }
       }
     },

@@ -318,12 +318,13 @@ def load_pipeline(description: Dict, index: Index, manifest: Manifest, source_re
     name = description["name"]
     build = description.get("build")
     runner = description.get("runner")
+    source_epoch = description.get("source-epoch")
 
     if build and build.startswith("name:"):
         target = resolve_ref(build, manifest)
         build = target
 
-    pl = manifest.add_pipeline(name, runner, build)
+    pl = manifest.add_pipeline(name, runner, build, source_epoch)
 
     for desc in description.get("stages", []):
         load_stage(desc, index, pl, manifest, source_refs)
