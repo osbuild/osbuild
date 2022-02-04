@@ -209,10 +209,16 @@ def blobs_add_layer(blobs: str, tree: str):
 
     command = [
         "tar",
+        # Sort for better reproduceability
+        "--sort=name",
         "--no-selinux",
         "--acls",
         "--xattrs",
         "--xattrs-include=" + XATTRS_WANT,
+        # Enforce standard format
+        "--format=posix",
+        # Drop atime and ctime for better reproduceability
+        "--pax-option", "delete=atime,delete=ctime",
         "-cf", layer_file,
         "-C", tree,
     ] + os.listdir(tree)
@@ -339,11 +345,22 @@ def main(inputs, output_dir, options, meta):
 
         create_oci_dir(inputs, workdir, options, create_time)
 
+        # This sorts by name and removes various metadata to make
+        # the tarfile reproducible
         command = [
             "tar",
             "--remove-files",
+            "--sort=name",
             "--no-selinux",
             "--no-xattrs",
+            "--no-acls",
+            "--owner=0",
+            "--group=0",
+            "--numeric-owner",
+            "--mode=go=rX,u+rw,a-s",
+            "--format=posix",
+            f"--mtime=@{int(create_time.timestamp())}",
+            "--pax-option", "delete=atime,delete=ctime",
             "-cf", os.path.join(output_dir, filename),
             f"--directory={workdir}",
         ] + os.listdir(workdir)
