@@ -96,10 +96,12 @@ class Stage:
 
     def prepare_arguments(self, args, location):
         args["options"] = self.options
-        args["meta"] = {
+        args["meta"] = meta = {
             "id": self.id,
-            "source-epoch": self.source_epoch
         }
+
+        if self.source_epoch is not None:
+            meta["source-epoch"] = self.source_epoch
 
         # Root relative paths: since paths are different on the
         # host and in the container they need to be mapped to
