@@ -115,6 +115,47 @@ The parameters for this pre-processor, version "2", look like this:
 ...
 ```
 
+
+Container resolving:
+
+This tool adjusts the `org.osbuild.skopeo` stage. It consumes the `mpp-resolve-images`
+option and produces image digests and source-entries.
+
+It supports version version "2" of the manifest description format.
+
+The parameters for this pre-processor, version "2", look like this:
+
+```
+...
+    {
+      "name": "org.osbuild.skopeo",
+      ...
+      "inputs": {
+        "images": {
+          "mpp-resolve-images": {
+            "images": [
+              {
+                 "source": "docker.io/library/ubuntu",
+                 "name": "localhost/myimagename"
+              },
+              {
+                 "source": "quay.io/centos/centos",
+                 "tag": "centos7",
+              }
+            ]
+          }
+        }
+      }
+    }
+...
+```
+
+The "source" key is required and specifies where to get the image.
+Optional keys "tag" and "digest" allow specifying a particular version
+of the image, otherwise the "latest" tag is used. If "name" is specified
+that is used as the custom name for the container when installed.
+
+
 Variable expansion and substitution:
 
 The variables can be set in the mpp-vars toplevel dict (which is removed from
@@ -277,6 +318,142 @@ import dnf
 import hawkey
 
 from osbuild.util.rhsm import Subscriptions
+
+# We need to resolve an image name to a resolved image manifest digest
+# and the corresponding container id (which is the digest of the config object).
+# However, it turns out that skopeo is not very useful to do this, as
+# can be seen in https://github.com/containers/skopeo/issues/1554
+# So, we have to fall back to "skopeo inspect --raw" and actually look
+# at the manifest contents.
+
+
+class ImageManifest:
+    # We hardcode this to what skopeo/fedora does since we don't want to
+    # depend on host specific cpu details for image resolving
+    _arch_from_rpm = {
+        "x86_64": "amd64",
+        "aarch64": "arm64",
+        "armhfp": "arm"
+    }
+    _default_variant = {
+        "arm64": "v8",
+        "arm": "v7",
+    }
+
+    def arch_from_rpm(rpm_arch):
+        return ImageManifest._arch_from_rpm.get(rpm_arch, rpm_arch)
+
+    def load(imagename, tag=None, digest=None):
+        if digest:
+            src = f"docker://{imagename}@{digest}"
+        elif tag:
+            src = f"docker://{imagename}:{tag}"
+        else:
+            src = f"docker://{imagename}"
+
+        res = subprocess.run(["skopeo", "inspect", "--raw", src],
+                             capture_output=True,
+                             check=True)
+        m = ImageManifest(res.stdout)
+        m.name = imagename
+        m.tag = tag
+        m.source_digest = digest
+
+        return m
+
+    def __init__(self, raw_manifest):
+        self.name = None
+        self.tag = None
+        self.source_digest = None
+        self.raw = raw_manifest
+        self.json = json.loads(raw_manifest)
+        self.schema_version = self.json.get("schemaVersion", 0)
+        self.media_type = self.json.get("mediaType", "")
+
+        self._compute_digest()
+
+    # Based on joseBase64UrlDecode() from docker
+    def _jose_base64url_decode(input):
+        # Strip whitespace
+        input.replace("\n", "")
+        input.replace(" ", "")
+        # Pad input with = to make it valid
+        rem = len(input) % 4
+        if rem > 0:
+            input += "=" * (4 - rem)
+        return base64.urlsafe_b64decode(input)
+
+    def _compute_digest(self):
+        raw = self.raw
+
+        # If this is an old docker v1 signed manifest we need to remove the jsw signature
+        if self.schema_version == 1 and "signatures" in self.json:
+            formatLength = 0
+            formatTail = ""
+            for s in self.json["signatures"]:
+                header = json.loads(ImageManifest._jose_base64url_decode(s["protected"]))
+                formatLength = header["formatLength"]
+                formatTail = ImageManifest._jose_base64url_decode(header["formatTail"])
+            raw = raw[0:formatLength] + formatTail
+
+        self.digest = "sha256:" + hashlib.sha256(raw).hexdigest()
+
+    def is_manifest_list(self):
+        return self.media_type == "application/vnd.docker.distribution.manifest.list.v2+json" or self.media_type == "application/vnd.oci.image.index.v1+json"
+
+    def _match_platform(self, wanted_arch, wanted_os, wanted_variant):
+        for m in self.json.get("manifests", []):
+            platform = m.get("platform", {})
+            arch = platform.get("architecture", "")
+            os = platform.get("os", "")
+            variant = platform.get("variant", None)
+
+            if arch != wanted_arch or wanted_os != os:
+                continue
+
+            if wanted_variant and wanted_variant != variant:
+                continue
+
+            return m["digest"]
+
+        return None
+
+    def resolve_list(self, wanted_arch, wanted_os, wanted_variant):
+        if not self.is_manifest_list():
+            return self
+
+        manifests = self.json.get("manifests", [])
+        digest = None
+
+        if wanted_variant:
+            # Variant specify, require exact match
+            digest = self._match_platform(wanted_arch, wanted_os, wanted_variant)
+        else:
+            # No variant specified, first try exact match with default variant for arch (if any)
+            default_variant = ImageManifest._default_variant.get(wanted_arch, None)
+            if default_variant:
+                digest = self._match_platform(wanted_arch, wanted_os, default_variant)
+
+            # Else, pick first with any (or no) variant
+            if not digest:
+                digest = self._match_platform(wanted_arch, wanted_os, None)
+
+        if not digest:
+            raise RuntimeError(
+                f"No manifest matching architecture '{wanted_arch}', os '{wanted_os}', variant '{wanted_variant}'.")
+
+        return ImageManifest.load(self.name, digest=digest)
+
+    def get_config_digest(self):
+        if self.schema_version == 1:
+            # The way the image id is extracted for old v1 images is super weird, and
+            # there is no easy way to get it from skopeo.
+            # So, kets just not support them instead of living in the past.
+            raise RuntimeError("Old docker images with schema version 1 not supported.")
+        if self.is_manifest_list():
+            raise RuntimeError("No config existis for manifest lists.")
+
+        return self.json.get("config", {}).get("digest", "")
 
 
 class YamlOrderedLoader(yaml.Loader):
@@ -1023,6 +1200,7 @@ class ManifestFile:
     def _process_stage(self, solver_factory, stage, pipeline_name):
         self._process_depsolve(solver_factory, stage, pipeline_name)
         self._process_embed_files(stage)
+        self._process_container(stage)
 
 
 class ManifestFileV1(ManifestFile):
@@ -1110,6 +1288,9 @@ class ManifestFileV1(ManifestFile):
 
     def _process_embed_files(self, stage):
         "Embedding files is not supported for v1 manifests"
+
+    def _process_container(self, stage):
+        "Installing containers is not supported for v1 manifests"
 
 
 class ManifestFileV2(ManifestFile):
@@ -1246,6 +1427,58 @@ class ManifestFileV2(ManifestFile):
                 continue
 
             embed_data(ip, mpp)
+
+    def _process_container(self, stage):
+        if stage.get("type", "") != "org.osbuild.skopeo":
+            return
+
+        inputs = element_enter(stage, "inputs", {})
+        inputs_images = element_enter(inputs, "images", {})
+
+        if inputs_images.get("type", "") != "org.osbuild.containers":
+            return
+
+        if inputs_images.get("origin", "") != "org.osbuild.source":
+            return
+
+        mpp = self.get_mpp_node(inputs_images, "resolve-images")
+        if not mpp:
+            return
+
+        refs = element_enter(inputs_images, "references", {})
+
+        for image in element_enter(mpp, "images", []):
+            source = image["source"]
+            name = image.get("name", source)
+            digest = image.get("digest", None)
+            tag = image.get("tag", None)
+
+            main_manifest = ImageManifest.load(source, tag=tag, digest=digest)
+
+            os = image.get("os", "linux")
+
+            default_rpm_arch = self.get_vars()["arch"]
+            rpm_arch = image.get("arch", default_rpm_arch)
+            oci_arch = ImageManifest.arch_from_rpm(rpm_arch)
+
+            variant = image.get("variant", None)
+
+            resolved_manifest = main_manifest.resolve_list(oci_arch, os, variant)
+
+            image_id = resolved_manifest.get_config_digest()
+
+            container_image_source = element_enter(self.sources, "org.osbuild.skopeo", {})
+            items = element_enter(container_image_source, "items", {})
+            items[image_id] = {
+                "image": {
+                    "name": source,
+                    "digest": resolved_manifest.digest,
+                }
+            }
+
+            refs[image_id] = {
+                "name": name
+            }
 
 
 def main():
