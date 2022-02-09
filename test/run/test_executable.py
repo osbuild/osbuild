@@ -17,7 +17,7 @@ class TestExecutable(unittest.TestCase):
         invalid = json.dumps({"foo": 42})
 
         with self.osbuild as osb, self.assertRaises(subprocess.CalledProcessError) as e:
-            osb.compile(invalid, check=True)
+            osb.compile(invalid, checkpoints=[], check=True)
 
         self.assertEqual(e.exception.returncode, 2)
 
