@@ -2,7 +2,8 @@
 """Inputs for container images
 
 This reads images from the `org.osbuild.containers` directory in the
-sources store.
+sources store, or from oci-archive files in pipelines (typically
+created by `org.osbuild.oci-archive`).
 
 The store is indexed by the "container image id", which is the digest
 of the container configuration file (rather than the outer manifest)
@@ -10,6 +11,9 @@ and is what will be shown in the "podman images" output when the image
 is installed. This digest is stable as opposed to the manifest digest
 which can change during transfer and storage due to
 e.g. recompression.
+
+When using pipeline sources, the first file (alphabetically) in the
+root of the tree is used as the oci archive file to install.
 
 """
 
@@ -51,19 +55,11 @@ SCHEMA = r"""
   "pipeline-options": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["name", "file", "format"],
+    "required": ["name"],
     "properties": {
       "name": {
         "type": "string",
         "description": "The name to use for the image"
-      },
-      "file": {
-        "description": "File to access with in a pipeline",
-        "type": "string"
-      },
-      "format": {
-        "description": "Container archive format",
-        "enum": ["oci-archive", "docker-archive"]
       }
     }
   },
@@ -134,17 +130,19 @@ class ContainersInput(inputs.InputService):
 
     @staticmethod
     def map_pipeline_ref(store, ref, data, target):
-        filepath = data["file"].lstrip("/")
-        container_format = data["format"]
-
         # prepare the mount point
-        filename = pathlib.Path(target, filepath)
-        os.makedirs(filename.parent, exist_ok=True)
-        filename.touch()
+        os.makedirs(target, exist_ok=True)
+        print("target", target)
 
-        store.read_tree_at(ref, filename, filepath)
+        store.read_tree_at(ref, target)
 
-        return filepath, container_format
+        # Find the archive file in target, we use the first alphabetical regular file
+        files = sorted(filter(lambda f: os.path.isfile(os.path.join(target, f)),
+                              os.listdir(target)))
+        if len(files) == 0:
+            raise RuntimeError("No archive files in source")
+
+        return files[0], "oci-archive"
 
     def map(self, store, origin, refs, target, _options):
         source = store.source("org.osbuild.containers")
