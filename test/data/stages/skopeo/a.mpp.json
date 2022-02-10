@@ -49,8 +49,6 @@
               "origin": "org.osbuild.pipeline",
               "references": {
                 "name:input-tree": {
-                  "file": "/hello.img",
-                  "format": "docker-archive",
                   "name": "localhost/hello"
                 }
               }
