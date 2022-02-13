@@ -348,10 +348,10 @@ class Pipeline:
 
         monitor.begin(self)
 
-        results = self.build_stages(store, monitor, libdir, stage_timeout)
-
-        if not results["success"]:
-            return results
+        results = self.build_stages(store,
+                                    monitor,
+                                    libdir,
+                                    stage_timeout)
 
         monitor.finish(results)
 
