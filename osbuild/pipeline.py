@@ -273,6 +273,15 @@ class Pipeline:
     def build_stages(self, object_store, monitor, libdir, stage_timeout=None):
         results = {"success": True}
 
+        # If there are no stages, just return here
+        if not self.stages:
+            return results
+
+        # Check if the tree that we are supposed to build does
+        # already exist. If so, short-circuit here
+        if object_store.contains(self.id):
+            return results
+
         # We need a build tree for the stages below, which is either
         # another tree that needs to be built with the build pipeline
         # or the host file system if no build pipeline is specified
@@ -286,15 +295,6 @@ class Pipeline:
 
         if not build_tree:
             raise AssertionError(f"build tree {self.build} not found")
-
-        # If there are no stages, just return here
-        if not self.stages:
-            return results
-
-        # Check if the tree that we are supposed to build does
-        # already exist. If so, short-circuit here
-        if object_store.contains(self.id):
-            return results
 
         # Not in the store yet, need to actually build it, but maybe
         # an intermediate checkpoint exists: Find the last stage that
@@ -345,22 +345,13 @@ class Pipeline:
         return results
 
     def run(self, store, monitor, libdir, stage_timeout=None):
-        results = {"success": True}
 
         monitor.begin(self)
 
-        # If the final result is already in the store, no need to attempt
-        # building it. Just fetch the cached information. If the associated
-        # tree exists, we return it as well, but we do not care if it is
-        # missing, since it is not a mandatory part of the result and would
-        # usually be needless overhead.
-        have_object = store.contains(self.id)
+        results = self.build_stages(store, monitor, libdir, stage_timeout)
 
-        if not have_object:
-            results = self.build_stages(store, monitor, libdir, stage_timeout)
-
-            if not results["success"]:
-                return results
+        if not results["success"]:
+            return results
 
         monitor.finish(results)
 
