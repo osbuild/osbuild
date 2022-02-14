@@ -28,7 +28,7 @@ an OSTree commit via the following:
 The `org.osbuild.layer` value can either bey a index (starting at 0),
 or a digest in the form of <algorithm>:<checksum>.
 
-The final resulting tarball, aka a "orci-archive", can be imported via
+The final resulting tarball, aka a "oci-archive", can be imported via
 podman[3] with `podman pull oci-archive:<archive>`.
 
 [1] https://www.opencontainers.org/
