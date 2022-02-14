@@ -12,7 +12,7 @@ as the `config` option for the "OCI Image Configuration" (see [2]),
 except those that map to the "Go type map[string]struct{}", which are
 represented as array of strings.
 
-The final resulting tarball, aka a "orci-archive", can be imported via
+The final resulting tarball, aka a "oci-archive", can be imported via
 podman[3] with `podman pull oci-archive:<archive>`.
 
 [1] https://www.opencontainers.org/
