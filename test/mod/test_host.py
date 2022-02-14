@@ -61,6 +61,18 @@ class ServiceTest(host.Service):
                         continue
                     raise
                 raise ValueError(f"fd '{fd}' was not closed")
+        elif method == "signal_me_3_times":
+            self.emit_signal(0)
+            self.emit_signal(1)
+            self.emit_signal(2)
+        elif method == "signal_me_on_fd":
+            with tempfile.TemporaryFile("w+") as f:
+                with os.fdopen(fds.steal(0)) as d:
+                    f.write(d.read())
+                f.seek(0)
+                fds = [os.dup(f.fileno())]
+                self.register_fds(fds)
+                self.emit_signal("that should do it", fds)
         else:
             raise host.ProtocolError("unknown method:", method)
 
@@ -133,6 +145,42 @@ def test_exception():
         client = mgr.start("exception", __file__)
         with pytest.raises(host.RemoteError, match=r"Remote Exception"):
             client.call("exception")
+
+
+def test_signals():
+    with host.ServiceManager() as mgr:
+        exec_callback = 0
+
+        def check_value(item, _fds):
+            nonlocal exec_callback
+            assert item == exec_callback
+            exec_callback += 1
+        client = mgr.start("test_signal_me_3_times", __file__)
+        client.call_with_fds("signal_me_3_times", on_signal=check_value)
+        assert exec_callback == 3
+
+
+def test_signals_on_separate_fd():
+    with host.ServiceManager() as mgr:
+
+        data = "osbuild\n"
+        exec_callback = False
+
+        def check_value(item, fds):
+            nonlocal exec_callback
+            exec_callback = True
+            assert item == "that should do it"
+            with os.fdopen(fds.steal(0)) as d:
+                assert data == d.read()
+
+        client = mgr.start("test_signal_me_on_fd", __file__)
+
+        with tempfile.TemporaryFile("w+") as f:
+            f.write(data)
+            f.seek(0)
+
+            client.call_with_fds("signal_me_on_fd", fds=[f.fileno()], on_signal=check_value)
+        assert exec_callback
 
 
 def main():

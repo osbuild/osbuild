@@ -48,7 +48,7 @@ import sys
 import threading
 import traceback
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Callable
 
 from osbuild.util.jsoncomm import FdSet, Socket
 
@@ -130,6 +130,16 @@ class ServiceProtocol:
         # NB: This is the returned data of the remote
         # method call, which can also be `None`
         return data
+
+    @staticmethod
+    def encode_signal(sig: Any):
+        msg = {
+            "type": "signal",
+            "data": {
+                "reply": sig
+            }
+        }
+        return msg
 
     @staticmethod
     def encode_exception(value, tb):
@@ -293,6 +303,10 @@ class Service(abc.ABC):
 
         return msg, fds
 
+    def emit_signal(self, data: Any, fds: Optional[list] = None):
+        self._check_fds(fds)
+        self.sock.send(self.protocol.encode_signal(data), fds=fds)
+
     @staticmethod
     def _close_all(fds: Optional[List[int]]):
         if not fds:
@@ -336,7 +350,8 @@ class ServiceClient:
 
     def call_with_fds(self, method: str,
                       args: Optional[Any] = None,
-                      fds: Optional[List] = None) -> Tuple[Any, FdSet]:
+                      fds: Optional[List] = None,
+                      on_signal: Callable[[Any, FdSet], None] = None) -> Tuple[Any, FdSet]:
         """
         Remotely call a method and return the result, including file
         descriptors.
@@ -344,16 +359,20 @@ class ServiceClient:
 
         msg = self.protocol.encode_method(method, args)
 
-        ret, fds, _ = self.sock.send_and_recv(msg, fds=fds)
+        self.sock.send(msg, fds=fds)
 
-        kind, data = self.protocol.decode_message(ret)
-
-        if kind == "reply":
-            ret = self.protocol.decode_reply(data)
-            return ret, fds
-        if kind == "exception":
-            error = self.protocol.decode_exception(data)
-            raise error
+        while True:
+            ret, fds, _ = self.sock.recv()
+            kind, data = self.protocol.decode_message(ret)
+            if kind == "signal":
+                ret = self.protocol.decode_reply(data)
+                on_signal(ret, fds)
+            if kind == "reply":
+                ret = self.protocol.decode_reply(data)
+                return ret, fds
+            if kind == "exception":
+                error = self.protocol.decode_exception(data)
+                raise error
 
         raise ProtocolError(f"unknown message type: {kind}")
 
