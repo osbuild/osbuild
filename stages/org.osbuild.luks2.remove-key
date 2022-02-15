@@ -1,0 +1,61 @@
+#!/usr/bin/python3
+"""
+Removes the supplied passphrase from the LUKS device.
+
+Buildhost commands used: `cryptsetup`.
+"""
+
+
+import os
+import subprocess
+import sys
+
+
+import osbuild.api
+
+
+SCHEMA_2 = r"""
+"devices": {
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["device"],
+  "properties": {
+    "device": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": false,
+  "required": ["passphrase"],
+  "properties": {
+    "passphrase": {
+        "description": "Passphrase to remove",
+        "type": "string"
+    }
+  }
+}
+"""
+
+
+def main(devices, options):
+    device = devices["device"]
+    passphrase = options["passphrase"]
+    path = os.path.join("/dev", device["path"])
+
+    command = [
+        "cryptsetup",
+        "-q",  # batch mode
+        "luksRemoveKey"
+    ]
+
+    subprocess.run(command + [path],
+                   encoding='utf-8', check=True,
+                   input=passphrase)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    ret = main(args["devices"], args["options"])
+    sys.exit(ret)
