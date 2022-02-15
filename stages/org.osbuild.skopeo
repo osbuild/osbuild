@@ -98,6 +98,16 @@ def main(inputs, output, options):
             subprocess.run(["skopeo", "copy", source, dest],
                            check=True)
 
+    if storage_driver == "overlay":
+        # Each time the overlay backend runs on an xfs fs it creates this file:
+        backing_fs_block_dev = os.path.join(output, storage_root.lstrip("/"), "overlay/backingFsBlockDev")
+        # It is not needed in the image as skopeo recreates it each
+        # boot, and since it is a block device its existance means we
+        # can't store the resulting tree in ostree.
+        # Lets just get rid of it.
+        if os.path.exists(backing_fs_block_dev):
+            os.unlink(backing_fs_block_dev)
+
     return 0
 
 
