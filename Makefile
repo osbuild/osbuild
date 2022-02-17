@@ -288,6 +288,7 @@ srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 rpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
+		--with tests \
 		$(RPM_SPECFILE)
 
 #

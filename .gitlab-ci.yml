@@ -47,7 +47,7 @@ Composer Tests:
   extends: .terraform
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/image_tests.sh
+    - /usr/libexec/tests/osbuild/image_tests.sh
   parallel:
     matrix:
       - RUNNER:

@@ -56,7 +56,7 @@ fi
 
 # Install the Image Builder packages.
 # Note: installing only -tests to catch missing dependencies
-sudo dnf -y install osbuild-composer-tests
+sudo dnf -y install osbuild-composer-tests osbuild-tests
 
 # Set up a directory to hold repository overrides.
 sudo mkdir -p /etc/osbuild-composer/repositories

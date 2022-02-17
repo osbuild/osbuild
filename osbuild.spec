@@ -1,8 +1,15 @@
+# Do not build with tests by default
+# Pass --with tests to rpmbuild to override
+%bcond_with tests
+
+%global         goipath github.com/osbuild/osbuild
 %global         forgeurl https://github.com/osbuild/osbuild
 %global         selinuxtype targeted
+%global         debug_package %{nil}
 
 Version:        49
 
+%gometa
 %forgemeta
 
 %global         pypi_name osbuild
@@ -15,13 +22,19 @@ License:        ASL 2.0
 URL:            %{forgeurl}
 
 Source0:        %{forgesource}
-BuildArch:      noarch
+#BuildArch:      noarch
 Summary:        A build system for OS images
 
 BuildRequires:  make
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 BuildRequires:  systemd
+%if %{with tests} || 0%{?rhel}
+BuildRequires:  %{?go_compiler:compiler(go-compiler)}%{!?go_compiler:golang}
+%endif
+%if %{with tests} && 0%{?fedora}
+BuildRequires:  golang(github.com/stretchr/testify/assert)
+%endif
 
 Requires:       bash
 Requires:       bubblewrap
@@ -118,8 +131,21 @@ Requires:       python3-pyyaml
 Contains additional tools and utilities for development of
 manifests and osbuild.
 
+%if %{with tests} || 0%{?rhel}
+%package tests
+Summary:    Integration tests
+Requires:   %{name} = %{version}-%{release}
+
+%description tests
+Integration tests to be run on a pristine-dedicated system to test the osbuild package.
+%endif
+
 %prep
-%forgesetup
+%if 0%{?rhel}
+%forgeautosetup -p1
+%else
+%goprep
+%endif
 
 %build
 %py3_build
@@ -128,6 +154,37 @@ make man
 # SELinux
 make -f /usr/share/selinux/devel/Makefile osbuild.pp
 bzip2 -9 osbuild.pp
+
+%if %{with tests} || 0%{?rhel}
+
+export GOFLAGS="-buildmode=pie"
+%if 0%{?rhel}
+GO_BUILD_PATH=$PWD/_build
+install -m 0755 -vd $(dirname $GO_BUILD_PATH/src/%{goipath})
+ln -fs $PWD $GO_BUILD_PATH/src/%{goipath}
+cd $GO_BUILD_PATH/src/%{goipath}
+install -m 0755 -vd _bin
+export PATH=$PWD/_bin${PATH:+:$PATH}
+export GOPATH=$GO_BUILD_PATH:%{gopath}
+export GOFLAGS+=" -mod=vendor"
+%endif
+
+# Build test binaries with `go test -c`, so that they can take advantage of
+# golang's testing package. The golang rpm macros don't support building them
+# directly. Thus, do it manually, taking care to also include a build id.
+#
+# On Fedora, also turn off go modules and set the path to the one into which
+# the golang-* packages install source code.
+%if 0%{?fedora}
+export GO111MODULE=off
+export GOPATH=%{gobuilddir}:%{gopath}
+%endif
+
+TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
+
+go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
+
+%endif
 
 %pre
 %selinux_relabel_pre -s %{selinuxtype}
@@ -177,6 +234,22 @@ install -D -m 0644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_selinux.8
 # Udev rules
 mkdir -p %{buildroot}%{_udevrulesdir}
 install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
+
+%if %{with tests} || 0%{?rhel}
+
+install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/osbuild-test
+install -m 0755 -vp _bin/osbuild-image-tests                       %{buildroot}%{_libexecdir}/osbuild-test/
+install -m 0755 -vp tools/image-info                               %{buildroot}%{_libexecdir}/osbuild-test/
+install -m 0755 -vp tools/set-env-variables.sh                     %{buildroot}%{_libexecdir}/osbuild-test/
+
+install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/tests/osbuild
+install -m 0755 -vp test/cases/*                                   %{buildroot}%{_libexecdir}/tests/osbuild/
+
+install -m 0755 -vd                                                %{buildroot}%{_datadir}/tests/osbuild/image-info
+install -m 0644 -vp test/data/image-info/*                         %{buildroot}%{_datadir}/tests/osbuild/image-info/
+
+
+%endif
 
 %check
 exit 0
@@ -231,6 +304,15 @@ exit 0
 %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
 %{_mandir}/man8/%{name}_selinux.8.*
 %ghost %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
+
+%if %{with tests} || 0%{?rhel}
+
+%files tests
+%{_libexecdir}/osbuild-test/
+%{_libexecdir}/tests/osbuild/
+%{_datadir}/tests/osbuild/
+
+%endif
 
 %post selinux
 %selinux_modules_install -s %{selinuxtype} %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
