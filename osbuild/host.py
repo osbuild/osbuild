@@ -47,8 +47,11 @@ import subprocess
 import sys
 import threading
 import traceback
+import types
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple, Callable
+from importlib.machinery import SourceFileLoader
+from abc import ABC, abstractmethod
 
 from osbuild.util.jsoncomm import FdSet, Socket
 
@@ -538,3 +541,75 @@ class ServiceManager:
         self.event_loop.call_soon_threadsafe(self.event_loop.stop)
         self.thread.join()
         self.event_loop.close()
+
+
+class AbstractSerializableObject(ABC):
+    """
+    AbstractSerializableObject lets you define an object that has the capacity of serializing itself as a dict with the
+    meta information necessary for it to be rebuilt after serialization and transmission even to another executable.
+
+    The final class inheriting from the AbstractSerializableObject class can live anywhere, even in an other program, as
+    long as the program's file is readable from the receiver. The AbstractSerializableObject will then load the source
+    file containing the defintion as a module and look for the class definition of the child. Loading it and allowing
+    this object to deserialize its info from what was received.
+
+    The prerequisite is that the executable/python file that generated the dict is accessible from the receiver side.
+    Otherwise the receiver cannot load the final class and parse the content.
+    """
+
+    module_cache = {}
+    class_cache = {}
+
+    @abstractmethod
+    def _to_dict(self) -> Dict:
+        """
+        Transform this current object to a dict to store its fields values.
+        """
+
+    @abstractmethod
+    def _from_dict(self, obj: Dict):
+        """
+        Use the given dict to initialize this object
+        """
+
+    @staticmethod
+    def from_dict(obj: Dict):
+        """
+        Loads the file located at the field 'source_path' as a module. From this module, loads the class pointed by the
+        name in the field 'class' If found and if the loaded class is a subclass of AbstractSerializableObject then use
+        this loaded class to parse the subdict found in the field 'content'.
+        If anything goes wrong, raise a ValueError
+        """
+        if obj is None:
+            return None
+        try:
+            source_path = obj["source_path"]
+            klass = obj["class"]
+            content = obj["content"]
+            module_name = source_path.split("/")[-1].replace(".", "_")
+            module = AbstractSerializableObject.module_cache.get(module_name, None)
+            if not module:
+                loader = SourceFileLoader(module_name, source_path)
+                module = types.ModuleType(loader.name)
+                loader.exec_module(module)
+                AbstractSerializableObject.module_cache[source_path] = module
+            exec_class = AbstractSerializableObject.class_cache.get((source_path, klass))
+            if not exec_class:
+                exec_class = getattr(module, klass)
+                assert issubclass(exec_class, AbstractSerializableObject)
+                AbstractSerializableObject.class_cache[(source_path, klass)] = exec_class
+            # pylint: disable=protected-access # It is okay because ret is a subclass of AbstractSerializableObject
+            ret = exec_class()
+            ret._from_dict(content)
+            return ret
+        except Exception as e:
+            raise ValueError(f"invalid object {obj}") from e
+
+    def to_dict(self) -> Dict:
+        """
+        Prepare the dict that stores the class info and the content for serialisation
+        """
+        ret = {"class": self.__class__.__name__}
+        ret["source_path"] = os.path.abspath(sys.modules[self.__class__.__module__].__file__)
+        ret["content"] = self._to_dict()
+        return ret
