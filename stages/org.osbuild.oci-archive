@@ -272,7 +272,7 @@ def config_from_options(options):
 def create_oci_dir(inputs, output_dir, options, create_time):
     architecture = options["architecture"]
 
-    created = create_time.isoformat() + "Z"
+    created = create_time.isoformat()
 
     config = {
         "created": created,
