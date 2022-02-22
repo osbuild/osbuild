@@ -21,15 +21,15 @@
                 "repos": [
                   {
                     "id": "core",
-                    "baseurl": "https://archive.archlinux.org/repos/2021/11/24/$repo/os/$arch"
+                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
                   },
                   {
                     "id": "community",
-                    "baseurl": "https://archive.archlinux.org/repos/2021/11/24/$repo/os/$arch"
+                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
                   },
                   {
                     "id": "extra",
-                    "baseurl": "https://archive.archlinux.org/repos/2021/11/24/$repo/os/$arch"
+                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
                   }
                 ],
                 "packages": [
@@ -59,7 +59,20 @@
       "build": "name:build",
       "stages": [
         {
-          "type": "org.osbuild.pacman.conf"
+          "type": "org.osbuild.pacman.conf",
+          "options": {
+            "repositories": [
+              {"name": "core", "include": "/etc/pacman.d/mirrorlist"},
+              {"name": "extra", "include": "/etc/pacman.d/mirrorlist"},
+              {"name": "community", "include": "/etc/pacman.d/mirrorlist"}
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.pacman.mirrorlist.conf",
+          "options": {
+            "mirrors": ["https://europe.mirror.pkgbuild.com/$repo/os/$arch"]
+          }
         },
         {
           "type": "org.osbuild.pacman",
@@ -74,15 +87,15 @@
                 "repos": [
                   {
                     "id": "core",
-                    "baseurl": "https://archive.archlinux.org/repos/2021/11/24/$repo/os/$arch"
+                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
                   },
                   {
                     "id": "community",
-                    "baseurl": "https://archive.archlinux.org/repos/2021/11/24/$repo/os/$arch"
+                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
                   },
                   {
                     "id": "extra",
-                    "baseurl": "https://archive.archlinux.org/repos/2021/11/24/$repo/os/$arch"
+                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
                   }
                 ],
                 "packages": [
@@ -95,6 +108,8 @@
                   "systemd",
                   "linux",
                   "mkinitcpio",
+                  "networkmanager",
+                  "sudo",
                   "tar",
                   "grub",
                   "openssh"
@@ -172,6 +187,9 @@
         },
         {
           "type": "org.osbuild.mkinitcpio"
+        },
+        {
+          "type": "org.osbuild.pacman-keyring"
         }
       ]
     },
