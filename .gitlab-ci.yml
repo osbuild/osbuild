@@ -33,6 +33,8 @@ RPM:
           - aws/fedora-35-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
+          - aws/centos-stream-9-x86_64
+          - aws/centos-stream-9-aarch64
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.5-ga-aarch64
       - RUNNER:
