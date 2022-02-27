@@ -53,7 +53,7 @@ class UdevInhibitor:
     @classmethod
     def for_device(cls, major: int, minor: int, lockdir=LOCKDIR):
         """Inhibit a device given its major and minor number"""
-        path = pathlib.Path(lockdir, f"device-{major}-{minor}")
+        path = pathlib.Path(lockdir, f"device-{major}:{minor}")
         ib = cls(path)
         ib.inhibit()
         return ib
