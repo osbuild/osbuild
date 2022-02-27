@@ -1,0 +1,75 @@
+#!/usr/bin/python3
+"""
+Btrfs host dvice service
+
+"""
+
+
+import argparse
+import os
+import sys
+import subprocess
+
+from typing import Dict
+
+from osbuild import devices
+
+
+SCHEMA = """
+"additionalProperties": false
+"""
+
+
+class BtrfsService(devices.DeviceService):
+
+    def __init__(self, args: argparse.Namespace):
+        super().__init__(args)
+        self.devname = None
+
+    def open(self, _devpath: str, parent: str, _tree: str, _options: Dict):
+
+        self.devname = os.path.join("/dev", parent)
+
+        res = subprocess.run(["btrfs", "device", "scan", self.devname],
+                             check=False,
+                             # stdout=subprocess.PIPE,
+                             # stderr=subprocess.STDOUT,
+                             encoding="UTF-8")
+
+        if res.returncode != 0:
+            data = res.stdout.strip()
+            msg = f"Failed to scan btrfs device: {data}"
+            raise RuntimeError(msg)
+
+        res = {
+            "path": parent
+        }
+
+        return res
+
+    def close(self):
+        if not self.devname:
+            return
+
+        res = subprocess.run(["btrfs", "device", "scan",
+                              "--forget", self.devname],
+                             check=False,
+                             # stdout=subprocess.PIPE,
+                             # stderr=subprocess.STDOUT,
+                             encoding="UTF-8")
+
+        self.devname = None
+
+        if res.returncode != 0:
+            data = res.stdout.strip()
+            msg = f"Failed to forget btrfs device: {data}"
+            raise RuntimeError(msg)
+
+
+def main():
+    service = BtrfsService.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()

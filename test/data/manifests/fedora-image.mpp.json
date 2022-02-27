@@ -216,6 +216,7 @@
             "device": {
               "type": "org.osbuild.loopback",
               "options": {
+                "lock": true,
                 "filename": "disk.img",
                 "start": 413696,
                 "size": 20557791
@@ -255,7 +256,7 @@
                 "size": 204800
               }
             },
-            "btrfs": {
+            "btrfs-raw": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
@@ -268,7 +269,7 @@
             {
               "name": "root",
               "type": "org.osbuild.btrfs",
-              "source": "btrfs",
+              "source": "btrfs-raw",
               "target": "/"
             },
             {
