@@ -488,7 +488,8 @@
           ],
           "disabled_services": [
             "telnet"
-          ]
+          ],
+          "default_zone": "trusted"
         }
       }
     ]
