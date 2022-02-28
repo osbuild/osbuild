@@ -1,8 +1,11 @@
 {
   "added_files": [
-    "/etc/firewalld/zones/public.xml",
-    "/etc/firewalld/zones/public.xml.old"
+    "/etc/firewalld/firewalld.conf.old",
+    "/etc/firewalld/zones/trusted.xml",
+    "/etc/firewalld/zones/trusted.xml.old"
   ],
   "deleted_files": [],
-  "differences": {}
+  "differences": {
+    "/etc/firewalld/firewalld.conf": {"mode": [41471, 33152]}
+  }
 }

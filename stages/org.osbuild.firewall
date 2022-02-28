@@ -59,6 +59,10 @@ SCHEMA = """
       "type": "string",
       "description": "Service name (from /{lib,etc}/firewalld/services/*.xml)"
     }
+  },
+  "default_zone": {
+    "description": "Set default zone for connections and interfaces where no zone has been selected.",
+    "type": "string"
   }
 }
 """
@@ -72,7 +76,14 @@ def main(tree, options):
     enabled_services = options.get("enabled_services", [])
     disabled_services = options.get("disabled_services", [])
 
+    default_zone = options.get("default_zone", "")
+
     # firewall-offline-cmd does not implement --root option so we must chroot it
+    if default_zone:
+        subprocess.run(["chroot", tree, "firewall-offline-cmd", f"--set-default-zone={default_zone}"], check=True)
+
+    # The options below are "lokkit" compatibility options and can not be used
+    # with other options.
     subprocess.run(["chroot",
                     tree,
                     "firewall-offline-cmd"] +
