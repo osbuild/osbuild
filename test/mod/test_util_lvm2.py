@@ -81,13 +81,13 @@ def list_vgs():
     res = subprocess.run(cmd,
                          check=False,
                          stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT,
+                         stderr=subprocess.PIPE,
                          encoding="UTF-8")
 
     data = res.stdout.strip()
 
     if res.returncode != 0:
-        msg = f"vgs: {data}"
+        msg = f"vgs: {res.stderr.strip()}"
         raise RuntimeError(msg)
 
     data = json.loads(data)
