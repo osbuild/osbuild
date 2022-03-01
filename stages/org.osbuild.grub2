@@ -49,6 +49,9 @@ to be selected as default. The contents of variable needs to match the
 corresponding loader entry, which currently is a combination of the
 machine id and kernel NVRA, like e.g.:
   `ffffffffffffffffffffffffffffffff-5.6.6-300.fc32.x86_64`
+If `saved_entry` is set it is advisable to set `config.default` to
+`saved` so that any re-creation of the grub configuration by the
+user will preserve that functionality.
 
 Support for "greenboot" can be turned on via the `greenboot` option.
 Greenboot is the idea of automatically rolling back bad updates,
@@ -191,6 +194,10 @@ SCHEMA = """
     "type": "object",
     "additionalProperties": false,
     "properties": {
+      "default": {
+        "description": "Default boot entry",
+        "type": "string"
+      },
       "terminal_input": {
          "$ref": "#/definitions/terminal"
       },
@@ -350,11 +357,13 @@ def copy_efi_data(tree, vendor):
                         symlinks=False)
 
 
+# pylint: disable=too-many-instance-attributes
 class GrubConfig:
     def __init__(self, rootfs, bootfs):
         self.rootfs = rootfs
         self.bootfs = bootfs
         self.path = "boot/grub2/grub.cfg"
+        self.default_entry = None
         self.ignition = False
         self.greenboot = False
         self.kernel_opts = ""
@@ -470,6 +479,9 @@ class GrubConfig:
             val = " ".join(self.terminal_output)
             data += f'GRUB_TERMINAL_OUTPUT="{val}"\n'
 
+        if self.default_entry is not None:
+            data += f'GRUB_DEFAULT={self.default_entry}\n'
+
         return data
 
 
@@ -513,6 +525,7 @@ def main(tree, options):
     config.terminal_input = cfg.get("terminal_input")
     config.terminal_output = cfg.get("terminal_output")
     config.timeout = cfg.get("timeout", 0)
+    config.default_entry = cfg.get("default")
 
     # Create the configuration file that determines how grub.cfg is generated.
     if write_defaults:
