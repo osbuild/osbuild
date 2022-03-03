@@ -66,6 +66,17 @@ SCHEMA_2 = r"""
           "uuid": {
             "description": "UUID of the partition (GPT)",
             "type": "string"
+          },
+          "attrs": {
+            "description": "Attributes of the partition (GPT)",
+            "type": "array",
+            "maxItems": 64,
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 63
+            }
           }
         }
       }
@@ -82,7 +93,8 @@ class Partition:
                  size: int = None,
                  bootable: bool = False,
                  name: str = None,
-                 uuid: str = None):
+                 uuid: str = None,
+                 attrs: int = None):
         self.type = pttype
         self.start = start
         self.size = size
@@ -90,6 +102,7 @@ class Partition:
         self.name = name
         self.uuid = uuid
         self.index = None
+        self.attrs = attrs
 
     @property
     def start_in_bytes(self):
@@ -135,9 +148,13 @@ class PartitionTable:
         command = f"label: {self.label}\nlabel-id: {self.uuid}"
         for partition in self.partitions:
             fields = []
-            for field in ["start", "size", "type", "name", "uuid"]:
+            for field in ["start", "size", "type", "name", "uuid", "attrs"]:
                 value = getattr(partition, field)
                 if value:
+                    if field == "attrs":
+                        # make a list into a comma-separated string
+                        attr_list = [str(element) for element in value]
+                        value = ",".join(attr_list)
                     fields += [f'{field}="{value}"']
             if partition.bootable:
                 fields += ["bootable"]
@@ -169,6 +186,7 @@ class PartitionTable:
             part.size = disk_parts[i]["size"]
             part.type = disk_parts[i].get("type")
             part.name = disk_parts[i].get("name")
+            part.attrs = disk_parts[i].get("attrs")
 
 
 def partition_from_json(js) -> Partition:
@@ -177,7 +195,8 @@ def partition_from_json(js) -> Partition:
                   size=js.get("size"),
                   bootable=js.get("bootable"),
                   name=js.get("name"),
-                  uuid=js.get("uuid"))
+                  uuid=js.get("uuid"),
+                  attrs=js.get("attrs"))
     return p
 
 
