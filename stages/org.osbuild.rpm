@@ -5,7 +5,9 @@ Verify, and install RPM packages
 The `exclude.docs` option can be used to tell rpm to not install docs.
 
 `gpgkeys` should be an array of strings containing each GPG key to be used
-to verify the packages.
+to verify the packages. Alternatively, the keys can be imported via files
+located in the tree via `gpgkeys.fromtree`. This is done after the packages
+are installed so it is possible to import keys packaged in rpms.
 
 `packages` is an array of objects representing RPMs. Each RPM is identified by
 its checksums. Specifically, the content hash of the rpm, not the checksums
@@ -65,6 +67,11 @@ SCHEMA = """
     "type": "array",
     "items": { "type": "string" }
   },
+  "gpgkeys.fromtree": {
+    "description": "Array of files in the tree with GPG keys to import",
+    "type": "array",
+    "items": { "type": "string" }
+  },
   "packages": {
     "description": "Array of RPM content hashes",
     "type": "array",
@@ -104,6 +111,11 @@ SCHEMA_2 = """
   "properties": {
     "gpgkeys": {
       "description": "Array of GPG key contents to import",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "gpgkeys.fromtree": {
+      "description": "Array of files in the tree with GPG keys to import",
       "type": "array",
       "items": { "type": "string" }
     },
@@ -283,6 +295,15 @@ def main(tree, inputs, options):
             "--define", "_pkgverify_level none",
             "--install", manifest.name
         ], cwd=pkgpath, check=True)
+
+    for key in options.get("gpgkeys.fromtree", []):
+        path = os.path.join(tree, key.lstrip("/"))
+        subprocess.run([
+            "rpmkeys",
+            "--root", tree,
+            "--import", path
+        ], check=True)
+        print(f"imported gpg keys from '{key}'")
 
     # re-enabled dracut
     if no_dracut:
