@@ -478,6 +478,12 @@
       {
         "name": "org.osbuild.firewall",
         "options": {
+          "default_zone": "trusted"
+        }
+      },
+      {
+        "name": "org.osbuild.firewall",
+        "options": {
           "ports": [
             "53:tcp",
             "88:udp"
@@ -488,8 +494,7 @@
           ],
           "disabled_services": [
             "telnet"
-          ],
-          "default_zone": "trusted"
+          ]
         }
       }
     ]
