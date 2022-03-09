@@ -13,6 +13,7 @@ copy_upstream_release_description: true
 
 upstream_tag_template: v{version}
 
+srpm_build_deps: []
 actions:
   get-current-version: bash -c "git describe --tags --abbrev=0 | sed 's|v||'"
 
