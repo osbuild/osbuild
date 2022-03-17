@@ -26,6 +26,7 @@ import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util import selinux
 
 
 SCHEMA = """
@@ -60,7 +61,7 @@ def main(tree, options):
 
     for path, label in labels.items():
         fullpath = os.path.join(tree, path.lstrip("/"))
-        subprocess.run(["chcon", "-v", label, fullpath], check=True)
+        selinux.setfilecon(fullpath, label)
 
     if options.get("force_autorelabel", False):
         stamp = pathlib.Path(tree, ".autorelabel")
