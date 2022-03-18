@@ -2,7 +2,9 @@
 # Tests for the 'osbuild.util.selinux' module.
 #
 
+import errno
 import io
+from unittest import mock
 
 from osbuild.util import selinux
 
@@ -37,3 +39,22 @@ def test_selinux_config():
 
     policy = selinux.config_get_policy(cfg)
     assert policy == 'targeted'
+
+
+def test_setfilecon():
+    with mock.patch("os.setxattr") as setxattr:
+
+        selinux.setfilecon("/path", "context")
+        setxattr.assert_called_once_with("/path", selinux.XATTR_NAME_SELINUX,
+                                         b"context", follow_symlinks=True)
+
+    with mock.patch("os.getxattr") as getxattr:
+        with mock.patch("os.setxattr") as setxattr:
+
+            def raise_error(*_args, **_kwargs):
+                raise OSError(errno.ENOTSUP, "Not supported")
+
+            getxattr.return_value = b"context"
+            setxattr.side_effect = raise_error
+
+            selinux.setfilecon("path", "context")

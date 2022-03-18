@@ -1,5 +1,6 @@
 """SELinux utility functions"""
 
+import errno
 import os
 import subprocess
 
@@ -57,3 +58,27 @@ def getfilecon(path: str) -> str:
     label = os.getxattr(path, XATTR_NAME_SELINUX,
                         follow_symlinks=False)
     return label.decode().strip('\n\0')
+
+
+def setfilecon(path: str, context: str) -> None:
+    """
+    Set the security context associated with `path`
+
+    Like `setfilecon`(3), but does not attempt to translate
+    the context via `selinux_trans_to_raw_context`.
+    """
+
+    try:
+        os.setxattr(path, XATTR_NAME_SELINUX,
+                    context.encode(),
+                    follow_symlinks=True)
+    except OSError as err:
+        # in case we get a not-supported error, check if
+        # the context we want to set is already set and
+        # ignore the error in that case. This follows the
+        # behavior of `setfilecon(3)`.
+        if err.errno == errno.ENOTSUP:
+            have = getfilecon(path)
+            if have == context:
+                return
+        raise
