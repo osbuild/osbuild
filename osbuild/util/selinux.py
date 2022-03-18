@@ -5,6 +5,9 @@ import subprocess
 
 from typing import Dict, TextIO
 
+# Extended attribute name for SELinux labels
+XATTR_NAME_SELINUX = b"security.selinux"
+
 
 def parse_config(config_file: TextIO):
     """Parse an SELinux configuration file"""
@@ -51,6 +54,6 @@ def setfiles(spec_file: str, root: str, *paths):
 
 def getfilecon(path: str) -> str:
     """Get the security context associated with `path`"""
-    label = os.getxattr(path, b"security.selinux",
+    label = os.getxattr(path, XATTR_NAME_SELINUX,
                         follow_symlinks=False)
     return label.decode().strip('\n\0')
