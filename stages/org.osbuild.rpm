@@ -290,9 +290,10 @@ def main(tree, inputs, options):
             "--verbose",
             "--root", tree,
             *extra_args,
-            # The content hash of the rpms has been verified, default to not
-            # verifying again (see /usr/lib/rpm/macros for more info)
-            "--define", "_pkgverify_level none",
+            # All digests and signatures of the rpms has been verified,
+            # default to not verifying package or header signatures when
+            # reading.
+            "--nosignature",
             "--install", manifest.name
         ], cwd=pkgpath, check=True)
 
