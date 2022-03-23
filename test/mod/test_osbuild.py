@@ -289,20 +289,3 @@ class TestDescriptions(unittest.TestCase):
         for version in ["1", "2"]:
             with self.subTest(version=version):
                 self.check_moduleinfo(version)
-
-    def test_schema(self):
-        schema = osbuild.meta.Schema(None)
-        self.assertFalse(schema)
-
-        schema = osbuild.meta.Schema({"type": "bool"})  # should be 'boolean'
-        self.assertFalse(schema.check().valid)
-        self.assertFalse(schema)
-
-        schema = osbuild.meta.Schema({"type": "array", "minItems": 3})
-        self.assertTrue(schema.check().valid)
-        self.assertTrue(schema)
-
-        res = schema.validate([1, 2])
-        self.assertFalse(res)
-        res = schema.validate([1, 2, 3])
-        self.assertTrue(res)
