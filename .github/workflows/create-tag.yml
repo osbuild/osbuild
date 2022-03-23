@@ -1,0 +1,24 @@
+# This action creates a release every second Wednesday
+name: "Create and push release tag"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 13 * * 3"
+
+jobs:
+  tag-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Even or odd week
+        run: if [ `expr \`date +\%s\` / 86400 \% 2` -eq 0 ]; then echo "WEEK=odd" >> $GITHUB_ENV; else echo "WEEK=even" >> $GITHUB_ENV; fi
+        shell: bash
+
+      - name: Upstream tag
+        uses: osbuild/release-action@create-tag
+        if: ${{ env.WEEK == 'even' || github.event_name != 'schedule' }}
+        with:
+          token: "${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}"
+          username: "imagebuilder-bot"
+          email: "imagebuilder-bots+imagebuilder-bot@redhat.com"
