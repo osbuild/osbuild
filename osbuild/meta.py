@@ -34,6 +34,8 @@ from typing import (Any, Deque, Dict, List, Optional, Sequence, Set, Tuple,
 
 import jsonschema
 
+from .util import osrelease
+
 FAILED_TITLE = "JSON Schema validation failed"
 FAILED_TYPEURI = "https://osbuild.org/validation-error"
 
@@ -668,3 +670,9 @@ class Index:
 
         # candidate None or is too new for version (2)
         raise ValueError(f"No suitable runner for {name}")
+
+    def detect_host_runner(self) -> RunnerInfo:
+        """Use os-release(5) to detect the runner for the host"""
+
+        osname = osrelease.describe_os(*osrelease.DEFAULT_PATHS)
+        return self.detect_runner("org.osbuild." + osname)
