@@ -127,6 +127,33 @@
       ]
     },
     {
+      "name": "image-stream.vmdk",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.qemu",
+          "inputs": {
+            "image": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:image": {
+                  "file": "image.raw"
+                }
+              }
+            }
+          },
+          "options": {
+            "filename": "image-stream.vmdk",
+            "format": {
+              "type": "vmdk",
+              "subformat": "streamOptimized"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "image.vpc",
       "build": "name:build",
       "stages": [
