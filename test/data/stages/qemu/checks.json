@@ -17,6 +17,15 @@
   "image.vmdk": {
     "format": "vmdk"
   },
+  "image-stream.vmdk": {
+    "format": "vmdk",
+    "format-specific": {
+      "type": "vmdk",
+      "data": {
+        "create-type": "streamOptimized"
+      }
+    }
+  },
   "image.vpc": {
     "format": "raw"
   },

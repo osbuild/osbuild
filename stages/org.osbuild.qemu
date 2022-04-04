@@ -61,6 +61,11 @@ SCHEMA_2 = r"""
         "description": "The type of the format, here 'vmdk'",
         "type": "string",
         "enum": ["vmdk"]
+      },
+      "subformat": {
+        "description": "VMDK flat extent format",
+        "type": "string",
+        "enum": ["monolithicSparse", "monolithicFlat", "twoGbMaxExtentSparse", "twoGbMaxExtentFlat", "streamOptimized"]
       }
     }
   },
@@ -133,6 +138,14 @@ def qcow2_arguments(options):
     return argv
 
 
+def vmdk_arguments(options):
+    argv = ["-c"]
+    subformat = options.get("subformat")
+    if subformat:
+        argv += ["-o", f"subformat={subformat}"]
+    return argv
+
+
 def parse_input(inputs):
     image = inputs["image"]
     files = image["data"]["files"]
@@ -153,7 +166,7 @@ def main(inputs, output, options):
     formats = {
         "qcow2": qcow2_arguments,
         "vdi": [],
-        "vmdk": ["-c"],
+        "vmdk": vmdk_arguments,
         "vpc": ["-o", "subformat=fixed,force_size"],
         "vhdx": []
     }
