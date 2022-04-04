@@ -1,0 +1,26 @@
+{
+  "image.qcow2": {
+    "format": "qcow2"
+  },
+  "image-v1.1.qcow2": {
+    "format": "qcow2",
+    "format-specific": {
+      "type": "qcow2",
+      "data": {
+          "compat": "1.1"
+      }
+    }
+  },
+  "image.vdi": {
+    "format": "vdi"
+  },
+  "image.vmdk": {
+    "format": "vmdk"
+  },
+  "image.vpc": {
+    "format": "raw"
+  },
+  "image.vhdx": {
+    "format": "vhdx"
+  }
+}

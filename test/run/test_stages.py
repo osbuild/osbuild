@@ -13,6 +13,7 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
+from collections.abc import Mapping
 from typing import Dict
 
 from osbuild.util import selinux
@@ -57,6 +58,35 @@ def make_stage_tests(klass):
         setattr(klass, f"test_{test_name}",
                 lambda s, path=test_path: s.run_stage_diff_test(path))
     return klass
+
+
+def mapping_is_subset(subset, other):
+    """
+    Recursively compares two Mapping objects and returns True if all values
+    of the 'subset' Mapping are contained in the 'other' Mapping. Otherwise,
+    False is returned.
+
+    Only nested Mapping objects are compared recursively. Any other types are
+    compared simply using '=='.
+    """
+    if isinstance(subset, Mapping) and isinstance(other, Mapping):
+        for key, value in subset.items():
+            if not key in other:
+                return False
+
+            other_value = other[key]
+
+            if isinstance(value, Mapping):
+                if mapping_is_subset(value, other_value):
+                    continue
+                return False
+
+            if value != other_value:
+                return False
+
+        return True
+
+    return False
 
 
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
@@ -267,6 +297,41 @@ class TestStages(test.TestBase):
 
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")
+
+    def test_qemu(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "qemu")
+
+        checks_path = os.path.join(testdir, "checks.json")
+        checks = {}
+        with open(checks_path) as f:
+            checks = json.load(f)
+
+        for image_name, test_data in checks.items():
+            with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+                osb.compile_file(os.path.join(testdir, "qemu.json"),
+                                exports=[image_name],
+                                output_dir=outdir)
+
+                tree = os.path.join(outdir, image_name)
+                ip = os.path.join(tree, image_name)
+                assert os.path.exists(ip)
+                assert os.path.isfile(ip)
+
+                qemu_img_run = subprocess.run(
+                    ["qemu-img", "info", "--output=json", ip],
+                    capture_output=True,
+                    check=True,
+                    encoding="utf-8"
+                )
+
+                qemu_img_out = json.loads(qemu_img_run.stdout)
+                self.assertTrue(mapping_is_subset(test_data, qemu_img_out),
+                    f"Test data is not a subset of the qemu-img output: {test_data} not <= {qemu_img_run.stdout}"
+                )
+
+                # cache the downloaded data for the files source
+                osb.copy_source_data(self.store, "org.osbuild.files")
 
     def test_tar(self):
         datadir = self.locate_test_data()
