@@ -63,6 +63,11 @@ SCHEMA = """
     "description": "The qcow2-compatibility-version to use",
     "type": "string"
   },
+  "vmdk_subformat": {
+    "description": "VMDK flat extent format",
+    "type": "string",
+    "enum": ["monolithicSparse", "monolithicFlat", "twoGbMaxExtentSparse", "twoGbMaxExtentFlat", "streamOptimized"]
+  },
   "filename": {
     "description": "Image filename",
     "type": "string"
@@ -618,6 +623,7 @@ def install_zipl(root: str, device: str, pt: PartitionTable):
                    check=True)
 
 
+#pylint: disable=too-many-branches
 def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
     filename = options["filename"]
@@ -698,6 +704,10 @@ def main(tree, output_dir, options, loop_client):
         compat = options.get("qcow2_compat")
         if compat:
             extra_args["qcow2"] += ["-o", f"compat={compat}"]
+
+        vmdk_subformat = options.get("vmdk_subformat")
+        if vmdk_subformat:
+            extra_args["vmdk"] += ["-o", f"subformat={vmdk_subformat}"]
 
         coroutines = os.environ.get("OSBUILD_QEMU_IMG_COROUTINES")
         if coroutines:
