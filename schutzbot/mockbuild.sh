@@ -6,6 +6,36 @@ function greenprint {
   echo -e "\033[1;32m${1}\033[0m"
 }
 
+# function to override template respositores with system repositories which contain rpmrepos snapshots
+function template_override {
+    sudo dnf -y install jq
+    if sudo subscription-manager status; then
+        greenprint "📋 Running on subscribed RHEL machine, no mock template override done."
+        return 0
+    fi
+    if [[ "$ID" == rhel ]]; then
+        TEMPLATE=${ID}-${VERSION_ID%.*}.tpl
+        if [[ ${VERSION_ID%.*} == 8 ]]; then
+            sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
+        elif [[ ${VERSION_ID%.*} == 9 ]]; then
+            greenprint "📋 Inserting $ID-$VERSION_ID mock template"
+            sudo cp -r schutzbot/rhel-9-mock-configs/* /etc/mock/
+        fi
+    elif [[ "$ID" == fedora ]]; then
+        TEMPLATE=fedora-branched.tpl
+    elif [[ "$ID" == centos ]]; then
+        TEMPLATE=${ID}-stream-${VERSION_ID}.tpl
+        STREAM=-stream
+    fi
+    greenprint "📋 Updating $ID-$VERSION_ID mock template with rpmrepo snapshot repositories"
+    REPOS=$(jq -r ."\"${ID}${STREAM:-}-${VERSION_ID}\".repos[].file" Schutzfile)
+    sudo sed -i '/user_agent/q' /etc/mock/templates/"$TEMPLATE"
+    for REPO in $REPOS; do
+        sudo cat "$REPO" | sudo tee -a /etc/mock/templates/"$TEMPLATE"
+    done
+    echo '"""' | sudo tee -a /etc/mock/templates/"$TEMPLATE"
+}
+
 # Get OS and architecture details.
 source /etc/os-release
 ARCH=$(uname -m)
@@ -81,21 +111,8 @@ greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 greenprint "🔧 Building source RPMs."
 make srpm
 
-if [[ "$ID" == rhel && ${VERSION_ID%.*} == 8 ]] && ! sudo subscription-manager status; then
-    greenprint "📋 Updating RHEL 8 mock template with the latest nightly repositories"
-    # strip everything after line with # repos
-    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
-    # remove the subscription check
-    sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
-    # reuse redhat.repo
-    cat /etc/yum.repos.d/rhel8internal.repo | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
-    # We need triple quotes at the end of the template to mark the end of the repo list.
-    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
-elif [[ $VERSION_ID == 9.0 ]]; then
-    greenprint "📋 Inserting RHEL 9 mock template"
-    sudo cp schutzbot/rhel-9-mock-configs/templates/rhel-9.tpl /etc/mock/templates/
-    sudo cp schutzbot/rhel-9-mock-configs/*.cfg /etc/mock/
-fi
+# override template repositories
+template_override
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
