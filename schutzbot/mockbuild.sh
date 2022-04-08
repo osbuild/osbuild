@@ -37,8 +37,7 @@ function template_override {
 }
 
 # Get OS and architecture details.
-source /etc/os-release
-ARCH=$(uname -m)
+source tools/set-env-variables.sh
 
 # Register RHEL if we are provided with a registration script and intend to do that.
 REGISTER="${REGISTER:-'false'}"
