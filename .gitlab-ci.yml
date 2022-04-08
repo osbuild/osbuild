@@ -5,10 +5,17 @@ stages:
   - finish
 
 .terraform:
+  before_script:
+    - schutzbot/ci_details.sh > ci-details-before-run
   after_script:
+    - schutzbot/ci_details.sh > ci-details-after-run
     - schutzbot/update_github_status.sh update
   tags:
     - terraform
+  artifacts:
+    paths:
+      - ci-details-before-run
+      - ci-details-after-run
 
 init:
   stage: init
