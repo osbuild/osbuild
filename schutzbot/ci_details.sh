@@ -8,6 +8,9 @@ CPUS=$(nproc)
 MEM=$(free -m | grep -oP '\d+' | head -n 1)
 DISK=$(df --output=size -h / | sed '1d;s/[^0-9]//g')
 HOSTNAME=$(uname -n)
+USER=$(whoami)
+ARCH=$(uname -m)
+KERNEL=$(uname -r)
 
 echo -e "\033[0;36m"
 cat << EOF
@@ -16,16 +19,24 @@ CI MACHINE SPECS
 ------------------------------------------------------------------------------
 
      Hostname: ${HOSTNAME}
+         User: ${USER}
    Primary IP: ${PRIMARY_IP}
   External IP: ${EXTERNAL_IP}
   Reverse DNS: ${PTR}
          CPUs: ${CPUS}
           RAM: ${MEM} GB
          DISK: ${DISK} GB
+         ARCH: ${ARCH}
+       KERNEL: ${KERNEL}
 
 ------------------------------------------------------------------------------
 EOF
 echo -e "\033[0m"
+
+echo "List of system repositories:"
+yum repolist -v
+
+echo "------------------------------------------------------------------------------"
 
 echo "List of installed packages:"
 rpm -qa | sort
