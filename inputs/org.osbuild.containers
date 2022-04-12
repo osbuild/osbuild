@@ -121,14 +121,14 @@ SCHEMA = r"""
 class ContainersInput(inputs.InputService):
 
     @staticmethod
-    def map_source_ref(source, ref, data, target):
+    def map_source_ref(source, ref, _data, target):
         cache_dir = os.path.join(source, ref)
         os.link(os.path.join(cache_dir, "container-image.tar"), os.path.join(target, ref))
 
         return ref, "docker-archive"
 
     @staticmethod
-    def map_pipeline_ref(store, ref, data, target):
+    def map_pipeline_ref(store, ref, _data, target):
         # prepare the mount point
         os.makedirs(target, exist_ok=True)
         print("target", target)
