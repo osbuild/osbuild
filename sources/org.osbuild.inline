@@ -15,9 +15,6 @@ import base64
 import contextlib
 import os
 import sys
-import tempfile
-
-from typing import Dict
 
 from osbuild import sources
 from osbuild.util.checksum import verify_file
@@ -56,15 +53,18 @@ SCHEMA = """
 """
 
 
-def process(items: Dict, cache: str, tmpdir):
-    for checksum, item in items.items():
-        target = os.path.join(cache, checksum)
-        floating = os.path.join(tmpdir, checksum)
+class InlineSource(sources.SourceService):
+
+    content_type = "org.osbuild.files"
+
+    def fetch_one(self, checksum, desc):
+        target = os.path.join(self.cache, checksum)
+        floating = os.path.join(self.tmpdir, checksum)
 
         if os.path.isfile(target):
             return
 
-        data = base64.b64decode(item["data"])
+        data = base64.b64decode(desc["data"])
 
         # Write the bits to disk and then verify the checksum
         # This ensures that 1) the data is ok and that 2) we
@@ -73,18 +73,10 @@ def process(items: Dict, cache: str, tmpdir):
             f.write(data)
 
         if not verify_file(floating, checksum):
-            raise RuntimeError("Checksum mismatch for {}".format(checksum))
+            raise RuntimeError(f"Checksum mismatch for {format(checksum)}")
 
         with contextlib.suppress(FileExistsError):
             os.rename(floating, target)
-
-
-class InlineSource(sources.SourceService):
-
-    content_type = "org.osbuild.files"
-
-    def download(self, items):
-        process(items, self.cache, self.tmpdir)
 
 
 def main():

@@ -64,18 +64,18 @@ SCHEMA = """
 """
 
 
-def download(items, cache):
-    for image_id, item in items.items():
-        image = item["image"]
+class SkopeoSource(sources.SourceService):
+
+    content_type = "org.osbuild.containers"
+
+    def fetch_one(self, checksum, desc):
+        image_id = checksum
+        image = desc["image"]
         imagename = image["name"]
         digest = image["digest"]
         tls_verify = image.get("tls-verify", True)
 
-        path = f"{cache}/{image_id}"
-        if os.path.isdir(path):
-            continue
-
-        with tempfile.TemporaryDirectory(prefix="tmp-download-", dir=cache) as tmpdir:
+        with tempfile.TemporaryDirectory(prefix="tmp-download-", dir=self.cache) as tmpdir:
             archive_path = os.path.join(tmpdir, "container-image.tar")
 
             source = f"docker://{imagename}@{digest}"
@@ -113,16 +113,7 @@ def download(items, cache):
             # Atomically move download dir into place on successful download
             os.chmod(tmpdir, 0o755)
             with ctx.suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
-                os.rename(tmpdir, path)
-
-
-class SkopeoSource(sources.SourceService):
-
-    content_type = "org.osbuild.containers"
-
-    def download(self, items):
-
-        download(items, self.cache)
+                os.rename(tmpdir, f"{self.cache}/{image_id}")
 
 
 def main():
