@@ -3,7 +3,9 @@ import contextlib
 import os
 import json
 import tempfile
+import concurrent.futures
 from abc import abstractmethod
+from typing import Dict, Tuple
 
 from . import host
 from .objectstore import ObjectStore
@@ -51,6 +53,8 @@ class Source:
 class SourceService(host.Service):
     """Source host service"""
 
+    max_workers = 1
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cache = None
@@ -58,8 +62,24 @@ class SourceService(host.Service):
         self.tmpdir = None
 
     @abc.abstractmethod
-    def download(self, items):
-        pass
+    def fetch_one(self, checksum, desc) -> None:
+        """Performs the actual fetch of an element described by its checksum and its descriptor"""
+
+    def exists(self, checksum, _desc) -> bool:
+        """Returns True if the item to download is in cache. """
+        return os.path.isfile(f"{self.cache}/{checksum}")
+
+    # pylint: disable=[no-self-use]
+    def transform(self, checksum, desc) -> Tuple:
+        """Modify the input data before downloading. By default only transforms an item object to a Tupple."""
+        return checksum, desc
+
+    def download(self, items: Dict) -> None:
+        items = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
+        items = map(lambda i: self.transform(i[0], i[1]), items)  # prepare each item to be downloaded
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            for _ in executor.map(self.fetch_one, *zip(*items)):
+                pass
 
     @property
     @classmethod
