@@ -114,9 +114,23 @@
         {
           "type": "array",
           "items": { "type": "string" }
-        },{
+        }, {
           "type": "object",
           "additionalProperties": true
+        }, {
+          "type": "array",
+          "items": {
+            "type": "object", 
+            "required": ["id"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "options": {
+                "type": "object", 
+                "additionalProperties": true
+              }
+            }
+          }
         }
       ]
     },

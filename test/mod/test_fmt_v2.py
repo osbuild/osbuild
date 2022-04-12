@@ -439,3 +439,9 @@ class TestFormatV2(unittest.TestCase):
         }
 
         self.check_input_references(desc)
+
+        # check references passed as array of objects
+        inputs["references"] = [
+            {"id": k, "options": {}} for k in refs
+        ]
+        self.check_input_references(desc)
