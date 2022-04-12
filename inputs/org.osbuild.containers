@@ -19,7 +19,6 @@ root of the tree is used as the oci archive file to install.
 
 import os
 import sys
-import pathlib
 
 from osbuild import inputs
 
