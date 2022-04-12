@@ -7,7 +7,7 @@ repository. Optionally, if `ref` was specified, create an new
 reference for that commit.
 
 The returned data in `refs` is a dictionary where the keys are
-commit ids and the values are dictionries. The latter will
+commit ids and the values are dictionaries. The latter will
 contain `ref` it was specified.
 """
 
