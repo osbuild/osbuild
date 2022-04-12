@@ -21,6 +21,18 @@ from osbuild import inputs
 
 
 SCHEMA = """
+"definitions": {
+  "options": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "ref": {
+        "type": "string",
+        "description": "OSTree reference to create for this commit"
+      }
+    }
+  }
+},
 "additionalProperties": false,
 "required": ["type", "origin", "references"],
 "properties": {
@@ -46,14 +58,7 @@ SCHEMA = """
       "minProperties": 1,
       "patternProperties": {
         ".*": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "ref": {
-                "type": "string",
-                "description": "OSTree reference to create for this commit"
-            }
-          }
+          "$ref": "#/definitions/options"
         }
       }
     }]
