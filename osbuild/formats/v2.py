@@ -248,7 +248,14 @@ def load_input(name: str, description: Dict, index: Index, stage: Stage, manifes
     refs = description.get("references", {})
 
     if isinstance(refs, list):
-        refs = {r: {} for r in refs}
+        def make_ref(ref):
+            if isinstance(ref, str):
+                return ref, {}
+            if isinstance(ref, dict):
+                return ref.get("id"), ref.get("options", {})
+            raise ValueError(f"Invalid reference: {ref}")
+
+        refs = dict(make_ref(ref) for ref in refs)
 
     if origin == "org.osbuild.pipeline":
         resolved = {}

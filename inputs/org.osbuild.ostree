@@ -61,6 +61,24 @@ SCHEMA = """
           "$ref": "#/definitions/options"
         }
       }
+    }, {
+      "type": "array",
+      "additionalItems": false,
+      "minItems": 1,
+      "maxItems": 1,
+      "items": [{
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "options": {
+            "$ref": "#/definitions/options"
+          }
+        }
+      }]
     }]
   }
 }
