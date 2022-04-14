@@ -1,0 +1,125 @@
+{
+  "version": "2",
+  "sources": {
+    "org.osbuild.curl": {
+      "items": {
+        "sha256:6adcd6e63836263f8194f976a385eb3ca8a263a2ac5b08c077961ebe36f33c52": {
+          "url": "https://raw.githubusercontent.com/osbuild/osbuild/008d013e1c65eb123c88b55f11a28b819c0d27a6/osbuild.spec"
+        },
+        "sha256:60397199ffda7b66deb960abf3f2ae98fb9c994a3b95dd520252ac87283723ee": {
+          "url": "https://github.com/osbuild/osbuild/archive/refs/tags/v54.tar.gz"
+        }
+      }
+    }
+  },
+  "pipelines": [
+    {
+      "name": "build",
+      "runner": "org.osbuild.fedora34",
+      "stages": [
+        {
+          "type": "org.osbuild.rpm",
+          "inputs": {
+            "packages": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.source",
+              "mpp-depsolve": {
+                "architecture": "x86_64",
+                "module-platform-id": "f34",
+                "repos": [
+                  {
+                    "id": "default",
+                    "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
+                  }
+                ],
+                "packages": [
+                  "dnf",
+                  "git",
+                  "make",
+                  "policycoreutils",
+                  "python3-devel",
+                  "python3-docutils",
+                  "python3-iniparse",
+                  "qemu-img",
+                  "rpm-build",
+                  "selinux-policy-devel",
+                  "selinux-policy-targeted",
+                  "systemd",
+                  "tar",
+                  "xz"
+                ]
+              }
+            }
+          },
+          "options": {
+            "gpgkeys": [
+              "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBF1RVqsBEADWMBqYv/G1r4PwyiPQCfg5fXFGXV1FCZ32qMi9gLUTv1CX7rYy\nH4Inj93oic+lt1kQ0kQCkINOwQczOkm6XDkEekmMrHknJpFLwrTK4AS28bYF2RjL\nM+QJ/dGXDMPYsP0tkLvoxaHr9WTRq89A+AmONcUAQIMJg3JxXAAafBi2UszUUEPI\nU35MyufFt2ePd1k/6hVAO8S2VT72TxXSY7Ha4X2J0pGzbqQ6Dq3AVzogsnoIi09A\n7fYutYZPVVAEGRUqavl0th8LyuZShASZ38CdAHBMvWV4bVZghd/wDV5ev3LXUE0o\nitLAqNSeiDJ3grKWN6v0qdU0l3Ya60sugABd3xaE+ROe8kDCy3WmAaO51Q880ZA2\niXOTJFObqkBTP9j9+ZeQ+KNE8SBoiH1EybKtBU8HmygZvu8ZC1TKUyL5gwGUJt8v\nergy5Bw3Q7av520sNGD3cIWr4fBAVYwdBoZT8RcsnU1PP67NmOGFcwSFJ/LpiOMC\npZ1IBvjOC7KyKEZY2/63kjW73mB7OHOd18BHtGVkA3QAdVlcSule/z68VOAy6bih\nE6mdxP28D4INsts8w6yr4G+3aEIN8u0qRQq66Ri5mOXTyle+ONudtfGg3U9lgicg\nz6oVk17RT0jV9uL6K41sGZ1sH/6yTXQKagdAYr3w1ix2L46JgzC+/+6SSwARAQAB\ntDFGZWRvcmEgKDMyKSA8ZmVkb3JhLTMyLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQI4BBMBAgAiBQJdUVarAhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAK\nCRBsEwJtEslE0LdAD/wKdAMtfzr7O2y06/sOPnrb3D39Y2DXbB8y0iEmRdBL29Bq\n5btxwmAka7JZRJVFxPsOVqZ6KARjS0/oCBmJc0jCRANFCtM4UjVHTSsxrJfuPkel\nvrlNE9tcR6OCRpuj/PZgUa39iifF/FTUfDgh4Q91xiQoLqfBxOJzravQHoK9VzrM\nNTOu6J6l4zeGzY/ocj6DpT+5fdUO/3HgGFNiNYPC6GVzeiA3AAVR0sCyGENuqqdg\nwUxV3BIht05M5Wcdvxg1U9x5I3yjkLQw+idvX4pevTiCh9/0u+4g80cT/21Cxsdx\n7+DVHaewXbF87QQIcOAing0S5QE67r2uPVxmWy/56TKUqDoyP8SNsV62lT2jutsj\nLevNxUky011g5w3bc61UeaeKrrurFdRs+RwBVkXmtqm/i6g0ZTWZyWGO6gJd+HWA\nqY1NYiq4+cMvNLatmA2sOoCsRNmE9q6jM/ESVgaH8hSp8GcLuzt9/r4PZZGl5CvU\neldOiD221u8rzuHmLs4dsgwJJ9pgLT0cUAsOpbMPI0JpGIPQ2SG6yK7LmO6HFOxb\nAkz7IGUt0gy1MzPTyBvnB+WgD1I+IQXXsJbhP5+d+d3mOnqsd6oDM/grKBzrhoUe\noNadc9uzjqKlOrmrdIR3Bz38SSiWlde5fu6xPqJdmGZRNjXtcyJlbSPVDIloxw==\n=QWRO\n-----END PGP PUBLIC KEY BLOCK-----\n"
+            ],
+            "exclude": {
+              "docs": true
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.selinux",
+          "options": {
+            "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts",
+            "labels": {
+              "/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
+              "/usr/bin/tar": "system_u:object_r:install_exec_t:s0"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "srpm",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.rpmbuild.source",
+          "inputs": {
+            "specfile": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.source",
+              "references": {
+                "sha256:6adcd6e63836263f8194f976a385eb3ca8a263a2ac5b08c077961ebe36f33c52": {
+                  "rename": "osbuild.spec"
+                }
+              }
+            },
+            "sources": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.source",
+              "references": {
+                "sha256:60397199ffda7b66deb960abf3f2ae98fb9c994a3b95dd520252ac87283723ee": {
+                  "rename": "osbuild-54.tar.gz"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "rpms",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.rpmbuild.binary",
+          "inputs": {
+            "srpm": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:srpm": {
+                  "file": "osbuild-54-1.fc34.src.rpm"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
