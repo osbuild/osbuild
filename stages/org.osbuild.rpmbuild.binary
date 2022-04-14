@@ -64,11 +64,16 @@ def main(inputs, output, _options):
             cmd, check=True
         )
 
+        spec = list(os.scandir(os.path.join(topdir, "SPECS")))
+
+        if len(spec) > 1:
+            raise RuntimeError("More than one spec file found")
+
         cmd = [
             "rpmbuild", "-bb",
             "--nodeps",
             "--define", f"_topdir {topdir}",
-            os.path.join(topdir, "SPECS", "osbuild.spec")
+            os.path.join(topdir, "SPECS", spec[0])
         ]
 
         subprocess.run(
