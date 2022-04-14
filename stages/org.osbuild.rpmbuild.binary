@@ -1,0 +1,84 @@
+#!/usr/bin/python3
+"""
+Build source rpm via `rpmbuild`
+
+Buildhost commands used: `rpmbuild`.
+"""
+
+import os
+import subprocess
+import tempfile
+import sys
+
+import osbuild.api
+
+
+SCHEMA_2 = r"""
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["srpm"],
+  "properties": {
+    "srpm": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": false
+}
+"""
+
+
+def srpm_input(inputs):
+    specfile = inputs["srpm"]
+    files = specfile["data"]["files"]
+    assert len(files) == 1
+
+    filename, _ = files.popitem()
+    return specfile["path"], filename
+
+
+def main(inputs, output, _options):
+
+    with tempfile.TemporaryDirectory(dir="/var") as topdir:
+
+        # point the specs directory to the specfile input
+        srpms, srpm = srpm_input(inputs)
+        os.symlink(srpms, os.path.join(topdir, "SRPMS"))
+
+        # put the resulting RPMs into the output directory
+        os.symlink(output, os.path.join(topdir, "RPMS"))
+
+        for d in ("BUILD", "BUILDROOT", "SPECS", "SOURCES"):
+            os.makedirs(os.path.join(topdir, d))
+
+        cmd = [
+            "rpm", "-i",
+            "--define", f"_topdir {topdir}",
+            os.path.join(srpms, srpm)
+        ]
+
+        subprocess.run(
+            cmd, check=True
+        )
+
+        cmd = [
+            "rpmbuild", "-bb",
+            "--nodeps",
+            "--define", f"_topdir {topdir}",
+            os.path.join(topdir, "SPECS", "osbuild.spec")
+        ]
+
+        subprocess.run(
+            cmd, check=True
+        )
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"], args["options"])
+    sys.exit(r)
