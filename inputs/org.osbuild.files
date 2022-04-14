@@ -37,6 +37,10 @@ SCHEMA = r"""
     "description": "File to access with in a pipeline",
     "type": "string"
   },
+  "rename": {
+    "description": "Rename the the file to this name",
+    "type": "string"
+  },
   "plain-ref": {
     "type": "array",
     "items": {
@@ -49,6 +53,9 @@ SCHEMA = r"""
     "properties": {
       "metadata": {
         "$ref": "#/definitions/metadata"
+      },
+      "rename": {
+        "$ref": "#/definitions/rename"
       }
     }
   },
@@ -155,9 +162,10 @@ class FilesInput(inputs.InputService):
 
     @staticmethod
     def map_source_ref(source, ref, data, target):
-        os.link(f"{source}/{ref}", f"{target}/{ref}")
+        name = data.get("rename", ref).lstrip("/")
+        os.link(f"{source}/{ref}", f"{target}/{name}")
         data = data.get("metadata", {})
-        return ref, data
+        return name, data
 
     def map(self, store, origin, refs, target, _options):
 
