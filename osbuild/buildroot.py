@@ -265,7 +265,6 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         cmd = [
             "bwrap",
-            "--cap-add", "CAP_MAC_ADMIN",
             "--chdir", "/",
             "--die-with-parent",
             "--new-session",
