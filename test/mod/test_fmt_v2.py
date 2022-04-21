@@ -135,6 +135,41 @@ BAD_REF_PIPELINE = {
 }
 
 
+INPUT_REFERENCES = {
+    "version": "2",
+    "sources": {
+        "org.osbuild.curl": {
+            "items": {
+                "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4":
+                "https://internet/curl-7.69.1-1.fc32.x86_64.rpm",
+                "sha256:184a0c274d4efa84a2f6d0a128aae87e2fa231fe9067b4a4dc8f886fa6f1dc18":
+                "https://internet/kernel-5.11.12-300.fc34.x86_64.rpm"
+            }
+        },
+    },
+    "pipelines": [
+        {
+            "name": "os",
+            "stages": [
+                {
+                    "type": "org.osbuild.rpm",
+                    "inputs": {
+                        "packages": {
+                            "type": "org.osbuild.files",
+                            "origin": "org.osbuild.source",
+                            "references": [
+                                "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
+                                "sha256:184a0c274d4efa84a2f6d0a128aae87e2fa231fe9067b4a4dc8f886fa6f1dc18"
+                            ]
+                        }
+                    }
+                }
+            ],
+        },
+    ]
+}
+
+
 class TestFormatV2(unittest.TestCase):
     def setUp(self):
         self.index = osbuild.meta.Index(os.curdir)
@@ -358,3 +393,49 @@ class TestFormatV2(unittest.TestCase):
         for check in itertools.permutations(devices.keys()):
             before = {name: devices[name] for name in check}
             ensure_sorted(fmt.sort_devices(before))
+
+    def check_input_references(self, desc):
+        info = self.index.detect_format_info(desc)
+        assert info, "Failed to detect format"
+
+        fmt = info.module
+        self.assertEqual(fmt.VERSION, "2")
+
+        res = fmt.validate(desc, self.index)
+        self.assert_validation(res)
+
+        manifest = fmt.load(desc, self.index)
+        self.assertIsNotNone(manifest)
+
+        pl = manifest.get("os")
+        assert pl is not None
+
+        packages = pl.stages[0].inputs["packages"]
+        assert packages is not None
+        assert len(packages.refs) == 2
+
+        refs = [
+            "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
+            "sha256:184a0c274d4efa84a2f6d0a128aae87e2fa231fe9067b4a4dc8f886fa6f1dc18"
+        ]
+
+        keys = list(packages.refs.keys())
+        assert keys == refs
+
+    def test_input_references(self):
+
+        # assert that the input references are ordered properly, i.e.
+        # their order is preserved as specified in the manifest
+
+        desc = INPUT_REFERENCES
+        self.check_input_references(desc)
+
+        inputs = desc["pipelines"][0]["stages"][0]["inputs"]["packages"]
+        refs = inputs["references"]
+
+        # check references as maps
+        inputs["references"] = {
+            k: {} for k in refs
+        }
+
+        self.check_input_references(desc)

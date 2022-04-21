@@ -36,6 +36,7 @@ SCHEMA = """
     "description": "Commit identifier",
     "oneOf": [{
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "string"
       }
