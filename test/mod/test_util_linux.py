@@ -69,3 +69,29 @@ def test_ioctl_toggle_immutable(tmpdir):
 
         # Verify we can unlink the file again, once the flag is cleared.
         os.unlink(f"{tmpdir}/immutable")
+
+
+@pytest.mark.skipif(not linux.cap_is_supported(), reason="no support for capabilities")
+def test_capabilities():
+    #
+    # Test the capability related utility functions
+    #
+
+    lib = linux.LibCap.get_default()
+    assert lib
+    l2 = linux.LibCap.get_default()
+    assert lib is l2
+
+    assert linux.cap_is_supported()
+
+    assert linux.cap_is_supported("CAP_MAC_ADMIN")
+
+    val = lib.from_name("CAP_MAC_ADMIN")
+    assert val >= 0
+
+    name = lib.to_name(val)
+    assert name == "CAP_MAC_ADMIN"
+
+    assert not linux.cap_is_supported("CAP_GICMO")
+    with pytest.raises(OSError):
+        lib.from_name("CAP_GICMO")
