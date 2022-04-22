@@ -13,6 +13,7 @@ import pytest
 from osbuild.buildroot import BuildRoot
 from osbuild.monitor import LogMonitor, NullMonitor
 from osbuild.pipeline import detect_host_runner
+from osbuild.util import linux
 
 from ..test import TestBase
 
@@ -226,3 +227,62 @@ def test_env_isolation(tempdir):
 
     for k in have:
         assert k in allowed
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_caps(tempdir):
+    runner = detect_host_runner()
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
+
+    ipc = pathlib.Path(tempdir, "ipc")
+    ipc.mkdir()
+
+    monitor = NullMonitor(sys.stderr.fileno())
+    with BuildRoot("/", runner, libdir, var) as root:
+
+        def run_and_get_caps():
+            cmd = ["/bin/sh", "-c", "cat /proc/self/status > /ipc/status"]
+            r = root.run(cmd, monitor, binds=[f"{ipc}:/ipc"])
+
+            assert r.returncode == 0
+            with open(os.path.join(ipc, "status"), encoding="utf-8") as f:
+                data = f.readlines()
+            assert data
+
+            print(data)
+            perm = list(filter(lambda x: x.startswith("CapEff"), data))
+
+            assert perm and len(perm) == 1
+            perm = perm[0]
+
+            perm = perm[7:].strip()  # strip "CapEff"
+            print(perm)
+
+            caps = linux.cap_mask_to_set(int(perm, base=16))
+            return caps
+
+        # check case of `BuildRoot.caps` is `None`, i.e. don't drop capabilities,
+        # thus the effective capabilities should be the bounding set
+        assert root.caps is None
+
+        bound_set = linux.cap_bound_set()
+
+        caps = run_and_get_caps()
+        assert caps == bound_set
+
+        # drop everything but `CAP_SYS_ADMIN`
+        assert "CAP_SYS_ADMIN" in bound_set
+
+        enable = set(["CAP_SYS_ADMIN"])
+        disable = bound_set - enable
+
+        root.caps = enable
+
+        caps = run_and_get_caps()
+
+        for e in enable:
+            assert e in caps
+        for d in disable:
+            assert d not in caps

@@ -16,6 +16,10 @@ import subprocess
 import tempfile
 import time
 
+from typing import Optional
+
+from osbuild.util import linux
+
 
 __all__ = [
     "BuildRoot",
@@ -79,6 +83,10 @@ class BuildRoot(contextlib.AbstractContextManager):
     The `run()` method allows running applications in this environment. Some
     state is persistent across runs, including data in `/var`. It is deleted
     only when exiting the context manager.
+
+    If `BuildRoot.caps` is not `None`, only the capabilities listed in this
+    set will be retained (all others will be dropped), otherwise all caps
+    are retained.
     """
 
     def __init__(self, root, runner, libdir, var, *, rundir="/run/osbuild"):
@@ -94,6 +102,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         self.proc = None
         self.tmp = None
         self.mount_boot = True
+        self.caps: Optional[set] = None
 
     @staticmethod
     def _mknod(path, name, mode, major, minor):
@@ -273,6 +282,8 @@ class BuildRoot(contextlib.AbstractContextManager):
             "--unshare-net"
         ]
 
+        cmd += self.build_capabilities_args()
+
         cmd += mounts
         cmd += ["--", f"/run/osbuild/lib/runners/{self._runner}"]
         cmd += argv
@@ -320,6 +331,32 @@ class BuildRoot(contextlib.AbstractContextManager):
         data.close()
 
         return CompletedBuild(proc, output)
+
+    def build_capabilities_args(self):
+        """Build the capabilities arguments for bubblewrap"""
+        args = []
+
+        # If no capabilities are explicitly requested we retain all of them
+        if self.caps is None:
+            return args
+
+        # Under the assumption that we are running as root, the capabilities
+        # for the child process (bubblewrap) are calculated as follows:
+        #   P'(effective) = P'(permitted)
+        #   P'(permitted) = P(inheritable) | P(bounding)
+        # Thus bubblewrap will effectively run with all capabilities that
+        # are present in the bounding set. If run as root, bubblewrap will
+        # preserve all capabilities in the effective set when running the
+        # container, which corresponds to our bounding set.
+        # Therefore: drop all capabilities present in the bounding set minus
+        # the ones explicitly requested.
+        have = linux.cap_bound_set()
+        drop = have - self.caps
+
+        for cap in sorted(drop):
+            args += ["--cap-drop", cap]
+
+        return args
 
     @classmethod
     def read_with_timeout(cls, proc, poller, start, timeout):
