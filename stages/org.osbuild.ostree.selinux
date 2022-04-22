@@ -14,6 +14,9 @@ from osbuild.util import ostree
 from osbuild.util import selinux
 
 
+CAPABILITIES = ["CAP_MAC_ADMIN"]
+
+
 SCHEMA = """
 "additionalProperties": false,
 "required": ["deployment"],

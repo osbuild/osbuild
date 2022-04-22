@@ -12,6 +12,9 @@ import sys
 import osbuild.api
 
 
+CAPABILITIES = ["CAP_MAC_ADMIN"]
+
+
 SCHEMA_2 = r"""
 "inputs": {
   "type": "object",
