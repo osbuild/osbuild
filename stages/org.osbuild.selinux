@@ -29,6 +29,9 @@ import osbuild.api
 from osbuild.util import selinux
 
 
+CAPABILITIES = ["CAP_MAC_ADMIN"]
+
+
 SCHEMA = """
 "additionalProperties": false,
 "required": ["file_contexts"],

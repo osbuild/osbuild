@@ -26,6 +26,7 @@ import subprocess
 
 import osbuild.api
 
+CAPABILITIES = ["CAP_MAC_ADMIN"]
 
 SCHEMA = """
 "required": ["osname", "rootfs", "ref"],
