@@ -157,7 +157,7 @@ class Stage:
             build_root.mount_boot = bool(self.build)
 
             # drop capabilities other than `DEFAULT_CAPABILITIES`
-            build_root.caps = DEFAULT_CAPABILITIES
+            build_root.caps = DEFAULT_CAPABILITIES | self.info.caps
 
             tmpdir = store.tempdir(prefix="buildroot-tmp-")
             tmpdir = cm.enter_context(tmpdir)
