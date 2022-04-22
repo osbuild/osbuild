@@ -17,6 +17,32 @@ from .sources import Source
 from .util import osrelease
 
 
+DEFAULT_CAPABILITIES = {
+    "CAP_AUDIT_WRITE",
+    "CAP_CHOWN",
+    "CAP_DAC_OVERRIDE",
+    "CAP_DAC_READ_SEARCH",
+    "CAP_FOWNER",
+    "CAP_FSETID",
+    "CAP_IPC_LOCK",
+    "CAP_LINUX_IMMUTABLE",
+    "CAP_MAC_ADMIN",
+    "CAP_MAC_OVERRIDE",
+    "CAP_MKNOD",
+    "CAP_NET_ADMIN",  # bwrap
+    "CAP_NET_BIND_SERVICE",
+    "CAP_SETFCAP",
+    "CAP_SETGID",
+    "CAP_SETPCAP",
+    "CAP_SETUID",
+    "CAP_SYS_ADMIN",
+    "CAP_SYS_CHROOT",
+    "CAP_SYS_NICE",
+    "CAP_SYS_PTRACE",  # bwrap
+    "CAP_SYS_RESOURCE"
+}
+
+
 def cleanup(*objs):
     """Call cleanup method for all objects, filters None values out"""
     _ = map(lambda o: o.cleanup(), filter(None, objs))
@@ -129,6 +155,9 @@ class Stage:
             # if we have a build root, then also bind-mount the boot
             # directory from it, since it may contain efi binaries
             build_root.mount_boot = bool(self.build)
+
+            # drop capabilities other than `DEFAULT_CAPABILITIES`
+            build_root.caps = DEFAULT_CAPABILITIES
 
             tmpdir = store.tempdir(prefix="buildroot-tmp-")
             tmpdir = cm.enter_context(tmpdir)
