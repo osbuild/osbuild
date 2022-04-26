@@ -16,7 +16,8 @@
             "name": "fedora",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512"
           }
-        ]
+        ],
+        "updateable": false
       },
       {
         "file": "/etc/yum.repos.d/fedora-modular.repo",
@@ -33,7 +34,8 @@
             "name": "fedora-modular",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-modular-20210512"
           }
-        ]
+        ],
+        "updateable": false
       },
       {
         "file": "/etc/yum.repos.d/fedora-updates.repo",
@@ -50,7 +52,8 @@
             "name": "updates",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220330"
           }
-        ]
+        ],
+        "updateable": true
       },
       {
         "file": "/etc/yum.repos.d/fedora-updates-modular.repo",
@@ -67,7 +70,8 @@
             "name": "updates-modular",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-modular-20220330"
           }
-        ]
+        ],
+        "updateable": true
       }
     ]
   },
@@ -88,7 +92,8 @@
             "name": "fedora",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106"
           }
-        ]
+        ],
+        "updateable": false
       },
       {
         "file": "/etc/yum.repos.d/fedora-modular.repo",
@@ -105,7 +110,8 @@
             "name": "fedora-modular",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-modular-20220106"
           }
-        ]
+        ],
+        "updateable": false
       },
       {
         "file": "/etc/yum.repos.d/fedora-updates.repo",
@@ -122,7 +128,8 @@
             "name": "updates",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220330"
           }
-        ]
+        ],
+        "updateable": true
       },
       {
         "file": "/etc/yum.repos.d/fedora-updates-modular.repo",
@@ -139,7 +146,8 @@
             "name": "updates-modular",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-modular-20220330"
           }
-        ]
+        ],
+        "updateable": true
       }
     ]
   },
@@ -180,7 +188,8 @@
             "name": "crb",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-crb-n8.6-20220301"
           }
-        ]
+        ],
+        "updateable": true
       }
     ]
   },
@@ -221,7 +230,8 @@
             "name": "crb",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-crb-n9.0-20220301"
           }
-        ]
+        ],
+        "updateable": true
       }
     ]
   },
@@ -262,7 +272,8 @@
             "name": "crb",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-crb-20220330"
           }
-        ]
+        ],
+        "updateable": true
       }
     ]
   },
@@ -283,7 +294,8 @@
             "name": "baseos",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220322"
           }
-        ]
+        ],
+        "updateable": true
       },
       {
         "file": "/etc/yum.repos.d/CentOS-Stream-AppStream.repo",
@@ -300,7 +312,8 @@
             "name": "appstream",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220322"
           }
-        ]
+        ],
+        "updateable": true
       },
       {
         "file": "/etc/yum.repos.d/CentOS-Stream-PowerTools.repo",
@@ -317,7 +330,8 @@
             "name": "powertoosl",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-powertools-20220330"
           }
-        ]
+        ],
+        "updateable": true
       }
     ]
   }
