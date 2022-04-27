@@ -2,6 +2,7 @@
 # Tests for the 'osbuild.util.ostree' module.
 #
 
+import io
 import json
 import os
 import subprocess
@@ -147,3 +148,53 @@ class TestPasswdLike(unittest.TestCase):
 
             with open(os.path.join(tmpdir, "result"), "r") as f:
                 self.assertEqual(sorted(f.readlines()), sorted(result_file_lines))
+
+    #pylint: disable=no-self-use
+    def test_subids_cfg(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+
+            first = [
+                "gicmo:100000:65536",
+                "achilles:100000:65536",
+                "ondrej:100000:65536"
+            ]
+
+            txt = io.StringIO("\n".join(first))
+
+            subids = ostree.SubIdsDB()
+            subids.read(txt)
+
+            assert len(subids.db) == 3
+
+            for name in ("gicmo", "achilles", "ondrej"):
+                assert name in subids.db
+                uid, count = subids.db[name]
+                assert uid == "100000"
+                assert count == "65536"
+
+            second = [
+                "gicmo:200000:1000",
+                "tom:200000:1000",
+                "lars:200000:1000"
+            ]
+
+            txt = io.StringIO("\n".join(second))
+            subids.read(txt)
+
+            assert len(subids.db) == 5
+
+            for name in ("gicmo", "achilles", "tom", "lars"):
+                assert name in subids.db
+
+            for name in ("gicmo", "tom", "lars"):
+                uid, count = subids.db[name]
+                assert uid == "200000"
+                assert count == "1000"
+
+            file = os.path.join(tmpdir, "subuid")
+            subids.write_to(file)
+
+            check = ostree.SubIdsDB()
+            check.read_from(file)
+
+            assert subids.db == check.db

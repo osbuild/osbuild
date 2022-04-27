@@ -1,7 +1,9 @@
+import collections
 import contextlib
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import typing
 
@@ -186,3 +188,51 @@ class PasswdLike:
     def _passwd_lines_to_dict(lines):
         """Take a list of passwd lines and produce a "name": "line" dictionary"""
         return {line.split(':')[0]: line for line in lines}
+
+
+class SubIdsDB:
+    """Represention of subordinate Ids database
+
+    Class to represent a mapping of a user name to subordinate ids,
+    like `/etc/subgid` and `/etc/subuid`.
+    """
+
+    def __init__(self) -> None:
+        self.db = collections.OrderedDict()
+
+    def read(self, fp) -> int:
+        idx = 0
+        for idx, line in enumerate(fp.readlines()):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            comps = line.split(":")
+            if len(comps) != 3:
+                print(f"WARNING: invalid line `{line}`", file=sys.stderr)
+                continue
+            name, uid, count = comps
+            self.db[name] = (uid, count)
+        return idx
+
+    def dumps(self) -> str:
+        """Dump the database to a string"""
+        data = "\n".join([
+            f"{name}:{uid}:{count}\n"
+            for name, (uid, count) in self.db.items()
+        ])
+
+        return data
+
+    def read_from(self, path: PathLike) -> int:
+        """Read a file and add the entries to the database"""
+        with open(path, "r", encoding="utf-8") as f:
+            return self.read(f)
+
+    def write_to(self, path: PathLike) -> None:
+        """Write the database to a file"""
+        data = self.dumps()
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(data)
+
+    def __bool__(self) -> bool:
+        return bool(self.db)
