@@ -12,13 +12,14 @@ files before any RPMs (or other packages) are installed will prevent changes
 in UIDs and GIDs.
 """
 
+import contextlib
 import os
 import sys
 import subprocess
 
 import osbuild.api
 
-from osbuild.util.ostree import PasswdLike
+from osbuild.util.ostree import PasswdLike, SubIdsDB
 
 
 SCHEMA_2 = """
@@ -37,6 +38,10 @@ SCHEMA_2 = """
   }
 }
 """
+
+
+SUBUID_PATH = "etc/subuid"
+SUBGID_PATH = "etc/subgid"
 
 
 def ostree(*args, _input=None, **kwargs):
@@ -64,6 +69,10 @@ def main(tree, inputs, _options):
     source_root, refs = parse_input(inputs)
 
     os.makedirs(os.path.join(tree, "etc"), exist_ok=True)
+
+    subuids = SubIdsDB()
+    subgids = SubIdsDB()
+
     # Only once ref (commit) is currently supported, so this loop will run exactly once
     for commit, data in refs.items():
         ref = data.get("path", commit).lstrip("/")
@@ -82,6 +91,22 @@ def main(tree, inputs, _options):
         passwd = PasswdLike.from_file(os.path.join(checkout_root, "usr/etc/group"), allow_missing_file=True)
         passwd.merge_with_file(os.path.join(checkout_root, "usr/lib/group"), allow_missing_file=False)
         passwd.dump_to_file(os.path.join(tree, "etc/group"))
+
+        # Merge /etc/sub{g,u}id with /etc/sub{g,u}id from the checkout and store it in the buildroot
+        with contextlib.suppress(FileNotFoundError):
+            subuids.read_from(os.path.join(checkout_root, SUBUID_PATH))
+
+        with contextlib.suppress(FileNotFoundError):
+            subgids.read_from(os.path.join(checkout_root, SUBGID_PATH))
+
+    # If we have entries in the subordinate id files, write them to the tree
+    if subuids:
+        subuids.write_to(os.path.join(tree, SUBUID_PATH))
+
+    if subgids:
+        subgids.write_to(os.path.join(tree, SUBGID_PATH))
+
+    return 0
 
 
 if __name__ == '__main__':
