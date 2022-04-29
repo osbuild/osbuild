@@ -115,6 +115,9 @@ SCHEMA_2 = r"""
     "sector-size": {
       "description": "Sector size to use",
       "type": "integer"
+    },
+    "integrity": {
+      "enum": ["hmac-sha256"]
     }
   }
 }
@@ -128,6 +131,7 @@ def main(devices, options):
     pbkdf = options["pbkdf"]
     cipher = options.get("cipher")
     label = options.get("label")
+    integrity = options.get("integrity")
     subsystem = options.get("subsystem", "")
     sector_size = options.get("sector-size")
     path = os.path.join("/dev", device["path"])
@@ -149,6 +153,9 @@ def main(devices, options):
 
     if sector_size:
         command += ["--sector-size", str(sector_size)]
+
+    if integrity:
+        command += ["--integrity", integrity]
 
     # password base key derivation function parameters
     command += [
