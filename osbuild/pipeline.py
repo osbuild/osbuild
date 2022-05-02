@@ -294,13 +294,6 @@ class Pipeline:
             tree = object_store.new()
             return results, build_tree, tree
 
-        # Check if the tree that we are supposed to build does
-        # already exist. If so, short-circuit here
-        tree = object_store.get(self.id)
-
-        if tree:
-            return results, build_tree, tree
-
         # Not in the store yet, need to actually build it, but maybe
         # an intermediate checkpoint exists: Find the last stage that
         # already exists in the store and use that as the base.
