@@ -87,7 +87,7 @@ class Object:
     @property
     def _path(self) -> str:
         if self._base and not self._init:
-            path = self.store.resolve_ref(self._base)
+            path = os.path.join(self.store.resolve_ref(self._base), "tree")
         else:
             path = self._tree
         return path
@@ -135,7 +135,7 @@ class Object:
             umount(target)
             self._readers -= 1
 
-    def store_tree(self):
+    def store_object(self):
         """Store the tree with a fresh name and reset itself
 
         Moves the tree atomically by using rename(2), to a
@@ -147,7 +147,8 @@ class Object:
         self._check_writer()
         self.init()
         destination = str(uuid.uuid4())
-        os.rename(self._tree, os.path.join(self.store.objects, destination))
+        os.rename(self._workdir, os.path.join(self.store.objects, destination))
+        self._workdir = None
         self.reset()
         return destination
 
@@ -286,7 +287,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         if self._get_floating(object_id):
             return True
 
-        return os.access(self.resolve_ref(object_id), os.F_OK)
+        return os.access(os.path.join(self.resolve_ref(object_id), "tree"), os.F_OK)
 
     def resolve_ref(self, object_id: Optional[str]) -> Optional[str]:
         """Returns the path to the given object_id"""
@@ -350,7 +351,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         # the object is stored in the objects directory using its unique
         # name. This means that eatch commit will always result in a new
         # object in the store, even if an identical one exists.
-        object_name = obj.store_tree()
+        object_name = obj.store_object()
 
         # symlink the object_id (config hash) in the refs directory to the
         # object name in the objects directory. If a symlink by that name
