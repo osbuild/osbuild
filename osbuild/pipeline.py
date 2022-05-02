@@ -283,7 +283,7 @@ class Pipeline:
         if not self.build:
             build_tree = objectstore.HostTree(object_store)
         else:
-            build_tree = object_store.get(self.build)
+            build_tree, _ = object_store.get(self.build)
 
         if not build_tree:
             raise AssertionError(f"build tree {self.build} not found")
@@ -293,6 +293,7 @@ class Pipeline:
         if not self.stages:
             tree = object_store.new()
             return results, build_tree, tree
+        results["stages"] = []
 
         # Not in the store yet, need to actually build it, but maybe
         # an intermediate checkpoint exists: Find the last stage that
@@ -300,8 +301,10 @@ class Pipeline:
         tree = object_store.new()
         base_idx = -1
         for i in reversed(range(len(self.stages))):
-            if object_store.contains(self.stages[i].id):
-                tree.base = self.stages[i].id
+            tr, res = object_store.get(self.stages[i].id)
+            if tr:
+                tree = tr
+                results = res
                 base_idx = i
                 break
 
@@ -310,8 +313,6 @@ class Pipeline:
         # referenced by the `tree_id` in the content store if they are
         # both committed. However, after the call to commit all the
         # trees will be based on the winner.
-        results["stages"] = []
-
         for stage in self.stages[base_idx + 1:]:
             with build_tree.read() as build_path, tree.write() as path:
 
@@ -338,13 +339,11 @@ class Pipeline:
             tree.id = stage.id
 
             if stage.checkpoint:
-                object_store.commit(tree, stage.id)
+                object_store.commit(tree, results, stage.id)
 
         return results, build_tree, tree
 
     def run(self, store, monitor, libdir, stage_timeout=None):
-        results = {"success": True}
-
         monitor.begin(self)
 
         # If the final result is already in the store, no need to attempt
@@ -352,7 +351,7 @@ class Pipeline:
         # tree exists, we return it as well, but we do not care if it is
         # missing, since it is not a mandatory part of the result and would
         # usually be needless overhead.
-        obj = store.get(self.id)
+        obj, results = store.get(self.id)
 
         if not obj:
             results, _, obj = self.build_stages(store, monitor, libdir, stage_timeout)

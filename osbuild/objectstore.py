@@ -92,6 +92,14 @@ class Object:
             path = self._tree
         return path
 
+    @property
+    def results(self) -> Optional[dict]:
+        if self._base and not self._init:
+            with open(os.path.join(self.store.resolve_ref(self._base), "results.json"), encoding="utf-8") as fp:
+                return json.load(fp)
+
+        return None
+
     @contextlib.contextmanager
     def write(self) -> str:
         """Return a path that can be written to"""
@@ -135,7 +143,7 @@ class Object:
             umount(target)
             self._readers -= 1
 
-    def store_object(self):
+    def store_object(self, results: dict):
         """Store the tree with a fresh name and reset itself
 
         Moves the tree atomically by using rename(2), to a
@@ -146,6 +154,8 @@ class Object:
         self._check_readers()
         self._check_writer()
         self.init()
+        with open(os.path.join(self._workdir, "results.json"), "w", encoding="utf-8") as fp:
+            json.dump(results, fp)
         destination = str(uuid.uuid4())
         os.rename(self._workdir, os.path.join(self.store.objects, destination))
         self._workdir = None
@@ -301,16 +311,18 @@ class ObjectStore(contextlib.AbstractContextManager):
                                            prefix=prefix,
                                            suffix=suffix)
 
-    def get(self, object_id):
+    def get(self, object_id) -> Optional[dict]:
         obj = self._get_floating(object_id)
         if obj:
-            return obj
+            return obj, None
 
         if not self.contains(object_id):
-            return None
+            return None, None
 
         obj = self.new(base_id=object_id)
-        return obj
+        results = obj.results()
+
+        return obj, results
 
     def new(self, base_id=None):
         """Creates a new temporary `Object`.
@@ -324,6 +336,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         """
 
         obj = Object(self)
+        result = None
 
         if base_id:
             # if we were given a base id then this is the base
@@ -334,9 +347,9 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         self._objs.add(obj)
 
-        return obj
+        return obj, result
 
-    def commit(self, obj: Object, object_id: str) -> str:
+    def commit(self, obj: Object, results: dict, object_id: str) -> str:
         """Commits a Object to the object store
 
         Move the contents of the obj (Object) to object directory
@@ -351,7 +364,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         # the object is stored in the objects directory using its unique
         # name. This means that eatch commit will always result in a new
         # object in the store, even if an identical one exists.
-        object_name = obj.store_object()
+        object_name = obj.store_object(results)
 
         # symlink the object_id (config hash) in the refs directory to the
         # object name in the objects directory. If a symlink by that name
