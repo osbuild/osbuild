@@ -1,0 +1,8 @@
+{
+  "added_files": [
+    "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules",
+    "/etc/udev/rules.d/osbuild.rules"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
