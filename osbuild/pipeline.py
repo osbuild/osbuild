@@ -299,13 +299,16 @@ class Pipeline:
         # Not in the store yet, need to actually build it, but maybe
         # an intermediate checkpoint exists: Find the last stage that
         # already exists in the store and use that as the base.
-        tree = object_store.new()
+        tree = None
         todo = collections.deque()
         for stage in reversed(self.stages):
-            if object_store.contains(stage.id):
-                tree.base = stage.id
+            tree = object_store.get(stage.id)
+            if tree:
                 break
             todo.append(stage)  # append right side of the deque
+
+        if not tree:
+            tree = object_store.new()
 
         # If two run() calls race each-other, two trees will get built
         # and it is nondeterministic which of them will end up
