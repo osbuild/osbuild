@@ -27,6 +27,7 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         self.asm = None
         self.results = set()
         self.logger = io.StringIO()
+        self.output = None
 
     def begin(self, pipeline: osbuild.Pipeline):
         self.counter["begin"] += 1
