@@ -353,6 +353,7 @@ class Loop:
             unchanged (default is None)
         """
 
+        #  pylint: disable=attribute-defined-outside-init
         info = self.get_status()
         if offset:
             info.lo_offset = offset
