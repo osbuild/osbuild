@@ -25,6 +25,7 @@ BOLD = "\033[1m"
 
 class TextWriter:
     """Helper class for writing text to file descriptors"""
+
     def __init__(self, fd: int):
         self.fd = fd
         self.isatty = os.isatty(fd)
