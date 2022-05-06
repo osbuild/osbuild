@@ -91,6 +91,11 @@ class LogMonitor(BaseMonitor):
     the log will get written to. If `fd`  is a `TTY`, escape
     sequences will be used to highlight sections of the log.
     """
+
+    def __init__(self, fd: int):
+        super().__init__(fd)
+        self.timer_start = 0
+
     def result(self, result):
         duration = int(time.time() - self.timer_start)
         self.out.write(f"\n⏱  Duration: {duration}s\n")
