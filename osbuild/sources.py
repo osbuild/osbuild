@@ -54,6 +54,10 @@ class SourceService(host.Service):
     def download(self, items, cache, options):
         pass
 
+    def setup(self, cache, content_type):
+        self.cache = os.path.join(cache, content_type)
+        os.makedirs(self.cache, exist_ok=True)
+
     def dispatch(self, method: str, args, fds):
         if method == "download":
             with os.fdopen(fds.steal(0)) as f:
