@@ -129,6 +129,24 @@ def rev_parse(repo: PathLike, ref: str) -> str:
     return msg
 
 
+def show(repo: PathLike, checksum: str) -> str:
+    """Show the metada of an OSTree object pointed by `checksum` in the repository at `repo`"""
+
+    repo = os.fspath(repo)
+
+    r = subprocess.run(["ostree", "show", f"--repo={repo}", checksum],
+                       encoding="utf-8",
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT,
+                       check=False)
+
+    msg = r.stdout.strip()
+    if r.returncode != 0:
+        raise RuntimeError(msg)
+
+    return msg
+
+
 def deployment_path(root: PathLike, osname: str, ref: str, serial: int):
     """Return the path to a deployment given the parameters"""
 
