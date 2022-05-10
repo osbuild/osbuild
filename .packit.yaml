@@ -17,7 +17,6 @@ srpm_build_deps: []
 actions:
   get-current-version: bash -c "git describe --tags --abbrev=0 | sed 's|v||'"
 
-create_pr: false
 jobs:
 - job: copr_build
   trigger: pull_request
@@ -52,6 +51,11 @@ jobs:
     - fedora-all
 - job: propose_downstream
   trigger: release
+  metadata:
+    dist_git_branches:
+      - fedora-all
+- job: koji_build
+  trigger: commit
   metadata:
     dist_git_branches:
       - fedora-all
