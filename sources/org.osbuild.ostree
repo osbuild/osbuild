@@ -115,10 +115,9 @@ def download(items, cache):
 class OSTreeSource(sources.SourceService):
 
     def download(self, items, cache, _options):
-        cache = os.path.join(cache, "org.osbuild.ostree")
-        os.makedirs(cache, exist_ok=True)
+        self.setup(cache, "org.osbuild.ostree")
 
-        download(items, cache)
+        download(items, self.cache)
 
 
 def main():

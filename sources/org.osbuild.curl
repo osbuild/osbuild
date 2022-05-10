@@ -166,10 +166,8 @@ def download(items, cache):
 class CurlSource(sources.SourceService):
 
     def download(self, items, cache, _options):
-        cache = os.path.join(cache, "org.osbuild.files")
-        os.makedirs(cache, exist_ok=True)
-
-        download(items, cache)
+        self.setup(cache, "org.osbuild.files")
+        download(items, self.cache)
 
 
 def main():
