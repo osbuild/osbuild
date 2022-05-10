@@ -8,6 +8,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+import pytest
 
 from osbuild.util import ostree
 
@@ -22,7 +23,7 @@ def run(*args, check=True, encoding="utf-8", **kwargs):
     return res
 
 
-class TestObjectStore(unittest.TestCase):
+class TestObjectStore(test.TestBase):
 
     # pylint: disable=no-self-use
     @unittest.skipUnless(test.TestBase.have_rpm_ostree(), "rpm-ostree missing")
@@ -87,6 +88,13 @@ class TestObjectStore(unittest.TestCase):
 
         for p, v in params.items():
             self.assertEqual(v, js[p])
+
+    @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+    def test_show_commit(self):
+        repo_path = os.path.join(self.locate_test_data(), "sources/org.osbuild.ostree/data/repo")
+        ostree.show(repo_path, "d6243b0d0ca3dc2aaef2e0eb3e9f1f4836512c2921007f124b285f7c466464d8")
+        with pytest.raises(RuntimeError):
+            ostree.show(repo_path, "f000000000000000000000000DEADBEEF000000000000000000000000000000f")
 
 
 class TestPasswdLike(unittest.TestCase):
