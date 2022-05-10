@@ -55,6 +55,7 @@ class SourceService(host.Service):
         super().__init__(*args, **kwargs)
         self.cache = None
         self.options = None
+        self.tmpdir = None
 
     @abc.abstractmethod
     def download(self, items):
@@ -80,6 +81,7 @@ class SourceService(host.Service):
     def dispatch(self, method: str, args, fds):
         if method == "download":
             self.setup(args)
-            return self.download(SourceService.load_items(fds)), None
+            with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as self.tmpdir:
+                return self.download(SourceService.load_items(fds)), None
 
         raise host.ProtocolError("Unknown method")

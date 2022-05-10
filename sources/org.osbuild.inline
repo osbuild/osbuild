@@ -84,8 +84,7 @@ class InlineSource(sources.SourceService):
     content_type = "org.osbuild.files"
 
     def download(self, items):
-        with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as tmpdir:
-            process(items, self.cache, tmpdir)
+        process(items, self.cache, self.tmpdir)
 
 
 def main():
