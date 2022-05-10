@@ -51,8 +51,13 @@ class Source:
 class SourceService(host.Service):
     """Source host service"""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cache = None
+        self.options = None
+
     @abc.abstractmethod
-    def download(self, items, cache, options):
+    def download(self, items):
         pass
 
     @property
@@ -61,19 +66,20 @@ class SourceService(host.Service):
     def content_type(cls):
         """The content type of the source."""
 
+    @staticmethod
+    def load_items(fds):
+        with os.fdopen(fds.steal(0)) as f:
+            items = json.load(f)
+        return items
+
     def setup(self, args):
         self.cache = os.path.join(args["cache"], self.content_type)
         os.makedirs(self.cache, exist_ok=True)
+        self.options = args["options"]
 
     def dispatch(self, method: str, args, fds):
         if method == "download":
             self.setup(args)
-            with os.fdopen(fds.steal(0)) as f:
-                items = json.load(f)
-
-            r = self.download(items,
-                              args["cache"],
-                              args["options"])
-            return r, None
+            return self.download(SourceService.load_items(fds)), None
 
         raise host.ProtocolError("Unknown method")

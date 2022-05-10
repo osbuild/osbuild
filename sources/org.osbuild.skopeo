@@ -120,7 +120,7 @@ class SkopeoSource(sources.SourceService):
 
     content_type = "org.osbuild.containers"
 
-    def download(self, items, _cache, _options):
+    def download(self, items):
 
         download(items, self.cache)
 
