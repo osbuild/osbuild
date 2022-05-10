@@ -114,8 +114,9 @@ def download(items, cache):
 
 class OSTreeSource(sources.SourceService):
 
-    def download(self, items, cache, _options):
-        self.setup(cache, "org.osbuild.ostree")
+    content_type = "org.osbuild.ostree"
+
+    def download(self, items, _cache, _options):
 
         download(items, self.cache)
 
