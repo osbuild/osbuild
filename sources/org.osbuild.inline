@@ -81,9 +81,10 @@ def process(items: Dict, cache: str, tmpdir):
 
 class InlineSource(sources.SourceService):
 
-    def download(self, items, cache, _options):
-        self.setup(cache, "org.osbuild.files")
-        with tempfile.TemporaryDirectory(prefix=".unverified-", dir=cache) as tmpdir:
+    content_type = "org.osbuild.files"
+
+    def download(self, items, _cache, _options):
+        with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as tmpdir:
             process(items, self.cache, tmpdir)
 
 

@@ -3,6 +3,7 @@ import contextlib
 import os
 import json
 import tempfile
+from abc import abstractmethod
 
 from . import host
 from .objectstore import ObjectStore
@@ -54,12 +55,19 @@ class SourceService(host.Service):
     def download(self, items, cache, options):
         pass
 
-    def setup(self, cache, content_type):
-        self.cache = os.path.join(cache, content_type)
+    @property
+    @classmethod
+    @abstractmethod
+    def content_type(cls):
+        """The content type of the source."""
+
+    def setup(self, args):
+        self.cache = os.path.join(args["cache"], self.content_type)
         os.makedirs(self.cache, exist_ok=True)
 
     def dispatch(self, method: str, args, fds):
         if method == "download":
+            self.setup(args)
             with os.fdopen(fds.steal(0)) as f:
                 items = json.load(f)
 

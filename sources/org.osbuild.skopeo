@@ -118,8 +118,9 @@ def download(items, cache):
 
 class SkopeoSource(sources.SourceService):
 
-    def download(self, items, cache, _options):
-        self.setup(cache, "org.osbuild.containers")
+    content_type = "org.osbuild.containers"
+
+    def download(self, items, _cache, _options):
 
         download(items, self.cache)
 
