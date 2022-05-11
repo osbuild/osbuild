@@ -5,11 +5,29 @@ import json
 import tempfile
 import concurrent.futures
 from abc import abstractmethod
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
+from enum import Enum
 
 from . import host
 from .objectstore import ObjectStore
 from .util.types import PathLike
+
+
+class SourceErrorKind(Enum):
+    FAILED = 0
+    BAD_INPUT = 1
+    DOWNLOAD = 2
+    CHECKSUM = 3
+    STORAGE = 4
+
+
+class SourceError(Exception):
+
+    def __init__(self, kind: SourceErrorKind, message: str, source: str):
+        self.kind = kind
+        self.message = message
+        self.source = source
+        super().__init__(message)
 
 
 class Source:
@@ -21,6 +39,10 @@ class Source:
         self.info = info
         self.items = items or {}
         self.options = options
+
+    @staticmethod
+    def raise_error(obj: Dict, _fds: List = None):
+        raise SourceError(SourceErrorKind(obj["kind"]), obj["message"], obj["source"])
 
     def download(self, mgr: host.ServiceManager, store: ObjectStore, libdir: PathLike):
         source = self.info.name
@@ -37,10 +59,7 @@ class Source:
         client = mgr.start(f"source/{source}", self.info.path)
 
         with self.make_items_file(store.tmp) as fd:
-            fds = [fd]
-            reply = client.call_with_fds("download", args, fds)
-
-        return reply
+            client.call_with_fds("download", args, [fd], on_signal=Source.raise_error)
 
     @contextlib.contextmanager
     def make_items_file(self, tmp):
@@ -60,6 +79,9 @@ class SourceService(host.Service):
         self.cache = None
         self.options = None
         self.tmpdir = None
+
+    def signal_error(self, err: SourceError):
+        self.emit_signal({"kind": err.kind.value, "message": err.message, "source": err.source})
 
     @abc.abstractmethod
     def fetch_one(self, checksum, desc) -> None:
