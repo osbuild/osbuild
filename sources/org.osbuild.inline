@@ -61,9 +61,6 @@ class InlineSource(sources.SourceService):
         target = os.path.join(self.cache, checksum)
         floating = os.path.join(self.tmpdir, checksum)
 
-        if os.path.isfile(target):
-            return
-
         data = base64.b64decode(desc["data"])
 
         # Write the bits to disk and then verify the checksum
