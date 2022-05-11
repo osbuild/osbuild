@@ -63,9 +63,8 @@ class InlineSource(sources.SourceService):
 
         data = base64.b64decode(desc["data"])
 
-        # Write the bits to disk and then verify the checksum
-        # This ensures that 1) the data is ok and that 2) we
-        # wrote them correctly as well
+        # Write the bits to disk and then verify the checksum This ensures that 1) the data is ok and that 2) we wrote
+        # them correctly as well
         with open(floating, "wb") as f:
             f.write(data)
 

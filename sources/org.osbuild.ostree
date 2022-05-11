@@ -94,22 +94,17 @@ class OSTreeSource(sources.SourceService):
         if not gpg:
             verify_args = ["--no-gpg-verify"]
 
-        ostree("remote", "add",
-               uid, url,
-               *verify_args,
-               repo=self.repo)
+        ostree("remote", "add", uid, url, *verify_args, repo=self.repo)
 
         for key in gpg:
-            ostree("remote", "gpg-import", "--stdin", uid,
-                   repo=self.repo, _input=key)
+            ostree("remote", "gpg-import", "--stdin", uid, repo=self.repo, _input=key)
 
         # Transfer the commit: remote → cache
         print(f"pulling {commit}", file=sys.stderr)
         ostree("pull", uid, commit, repo=self.repo)
 
         # Remove the temporary remotes again
-        ostree("remote", "delete", uid,
-               repo=self.repo)
+        ostree("remote", "delete", uid, repo=self.repo)
 
     def setup(self, args):
         super().setup(args)
@@ -117,9 +112,8 @@ class OSTreeSource(sources.SourceService):
         self.repo = os.path.join(self.cache, "repo")
         ostree("init", mode="archive", repo=self.repo)
 
-        # Make sure the cache repository uses locks to protect the metadata during
-        # shared access. This is the default since `2018.5`, but lets document this
-        # explicitly here.
+        # Make sure the cache repository uses locks to protect the metadata during shared access. This is the default
+        # since `2018.5`, but lets document this explicitly here.
         ostree("config", "set", "repo.locking", "true", repo=self.repo)
 
     # pylint: disable=[no-self-use]
