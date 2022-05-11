@@ -7,6 +7,7 @@ from osbuild.meta import Index, ModuleInfo, ValidationResult
 from ..inputs import Input
 from ..pipeline import Manifest, Pipeline, Stage, detect_host_runner
 from ..sources import Source
+from ..sources import SourceError
 
 
 VERSION = "2"
@@ -500,3 +501,30 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
         validate_pipeline(pipeline, path=["pipelines", i])
 
     return result
+
+
+GENERIC_ID = 0
+GENERIC_CODE = "EXCEPTION"
+SOURCE_ERROR_ID = 1000
+
+
+def format_error(error: Exception):
+    id_ = GENERIC_ID
+    code = GENERIC_CODE
+    reason = str(error)
+    details = ""
+
+    if isinstance(error, SourceError):
+        id_ = SOURCE_ERROR_ID + error.kind.value
+        code = error.kind.name
+        details = {"source": error.source}
+
+    return {
+        "type": "error",
+        "error": {
+                "id": id_,
+                "code": code,
+                "reason": reason,
+                "details": details
+        }
+    }
