@@ -17,10 +17,9 @@ import os
 import subprocess
 import sys
 
-from osbuild import sources
-
 from osbuild.util.checksum import verify_file
 from osbuild.util.rhsm import Subscriptions
+from osbuild.sources import SourceService, SourceError, SourceErrorKind
 
 
 SCHEMA = """
@@ -80,7 +79,101 @@ SCHEMA = """
 """
 
 
-class CurlSource(sources.SourceService):
+CURL_CODE_MAP = {
+    # networking errors
+    5: ("Couldn't resolve proxy", SourceErrorKind.DOWNLOAD),
+    6: ("Couldn't resolve host", SourceErrorKind.DOWNLOAD),
+    7: ("Failed to connect to host", SourceErrorKind.DOWNLOAD),
+    8: ("Unknown FTP server response", SourceErrorKind.DOWNLOAD),
+    10: ("FTP accept failed", SourceErrorKind.DOWNLOAD),
+    11: ("FTP weird PASS reply", SourceErrorKind.DOWNLOAD),
+    12: ("FTP Timeout", SourceErrorKind.DOWNLOAD),
+    13: ("Unknown response to FTP PASV command", SourceErrorKind.DOWNLOAD),
+    14: ("Unknown FTP 227 format", SourceErrorKind.DOWNLOAD),
+    15: ("FTP cannot get host", SourceErrorKind.DOWNLOAD),
+    16: ("HTTP/2 error", SourceErrorKind.DOWNLOAD),
+    17: ("FTP could not set binary", SourceErrorKind.DOWNLOAD),
+    18: ("Partial file. Only a part of the file was transferred", SourceErrorKind.DOWNLOAD),
+    19: ("FTP could not download/access the given file", SourceErrorKind.DOWNLOAD),
+    22: ("HTTP page not retrieved", SourceErrorKind.DOWNLOAD),
+    25: ("Upload failed", SourceErrorKind.DOWNLOAD),
+    26: ("Read error", SourceErrorKind.DOWNLOAD),
+    28: ("Operation timeout", SourceErrorKind.DOWNLOAD),
+    30: ("FTP PORT failed", SourceErrorKind.DOWNLOAD),
+    31: ("FTP could not use REST", SourceErrorKind.DOWNLOAD),
+    33: ("HTTP range error", SourceErrorKind.DOWNLOAD),
+    34: ("HTTP post error", SourceErrorKind.DOWNLOAD),
+    36: ("Bad download resume", SourceErrorKind.DOWNLOAD),
+    45: ("A specified outgoing network interface could not be used", SourceErrorKind.DOWNLOAD),
+    47: ("Too many redirects.", SourceErrorKind.DOWNLOAD),
+    52: ("The server did not reply anything", SourceErrorKind.DOWNLOAD),
+    55: ("Failed sending network data", SourceErrorKind.DOWNLOAD),
+    56: ("Failure in receiving network data", SourceErrorKind.DOWNLOAD),
+    60: ("Unrecognized transfer encoding", SourceErrorKind.DOWNLOAD),
+    85: ("RTSP: mismatch of CSeq numbers", SourceErrorKind.DOWNLOAD),
+    86: ("RTSP: mismatch of Session Identifiers", SourceErrorKind.DOWNLOAD),
+    89: ("No connection available, the session will be queued", SourceErrorKind.DOWNLOAD),
+    92: ("Stream error in HTTP/2 framing layer", SourceErrorKind.DOWNLOAD),
+    96: ("QUIC connection error", SourceErrorKind.DOWNLOAD),
+    # credentials errors
+    9: ("FTP access denied", SourceErrorKind.DOWNLOAD),
+    66: ("failed to log in", SourceErrorKind.DOWNLOAD),
+    68: ("Permission problem on TFTP server", SourceErrorKind.DOWNLOAD),
+    94: ("Authentication error", SourceErrorKind.DOWNLOAD),
+    # Security errors
+    35: ("A TLS/SSL connect error", SourceErrorKind.DOWNLOAD),
+    51: ("The server's SSL/TLS certificate or SSH fingerprint failed verification", SourceErrorKind.DOWNLOAD),
+    53: ("SSL crypto engine not found", SourceErrorKind.DOWNLOAD),
+    54: ("Cannot set SSL crypto engine as default", SourceErrorKind.DOWNLOAD),
+    58: ("Couldn't use the specified SSL cipher", SourceErrorKind.DOWNLOAD),
+    59: ("Peer certificate cannot be authenticated with known CA certificates", SourceErrorKind.DOWNLOAD),
+    63: ("Requested FTP SSL level failed", SourceErrorKind.DOWNLOAD),
+    65: ("Failed to initialize SSL Engine", SourceErrorKind.DOWNLOAD),
+    76: ("Problem with reading the SSL CA cert", SourceErrorKind.DOWNLOAD),
+    79: ("Failed to shut down the SSL connection", SourceErrorKind.DOWNLOAD),
+    82: ("Could not load CRL file, missing or wrong format", SourceErrorKind.DOWNLOAD),
+    83: ("TLS certificate issuer check failed", SourceErrorKind.DOWNLOAD),
+    84: ("The FTP PRET command failed", SourceErrorKind.DOWNLOAD),
+    90: ("SSL public key does not matched pinned public key", SourceErrorKind.DOWNLOAD),
+    91: ("Invalid SSL certificate status", SourceErrorKind.DOWNLOAD),
+    # User input errors
+    1: ("Unsupported protocol", SourceErrorKind.BAD_INPUT),
+    3: ("URL malformed", SourceErrorKind.BAD_INPUT),
+    21: ("Quote error", SourceErrorKind.BAD_INPUT),
+    48: ("Unknown option specified to libcurl", SourceErrorKind.BAD_INPUT),
+    49: ("Malformed telnet option", SourceErrorKind.BAD_INPUT),
+    67: ("File not found on TFTP server", SourceErrorKind.BAD_INPUT),
+    77: ("The resource referenced in the URL does not exist", SourceErrorKind.BAD_INPUT),
+    # Storage errors
+    23: ("Curl could not write data to a local filesystem.", SourceErrorKind.STORAGE),
+    37: ("Couldn't read the given file when using the FILE:// ", SourceErrorKind.STORAGE),
+    69: ("Out of disk space on TFTP server", SourceErrorKind.STORAGE),
+    # Internal errors
+    2: ("Failed to initialize", SourceErrorKind.FAILED),
+    4: ("A feature or option that was needed to perform the desired request", SourceErrorKind.FAILED),
+    27: ("Out of memory. A memory allocation request failed", SourceErrorKind.FAILED),
+    38: ("LDAP cannot bind", SourceErrorKind.FAILED),
+    39: ("LDAP search failed", SourceErrorKind.FAILED),
+    42: ("Aborted by callback. An application told libcurl to abort the operation", SourceErrorKind.FAILED),
+    43: ("Bad function argument. A function was called with a bad parameter", SourceErrorKind.FAILED),
+    61: ("Invalid LDAP URL", SourceErrorKind.FAILED),
+    62: ("Maximum file size exceeded", SourceErrorKind.FAILED),
+    64: ("Sending the data requires a rewind that failed", SourceErrorKind.FAILED),
+    70: ("Illegal TFTP operation", SourceErrorKind.FAILED),
+    71: ("Unknown TFTP transfer ID", SourceErrorKind.FAILED),
+    72: ("File already exists (TFTP)", SourceErrorKind.FAILED),
+    73: ("No such user (TFTP)", SourceErrorKind.FAILED),
+    74: ("Character conversion failed", SourceErrorKind.FAILED),
+    75: ("Character conversion functions required", SourceErrorKind.FAILED),
+    78: ("An unspecified error occurred during the SSH session", SourceErrorKind.FAILED),
+    87: ("Unable to parse FTP file list", SourceErrorKind.FAILED),
+    88: ("FTP chunk callback reported error", SourceErrorKind.FAILED),
+    93: ("An API function was called from inside a callback", SourceErrorKind.FAILED),
+    95: ("HTTP/3 layer error", SourceErrorKind.FAILED)
+}
+
+
+class CurlSource(SourceService):
 
     content_type = "org.osbuild.files"
     max_workers = 4
@@ -129,19 +222,22 @@ class CurlSource(sources.SourceService):
             # url must follow options
             curl_command.append(url)
 
-            curl = subprocess.run(curl_command, encoding="utf-8", cwd=self.tmpdir, check=False)
-            return_code = curl.returncode
+            return_code = subprocess.run(curl_command, encoding="utf-8", cwd=self.tmpdir, check=False).returncode
             if return_code == 0:
                 break
         else:
-            raise RuntimeError(f"curl: error downloading {url}: error code {return_code}")
+            message, kind = CURL_CODE_MAP.get(return_code, [SourceErrorKind.FAILED.name, SourceErrorKind.FAILED])
+            return self.signal_error(SourceError(kind=kind,
+                                                 message=message,
+                                                 source=str(url)))
 
         if not verify_file(f"{self.tmpdir}/{checksum}", checksum):
-            raise RuntimeError(f"checksum mismatch: {checksum} {url}")
+            return self.signal_error(SourceError(kind=SourceErrorKind.CHECKSUM,
+                                                 message=SourceErrorKind.CHECKSUM.name,
+                                                 source=str(url)))
 
-        # The checksum has been verified, move the file into place. in case we race
-        # another download of the same file, we simply ignore the error as their
-        # contents are guaranteed to be  the same.
+        # The checksum has been verified, move the file into place. In case we race another download of the same file,
+        # we simply ignore the error as their contents are guaranteed to be  the same.
         try:
             os.rename(f"{self.tmpdir}/{checksum}", f"{self.cache}/{checksum}")
         except FileExistsError:

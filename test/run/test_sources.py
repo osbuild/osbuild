@@ -99,7 +99,7 @@ def check_case(source, case, store, libdir):
     with host.ServiceManager() as mgr:
         expects = case["expects"]
         if expects == "error":
-            with pytest.raises(host.RemoteError):
+            with pytest.raises(osbuild.sources.SourceError):
                 source.download(mgr, store, libdir)
         elif expects == "success":
             source.download(mgr, store, libdir)

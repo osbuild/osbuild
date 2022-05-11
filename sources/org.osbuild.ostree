@@ -10,10 +10,11 @@ gpg keys are provided via `gpgkeys`.
 import os
 import sys
 import subprocess
+from subprocess import CalledProcessError
 import uuid
 from osbuild.util.ostree import show
 
-from osbuild import sources
+from osbuild.sources import SourceService, SourceError, SourceErrorKind
 
 
 SCHEMA = """
@@ -75,7 +76,7 @@ def ostree(*args, _input=None, **kwargs):
                    check=True)
 
 
-class OSTreeSource(sources.SourceService):
+class OSTreeSource(SourceService):
 
     content_type = "org.osbuild.ostree"
 
@@ -90,21 +91,32 @@ class OSTreeSource(sources.SourceService):
         gpg = remote.get("gpgkeys", [])
         uid = str(uuid.uuid4())
 
-        verify_args = []
-        if not gpg:
-            verify_args = ["--no-gpg-verify"]
+        error_kind = SourceErrorKind.FAILED
+        try:
+            verify_args = []
+            if not gpg:
+                verify_args = ["--no-gpg-verify"]
 
-        ostree("remote", "add", uid, url, *verify_args, repo=self.repo)
+            error_kind = SourceErrorKind.BAD_INPUT
 
-        for key in gpg:
-            ostree("remote", "gpg-import", "--stdin", uid, repo=self.repo, _input=key)
+            ostree("remote", "add", uid, url, *verify_args, repo=self.repo)
 
-        # Transfer the commit: remote → cache
-        print(f"pulling {commit}", file=sys.stderr)
-        ostree("pull", uid, commit, repo=self.repo)
+            for key in gpg:
+                ostree("remote", "gpg-import", "--stdin", uid, repo=self.repo, _input=key)
 
-        # Remove the temporary remotes again
-        ostree("remote", "delete", uid, repo=self.repo)
+            error_kind = SourceErrorKind.DOWNLOAD
+
+            # Transfer the commit: remote → cache
+            print(f"pulling {commit}", file=sys.stderr)
+            ostree("pull", uid, commit, repo=self.repo)
+
+            # Remove the temporary remotes again
+            ostree("remote", "delete", uid, repo=self.repo)
+
+            error_kind = SourceErrorKind.FAILED
+
+        except CalledProcessError as e:
+            self.signal_error(SourceError(error_kind, str(e), f"{commit}@{url} {remote}"))
 
     def setup(self, args):
         super().setup(args)

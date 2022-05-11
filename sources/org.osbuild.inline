@@ -16,8 +16,8 @@ import contextlib
 import os
 import sys
 
-from osbuild import sources
 from osbuild.util.checksum import verify_file
+from osbuild.sources import SourceService, SourceError, SourceErrorKind
 
 
 SCHEMA = """
@@ -53,7 +53,7 @@ SCHEMA = """
 """
 
 
-class InlineSource(sources.SourceService):
+class InlineSource(SourceService):
 
     content_type = "org.osbuild.files"
 
@@ -69,7 +69,11 @@ class InlineSource(sources.SourceService):
             f.write(data)
 
         if not verify_file(floating, checksum):
-            raise RuntimeError(f"Checksum mismatch for {format(checksum)}")
+            self.signal_error(
+                SourceError(kind=SourceErrorKind.CHECKSUM,
+                            message=f"Checksum mismatch for {checksum}",
+                            source=str(checksum)))
+            return
 
         with contextlib.suppress(FileExistsError):
             os.rename(floating, target)
