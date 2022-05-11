@@ -232,7 +232,13 @@ class Schema:
             return res
 
         if not self.data:
-            res.fail("missing schema information")
+            msg = "could not find schema information"
+
+            if self.name:
+                msg += f" for '{self.name}'"
+
+            res.fail(msg)
+
             return res
 
         try:
