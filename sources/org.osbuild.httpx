@@ -145,7 +145,6 @@ class HttpxSource(sources.SourceService):
                 return
 
     async def fetch_one_async(self, client, tmpdir, checksum, desc):
-        secrets = desc.get("secrets")
         url = desc.get("url")
 
         for _ in range(10):
