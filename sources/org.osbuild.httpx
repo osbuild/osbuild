@@ -111,7 +111,10 @@ class HttpxSource(sources.SourceService):
         return checksum, url
 
     def download(self, items: Dict) -> None:
-        items = [self.transform(*i) for i in items.items() if not self.exists(*i)]
+        items = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
+        items = map(lambda i: self.transform(i[0], i[1]), items)  # prepare each item to be downloaded
+
+        items = list(items)
 
         if not items:
             return
