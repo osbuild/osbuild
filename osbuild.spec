@@ -36,6 +36,7 @@ Requires:       systemd
 Requires:       tar
 Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
+Requires:       python3-httpx
 Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 
 # Turn off dependency generators for runners. The reason is that runners are
