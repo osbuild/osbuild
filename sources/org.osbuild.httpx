@@ -91,7 +91,7 @@ class HttpxSource(sources.SourceService):
 
     # Max workers refers to max concurrent downloads in the HttpxSource and was
     # chosed based on some arbitrary benchmarks
-    max_workers = 16
+    max_workers = 32
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -128,21 +128,21 @@ class HttpxSource(sources.SourceService):
             await queue.put((checksum, desc))
 
         with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
-            transport = httpx.AsyncHTTPTransport(retries=10)  # These are connection retries
+            await asyncio.wait(
+                [asyncio.create_task(self.fetch_queue(tmpdir, queue)) for _ in range(self.max_workers)]
+            )
 
-            async with httpx.AsyncClient(transport=transport, follow_redirects=True) as client:
-                await asyncio.wait(
-                    [asyncio.create_task(self.fetch_queue(client, tmpdir, queue)) for _ in range(self.max_workers)]
-                )
-
-    async def fetch_queue(self, client, tmpdir, queue):
+    async def fetch_queue(self, tmpdir, queue):
         """Consume items from the queue until no more items are left to
         consume."""
-        try:
-            while item := queue.get_nowait():
-                await self.fetch_one_async(client, tmpdir, *item)
-        except asyncio.QueueEmpty:
-            return
+        transport = httpx.AsyncHTTPTransport(retries=10)  # These are connection retries
+
+        async with httpx.AsyncClient(transport=transport, follow_redirects=True) as client:
+            try:
+                while item := queue.get_nowait():
+                    await self.fetch_one_async(client, tmpdir, *item)
+            except asyncio.QueueEmpty:
+                return
 
     async def fetch_one_async(self, client, tmpdir, checksum, desc):
         secrets = desc.get("secrets")
