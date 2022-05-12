@@ -132,7 +132,8 @@ class HttpxSource(sources.SourceService):
 
             async with httpx.AsyncClient(transport=transport, follow_redirects=True) as client:
                 await asyncio.wait(
-                    [asyncio.create_task(self.fetch_queue(client, tmpdir, queue)) for _ in range(self.max_workers)])
+                    [asyncio.create_task(self.fetch_queue(client, tmpdir, queue)) for _ in range(self.max_workers)]
+                )
 
     async def fetch_queue(self, client, tmpdir, queue):
         """Consume items from the queue until no more items are left to
@@ -160,7 +161,6 @@ class HttpxSource(sources.SourceService):
         else:
             raise RuntimeError(f"httpx: error downloading {url}")
 
-
         if not verify_file(f"{tmpdir}/{checksum}", checksum):
             raise RuntimeError(f"checksum mismatch: {checksum} {url}")
 
@@ -174,10 +174,11 @@ class HttpxSource(sources.SourceService):
     def fetch_one(self, checksum, desc):
         raise NotImplementedError()
 
+
 def main():
     service = HttpxSource.from_args(sys.argv[1:])
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
