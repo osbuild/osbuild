@@ -142,8 +142,10 @@ class HttpxSource(sources.SourceService):
 
         async with httpx.AsyncClient(transport=transport, follow_redirects=True) as client:
             try:
-                while item := queue.get_nowait():
+                item = queue.get_nowait()
+                while item:
                     await self.fetch_one_async(client, tmpdir, *item)
+                    item = queue.get_nowait()
             except asyncio.QueueEmpty:
                 return
 
