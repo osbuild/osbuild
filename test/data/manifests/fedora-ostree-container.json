@@ -1082,7 +1082,7 @@
     }
   ],
   "sources": {
-    "org.osbuild.curl": {
+    "org.osbuild.httpx": {
       "items": {
         "sha256:c540ca8c5e21ba5f063286c94a088af2aac0b15bc40df6fd562d40154c10f4a1": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/acl-2.3.1-1.fc34.x86_64.rpm",
         "sha256:15a654d32efaa75b5df3e2481939d0393fe1746696cc858ca094ccf8b76073cd": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/alternatives-1.15-2.fc34.x86_64.rpm",

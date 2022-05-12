@@ -206,7 +206,7 @@
     }
   ],
   "sources": {
-    "org.osbuild.curl": {
+    "org.osbuild.httpx": {
       "items": {
         "sha256:1370de73e8c66a91af841521ca143c72a704df1c54ee9b452b2354a54de7b9b4": "http://download.eng.brq.redhat.com/rhel-7/nightly/updates/RHEL-7/latest-RHEL-7.9/compose/Server/x86_64/os/Packages/acl-2.2.51-15.el7.x86_64.rpm",
         "sha256:2f8d6d29f7f4b3e655bf00ffb0cb4be1ca46c042977e60dbc435ef999f76d323": "http://download.eng.brq.redhat.com/rhel-7/nightly/updates/RHEL-7/latest-RHEL-7.9/compose/Server/x86_64/os/Packages/audit-libs-2.8.5-4.el7.x86_64.rpm",

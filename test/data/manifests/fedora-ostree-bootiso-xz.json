@@ -2077,7 +2077,7 @@
     }
   ],
   "sources": {
-    "org.osbuild.curl": {
+    "org.osbuild.httpx": {
       "items": {
         "sha256:4fa9e87a2bcd4e0f3f9b7d8cb996158f6e62b90c332c5a3e76f1bf09fef00e3a": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/aajohan-comfortaa-fonts-3.001-8.fc34.noarch.rpm",
         "sha256:714717baf9908951d3307c4b1e79a08c1e148d1fa53ff439295e3deedbba5886": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/a/abattis-cantarell-fonts-0.301-2.fc34.noarch.rpm",

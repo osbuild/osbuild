@@ -977,7 +977,7 @@
     }
   ],
   "sources": {
-    "org.osbuild.curl": {
+    "org.osbuild.httpx": {
       "items": {
         "sha256:f9626530724ff46eca85405b4bce5d25662607a80df78cff61ee21f16c3f654c": "http://download.eng.brq.redhat.com/rhel-7/nightly/updates/RHEL-7/latest-RHEL-7.9/compose/Server/x86_64/os/Packages/NetworkManager-1.18.8-2.el7_9.x86_64.rpm",
         "sha256:abc315840a5505f6247fc1d09d40089683532d028f4b81735f1c481319ab41e4": "http://download.eng.brq.redhat.com/rhel-7/nightly/updates/RHEL-7/latest-RHEL-7.9/compose/Server/x86_64/os/Packages/NetworkManager-config-server-1.18.8-2.el7_9.noarch.rpm",

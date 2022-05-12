@@ -702,7 +702,7 @@
     }
   ],
   "sources": {
-    "org.osbuild.curl": {
+    "org.osbuild.httpx": {
       "items": {
         "sha256:cf71023fd8d44ae512e4980a09f3c94caa641b803a156ddf8edbe984c9448069": "https://archive.archlinux.org/repos/2022/01/22/community/os/x86_64/dtc-1.6.1-3-x86_64.pkg.tar.zst",
         "sha256:2c11edcb807ff261ec5a4943e5598e00eee3f7b0fa533fb350e83e08a7d7f2fb": "https://archive.archlinux.org/repos/2022/01/22/community/os/x86_64/hidapi-0.11.2-1-x86_64.pkg.tar.zst",
