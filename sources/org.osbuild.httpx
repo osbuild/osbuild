@@ -15,7 +15,6 @@ up the download.
 from typing import Dict
 
 import os
-import subprocess
 import sys
 import tempfile
 import asyncio
@@ -112,9 +111,7 @@ class HttpxSource(sources.SourceService):
         return checksum, url
 
     def download(self, items: Dict) -> None:
-        items = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-        items = map(lambda i: self.transform(i[0], i[1]), items)  # prepare each item to be downloaded
-        items = list(items)
+        items = [self.transform(*i) for i in items.items() if not self.exists(*i)]
 
         if not items:
             return
@@ -142,18 +139,27 @@ class HttpxSource(sources.SourceService):
         consume."""
         try:
             while item := queue.get_nowait():
-                await self.fetch_one(client, tmpdir, *item)
+                await self.fetch_one_async(client, tmpdir, *item)
         except asyncio.QueueEmpty:
             return
 
-    async def fetch_one(self, client, tmpdir, checksum, desc):
+    async def fetch_one_async(self, client, tmpdir, checksum, desc):
         secrets = desc.get("secrets")
         url = desc.get("url")
 
-        async with aiofiles.open(f"{tmpdir}/{checksum}", "wb") as output_path:
-            async with client.stream("GET", url) as response:
-                async for chunk in response.aiter_bytes():
-                    await output_path.write(chunk)
+        for _ in range(10):
+            async with aiofiles.open(f"{tmpdir}/{checksum}", "wb") as output_path:
+                try:
+                    async with client.stream("GET", url) as response:
+                        response.raise_for_status()
+                        async for chunk in response.aiter_bytes():
+                            await output_path.write(chunk)
+                        break
+                except httpx.HTTPStatusError():  # Raised for 4xx/5xx
+                    continue
+        else:
+            raise RuntimeError(f"httpx: error downloading {url}")
+
 
         if not verify_file(f"{tmpdir}/{checksum}", checksum):
             raise RuntimeError(f"checksum mismatch: {checksum} {url}")
@@ -164,6 +170,9 @@ class HttpxSource(sources.SourceService):
             pass
 
         return
+
+    def fetch_one(self, checksum, desc):
+        raise NotImplementedError()
 
 def main():
     service = HttpxSource.from_args(sys.argv[1:])
