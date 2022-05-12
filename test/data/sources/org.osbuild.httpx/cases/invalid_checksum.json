@@ -1,0 +1,10 @@
+{
+  "expects": "error",
+  "org.osbuild.httpx": {
+    "items": {
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+        "url": "http://localhost/sources/org.osbuild.httpx/data/a"
+      }
+    }
+  }
+}
