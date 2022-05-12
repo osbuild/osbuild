@@ -1,0 +1,174 @@
+#!/usr/bin/python3
+"""
+Source for downloading files from URLs.
+
+The files are indexed by their content hash. Can download files
+that require secrets. The only secret provider currently supported
+is `org.osbuild.rhsm` for downloading Red Hat content that requires
+a subscriptions.
+
+Internally use httpx to download the files; the files are cached in
+an internal cache. Multiple parallel connections are used to speed
+up the download.
+"""
+
+from typing import Dict
+
+import os
+import subprocess
+import sys
+import tempfile
+import asyncio
+
+import httpx
+import aiofiles
+
+from osbuild import sources
+
+from osbuild.util.checksum import verify_file
+from osbuild.util.rhsm import Subscriptions
+
+
+SCHEMA = """
+"additionalProperties": false,
+"definitions": {
+  "item": {
+    "description": "The files to fetch indexed their content checksum",
+    "type": "object",
+    "additionalProperties": false,
+    "patternProperties": {
+      "(md5|sha1|sha256|sha384|sha512):[0-9a-f]{32,128}": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "URL to download the file from."
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "URL to download the file from."
+              },
+              "secrets": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the secrets provider."
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+},
+"properties": {
+  "items": {"$ref": "#/definitions/item"},
+  "urls": {"$ref": "#/definitions/item"}
+},
+"oneOf": [{
+  "required": ["items"]
+}, {
+  "required": ["urls"]
+}]
+"""
+
+
+class HttpxSource(sources.SourceService):
+
+    content_type = "org.osbuild.files"
+
+    # Max workers refers to max concurrent downloads in the HttpxSource and was
+    # chosed based on some arbitrary benchmarks
+    max_workers = 16
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.subscriptions = None
+
+    def transform(self, checksum, desc):
+        url = desc
+        if not isinstance(url, dict):
+            url = {"url": url}
+
+        # check if url needs rhsm secrets
+        if url.get("secrets", {}).get("name") == "org.osbuild.rhsm":
+            # rhsm secrets only need to be retrieved once and can then be reused
+            if self.subscriptions is None:
+                self.subscriptions = Subscriptions.from_host_system()
+            url["secrets"] = self.subscriptions.get_secrets(url.get("url"))
+        return checksum, url
+
+    def download(self, items: Dict) -> None:
+        items = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
+        items = map(lambda i: self.transform(i[0], i[1]), items)  # prepare each item to be downloaded
+        items = list(items)
+
+        if not items:
+            return
+
+        asyncio.run(self.fetch_many(*zip(*items)))
+
+    async def fetch_many(self, checksums, descs):
+        """Put all the files to download in a queue and then start and wait for
+        self.max_workers * fetch_queue to finish."""
+
+        queue = asyncio.Queue()
+
+        for checksum, desc in zip(checksums, descs):
+            await queue.put((checksum, desc))
+
+        with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
+            transport = httpx.AsyncHTTPTransport(retries=10)  # These are connection retries
+
+            async with httpx.AsyncClient(transport=transport, follow_redirects=True) as client:
+                await asyncio.wait(
+                    [asyncio.create_task(self.fetch_queue(client, tmpdir, queue)) for _ in range(self.max_workers)])
+
+    async def fetch_queue(self, client, tmpdir, queue):
+        """Consume items from the queue until no more items are left to
+        consume."""
+        try:
+            while item := queue.get_nowait():
+                await self.fetch_one(client, tmpdir, *item)
+        except asyncio.QueueEmpty:
+            return
+
+    async def fetch_one(self, client, tmpdir, checksum, desc):
+        secrets = desc.get("secrets")
+        url = desc.get("url")
+
+        async with aiofiles.open(f"{tmpdir}/{checksum}", "wb") as output_path:
+            async with client.stream("GET", url) as response:
+                async for chunk in response.aiter_bytes():
+                    await output_path.write(chunk)
+
+        if not verify_file(f"{tmpdir}/{checksum}", checksum):
+            raise RuntimeError(f"checksum mismatch: {checksum} {url}")
+
+        try:
+            os.rename(f"{tmpdir}/{checksum}", f"{self.cache}/{checksum}")
+        except FileExistsError:
+            pass
+
+        return
+
+def main():
+    service = HttpxSource.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()
