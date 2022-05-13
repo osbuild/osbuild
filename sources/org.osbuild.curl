@@ -84,7 +84,7 @@ SCHEMA = """
 class CurlSource(sources.SourceService):
 
     content_type = "org.osbuild.files"
-    max_workers = 4
+    max_workers = 2 * os.cpu_count()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
