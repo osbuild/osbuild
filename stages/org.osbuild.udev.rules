@@ -288,7 +288,7 @@ def make_rule(data: dict):
 
 
 def write_rule(f, rule: list):
-    data = " ".join(make_rule(rule))
+    data = ", ".join(make_rule(rule))
     f.write(data + "\n")
 
 
