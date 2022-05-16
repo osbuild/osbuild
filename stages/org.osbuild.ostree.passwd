@@ -92,12 +92,12 @@ def main(tree, inputs, _options):
         passwd.merge_with_file(os.path.join(checkout_root, "usr/lib/group"), allow_missing_file=False)
         passwd.dump_to_file(os.path.join(tree, "etc/group"))
 
-        # Merge /etc/sub{g,u}id with /etc/sub{g,u}id from the checkout and store it in the buildroot
+        # Merge /etc/sub{g,u}id with /usr/etc/sub{g,u}id from the checkout and store it in the buildroot
         with contextlib.suppress(FileNotFoundError):
-            subuids.read_from(os.path.join(checkout_root, SUBUID_PATH))
+            subuids.read_from(os.path.join(checkout_root, "usr", SUBUID_PATH))
 
         with contextlib.suppress(FileNotFoundError):
-            subgids.read_from(os.path.join(checkout_root, SUBGID_PATH))
+            subgids.read_from(os.path.join(checkout_root, "usr", SUBGID_PATH))
 
     # If we have entries in the subordinate id files, write them to the tree
     if subuids:
