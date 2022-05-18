@@ -1,0 +1,22 @@
+[package]
+name = "org-osbuild-http"
+description = "The org-osbuild-http source module for osbuild."
+documentation = "https://osbuild.org/"
+homepage = "https://osbuild.org/"
+repository = "https://github.com/osbuild/osbuild/"
+version = "0.1.0"
+edition = "2021"
+authors = [
+    "supakeen <supakeen@redhat.com>",
+]
+
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "3.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+log = { version = "0.4" }
+stderrlog = { version = "0.5" }
