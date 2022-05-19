@@ -187,16 +187,6 @@ class Object:
         if self._writer:
             raise ValueError("Write operation is ongoing")
 
-    @contextlib.contextmanager
-    def _open(self):
-        """Open the directory and return the file descriptor"""
-        with self.read() as path:
-            fd = os.open(path, os.O_DIRECTORY)
-            try:
-                yield fd
-            finally:
-                os.close(fd)
-
     def tempdir(self, suffix=None):
         workdir = self._workdir.name
         if suffix:
