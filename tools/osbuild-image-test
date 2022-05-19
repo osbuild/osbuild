@@ -1,0 +1,439 @@
+#!/usr/bin/python3
+"""
+OSBuild image based tests
+"""
+
+import argparse
+import fnmatch
+import json
+import os
+import platform
+import subprocess
+import sys
+
+from collections import defaultdict
+from typing import Iterator, List, Optional
+
+import osbuild
+import osbuild.meta
+
+
+RESET = "\033[0m"
+GREEN = "\033[32m"
+BOLD = "\033[1m"
+RED = "\033[31m"
+
+
+class OSBuild:
+    def __init__(self, path, store, outdir):
+        self.path = path
+        self.store = store
+        self.outdir = outdir
+        self.checkpoints = []
+        self.verbosity = 1
+
+    def compile(self, manifest: dict, exports: List, checkpoints=None):
+        res = self.run([],
+                       manifest=manifest,
+                       exports=exports,
+                       checkpoints=checkpoints)
+        return res
+
+    def inspect(self, manifest: dict) -> dict:
+        return self.run(args=["--inspect"], manifest=manifest)
+
+    def run(self,
+            args: Optional[List[str]] = None,
+            manifest: Optional[dict] = None,
+            exports: Optional[List] = None,
+            checkpoints: Optional[List] = None):
+
+        cmd = [
+            self.path,
+            "--store", os.fspath(self.store),
+            "--output-dir", os.fspath(self.outdir),
+            "--json",
+        ]
+
+        if args:
+            cmd += args
+
+        for checkpoint in self.checkpoints + (checkpoints or []):
+            cmd += [
+                "--checkpoint", checkpoint
+            ]
+
+        for export in (exports or []):
+            cmd += [
+                "--export", export
+            ]
+
+        data = None
+        if manifest:
+            data = json.dumps(manifest, indent=2).encode("utf-8")
+            cmd += [
+                "-",
+            ]
+
+        if self.verbosity > 1:
+            print("+" + " ".join(cmd), file=sys.stderr)
+
+        r = subprocess.run(cmd,
+                           check=False,
+                           input=data,
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+
+        if r.returncode != 0:
+            stdout = r.stdout.decode("utf-8").strip()
+
+            try:
+                data = json.loads(stdout)
+            except json.JSONDecodeError:
+                msg = r.stderr.decode("utf-8").strip()
+                msg += r.stdout.decode("utf-8").strip()
+            else:
+                msg = data.get("title")
+
+            msg = r.stderr.decode("utf-8").strip()
+            msg += r.stdout.decode("utf-8").strip()
+            raise RuntimeError("osbuild failed: " + msg)
+
+        return json.loads(r.stdout.decode("utf-8"))
+
+
+class ImageInfo:
+    def __init__(self, path: str):
+        self.path = path
+        self.verbosity = 1
+
+    def run(self, target: str):
+        cmd = [
+            self.path,
+            target
+        ]
+
+        if self.verbosity > 1:
+            print("+" + " ".join(cmd), file=sys.stderr)
+
+        r = subprocess.run(cmd,
+                           check=False,
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+
+        if r.returncode != 0:
+            msg = r.stderr.decode("utf-8").strip()
+            msg += r.stdout.decode("utf-8").strip()
+            raise RuntimeError("image-info failed: " + msg)
+
+        return json.loads(r.stdout.decode("utf-8"))
+
+
+class TestCase:
+    def __init__(self, path, data: dict) -> None:
+        self.path = path
+        self.id = data["id"]
+        self.info = data["desc"]
+        self.desc = data["manifest"]
+        self.image_info = data.get("image-info")
+
+        self.manifest: Optional[osbuild.Manifest] = None
+        self.result: Optional[dict] = None
+        self.error: Optional[str] = None
+
+    def __str__(self):
+        res = str(self.id)
+        extra = []
+
+        if not self.image_info:
+            extra += ["no-image-info"]
+
+        if extra:
+            res += f" [{', '.join(extra)}]"
+
+        return res
+
+    @classmethod
+    def load(cls, path: str) -> "TestCase":
+        with open(path, "r") as f:
+            data = json.load(f)
+
+        return cls(path, data)
+
+    def load_manifest(self, index: osbuild.meta.Index) -> bool:
+        info = index.detect_format_info(self.desc)
+        if not info:
+            self.error = "Unsupported manifest format"
+            return False
+
+        fmt = info.module
+
+        try:
+            res = fmt.validate(self.desc, index)
+            if not res:
+                self.error = "Invalid manifest: validation failed"
+                return False
+
+            self.manifest = fmt.load(self.desc, index)
+        except Exception as e:  # pylint: disable=broad-except
+            self.error = str(e)
+            return False
+
+        return True
+
+
+class ImageTestSuite:
+    pass
+
+
+def load_tests(path) -> Iterator[TestCase]:
+    files = os.scandir(path)
+
+    for entry in files:
+        if not entry.is_file():
+            continue
+
+        fullpath = os.path.join(path, entry.name)
+        case = TestCase.load(fullpath)
+        yield case
+
+
+def detect_exports(test: TestCase) -> List[str]:
+
+    pipelines = test.manifest.pipelines
+    if not pipelines:
+        return []
+
+    # for now we just assume the last pipeline is the export
+    return [next(reversed(pipelines))]
+
+
+def detect_checkpoints(test: TestCase) -> List[str]:
+    checkpoints = []
+    manifest = test.manifest
+
+    build = manifest.get("build")
+    if build:
+        checkpoints += [build.name]
+
+    commit = manifest.get("ostree-commit")
+    if commit:
+        checkpoints += [commit.name]
+
+    return checkpoints
+
+
+def build_image(test: TestCase, osb: OSBuild, args: argparse.Namespace) -> bool:
+    if test.error:
+        return None
+
+    exports = detect_exports(test)
+    checkpoints = detect_checkpoints(test)
+
+    try:
+        if args.dry_run:
+            return True
+
+        result = osb.run(manifest=test.desc,
+                         exports=exports,
+                         checkpoints=checkpoints)
+        test.result = result
+        return True
+    except RuntimeError as e:
+        test.error = str(e)
+        return False
+
+
+def inspect_image(test: TestCase, imi: ImageInfo, args: argparse.Namespace) -> bool:
+    if test.error:
+        return None
+
+    if args.dry_run:
+        return True
+
+    if not test.image_info:
+        return None
+
+    if "image" not in test.result:
+        test.error = "image not produced"
+        return False
+
+    try:
+        result = imi.run(test.result["image"])
+        test.result = result
+    except RuntimeError as e:
+        test.error = str(e)
+        return False
+
+    if result != test.image_info:
+        test.error = "image-info mismatch"
+        return False
+
+    return True
+
+
+def make_filter(args):
+    def fn(test):
+        info = test.info
+
+        if args.arch and info["arch"] != args.arch:
+            return False
+
+        if args.distro and info["distro"] != args.distro:
+            return False
+
+        if args.name:
+            return fnmatch.fnmatch(test.id, args.name)
+
+        return True
+
+    return fn
+
+
+def print_stats(tests: List[TestCase]) -> None:
+    distors = defaultdict(int)
+    archs = defaultdict(int)
+    types = defaultdict(int)
+
+    for test in tests:
+        print(test)
+        distors[test.info["distro"]] += 1
+        archs[test.info["arch"]] += 1
+        types[test.info["image-type"]] += 1
+
+    print("Distributions:")
+    for distro, count in sorted(distors.items()):
+        print(f"\t{distro}: {count}")
+
+    print("Architectures:")
+    for arch, count in sorted(archs.items()):
+        print(f"\t{arch}: {count}")
+
+    print("Image types:")
+    for image_type, count in sorted(types.items()):
+        print(f"\t{image_type}: {count}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="osbuild image tests")
+    parser.add_argument(
+        "--osbuild-path",
+        metavar="PATH",
+        type=os.path.abspath,
+        dest="osbuild",
+        default="/usr/bin/osbuild",
+        help="path to the osbuild executable"
+    )
+    parser.add_argument(
+        "--image-info-path",
+        metavar="PATH",
+        type=os.path.abspath,
+        dest="image_info",
+        default="/usr/bin/osbuild-image-info",
+        help="path to the image-info executable"
+    )
+    parser.add_argument(
+        "--tempdir",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        default="/var/lib/osbuild-tests",
+        help="directory where intermediary files will be stored")
+    parser.add_argument(
+        "--store",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        default="/var/lib/osbuild/store",
+        help="directory where intermediary os trees are stored")
+    parser.add_argument(
+        "--output",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        default="/var/lib/osbuild/out",
+        help="directory where result objects are stored")
+    parser.add_argument(
+        "--arch",
+        metavar="ARCHITECTURE",
+        type=str,
+        default=platform.machine(),
+        help="filter tests by architecture [default: host]")
+    parser.add_argument(
+        "--distro",
+        metavar="DISTRIBUTION",
+        type=str,
+        help="filter tests by distribution")
+    parser.add_argument(
+        "--name",
+        metavar="NAME",
+        type=str,
+        help="filter tests by name"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help="Do not compile test cases"
+    )
+    parser.add_argument(
+        "-l", "--libdir",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        default="/usr/lib/osbuild",
+        help="directory containing the osbuild modules and library"
+    )
+
+    args = parser.parse_args()
+
+    index = osbuild.meta.Index(args.libdir)
+
+    print(f"Running in {os.path.realpath(os.curdir)}")
+
+    tests = list(load_tests("test/data/images"))
+    tests = list(filter(make_filter(args), tests))
+
+    for t in tests:
+        print(f"{t.id}", end="", flush=True)
+
+        res = t.load_manifest(index)
+        if not res:
+            print(f" {RED}FAIL{RESET}: {t.error}", end="")
+
+        print("")
+
+    print_stats(tests)
+
+    osb = OSBuild(args.osbuild, args.store, args.output)
+    imi = ImageInfo(args.image_info)
+
+    for t in tests:
+        print(f"{t.id}", end="", flush=True)
+        res = build_image(t, osb, args)
+        if res is None:
+            print("")
+        elif not res:
+            print(f" {RED}FAIL{RESET}: {t.error}", end="")
+
+        res = inspect_image(t, imi, args)
+        if res is None:
+            print("")
+        elif not res:
+            print(f" {RED}FAIL{RESET}: {t.error}", end="")
+
+        print("")
+
+
+"""     tmpdir = args.tempdir
+    os.makedirs(tmpdir, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=tmpdir) as tmp:
+        results = run_tests(args, tmp)
+
+    ok = n - failed
+
+    print("tests/ok/failed", end=": ")
+    print(f"{n}/{GREEN}{ok}{RESET}/{RED}{failed}{RESET}")
+
+    if failed:
+        sys.exit(1) """
+
+
+if __name__ == "__main__":
+    main()
