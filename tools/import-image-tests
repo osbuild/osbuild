@@ -1,0 +1,151 @@
+#!/usr/bin/python3
+"""
+Import Composer image tests
+"""
+
+import argparse
+import json
+import os
+import sys
+
+from typing import Iterator, Tuple
+
+
+RESET = "\033[0m"
+GREEN = "\033[32m"
+BOLD = "\033[1m"
+RED = "\033[31m"
+
+
+def parse_name(name: str):
+    comps = name.split("-")
+    distro = comps[0]
+    arch = comps[1]
+    name = comps[2]
+    extra = comps[3] if len(comps) > 3 else None
+    return distro, arch, name, extra
+
+
+def list_tests(source) -> Iterator[Tuple[str, str]]:
+    for entry in os.scandir(source):
+        if not entry.is_file():
+            continue
+        if not entry.name.endswith(".json"):
+            continue
+
+        name = entry.name[:-5]
+        fullpath = os.path.join(source, entry.name)
+        yield name, fullpath
+
+
+def load_test(name, fullpath) -> dict:
+    with open(fullpath, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    manifest = data.get("manifest")
+    if not manifest:
+        raise ValueError("no manifest")
+
+    req = data.get("compose-request")
+    if not req:
+        raise ValueError("no compose-request")
+
+    test = {
+        "id": name,
+        "desc": {
+            "distro": req["distro"],
+            "arch": req["arch"],
+            "image-type": req["image-type"],
+        },
+        "manifest": data["manifest"],
+        "image-info": data.get("image-info"),
+    }
+
+    return test
+
+
+def export_test(test, target):
+    name = test["id"]
+    fullpath = os.path.join(target, name + ".json")
+    with open(fullpath, "w", encoding="utf-8") as f:
+        json.dump(test, f, indent=2)
+
+
+def report_import(test, verbosity=1):
+    if verbosity < 1:
+        return
+
+    if verbosity == 1:
+        print(".", end="", flush=True)
+    else:
+        print(f"{GREEN} OK  {RESET} {test['id']}", flush=True)
+
+
+def report_failure(name, reason, verbosity=1):
+    if verbosity < 1:
+        return
+
+    if verbosity == 1:
+        print(f"{RED}F{RESET}", end="", flush=True)
+    else:
+        print(f"{RED}FAIL{RESET} {name}: {reason}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="osbuild image tests")
+    parser.add_argument(
+        "SOURCE",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        help="directory where test cases are imported from")
+    parser.add_argument(
+        "TARGET",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        default=None,
+        help="directory where test cases are exported to")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help="do not export test cases"
+    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--verbose",
+        dest="verbosity",
+        action="count",
+        default=1,
+        help="increase verbosity")
+    group.add_argument(
+        "--quiet",
+        action="store_const",
+        const=0,
+        dest="verbosity",
+        help="suppress output")
+
+    args = parser.parse_args()
+
+    idx = 0
+    failures = []
+    for idx, (name, path) in enumerate(list_tests(args.SOURCE)):
+        try:
+            test = load_test(name, path)
+
+            if args.dry_run:
+                continue
+
+            export_test(test, args.TARGET)
+        except ValueError as e:
+            report_failure(name, str(e), args.verbosity)
+            failures.append(name)
+        else:
+            report_import(test, args.verbosity)
+
+    print(f"\n{GREEN}{idx + 1 - len(failures) }{RESET} tests imported")
+    if failures:
+        print(f"{RED}{len(failures)}{RESET} failed")
+
+
+if __name__ == "__main__":
+    main()
