@@ -25,6 +25,7 @@
                   "dnf",
                   "dosfstools",
                   "e2fsprogs",
+                  "gdisk",
                   "grub2-pc",
                   "policycoreutils",
                   "python3-iniparse",
