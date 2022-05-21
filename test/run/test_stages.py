@@ -407,3 +407,47 @@ class TestStages(test.TestBase):
 
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")
+
+    @unittest.skipUnless(have_sfdisk_with_json(), "Need sfdisk with JSON support")
+    def test_sgdisk(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "sgdisk")
+
+        imgname = "disk.img"
+
+        with open(os.path.join(testdir, f"{imgname}.json"), "r") as f:
+            want = json.load(f)
+
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+
+            osb.compile_file(os.path.join(testdir, "sgdisk.json"),
+                             checkpoints=["tree"],
+                             exports=["tree"],
+                             output_dir=outdir)
+
+            target = os.path.join(outdir, "tree", imgname)
+
+            assert os.path.exists(target)
+
+            r = subprocess.run(["sfdisk", "--json", target],
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE,
+                               encoding="utf-8",
+                               check=False)
+
+            have = json.loads(r.stdout)
+
+            table = have["partitiontable"]
+
+            # remove entries that are not stable across `parted`
+            # invocations: "device", "id"
+            if "device" in table:
+                del table["device"]
+
+            for p in table["partitions"]:
+                p["node"] = os.path.basename(p["node"])
+
+            self.assertEqual(have, want)
+
+            # cache the downloaded data for the files source
+            osb.copy_source_data(self.store, "org.osbuild.files")
