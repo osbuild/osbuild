@@ -184,7 +184,7 @@
       }
     ]
   },
-"rhel-8.7": {
+  "rhel-8.7": {
     "repos": [
       {
         "file": "/etc/yum.repos.d/rhel8internal.repo",
