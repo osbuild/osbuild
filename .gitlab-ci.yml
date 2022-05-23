@@ -34,8 +34,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
           - aws/fedora-35-x86_64
           - aws/fedora-35-aarch64
           - aws/centos-stream-8-x86_64
@@ -60,8 +58,6 @@ Composer Tests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
           - aws/fedora-35-x86_64
           - aws/fedora-35-aarch64
           - aws/rhel-8.5-ga-x86_64
@@ -82,7 +78,6 @@ OSTree Images:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-34-x86_64
           - aws/fedora-35-x86_64
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.6-nightly-x86_64
