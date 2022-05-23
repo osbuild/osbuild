@@ -202,6 +202,8 @@ class TestFormatV1(unittest.TestCase):
                 ]
             }
         }
+        info = index.detect_format_info({"version": "1"})
+        rslt_fmt = index.get_result_fmt(info, "json", "1")
 
         manifest = fmt.load(description, index)
         self.assertIsNotNone(manifest)
@@ -210,7 +212,16 @@ class TestFormatV1(unittest.TestCase):
             res = self.build_manifest(manifest, tmpdir)
 
         self.assertIsNotNone(res)
-        result = fmt.output(manifest, res)
+
+        # test formatting to V2 output
+        result = rslt_fmt.output(manifest, res, "2")
+        self.assertIsNotNone(result)
+        self.assertIn("success", result)
+        self.assertFalse(result["success"])
+        self.assertNotIn("stages", result)
+
+        # test formatting to V1 output
+        result = rslt_fmt.output(manifest, res, info.version)
         self.assertIsNotNone(result)
         self.assertIn("success", result)
         self.assertFalse(result["success"])
@@ -248,7 +259,7 @@ class TestFormatV1(unittest.TestCase):
             res = self.build_manifest(manifest, tmpdir)
 
         self.assertIsNotNone(res)
-        result = fmt.output(manifest, res)
+        result = rslt_fmt.output(manifest, res, info.version)
         self.assertIsNotNone(result)
         self.assertIn("success", result)
         self.assertFalse(result["success"])
@@ -278,7 +289,7 @@ class TestFormatV1(unittest.TestCase):
             res = self.build_manifest(manifest, tmpdir)
 
         self.assertIsNotNone(res)
-        result = fmt.output(manifest, res)
+        result = rslt_fmt.output(manifest, res, info.version)
         self.assertIsNotNone(result)
 
         self.assertIn("assembler", result)
@@ -310,7 +321,7 @@ class TestFormatV1(unittest.TestCase):
             res = self.build_manifest(manifest, tmpdir)
 
         self.assertIsNotNone(res)
-        result = fmt.output(manifest, res)
+        result = rslt_fmt.output(manifest, res, info.version)
         self.assertIsNotNone(result)
 
         self.assertIn("stages", result)

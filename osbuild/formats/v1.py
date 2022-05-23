@@ -12,7 +12,9 @@ from osbuild.meta import Index, ValidationResult
 from ..pipeline import Manifest, Pipeline, detect_host_runner
 
 
+FORMAT_KIND = ["IN"]
 VERSION = "1"
+COMPATIBLE_RESULT_FORMATS = ["text", "json/1", "json/2"]
 
 
 def describe(manifest: Manifest, *, with_id=False) -> Dict:
@@ -189,48 +191,6 @@ def load(description: Dict, index: Index) -> Manifest:
             stage.sources = sources
 
     return manifest
-
-
-def output(manifest: Manifest, res: Dict) -> Dict:
-    """Convert a result into the v1 format"""
-
-    def result_for_pipeline(pipeline):
-        # The pipeline might not have been built one of its
-        # dependencies, i.e. its build pipeline, failed to
-        # build. We thus need to be tolerant of a missing
-        # result but still need to to recurse
-        current = res.get(pipeline.id, {})
-        retval = {
-            "success": current.get("success", True)
-        }
-
-        if pipeline.build:
-            build = manifest[pipeline.build]
-            retval["build"] = result_for_pipeline(build)
-            retval["success"] = retval["build"]["success"]
-
-        stages = current.get("stages")
-        if stages:
-            retval["stages"] = stages
-        return retval
-
-    result = result_for_pipeline(manifest["tree"])
-
-    assembler = manifest.get("assembler")
-    if not assembler:
-        return result
-
-    current = res.get(assembler.id)
-    # if there was an error before getting to the assembler
-    # pipeline, there might not be a result present
-    if not current:
-        return result
-
-    result["assembler"] = current["stages"][0]
-    if not result["assembler"]["success"]:
-        result["success"] = False
-
-    return result
 
 
 def validate(manifest: Dict, index: Index) -> ValidationResult:

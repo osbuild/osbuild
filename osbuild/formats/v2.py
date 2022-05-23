@@ -9,7 +9,9 @@ from ..pipeline import Manifest, Pipeline, Stage, detect_host_runner
 from ..sources import Source
 
 
+FORMAT_KIND = ["IN"]
 VERSION = "2"
+COMPATIBLE_RESULT_FORMATS = ["text", "json/2"]
 
 
 # pylint: disable=too-many-statements
@@ -378,76 +380,6 @@ def load(description: Dict, index: Index) -> Manifest:
         pipeline.runner = runner
 
     return manifest
-
-
-#pylint: disable=too-many-branches
-def output(manifest: Manifest, res: Dict) -> Dict:
-    """Convert a result into the v2 format"""
-
-    if not res["success"]:
-        last = list(res.keys())[-1]
-        failed = res[last]["stages"][-1]
-
-        result = {
-            "type": "error",
-            "success": False,
-            "error": {
-                "type": "org.osbuild.error.stage",
-                "details": {
-                    "stage": {
-                        "id": failed["id"],
-                        "type": failed["name"],
-                        "output": failed["output"],
-                        "error": failed["error"]
-                    }
-                }
-            }
-        }
-    else:
-        result = {
-            "type": "result",
-            "success": True,
-            "metadata": {}
-        }
-
-        # gather all the metadata
-        for p in manifest.pipelines.values():
-            data = {}
-            r = res.get(p.id, {})
-            for stage in r.get("stages", []):
-                md = stage.get("metadata")
-                if not md:
-                    continue
-                name = stage["name"]
-                val = data.setdefault(name, {})
-                val.update(md)
-
-            if data:
-                result["metadata"][p.name] = data
-
-    # generate the log
-    result["log"] = {}
-    for p in manifest.pipelines.values():
-        r = res.get(p.id, {})
-        log = []
-
-        for stage in r.get("stages", []):
-            data = {
-                "id": stage["id"],
-                "type": stage["name"],
-                "output": stage["output"]
-            }
-            if not stage["success"]:
-                data["success"] = stage["success"]
-                if stage["error"]:
-                    data["error"] = stage["error"]
-
-            log.append(data)
-
-        if log:
-            result["log"][p.name] = log
-
-    return result
 
 
 def validate(manifest: Dict, index: Index) -> ValidationResult:

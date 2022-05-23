@@ -74,8 +74,6 @@ def parse_arguments(sys_argv):
                         help="stage to commit to the object store during build (can be passed multiple times)")
     parser.add_argument("--export", metavar="ID", action="append", type=str, default=[],
                         help="object to export, can be passed multiple times")
-    parser.add_argument("--json", action="store_true",
-                        help="output results in JSON format")
     parser.add_argument("--output-directory", metavar="DIRECTORY", type=os.path.abspath,
                         help="directory where result objects are stored")
     parser.add_argument("--inspect", action="store_true",
@@ -86,8 +84,35 @@ def parse_arguments(sys_argv):
                         help="File descriptor to be used for the monitor")
     parser.add_argument("--stage-timeout", type=int, default=None,
                         help="set the maximal time (in seconds) each stage is allowed to run")
+    parser.add_argument("--json", action="store_true",
+                        help="""output results in JSON format.
+                            Setting the flag is a shortcut for  `--result-format=json/auto`
+                            Not setting the flag (default) is a shortcut for `-result-format=text`.""")
+    parser.add_argument("--result-format", type=str, default=None,
+                        choices=[None, "text", "json/auto", "json/1", "json/2"],
+                        help="""fine grained control over the result format, always overrides --json flag.
+                        `text` let the result be formatted as text. `json` let the result be formatted as JSON.
+                        It is possible to specify the version of the result formatting. `auto` let osbuild decide to
+                        format the result with the same version as the input manifest, specifying the result version
+                        make osbuild force the result format to that specific version. Note that not all the input
+                        version are compatible with all output versions. Check formats/* for more details.
+                        """)
 
     return parser.parse_args(sys_argv[1:])
+
+
+def get_result_format(jsn, res_fmt: str, info):
+    if not res_fmt:
+        if jsn:
+            return "json", info.version
+        return "text", None
+    if "/" in res_fmt:
+        return tuple(res_fmt.replace("auto", info.version).split("/"))
+    return res_fmt, None
+
+
+def is_json(jsn, res_fmt: str):
+    return jsn or (res_fmt is not None and "json" in res_fmt)
 
 
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
@@ -102,19 +127,29 @@ def osbuild_cli():
     if not info:
         print("Unsupported manifest format")
         return 2
-    fmt = info.module
+    if not info.is_input_format():
+        print("Manifest format isn't tailored to parse input manifest")
+        return 2
+    mfst_fmt = info.module
+
+    # detect the result format
+    res_fmt, fmt_flavour = get_result_format(args.json, args.result_format, info)
+    rslt_fmt = index.get_result_fmt(info, res_fmt, fmt_flavour)
+    if not rslt_fmt:
+        print("Unsupported result format")
+        return 2
 
     # first thing is validation of the manifest
-    res = fmt.validate(desc, index)
+    res = mfst_fmt.validate(desc, index)
     if not res:
-        if args.json or args.inspect:
+        if is_json(args.json, args.result_format) or args.inspect:
             json.dump(res.as_dict(), sys.stdout)
             sys.stdout.write("\n")
         else:
             show_validation(res, args.manifest_path)
         return 2
 
-    manifest = fmt.load(desc, index)
+    manifest = mfst_fmt.load(desc, index)
 
     exports = set(args.export)
     unresolved = [e for e in exports if e not in manifest]
@@ -133,7 +168,7 @@ def osbuild_cli():
             return 1
 
     if args.inspect:
-        result = fmt.describe(manifest, with_id=True)
+        result = mfst_fmt.describe(manifest, with_id=True)
         json.dump(result, sys.stdout)
         sys.stdout.write("\n")
         return 0
@@ -146,7 +181,7 @@ def osbuild_cli():
 
     monitor_name = args.monitor
     if not monitor_name:
-        monitor_name = "NullMonitor" if args.json else "LogMonitor"
+        monitor_name = "NullMonitor" if is_json(args.json, args.result_format) else "LogMonitor"
     monitor = osbuild.monitor.make(monitor_name, args.monitor_fd)
 
     try:
@@ -174,16 +209,5 @@ def osbuild_cli():
         print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
         return 130
 
-    if args.json:
-        r = fmt.output(manifest, r)
-        json.dump(r, sys.stdout)
-        sys.stdout.write("\n")
-    else:
-        if r["success"]:
-            for name, pl in manifest.pipelines.items():
-                print(f"{name + ':': <10}\t{pl.id}")
-        else:
-            print()
-            print(f"{RESET}{BOLD}{RED}Failed{RESET}")
-
+    rslt_fmt.print_result(manifest, r, fmt_flavour)
     return 0 if r["success"] else 1
