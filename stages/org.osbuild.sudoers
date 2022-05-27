@@ -1,0 +1,90 @@
+#!/usr/bin/python3
+"""
+Create a sudoers file
+
+This stage accepts a list of user specifications. Each user specification
+consists of a `users` array, a `hosts` array, and a `command definition` array.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA = r"""
+  "definitions": {
+    "user": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.][A-Za-z0-9_.-]{0,31}$"
+    },
+    "host": {
+      "type": "string",
+      "pattern": "^[\\w]+$"
+    },
+    "target": {
+      "type": "string",
+      "pattern": "^[\\w]+$"
+    },
+    "command": {
+      "type": "string",
+      "pattern": "^[\\w]+$"
+    }
+  },
+  "properties": {
+    "filename": {
+      "type": "string",
+      "description": "Name of the sudoers file"
+    },
+    "specifications": {
+      "additionalProperties": false,
+      "type": "array",
+      "description": "Array of sudoers specifications",
+      "minLength": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "user": {
+              "$ref": "#/definitions/user"
+            },
+            "host": {
+              "$ref": "#/definitions/host"
+            },
+            "target": {
+              "$ref": "#/definitions/target"
+            },
+            "command": {
+              "$ref": "#/definitions/command"
+            }
+          }
+        }
+      }
+    }
+"""
+
+
+def write_specification(file, spec):
+    """Write a single specification line to the open file object."""
+    file.write(f"{spec['user']} {spec['host']} = ({spec['target']}) {spec['command']}\n")
+
+
+def main(tree, options):
+    filename = options["filename"]
+    specifications = options["specifications"]
+
+    path = os.path.join(tree, "etc/sudoers.d", filename)
+
+    with open(path, "w", encoding="utf-8") as f:
+        for specification in specifications:
+            write_specification(f, specification)
+
+    subprocess.check_call(["visudo", "-cf", path])
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

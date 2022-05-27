@@ -1,0 +1,7 @@
+{
+  "added_files": [
+    "/etc/sudoers.d/10-test"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
