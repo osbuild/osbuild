@@ -89,21 +89,25 @@ SCHEMA = """
   }
 },
 "additionalProperties": false,
-"required": ["rootfs", "architecture", "entries"],
+"required": ["rootfs", "entries"],
 "anyOf": [{
   "required": ["bios"]
 }, {
   "required": ["uefi"]
 }],
 "properties": {
-  "architecture": {
-    "enum": ["x86", "aarch64", "ppc64le"]
-  },
   "rootfs": { "$ref": "#/definitions/filesystem" },
   "bootfs": { "$ref": "#/definitions/filesystem" },
   "bios": {
     "description": "Include bios boot support",
-    "type": "boolean"
+    "type": "object",
+    "required": ["platform"],
+    "properties": {
+      "platform": {
+        "type": "string",
+        "enum": ["i386-pc", "powerpc-ieee1275"]
+      }
+    }
   },
   "uefi": {
     "description": "Include UEFI boot support",
@@ -285,19 +289,6 @@ def copy_efi_data(tree, vendor):
                         symlinks=False)
 
 
-def architecture_to_platform(architecture):
-    platform_map = {
-        "x86": "i386-pc",
-        "ppc64le": "powerpc-ieee1275"
-    }
-
-    platform = platform_map.get(architecture)
-    if not platform:
-        raise ValueError(f"Unsupported architecture: {architecture}")
-
-    return platform
-
-
 class GrubEntry:
 
     class Product:
@@ -342,8 +333,8 @@ class GrubEntry:
 
 
 class GrubConfig:
-    def __init__(self, architecture, rootfs, bootfs):
-        self.architecture = architecture
+    def __init__(self, bios, rootfs, bootfs):
+        self.bios = bios
         self.rootfs = rootfs
         self.bootfs = bootfs
         self.entries = []
@@ -398,8 +389,8 @@ class GrubConfig:
         fs_type, fs_id = fs_spec_decode(self.rootfs)
         rootfs = f"{fs_type}={fs_id}" if fs_type else fs_id
 
-        loader = ""
-        if self.architecture == "x64":
+        loader = ""  # default to `linux`, i.e. no suffix
+        if self.bios.get("platform", "") == "i386-pc":
             loader = "efi" if uefi else "16"
 
         # configuration options for the main template
@@ -467,7 +458,6 @@ class GrubConfig:
 
 # pylint: disable=too-many-statements
 def main(tree, options):
-    architecture = options["architecture"]
     root_fs = options["rootfs"]
     boot_fs = options.get("bootfs")
     bios = options.get("bios")
@@ -476,7 +466,7 @@ def main(tree, options):
 
     # Prepare the actual grub configuration file, will be written further down
     cfg = options.get("config", {})
-    config = GrubConfig(architecture, root_fs, boot_fs)
+    config = GrubConfig(bios, root_fs, boot_fs)
     config.cmdline = cfg.get("cmdline", "")
     config.distributor = cfg.get("distributor")
     config.serial = cfg.get("serial")
@@ -532,8 +522,7 @@ def main(tree, options):
     if bios:
         # Now actually write the main grub.cfg file
         config.write(tree, "boot/grub2/grub.cfg", False)
-        platform = architecture_to_platform(architecture)
-        copy_modules(tree, platform)
+        copy_modules(tree, bios["platform"])
         copy_font(tree)
 
     return 0
