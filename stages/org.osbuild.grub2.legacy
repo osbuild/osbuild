@@ -103,7 +103,7 @@ SCHEMA = """
   "bootfs": { "$ref": "#/definitions/filesystem" },
   "bios": {
     "description": "Include bios boot support",
-    "type": "string"
+    "type": "boolean"
   },
   "uefi": {
     "description": "Include UEFI boot support",
