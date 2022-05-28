@@ -97,7 +97,7 @@ SCHEMA = """
 }],
 "properties": {
   "architecture": {
-    "enum": ["x64", "aarch64", "ppc64le"]
+    "enum": ["x86", "aarch64", "ppc64le"]
   },
   "rootfs": { "$ref": "#/definitions/filesystem" },
   "bootfs": { "$ref": "#/definitions/filesystem" },
@@ -285,7 +285,7 @@ def copy_efi_data(tree, vendor):
 
 def architecture_to_platform(architecture):
     platform_map = {
-        "x64": "i386-pc",
+        "x86": "i386-pc",
         "ppc64le": "powerpc-ieee1275"
     }
 
