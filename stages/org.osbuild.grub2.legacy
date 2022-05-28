@@ -131,9 +131,11 @@ SCHEMA = """
   "entries": {
     "description": "List of entries to add to the boot menu",
     "type": "array",
+    "minItems": 1,
     "items": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["id", "product", "kernel"],
       "properties": {
         "default": {
           "type": "boolean",
