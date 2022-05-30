@@ -1,0 +1,8 @@
+{
+  "added_files": [
+    "/oscap-remediate-offline.conf.sh",
+    "/system-update"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
