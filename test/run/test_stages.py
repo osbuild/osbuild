@@ -33,6 +33,10 @@ def have_sfdisk_with_json():
 
     data = r.stdout.strip()
     vstr = data.split(" ")[-1]
+
+    if "-" in vstr:
+        vstr = vstr.split("-")[0]
+
     ver = list(map(int, vstr.split(".")))
     return ver[0] >= 2 and ver[1] >= 27
 
