@@ -1,0 +1,10 @@
+#!/usr/bin/python3
+
+import subprocess
+
+subprocess.run([
+                    "tools/osbuild-image-test",
+                    "--arch=x86_64",
+                    "--distro=rhel-90"
+                ],
+                check=True)

@@ -99,6 +99,18 @@ SonarQube:
     INTERNAL_NETWORK: "true"
     GIT_DEPTH: 0
 
+Manifests:
+  stage: test
+  extends: .terraform
+  script:
+    - schutzbot/deploy.sh
+    - sudo test/cases/manifest_tests
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-9.0-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
+
 finish:
   stage: finish
   tags:
