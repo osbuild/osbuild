@@ -171,7 +171,7 @@ def load(description: Dict, index: Index) -> Manifest:
     pipeline = description.get("pipeline", {})
     sources = description.get("sources", {})
 
-    manifest = Manifest()
+    manifest = Manifest(description)
 
     load_pipeline(pipeline, index, manifest)
 

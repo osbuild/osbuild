@@ -343,7 +343,7 @@ def load(description: Dict, index: Index) -> Manifest:
     sources = description.get("sources", {})
     pipelines = description.get("pipelines", [])
 
-    manifest = Manifest()
+    manifest = Manifest(description)
     source_refs = set()
 
     # load the sources

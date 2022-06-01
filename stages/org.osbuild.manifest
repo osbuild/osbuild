@@ -1,0 +1,43 @@
+#!/usr/bin/python3
+"""
+Leave behind a breadcrumb on the built image to later identify metadata on the
+options used to build the image.
+"""
+
+import os
+import sys
+import json
+
+import osbuild.api
+
+
+SCHEMA = r"""
+"additionalProperties": false,
+"properties": {
+  "data": {
+    "type": "string",
+    "description": "foo"
+  }
+}
+"""
+
+
+def main(tree, meta, options):
+    assert meta["manifest"] is not None
+
+    path = os.path.join(tree, "usr", "share", "osbuild", "self")
+
+    os.makedirs(path, exist_ok=True)
+
+    file = os.path.join(path, "manifest.json")
+
+    with open(file, "w", encoding="utf-8") as f:
+        json.dump(meta["manifest"], f)
+
+    return 0
+
+
+if __name__ == '__main__':
+    _args = osbuild.api.arguments()
+    r = main(_args["tree"], _args["meta"], _args["options"])
+    sys.exit(r)

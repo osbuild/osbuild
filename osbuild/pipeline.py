@@ -60,7 +60,7 @@ class BuildResult:
 
 
 class Stage:
-    def __init__(self, info, source_options, build, base, options, source_epoch):
+    def __init__(self, info, source_options, build, base, options, source_epoch, manifest):
         self.info = info
         self.sources = source_options
         self.build = build
@@ -71,6 +71,7 @@ class Stage:
         self.inputs = {}
         self.devices = {}
         self.mounts = {}
+        self.manifest = manifest
 
     @property
     def name(self):
@@ -121,6 +122,7 @@ class Stage:
         args["options"] = self.options
         args["meta"] = meta = {
             "id": self.id,
+            "manifest": self.manifest,
         }
 
         if self.source_epoch is not None:
@@ -241,13 +243,14 @@ class Stage:
 
 
 class Pipeline:
-    def __init__(self, name: str, runner=None, build=None, source_epoch=None):
+    def __init__(self, name: str, runner=None, build=None, source_epoch=None, manifest=None):
         self.name = name
         self.build = build
         self.runner = runner
         self.stages: List[Stage] = []
         self.assembler = None
         self.source_epoch = source_epoch
+        self.manifest = manifest
 
     @property
     def id(self):
@@ -266,7 +269,8 @@ class Pipeline:
 
     def add_stage(self, info, options, sources_options=None):
         stage = Stage(info, sources_options, self.build,
-                      self.id, options or {}, self.source_epoch)
+                      self.id, options or {}, self.source_epoch,
+                      self.manifest)
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id
@@ -367,14 +371,16 @@ class Pipeline:
 class Manifest:
     """Representation of a pipeline and its sources"""
 
-    def __init__(self):
+    def __init__(self, manifest: Dict):
+        self.manifest = manifest
+
         self.pipelines = collections.OrderedDict()
         self.sources: List[Source] = []
 
     def add_pipeline(
             self, name: str, runner: Optional[str], build: Optional[str] = None, source_epoch: Optional[int] = None
             ) -> Pipeline:
-        pipeline = Pipeline(name, runner, build, source_epoch)
+        pipeline = Pipeline(name, runner, build, source_epoch, self.manifest)
         if name in self.pipelines:
             raise ValueError(f"Name {name} already exists")
         self.pipelines[name] = pipeline

@@ -1,0 +1,11 @@
+{
+  "added_files": [
+    "/usr",
+    "/usr/share",
+    "/usr/share/osbuild",
+    "/usr/share/osbuild/self",
+    "/usr/share/osbuild/self/manifest.json"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
