@@ -123,18 +123,20 @@ class YumRepos:
         for file, repo in repos.items():
             self.repos[file] = YumRepo(repo)
 
+class ConfFolder(ABC):
 
-class Dracut:
+    def __init__(self, report: Dict, keyname:str):
+        self.folder_content = {}
+        for folder, content in report.get(keyname, {}).items():
+            for file, config in content.items():
+                if folder not in self.folder_content:
+                    self.folder_content[folder] = {}
+                self.folder_content[folder][file] = config
+
+class Dracut(ConfFolder):
 
     def __init__(self, report: Dict):
-        self.dracuts = {}
-        if "dracut" in report:
-            d = report["dracut"]
-            for folder, content in d.items():
-                for file, config in content.items():
-                    if folder not in self.dracuts:
-                        self.dracuts[folder] = {}
-                    self.dracuts[folder][file] = config
+        super().__init__(report, "dracut")
 
 
 class Firewall:
@@ -178,17 +180,10 @@ class Keyboard:
             self.vconsole = report["keyboard"].get("vconsole", self.vconsole)
 
 
-class SecurityLimits:
+class SecurityLimits(ConfFolder):
 
     def __init__(self, report: Dict):
-        self.limits = {}
-        if "security-limits" in report:
-            d = report["security-limits"]
-            for folder, content in d.items():
-                for file, config in content.items():
-                    if folder not in self.limits:
-                        self.limits[folder] = {}
-                    self.limits[folder][file] = config
+        super().__init__(report, "security-limits")
 
 
 class Locale:
@@ -220,16 +215,10 @@ class Modprobe:
                     self.folder_conf[folder] = BlacklistModule(path, blacklist)
 
 
-class TmpFiles:
+class TmpFiles(ConfFolder):
 
     def __init__(self, report: Dict):
-        self.tmp_files = {}
-        if "tmpfiles.d" in report:
-            for folder, content in report["tmpfiles.d"].items():
-                for file, config in content.items():
-                    if folder not in self.tmp_files:
-                        self.tmp_files[folder] = {}
-                    self.tmp_files[folder][file] = config
+        super().__init__(report, "tmpfiles")
 
 
 class DnfPluginsConfig:
@@ -281,28 +270,16 @@ class SELinux:
                 self.context_mismatch.append(SELinuxContext(context))
 
 
-class SSHConfig:
+class SSHConfig(ConfFolder):
 
     def __init__(self, report: Dict):
-        self.config = {}
-        if "ssh_config" in report:
-            for folder, content in report["ssh_config"].items():
-                for file, config in content.items():
-                    if folder not in config:
-                        self.config[folder] = {}
-                    self.config[folder][file] = content
+        super().__init__(report, "ssh_config")
 
 
-class SSHDConfig:
+class SSHDConfig(ConfFolder):
 
     def __init__(self, report: Dict):
-        self.config = {}
-        if "sshd_config" in report:
-            for folder, content in report["sshd_config"].items():
-                for file, config in content.items():
-                    if folder not in config:
-                        self.config[folder] = {}
-                    self.config[folder][file] = content
+        super().__init__(report, "sshd_config")
 
 
 class Sudoers:
@@ -331,28 +308,16 @@ class SysConfig:
                 self.network_scripts.append(NetworkScript(iface, config))
 
 
-class SysctlD:
+class SysctlD(ConfFolder):
 
     def __init__(self, report: Dict):
-        self.config = {}
-        if "sysctl.d" in report:
-            for folder, content in report["sysctl.d"].items():
-                for file, config in content.items():
-                    if folder not in config:
-                        self.config[folder] = {}
-                    self.config[folder][file] = content
+        super().__init__(report, "sysctl.d")
 
 
-class SystemDServiceDropin:
+class SystemDServiceDropin(ConfFolder):
 
     def __init__(self, report: Dict):
-        self.config = {}
-        if "systemd-service-dropins" in report:
-            for folder, content in report["systemd-service-dropins"].items():
-                for file, config in content.items():
-                    if folder not in config:
-                        self.config[folder] = {}
-                    self.config[folder][file] = content
+        super().__init__(report, "systemd-service-dropins")
 
 
 class TunedProfile:
