@@ -1,0 +1,618 @@
+#!/usr/bin/python3
+
+import argparse
+import json
+import os
+from os import walk
+from typing import Dict, List
+from abc import ABC
+
+
+class Package:
+
+    def __init__(self, package: str):
+        self.package_name = package.split(".")[0]
+        self.version = ".".join(package.split(".")[1:])
+
+
+class RpmVerify:
+
+    def __init__(self, report: Dict):
+        self.changed = {}
+        self.missing = []
+        if "rpm_verify" in report:
+            self.changed = report["rpm_verify"].get("changed", self.changed)
+            self.missing = report["rpm_verify"].get("missing", self.missing)
+
+
+class RpmNotInstalled:
+
+    def __init__(self, report):
+        self.not_installed = report.get("rpm_not_installed_docs", [])
+
+
+class Packages:
+
+    def __init__(self, report: Dict):
+        self.packages = []
+        self.unpack_packages(report.get("packages"))
+
+    def unpack_packages(self, packages: List):
+        if packages is None:
+            return
+        for package in packages:
+            self.packages = Package(package)
+
+
+class Services:
+
+    def __init__(self, report: Dict):
+        self.enabled = report["services-enabled"]
+        self.disabled = report["services-disabled"]
+
+
+class AuthselectConf:
+
+    def __init__(self, report: Dict):
+        self.profile_id = ""
+        self.enabled_features = []
+        if "authselect" in report:
+            self.profile_id = report["authselect"].get("profile-id",
+                                                       self.profile_id)
+            self.enabled_features = report["authselect"].get("enabled-features",
+                                                             self.enabled_features)
+
+
+class Chrony:
+
+    def __init__(self, report: Dict):
+        self.leapsectz = []
+        self.peer = []
+        self.pool = []
+        self.server = []
+        if "chrony" in report:
+            self.leapsectz = report["chrony"].get("server", self.leapsectz)
+            self.peer = report["chrony"].get("peer", self.peer)
+            self.pool = report["chrony"].get("pool", self.pool)
+            self.server = report["chrony"].get("server", self.server)
+
+
+class CloudIinit:
+
+    def __init__(self, report: Dict):
+        self.init_files = report.get("cloud-init", {})
+
+
+class Dnf:
+
+    def __init__(self, report: Dict):
+        self.dnf_conf = {}
+        self.vars = {}
+        if "dnf" in report:
+            self.dnf_conf = report["dnf"].get("dnf.conf", self.dnf_conf)
+            self.vars = report["dnf"].get("vars", self.vars)
+        self.automatic_conf = report.get("/etc/dnf/automatic.conf", {})
+
+
+class Repo:
+
+    def __init__(self, repo):
+        self.baseurl = repo.get("baseurl")
+        self.enabled = repo.get("enabled")
+        self.gpgkey = repo.get("gpgkey")
+        self.name = repo.get("name")
+        self.repo_gpgcheck = repo.get("repo_gpgcheck")
+
+
+class YumRepo:
+
+    def __init__(self, repos: Dict):
+        self.repo = {}
+        for name, info in repos.items():
+            self.repo[name] = Repo(info)
+
+
+class YumRepos:
+
+    def __init__(self, report: Dict):
+        self.repos = {}
+        if "yum_repos" in report:
+            self.unpack_repos(report["yum_repos"])
+
+    def unpack_repos(self, repos: Dict):
+        for file, repo in repos.items():
+            self.repos[file] = YumRepo(repo)
+
+
+class Dracut:
+
+    def __init__(self, report: Dict):
+        self.dracuts = {}
+        if "dracut" in report:
+            d = report["dracut"]
+            for folder, content in d.items():
+                for file, config in content.items():
+                    if folder not in self.dracuts:
+                        self.dracuts[folder] = {}
+                    self.dracuts[folder][file] = config
+
+
+class Firewall:
+
+    def __init__(self, report):
+        self.enabled = report.get("firewall-enabled", [])
+        self.zone = report.get("firewall-default-zone", "")
+
+
+class FStabEntry:
+
+    def __init__(self, entry: List):
+        self.info = entry
+
+
+class FStab:
+
+    def __init__(self, report):
+        self.entries = []
+        if "fstab" in report:
+            self.unpack(report["fstab"])
+
+    def unpack(self, fstab: List):
+        for entry in fstab:
+            self.entries.append(FStabEntry(entry))
+
+
+class Hosts:
+
+    def __init__(self, report):
+        self.hosts = report.get("hosts", [])
+
+
+class Keyboard:
+
+    def __init__(self, report):
+        self.x11 = {}
+        self.vconsole = {}
+        if "keyboard" in report:
+            self.x11 = report["keyboard"].get("x11", self.x11)
+            self.vconsole = report["keyboard"].get("vconsole", self.vconsole)
+
+
+class SecurityLimits:
+
+    def __init__(self, report: Dict):
+        self.limits = {}
+        if "security-limits" in report:
+            d = report["security-limits"]
+            for folder, content in d.items():
+                for file, config in content.items():
+                    if folder not in self.limits:
+                        self.limits[folder] = {}
+                    self.limits[folder][file] = config
+
+
+class Locale:
+
+    def __init__(self, report: Dict):
+        self.locale = report.get("locale", {})
+
+
+class SystemDLoginD:
+
+    def __init__(self, report: Dict):
+        self.conf = report.get("systemd-logind", {})
+
+
+class BlacklistModule:
+
+    def __init__(self, path: str, blacklist: List):
+        self.path = path
+        self.blacklist = blacklist
+
+
+class Modprobe:
+
+    def __init__(self, report: Dict):
+        self.folder_conf = {}
+        if "modprobe" in report:
+            for folder, content in report["modprobe"].items():
+                for path, blacklist in content.items():
+                    self.folder_conf[folder] = BlacklistModule(path, blacklist)
+
+
+class TmpFiles:
+
+    def __init__(self, report: Dict):
+        self.tmp_files = {}
+        if "tmpfiles.d" in report:
+            for folder, content in report["tmpfiles.d"].items():
+                for file, config in content.items():
+                    if folder not in self.tmp_files:
+                        self.tmp_files[folder] = {}
+                    self.tmp_files[folder][file] = config
+
+
+class DnfPluginsConfig:
+
+    def __init__(self, product_id, subscription_manager):
+        self.product_id = "true" in product_id
+        self.subscription_manager = "true" in subscription_manager
+
+
+class RHSMConf:
+
+    def __init__(self, rhsm: Dict):
+        self.logging = rhsm.get("logging")
+        self.rhsm = rhsm.get("rhsm")
+        self.rhsmcertd = rhsm.get("rhsmcertd")
+        self.server = rhsm.get("server")
+
+
+class RHSM:
+
+    def __init__(self, report: Dict):
+        self.rhsm_conf = {}
+        self.dnf_plugins = None
+        if "rhsm" in report:
+            rhsm = report["rhsm"]
+            self.rhsm_conf = RHSMConf(report["rhsm"].get("rhsm.conf", {}))
+            if "dnf-plugins" in rhsm:
+                self.dnf_plugins = DnfPluginsConfig(
+                    rhsm["dnf-plugins"]["product-id"],
+                    rhsm["dnf-plugins"]["subscription-manager"])
+
+
+class SELinuxContext:
+
+    def __init__(self, context: Dict):
+        self.actual = context["actual"]
+        self.expected = context["expected"]
+        self.filename = context["filename"]
+
+
+class SELinux:
+
+    def __init__(self, report: Dict):
+        self.policy = {}
+        self.context_mismatch = []
+        if "selinux" in report:
+            self.policy = report["selinux"].get("policy", self.policy)
+            for context in report["selinux"].get("context-mismatch", []):
+                self.context_mismatch.append(SELinuxContext(context))
+
+
+class SSHConfig:
+
+    def __init__(self, report: Dict):
+        self.config = {}
+        if "ssh_config" in report:
+            for folder, content in report["ssh_config"].items():
+                for file, config in content.items():
+                    if folder not in config:
+                        self.config[folder] = {}
+                    self.config[folder][file] = content
+
+
+class SSHDConfig:
+
+    def __init__(self, report: Dict):
+        self.config = {}
+        if "sshd_config" in report:
+            for folder, content in report["sshd_config"].items():
+                for file, config in content.items():
+                    if folder not in config:
+                        self.config[folder] = {}
+                    self.config[folder][file] = content
+
+
+class Sudoers:
+
+    def __init__(self, report: Dict):
+        self.conf_files = report.get("sudoers", {})
+
+
+class NetworkScript:
+
+    def __init__(self, name, configuration):
+        self.name = name
+        self.configuration = configuration
+
+
+class SysConfig:
+
+    def __init__(self, report: Dict):
+        self.kernel = {}
+        self.network = {}
+        self.network_scripts = []
+        if "sysconfig" in report:
+            self.kernel = report["sysconfig"].get("kernel", self.kernel)
+            self.network = report["sysconfig"].get("network", self.network)
+            for iface, config in report["sysconfig"].get("network-scripts", {}).items():
+                self.network_scripts.append(NetworkScript(iface, config))
+
+
+class SysctlD:
+
+    def __init__(self, report: Dict):
+        self.config = {}
+        if "sysctl.d" in report:
+            for folder, content in report["sysctl.d"].items():
+                for file, config in content.items():
+                    if folder not in config:
+                        self.config[folder] = {}
+                    self.config[folder][file] = content
+
+
+class SystemDServiceDropin:
+
+    def __init__(self, report: Dict):
+        self.config = {}
+        if "systemd-service-dropins" in report:
+            for folder, content in report["systemd-service-dropins"].items():
+                for file, config in content.items():
+                    if folder not in config:
+                        self.config[folder] = {}
+                    self.config[folder][file] = content
+
+
+class TunedProfile:
+
+    def __init__(self, report: Dict):
+        self.active_profile = ""
+        self.profile_mode = ""
+        if "tuned" in report:
+            self.active_profile = report["tuned"].get("active_profile", "")
+            self.profile_mode = report["tuned"].get("profile_mode", "")
+
+
+class ResolvConf:
+
+    def __init__(self, report: Dict):
+        self.conf = report.get("/etc/resolv.conf", [])
+
+
+class UdevRules:
+
+    def __init__(self, report: Dict):
+        self.rules = {}
+        if "/etc/udev/rules.d" in report:
+            for file, rules in report["/etc/udev/rules.d"].items():
+                self.rules[file] = rules
+
+
+class BootEntry:
+
+    def __init__(self, entry: Dict):
+        self.entry = entry
+
+
+class BootMenu:
+
+    def __init__(self, report: Dict):
+        self.boot_entries = []
+        if "bootmenu" in report:
+            for entry in report["bootmenu"]:
+                self.boot_entries.append(BootEntry(entry))
+
+
+class BootEnv:
+
+    def __init__(self, report: Dict):
+        self.boot_env = report.get("boot-environment", {})
+
+
+class DefaultTarget:
+
+    def __init__(self, report: Dict):
+        self.defaultTarget = report.get("default-target", "")
+
+
+class Groups:
+
+    def __init__(self, report: Dict):
+        self.groups = report.get("groups", [])
+
+
+class Hostname:
+
+    def __init__(self, report: Dict):
+        self.hostname = report.get("hostname", "")
+
+
+class MachineId:
+
+    def __init__(self, report: Dict):
+        self.machine_id = report.get("machine-id", "")
+
+
+class OSRelease:
+
+    def __init__(self, report: Dict):
+        self.os_release = report.get("os-release", {})
+
+
+class Passwd:
+
+    def __init__(self, report: Dict):
+        self.passwd = report.get("passwd", [])
+
+
+class Timezone:
+
+    def __init__(self, report: Dict):
+        self.timezone = report.get("timezone", "")
+
+
+class ImageInfo(ABC):
+
+    def __init__(self, report):
+        self.report_content = {
+            "authselect": AuthselectConf(report),
+            "boot-environment": BootEnv(report),
+            "bootmenu": BootMenu(report),
+            "chrony": Chrony(report),
+            "cloud-init": CloudIinit(report),
+            "default-target": DefaultTarget(report),
+            "dnf": Dnf(report),
+            "dracut": Dracut(report),
+            "firewall": Firewall(report),
+            "fstab": FStab(report),
+            "groups": Groups(report),
+            "hostname": Hostname(report),
+            "hosts": Hosts(report),
+            "keyboad": Keyboard(report),
+            "locale": Locale(report),
+            "machine-id": MachineId(report),
+            "modprobe": Modprobe(report),
+            "os-release": OSRelease(report),
+            "packages": Packages(report),
+            "passwd": Passwd(report),
+            "resolv-conf": ResolvConf(report),
+            "rhsm": RHSM(report),
+            "rpm-not-installed-docs": RpmNotInstalled(report),
+            "rpm-verify": RpmVerify(report),
+            "security-limits": SecurityLimits(report),
+            "selinux": SELinux(report),
+            "services": Services(report),
+            "ssh-configs": SSHConfig(report),
+            "sshd-configs": SSHDConfig(report),
+            "sudoers-conf": Sudoers(report),
+            "sysconfig": SysConfig(report),
+            "sysctld-configs": SysctlD(report),
+            "systemd-logind": SystemDLoginD(report),
+            "systemd-service-dropins": SystemDServiceDropin(report),
+            "timezone": Timezone(report),
+            "tmpfiles-d": TmpFiles(report),
+            "tuned-profile": TunedProfile(report),
+            "udev-rules": UdevRules(report),
+            "yum-repos": YumRepos(report)
+        }
+
+    @classmethod
+    def get_imi(cls, report: Dict):
+        if report is None:
+            return None
+        if (report.get("type", None) == "ostree/commit" or
+                report.get("type", None) == "ostree/repo"):
+            # image-info represents a ostree repo
+            return OSTreeInfoImage(report)
+        if report.get("bootloader", None):
+            # image-info represents an image
+            return ImageInfoImage(report)
+        # image-info represents a directory
+        return DirectoryInfoImage(report)
+
+
+class Partition:
+
+    def __init__(self, report: Dict):
+        self.bootable = report["bootable"]
+        self.partuuid = report["partuuid"]
+        self.size = report["size"]
+        self.type = report["type"]
+
+
+class Partitions:
+
+    def __init__(self, report: Dict):
+        self.partition_table = ""
+        self.partition_table_id = ""
+        self.partitions = []
+        if report.get("partition-table"):
+            self.partition_table = report["partition-table"]
+            self.partition_table_id = report["partition-table-id"]
+            for item in report["partitions"]:
+                self.partitions.append(Partition(item))
+
+
+class ImageFormat:
+
+    def __init__(self, report: Dict):
+        self.image_format = report["image-format"]["type"]
+        self.compat = ""
+        if self.image_format == "qcow2":
+            self.compat = report["image-format"].get("compat")
+
+
+class Bootloader:
+
+    def __init__(self, report: Dict):
+        self.bootloader = report["bootloader"]
+
+
+class ImageInfoImage(ImageInfo):
+
+    def __init__(self, report):
+        super().__init__(report)
+        self.report_content["partitions"] = Partitions(report)
+        self.report_content["image-format"] = ImageFormat(report)
+        self.report_content["bootloader"] = Bootloader(report)
+
+
+class GroupsSystem:
+
+    def __init__(self, report: Dict):
+        self.groups_system = report.get("groups-system", [])
+
+
+class PasswdSystem:
+
+    def __init__(self, report: Dict):
+        self.passwd_system = report.get("passwd-system", [])
+
+
+class OStree:
+
+    def __init__(self, report: Dict):
+        self.repo = report["ostree"]["repo"]
+        self.refs = report["ostree"]["refs"]
+
+
+class OSTreeInfoImage(ImageInfo):
+
+    def __init__(self, report):
+        super().__init__(report)
+        self.report_content["ostree"]: OStree(report)
+        self.report_content["groups-system"]: GroupsSystem(report)
+        self.report_content["passwd-system"]: PasswdSystem(report)
+
+
+class DirectoryInfoImage(ImageInfo):
+    pass
+
+
+def load_input(filename, filetype):
+    with open(filename, encoding="utf-8") as f:
+        if filetype == "only":
+            return ImageInfoImage.get_imi(json.load(f))
+        return ImageInfoImage.get_imi(json.load(f)["image-info"])
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Inspect an image")
+    parser.add_argument("--folder",
+                        type=os.path.abspath,
+                        help="a folder containing files with the image-info")
+    parser.add_argument("--input",
+                        type=os.path.abspath,
+                        help="a file containing the image-info")
+    parser.add_argument("--input-type",
+                        type=str,
+                        choices=["only", "test_case"],
+                        default="test_case",
+                        help="input contains image info only or embedded in a test case")
+
+
+    args = parser.parse_args()
+    filenames = [args.input]
+    if args.folder:
+        filenames = next(walk(args.folder), (None, None, []))[2]
+        filenames = [f'{args.folder}/{f}' for f in filenames]
+    for filename in filenames:
+        imi = load_input(filename, args.input_type)
+        if imi:
+            print(type(imi))
+
+
+if __name__ == "__main__":
+    main()
