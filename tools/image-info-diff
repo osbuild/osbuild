@@ -5,217 +5,372 @@ import json
 import os
 from os import walk
 from typing import Dict, List
-from abc import ABC
+from abc import ABC, abstractmethod
+
+INDENT_PATTERN = "    "
+
+class Dumpable(ABC):
+
+    @abstractmethod
+    def dump(self, indent_level=0):
+        pass
+
+    @staticmethod
+    def dump_title(title: str, indent_level=1):
+        indent = INDENT_PATTERN*indent_level
+        print(f"{indent}{title}:")
+
+    @staticmethod
+    def dump_titled(title: str, item, indent_level=1):
+        if isinstance(item, str):
+            Dumpable.dump_titled_str(title, item, indent_level)
+        elif isinstance(item, list):
+            Dumpable.dump_titled_list(title, item, indent_level)
+        elif isinstance(item, dict):
+            Dumpable.dump_titled_dict(title, item, indent_level)
+        elif isinstance(item, bool):
+            Dumpable.dump_titled_bool(title, item, indent_level)
+        elif isinstance(item, float):
+            Dumpable.dump_titled_str(title, str(item), indent_level)
+        elif isinstance(item, int):
+            Dumpable.dump_titled_str(title, str(item), indent_level)
+        else:
+            print(f"unknown type {title}{item}")
+
+    @staticmethod
+    def dump_titled_bool(title: str, b: bool, indent_level=1):
+        indent = INDENT_PATTERN*indent_level
+        print(f"{indent}{title}={b}")
+
+    @staticmethod
+    def dump_str(s: str, indent_level=1):
+        indent = INDENT_PATTERN*indent_level
+        print(f"{indent}{s}")
+
+    @staticmethod
+    def dump_titled_str(title: str, s: str, indent_level=1):
+        indent = INDENT_PATTERN*indent_level
+        s = s.replace("\n", " ")
+        print(f"{indent}{title}={s}")
+
+    @staticmethod
+    def dump_titled_list(title: str, lst: List, indent_level=1):
+        Dumpable.dump_title(title, indent_level)
+        Dumpable.dump_list(lst, indent_level+1)
+
+    @staticmethod
+    def dump_list(lst: List, indent_level=1):
+        indent = INDENT_PATTERN*indent_level
+        for item in lst:
+            if isinstance(item, dict):
+                Dumpable.dump_dict(item, indent_level)
+            else:
+                sitem = str(item).replace('\n', ' ')
+                print(f"{indent}{sitem}")
+
+    @staticmethod
+    def dump_titled_dict(title: str, dct: Dict, indent_level=1):
+        Dumpable.dump_title(title, indent_level)
+        Dumpable.dump_dict(dct, indent_level+1)
+
+    @staticmethod
+    def dump_dict(dct: Dict, indent_level=1):
+        for key, val in dct.items():
+            Dumpable.dump_titled(key, val, indent_level)
 
 # Single entry elements
 
 
-class Bootloader:
+class SingleEntry(Dumpable):
+
+    def __init__(self, report: Dict, title: str, default_value):
+        self.title = title
+        self.content = report.get(title, default_value)
+
+    def dump(self, indent_level=0):
+        Bootloader.dump_titled(self.title, self.content, indent_level)
+
+
+class Bootloader(SingleEntry):
 
     def __init__(self, report: Dict):
-        self.bootloader = report["bootloader"]
+        super().__init__(report, "bootloader", "")
 
 
-class GroupsSystem:
-
-    def __init__(self, report: Dict):
-        self.groups_system = report.get("groups-system", [])
-
-
-class PasswdSystem:
+class GroupsSystem(SingleEntry):
 
     def __init__(self, report: Dict):
-        self.passwd_system = report.get("passwd-system", [])
+        super().__init__(report, "groups-system", [])
 
 
-class BootEnv:
-
-    def __init__(self, report: Dict):
-        self.boot_env = report.get("boot-environment", {})
-
-
-class DefaultTarget:
+class PasswdSystem(SingleEntry):
 
     def __init__(self, report: Dict):
-        self.defaultTarget = report.get("default-target", "")
+        super().__init__(report, "passwd-system", [])
 
 
-class Groups:
-
-    def __init__(self, report: Dict):
-        self.groups = report.get("groups", [])
-
-
-class Hostname:
+class BootEnv(SingleEntry):
 
     def __init__(self, report: Dict):
-        self.hostname = report.get("hostname", "")
+        super().__init__(report, "boot-environment", {})
 
 
-class MachineId:
-
-    def __init__(self, report: Dict):
-        self.machine_id = report.get("machine-id", "")
-
-
-class OSRelease:
+class DefaultTarget(SingleEntry):
 
     def __init__(self, report: Dict):
-        self.os_release = report.get("os-release", {})
+        super().__init__(report, "default-target", "")
 
 
-class Passwd:
-
-    def __init__(self, report: Dict):
-        self.passwd = report.get("passwd", [])
-
-
-class Timezone:
+class Groups(SingleEntry):
 
     def __init__(self, report: Dict):
-        self.timezone = report.get("timezone", "")
+        super().__init__(report, "groups", [])
 
 
-class ResolvConf:
-
-    def __init__(self, report: Dict):
-        self.conf = report.get("/etc/resolv.conf", [])
-
-
-class Sudoers:
+class Hostname(SingleEntry):
 
     def __init__(self, report: Dict):
-        self.conf_files = report.get("sudoers", {})
+        super().__init__(report, "hostname", "")
 
 
-class Locale:
-
-    def __init__(self, report: Dict):
-        self.locale = report.get("locale", {})
-
-
-class SystemDLoginD:
+class MachineId(SingleEntry):
 
     def __init__(self, report: Dict):
-        self.conf = report.get("systemd-logind", {})
+        super().__init__(report, "machine-id", "")
 
 
-class Hosts:
+class OSRelease(SingleEntry):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "os-release", {})
+
+
+class Passwd(SingleEntry):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "passwd", [])
+
+
+class Timezone(SingleEntry):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "timezone", "")
+
+
+class ResolvConf(SingleEntry):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "/etc/resolv.conf", [])
+
+class ConfFolder(SingleEntry):
+
+    def dump(self, indent_level=0):
+        Dumpable.dump_title(self.title, indent_level)
+        for filename, filecontent in self.content.items():
+            Dumpable.dump_titled(f"file {filename}", filecontent, indent_level+1)
+
+class Sudoers(ConfFolder):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "sudoers", {})
+
+
+class Locale(SingleEntry):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "locale", {})
+
+class DnfAutomaticConf(SingleEntry):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "/etc/dnf/automatic.conf", {})
+
+class SystemDLoginD(ConfFolder):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "systemd-logind", {})
+
+
+class Hosts(SingleEntry):
 
     def __init__(self, report):
-        self.hosts = report.get("hosts", [])
+        super().__init__(report, "hosts", [])
 
 
-class CloudIinit:
 
-    def __init__(self, report: Dict):
-        self.init_files = report.get("cloud-init", {})
-
-
-class RpmNotInstalled:
+class RpmNotInstalled(SingleEntry):
 
     def __init__(self, report):
-        self.not_installed = report.get("rpm_not_installed_docs", [])
+        super().__init__(report, "rpm_not_installed_docs", [])
 
 # Multiple entries elements
 
+class ConstructedMultipleEntries(Dumpable):
 
-class Services:
+    def __init__(self, title: str):
+        self.title = title
+        self.has_content = True
+        self.report_content = {}
+
+    def dump(self, indent_level=1):
+        Dumpable.dump_title(self.title)
+        self.dump_all(indent_level)
+
+    @abstractmethod
+    def dump_all(self, indent_level):
+        pass
+
+class MultipleEntries(ConstructedMultipleEntries):
+
+    def __init__(self, report:Dict, title: str):
+        super().__init__(title)
+        self.report_content = report.get(title)
+        self.has_content = title in report
+
+
+    def get_list(self, name):
+        if self.has_content:
+            return self.report_content.get(name, [])
+        return []
+
+    def get_dict(self, name):
+        if self.has_content:
+            return self.report_content.get(name, {})
+        return {}
+
+    def get_str(self, name):
+        if self.has_content:
+            return self.report_content.get(name, "")
+        return ""
+
+
+
+class AuthselectConf(MultipleEntries):
 
     def __init__(self, report: Dict):
+        super().__init__(report, "authselect")
+        self.profile_id = self.get_str("profile-id")
+        self.enabled_features = self.get_dict("enabled-features")
+
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("profile-id", self.profile_id, indent_level)
+        Dumpable.dump_titled("enabled-features", self.enabled_features, indent_level)
+
+
+class Chrony(MultipleEntries):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "chrony")
+        self.leapsectz = self.get_dict("leapsectz")
+        self.peer = self.get_dict("peer")
+        self.pool = self.get_dict("pool")
+        self.server = self.get_dict("server")
+
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("leapsectz", self.leapsectz, indent_level)
+        Dumpable.dump_titled("peer", self.peer, indent_level)
+        Dumpable.dump_titled("pool", self.pool, indent_level)
+        Dumpable.dump_titled("server", self.server, indent_level)
+
+
+class Dnf(MultipleEntries):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "DNF")
+        self.dnf_conf = self.get_dict("dnf.conf")
+        self.vars = self.get_dict("vars")
+
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("dnf.conf", self.dnf_conf, indent_level)
+        Dumpable.dump_titled("vars", self.vars, indent_level)
+
+
+class Keyboard(MultipleEntries):
+
+    def __init__(self, report):
+        super().__init__(report, "keyboard")
+        self.x11 = self.get_dict("x11")
+        self.vconsole = self.get_dict("vconsole")
+
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("x11", self.x11, indent_level)
+        Dumpable.dump_titled("vconsole", self.vconsole, indent_level)
+
+
+
+class TunedProfile(MultipleEntries):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "tuned")
+        self.active_profile = self.get_str("active_profile")
+        self.profile_mode = self.get_str("profile_mode")
+
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("active_profile", self.active_profile, indent_level)
+        Dumpable.dump_titled("profile_mode", self.profile_mode, indent_level)
+
+
+class RpmVerify(MultipleEntries):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "rpm-verify")
+        self.changed = self.get_dict("changed")
+        self.missing = self.get_list("missing")
+
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("changed", self.changed, indent_level)
+        Dumpable.dump_titled("missing", self.missing, indent_level)
+
+class Services(ConstructedMultipleEntries):
+
+    def __init__(self, report: Dict):
+        super().__init__("services")
         self.enabled = report["services-enabled"]
         self.disabled = report["services-disabled"]
 
-
-class SELinuxContext:
-
-    def __init__(self, context: Dict):
-        self.actual = context["actual"]
-        self.expected = context["expected"]
-        self.filename = context["filename"]
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("services-enabled", self.enabled, indent_level)
+        Dumpable.dump_titled("services-disabled", self.disabled, indent_level)
 
 
-class Firewall:
+class Firewall(ConstructedMultipleEntries):
 
     def __init__(self, report):
+        super().__init__("firewall")
         self.enabled = report.get("firewall-enabled", [])
         self.zone = report.get("firewall-default-zone", "")
 
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("firewall-enabled", self.enabled, indent_level)
+        Dumpable.dump_titled("firewall-default-zone", self.zone, indent_level)
 
-class AuthselectConf:
-
-    def __init__(self, report: Dict):
-        self.profile_id = ""
-        self.enabled_features = []
-        if "authselect" in report:
-            self.profile_id = report["authselect"].get("profile-id", self.profile_id)
-            self.enabled_features = report["authselect"].get("enabled-features", self.enabled_features)
-
-
-class Chrony:
+class ImageFormat(ConstructedMultipleEntries):
 
     def __init__(self, report: Dict):
-        self.leapsectz = []
-        self.peer = []
-        self.pool = []
-        self.server = []
-        if "chrony" in report:
-            self.leapsectz = report["chrony"].get("server", self.leapsectz)
-            self.peer = report["chrony"].get("peer", self.peer)
-            self.pool = report["chrony"].get("pool", self.pool)
-            self.server = report["chrony"].get("server", self.server)
+        super().__init__("image-format")
+        self.image_format = report["image-format"]["type"]
+        self.compat = ""
+        if self.image_format == "qcow2":
+            self.compat = report["image-format"].get("compat")
 
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("image-format/type", self.image_format, indent_level)
+        Dumpable.dump_titled("image-format/compat", self.compat, indent_level)
 
-class Dnf:
-
-    def __init__(self, report: Dict):
-        self.dnf_conf = {}
-        self.vars = {}
-        if "dnf" in report:
-            self.dnf_conf = report["dnf"].get("dnf.conf", self.dnf_conf)
-            self.vars = report["dnf"].get("vars", self.vars)
-        self.automatic_conf = report.get("/etc/dnf/automatic.conf", {})
-
-
-class Keyboard:
-
-    def __init__(self, report):
-        self.x11 = {}
-        self.vconsole = {}
-        if "keyboard" in report:
-            self.x11 = report["keyboard"].get("x11", self.x11)
-            self.vconsole = report["keyboard"].get("vconsole", self.vconsole)
-
-
-class DnfPluginsConfig:
-
-    def __init__(self, product_id, subscription_manager):
-        self.product_id = "true" in product_id
-        self.subscription_manager = "true" in subscription_manager
-
-
-class SELinux:
+class OStree:
 
     def __init__(self, report: Dict):
-        self.policy = {}
-        self.context_mismatch = []
-        if "selinux" in report:
-            self.policy = report["selinux"].get("policy", self.policy)
-            for context in report["selinux"].get("context-mismatch", []):
-                self.context_mismatch.append(SELinuxContext(context))
+        super().__init__("ostree")
+        self.repo = report["ostree"]["repo"]
+        self.refs = report["ostree"]["refs"]
 
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("ostree/repo", self.repo, indent_level)
+        Dumpable.dump_titled("ostree/refs", self.refs, indent_level)
 
-class TunedProfile:
+# configuration folder elements
 
-    def __init__(self, report: Dict):
-        self.active_profile = ""
-        self.profile_mode = ""
-        if "tuned" in report:
-            self.active_profile = report["tuned"].get("active_profile", "")
-            self.profile_mode = report["tuned"].get("profile_mode", "")
-
-
-class UdevRules:
+class UdevRules(Dumpable):
 
     def __init__(self, report: Dict):
         self.rules = {}
@@ -223,38 +378,13 @@ class UdevRules:
             for file, rules in report["/etc/udev/rules.d"].items():
                 self.rules[file] = rules
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_titled("/etc/udev/rules.d",self.rules, indent_level)
 
-class RpmVerify:
-
-    def __init__(self, report: Dict):
-        self.changed = {}
-        self.missing = []
-        if "rpm_verify" in report:
-            self.changed = report["rpm_verify"].get("changed", self.changed)
-            self.missing = report["rpm_verify"].get("missing", self.missing)
-
-
-class ImageFormat:
-
-    def __init__(self, report: Dict):
-        self.image_format = report["image-format"]["type"]
-        self.compat = ""
-        if self.image_format == "qcow2":
-            self.compat = report["image-format"].get("compat")
-
-
-class OStree:
-
-    def __init__(self, report: Dict):
-        self.repo = report["ostree"]["repo"]
-        self.refs = report["ostree"]["refs"]
-
-# configuration folder elements
-
-
-class ConfFolder(ABC):
+class MultiLevelConfFolder(Dumpable):
 
     def __init__(self, report: Dict, keyname: str):
+        self.title = keyname
         self.folder_content = {}
         for folder, content in report.get(keyname, {}).items():
             for file, config in content.items():
@@ -262,44 +392,59 @@ class ConfFolder(ABC):
                     self.folder_content[folder] = {}
                 self.folder_content[folder][file] = config
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_title(self.title, indent_level)
+        for folder, foldercontent in self.folder_content.items():
+            Dumpable.dump_title(f"folder {folder}", indent_level+1)
+            for file, content in foldercontent.items():
+                Dumpable.dump_titled_list(f"file {file}",
+                                  content,
+                                  indent_level+2)
 
-class Dracut(ConfFolder):
+
+class CloudIinit(MultiLevelConfFolder):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "cloud-init")
+
+
+class Dracut(MultiLevelConfFolder):
 
     def __init__(self, report: Dict):
         super().__init__(report, "dracut")
 
 
-class SecurityLimits(ConfFolder):
+class SecurityLimits(MultiLevelConfFolder):
 
     def __init__(self, report: Dict):
         super().__init__(report, "security-limits")
 
 
-class TmpFiles(ConfFolder):
+class TmpFiles(MultiLevelConfFolder):
 
     def __init__(self, report: Dict):
         super().__init__(report, "tmpfiles")
 
 
-class SSHConfig(ConfFolder):
+class SSHConfig(MultiLevelConfFolder):
 
     def __init__(self, report: Dict):
         super().__init__(report, "ssh_config")
 
 
-class SSHDConfig(ConfFolder):
+class SSHDConfig(MultiLevelConfFolder):
 
     def __init__(self, report: Dict):
         super().__init__(report, "sshd_config")
 
 
-class SysctlD(ConfFolder):
+class SysctlD(MultiLevelConfFolder):
 
     def __init__(self, report: Dict):
         super().__init__(report, "sysctl.d")
 
 
-class SystemDServiceDropin(ConfFolder):
+class SystemDServiceDropin(MultiLevelConfFolder):
 
     def __init__(self, report: Dict):
         super().__init__(report, "systemd-service-dropins")
@@ -307,13 +452,44 @@ class SystemDServiceDropin(ConfFolder):
 
 # Composed elements
 
-class BootEntry:
+class SELinuxContext(Dumpable):
+
+    def __init__(self, context: Dict):
+        self.actual = context["actual"]
+        self.expected = context["expected"]
+        self.filename = context["filename"]
+
+    def dump(self, indent_level=0):
+        Dumpable.dump_titled("actual", self.actual, indent_level)
+        Dumpable.dump_titled("expected", self.expected, indent_level)
+        Dumpable.dump_titled("filename", self.filename, indent_level)
+
+
+class SELinux(MultipleEntries):
+
+    def __init__(self, report: Dict):
+        super().__init__(report, "selinux")
+        self.policy = self.get_dict("policy")
+        self.context_mismatch = []
+        if self.has_content:
+            for context in self.get_list("context-mismatch"):
+                self.context_mismatch.append(SELinuxContext(context))
+
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("policy", self.policy, indent_level)
+        Dumpable.dump_title("context-mismatch", indent_level)
+        for slnxc in self.context_mismatch:
+            slnxc.dump(indent_level+1)
+
+class BootEntry(Dumpable):
 
     def __init__(self, entry: Dict):
         self.entry = entry
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_titled("boot-entry", self.entry, indent_level)
 
-class BootMenu:
+class BootMenu(Dumpable):
 
     def __init__(self, report: Dict):
         self.boot_entries = []
@@ -321,28 +497,41 @@ class BootMenu:
             for entry in report["bootmenu"]:
                 self.boot_entries.append(BootEntry(entry))
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_title("bootmenu", indent_level)
+        for entry in self.boot_entries:
+            entry.dump(indent_level+1)
 
-class NetworkScript:
+
+class NetworkScript(Dumpable):
 
     def __init__(self, name, configuration):
         self.name = name
         self.configuration = configuration
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_titled("name", self.name, indent_level)
+        Dumpable.dump_titled("configuration", self.configuration, indent_level)
 
-class SysConfig:
+
+class SysConfig(MultipleEntries):
 
     def __init__(self, report: Dict):
-        self.kernel = {}
-        self.network = {}
+        super().__init__(report, "sysconfig")
+        self.kernel = self.get_dict("kernel")
+        self.network = self.get_dict("network")
         self.network_scripts = []
-        if "sysconfig" in report:
-            self.kernel = report["sysconfig"].get("kernel", self.kernel)
-            self.network = report["sysconfig"].get("network", self.network)
-            for iface, config in report["sysconfig"].get("network-scripts", {}).items():
+        if self.has_content:
+            for iface, config in self.get_dict("network-scripts").items():
                 self.network_scripts.append(NetworkScript(iface, config))
 
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("kernel", self.kernel, indent_level)
+        Dumpable.dump_titled("network", self.network, indent_level)
+        for ntscrpt in self.network_scripts:
+            ntscrpt.dump(indent_level+1)
 
-class RHSMConf:
+class RHSMConf(Dumpable):
 
     def __init__(self, rhsm: Dict):
         self.logging = rhsm.get("logging")
@@ -350,29 +539,54 @@ class RHSMConf:
         self.rhsmcertd = rhsm.get("rhsmcertd")
         self.server = rhsm.get("server")
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_titled("logging", self.logging, indent_level)
+        Dumpable.dump_titled("rhsm", self.rhsm, indent_level)
+        Dumpable.dump_titled("rhsmcertd", self.rhsmcertd, indent_level)
+        Dumpable.dump_titled("server", self.server, indent_level)
 
-class RHSM:
+class DnfPluginsConfig(Dumpable):
+
+    def __init__(self, product_id, subscription_manager):
+        self.product_id = "true" in product_id
+        self.subscription_manager = "true" in subscription_manager
+
+    def dump(self, indent_level=0):
+        Dumpable.dump_title("dnf-plugins", indent_level)
+        Dumpable.dump_titled("product-id", self.product_id, indent_level+1)
+        Dumpable.dump_titled("subscription-manager", self.subscription_manager,
+                indent_level+1)
+
+
+
+class RHSM(MultipleEntries):
 
     def __init__(self, report: Dict):
-        self.rhsm_conf = {}
+        super().__init__(report, "rhsm")
+        self.rhsm_conf = self.get_dict("rhsm.conf")
         self.dnf_plugins = None
-        if "rhsm" in report:
-            rhsm = report["rhsm"]
-            self.rhsm_conf = RHSMConf(report["rhsm"].get("rhsm.conf", {}))
-            if "dnf-plugins" in rhsm:
+        if self.has_content:
+            if "dnf-plugins" in self.report_content:
                 self.dnf_plugins = DnfPluginsConfig(
-                    rhsm["dnf-plugins"]["product-id"],
-                    rhsm["dnf-plugins"]["subscription-manager"])
+                    self.report_content["dnf-plugins"]["product-id"],
+                    self.report_content["dnf-plugins"]["subscription-manager"])
 
+    def dump_all(self, indent_level):
+        Dumpable.dump_titled("rhsm.conf", self.rhsm_conf, indent_level)
+        if self.dnf_plugins:
+            self.dnf_plugins.dump()
 
-class BlacklistModule:
+class BlacklistModule(Dumpable):
 
     def __init__(self, path: str, blacklist: List):
         self.path = path
         self.blacklist = blacklist
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_titled("path", self.path, indent_level)
+        Dumpable.dump_titled("blacklist", self.blacklist, indent_level+1)
 
-class Modprobe:
+class Modprobe(Dumpable):
 
     def __init__(self, report: Dict):
         self.folder_conf = {}
@@ -381,76 +595,101 @@ class Modprobe:
                 for path, blacklist in content.items():
                     self.folder_conf[folder] = BlacklistModule(path, blacklist)
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_title("Modprobe", indent_level)
+        for folder, bl in self.folder_conf.items():
+            Dumpable.dump_title(folder, indent_level+1)
+            bl.dump(indent_level+2)
 
-class Package:
+
+class Package(Dumpable):
 
     def __init__(self, package: str):
         self.package_name = package.split(".")[0]
         self.version = ".".join(package.split(".")[1:])
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_str(f"{self.package_name} @version {self.version}", indent_level)
 
-class Packages:
+class Packages(Dumpable):
 
     def __init__(self, report: Dict):
         self.packages = []
-        self.unpack_packages(report.get("packages"))
+        for package in report.get("packages", []):
+            self.packages.append(Package(package))
 
-    def unpack_packages(self, packages: List):
-        if packages is None:
-            return
-        for package in packages:
-            self.packages = Package(package)
-
-
-class Repo:
-
-    def __init__(self, repo):
-        self.baseurl = repo.get("baseurl")
-        self.enabled = repo.get("enabled")
-        self.gpgkey = repo.get("gpgkey")
-        self.name = repo.get("name")
-        self.repo_gpgcheck = repo.get("repo_gpgcheck")
+    def dump(self, indent_level=0):
+        Dumpable.dump_title("packages")
+        for pkg in self.packages:
+            pkg.dump(indent_level+1)
 
 
-class YumRepo:
+class Repo(Dumpable):
 
-    def __init__(self, repos: Dict):
-        self.repo = {}
-        for name, info in repos.items():
-            self.repo[name] = Repo(info)
+    def __init__(self, name, repo):
+        self.name = name
+        self.baseurl = repo.get("baseurl", "")
+        self.enabled = repo.get("enabled", "")
+        self.gpgkey = repo.get("gpgkey", "")
+        self.name = repo.get("name", "")
+        self.repo_gpgcheck = repo.get("repo_gpgcheck", "")
+
+    def dump(self, indent_level=0):
+        Dumpable.dump_title(self.name, indent_level)
+        Dumpable.dump_titled("baseurl", self.baseurl, indent_level+1)
+        Dumpable.dump_titled("enabled", self.enabled, indent_level+1)
+        Dumpable.dump_titled("gpgkey", self.gpgkey, indent_level+1)
+        Dumpable.dump_titled("name", self.name, indent_level+1)
+        Dumpable.dump_titled("repo_gpgcheck", self.repo_gpgcheck, indent_level+1)
 
 
-class YumRepos:
+class YumRepos(Dumpable):
 
     def __init__(self, report: Dict):
         self.repos = {}
         if "yum_repos" in report:
-            self.unpack_repos(report["yum_repos"])
+            for file, repo in report["yum_repos"].items():
+                if file not in self.repos:
+                    self.repos[file] = {}
+                for rep, repos_content in repo.items():
+                    if rep not in self.repos[file]:
+                        self.repos[file][rep] = []
+                    for name, info in repos_content.items():
+                        self.repos[file][rep].append(Repo(name, info))
 
-    def unpack_repos(self, repos: Dict):
-        for file, repo in repos.items():
-            self.repos[file] = YumRepo(repo)
+    def dump(self, indent_level=0):
+        Dumpable.dump_title("yum-repos", indent_level)
+        for file, repos in self.repos.items():
+            Dumpable.dump_title(file, indent_level+1)
+            for r, lst in repos.items():
+                Dumpable.dump_title(r, indent_level+2)
+                for repo in lst:
+                    repo.dump(indent_level+3)
 
 
-class FStabEntry:
+class FStabEntry(Dumpable):
 
     def __init__(self, entry: List):
         self.info = entry
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_titled("fstab-entry", self.info, indent_level)
 
-class FStab:
+
+class FStab(Dumpable):
 
     def __init__(self, report):
         self.entries = []
         if "fstab" in report:
-            self.unpack(report["fstab"])
+            for entry in report["fstab"]:
+                self.entries.append(FStabEntry(entry))
 
-    def unpack(self, fstab: List):
-        for entry in fstab:
-            self.entries.append(FStabEntry(entry))
+    def dump(self, indent_level=0):
+        Dumpable.dump_title("fstab", indent_level)
+        for entry in self.entries:
+            entry.dump(indent_level+1)
 
-
-class Partition:
+class Partition(Dumpable):
 
     def __init__(self, report: Dict):
         self.bootable = report["bootable"]
@@ -458,8 +697,13 @@ class Partition:
         self.size = report["size"]
         self.type = report["type"]
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_titled("bootable", self.bootable, indent_level)
+        Dumpable.dump_titled("partuuid", self.partuuid, indent_level)
+        Dumpable.dump_titled("size", self.size, indent_level)
+        Dumpable.dump_titled("type", self.type, indent_level)
 
-class Partitions:
+class Partitions(Dumpable):
 
     def __init__(self, report: Dict):
         self.partition_table = ""
@@ -471,11 +715,20 @@ class Partitions:
             for item in report["partitions"]:
                 self.partitions.append(Partition(item))
 
+    def dump(self, indent_level=0):
+        Dumpable.dump_titled("partition-table", self.partition_table, indent_level)
+        Dumpable.dump_titled("partition-table-id", self.partition_table_id, indent_level)
+        Dumpable.dump_title("partitions", indent_level)
+        for partition in self.partitions:
+            partition.dump(indent_level+1)
+
 # entry point classes
 
-class ImageInfo(ABC):
 
-    def __init__(self, report):
+class ImageInfo(Dumpable):
+
+    def __init__(self, report, name):
+        self.name = name
         self.report_content = {
             "authselect": AuthselectConf(report),
             "boot-environment": BootEnv(report),
@@ -484,6 +737,7 @@ class ImageInfo(ABC):
             "cloud-init": CloudIinit(report),
             "default-target": DefaultTarget(report),
             "dnf": Dnf(report),
+            "dnf_automatic_conf": DnfAutomaticConf(report),
             "dracut": Dracut(report),
             "firewall": Firewall(report),
             "fstab": FStab(report),
@@ -519,32 +773,36 @@ class ImageInfo(ABC):
         }
 
     @classmethod
-    def get_imi(cls, report: Dict):
+    def get_imi(cls, report: Dict, name):
         if report is None:
             return None
         if (report.get("type", None) == "ostree/commit" or
                 report.get("type", None) == "ostree/repo"):
             # image-info represents a ostree repo
-            return OSTreeInfoImage(report)
+            return OSTreeInfoImage(report, name)
         if report.get("bootloader", None):
             # image-info represents an image
-            return ImageInfoImage(report)
+            return ImageInfoImage(report, name)
         # image-info represents a directory
-        return DirectoryInfoImage(report)
+        return DirectoryInfoImage(report, name)
+
+    def dump(self, indent_level=0):
+        print(f"Image Info content: {self.name}")
+        for _, obj in self.report_content.items():
+            obj.dump(indent_level+1)
 
 class ImageInfoImage(ImageInfo):
 
-    def __init__(self, report):
-        super().__init__(report)
+    def __init__(self, report, name):
+        super().__init__(report, name)
         self.report_content["partitions"] = Partitions(report)
         self.report_content["image-format"] = ImageFormat(report)
         self.report_content["bootloader"] = Bootloader(report)
 
-
 class OSTreeInfoImage(ImageInfo):
 
-    def __init__(self, report):
-        super().__init__(report)
+    def __init__(self, report, name):
+        super().__init__(report, name)
         self.report_content["ostree"]: OStree(report)
         self.report_content["groups-system"]: GroupsSystem(report)
         self.report_content["passwd-system"]: PasswdSystem(report)
@@ -557,8 +815,8 @@ class DirectoryInfoImage(ImageInfo):
 def load_input(filename, filetype):
     with open(filename, encoding="utf-8") as f:
         if filetype == "only":
-            return ImageInfoImage.get_imi(json.load(f))
-        return ImageInfoImage.get_imi(json.load(f)["image-info"])
+            return ImageInfoImage.get_imi(json.load(f), filename)
+        return ImageInfoImage.get_imi(json.load(f)["image-info"], filename)
 
 
 def main():
@@ -583,9 +841,7 @@ def main():
     for filename in filenames:
         imi = load_input(filename, args.input_type)
         if imi:
-            print(type(imi))
-
-
+            imi.dump()
 
 
 if __name__ == "__main__":
