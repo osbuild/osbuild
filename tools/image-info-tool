@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+#pylint: disable=[too-many-lines]
 
 import argparse
 import json
@@ -7,8 +8,89 @@ from os import walk
 import tempfile
 from typing import Dict, List
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 
 INDENT_PATTERN = "    "
+
+
+def custom_path_join(*paths):
+    abspath = paths[0].startswith("/")
+    total_elements = []
+    for path in paths:
+        total_elements.extend(path.split("/"))
+    while "" in total_elements:
+        total_elements.remove("")
+    joined = "/".join(total_elements)
+    if abspath:
+        return f"/{joined}"
+    return joined
+
+
+def get_folder(path: str):
+    abspath = path.startswith("/")
+    split = path.split("/")
+    while "" in split:
+        split.remove("")
+    joined = "/".join(split[:-1])
+    if abspath:
+        return f"/{joined}"
+    return joined
+
+
+def create_parent(file):
+    folder = get_folder(file)
+    os.makedirs(folder, exist_ok=True)
+
+
+class Extractable(ABC):
+
+    @abstractmethod
+    def extract(self, root):
+        pass
+
+    @staticmethod
+    @contextmanager
+    def openf(path, extract=False):
+        if extract:
+            path = f"{path}.imi"
+        create_parent(path)
+        with open(path, mode="w", encoding="utf-8") as f:
+            yield f
+
+    @staticmethod
+    def open_and_write(path, item, extract=False):
+        with Extractable.openf(path, extract) as f:
+            Extractable.write_all(f, item)
+
+    @staticmethod
+    def write_all(f, item, indent_level=0):
+        if isinstance(item, list):
+            Extractable.write_list(f, item, indent_level)
+        elif isinstance(item, dict):
+            Extractable.write_dict(f, item, indent_level)
+        else:
+            Extractable.write_str(f, str(item), indent_level)
+
+    @staticmethod
+    def write_str(f, s: str, indent_level=0):
+        indent = INDENT_PATTERN*indent_level
+        f.write(f"{indent}{s}\n")
+
+    @staticmethod
+    def write_list(f, l: List, indent_level=0):
+        for item in l:
+            Extractable.write_all(f, item, indent_level)
+
+    @staticmethod
+    def write_dict(f, d: Dict, indent_level=0):
+        for k, v in d.items():
+            Extractable.write_titled(f, f"[{k}]", v, indent_level)
+
+    @staticmethod
+    def write_titled(f, key, value, indent_level=0):
+        Extractable.write_all(f, key)
+        Extractable.write_all(f, value, indent_level+1)
+
 
 class Dumpable(ABC):
 
@@ -82,7 +164,7 @@ class Dumpable(ABC):
 # Single entry elements
 
 
-class SingleEntry(Dumpable):
+class SingleEntry(Dumpable, Extractable):
 
     def __init__(self, report: Dict, title: str, default_value):
         self.title = title
@@ -90,6 +172,9 @@ class SingleEntry(Dumpable):
 
     def dump(self, indent_level=0):
         Bootloader.dump_titled(self.title, self.content, indent_level)
+
+    def extract(self, root):
+        Extractable.open_and_write(custom_path_join(root, self.title), self.content, True)
 
 
 class Bootloader(SingleEntry):
@@ -163,12 +248,19 @@ class ResolvConf(SingleEntry):
     def __init__(self, report: Dict):
         super().__init__(report, "/etc/resolv.conf", [])
 
-class ConfFolder(SingleEntry):
+
+class ConfFolder(SingleEntry, Extractable):
 
     def dump(self, indent_level=0):
         Dumpable.dump_title(self.title, indent_level)
         for filename, filecontent in self.content.items():
             Dumpable.dump_titled(f"file {filename}", filecontent, indent_level+1)
+
+    def extract(self, root):
+        for filename, filecontent in self.content.items():
+            Extractable.open_and_write(custom_path_join(root, filename),
+                                       filecontent)
+
 
 class Sudoers(ConfFolder):
 
@@ -181,10 +273,12 @@ class Locale(SingleEntry):
     def __init__(self, report: Dict):
         super().__init__(report, "locale", {})
 
+
 class DnfAutomaticConf(SingleEntry):
 
     def __init__(self, report: Dict):
         super().__init__(report, "/etc/dnf/automatic.conf", {})
+
 
 class SystemDLoginD(ConfFolder):
 
@@ -198,7 +292,6 @@ class Hosts(SingleEntry):
         super().__init__(report, "hosts", [])
 
 
-
 class RpmNotInstalled(SingleEntry):
 
     def __init__(self, report):
@@ -206,7 +299,8 @@ class RpmNotInstalled(SingleEntry):
 
 # Multiple entries elements
 
-class ConstructedMultipleEntries(Dumpable):
+
+class ConstructedMultipleEntries(Dumpable, Extractable):
 
     def __init__(self, title: str):
         self.title = title
@@ -221,13 +315,21 @@ class ConstructedMultipleEntries(Dumpable):
     def dump_all(self, indent_level):
         pass
 
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, self.title), True) as f:
+            self.extract_all(f)
+
+    @abstractmethod
+    def extract_all(self, f):
+        pass
+
+
 class MultipleEntries(ConstructedMultipleEntries):
 
-    def __init__(self, report:Dict, title: str):
+    def __init__(self, report: Dict, title: str):
         super().__init__(title)
         self.report_content = report.get(title)
         self.has_content = title in report
-
 
     def get_list(self, name):
         if self.has_content:
@@ -245,7 +347,6 @@ class MultipleEntries(ConstructedMultipleEntries):
         return ""
 
 
-
 class AuthselectConf(MultipleEntries):
 
     def __init__(self, report: Dict):
@@ -256,6 +357,10 @@ class AuthselectConf(MultipleEntries):
     def dump_all(self, indent_level):
         Dumpable.dump_titled("profile-id", self.profile_id, indent_level)
         Dumpable.dump_titled("enabled-features", self.enabled_features, indent_level)
+
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[profile-id]", self.profile_id)
+        Extractable.write_titled(f, "[enabled-features]", self.enabled_features)
 
 
 class Chrony(MultipleEntries):
@@ -273,6 +378,12 @@ class Chrony(MultipleEntries):
         Dumpable.dump_titled("pool", self.pool, indent_level)
         Dumpable.dump_titled("server", self.server, indent_level)
 
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[leapsectz]", self.leapsectz)
+        Extractable.write_titled(f, "[peer]", self.peer)
+        Extractable.write_titled(f, "[pool]", self.pool)
+        Extractable.write_titled(f, "[server]", self.server)
+
 
 class Dnf(MultipleEntries):
 
@@ -284,6 +395,10 @@ class Dnf(MultipleEntries):
     def dump_all(self, indent_level):
         Dumpable.dump_titled("dnf.conf", self.dnf_conf, indent_level)
         Dumpable.dump_titled("vars", self.vars, indent_level)
+
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[dnf.conf]", self.dnf_conf)
+        Extractable.write_titled(f, "[vars]", self.vars)
 
 
 class Keyboard(MultipleEntries):
@@ -297,6 +412,9 @@ class Keyboard(MultipleEntries):
         Dumpable.dump_titled("x11", self.x11, indent_level)
         Dumpable.dump_titled("vconsole", self.vconsole, indent_level)
 
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[x11]", self.x11)
+        Extractable.write_titled(f, "[vconsole]", self.vconsole)
 
 
 class TunedProfile(MultipleEntries):
@@ -310,6 +428,10 @@ class TunedProfile(MultipleEntries):
         Dumpable.dump_titled("active_profile", self.active_profile, indent_level)
         Dumpable.dump_titled("profile_mode", self.profile_mode, indent_level)
 
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[active_profile]", self.active_profile)
+        Extractable.write_titled(f, "[profile_mode]", self.profile_mode)
+
 
 class RpmVerify(MultipleEntries):
 
@@ -322,6 +444,11 @@ class RpmVerify(MultipleEntries):
         Dumpable.dump_titled("changed", self.changed, indent_level)
         Dumpable.dump_titled("missing", self.missing, indent_level)
 
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[changed]", self.changed)
+        Extractable.write_titled(f, "[missing]", self.missing)
+
+
 class Services(ConstructedMultipleEntries):
 
     def __init__(self, report: Dict):
@@ -332,6 +459,10 @@ class Services(ConstructedMultipleEntries):
     def dump_all(self, indent_level):
         Dumpable.dump_titled("services-enabled", self.enabled, indent_level)
         Dumpable.dump_titled("services-disabled", self.disabled, indent_level)
+
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[services-enabled]", self.enabled)
+        Extractable.write_titled(f, "[services-disabled]", self.disabled)
 
 
 class Firewall(ConstructedMultipleEntries):
@@ -344,6 +475,11 @@ class Firewall(ConstructedMultipleEntries):
     def dump_all(self, indent_level):
         Dumpable.dump_titled("firewall-enabled", self.enabled, indent_level)
         Dumpable.dump_titled("firewall-default-zone", self.zone, indent_level)
+
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[firewall-enabled]", self.enabled)
+        Extractable.write_titled(f, "[firewall-default-zone]", self.zone)
+
 
 class ImageFormat(ConstructedMultipleEntries):
 
@@ -358,6 +494,11 @@ class ImageFormat(ConstructedMultipleEntries):
         Dumpable.dump_titled("image-format/type", self.image_format, indent_level)
         Dumpable.dump_titled("image-format/compat", self.compat, indent_level)
 
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[image-format/type]", self.image_format)
+        Extractable.write_titled(f, "[image-format/compat]", self.compat)
+
+
 class OStree:
 
     def __init__(self, report: Dict):
@@ -369,9 +510,15 @@ class OStree:
         Dumpable.dump_titled("ostree/repo", self.repo, indent_level)
         Dumpable.dump_titled("ostree/refs", self.refs, indent_level)
 
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[ostree/repo]", self.repo)
+        Extractable.write_titled(f, "[ostree/refs]", self.refs)
+
+
 # configuration folder elements
 
-class UdevRules(Dumpable):
+
+class UdevRules(Dumpable, Extractable):
 
     def __init__(self, report: Dict):
         self.rules = {}
@@ -380,9 +527,20 @@ class UdevRules(Dumpable):
                 self.rules[file] = rules
 
     def dump(self, indent_level=0):
-        Dumpable.dump_titled("/etc/udev/rules.d",self.rules, indent_level)
+        Dumpable.dump_titled("/etc/udev/rules.d", self.rules, indent_level)
 
-class MultiLevelConfFolder(Dumpable):
+    def extract(self, root):
+        for filename, rules in self.rules.items():
+            Extractable.open_and_write(
+                custom_path_join(
+                    root,
+                    "/etc/udev/rules.d",
+                    filename
+                ),
+                rules)
+
+
+class MultiLevelConfFolder(Dumpable, Extractable):
 
     def __init__(self, report: Dict, keyname: str):
         self.title = keyname
@@ -399,8 +557,18 @@ class MultiLevelConfFolder(Dumpable):
             Dumpable.dump_title(f"folder {folder}", indent_level+1)
             for file, content in foldercontent.items():
                 Dumpable.dump_titled_list(f"file {file}",
-                                  content,
-                                  indent_level+2)
+                                          content,
+                                          indent_level+2)
+
+    def extract(self, root):
+        for folder, foldercontent in self.folder_content.items():
+            for file, content in foldercontent.items():
+                Extractable.open_and_write(
+                    custom_path_join(
+                        root,
+                        folder,
+                        file),
+                    content)
 
 
 class CloudIinit(MultiLevelConfFolder):
@@ -453,7 +621,7 @@ class SystemDServiceDropin(MultiLevelConfFolder):
 
 # Composed elements
 
-class SELinuxContext(Dumpable):
+class SELinuxContext(Dumpable, Extractable):
 
     def __init__(self, context: Dict):
         self.actual = context["actual"]
@@ -464,6 +632,12 @@ class SELinuxContext(Dumpable):
         Dumpable.dump_titled("actual", self.actual, indent_level)
         Dumpable.dump_titled("expected", self.expected, indent_level)
         Dumpable.dump_titled("filename", self.filename, indent_level)
+
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, "context-mismatch"), True) as f:
+            Extractable.write_titled(f, "[actual]", self.actual)
+            Extractable.write_titled(f, "[expected]", self.expected)
+            Extractable.write_titled(f, "[filename]", self.filename)
 
 
 class SELinux(MultipleEntries):
@@ -482,6 +656,12 @@ class SELinux(MultipleEntries):
         for slnxc in self.context_mismatch:
             slnxc.dump(indent_level+1)
 
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[policy]", self.policy)
+        for i, slnxc in enumerate(self.context_mismatch):
+            slnxc.extract(custom_path_join(f"{f.name}.d", f"{i}"))
+
+
 class BootEntry(Dumpable):
 
     def __init__(self, entry: Dict):
@@ -490,7 +670,8 @@ class BootEntry(Dumpable):
     def dump(self, indent_level=0):
         Dumpable.dump_titled("boot-entry", self.entry, indent_level)
 
-class BootMenu(Dumpable):
+
+class BootMenu(Dumpable, Extractable):
 
     def __init__(self, report: Dict):
         self.boot_entries = []
@@ -503,8 +684,13 @@ class BootMenu(Dumpable):
         for entry in self.boot_entries:
             entry.dump(indent_level+1)
 
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, "bootmenu"), True) as f:
+            for entry in self.boot_entries:
+                Extractable.write_titled(f, "[boot-entry]", entry.entry)
 
-class NetworkScript(Dumpable):
+
+class NetworkScript(Dumpable, Extractable):
 
     def __init__(self, name, configuration):
         self.name = name
@@ -513,6 +699,10 @@ class NetworkScript(Dumpable):
     def dump(self, indent_level=0):
         Dumpable.dump_titled("name", self.name, indent_level)
         Dumpable.dump_titled("configuration", self.configuration, indent_level)
+
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, self.name), True) as f:
+            Extractable.write_titled(f, "[configuration]", self.configuration)
 
 
 class SysConfig(MultipleEntries):
@@ -532,7 +722,14 @@ class SysConfig(MultipleEntries):
         for ntscrpt in self.network_scripts:
             ntscrpt.dump(indent_level+1)
 
-class RHSMConf(Dumpable):
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[kernel]", self.kernel)
+        Extractable.write_titled(f, "[network]", self.network)
+        for ntscrpt in self.network_scripts:
+            ntscrpt.extract(custom_path_join(f"{f.name}.d"))
+
+
+class RHSMConf(Dumpable, Extractable):
 
     def __init__(self, rhsm: Dict):
         self.logging = rhsm.get("logging")
@@ -546,6 +743,14 @@ class RHSMConf(Dumpable):
         Dumpable.dump_titled("rhsmcertd", self.rhsmcertd, indent_level)
         Dumpable.dump_titled("server", self.server, indent_level)
 
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, "rhsm_conf"), True) as f:
+            Extractable.write_titled(f, "[logging]", self.logging)
+            Extractable.write_titled(f, "[rhsm]", self.rhsm)
+            Extractable.write_titled(f, "[rhsmcertd]", self.rhsmcertd)
+            Extractable.write_titled(f, "[server]", self.server)
+
+
 class DnfPluginsConfig(Dumpable):
 
     def __init__(self, product_id, subscription_manager):
@@ -556,8 +761,12 @@ class DnfPluginsConfig(Dumpable):
         Dumpable.dump_title("dnf-plugins", indent_level)
         Dumpable.dump_titled("product-id", self.product_id, indent_level+1)
         Dumpable.dump_titled("subscription-manager", self.subscription_manager,
-                indent_level+1)
+                             indent_level+1)
 
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, "dnf_plugins"), True) as f:
+            Extractable.write_titled(f, "[product-id]", self.product_id)
+            Extractable.write_titled(f, "[subscription-manager]", self.subscription_manager)
 
 
 class RHSM(MultipleEntries):
@@ -577,7 +786,13 @@ class RHSM(MultipleEntries):
         if self.dnf_plugins:
             self.dnf_plugins.dump()
 
-class BlacklistModule(Dumpable):
+    def extract_all(self, f):
+        Extractable.write_titled(f, "[rhsm.conf]", self.rhsm_conf)
+        if self.dnf_plugins:
+            self.dnf_plugins.extract(custom_path_join(f"{f.name}.d"))
+
+
+class BlacklistModule(Dumpable, Extractable):
 
     def __init__(self, path: str, blacklist: List):
         self.path = path
@@ -587,7 +802,11 @@ class BlacklistModule(Dumpable):
         Dumpable.dump_titled("path", self.path, indent_level)
         Dumpable.dump_titled("blacklist", self.blacklist, indent_level+1)
 
-class Modprobe(Dumpable):
+    def extract(self, root):
+        Extractable.open_and_write(custom_path_join(root, self.path), self.blacklist, True)
+
+
+class Modprobe(Dumpable, Extractable):
 
     def __init__(self, report: Dict):
         self.folder_conf = {}
@@ -602,6 +821,10 @@ class Modprobe(Dumpable):
             Dumpable.dump_title(folder, indent_level+1)
             bl.dump(indent_level+2)
 
+    def extract(self, root):
+        for folder, bl in self.folder_conf.items():
+            bl.extract(custom_path_join(root, folder))
+
 
 class Package(Dumpable):
 
@@ -612,7 +835,11 @@ class Package(Dumpable):
     def dump(self, indent_level=0):
         Dumpable.dump_str(f"{self.package_name} @version {self.version}", indent_level)
 
-class Packages(Dumpable):
+    def __str__(self):
+        return f"{self.package_name}.{self.version}"
+
+
+class Packages(Dumpable, Extractable):
 
     def __init__(self, report: Dict):
         self.packages = []
@@ -624,8 +851,11 @@ class Packages(Dumpable):
         for pkg in self.packages:
             pkg.dump(indent_level+1)
 
+    def extract(self, root):
+        Extractable.open_and_write(custom_path_join(root, "packages"), self.packages, True)
 
-class Repo(Dumpable):
+
+class Repo(Dumpable, Extractable):
 
     def __init__(self, name, repo):
         self.name = name
@@ -643,8 +873,16 @@ class Repo(Dumpable):
         Dumpable.dump_titled("name", self.name, indent_level+1)
         Dumpable.dump_titled("repo_gpgcheck", self.repo_gpgcheck, indent_level+1)
 
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, self.name), True) as f:
+            Extractable.write_titled(f, "[baseurl]", self.baseurl)
+            Extractable.write_titled(f, "[enabled]", self.enabled)
+            Extractable.write_titled(f, "[gpgkey]", self.gpgkey)
+            Extractable.write_titled(f, "[name]", self.name)
+            Extractable.write_titled(f, "[repo_gpgcheck]", self.repo_gpgcheck)
 
-class YumRepos(Dumpable):
+
+class YumRepos(Dumpable, Extractable):
 
     def __init__(self, report: Dict):
         self.repos = {}
@@ -667,6 +905,12 @@ class YumRepos(Dumpable):
                 for repo in lst:
                     repo.dump(indent_level+3)
 
+    def extract(self, root):
+        for file, repos in self.repos.items():
+            for r, lst in repos.items():
+                for repo in lst:
+                    repo.extract(custom_path_join(root, file, r))
+
 
 class FStabEntry(Dumpable):
 
@@ -676,8 +920,11 @@ class FStabEntry(Dumpable):
     def dump(self, indent_level=0):
         Dumpable.dump_titled("fstab-entry", self.info, indent_level)
 
+    def __str__(self):
+        return " ".join(self.info)
 
-class FStab(Dumpable):
+
+class FStab(Dumpable, Extractable):
 
     def __init__(self, report):
         self.entries = []
@@ -690,7 +937,13 @@ class FStab(Dumpable):
         for entry in self.entries:
             entry.dump(indent_level+1)
 
-class Partition(Dumpable):
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, "fstab"), True) as f:
+            for entry in self.entries:
+                Extractable.write_all(f, entry)
+
+
+class Partition(Dumpable, Extractable):
 
     def __init__(self, report: Dict):
         self.bootable = report["bootable"]
@@ -704,7 +957,15 @@ class Partition(Dumpable):
         Dumpable.dump_titled("size", self.size, indent_level)
         Dumpable.dump_titled("type", self.type, indent_level)
 
-class Partitions(Dumpable):
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, self.partuuid), True) as f:
+            Extractable.write_titled(f, "[bootable]", self.bootable)
+            Extractable.write_titled(f, "[partuuid]", self.partuuid)
+            Extractable.write_titled(f, "[size]", self.size)
+            Extractable.write_titled(f, "[type]", self.type)
+
+
+class Partitions(Dumpable, Extractable):
 
     def __init__(self, report: Dict):
         self.partition_table = ""
@@ -723,10 +984,17 @@ class Partitions(Dumpable):
         for partition in self.partitions:
             partition.dump(indent_level+1)
 
+    def extract(self, root):
+        with Extractable.openf(custom_path_join(root, "partitions"), True) as f:
+            Extractable.write_titled(f, "[partition-table]", self.partition_table)
+            Extractable.write_titled(f, "[partition-table-id]", self.partition_table_id)
+            for partition in self.partitions:
+                partition.extract(custom_path_join(root, "partitions.d"))
+
 # entry point classes
 
 
-class ImageInfo(Dumpable):
+class ImageInfo(Dumpable, Extractable):
 
     def __init__(self, report, name):
         self.name = name
@@ -792,6 +1060,12 @@ class ImageInfo(Dumpable):
         for _, obj in self.report_content.items():
             obj.dump(indent_level+1)
 
+    def extract(self, root):
+        print(f"Extracting {self.name} to {root}")
+        for _, obj in self.report_content.items():
+            obj.extract(root)
+
+
 class ImageInfoImage(ImageInfo):
 
     def __init__(self, report, name):
@@ -799,6 +1073,7 @@ class ImageInfoImage(ImageInfo):
         self.report_content["partitions"] = Partitions(report)
         self.report_content["image-format"] = ImageFormat(report)
         self.report_content["bootloader"] = Bootloader(report)
+
 
 class OSTreeInfoImage(ImageInfo):
 
@@ -836,20 +1111,34 @@ def main():
                         help="input contains image info only or embedded in a test case")
     parser.add_argument("--command",
                         type=str,
-                        choices=["dump"],
+                        choices=["dump", "extract"],
                         default="dump",
                         help="what to do with each files")
+    parser.add_argument("--output-folder",
+                        type=str,
+                        help="the folder to store the output of extract"
+                        " default will be in /tmp/$random/filename")
 
     args = parser.parse_args()
     filenames = [args.input]
     if args.input_folder:
-        filenames = next(walk(args.folder), (None, None, []))[2]
+        filenames = next(walk(args.input_folder), (None, None, []))[2]
         filenames = [f'{args.input_folder}/{f}' for f in filenames]
+    if "extract" in args.command:
+        if args.output_folder:
+            outputf = args.output_folder
+        else:
+            outputf = tempfile.mkdtemp()
+        print(f"global output folder: {outputf}")
     for filename in filenames:
         imi = load_input(filename, args.input_type)
         if imi:
             if "dump" in args.command:
                 imi.dump()
+            if "extract" in args.command:
+                output_folder = custom_path_join(outputf, filename.split("/")[-1])
+                os.makedirs(output_folder, exist_ok=True)
+                imi.extract(output_folder)
 
 
 if __name__ == "__main__":
