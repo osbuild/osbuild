@@ -838,6 +838,11 @@ class Package(Dumpable):
     def __str__(self):
         return f"{self.package_name}.{self.version}"
 
+    def __lt__(self, other):
+        if self.package_name == other.package_name:
+            return self.version < other.version
+        return self.package_name < other.package_name
+
 
 class Packages(Dumpable, Extractable):
 
@@ -853,6 +858,32 @@ class Packages(Dumpable, Extractable):
 
     def extract(self, root):
         Extractable.open_and_write(custom_path_join(root, "packages"), self.packages, True)
+
+    def diff(self, other):
+        missing_other = []
+        missing_me = []
+        different = []
+        for package in self.packages:
+            other_package = other.find_package(package.package_name)
+            if not other_package:
+                missing_other.append(package)
+            else:
+                if package.version != other_package.version:
+                    different.append(package)
+        for package in other.packages:
+            my_package = self.find_package(package.package_name)
+            if not my_package:
+                missing_me.append(package)
+        missing_me.sort()
+        missing_other.sort()
+        different.sort()
+        return missing_me, missing_other, different
+
+    def find_package(self, pkg_name):
+        for package in self.packages:
+            if package.package_name == pkg_name:
+                return package
+        return None
 
 
 class Repo(Dumpable, Extractable):
@@ -1088,22 +1119,24 @@ class DirectoryInfoImage(ImageInfo):
     pass
 
 
-def load_input(filename, filetype):
+def load_input(filename, short_name, filetype):
     with open(filename, encoding="utf-8") as f:
         if filetype == "only":
-            return ImageInfoImage.get_imi(json.load(f), filename)
-        return ImageInfoImage.get_imi(json.load(f)["image-info"], filename)
+            return ImageInfoImage.get_imi(json.load(f), short_name)
+        return ImageInfoImage.get_imi(json.load(f)["image-info"], short_name)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Inspect an image")
-    parser.add_argument("--input-folder",
-                        type=os.path.abspath,
-                        help="a folder containing files with the image-info "
-                        "the tool will loop over each files")
-    parser.add_argument("--input",
-                        type=os.path.abspath,
-                        help="a file containing the image-info")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--input-folder",
+                       type=os.path.abspath,
+                       help="a folder containing files with the image-info "
+                       "the tool will loop over each files")
+    group.add_argument("--input",
+                       action="append",
+                       type=os.path.abspath,
+                       help="a file containing the image-info")
     parser.add_argument("--input-type",
                         type=str,
                         choices=["only", "test_case"],
@@ -1111,16 +1144,21 @@ def main():
                         help="input contains image info only or embedded in a test case")
     parser.add_argument("--command",
                         type=str,
-                        choices=["dump", "extract"],
+                        choices=["dump", "extract", "diff"],
                         default="dump",
                         help="what to do with each files")
     parser.add_argument("--output-folder",
                         type=str,
                         help="the folder to store the output of extract"
                         " default will be in /tmp/$random/filename")
+    parser.add_argument("--diff-option",
+                        type=str,
+                        choices=["packages"],
+                        default="dump",
+                        help="what to do with each files")
 
     args = parser.parse_args()
-    filenames = [args.input]
+    filenames = args.input
     if args.input_folder:
         filenames = next(walk(args.input_folder), (None, None, []))[2]
         filenames = [f'{args.input_folder}/{f}' for f in filenames]
@@ -1130,15 +1168,44 @@ def main():
         else:
             outputf = tempfile.mkdtemp()
         print(f"global output folder: {outputf}")
+    imis = []
     for filename in filenames:
-        imi = load_input(filename, args.input_type)
+        short_name = filename.split("/")[-1]
+        imi = load_input(filename, short_name, args.input_type)
         if imi:
             if "dump" in args.command:
                 imi.dump()
             if "extract" in args.command:
-                output_folder = custom_path_join(outputf, filename.split("/")[-1])
+                output_folder = custom_path_join(outputf, short_name)
                 os.makedirs(output_folder, exist_ok=True)
                 imi.extract(output_folder)
+            imis.append(imi)
+    if "diff" in args.command:
+        if len(filenames) != 2:
+            print("diff requires exactly two input files")
+            return
+        if "packages" in args.diff_option:
+            diff_packages(imis[0], imis[1])
+
+
+def diff_packages(imi1: ImageInfo, imi2: ImageInfo):
+    packages1 = imi1.report_content["packages"]
+    packages2 = imi2.report_content["packages"]
+    missing1, missing2, different = packages1.diff(packages2)
+    if missing1:
+        print(f"The following packages were missing from {imi1.name}:")
+        for package1 in missing1:
+            print(f"    {package1.package_name}")
+    if missing2:
+        print(f"The following packages were missing from {imi2.name}:")
+        for package2 in missing2:
+            print(f"    {package2.package_name}")
+    if different:
+        print(f"The following packages are not on the same version: ({imi1.name}) != ({imi2.name})")
+        for package1 in different:
+            package2 = packages2.find_package(package1.package_name)
+            print(f"    {package1.package_name}, version {package1.version}"
+                  f" != {package2.version}")
 
 
 if __name__ == "__main__":
