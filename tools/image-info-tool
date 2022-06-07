@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from os import walk
+import tempfile
 from typing import Dict, List
 from abc import ABC, abstractmethod
 
@@ -821,9 +822,10 @@ def load_input(filename, filetype):
 
 def main():
     parser = argparse.ArgumentParser(description="Inspect an image")
-    parser.add_argument("--folder",
+    parser.add_argument("--input-folder",
                         type=os.path.abspath,
-                        help="a folder containing files with the image-info")
+                        help="a folder containing files with the image-info "
+                        "the tool will loop over each files")
     parser.add_argument("--input",
                         type=os.path.abspath,
                         help="a file containing the image-info")
@@ -832,16 +834,22 @@ def main():
                         choices=["only", "test_case"],
                         default="test_case",
                         help="input contains image info only or embedded in a test case")
+    parser.add_argument("--command",
+                        type=str,
+                        choices=["dump"],
+                        default="dump",
+                        help="what to do with each files")
 
     args = parser.parse_args()
     filenames = [args.input]
-    if args.folder:
+    if args.input_folder:
         filenames = next(walk(args.folder), (None, None, []))[2]
-        filenames = [f'{args.folder}/{f}' for f in filenames]
+        filenames = [f'{args.input_folder}/{f}' for f in filenames]
     for filename in filenames:
         imi = load_input(filename, args.input_type)
         if imi:
-            imi.dump()
+            if "dump" in args.command:
+                imi.dump()
 
 
 if __name__ == "__main__":
