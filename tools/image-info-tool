@@ -1127,6 +1127,11 @@ def load_input(filename, short_name, filetype):
 
 
 def main():
+    diff_functions = [diff_packages]
+    diff_options = ["_".join(f.__name__.split("_")[1:]) for f in diff_functions]
+    diff_map = dict(zip(diff_options, diff_functions))
+    print(diff_map)
+
     parser = argparse.ArgumentParser(description="Inspect an image")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--input-folder",
@@ -1134,9 +1139,9 @@ def main():
                        help="a folder containing files with the image-info "
                        "the tool will loop over each files")
     group.add_argument("--input",
-                       action="append",
-                       type=os.path.abspath,
-                       help="a file containing the image-info")
+                        action="append",
+                        type=os.path.abspath,
+                        help="a file containing the image-info")
     parser.add_argument("--input-type",
                         type=str,
                         choices=["only", "test_case"],
@@ -1151,10 +1156,10 @@ def main():
                         type=str,
                         help="the folder to store the output of extract"
                         " default will be in /tmp/$random/filename")
-    parser.add_argument("--diff-option",
+    parser.add_argument("--diff-operation",
                         type=str,
-                        choices=["packages"],
-                        default="dump",
+                        choices=diff_options,
+                        action="append",
                         help="what to do with each files")
 
     args = parser.parse_args()
@@ -1184,8 +1189,10 @@ def main():
         if len(filenames) != 2:
             print("diff requires exactly two input files")
             return
-        if "packages" in args.diff_option:
-            diff_packages(imis[0], imis[1])
+        if not args.diff_operation:
+            args.diff_operation = diff_options
+        for action in args.diff_operation:
+            diff_map[action](imis[0], imis[1])
 
 
 def diff_packages(imi1: ImageInfo, imi2: ImageInfo):
