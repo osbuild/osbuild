@@ -49,7 +49,6 @@ class BuildResult:
     def __init__(self, origin, returncode, output, metadata, error):
         self.name = origin.name
         self.id = origin.id
-        self.options = origin.options
         self.success = returncode == 0
         self.output = output
         self.metadata = metadata
