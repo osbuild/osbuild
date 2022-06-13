@@ -9,7 +9,7 @@ to fetch resources.
 """
 from typing import Dict
 from osbuild.meta import Index, ValidationResult
-from ..pipeline import Manifest, Pipeline, detect_host_runner
+from ..pipeline import BuildResult, Manifest, Pipeline, detect_host_runner
 
 
 VERSION = "1"
@@ -194,6 +194,16 @@ def load(description: Dict, index: Index) -> Manifest:
 def output(manifest: Manifest, res: Dict) -> Dict:
     """Convert a result into the v1 format"""
 
+    def result_for_stage(result: BuildResult):
+        return {
+            "id": result.id,
+            "type": result.name,
+            "success": result.success,
+            "error": result.error,
+            "output": result.output,
+            "metadata": result.metadata,
+        }
+
     def result_for_pipeline(pipeline):
         # The pipeline might not have been built one of its
         # dependencies, i.e. its build pipeline, failed to
@@ -211,7 +221,9 @@ def output(manifest: Manifest, res: Dict) -> Dict:
 
         stages = current.get("stages")
         if stages:
-            retval["stages"] = stages
+            retval["stages"] = [
+                result_for_stage(r) for r in stages
+            ]
         return retval
 
     result = result_for_pipeline(manifest["tree"])
@@ -226,7 +238,10 @@ def output(manifest: Manifest, res: Dict) -> Dict:
     if not current:
         return result
 
-    result["assembler"] = current["stages"][0]
+    # The assembler pipeline must have exactly one stage
+    # which is the v1 assembler
+    stage = current["stages"][0]
+    result["assembler"] = result_for_stage(stage)
     if not result["assembler"]["success"]:
         result["success"] = False
 
