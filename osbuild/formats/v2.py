@@ -395,10 +395,10 @@ def output(manifest: Manifest, res: Dict) -> Dict:
                 "type": "org.osbuild.error.stage",
                 "details": {
                     "stage": {
-                        "id": failed["id"],
-                        "type": failed["name"],
-                        "output": failed["output"],
-                        "error": failed["error"]
+                        "id": failed.id,
+                        "type": failed.name,
+                        "output": failed.output,
+                        "error": failed.error,
                     }
                 }
             }
@@ -415,10 +415,10 @@ def output(manifest: Manifest, res: Dict) -> Dict:
             data = {}
             r = res.get(p.id, {})
             for stage in r.get("stages", []):
-                md = stage.get("metadata")
+                md = stage.metadata
                 if not md:
                     continue
-                name = stage["name"]
+                name = stage.name
                 val = data.setdefault(name, {})
                 val.update(md)
 
@@ -433,14 +433,14 @@ def output(manifest: Manifest, res: Dict) -> Dict:
 
         for stage in r.get("stages", []):
             data = {
-                "id": stage["id"],
-                "type": stage["name"],
-                "output": stage["output"]
+                "id": stage.id,
+                "type": stage.name,
+                "output": stage.output,
             }
-            if not stage["success"]:
-                data["success"] = stage["success"]
-                if stage["error"]:
-                    data["error"] = stage["error"]
+            if not stage.success:
+                data["success"] = stage.success
+                if stage.error:
+                    data["error"] = stage.error
 
             log.append(data)
 

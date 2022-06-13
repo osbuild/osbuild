@@ -333,7 +333,7 @@ class Pipeline:
 
                 monitor.result(r)
 
-            results["stages"].append(r.as_dict())
+            results["stages"].append(r)
             if not r.success:
                 cleanup(build_tree, tree)
                 results["success"] = False
