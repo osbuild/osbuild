@@ -27,7 +27,12 @@
     }
   },
   "image.vpc": {
-    "format": "raw"
+    "format": "raw",
+    "virtual-size": 104858112
+  },
+  "image-no-force-size.vpc": {
+    "format": "raw",
+    "virtual-size": 104866304
   },
   "image.vhdx": {
     "format": "vhdx"
