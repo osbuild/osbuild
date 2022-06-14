@@ -4,7 +4,7 @@ name: "Create and push release tag"
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 13 * * 3"
+    - cron: "0 8 * * 3"
 
 jobs:
   tag-and-push:
