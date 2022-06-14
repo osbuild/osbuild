@@ -49,6 +49,11 @@ SCHEMA = """
                 "type": "string",
                 "description": "URL to download the file from."
               },
+              "insecure": {
+                "type": "boolean",
+                "description": "Skip the verification step for secure connections and proceed without checking",
+                "default": false
+              },
               "secrets": {
                 "type": "object",
                 "additionalProperties": false,
@@ -101,10 +106,12 @@ class CurlSource(sources.SourceService):
             if self.subscriptions is None:
                 self.subscriptions = Subscriptions.from_host_system()
             url["secrets"] = self.subscriptions.get_secrets(url.get("url"))
+
         return checksum, url
 
     def fetch_one(self, checksum, desc):
         secrets = desc.get("secrets")
+        insecure = desc.get("insecure")
         url = desc.get("url")
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
@@ -129,6 +136,10 @@ class CurlSource(sources.SourceService):
                         curl_command.extend(["--cert", secrets.get('ssl_client_cert')])
                     if secrets.get('ssl_client_key'):
                         curl_command.extend(["--key", secrets.get('ssl_client_key')])
+
+                if insecure:
+                    curl_command.append("--insecure")
+
                 # url must follow options
                 curl_command.append(url)
 
