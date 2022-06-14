@@ -180,6 +180,33 @@
       ]
     },
     {
+      "name": "image-no-force-size.vpc",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.qemu",
+          "inputs": {
+            "image": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:image": {
+                  "file": "image.raw"
+                }
+              }
+            }
+          },
+          "options": {
+            "filename": "image-no-force-size.vpc",
+            "format": {
+              "type": "vpc",
+              "force_size": false
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "image.vhdx",
       "build": "name:build",
       "stages": [
