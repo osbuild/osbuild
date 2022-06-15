@@ -15,12 +15,8 @@ function template_override {
     fi
     if [[ "$ID" == rhel ]]; then
         TEMPLATE=${ID}-${VERSION_ID%.*}.tpl
-        if [[ ${VERSION_ID%.*} == 8 ]]; then
-            sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
-        elif [[ ${VERSION_ID%.*} == 9 ]]; then
-            greenprint "📋 Inserting $ID-$VERSION_ID mock template"
-            sudo cp -r schutzbot/rhel-9-mock-configs/* /etc/mock/
-        fi
+        # disable subscription for nightlies
+        sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/"$TEMPLATE"
     elif [[ "$ID" == fedora ]]; then
         TEMPLATE=fedora-branched.tpl
     elif [[ "$ID" == centos ]]; then
