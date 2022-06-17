@@ -5,6 +5,10 @@ Construct an FAT file-system via mkfs.fat(8)
 Construct a FAT file-system with the given options at the device
 specified via `device`.
 
+NB: `mkfs.fat` is called via `-I` to ignore existing partitions
+on the device. This should also prevent the situation where
+the partition table information on a (loop-)device is outdated.
+
 Buildhost commands used: `mkfs.fat`.
 """
 
@@ -64,7 +68,7 @@ def main(devices, options):
     if fatsize:
         opts = ["-F", str(fatsize)]
 
-    subprocess.run(["mkfs.fat", "-i", volid] + opts + [device],
+    subprocess.run(["mkfs.fat", "-I", "-i", volid] + opts + [device],
                    encoding='utf-8', check=True)
 
 
