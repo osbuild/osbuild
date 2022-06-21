@@ -1,4 +1,11 @@
 {
+  "global": {
+    "dependencies": {
+      "manifest-db": {
+        "commit": "a5df7345e7f30d7915cb78624e748c44aeefd8f7"
+      }
+    }
+  },
   "fedora-35": {
     "repos": [
       {
@@ -184,7 +191,7 @@
       }
     ]
   },
-"rhel-8.7": {
+  "rhel-8.7": {
     "repos": [
       {
         "file": "/etc/yum.repos.d/rhel8internal.repo",

@@ -100,6 +100,38 @@ SonarQube:
     INTERNAL_NETWORK: "true"
     GIT_DEPTH: 0
 
+Manifests:
+  stage: test
+  extends: .terraform
+  script:
+    - schutzbot/deploy.sh
+    - schutzbot/manifest_tests.sh
+  artifacts:
+    when: always
+    paths:
+      - manifest-db/generated-image-infos/
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/fedora-35-x86_64
+          - aws/fedora-35-aarch64
+          - aws/fedora-36-x86_64
+          - aws/fedora-36-aarch64
+          - aws/centos-stream-8-x86_64
+          - aws/centos-stream-8-aarch64
+          - aws/centos-stream-9-x86_64
+          - aws/centos-stream-9-aarch64
+      - RUNNER:
+          - aws/rhel-8.6-ga-x86_64
+          - aws/rhel-8.6-ga-aarch64
+          - aws/rhel-9.0-ga-x86_64
+          - aws/rhel-9.0-ga-aarch64
+          - aws/rhel-8.7-nightly-x86_64
+          - aws/rhel-8.7-nightly-aarch64
+          - aws/rhel-9.1-nightly-x86_64
+          - aws/rhel-9.1-nightly-aarch64
+        INTERNAL_NETWORK: "true"
+
 finish:
   stage: finish
   tags:
