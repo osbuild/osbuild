@@ -70,6 +70,12 @@ class TestBase(unittest.TestCase):
         return TestBase.have_test_checkout()
 
     @staticmethod
+    def locate_modules() -> str:
+        """Locate Modules Path"""
+
+        return os.path.join(TestBase.locate_test_checkout(), "modules")
+
+    @staticmethod
     def locate_test_data() -> str:
         """Locate Test-Data Path
 
@@ -303,7 +309,7 @@ class OSBuild(contextlib.AbstractContextManager):
             cmd_args = ["python3", "-m", "osbuild"]
 
             cmd_args += ["--json"]
-            cmd_args += ["--libdir", "."]
+            cmd_args += ["--libdir", TestBase.locate_modules()]
             cmd_args += ["--output-directory", output_dir]
             cmd_args += ["--store", self._cachedir]
 
@@ -371,7 +377,7 @@ class OSBuild(contextlib.AbstractContextManager):
         are defined.
         """
 
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(TestBase.locate_modules())
 
         manifest_json = json.loads(manifest_data)
 
@@ -422,3 +428,4 @@ class OSBuild(contextlib.AbstractContextManager):
             "cp", "--reflink=auto", "-a",
             os.path.join(from_path, "."), to_path
         ], check=True)
+

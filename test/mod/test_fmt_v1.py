@@ -89,7 +89,7 @@ class TestFormatV1(unittest.TestCase):
         """Degenerate case. Make sure we always return the same canonical
         description when passing empty or null values."""
 
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         cases = [
             {},
@@ -111,7 +111,7 @@ class TestFormatV1(unittest.TestCase):
             self.assertEqual(have.name, want["name"])
             self.assertEqual(have.options, want.get("options", {}))
 
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         description = BASIC_PIPELINE
 
@@ -162,7 +162,7 @@ class TestFormatV1(unittest.TestCase):
 
 
     def test_describe(self):
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         manifest = fmt.load(BASIC_PIPELINE, index)
         self.assertIsNotNone(manifest)
@@ -170,7 +170,7 @@ class TestFormatV1(unittest.TestCase):
         self.assertEqual(fmt.describe(manifest), BASIC_PIPELINE)
 
     def test_format_info(self):
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         lst = index.list_formats()
         self.assertIn("osbuild.formats.v1", lst)
@@ -189,7 +189,7 @@ class TestFormatV1(unittest.TestCase):
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_format_output(self):
         """Test that output formatting is as expected"""
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         description = {
             "pipeline": {
@@ -324,7 +324,7 @@ class TestFormatV1(unittest.TestCase):
         self.assertTrue(result["assembler"]["success"])
 
     def test_validation(self):
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         # an empty manifest is OK
         res = fmt.validate({}, index)

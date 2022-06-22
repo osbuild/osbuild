@@ -22,7 +22,7 @@ def tmpdir_fixture():
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
 def test_loopback_basic(tmpdir):
-    index = meta.Index(os.curdir)
+    index = meta.Index(TestBase.locate_modules())
     info = index.get_module_info("Device", "org.osbuild.loopback")
 
     tree = os.path.join(tmpdir, "tree")

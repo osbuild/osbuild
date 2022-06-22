@@ -10,6 +10,8 @@ import unittest
 import osbuild
 import osbuild.meta
 
+from .. import test
+
 
 BASIC_PIPELINE = {
     "version": "2",
@@ -172,7 +174,7 @@ INPUT_REFERENCES = {
 
 class TestFormatV2(unittest.TestCase):
     def setUp(self):
-        self.index = osbuild.meta.Index(os.curdir)
+        self.index = osbuild.meta.Index(test.TestBase.locate_modules())
         self.maxDiff = None
 
     def load_manifest(self, desc):

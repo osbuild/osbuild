@@ -248,7 +248,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         mounts += ["--ro-bind", f"{self._libdir}", "/run/osbuild/lib"]
         if not os.listdir(os.path.join(self._libdir, "osbuild")):
             modorigin = importlib.util.find_spec("osbuild").origin
-            modpath = os.path.dirname(modorigin)
+            modpath = f"{os.path.dirname(modorigin)}/modules"
             mounts += ["--ro-bind", f"{modpath}", "/run/osbuild/lib/osbuild"]
 
         # Setup /proc overrides
@@ -285,7 +285,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         cmd += self.build_capabilities_args()
 
         cmd += mounts
-        cmd += ["--", f"/run/osbuild/lib/runners/{self._runner}"]
+        cmd += ["--", f"/run/osbuild/lib/modules/runners/{self._runner}"]
         cmd += argv
 
         # Setup a new environment for the container.

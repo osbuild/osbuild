@@ -27,14 +27,16 @@ def tempdir_fixture():
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
 def test_basic(tempdir):
     runner = detect_host_runner()
-    libdir = os.path.abspath(os.curdir)
+    libdir = os.path.abspath(os.path.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
 
     monitor = NullMonitor(sys.stderr.fileno())
+
     with BuildRoot("/", runner, libdir, var) as root:
 
         r = root.run(["/usr/bin/true"], monitor)
+        print(r.stderr)
         assert r.returncode == 0
 
         # Test we can use `.run` multiple times

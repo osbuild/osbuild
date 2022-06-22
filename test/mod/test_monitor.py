@@ -53,7 +53,7 @@ class TestMonitor(unittest.TestCase):
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_log_monitor_vfuncs(self):
         # Checks the basic functioning of the LogMonitor
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         runner = detect_host_runner()
         pipeline = osbuild.Pipeline("pipeline", runner=runner)
@@ -84,7 +84,7 @@ class TestMonitor(unittest.TestCase):
     def test_monitor_integration(self):
         # Checks the monitoring API is called properly from the pipeline
         runner = detect_host_runner()
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         pipeline = osbuild.Pipeline("pipeline", runner=runner)
         noop_info = index.get_module_info("Stage", "org.osbuild.noop")

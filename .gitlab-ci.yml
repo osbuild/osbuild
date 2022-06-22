@@ -6,7 +6,7 @@ stages:
 
 .terraform:
   before_script:
-    - ci/ci/schutzbot/ci_details.sh > ci-details-before-run
+    - ci/schutzbot/ci_details.sh > ci-details-before-run
   after_script:
     - ci/schutzbot/ci_details.sh > ci-details-after-run
     - ci/schutzbot/update_github_status.sh update

@@ -39,7 +39,7 @@ class TestPylint(test.TestBase):
         files = files.split('\x00')
 
         # Filter out all our python files (i.e., all modules and files ending in *.py)
-        modules = ("assemblers/", "runners/", "sources/", "stages/")
+        modules = ("modules/assemblers/", "modules/runners/", "modules/sources/", "modules/stages/")
         files = filter(lambda p: p.endswith(".py") or p.startswith(modules), files)
 
         # Append the checkout-path so all paths are absolute.

@@ -116,7 +116,7 @@ def tmpdir_fixture():
 @pytest.mark.skipif(not can_setup_netns(), reason="network namespace setup failed")
 @pytest.mark.parametrize("source,case", make_test_cases())
 def test_sources(source, case, tmpdir):
-    index = osbuild.meta.Index(os.curdir)
+    index = osbuild.meta.Index(test.TestBase.locate_modules())
     sources = os.path.join(test.TestBase.locate_test_data(), "sources")
 
     with open(f"{sources}/{source}/cases/{case}") as f:

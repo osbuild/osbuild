@@ -33,7 +33,7 @@ class TestDescriptions(unittest.TestCase):
 
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_stage_run(self):
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
         info = index.get_module_info("Stage", "org.osbuild.noop")
         stage = osbuild.Stage(info, {}, None, None, {}, None)
 
@@ -54,7 +54,7 @@ class TestDescriptions(unittest.TestCase):
         self.assertEqual(res.id, stage.id)
 
     def test_manifest(self):
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         info = index.get_module_info("Stage", "org.osbuild.noop")
 
@@ -122,7 +122,7 @@ class TestDescriptions(unittest.TestCase):
 
     # pylint: disable=too-many-statements
     def test_on_demand(self):
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         manifest = Manifest()
         noop = index.get_module_info("Stage", "org.osbuild.noop")
@@ -261,7 +261,7 @@ class TestDescriptions(unittest.TestCase):
         assert res == names(build, rootfs, image)
 
     def check_moduleinfo(self, version):
-        index = osbuild.meta.Index(os.curdir)
+        index = osbuild.meta.Index(test.TestBase.locate_modules())
 
         modules = []
         for klass in ("Assembler", "Device", "Input", "Mount", "Source", "Stage"):
@@ -273,7 +273,7 @@ class TestDescriptions(unittest.TestCase):
         for module in modules:
             klass, name = module
             try:
-                info = osbuild.meta.ModuleInfo.load(os.curdir, klass, name)
+                info = osbuild.meta.ModuleInfo.load(os.path.join(os.curdir, "modules"), klass, name)
                 schema = osbuild.meta.Schema(info.get_schema(version), name)
                 res = schema.check()
                 if not res:
