@@ -61,7 +61,8 @@ def export(name_or_id, output_directory, store, manifest):
 
 
 def parse_arguments(sys_argv):
-    parser = argparse.ArgumentParser(description="Build operating system images")
+    parser = argparse.ArgumentParser(prog="osbuild",
+                                     description="Build operating system images")
 
     parser.add_argument("manifest_path", metavar="MANIFEST",
                         help="json file containing the manifest that should be built, or a '-' to read from stdin")
@@ -86,6 +87,9 @@ def parse_arguments(sys_argv):
                         help="File descriptor to be used for the monitor")
     parser.add_argument("--stage-timeout", type=int, default=None,
                         help="set the maximal time (in seconds) each stage is allowed to run")
+    parser.add_argument("--version", action="version",
+                        help="return the version of osbuild",
+                        version="%(prog)s " + osbuild.__version__)
 
     return parser.parse_args(sys_argv[1:])
 
