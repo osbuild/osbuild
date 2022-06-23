@@ -11,7 +11,7 @@ from . import host
 from . import objectstore
 from . import remoteloop
 from .devices import Device, DeviceManager
-from .inputs import Input
+from .inputs import Input, InputManager
 from .mounts import Mount, MountManager
 from .sources import Source
 from .util import osrelease
@@ -203,8 +203,9 @@ class Stage:
             mgr = host.ServiceManager(monitor=monitor)
             cm.enter_context(mgr)
 
+            ipmgr = InputManager(mgr, storeapi, inputs_tmpdir)
             for key, ip in self.inputs.items():
-                data = ip.map(mgr, storeapi, inputs_tmpdir)
+                data = ipmgr.map(ip)
                 inputs[key] = data
 
             devmgr = DeviceManager(mgr, build_root.dev, tree)

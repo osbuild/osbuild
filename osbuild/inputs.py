@@ -58,39 +58,46 @@ class Input:
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
 
-    def map(self,
-            mgr: host.ServiceManager,
-            storeapi: StoreServer,
-            root: PathLike) -> Tuple[str, Dict]:
 
-        target = os.path.join(root, self.name)
+class InputManager:
+    def __init__(self, mgr: host.ServiceManager, storeapi: StoreServer, root: PathLike) -> Dict:
+        self.service_manager = mgr
+        self.storeapi = storeapi
+        self.root = root
+        self.inputs = {}
+
+    def map(self, ip: Input) -> Tuple[str, Dict]:
+
+        target = os.path.join(self.root, ip.name)
         os.makedirs(target)
 
         args = {
             # mandatory bits
-            "origin": self.origin,
-            "refs": self.refs,
+            "origin": ip.origin,
+            "refs": ip.refs,
 
             "target": target,
 
             # global options
-            "options": self.options,
+            "options": ip.options,
 
             # API endpoints
             "api": {
-                "store": storeapi.socket_address
+                "store": self.storeapi.socket_address
             }
         }
 
-        client = mgr.start(f"input/{self.name}", self.info.path)
+        client = self.service_manager.start(f"input/{ip.name}", ip.info.path)
         reply = client.call("map", args)
 
         path = reply["path"]
 
-        if not path.startswith(root):
+        if not path.startswith(self.root):
             raise RuntimeError(f"returned {path} has wrong prefix")
 
-        reply["path"] = os.path.relpath(path, root)
+        reply["path"] = os.path.relpath(path, self.root)
+
+        self.inputs[ip.name] = reply
 
         return reply
 
