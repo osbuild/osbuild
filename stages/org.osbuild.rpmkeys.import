@@ -1,0 +1,56 @@
+#!/usr/bin/python3
+"""
+Import public keys into the RPM database
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild
+
+
+SCHEMA_2 = r"""
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["keys"],
+  "properties": {
+    "keys": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": false
+}
+"""
+
+
+def parse_input(inputs):
+    keys = inputs["keys"]
+    files = keys["data"]["files"]
+    return keys["path"], files
+
+
+def main(inputs, tree, _options):
+    basepath, keys = parse_input(inputs)
+
+    print(inputs)
+
+    for filename, _ in keys.items():
+        path = os.path.join(basepath, filename)
+        subprocess.run([
+            "rpmkeys",
+            "--verbose",
+            "--root", tree,
+            "--import", path
+        ], check=True)
+        print(f"imported key '{filename}'")
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"], args["options"])
+    sys.exit(r)
