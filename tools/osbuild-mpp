@@ -340,9 +340,11 @@ class ImageManifest:
         "arm": "v7",
     }
 
+    @staticmethod
     def arch_from_rpm(rpm_arch):
         return ImageManifest._arch_from_rpm.get(rpm_arch, rpm_arch)
 
+    @staticmethod
     def load(imagename, tag=None, digest=None):
         if digest:
             src = f"docker://{imagename}@{digest}"
@@ -373,6 +375,7 @@ class ImageManifest:
         self._compute_digest()
 
     # Based on joseBase64UrlDecode() from docker
+    @staticmethod
     def _jose_base64url_decode(input):
         # Strip whitespace
         input.replace("\n", "")
@@ -422,7 +425,6 @@ class ImageManifest:
         if not self.is_manifest_list():
             return self
 
-        manifests = self.json.get("manifests", [])
         digest = None
 
         if wanted_variant:
