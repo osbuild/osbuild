@@ -58,3 +58,4 @@ jobs:
           ssh-keyscan -t rsa gitlab.com >> ~/.ssh/known_hosts
           git remote add ci git@gitlab.com:redhat/services/products/image-builder/ci/osbuild.git
           git push -f ci
+          git push -f --tags ci
