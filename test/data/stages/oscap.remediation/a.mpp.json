@@ -30,7 +30,6 @@
                 ],
                 "packages": [
                   "openscap-scanner",
-                  "openscap-utils",
                   "scap-security-guide"
                 ]
               }

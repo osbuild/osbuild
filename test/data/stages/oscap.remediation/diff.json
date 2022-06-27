@@ -1,8 +1,155 @@
 {
   "added_files": [
-    "/oscap-remediate-offline.conf.sh",
-    "/system-update"
+    "/boot/grub2/grubenv",
+    "/dev/null",
+    "/etc/chrony.conf",
+    "/etc/dnf/automatic.conf",
+    "/etc/dracut.conf.d/40-fips.conf",
+    "/etc/modprobe.d/atm.conf",
+    "/etc/modprobe.d/can.conf",
+    "/etc/modprobe.d/firewire-core.conf",
+    "/etc/modprobe.d/tipc.conf",
+    "/etc/rsyslog.conf",
+    "/etc/rsyslog.d",
+    "/etc/rsyslog.d/cron.conf",
+    "/etc/selinux/config",
+    "/etc/system-fips",
+    "/var/tmp/eval_remediate_report.html",
+    "/var/tmp/eval_remediate_results.xml"
   ],
   "deleted_files": [],
-  "differences": {}
+  "differences": {
+    "/etc/crypto-policies/back-ends/bind.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/bind.txt",
+        "/usr/share/crypto-policies/FIPS/bind.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/gnutls.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/gnutls.txt",
+        "/usr/share/crypto-policies/FIPS/gnutls.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/java.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/java.txt",
+        "/usr/share/crypto-policies/FIPS/java.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/krb5.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/krb5.txt",
+        "/usr/share/crypto-policies/FIPS/krb5.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/libreswan.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/libreswan.txt",
+        "/usr/share/crypto-policies/FIPS/libreswan.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/libssh.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/libssh.txt",
+        "/usr/share/crypto-policies/FIPS/libssh.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/nss.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/nss.txt",
+        "/usr/share/crypto-policies/FIPS/nss.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/openssh.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/openssh.txt",
+        "/usr/share/crypto-policies/FIPS/openssh.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/opensshserver.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/opensshserver.txt",
+        "/usr/share/crypto-policies/FIPS/opensshserver.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/openssl.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/openssl.txt",
+        "/usr/share/crypto-policies/FIPS/openssl.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/opensslcnf.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/opensslcnf.txt",
+        "/usr/share/crypto-policies/FIPS/opensslcnf.txt"
+      ]
+    },
+    "/etc/crypto-policies/config": {
+      "content": [
+        "sha256:ecae097fb02a733ac98c03d7527fd923d5c9607c6a02feb5f0d388375f3e70dc",
+        "sha256:858dd9c983a8e87bbb242952b737f33499c99ff5fd8b377b218da3836357c874"
+      ]
+    },
+    "/etc/crypto-policies/state/CURRENT.pol": {
+      "content": [
+        "sha256:37e69af9169312ad09662024b58da264b2eea5a602c058825b4f8d3616334e1d",
+        "sha256:ec5a6d3a15a4d1c4a424618267b95ed3602d903b438b9ad12ad27686ca51e3fb"
+      ]
+    },
+    "/etc/crypto-policies/state/current": {
+      "content": [
+        "sha256:ecae097fb02a733ac98c03d7527fd923d5c9607c6a02feb5f0d388375f3e70dc",
+        "sha256:858dd9c983a8e87bbb242952b737f33499c99ff5fd8b377b218da3836357c874"
+      ]
+    },
+    "/etc/pam.d/password-auth": {
+      "content": [
+        "sha256:ca14e0b19bd9714133b7e5048fe2183c9447c7a433c873d1add2e8b2a45661d4",
+        "sha256:7b29643d80a4984fe8bca65447b2a4a062b4853ea7e0605c0dcf3e3aaaee9b80"
+      ]
+    },
+    "/etc/pam.d/system-auth": {
+      "content": [
+        "sha256:ca14e0b19bd9714133b7e5048fe2183c9447c7a433c873d1add2e8b2a45661d4",
+        "sha256:7b29643d80a4984fe8bca65447b2a4a062b4853ea7e0605c0dcf3e3aaaee9b80"
+      ]
+    },
+    "/etc/pki/tls/openssl.cnf": {
+      "content": [
+        "sha256:24b1b1d2c08d740c1c60097a6cfff0b0af26f05fd66275ab75c12d6adbf8b36c",
+        "sha256:ca0570541c440f7ff2bca6369ddc0d50ff439221b39965aa1e97b862eac7242d"
+      ]
+    },
+    "/etc/profile": {
+      "content": [
+        "sha256:ccf50451c280412efb0dc1361e1cea70fd4cec8a5883d5952bcd5a44fd9f6861",
+        "sha256:0494610ae6ce48cb9257b263262902bd7983895851426e239f9dd010d6e7bfdf"
+      ]
+    },
+    "/etc/security/pwquality.conf": {
+      "content": [
+        "sha256:8c6951c20f2489549e8793711818cfb0318e26fe8ced35da930a70a3cac757c8",
+        "sha256:fce9d691653a3d76c22d2874572b236cd56440474eb7690b8f2597f7b9505065"
+      ]
+    },
+    "/etc/sysctl.conf": {
+      "content": [
+        "sha256:51d16ee2e7eef12dd42e924af6b835861e8b79d11921ba0418d7d0aec7a2a93b",
+        "sha256:79b47e7941520260a5a6d351e763c19dc94758ad48a57503dcdd4bc5f6879de5"
+      ]
+    },
+    "/etc/systemd/coredump.conf": {
+      "content": [
+        "sha256:6b5ec67856213a8b4643bac777c8db5acbee4c8466a954c4c9dda561532cb9f4",
+        "sha256:a70077aa8e912fa514b0a413aac229f15cdccfe71e911b7c45d90cbc14743ecc"
+      ]
+    },
+    "/usr/lib/issue": {
+      "content": [
+        "sha256:9489d28fbd325690224dd76c0d7ae403177e15a0d63758cc0171327b5ba2aa85",
+        "sha256:0a48f732f0a2ae7c1c1884c5a5db85eda09a6506489c137656707957f2b84686"
+      ]
+    }
+  }
 }

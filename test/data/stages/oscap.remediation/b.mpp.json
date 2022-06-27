@@ -30,7 +30,6 @@
                 ],
                 "packages": [
                   "openscap-scanner",
-                  "openscap-utils",
                   "scap-security-guide"
                 ]
               }
@@ -40,7 +39,7 @@
         {
           "type": "org.osbuild.oscap.remediation",
           "options": {
-            "filename": "oscap-remediate-offline.conf.sh",
+            "data_dir": "/var/tmp",
             "config": {
               "datastream": "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml",
               "profile_id": "xccdf_org.ssgproject.content_profile_ospp"
