@@ -1,25 +1,20 @@
 #!/usr/bin/python3
 """
-Execute oscap remediation on first boot
+Execute oscap remediation
 
-The OpenSCAP scanner package uses systemd's  `system-update.target` to run an OpenSCAP
-remediation at first boot[1]. The `openscap-remediate.service` expects a `/system-update`
-symlink that points to an OpenSCAP offline remediation config file. The requirement
-of the config file is to have the basename of `oscap-remediate-offline.conf.sh` and
-must be accessible at boot time.
+The OpenSCAP scanner can be run on the image tree and the remediation can be carried
+out during build time. The stage takes the OpenSCAP config as input and then runs the
+the utility in chroot to scan and remediate [1] the tree during image at build time.
 
-This stage generates the OpenSCAP offline remediation config file with the required
-configurations. A `/system-update` symlink is then created which points to the
-config file.
+The stage generates an html report and xml results file both saved to the `/openscap_data`
+directory.
 
-Once executed, the symlink will be removed to avoid an invocation loop. The oscap
-offline remediation configuration will be left intact.
-
-[1] https://github.com/OpenSCAP/openscap/blob/maint-1.3/docs/manual/manual.adoc
+[1] https://github.com/OpenSCAP/openscap/blob/maint-1.3/docs/manual/manual.adoc#remediating-system
 """
 
 
 import os
+import subprocess
 import sys
 
 import osbuild.api
@@ -27,11 +22,11 @@ import osbuild.api
 
 SCHEMA = """
 "additionalProperties": false,
-"required": ["filename", "config"],
+"required": ["config"],
 "properties": {
-  "filename": {
+  "data_dir": {
     "type": "string",
-    "description": "Filename and location where the OpenSCAP remediation config should be saved"
+    "description": "Path to directory where OpenSCAP reports and results should be saved"
   },
   "config": {
     "additionalProperties": false,
@@ -67,17 +62,23 @@ SCHEMA = """
         "type": "string",
         "description": "The tailoring id"
       },
-      "arf_result": {
+      "xml_results": {
         "type": "string",
-        "description": "Filename and path for saving the arf results"
+        "description": "Filename for saving the xml result file",
+        "default": "eval_remediate_results.xml"
+      },
+      "arf_results": {
+        "type": "string",
+        "description": "Filename for saving the arf result file"
       },
       "html_report": {
         "type": "string",
-        "description": "Filename and path for saving the html report"
+        "description": "Filename for saving the html report",
+        "default": "eval_remediate_report.html"
       },
       "verbose_log": {
         "type": "string",
-        "description": "Filename and path for verbose error messages"
+        "description": "Filename for verbose error messages"
       },
       "verbose_level": {
         "type": "string",
@@ -89,34 +90,53 @@ SCHEMA = """
 }
 """
 
-# Map containing the translations between
-# our configuration names and the OpenScap
-# configuration names.
-OSCAP_OPTIONS = {
-    "datastream" : "OSCAP_REMEDIATE_DS",
-    "profile_id" : "OSCAP_REMEDIATE_PROFILE_ID",
-    "datastream_id" : "OSCAP_REMEDIATE_DATASTREAM_ID",
-    "xccdf_id" : "OSCAP_REMEDIATE_XCCDF_ID",
-    "benchmark_id" : "OSCAP_REMEDIATE_BENCHMARK_ID",
-    "tailoring" : "OSCAP_REMEDIATE_TAILORING",
-    "tailoring_id" : "OSCAP_REMEDIATE_TAILORING_ID",
-    "arf_result" : "OSCAP_REMEDIATE_ARF_RESULT",
-    "html_report" : "OSCAP_REMEDIATE_HTML_REPORT",
-    "verbose_log" : "OSCAP_REMEDIATE_VERBOSE_LOG",
-    "verbose_level" : "OSCAP_REMEDIATE_VERBOSE_LEVEL",
-}
+XML_RESULTS = "eval_remediate_results.xml"
+HTML_REPORT = "eval_remediate_report.html"
 
 def main(tree, options):
-    filename = options["filename"]
+    # required vars
     config = options["config"]
+    profile = config["profile_id"]
+    datastream = config["datastream"]
+    # optional vars
+    xccdf_id = config.get("xccdf_id")
+    data_dir = options.get("data_dir")
+    ds_id = config.get("datastream_id")
+    tailoring = config.get("tailoring")
+    xml_results = config.get("xml_results", XML_RESULTS)
+    html_report = config.get("html_report", HTML_REPORT)
 
-    with open(f"{tree}/{filename}", "w", encoding="utf-8") as f:
-        for ours, theirs in OSCAP_OPTIONS.items():
-            value = config.get(ours)
-            if value:
-                f.write(f"{theirs}={value}\n")
+    # run openscap in chroot on the image tree
+    cmd = [
+      "/usr/sbin/chroot", tree,
+      "/usr/bin/oscap", "xccdf", "eval",
+      "--remediate", "--profile", profile
+    ]
 
-    os.symlink(f"{filename}", f"{tree}/system-update")
+    if data_dir is not None:
+        os.makedirs(f"{tree}/{data_dir.lstrip('/')}", exist_ok=True)
+        # run with command in chroot so full path ok
+        cmd.extend(["--results", f"{data_dir}/{xml_results}"])
+        cmd.extend(["--report", f"{data_dir}/{html_report}"])
+
+    if ds_id is not None:
+        cmd.extend(["--datastream-id", ds_id])
+
+    if xccdf_id is not None:
+        cmd.extend(["--xccdf-id", xccdf_id])
+
+    if tailoring is not None:
+        cmd.extend(["--tailoring-file", tailoring])
+
+    cmd.append(datastream)
+
+    res = subprocess.run(cmd, encoding="utf-8", stdout=sys.stderr, check=False)
+
+    # oscap return values are:
+    # 0 → success
+    # 2 → -- no error, but some checks/remediation failed
+    if res.returncode not in (0, 2):
+        raise RuntimeError("oscap content evaluation and remediation failed")
 
     return 0
 
