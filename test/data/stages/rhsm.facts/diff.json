@@ -1,0 +1,12 @@
+{
+  "added_files": [
+    "/usr/share/osbuild",
+    "/usr/share/osbuild/self",
+    "/usr/share/osbuild/self/rhsm.facts",
+    "/etc/rhsm",
+    "/etc/rhsm/facts",
+    "/etc/rhsm/facts/osbuild.facts"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
