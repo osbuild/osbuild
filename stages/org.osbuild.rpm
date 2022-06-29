@@ -133,6 +133,15 @@ SCHEMA_2 = """
           "default": false
         }
       }
+    },
+    "install_langs": {
+       "description": "Only install certain locales (sets `_install_langs` RPM macro)",
+       "type": "array",
+       "minItems": 1,
+       "uniqueItems": true,
+       "items": {
+        "type": "string"
+      }
     }
   }
 },
@@ -281,6 +290,14 @@ def main(tree, inputs, options):
     no_dracut = options.get("disable_dracut", False)
     if no_dracut:
         masked_files = disable_dracut(tree)
+
+    langs = options.get("install_langs")
+    if langs:
+        macro = "%_install_langs " + ":".join(langs)
+        print(f"using '{macro}'")
+        extra_args += [
+            "--define", macro,
+        ]
 
     with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
         manifest.writelines(c+'\n' for c in packages)
