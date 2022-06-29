@@ -278,7 +278,7 @@ def create_oci_dir(inputs, output_dir, options, create_time):
         "created": created,
         "architecture": architecture,
         "os": "linux",
-        "config": config_from_options(options["config"]),
+        "config": config_from_options(options.get("config", {})),
         "rootfs": {
             "type": "layers",
             "diff_ids": []
