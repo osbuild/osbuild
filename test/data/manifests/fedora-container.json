@@ -546,7 +546,10 @@
             ],
             "exclude": {
               "docs": true
-            }
+            },
+            "install_langs": [
+              "en_US"
+            ]
           }
         },
         {
