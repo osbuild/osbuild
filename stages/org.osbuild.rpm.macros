@@ -1,0 +1,66 @@
+#!/usr/bin/python3
+"""
+Persistently set RPM macros
+
+Stage to be able to set a selection of RPM macros.
+"""
+
+import os
+import sys
+
+import osbuild
+
+
+SCHEMA = r"""
+"additionalProperties": false,
+"required": ["macros", "filename"],
+"properties": {
+  "filename": {
+    "type": "string",
+    "description": "Path to the macro file."
+  },
+  "macros": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "macros to configure",
+    "minProperties": 1,
+    "properties": {
+      "_install_langs": {
+        "description": "Only install the specified locales.",
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def make_value(key, value):
+    if key == "_install_langs":
+        assert isinstance(value, list)
+        return ":".join(value)
+    return str(value)
+
+
+def main(tree, options):
+    filename = options["filename"].lstrip("/")
+
+    path = os.path.join(tree, filename)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    with open(path, "w", encoding="utf-8") as f:
+        for k, v in options["macros"].items():
+            value = make_value(k, v)
+            line = f"%{k} {value}"
+            f.write(line)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
