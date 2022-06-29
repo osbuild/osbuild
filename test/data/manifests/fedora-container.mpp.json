@@ -68,6 +68,17 @@
           }
         },
         {
+          "type": "org.osbuild.rpm.macros",
+          "options": {
+            "filename": "/etc/rpm/macros.image-language-conf",
+            "macros": {
+              "_install_langs": [
+                "en_US"
+              ]
+            }
+          }
+        },
+        {
           "type": "org.osbuild.locale",
           "options": {
             "language": "en_US.UTF-8"
