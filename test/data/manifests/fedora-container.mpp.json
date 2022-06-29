@@ -36,9 +36,7 @@
                   "shadow-utils",
                   "sssd-client",
                   "util-linux",
-
                   "microdnf",
-
                   "nginx"
                 ],
                 "excludes": [
@@ -63,7 +61,10 @@
             ],
             "exclude": {
               "docs": true
-            }
+            },
+            "install_langs": [
+              "en_US"
+            ]
           }
         },
         {
