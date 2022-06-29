@@ -196,7 +196,7 @@ def blobs_add_file(blobs: str, path: str, mtype: str):
 
 def blobs_add_json(blobs: str, js: str, mtype: str):
     js_file = os.path.join(blobs, "temporary.js")
-    with open(js_file, "w") as f:
+    with open(js_file, "w", encoding="utf-8") as f:
         json.dump(js, f)
 
     return blobs_add_file(blobs, js_file, mtype)
@@ -326,11 +326,13 @@ def create_oci_dir(inputs, output_dir, options, create_time):
 
     # index
     print("writing index")
-    with open(os.path.join(output_dir, "index.json"), "w") as f:
+    index_path = os.path.join(output_dir, "index.json")
+    with open(index_path, "w", encoding="utf-8") as f:
         json.dump(index, f)
 
     # oci-layout tag
-    with open(os.path.join(output_dir, "oci-layout"), "w") as f:
+    layout_path = os.path.join(output_dir, "oci-layout")
+    with open(layout_path, "w", encoding="utf-8") as f:
         json.dump({"imageLayoutVersion": "1.0.0"}, f)
 
 
