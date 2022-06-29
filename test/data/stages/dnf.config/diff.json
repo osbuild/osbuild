@@ -7,7 +7,7 @@
     "/etc/dnf/dnf.conf": {
       "content": [
         "sha256:c517559154f0de26716dd6464fbf524aeebf965cb8cf89ebde69e51355633878",
-        "sha256:86795d352e3107dfb5257a9a4466fdc93668ec0776def8f62e211560f6fabeac"
+        "sha256:1469ad98fc3bb8c2d88d5bdb81eb5f91c48107a5ecabcafd5025b03d9d215325"
       ]
     }
   }

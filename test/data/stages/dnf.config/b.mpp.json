@@ -40,7 +40,10 @@
           ],
           "config": {
             "main": {
-              "ip_resolve": "4"
+              "ip_resolve": "4",
+              "tsflags": [
+                "nodocs"
+              ]
             }
           }
         }
