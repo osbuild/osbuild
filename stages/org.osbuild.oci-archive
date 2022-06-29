@@ -316,7 +316,7 @@ def create_oci_dir(inputs, output_dir, options, create_time):
             "created_by": f"/bin/sh -c #(nop) osbuild input '{ip}'"
         })
 
-    ## write config
+    # write config
     info = blobs_add_json(blobs, config, "config")
     manifest["config"] = info
 
