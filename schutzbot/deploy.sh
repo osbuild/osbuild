@@ -4,8 +4,8 @@ set -euxo pipefail
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
-# Currently: test: add image test cases for Fedora 34 and 35
-OSBUILD_COMPOSER_COMMIT=1401a7a6595f86812008b6bfdacdf7289945a6f3
+# Currently: CI: temporarily siwtch RHOS-01 to non-ssd instances
+OSBUILD_COMPOSER_COMMIT=b297ee8d403bb48363c44773f495ef30acbf7d1a
 
 # Get OS details.
 source /etc/os-release
