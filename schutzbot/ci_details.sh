@@ -34,7 +34,7 @@ EOF
 echo -e "\033[0m"
 
 echo "List of system repositories:"
-yum repolist -v
+sudo yum repolist -v
 
 echo "------------------------------------------------------------------------------"
 
