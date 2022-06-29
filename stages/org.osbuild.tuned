@@ -38,6 +38,7 @@ class TunedProfilesDB:
     Class for loading available TuneD profiles from the given filesystem tree
     and checking if a profile with particular name exists.
     """
+
     def __init__(self, tree):
         self._available_profiles = self._load_available_profiles(tree)
 
@@ -53,15 +54,14 @@ class TunedProfilesDB:
         available_profiles = set()
 
         # Directories, from which TuneD loads profile definitions
-        profile_directories = [
-            "/usr/lib/tuned",
-            "/etc/tuned"
-        ]
+        profile_directories = ["/usr/lib/tuned", "/etc/tuned"]
         profile_config_file = "tuned.conf"
 
         for path in profile_directories:
             for dir_entry in os.scandir(f"{tree}{path}"):
-                if dir_entry.is_dir() and os.path.isfile(f"{tree}{path}/{dir_entry.name}/{profile_config_file}"):
+                if dir_entry.is_dir() and os.path.isfile(
+                    f"{tree}{path}/{dir_entry.name}/{profile_config_file}"
+                ):
                     available_profiles.add(dir_entry.name)
 
         return available_profiles
@@ -99,7 +99,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

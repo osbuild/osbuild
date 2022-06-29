@@ -64,10 +64,8 @@ class MountManager:
         args = {
             "source": source,
             "target": mount.target,
-
             "root": self.root,
             "tree": self.devices.tree,
-
             "options": mount.options,
         }
 
@@ -139,13 +137,7 @@ class FileSystemMountService(MountService):
         os.makedirs(mountpoint, exist_ok=True)
         self.mountpoint = mountpoint
 
-        subprocess.run(
-            ["mount"] +
-            args + [
-                "--source", source,
-                "--target", mountpoint
-            ],
-            check=True)
+        subprocess.run(["mount"] + args + ["--source", source, "--target", mountpoint], check=True)
 
         self.check = True
         return mountpoint
@@ -159,10 +151,8 @@ class FileSystemMountService(MountService):
         print("umounting")
 
         # We ignore errors here on purpose
-        subprocess.run(["umount", self.mountpoint],
-                       check=self.check)
+        subprocess.run(["umount", self.mountpoint], check=self.check)
         self.mountpoint = None
 
     def sync(self):
-        subprocess.run(["sync", "-f", self.mountpoint],
-                       check=self.check)
+        subprocess.run(["sync", "-f", self.mountpoint], check=self.check)

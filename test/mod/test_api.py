@@ -13,6 +13,7 @@ from osbuild.util import jsoncomm
 
 class APITester(osbuild.api.BaseAPI):
     """Records the number of messages and if it got cleaned up"""
+
     def __init__(self, sockaddr):
         super().__init__(sockaddr)
         self.clean = False
@@ -33,6 +34,7 @@ class APITester(osbuild.api.BaseAPI):
 
 class TestAPI(unittest.TestCase):
     """Check API infrastructure"""
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
 
@@ -46,7 +48,7 @@ class TestAPI(unittest.TestCase):
         api = APITester(socket)
         with api:
             with jsoncomm.Socket.new_client(socket) as client:
-                req = {'method': 'echo', 'data': 'Hello'}
+                req = {"method": "echo", "data": "Hello"}
                 client.send(req)
                 msg, _, _ = client.recv()
                 self.assertEqual(msg["method"], "reply")
@@ -79,7 +81,7 @@ class TestAPI(unittest.TestCase):
 
         api = osbuild.api.API(socket_address=path)
         with api:
-            p = mp.Process(target=exception, args=(path, ))
+            p = mp.Process(target=exception, args=(path,))
             p.start()
             p.join()
         self.assertEqual(p.exitcode, 2)
@@ -106,7 +108,7 @@ class TestAPI(unittest.TestCase):
 
         api = osbuild.api.API(socket_address=path)
         with api:
-            p = mp.Process(target=metadata, args=(path, ))
+            p = mp.Process(target=metadata, args=(path,))
             p.start()
             p.join()
             self.assertEqual(p.exitcode, 0)

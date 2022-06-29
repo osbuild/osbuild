@@ -17,7 +17,6 @@ from osbuild.util.jsoncomm import FdSet
 
 
 class ServiceTest(host.Service):
-
     def __init__(self, args):
         super().__init__(args)
         self.fds = []
@@ -155,6 +154,7 @@ def test_signals():
             nonlocal exec_callback
             assert item == exec_callback
             exec_callback += 1
+
         client = mgr.start("test_signal_me_3_times", __file__)
         client.call_with_fds("signal_me_3_times", on_signal=check_value)
         assert exec_callback == 3

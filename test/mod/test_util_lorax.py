@@ -28,13 +28,11 @@ replace @NAME@ ${name} *.txt
 
 
 class TestUtilLorax(test.TestBase):
-
     def assertExists(self, root, *paths):
         for path in paths:
             target = os.path.join(root, path.lstrip("/"))
             if not os.path.exists(target):
                 self.fail(f"Path {target} does not exists")
-
 
     def test_script(self):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
@@ -53,10 +51,7 @@ class TestUtilLorax(test.TestBase):
                 f.write(BASIC_TEMPLATE)
 
             # parse the template and render it
-            args = {
-                "tree": tree,
-                "name": "osbuild-42"
-            }
+            args = {"tree": tree, "name": "osbuild-42"}
 
             tmpl = lorax.render_template(template, args)
             self.assertIsNotNone(tmpl)
@@ -80,7 +75,6 @@ class TestUtilLorax(test.TestBase):
                 with open(os.path.join(tree, fn), "r") as f:
                     data = f.read().strip()
                     self.assertEqual(data, "osbuild-42")
-
 
     def test_script_errors(self):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:

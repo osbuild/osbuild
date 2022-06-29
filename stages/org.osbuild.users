@@ -82,7 +82,17 @@ def getpwnam(root, name):
         return None
 
 
-def useradd(root, name, uid=None, gid=None, groups=None, description=None, home=None, shell=None, password=None):
+def useradd(
+    root,
+    name,
+    uid=None,
+    gid=None,
+    groups=None,
+    description=None,
+    home=None,
+    shell=None,
+    password=None,
+):
     arguments = []
     if uid is not None:
         arguments += ["--uid", str(uid), "-o"]
@@ -103,7 +113,9 @@ def useradd(root, name, uid=None, gid=None, groups=None, description=None, home=
     subprocess.run(["chroot", root, "useradd", *arguments, name], check=True)
 
 
-def usermod(root, name, gid=None, groups=None, description=None, home=None, shell=None, password=None):
+def usermod(
+    root, name, gid=None, groups=None, description=None, home=None, shell=None, password=None
+):
     arguments = []
     if gid is not None:
         arguments += ["--gid", gid]
@@ -166,7 +178,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

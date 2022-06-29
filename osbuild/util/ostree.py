@@ -99,8 +99,7 @@ class Treefile:
     def as_tmp_file(self):
         name = None
         try:
-            fd, name = tempfile.mkstemp(suffix=".json",
-                                        text=True)
+            fd, name = tempfile.mkstemp(suffix=".json", text=True)
 
             with os.fdopen(fd, "w+") as f:
                 self.dump(f)
@@ -116,11 +115,13 @@ def rev_parse(repo: PathLike, ref: str) -> str:
 
     repo = os.fspath(repo)
 
-    r = subprocess.run(["ostree", "rev-parse", ref, f"--repo={repo}"],
-                       encoding="utf-8",
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.STDOUT,
-                       check=False)
+    r = subprocess.run(
+        ["ostree", "rev-parse", ref, f"--repo={repo}"],
+        encoding="utf-8",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
 
     msg = r.stdout.strip()
     if r.returncode != 0:
@@ -134,11 +135,13 @@ def show(repo: PathLike, checksum: str) -> str:
 
     repo = os.fspath(repo)
 
-    r = subprocess.run(["ostree", "show", f"--repo={repo}", checksum],
-                       encoding="utf-8",
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.STDOUT,
-                       check=False)
+    r = subprocess.run(
+        ["ostree", "show", f"--repo={repo}", checksum],
+        encoding="utf-8",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
 
     msg = r.stdout.strip()
     if r.returncode != 0:
@@ -169,12 +172,13 @@ class PasswdLike:
     class can parse the the list, manipulate it, and export it to file
     again.
     """
+
     def __init__(self):
         """Initialize an empty PasswdLike object"""
         self.db = dict()
 
     @classmethod
-    def from_file(cls, path: PathLike, allow_missing_file: bool=False):
+    def from_file(cls, path: PathLike, allow_missing_file: bool = False):
         """Initialize a PasswdLike object from an existing file"""
         ret = cls()
         if allow_missing_file:
@@ -185,7 +189,7 @@ class PasswdLike:
             ret.db = cls._passwd_lines_to_dict(p.readlines())
         return ret
 
-    def merge_with_file(self, path: PathLike, allow_missing_file: bool=False):
+    def merge_with_file(self, path: PathLike, allow_missing_file: bool = False):
         """Extend the database with entries from another file"""
         if allow_missing_file:
             if not os.path.isfile(path):
@@ -205,7 +209,7 @@ class PasswdLike:
     @staticmethod
     def _passwd_lines_to_dict(lines):
         """Take a list of passwd lines and produce a "name": "line" dictionary"""
-        return {line.split(':')[0]: line for line in lines}
+        return {line.split(":")[0]: line for line in lines}
 
 
 class SubIdsDB:
@@ -234,10 +238,7 @@ class SubIdsDB:
 
     def dumps(self) -> str:
         """Dump the database to a string"""
-        data = "\n".join([
-            f"{name}:{uid}:{count}\n"
-            for name, (uid, count) in self.db.items()
-        ])
+        data = "\n".join([f"{name}:{uid}:{count}\n" for name, (uid, count) in self.db.items()])
 
         return data
 

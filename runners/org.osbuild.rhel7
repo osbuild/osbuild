@@ -9,7 +9,10 @@ import osbuild.api
 
 def ldconfig():
     # ld.so.conf must exist, or `ldconfig` throws a warning
-    with open("/etc/ld.so.conf", "w", ) as f:
+    with open(
+        "/etc/ld.so.conf",
+        "w",
+    ) as f:
         # qemu-img needs `libiscsi`, which is located in /usr/lib64/iscsi
         f.write("/usr/lib64/iscsi\n")
         f.flush()

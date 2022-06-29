@@ -29,7 +29,9 @@ def ldconfig():
 
 def sysusers():
     try:
-        subprocess.run(["systemd-sysusers"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
+        subprocess.run(
+            ["systemd-sysusers"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
+        )
     except subprocess.CalledProcessError as error:
         sys.stderr.write(error.stdout)
         sys.exit(1)
@@ -73,9 +75,7 @@ def main():
 
         env = quirks()
 
-        r = subprocess.run(sys.argv[1:],
-                           env=env,
-                           check=False)
+        r = subprocess.run(sys.argv[1:], env=env, check=False)
         sys.exit(r.returncode)
 
 

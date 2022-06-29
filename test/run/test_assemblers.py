@@ -28,12 +28,10 @@ class TestAssemblers(test.TestBase):
 
     @contextlib.contextmanager
     def run_assembler(self, osb, name, options, output_path):
-        with open(os.path.join(self.locate_test_data(),
-                               "manifests/filesystem.json")) as f:
+        with open(os.path.join(self.locate_test_data(), "manifests/filesystem.json")) as f:
             manifest = json.load(f)
         manifest["pipeline"] = dict(
-            manifest["pipeline"],
-            assembler={"name": name, "options": options}
+            manifest["pipeline"], assembler={"name": name, "options": options}
         )
         data = json.dumps(manifest)
 
@@ -46,7 +44,9 @@ class TestAssemblers(test.TestBase):
             yield tree, os.path.join(output_dir, "assembler", output_path)
 
     def assertImageFile(self, filename, fmt, expected_size=None):
-        info = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", filename]))
+        info = json.loads(
+            subprocess.check_output(["qemu-img", "info", "--output", "json", filename])
+        )
         self.assertEqual(info["format"], fmt)
         self.assertEqual(info["virtual-size"], expected_size)
 
@@ -58,7 +58,7 @@ class TestAssemblers(test.TestBase):
 
         with mount(device) as target_tree:
             diff = self.tree_diff(tree, target_tree)
-            if fstype == 'ext4':
+            if fstype == "ext4":
                 added_files = ["/lost+found"]
             else:
                 added_files = []
@@ -105,15 +105,19 @@ class TestAssemblers(test.TestBase):
                     "fs_type": fs_type,
                 }
                 with self.osbuild as osb:
-                    with self.run_assembler(osb, "org.osbuild.rawfs", options, "image.raw") as (tree, image):
+                    with self.run_assembler(osb, "org.osbuild.rawfs", options, "image.raw") as (
+                        tree,
+                        image,
+                    ):
                         self.assertImageFile(image, "raw", options["size"])
                         self.assertFilesystem(image, options["root_fs_uuid"], fs_type, tree)
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
     def test_ostree(self):
         with self.osbuild as osb:
-            with open(os.path.join(self.locate_test_data(),
-                                   "manifests/fedora-ostree-commit.json")) as f:
+            with open(
+                os.path.join(self.locate_test_data(), "manifests/fedora-ostree-commit.json")
+            ) as f:
                 manifest = json.load(f)
 
             data = json.dumps(manifest)
@@ -141,20 +145,19 @@ class TestAssemblers(test.TestBase):
                     [
                         "ostree",
                         "show",
-                        "--repo", repo,
+                        "--repo",
+                        repo,
                         "--print-metadata-key=rpmostree.inputhash",
-                        commit_id
-                    ], encoding="utf-8").strip()
+                        commit_id,
+                    ],
+                    encoding="utf-8",
+                ).strip()
                 self.assertEqual(md, f"'{rpmostree_inputhash}'")
 
                 md = subprocess.check_output(
-                    [
-                        "ostree",
-                        "show",
-                        "--repo", repo,
-                        "--print-metadata-key=version",
-                        commit_id
-                    ], encoding="utf-8").strip()
+                    ["ostree", "show", "--repo", repo, "--print-metadata-key=version", commit_id],
+                    encoding="utf-8",
+                ).strip()
                 self.assertEqual(md, f"'{os_version}'")
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
@@ -173,10 +176,10 @@ class TestAssemblers(test.TestBase):
                         "size": 1024 * MEBIBYTE,
                         "root_fs_type": fs_type,
                     }
-                    with self.run_assembler(osb,
-                                            "org.osbuild.qemu",
-                                            options,
-                                            f"image.{fmt}") as (tree, image):
+                    with self.run_assembler(osb, "org.osbuild.qemu", options, f"image.{fmt}") as (
+                        tree,
+                        image,
+                    ):
                         if fmt == "raw.xz":
                             subprocess.run(["unxz", "--keep", "--force", image], check=True)
                             image = image[:-3]
@@ -184,21 +187,21 @@ class TestAssemblers(test.TestBase):
                         self.assertImageFile(image, fmt, options["size"])
                         with open_image(loctl, image, fmt) as (target, device):
                             ptable = self.read_partition_table(device)
-                            self.assertPartitionTable(ptable,
-                                                      "dos",
-                                                      options["ptuuid"],
-                                                      1,
-                                                      boot_partition=1)
+                            self.assertPartitionTable(
+                                ptable, "dos", options["ptuuid"], 1, boot_partition=1
+                            )
                             if fs_type == "btrfs":
                                 l2hash = "919aad44d37aa9fdbb8cb1bbd8ce2a44e64aee76f4dceb805eaab041b7f62348"
                             elif fs_type == "xfs":
                                 l2hash = "1729f531281e4c3cbcde2a39b587c9dd5334ea1335bb860905556d5b73603de6"
                             else:
                                 l2hash = "24c3ad6be9a5687d5140e0bf66d25953c4f0c7eeb6aaced4cc64685f5b3cfa9e"
-                            self.assertGRUB2(device,
-                                             "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
-                                             l2hash,
-                                             1024 * 1024)
+                            self.assertGRUB2(
+                                device,
+                                "26e3327c6b5ac9b5e21d8b86f19ff7cb4d12fb2d0406713f936997d9d89de3ee",
+                                l2hash,
+                                1024 * 1024,
+                            )
 
                             p1 = ptable["partitions"][0]
                             ssize = ptable.get("sectorsize", 512)
@@ -210,18 +213,17 @@ class TestAssemblers(test.TestBase):
     def test_tar(self):
         cases = [
             ("tree.tar.gz", None, ["application/x-tar"]),
-            ("tree.tar.gz", "gzip", ["application/x-gzip", "application/gzip"])
+            ("tree.tar.gz", "gzip", ["application/x-gzip", "application/gzip"]),
         ]
         with self.osbuild as osb:
             for filename, compression, expected_mimetypes in cases:
                 options = {"filename": filename}
                 if compression:
                     options["compression"] = compression
-                with self.run_assembler(osb,
-                                        "org.osbuild.tar",
-                                        options,
-                                        filename) as (tree, image):
-                    output = subprocess.check_output(["file", "--mime-type", image], encoding="utf-8")
+                with self.run_assembler(osb, "org.osbuild.tar", options, filename) as (tree, image):
+                    output = subprocess.check_output(
+                        ["file", "--mime-type", image], encoding="utf-8"
+                    )
                     _, mimetype = output.strip().split(": ")  # "filename: mimetype"
                     self.assertIn(mimetype, expected_mimetypes)
 
@@ -235,9 +237,14 @@ class TestAssemblers(test.TestBase):
                             "--numeric-owner",
                             "--selinux",
                             "--acls",
-                            "--xattrs", "--xattrs-include", "*",
-                            "-xaf", image,
-                            "-C", tmp]
+                            "--xattrs",
+                            "--xattrs-include",
+                            "*",
+                            "-xaf",
+                            image,
+                            "-C",
+                            tmp,
+                        ]
                         subprocess.check_output(args, encoding="utf-8")
                         diff = self.tree_diff(tree, tmp)
                         self.assertEqual(diff["added_files"], [])
@@ -249,10 +256,7 @@ class TestAssemblers(test.TestBase):
 def loop_create_device(ctl, fd, offset=None, sizelimit=None):
     lo = None
     try:
-        lo = ctl.loop_for_fd(fd,
-                             offset=offset,
-                             sizelimit=sizelimit,
-                             autoclear=True)
+        lo = ctl.loop_for_fd(fd, offset=offset, sizelimit=sizelimit, autoclear=True)
         yield lo
     finally:
         if lo:
@@ -282,8 +286,7 @@ def open_image(ctl, image, fmt):
     with tempfile.TemporaryDirectory() as tmp:
         if fmt != "raw":
             target = os.path.join(tmp, "image.raw")
-            subprocess.run(["qemu-img", "convert", "-O", "raw", image, target],
-                           check=True)
+            subprocess.run(["qemu-img", "convert", "-O", "raw", image, target], check=True)
         else:
             target = image
 

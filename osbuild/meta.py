@@ -83,10 +83,7 @@ class ValidationError:
         components (string or integer) and `message` the
         human readable message string.
         """
-        return {
-            "message": self.message,
-            "path": list(self.path)
-        }
+        return {"message": self.message, "path": list(self.path)}
 
     def rebase(self, path: Iterable[str]):
         """Prepend the `path` to `self.path`"""
@@ -160,12 +157,7 @@ class ValidationResult:
         if not errors:
             return {}
 
-        return {
-            "type": FAILED_TYPEURI,
-            "title": FAILED_TITLE,
-            "success": False,
-            "errors": errors
-        }
+        return {"type": FAILED_TYPEURI, "title": FAILED_TITLE, "success": False, "errors": errors}
 
     @property
     def valid(self):
@@ -339,17 +331,12 @@ class ModuleInfo:
                 **opts,
             }
             if "mounts" not in schema["properties"]:
-                schema["properties"]["mounts"] = {
-                    "type": "array"
-                }
+                schema["properties"]["mounts"] = {"type": "array"}
             schema["required"] = [type_id]
         elif self.type in ("Device"):
             schema["additionalProperties"] = True
             opts = self._load_opts(version, "1")
-            schema["properties"] = {
-                "type": {"enum": [self.name]},
-                "options": opts
-            }
+            schema["properties"] = {"type": {"enum": [self.name]}, "options": opts}
         elif self.type in ("Mount"):
             opts = self._load_opts("2")
             schema.update(opts)
@@ -429,12 +416,7 @@ class ModuleInfo:
         doclist = docstring.split("\n")
 
         assigns = filter_type(tree.body, ast.Assign)
-        values = {
-            t: a
-            for a in assigns
-            for t in targets(a)
-            if t in names
-        }
+        values = {t: a for a in assigns for t in targets(a) if t in names}
 
         def parse_schema(node):
             return cls._parse_schema(klass, name, node)
@@ -443,13 +425,13 @@ class ModuleInfo:
             return cls._parse_caps(klass, name, node)
 
         info = {
-            'schema': {
+            "schema": {
                 "1": parse_schema(values.get("SCHEMA")),
                 "2": parse_schema(values.get("SCHEMA_2")),
             },
-            'desc': doclist[0],
-            'info': "\n".join(doclist[1:]),
-            'caps': parse_caps(values.get("CAPABILITIES"))
+            "desc": doclist[0],
+            "info": "\n".join(doclist[1:]),
+            "caps": parse_caps(values.get("CAPABILITIES")),
         }
         return cls(klass, name, path, info)
 
@@ -499,10 +481,7 @@ class Index:
         base = "osbuild.formats"
         spec = importlib.util.find_spec(base)
         locations = spec.submodule_search_locations
-        modinfo = [
-            mod for mod in pkgutil.walk_packages(locations)
-            if not mod.ispkg
-        ]
+        modinfo = [mod for mod in pkgutil.walk_packages(locations) if not mod.ispkg]
 
         return [base + "." + m.name for m in modinfo]
 
@@ -532,8 +511,7 @@ class Index:
             raise ValueError(f"Unsupported nodule class: {klass}")
 
         path = os.path.join(self.path, module_path)
-        modules = filter(lambda f: os.path.isfile(f"{path}/{f}"),
-                         os.listdir(path))
+        modules = filter(lambda f: os.path.isfile(f"{path}/{f}"), os.listdir(path))
         return list(modules)
 
     def get_module_info(self, klass, name) -> Optional[ModuleInfo]:

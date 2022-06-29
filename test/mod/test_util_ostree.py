@@ -16,10 +16,7 @@ from .. import test
 
 
 def run(*args, check=True, encoding="utf-8", **kwargs):
-    res = subprocess.run(*args,
-                         encoding=encoding,
-                         check=check,
-                         **kwargs)
+    res = subprocess.run(*args, encoding=encoding, check=check, **kwargs)
     return res
 
 
@@ -37,15 +34,15 @@ class TestObjectStore(test.TestBase):
     def test_treefile_types(self):
         tf = ostree.Treefile()
 
-        tf["repos"] = ["a", "b", "c"]    # valid list of strings
-        tf["selinux"] = True             # valid boolean
-        tf["ref"] = "ref/sample/tip"     # valid string
+        tf["repos"] = ["a", "b", "c"]  # valid list of strings
+        tf["selinux"] = True  # valid boolean
+        tf["ref"] = "ref/sample/tip"  # valid string
 
         with self.assertRaises(ValueError):
-            tf["repos"] = "not a list"   # not a list
+            tf["repos"] = "not a list"  # not a list
 
         with self.assertRaises(ValueError):
-            tf["repos"] = [1, 2, 3]       # not a string list
+            tf["repos"] = [1, 2, 3]  # not a string list
 
         with self.assertRaises(ValueError):
             tf["selinux"] = "not a bool"  # not a boolean
@@ -69,7 +66,7 @@ class TestObjectStore(test.TestBase):
             "selinux": True,
             "boot-location": "new",
             "etc-group-members": ["wheel"],
-            "machineid-compat": True
+            "machineid-compat": True,
         }
 
         tf = ostree.Treefile()
@@ -77,12 +74,7 @@ class TestObjectStore(test.TestBase):
             tf[p] = v
 
         with tf.as_tmp_file() as path:
-            r = run(["rpm-ostree",
-                     "compose",
-                     "tree",
-                     "--print-only",
-                     path],
-                    stdout=subprocess.PIPE)
+            r = run(["rpm-ostree", "compose", "tree", "--print-only", path], stdout=subprocess.PIPE)
             self.assertEqual(r.returncode, 0)
             js = json.loads(r.stdout)
 
@@ -94,29 +86,30 @@ class TestObjectStore(test.TestBase):
         repo_path = os.path.join(self.locate_test_data(), "sources/org.osbuild.ostree/data/repo")
         ostree.show(repo_path, "d6243b0d0ca3dc2aaef2e0eb3e9f1f4836512c2921007f124b285f7c466464d8")
         with pytest.raises(RuntimeError):
-            ostree.show(repo_path, "f000000000000000000000000DEADBEEF000000000000000000000000000000f")
+            ostree.show(
+                repo_path, "f000000000000000000000000DEADBEEF000000000000000000000000000000f"
+            )
 
 
 class TestPasswdLike(unittest.TestCase):
-
     def test_merge_passwd(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             primary_file_lines = [
                 "root:x:0:0:root:/root:/bin/bash\n",
                 "bin:x:1:1:bin:/bin:/sbin/nologin\n",
-                "daemon:x:2:2:daemon:/sbin:/sbin/nologin\n"
+                "daemon:x:2:2:daemon:/sbin:/sbin/nologin\n",
             ]
             secondary_file_lines = [
                 "daemon:x:9:9:daemon:/sbin:/sbin/nologin\n"
                 "lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin\n",
-                "sync:x:5:0:sync:/sbin:/bin/sync\n"
+                "sync:x:5:0:sync:/sbin:/bin/sync\n",
             ]
             result_file_lines = [
                 "root:x:0:0:root:/root:/bin/bash\n",
                 "bin:x:1:1:bin:/bin:/sbin/nologin\n",
                 "daemon:x:2:2:daemon:/sbin:/sbin/nologin\n",
                 "lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin\n",
-                "sync:x:5:0:sync:/sbin:/bin/sync\n"
+                "sync:x:5:0:sync:/sbin:/bin/sync\n",
             ]
             with open(os.path.join(tmpdir, "primary"), "w") as f:
                 f.writelines(primary_file_lines)
@@ -132,19 +125,9 @@ class TestPasswdLike(unittest.TestCase):
 
     def test_merge_group(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            primary_file_lines = [
-                "root:x:0:\n",
-                "bin:x:1:\n"
-            ]
-            secondary_file_lines = [
-                "bin:x:4:\n",
-                "daemon:x:2:\n"
-            ]
-            result_file_lines = [
-                "root:x:0:\n",
-                "bin:x:1:\n",
-                "daemon:x:2:\n"
-            ]
+            primary_file_lines = ["root:x:0:\n", "bin:x:1:\n"]
+            secondary_file_lines = ["bin:x:4:\n", "daemon:x:2:\n"]
+            result_file_lines = ["root:x:0:\n", "bin:x:1:\n", "daemon:x:2:\n"]
             with open(os.path.join(tmpdir, "primary"), "w") as f:
                 f.writelines(primary_file_lines)
             with open(os.path.join(tmpdir, "secondary"), "w") as f:
@@ -157,15 +140,11 @@ class TestPasswdLike(unittest.TestCase):
             with open(os.path.join(tmpdir, "result"), "r") as f:
                 self.assertEqual(sorted(f.readlines()), sorted(result_file_lines))
 
-    #pylint: disable=no-self-use
+    # pylint: disable=no-self-use
     def test_subids_cfg(self):
         with tempfile.TemporaryDirectory() as tmpdir:
 
-            first = [
-                "gicmo:100000:65536",
-                "achilles:100000:65536",
-                "ondrej:100000:65536"
-            ]
+            first = ["gicmo:100000:65536", "achilles:100000:65536", "ondrej:100000:65536"]
 
             txt = io.StringIO("\n".join(first))
 
@@ -180,11 +159,7 @@ class TestPasswdLike(unittest.TestCase):
                 assert uid == "100000"
                 assert count == "65536"
 
-            second = [
-                "gicmo:200000:1000",
-                "tom:200000:1000",
-                "lars:200000:1000"
-            ]
+            second = ["gicmo:200000:1000", "tom:200000:1000", "lars:200000:1000"]
 
             txt = io.StringIO("\n".join(second))
             subids.read(txt)

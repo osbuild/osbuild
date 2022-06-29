@@ -15,7 +15,6 @@ from .. import test
 
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
 class TestObjectStore(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         cls.store = os.getenv("OSBUILD_TEST_STORE")
@@ -65,8 +64,7 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(f"{object_store.refs}/b/")) == 2
 
             self.assertEqual(object_store.resolve_ref(None), None)
-            self.assertEqual(object_store.resolve_ref("a"),
-                             f"{object_store.refs}/a")
+            self.assertEqual(object_store.resolve_ref("a"), f"{object_store.refs}/a")
 
     def test_cleanup(self):
         # always use a temporary store so item counting works
@@ -121,8 +119,7 @@ class TestObjectStore(unittest.TestCase):
 
             with object_store.new() as tree:
                 path = tree.write()
-                with tree.write() as path, \
-                     open(os.path.join(path, "data"), "w") as f:
+                with tree.write() as path, open(os.path.join(path, "data"), "w") as f:
                     f.write(data)
                     st = os.fstat(f.fileno())
                     data_inode = st.st_ino

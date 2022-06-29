@@ -150,15 +150,12 @@ def test_clear_fd_wait(tempdir):
         # four times the delay time of the thread to ensure
         # we don't get a timeout.
         barrier = threading.Barrier(2)
-        thread = threading.Thread(
-            target=close_loop,
-            args=(lo2, barrier)
-        )
+        thread = threading.Thread(target=close_loop, args=(lo2, barrier))
         barrier.reset()
         thread.start()
         barrier.wait()
 
-        lo.clear_fd_wait(f.fileno(), 4*delay_time, delay_time/10)
+        lo.clear_fd_wait(f.fileno(), 4 * delay_time, delay_time / 10)
 
         # no timeout exception has occurred and thus the device
         # must not be be bound to the original file anymore

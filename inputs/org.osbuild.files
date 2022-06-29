@@ -177,7 +177,6 @@ SCHEMA = r"""
 
 
 class FilesInput(inputs.InputService):
-
     @staticmethod
     def map_pipeline_ref(store, ref, data, target):
         filepath = data["file"].lstrip("/")
@@ -209,12 +208,7 @@ class FilesInput(inputs.InputService):
                 ref, data = self.map_pipeline_ref(store, ref, data, target)
             files[ref] = data
 
-        reply = {
-            "path": target,
-            "data": {
-                "files": files
-            }
-        }
+        reply = {"path": target, "data": {"files": files}}
         return reply
 
 
@@ -223,5 +217,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

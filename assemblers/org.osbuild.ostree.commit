@@ -83,10 +83,10 @@ TOPLEVEL_LINKS = {
 
 
 def copy(name, source, dest):
-    subprocess.run(["cp", "--reflink=auto", "-a",
-                    os.path.join(source, name),
-                    "-t", os.path.join(dest)],
-                   check=True)
+    subprocess.run(
+        ["cp", "--reflink=auto", "-a", os.path.join(source, name), "-t", os.path.join(dest)],
+        check=True,
+    )
 
 
 def init_rootfs(root, tmp_is_dir):
@@ -133,12 +133,9 @@ def main(tree, output_dir, options, meta):
 
         repo = os.path.join(output_dir, "repo")
 
-        subprocess.run(["ostree",
-                        "init",
-                        "--mode=archive",
-                        f"--repo={repo}"],
-                       stdout=sys.stderr,
-                       check=True)
+        subprocess.run(
+            ["ostree", "init", "--mode=archive", f"--repo={repo}"], stdout=sys.stderr, check=True
+        )
 
         treefile = ostree.Treefile()
         treefile["ref"] = ref
@@ -156,15 +153,13 @@ def main(tree, output_dir, options, meta):
 
         argv += [
             f"--add-metadata-string=rpmostree.inputhash={meta['id']}",
-            f"--write-composejson-to={output_dir}/compose.json"
+            f"--write-composejson-to={output_dir}/compose.json",
         ]
 
         with treefile.as_tmp_file() as path:
             argv += [path, root]
 
-            subprocess.run(argv,
-                           stdout=sys.stderr,
-                           check=True)
+            subprocess.run(argv, stdout=sys.stderr, check=True)
 
         with open(os.path.join(output_dir, "compose.json"), "r") as f:
             compose = json.load(f)
@@ -177,16 +172,17 @@ def main(tree, output_dir, options, meta):
             "tar",
             "--remove-files",
             "--auto-compress",
-            "-cf", os.path.join(output_dir, filename),
-            "-C", output_dir,
-            "repo", "compose.json"
+            "-cf",
+            os.path.join(output_dir, filename),
+            "-C",
+            output_dir,
+            "repo",
+            "compose.json",
         ]
-        subprocess.run(command,
-                       stdout=sys.stderr,
-                       check=True)
+        subprocess.run(command, stdout=sys.stderr, check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = api.arguments()
     args_input = args["inputs"]["tree"]["path"]
     args_output = args["tree"]

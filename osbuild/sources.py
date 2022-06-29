@@ -31,7 +31,7 @@ class Source:
             "cache": cache,
             "output": None,
             "checksums": [],
-            "libdir": os.fspath(libdir)
+            "libdir": os.fspath(libdir),
         }
 
         client = mgr.start(f"source/{source}", self.info.path)
@@ -66,7 +66,7 @@ class SourceService(host.Service):
         """Performs the actual fetch of an element described by its checksum and its descriptor"""
 
     def exists(self, checksum, _desc) -> bool:
-        """Returns True if the item to download is in cache. """
+        """Returns True if the item to download is in cache."""
         return os.path.isfile(f"{self.cache}/{checksum}")
 
     # pylint: disable=[no-self-use]
@@ -75,8 +75,12 @@ class SourceService(host.Service):
         return checksum, desc
 
     def download(self, items: Dict) -> None:
-        items = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-        items = map(lambda i: self.transform(i[0], i[1]), items)  # prepare each item to be downloaded
+        items = filter(
+            lambda i: not self.exists(i[0], i[1]), items.items()
+        )  # discards items already in cache
+        items = map(
+            lambda i: self.transform(i[0], i[1]), items
+        )  # prepare each item to be downloaded
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             for _ in executor.map(self.fetch_one, *zip(*items)):
                 pass

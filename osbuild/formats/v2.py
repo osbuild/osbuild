@@ -17,10 +17,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
     # Undo the build, runner pairing introduce by the loading
     # code. See the comment there for more details
-    runners = {
-        p.build: p.runner for p in manifest.pipelines.values()
-        if p.build
-    }
+    runners = {p.build: p.runner for p in manifest.pipelines.values() if p.build}
 
     def pipeline_ref(pid):
         if with_id:
@@ -30,9 +27,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return f"name:{pl.name}"
 
     def describe_device(dev):
-        desc = {
-            "type": dev.info.name
-        }
+        desc = {"type": dev.info.name}
 
         if dev.options:
             desc["options"] = dev.options
@@ -40,10 +35,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return desc
 
     def describe_devices(devs: Dict):
-        desc = {
-            name: describe_device(dev)
-            for name, dev in devs.items()
-        }
+        desc = {name: describe_device(dev) for name, dev in devs.items()}
         return desc
 
     def describe_input(ip: Input):
@@ -67,18 +59,11 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return desc
 
     def describe_inputs(ips: Dict[str, Input]):
-        desc = {
-            name: describe_input(ip)
-            for name, ip in ips.items()
-        }
+        desc = {name: describe_input(ip) for name, ip in ips.items()}
         return desc
 
     def describe_mount(mnt):
-        desc = {
-            "name": mnt.name,
-            "type": mnt.info.name,
-            "target": mnt.target
-        }
+        desc = {"name": mnt.name, "type": mnt.info.name, "target": mnt.target}
 
         if mnt.device:
             desc["source"] = mnt.device.name
@@ -88,16 +73,11 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return desc
 
     def describe_mounts(mounts: Dict):
-        desc = [
-            describe_mount(mnt)
-            for mnt in mounts.values()
-        ]
+        desc = [describe_mount(mnt) for mnt in mounts.values()]
         return desc
 
     def describe_stage(s: Stage):
-        desc = {
-            "type": s.info.name
-        }
+        desc = {"type": s.info.name}
 
         if with_id:
             desc["id"] = s.id
@@ -120,9 +100,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return desc
 
     def describe_pipeline(p: Pipeline):
-        desc = {
-            "name": p.name
-        }
+        desc = {"name": p.name}
 
         if p.build:
             desc["build"] = pipeline_ref(p.build)
@@ -131,10 +109,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         if runner:
             desc["runner"] = runner
 
-        stages = [
-            describe_stage(stage)
-            for stage in p.stages
-        ]
+        stages = [describe_stage(stage) for stage in p.stages]
 
         if stages:
             desc["stages"] = stages
@@ -142,26 +117,15 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return desc
 
     def describe_source(s: Source):
-        desc = {
-            "items": s.items
-        }
+        desc = {"items": s.items}
 
         return desc
 
-    pipelines = [
-        describe_pipeline(pipeline)
-        for pipeline in manifest.pipelines.values()
-    ]
+    pipelines = [describe_pipeline(pipeline) for pipeline in manifest.pipelines.values()]
 
-    sources = {
-        source.info.name: describe_source(source)
-        for source in manifest.sources
-    }
+    sources = {source.info.name: describe_source(source) for source in manifest.sources}
 
-    description = {
-        "version": VERSION,
-        "pipelines": pipelines
-    }
+    description = {"version": VERSION, "pipelines": pipelines}
 
     if sources:
         description["sources"] = sources
@@ -237,7 +201,9 @@ def load_device(name: str, description: Dict, index: Index, stage: Stage):
     stage.add_device(name, info, parent, options)
 
 
-def load_input(name: str, description: Dict, index: Index, stage: Stage, manifest: Manifest, source_refs: set):
+def load_input(
+    name: str, description: Dict, index: Index, stage: Stage, manifest: Manifest, source_refs: set
+):
     input_type = description["type"]
     origin = description["origin"]
     options = description.get("options", {})
@@ -248,6 +214,7 @@ def load_input(name: str, description: Dict, index: Index, stage: Stage, manifes
     refs = description.get("references", {})
 
     if isinstance(refs, list):
+
         def make_ref(ref):
             if isinstance(ref, str):
                 return ref, {}
@@ -297,7 +264,9 @@ def load_mount(description: Dict, index: Index, stage: Stage):
     stage.add_mount(name, info, device, target, options)
 
 
-def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Manifest, source_refs):
+def load_stage(
+    description: Dict, index: Index, pipeline: Pipeline, manifest: Manifest, source_refs
+):
     stage_type = description["type"]
     opts = description.get("options", {})
     info = index.get_module_info("Stage", stage_type)
@@ -365,9 +334,7 @@ def load(description: Dict, index: Index) -> Manifest:
     pipelines = manifest.pipelines.values()
 
     host_runner = detect_host_runner()
-    runners = {
-        pl.id: pl.runner for pl in pipelines
-    }
+    runners = {pl.id: pl.runner for pl in pipelines}
 
     for pipeline in pipelines:
         if not pipeline.build:
@@ -380,7 +347,7 @@ def load(description: Dict, index: Index) -> Manifest:
     return manifest
 
 
-#pylint: disable=too-many-branches
+# pylint: disable=too-many-branches
 def output(manifest: Manifest, res: Dict) -> Dict:
     """Convert a result into the v2 format"""
 
@@ -400,15 +367,11 @@ def output(manifest: Manifest, res: Dict) -> Dict:
                         "output": failed.output,
                         "error": failed.error,
                     }
-                }
-            }
+                },
+            },
         }
     else:
-        result = {
-            "type": "result",
-            "success": True,
-            "metadata": {}
-        }
+        result = {"type": "result", "success": True, "metadata": {}}
 
         # gather all the metadata
         for p in manifest.pipelines.values():

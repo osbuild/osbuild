@@ -70,7 +70,7 @@ def main(tree, options, inputs):
         metadata["format"] = "qcow2"
         # virtual image size as rounded numbwr
         data = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", target]))
-        metadata["virtual_size"] = data['virtual-size'] // 1000 ** 3
+        metadata["virtual_size"] = data["virtual-size"] // 1000**3
 
     vagrantfile = """
 Vagrant.configure("2") do |config|
@@ -84,7 +84,7 @@ end
         json.dump(metadata, fp)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"], args["inputs"])
     sys.exit(r)

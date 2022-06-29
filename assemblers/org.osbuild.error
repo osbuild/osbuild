@@ -30,7 +30,7 @@ def main(options):
     return errno
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args.get("options", {}))
     sys.exit(r)

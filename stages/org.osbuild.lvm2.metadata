@@ -78,7 +78,7 @@ def main(devices, options):
         disk.flush_metadata()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

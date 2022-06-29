@@ -95,20 +95,25 @@ class SkopeoSource(sources.SourceService):
             if not tls_verify:
                 extra_args.append("--src-tls-verify=false")
 
-            subprocess.run(["skopeo", "copy"] + extra_args + [source, destination],
-                           encoding="utf-8",
-                           check=True)
+            subprocess.run(
+                ["skopeo", "copy"] + extra_args + [source, destination],
+                encoding="utf-8",
+                check=True,
+            )
 
             # Verify that the digest supplied downloaded the correct container image id.
             # The image id is the digest of the config, but skopeo can' currently
             # get the config id, only the full config, so we checksum it ourselves.
-            res = subprocess.run(["skopeo", "inspect", "--raw", "--config", destination],
-                                 capture_output=True,
-                                 check=True)
+            res = subprocess.run(
+                ["skopeo", "inspect", "--raw", "--config", destination],
+                capture_output=True,
+                check=True,
+            )
             downloaded_id = "sha256:" + hashlib.sha256(res.stdout).hexdigest()
             if downloaded_id != image_id:
                 raise RuntimeError(
-                    f"Downloaded image {imagename}@{digest} has a id of {downloaded_id}, but expected {image_id}")
+                    f"Downloaded image {imagename}@{digest} has a id of {downloaded_id}, but expected {image_id}"
+                )
 
             # Atomically move download dir into place on successful download
             os.chmod(tmpdir, 0o755)
@@ -121,5 +126,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -189,7 +189,7 @@ def main(inputs, output, options):
         "vdi": [],
         "vmdk": vmdk_arguments,
         "vpc": vpc_arguments,
-        "vhdx": []
+        "vhdx": [],
     }
 
     extra_args = formats[fmt["type"]]
@@ -202,21 +202,14 @@ def main(inputs, output, options):
         print(f"qemu-img coroutines: {coroutines}")
         extra_args += ["-m", coroutines]
 
-    cmd = [
-        "qemu-img", "convert",
-        "-O", fmt["type"],
-        *extra_args,
-        source, target
-    ]
+    cmd = ["qemu-img", "convert", "-O", fmt["type"], *extra_args, source, target]
 
-    subprocess.run(
-        cmd, check=True
-    )
+    subprocess.run(cmd, check=True)
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"], args["options"])
     sys.exit(r)

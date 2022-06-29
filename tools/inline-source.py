@@ -24,16 +24,7 @@ def main():
     checksum = "sha256:" + m.hexdigest()
     data = binascii.b2a_base64(raw, newline=False).decode("ascii")
 
-    source = {
-        "org.osbuild.inline": {
-            "items": {
-                checksum: {
-                    "encoding": "base64",
-                    "data": data
-                }
-            }
-        }
-    }
+    source = {"org.osbuild.inline": {"items": {checksum: {"encoding": "base64", "data": data}}}}
 
     json.dump(source, sys.stdout, indent=2)
 

@@ -58,9 +58,7 @@ class TestMonitor(unittest.TestCase):
         runner = detect_host_runner()
         pipeline = osbuild.Pipeline("pipeline", runner=runner)
         info = index.get_module_info("Stage", "org.osbuild.noop")
-        pipeline.add_stage(info, {
-            "isthisthereallife": False
-        })
+        pipeline.add_stage(info, {"isthisthereallife": False})
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
@@ -69,9 +67,7 @@ class TestMonitor(unittest.TestCase):
 
             with open(logfile, "w") as log, ObjectStore(storedir) as store:
                 monitor = LogMonitor(log.fileno())
-                res = pipeline.run(store,
-                                   monitor,
-                                   libdir=os.path.abspath(os.curdir))
+                res = pipeline.run(store, monitor, libdir=os.path.abspath(os.curdir))
 
                 with open(logfile) as f:
                     log = f.read()
@@ -88,21 +84,15 @@ class TestMonitor(unittest.TestCase):
 
         pipeline = osbuild.Pipeline("pipeline", runner=runner)
         noop_info = index.get_module_info("Stage", "org.osbuild.noop")
-        pipeline.add_stage(noop_info, {
-            "isthisthereallife": False
-        })
-        pipeline.add_stage(noop_info, {
-            "isthisjustfantasy": True
-        })
+        pipeline.add_stage(noop_info, {"isthisthereallife": False})
+        pipeline.add_stage(noop_info, {"isthisjustfantasy": True})
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storedir = os.path.join(tmpdir, "store")
 
             tape = TapeMonitor()
             with ObjectStore(storedir) as store:
-                res = pipeline.run(store,
-                                   tape,
-                                   libdir=os.path.abspath(os.curdir))
+                res = pipeline.run(store, tape, libdir=os.path.abspath(os.curdir))
 
         assert res
         self.assertEqual(tape.counter["begin"], 1)

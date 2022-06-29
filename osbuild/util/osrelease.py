@@ -8,10 +8,7 @@ import os
 
 
 # The default paths where os-release is located, as per os-release(5)
-DEFAULT_PATHS = [
-    "/etc/os-release",
-    "/usr/lib/os-release"
-]
+DEFAULT_PATHS = ["/etc/os-release", "/usr/lib/os-release"]
 
 
 def parse_files(*paths):

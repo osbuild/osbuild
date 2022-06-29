@@ -30,11 +30,13 @@ def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
     if options:
         args += ["-o", ",".join(options)]
 
-    r = subprocess.run(["mount"] + args + [source, target],
-                       stderr=subprocess.STDOUT,
-                       stdout=subprocess.PIPE,
-                       encoding="utf-8",
-                       check=False)
+    r = subprocess.run(
+        ["mount"] + args + [source, target],
+        stderr=subprocess.STDOUT,
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+        check=False,
+    )
 
     if r.returncode != 0:
         code = r.returncode
@@ -191,8 +193,7 @@ class Object:
         workdir = self._workdir.name
         if suffix:
             suffix = "-" + suffix
-        return tempfile.TemporaryDirectory(dir=workdir,
-                                           suffix=suffix)
+        return tempfile.TemporaryDirectory(dir=workdir, suffix=suffix)
 
     def __enter__(self):
         self._check_writable()
@@ -286,9 +287,7 @@ class ObjectStore(contextlib.AbstractContextManager):
 
     def tempdir(self, prefix=None, suffix=None):
         """Return a tempfile.TemporaryDirectory within the store"""
-        return tempfile.TemporaryDirectory(dir=self.tmp,
-                                           prefix=prefix,
-                                           suffix=suffix)
+        return tempfile.TemporaryDirectory(dir=self.tmp, prefix=prefix, suffix=suffix)
 
     def get(self, object_id):
         obj = self._get_floating(object_id)
@@ -415,11 +414,7 @@ class StoreServer(api.BaseAPI):
         sock.send({"path": path})
 
     def _mkdtemp(self, msg, sock):
-        args = {
-            "suffix": msg.get("suffix"),
-            "prefix": msg.get("prefix"),
-            "dir": self.tmproot.name
-        }
+        args = {"suffix": msg.get("suffix"), "prefix": msg.get("prefix"), "dir": self.tmproot.name}
 
         path = tempfile.mkdtemp(**args)
         sock.send({"path": path})
@@ -452,11 +447,7 @@ class StoreClient:
             self.client.close()
 
     def mkdtemp(self, suffix=None, prefix=None):
-        msg = {
-            "method": "mkdtemp",
-            "suffix": suffix,
-            "prefix": prefix
-        }
+        msg = {"method": "mkdtemp", "suffix": suffix, "prefix": prefix}
 
         self.client.send(msg)
         msg, _, _ = self.client.recv()
@@ -464,10 +455,7 @@ class StoreClient:
         return msg["path"]
 
     def read_tree(self, object_id: str):
-        msg = {
-            "method": "read-tree",
-            "object-id": object_id
-        }
+        msg = {"method": "read-tree", "object-id": object_id}
 
         self.client.send(msg)
         msg, _, _ = self.client.recv()
@@ -479,7 +467,7 @@ class StoreClient:
             "method": "read-tree-at",
             "object-id": object_id,
             "target": os.fspath(target),
-            "subtree": os.fspath(path)
+            "subtree": os.fspath(path),
         }
 
         self.client.send(msg)
@@ -492,10 +480,7 @@ class StoreClient:
         return msg["path"]
 
     def source(self, name: str) -> str:
-        msg = {
-            "method": "source",
-            "name": name
-        }
+        msg = {"method": "source", "name": name}
 
         self.client.send(msg)
         msg, _, _ = self.client.recv()

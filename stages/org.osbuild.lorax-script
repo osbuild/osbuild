@@ -81,7 +81,7 @@ def main(tree, options):
         "basearch": basearch,
         "configdir": configdir,
         "libdir": libdir,
-        "product": product
+        "product": product,
     }
 
     tpl = render_template(fullpath, args)
@@ -90,8 +90,7 @@ def main(tree, options):
     script()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["options"])
     sys.exit(r)

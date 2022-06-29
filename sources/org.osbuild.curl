@@ -115,7 +115,9 @@ class CurlSource(sources.SourceService):
         url = desc.get("url")
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
-        with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
+        with tempfile.TemporaryDirectory(
+            prefix="osbuild-unverified-file-", dir=self.cache
+        ) as tmpdir:
             # some mirrors are sometimes broken. retry manually, because we could be
             # redirected to a different, working, one on retry.
             return_code = 0
@@ -123,19 +125,22 @@ class CurlSource(sources.SourceService):
                 curl_command = [
                     "curl",
                     "--silent",
-                    "--speed-limit", "1000",
-                    "--connect-timeout", "30",
+                    "--speed-limit",
+                    "1000",
+                    "--connect-timeout",
+                    "30",
                     "--fail",
                     "--location",
-                    "--output", checksum,
+                    "--output",
+                    checksum,
                 ]
                 if secrets:
-                    if secrets.get('ssl_ca_cert'):
-                        curl_command.extend(["--cacert", secrets.get('ssl_ca_cert')])
-                    if secrets.get('ssl_client_cert'):
-                        curl_command.extend(["--cert", secrets.get('ssl_client_cert')])
-                    if secrets.get('ssl_client_key'):
-                        curl_command.extend(["--key", secrets.get('ssl_client_key')])
+                    if secrets.get("ssl_ca_cert"):
+                        curl_command.extend(["--cacert", secrets.get("ssl_ca_cert")])
+                    if secrets.get("ssl_client_cert"):
+                        curl_command.extend(["--cert", secrets.get("ssl_client_cert")])
+                    if secrets.get("ssl_client_key"):
+                        curl_command.extend(["--key", secrets.get("ssl_client_key")])
 
                 if insecure:
                     curl_command.append("--insecure")
@@ -167,5 +172,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

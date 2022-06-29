@@ -15,7 +15,9 @@ def ldconfig():
 
 def sysusers():
     try:
-        subprocess.run(["systemd-sysusers"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
+        subprocess.run(
+            ["systemd-sysusers"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
+        )
     except subprocess.CalledProcessError as error:
         sys.stderr.write(error.stdout)
         sys.exit(1)
@@ -70,6 +72,7 @@ def python_alternatives():
         os.symlink("/usr/bin/python3.6", "/etc/alternatives/python3")
     except FileExistsError:
         pass
+
 
 if __name__ == "__main__":
     with osbuild.api.exception_handler():

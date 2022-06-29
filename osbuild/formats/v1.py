@@ -17,6 +17,7 @@ VERSION = "1"
 
 def describe(manifest: Manifest, *, with_id=False) -> Dict:
     """Create the manifest description for the pipeline"""
+
     def describe_stage(stage):
         description = {"name": stage.name}
         if stage.options:
@@ -29,10 +30,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         description = {}
         if pipeline.build:
             build = manifest[pipeline.build]
-            description["build"] = {
-                "pipeline": describe_pipeline(build),
-                "runner": pipeline.runner
-            }
+            description["build"] = {"pipeline": describe_pipeline(build), "runner": pipeline.runner}
 
         if pipeline.stages:
             stages = [describe_stage(s) for s in pipeline.stages]
@@ -56,10 +54,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     description = {"pipeline": pipeline}
 
     if manifest.sources:
-        sources = {
-            get_source_name(s): s.options
-            for s in manifest.sources
-        }
+        sources = {get_source_name(s): s.options for s in manifest.sources}
         description["sources"] = sources
 
     return description
@@ -210,9 +205,7 @@ def output(manifest: Manifest, res: Dict) -> Dict:
         # build. We thus need to be tolerant of a missing
         # result but still need to to recurse
         current = res.get(pipeline.id, {})
-        retval = {
-            "success": current.get("success", True)
-        }
+        retval = {"success": current.get("success", True)}
 
         if pipeline.build:
             build = manifest[pipeline.build]
@@ -221,9 +214,7 @@ def output(manifest: Manifest, res: Dict) -> Dict:
 
         stages = current.get("stages")
         if stages:
-            retval["stages"] = [
-                result_for_stage(r) for r in stages
-            ]
+            retval["stages"] = [result_for_stage(r) for r in stages]
         return retval
 
     result = result_for_pipeline(manifest["tree"])

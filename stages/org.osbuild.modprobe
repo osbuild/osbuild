@@ -98,7 +98,9 @@ def main(tree, options):
         if config_command["command"] == "blacklist":
             lines.append(f'{config_command["command"]} {config_command["modulename"]}\n')
         elif config_command["command"] == "install":
-            lines.append(f'{config_command["command"]} {config_command["modulename"]} {config_command["cmdline"]}\n')
+            lines.append(
+                f'{config_command["command"]} {config_command["modulename"]} {config_command["cmdline"]}\n'
+            )
         else:
             raise ValueError()
 
@@ -108,7 +110,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

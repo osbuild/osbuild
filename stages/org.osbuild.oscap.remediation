@@ -93,18 +93,19 @@ SCHEMA = """
 # our configuration names and the OpenScap
 # configuration names.
 OSCAP_OPTIONS = {
-    "datastream" : "OSCAP_REMEDIATE_DS",
-    "profile_id" : "OSCAP_REMEDIATE_PROFILE_ID",
-    "datastream_id" : "OSCAP_REMEDIATE_DATASTREAM_ID",
-    "xccdf_id" : "OSCAP_REMEDIATE_XCCDF_ID",
-    "benchmark_id" : "OSCAP_REMEDIATE_BENCHMARK_ID",
-    "tailoring" : "OSCAP_REMEDIATE_TAILORING",
-    "tailoring_id" : "OSCAP_REMEDIATE_TAILORING_ID",
-    "arf_result" : "OSCAP_REMEDIATE_ARF_RESULT",
-    "html_report" : "OSCAP_REMEDIATE_HTML_REPORT",
-    "verbose_log" : "OSCAP_REMEDIATE_VERBOSE_LOG",
-    "verbose_level" : "OSCAP_REMEDIATE_VERBOSE_LEVEL",
+    "datastream": "OSCAP_REMEDIATE_DS",
+    "profile_id": "OSCAP_REMEDIATE_PROFILE_ID",
+    "datastream_id": "OSCAP_REMEDIATE_DATASTREAM_ID",
+    "xccdf_id": "OSCAP_REMEDIATE_XCCDF_ID",
+    "benchmark_id": "OSCAP_REMEDIATE_BENCHMARK_ID",
+    "tailoring": "OSCAP_REMEDIATE_TAILORING",
+    "tailoring_id": "OSCAP_REMEDIATE_TAILORING_ID",
+    "arf_result": "OSCAP_REMEDIATE_ARF_RESULT",
+    "html_report": "OSCAP_REMEDIATE_HTML_REPORT",
+    "verbose_log": "OSCAP_REMEDIATE_VERBOSE_LOG",
+    "verbose_level": "OSCAP_REMEDIATE_VERBOSE_LEVEL",
 }
+
 
 def main(tree, options):
     filename = options["filename"]

@@ -25,6 +25,8 @@ class TestExecutable(unittest.TestCase):
         manifest = json.dumps({})
 
         with self.osbuild as osb, self.assertRaises(subprocess.CalledProcessError) as e:
-            osb.compile(manifest, checkpoints=["f44f76973fb92446a2a33bfdb401361a47f70497"], check=True)
+            osb.compile(
+                manifest, checkpoints=["f44f76973fb92446a2a33bfdb401361a47f70497"], check=True
+            )
 
         self.assertEqual(e.exception.returncode, 1)

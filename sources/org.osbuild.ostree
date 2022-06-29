@@ -65,14 +65,16 @@ SCHEMA = """
 
 
 def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    args = list(args) + [f"--{k}={v}" for k, v in kwargs.items()]
     print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf-8",
-                   stdout=subprocess.PIPE,
-                   stderr=subprocess.STDOUT,
-                   input=_input,
-                   check=True)
+    subprocess.run(
+        ["ostree"] + args,
+        encoding="utf-8",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        input=_input,
+        check=True,
+    )
 
 
 class OSTreeSource(sources.SourceService):
@@ -94,22 +96,17 @@ class OSTreeSource(sources.SourceService):
         if not gpg:
             verify_args = ["--no-gpg-verify"]
 
-        ostree("remote", "add",
-               uid, url,
-               *verify_args,
-               repo=self.repo)
+        ostree("remote", "add", uid, url, *verify_args, repo=self.repo)
 
         for key in gpg:
-            ostree("remote", "gpg-import", "--stdin", uid,
-                   repo=self.repo, _input=key)
+            ostree("remote", "gpg-import", "--stdin", uid, repo=self.repo, _input=key)
 
         # Transfer the commit: remote → cache
         print(f"pulling {commit}", file=sys.stderr)
         ostree("pull", uid, commit, repo=self.repo)
 
         # Remove the temporary remotes again
-        ostree("remote", "delete", uid,
-               repo=self.repo)
+        ostree("remote", "delete", uid, repo=self.repo)
 
     def setup(self, args):
         super().setup(args)
@@ -136,5 +133,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

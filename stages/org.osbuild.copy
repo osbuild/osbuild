@@ -131,14 +131,12 @@ def main(args, options):
 
         print(f"copying '{src}' -> '{dst}'")
 
-        subprocess.run(["cp", "-a", "--reflink=auto",
-                        src, dst],
-                       check=True)
+        subprocess.run(["cp", "-a", "--reflink=auto", src, dst], check=True)
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _args = osbuild.api.arguments()
     r = main(_args, _args["options"])
     sys.exit(r)

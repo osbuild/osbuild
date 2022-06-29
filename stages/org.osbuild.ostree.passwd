@@ -45,13 +45,9 @@ SUBGID_PATH = "etc/subgid"
 
 
 def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    args = list(args) + [f"--{k}={v}" for k, v in kwargs.items()]
     print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf-8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
+    subprocess.run(["ostree"] + args, encoding="utf-8", stdout=sys.stderr, input=_input, check=True)
 
 
 def parse_input(inputs):
@@ -81,15 +77,23 @@ def main(tree, inputs, _options):
         # Merge /usr/etc/passwd with /usr/lib/passwd from the checkout and store it in the buildroot
         # "tree" directory. Entries in /usr/etc/passwd have a precedence, but the file does not
         # necessarily exist.
-        passwd = PasswdLike.from_file(os.path.join(checkout_root, "usr/etc/passwd"), allow_missing_file=True)
-        passwd.merge_with_file(os.path.join(checkout_root, "usr/lib/passwd"), allow_missing_file=False)
+        passwd = PasswdLike.from_file(
+            os.path.join(checkout_root, "usr/etc/passwd"), allow_missing_file=True
+        )
+        passwd.merge_with_file(
+            os.path.join(checkout_root, "usr/lib/passwd"), allow_missing_file=False
+        )
         passwd.dump_to_file(os.path.join(tree, "etc/passwd"))
 
         # Merge /usr/etc/group with /usr/lib/group from the checkout and store it in the buildroot
         # "tree" directory. Entries in /usr/etc/group have a precedence, but the file does not
         # necessarily exist.
-        passwd = PasswdLike.from_file(os.path.join(checkout_root, "usr/etc/group"), allow_missing_file=True)
-        passwd.merge_with_file(os.path.join(checkout_root, "usr/lib/group"), allow_missing_file=False)
+        passwd = PasswdLike.from_file(
+            os.path.join(checkout_root, "usr/etc/group"), allow_missing_file=True
+        )
+        passwd.merge_with_file(
+            os.path.join(checkout_root, "usr/lib/group"), allow_missing_file=False
+        )
         passwd.dump_to_file(os.path.join(tree, "etc/group"))
 
         # Merge /etc/sub{g,u}id with /usr/etc/sub{g,u}id from the checkout and store it in the buildroot
@@ -109,9 +113,7 @@ def main(tree, inputs, _options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["inputs"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["inputs"], stage_args["options"])
     sys.exit(r)

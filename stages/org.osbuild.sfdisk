@@ -87,14 +87,16 @@ SCHEMA_2 = r"""
 
 
 class Partition:
-    def __init__(self,
-                 pttype: str = None,
-                 start: int = None,
-                 size: int = None,
-                 bootable: bool = False,
-                 name: str = None,
-                 uuid: str = None,
-                 attrs: int = None):
+    def __init__(
+        self,
+        pttype: str = None,
+        start: int = None,
+        size: int = None,
+        bootable: bool = False,
+        name: str = None,
+        uuid: str = None,
+        attrs: int = None,
+    ):
         self.type = pttype
         self.start = start
         self.size = size
@@ -162,20 +164,21 @@ class PartitionTable:
 
         print(command)
 
-        subprocess.run(["sfdisk", "-q", "--no-tell-kernel", target],
-                       input=command,
-                       encoding='utf-8',
-                       check=True)
+        subprocess.run(
+            ["sfdisk", "-q", "--no-tell-kernel", target],
+            input=command,
+            encoding="utf-8",
+            check=True,
+        )
 
         if sync:
             self.update_from(target)
 
     def update_from(self, target):
         """Update and fill in missing information from disk"""
-        r = subprocess.run(["sfdisk", "--json", target],
-                           stdout=subprocess.PIPE,
-                           encoding='utf-8',
-                           check=True)
+        r = subprocess.run(
+            ["sfdisk", "--json", target], stdout=subprocess.PIPE, encoding="utf-8", check=True
+        )
         disk_table = json.loads(r.stdout)["partitiontable"]
         disk_parts = disk_table["partitions"]
 
@@ -190,13 +193,15 @@ class PartitionTable:
 
 
 def partition_from_json(js) -> Partition:
-    p = Partition(pttype=js.get("type"),
-                  start=js.get("start"),
-                  size=js.get("size"),
-                  bootable=js.get("bootable"),
-                  name=js.get("name"),
-                  uuid=js.get("uuid"),
-                  attrs=js.get("attrs"))
+    p = Partition(
+        pttype=js.get("type"),
+        start=js.get("start"),
+        size=js.get("size"),
+        bootable=js.get("bootable"),
+        name=js.get("name"),
+        uuid=js.get("uuid"),
+        attrs=js.get("attrs"),
+    )
     return p
 
 
@@ -212,12 +217,10 @@ def main(devices, options):
 
     pt.write_to(device)
 
-    subprocess.run(["sfdisk", "--json", device],
-                   encoding='utf-8',
-                   check=False)
+    subprocess.run(["sfdisk", "--json", device], encoding="utf-8", check=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

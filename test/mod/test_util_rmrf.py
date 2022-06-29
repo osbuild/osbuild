@@ -27,8 +27,7 @@ class TestUtilLinux(unittest.TestCase):
 
             p = pathlib.Path(f"{vartmpdir}/dir/immutable")
             p.touch()
-            subprocess.run(["chattr", "+i", f"{vartmpdir}/dir/immutable"],
-                           check=True)
+            subprocess.run(["chattr", "+i", f"{vartmpdir}/dir/immutable"], check=True)
 
             with self.assertRaises(PermissionError):
                 shutil.rmtree(f"{vartmpdir}/dir")

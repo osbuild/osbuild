@@ -75,16 +75,11 @@ class InputManager:
             # mandatory bits
             "origin": ip.origin,
             "refs": ip.refs,
-
             "target": target,
-
             # global options
             "options": ip.options,
-
             # API endpoints
-            "api": {
-                "store": self.storeapi.socket_address
-            }
+            "api": {"store": self.storeapi.socket_address},
         }
 
         client = self.service_manager.start(f"input/{ip.name}", ip.info.path)
@@ -118,11 +113,7 @@ class InputService(host.Service):
     def dispatch(self, method: str, args, _fds):
         if method == "map":
             store = StoreClient(connect_to=args["api"]["store"])
-            r = self.map(store,
-                         args["origin"],
-                         args["refs"],
-                         args["target"],
-                         args["options"])
+            r = self.map(store, args["origin"], args["refs"], args["target"], args["options"])
             return r, None
 
         raise host.ProtocolError("Unknown method")

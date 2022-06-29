@@ -13,9 +13,7 @@ from .util.types import PathLike
 from .util import jsoncomm
 
 
-__all__ = [
-    "API"
-]
+__all__ = ["API"]
 
 
 class BaseAPI(abc.ABC):
@@ -157,9 +155,9 @@ class API(BaseAPI):
         }
 
     def _message(self, msg, fds, sock):
-        if msg["method"] == 'add-metadata':
+        if msg["method"] == "add-metadata":
             self._set_metadata(msg, fds)
-        elif msg["method"] == 'exception':
+        elif msg["method"] == "exception":
             self._get_exception(msg)
 
 
@@ -172,11 +170,7 @@ def exception(e, path="/run/osbuild/api/osbuild"):
             stacktrace = out.getvalue()
         msg = {
             "method": "exception",
-            "exception": {
-                "type": type(e).__name__,
-                "value": str(e),
-                "traceback": stacktrace
-            }
+            "exception": {"type": type(e).__name__, "value": str(e), "traceback": stacktrace},
         }
         client.send(msg)
 
@@ -204,13 +198,10 @@ def metadata(data: Dict, path="/run/osbuild/api/osbuild"):
 
     def data_to_file():
         with tempfile.TemporaryFile() as f:
-            f.write(json.dumps(data).encode('utf-8'))
+            f.write(json.dumps(data).encode("utf-8"))
             # re-open the file to get a read-only file descriptor
             return open(f"/proc/self/fd/{f.fileno()}", "r")
 
     with jsoncomm.Socket.new_client(path) as client, data_to_file() as f:
-        msg = {
-            "method": "add-metadata",
-            "metadata": 0
-        }
+        msg = {"method": "add-metadata", "metadata": 0}
         client.send(msg, fds=[f.fileno()])

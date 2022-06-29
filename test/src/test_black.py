@@ -1,5 +1,5 @@
 #
-# Run `pylint` on all python sources.
+# Run `black` on all python sources.
 #
 
 import os
@@ -10,10 +10,10 @@ from .. import test
 
 
 @unittest.skipUnless(test.TestBase.have_test_checkout(), "no test-checkout access")
-class TestPylint(test.TestBase):
-    def test_pylint(self):
+class TestBlack(test.TestBase):
+    def test_black(self):
         #
-        # Run `pylint` on all python sources. We simply use `find` to locate
+        # Run `black` on all python sources. We simply use `find` to locate
         # all `*.py` files, and then manually select the reverse-domain named
         # modules we have.
         #
@@ -45,5 +45,5 @@ class TestPylint(test.TestBase):
         # Append the checkout-path so all paths are absolute.
         files = map(lambda p: os.path.join(checkout, p), files)
 
-        # Run pylint on all files.
-        subprocess.run(["pylint"] + list(files), check=True)
+        # Run black on all files.
+        subprocess.run(["black", "--check"] + list(files), check=True)

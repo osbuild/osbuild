@@ -20,9 +20,9 @@ class Subscriptions:
 
     def get_fallback_rhsm_secrets(self):
         rhsm_secrets = {
-            'ssl_ca_cert': "/etc/rhsm/ca/redhat-uep.pem",
-            'ssl_client_key': "",
-            'ssl_client_cert': ""
+            "ssl_ca_cert": "/etc/rhsm/ca/redhat-uep.pem",
+            "ssl_client_key": "",
+            "ssl_client_cert": "",
         }
 
         keys = glob.glob("/etc/pki/entitlement/*-key.pem")
@@ -31,8 +31,8 @@ class Subscriptions:
             cert = key.rstrip("-key.pem") + ".pem"
             # The key is only valid if it has a matching cert
             if os.path.exists(cert):
-                rhsm_secrets['ssl_client_key'] = key
-                rhsm_secrets['ssl_client_cert'] = cert
+                rhsm_secrets["ssl_client_key"] = key
+                rhsm_secrets["ssl_client_cert"] = cert
                 # Once the dictionary is complete, assign it to the object
                 self.secrets = rhsm_secrets
 
@@ -81,9 +81,7 @@ class Subscriptions:
 
         repositories = dict()
         for section in parser.sections():
-            current = {
-                "matchurl": cls._process_baseurl(parser.get(section, "baseurl"))
-            }
+            current = {"matchurl": cls._process_baseurl(parser.get(section, "baseurl"))}
             for parameter in ["sslcacert", "sslclientkey", "sslclientcert"]:
                 current[parameter] = parser.get(section, parameter)
 
@@ -99,7 +97,7 @@ class Subscriptions:
                     return {
                         "ssl_ca_cert": parameters["sslcacert"],
                         "ssl_client_key": parameters["sslclientkey"],
-                        "ssl_client_cert": parameters["sslclientcert"]
+                        "ssl_client_cert": parameters["sslclientcert"],
                     }
 
         # In case there is no matching URL, try the fallback
