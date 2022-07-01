@@ -55,27 +55,6 @@ RPM:
           - aws/rhel-9.1-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
-Composer Tests:
-  stage: test
-  extends: .terraform
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/image_tests.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-8.6-ga-aarch64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-8.7-nightly-aarch64
-          - aws/rhel-9.1-nightly-x86_64
-          - aws/rhel-9.1-nightly-aarch64
-        INTERNAL_NETWORK: "true"
-
 OSTree Images:
   stage: test
   extends: .terraform
