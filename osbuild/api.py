@@ -75,7 +75,8 @@ class BaseAPI(abc.ABC):
         msg, fds, _ = sock.recv()
         if msg is None:
             # Peer closed the connection
-            self.event_loop.remove_reader(sock)
+            if self.event_loop:
+                self.event_loop.remove_reader(sock)
             return
         self._message(msg, fds, sock)
         fds.close()

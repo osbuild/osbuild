@@ -48,7 +48,7 @@ import sys
 import threading
 import traceback
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple, Callable, Iterable, Union
 
 from osbuild.util.jsoncomm import FdSet, Socket
 
@@ -92,7 +92,7 @@ class ServiceProtocol:
         return t, d
 
     @staticmethod
-    def encode_method(name: str, arguments: List):
+    def encode_method(name: str, arguments: Union[List[str], Dict[str, Any]]):
         msg = {
             "type": "method",
             "data": {
@@ -349,13 +349,20 @@ class ServiceClient:
         return ret
 
     def call_with_fds(self, method: str,
-                      args: Optional[Any] = None,
-                      fds: Optional[List] = None,
-                      on_signal: Callable[[Any, FdSet], None] = None) -> Tuple[Any, FdSet]:
+                      args: Optional[Union[List[str], Dict[str, Any]]] = None,
+                      fds: Optional[List[int]] = None,
+                      on_signal: Callable[[Any, Optional[Iterable[int]]], None] = None
+                      ) -> Tuple[Any, Optional[Iterable[int]]]:
         """
         Remotely call a method and return the result, including file
         descriptors.
         """
+
+        if args is None:
+            args = []
+
+        if fds is None:
+            fds = []
 
         msg = self.protocol.encode_method(method, args)
 
@@ -366,7 +373,9 @@ class ServiceClient:
             kind, data = self.protocol.decode_message(ret)
             if kind == "signal":
                 ret = self.protocol.decode_reply(data)
-                on_signal(ret, fds)
+
+                if on_signal:
+                    on_signal(ret, fds)
             if kind == "reply":
                 ret = self.protocol.decode_reply(data)
                 return ret, fds
@@ -470,6 +479,9 @@ class ServiceManager:
             service = ServiceClient(uid, proc, ours)
             self.services[uid] = service
             ours = None
+
+            if proc.stdout is None:
+                raise RuntimeError("No stdout.")
 
             stdout = io.TextIOWrapper(proc.stdout,
                                       encoding="utf-8",

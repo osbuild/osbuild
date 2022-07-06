@@ -28,7 +28,7 @@ import struct
 import subprocess
 import sys
 import tempfile
-from typing import List, BinaryIO
+from typing import List, BinaryIO, Optional
 
 import osbuild.api
 import osbuild.remoteloop as remoteloop
@@ -285,14 +285,14 @@ class PartitionTable:
         parts_fs = filter(lambda p: p.filesystem is not None, self.partitions)
         return sorted(parts_fs, key=mountpoint_len)
 
-    def partition_containing_root(self) -> Partition:
+    def partition_containing_root(self) -> Optional[Partition]:
         """Return the partition containing the root filesystem"""
         for p in self.partitions:
             if p.mountpoint and p.mountpoint == "/":
                 return p
         return None
 
-    def partition_containing_boot(self) -> Partition:
+    def partition_containing_boot(self) -> Optional[Partition]:
         """Return the partition containing /boot"""
         for p in self.partitions_with_filesystems():
             if p.mountpoint == "/boot":
@@ -300,7 +300,7 @@ class PartitionTable:
         # fallback to the root partition
         return self.partition_containing_root()
 
-    def find_prep_partition(self) -> Partition:
+    def find_prep_partition(self) -> Optional[Partition]:
         """Find the PReP partition'"""
         if self.label == "dos":
             prep_type = "41"
@@ -312,7 +312,7 @@ class PartitionTable:
                 return part
         return None
 
-    def find_bios_boot_partition(self) -> Partition:
+    def find_bios_boot_partition(self) -> Optional[Partition]:
         """Find the BIOS-boot Partition"""
         bb_type = "21686148-6449-6E6F-744E-656564454649"
         for part in self.partitions:
@@ -465,7 +465,7 @@ def grub2_write_core_bios_boot(core_f: BinaryIO,
                                pt: PartitionTable):
     """Write the core to the bios boot partition"""
     bb = pt.find_bios_boot_partition()
-    if bb is None:
+    if not bb:
         raise ValueError("BIOS-boot partition missing")
     core_size = os.fstat(core_f.fileno()).st_size
     if bb.size_in_bytes < core_size:
@@ -480,6 +480,10 @@ def grub2_write_core_bios_boot(core_f: BinaryIO,
     # the "sector start parameter" ("size .long 2, 0"):
     # 0x200 - GRUB_BOOT_MACHINE_LIST_SIZE (12) = 0x1F4 = 500
     image_f.seek(bb.start_in_bytes + 500)
+
+    if not bb.start:
+        raise ValueError("BIOS-boot partition start missing")
+
     image_f.write(struct.pack("<Q", bb.start + 1))
 
     return bb.start
@@ -499,6 +503,7 @@ def grub2_partition_id(pt: PartitionTable):
     return label2grub[pt.label]
 
 
+#pylint: disable=too-many-branches
 def install_grub2(image: str, pt: PartitionTable, options):
     """Install grub2 to image"""
     platform = options.get("platform", "i386-pc")
@@ -517,6 +522,9 @@ def install_grub2(image: str, pt: PartitionTable, options):
 
     # find the partition containing /boot/grub2
     boot_part = pt.partition_containing_boot()
+
+    if not boot_part:
+        raise RuntimeError("Failed to find boot_part")
 
     # modules: access the disk and read the partition table:
     # on x86 'biosdisk' is used to access the disk, on ppc64le
@@ -544,6 +552,9 @@ def install_grub2(image: str, pt: PartitionTable, options):
         raise ValueError(f"unknown boot filesystem type: '{fs_type}'")
 
     # identify the partition containing boot for grub2
+    if boot_part.index is None:
+        raise RuntimeError("No boot_part index")
+
     partid = grub2_partition_id(pt) + str(boot_part.index + 1)
     print(f"grub2 prefix {partid}")
 
@@ -610,6 +621,10 @@ def install_zipl(root: str, device: str, pt: PartitionTable):
     """Install the bootloader on s390x via zipl"""
     kernel, initrd, kopts = find_kernel(root)
     part_with_boot = pt.partition_containing_boot()
+
+    if not part_with_boot:
+        raise RuntimeError("Could not find part_with_boot")
+
     subprocess.run(["/usr/sbin/zipl",
                     "--verbose",
                     "--target", f"{root}/boot",

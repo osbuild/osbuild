@@ -1,10 +1,7 @@
 """Path handling utility functions"""
-import os.path
+import os
 
-from .types import PathLike
-
-
-def in_tree(path: PathLike, tree: PathLike, must_exist=False) -> bool:
+def in_tree(path: str, tree: str, must_exist: bool = False) -> bool:
     """Return whether the canonical location of 'path' is under 'tree'.
     If 'must_exist' is True, the file must also exist for the check to succeed.
     """

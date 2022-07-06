@@ -21,7 +21,7 @@ import hashlib
 import json
 import os
 
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 
 from osbuild import host
 from osbuild.util.types import PathLike
@@ -37,7 +37,7 @@ class Input:
         self.name = name
         self.info = info
         self.origin = origin
-        self.refs = {}
+        self.refs: Dict[str, Dict[str, Any]] = {}
         self.options = options or {}
         self.id = self.calc_id()
 
@@ -60,11 +60,11 @@ class Input:
 
 
 class InputManager:
-    def __init__(self, mgr: host.ServiceManager, storeapi: StoreServer, root: PathLike) -> Dict:
+    def __init__(self, mgr: host.ServiceManager, storeapi: StoreServer, root: PathLike) -> None:
         self.service_manager = mgr
         self.storeapi = storeapi
         self.root = root
-        self.inputs = {}
+        self.inputs: Dict[str, Input] = {}
 
     def map(self, ip: Input) -> Tuple[str, Dict]:
 

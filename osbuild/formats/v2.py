@@ -2,7 +2,7 @@
 
 Second, and current, version of the manifest description
 """
-from typing import Dict
+from typing import Dict, Any
 from osbuild.meta import Index, ModuleInfo, ValidationResult
 from ..inputs import Input
 from ..pipeline import Manifest, Pipeline, Stage, detect_host_runner
@@ -120,7 +120,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         return desc
 
     def describe_pipeline(p: Pipeline):
-        desc = {
+        desc: Dict[str, Any] = {
             "name": p.name
         }
 
@@ -158,7 +158,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         for source in manifest.sources
     }
 
-    description = {
+    description: Dict[str, Any] = {
         "version": VERSION,
         "pipelines": pipelines
     }
@@ -384,6 +384,8 @@ def load(description: Dict, index: Index) -> Manifest:
 def output(manifest: Manifest, res: Dict) -> Dict:
     """Convert a result into the v2 format"""
 
+    result: Dict[str, Any] = {}
+
     if not res["success"]:
         last = list(res.keys())[-1]
         failed = res[last]["stages"][-1]
@@ -412,7 +414,7 @@ def output(manifest: Manifest, res: Dict) -> Dict:
 
         # gather all the metadata
         for p in manifest.pipelines.values():
-            data = {}
+            data: Dict[str, Any] = {}
             r = res.get(p.id, {})
             for stage in r.get("stages", []):
                 md = stage.metadata

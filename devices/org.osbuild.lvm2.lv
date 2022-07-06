@@ -35,7 +35,7 @@ import subprocess
 import sys
 import time
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 from osbuild import devices
 
@@ -108,7 +108,7 @@ class LVService(devices.DeviceService):
             msg = f"Failed to set LV device ({fullname}) status: {data}"
             raise RuntimeError(msg)
 
-    def volume_group_for_device(self, device: str) -> str:
+    def volume_group_for_device(self, device: str) -> Union[int, str]:
         # Find the volume group that belongs to the device specified via `parent`
         vg_name = None
         count = 0
@@ -193,13 +193,13 @@ class LVService(devices.DeviceService):
 
         # Now that we have the volume group, find the major and minor
         # device numbers for the logical volume
-        major, minor = self.device_for_logical_volume(vg, lv)
+        major, minor = self.device_for_logical_volume(vg, lv)  # type: ignore
 
         # Create the device node for the LV in the build root's /dev
-        devname = os.path.join(vg, lv)
+        devname = os.path.join(vg, lv)  # type: ignore
         fullpath = os.path.join(devpath, devname)
 
-        os.makedirs(os.path.join(devpath, vg), exist_ok=True)
+        os.makedirs(os.path.join(devpath, vg), exist_ok=True)  # type: ignore
         os.mknod(fullpath, 0o666 | stat.S_IFBLK, os.makedev(major, minor))
 
         data = {

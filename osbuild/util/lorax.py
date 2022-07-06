@@ -16,6 +16,8 @@ import shlex
 import shutil
 import subprocess
 
+from typing import Dict, Any
+
 import mako.template
 
 
@@ -44,7 +46,7 @@ def rglob(pathname, *, fatal=False):
 class Script:
 
     # all built-in commands in a name to method map
-    commands = {}
+    commands: Dict[str, Any] = {}
 
     # helper decorator to register builtin methods
     class command:

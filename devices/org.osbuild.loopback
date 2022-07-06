@@ -22,7 +22,7 @@ import errno
 import os
 import sys
 
-from typing import Dict
+from typing import Dict, Optional
 
 from osbuild import devices
 from osbuild import loop
@@ -63,8 +63,6 @@ class LoopbackService(devices.DeviceService):
 
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
-        self.fd = None
-        self.lo = None
         self.ctl = loop.LoopControl()
 
     @staticmethod

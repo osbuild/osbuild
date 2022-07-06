@@ -29,7 +29,7 @@ import pkgutil
 import json
 import sys
 from collections import deque
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Sequence, List, Optional, Union, Set, Deque, Any, Tuple
 
 import jsonschema
 
@@ -50,7 +50,7 @@ class ValidationError:
 
     def __init__(self, message: str):
         self.message = message
-        self.path = deque()
+        self.path: Deque[Union[int, str]] = deque()
 
     @classmethod
     def from_exception(cls, ex):
@@ -88,7 +88,7 @@ class ValidationError:
             "path": list(self.path)
         }
 
-    def rebase(self, path: Iterable[str]):
+    def rebase(self, path: Sequence[str]):
         """Prepend the `path` to `self.path`"""
         rev = reversed(path)
         self.path.extendleft(rev)
@@ -96,7 +96,7 @@ class ValidationError:
     def __hash__(self):
         return hash((self.id, self.message))
 
-    def __eq__(self, other: "ValidationError"):
+    def __eq__(self, other: object):
         if not isinstance(other, ValidationError):
             raise ValueError("Need ValidationError")
 
@@ -119,7 +119,7 @@ class ValidationResult:
 
     def __init__(self, origin: Optional[str]):
         self.origin = origin
-        self.errors = set()
+        self.errors: Set[ValidationError] = set()
 
     def fail(self, msg: str) -> ValidationError:
         """Add a new `ValidationError` with `msg` as message"""
@@ -218,7 +218,7 @@ class Schema:
     def __init__(self, schema: str, name: Optional[str] = None):
         self.data = schema
         self.name = name
-        self._validator = None
+        self._validator: Optional[jsonschema.Draft4Validator] = None
 
     def check(self) -> ValidationResult:
         """Validate the `schema` data itself"""
@@ -258,8 +258,12 @@ class Schema:
         with 'missing schema information' as the reason.
         """
         res = self.check()
+
         if not res:
             return res
+
+        if not self._validator:
+            raise RuntimeError("Trying to validate without validator.")
 
         for error in self._validator.iter_errors(target):
             res += ValidationError.from_exception(error)
@@ -426,7 +430,7 @@ class ModuleInfo:
         tree = ast.parse(data, name)
 
         docstring = ast.get_docstring(tree)
-        doclist = docstring.split("\n")
+        doclist = docstring.split("\n") if docstring else []
 
         assigns = filter_type(tree.body, ast.Assign)
         values = {
@@ -489,15 +493,19 @@ class Index:
 
     def __init__(self, path: str):
         self.path = path
-        self._module_info = {}
-        self._format_info = {}
-        self._schemata = {}
+        self._module_info: Dict[Tuple[str, Any], Any] = {}
+        self._format_info: Dict[Tuple[str, Any], Any] = {}
+        self._schemata: Dict[Tuple[str, Any, str], Schema] = {}
 
     @staticmethod
     def list_formats() -> List[str]:
         """List all known formats for manifest descriptions"""
         base = "osbuild.formats"
         spec = importlib.util.find_spec(base)
+
+        if not spec:
+            raise RuntimeError(f"Could not find spec for {base!r}")
+
         locations = spec.submodule_search_locations
         modinfo = [
             mod for mod in pkgutil.walk_packages(locations)
@@ -555,9 +563,10 @@ class Index:
         that case the actual schema data for `Schema` will be
         `None` and any validation will fail.
         """
-        schema = self._schemata.get((klass, name, version))
-        if schema is not None:
-            return schema
+        cached_schema: Optional[Schema] = self._schemata.get((klass, name, version))
+
+        if cached_schema is not None:
+            return cached_schema
 
         if klass == "Manifest":
             path = f"{self.path}/schemas/osbuild{version}.json"

@@ -56,3 +56,15 @@ jobs:
         with:
           ignore_words_list: msdos, pullrequest
           skip: ./.git,coverity,rpmbuild,samples
+
+  mypy:
+    name: "Mypy check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+      - name: Check files with mypy
+        run: |
+          sudo apt install python3-pip -y
+          sudo pip install mypy types-pyyaml jsonschema mako
+          mypy osbuild

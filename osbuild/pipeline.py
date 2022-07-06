@@ -15,6 +15,7 @@ from .inputs import Input, InputManager
 from .mounts import Mount, MountManager
 from .sources import Source
 from .util import osrelease
+from .objectstore import ObjectStore
 
 
 DEFAULT_CAPABILITIES = {
@@ -244,7 +245,7 @@ class Pipeline:
         self.name = name
         self.build = build
         self.runner = runner
-        self.stages = []
+        self.stages: List[Stage] = []
         self.assembler = None
         self.source_epoch = source_epoch
 
@@ -370,7 +371,9 @@ class Manifest:
         self.pipelines = collections.OrderedDict()
         self.sources: List[Source] = []
 
-    def add_pipeline(self, name: str, runner: str, build: str, source_epoch: Optional[int] = None) -> Pipeline:
+    def add_pipeline(
+            self, name: str, runner: Optional[str], build: Optional[str] = None, source_epoch: Optional[int] = None
+            ) -> Pipeline:
         pipeline = Pipeline(name, runner, build, source_epoch)
         if name in self.pipelines:
             raise ValueError(f"Name {name} already exists")
@@ -387,7 +390,7 @@ class Manifest:
             for source in self.sources:
                 source.download(mgr, store, libdir)
 
-    def depsolve(self, store, targets: Iterable[str]) -> List[str]:
+    def depsolve(self, store: ObjectStore, targets: Iterable[str]) -> List[str]:
         """Return the list of pipelines that need to be built
 
         Given a list of target pipelines, return the names
@@ -403,6 +406,9 @@ class Manifest:
 
         while check:
             pl = check.pop()  # get the last(!) item
+
+            if not pl:
+                raise RuntimeError("Could not find pipeline.")
 
             if store.contains(pl.id):
                 continue
