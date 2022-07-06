@@ -3,7 +3,7 @@ import os
 import subprocess
 import tempfile
 import uuid
-from typing import Optional
+from typing import Optional, Iterator, Set
 
 from osbuild.util.types import PathLike
 from osbuild.util import jsoncomm, rmrf
@@ -55,10 +55,10 @@ class Object:
         self._init = True
         self._readers = 0
         self._writer = False
-        self._base = None
+        self._base: Optional[str] = None
         self._workdir = None
         self._tree = None
-        self.id = None
+        self.id: Optional[str] = None
         self.store = store
         self.reset()
 
@@ -85,7 +85,7 @@ class Object:
         self.id = base_id
 
     @property
-    def _path(self) -> str:
+    def _path(self) -> Optional[str]:
         if self._base and not self._init:
             path = self.store.resolve_ref(self._base)
         else:
@@ -93,7 +93,7 @@ class Object:
         return path
 
     @contextlib.contextmanager
-    def write(self) -> str:
+    def write(self) -> Iterator[str]:
         """Return a path that can be written to"""
         self._check_writable()
         self._check_readers()
@@ -110,13 +110,13 @@ class Object:
                 self._writer = False
 
     @contextlib.contextmanager
-    def read(self) -> str:
+    def read(self) -> Iterator[PathLike]:
         with self.tempdir("reader") as target:
             with self.read_at(target) as path:
                 yield path
 
     @contextlib.contextmanager
-    def read_at(self, target: PathLike, path: str = "/") -> str:
+    def read_at(self, target: PathLike, path: str = "/") -> Iterator[PathLike]:
         """Read the object or a part of it at given location
 
         Map the tree or a part of it specified via `path` at the
@@ -124,6 +124,9 @@ class Object:
         """
         self._check_writable()
         self._check_writer()
+
+        if self._path is None:
+            raise RuntimeError("read_at with no path.")
 
         path = os.path.join(self._path, path.lstrip("/"))
 
@@ -260,7 +263,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         os.makedirs(self.objects, exist_ok=True)
         os.makedirs(self.refs, exist_ok=True)
         os.makedirs(self.tmp, exist_ok=True)
-        self._objs = set()
+        self._objs: Set[Object] = set()
 
     def _get_floating(self, object_id: str) -> Optional[Object]:
         """Internal: get a non-committed object"""
@@ -349,7 +352,13 @@ class ObjectStore(contextlib.AbstractContextManager):
         with self.tempdir() as tmp:
             link = f"{tmp}/link"
             os.symlink(f"../objects/{object_name}", link)
-            os.replace(link, self.resolve_ref(object_id))
+
+            ref = self.resolve_ref(object_id)
+
+            if not ref:
+                raise RuntimeError("commit with unresolvable ref")
+
+            os.replace(link, ref)
 
         # the reference that is pointing to `object_name` is now the base
         # of `obj`. It is not actively initialized but any subsequent calls

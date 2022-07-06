@@ -20,7 +20,7 @@ import subprocess
 import sys
 import uuid
 
-from typing import Dict
+from typing import Dict, Optional
 
 from osbuild import devices
 from osbuild.util.udev import UdevInhibitor
@@ -44,7 +44,7 @@ class CryptDeviceService(devices.DeviceService):
 
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
-        self.devname = None
+        self.devname: Optional[str] = None
         self.lock = None
         self.check = False
 

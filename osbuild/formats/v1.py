@@ -7,7 +7,7 @@ the created tree into an artefact. The pipeline can have any
 number of nested build pipelines. A sources section is used
 to fetch resources.
 """
-from typing import Dict
+from typing import Dict, Any
 from osbuild.meta import Index, ValidationResult
 from ..pipeline import BuildResult, Manifest, Pipeline, detect_host_runner
 
@@ -15,9 +15,9 @@ from ..pipeline import BuildResult, Manifest, Pipeline, detect_host_runner
 VERSION = "1"
 
 
-def describe(manifest: Manifest, *, with_id=False) -> Dict:
+def describe(manifest: Manifest, *, with_id=False) -> Dict[str, Any]:
     """Create the manifest description for the pipeline"""
-    def describe_stage(stage):
+    def describe_stage(stage) -> Dict[str, Any]:
         description = {"name": stage.name}
         if stage.options:
             description["options"] = stage.options
@@ -25,8 +25,8 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
             description["id"] = stage.id
         return description
 
-    def describe_pipeline(pipeline: Pipeline) -> Dict:
-        description = {}
+    def describe_pipeline(pipeline: Pipeline) -> Dict[str, Any]:
+        description: Dict[str, Any] = {}
         if pipeline.build:
             build = manifest[pipeline.build]
             description["build"] = {

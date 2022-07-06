@@ -75,10 +75,11 @@ class SourceService(host.Service):
         return checksum, desc
 
     def download(self, items: Dict) -> None:
-        items = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-        items = map(lambda i: self.transform(i[0], i[1]), items)  # prepare each item to be downloaded
+        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
+        transformed = map(lambda i: self.transform(i[0], i[1]), filtered)  # prepare each item to be downloaded
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*items)):
+            for _ in executor.map(self.fetch_one, *zip(*transformed)):
                 pass
 
     @property
@@ -102,6 +103,7 @@ class SourceService(host.Service):
         if method == "download":
             self.setup(args)
             with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as self.tmpdir:
-                return self.download(SourceService.load_items(fds)), None
+                self.download(SourceService.load_items(fds))
+                return None, None
 
         raise host.ProtocolError("Unknown method")

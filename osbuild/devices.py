@@ -17,7 +17,7 @@ import hashlib
 import json
 import os
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 from osbuild import host
 
@@ -52,11 +52,11 @@ class DeviceManager:
     Uses a `host.ServiceManager` to open `Device` instances.
     """
 
-    def __init__(self, mgr: host.ServiceManager, devpath: str, tree: str) -> Dict:
+    def __init__(self, mgr: host.ServiceManager, devpath: str, tree: str) -> None:
         self.service_manager = mgr
         self.devpath = devpath
         self.tree = tree
-        self.devices = {}
+        self.devices: Dict[str, Dict[str, Any]] = {}
 
     def device_relpath(self, dev: Optional[Device]) -> Optional[str]:
         if dev is None:

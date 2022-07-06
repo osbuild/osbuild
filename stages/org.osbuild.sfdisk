@@ -7,6 +7,7 @@ import json
 import subprocess
 import sys
 
+from typing import Optional
 
 import osbuild.api
 
@@ -122,7 +123,7 @@ class PartitionTable:
     def __getitem__(self, key) -> Partition:
         return self.partitions[key]
 
-    def find_prep_partition(self) -> Partition:
+    def find_prep_partition(self) -> Optional[Partition]:
         """Find the PReP partition'"""
         if self.label == "dos":
             prep_type = "41"
@@ -134,7 +135,7 @@ class PartitionTable:
                 return part
         return None
 
-    def find_bios_boot_partition(self) -> Partition:
+    def find_bios_boot_partition(self) -> Optional[Partition]:
         """Find the BIOS-boot Partition"""
         bb_type = "21686148-6449-6E6F-744E-656564454649"
         for part in self.partitions:

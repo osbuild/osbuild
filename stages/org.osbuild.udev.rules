@@ -18,6 +18,8 @@ and the possible keys for the `OPTIONS` assignment are not checked.
 import os
 import sys
 
+from typing import Dict
+
 import osbuild.api
 
 
@@ -259,7 +261,7 @@ SCHEMA = r"""
 """
 
 
-def make_key(data: dict):
+def make_key(data: Dict):
     key = data["key"]
 
     if isinstance(key, str):
@@ -274,12 +276,12 @@ def make_key(data: dict):
     return res
 
 
-def make_value(data: dict):
+def make_value(data: Dict):
     val = data["val"]
     return '"' + val.replace('"', r'\"') + '"'
 
 
-def make_rule(data: dict):
+def make_rule(data: Dict):
     for item in data:
         res = make_key(item)
         res += item["op"]
@@ -287,7 +289,7 @@ def make_rule(data: dict):
         yield res
 
 
-def write_rule(f, rule: list):
+def write_rule(f, rule: Dict):
     data = ", ".join(make_rule(rule))
     f.write(data + "\n")
 

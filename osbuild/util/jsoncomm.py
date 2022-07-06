@@ -127,13 +127,20 @@ class Socket(contextlib.AbstractContextManager):
     @blocking.setter
     def blocking(self, value: bool):
         """Set the blocking mode of the socket."""
-        self._socket.setblocking(value)
+        if self._socket:
+            self._socket.setblocking(value)
+        else:
+            raise RuntimeError("Tried to set blocking mode without socket.")
 
     def accept(self) -> Optional["Socket"]:
         """Accept a new connection on the socket.
 
         See python's `socket.accept` for more information.
         """
+
+        if not self._socket:
+            raise RuntimeError("Tried to accept without socket.")
+
         # Since, in the kernel, for AF_UNIX, new connection requests,
         # i.e. clients connecting, are directly put on the receive
         # queue of the listener socket, accept here *should* always
@@ -150,6 +157,9 @@ class Socket(contextlib.AbstractContextManager):
 
         See python's `socket.listen` for details.
         """
+
+        if not self._socket:
+            raise RuntimeError("Tried to listen without socket.")
 
         # `Socket.listen` accepts an `int` or no argument, but not `None`
         args = [backlog] if backlog is not None else []
@@ -385,6 +395,9 @@ class Socket(contextlib.AbstractContextManager):
         TypeError
             If the payload cannot be serialized, a type error is raised.
         """
+
+        if not self._socket:
+            raise RuntimeError("Tried to send without socket.")
 
         serialized = json.dumps(payload).encode()
         cmsg = []

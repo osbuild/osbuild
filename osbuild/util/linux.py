@@ -141,25 +141,25 @@ class LibCap:
         get_bound = lib.cap_get_bound
         get_bound.argtypes = (self.cap_value_t,)
         get_bound.restype = ctypes.c_int
-        get_bound.errcheck = self._check_result
+        get_bound.errcheck = self._check_result  # type: ignore
         self._get_bound = get_bound
 
         from_name = lib.cap_from_name
         from_name.argtypes = (ctypes.c_char_p, ctypes.POINTER(self.cap_value_t),)
         from_name.restype = ctypes.c_int
-        from_name.errcheck = self._check_result
+        from_name.errcheck = self._check_result  # type: ignore
         self._from_name = from_name
 
         to_name = lib.cap_to_name
         to_name.argtypes = (ctypes.c_int,)
         to_name.restype = ctypes.POINTER(ctypes.c_char)
-        to_name.errcheck = self._check_result
+        to_name.errcheck = self._check_result  # type: ignore
         self._to_name = to_name
 
         free = lib.cap_free
         free.argtypes = (ctypes.c_void_p,)
         free.restype = ctypes.c_int
-        free.errcheck = self._check_result
+        free.errcheck = self._check_result  # type: ignore
         self._free = free
 
     @staticmethod
@@ -210,6 +210,10 @@ class LibCap:
         """Translate from the capability's integer value to the its symbolic name"""
         raw = self._to_name(value)
         val = ctypes.cast(raw, ctypes.c_char_p).value
+
+        if val is None:
+            raise RuntimeError("Failed to cast.")
+
         res = str(val, encoding="utf-8")
         self._free(raw)
         return res.upper()

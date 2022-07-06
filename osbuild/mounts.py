@@ -13,7 +13,7 @@ import json
 import os
 import subprocess
 
-from typing import Dict
+from typing import Dict, List
 
 from osbuild import host
 from osbuild.devices import DeviceManager
@@ -55,7 +55,7 @@ class MountManager:
     def __init__(self, devices: DeviceManager, root: str) -> None:
         self.devices = devices
         self.root = root
-        self.mounts = {}
+        self.mounts: Dict[str, Dict[str, Mount]] = {}
 
     def mount(self, mount: Mount) -> Dict:
 
@@ -77,7 +77,7 @@ class MountManager:
         path = client.call("mount", args)
 
         if not path:
-            res = {}
+            res: Dict[str, Mount] = {}
             self.mounts[mount.name] = res
             return res
 
@@ -123,7 +123,7 @@ class FileSystemMountService(MountService):
         self.check = False
 
     @abc.abstractmethod
-    def translate_options(self, options: Dict):
+    def translate_options(self, options: Dict) -> List:
         return []
 
     def mount(self, args: Dict):
@@ -134,14 +134,15 @@ class FileSystemMountService(MountService):
         options = args["options"]
 
         mountpoint = os.path.join(root, target.lstrip("/"))
-        args = self.translate_options(options)
+
+        options = self.translate_options(options)
 
         os.makedirs(mountpoint, exist_ok=True)
         self.mountpoint = mountpoint
 
         subprocess.run(
             ["mount"] +
-            args + [
+            options + [
                 "--source", source,
                 "--target", mountpoint
             ],

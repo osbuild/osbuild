@@ -16,8 +16,9 @@ import subprocess
 import tempfile
 import time
 
-from typing import Optional
+from typing import Optional, Set
 
+from osbuild.api import BaseAPI
 from osbuild.util import linux
 
 
@@ -57,7 +58,7 @@ class ProcOverrides:
 
     def __init__(self, path) -> None:
         self.path = path
-        self.overrides = set()
+        self.overrides: Set["str"] = set()
 
     @property
     def cmdline(self) -> str:
@@ -167,7 +168,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         self._exitstack.close()
         self._exitstack = None
 
-    def register_api(self, api: "BaseAPI"):
+    def register_api(self, api: BaseAPI):
         """Register an API endpoint.
 
         The context of the API endpoint will be bound to the context of

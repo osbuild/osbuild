@@ -95,7 +95,7 @@ class Partition:
         self.size = size
         self.name = name
         self.uuid = uuid
-        self.attrs = set(attrs or [])
+        self.attrs = set([attrs] if attrs else [])
 
         if bootable:
             self.attrs.add(2)
