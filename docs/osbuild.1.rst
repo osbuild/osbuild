@@ -12,19 +12,20 @@ Build-Pipelines for Operating System Artifacts
 SYNOPSIS
 ========
 
-| ``osbuild`` [ OPTIONS ] PIPELINE
+| ``osbuild`` [ OPTIONS ] MANIFEST
 | ``osbuild`` [ OPTIONS ] -
 | ``osbuild`` ``--help``
+| ``osbuild`` ``--version``
 
 DESCRIPTION
 ===========
 
-**osbuild** is a build-system for operating system artifacts. It takes a
-pipeline description as input and produces file-system trees, images, or other
-artifacts as output. Its pipeline description gives comprehensive control over
-the individual steps to execute as part of a pipeline. **osbuild** provides
-isolation from the host system as well as caching capabilities, and thus
-ensures that pipeline builds will be deterministic and efficient.
+**osbuild** is a build-system for operating system artifacts. It takes an input
+manifest describing the build pipelines and produces file-system trees, images,
+or other artifacts as output. Its pipeline description gives comprehensive
+control over the individual steps to execute as part of a pipeline. **osbuild**
+provides isolation from the host system as well as caching capabilities, and
+thus ensures that pipeline builds will be deterministic and efficient.
 
 OPTIONS
 =======
@@ -37,10 +38,9 @@ The following command-line options are supported. If an option is passed, which
 is not listed here, **osbuild** will deny startup and exit with an error.
 
 -h, --help                      print usage information and exit immediately
+--version                       print version information and exit immediately
 --store=DIR                     directory where intermediary file system trees
                                 are stored
---secrets=PATH                  json file containing a dictionary of secrets
-                                that are passed to sources
 -l DIR, --libdir=DIR            directory containing stages, assemblers, and
                                 the osbuild library
 --checkpoint=CHECKPOINT         stage to commit to the object store during
@@ -50,6 +50,10 @@ is not listed here, **osbuild** will deny startup and exit with an error.
 --output-directory=DIR          directory where result objects are stored
 --inspect                       return the manifest in JSON format including
                                 all the ids
+--monitor=TYPE                  name of the monitor to be used
+--monitor-fd=NUM                file-descriptor to be used for the monitor
+--stage-timeout                 set the maximal time (in seconds) each stage is
+                                allowed to run
 
 NB: If neither ``--output-directory`` nor ``--checkpoint`` is specified, no
 attempt to build the manifest will be made.
@@ -57,13 +61,49 @@ attempt to build the manifest will be made.
 MANIFEST
 ========
 
-The input to **osbuild** is a description of the pipeline to execute, as well
+The input to **osbuild** is a description of the pipelines to execute, as well
 as required parameters to each pipeline stage. This data must be *JSON*
 encoded. It is read from the file specified on the command-line, or, if ``-``
 is passed, from standard input.
 
 The format of the manifest is described in ``osbuild-manifest``\(5). The formal
 schema of the manifest is available online as the OSBuild JSON Schema [#]_.
+
+MONITOR
+=======
+
+Live activity of the pipeline execution can be monitored via a built-in set
+of different monitors. The ``--monitor=TYPE`` option selects the type of
+monitor that is used. Valid types are:
+
+``NullMonitor``
+        No live coverage is reported and all monitoring features are disabled.
+        This is the default monitor if ``--json`` was specified on the
+        command-line.
+``LogMonitor``
+        A human-readable live monitor of the pipeline execution. This monitor
+        prints pipeline names, stage names, and relevant options of each stage
+        as it is executed. Additionally, timing information is provided for
+        each stage. The output is not machine-readable and is interspersed
+        with the individual log messages of the stages.
+        This is the default monitor if ``--json`` was **not** specified.
+
+Monitor output is written to the file-descriptor provided via
+``--monitor-fd=NUM``. If none was specified, standard output is used.
+
+OUTPUT
+======
+
+OSBuild only ever builds the requested artifacts, rather than all artifacts
+defined in a manifest. Each stage and pipeline has an associated ID (which can
+be acquired by passing ``--inspect``). To export an artifact after a stage or
+pipeline finished, pass its ID via ``--export=ID``. A sub-directory will be
+created in the output-directory with the ID as the name. The contents of the
+artifact are then stored in that sub-directory.
+
+Additionally, any completed pipeline or stage can be cached to avoid rebuilding
+them in subsequent invocations. Use ``--checkpoint=ID`` to request caching of a
+specific stage or pipeline.
 
 EXAMPLES
 ========
@@ -114,5 +154,5 @@ SEE ALSO
 NOTES
 =====
 
-.. [#] OSBuild JSON Schema:
-       https://osbuild.org/schemas/osbuild1.json
+.. [#] OSBuild JSON Schema v2:
+       https://osbuild.org/schemas/osbuild2.json
