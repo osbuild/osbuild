@@ -70,7 +70,7 @@ def parse_arguments(sys_argv):
                         default=".osbuild",
                         help="directory where intermediary os trees are stored")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath, default="/usr/lib/osbuild",
-                        help="the directory containing stages, assemblers, and the osbuild library")
+                        help="directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
                         help="stage to commit to the object store during build (can be passed multiple times)")
     parser.add_argument("--export", metavar="ID", action="append", type=str, default=[],
@@ -82,9 +82,9 @@ def parse_arguments(sys_argv):
     parser.add_argument("--inspect", action="store_true",
                         help="return the manifest in JSON format including all the ids")
     parser.add_argument("--monitor", metavar="NAME", default=None,
-                        help="Name of the monitor to be used")
+                        help="name of the monitor to be used")
     parser.add_argument("--monitor-fd", metavar="FD", type=int, default=sys.stdout.fileno(),
-                        help="File descriptor to be used for the monitor")
+                        help="file descriptor to be used for the monitor")
     parser.add_argument("--stage-timeout", type=int, default=None,
                         help="set the maximal time (in seconds) each stage is allowed to run")
     parser.add_argument("--version", action="version",
