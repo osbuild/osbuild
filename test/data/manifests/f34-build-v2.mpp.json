@@ -29,6 +29,7 @@
                   "grub2-pc",
                   "policycoreutils",
                   "python3-iniparse",
+                  "python3-toml",
                   "qemu-img",
                   "rpm-ostree",
                   "systemd",
