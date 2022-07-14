@@ -17,10 +17,7 @@ import time
 from typing import Dict
 
 import osbuild
-
-
-RESET = "\033[0m"
-BOLD = "\033[1m"
+from osbuild.util.term import fmt as vt
 
 
 class TextWriter:
@@ -36,7 +33,7 @@ class TextWriter:
             return
 
         if clear:
-            self.write(RESET)
+            self.write(vt.reset)
 
         self.write(text)
 
@@ -102,18 +99,18 @@ class LogMonitor(BaseMonitor):
         self.out.write(f"\n⏱  Duration: {duration}s\n")
 
     def begin(self, pipeline):
-        self.out.term(BOLD, clear=True)
+        self.out.term(vt.bold, clear=True)
         self.out.write(f"Pipeline {pipeline.name}: {pipeline.id}")
-        self.out.term(RESET)
+        self.out.term(vt.reset)
         self.out.write("\n")
 
     def stage(self, stage):
         self.module(stage)
 
     def assembler(self, assembler):
-        self.out.term(BOLD, clear=True)
+        self.out.term(vt.bold, clear=True)
         self.out.write("Assembler ")
-        self.out.term(RESET)
+        self.out.term(vt.reset)
 
         self.module(assembler)
 
@@ -121,9 +118,9 @@ class LogMonitor(BaseMonitor):
         options = module.options or {}
         title = f"{module.name}: {module.id}"
 
-        self.out.term(BOLD, clear=True)
+        self.out.term(vt.bold, clear=True)
         self.out.write(title)
-        self.out.term(RESET)
+        self.out.term(vt.reset)
         self.out.write(" ")
 
         json.dump(options, self.out, indent=2)

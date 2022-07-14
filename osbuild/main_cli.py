@@ -15,12 +15,7 @@ import osbuild
 import osbuild.meta
 import osbuild.monitor
 from osbuild.objectstore import ObjectStore
-
-
-RESET = "\033[0m"
-BOLD = "\033[1m"
-RED = "\033[31m"
-GREEN = "\033[32m"
+from osbuild.util.term import fmt as vt
 
 
 def parse_manifest(path):
@@ -37,17 +32,17 @@ def show_validation(result, name):
     if name == "-":
         name = "<stdin>"
 
-    print(f"{BOLD}{name}{RESET} ", end='')
+    print(f"{vt.bold}{name}{vt.reset} ", end='')
 
     if result:
-        print(f"is {BOLD}{GREEN}valid{RESET}")
+        print(f"is {vt.bold}{vt.green}valid{vt.reset}")
         return
 
-    print(f"has {BOLD}{RED}errors{RESET}:")
+    print(f"has {vt.bold}{vt.red}errors{vt.reset}:")
     print("")
 
     for error in result:
-        print(f"{BOLD}{error.id}{RESET}:")
+        print(f"{vt.bold}{error.id}{vt.reset}:")
         print(f"  {error.message}\n")
 
 
@@ -124,16 +119,16 @@ def osbuild_cli():
     unresolved = [e for e in exports if e not in manifest]
     if unresolved:
         for name in unresolved:
-            print(f"Export {BOLD}{name}{RESET} not found!")
-        print(f"{RESET}{BOLD}{RED}Failed{RESET}")
+            print(f"Export {vt.bold}{name}{vt.reset} not found!")
+        print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
         return 1
 
     if args.checkpoint:
         missed = manifest.mark_checkpoints(args.checkpoint)
         if missed:
             for checkpoint in missed:
-                print(f"Checkpoint {BOLD}{checkpoint}{RESET} not found!")
-            print(f"{RESET}{BOLD}{RED}Failed{RESET}")
+                print(f"Checkpoint {vt.bold}{checkpoint}{vt.reset} not found!")
+            print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
             return 1
 
     if args.inspect:
@@ -175,7 +170,7 @@ def osbuild_cli():
 
     except KeyboardInterrupt:
         print()
-        print(f"{RESET}{BOLD}{RED}Aborted{RESET}")
+        print(f"{vt.reset}{vt.bold}{vt.red}Aborted{vt.reset}")
         return 130
 
     if args.json:
@@ -188,6 +183,6 @@ def osbuild_cli():
                 print(f"{name + ':': <10}\t{pl.id}")
         else:
             print()
-            print(f"{RESET}{BOLD}{RED}Failed{RESET}")
+            print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
 
     return 0 if r["success"] else 1
