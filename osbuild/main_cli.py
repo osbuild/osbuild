@@ -10,6 +10,8 @@ import argparse
 import json
 import os
 import sys
+import subprocess
+import tempfile
 
 import osbuild
 import osbuild.meta
@@ -27,8 +29,16 @@ def parse_manifest(path):
     if path == "-":
         manifest = json.load(sys.stdin)
     else:
-        with open(path) as f:
-            manifest = json.load(f)
+        if not os.path.exists(path) and path.startswith("http"):
+            # Try fetching over HTTP
+            with tempfile.NamedTemporaryFile() as temp:
+                subprocess.check_call(["curl", "-so", temp.name, path])
+
+                with open(temp.name) as f:
+                    manifest = json.load(f)
+        else:
+            with open(path) as f:
+                manifest = json.load(f)
 
     return manifest
 
