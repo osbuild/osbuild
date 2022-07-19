@@ -76,7 +76,10 @@ class SkopeoSource(sources.SourceService):
         tls_verify = image.get("tls-verify", True)
 
         with tempfile.TemporaryDirectory(prefix="tmp-download-", dir=self.cache) as tmpdir:
-            archive_path = os.path.join(tmpdir, "container-image.tar")
+            archive_dir = os.path.join(tmpdir, "container-archive")
+            os.makedirs(archive_dir)
+            os.chmod(archive_dir, 0o755)
+            archive_path = os.path.join(archive_dir, "container-image.tar")
 
             source = f"docker://{imagename}@{digest}"
 
@@ -109,9 +112,8 @@ class SkopeoSource(sources.SourceService):
                     f"Downloaded image {imagename}@{digest} has a id of {downloaded_id}, but expected {image_id}")
 
             # Atomically move download dir into place on successful download
-            os.chmod(tmpdir, 0o755)
             with ctx.suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
-                os.rename(tmpdir, f"{self.cache}/{image_id}")
+                os.rename(archive_dir, f"{self.cache}/{image_id}")
 
 
 def main():
