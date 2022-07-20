@@ -11,14 +11,19 @@
     "/home/test/.bash_logout",
     "/home/test/.bashrc",
     "/home/test/.bash_profile",
-    "/var/spool/mail/test"
+    "/home/test.user_42-OSBUILD",
+    "/home/test.user_42-OSBUILD/.bash_logout",
+    "/home/test.user_42-OSBUILD/.bashrc",
+    "/home/test.user_42-OSBUILD/.bash_profile",
+    "/var/spool/mail/test",
+    "/var/spool/mail/test.user_42-OSBUILD"
   ],
   "deleted_files": [],
   "differences": {
     "/etc/group": {
       "content": [
         "sha256:5be46faf83078411c18ce0f3cb5e5fc5b56b8cb214a7f5a65dbbef6cb8249e16",
-        "sha256:c84391d03143617e308b8a7800704ffb58ee20d88fdfa07ada57a0e84fc44dc8"
+        "sha256:b75a8542437c8c0265e36f719b0bb2176ab14bc843af12bb009180b53aeb51f6"
       ]
     },
     "/etc/gshadow": {
@@ -30,7 +35,7 @@
     "/etc/passwd": {
       "content": [
         "sha256:d137fa8bf6ca9020c35a5bf992f32d4c803497e856e0254618f5abcb2f2425c6",
-        "sha256:f6d28352e02b3ed1971d8d0d2e9e556f9dfaa9300fbafa6828f69f758570839c"
+        "sha256:cb2abbc72a76ead35817e76050f6fbb85255a53e09ecfcd6966389dc2e563565"
       ]
     },
     "/etc/shadow": {
@@ -42,13 +47,13 @@
     "/etc/subgid": {
       "content": [
         "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "sha256:26d48e295489c012dd33c13df566059d0f97215e1990d80192026e5a162dc3a0"
+        "sha256:601e9cc755cb80e34e21999e732e25869f554f92a42e760533da8d5c701957ea"
       ]
     },
     "/etc/subuid": {
       "content": [
         "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "sha256:26d48e295489c012dd33c13df566059d0f97215e1990d80192026e5a162dc3a0"
+        "sha256:601e9cc755cb80e34e21999e732e25869f554f92a42e760533da8d5c701957ea"
       ]
     }
   }

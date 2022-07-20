@@ -26,7 +26,7 @@ SCHEMA = """
     "type": "object",
     "description": "Keys are usernames, values are objects giving user info.",
     "patternProperties": {
-      "^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$": {
+      "^[A-Za-z0-9_.][A-Za-z0-9_.-]{0,31}$": {
         "type": "object",
         "properties": {
           "uid": {

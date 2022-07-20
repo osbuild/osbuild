@@ -317,6 +317,9 @@
           "users": {
             "test": {
               "password": "$6$s06sY2/bZbmuyE4a$JTn/Ki2jbNG.wGeCvt6mcjaIZ2HV.H8VjLzIMZs7f2G48NMFlcB2/OhbHZ6HhZAOcb.CmUb2qywSW2DkKe6gn0"
+            },
+            "test.user_42-OSBUILD": {
+              "password": "$6$TZ9oR8s21Srjvamo$PRHaXMA6pcZc7M2yKGEDLVir/GjCUgV0gW8ZIrab3cY4fKth/MBGm/wndn2MxSU31dCmCnb.3uEODgyaAkaRh0"
             }
           }
         }
