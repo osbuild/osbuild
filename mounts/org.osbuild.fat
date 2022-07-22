@@ -33,14 +33,14 @@ SCHEMA_2 = """
 """
 
 
-class XfsMount(mounts.FileSystemMountService):
+class FatMount(mounts.FileSystemMountService):
 
     def translate_options(self, _options: Dict):
         return ["-t", "vfat"]
 
 
 def main():
-    service = XfsMount.from_args(sys.argv[1:])
+    service = FatMount.from_args(sys.argv[1:])
     service.main()
 
 
