@@ -4,8 +4,6 @@ No-op mount service
 
 Does not mount anything, but only creates an empty directory.
 Useful for testing.
-
-Host commands used: mount
 """
 
 import os
