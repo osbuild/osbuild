@@ -4,8 +4,8 @@ set -euxo pipefail
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 
 # The osbuild-composer commit to run reverse-dependency test against.
-# Currently: CI: temporarily siwtch RHOS-01 to non-ssd instances
-OSBUILD_COMPOSER_COMMIT=b297ee8d403bb48363c44773f495ef30acbf7d1a
+# Currently: CI: temporarily switch RHOS-01 to non-ssd instances
+OSBUILD_COMPOSER_COMMIT=de72b36dddfc703d76d79479dde7b92f0a78e924
 
 # Get OS details.
 source /etc/os-release
