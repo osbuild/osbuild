@@ -564,6 +564,7 @@ class Index:
         `None` and any validation will fail.
         """
         cached_schema: Optional[Schema] = self._schemata.get((klass, name, version))
+        schema = None
 
         if cached_schema is not None:
             return cached_schema
