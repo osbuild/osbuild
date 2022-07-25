@@ -6,6 +6,7 @@
   "description": "OSBuild manifest describing a pipeline and all parameters",
   "type": "object",
   "additionalProperties": false,
+  "required": ["version"],
   "properties": {
     "pipelines": { "$ref": "#/definitions/pipelines" },
     "sources": { "$ref": "#/definitions/sources" },
