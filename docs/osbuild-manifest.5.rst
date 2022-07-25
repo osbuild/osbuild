@@ -55,7 +55,7 @@ PIPELINES
 
 The `pipeline` section describes the pipeline to execute. This includes a
 description of the build system to use for the execution, the stages to
-execute, and the final assemblers whichproduce the desired output format.
+execute, and the final assemblers which produce the desired output format.
 
 |
 | "**pipeline**": {
