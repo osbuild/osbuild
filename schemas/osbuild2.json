@@ -120,13 +120,13 @@
         }, {
           "type": "array",
           "items": {
-            "type": "object", 
+            "type": "object",
             "required": ["id"],
             "additionalProperties": false,
             "properties": {
               "id": { "type": "string" },
               "options": {
-                "type": "object", 
+                "type": "object",
                 "additionalProperties": true
               }
             }
