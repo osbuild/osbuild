@@ -215,7 +215,7 @@ class Schema:
     schema data.
     """
 
-    def __init__(self, schema: str, name: Optional[str] = None):
+    def __init__(self, schema: Optional[Dict], name: Optional[str] = None):
         self.data = schema
         self.name = name
         self._validator: Optional[jsonschema.Draft4Validator] = None
