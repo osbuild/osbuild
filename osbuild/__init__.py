@@ -11,7 +11,7 @@ independent of osbuild but used across the osbuild codebase.
 from .pipeline import Manifest, Pipeline, Stage
 
 
-__version__ = "62"
+__version__ = "63"
 
 __all__ = [
     "Manifest",
