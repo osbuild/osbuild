@@ -14,6 +14,15 @@ from osbuild import objectstore
 from .. import test
 
 
+def store_path(store: objectstore.ObjectStore, ref: str, path: str) -> bool:
+    if not store.contains(ref):
+        return False
+    obj = store.resolve_ref(ref)
+    if not obj or not os.path.exists(obj):
+        return False
+    return os.path.exists(os.path.join(obj, path))
+
+
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
 class TestObjectStore(unittest.TestCase):
 
@@ -43,11 +52,10 @@ class TestObjectStore(unittest.TestCase):
                 object_store.commit(tree, "a")
 
             assert object_store.contains("a")
-            assert os.path.exists(f"{object_store.refs}/a")
-            assert os.path.exists(f"{object_store.refs}/a/A")
+            assert store_path(object_store, "a", "A")
+
             assert len(os.listdir(object_store.refs)) == 1
             assert len(os.listdir(object_store.objects)) == 1
-            assert len(os.listdir(f"{object_store.refs}/a/")) == 1
 
             with object_store.new() as tree:
                 with tree.write() as path:
@@ -58,12 +66,11 @@ class TestObjectStore(unittest.TestCase):
                 object_store.commit(tree, "b")
 
             assert object_store.contains("b")
-            assert os.path.exists(f"{object_store.refs}/b")
-            assert os.path.exists(f"{object_store.refs}/b/B")
+            assert store_path(object_store, "b", "B")
 
             assert len(os.listdir(object_store.refs)) == 2
             assert len(os.listdir(object_store.objects)) == 2
-            assert len(os.listdir(f"{object_store.refs}/b/")) == 2
+            # assert len(os.listdir(f"{object_store.refs}/b/")) == 2
 
             self.assertEqual(object_store.resolve_ref(None), None)
             self.assertEqual(object_store.resolve_ref("a"),
@@ -103,10 +110,10 @@ class TestObjectStore(unittest.TestCase):
                     p.touch()
                 object_store.commit(tree, "c")
 
-            assert os.path.exists(f"{object_store.refs}/a/A")
-            assert os.path.exists(f"{object_store.refs}/b/A")
-            assert os.path.exists(f"{object_store.refs}/c/A")
-            assert os.path.exists(f"{object_store.refs}/c/C")
+            assert store_path(object_store, "a", "A")
+            assert store_path(object_store, "b", "A")
+            assert store_path(object_store, "c", "A")
+            assert store_path(object_store, "c", "C")
 
             assert len(os.listdir(object_store.refs)) == 3
             assert len(os.listdir(object_store.objects)) == 3
@@ -236,11 +243,10 @@ class TestObjectStore(unittest.TestCase):
         assert os.path.exists(f"{object_store.refs}/b")
 
         # check the contents of the trees
-        assert os.path.exists(f"{object_store.refs}/a/A")
-        assert not os.path.exists(f"{object_store.refs}/a/B")
-
-        assert os.path.exists(f"{object_store.refs}/b/A")
-        assert os.path.exists(f"{object_store.refs}/b/B")
+        assert store_path(object_store, "a", "A")
+        assert not store_path(object_store, "a", "B")
+        assert store_path(object_store, "b", "A")
+        assert store_path(object_store, "b", "B")
 
     def test_host_tree(self):
         object_store = objectstore.ObjectStore(self.store)
