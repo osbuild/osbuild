@@ -52,7 +52,9 @@ def test_pylint(source_files):
     # modules we have.
     #
 
-    subprocess.run(["pylint"] + source_files, check=True)
+    r = subprocess.run(["pylint"] + source_files, check=False)
+    if r.returncode != 0:
+        pytest.fail("pylint issues detected")
 
 
 @pytest.mark.skipif(not test.TestBase.have_autopep8(), reason="autopep8 not available")
