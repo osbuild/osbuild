@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+"""
+Configure greenboot
+
+Update configuration of greenboot in /etc/greenboot/greenbot.conf.
+"""
+
+import fileinput
+import sys
+
+import osbuild.api
+
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["config"],
+"properties": {
+  "config": {
+    "additionalProperties": false,
+    "description": "greenboot config options",
+    "type": "object",
+    "properties": {
+      "monitor_services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+      }
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    greenboot_conf = options.get("config", {})
+    changes = greenboot_conf.copy()
+    config_file = f"{tree}/etc/greenboot/greenboot.conf"
+    key_to_conf = {
+        "GREENBOOT_MONITOR_SERVICES": "monitor_services"
+    }
+
+    # For each of the configured options, find the first non-commented out instance
+    # of the option and replace it (if necessary). If it does not already exist, append
+    # the option to the end of the file.
+    # Keys are case case sensitive.
+    with fileinput.input(files=(config_file), inplace=True) as f:
+        for line in f:
+            if line.startswith("#"):
+                sys.stdout.write(line)
+                continue
+            line_list = line.split('=')
+            if len(line_list) != 2:
+                sys.stdout.write(line)
+                continue
+            key, current = line_list
+            key_in_conf = key_to_conf.get(key, None)
+            if key_in_conf is None:
+                sys.stdout.write(line)
+                continue
+            value = changes.pop(key_in_conf, None)
+            if value is None:
+                sys.stdout.write(line)
+                continue
+            if key == "GREENBOOT_MONITOR_SERVICES":
+                svcs = current.strip('\"\n').split(" ")
+                new_svcs = [ns for ns in value if ns not in svcs]
+                new_svcs.extend(svcs)
+                sys.stdout.write('GREENBOOT_MONITOR_SERVICES="{0}"\n'.format(" ".join(new_svcs)))
+    with open(config_file, mode="a") as f:
+        for key, value in changes.items():
+            if key == "monitor_services":
+                f.write('GREENBOOT_MONITOR_SERVICES="{0}"\n'.format(" ".join(value)))
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
