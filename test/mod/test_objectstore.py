@@ -122,7 +122,7 @@ class TestObjectStore(unittest.TestCase):
             with object_store.new() as tree:
                 path = tree.write()
                 with tree.write() as path, \
-                     open(os.path.join(path, "data"), "w") as f:
+                        open(os.path.join(path, "data"), "w") as f:
                     f.write(data)
                     st = os.fstat(f.fileno())
                     data_inode = st.st_ino

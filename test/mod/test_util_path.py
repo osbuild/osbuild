@@ -5,6 +5,7 @@ import os
 
 from osbuild.util import path
 
+
 def test_in_tree():
     cases = {
         ("/tmp/file", "/tmp", False): True,  # Simple, non-existent

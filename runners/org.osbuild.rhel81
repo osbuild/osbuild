@@ -71,6 +71,7 @@ def python_alternatives():
     except FileExistsError:
         pass
 
+
 if __name__ == "__main__":
     with osbuild.api.exception_handler():
         ldconfig()

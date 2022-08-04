@@ -93,6 +93,7 @@ SCHEMA = """
 XML_RESULTS = "eval_remediate_results.xml"
 HTML_REPORT = "eval_remediate_report.html"
 
+
 def main(tree, options):
     # required vars
     config = options["config"]
@@ -108,9 +109,9 @@ def main(tree, options):
 
     # run openscap in chroot on the image tree
     cmd = [
-      "/usr/sbin/chroot", tree,
-      "/usr/bin/oscap", "xccdf", "eval",
-      "--remediate", "--profile", profile
+        "/usr/sbin/chroot", tree,
+        "/usr/bin/oscap", "xccdf", "eval",
+        "--remediate", "--profile", profile
     ]
 
     if data_dir is not None:

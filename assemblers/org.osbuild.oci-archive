@@ -230,7 +230,7 @@ def create_oci_dir(tree, output_dir, options):
     config["rootfs"]["diff_ids"] = [digest]
     manifest["layers"].append(info)
 
-    ## write config
+    # write config
     info = blobs_add_json(blobs, config, "config")
     manifest["config"] = info
 

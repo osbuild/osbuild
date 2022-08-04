@@ -208,7 +208,7 @@ def make_efi(efi, info, root, loop_client):
     efidir = os.path.join(root, "EFI", "BOOT")
     os.makedirs(efidir)
 
-    #arch related data
+    # arch related data
     for arch in arches:
         arch = arch.lower()
         targets = [
@@ -382,7 +382,7 @@ def main(inputs, root, options, workdir, loop_client):
         "cmdline": cmdline
     }
 
-    #install the kernel
+    # install the kernel
     kerneldir = pxedir
     kernel_input = inputs.get("kernel", inputs["rootfs"])
     kernel_tree = kernel_input["path"]

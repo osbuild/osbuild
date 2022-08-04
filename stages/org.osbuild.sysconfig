@@ -227,7 +227,7 @@ def configure_network_scripts_ifcfg(tree, network_scripts_ifcfg_options):
             else:
                 # schema does not currently allow any additional properties but it may at some point
                 raise ValueError(f"Error: unknown property {option} specified for sysconfig network-scripts/ifcfg "
-                    "config.")
+                                 "config.")
 
         if lines:
             with open(f"{tree}/etc/sysconfig/network-scripts/ifcfg-{ifname}", 'w') as ifcfg_file:

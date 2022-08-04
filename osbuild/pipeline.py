@@ -373,7 +373,7 @@ class Manifest:
 
     def add_pipeline(
             self, name: str, runner: Optional[str], build: Optional[str] = None, source_epoch: Optional[int] = None
-            ) -> Pipeline:
+    ) -> Pipeline:
         pipeline = Pipeline(name, runner, build, source_epoch)
         if name in self.pipelines:
             raise ValueError(f"Name {name} already exists")

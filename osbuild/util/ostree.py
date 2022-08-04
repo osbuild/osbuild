@@ -175,12 +175,13 @@ class PasswdLike:
     class can parse the the list, manipulate it, and export it to file
     again.
     """
+
     def __init__(self):
         """Initialize an empty PasswdLike object"""
         self.db = dict()
 
     @classmethod
-    def from_file(cls, path: PathLike, allow_missing_file: bool=False):
+    def from_file(cls, path: PathLike, allow_missing_file: bool = False):
         """Initialize a PasswdLike object from an existing file"""
         ret = cls()
         if allow_missing_file:
@@ -191,7 +192,7 @@ class PasswdLike:
             ret.db = cls._passwd_lines_to_dict(p.readlines())
         return ret
 
-    def merge_with_file(self, path: PathLike, allow_missing_file: bool=False):
+    def merge_with_file(self, path: PathLike, allow_missing_file: bool = False):
         """Extend the database with entries from another file"""
         if allow_missing_file:
             if not os.path.isfile(path):

@@ -160,7 +160,6 @@ class TestFormatV1(unittest.TestCase):
         self.assertEqual(pl.runner, runner)
         check_stage(have, want)
 
-
     def test_describe(self):
         index = osbuild.meta.Index(os.curdir)
 
@@ -412,9 +411,9 @@ class TestFormatV1(unittest.TestCase):
         self.assertEqual(res.valid, False)
         self.assertEqual(len(res), 2)
         lst = res[".pipeline.stages[0].options"]
-        self.assertEqual(len(lst), 1)  #  missing rootfs
+        self.assertEqual(len(lst), 1)  # missing rootfs
         lst = res[".pipeline.stages[0].options.uefi"]
-        self.assertEqual(len(lst), 1)  #  missing "osname"
+        self.assertEqual(len(lst), 1)  # missing "osname"
 
         assembler_check = {
             "pipeline": {
@@ -431,6 +430,6 @@ class TestFormatV1(unittest.TestCase):
         self.assertEqual(res.valid, False)
         self.assertEqual(len(res), 2)
         lst = res[".pipeline.assembler.options"]
-        self.assertEqual(len(lst), 1)  #  missing "filename"
+        self.assertEqual(len(lst), 1)  # missing "filename"
         lst = res[".pipeline.assembler.options.compression"]
-        self.assertEqual(len(lst), 1)  #  wrong compression method
+        self.assertEqual(len(lst), 1)  # wrong compression method

@@ -6,7 +6,7 @@ from io import StringIO
 
 from osbuild.util.rhsm import Subscriptions
 
-REPO_FILE="""[jpp]
+REPO_FILE = """[jpp]
 name = Red Hat JBoss Portal
 baseurl = https://cdn.redhat.com/1.0/$basearch/os
 enabled = 0
@@ -66,7 +66,7 @@ def test_from_host_system():
 
             raise e
 
-        assert test_case["success"] # Verify this test case should pass
+        assert test_case["success"]  # Verify this test case should pass
         assert secrets["ssl_ca_cert"] == "/etc/rhsm/ca/redhat-uep.pem"
         assert secrets["ssl_client_key"] == f'/etc/pki/entitlement/{test_case["key"]}-key.pem'
         assert secrets["ssl_client_cert"] == f'/etc/pki/entitlement/{test_case["key"]}.pem'
