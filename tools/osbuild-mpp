@@ -959,6 +959,7 @@ class ManifestFile:
         self.version = version
         self.sources = element_enter(self.root, "sources", {})
         self.source_urls = {}
+        self.solver_factory = None
 
         self.vars = default_vars.copy()
         self.overrides = overrides
@@ -1021,13 +1022,13 @@ class ManifestFile:
         with f:
             return ManifestFile.load_from_fd(f, fullpath, self.overrides, self.vars, self.searchdirs)
 
-    def depsolve(self, solver_factory: DepSolverFactory, desc: Dict):
+    def depsolve(self, desc: Dict):
         repos = desc.get("repos", [])
         packages = desc.get("packages", [])
         excludes = desc.get("excludes", [])
         baseurl = desc.get("baseurl")
         arch = desc.get("architecture")
-        solver = solver_factory.get_depsolver(desc.get("solver", "dnf"))
+        solver = self.solver_factory.get_depsolver(desc.get("solver", "dnf"))
 
         if not packages:
             return []
@@ -1199,8 +1200,8 @@ class ManifestFile:
         name = desc.get("id", "image")
         self.vars[name] = Image.from_dict(desc)
 
-    def _process_stage(self, solver_factory, stage, pipeline_name):
-        self._process_depsolve(solver_factory, stage, pipeline_name)
+    def _process_stage(self, stage, pipeline_name):
+        self._process_depsolve(stage, pipeline_name)
         self._process_embed_files(stage)
         self._process_container(stage)
 
@@ -1249,7 +1250,7 @@ class ManifestFileV1(ManifestFile):
             self._process_import(current)
             current = current.get("pipeline", {}).get("build")
 
-    def _process_depsolve(self, solver_factory, stage, pipeline_name):
+    def _process_depsolve(self, stage, pipeline_name):
         if stage.get("name", "") not in ("org.osbuild.pacman", "org.osbuild.rpm"):
             return
         options = stage.get("options")
@@ -1264,12 +1265,12 @@ class ManifestFileV1(ManifestFile):
 
         packages = element_enter(options, "packages", [])
 
-        deps = self.depsolve(solver_factory, mpp)
+        deps = self.depsolve(mpp)
         checksums = self.add_packages(deps, pipeline_name)
 
         packages += checksums
 
-    def process_stages(self, solver_factory, pipeline=None, depth=0):
+    def process_stages(self, pipeline=None, depth=0):
         if pipeline is None:
             pipeline = self.pipeline
 
@@ -1282,11 +1283,11 @@ class ManifestFileV1(ManifestFile):
 
         stages = element_enter(pipeline, "stages", [])
         for stage in stages:
-            self._process_stage(solver_factory, stage, pipeline_name)
+            self._process_stage(stage, pipeline_name)
         build = pipeline.get("build")
         if build:
             if "pipeline" in build:
-                self.process_stages(solver_factory, build["pipeline"], depth+1)
+                self.process_stages(build["pipeline"], depth+1)
 
     def _process_embed_files(self, stage):
         "Embedding files is not supported for v1 manifests"
@@ -1353,7 +1354,7 @@ class ManifestFileV2(ManifestFile):
         for pipeline in old_pipelines:
             self.pipelines.extend(self._process_import(pipeline))
 
-    def _process_depsolve(self, solver_factory, stage, pipeline_name):
+    def _process_depsolve(self, stage, pipeline_name):
         if stage.get("type", "") not in ("org.osbuild.pacman", "org.osbuild.rpm"):
             return
         inputs = element_enter(stage, "inputs", {})
@@ -1367,18 +1368,18 @@ class ManifestFileV2(ManifestFile):
 
         refs = element_enter(packages, "references", {})
 
-        deps = self.depsolve(solver_factory, mpp)
+        deps = self.depsolve(mpp)
         checksums = self.add_packages(deps, pipeline_name)
 
         for checksum in checksums:
             refs[checksum] = {}
 
-    def process_stages(self, solver_factory):
+    def process_stages(self):
         for pipeline in self.pipelines:
             name = pipeline.get("name", "")
             stages = element_enter(pipeline, "stages", [])
             for stage in stages:
-                self._process_stage(solver_factory, stage, name)
+                self._process_stage(stage, name)
 
     def _process_embed_files(self, stage):
 
@@ -1545,8 +1546,9 @@ def main():
     m = ManifestFile.load(args.src, overrides, defaults, args.searchdirs)
 
     with tempfile.TemporaryDirectory() as persistdir:
-        solver_factory = DepSolverFactory(args.cachedir, persistdir)
-        m.process_stages(solver_factory)
+        m.solver_factory = DepSolverFactory(args.cachedir, persistdir)
+        m.process_stages()
+        m.solver_factory = None
 
     m.process_format()
 
