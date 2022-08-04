@@ -168,6 +168,24 @@ class TestBase(unittest.TestCase):
                 )
 
     @staticmethod
+    def have_autopep8() -> bool:
+        """Check autopep8 Availability
+
+        This checks whether `autopep8` is available in the current path and
+        can be called by this process.
+        """
+
+        try:
+            r = subprocess.run(
+                ["autopep8-3", "--version"],
+                encoding="utf-8", stdout=subprocess.PIPE, check=False
+            )
+        except FileNotFoundError:
+            return False
+
+        return r.returncode == 0 and "autopep8" in r.stdout
+
+    @staticmethod
     def have_rpm_ostree() -> bool:
         """Check rpm-ostree Availability
 
