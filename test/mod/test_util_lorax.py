@@ -35,7 +35,6 @@ class TestUtilLorax(test.TestBase):
             if not os.path.exists(target):
                 self.fail(f"Path {target} does not exists")
 
-
     def test_script(self):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
             root = os.path.join(tmp, "root")
@@ -80,7 +79,6 @@ class TestUtilLorax(test.TestBase):
                 with open(os.path.join(tree, fn), "r") as f:
                     data = f.read().strip()
                     self.assertEqual(data, "osbuild-42")
-
 
     def test_script_errors(self):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:

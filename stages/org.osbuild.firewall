@@ -88,10 +88,10 @@ def main(tree, options):
         subprocess.run(["chroot",
                         tree,
                         "firewall-offline-cmd"] +
-                      list(map(lambda x: f"--port={x}", ports)) +
-                      list(map(lambda x: f"--service={x}", enabled_services)) +
-                      list(map(lambda x: f"--remove-service={x}", disabled_services)),
-                      check=True)
+                       list(map(lambda x: f"--port={x}", ports)) +
+                       list(map(lambda x: f"--service={x}", enabled_services)) +
+                       list(map(lambda x: f"--remove-service={x}", disabled_services)),
+                       check=True)
 
     return 0
 

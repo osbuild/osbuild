@@ -38,6 +38,7 @@ class TunedProfilesDB:
     Class for loading available TuneD profiles from the given filesystem tree
     and checking if a profile with particular name exists.
     """
+
     def __init__(self, tree):
         self._available_profiles = self._load_available_profiles(tree)
 

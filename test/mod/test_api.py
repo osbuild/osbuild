@@ -13,6 +13,7 @@ from osbuild.util import jsoncomm
 
 class APITester(osbuild.api.BaseAPI):
     """Records the number of messages and if it got cleaned up"""
+
     def __init__(self, sockaddr):
         super().__init__(sockaddr)
         self.clean = False
@@ -33,6 +34,7 @@ class APITester(osbuild.api.BaseAPI):
 
 class TestAPI(unittest.TestCase):
     """Check API infrastructure"""
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
 

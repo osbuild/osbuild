@@ -314,8 +314,8 @@ class TestStages(test.TestBase):
         for image_name, test_data in checks.items():
             with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
                 osb.compile_file(os.path.join(testdir, "qemu.json"),
-                                exports=[image_name],
-                                output_dir=outdir)
+                                 exports=[image_name],
+                                 output_dir=outdir)
 
                 tree = os.path.join(outdir, image_name)
                 ip = os.path.join(tree, image_name)
@@ -331,8 +331,8 @@ class TestStages(test.TestBase):
 
                 qemu_img_out = json.loads(qemu_img_run.stdout)
                 self.assertTrue(mapping_is_subset(test_data, qemu_img_out),
-                    f"Test data is not a subset of the qemu-img output: {test_data} not <= {qemu_img_run.stdout}"
-                )
+                                ("Test data is not a subset of the qemu-img output: "
+                                f"{test_data} not <= {qemu_img_run.stdout}"))
 
                 # cache the downloaded data for the files source
                 osb.copy_source_data(self.store, "org.osbuild.files")
