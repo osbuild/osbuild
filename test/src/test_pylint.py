@@ -53,3 +53,10 @@ def test_pylint(source_files):
     #
 
     subprocess.run(["pylint"] + source_files, check=True)
+
+
+@pytest.mark.skipif(not test.TestBase.have_autopep8(), reason="autopep8 not available")
+def test_autopep8(source_files):
+    r = subprocess.run(["autopep8-3", "--diff", "--exit-code"] + source_files, check=False)
+    if r.returncode != 0:
+        pytest.fail("autopep8 has detected changes (see diff)")
