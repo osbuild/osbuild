@@ -959,6 +959,7 @@ class ManifestFile:
         self.version = version
         self.sources = element_enter(self.root, "sources", {})
         self.source_urls = {}
+        self.format_stack = []
         self.solver_factory = None
 
         self.vars = default_vars.copy()
@@ -1098,6 +1099,18 @@ class ManifestFile:
         else:
             return fakeroot[0], False
 
+    def _format_dict_node(self, node, stack):
+        if len(stack) > 0:
+            parent_node = stack[-1][0]
+            parent_key = stack[-1][1]
+        else:
+            parent_node = None
+            parent_key = None
+
+        if parent_key == "stages":
+            pipeline_name = self.get_pipeline_name(parent_node)
+            self._process_stage(node, pipeline_name)
+
     def _process_format(self, node):
         def _is_format(node):
             if not isinstance(node, dict):
@@ -1162,7 +1175,11 @@ class ManifestFile:
             return res, False
 
         if isinstance(node, dict):
+
+            self._format_dict_node(node, self.format_stack)
+
             for key in list(node.keys()):
+                self.format_stack.append( (node, key) )
                 value = node[key]
                 if _is_format(value):
                     val, remove = _eval_format(value, self.get_vars())
@@ -1172,6 +1189,8 @@ class ManifestFile:
                         node[key] = val
                 else:
                     self._process_format(value)
+                self.format_stack.pop()
+
         if isinstance(node, list):
             to_remove = []
             for i, value in enumerate(node):
@@ -1199,6 +1218,9 @@ class ManifestFile:
 
         name = desc.get("id", "image")
         self.vars[name] = Image.from_dict(desc)
+
+    def get_pipeline_name(self, node):
+        return node.get("name", "unknown")
 
     def _process_stage(self, stage, pipeline_name):
         self._process_depsolve(stage, pipeline_name)
@@ -1270,24 +1292,22 @@ class ManifestFileV1(ManifestFile):
 
         packages += checksums
 
-    def process_stages(self, pipeline=None, depth=0):
-        if pipeline is None:
-            pipeline = self.pipeline
+    def get_pipeline_name(self, node):
+        if self.pipeline == node:
+            return "stages"
 
-        if depth == 0:
-            pipeline_name = "stages"
-        elif depth == 1:
-            pipeline_name = "build"
-        else:
-            pipeline_name = "build" + str(depth)
+        build = self.pipeline.get("build", {}).get("pipeline")
+        if build == node:
+            return "build"
 
-        stages = element_enter(pipeline, "stages", [])
-        for stage in stages:
-            self._process_stage(stage, pipeline_name)
-        build = pipeline.get("build")
-        if build:
-            if "pipeline" in build:
-                self.process_stages(build["pipeline"], depth+1)
+        depth = 1
+        while build:
+            build = build.get("build", {}).get("pipeline")
+            depth = depth + 1
+            if build == node:
+                return "build" + str(depth)
+
+        return "unknown"
 
     def _process_embed_files(self, stage):
         "Embedding files is not supported for v1 manifests"
@@ -1373,13 +1393,6 @@ class ManifestFileV2(ManifestFile):
 
         for checksum in checksums:
             refs[checksum] = {}
-
-    def process_stages(self):
-        for pipeline in self.pipelines:
-            name = pipeline.get("name", "")
-            stages = element_enter(pipeline, "stages", [])
-            for stage in stages:
-                self._process_stage(stage, name)
 
     def _process_embed_files(self, stage):
 
@@ -1547,10 +1560,8 @@ def main():
 
     with tempfile.TemporaryDirectory() as persistdir:
         m.solver_factory = DepSolverFactory(args.cachedir, persistdir)
-        m.process_stages()
+        m.process_format()
         m.solver_factory = None
-
-    m.process_format()
 
     with sys.stdout if args.dst == "-" else open(args.dst, "w") as f:
         m.write(f, args.sort_keys)
