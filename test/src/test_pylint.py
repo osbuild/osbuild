@@ -4,46 +4,46 @@
 
 import os
 import subprocess
-import unittest
+
+import pytest
 
 from .. import test
 
 
-@unittest.skipUnless(test.TestBase.have_test_checkout(), "no test-checkout access")
-class TestPylint(test.TestBase):
-    def test_pylint(self):
-        #
-        # Run `pylint` on all python sources. We simply use `find` to locate
-        # all `*.py` files, and then manually select the reverse-domain named
-        # modules we have.
-        #
+@pytest.mark.skipif(not test.TestBase.have_test_checkout(), "no test-checkout access")
+def test_pylint():
+    #
+    # Run `pylint` on all python sources. We simply use `find` to locate
+    # all `*.py` files, and then manually select the reverse-domain named
+    # modules we have.
+    #
 
-        checkout = self.locate_test_checkout()
+    checkout = test.TestBase.locate_test_checkout()
 
-        # Fetch list of checked-in files from git.
-        cwd = os.getcwd()
-        os.chdir(checkout)
-        files = subprocess.check_output(
-            [
-                "git",
-                "ls-tree",
-                "-rz",
-                "--full-tree",
-                "--name-only",
-                "HEAD",
-            ]
-        ).decode()
-        os.chdir(cwd)
+    # Fetch list of checked-in files from git.
+    cwd = os.getcwd()
+    os.chdir(checkout)
+    files = subprocess.check_output(
+        [
+            "git",
+            "ls-tree",
+            "-rz",
+            "--full-tree",
+            "--name-only",
+            "HEAD",
+        ]
+    ).decode()
+    os.chdir(cwd)
 
-        # File list is separated by NULs, so split into array.
-        files = files.split('\x00')
+    # File list is separated by NULs, so split into array.
+    files = files.split('\x00')
 
-        # Filter out all our python files (i.e., all modules and files ending in *.py)
-        modules = ("assemblers/", "runners/", "sources/", "stages/")
-        files = filter(lambda p: p.endswith(".py") or p.startswith(modules), files)
+    # Filter out all our python files (i.e., all modules and files ending in *.py)
+    modules = ("assemblers/", "runners/", "sources/", "stages/")
+    files = filter(lambda p: p.endswith(".py") or p.startswith(modules), files)
 
-        # Append the checkout-path so all paths are absolute.
-        files = map(lambda p: os.path.join(checkout, p), files)
+    # Append the checkout-path so all paths are absolute.
+    files = map(lambda p: os.path.join(checkout, p), files)
 
-        # Run pylint on all files.
-        subprocess.run(["pylint"] + list(files), check=True)
+    # Run pylint on all files.
+    subprocess.run(["pylint"] + list(files), check=True)
