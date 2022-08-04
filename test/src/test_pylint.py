@@ -10,13 +10,10 @@ import pytest
 from .. import test
 
 
-@pytest.mark.skipif(not test.TestBase.have_test_checkout(), "no test-checkout access")
-def test_pylint():
-    #
-    # Run `pylint` on all python sources. We simply use `find` to locate
-    # all `*.py` files, and then manually select the reverse-domain named
-    # modules we have.
-    #
+@pytest.fixture(name="source_files")
+def discover_source_files():
+    if not test.TestBase.have_test_checkout():
+        pytest.skip("no test-checkout access")
 
     checkout = test.TestBase.locate_test_checkout()
 
@@ -45,5 +42,14 @@ def test_pylint():
     # Append the checkout-path so all paths are absolute.
     files = map(lambda p: os.path.join(checkout, p), files)
 
-    # Run pylint on all files.
-    subprocess.run(["pylint"] + list(files), check=True)
+    return list(files)
+
+
+def test_pylint(source_files):
+    #
+    # Run `pylint` on all python sources. We simply use `find` to locate
+    # all `*.py` files, and then manually select the reverse-domain named
+    # modules we have.
+    #
+
+    subprocess.run(["pylint"] + source_files, check=True)
