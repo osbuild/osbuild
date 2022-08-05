@@ -1107,6 +1107,9 @@ class ManifestFile:
             parent_node = None
             parent_key = None
 
+        # Avoid unnecessarily running the stage processing on things
+        # that don't look like a stage. The indidual stage processing
+        # will verify that the stage looks right too.
         if parent_key == "stages":
             pipeline_name = self.get_pipeline_name(parent_node)
             self._process_stage(node, pipeline_name)
