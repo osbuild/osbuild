@@ -1220,7 +1220,7 @@ class ManifestFile:
         self.vars[name] = Image.from_dict(desc)
 
     def get_pipeline_name(self, node):
-        return node.get("name", "unknown")
+        return node.get("name", "")
 
     def _process_stage(self, stage, pipeline_name):
         self._process_depsolve(stage, pipeline_name)
@@ -1307,7 +1307,7 @@ class ManifestFileV1(ManifestFile):
             if build == node:
                 return "build" + str(depth)
 
-        return "unknown"
+        return ""
 
     def _process_embed_files(self, stage):
         "Embedding files is not supported for v1 manifests"
