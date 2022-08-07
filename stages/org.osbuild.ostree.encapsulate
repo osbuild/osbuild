@@ -1,0 +1,123 @@
+#!/usr/bin/python3
+"""
+Wrap OSTree commits into a oci container image
+
+For more information see [1].
+
+[1] https://github.com/ostreedev/ostree-rs-ext#module-container-bridging-between-ostree-and-ocidocker-images
+"""
+
+import subprocess
+import sys
+
+import osbuild.api
+
+CAPABILITIES = ["CAP_MAC_ADMIN"]
+
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "required": ["filename"],
+  "properties": {
+    "filename": {
+      "description": "Resulting image filename",
+      "type": "string"
+    },
+    "cmd": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "copymeta": {
+      "description": "Propagate an OSTree commit metadata key to container label",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "format_version": {
+      "type": "integer",
+      "description": "The encapsulated container format version",
+      "default": 1
+    },
+    "labels": {
+      "description": "Additional labels for the container",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "max_layers": {
+      "description": "Maximum number of container image layers",
+      "type": "integer"
+    }
+  }
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["commit"],
+  "properties": {
+    "commit": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
+def ostree(*args, **kwargs):
+    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    print("rpm-ostree " + " ".join(args), file=sys.stderr)
+    subprocess.run(["rpm-ostree"] + args,
+                   encoding="utf-8",
+                   stdout=sys.stderr,
+                   check=True)
+
+
+def parse_input(inputs):
+    commits = inputs["commit"]
+    data = commits["data"]
+    refs = data["refs"]
+    assert len(refs) == 1, "Need exactly one commit"
+    commit_id, = refs.keys()
+    return commits["path"], commit_id, refs[commit_id]
+
+
+def main(tree, inputs, options):
+    filename = options["filename"].lstrip("/")
+    cmd = options.get("cmd", [])
+    formatver = options.get("format_version", 1)
+    maxlayers = options.get("max_layers")
+    source_repo, commit, _ = parse_input(inputs)
+    extra_args = []
+
+    container = f"oci-archive:{tree}/{filename}"
+
+    if cmd:
+        extra_args = ["--cmd", " ".join(cmd)]
+
+    for name in options.get("copymeta", []):
+        extra_args += ["--copymeta", name]
+
+    for label in options.get("labels", []):
+        extra_args += ["--label", label]
+
+    if maxlayers:
+        extra_args += ["--max-layers", str(maxlayers)]
+
+    ostree("container-encapsulate", commit, container,
+           "--format-version", str(formatver),
+           "--repo", source_repo,
+           *extra_args)
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"],
+             stage_args["inputs"],
+             stage_args["options"])
+    sys.exit(r)
