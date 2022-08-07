@@ -60,6 +60,14 @@ def run_tests(args, tmpdir):
                 }
             },
         },
+        "fedora-ostree-native-container": {
+            "manifest": "fedora-ostree-native-container.json",
+            "exports": {
+                "container": {
+                    "artifact": "container.tar"
+                }
+            },
+        },
         "fedora-ostree-bootiso": {
             "manifest": "fedora-ostree-bootiso.json",
             "exports": {
