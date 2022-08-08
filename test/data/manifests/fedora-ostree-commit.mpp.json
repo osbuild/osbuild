@@ -1,4 +1,10 @@
 {
+  "mpp-vars": {
+    "arch": "x86_64",
+    "release": 34,
+    "releasever": "f$release",
+    "snapshot": "20210512"
+  },
   "version": "2",
   "pipelines": [
     {
@@ -6,7 +12,9 @@
         "path": "f34-build-v2.json",
         "id": "build"
       },
-      "runner": "org.osbuild.fedora34"
+      "runner": {
+        "mpp-format-string": "org.osbuild.fedora{release}"
+      }
     },
     {
       "name": "ostree-tree",
@@ -24,12 +32,13 @@
               "type": "org.osbuild.files",
               "origin": "org.osbuild.source",
               "mpp-depsolve": {
-                "architecture": "x86_64",
-                "module-platform-id": "f34",
+                "architecture": "$arch",
+                "module-platform-id": "$releasever",
+                "releasever": "$releasever",
                 "repos": [
                   {
                     "id": "default",
-                    "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
+                    "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$releasever-$arch-fedora-$snapshot/"
                   }
                 ],
                 "packages": [
@@ -104,7 +113,9 @@
           },
           "options": {
             "ref": "fedora/x86_64/osbuild",
-            "os_version": "34"
+            "os_version": {
+              "mpp-format-string": "{release}"
+            }
           }
         }
       ]
