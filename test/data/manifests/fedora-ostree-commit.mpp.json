@@ -9,7 +9,7 @@
   "pipelines": [
     {
       "mpp-import-pipeline": {
-        "path": "f34-build-v2.json",
+        "path": "fedora-build-v2.mpp.json",
         "id": "build"
       },
       "runner": {
