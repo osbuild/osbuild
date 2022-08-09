@@ -5,6 +5,41 @@ import contextlib
 import subprocess
 
 
+def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
+    options = []
+    if ro:
+        options += ["ro"]
+    if mode:
+        options += [mode]
+
+    args = []
+    if bind:
+        args += ["--rbind"]
+    if private:
+        args += ["--make-rprivate"]
+    if options:
+        args += ["-o", ",".join(options)]
+
+    r = subprocess.run(["mount"] + args + [source, target],
+                       stderr=subprocess.STDOUT,
+                       stdout=subprocess.PIPE,
+                       encoding="utf-8",
+                       check=False)
+
+    if r.returncode != 0:
+        code = r.returncode
+        msg = r.stdout.strip()
+        raise RuntimeError(f"{msg} (code: {code})")
+
+
+def umount(target, lazy=False):
+    args = []
+    if lazy:
+        args += ["--lazy"]
+    subprocess.run(["sync", "-f", target], check=True)
+    subprocess.run(["umount", "-R"] + args + [target], check=True)
+
+
 class MountGuard(contextlib.AbstractContextManager):
     def __init__(self):
         self.mounts = []
