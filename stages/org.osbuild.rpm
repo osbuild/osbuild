@@ -100,6 +100,10 @@ SCHEMA = """
         }
       ]
     }
+  },
+  "ostree_booted": {
+    "type": "boolean",
+    "description": "Create the '/run/ostree-booted' marker"
   }
 }
 """
@@ -143,6 +147,10 @@ SCHEMA_2 = """
        "items": {
         "type": "string"
       }
+    },
+    "ostree_booted": {
+      "type": "boolean",
+      "description": "Create the '/run/ostree-booted' marker"
     }
   }
 },
@@ -158,6 +166,12 @@ SCHEMA_2 = """
   }
 }
 """
+
+
+# File to mark a system as ostree booted. Also used by certain packages
+# like e.g. authselect, to adjust its behavior during installation.
+# Controlled via the `ostree_booted` option.
+OSTREE_BOOTED_MARKER = "run/ostree-booted"
 
 
 def generate_package_metadata(tree):
@@ -284,6 +298,13 @@ def main(tree, inputs, options):
 
     machine_id_created = create_machine_id_if_needed(tree)
 
+    ostree_booted = None
+    if options.get("ostree_booted", False):
+        os.makedirs(f"{tree}/run", exist_ok=True)
+        ostree_booted = f"{tree}/{OSTREE_BOOTED_MARKER}"
+        with open(ostree_booted, "w", encoding="utf-8") as f:
+            f.write("")
+
     extra_args = []
 
     if options.get("exclude", {}).get("docs"):
@@ -337,6 +358,9 @@ def main(tree, inputs, options):
         machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
         machine_id_file.unlink()
         machine_id_file.touch()
+
+    if ostree_booted:
+        os.unlink(ostree_booted)
 
     # remove random seed from the tree if exists
     with contextlib.suppress(FileNotFoundError):
