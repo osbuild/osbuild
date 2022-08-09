@@ -28,8 +28,8 @@ class MountGuard(contextlib.AbstractContextManager):
     def umount(self):
 
         while self.mounts:
-            mount = self.mounts.pop()  # FILO: get the last mount
-            target = mount["target"]
+            mnt = self.mounts.pop()  # FILO: get the last mount
+            target = mnt["target"]
             # The sync should in theory not be needed but in rare
             # cases `target is busy` error has been spotted.
             # Calling  `sync` does not hurt so we keep it for now.
