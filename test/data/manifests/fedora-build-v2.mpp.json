@@ -1,9 +1,9 @@
 {
   "mpp-vars": {
     "arch": "x86_64",
-    "release": 34,
+    "release": 36,
     "releasever": "f$release",
-    "snapshot": "20210512",
+    "snapshot": "20220617",
     "updates": "20220801"
   },
   "version": "2",
