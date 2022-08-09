@@ -238,6 +238,21 @@ def parse_input(inputs):
     return path, files
 
 
+def create_machine_id_if_needed(tree):
+    """Create a machine-id with a fake machine id if it does not exist"""
+    path = f"{tree}/etc/machine-id"
+    if os.path.exists(path):
+        return False
+
+    os.makedirs(f"{tree}/etc", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        # create a fake machine ID to improve reproducibility
+        f.write("ffffffffffffffffffffffffffffffff")
+        os.fchmod(f.fileno(), 0o400)
+
+    return True
+
+
 def main(tree, inputs, options):
     pkgpath, packages = parse_input(inputs)
 
@@ -269,15 +284,7 @@ def main(tree, inputs, options):
         mount -o bind /proc {tree}/proc
     """
 
-    machine_id_set_previously = os.path.exists(f"{tree}/etc/machine-id")
-    if not machine_id_set_previously:
-        # create a fake machine ID to improve reproducibility
-        print("creating a fake machine id")
-        script += f"""
-            mkdir -p {tree}/etc
-            echo "ffffffffffffffffffffffffffffffff" > {tree}/etc/machine-id
-            chmod 0444 {tree}/etc/machine-id
-        """
+    machine_id_created = create_machine_id_if_needed(tree)
 
     subprocess.run(["/bin/sh", "-c", script], check=True)
 
@@ -329,7 +336,7 @@ def main(tree, inputs, options):
         remove_unowned_etc_kernel(tree)
 
     # remove temporary machine ID if it was created by us
-    if not machine_id_set_previously:
+    if machine_id_created:
         print("deleting the fake machine id")
         machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
         machine_id_file.unlink()
