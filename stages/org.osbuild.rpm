@@ -41,6 +41,7 @@ import sys
 import tempfile
 from operator import itemgetter
 
+from osbuild.util.mnt import mount
 from osbuild import api
 
 
@@ -276,17 +277,12 @@ def main(tree, inputs, options):
                 filename
             ], cwd=pkgpath, stdout=subprocess.DEVNULL, check=True)
 
-    script = f"""
-        set -e
-        mkdir -p {tree}/dev {tree}/sys {tree}/proc
-        mount -o bind /dev {tree}/dev
-        mount -o bind /sys {tree}/sys
-        mount -o bind /proc {tree}/proc
-    """
+    for source in ("/dev", "/sys", "/proc"):
+        target = os.path.join(tree, source.lstrip("/"))
+        os.makedirs(target, exist_ok=True)
+        mount(source, target, ro=False)
 
     machine_id_created = create_machine_id_if_needed(tree)
-
-    subprocess.run(["/bin/sh", "-c", script], check=True)
 
     extra_args = []
 
