@@ -33,6 +33,10 @@ SCHEMA = r"""
         "items": {
           "type": "string"
         }
+      },
+      "_dbpath": {
+        "description": "Specify the rpm database path.",
+        "type": "string"
       }
     }
   }
