@@ -21,14 +21,13 @@ the sysroot and the deployments. Additional kernel options can be passed via
 """
 
 
-import contextlib
 import os
 import sys
 import subprocess
 
 import osbuild.api
 from osbuild.util import selinux
-
+from osbuild.util.mnt import MountGuard
 
 SCHEMA_2 = """
 "inputs": {
@@ -151,40 +150,6 @@ def ostree(*args, _input=None, **kwargs):
                    stdout=sys.stderr,
                    input=_input,
                    check=True)
-
-
-class MountGuard(contextlib.AbstractContextManager):
-    def __init__(self):
-        self.mounts = []
-
-    def mount(self, source, target, bind=True, ro=False, mode="0755"):
-        options = []
-        if bind:
-            options += ["bind"]
-        if ro:
-            options += ["ro"]
-        if mode:
-            options += [mode]
-
-        args = ["--make-private"]
-        if options:
-            args += ["-o", ",".join(options)]
-
-        subprocess.run(["mount"] + args + [source, target], check=True)
-        self.mounts += [{"source": source, "target": target}]
-
-        subprocess.run(["mount"] + args + [source, target], check=True)
-
-    def unmount(self):
-
-        while self.mounts:
-            mount = self.mounts.pop()  # FILO: get the last mount
-            target = mount["target"]
-            subprocess.run(["umount", "--lazy", target],
-                           check=True)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.unmount()
 
 
 def make_fs_identifier(desc):
