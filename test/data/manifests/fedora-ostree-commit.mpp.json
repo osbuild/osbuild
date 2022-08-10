@@ -25,16 +25,21 @@
             "packages": [
               "@cloud-server-environment",
               "chrony",
+              "cryptsetup",
               "dracut-config-generic",
+              "greenboot-grub2",
+              "greenboot-reboot",
+              "greenboot-rpm-ostree-grub2",
+              "greenboot-status",
+              "greenboot",
               "grub2-pc",
               "kernel-core",
               "langpacks-en",
+              "lvm2",
               "nss-altfiles",
-              "ostree",
               "polkit",
               "rpm-ostree",
-              "selinux-policy-targeted",
-              "systemd-udev"
+              "selinux-policy-targeted"
             ],
             "excludes": [
               "dracut-config-rescue"
