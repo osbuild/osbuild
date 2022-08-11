@@ -272,7 +272,7 @@ class Service(abc.ABC):
                 # an exception in `sock.send` later.
                 self._check_fds(reply_fds)
 
-            except:  # pylint: disable=bare-except
+            except Exception:  # pylint: disable=broad-except
                 reply_fds = self._close_all(reply_fds)
                 _, val, tb = sys.exc_info()
                 reply = self.protocol.encode_exception(val, tb)

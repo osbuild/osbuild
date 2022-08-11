@@ -359,8 +359,8 @@ class MDAHeader(Header):
         for loc in self.raw_locns:
             loc.write(fr)
 
-        l = fr.tell()
-        fr.write(b"\0" * (self.HEADER_SIZE - l))
+        L = fr.tell()
+        fr.write(b"\0" * (self.HEADER_SIZE - L))
 
         raw = fr.getvalue()
 
@@ -542,7 +542,7 @@ class Disk:
 
         try:
             self._init_headers()
-        except:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             self.fp.close()
             raise
 

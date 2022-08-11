@@ -195,7 +195,7 @@ def sort_devices(devices: Dict) -> Dict:
             desc = devices[name]
 
             parent = desc.get("parent")
-            if parent and not parent in result:
+            if parent and parent not in result:
                 # if the parent is not in the `result` list, it must
                 # be in `todo`; otherwise it is missing
                 if parent not in todo:
@@ -380,7 +380,7 @@ def load(description: Dict, index: Index) -> Manifest:
     return manifest
 
 
-#pylint: disable=too-many-branches
+# pylint: disable=too-many-branches
 def output(manifest: Manifest, res: Dict) -> Dict:
     """Convert a result into the v2 format"""
 

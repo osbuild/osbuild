@@ -86,3 +86,15 @@ jobs:
           sudo apt install python3-pip -y
           sudo pip install mypy types-pyyaml jsonschema mako
           mypy osbuild
+
+  flake8:
+    name: "flake8 check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+      - name: Check files with flake8
+        run: |
+          sudo apt install python3-pip -y
+          sudo pip install flake8
+          flake8 osbuild

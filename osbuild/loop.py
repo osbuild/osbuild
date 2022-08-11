@@ -584,7 +584,7 @@ class LoopControl:
             if callable(setup):
                 try:
                     setup(lo)
-                except:
+                except Exception:
                     lo.close()
                     raise
 

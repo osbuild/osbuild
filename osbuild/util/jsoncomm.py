@@ -57,7 +57,7 @@ class FdSet:
         self._fds = array.array("i")
 
     @classmethod
-    def from_list(cls, l: list):
+    def from_list(cls, L: list):
         """Create new Set from List
 
         This creates a new file-descriptor set initialized to the same entries
@@ -66,7 +66,7 @@ class FdSet:
         """
 
         fds = array.array("i")
-        fds.fromlist(l)
+        fds.fromlist(L)
         return cls(rawfds=fds)
 
     def __len__(self):
@@ -216,7 +216,7 @@ class Socket(contextlib.AbstractContextManager):
             # default destination for send operations.
             if connect_to is not None:
                 sock.connect(os.fspath(connect_to))
-        except:
+        except Exception:
             if sock is not None:
                 sock.close()
             raise
@@ -255,7 +255,7 @@ class Socket(contextlib.AbstractContextManager):
             sock.bind(os.fspath(bind_to))
             unlink = os.open(os.path.join(".", path[0]), os.O_CLOEXEC | os.O_PATH)
             sock.setblocking(False)
-        except:
+        except Exception:
             if unlink is not None:
                 os.close(unlink)
             if sock is not None:
