@@ -48,6 +48,10 @@ from osbuild import api
 SCHEMA = """
 "additionalProperties": false,
 "properties": {
+   "dbpath": {
+     "desription": "Use the given path as RPM database",
+     "type": "string"
+  },
   "disable_dracut": {
     "description": "Prevent dracut from running",
     "type": "boolean"
@@ -114,6 +118,10 @@ SCHEMA_2 = """
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "dbpath": {
+      "desription": "Use the given path as RPM database",
+      "type": "string"
+    },
     "gpgkeys": {
       "description": "Array of GPG key contents to import",
       "type": "array",
@@ -174,7 +182,7 @@ SCHEMA_2 = """
 OSTREE_BOOTED_MARKER = "run/ostree-booted"
 
 
-def generate_package_metadata(tree):
+def generate_package_metadata(tree, rpm_args):
     query = r"""\{
     "name": "%{NAME}",
     "version": "%{VERSION}",
@@ -189,6 +197,7 @@ def generate_package_metadata(tree):
 
     cmd = [
         "rpm",
+        *rpm_args,
         "-qa",
         "--root", tree,
         "--qf=" + query
@@ -226,10 +235,12 @@ def enable_dracut(masked_files):
         os.unlink(path)
 
 
-def remove_unowned_etc_kernel(tree):
+def remove_unowned_etc_kernel(tree, rpm_args):
     # if installed, /etc/kernel is owned by systemd-udev; but
     # in case the directory is un-owned, remove it again
+
     res = subprocess.run(["rpm",
+                          *rpm_args,
                           "--root", tree,
                           "-qf", "/etc/kernel"],
                          stdout=subprocess.PIPE,
@@ -268,8 +279,16 @@ def create_machine_id_if_needed(tree):
     return True
 
 
+# pylint: disable=too-many-branches
 def main(tree, inputs, options):
     pkgpath, packages = parse_input(inputs)
+
+    dbpath = options.get("dbpath")
+
+    rpm_args = []
+    if dbpath:
+        print(f"dbpath set to '{dbpath}'")
+        rpm_args += ["--dbpath", dbpath]
 
     for key in options.get("gpgkeys", []):
         with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
@@ -277,6 +296,7 @@ def main(tree, inputs, options):
             keyfile.flush()
             subprocess.run([
                 "rpmkeys",
+                *rpm_args,
                 "--root", tree,
                 "--import", keyfile.name
             ], check=True)
@@ -286,6 +306,7 @@ def main(tree, inputs, options):
         if data.get("rpm.check_gpg"):
             subprocess.run([
                 "rpmkeys",
+                *rpm_args,
                 "--root", tree,
                 "--checksig",
                 filename
@@ -306,7 +327,6 @@ def main(tree, inputs, options):
             f.write("")
 
     extra_args = []
-
     if options.get("exclude", {}).get("docs"):
         extra_args += ["--excludedocs"]
 
@@ -329,6 +349,7 @@ def main(tree, inputs, options):
         subprocess.run([
             "rpm",
             "--verbose",
+            *rpm_args,
             "--root", tree,
             *extra_args,
             # All digests and signatures of the rpms has been verified,
@@ -342,6 +363,7 @@ def main(tree, inputs, options):
         path = os.path.join(tree, key.lstrip("/"))
         subprocess.run([
             "rpmkeys",
+            *rpm_args,
             "--root", tree,
             "--import", path
         ], check=True)
@@ -350,7 +372,7 @@ def main(tree, inputs, options):
     # re-enabled dracut
     if no_dracut:
         enable_dracut(masked_files)
-        remove_unowned_etc_kernel(tree)
+        remove_unowned_etc_kernel(tree, rpm_args)
 
     # remove temporary machine ID if it was created by us
     if machine_id_created:
@@ -367,7 +389,7 @@ def main(tree, inputs, options):
         os.unlink(f"{tree}/var/lib/systemd/random-seed")
 
     # generate the metadata
-    md = generate_package_metadata(tree)
+    md = generate_package_metadata(tree, rpm_args)
     api.metadata(md)
 
     return 0
