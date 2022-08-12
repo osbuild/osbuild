@@ -11,10 +11,15 @@ import json
 import os
 import sys
 
+from typing import Dict, Any, List
+
 import osbuild
 import osbuild.meta
 import osbuild.monitor
 from osbuild.objectstore import ObjectStore
+
+from typing import Dict, Any, List
+
 
 
 RESET = "\033[0m"
@@ -23,17 +28,17 @@ RED = "\033[31m"
 GREEN = "\033[32m"
 
 
-def parse_manifest(path):
+def parse_manifest(path: str) -> Dict[str, Any]:
     if path == "-":
         manifest = json.load(sys.stdin)
     else:
         with open(path) as f:
             manifest = json.load(f)
 
-    return manifest
+    return dict(manifest)
 
 
-def show_validation(result, name):
+def show_validation(result: osbuild.meta.ValidationResult, name: str) -> None:
     if name == "-":
         name = "<stdin>"
 
@@ -51,7 +56,7 @@ def show_validation(result, name):
         print(f"  {error.message}\n")
 
 
-def export(name_or_id, output_directory, store, manifest):
+def export(name_or_id: str, output_directory: str, store: ObjectStore, manifest: Dict[str, Any]) -> None:
     pipeline = manifest[name_or_id]
     obj = store.get(pipeline.id)
     dest = os.path.join(output_directory, name_or_id)
@@ -60,7 +65,7 @@ def export(name_or_id, output_directory, store, manifest):
     obj.export(dest)
 
 
-def parse_arguments(sys_argv):
+def parse_arguments(sys_argv: List[str]) -> Any:
     parser = argparse.ArgumentParser(prog="osbuild",
                                      description="Build operating system images")
 
@@ -95,7 +100,7 @@ def parse_arguments(sys_argv):
 
 
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
-def osbuild_cli():
+def osbuild_cli() -> int:
     args = parse_arguments(sys.argv)
     desc = parse_manifest(args.manifest_path)
 

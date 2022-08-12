@@ -48,7 +48,7 @@ import sys
 import threading
 import traceback
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple, Callable, Iterable, Union
+from typing import Any, Dict, List, Optional, Tuple, Callable, Iterable, Union, Tuple, Type
 
 from osbuild.util.jsoncomm import FdSet, Socket
 
@@ -60,7 +60,7 @@ class ProtocolError(Exception):
 class RemoteError(Exception):
     """A RemoteError indicates an unexpected error in the service"""
 
-    def __init__(self, name, value, stack) -> None:
+    def __init__(self, name: str, value: str, stack: str) -> None:
         self.name = name
         self.value = value
         self.stack = stack
@@ -78,7 +78,7 @@ class ServiceProtocol:
     """
 
     @staticmethod
-    def decode_message(msg: Dict) -> Tuple[str, Dict]:
+    def decode_message(msg: Dict[str, Any]) -> Tuple[str, Dict]:
         if not msg:
             raise ProtocolError("message empty")
 
@@ -92,7 +92,7 @@ class ServiceProtocol:
         return t, d
 
     @staticmethod
-    def encode_method(name: str, arguments: Union[List[str], Dict[str, Any]]):
+    def encode_method(name: str, arguments: Union[List[str], Dict[str, Any]]) -> Dict[str, Any]:
         msg = {
             "type": "method",
             "data": {
@@ -103,7 +103,7 @@ class ServiceProtocol:
         return msg
 
     @staticmethod
-    def decode_method(data: Dict):
+    def decode_method(data: Dict[str, Any]) -> Tuple[str, List[Any]]:
         name = data.get("name")
         if not name:
             raise ProtocolError("'name' field missing")
@@ -112,7 +112,7 @@ class ServiceProtocol:
         return name, args
 
     @staticmethod
-    def encode_reply(reply: Any):
+    def encode_reply(reply: Any) -> Dict[str, Any]:
         msg = {
             "type": "reply",
             "data": {
@@ -122,7 +122,7 @@ class ServiceProtocol:
         return msg
 
     @staticmethod
-    def decode_reply(msg: Dict) -> Any:
+    def decode_reply(msg: Dict[str, Any]) -> Any:
         if "reply" not in msg:
             raise ProtocolError("'reply' field missing")
 
@@ -132,7 +132,7 @@ class ServiceProtocol:
         return data
 
     @staticmethod
-    def encode_signal(sig: Any):
+    def encode_signal(sig: Any) -> Dict[str, Any]:
         msg = {
             "type": "signal",
             "data": {
@@ -142,7 +142,7 @@ class ServiceProtocol:
         return msg
 
     @staticmethod
-    def encode_exception(value, tb):
+    def encode_exception(value: BaseException, tb: Type[BaseException]) -> Dict[str, Any]:
         backtrace = "".join(traceback.format_tb(tb))
         msg = {
             "type": "exception",
@@ -155,7 +155,7 @@ class ServiceProtocol:
         return msg
 
     @staticmethod
-    def decode_exception(data):
+    def decode_exception(data: Dict[str, Any]) -> RemoteError:
         name = data["name"]
         value = data["value"]
         tb = data["backtrace"]
@@ -180,13 +180,13 @@ class Service(abc.ABC):
 
     protocol = ServiceProtocol
 
-    def __init__(self, args: argparse.Namespace):
+    def __init__(self, args: argparse.Namespace) -> None:
 
         self.sock = Socket.new_from_fd(args.service_fd)
         self.id = args.service_id
 
     @classmethod
-    def from_args(cls, argv):
+    def from_args(cls, argv: argparse.Namespace) -> "Service":
         """Create a service object given an argument vector"""
 
         parser = cls.prepare_argument_parser()
@@ -194,7 +194,7 @@ class Service(abc.ABC):
         return cls(args)
 
     @classmethod
-    def prepare_argument_parser(cls):
+    def prepare_argument_parser(cls) -> argparse.ArgumentParser:
         """Prepare the command line argument parser"""
 
         name = __class__.__name__
@@ -209,7 +209,7 @@ class Service(abc.ABC):
         return parser
 
     @abc.abstractmethod
-    def dispatch(self, method: str, args: Any, fds: FdSet):
+    def dispatch(self, method: str, args: Any, fds: FdSet) -> None:
         """Handle remote method calls
 
         This method must be overridden in order to handle remote
@@ -219,7 +219,7 @@ class Service(abc.ABC):
         will form the return value of the remote call.
         """
 
-    def stop(self):
+    def stop(self) -> None:
         """Service is stopping
 
         This method will be called when the service is stopping,
@@ -230,7 +230,7 @@ class Service(abc.ABC):
         even during the handling method calls.
         """
 
-    def main(self):
+    def main(self) -> None:
         """Main service entry point
 
         This method should be invoked in the service executable
@@ -251,7 +251,7 @@ class Service(abc.ABC):
         finally:
             self.stop()
 
-    def serve(self):
+    def serve(self) -> None:
         """Serve remote requests
 
         Wait for remote method calls and translate them into
@@ -287,7 +287,7 @@ class Service(abc.ABC):
             finally:
                 self._close_all(reply_fds)
 
-    def _handle_message(self, msg, fds):
+    def _handle_message(self, msg: str, fds: FdSet):
         """
         Internal method called by `service` to handle new messages
         """
@@ -303,12 +303,12 @@ class Service(abc.ABC):
 
         return msg, fds
 
-    def emit_signal(self, data: Any, fds: Optional[list] = None):
+    def emit_signal(self, data: Any, fds: Optional[List[Any]] = None) -> None:
         self._check_fds(fds)
         self.sock.send(self.protocol.encode_signal(data), fds=fds)
 
     @staticmethod
-    def _close_all(fds: Optional[List[int]]):
+    def _close_all(fds: Optional[List[int]]) -> List[Any]:
         if not fds:
             return []
 
@@ -320,7 +320,7 @@ class Service(abc.ABC):
         return []
 
     @staticmethod
-    def _check_fds(fds: Optional[List[int]]):
+    def _check_fds(fds: Optional[List[int]]) -> None:
         if not fds:
             return
 
@@ -337,7 +337,7 @@ class ServiceClient:
     """
     protocol = ServiceProtocol
 
-    def __init__(self, uid, proc, sock):
+    def __init__(self, uid: str, proc: int, sock: Socket):
         self.uid = uid
         self.proc = proc
         self.sock = sock
@@ -385,7 +385,7 @@ class ServiceClient:
 
         raise ProtocolError(f"unknown message type: {kind}")
 
-    def stop(self):
+    def stop(self) -> None:
         """
         Stop the host service associated with this client.
         """
@@ -407,7 +407,7 @@ class ServiceManager:
     is used.
     """
 
-    def __init__(self, *, monitor=None):
+    def __init__(self, *, monitor: Any = None):
         self.services = OrderedDict()
         self.monitor = monitor
 
@@ -416,12 +416,12 @@ class ServiceManager:
         self.thread = None
 
     @property
-    def running(self):
+    def running(self) -> bool:
         """Return whether the service manager is running"""
         return self.event_loop is not None
 
     @staticmethod
-    def make_env():
+    def make_env() -> Dict[str, Any]:
         # We want the `osbuild` python package that contains this
         # very module, which might be different from the system wide
         # installed one, to be accessible to the Input programs so
@@ -433,7 +433,7 @@ class ServiceManager:
         env["PYTHONUNBUFFERED"] = "1"
         return env
 
-    def start(self, uid, cmd, extra_args=None) -> ServiceClient:
+    def start(self, uid: str, cmd: str, extra_args: List[str] = None) -> ServiceClient:
         """
         Start a new host service
 
@@ -489,7 +489,7 @@ class ServiceManager:
 
             name = os.path.basename(cmd)
 
-            def reader():
+            def reader() -> bool:
                 return self._stdout_ready(name, uid, stdout)
 
             self.event_loop.add_reader(stdout, reader)
@@ -500,7 +500,7 @@ class ServiceManager:
 
         return service
 
-    def stop(self, uid):
+    def stop(self, uid: str) -> None:
         """
         Stop a service given its unique identifier, `uid`
         """
@@ -511,7 +511,7 @@ class ServiceManager:
 
         service.stop()
 
-    def _stdout_ready(self, name, uid, stdout):
+    def _stdout_ready(self, name: str, uid: str, stdout: int) -> None:
         txt = stdout.readline()
         if not txt:
             self.event_loop.remove_reader(stdout)
@@ -523,12 +523,12 @@ class ServiceManager:
         else:
             print(msg, end="")
 
-    def _thread_main(self):
+    def _thread_main(self) -> None:
         self.barrier.wait()
         asyncio.set_event_loop(self.event_loop)
         self.event_loop.run_forever()
 
-    def __enter__(self):
+    def __enter__(self) -> "ServiceManager":
         # We are not re-entrant, so complain if re-entered.
         assert not self.running
 
@@ -541,7 +541,7 @@ class ServiceManager:
 
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: List[str]) -> None:
         # Stop all registered services
         while self.services:
             _, srv = self.services.popitem()

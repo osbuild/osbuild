@@ -13,7 +13,7 @@ import json
 import os
 import subprocess
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from osbuild import host
 from osbuild.devices import DeviceManager
@@ -24,7 +24,7 @@ class Mount:
     A single mount with its corresponding options
     """
 
-    def __init__(self, name, info, device, target, options: Dict):
+    def __init__(self, name, info, device, target, options: Dict) -> None:
         self.name = name
         self.info = info
         self.device = device
@@ -32,7 +32,7 @@ class Mount:
         self.options = options
         self.id = self.calc_id()
 
-    def calc_id(self):
+    def calc_id(self) -> str:
         m = hashlib.sha256()
         m.update(json.dumps(self.info.name, sort_keys=True).encode())
         if self.device:
@@ -95,17 +95,17 @@ class MountService(host.Service):
     """Mount host service"""
 
     @abc.abstractmethod
-    def mount(self, args: Dict):
+    def mount(self, args: Dict) -> None:
         """Mount a device"""
 
     @abc.abstractmethod
-    def umount(self):
+    def umount(self) -> None:
         """Unmount all mounted resources"""
 
-    def stop(self):
+    def stop(self) -> None:
         self.umount()
 
-    def dispatch(self, method: str, args, _fds):
+    def dispatch(self, method: str, args, _fds) -> Tuple[None, None]:
         if method == "mount":
             r = self.mount(args)
             return r, None
@@ -126,7 +126,7 @@ class FileSystemMountService(MountService):
     def translate_options(self, options: Dict) -> List:
         return []
 
-    def mount(self, args: Dict):
+    def mount(self, args: Dict) -> str:
 
         source = args["source"]
         target = args["target"]
@@ -151,7 +151,7 @@ class FileSystemMountService(MountService):
         self.check = True
         return mountpoint
 
-    def umount(self):
+    def umount(self) -> None:
         if not self.mountpoint:
             return
 
@@ -164,6 +164,6 @@ class FileSystemMountService(MountService):
                        check=self.check)
         self.mountpoint = None
 
-    def sync(self):
+    def sync(self) -> None:
         subprocess.run(["sync", "-f", self.mountpoint],
                        check=self.check)

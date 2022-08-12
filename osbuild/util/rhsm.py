@@ -9,16 +9,19 @@ import contextlib
 import glob
 import os
 import re
+import io
+
+from typing import Dict, List, Any, Optional, Union
 
 
 class Subscriptions:
-    def __init__(self, repositories):
+    def __init__(self, repositories: Optional[Dict[str, Dict[str, Any]]]) -> None:
         self.repositories = repositories
         # These are used as a fallback if the repositories don't
         # contain secrets for a requested URL.
-        self.secrets = None
+        self.secrets: Optional[Dict[str, str]] = None
 
-    def get_fallback_rhsm_secrets(self):
+    def get_fallback_rhsm_secrets(self) -> None:
         rhsm_secrets = {
             'ssl_ca_cert': "/etc/rhsm/ca/redhat-uep.pem",
             'ssl_client_key': "",
@@ -39,7 +42,7 @@ class Subscriptions:
         raise RuntimeError("no matching rhsm key and cert")
 
     @classmethod
-    def from_host_system(cls):
+    def from_host_system(cls) -> "Subscriptions":
         """Read redhat.repo file and process the list of repositories in there."""
         ret = cls(None)
         with contextlib.suppress(FileNotFoundError):
@@ -55,7 +58,7 @@ class Subscriptions:
         return ret
 
     @staticmethod
-    def _process_baseurl(input_url):
+    def _process_baseurl(input_url: str) -> re.Pattern[str]:
         """Create a regex from a baseurl.
 
         The osbuild manifest format does not contain information about repositories.
@@ -74,14 +77,14 @@ class Subscriptions:
         return re.compile(input_url)
 
     @classmethod
-    def parse_repo_file(cls, fp):
+    def parse_repo_file(cls, fp: io.TextIOWrapper) -> "Subscriptions":
         """Take a file object and reads its content assuming it is a .repo file."""
         parser = configparser.ConfigParser()
         parser.read_file(fp)
 
         repositories = dict()
         for section in parser.sections():
-            current = {
+            current: Dict[str, Any] = {
                 "matchurl": cls._process_baseurl(parser.get(section, "baseurl"))
             }
             for parameter in ["sslcacert", "sslclientkey", "sslclientcert"]:
@@ -91,7 +94,7 @@ class Subscriptions:
 
         return cls(repositories)
 
-    def get_secrets(self, url):
+    def get_secrets(self, url: str) -> Dict[str, str]:
         # Try to find a matching URL from redhat.repo file first
         if self.repositories is not None:
             for parameters in self.repositories.values():

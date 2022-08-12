@@ -8,7 +8,7 @@ import sys
 import tempfile
 import traceback
 import threading
-from typing import Dict, Optional
+from typing import Dict, Optional, Any, IO, Iterator, List, Type
 from .util.types import PathLike
 from .util import jsoncomm
 
@@ -40,37 +40,38 @@ class BaseAPI(abc.ABC):
     call `_message.`
     """
 
-    def __init__(self, socket_address: Optional[PathLike] = None):
+    event_loop: Optional[asyncio.AbstractEventLoop] = None
+    thread: Optional[threading.Thread] = None
+    _socketdir: Optional[tempfile.TemporaryDirectory[Any]] = None
+
+    def __init__(self, socket_address: Optional[PathLike] = None) -> None:
         self.socket_address = socket_address
         self.barrier = threading.Barrier(2)
-        self.event_loop = None
-        self.thread = None
-        self._socketdir = None
 
     @property
     @classmethod
     @abc.abstractmethod
-    def endpoint(cls):
+    def endpoint(cls) -> "str":
         """The name of the API endpoint"""
 
     @abc.abstractmethod
-    def _message(self, msg: Dict, fds: jsoncomm.FdSet, sock: jsoncomm.Socket):
+    def _message(self, msg: Dict[str, Any], fds: jsoncomm.FdSet, sock: jsoncomm.Socket) -> None:
         """Called for a new incoming message
 
         The file descriptor set `fds` will be closed after the call.
         Use the `FdSet.steal()` method to extract file descriptors.
         """
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """Called after the event loop is shut down"""
 
     @classmethod
-    def _make_socket_dir(cls, rundir: PathLike = "/run/osbuild"):
+    def _make_socket_dir(cls, rundir: PathLike = "/run/osbuild") -> tempfile.TemporaryDirectory[Any]:
         """Called to create the temporary socket dir"""
         os.makedirs(rundir, exist_ok=True)
         return tempfile.TemporaryDirectory(prefix="api-", dir=rundir)
 
-    def _dispatch(self, sock: jsoncomm.Socket):
+    def _dispatch(self, sock: jsoncomm.Socket) -> None:
         """Called when data is available on the socket"""
         msg, fds, _ = sock.recv()
         if msg is None:
@@ -81,26 +82,33 @@ class BaseAPI(abc.ABC):
         self._message(msg, fds, sock)
         fds.close()
 
-    def _accept(self, server):
+    def _accept(self, server: jsoncomm.Socket) -> None:
         client = server.accept()
-        if client:
+        if client and self.event_loop:
             self.event_loop.add_reader(client, self._dispatch, client)
 
-    def _run_event_loop(self):
+    def _run_event_loop(self) -> None:
+        if not self.socket_address:
+            raise RuntimeError("_run_event_loop but no socket_address")
+
         with jsoncomm.Socket.new_server(self.socket_address) as server:
             server.blocking = False
             server.listen()
             self.barrier.wait()
+
+            if not self.event_loop:
+                raise RuntimeError("_run_event_loop but no event_loop")
+
             self.event_loop.add_reader(server, self._accept, server)
             asyncio.set_event_loop(self.event_loop)
             self.event_loop.run_forever()
             self.event_loop.remove_reader(server)
 
     @property
-    def running(self):
+    def running(self) -> bool:
         return self.event_loop is not None
 
-    def __enter__(self):
+    def __enter__(self) -> "BaseAPI":
         # We are not re-entrant, so complain if re-entered.
         assert not self.running
 
@@ -118,8 +126,15 @@ class BaseAPI(abc.ABC):
 
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: List[Any]) -> None:
+        if not self.event_loop:
+            raise RuntimeError("__exit__ but no event_loop")
+
         self.event_loop.call_soon_threadsafe(self.event_loop.stop)
+
+        if not self.thread:
+            raise RuntimeError("__exit__ but no thread")
+
         self.thread.join()
         self.event_loop.close()
 
@@ -140,31 +155,32 @@ class API(BaseAPI):
 
     endpoint = "osbuild"
 
-    def __init__(self, *, socket_address=None):
+    error: Optional[Dict[str, Any]] = None
+
+    def __init__(self, *, socket_address: Optional[PathLike] = None) -> None:
         super().__init__(socket_address)
         self.metadata = {}
-        self.error = None
 
-    def _set_metadata(self, message, fds):
+    def _set_metadata(self, message: Dict[str, Any], fds: jsoncomm.FdSet) -> None:
         fd = message["metadata"]
         with os.fdopen(fds.steal(fd), encoding="utf-8") as f:
             data = json.load(f)
         self.metadata.update(data)
 
-    def _get_exception(self, message):
+    def _get_exception(self, message: Dict[str, Any]) -> None:
         self.error = {
             "type": "exception",
             "data": message["exception"],
         }
 
-    def _message(self, msg, fds, sock):
+    def _message(self, msg: Dict[str, Any], fds: jsoncomm.FdSet, sock: jsoncomm.Socket) -> None:
         if msg["method"] == 'add-metadata':
             self._set_metadata(msg, fds)
         elif msg["method"] == 'exception':
             self._get_exception(msg)
 
 
-def exception(e, path="/run/osbuild/api/osbuild"):
+def exception(e: Type[BaseException], path: str = "/run/osbuild/api/osbuild") -> None:
     """Send exception to osbuild"""
     traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
     with jsoncomm.Socket.new_client(path) as client:
@@ -186,24 +202,24 @@ def exception(e, path="/run/osbuild/api/osbuild"):
 
 # pylint: disable=broad-except
 @contextlib.contextmanager
-def exception_handler(path="/run/osbuild/api/osbuild"):
+def exception_handler(path: str = "/run/osbuild/api/osbuild") -> Iterator[None]:
     try:
         yield
     except Exception as e:
         exception(e, path)
 
 
-def arguments(path="/run/osbuild/api/arguments"):
+def arguments(path: str = "/run/osbuild/api/arguments") -> Dict[str, Any]:
     """Retrieve the input arguments that were supplied to API"""
     with open(path, "r", encoding="utf-8") as fp:
-        data = json.load(fp)
+        data: Dict[str, Any] = json.load(fp)
     return data
 
 
-def metadata(data: Dict, path="/run/osbuild/api/osbuild"):
+def metadata(data: Dict[str, Any], path: str = "/run/osbuild/api/osbuild") -> None:
     """Update metadata for the current module"""
 
-    def data_to_file():
+    def data_to_file() -> io.TextIOWrapper:
         with tempfile.TemporaryFile() as f:
             f.write(json.dumps(data).encode('utf-8'))
             # re-open the file to get a read-only file descriptor

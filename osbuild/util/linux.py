@@ -20,6 +20,8 @@ import os
 import platform
 import threading
 
+from typing import Set, Sequence, Optional, Callable, Any, Iterator
+
 
 __all__ = [
     "ioctl_get_immutable",
@@ -44,7 +46,7 @@ else:
     BLK_IOC_FLSBUF = 0x00001261
 
 
-def ioctl_get_immutable(fd: int):
+def ioctl_get_immutable(fd: int) -> bool:
     """Query FS_IMMUTABLE_FL
 
     This queries the `FS_IMMUTABLE_FL` flag on a specified file.
@@ -73,7 +75,7 @@ def ioctl_get_immutable(fd: int):
     return bool(flags[0] & FS_IMMUTABLE_FL)
 
 
-def ioctl_toggle_immutable(fd: int, set_to: bool):
+def ioctl_toggle_immutable(fd: int, set_to: bool) -> None:
     """Toggle FS_IMMUTABLE_FL
 
     This toggles the `FS_IMMUTABLE_FL` flag on a specified file. It can both set
@@ -104,7 +106,7 @@ def ioctl_toggle_immutable(fd: int, set_to: bool):
     fcntl.ioctl(fd, FS_IOC_SETFLAGS, flags, False)
 
 
-def ioctl_blockdev_flushbuf(fd: int):
+def ioctl_blockdev_flushbuf(fd: int) -> None:
     """Flush the block device buffer cache
 
     NB: This function needs the `CAP_SYS_ADMIN` capability.
@@ -163,7 +165,7 @@ class LibCap:
         self._free = free
 
     @staticmethod
-    def _check_result(result, func, args):
+    def _check_result(result: Optional[int], func: Callable[[Sequence[Any]], None], args: Sequence[Any]) -> int:
         if result is None or (isinstance(result, int) and result == -1):
             err = ctypes.get_errno()
             msg = f"{func.__name__}{args} -> {result}: error ({err}): {os.strerror(err)}"
@@ -171,7 +173,7 @@ class LibCap:
         return result
 
     @staticmethod
-    def make():
+    def make() -> Optional["LibCap"]:
         path = ctypes.util.find_library("cap")
         if not path:
             return None
@@ -194,7 +196,7 @@ class LibCap:
             return 0
 
     @classmethod
-    def get_default(cls) -> "LibCap":
+    def get_default(cls) -> Optional["LibCap"]:
         """Return a singleton instance of the library"""
         with cls._lock:
             if cls._inst is None:
@@ -204,7 +206,7 @@ class LibCap:
     def get_bound(self, capability: int) -> bool:
         """Return the current value of the capability in the thread's bounding set"""
         # cap = self.cap_value_t(capability)
-        return self._get_bound(capability) == 1
+        return bool(self._get_bound(capability) == 1)
 
     def to_name(self, value: int) -> str:
         """Translate from the capability's integer value to the its symbolic name"""
@@ -239,7 +241,7 @@ def cap_is_supported(capability: str = "CAP_CHOWN") -> bool:
         return False
 
 
-def cap_bound_set() -> set:
+def cap_bound_set() -> Set[str]:
     """Return the calling thread's capability bounding set
 
     If capabilities are not supported this function will return the empty set.
@@ -257,12 +259,12 @@ def cap_bound_set() -> set:
     return res
 
 
-def cap_mask_to_set(mask: int) -> set:
+def cap_mask_to_set(mask: int) -> Set[str]:
     lib = LibCap.get_default()
     if not lib:
         return set()
 
-    def bits(n):
+    def bits(n: int) -> Iterator[int]:
         count = 0
         while n:
             if n & 1:

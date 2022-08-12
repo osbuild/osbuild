@@ -6,8 +6,9 @@ import subprocess
 import sys
 import tempfile
 import typing
+import io
 
-from typing import List, Any
+from typing import List, Any, Iterator, Dict, Type
 
 from .types import PathLike
 
@@ -15,11 +16,11 @@ from .types import PathLike
 class Param:
     """rpm-ostree Treefile parameter"""
 
-    def __init__(self, value_type, mandatory=False):
+    def __init__(self, value_type: Type, mandatory: bool = False) -> None:
         self.type = value_type
         self.mandatory = mandatory
 
-    def check(self, value):
+    def check(self, value: List[Type]) -> None:
         origin = getattr(self.type, "__origin__", None)
         if origin:
             self.typecheck(value, origin)
@@ -31,13 +32,13 @@ class Param:
             self.typecheck(value, self.type)
 
     @staticmethod
-    def check_list(value, tp):
+    def check_list(value: List[Type], tp: Type) -> None:
         inner = tp.__args__
         for x in value:
             Param.typecheck(x, inner)
 
     @staticmethod
-    def typecheck(value, tp):
+    def typecheck(value: Type, tp: Type) -> None:
         if isinstance(value, tp):
             return
         raise ValueError(f"{value} is not of {tp}")
@@ -71,32 +72,33 @@ class Treefile:
         "initramfs-args": Param(List[str]),
     }
 
-    def __init__(self):
-        self._data = {}
+    def __init__(self) -> None:
+        self._data: Dict[str, Any] = {}
+
         self["ref"] = "osbuild/devel"
         self["repos"] = ["osbuild"]
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         param = self.parameters.get(key)
         if not param:
             raise ValueError(f"Unknown param: {key}")
         return self._data[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         param = self.parameters.get(key)
         if not param:
             raise ValueError(f"Unknown param: {key}")
         param.check(value)
         self._data[key] = value
 
-    def dumps(self):
+    def dumps(self) -> str:
         return json.dumps(self._data)
 
-    def dump(self, fp):
+    def dump(self, fp: io.TextIOWrapper) -> None:
         return json.dump(self._data, fp)
 
     @contextlib.contextmanager
-    def as_tmp_file(self):
+    def as_tmp_file(self) -> Iterator[str]:
         name = None
         try:
             fd, name = tempfile.mkstemp(suffix=".json",
@@ -153,7 +155,7 @@ def show(repo: PathLike, checksum: str) -> str:
     return msg
 
 
-def deployment_path(root: PathLike, osname: str, ref: str, serial: int):
+def deployment_path(root: PathLike, osname: str, ref: str, serial: int) -> str:
     """Return the path to a deployment given the parameters"""
 
     base = os.path.join(root, "ostree")
@@ -176,12 +178,12 @@ class PasswdLike:
     again.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an empty PasswdLike object"""
         self.db = dict()
 
     @classmethod
-    def from_file(cls, path: PathLike, allow_missing_file: bool = False):
+    def from_file(cls, path: PathLike, allow_missing_file: bool = False) -> "PasswdLike":
         """Initialize a PasswdLike object from an existing file"""
         ret = cls()
         if allow_missing_file:
@@ -192,7 +194,7 @@ class PasswdLike:
             ret.db = cls._passwd_lines_to_dict(p.readlines())
         return ret
 
-    def merge_with_file(self, path: PathLike, allow_missing_file: bool = False):
+    def merge_with_file(self, path: PathLike, allow_missing_file: bool = False) -> None:
         """Extend the database with entries from another file"""
         if allow_missing_file:
             if not os.path.isfile(path):
@@ -204,13 +206,13 @@ class PasswdLike:
                 if name not in self.db:
                     self.db[name] = passwd_line
 
-    def dump_to_file(self, path: PathLike):
+    def dump_to_file(self, path: PathLike) -> None:
         """Write the current database to a file"""
         with open(path, "w") as p:
             p.writelines(list(self.db.values()))
 
     @staticmethod
-    def _passwd_lines_to_dict(lines):
+    def _passwd_lines_to_dict(lines: List[str]) -> Dict[str, str]:
         """Take a list of passwd lines and produce a "name": "line" dictionary"""
         return {line.split(':')[0]: line for line in lines}
 
@@ -225,7 +227,7 @@ class SubIdsDB:
     def __init__(self) -> None:
         self.db: collections.OrderedDict[str, Any] = collections.OrderedDict()
 
-    def read(self, fp) -> int:
+    def read(self, fp: io.TextIOWrapper) -> int:
         idx = 0
         for idx, line in enumerate(fp.readlines()):
             line = line.strip()

@@ -4,15 +4,15 @@ import errno
 import os
 import subprocess
 
-from typing import Dict, TextIO
+from typing import Dict, TextIO, Optional
 
 # Extended attribute name for SELinux labels
 XATTR_NAME_SELINUX = b"security.selinux"
 
 
-def parse_config(config_file: TextIO):
+def parse_config(config_file: TextIO) -> Dict[str, str]:
     """Parse an SELinux configuration file"""
-    config = {}
+    config: Dict[str, str] = {}
     for line in config_file:
         line = line.strip()
         if not line:
@@ -24,7 +24,7 @@ def parse_config(config_file: TextIO):
     return config
 
 
-def config_get_policy(config: Dict[str, str]):
+def config_get_policy(config: Dict[str, str]) -> Optional[str]:
     """Return the effective SELinux policy
 
     Checks if SELinux is enabled and if so returns the
@@ -36,7 +36,7 @@ def config_get_policy(config: Dict[str, str]):
     return config.get('SELINUXTYPE', None)
 
 
-def setfiles(spec_file: str, root: str, *paths):
+def setfiles(spec_file: str, root: str, *paths: str) -> None:
     """Initialize the security context fields for `paths`
 
     Initialize the security context fields (extended attributes)

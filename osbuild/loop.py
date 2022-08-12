@@ -5,7 +5,8 @@ import fcntl
 import os
 import stat
 import time
-from typing import Callable, Optional
+
+from typing import Callable, Optional, Dict, Any
 
 from .util import linux
 
@@ -17,8 +18,9 @@ __all__ = [
 
 
 class UnexpectedDevice(Exception):
-    def __init__(self, expected_minor, rdev, mode):
+    def __init__(self, expected_minor: int, rdev: int, mode: int) -> None:
         super().__init__()
+
         self.expected_minor = expected_minor
         self.rdev = rdev
         self.mode = mode
@@ -48,8 +50,8 @@ class LoopInfo(ctypes.Structure):
 
     def is_bound_to(self, info: os.stat_result) -> bool:
         """Return if the loop device is bound to the file `info`"""
-        return (self.lo_device == info.st_dev and
-                self.lo_inode == info.st_ino)
+        return bool(self.lo_device == info.st_dev and
+                    self.lo_inode == info.st_ino)
 
 
 class Loop:
@@ -90,7 +92,7 @@ class Loop:
     LOOP_SET_DIRECT_IO = 0x4C08
     LOOP_SET_BLOCK_SIZE = 0x4C09
 
-    def __init__(self, minor, dir_fd=None):
+    def __init__(self, minor: int, dir_fd: Optional[int] = None) -> None:
         """
         Parameters
         ----------
@@ -112,10 +114,10 @@ class Loop:
         self.on_close: Optional[Callable[["Loop"], None]] = None
 
         with contextlib.ExitStack() as stack:
-            if not dir_fd:
-                dir_fd = os.open("/dev", os.O_DIRECTORY)
-                stack.callback(lambda: os.close(dir_fd))
-            self.fd = os.open(self.devname, os.O_RDWR, dir_fd=dir_fd)
+            if dir_fd is None:
+                new_dir_fd = os.open("/dev", os.O_DIRECTORY)
+                stack.callback(lambda: os.close(new_dir_fd))
+            self.fd = os.open(self.devname, os.O_RDWR, dir_fd=new_dir_fd)
 
         info = os.stat(self.fd)
         if ((not stat.S_ISBLK(info.st_mode)) or
@@ -123,10 +125,10 @@ class Loop:
                 (not os.minor(info.st_rdev) == minor)):
             raise UnexpectedDevice(minor, info.st_rdev, info.st_mode)
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         """Close this loop device.
 
         No operations on this object are valid after this call.
@@ -181,7 +183,7 @@ class Loop:
 
         linux.ioctl_blockdev_flushbuf(self.fd)
 
-    def set_fd(self, fd):
+    def set_fd(self, fd: int) -> None:
         """Bind a file descriptor to the loopback device
 
         The loopback device must be unbound. The backing file must be
@@ -198,7 +200,7 @@ class Loop:
 
         fcntl.ioctl(self.fd, self.LOOP_SET_FD, fd)
 
-    def clear_fd(self):
+    def clear_fd(self) -> None:
         """Unbind the file descriptor from the loopback device
 
         The loopback device must be bound. The device is then marked
@@ -264,7 +266,7 @@ class Loop:
 
             time.sleep(wait)
 
-    def change_fd(self, fd):
+    def change_fd(self, fd: int) -> None:
         """Replace the bound filedescriptor
 
         Atomically replace the backing filedescriptor of the loopback
@@ -315,7 +317,13 @@ class Loop:
         # it is bound, check if it is bound by `fd`
         return loop_info.is_bound_to(file_info)
 
-    def set_status(self, offset=None, sizelimit=None, autoclear=None, partscan=None):
+    def set_status(
+        self,
+        offset: Optional[int] = None,
+        sizelimit: Optional[int] = None,
+        autoclear: Optional[bool] = None,
+        partscan: Optional[bool] = None,
+    ) -> None:
         """Set properties of the loopback device
 
         The loopback device must be bound, and the properties will be
@@ -382,7 +390,7 @@ class Loop:
         fcntl.ioctl(self.fd, self.LOOP_GET_STATUS64, info)
         return info
 
-    def set_direct_io(self, dio=True):
+    def set_direct_io(self, dio: Optional[bool] = True) -> None:
         """Set the direct-IO property on the loopback device
 
         Enabling direct IO allows one to avoid double caching, which
@@ -396,7 +404,7 @@ class Loop:
 
         fcntl.ioctl(self.fd, self.LOOP_SET_DIRECT_IO, dio)
 
-    def mknod(self, dir_fd, mode=0o600):
+    def mknod(self, dir_fd: int, mode: int = 0o600) -> None:
         """Create a secondary device node
 
         Create a device node with the correct name, mode, minor and major
@@ -454,7 +462,7 @@ class LoopControl:
     LOOP_CTL_REMOVE = 0x4C81
     LOOP_CTL_GET_FREE = 0x4C82
 
-    def __init__(self, dir_fd=None):
+    def __init__(self, dir_fd: int = None) -> None:
         """
         Parameters
         ----------
@@ -470,14 +478,14 @@ class LoopControl:
 
             self.fd = os.open("loop-control", os.O_RDWR, dir_fd=dir_fd)
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def _check_open(self):
+    def _check_open(self) -> None:
         if self.fd < 0:
             raise RuntimeError("LoopControl closed")
 
-    def close(self):
+    def close(self) -> None:
         """Close the loop control file-descriptor
 
         No operations on this object are valid after this call,
@@ -488,7 +496,7 @@ class LoopControl:
             os.close(self.fd)
             self.fd = -1
 
-    def add(self, minor=-1):
+    def add(self, minor: int = -1) -> int:
         """Add a new loopback device
 
         Add a new, unbound loopback device. If a minor number is given
@@ -511,7 +519,7 @@ class LoopControl:
         self._check_open()
         return fcntl.ioctl(self.fd, self.LOOP_CTL_ADD, minor)
 
-    def remove(self, minor=-1):
+    def remove(self, minor: int = -1) -> None:
         """Remove an existing loopback device
 
         Removes an unbound and unopen loopback device. If a minor
@@ -529,7 +537,7 @@ class LoopControl:
         self._check_open()
         fcntl.ioctl(self.fd, self.LOOP_CTL_REMOVE, minor)
 
-    def get_unbound(self):
+    def get_unbound(self) -> int:
         """Get or create an unbound loopback device
 
         If an unbound loopback device exists, returns it.
@@ -548,7 +556,7 @@ class LoopControl:
                     fd: int,
                     lock: bool = False,
                     setup: Optional[Callable[[Loop], None]] = None,
-                    **kwargs):
+                    **kwargs: Dict[str, Any]) -> Loop:
         """
         Get or create an unbound loopback device and bind it to an fd
 

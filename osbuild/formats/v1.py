@@ -7,9 +7,10 @@ the created tree into an artefact. The pipeline can have any
 number of nested build pipelines. A sources section is used
 to fetch resources.
 """
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from osbuild.meta import Index, ValidationResult
 from ..pipeline import BuildResult, Manifest, Pipeline, detect_host_runner
+from ..sources import Source
 
 
 VERSION = "1"
@@ -40,7 +41,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict[str, Any]:
 
         return description
 
-    def get_source_name(source):
+    def get_source_name(source: Source):
         name = source.info.name
         if name == "org.osbuild.curl":
             name = "org.osbuild.files"
@@ -65,7 +66,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict[str, Any]:
     return description
 
 
-def load_assembler(description: Dict, index: Index, manifest: Manifest):
+def load_assembler(description: Dict[str, Any], index: Index, manifest: Manifest) -> Pipeline:
     pipeline = manifest["tree"]
 
     build, base, runner = pipeline.build, pipeline.id, pipeline.runner
@@ -83,7 +84,7 @@ def load_assembler(description: Dict, index: Index, manifest: Manifest):
     return pipeline
 
 
-def load_build(description: Dict, index: Index, manifest: Manifest, n: int):
+def load_build(description: Dict[str, Any], index: Index, manifest: Manifest, n: int) -> Optional[Pipeline]:
     pipeline = description.get("pipeline")
     if pipeline:
         build_pipeline = load_pipeline(pipeline, index, manifest, n + 1)
@@ -93,7 +94,7 @@ def load_build(description: Dict, index: Index, manifest: Manifest, n: int):
     return build_pipeline, description["runner"]
 
 
-def load_stage(description: Dict, index: Index, pipeline: Pipeline):
+def load_stage(description: Dict[str, Any], index: Index, pipeline: Pipeline) -> None:
     name = description["name"]
     opts = description.get("options", {})
     info = index.get_module_info("Stage", name)
@@ -119,7 +120,7 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline):
         ip.add_reference(commit, options)
 
 
-def load_source(name: str, description: Dict, index: Index, manifest: Manifest):
+def load_source(name: str, description: Dict[str, Any], index: Index, manifest: Manifest) -> None:
     if name == "org.osbuild.files":
         name = "org.osbuild.curl"
 
@@ -140,7 +141,7 @@ def load_source(name: str, description: Dict, index: Index, manifest: Manifest):
     manifest.add_source(info, items, description)
 
 
-def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 0) -> Pipeline:
+def load_pipeline(description: Dict[str, Any], index: Index, manifest: Manifest, n: int = 0) -> Pipeline:
     build = description.get("build")
     if build:
         build_pipeline, runner = load_build(build, index, manifest, n)
@@ -165,7 +166,7 @@ def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 
     return pipeline
 
 
-def load(description: Dict, index: Index) -> Manifest:
+def load(description: Dict[str, Any], index: Index) -> Manifest:
     """Load a manifest description"""
 
     pipeline = description.get("pipeline", {})
@@ -191,10 +192,10 @@ def load(description: Dict, index: Index) -> Manifest:
     return manifest
 
 
-def output(manifest: Manifest, res: Dict) -> Dict:
+def output(manifest: Manifest, res: Dict[str, Any]) -> Dict[str, Any]:
     """Convert a result into the v1 format"""
 
-    def result_for_stage(result: BuildResult):
+    def result_for_stage(result: BuildResult) -> Dict[str, Any]:
         return {
             "id": result.id,
             "type": result.name,
@@ -204,7 +205,7 @@ def output(manifest: Manifest, res: Dict) -> Dict:
             "metadata": result.metadata,
         }
 
-    def result_for_pipeline(pipeline):
+    def result_for_pipeline(pipeline: Pipeline) -> int:
         # The pipeline might not have been built one of its
         # dependencies, i.e. its build pipeline, failed to
         # build. We thus need to be tolerant of a missing
@@ -248,7 +249,7 @@ def output(manifest: Manifest, res: Dict) -> Dict:
     return result
 
 
-def validate(manifest: Dict, index: Index) -> ValidationResult:
+def validate(manifest: Dict[str, Any], index: Index) -> ValidationResult:
     """Validate a OSBuild manifest
 
     This function will validate a OSBuild manifest, including
@@ -281,7 +282,7 @@ def validate(manifest: Dict, index: Index) -> ValidationResult:
         name = stage["name"]
         schema = index.get_schema("Stage", name)
         res = schema.validate(stage)
-        result.merge(res, path=["pipeline", "stages", i])
+        result.merge(res, path=["pipeline", "stages", str(i)])
 
     asm = pipeline.get("assembler", {})
     if asm:

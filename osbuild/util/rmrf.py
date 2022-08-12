@@ -14,6 +14,8 @@ removed.
 import os
 import shutil
 
+from typing import Any, Tuple, Type
+
 import osbuild.util.linux as linux
 
 
@@ -22,7 +24,7 @@ __all__ = [
 ]
 
 
-def rmtree(path: str):
+def rmtree(path: str) -> None:
     """Recursively Remove from File System
 
     This removes the object at the given path from the file-system. It
@@ -52,7 +54,7 @@ def rmtree(path: str):
         function is used internally). Consult its documentation for details.
     """
 
-    def fixperms(p):
+    def fixperms(p: str) -> None:
         fd = None
         try:
 
@@ -87,7 +89,7 @@ def rmtree(path: str):
             if fd is not None:
                 os.close(fd)
 
-    def unlink(p):
+    def unlink(p: str) -> None:
         try:
             os.unlink(p)
         except IsADirectoryError:
@@ -95,7 +97,7 @@ def rmtree(path: str):
         except FileNotFoundError:
             pass
 
-    def on_error(_fn, p, exc_info):
+    def on_error(_fn, p: str, exc_info: Tuple[Type[BaseException], BaseException, Any]) -> None:
         e = exc_info[0]
         if issubclass(e, FileNotFoundError):
             pass

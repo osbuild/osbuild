@@ -3,7 +3,7 @@ import contextlib
 import hashlib
 import json
 import os
-from typing import Dict, Generator, Iterable, Iterator, List, Optional
+from typing import Dict, Generator, Iterable, Iterator, List, Optional, Set, Any
 
 from .api import API
 from . import buildroot
@@ -18,7 +18,7 @@ from .util import osrelease
 from .objectstore import ObjectStore
 
 
-DEFAULT_CAPABILITIES = {
+DEFAULT_CAPABILITIES: Set[str] = {
     "CAP_AUDIT_WRITE",
     "CAP_CHOWN",
     "CAP_DAC_OVERRIDE",
@@ -41,13 +41,13 @@ DEFAULT_CAPABILITIES = {
 }
 
 
-def cleanup(*objs):
+def cleanup(*objs) -> None:
     """Call cleanup method for all objects, filters None values out"""
     _ = map(lambda o: o.cleanup(), filter(None, objs))
 
 
 class BuildResult:
-    def __init__(self, origin, returncode, output, metadata, error):
+    def __init__(self, origin, returncode, output, metadata, error) -> None:
         self.name = origin.name
         self.id = origin.id
         self.success = returncode == 0
@@ -55,12 +55,12 @@ class BuildResult:
         self.metadata = metadata
         self.error = error
 
-    def as_dict(self):
+    def as_dict(self) -> Dict[str, Any]:
         return vars(self)
 
 
 class Stage:
-    def __init__(self, info, source_options, build, base, options, source_epoch):
+    def __init__(self, info, source_options, build, base, options, source_epoch) -> None:
         self.info = info
         self.sources = source_options
         self.build = build
@@ -73,11 +73,11 @@ class Stage:
         self.mounts = {}
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.info.name
 
     @property
-    def id(self):
+    def id(self) -> str:
         m = hashlib.sha256()
         m.update(json.dumps(self.name, sort_keys=True).encode())
         m.update(json.dumps(self.build, sort_keys=True).encode())
@@ -102,22 +102,22 @@ class Stage:
             for ref in ip.refs:
                 yield ref
 
-    def add_input(self, name, info, origin, options=None):
+    def add_input(self, name, info, origin, options=None) -> Input:
         ip = Input(name, info, origin, options or {})
         self.inputs[name] = ip
         return ip
 
-    def add_device(self, name, info, parent, options):
+    def add_device(self, name, info, parent, options) -> Device:
         dev = Device(name, info, parent, options)
         self.devices[name] = dev
         return dev
 
-    def add_mount(self, name, info, device, target, options):
+    def add_mount(self, name, info, device, target, options) -> Mount:
         mount = Mount(name, info, device, target, options)
         self.mounts[name] = mount
         return mount
 
-    def prepare_arguments(self, args, location):
+    def prepare_arguments(self, args, location) -> None:
         args["options"] = self.options
         args["meta"] = meta = {
             "id": self.id,
@@ -143,7 +143,7 @@ class Stage:
         with open(location, "w", encoding="utf-8") as fp:
             json.dump(args, fp)
 
-    def run(self, tree, runner, build_tree, store, monitor, libdir, timeout=None):
+    def run(self, tree, runner, build_tree, store, monitor, libdir, timeout=None) -> BuildResult:
         with contextlib.ExitStack() as cm:
 
             build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
@@ -241,7 +241,7 @@ class Stage:
 
 
 class Pipeline:
-    def __init__(self, name: str, runner=None, build=None, source_epoch=None):
+    def __init__(self, name: str, runner=None, build=None, source_epoch=None) -> None:
         self.name = name
         self.build = build
         self.runner = runner
@@ -250,7 +250,7 @@ class Pipeline:
         self.source_epoch = source_epoch
 
     @property
-    def id(self):
+    def id(self) -> Optional[str]:
         """
         Pipeline id: corresponds to the `id` of the last stage
 
@@ -264,7 +264,7 @@ class Pipeline:
         """
         return self.stages[-1].id if self.stages else None
 
-    def add_stage(self, info, options, sources_options=None):
+    def add_stage(self, info, options, sources_options=None) -> Stage:
         stage = Stage(info, sources_options, self.build,
                       self.id, options or {}, self.source_epoch)
         self.stages.append(stage)
@@ -272,7 +272,7 @@ class Pipeline:
             self.assembler.base = stage.id
         return stage
 
-    def build_stages(self, object_store, monitor, libdir, stage_timeout=None):
+    def build_stages(self, object_store, monitor, libdir, stage_timeout=None) -> Dict[str, Any]:
         results = {"success": True}
 
         # If there are no stages, just return here
@@ -350,7 +350,7 @@ class Pipeline:
 
         return results
 
-    def run(self, store, monitor, libdir, stage_timeout=None):
+    def run(self, store, monitor, libdir, stage_timeout=None) -> List[Dict[str, Any]]:
 
         monitor.begin(self)
 
@@ -367,7 +367,7 @@ class Pipeline:
 class Manifest:
     """Representation of a pipeline and its sources"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.pipelines = collections.OrderedDict()
         self.sources: List[Source] = []
 
@@ -380,12 +380,12 @@ class Manifest:
         self.pipelines[name] = pipeline
         return pipeline
 
-    def add_source(self, info, items: List, options: Dict) -> Source:
+    def add_source(self, info, items: List[Any], options: Dict[str, Any]) -> Source:
         source = Source(info, items, options)
         self.sources.append(source)
         return source
 
-    def download(self, store, monitor, libdir):
+    def download(self, store, monitor, libdir) -> None:
         with host.ServiceManager(monitor=monitor) as mgr:
             for source in self.sources:
                 source.download(mgr, store, libdir)
@@ -442,7 +442,7 @@ class Manifest:
 
         return list(map(lambda x: x.name, reversed(build.values())))
 
-    def build(self, store, pipelines, monitor, libdir, stage_timeout=None):
+    def build(self, store, pipelines, monitor, libdir, stage_timeout=None) -> Dict[str, Any]:
         results = {"success": True}
 
         for pl in map(self.get, pipelines):
@@ -454,7 +454,7 @@ class Manifest:
 
         return results
 
-    def mark_checkpoints(self, checkpoints):
+    def mark_checkpoints(self, checkpoints) -> Set[Any]:
         points = set(checkpoints)
 
         def mark_stage(stage):
@@ -498,7 +498,7 @@ class Manifest:
         return iter(self.pipelines.values())
 
 
-def detect_host_runner():
+def detect_host_runner() -> str:
     """Use os-release(5) to detect the runner for the host"""
     osname = osrelease.describe_os(*osrelease.DEFAULT_PATHS)
     return "org.osbuild." + osname

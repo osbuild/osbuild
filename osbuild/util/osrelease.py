@@ -6,6 +6,8 @@ related documentation can be found in `os-release(5)`.
 
 import os
 
+from typing import Dict
+
 
 # The default paths where os-release is located, as per os-release(5)
 DEFAULT_PATHS = [
@@ -14,7 +16,7 @@ DEFAULT_PATHS = [
 ]
 
 
-def parse_files(*paths):
+def parse_files(*paths: str) -> Dict[str, str]:
     """Read Operating System Information from `os-release`
 
     This creates a dictionary with information describing the running operating
@@ -22,7 +24,7 @@ def parse_files(*paths):
     The first available file takes precedence. It must be formatted according
     to the rules in `os-release(5)`.
     """
-    osrelease = {}
+    osrelease: Dict[str, str] = {}
 
     path = next((p for p in paths if os.path.exists(p)), None)
     if path:
@@ -39,7 +41,7 @@ def parse_files(*paths):
     return osrelease
 
 
-def describe_os(*paths):
+def describe_os(*paths: str) -> str:
     """Read the Operating System Description from `os-release`
 
     This creates a string describing the running operating-system name and

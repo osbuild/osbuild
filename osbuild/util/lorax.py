@@ -16,12 +16,12 @@ import shlex
 import shutil
 import subprocess
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Iterable, Callable
 
 import mako.template
 
 
-def replace(target, patterns):
+def replace(target: str, patterns: List[str]) -> None:
     finder = [(re.compile(p), s) for p, s in patterns]
     newfile = target + ".replace"
 
@@ -33,7 +33,7 @@ def replace(target, patterns):
     os.rename(newfile, target)
 
 
-def rglob(pathname, *, fatal=False):
+def rglob(pathname: str, *, fatal: bool = False) -> Iterable[str]:
     seen = set()
     for f in glob.iglob(pathname):
         if f not in seen:
@@ -50,21 +50,21 @@ class Script:
 
     # helper decorator to register builtin methods
     class command:
-        def __init__(self, fn):
+        def __init__(self, fn: Callable[[], None]) -> None:
             self.fn = fn
 
-        def __set_name__(self, owner, name):
+        def __set_name__(self, owner: "Script", name: str) -> None:
             bultins = getattr(owner, "commands")
             bultins[name] = self.fn
             setattr(owner, name, self.fn)
 
     # Script class starts here
-    def __init__(self, script, build, tree):
+    def __init__(self, script: List[List[str]], build: str, tree: str) -> None:
         self.script = script
         self.tree = tree
         self.build = build
 
-    def __call__(self):
+    def __call__(self) -> None:
         for i, line in enumerate(self.script):
             cmd, args = line[0], line[1:]
             ignore_error = False
@@ -85,12 +85,12 @@ class Script:
                 print(f"Error on line: {i} " + str(line))
                 raise
 
-    def tree_path(self, target):
+    def tree_path(self, target: str) -> str:
         dest = os.path.join(self.tree, target.lstrip("/"))
         return dest
 
     @command
-    def append(self, filename, data):
+    def append(self, filename: str, data: str) -> None:
         target = self.tree_path(filename)
         dirname = os.path.dirname(target)
         os.makedirs(dirname, exist_ok=True)
@@ -100,13 +100,13 @@ class Script:
             f.write("\n")
 
     @command
-    def mkdir(self, *dirs):
+    def mkdir(self, *dirs: List[str]) -> None:
         for d in dirs:
             print(f"mkdir '{d}'")
             os.makedirs(self.tree_path(d), exist_ok=True)
 
     @command
-    def move(self, src, dst):
+    def move(self, src: str, dst: str) -> None:
         src = self.tree_path(src)
         dst = self.tree_path(dst)
 
@@ -117,7 +117,7 @@ class Script:
         os.rename(src, dst)
 
     @command
-    def install(self, src, dst):
+    def install(self, src: str, dst: str) -> None:
         dst = self.tree_path(dst)
         for s in rglob(os.path.join(self.build, src.lstrip("/")), fatal=True):
             with contextlib.suppress(shutil.Error):
@@ -125,7 +125,7 @@ class Script:
                 shutil.copy2(os.path.join(self.build, s), dst)
 
     @command
-    def remove(self, *files):
+    def remove(self, *files: List[str]) -> None:
         for g in files:
             for f in rglob(self.tree_path(g)):
                 if os.path.isdir(f) and not os.path.islink(f):
@@ -135,7 +135,7 @@ class Script:
                 print(f"remove '{f}'")
 
     @command
-    def replace(self, pat, repl, *files):
+    def replace(self, pat: str, repl: str, *files: List[str]) -> None:
         found = False
         for g in files:
             for f in rglob(self.tree_path(g)):
@@ -147,12 +147,12 @@ class Script:
             assert found, f"No match for {pat} in {' '.join(files)}"
 
     @command
-    def runcmd(self, *args):
+    def runcmd(self, *args: List[str]) -> None:
         print("run ", " ".join(args))
         subprocess.run(args, cwd=self.tree, check=True)
 
     @command
-    def symlink(self, source, dest):
+    def symlink(self, source: str, dest: str) -> None:
         target = self.tree_path(dest)
         if os.path.exists(target):
             self.remove(dest)
@@ -160,7 +160,7 @@ class Script:
         os.symlink(source, target)
 
     @command
-    def systemctl(self, verb, *units):
+    def systemctl(self, verb: str, *units: List[str]):
         assert verb in ('enable', 'disable', 'mask')
         self.mkdir("/run/systemd/system")
         cmd = ['systemctl', '--root', self.tree, '--no-reload', verb]
@@ -171,7 +171,7 @@ class Script:
                 self.runcmd(*args)
 
 
-def brace_expand(s):
+def brace_expand(s: str) -> str:
     if not ('{' in s and ',' in s and '}' in s):
         return [s]
 
@@ -185,11 +185,11 @@ def brace_expand(s):
     return result
 
 
-def brace_expand_line(line):
+def brace_expand_line(line: List[str]) -> List[str]:
     return [after for before in line for after in brace_expand(before)]
 
 
-def render_template(path, args):
+def render_template(path: str, args: Dict[str, Any]) -> List[str]:
     """Render a template at `path` with arguments `args`"""
 
     with open(path, "r") as f:

@@ -17,7 +17,7 @@ import hashlib
 import json
 import os
 
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, Tuple
 
 from osbuild import host
 
@@ -27,14 +27,14 @@ class Device:
     A single device with its corresponding options
     """
 
-    def __init__(self, name, info, parent, options: Dict):
+    def __init__(self, name, info, parent, options: Dict) -> None:
         self.name = name
         self.info = info
         self.parent = parent
         self.options = options or {}
         self.id = self.calc_id()
 
-    def calc_id(self):
+    def calc_id(self) -> str:
         # NB: Since the name of the device is arbitrary or prescribed
         # by the stage, it is not included in the id calculation.
         m = hashlib.sha256()
@@ -97,7 +97,7 @@ class DeviceService(host.Service):
     """Device host service"""
 
     @abc.abstractmethod
-    def open(self, devpath: str, parent: str, tree: str, options: Dict):
+    def open(self, devpath: str, parent: str, tree: str, options: Dict) -> None:
         """Open a specific device
 
         This method must be implemented by the specific device service.
@@ -107,13 +107,13 @@ class DeviceService(host.Service):
         """
 
     @abc.abstractmethod
-    def close(self):
+    def close(self) -> None:
         """Close the device"""
 
-    def stop(self):
+    def stop(self) -> None:
         self.close()
 
-    def dispatch(self, method: str, args, _fds):
+    def dispatch(self, method: str, args, _fds) -> Tuple[Any, None]:
         if method == "open":
             r = self.open(args["dev"],
                           args["parent"],

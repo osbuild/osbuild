@@ -4,8 +4,11 @@
 import contextlib
 import subprocess
 
+from types import TracebackType
+from typing import List, Dict, Optional, Type
 
-def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
+
+def mount(source: str, target: str, bind: bool = True, ro: bool = True, private: bool = True, mode: str = "0755") -> None:
     options = []
     if ro:
         options += ["ro"]
@@ -32,7 +35,7 @@ def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
         raise RuntimeError(f"{msg} (code: {code})")
 
 
-def umount(target, lazy=False):
+def umount(target: str, lazy: bool = False) -> None:
     args = []
     if lazy:
         args += ["--lazy"]
@@ -41,10 +44,12 @@ def umount(target, lazy=False):
 
 
 class MountGuard(contextlib.AbstractContextManager):
-    def __init__(self):
+    mounts: List[Dict[str, str]]
+
+    def __init__(self) -> None:
         self.mounts = []
 
-    def mount(self, source, target, bind=True, ro=False, mode="0755"):
+    def mount(self, source: str, target: str, bind: bool = True, ro: bool = False, mode: str = "0755") -> None:
         options = []
         if bind:
             options += ["bind"]
@@ -60,7 +65,7 @@ class MountGuard(contextlib.AbstractContextManager):
         subprocess.run(["mount"] + args + [source, target], check=True)
         self.mounts += [{"source": source, "target": target}]
 
-    def umount(self):
+    def umount(self) -> None:
 
         while self.mounts:
             mnt = self.mounts.pop()  # FILO: get the last mount
@@ -71,5 +76,5 @@ class MountGuard(contextlib.AbstractContextManager):
             subprocess.run(["sync", "-f", target], check=True)
             subprocess.run(["umount", target], check=True)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_value: Optional[BaseException], exc_tb: Optional[TracebackType]) -> None:
         self.umount()

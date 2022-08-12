@@ -28,7 +28,7 @@ import struct
 import sys
 
 from collections import OrderedDict
-from typing import BinaryIO, Dict, Union, List
+from typing import BinaryIO, Dict, List, Optional, Any, Union, Iterator, Tuple
 
 PathLike = Union[str, bytes, os.PathLike]
 
@@ -36,7 +36,7 @@ INITIAL_CRC = 0xf597a6cf
 MDA_HEADER_SIZE = 512
 
 
-def _calc_crc(buf, crc=INITIAL_CRC):
+def _calc_crc(buf: bytes, crc: int = INITIAL_CRC) -> int:
     crc = crc ^ 0xFFFFFFFF
     crc = binascii.crc32(buf, crc)
     return crc ^ 0xFFFFFFFF
@@ -44,12 +44,12 @@ def _calc_crc(buf, crc=INITIAL_CRC):
 
 class CStruct:
     class Field:
-        def __init__(self, name: str, ctype: str, position: int):
+        def __init__(self, name: str, ctype: str, position: int) -> None:
             self.name = name
             self.type = ctype
             self.pos = position
 
-    def __init__(self, mapping: Dict, byte_order="<"):
+    def __init__(self, mapping: Dict[str, Any], byte_order: str = "<") -> None:
         fmt = byte_order
         self.fields = []
         for pos, name in enumerate(mapping):
@@ -60,10 +60,10 @@ class CStruct:
         self.struct = struct.Struct(fmt)
 
     @property
-    def size(self):
+    def size(self) -> int:
         return self.struct.size
 
-    def unpack(self, data):
+    def unpack(self, data: bytes) -> Dict[str, int]:
         up = self.struct.unpack_from(data)
         res = {
             field.name: up[idx]
@@ -71,7 +71,7 @@ class CStruct:
         }
         return res
 
-    def read(self, fp):
+    def read(self, fp: BinaryIO) -> Optional[int]:
         pos = fp.tell()
         data = fp.read(self.size)
 
@@ -82,14 +82,14 @@ class CStruct:
         res["_position"] = pos
         return res
 
-    def pack(self, data):
+    def pack(self, data: Dict[str, int]) -> bytes:
         values = [
             data[field.name] for field in self.fields
         ]
         data = self.struct.pack(*values)
         return data
 
-    def write(self, fp, data: Dict, *, offset=None):
+    def write(self, fp: BinaryIO, data: Dict[str, int], *, offset: Optional[int] = None) -> int:
         packed = self.pack(data)
 
         save = None
@@ -97,18 +97,20 @@ class CStruct:
             save = fp.tell()
             fp.seek(offset)
 
-        fp.write(packed)
+        n = fp.write(packed)
 
         if save:
             fp.seek(save)
 
-    def __getitem__(self, name):
+        return n
+
+    def __getitem__(self, name: str) -> Any:
         for f in self.fields:
             if f.name == f:
                 return f
         raise KeyError(f"Unknown field '{name}'")
 
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
         return any(field.name == name for field in self.fields)
 
 
@@ -121,26 +123,26 @@ class Header:
     def struct(cls) -> Union[struct.Struct, CStruct]:
         """Definition of the underlying struct data"""
 
-    def __init__(self, data):
+    def __init__(self, data: Dict[str, Any]) -> None:
         self.data = data
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Any:
         assert name in self.struct
         return self.data[name]
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name: str, value: Any) -> None:
         assert name in self.struct
         self.data[name] = value
 
-    def pack(self):
+    def pack(self) -> bytes:
         return self.struct.pack(self.data)
 
     @classmethod
-    def read(cls, fp):
+    def read(cls, fp: BinaryIO) -> "Header":
         data = cls.struct.read(fp)  # pylint: disable=no-member
         return cls(data)
 
-    def write(self, fp):
+    def write(self, fp: BinaryIO) -> None:
         raw = self.pack()
         fp.write(raw)
 
@@ -170,12 +172,12 @@ class LabelHeader(Header):
     # scan sector 0 to 3 inclusive
     LABEL_SCAN_SECTORS = 4
 
-    def __init__(self, data):
+    def __init__(self, data: Dict[str, int]) -> None:
         super().__init__(data)
         self.sector_size = 512
 
     @classmethod
-    def search(cls, fp, *, sector_size=512):
+    def search(cls, fp: BinaryIO, *, sector_size: int = 512) -> Optional["LabelHeader"]:
         fp.seek(0, io.SEEK_SET)
         for _ in range(cls.LABEL_SCAN_SECTORS):
             raw = fp.read(sector_size)
@@ -184,7 +186,7 @@ class LabelHeader(Header):
                 return LabelHeader(data)
         return None
 
-    def read_pv_header(self, fp):
+    def read_pv_header(self, fp: BinaryIO) -> "PVHeader":
         sector = self.data["sector"]
         offset = self.data["offset"]
         offset = sector * self.sector_size + offset
@@ -200,20 +202,20 @@ class DiskLocN(Header):
     })
 
     @property
-    def offset(self):
+    def offset(self) -> int:
         return self.data["offset"]
 
     @property
-    def size(self):
+    def size(self) -> int:
         return self.data["size"]
 
-    def read_data(self, fp: BinaryIO):
+    def read_data(self, fp: BinaryIO) -> io.BytesIO:
         fp.seek(self.offset)
         data = fp.read(self.size)
         return io.BytesIO(data)
 
     @classmethod
-    def read_array(cls, fp):
+    def read_array(cls, fp: BinaryIO) -> Iterator["DiskLocN"]:
         while True:
             data = cls.struct.read(fp)
 
@@ -233,21 +235,21 @@ class PVHeader(Header):
     # followed by two NULL terminated list of data areas
     # and metadata areas of type `DiskLocN`
 
-    def __init__(self, data, data_areas, meta_areas):
+    def __init__(self, data: Dict[str, int], data_areas: List[int], meta_areas: List[int]) -> None:
         super().__init__(data)
         self.data_areas = data_areas
         self.meta_areas = meta_areas
 
     @property
-    def uuid(self):
+    def uuid(self) -> str:
         return self.data["uuid"]
 
     @property
-    def disk_size(self):
+    def disk_size(self) -> int:
         return self.data["disk_size"]
 
     @classmethod
-    def read(cls, fp):
+    def read(cls, fp: BinaryIO) -> "PVHeader":
         data = cls.struct.read(fp)
 
         data_areas = list(DiskLocN.read_array(fp))
@@ -255,7 +257,7 @@ class PVHeader(Header):
 
         return cls(data, data_areas, meta_areas)
 
-    def __str__(self):
+    def __str__(self) -> str:
         msg = super().__str__()
         if self.data_areas:
             msg += "\nData: \n\t" + "\n\t".join(map(str, self.data_areas))
@@ -275,7 +277,7 @@ class RawLocN(Header):
     IGNORED = 0x00000001
 
     @classmethod
-    def read_array(cls, fp: BinaryIO):
+    def read_array(cls, fp: BinaryIO) -> Iterator["RawLocN"]:
         while True:
             loc = cls.struct.read(fp)
 
@@ -300,37 +302,37 @@ class MDAHeader(Header):
 
     HEADER_SIZE = MDA_HEADER_SIZE
 
-    def __init__(self, data, raw_locns):
+    def __init__(self, data: Dict[str, int], raw_locns: RawLocN) -> None:
         super().__init__(data)
         self.raw_locns = raw_locns
 
     @property
-    def checksum(self):
+    def checksum(self) -> int:
         return self.data["checksum"]
 
     @property
-    def magic(self):
+    def magic(self) -> List[int]:
         return self.data["magic"]
 
     @property
-    def version(self):
+    def version(self) -> int:
         return self.data["version"]
 
     @property
-    def start(self):
+    def start(self) -> int:
         return self.data["start"]
 
     @property
-    def size(self):
+    def size(self) -> int:
         return self.data["size"]
 
     @classmethod
-    def read(cls, fp):
+    def read(cls, fp: BinaryIO) -> "MDAHeader":
         data = cls.struct.read(fp)
         raw_locns = list(RawLocN.read_array(fp))
         return cls(data, raw_locns)
 
-    def read_metadata(self, fp) -> "Metadata":
+    def read_metadata(self, fp: BinaryIO) -> "Metadata":
         loc = self.raw_locns[self.LOC_COMMITTED]
         offset = self.start + loc["offset"]
         fp.seek(offset)
@@ -338,7 +340,7 @@ class MDAHeader(Header):
         md = Metadata.decode(data)
         return md
 
-    def write_metadata(self, fp, data: "Metadata"):
+    def write_metadata(self, fp: BinaryIO, data: str = "Metadata") -> None:
         raw = data.encode()
 
         loc = self.raw_locns[self.LOC_COMMITTED]
@@ -350,7 +352,7 @@ class MDAHeader(Header):
         loc["checksum"] = _calc_crc(raw)
         self.write(fp)
 
-    def write(self, fp):
+    def write(self, fp: BinaryIO) -> int:
         data = self.struct.pack(self.data)
 
         fr = io.BytesIO()
@@ -375,7 +377,7 @@ class MDAHeader(Header):
         n = fp.write(fr.getvalue())
         return n
 
-    def __str__(self):
+    def __str__(self) -> str:
         msg = super().__str__()
         if self.raw_locns:
             msg += "\n\t" + "\n\t".join(map(str, self.raw_locns))
@@ -383,7 +385,7 @@ class MDAHeader(Header):
 
 
 class Metadata:
-    def __init__(self, vg_name, data: OrderedDict) -> None:
+    def __init__(self, vg_name: str, data: OrderedDict[str, int]) -> None:
         self._vg_name = vg_name
         self.data = data
 
@@ -395,7 +397,7 @@ class Metadata:
     def vg_name(self, vg_name: str) -> None:
         self.rename_vg(vg_name)
 
-    def rename_vg(self, new_name):
+    def rename_vg(self, new_name: str) -> None:
         # Replace the corresponding key in the dict and
         # ensure it is always the first key
         name = self.vg_name
@@ -417,7 +419,7 @@ class Metadata:
         return json.dumps(self.data, indent=2)
 
     @staticmethod
-    def decode_data(raw):
+    def decode_data(raw: str) -> Tuple[str, Any]:
         substitutions = {
             r"#.*\n": "",
             r"\[": "[ ",
@@ -441,12 +443,12 @@ class Metadata:
         STRING_START = '"'
         STRING_END = '"'
 
-        def next_token():
+        def next_token() -> Optional[str]:
             if not data:
                 return None
             return data.pop(0)
 
-        def parse_str(val):
+        def parse_str(val: str) -> str:
             result = ""
 
             while val != STRING_END:
@@ -455,7 +457,7 @@ class Metadata:
 
             return result.strip()
 
-        def parse_type(val):
+        def parse_type(val: str) -> Union[str, float, int]:
             # type = integer | float | string
             # integer = [0-9]*
             # float = [0-9]*'.'[0-9]*
@@ -467,7 +469,7 @@ class Metadata:
                 return float(val)
             return int(val)
 
-        def parse_array(val):
+        def parse_array(val: str) -> List[str]:
             result = []
 
             while val != ARRAY_END:
@@ -477,7 +479,7 @@ class Metadata:
 
             return result
 
-        def parse_section(val):
+        def parse_section(val: str) -> Dict[str, Any]:
             result = OrderedDict()
 
             while val and val != DICT_END:
@@ -486,7 +488,7 @@ class Metadata:
 
             return result
 
-        def parse_value():
+        def parse_value() -> Union[str, float, int]:
             val = next_token()
 
             if val == DICT_START:
@@ -502,9 +504,9 @@ class Metadata:
         return name, obj
 
     @staticmethod
-    def encode_data(data):
+    def encode_data(data: Dict[str, int]) -> str:
 
-        def encode_dict(d):
+        def encode_dict(d: Dict[str, int]) -> str:
             s = ""
             for k, v in d.items():
                 s += k
@@ -515,7 +517,7 @@ class Metadata:
                 s += encode_val(v) + "\n"
             return s
 
-        def encode_val(v):
+        def encode_val(v: Union[int, str, List[str], Dict[str, int]]) -> str:
             if isinstance(v, int):
                 s = str(v)
             elif isinstance(v, str):
@@ -532,7 +534,7 @@ class Metadata:
 
 
 class Disk:
-    def __init__(self, fp, path: PathLike) -> None:
+    def __init__(self, fp: BinaryIO, path: PathLike) -> None:
         self.fp = fp
         self.path = path
 
@@ -546,7 +548,7 @@ class Disk:
             self.fp.close()
             raise
 
-    def _init_headers(self):
+    def _init_headers(self) -> None:
         fp = self.fp
         lbl = LabelHeader.search(fp)
 
@@ -579,11 +581,11 @@ class Disk:
 
         return cls(fp, path)
 
-    def flush_metadata(self):
+    def flush_metadata(self) -> None:
         for ma in self.ma_headers:
             ma.write_metadata(self.fp, self.metadata)
 
-    def rename_vg(self, new_name):
+    def rename_vg(self, new_name: str) -> None:
         """Rename the volume group"""
         self.metadata.rename_vg(new_name)
 
@@ -599,24 +601,24 @@ class Disk:
         """Set the host that created the volume group"""
         self.metadata.data["creation_host"] = host
 
-    def dump(self):
+    def dump(self) -> None:
         print(self.path)
         print(self.lbl_hdr)
         print(self.pv_hdr)
         print(self.metadata)
 
-    def __enter__(self):
+    def __enter__(self) -> "Disk":
         assert self.fp, "Disk not open"
         return self
 
-    def __exit__(self, *exc_details):
+    def __exit__(self, *exc_details: str) -> None:
         if self.fp:
             self.fp.flush()
             self.fp.close()
             self.fp = None
 
 
-def main():
+def main() -> None:
 
     if len(sys.argv) != 2:
         print(f"usage: {sys.argv[0]} DISK")

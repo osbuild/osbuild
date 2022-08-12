@@ -33,7 +33,7 @@ class Input:
     A single input with its corresponding options.
     """
 
-    def __init__(self, name, info, origin: str, options: Dict):
+    def __init__(self, name, info, origin: str, options: Dict[str, Any]) -> None:
         self.name = name
         self.info = info
         self.origin = origin
@@ -41,11 +41,11 @@ class Input:
         self.options = options or {}
         self.id = self.calc_id()
 
-    def add_reference(self, ref, options: Optional[Dict] = None):
+    def add_reference(self, ref, options: Optional[Dict[str, Any]] = None) -> None:
         self.refs[ref] = options or {}
         self.id = self.calc_id()
 
-    def calc_id(self):
+    def calc_id(self) -> str:
 
         # NB: The input `name` is not included here on purpose since it
         # is either prescribed by the stage itself and thus not actual
@@ -66,7 +66,7 @@ class InputManager:
         self.root = root
         self.inputs: Dict[str, Input] = {}
 
-    def map(self, ip: Input) -> Tuple[str, Dict]:
+    def map(self, ip: Input) -> Tuple[str, Dict[str, Any]]:
 
         target = os.path.join(self.root, ip.name)
         os.makedirs(target)
@@ -106,16 +106,16 @@ class InputService(host.Service):
     """Input host service"""
 
     @abc.abstractmethod
-    def map(self, store, origin, refs, target, options):
+    def map(self, store, origin, refs, target, options) -> Tuple[str, Dict[str, Any]]:
         pass
 
-    def unmap(self):
+    def unmap(self) -> None:
         pass
 
-    def stop(self):
+    def stop(self) -> None:
         self.unmap()
 
-    def dispatch(self, method: str, args, _fds):
+    def dispatch(self, method: str, args, _fds) -> Tuple[Tuple[str, Dict[str, Any]], None]:
         if method == "map":
             store = StoreClient(connect_to=args["api"]["store"])
             r = self.map(store,

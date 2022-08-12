@@ -1,6 +1,7 @@
 import contextlib
 import errno
 import os
+from typing import List, Any, Dict, Optional, Iterator
 from . import api
 from . import loop
 from .util import jsoncomm
@@ -37,12 +38,12 @@ class LoopServer(api.BaseAPI):
 
     endpoint = "remoteloop"
 
-    def __init__(self, *, socket_address=None):
+    def __init__(self, *, socket_address: Optional[str] = None) -> None:
         super().__init__(socket_address)
-        self.devs = []
+        self.devs: List[loop.Loop] = []
         self.ctl = loop.LoopControl()
 
-    def _create_device(self, fd, dir_fd, offset=None, sizelimit=None):
+    def _create_device(self, fd: int, dir_fd: int, offset: Optional[int] = None, sizelimit: Optional[int] = None) -> str:
         while True:
             # Getting an unbound loopback device and attaching a backing
             # file descriptor to it is racy, so we must use a retry loop
@@ -70,7 +71,7 @@ class LoopServer(api.BaseAPI):
         self.devs.append(lo)
         return lo.devname
 
-    def _message(self, msg, fds, sock):
+    def _message(self, msg: Dict[str, Any], fds: jsoncomm.FdSet, sock: jsoncomm.Socket) -> None:
         fd = fds[msg["fd"]]
         dir_fd = fds[msg["dir_fd"]]
         offset = msg.get("offset")
@@ -79,7 +80,7 @@ class LoopServer(api.BaseAPI):
         devname = self._create_device(fd, dir_fd, offset, sizelimit)
         sock.send({"devname": devname})
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         for lo in self.devs:
             lo.close()
         self.ctl.close()
@@ -88,15 +89,15 @@ class LoopServer(api.BaseAPI):
 class LoopClient:
     client = None
 
-    def __init__(self, connect_to):
+    def __init__(self, connect_to: str) -> None:
         self.client = jsoncomm.Socket.new_client(connect_to)
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self.client is not None:
             self.client.close()
 
     @contextlib.contextmanager
-    def device(self, filename, offset=None, sizelimit=None):
+    def device(self, filename: str, offset: Optional[int] = None, sizelimit: Optional[int] = None) -> Iterator[str]:
         req = {}
         fds = []
 
@@ -112,6 +113,9 @@ class LoopClient:
             req["offset"] = offset
         if sizelimit:
             req["sizelimit"] = sizelimit
+
+        if not self.client:
+            raise RuntimeError("tried to send but no client")
 
         self.client.send(req, fds=fds)
         os.close(dir_fd)

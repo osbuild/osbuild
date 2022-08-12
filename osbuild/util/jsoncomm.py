@@ -12,8 +12,8 @@ import errno
 import json
 import os
 import socket
-from typing import Any
-from typing import Optional
+from typing import Any, List, Tuple, Iterable, Optional, Type, MutableSequence
+from types import TracebackType
 from .types import PathLike
 
 
@@ -32,17 +32,17 @@ class FdSet:
 
     _fds = array.array("i")
 
-    def __init__(self, *, rawfds):
+    def __init__(self, *, rawfds: MutableSequence[int]) -> None:
         for i in rawfds:
             if not isinstance(i, int) or i < 0:
                 raise ValueError()
 
         self._fds = rawfds
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         """Close All Entries
 
         This closes all stored file-descriptors and clears the set. Once this
@@ -57,7 +57,7 @@ class FdSet:
         self._fds = array.array("i")
 
     @classmethod
-    def from_list(cls, l: list):
+    def from_list(cls, l: List[int]) -> "FdSet":
         """Create new Set from List
 
         This creates a new file-descriptor set initialized to the same entries
@@ -69,15 +69,15 @@ class FdSet:
         fds.fromlist(l)
         return cls(rawfds=fds)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._fds)
 
-    def __getitem__(self, key: Any):
+    def __getitem__(self, key: Any) -> Any:
         if self._fds[key] < 0:
             raise IndexError
         return self._fds[key]
 
-    def steal(self, key: Any):
+    def steal(self, key: Any) -> Any:
         """Steal Entry
 
         Retrieve the entry at the given position, but drop it from the internal
@@ -103,29 +103,32 @@ class Socket(contextlib.AbstractContextManager):
     _socket = None
     _unlink = None
 
-    def __init__(self, sock, unlink):
+    def __init__(self, sock: socket.socket, unlink: Optional[Tuple[int, str]]) -> None:
         self._socket = sock
         self._unlink = unlink
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_value: Optional[BaseException], exc_tb: Optional[TracebackType]) -> None:
         self.close()
-        return False
 
     @property
-    def blocking(self):
+    def blocking(self) -> bool:
         """Get the current blocking mode of the socket.
 
         This is related to the socket's timeout, i.e. if no time out is set
         the socket is in blocking mode; otherwise it is non-blocking.
         """
+
+        if not self._socket:
+            raise RuntimeError("Called blocking but no socket")
+
         timeout = self._socket.gettimeout()
         return timeout is not None
 
     @blocking.setter
-    def blocking(self, value: bool):
+    def blocking(self, value: bool) -> None:
         """Set the blocking mode of the socket."""
         if self._socket:
             self._socket.setblocking(value)
@@ -152,7 +155,7 @@ class Socket(contextlib.AbstractContextManager):
             return None
         return Socket(conn, None)
 
-    def listen(self, backlog: Optional[int] = 2**16):
+    def listen(self, backlog: Optional[int] = 2**16) -> None:
         """Enable accepting of incoming connections.
 
         See python's `socket.listen` for details.
@@ -165,7 +168,7 @@ class Socket(contextlib.AbstractContextManager):
         args = [backlog] if backlog is not None else []
         self._socket.listen(*args)
 
-    def close(self):
+    def close(self) -> None:
         """Close Socket
 
         Close the socket and all underlying resources. This can be called
@@ -189,7 +192,7 @@ class Socket(contextlib.AbstractContextManager):
             self._unlink = None
 
     @classmethod
-    def new_client(cls, connect_to: Optional[PathLike] = None):
+    def new_client(cls, connect_to: Optional[PathLike] = None) -> "Socket":
         """Create Client
 
         Create a new client socket.
@@ -224,7 +227,7 @@ class Socket(contextlib.AbstractContextManager):
         return cls(sock, None)
 
     @classmethod
-    def new_server(cls, bind_to: PathLike):
+    def new_server(cls, bind_to: PathLike) -> "Socket":
         """Create Server
 
         Create a new listener socket. Returned socket is in non-blocking
@@ -265,7 +268,7 @@ class Socket(contextlib.AbstractContextManager):
         return cls(sock, (unlink, path[1]))
 
     @classmethod
-    def new_pair(cls, *, blocking=True):
+    def new_pair(cls, *, blocking: bool = True) -> Tuple["Socket", "Socket"]:
         """Create a connected socket pair
 
         Create a pair of connected sockets and return both as a tuple.
@@ -283,7 +286,7 @@ class Socket(contextlib.AbstractContextManager):
         return cls(a, None), cls(b, None)
 
     @classmethod
-    def new_from_fd(cls, fd: int, *, blocking=True, close_fd=True):
+    def new_from_fd(cls, fd: int, *, blocking: bool = True, close_fd: bool = True) -> "Socket":
         """Create a socket for an existing file descriptor
 
         Duplicate the file descriptor and return a `Socket` for it.
@@ -307,7 +310,7 @@ class Socket(contextlib.AbstractContextManager):
         assert self._socket is not None
         return self._socket.fileno()
 
-    def recv(self):
+    def recv(self) -> Tuple[Any, Any, Any]:
         """Receive a Message
 
         This receives the next pending message from the socket. This operation
@@ -319,6 +322,9 @@ class Socket(contextlib.AbstractContextManager):
         In case the peer closed the connection, A tuple of `None` values is
         returned.
         """
+
+        if not self._socket:
+            raise RuntimeError("Calling recv but no socket.")
 
         # On `SOCK_SEQPACKET`, packets might be arbitrarily sized. There is no
         # hard-coded upper limit, since it is only restricted by the size of
@@ -344,6 +350,7 @@ class Socket(contextlib.AbstractContextManager):
         # size is hard-coded to 253. This allows us to size the ancillary buffer
         # big enough to receive any possible message.
         fds = array.array("i")
+
         msg = self._socket.recvmsg(size, socket.CMSG_LEN(253 * fds.itemsize))
 
         # First thing we do is always to fetch the CMSG FDs into an FdSet. This
@@ -370,7 +377,7 @@ class Socket(contextlib.AbstractContextManager):
 
         return (payload, fdset, msg[3])
 
-    def send(self, payload: object, *, fds: Optional[list] = None):
+    def send(self, payload: object, *, fds: Optional[List[int]] = None) -> None:
         """Send Message
 
         Send a new message via this socket. This operation is synchronous. The
@@ -407,7 +414,7 @@ class Socket(contextlib.AbstractContextManager):
         n = self._socket.sendmsg([serialized], cmsg, 0)
         assert n == len(serialized)
 
-    def send_and_recv(self, payload: object, *, fds: Optional[list] = None):
+    def send_and_recv(self, payload: object, *, fds: Optional[List[int]] = None) -> Tuple[Any, Any, Any]:
         """Send a message and wait for a reply
 
         This is a convenience helper that combines `send` and `recv`.

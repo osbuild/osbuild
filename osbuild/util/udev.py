@@ -24,7 +24,7 @@ class UdevInhibitor:
     [1] 10-osbuild-inhibitor.rules
     """
 
-    def __init__(self, path: pathlib.Path):
+    def __init__(self, path: pathlib.Path) -> None:
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -39,11 +39,11 @@ class UdevInhibitor:
     def active(self) -> bool:
         return self.path.exists()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"UdevInhibtor at '{self.path}'"
 
     @classmethod
-    def for_dm_name(cls, name: str, lockdir=LOCKDIR):
+    def for_dm_name(cls, name: str, lockdir: str = LOCKDIR) -> "UdevInhibitor":
         """Inhibit a Device Mapper device with the given name"""
         path = pathlib.Path(lockdir, f"dm-{name}")
         ib = cls(path)
@@ -51,7 +51,7 @@ class UdevInhibitor:
         return ib
 
     @classmethod
-    def for_device(cls, major: int, minor: int, lockdir=LOCKDIR):
+    def for_device(cls, major: int, minor: int, lockdir: str = LOCKDIR) -> "UdevInhibitor":
         """Inhibit a device given its major and minor number"""
         path = pathlib.Path(lockdir, f"device-{major}:{minor}")
         ib = cls(path)

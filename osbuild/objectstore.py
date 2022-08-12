@@ -3,7 +3,9 @@ import os
 import subprocess
 import tempfile
 import uuid
-from typing import Optional, Iterator, Set
+
+from types import TracebackType
+from typing import Optional, Iterator, Set, Type
 
 from osbuild.util.types import PathLike
 from osbuild.util import jsoncomm, rmrf
@@ -45,7 +47,7 @@ class Object:
         return self._base
 
     @base.setter
-    def base(self, base_id: Optional[str]):
+    def base(self, base_id: Optional[str]) -> None:
         self._init = not base_id
         self._base = base_id
         self.id = base_id
@@ -104,7 +106,7 @@ class Object:
             umount(target)
             self._readers -= 1
 
-    def store_tree(self):
+    def store_tree(self) -> str:
         """Store the tree with a fresh name and reset itself
 
         Moves the tree atomically by using rename(2), to a
@@ -120,14 +122,14 @@ class Object:
         self.reset()
         return destination
 
-    def reset(self):
+    def reset(self) -> None:
         self.cleanup()
         self._workdir = self.store.tempdir(suffix="object")
         self._tree = os.path.join(self._workdir.name, "tree")
         os.makedirs(self._tree, mode=0o755, exist_ok=True)
         self._init = not self._base
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self._check_readers()
         self._check_writer()
         if self._tree:
@@ -141,36 +143,36 @@ class Object:
             self._workdir = None
         self.id = None
 
-    def _check_readers(self):
+    def _check_readers(self) -> None:
         """Internal: Raise a ValueError if there are readers"""
         if self._readers:
             raise ValueError("Read operation is ongoing")
 
-    def _check_writable(self):
+    def _check_writable(self) -> None:
         """Internal: Raise a ValueError if not writable"""
         if not self._workdir:
             raise ValueError("Object is not writable")
 
-    def _check_writer(self):
+    def _check_writer(self) -> None:
         """Internal: Raise a ValueError if there is a writer"""
         if self._writer:
             raise ValueError("Write operation is ongoing")
 
-    def tempdir(self, suffix=None):
+    def tempdir(self, suffix: Optional[str] = None) -> tempfile.TemporaryDirectory:
         workdir = self._workdir.name
         if suffix:
             suffix = "-" + suffix
         return tempfile.TemporaryDirectory(dir=workdir,
                                            suffix=suffix)
 
-    def __enter__(self):
+    def __enter__(self) -> "Object":
         self._check_writable()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_value: Optional[BaseException], exc_tb: Optional[TracebackType]) -> None:
         self.cleanup()
 
-    def export(self, to_directory: PathLike):
+    def export(self, to_directory: PathLike) -> None:
         """Copy object into an external directory"""
         with self.read() as from_directory:
             subprocess.run(
@@ -193,15 +195,15 @@ class HostTree:
     the host file-system.
     """
 
-    def __init__(self, store):
+    def __init__(self, store: ObjectStore) -> None:
         self.store = store
 
     @staticmethod
-    def write():
+    def write() -> None:
         raise ValueError("Cannot write to host")
 
     @contextlib.contextmanager
-    def read(self):
+    def read(self) -> Iterator[str]:
         with self.store.tempdir() as tmp:
             # Create a bare bones root file system
             # with just /usr mounted from the host
@@ -215,7 +217,7 @@ class HostTree:
             finally:
                 umount(tmp)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         pass  # noop for the host
 
 
@@ -238,7 +240,7 @@ class ObjectStore(contextlib.AbstractContextManager):
                 return obj
         return None
 
-    def contains(self, object_id):
+    def contains(self, object_id: str) -> bool:
         if not object_id:
             return False
 
@@ -253,13 +255,13 @@ class ObjectStore(contextlib.AbstractContextManager):
             return None
         return os.path.join(self.refs, object_id)
 
-    def tempdir(self, prefix=None, suffix=None):
+    def tempdir(self, prefix: Optional[str] = None, suffix: Optional[str] = None) -> tempfile.TemporaryDirectory:
         """Return a tempfile.TemporaryDirectory within the store"""
         return tempfile.TemporaryDirectory(dir=self.tmp,
                                            prefix=prefix,
                                            suffix=suffix)
 
-    def get(self, object_id):
+    def get(self, object_id: str) -> Object:
         obj = self._get_floating(object_id)
         if obj:
             return obj
@@ -270,7 +272,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         obj = self.new(base_id=object_id)
         return obj
 
-    def new(self, base_id=None):
+    def new(self, base_id: Optional[str] = None) -> Object:
         """Creates a new temporary `Object`.
 
         It returns a temporary instance of `Object`, the base
@@ -333,32 +335,31 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         return object_name
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup all created Objects that are still alive"""
         for obj in self._objs:
             obj.cleanup()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_value: Optional[BaseException], exc_tb: Optional[TracebackType]) -> None:
         self.cleanup()
 
 
 class StoreServer(api.BaseAPI):
-
     endpoint = "store"
 
-    def __init__(self, store: ObjectStore, *, socket_address=None):
+    def __init__(self, store: ObjectStore, *, socket_address: Optional[str] = None) -> None:
         super().__init__(socket_address)
         self.store = store
         self.tmproot = store.tempdir(prefix="store-server-")
         self._stack = contextlib.ExitStack()
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         self.tmproot.cleanup()
         self.tmproot = None
         self._stack.close()
         self._stack = None
 
-    def _read_tree(self, msg, sock):
+    def _read_tree(self, msg: Dict[str, Any], sock: Socket) -> None:
         object_id = msg["object-id"]
         obj = self.store.get(object_id)
         if not obj:
@@ -369,7 +370,7 @@ class StoreServer(api.BaseAPI):
         path = self._stack.enter_context(reader)
         sock.send({"path": path})
 
-    def _read_tree_at(self, msg, sock):
+    def _read_tree_at(self, msg: Dict[str, Any], sock: Socket) -> None:
         object_id = msg["object-id"]
         target = msg["target"]
         subtree = msg["subtree"]
@@ -389,7 +390,7 @@ class StoreServer(api.BaseAPI):
 
         sock.send({"path": path})
 
-    def _mkdtemp(self, msg, sock):
+    def _mkdtemp(self, msg: Dict[str, Any], sock: Socket) -> None:
         args = {
             "suffix": msg.get("suffix"),
             "prefix": msg.get("prefix"),
@@ -399,13 +400,13 @@ class StoreServer(api.BaseAPI):
         path = tempfile.mkdtemp(**args)
         sock.send({"path": path})
 
-    def _source(self, msg, sock):
+    def _source(self, msg: Dict[str, Any], sock: Socket) -> None:
         name = msg["name"]
         base = self.store.store
         path = os.path.join(base, "sources", name)
         sock.send({"path": path})
 
-    def _message(self, msg, _fds, sock):
+    def _message(self, msg: Dict[str, Any], _fds: FdSet, sock: Socket) -> None:
         if msg["method"] == "read-tree":
             self._read_tree(msg, sock)
         elif msg["method"] == "read-tree-at":
@@ -419,14 +420,14 @@ class StoreServer(api.BaseAPI):
 
 
 class StoreClient:
-    def __init__(self, connect_to="/run/osbuild/api/store"):
+    def __init__(self, connect_to: str = "/run/osbuild/api/store") -> None:
         self.client = jsoncomm.Socket.new_client(connect_to)
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self.client is not None:
             self.client.close()
 
-    def mkdtemp(self, suffix=None, prefix=None):
+    def mkdtemp(self, suffix: Optional[str] = None, prefix: Optional[str] = None) -> str:
         msg = {
             "method": "mkdtemp",
             "suffix": suffix,
@@ -438,7 +439,7 @@ class StoreClient:
 
         return msg["path"]
 
-    def read_tree(self, object_id: str):
+    def read_tree(self, object_id: str) -> str:
         msg = {
             "method": "read-tree",
             "object-id": object_id
@@ -449,7 +450,7 @@ class StoreClient:
 
         return msg["path"]
 
-    def read_tree_at(self, object_id: str, target: str, path="/"):
+    def read_tree_at(self, object_id: str, target: str, path: str = "/") -> str:
         msg = {
             "method": "read-tree-at",
             "object-id": object_id,

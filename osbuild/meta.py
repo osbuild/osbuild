@@ -29,7 +29,7 @@ import pkgutil
 import json
 import sys
 from collections import deque
-from typing import Dict, Sequence, List, Optional, Union, Set, Deque, Any, Tuple
+from typing import Dict, Sequence, List, Optional, Union, Set, Deque, Any, Tuple, Iterable, Type, Iterator
 
 import jsonschema
 
@@ -53,13 +53,13 @@ class ValidationError:
         self.path: Deque[Union[int, str]] = deque()
 
     @classmethod
-    def from_exception(cls, ex):
+    def from_exception(cls, ex: Any) -> "ValidationError":
         err = cls(ex.message)
         err.path = ex.absolute_path
         return err
 
     @property
-    def id(self):
+    def id(self) -> str:
         if not self.path:
             return "."
 
@@ -76,7 +76,7 @@ class ValidationError:
 
         return result
 
-    def as_dict(self):
+    def as_dict(self) -> Dict[str, Any]:
         """Serializes this object as a dictionary
 
         The `path` member will be serialized as a list of
@@ -88,29 +88,29 @@ class ValidationError:
             "path": list(self.path)
         }
 
-    def rebase(self, path: Sequence[str]):
+    def rebase(self, path: Sequence[str]) -> None:
         """Prepend the `path` to `self.path`"""
         rev = reversed(path)
         self.path.extendleft(rev)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.id, self.message))
 
-    def __eq__(self, other: object):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, ValidationError):
             raise ValueError("Need ValidationError")
 
         if self.id != other.id:
             return False
-        return self.message == other.message
+        return bool(self.message == other.message)
 
-    def __lt__(self, other: "ValidationError"):
+    def __lt__(self, other: "ValidationError") -> bool:
         if not isinstance(other, ValidationError):
             raise ValueError("Need ValidationError")
 
-        return self.id < other.id
+        return bool(self.id < other.id)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"ValidationError: {self.message} [{self.id}]"
 
 
@@ -127,12 +127,12 @@ class ValidationResult:
         self.errors.add(err)
         return err
 
-    def add(self, err: ValidationError):
+    def add(self, err: ValidationError) -> "ValidationResult":
         """Add a `ValidationError` to the set of errors"""
         self.errors.add(err)
         return self
 
-    def merge(self, result: "ValidationResult", *, path=None):
+    def merge(self, result: "ValidationResult", *, path: Optional[List[str]] = None) -> None:
         """Merge all errors of `result` into this
 
         Merge all the errors of in `result` into this,
@@ -144,7 +144,7 @@ class ValidationResult:
             err.rebase(path or [])
             self.errors.add(err)
 
-    def as_dict(self):
+    def as_dict(self) -> Dict[str, Any]:
         """Represent this result as a dictionary
 
         If there are not errors, returns an empty dict;
@@ -168,26 +168,26 @@ class ValidationResult:
         }
 
     @property
-    def valid(self):
+    def valid(self) -> bool:
         """Returns `True` if there are zero errors"""
-        return len(self) == 0
+        return bool(len(self) == 0)
 
-    def __iadd__(self, error: ValidationError):
+    def __iadd__(self, error: ValidationError) -> "ValidationResult":
         return self.add(error)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return self.valid
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.errors)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[ValidationError]:
         return iter(sorted(self.errors))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"ValidationResult: {len(self)} error(s)"
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> List[ValidationError]:
         if not isinstance(key, str):
             raise ValueError("Only string keys allowed")
 
@@ -215,7 +215,7 @@ class Schema:
     schema data.
     """
 
-    def __init__(self, schema: Optional[Dict], name: Optional[str] = None):
+    def __init__(self, schema: Optional[Dict[str, Any]], name: Optional[str] = None):
         self.data = schema
         self.name = name
         self._validator: Optional[jsonschema.Draft4Validator] = None
@@ -250,7 +250,7 @@ class Schema:
 
         return res
 
-    def validate(self, target) -> ValidationResult:
+    def validate(self, target: Any) -> ValidationResult:
         """Validate the `target` against this schema
 
         If the schema information itself is missing, it
@@ -270,7 +270,7 @@ class Schema:
 
         return res
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return self.check().valid
 
 
@@ -298,7 +298,7 @@ class ModuleInfo:
         "Stage": "stages",
     }
 
-    def __init__(self, klass: str, name: str, path: str, info: Dict):
+    def __init__(self, klass: str, name: str, path: str, info: Dict[str, Any]) -> None:
         self.name = name
         self.type = klass
         self.path = path
@@ -308,15 +308,15 @@ class ModuleInfo:
         self.opts = info["schema"]
         self.caps = info["caps"]
 
-    def _load_opts(self, version, fallback=None):
-        raw = self.opts[version]
+    def _load_opts(self, version: str, fallback: Optional[str] = None) -> str:
+        raw: str = self.opts[version]
         if not raw and fallback:
             raw = self.opts[fallback]
         if not raw:
             raise ValueError(f"Unsupported version: {version}")
         return raw
 
-    def _make_options(self, version):
+    def _make_options(self, version: str) -> Dict[str, str]:
         if version == "2":
             raw = self.opts["2"]
             if not raw:
@@ -328,7 +328,7 @@ class ModuleInfo:
 
         return raw
 
-    def get_schema(self, version="1"):
+    def get_schema(self, version: str = "1") -> Dict[str, Any]:
         schema = {
             "title": f"Pipeline {self.type}",
             "type": "object",
@@ -381,7 +381,7 @@ class ModuleInfo:
         return schema
 
     @classmethod
-    def _parse_schema(cls, klass, name, node):
+    def _parse_schema(cls, klass: str, name: str, node: ast.AST) -> Dict[str, Any]:
         if not node:
             return {}
 
@@ -400,20 +400,20 @@ class ModuleInfo:
             raise SyntaxError(msg, detail) from None
 
     @classmethod
-    def _parse_caps(cls, _klass, _name, node):
+    def _parse_caps(cls, _klass: str, _name: str, node: ast.AST) -> Set[ast.AST]:
         if not node:
             return set()
 
         return {e.s for e in node.value.elts}
 
     @classmethod
-    def load(cls, root, klass, name) -> Optional["ModuleInfo"]:
+    def load(cls, root: str, klass: str, name: str) -> Optional["ModuleInfo"]:
         names = ["SCHEMA", "SCHEMA_2", "CAPABILITIES"]
 
-        def filter_type(lst, target):
+        def filter_type(lst: List[Any], target: Type) -> List[Any]:
             return [x for x in lst if isinstance(x, target)]
 
-        def targets(a):
+        def targets(a: Any) -> List[Any]:
             return [t.id for t in filter_type(a.targets, ast.Name)]
 
         base = cls.MODULES.get(klass)
@@ -440,10 +440,10 @@ class ModuleInfo:
             if t in names
         }
 
-        def parse_schema(node):
+        def parse_schema(node: ast.AST) -> Dict[str, Any]:
             return cls._parse_schema(klass, name, node)
 
-        def parse_caps(node):
+        def parse_caps(node: ast.AST) -> Dict[str, Any]:
             return cls._parse_caps(klass, name, node)
 
         info = {
@@ -455,6 +455,7 @@ class ModuleInfo:
             'info': "\n".join(doclist[1:]),
             'caps': parse_caps(values.get("CAPABILITIES"))
         }
+
         return cls(klass, name, path, info)
 
 
@@ -466,7 +467,7 @@ class FormatInfo:
     manifest descriptions and writes results.
     """
 
-    def __init__(self, module):
+    def __init__(self, module: ast.Module) -> None:
         self.module = module
         self.version = getattr(module, "VERSION")
         docs = getattr(module, "__doc__")
@@ -475,7 +476,7 @@ class FormatInfo:
         self.desc = desc.strip()
 
     @classmethod
-    def load(cls, name):
+    def load(cls, name: str) -> "FormatInfo":
         mod = sys.modules.get(name)
         if not mod:
             mod = importlib.import_module(name)
@@ -491,7 +492,7 @@ class Index:
     osbuild modules as well as JSON schemata.
     """
 
-    def __init__(self, path: str):
+    def __init__(self, path: str) -> None:
         self.path = path
         self._module_info: Dict[Tuple[str, Any], Any] = {}
         self._format_info: Dict[Tuple[str, Any], Any] = {}
@@ -514,7 +515,7 @@ class Index:
 
         return [base + "." + m.name for m in modinfo]
 
-    def get_format_info(self, name) -> FormatInfo:
+    def get_format_info(self, name: str) -> FormatInfo:
         """Get the `FormatInfo` for the format called `name`"""
         info = self._format_info.get(name)
         if not info:
@@ -522,7 +523,7 @@ class Index:
             self._format_info[name] = info
         return info
 
-    def detect_format_info(self, data) -> Optional[FormatInfo]:
+    def detect_format_info(self, data: Dict[str, Any]) -> Optional[FormatInfo]:
         """Obtain a `FormatInfo` for the format that can handle `data`"""
         formats = self.list_formats()
         version = data.get("version", "1")
@@ -544,7 +545,7 @@ class Index:
                          os.listdir(path))
         return list(modules)
 
-    def get_module_info(self, klass, name) -> Optional[ModuleInfo]:
+    def get_module_info(self, klass: str, name: str) -> Optional[ModuleInfo]:
         """Obtain `ModuleInfo` for a given stage or assembler"""
 
         if (klass, name) not in self._module_info:
@@ -554,7 +555,7 @@ class Index:
 
         return self._module_info[(klass, name)]
 
-    def get_schema(self, klass, name=None, version="1") -> Schema:
+    def get_schema(self, klass: str, name: Optional[str] = None, version: str = "1") -> Schema:
         """Obtain a `Schema` for `klass` and `name` (optional)
 
         Returns a `Schema` for the entity identified via `klass`

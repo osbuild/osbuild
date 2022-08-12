@@ -2,8 +2,9 @@
 
 Second, and current, version of the manifest description
 """
-from typing import Dict, Any
-from osbuild.meta import Index, ModuleInfo, ValidationResult
+from typing import Dict, Any, List, Tuple, Set, Optional
+
+from ..meta import Index, ModuleInfo, ValidationResult
 from ..inputs import Input
 from ..pipeline import Manifest, Pipeline, Stage, detect_host_runner
 from ..sources import Source
@@ -13,7 +14,7 @@ VERSION = "2"
 
 
 # pylint: disable=too-many-statements
-def describe(manifest: Manifest, *, with_id=False) -> Dict:
+def describe(manifest: Manifest, *, with_id=False) -> Dict[str, Any]:
 
     # Undo the build, runner pairing introduce by the loading
     # code. See the comment there for more details
@@ -22,14 +23,14 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         if p.build
     }
 
-    def pipeline_ref(pid):
+    def pipeline_ref(pid: str) -> str:
         if with_id:
             return pid
 
         pl = manifest[pid]
         return f"name:{pl.name}"
 
-    def describe_device(dev):
+    def describe_device(dev) -> Dict[str, Any]:
         desc = {
             "type": dev.info.name
         }
@@ -39,14 +40,14 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         return desc
 
-    def describe_devices(devs: Dict):
+    def describe_devices(devs: Dict[str, Any]) -> Dict[str, Any]:
         desc = {
             name: describe_device(dev)
             for name, dev in devs.items()
         }
         return desc
 
-    def describe_input(ip: Input):
+    def describe_input(ip: Input) -> Dict[str, Any]:
         origin = ip.origin
         desc = {
             "type": ip.info.name,
@@ -66,14 +67,14 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         return desc
 
-    def describe_inputs(ips: Dict[str, Input]):
+    def describe_inputs(ips: Dict[str, Input]) -> Dict[str, Any]:
         desc = {
             name: describe_input(ip)
             for name, ip in ips.items()
         }
         return desc
 
-    def describe_mount(mnt):
+    def describe_mount(mnt) -> Dict[str, Any]:
         desc = {
             "name": mnt.name,
             "type": mnt.info.name,
@@ -87,14 +88,14 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
             desc["options"] = mnt.options
         return desc
 
-    def describe_mounts(mounts: Dict):
+    def describe_mounts(mounts: Dict[str, Any]) -> List[Any]:
         desc = [
             describe_mount(mnt)
             for mnt in mounts.values()
         ]
         return desc
 
-    def describe_stage(s: Stage):
+    def describe_stage(s: Stage) -> Dict[str, Any]:
         desc = {
             "type": s.info.name
         }
@@ -119,7 +120,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         return desc
 
-    def describe_pipeline(p: Pipeline):
+    def describe_pipeline(p: Pipeline) -> Dict[str, Any]:
         desc: Dict[str, Any] = {
             "name": p.name
         }
@@ -141,7 +142,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         return desc
 
-    def describe_source(s: Source):
+    def describe_source(s: Source) -> Dict[str, Any]:
         desc = {
             "items": s.items
         }
@@ -177,7 +178,7 @@ def resolve_ref(name: str, manifest: Manifest) -> str:
     return target.id
 
 
-def sort_devices(devices: Dict) -> Dict:
+def sort_devices(devices: Dict[str, Any]) -> Dict[str, Any]:
     """Sort the devices so that dependencies are in the correct order
 
     We need to ensure that parents are sorted before the devices that
@@ -219,7 +220,7 @@ def sort_devices(devices: Dict) -> Dict:
     return result
 
 
-def load_device(name: str, description: Dict, index: Index, stage: Stage):
+def load_device(name: str, description: Dict[str, Any], index: Index, stage: Stage) -> None:
     device_type = description["type"]
     options = description.get("options", {})
     parent = description.get("parent")
@@ -237,7 +238,9 @@ def load_device(name: str, description: Dict, index: Index, stage: Stage):
     stage.add_device(name, info, parent, options)
 
 
-def load_input(name: str, description: Dict, index: Index, stage: Stage, manifest: Manifest, source_refs: set):
+def load_input(
+    name: str, description: Dict[str, Any], index: Index, stage: Stage, manifest: Manifest, source_refs: Set[str]
+) -> Optional[Tuple[Any, Dict[str, Any]]]:
     input_type = description["type"]
     origin = description["origin"]
     options = description.get("options", {})
@@ -274,7 +277,7 @@ def load_input(name: str, description: Dict, index: Index, stage: Stage, manifes
         ip.add_reference(r, desc)
 
 
-def load_mount(description: Dict, index: Index, stage: Stage):
+def load_mount(description: Dict[str, Any], index: Index, stage: Stage) -> None:
     mount_type = description["type"]
     info = index.get_module_info("Mount", mount_type)
 
@@ -297,7 +300,7 @@ def load_mount(description: Dict, index: Index, stage: Stage):
     stage.add_mount(name, info, device, target, options)
 
 
-def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Manifest, source_refs):
+def load_stage(description: Dict[str, Any], index: Index, pipeline: Pipeline, manifest: Manifest, source_refs) -> Stage:
     stage_type = description["type"]
     opts = description.get("options", {})
     info = index.get_module_info("Stage", stage_type)
@@ -321,7 +324,7 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
     return stage
 
 
-def load_pipeline(description: Dict, index: Index, manifest: Manifest, source_refs: set):
+def load_pipeline(description: Dict[str, Any], index: Index, manifest: Manifest, source_refs: Set[str]) -> None:
     name = description["name"]
     build = description.get("build")
     runner = description.get("runner")
@@ -337,7 +340,7 @@ def load_pipeline(description: Dict, index: Index, manifest: Manifest, source_re
         load_stage(desc, index, pl, manifest, source_refs)
 
 
-def load(description: Dict, index: Index) -> Manifest:
+def load(description: Dict[str, Any], index: Index) -> Manifest:
     """Load a manifest description"""
 
     sources = description.get("sources", {})
@@ -381,7 +384,7 @@ def load(description: Dict, index: Index) -> Manifest:
 
 
 #pylint: disable=too-many-branches
-def output(manifest: Manifest, res: Dict) -> Dict:
+def output(manifest: Manifest, res: Dict[str, Any]) -> Dict[str, Any]:
     """Convert a result into the v2 format"""
 
     result: Dict[str, Any] = {}
@@ -452,7 +455,7 @@ def output(manifest: Manifest, res: Dict) -> Dict:
     return result
 
 
-def validate(manifest: Dict, index: Index) -> ValidationResult:
+def validate(manifest: Dict[str, Any], index: Index) -> ValidationResult:
 
     schema = index.get_schema("Manifest", version="2")
     result = schema.validate(manifest)

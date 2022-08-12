@@ -7,6 +7,8 @@ library.
 
 import contextlib
 
+from typing import Iterator
+
 
 __all__ = [
     "suppress_oserror",
@@ -14,7 +16,7 @@ __all__ = [
 
 
 @contextlib.contextmanager
-def suppress_oserror(*errnos):
+def suppress_oserror(*errnos: int) -> Iterator[None]:
     """Suppress OSError Exceptions
 
     This is an extension to `contextlib.suppress()` from the python standard

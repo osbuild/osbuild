@@ -16,7 +16,8 @@ import subprocess
 import tempfile
 import time
 
-from typing import Optional, Set
+from typing import Optional, Set, List, Type, Dict, Any
+from types import TracebackType
 
 from osbuild.api import BaseAPI
 from osbuild.util import linux
@@ -41,22 +42,22 @@ class CompletedBuild:
         self.output = output
 
     @property
-    def returncode(self):
+    def returncode(self) -> int:
         return self.process.returncode
 
     @property
-    def stdout(self):
+    def stdout(self) -> str:
         return self.output
 
     @property
-    def stderr(self):
+    def stderr(self) -> str:
         return self.output
 
 
 class ProcOverrides:
     """Overrides for /proc inside the buildroot"""
 
-    def __init__(self, path) -> None:
+    def __init__(self, path: str) -> None:
         self.path = path
         self.overrides: Set["str"] = set()
 
@@ -66,7 +67,7 @@ class ProcOverrides:
             return f.read().strip()
 
     @cmdline.setter
-    def cmdline(self, value) -> None:
+    def cmdline(self, value: str) -> None:
         with open(os.path.join(self.path, "cmdline"), "w") as f:
             f.write(value + "\n")
         self.overrides.add("cmdline")
@@ -90,7 +91,7 @@ class BuildRoot(contextlib.AbstractContextManager):
     are retained.
     """
 
-    def __init__(self, root, runner, libdir, var, *, rundir="/run/osbuild"):
+    def __init__(self, root: str, runner: str, libdir: str, var: str, *, rundir: str = "/run/osbuild") -> None:
         self._exitstack = None
         self._rootdir = root
         self._rundir = rundir
@@ -106,12 +107,12 @@ class BuildRoot(contextlib.AbstractContextManager):
         self.caps: Optional[set] = None
 
     @staticmethod
-    def _mknod(path, name, mode, major, minor):
+    def _mknod(path: str, name: str, mode: int, major: int, minor: int) -> None:
         os.mknod(os.path.join(path, name),
                  mode=(stat.S_IMODE(mode) | stat.S_IFCHR),
                  device=os.makedev(major, minor))
 
-    def __enter__(self):
+    def __enter__(self) -> "BuildRoot":
         self._exitstack = contextlib.ExitStack()
         with self._exitstack:
             # We create almost everything directly in the container as temporary
@@ -164,11 +165,11 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(self, exc_type: Optional[Type[BaseException]], exc_value: Optional[BaseException], exc_tb: Optional[TracebackType]) -> None:
         self._exitstack.close()
         self._exitstack = None
 
-    def register_api(self, api: BaseAPI):
+    def register_api(self, api: BaseAPI) -> None:
         """Register an API endpoint.
 
         The context of the API endpoint will be bound to the context of
@@ -179,7 +180,15 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self._exitstack:
             self._exitstack.enter_context(api)
 
-    def run(self, argv, monitor, timeout=None, binds=None, readonly_binds=None, extra_env=None):
+    def run(
+        self,
+        argv: List[str],
+        monitor: Any,
+        timeout: Optional[int] = None,
+        binds: Optional[List[str]] = None,
+        readonly_binds: Optional[List[str]] = None,
+        extra_env: Optional[Dict[str, Any]] = None
+    ) -> CompletedBuild:
         """Runs a command in the buildroot.
 
         Takes the command and arguments, as well as bind mounts to mirror
@@ -333,7 +342,7 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         return CompletedBuild(proc, output)
 
-    def build_capabilities_args(self):
+    def build_capabilities_args(self) -> List[str]:
         """Build the capabilities arguments for bubblewrap"""
         args = []
 
@@ -360,7 +369,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         return args
 
     @classmethod
-    def read_with_timeout(cls, proc, poller, start, timeout):
+    def read_with_timeout(cls, proc, poller, start: int, timeout: int) -> Optional[bytes]:
         fd = proc.stdout.fileno()
         if timeout is None:
             return os.read(fd, 32768)
