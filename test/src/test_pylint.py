@@ -57,6 +57,17 @@ def test_pylint(source_files):
         pytest.fail("pylint issues detected")
 
 
+@pytest.mark.skipif(not test.TestBase.have_mypy(), reason="mypy not available")
+def test_mypy():
+    #
+    # Run `mypy` on osbuild sources.
+    #
+
+    r = subprocess.run(["mypy", "osbuild/"], check=False)
+    if r.returncode != 0:
+        pytest.fail("mypy issues detected")
+
+
 @pytest.mark.skipif(not test.TestBase.have_autopep8(), reason="autopep8 not available")
 def test_autopep8(source_files):
     r = subprocess.run(["autopep8-3", "--diff", "--exit-code"] + source_files, check=False)
