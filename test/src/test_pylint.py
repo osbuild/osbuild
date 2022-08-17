@@ -68,6 +68,19 @@ def test_mypy():
         pytest.fail("mypy issues detected")
 
 
+@pytest.mark.skipif(not test.TestBase.have_isort(), reason="isort not available")
+def test_isort(source_files):
+    #
+    # Run `isort` on all python sources. We simply use `find` to locate
+    # all `*.py` files, and then manually select the reverse-domain named
+    # modules we have.
+    #
+
+    r = subprocess.run(["isort", "-c"] + source_files, check=False)
+    if r.returncode != 0:
+        pytest.fail("isort issues detected")
+
+
 @pytest.mark.skipif(not test.TestBase.have_autopep8(), reason="autopep8 not available")
 def test_autopep8(source_files):
     r = subprocess.run(["autopep8-3", "--diff", "--exit-code"] + source_files, check=False)
