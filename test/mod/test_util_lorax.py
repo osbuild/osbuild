@@ -3,13 +3,12 @@
 #
 
 import os
-import tempfile
 import subprocess
+import tempfile
 
 import osbuild.util.lorax as lorax
 
 from .. import test
-
 
 BASIC_TEMPLATE = """
 # This is a comment

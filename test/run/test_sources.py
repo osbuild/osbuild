@@ -14,10 +14,11 @@ import threading
 
 import pytest
 
-import osbuild.objectstore
 import osbuild.meta
+import osbuild.objectstore
 import osbuild.sources
 from osbuild import host
+
 from .. import test
 
 

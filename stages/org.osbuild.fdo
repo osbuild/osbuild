@@ -7,12 +7,11 @@ This will create a '/fdo_diun_root_certs.pem' with content
 specified via the `rootcerts` input.
 """
 
-import shutil
 import os
+import shutil
 import sys
 
 import osbuild.api
-
 
 SCHEMA_2 = r"""
 "inputs": {

@@ -7,7 +7,6 @@ import os
 
 from .types import PathLike
 
-
 # How many bytes to read in one go. Taken from coreutils/gnulib
 BLOCKSIZE = 32768
 

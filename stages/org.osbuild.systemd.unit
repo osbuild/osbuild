@@ -16,12 +16,11 @@ of options:
     - 'Environment' option
 """
 
+import configparser
 import os
 import sys
-import configparser
 
 import osbuild.api
-
 
 SCHEMA = r"""
 "additionalProperties": false,

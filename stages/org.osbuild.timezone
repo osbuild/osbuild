@@ -10,12 +10,11 @@ the `--timezone` option, which will re-create `/etc/localtime`.
 """
 
 
+import os
 import subprocess
 import sys
-import os
 
 import osbuild.api
-
 
 SCHEMA = """
 "additionalProperties": false,

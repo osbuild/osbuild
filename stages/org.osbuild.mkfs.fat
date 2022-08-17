@@ -15,9 +15,7 @@ Buildhost commands used: `mkfs.fat`.
 import subprocess
 import sys
 
-
 import osbuild.api
-
 
 SCHEMA_2 = r"""
 "devices": {

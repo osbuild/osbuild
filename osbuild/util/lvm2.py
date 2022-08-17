@@ -26,9 +26,8 @@ import os
 import re
 import struct
 import sys
-
 from collections import OrderedDict
-from typing import BinaryIO, Dict, Union, List
+from typing import BinaryIO, Dict, List, Union
 
 PathLike = Union[str, bytes, os.PathLike]
 

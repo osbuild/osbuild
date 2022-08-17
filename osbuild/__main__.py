@@ -8,7 +8,6 @@ import sys
 
 from osbuild.main_cli import osbuild_cli as main
 
-
 if __name__ == "__main__":
     r = main()
     sys.exit(r)

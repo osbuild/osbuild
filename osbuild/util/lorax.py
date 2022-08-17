@@ -15,8 +15,7 @@ import re
 import shlex
 import shutil
 import subprocess
-
-from typing import Dict, Any
+from typing import Any, Dict
 
 import mako.template
 

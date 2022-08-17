@@ -35,11 +35,10 @@ Constraints:
 """
 
 
-import sys
 import re
+import sys
 
 import osbuild.api
-
 
 SCHEMA = """
 "additionalProperties": false,

@@ -12,8 +12,8 @@ import errno
 import json
 import os
 import socket
-from typing import Any
-from typing import Optional
+from typing import Any, Optional
+
 from .types import PathLike
 
 

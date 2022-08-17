@@ -17,11 +17,9 @@ and the possible keys for the `OPTIONS` assignment are not checked.
 
 import os
 import sys
-
 from typing import Dict
 
 import osbuild.api
-
 
 SCHEMA = r"""
   "definitions": {

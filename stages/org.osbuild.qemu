@@ -18,7 +18,6 @@ import sys
 
 import osbuild.api
 
-
 SCHEMA_2 = r"""
 "definitions": {
   "qcow2": {

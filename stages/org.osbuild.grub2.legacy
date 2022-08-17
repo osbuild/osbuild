@@ -45,7 +45,6 @@ import sys
 
 import osbuild.api
 
-
 SCHEMA = """
 
 "definitions": {

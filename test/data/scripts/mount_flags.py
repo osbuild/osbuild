@@ -7,7 +7,6 @@ import argparse
 import os
 import sys
 
-
 # from /usr/include/sys/mount.h
 # these are file-system independent
 MS_RDONLY = 1

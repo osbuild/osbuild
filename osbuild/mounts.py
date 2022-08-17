@@ -12,7 +12,6 @@ import hashlib
 import json
 import os
 import subprocess
-
 from typing import Dict, List
 
 from osbuild import host

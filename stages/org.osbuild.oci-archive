@@ -38,15 +38,14 @@ podman[3] with `podman pull oci-archive:<archive>`.
 
 
 import datetime
-import time
 import json
 import os
 import subprocess
 import sys
 import tempfile
+import time
 
 import osbuild.api
-
 
 DEFAULT_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 

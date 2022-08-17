@@ -17,7 +17,6 @@ import sys
 
 import osbuild.api
 
-
 SCHEMA = """
 "required": ["kernel"],
 "properties": {

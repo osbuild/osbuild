@@ -21,7 +21,6 @@ import sys
 
 import osbuild.api
 
-
 SCHEMA_2 = r"""
 "options": {
   "additionalProperties": false,

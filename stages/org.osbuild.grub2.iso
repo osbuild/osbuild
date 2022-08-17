@@ -7,10 +7,10 @@ an efiboot.img.
 
 import os
 import shutil
-import sys
 import string
-import osbuild.api
+import sys
 
+import osbuild.api
 
 SCHEMA_2 = """
 "options": {

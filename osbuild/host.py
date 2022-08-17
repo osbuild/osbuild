@@ -48,7 +48,7 @@ import sys
 import threading
 import traceback
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple, Callable, Iterable, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from osbuild.util.jsoncomm import FdSet, Socket
 

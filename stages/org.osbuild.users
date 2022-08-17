@@ -11,12 +11,11 @@ assumptions about its host system.
 """
 
 
+import os
 import subprocess
 import sys
-import os
 
 import osbuild.api
-
 
 SCHEMA = """
 "additionalProperties": false,

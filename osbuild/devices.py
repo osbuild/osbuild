@@ -16,8 +16,7 @@ import abc
 import hashlib
 import json
 import os
-
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 
 from osbuild import host
 

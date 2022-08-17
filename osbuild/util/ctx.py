@@ -7,7 +7,6 @@ library.
 
 import contextlib
 
-
 __all__ = [
     "suppress_oserror",
 ]

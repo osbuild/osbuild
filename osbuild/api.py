@@ -6,12 +6,12 @@ import json
 import os
 import sys
 import tempfile
-import traceback
 import threading
+import traceback
 from typing import Dict, Optional
-from .util.types import PathLike
-from .util import jsoncomm
 
+from .util import jsoncomm
+from .util.types import PathLike
 
 __all__ = [
     "API"

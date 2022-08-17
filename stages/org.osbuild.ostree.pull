@@ -12,11 +12,10 @@ that to pull the commits.
 
 
 import os
-import sys
 import subprocess
+import sys
 
 import osbuild.api
-
 
 CAPABILITIES = ["CAP_MAC_ADMIN"]
 

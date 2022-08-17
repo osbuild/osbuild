@@ -20,10 +20,8 @@ import collections
 import os
 import sys
 
-from osbuild.util.lorax import render_template, Script
-
 import osbuild.api
-
+from osbuild.util.lorax import Script, render_template
 
 SCHEMA = """
 "additionalProperties": false,

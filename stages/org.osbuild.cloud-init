@@ -17,11 +17,10 @@ Currently supported subset of cloud-init configuration:
 
 
 import sys
+
 import yaml
 
-
 import osbuild.api
-
 
 SCHEMA = r"""
 "definitions": {

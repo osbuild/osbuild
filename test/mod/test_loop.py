@@ -5,8 +5,8 @@
 import contextlib
 import fcntl
 import os
-import time
 import threading
+import time
 from tempfile import TemporaryDirectory, TemporaryFile
 
 import pytest

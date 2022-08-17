@@ -8,13 +8,12 @@ gpg keys are provided via `gpgkeys`.
 
 
 import os
-import sys
 import subprocess
+import sys
 import uuid
-from osbuild.util.ostree import show
 
 from osbuild import sources
-
+from osbuild.util.ostree import show
 
 SCHEMA = """
 "additionalProperties": false,

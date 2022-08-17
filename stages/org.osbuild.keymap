@@ -18,12 +18,11 @@ Valid keymaps are generally found in /lib/kbd/keymaps.
 """
 
 
+import os
 import subprocess
 import sys
-import os
 
 import osbuild.api
-
 
 SCHEMA = """
 "additionalProperties": false,

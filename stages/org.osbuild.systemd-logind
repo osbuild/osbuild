@@ -15,12 +15,11 @@ At least one option must be specified in the 'Login' section.
 """
 
 
+import configparser
 import os
 import sys
-import configparser
 
 import osbuild.api
-
 
 SCHEMA = r"""
 "additionalProperties": false,

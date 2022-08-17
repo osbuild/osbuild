@@ -18,8 +18,8 @@ import dnf
 import dnf.conf
 import dnf.conf.read
 
-from osbuild.util.lorax import render_template
 import osbuild.util.osrelease as ostrelease
+from osbuild.util.lorax import render_template
 
 
 class DepSolver:

@@ -14,8 +14,8 @@ import osbuild.meta
 from osbuild.formats import v1 as fmt
 from osbuild.monitor import NullMonitor
 from osbuild.objectstore import ObjectStore
-from .. import test
 
+from .. import test
 
 BASIC_PIPELINE = {
     "sources": {

@@ -15,12 +15,10 @@ import stat
 import subprocess
 import tempfile
 import time
-
 from typing import Optional, Set
 
 from osbuild.api import BaseAPI
 from osbuild.util import linux
-
 
 __all__ = [
     "BuildRoot",

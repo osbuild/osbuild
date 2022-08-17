@@ -14,6 +14,7 @@ import osbuild.meta
 from osbuild.monitor import LogMonitor
 from osbuild.objectstore import ObjectStore
 from osbuild.pipeline import detect_host_runner
+
 from .. import test
 
 

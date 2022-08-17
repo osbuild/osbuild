@@ -23,10 +23,10 @@ subscription-manager to modify its configuration file.
 """
 
 import sys
+
 import iniparse
 
 import osbuild.api
-
 
 SCHEMA = """
 "definitions": {

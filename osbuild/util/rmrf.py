@@ -16,7 +16,6 @@ import shutil
 
 import osbuild.util.linux as linux
 
-
 __all__ = [
     "rmtree",
 ]

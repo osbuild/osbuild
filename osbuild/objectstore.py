@@ -3,13 +3,13 @@ import os
 import subprocess
 import tempfile
 import uuid
-from typing import Optional, Iterator, Set
+from typing import Iterator, Optional, Set
 
-from osbuild.util.types import PathLike
 from osbuild.util import jsoncomm, rmrf
 from osbuild.util.mnt import mount, umount
-from . import api
+from osbuild.util.types import PathLike
 
+from . import api
 
 __all__ = [
     "ObjectStore",

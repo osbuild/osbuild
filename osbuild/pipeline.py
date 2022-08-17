@@ -5,18 +5,14 @@ import json
 import os
 from typing import Dict, Generator, Iterable, Iterator, List, Optional
 
+from . import buildroot, host, objectstore, remoteloop
 from .api import API
-from . import buildroot
-from . import host
-from . import objectstore
-from . import remoteloop
 from .devices import Device, DeviceManager
 from .inputs import Input, InputManager
 from .mounts import Mount, MountManager
+from .objectstore import ObjectStore
 from .sources import Source
 from .util import osrelease
-from .objectstore import ObjectStore
-
 
 DEFAULT_CAPABILITIES = {
     "CAP_AUDIT_WRITE",

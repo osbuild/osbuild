@@ -305,7 +305,6 @@ import collections
 import contextlib
 import hashlib
 import json
-import yaml
 import os
 import pathlib
 import string
@@ -316,9 +315,10 @@ import urllib.parse
 import urllib.request
 from typing import Dict, Optional
 
-import rpm
 import dnf
 import hawkey
+import rpm
+import yaml
 
 from osbuild.util.rhsm import Subscriptions
 

@@ -13,7 +13,6 @@ import json
 import os
 import sys
 import time
-
 from typing import Dict
 
 import osbuild

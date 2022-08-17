@@ -5,13 +5,12 @@ Pre-populate /var directory for a given stateroot.
 
 
 import os
-import sys
 import subprocess
+import sys
 
 import osbuild.api
-from osbuild.util.mnt import MountGuard
 from osbuild.util import ostree
-
+from osbuild.util.mnt import MountGuard
 
 SCHEMA = """
 "additionalProperties": false,

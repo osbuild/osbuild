@@ -13,12 +13,11 @@ and here only a subset of the available options. See the schema
 for more information.
 """
 
+import configparser
 import os
 import sys
-import configparser
 
 import osbuild.api
-
 
 SCHEMA = r"""
 "definitions": {

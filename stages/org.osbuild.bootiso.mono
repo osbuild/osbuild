@@ -30,10 +30,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import osbuild.remoteloop as remoteloop
 
 import osbuild.api
-
+import osbuild.remoteloop as remoteloop
 
 SCHEMA_2 = """
 "options": {

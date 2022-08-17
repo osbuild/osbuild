@@ -6,8 +6,7 @@ import subprocess
 import sys
 import tempfile
 import typing
-
-from typing import List, Any
+from typing import Any, List
 
 from .types import PathLike
 

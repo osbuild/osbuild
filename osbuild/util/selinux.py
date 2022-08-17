@@ -3,7 +3,6 @@
 import errno
 import os
 import subprocess
-
 from typing import Dict, TextIO
 
 # Extended attribute name for SELinux labels
