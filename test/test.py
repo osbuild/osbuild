@@ -203,6 +203,23 @@ class TestBase(unittest.TestCase):
 
         return r.returncode == 0 and "mypy" in r.stdout
 
+    def have_isort() -> bool:
+        """Check isort Availability
+
+        This checks whether `isort` is available in the current path and
+        can be called by this process.
+        """
+
+        try:
+            r = subprocess.run(
+                ["isort", "--version"],
+                encoding="utf-8", stdout=subprocess.PIPE, check=False
+            )
+        except FileNotFoundError:
+            return False
+
+        return r.returncode == 0 and "isort" in r.stdout
+
     @staticmethod
     def have_rpm_ostree() -> bool:
         """Check rpm-ostree Availability
