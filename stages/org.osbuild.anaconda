@@ -12,9 +12,7 @@ configurable via the `kickstart-modules` option.
 import os
 import sys
 
-
 import osbuild.api
-
 
 SCHEMA = """
 "additionalProperties": true,

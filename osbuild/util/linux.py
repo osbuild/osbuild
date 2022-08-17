@@ -20,7 +20,6 @@ import os
 import platform
 import threading
 
-
 __all__ = [
     "ioctl_get_immutable",
     "ioctl_toggle_immutable",

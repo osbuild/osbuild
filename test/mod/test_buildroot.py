@@ -2,10 +2,9 @@
 # Test for the build root
 #
 
-import pathlib
 import os
+import pathlib
 import sys
-
 from tempfile import TemporaryDirectory
 
 import pytest

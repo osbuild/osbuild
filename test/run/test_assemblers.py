@@ -11,6 +11,7 @@ import tempfile
 import unittest
 
 from osbuild import loop
+
 from .. import test
 
 MEBIBYTE = 1024 * 1024

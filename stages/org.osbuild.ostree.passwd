@@ -14,13 +14,11 @@ in UIDs and GIDs.
 
 import contextlib
 import os
-import sys
 import subprocess
+import sys
 
 import osbuild.api
-
 from osbuild.util.ostree import PasswdLike, SubIdsDB
-
 
 SCHEMA_2 = """
 "options": {

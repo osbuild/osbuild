@@ -2,10 +2,10 @@
 # Test for the util.checksum module
 #
 from tempfile import NamedTemporaryFile
+
 import pytest
 
 from osbuild.util import checksum
-
 
 # pylint: disable=line-too-long
 TEST_STRING = "I have of late, but wherefore I know not, lost all my bytes\n"

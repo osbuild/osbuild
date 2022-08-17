@@ -8,6 +8,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+
 import pytest
 
 from osbuild.util import ostree

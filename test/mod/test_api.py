@@ -2,8 +2,8 @@
 # Test for API infrastructure
 #
 
-import os
 import multiprocessing as mp
+import os
 import tempfile
 import unittest
 

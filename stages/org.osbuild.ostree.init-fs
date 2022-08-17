@@ -6,11 +6,10 @@ Creates the basic file system layout for an OSTree based system.
 """
 
 
-import sys
 import subprocess
+import sys
 
 import osbuild.api
-
 
 SCHEMA = """
 "additionalProperties": false

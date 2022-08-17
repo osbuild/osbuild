@@ -42,15 +42,13 @@ image and transfers control to it.
 
 
 import os
-import subprocess
 import shutil
 import struct
+import subprocess
 import sys
-
 from typing import BinaryIO, Dict
 
 import osbuild.api
-
 
 SCHEMA = r"""
 "definitions": {

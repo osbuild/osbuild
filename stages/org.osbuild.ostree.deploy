@@ -20,8 +20,8 @@ the sysroot and the deployments. Additional kernel options can be passed via
 """
 
 import os
-import sys
 import subprocess
+import sys
 
 import osbuild.api
 from osbuild.util.mnt import MountGuard

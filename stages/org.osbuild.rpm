@@ -41,9 +41,8 @@ import sys
 import tempfile
 from operator import itemgetter
 
-from osbuild.util.mnt import mount
 from osbuild import api
-
+from osbuild.util.mnt import mount
 
 SCHEMA = """
 "additionalProperties": false,

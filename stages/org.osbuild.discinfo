@@ -6,11 +6,10 @@ This will create a `.discinfo` file with the specified parameters.
 """
 
 import os
-import time
 import sys
+import time
 
 import osbuild.api
-
 
 SCHEMA = """
 "additionalProperties": true,

@@ -10,13 +10,11 @@ Only a very limited set of available kickstart
 commands are supported here.
 """
 
-import sys
 import os
-
+import sys
 from typing import Dict, List
 
 import osbuild.api
-
 
 SCHEMA = """
 "additionalProperties": false,

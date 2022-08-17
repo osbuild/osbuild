@@ -1,8 +1,8 @@
 import contextlib
 import errno
 import os
-from . import api
-from . import loop
+
+from . import api, loop
 from .util import jsoncomm
 
 __all__ = [

@@ -17,7 +17,6 @@ import sys
 import osbuild.api
 from osbuild.util import ostree
 
-
 SCHEMA = """
 "additionalProperties": false,
 "required": ["filesystems"],

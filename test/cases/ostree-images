@@ -4,11 +4,10 @@
 
 import argparse
 import os
-import tempfile
-import time
 import subprocess
 import sys
-
+import tempfile
+import time
 
 RESET = "\033[0m"
 GREEN = "\033[32m"

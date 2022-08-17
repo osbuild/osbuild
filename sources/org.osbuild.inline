@@ -19,7 +19,6 @@ import sys
 from osbuild import sources
 from osbuild.util.checksum import verify_file
 
-
 SCHEMA = """
 "definitions": {
   "item": {

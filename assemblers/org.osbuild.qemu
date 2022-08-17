@@ -28,11 +28,10 @@ import struct
 import subprocess
 import sys
 import tempfile
-from typing import List, BinaryIO, Optional
+from typing import BinaryIO, List, Optional
 
 import osbuild.api
 import osbuild.remoteloop as remoteloop
-
 
 SCHEMA = """
 "additionalProperties": false,

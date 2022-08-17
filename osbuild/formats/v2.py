@@ -2,12 +2,13 @@
 
 Second, and current, version of the manifest description
 """
-from typing import Dict, Any
+from typing import Any, Dict
+
 from osbuild.meta import Index, ModuleInfo, ValidationResult
+
 from ..inputs import Input
 from ..pipeline import Manifest, Pipeline, Stage, detect_host_runner
 from ..sources import Source
-
 
 VERSION = "2"
 

@@ -23,7 +23,6 @@ import pyalpm
 
 from osbuild import api
 
-
 SCHEMA_2 = """
 "options": {
   "type": "object",

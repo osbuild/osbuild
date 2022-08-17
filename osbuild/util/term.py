@@ -1,7 +1,6 @@
 """Wrapper module for output formatting."""
 
 import sys
-
 from typing import Dict
 
 

@@ -12,7 +12,6 @@ import sys
 import osbuild.api
 from osbuild.util.path import in_tree
 
-
 SCHEMA_2 = r"""
 "options": {
   "additionalProperties": false,

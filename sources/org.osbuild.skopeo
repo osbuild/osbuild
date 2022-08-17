@@ -5,11 +5,11 @@ Buildhost commands used: `skopeo`.
 """
 
 import errno
-import os
-import sys
-import subprocess
-import tempfile
 import hashlib
+import os
+import subprocess
+import sys
+import tempfile
 
 from osbuild import sources
 from osbuild.util import ctx

@@ -20,11 +20,11 @@ import abc
 import hashlib
 import json
 import os
-
-from typing import Dict, Optional, Tuple, Any
+from typing import Any, Dict, Optional, Tuple
 
 from osbuild import host
 from osbuild.util.types import PathLike
+
 from .objectstore import StoreClient, StoreServer
 
 

@@ -12,12 +12,11 @@ configuration, is supported, specifically:
   - repo_gpgcheck
 """
 
+import configparser
 import os
 import sys
-import configparser
 
 import osbuild.api
-
 
 SCHEMA = r"""
 "definitions": {

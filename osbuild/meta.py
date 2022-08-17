@@ -24,15 +24,15 @@ import ast
 import contextlib
 import copy
 import importlib.util
+import json
 import os
 import pkgutil
-import json
 import sys
 from collections import deque
-from typing import Dict, Sequence, List, Optional, Union, Set, Deque, Any, Tuple
+from typing import (Any, Deque, Dict, List, Optional, Sequence, Set, Tuple,
+                    Union)
 
 import jsonschema
-
 
 FAILED_TITLE = "JSON Schema validation failed"
 FAILED_TYPEURI = "https://osbuild.org/validation-error"

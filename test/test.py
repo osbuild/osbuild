@@ -203,6 +203,7 @@ class TestBase(unittest.TestCase):
 
         return r.returncode == 0 and "mypy" in r.stdout
 
+    @staticmethod
     def have_isort() -> bool:
         """Check isort Availability
 

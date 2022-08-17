@@ -2,14 +2,13 @@
 # Test for the util.lvm2 module
 #
 
-import os
 import json
+import os
 import subprocess
 import time
 import uuid
-
-from typing import List
 from tempfile import TemporaryDirectory
+from typing import List
 
 import pytest
 

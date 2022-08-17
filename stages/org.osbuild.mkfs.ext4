@@ -11,9 +11,7 @@ Buildhost commands used: `mke2fs`.
 import subprocess
 import sys
 
-
 import osbuild.api
-
 
 SCHEMA_2 = r"""
 "devices": {

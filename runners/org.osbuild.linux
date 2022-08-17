@@ -3,7 +3,6 @@
 import subprocess
 import sys
 
-
 if __name__ == "__main__":
     r = subprocess.run(sys.argv[1:], check=False)
     sys.exit(r.returncode)

@@ -5,11 +5,10 @@ Configure OSTree remotes for a repository.
 
 
 import os
-import sys
 import subprocess
+import sys
 
 import osbuild.api
-
 
 SCHEMA = """
 "additionalProperties": false,

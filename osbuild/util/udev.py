@@ -3,7 +3,6 @@
 import contextlib
 import pathlib
 
-
 # The default lock dir to use
 LOCKDIR = "/run/osbuild/locks/udev"
 

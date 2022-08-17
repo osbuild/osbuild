@@ -14,12 +14,10 @@ the directory itself.
 import os
 import subprocess
 import sys
-
 from typing import Dict
-from urllib.parse import urlparse, ParseResult
+from urllib.parse import ParseResult, urlparse
 
 import osbuild.api
-
 
 CAPABILITIES = ["CAP_MAC_ADMIN"]
 

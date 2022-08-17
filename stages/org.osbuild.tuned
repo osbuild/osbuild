@@ -15,7 +15,6 @@ import sys
 
 import osbuild.api
 
-
 SCHEMA = """
 "additionalProperties": false,
 "required": ["profiles"],

@@ -7,10 +7,11 @@ the created tree into an artefact. The pipeline can have any
 number of nested build pipelines. A sources section is used
 to fetch resources.
 """
-from typing import Dict, Any
-from osbuild.meta import Index, ValidationResult
-from ..pipeline import BuildResult, Manifest, Pipeline, detect_host_runner
+from typing import Any, Dict
 
+from osbuild.meta import Index, ValidationResult
+
+from ..pipeline import BuildResult, Manifest, Pipeline, detect_host_runner
 
 VERSION = "1"
 

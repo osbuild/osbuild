@@ -20,10 +20,8 @@ import tempfile
 import urllib.parse
 
 from osbuild import sources
-
 from osbuild.util.checksum import verify_file
 from osbuild.util.rhsm import Subscriptions
-
 
 SCHEMA = """
 "additionalProperties": false,

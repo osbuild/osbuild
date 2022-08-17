@@ -38,7 +38,6 @@ import sys
 import osbuild.api
 from osbuild.util import ostree
 
-
 CAPABILITIES = ["CAP_MAC_ADMIN", "CAP_NET_ADMIN", "CAP_SYS_PTRACE"]
 
 

@@ -10,7 +10,6 @@ import unittest
 import osbuild
 import osbuild.meta
 
-
 BASIC_PIPELINE = {
     "version": "2",
     "sources": {

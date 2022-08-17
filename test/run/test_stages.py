@@ -17,8 +17,8 @@ from collections.abc import Mapping
 from typing import Dict
 
 from osbuild.util import selinux
-from .. import initrd
-from .. import test
+
+from .. import initrd, test
 
 
 def have_sfdisk_with_json():

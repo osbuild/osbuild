@@ -51,11 +51,10 @@ This stage will overwrite existing files.
 
 """
 
-import sys
 import os
+import sys
 
 import osbuild.api
-
 
 SCHEMA = r"""
 "additionalProperties": false,

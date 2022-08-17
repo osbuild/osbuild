@@ -15,9 +15,7 @@ import subprocess
 import sys
 import uuid
 
-
 import osbuild.api
-
 
 SCHEMA_2 = r"""
 "devices": {

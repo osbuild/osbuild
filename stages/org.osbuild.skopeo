@@ -14,7 +14,6 @@ import tempfile
 
 import osbuild.api
 
-
 SCHEMA_2 = r"""
 "inputs": {
   "type": "object",
