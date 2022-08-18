@@ -178,7 +178,7 @@ class PasswdLike:
 
     def __init__(self):
         """Initialize an empty PasswdLike object"""
-        self.db = dict()
+        self.db = {}
 
     @classmethod
     def from_file(cls, path: PathLike, allow_missing_file: bool = False):

@@ -79,7 +79,7 @@ class Subscriptions:
         parser = configparser.ConfigParser()
         parser.read_file(fp)
 
-        repositories = dict()
+        repositories = {}
         for section in parser.sections():
             current = {
                 "matchurl": cls._process_baseurl(parser.get(section, "baseurl"))
