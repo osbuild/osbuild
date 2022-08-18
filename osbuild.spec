@@ -22,6 +22,12 @@ BuildRequires:  make
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 BuildRequires:  systemd
+# dependencies for %%check
+BuildRequires:  lvm2
+BuildRequires:  python3-jsonschema
+BuildRequires:  python3-mako
+BuildRequires:  python3-pytest
+BuildRequires:  rpm-ostree
 
 Requires:       bash
 Requires:       bubblewrap
@@ -179,9 +185,9 @@ mkdir -p %{buildroot}%{_udevrulesdir}
 install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
 
 %check
-exit 0
 # We have some integration tests, but those require running a VM, so that would
 # be an overkill for RPM check script.
+python3 -m pytest test/mod
 
 %files
 %license LICENSE
