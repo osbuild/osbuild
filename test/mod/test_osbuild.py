@@ -207,7 +207,7 @@ class TestDescriptions(unittest.TestCase):
 
         # check an empty input leads to an empty list
         res = manifest.depsolve(store, [])
-        assert res == []
+        assert not res
 
         # the build pipeline should resolve to just itself
         res = manifest.depsolve(store, names(build))
@@ -250,7 +250,7 @@ class TestDescriptions(unittest.TestCase):
         store.have.clear()
         store.have.add(image.id)
         res = manifest.depsolve(store, names(image))
-        assert res == []
+        assert not res
 
         # we have a checkpoint of the stage in the image
         # pipeline with the `dep` dependency, so that
