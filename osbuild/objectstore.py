@@ -306,8 +306,8 @@ class ObjectStore(contextlib.AbstractContextManager):
         Returns: The name of the object
         """
 
-        # the object is stored in the objects directory using its unique
-        # name. This means that eatch commit will always result in a new
+        # The object is stored in the objects directory using its unique
+        # name. This means that each commit will always result in a new
         # object in the store, even if an identical one exists.
         object_name = obj.store_tree()
 
