@@ -118,6 +118,33 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(object_store.refs)) == 3
             assert len(os.listdir(object_store.objects)) == 3
 
+    def test_commit_clone(self):
+        # operate with a clean object store
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+            # sample data to be used for read, write checks
+            data = "23"
+
+            object_store = objectstore.ObjectStore(tmp)
+            assert len(os.listdir(object_store.refs)) == 0
+
+            with object_store.new() as tree:
+                path = tree.write()
+                with tree.write() as path, \
+                        open(os.path.join(path, "data"), "w", encoding="utf-8") as f:
+                    f.write(data)
+                    st = os.fstat(f.fileno())
+                    data_inode = st.st_ino
+                # commit the object as "x", making a copy
+                object_store.commit(tree, "x", clone=True)
+
+                # check that "data" got indeed copied
+                with tree.read() as path:
+                    with open(os.path.join(path, "data"), "r", encoding="utf-8") as f:
+                        st = os.fstat(f.fileno())
+                        self.assertNotEqual(st.st_ino, data_inode)
+                        data_read = f.read()
+                        self.assertEqual(data, data_read)
+
     def test_object_copy_on_write(self):
         # operate with a clean object store
         with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
