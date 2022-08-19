@@ -184,6 +184,20 @@ class Object:
                 check=True,
             )
 
+    def clone(self, to_directory: PathLike):
+        """Clone the object to the specified directory"""
+        with self.read() as from_directory:
+            subprocess.run(
+                [
+                    "cp",
+                    "--reflink=auto",
+                    "-a",
+                    os.fspath(from_directory) + "/.",
+                    os.fspath(to_directory),
+                ],
+                check=True,
+            )
+
 
 class HostTree:
     """Read-only access to the host file system
