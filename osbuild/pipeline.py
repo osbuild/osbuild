@@ -359,7 +359,7 @@ class Pipeline:
             tree.id = stage.id
 
             if stage.checkpoint:
-                object_store.commit(tree, stage.id)
+                object_store.commit(tree, stage.id, clone=bool(todo))
 
         return results
 
