@@ -308,7 +308,7 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         return obj
 
-    def commit(self, obj: Object, object_id: str) -> str:
+    def commit(self, obj: Object, object_id: str, clone: bool = False) -> str:
         """Commits a Object to the object store
 
         Move the contents of the obj (Object) to object directory
@@ -323,7 +323,11 @@ class ObjectStore(contextlib.AbstractContextManager):
         # The object is stored in the objects directory using its unique
         # name. This means that each commit will always result in a new
         # object in the store, even if an identical one exists.
-        object_name = obj.store_tree()
+        if clone:
+            object_name = str(uuid.uuid4())
+            obj.clone(os.path.join(self.objects, object_name))
+        else:
+            object_name = obj.store_tree()
 
         # symlink the object_id (config hash) in the refs directory to the
         # object name in the objects directory. If a symlink by that name
