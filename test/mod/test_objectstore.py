@@ -113,7 +113,7 @@ class TestObjectStore(unittest.TestCase):
                     data_inode = st.st_ino
 
                 # commit the object as "x", making a copy
-                store.commit(tree, "x", clone=True)
+                store.commit(tree, "x")
 
                 # check that "data" got indeed copied
                 tree = store.get("x")
@@ -191,7 +191,7 @@ class TestObjectStore(unittest.TestCase):
                 p.touch()
 
             assert not store.contains("a")
-            store.commit(tree, "a", clone=True)
+            store.commit(tree, "a")  # store via "a", creates a clone
             assert store.contains("a")
 
             with tree.write() as path:

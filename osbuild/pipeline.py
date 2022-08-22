@@ -354,7 +354,7 @@ class Pipeline:
                 return results
 
             if stage.checkpoint:
-                object_store.commit(tree, stage.id, clone=bool(todo))
+                object_store.commit(tree, stage.id)
 
         tree.finalize()
 
