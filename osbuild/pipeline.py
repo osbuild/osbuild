@@ -88,6 +88,9 @@ class Stage:
         if self.inputs:
             data = {n: i.id for n, i in self.inputs.items()}
             m.update(json.dumps(data, sort_keys=True).encode())
+        if self.mounts:
+            data = [m.id for m in self.mounts.values()]
+            m.update(json.dumps(data).encode())
         return m.hexdigest()
 
     @property
