@@ -32,7 +32,11 @@ SCHEMA = """
           "type": "string"
         },
         "url": {
-          "description": "URL of the remote",
+          "description": "URL for accessing metadata and content for the remote",
+          "type": "string"
+        },
+        "contenturl": {
+          "description": "URL for accessing content. When set, url is used only for metadata. Supports 'mirrorlist=' prefix",
           "type": "string"
         },
         "branches": {
@@ -85,6 +89,7 @@ def main(tree, options):
         branches = remote.get("branches", [])
         gpgkeys = remote.get("gpgkeys", [])
         gpgkeypaths = remote.get("gpgkeypaths", [])
+        contenturl = remote.get("contenturl")
 
         extra_args = []
         if gpgkeypaths:
@@ -93,6 +98,9 @@ def main(tree, options):
             extra_args.append("--set=gpg-verify=true")
         elif not gpgkeys:
             extra_args += ["--no-gpg-verify"]
+
+        if contenturl:
+            extra_args.append(f"--set=contenturl={contenturl}")
 
         ostree("remote", "add",
                "--if-not-exists",
