@@ -48,6 +48,13 @@ SCHEMA = """
             "description": "GPG keys for the remote to verify commits",
             "type": "string"
           }
+        },
+        "gpgkeypaths": {
+          "type": "array",
+          "items": {
+            "description": "Path to ASCII-armored GPG key or directory containing ASCII-armored GPG keys to import",
+            "type": "string"
+          }
         }
       }
     }
@@ -77,9 +84,14 @@ def main(tree, options):
         url = remote["url"]
         branches = remote.get("branches", [])
         gpgkeys = remote.get("gpgkeys", [])
+        gpgkeypaths = remote.get("gpgkeypaths", [])
 
         extra_args = []
-        if not gpgkeys:
+        if gpgkeypaths:
+            paths = ",".join(gpgkeypaths)
+            extra_args.append(f"--set=gpgkeypath={paths}")
+            extra_args.append("--set=gpg-verify=true")
+        elif not gpgkeys:
             extra_args += ["--no-gpg-verify"]
 
         ostree("remote", "add",
