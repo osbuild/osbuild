@@ -26,16 +26,11 @@ def store_path(store: objectstore.ObjectStore, ref: str, path: str) -> bool:
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
 class TestObjectStore(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.store = os.getenv("OSBUILD_TEST_STORE")
-        if not cls.store:
-            cls.store = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
+    def setUp(self):
+        self.store = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
 
-    @classmethod
-    def tearDownClass(cls):
-        if not os.getenv("OSBUILD_TEST_STORE"):
-            shutil.rmtree(cls.store)
+    def tearDown(self):
+        shutil.rmtree(self.store)
 
     def test_basic(self):
         # always use a temporary store so item counting works
