@@ -8,6 +8,7 @@ import json
 import os
 import sys
 
+import osbuild
 import osbuild.api
 
 
@@ -23,13 +24,21 @@ SCHEMA = r"""
 
 
 def main(tree, options):
+    # `osbuild` itself will write some default facts about its setup into the
+    # facts stage when it is enabled, these are overwritten if supplied by the
+    # options to the stage
+    facts = {
+        "image-builder.osbuild.version": str(osbuild.__version__),
+    }
+    facts.update(options["facts"])
+
     path = os.path.join(tree, "usr/share/osbuild/self")
     file = os.path.join(path, "rhsm.facts")
 
     os.makedirs(path, exist_ok=True)
 
     with open(file, "x", encoding="utf-8") as f:
-        json.dump(options["facts"], f)
+        json.dump(facts, f)
 
     os.makedirs(os.path.join(tree, "etc/rhsm/facts"), exist_ok=True)
 
