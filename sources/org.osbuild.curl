@@ -17,6 +17,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 
 from osbuild import sources
 
@@ -110,10 +111,17 @@ class CurlSource(sources.SourceService):
 
         return checksum, url
 
+    @staticmethod
+    def _quote_url(url: str) -> str:
+        purl = urllib.parse.urlparse(url)
+        path = urllib.parse.quote(purl.path)
+        quoted = purl._replace(path=path)
+        return quoted.geturl()
+
     def fetch_one(self, checksum, desc):
         secrets = desc.get("secrets")
         insecure = desc.get("insecure")
-        url = desc.get("url")
+        url = self._quote_url(desc.get("url"))
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
         with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
