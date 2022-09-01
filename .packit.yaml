@@ -59,3 +59,7 @@ jobs:
   metadata:
     dist_git_branches:
       - fedora-all
+- job: bodhi_update
+  trigger: commit
+  dist_git_branches:
+    - fedora-stable # rawhide updates are created automatically
