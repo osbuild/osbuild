@@ -76,6 +76,12 @@ SCHEMA_2 = r"""
             "type": "string"
           }
         },
+        "Entrypoint": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "Env": {
           "type": "array",
           "default": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
@@ -255,7 +261,7 @@ def config_from_options(options):
         "Cmd": command
     }
 
-    for name in ["User", "Labels", "StopSignal", "WorkingDir"]:
+    for name in ["Entrypoint", "User", "Labels", "StopSignal", "WorkingDir"]:
         item = options.get(name)
         if item:
             config[name] = item
