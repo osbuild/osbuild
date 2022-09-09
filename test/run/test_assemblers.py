@@ -30,7 +30,7 @@ class TestAssemblers(test.TestBase):
     def run_assembler(self, osb, name, options, output_path):
         with open(os.path.join(self.locate_test_data(),
                                "manifests/filesystem.json"),
-                               encoding="utf8") as f:
+                  encoding="utf8") as f:
             manifest = json.load(f)
         manifest["pipeline"] = dict(
             manifest["pipeline"],
@@ -115,7 +115,7 @@ class TestAssemblers(test.TestBase):
         with self.osbuild as osb:
             with open(os.path.join(self.locate_test_data(),
                                    "manifests/fedora-ostree-commit.json"),
-                                   encoding="utf8") as f:
+                      encoding="utf8") as f:
                 manifest = json.load(f)
 
             data = json.dumps(manifest)
