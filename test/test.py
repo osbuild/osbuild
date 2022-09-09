@@ -133,9 +133,9 @@ class TestBase(unittest.TestCase):
             original = os.path.join(tmpdir, "original")
             mnt = os.path.join(tmpdir, "mnt")
 
-            with open(original, "w") as f:
+            with open(original, "w", encoding="utf8") as f:
                 f.write("foo")
-            with open(mnt, "w") as f:
+            with open(mnt, "w", encoding="utf8") as f:
                 f.write("bar")
 
             try:
@@ -153,7 +153,7 @@ class TestBase(unittest.TestCase):
                     stderr=subprocess.DEVNULL,
                     check=True,
                 )
-                with open(mnt, "r") as f:
+                with open(mnt, "r", encoding="utf8") as f:
                     assert f.read() == "foo"
                 return True
             except subprocess.CalledProcessError:
@@ -178,7 +178,7 @@ class TestBase(unittest.TestCase):
         try:
             r = subprocess.run(
                 ["autopep8-3", "--version"],
-                encoding="utf-8", stdout=subprocess.PIPE, check=False
+                encoding="utf8", stdout=subprocess.PIPE, check=False
             )
         except FileNotFoundError:
             return False
@@ -196,7 +196,7 @@ class TestBase(unittest.TestCase):
         try:
             r = subprocess.run(
                 ["rpm-ostree", "--version"],
-                encoding="utf-8", stdout=subprocess.PIPE, check=False
+                encoding="utf8", stdout=subprocess.PIPE, check=False
             )
         except FileNotFoundError:
             return False
@@ -333,7 +333,7 @@ class OSBuild(contextlib.AbstractContextManager):
 
             cmd_args += ["-"]
 
-            logfile_context = tempfile.NamedTemporaryFile(dir="/var/tmp", mode="w+", encoding="utf-8")
+            logfile_context = tempfile.NamedTemporaryFile(dir="/var/tmp", mode="w+", encoding="utf8")
             logfile = cm.enter_context(logfile_context)
 
             cmd_args += ["--monitor", "LogMonitor", "--monitor-fd", str(logfile.fileno())]
@@ -345,7 +345,7 @@ class OSBuild(contextlib.AbstractContextManager):
             try:
                 p = subprocess.Popen(
                     cmd_args,
-                    encoding="utf-8",
+                    encoding="utf8",
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -376,7 +376,7 @@ class OSBuild(contextlib.AbstractContextManager):
         to `compile()`.
         """
 
-        with open(file_stdin, "r") as f:
+        with open(file_stdin, "r", encoding="utf8") as f:
             data_stdin = f.read()
             return self.compile(data_stdin, output_dir, checkpoints=checkpoints, exports=exports)
 

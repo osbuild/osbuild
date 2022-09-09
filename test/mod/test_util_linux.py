@@ -26,7 +26,7 @@ def test_ioctl_get_immutable(tmpdir):
     # as intended.
     #
 
-    with open(f"{tmpdir}/immutable", "x") as f:
+    with open(f"{tmpdir}/immutable", "x", encoding="utf8") as f:
         assert not linux.ioctl_get_immutable(f.fileno())
 
 
@@ -37,7 +37,7 @@ def test_ioctl_toggle_immutable(tmpdir):
     # as intended.
     #
 
-    with open(f"{tmpdir}/immutable", "x") as f:
+    with open(f"{tmpdir}/immutable", "x", encoding="utf8") as f:
         # Check the file is mutable by default and if we clear it again.
         assert not linux.ioctl_get_immutable(f.fileno())
         linux.ioctl_toggle_immutable(f.fileno(), False)

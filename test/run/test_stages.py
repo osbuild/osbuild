@@ -25,7 +25,7 @@ def have_sfdisk_with_json():
     r = subprocess.run(["sfdisk", "--version"],
                        stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE,
-                       encoding="utf-8",
+                       encoding="utf8",
                        check=False)
 
     if r.returncode != 0:
@@ -187,7 +187,7 @@ class TestStages(test.TestBase):
                                      pprint.pformat(want).splitlines())
                 txt = "\n".join(diff)
                 path = f"/tmp/osbuild.metadata.{stageid}.json"
-                with open(path, "w") as f:
+                with open(path, "w", encoding="utf8") as f:
                     json.dump(have, f, indent=2)
                 self.fail(f"metadata for {stageid} differs:\n{txt}\n{path}")
 
@@ -224,14 +224,14 @@ class TestStages(test.TestBase):
 
             actual_diff = self.tree_diff(tree1, tree2)
 
-            with open(os.path.join(test_dir, "diff.json")) as f:
+            with open(os.path.join(test_dir, "diff.json"), encoding="utf8") as f:
                 expected_diff = json.load(f)
 
             self.assertTreeDiffsEqual(expected_diff, actual_diff)
 
             md_path = os.path.join(test_dir, "metadata.json")
             if os.path.exists(md_path):
-                with open(md_path, "r") as f:
+                with open(md_path, "r", encoding="utf8") as f:
                     metadata = json.load(f)
 
                 self.assertMetadata(metadata, res)
@@ -245,7 +245,7 @@ class TestStages(test.TestBase):
         datadir = self.locate_test_data()
         base = os.path.join(datadir, "stages/dracut")
 
-        with open(f"{base}/vanilla.json", "r") as f:
+        with open(f"{base}/vanilla.json", "r", encoding="utf8") as f:
             refs = json.load(f)
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
@@ -273,7 +273,7 @@ class TestStages(test.TestBase):
         testdir = os.path.join(datadir, "stages", "selinux")
 
         def load_manifest(manifest_name):
-            with open(os.path.join(datadir, f"manifests/{manifest_name}")) as f:
+            with open(os.path.join(datadir, f"manifests/{manifest_name}"), encoding="utf8") as f:
                 manifest = json.load(f)
                 return manifest
 
@@ -281,7 +281,7 @@ class TestStages(test.TestBase):
 
             for t in glob.glob(f"{testdir}/test_*.json"):
                 manifest = load_manifest("f34-base.json")
-                with open(t) as f:
+                with open(t, encoding="utf8") as f:
                     check = json.load(f)
                 manifest["pipeline"]["stages"].append({
                     "name": "org.osbuild.selinux",
@@ -308,7 +308,7 @@ class TestStages(test.TestBase):
 
         checks_path = os.path.join(testdir, "checks.json")
         checks = {}
-        with open(checks_path) as f:
+        with open(checks_path, encoding="utf8") as f:
             checks = json.load(f)
 
         for image_name, test_data in checks.items():
@@ -326,7 +326,7 @@ class TestStages(test.TestBase):
                     ["qemu-img", "info", "--output=json", ip],
                     capture_output=True,
                     check=True,
-                    encoding="utf-8"
+                    encoding="utf8"
                 )
 
                 qemu_img_out = json.loads(qemu_img_run.stdout)
@@ -371,7 +371,7 @@ class TestStages(test.TestBase):
 
         imgname = "disk.img"
 
-        with open(os.path.join(testdir, f"{imgname}.json"), "r") as f:
+        with open(os.path.join(testdir, f"{imgname}.json"), "r", encoding="utf8") as f:
             want = json.load(f)
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
@@ -388,7 +388,7 @@ class TestStages(test.TestBase):
             r = subprocess.run(["sfdisk", "--json", target],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
-                               encoding="utf-8",
+                               encoding="utf8",
                                check=False)
 
             have = json.loads(r.stdout)
@@ -419,7 +419,7 @@ class TestStages(test.TestBase):
 
         imgname = "disk.img"
 
-        with open(os.path.join(testdir, f"{imgname}.json"), "r") as f:
+        with open(os.path.join(testdir, f"{imgname}.json"), "r", encoding="utf8") as f:
             want = json.load(f)
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
@@ -436,7 +436,7 @@ class TestStages(test.TestBase):
             r = subprocess.run(["sfdisk", "--json", target],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
-                               encoding="utf-8",
+                               encoding="utf8",
                                check=False)
 
             have = json.loads(r.stdout)

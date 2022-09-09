@@ -77,5 +77,5 @@ def test_loopback_basic(tmpdir):
         client.call("close", None)
 
         lo = loop.Loop(minor)
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf8") as f:
             assert not lo.is_bound_to(f.fileno())

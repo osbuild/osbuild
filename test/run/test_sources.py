@@ -35,7 +35,7 @@ libc.setns.errcheck = errcheck
 @contextlib.contextmanager
 def netns():
     # Grab a reference to the current namespace.
-    with open("/proc/self/ns/net") as oldnet:
+    with open("/proc/self/ns/net", encoding="utf8") as oldnet:
         # Create a new namespace and enter it.
         libc.unshare(CLONE_NEWNET)
         try:
@@ -76,7 +76,7 @@ def runFileServer(barrier, directory):
 
         def guess_type(self, path):
             try:
-                with open(path + ".mimetype", "r") as f:
+                with open(path + ".mimetype", "r", encoding="utf8") as f:
                     return f.read().strip()
             except FileNotFoundError:
                 pass
@@ -119,7 +119,7 @@ def test_sources(source, case, tmpdir):
     index = osbuild.meta.Index(os.curdir)
     sources = os.path.join(test.TestBase.locate_test_data(), "sources")
 
-    with open(f"{sources}/{source}/cases/{case}") as f:
+    with open(f"{sources}/{source}/cases/{case}", encoding="utf8") as f:
         case_options = json.load(f)
 
     info = index.get_module_info("Source", source)

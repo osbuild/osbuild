@@ -67,13 +67,13 @@ class TestMonitor(unittest.TestCase):
 
             logfile = os.path.join(tmpdir, "log.txt")
 
-            with open(logfile, "w") as log, ObjectStore(storedir) as store:
+            with open(logfile, "w", encoding="utf8") as log, ObjectStore(storedir) as store:
                 monitor = LogMonitor(log.fileno())
                 res = pipeline.run(store,
                                    monitor,
                                    libdir=os.path.abspath(os.curdir))
 
-                with open(logfile) as f:
+                with open(logfile, encoding="utf8") as f:
                     log = f.read()
 
             assert res
