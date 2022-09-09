@@ -55,14 +55,14 @@ def test_runner_fail(tempdir):
     logfile = os.path.join(tempdir, "log.txt")
 
     with BuildRoot("/", runner, libdir, var) as root, \
-            open(logfile, "w") as log:
+            open(logfile, "w", encoding="utf8") as log:
 
         monitor = LogMonitor(log.fileno())
 
         r = root.run(["/usr/bin/true"], monitor)
 
     assert r.returncode == 1
-    with open(logfile) as f:
+    with open(logfile, encoding="utf8") as f:
         log = f.read()
     assert log
     assert r.output
@@ -208,7 +208,7 @@ def test_env_isolation(tempdir):
         r = root.run(cmd, monitor, binds=[f"{ipc}:/ipc"])
 
     assert r.returncode == 0
-    with open(os.path.join(ipc, "env.txt")) as f:
+    with open(os.path.join(ipc, "env.txt"), encoding="utf8") as f:
         data = f.read().strip()
     assert data
     have = dict(map(lambda x: x.split("=", 1), data.split("\n")))
@@ -247,7 +247,7 @@ def test_caps(tempdir):
             r = root.run(cmd, monitor, binds=[f"{ipc}:/ipc"])
 
             assert r.returncode == 0
-            with open(os.path.join(ipc, "status"), encoding="utf-8") as f:
+            with open(os.path.join(ipc, "status"), encoding="utf8") as f:
                 data = f.readlines()
             assert data
 

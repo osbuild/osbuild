@@ -46,7 +46,7 @@ class TestBoot(test.TestBase):
                                 "-device", "virtserialport,chardev=stdio",
 
                                 qcow2],
-                               encoding="utf-8",
+                               encoding="utf8",
                                check=True)
-                with open(output_file, "r") as f:
+                with open(output_file, "r", encoding="utf8") as f:
                     self.assertEqual(f.read().strip(), "running")

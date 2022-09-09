@@ -122,7 +122,7 @@ class TestObjectStore(unittest.TestCase):
             with object_store.new() as tree:
                 path = tree.write()
                 with tree.write() as path, \
-                        open(os.path.join(path, "data"), "w") as f:
+                        open(os.path.join(path, "data"), "w", encoding="utf8") as f:
                     f.write(data)
                     st = os.fstat(f.fileno())
                     data_inode = st.st_ino
@@ -134,7 +134,7 @@ class TestObjectStore(unittest.TestCase):
                 # check that "data" is still the very
                 # same file after committing
                 with tree.read() as path:
-                    with open(os.path.join(path, "data"), "r") as f:
+                    with open(os.path.join(path, "data"), "r", encoding="utf8") as f:
                         st = os.fstat(f.fileno())
                         self.assertEqual(st.st_ino, data_inode)
                         data_read = f.read()
@@ -147,7 +147,7 @@ class TestObjectStore(unittest.TestCase):
             with object_store.new(base_id="x") as tree:
                 self.assertEqual(tree.base, "x")
                 with tree.read() as path:
-                    with open(os.path.join(path, "data"), "r") as f:
+                    with open(os.path.join(path, "data"), "r", encoding="utf8") as f:
                         # copy-on-write: since we have not written
                         # to the tree yet, "data" should be the
                         # very same file as that one of object "x"
@@ -303,7 +303,7 @@ class TestObjectStore(unittest.TestCase):
             assert Path(path) == mountpoint
             filepath = Path(mountpoint, "file.txt")
             assert filepath.exists()
-            txt = filepath.read_text()
+            txt = filepath.read_text(encoding="utf8")
             assert txt == "osbuild"
 
             # check we can mount subtrees via `read_tree_at`
@@ -314,7 +314,7 @@ class TestObjectStore(unittest.TestCase):
             path = client.read_tree_at("42", filemount, "/file.txt")
             filepath = Path(path)
             assert filepath.is_file()
-            txt = filepath.read_text()
+            txt = filepath.read_text(encoding="utf8")
             assert txt == "osbuild"
 
             dirmount = Path(tmpdir, "dir")

@@ -168,7 +168,7 @@ class Initrd:
                                          encoding=None,
                                          stdin=image,
                                          stderr=subprocess.DEVNULL)
-        return output.strip().decode('utf-8')
+        return output.strip().decode('utf8')
 
 
 def read_initrd(path):

@@ -24,7 +24,7 @@ def have_lvm() -> bool:
     try:
         r = subprocess.run(
             ["vgs"],
-            encoding="utf-8",
+            encoding="utf8",
             stdout=subprocess.PIPE,
             check=False
         )

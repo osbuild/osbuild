@@ -15,7 +15,7 @@ from osbuild.util import ostree
 from .. import test
 
 
-def run(*args, check=True, encoding="utf-8", **kwargs):
+def run(*args, check=True, encoding="utf8", **kwargs):
     res = subprocess.run(*args,
                          encoding=encoding,
                          check=check,
@@ -56,7 +56,7 @@ class TestObjectStore(test.TestBase):
         tf["ref"] = test_ref
 
         with tf.as_tmp_file() as path:
-            with open(path, "r") as f:
+            with open(path, "r", encoding="utf8") as f:
                 js = json.load(f)
                 self.assertEqual(js["ref"], test_ref)
                 self.assertEqual(tf["ref"], test_ref)
@@ -118,16 +118,16 @@ class TestPasswdLike(unittest.TestCase):
                 "lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin\n",
                 "sync:x:5:0:sync:/sbin:/bin/sync\n"
             ]
-            with open(os.path.join(tmpdir, "primary"), "w") as f:
+            with open(os.path.join(tmpdir, "primary"), "w", encoding="utf8") as f:
                 f.writelines(primary_file_lines)
-            with open(os.path.join(tmpdir, "secondary"), "w") as f:
+            with open(os.path.join(tmpdir, "secondary"), "w", encoding="utf8") as f:
                 f.writelines(secondary_file_lines)
 
             passwd = ostree.PasswdLike.from_file(os.path.join(tmpdir, "primary"))
             passwd.merge_with_file(os.path.join(tmpdir, "secondary"))
             passwd.dump_to_file(os.path.join(tmpdir, "result"))
 
-            with open(os.path.join(tmpdir, "result"), "r") as f:
+            with open(os.path.join(tmpdir, "result"), "r", encoding="utf8") as f:
                 self.assertEqual(sorted(f.readlines()), sorted(result_file_lines))
 
     def test_merge_group(self):
@@ -145,16 +145,16 @@ class TestPasswdLike(unittest.TestCase):
                 "bin:x:1:\n",
                 "daemon:x:2:\n"
             ]
-            with open(os.path.join(tmpdir, "primary"), "w") as f:
+            with open(os.path.join(tmpdir, "primary"), "w", encoding="utf8") as f:
                 f.writelines(primary_file_lines)
-            with open(os.path.join(tmpdir, "secondary"), "w") as f:
+            with open(os.path.join(tmpdir, "secondary"), "w", encoding="utf8") as f:
                 f.writelines(secondary_file_lines)
 
             passwd = ostree.PasswdLike.from_file(os.path.join(tmpdir, "primary"))
             passwd.merge_with_file(os.path.join(tmpdir, "secondary"))
             passwd.dump_to_file(os.path.join(tmpdir, "result"))
 
-            with open(os.path.join(tmpdir, "result"), "r") as f:
+            with open(os.path.join(tmpdir, "result"), "r", encoding="utf8") as f:
                 self.assertEqual(sorted(f.readlines()), sorted(result_file_lines))
 
     #pylint: disable=no-self-use

@@ -29,7 +29,8 @@ class TestAssemblers(test.TestBase):
     @contextlib.contextmanager
     def run_assembler(self, osb, name, options, output_path):
         with open(os.path.join(self.locate_test_data(),
-                               "manifests/filesystem.json")) as f:
+                               "manifests/filesystem.json"),
+                               encoding="utf8") as f:
             manifest = json.load(f)
         manifest["pipeline"] = dict(
             manifest["pipeline"],
@@ -51,7 +52,7 @@ class TestAssemblers(test.TestBase):
         self.assertEqual(info["virtual-size"], expected_size)
 
     def assertFilesystem(self, device, uuid, fstype, tree):
-        output = subprocess.check_output(["blkid", "--output", "export", device], encoding="utf-8")
+        output = subprocess.check_output(["blkid", "--output", "export", device], encoding="utf8")
         blkid = dict(line.split("=") for line in output.strip().split("\n"))
         self.assertEqual(blkid["UUID"], uuid)
         self.assertEqual(blkid["TYPE"], fstype)
@@ -113,7 +114,8 @@ class TestAssemblers(test.TestBase):
     def test_ostree(self):
         with self.osbuild as osb:
             with open(os.path.join(self.locate_test_data(),
-                                   "manifests/fedora-ostree-commit.json")) as f:
+                                   "manifests/fedora-ostree-commit.json"),
+                                   encoding="utf8") as f:
                 manifest = json.load(f)
 
             data = json.dumps(manifest)
@@ -122,7 +124,7 @@ class TestAssemblers(test.TestBase):
                 compose_file = os.path.join(output_dir, "ostree-commit", "compose.json")
                 repo = os.path.join(output_dir, "ostree-commit", "repo")
 
-                with open(compose_file) as f:
+                with open(compose_file, encoding="utf8") as f:
                     compose = json.load(f)
                 commit_id = compose["ostree-commit"]
                 ref = compose["ref"]
@@ -146,7 +148,7 @@ class TestAssemblers(test.TestBase):
                         "--repo", repo,
                         "--print-metadata-key=rpmostree.inputhash",
                         commit_id
-                    ], encoding="utf-8").strip()
+                    ], encoding="utf8").strip()
                 self.assertEqual(md, f"'{rpmostree_inputhash}'")
 
                 md = subprocess.check_output(
@@ -156,7 +158,7 @@ class TestAssemblers(test.TestBase):
                         "--repo", repo,
                         "--print-metadata-key=version",
                         commit_id
-                    ], encoding="utf-8").strip()
+                    ], encoding="utf8").strip()
                 self.assertEqual(md, f"'{os_version}'")
 
     @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
@@ -223,7 +225,7 @@ class TestAssemblers(test.TestBase):
                                         "org.osbuild.tar",
                                         options,
                                         filename) as (tree, image):
-                    output = subprocess.check_output(["file", "--mime-type", image], encoding="utf-8")
+                    output = subprocess.check_output(["file", "--mime-type", image], encoding="utf8")
                     _, mimetype = output.strip().split(": ")  # "filename: mimetype"
                     self.assertIn(mimetype, expected_mimetypes)
 
@@ -240,7 +242,7 @@ class TestAssemblers(test.TestBase):
                             "--xattrs", "--xattrs-include", "*",
                             "-xaf", image,
                             "-C", tmp]
-                        subprocess.check_output(args, encoding="utf-8")
+                        subprocess.check_output(args, encoding="utf8")
                         diff = self.tree_diff(tree, tmp)
                         self.assertEqual(diff["added_files"], [])
                         self.assertEqual(diff["deleted_files"], [])

@@ -42,13 +42,13 @@ class TestUtilLorax(test.TestBase):
             os.makedirs(root)
             os.makedirs(tree)
 
-            with open(os.path.join(root, "hello.txt"), "w") as f:
+            with open(os.path.join(root, "hello.txt"), "w", encoding="utf8") as f:
                 f.write("Hello World\n")
 
             self.assertExists(root, "hello.txt")
 
             template = os.path.join(tmp, "template.tmpl")
-            with open(os.path.join(tmp, template), "w") as f:
+            with open(os.path.join(tmp, template), "w", encoding="utf8") as f:
                 f.write(BASIC_TEMPLATE)
 
             # parse the template and render it
@@ -76,7 +76,7 @@ class TestUtilLorax(test.TestBase):
             self.assertExists(tree, "foo.txt")
 
             for fn in ["a.txt", "b.txt"]:
-                with open(os.path.join(tree, fn), "r") as f:
+                with open(os.path.join(tree, fn), "r", encoding="utf8") as f:
                     data = f.read().strip()
                     self.assertEqual(data, "osbuild-42")
 
