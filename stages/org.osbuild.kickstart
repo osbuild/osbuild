@@ -218,13 +218,13 @@ def main(tree, options):
     base = os.path.dirname(target)
     os.makedirs(base, exist_ok=True)
 
-    with open(target, "w") as f:
+    with open(target, "w", encoding="utf8") as f:
         if config:
             f.write("\n".join(config))
         f.write("\n")
 
     print(f"created kickstarted at: {path}\n")
-    with open(target, "r") as f:
+    with open(target, "r", encoding="utf8") as f:
         print(f.read())
 
     return 0

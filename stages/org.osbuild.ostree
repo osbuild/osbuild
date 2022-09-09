@@ -146,7 +146,7 @@ def ostree(*args, _input=None, **kwargs):
     args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
     print("ostree " + " ".join(args), file=sys.stderr)
     subprocess.run(["ostree"] + args,
-                   encoding="utf-8",
+                   encoding="utf8",
                    stdout=sys.stderr,
                    input=_input,
                    check=True)
@@ -177,7 +177,7 @@ def populate_var(sysroot):
         res = subprocess.run(["systemd-tmpfiles", "--create", "--boot",
                               "--root=" + sysroot,
                               "--prefix=/var/" + target],
-                             encoding="utf-8",
+                             encoding="utf8",
                              stdout=sys.stderr,
                              check=False)
 
@@ -271,7 +271,7 @@ def main(tree, inputs, options):
         if not os.path.isfile(cfgfile):
             continue
 
-        with open(cfgfile, 'r') as f:
+        with open(cfgfile, 'r', encoding="utf8") as f:
             cfg = selinux.parse_config(f)
         se_policy = selinux.config_get_policy(cfg)
 

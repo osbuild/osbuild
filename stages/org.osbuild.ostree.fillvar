@@ -57,7 +57,7 @@ def populate_var(sysroot):
         res = subprocess.run(["systemd-tmpfiles", "--create", "--boot",
                               "--root=" + sysroot,
                               "--prefix=/var/" + target],
-                             encoding="utf-8",
+                             encoding="utf8",
                              stdout=sys.stderr,
                              check=False)
 

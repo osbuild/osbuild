@@ -79,8 +79,8 @@ Vagrant.configure("2") do |config|
   end
 end
 """
-    open(f"{tree}/Vagrantfile", "w").write(vagrantfile)
-    with open(f"{tree}/metadata.json", "w") as fp:
+    open(f"{tree}/Vagrantfile", "w", encoding="utf8").write(vagrantfile)
+    with open(f"{tree}/metadata.json", "w", encoding="utf8") as fp:
         json.dump(metadata, fp)
 
 

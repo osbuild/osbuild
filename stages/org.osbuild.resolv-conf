@@ -56,7 +56,7 @@ def main(tree, options):
         data += ["nameserver " + str(ns)]
 
     os.makedirs(os.path.join(tree, "etc"), exist_ok=True)
-    with open(fullpath, "w") as f:
+    with open(fullpath, "w", encoding="utf8") as f:
         f.write("\n".join(data) + "\n")
 
     return 0

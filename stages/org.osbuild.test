@@ -42,7 +42,7 @@ StandardOutput=file:/dev/vport0p1
 ExecStart={script}
 ExecStopPost=/usr/bin/systemctl poweroff
 """
-    with open(f"{tree}/etc/systemd/system/osbuild-test.service", "w") as f:
+    with open(f"{tree}/etc/systemd/system/osbuild-test.service", "w", encoding="utf8") as f:
         f.write(unit)
 
     os.symlink("../osbuild-test.service",

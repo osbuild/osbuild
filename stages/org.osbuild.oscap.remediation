@@ -131,7 +131,7 @@ def main(tree, options):
 
     cmd.append(datastream)
 
-    res = subprocess.run(cmd, encoding="utf-8", stdout=sys.stderr, check=False)
+    res = subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, check=False)
 
     # oscap return values are:
     # 0 → success

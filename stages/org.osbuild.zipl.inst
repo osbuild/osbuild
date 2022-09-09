@@ -55,7 +55,7 @@ SCHEMA_2 = r"""
 
 def parse_blsfile(blsfile):
     params = {}
-    with open(blsfile, "r") as bls:
+    with open(blsfile, "r", encoding="utf8") as bls:
         for line in bls:
             key, value = line.split(' ', 1)
             params[key] = value.strip()

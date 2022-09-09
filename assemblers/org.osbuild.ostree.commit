@@ -166,7 +166,7 @@ def main(tree, output_dir, options, meta):
                            stdout=sys.stderr,
                            check=True)
 
-        with open(os.path.join(output_dir, "compose.json"), "r") as f:
+        with open(os.path.join(output_dir, "compose.json"), "r", encoding="utf8") as f:
             compose = json.load(f)
 
         api.metadata({"compose": compose})

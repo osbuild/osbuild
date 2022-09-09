@@ -204,7 +204,7 @@ def generate_package_metadata(tree, rpm_args):
     ]
 
     res = subprocess.run(cmd, stdout=subprocess.PIPE,
-                         check=True, encoding="utf-8")
+                         check=True, encoding="utf8")
 
     raw = res.stdout.strip()
     jsdata = '{"packages": [' + raw[:-1] + "]}"
@@ -271,7 +271,7 @@ def create_machine_id_if_needed(tree):
         return False
 
     os.makedirs(f"{tree}/etc", exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    with open(path, "w", encoding="utf8") as f:
         # create a fake machine ID to improve reproducibility
         f.write("ffffffffffffffffffffffffffffffff")
         os.fchmod(f.fileno(), 0o400)
@@ -323,7 +323,7 @@ def main(tree, inputs, options):
     if options.get("ostree_booted", False):
         os.makedirs(f"{tree}/run", exist_ok=True)
         ostree_booted = f"{tree}/{OSTREE_BOOTED_MARKER}"
-        with open(ostree_booted, "w", encoding="utf-8") as f:
+        with open(ostree_booted, "w", encoding="utf8") as f:
             f.write("")
 
     extra_args = []

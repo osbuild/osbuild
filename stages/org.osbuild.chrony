@@ -154,7 +154,7 @@ def main(tree, options):
     # therefore default to 'None' to distinguish these two cases.
     leapsectz = options.get("leapsectz", None)
 
-    with open(f"{tree}/etc/chrony.conf") as f:
+    with open(f"{tree}/etc/chrony.conf", encoding="utf8") as f:
         chrony_conf = f.read()
 
     # Split to lines and remove ones starting with server, pool or peer.
@@ -172,7 +172,7 @@ def main(tree, options):
 
     new_chrony_conf = "\n".join(lines)
 
-    with open(f"{tree}/etc/chrony.conf", "w") as f:
+    with open(f"{tree}/etc/chrony.conf", "w", encoding="utf8") as f:
         f.write(new_chrony_conf)
 
     return 0

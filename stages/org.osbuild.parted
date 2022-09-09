@@ -138,12 +138,12 @@ class PartitionTable:
 
         subprocess.run(["parted", "-a", "none", "-s",
                         target, "--"] + commands,
-                       encoding='utf-8',
+                       encoding='utf8',
                        check=True)
 
         subprocess.run(["parted", "-a", "none", "-s",
                         target, "--", "print"],
-                       encoding='utf-8',
+                       encoding='utf8',
                        check=True)
 
 

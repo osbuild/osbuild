@@ -83,11 +83,11 @@ def main(devices, options):
     print(f"LVM2: using vg name '{vg_name}'")
 
     subprocess.run(["pvcreate", path],
-                   encoding='utf-8',
+                   encoding='utf8',
                    check=True)
 
     subprocess.run(["vgcreate", vg_name, path],
-                   encoding='utf-8',
+                   encoding='utf8',
                    check=True)
 
     for volume in volumes:
@@ -104,7 +104,7 @@ def main(devices, options):
 
         cmd += ["-n", name, vg_name]
 
-        subprocess.run(cmd, encoding='utf-8', check=True)
+        subprocess.run(cmd, encoding='utf8', check=True)
 
 
 if __name__ == '__main__':

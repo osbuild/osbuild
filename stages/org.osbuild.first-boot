@@ -63,13 +63,13 @@ Type=oneshot
 {execs}"""
 
     os.makedirs(f"{tree}/usr/lib/systemd/system/default.target.wants", exist_ok=True)
-    with open(f"{tree}/usr/lib/systemd/system/osbuild-first-boot.service", "w") as f:
+    with open(f"{tree}/usr/lib/systemd/system/osbuild-first-boot.service", "w", encoding="utf8") as f:
         f.write(service)
     os.symlink("../osbuild-first-boot.service",
                f"{tree}/usr/lib/systemd/system/default.target.wants/osbuild-first-boot.service")
 
     os.makedirs(f"{tree}/etc", exist_ok=True)
-    open(f"{tree}/etc/osbuild-first-boot", 'a').close()
+    open(f"{tree}/etc/osbuild-first-boot", 'a', encoding="utf8").close()
 
 
 def main(tree, options):

@@ -49,10 +49,10 @@ def main(tree, options):
     path_re = re.compile(r"(/.*)+/boot")
 
     for name in glob.glob(f"{tree}/boot/loader/entries/*.conf"):
-        with open(name) as f:
+        with open(name, encoding="utf8") as f:
             entry = f.read().splitlines(keepends=True)
 
-        with open(name, "w") as f:
+        with open(name, "w", encoding="utf8") as f:
             for line in entry:
                 f.write(path_re.sub(prefix, line))
 

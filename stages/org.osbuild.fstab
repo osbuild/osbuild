@@ -129,7 +129,7 @@ def main(tree, options):
 
         path = f"{root}/etc/fstab"
 
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf8") as f:
         for filesystem in filesystems:
             uuid = filesystem.get("uuid")
             path = filesystem["path"]

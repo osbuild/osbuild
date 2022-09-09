@@ -69,7 +69,7 @@ def main(devices, options):
         opts = ["-F", str(fatsize)]
 
     subprocess.run(["mkfs.fat", "-I", "-i", volid] + opts + [device],
-                   encoding='utf-8', check=True)
+                   encoding='utf8', check=True)
 
 
 if __name__ == '__main__':

@@ -35,7 +35,7 @@ def main(tree, options):
     # Based on `pylorax/discinfo.py`
 
     timestamp = time.time()
-    with open(os.path.join(tree, ".discinfo"), "w") as f:
+    with open(os.path.join(tree, ".discinfo"), "w", encoding="utf8") as f:
         f.write(f"{timestamp}\n")
         f.write(f"{release}\n")
         f.write(f"{basearch}\n")

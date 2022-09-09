@@ -165,7 +165,7 @@ class PartitionTable:
 
         subprocess.run(["sfdisk", "-q", "--no-tell-kernel", target],
                        input=command,
-                       encoding='utf-8',
+                       encoding='utf8',
                        check=True)
 
         if sync:
@@ -175,7 +175,7 @@ class PartitionTable:
         """Update and fill in missing information from disk"""
         r = subprocess.run(["sfdisk", "--json", target],
                            stdout=subprocess.PIPE,
-                           encoding='utf-8',
+                           encoding='utf8',
                            check=True)
         disk_table = json.loads(r.stdout)["partitiontable"]
         disk_parts = disk_table["partitions"]
@@ -214,7 +214,7 @@ def main(devices, options):
     pt.write_to(device)
 
     subprocess.run(["sfdisk", "--json", device],
-                   encoding='utf-8',
+                   encoding='utf8',
                    check=False)
 
 

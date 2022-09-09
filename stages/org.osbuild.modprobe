@@ -102,7 +102,7 @@ def main(tree, options):
         else:
             raise ValueError()
 
-    with open(f"{config_dir}/{config_file}", "w") as f:
+    with open(f"{config_dir}/{config_file}", "w", encoding="utf8") as f:
         f.writelines(lines)
 
     return 0

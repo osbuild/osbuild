@@ -423,7 +423,7 @@ class GrubConfig:
 
         data += "\n"
 
-        with open(path, "w") as cfg:
+        with open(path, "w", encoding="utf8") as cfg:
             print(data)
             cfg.write(data)
 
@@ -478,13 +478,13 @@ def main(tree, options):
     # Create the configuration file that determines how grub.cfg is generated.
     if write_defaults:
         os.makedirs(f"{tree}/etc/default", exist_ok=True)
-        with open(f"{tree}/etc/default/grub", "w") as default:
+        with open(f"{tree}/etc/default/grub", "w", encoding="utf8") as default:
             default.write(config.defaults())
 
     os.makedirs(f"{tree}/boot/grub2", exist_ok=True)
     grubenv = f"{tree}/boot/grub2/grubenv"
 
-    with open(grubenv, "w") as env:
+    with open(grubenv, "w", encoding="utf8") as env:
         data = (
             "# GRUB Environment Block\n"
         )
