@@ -147,7 +147,7 @@ class API(BaseAPI):
 
     def _set_metadata(self, message, fds):
         fd = message["metadata"]
-        with os.fdopen(fds.steal(fd), encoding="utf-8") as f:
+        with os.fdopen(fds.steal(fd), encoding="utf8") as f:
             data = json.load(f)
         self.metadata.update(data)
 
@@ -195,7 +195,7 @@ def exception_handler(path="/run/osbuild/api/osbuild"):
 
 def arguments(path="/run/osbuild/api/arguments"):
     """Retrieve the input arguments that were supplied to API"""
-    with open(path, "r", encoding="utf-8") as fp:
+    with open(path, "r", encoding="utf8") as fp:
         data = json.load(fp)
     return data
 
@@ -205,9 +205,9 @@ def metadata(data: Dict, path="/run/osbuild/api/osbuild"):
 
     def data_to_file():
         with tempfile.TemporaryFile() as f:
-            f.write(json.dumps(data).encode('utf-8'))
+            f.write(json.dumps(data).encode('utf8'))
             # re-open the file to get a read-only file descriptor
-            return open(f"/proc/self/fd/{f.fileno()}", "r")
+            return open(f"/proc/self/fd/{f.fileno()}", "r", encoding="utf8")
 
     with jsoncomm.Socket.new_client(path) as client, data_to_file() as f:
         msg = {

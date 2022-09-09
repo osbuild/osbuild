@@ -62,12 +62,12 @@ class ProcOverrides:
 
     @property
     def cmdline(self) -> str:
-        with open(os.path.join(self.path, "cmdline"), "r") as f:
+        with open(os.path.join(self.path, "cmdline"), "r", encoding="utf8") as f:
             return f.read().strip()
 
     @cmdline.setter
     def cmdline(self, value) -> None:
-        with open(os.path.join(self.path, "cmdline"), "w") as f:
+        with open(os.path.join(self.path, "cmdline"), "w", encoding="utf8") as f:
             f.write(value + "\n")
         self.overrides.add("cmdline")
 

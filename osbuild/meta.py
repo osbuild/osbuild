@@ -422,7 +422,7 @@ class ModuleInfo:
 
         path = os.path.join(root, base, name)
         try:
-            with open(path) as f:
+            with open(path, encoding="utf8") as f:
                 data = f.read()
         except FileNotFoundError:
             return None
@@ -572,7 +572,7 @@ class Index:
         if klass == "Manifest":
             path = f"{self.path}/schemas/osbuild{version}.json"
             with contextlib.suppress(FileNotFoundError):
-                with open(path, "r") as f:
+                with open(path, "r", encoding="utf8") as f:
                     schema = json.load(f)
         elif klass in ModuleInfo.MODULES:
             info = self.get_module_info(klass, name)

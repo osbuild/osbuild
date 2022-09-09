@@ -27,7 +27,7 @@ def parse_manifest(path):
     if path == "-":
         manifest = json.load(sys.stdin)
     else:
-        with open(path) as f:
+        with open(path, encoding="utf8") as f:
             manifest = json.load(f)
 
     return manifest

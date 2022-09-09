@@ -25,7 +25,7 @@ def replace(target, patterns):
     finder = [(re.compile(p), s) for p, s in patterns]
     newfile = target + ".replace"
 
-    with open(target, "r") as i, open(newfile, "w") as o:
+    with open(target, "r", encoding="utf8") as i, open(newfile, "w", encoding="utf8") as o:
         for line in i:
             for p, s in finder:
                 line = p.sub(s, line)
@@ -95,7 +95,7 @@ class Script:
         dirname = os.path.dirname(target)
         os.makedirs(dirname, exist_ok=True)
         print(f"append '{target}' '{data}'")
-        with open(target, "a", encoding="utf-8") as f:
+        with open(target, "a", encoding="utf8") as f:
             f.write(bytes(data, "utf8").decode("unicode_escape"))
             f.write("\n")
 
@@ -192,7 +192,7 @@ def brace_expand_line(line):
 def render_template(path, args):
     """Render a template at `path` with arguments `args`"""
 
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf8") as f:
         data = f.read()
 
     tlp = mako.template.Template(text=data, filename=path)
