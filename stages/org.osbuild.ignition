@@ -44,7 +44,7 @@ def main(tree, options):
     # itself will be sourced this the 'ignition_network_kcmdline'
     # that is also in the "ignition_firstboot" variable can be
     # overwritten with the contents of `network`
-    with open(f"{tree}/boot/ignition.firstboot", "w") as f:
+    with open(f"{tree}/boot/ignition.firstboot", "w", encoding="utf8") as f:
         if network:
             netstr = " ".join(network)
             f.write(f"ignition_network_kcmdline={netstr}")

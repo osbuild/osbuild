@@ -74,7 +74,7 @@ def main(tree, options):
         "osbuild": "devel",
     }
 
-    with open(f"{tree}/.buildstamp", "w") as f:
+    with open(f"{tree}/.buildstamp", "w", encoding="utf8") as f:
         stamp.write(f)
 
     return 0

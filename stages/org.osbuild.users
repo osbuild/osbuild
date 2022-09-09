@@ -74,7 +74,7 @@ SCHEMA = """
 
 def getpwnam(root, name):
     """Similar to pwd.getpwnam, but takes a @root parameter"""
-    with open(f"{root}/etc/passwd") as f:
+    with open(f"{root}/etc/passwd", encoding="utf8") as f:
         for line in f:
             passwd = line.split(":")
             if passwd[0] == name:
@@ -131,7 +131,7 @@ def add_ssh_key(root, user, key):
         os.mkdir(ssh_dir, 0o700)
         os.chown(ssh_dir, int(uid), int(gid))
 
-    with open(authorized_keys, "a") as f:
+    with open(authorized_keys, "a", encoding="utf8") as f:
         f.write(f"{key}\n")
 
     os.chown(authorized_keys, int(uid), int(gid))

@@ -440,7 +440,7 @@ class GrubConfig:
         tplt = string.Template(GRUB_CFG_TEMPLATE)
         data = tplt.safe_substitute(config)
 
-        with open(path, "w") as cfg:
+        with open(path, "w", encoding="utf8") as cfg:
             cfg.write(data)
 
     def write_redirect(self, tree, path):
@@ -456,7 +456,7 @@ class GrubConfig:
         tplt = string.Template(GRUB_REDIRECT_TEMPLATE)
         data = tplt.safe_substitute(config)
 
-        with open(os.path.join(tree, path), "w") as cfg:
+        with open(os.path.join(tree, path), "w", encoding="utf8") as cfg:
             cfg.write(data)
 
     def defaults(self):
@@ -530,7 +530,7 @@ def main(tree, options):
     # Create the configuration file that determines how grub.cfg is generated.
     if write_defaults:
         os.makedirs(f"{tree}/etc/default", exist_ok=True)
-        with open(f"{tree}/etc/default/grub", "w") as default:
+        with open(f"{tree}/etc/default/grub", "w", encoding="utf8") as default:
             default.write(config.defaults())
 
     os.makedirs(f"{tree}/boot/grub2", exist_ok=True)
@@ -545,7 +545,7 @@ def main(tree, options):
         except FileNotFoundError:
             pass
 
-    with open(grubenv, "w") as env:
+    with open(grubenv, "w", encoding="utf8") as env:
         fs_type, fs_id = fs_spec_decode(root_fs)
         data = "# GRUB Environment Block\n"
 

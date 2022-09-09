@@ -145,7 +145,7 @@ def main(root, options):
     })
 
     config = os.path.join(efidir, "grub.cfg")
-    with open(config, "w") as cfg:
+    with open(config, "w", encoding="utf8") as cfg:
         cfg.write(data)
 
     if "IA32" in architectures:

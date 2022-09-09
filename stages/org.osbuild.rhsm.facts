@@ -28,7 +28,7 @@ def main(tree, options):
 
     os.makedirs(path, exist_ok=True)
 
-    with open(file, "x", encoding="utf-8") as f:
+    with open(file, "x", encoding="utf8") as f:
         json.dump(options["facts"], f)
 
     os.makedirs(os.path.join(tree, "etc/rhsm/facts"), exist_ok=True)

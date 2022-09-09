@@ -304,7 +304,7 @@ def main(tree, options):
     rules = options["rules"]
 
     path = os.path.join(tree, filename.lstrip("/"))
-    with open(path, "w", encoding="utf-8") as f:
+    with open(path, "w", encoding="utf8") as f:
         for rule in rules:
             if isinstance(rule, dict):
                 comment = rule.get("comment")

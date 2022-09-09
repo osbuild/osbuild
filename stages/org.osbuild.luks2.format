@@ -172,7 +172,7 @@ def main(devices, options):
         command += ["--pbkdf-parallel", str(parallelism)]
 
     subprocess.run(command + [path],
-                   encoding='utf-8', check=True,
+                   encoding='utf8', check=True,
                    input=passphrase)
 
 

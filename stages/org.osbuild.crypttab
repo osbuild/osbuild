@@ -66,7 +66,7 @@ SCHEMA = """
 def main(tree, options):
     volumes = options["volumes"]
 
-    with open(f"{tree}/etc/crypttab", "w") as f:
+    with open(f"{tree}/etc/crypttab", "w", encoding="utf8") as f:
         for volume in volumes:
             name = volume["volume"]
             uuid = volume.get("uuid")

@@ -68,7 +68,7 @@ def main(devices, options):
     os.symlink("/proc/self/fd", "/dev/fd")
 
     subprocess.run(command,
-                   encoding='utf-8', check=True,
+                   encoding='utf8', check=True,
                    input=passphrase)
 
 

@@ -228,7 +228,7 @@ def main(tree, inputs, options):
     })
 
     config = os.path.join(isolinux, "isolinux.cfg")
-    with open(config, "w") as cfg:
+    with open(config, "w", encoding="utf8") as cfg:
         cfg.write(data)
 
     # link the kernel

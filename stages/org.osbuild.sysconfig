@@ -168,7 +168,7 @@ def configure_kernel(tree, kernel_options):
     if not kernel_options:
         return
 
-    with open(f"{tree}/etc/sysconfig/kernel", 'w') as kernel_file:
+    with open(f"{tree}/etc/sysconfig/kernel", 'w', encoding="utf8") as kernel_file:
         for option, value in kernel_options.items():
             if option == "update_default":
                 kernel_file.write(f"UPDATEDEFAULT={bool_to_string(value)}\n")
@@ -183,7 +183,7 @@ def configure_network(tree, network_options):
     if not network_options:
         return
 
-    with open(f"{tree}/etc/sysconfig/network", 'w') as network_file:
+    with open(f"{tree}/etc/sysconfig/network", 'w', encoding="utf8") as network_file:
         for option, value in network_options.items():
             if option == "networking":
                 network_file.write(f"NETWORKING={bool_to_string(value)}\n")
@@ -230,7 +230,7 @@ def configure_network_scripts_ifcfg(tree, network_scripts_ifcfg_options):
                                  "config.")
 
         if lines:
-            with open(f"{tree}/etc/sysconfig/network-scripts/ifcfg-{ifname}", 'w') as ifcfg_file:
+            with open(f"{tree}/etc/sysconfig/network-scripts/ifcfg-{ifname}", 'w', encoding="utf8") as ifcfg_file:
                 ifcfg_file.writelines(lines)
 
 

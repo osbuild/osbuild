@@ -171,7 +171,7 @@ def mkfs_ext4(device, uuid, label):
     if label:
         opts = ["-L", label]
     subprocess.run(["mkfs.ext4", "-U", uuid] + opts + [device],
-                   input="y", encoding='utf-8', check=True)
+                   input="y", encoding='utf8', check=True)
 
 
 def mkfs_xfs(device, uuid, label):
@@ -179,7 +179,7 @@ def mkfs_xfs(device, uuid, label):
     if label:
         opts = ["-L", label]
     subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}"] + opts + [device],
-                   encoding='utf-8', check=True)
+                   encoding='utf8', check=True)
 
 
 def mkfs_btrfs(device, uuid, label):
@@ -187,7 +187,7 @@ def mkfs_btrfs(device, uuid, label):
     if label:
         opts = ["-L", label]
     subprocess.run(["mkfs.btrfs", "-U", uuid] + opts + [device],
-                   encoding='utf-8', check=True)
+                   encoding='utf8', check=True)
 
 
 def mkfs_vfat(device, uuid, label):
@@ -195,7 +195,7 @@ def mkfs_vfat(device, uuid, label):
     opts = []
     if label:
         opts = ["-n", label]
-    subprocess.run(["mkfs.vfat", "-i", volid] + opts + [device], encoding='utf-8', check=True)
+    subprocess.run(["mkfs.vfat", "-i", volid] + opts + [device], encoding='utf8', check=True)
 
 
 class Filesystem:
@@ -336,7 +336,7 @@ class PartitionTable:
 
         subprocess.run(["sfdisk", "-q", target],
                        input=command,
-                       encoding='utf-8',
+                       encoding='utf8',
                        check=True)
 
         if sync:
@@ -346,7 +346,7 @@ class PartitionTable:
         """Update and fill in missing information from disk"""
         r = subprocess.run(["sfdisk", "--json", target],
                            stdout=subprocess.PIPE,
-                           encoding='utf-8',
+                           encoding='utf8',
                            check=True)
         disk_table = json.loads(r.stdout)["partitiontable"]
         disk_parts = disk_table["partitions"]
@@ -596,7 +596,7 @@ def install_grub2(image: str, pt: PartitionTable, options):
 
 def parse_blsfile(blsfile):
     params = {}
-    with open(blsfile, "r") as bls:
+    with open(blsfile, "r", encoding="utf8") as bls:
         for line in bls:
             key, value = line.split(' ', 1)
             params[key] = value.strip()
@@ -698,7 +698,7 @@ def main(tree, output_dir, options, loop_client):
     if fmt == "raw":
         subprocess.run(["cp", image, f"{output_dir}/{filename}"], check=True)
     elif fmt == "raw.xz":
-        with open(f"{output_dir}/{filename}", "w") as f:
+        with open(f"{output_dir}/{filename}", "w", encoding="utf8") as f:
             subprocess.run(
                 ["xz", "--keep", "--stdout", "-0", image],
                 stdout=f,

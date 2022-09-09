@@ -73,7 +73,7 @@ def main(tree, options):
         for option, value in opts.items():
             config.set(section, option, str(value))
 
-    with open(f"{dropins_dir}/{dropin_file}", "w") as f:
+    with open(f"{dropins_dir}/{dropin_file}", "w", encoding="utf8") as f:
         config.write(f, space_around_delimiters=False)
 
     return 0

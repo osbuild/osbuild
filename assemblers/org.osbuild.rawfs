@@ -68,15 +68,15 @@ def mount(source, dest, *options):
 
 
 def mkfs_ext4(device, uuid):
-    subprocess.run(["mkfs.ext4", "-U", uuid, device], input="y", encoding='utf-8', check=True)
+    subprocess.run(["mkfs.ext4", "-U", uuid, device], input="y", encoding='utf8', check=True)
 
 
 def mkfs_xfs(device, uuid):
-    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf-8', check=True)
+    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf8', check=True)
 
 
 def mkfs_btrfs(device, uuid):
-    subprocess.run(["mkfs.btrfs", "-U", uuid, device], encoding='utf-8', check=True)
+    subprocess.run(["mkfs.btrfs", "-U", uuid, device], encoding='utf8', check=True)
 
 
 def main(tree, output_dir, options, loop_client):

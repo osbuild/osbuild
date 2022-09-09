@@ -181,7 +181,7 @@ def main(tree, options):
             parser.set(repo_id, key, option_value_to_str(value))
 
     # ensure that we won't overwrite an existing file
-    with open(f"{yum_repos_dir}/{filename}", "x") as f:
+    with open(f"{yum_repos_dir}/{filename}", "x", encoding="utf8") as f:
         parser.write(f, space_around_delimiters=False)
 
     return 0

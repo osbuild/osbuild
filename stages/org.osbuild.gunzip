@@ -52,7 +52,7 @@ def main(inputs, output, options):
     source = parse_input(inputs)
     target = os.path.join(output, path.lstrip("/"))
 
-    with open(target, "w") as f:
+    with open(target, "w", encoding="utf8") as f:
         cmd = ["gunzip", "--stdout", source]
         subprocess.run(cmd, stdout=f,
                        check=True)

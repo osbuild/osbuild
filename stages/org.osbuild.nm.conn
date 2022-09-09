@@ -210,7 +210,7 @@ def main(tree, options):
                 val = str(value)
             config.set(name, option, val)
 
-    with open(cfgfile, "w") as f:
+    with open(cfgfile, "w", encoding="utf8") as f:
         # need restrictive permissions
         os.fchmod(f.fileno(), 0o600)
         config.write(f, space_around_delimiters=False)

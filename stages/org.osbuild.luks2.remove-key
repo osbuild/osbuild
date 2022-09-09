@@ -51,7 +51,7 @@ def main(devices, options):
     ]
 
     subprocess.run(command + [path],
-                   encoding='utf-8', check=True,
+                   encoding='utf8', check=True,
                    input=passphrase)
 
 

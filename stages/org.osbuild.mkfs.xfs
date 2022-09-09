@@ -56,7 +56,7 @@ def main(devices, options):
         opts = ["-L", label]
 
     subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}"] + opts + [device],
-                   encoding='utf-8', check=True)
+                   encoding='utf8', check=True)
 
 
 if __name__ == '__main__':

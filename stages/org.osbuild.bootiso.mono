@@ -171,7 +171,7 @@ def replace(target, patterns):
     finder = [(re.compile(p), s) for p, s in patterns]
     newfile = target + ".replace"
 
-    with open(target, "r") as i, open(newfile, "w") as o:
+    with open(target, "r", encoding="utf8") as i, open(newfile, "w", encoding="utf8") as o:
         for line in i:
             for p, s in finder:
                 line = p.sub(s, line)
@@ -180,7 +180,7 @@ def replace(target, patterns):
 
 
 def make_rootfs(tree, image, size, workdir, loop_client):
-    with open(image, "w") as f:
+    with open(image, "w", encoding="utf8") as f:
         os.ftruncate(f.fileno(), size)
 
     root = os.path.join(workdir, "rootfs")
@@ -192,7 +192,7 @@ def make_rootfs(tree, image, size, workdir, loop_client):
                         "-b", "4096",
                         "-m", "0",
                         dev],
-                       input="y", encoding='utf-8', check=True)
+                       input="y", encoding='utf8', check=True)
 
         with mount(dev, root):
             print("copying tree")
@@ -267,7 +267,7 @@ def make_efi(efi, info, root, loop_client):
 
     # create the image
     image = os.path.join(info["imgdir"], "efiboot.img")
-    with open(image, "w") as f:
+    with open(image, "w", encoding="utf8") as f:
         os.ftruncate(f.fileno(), size)
 
     root = os.path.join(info["workdir"], "mnt")
@@ -277,7 +277,7 @@ def make_efi(efi, info, root, loop_client):
         subprocess.run(["mkfs.fat",
                         "-n", "ANACONDA",
                         dev],
-                       input="y", encoding='utf-8', check=True)
+                       input="y", encoding='utf8', check=True)
 
         with mount(dev, root):
             target = os.path.join(root, "EFI", "BOOT")

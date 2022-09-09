@@ -56,7 +56,7 @@ KillSignal=SIGHUP
 UnsetEnvironment=LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION
 """
 
-    with open(f"{tree}/etc/systemd/system/osbuild-debug-shell.service", "w") as f:
+    with open(f"{tree}/etc/systemd/system/osbuild-debug-shell.service", "w", encoding="utf8") as f:
         f.write(unit)
 
     os.symlink("../osbuild-debug-shell.service",

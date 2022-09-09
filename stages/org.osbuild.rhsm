@@ -111,7 +111,7 @@ def configure_plugins(tree, path, plugins_options):
         plugin_conf = iniparse.SafeConfigParser()
 
         try:
-            with open(plugin_conf_path, "r") as f:
+            with open(plugin_conf_path, "r", encoding="utf8") as f:
                 plugin_conf.readfp(f)
         except FileNotFoundError:
             print(f"Error: {plugin} configuration file '{plugin_conf_path}' does not exist.")
@@ -129,7 +129,7 @@ def configure_plugins(tree, path, plugins_options):
                 print(f"Error: unknown property {option} specified for {plugin} plugin.")
                 return 1
 
-        with open(plugin_conf_path, "w") as f:
+        with open(plugin_conf_path, "w", encoding="utf8") as f:
             plugin_conf.write(f)
 
     return 0
@@ -144,7 +144,7 @@ def configure_rhsm(tree, rhsm_configuration_options):
     rhsm_conf = iniparse.SafeConfigParser()
 
     try:
-        with open(rhsm_config_path, "r") as f:
+        with open(rhsm_config_path, "r", encoding="utf8") as f:
             rhsm_conf.readfp(f)
     except FileNotFoundError:
         print(f"Error: RHSM configuration file '{rhsm_config_path}' does not exist.")
@@ -159,7 +159,7 @@ def configure_rhsm(tree, rhsm_configuration_options):
             value = str(value)
             rhsm_conf.set(config_section, option, value)
 
-    with open(rhsm_config_path, "w") as f:
+    with open(rhsm_config_path, "w", encoding="utf8") as f:
         rhsm_conf.write(f)
 
     return 0

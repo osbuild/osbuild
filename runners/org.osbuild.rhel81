@@ -46,7 +46,7 @@ def os_release():
 
     # remove the symlink that systemd-nspawn creates
     os.remove("/etc/os-release")
-    with open("/etc/os-release", "w") as f:
+    with open("/etc/os-release", "w", encoding="utf8") as f:
         f.write('NAME="Red Hat Enterprise Linux"\n')
         f.write('VERSION="8.1 (Ootpa)"\n')
         f.write('ID="rhel"\n')

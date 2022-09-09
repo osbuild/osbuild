@@ -162,7 +162,7 @@ class PartitionTable:
             command += cmd
 
         subprocess.run(command,
-                       encoding='utf-8',
+                       encoding='utf8',
                        check=True)
 
 
@@ -189,7 +189,7 @@ def main(devices, options):
     pt.write_to(device)
 
     subprocess.run(["sgdisk", "-p", device],
-                   encoding='utf-8',
+                   encoding='utf8',
                    check=False)
 
 
