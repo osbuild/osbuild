@@ -26,7 +26,7 @@ def parse_files(*paths):
 
     path = next((p for p in paths if os.path.exists(p)), None)
     if path:
-        with open(path) as f:
+        with open(path, encoding="utf8") as f:
             for line in f:
                 line = line.strip()
                 if not line:

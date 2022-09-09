@@ -102,7 +102,7 @@ class Treefile:
             fd, name = tempfile.mkstemp(suffix=".json",
                                         text=True)
 
-            with os.fdopen(fd, "w+") as f:
+            with os.fdopen(fd, "w+", encoding="utf8") as f:
                 self.dump(f)
 
             yield name
@@ -120,7 +120,7 @@ def rev_parse(repo: PathLike, ref: str) -> str:
         repo = repo.decode("utf8")
 
     r = subprocess.run(["ostree", "rev-parse", ref, f"--repo={repo}"],
-                       encoding="utf-8",
+                       encoding="utf8",
                        stdout=subprocess.PIPE,
                        stderr=subprocess.STDOUT,
                        check=False)
@@ -141,7 +141,7 @@ def show(repo: PathLike, checksum: str) -> str:
         repo = repo.decode("utf8")
 
     r = subprocess.run(["ostree", "show", f"--repo={repo}", checksum],
-                       encoding="utf-8",
+                       encoding="utf8",
                        stdout=subprocess.PIPE,
                        stderr=subprocess.STDOUT,
                        check=False)
@@ -188,7 +188,7 @@ class PasswdLike:
             if not os.path.isfile(path):
                 return ret
 
-        with open(path, "r") as p:
+        with open(path, "r", encoding="utf8") as p:
             ret.db = cls._passwd_lines_to_dict(p.readlines())
         return ret
 
@@ -198,7 +198,7 @@ class PasswdLike:
             if not os.path.isfile(path):
                 return
 
-        with open(path, "r") as p:
+        with open(path, "r", encoding="utf8") as p:
             additional_passwd_dict = self._passwd_lines_to_dict(p.readlines())
             for name, passwd_line in additional_passwd_dict.items():
                 if name not in self.db:
@@ -206,7 +206,7 @@ class PasswdLike:
 
     def dump_to_file(self, path: PathLike):
         """Write the current database to a file"""
-        with open(path, "w") as p:
+        with open(path, "w", encoding="utf8") as p:
             p.writelines(list(self.db.values()))
 
     @staticmethod
@@ -250,13 +250,13 @@ class SubIdsDB:
 
     def read_from(self, path: PathLike) -> int:
         """Read a file and add the entries to the database"""
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf8") as f:
             return self.read(f)
 
     def write_to(self, path: PathLike) -> None:
         """Write the database to a file"""
         data = self.dumps()
-        with open(path, "w", encoding="utf-8") as f:
+        with open(path, "w", encoding="utf8") as f:
             f.write(data)
 
     def __bool__(self) -> bool:

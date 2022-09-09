@@ -43,7 +43,7 @@ class Subscriptions:
         """Read redhat.repo file and process the list of repositories in there."""
         ret = cls(None)
         with contextlib.suppress(FileNotFoundError):
-            with open("/etc/yum.repos.d/redhat.repo", "r") as fp:
+            with open("/etc/yum.repos.d/redhat.repo", "r", encoding="utf8") as fp:
                 ret = cls.parse_repo_file(fp)
 
         with contextlib.suppress(RuntimeError):
