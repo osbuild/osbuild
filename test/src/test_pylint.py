@@ -12,36 +12,58 @@ from .. import test
 
 @pytest.fixture(name="source_files")
 def discover_source_files():
+
+    # Evaluate whether `path` is a python file. This assumes that the file is
+    # opened by the caller, anyway, hence it might invoke `file` to detect the
+    # file type if in doubt.
+    def is_python_script(path):
+        if path.endswith(".py"):
+            return True
+
+        mime_valid = [
+            "text/x-python",
+            "text/x-script.python",
+        ]
+
+        mime_file = subprocess.check_output(
+            [
+                "file",
+                "-bi",
+                "--",
+                path,
+            ],
+            encoding="utf-8",
+        )
+
+        return any(mime_file.startswith(v) for v in mime_valid)
+
+    # Enumerate all repository files. This will invoke `git ls-tree` to list
+    # all files. This also requires a temporary change of directory, since git
+    # operates on the current directory and does not allow path arguments.
+    def list_files(path):
+        cwd = os.getcwd()
+        os.chdir(path)
+        files = subprocess.check_output(
+            [
+                "git",
+                "ls-tree",
+                "-rz",
+                "--full-tree",
+                "--name-only",
+                "HEAD",
+            ],
+            encoding="utf-8",
+        )
+        os.chdir(cwd)
+
+        files = files.split('\x00')
+        return (os.path.join(path, f) for f in files)
+
     if not test.TestBase.have_test_checkout():
         pytest.skip("no test-checkout access")
 
-    checkout = test.TestBase.locate_test_checkout()
-
-    # Fetch list of checked-in files from git.
-    cwd = os.getcwd()
-    os.chdir(checkout)
-    files = subprocess.check_output(
-        [
-            "git",
-            "ls-tree",
-            "-rz",
-            "--full-tree",
-            "--name-only",
-            "HEAD",
-        ]
-    ).decode()
-    os.chdir(cwd)
-
-    # File list is separated by NULs, so split into array.
-    files = files.split('\x00')
-
-    # Filter out all our python files (i.e., all modules and files ending in *.py)
-    modules = ("assemblers/", "runners/", "sources/", "stages/")
-    files = filter(lambda p: p.endswith(".py") or p.startswith(modules), files)
-
-    # Append the checkout-path so all paths are absolute.
-    files = map(lambda p: os.path.join(checkout, p), files)
-
+    files = list_files(test.TestBase.locate_test_checkout())
+    files = filter(is_python_script, files)
     return list(files)
 
 
