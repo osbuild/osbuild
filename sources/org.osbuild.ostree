@@ -43,6 +43,34 @@ SCHEMA = """
                   "type": "string",
                   "description": "GPG keys to verify the commits"
                 }
+              },
+              "cookies": {
+                "type": "array",
+                "description": "Cookies to add to the remote",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["domain", "path", "name", "value"],
+                  "description": "Cookie to add",
+                  "properties": {
+                    "domain": {
+                      "description": "Domain of the cookie, which specifies which hosts can receive the cookie",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path of the cookie, which must exist in the requested URL",
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "Name of the cookie",
+                      "type": "string"
+                    },
+                    "value": {
+                      "description": "Value of the cookie",
+                      "type": "string"
+                    }
+                  }
+                }
               }
             }
           }
@@ -87,6 +115,7 @@ class OSTreeSource(sources.SourceService):
         remote = desc["remote"]
         url = remote["url"]
         gpg = remote.get("gpgkeys", [])
+        cookies = remote.get("cookies", [])
         uid = str(uuid.uuid4())
 
         verify_args = []
@@ -101,6 +130,14 @@ class OSTreeSource(sources.SourceService):
         for key in gpg:
             ostree("remote", "gpg-import", "--stdin", uid,
                    repo=self.repo, _input=key)
+
+        for cookie in cookies:
+            domain = cookie["domain"]
+            path = cookie["path"]
+            cookie_name = cookie["name"]
+            cookie_value = cookie["value"]
+            ostree("remote", "add-cookie", uid, domain, path, cookie_name, cookie_value,
+                   repo=self.repo)
 
         # Transfer the commit: remote → cache
         print(f"pulling {commit}", file=sys.stderr)

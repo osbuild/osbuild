@@ -4,7 +4,15 @@
     "items": {
       "d6243b0d0ca3dc2aaef2e0eb3e9f1f4836512c2921007f124b285f7c466464d8": {
         "remote": {
-          "url": "http://localhost/sources/org.osbuild.ostree/data/repo"
+          "url": "http://localhost/sources/org.osbuild.ostree/data/repo",
+          "cookies": [
+            {
+              "domain": "localhost",
+              "path": "/sources/*",
+              "name": "cookie_name",
+              "value": "cookie_value"
+            }
+          ]
         }
       }
     }
