@@ -927,11 +927,11 @@ class ManifestFile:
             try:
                 data = yaml_load_ordered(f)
             except yaml.YAMLError as err:
-                pos = ""
+                prob = ""
                 if hasattr(err, 'problem_mark'):
                     mark = err.problem_mark
-                    pos = f" at line {mark.line+1} (col {mark.column+1})"
-                print(f"Invalid yaml in \"{path}\": {err.problem}{pos}")
+                    prob = f": {err.problem} at line {mark.line+1} (col {mark.column+1})"
+                print(f"Invalid yaml in \"{path}\"{prob}")
                 sys.exit(1)
         else:
             try:
