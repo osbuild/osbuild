@@ -1232,6 +1232,15 @@ class ManifestFile:
         self._process_embed_files(stage)
         self._process_container(stage)
 
+    def _process_depsolve(self, _stage, _pipeline_name):
+        raise NotImplementedError()
+
+    def _process_embed_files(self, _stage):
+        raise NotImplementedError()
+
+    def _process_container(self, _stage):
+        raise NotImplementedError()
+
 
 class ManifestFileV1(ManifestFile):
     def __init__(self, path, overrides, default_vars, data, searchdirs):
