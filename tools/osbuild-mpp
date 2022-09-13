@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# pylint: disable=too-many-lines
+
 """Manifest-Pre-Processor
 
 This manifest-pre-processor takes a path to a manifest, loads it,
@@ -405,7 +407,7 @@ class ImageManifest:
         self.digest = "sha256:" + hashlib.sha256(raw).hexdigest()
 
     def is_manifest_list(self):
-        return self.media_type == "application/vnd.docker.distribution.manifest.list.v2+json" or self.media_type == "application/vnd.oci.image.index.v1+json"
+        return self.media_type in ("application/vnd.docker.distribution.manifest.list.v2+json", "application/vnd.oci.image.index.v1+json")
 
     def _match_platform(self, wanted_arch, wanted_os, wanted_variant):
         for m in self.json.get("manifests", []):
@@ -461,11 +463,12 @@ class ImageManifest:
         return self.json.get("config", {}).get("digest", "")
 
 
+# pylint: disable=too-many-ancestors
 class YamlOrderedLoader(yaml.Loader):
     def construct_mapping(self, node, deep=False):
         if not isinstance(node, yaml.MappingNode):
             raise yaml.constructor.ConstructorError(None, None,
-                                                    "expected a mapping node, but found %s" % node.id,
+                                                    f"expected a mapping node, but found {node.id}",
                                                     node.start_mark)
         mapping = collections.OrderedDict()
         for key_node, value_node in node.value:
@@ -548,7 +551,7 @@ class PacmanSolver():
         os.makedirs(os.path.join(root, "var", "lib", "pacman"), exist_ok=True)
         os.makedirs(os.path.join(root, "etc"), exist_ok=True)
 
-    def reset(self, arch, _, module_platform_id, ignore_weak_deps):
+    def reset(self, arch, _, _module_platform_id, _ignore_weak_deps):
         self.setup_root()
         cfg = f"""
 [options]
@@ -823,7 +826,7 @@ class PartitionTable:
     def __getitem__(self, key) -> Partition:
         if isinstance(key, int):
             return self.partitions[key]
-        elif isinstance(key, str):
+        if isinstance(key, str):
             for part in self.partitions:
                 if part.id == key:
                     return part
@@ -914,10 +917,11 @@ class Image:
         return cls(size, table)
 
 
+# pylint: disable=too-many-instance-attributes
 class ManifestFile:
     @staticmethod
     def load(path, overrides, default_vars, searchdirs):
-        with open(path) as f:
+        with open(path, encoding="utf8") as f:
             return ManifestFile.load_from_fd(f, path, overrides, default_vars, searchdirs)
 
     @staticmethod
@@ -1013,11 +1017,11 @@ class ManifestFile:
             raise ValueError(f"Incompatible manifest version {m.version}")
         return m
 
-    def find_and_open_file(self, path, dirs, mode="r"):
+    def find_and_open_file(self, path, dirs, mode="r", encoding="utf8"):
         for p in [self.basedir] + dirs:
             with contextlib.suppress(FileNotFoundError):
                 fullpath = os.path.join(p, path)
-                return open(fullpath, mode), os.path.normpath(fullpath)
+                return open(fullpath, mode, encoding=encoding), os.path.normpath(fullpath)
         raise FileNotFoundError(f"Could not find file '{path}'")
 
     def find_and_load_manifest(self, path):
@@ -1098,8 +1102,7 @@ class ManifestFile:
         self._process_format(fakeroot)
         if not fakeroot:
             return None, True
-        else:
-            return fakeroot[0], False
+        return fakeroot[0], False
 
     def _format_dict_node(self, node, stack):
         if len(stack) > 0:
@@ -1116,6 +1119,7 @@ class ManifestFile:
             pipeline_name = self.get_pipeline_name(parent_node)
             self._process_stage(node, pipeline_name)
 
+    # pylint: disable=too-many-branches
     def _process_format(self, node):
         def _is_format(node):
             if not isinstance(node, dict):
@@ -1184,7 +1188,7 @@ class ManifestFile:
             self._format_dict_node(node, self.format_stack)
 
             for key in list(node.keys()):
-                self.format_stack.append( (node, key) )
+                self.format_stack.append((node, key))
                 value = node[key]
                 if _is_format(value):
                     val, remove = _eval_format(value, self.get_vars())
@@ -1427,7 +1431,7 @@ class ManifestFileV2(ManifestFile):
                 raise ValueError(f"Only one of 'path', 'url' or 'text' may be specified for '{uid}'")
 
             if path:
-                f, _ = self.find_and_open_file(path, [], mode="rb")
+                f, _ = self.find_and_open_file(path, [], mode="rb", encoding=None)
                 with f:
                     data = f.read()
             elif url:
@@ -1589,7 +1593,7 @@ def main():
         m.process_format()
         m.solver_factory = None
 
-    with sys.stdout if args.dst == "-" else open(args.dst, "w") as f:
+    with sys.stdout if args.dst == "-" else open(args.dst, "w", encoding="utf8") as f:
         m.write(f, args.sort_keys)
 
 
