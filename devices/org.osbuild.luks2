@@ -140,11 +140,11 @@ class CryptDeviceService(devices.DeviceService):
         self.devname = None
 
         # finally close the device
-        res = subprocess.run(["cryptsetup", "-q", "close", name],
-                             check=self.check,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT,
-                             encoding="UTF-8")
+        subprocess.run(["cryptsetup", "-q", "close", name],
+                       check=self.check,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT,
+                       encoding="UTF-8")
 
 
 def main():

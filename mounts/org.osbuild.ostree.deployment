@@ -104,8 +104,6 @@ class OSTreeDeploymentMount(mounts.MountService):
         self.mountpoint = tree
         self.check = True
 
-        return None
-
     def umount(self):
 
         if not self.mountpoint:

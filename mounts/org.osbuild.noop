@@ -34,6 +34,7 @@ SCHEMA_2 = """
 
 
 class NoOpMount(mounts.MountService):
+    mountpoint = None
 
     def mount(self, args: Dict):
         root = args["root"]

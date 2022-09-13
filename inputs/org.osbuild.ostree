@@ -133,7 +133,7 @@ class OSTreeInput(inputs.InputService):
         if origin == "org.osbuild.pipeline":
             for ref, options in refs.items():
                 source = store.read_tree(ref)
-                with open(os.path.join(source, "compose.json"), "r") as f:
+                with open(os.path.join(source, "compose.json"), "r", encoding="utf8") as f:
                     compose = json.load(f)
                 commit_id = compose["ostree-commit"]
                 reply = export({commit_id: options}, source, target)
