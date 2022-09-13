@@ -65,10 +65,12 @@ def main(tree, options):
                 svcs = current.strip('\"\n').split(" ")
                 new_svcs = [ns for ns in value if ns not in svcs]
                 new_svcs.extend(svcs)
+                # pylint: disable=consider-using-f-string
                 sys.stdout.write('GREENBOOT_MONITOR_SERVICES="{0}"\n'.format(" ".join(new_svcs)))
     with open(config_file, "a", encoding="utf8") as f:
         for key, value in changes.items():
             if key == "monitor_services":
+                # pylint: disable=consider-using-f-string
                 f.write('GREENBOOT_MONITOR_SERVICES="{0}"\n'.format(" ".join(value)))
 
     return 0
