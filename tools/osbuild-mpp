@@ -379,15 +379,15 @@ class ImageManifest:
 
     # Based on joseBase64UrlDecode() from docker
     @staticmethod
-    def _jose_base64url_decode(input):
+    def _jose_base64url_decode(data):
         # Strip whitespace
-        input.replace("\n", "")
-        input.replace(" ", "")
-        # Pad input with = to make it valid
-        rem = len(input) % 4
+        data.replace("\n", "")
+        data.replace(" ", "")
+        # Pad data with = to make it valid
+        rem = len(data) % 4
         if rem > 0:
-            input += "=" * (4 - rem)
-        return base64.urlsafe_b64decode(input)
+            data += "=" * (4 - rem)
+        return base64.urlsafe_b64decode(data)
 
     def _compute_digest(self):
         raw = self.raw
@@ -411,10 +411,10 @@ class ImageManifest:
         for m in self.json.get("manifests", []):
             platform = m.get("platform", {})
             arch = platform.get("architecture", "")
-            os = platform.get("os", "")
+            ostype = platform.get("os", "")
             variant = platform.get("variant", None)
 
-            if arch != wanted_arch or wanted_os != os:
+            if arch != wanted_arch or wanted_os != ostype:
                 continue
 
             if wanted_variant and wanted_variant != variant:
@@ -1497,7 +1497,7 @@ class ManifestFileV2(ManifestFile):
 
             main_manifest = ImageManifest.load(source, tag=tag, digest=digest)
 
-            os = image.get("os", "linux")
+            ostype = image.get("os", "linux")
 
             default_rpm_arch = self.get_vars()["arch"]
             rpm_arch = image.get("arch", default_rpm_arch)
@@ -1505,7 +1505,7 @@ class ManifestFileV2(ManifestFile):
 
             variant = image.get("variant", None)
 
-            resolved_manifest = main_manifest.resolve_list(oci_arch, os, variant)
+            resolved_manifest = main_manifest.resolve_list(oci_arch, ostype, variant)
 
             image_id = resolved_manifest.get_config_digest()
 
