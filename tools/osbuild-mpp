@@ -827,8 +827,7 @@ class PartitionTable:
             for part in self.partitions:
                 if part.id == key:
                     return part
-        else:
-            raise ValueError("unsupported type")
+        raise IndexError
 
     def write_to(self, target, sync=True):
         """Write the partition table to disk"""
