@@ -34,11 +34,9 @@ import stat
 import subprocess
 import sys
 import time
-
 from typing import Dict, Tuple, Union
 
 from osbuild import devices
-
 
 SCHEMA = """
 "additionalProperties": false,

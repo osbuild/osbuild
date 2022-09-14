@@ -15,13 +15,12 @@ Host commands used: mount
 """
 
 import os
-import sys
 import subprocess
+import sys
 from typing import Dict
 
 from osbuild import mounts
 from osbuild.util import ostree
-
 
 SCHEMA_2 = """
 "additionalProperties": false,

@@ -8,13 +8,12 @@ Internally uses `ostree checkout`
 """
 
 
-import os
 import json
-import sys
+import os
 import subprocess
+import sys
 
 from osbuild import inputs
-
 
 SCHEMA = """
 "additionalProperties": false,

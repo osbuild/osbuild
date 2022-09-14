@@ -12,7 +12,6 @@ from typing import Dict
 
 from osbuild import mounts
 
-
 SCHEMA_2 = """
 "additionalProperties": false,
 "required": ["name", "type", "source", "target"],

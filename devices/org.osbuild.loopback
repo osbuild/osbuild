@@ -20,13 +20,10 @@ documentation for `osbuil.util.udev.UdevInhibitor`.
 import argparse
 import os
 import sys
-
 from typing import Dict
 
-from osbuild import devices
-from osbuild import loop
+from osbuild import devices, loop
 from osbuild.util.udev import UdevInhibitor
-
 
 SCHEMA = """
 "additionalProperties": false,

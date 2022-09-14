@@ -19,12 +19,10 @@ import stat
 import subprocess
 import sys
 import uuid
-
 from typing import Dict, Optional
 
 from osbuild import devices
 from osbuild.util.udev import UdevInhibitor
-
 
 SCHEMA = """
 "additionalProperties": false,
