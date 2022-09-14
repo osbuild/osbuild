@@ -12,7 +12,6 @@ import sys
 
 from osbuild import inputs
 
-
 SCHEMA = """
 "additionalProperties": false,
 "required": ["type", "origin", "references"],

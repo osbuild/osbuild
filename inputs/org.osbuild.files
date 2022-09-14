@@ -20,7 +20,6 @@ import sys
 
 from osbuild import inputs
 
-
 SCHEMA = r"""
 "definitions": {
   "metadata": {
