@@ -344,7 +344,7 @@ class TestFormatV2(unittest.TestCase):
 
     def test_device_sorting(self):
         fmt = self.index.get_format_info("osbuild.formats.v2").module
-        assert(fmt)
+        assert fmt
 
         self_cycle = {
             "a": {"parent": "a"},

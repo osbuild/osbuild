@@ -573,7 +573,8 @@ LocalFileSigLevel = Optional
             cfgfile.write(f"[{rid}]\n")
             cfgfile.write(f"Server = {url}\n")
 
-    def _pacman(self, *args):
+    @staticmethod
+    def _pacman(*args):
         return subprocess.check_output(["pacman", *args], encoding="utf-8")
 
     def resolve(self, packages, _):
@@ -1228,6 +1229,7 @@ class ManifestFile:
         name = desc.get("id", "image")
         self.vars[name] = Image.from_dict(desc)
 
+    # pylint: disable=no-self-use
     def get_pipeline_name(self, node):
         return node.get("name", "")
 

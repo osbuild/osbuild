@@ -81,6 +81,7 @@ def symlink_diff(name, dir_fd1, dir_fd2, path, differences):
         props["symlink"] = [os.fsdecode(target1), os.fsdecode(target2)]
 
 
+# pylint: disable=too-many-branches
 def diff_aux(dir_fd1, dir_fd2, path, report):
     entries1 = set()
     with os.scandir(dir_fd1) as it:
