@@ -76,7 +76,7 @@ def test_isort(source_files):
     # modules we have.
     #
 
-    r = subprocess.run(["isort", "-c"] + source_files, check=False)
+    r = subprocess.run(["isort", "--check", "--diff"] + source_files, check=False)
     if r.returncode != 0:
         pytest.fail("isort issues detected")
 
