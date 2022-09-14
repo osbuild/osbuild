@@ -40,9 +40,9 @@ jobs:
     - name: "Clone Repository"
       uses: actions/checkout@v2
     - name: "Regenerate Test Data"
-      uses: osbuild/containers/src/actions/privdocker@e4de123f43b95e99dfe8eed0bd5a1cd58db50715
+      uses: osbuild/containers/src/actions/privdocker@1e349b1c69884f9f38f7afa567869b975104828c
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202202021637
+        image: ghcr.io/osbuild/osbuild-ci:latest-202209070757
         run: |
           make test-data
           git diff --exit-code -- ./test/data
@@ -64,9 +64,9 @@ jobs:
     - name: "Clone Repository"
       uses: actions/checkout@v2
     - name: "Run Tests"
-      uses: osbuild/containers/src/actions/privdocker@e4de123f43b95e99dfe8eed0bd5a1cd58db50715
+      uses: osbuild/containers/src/actions/privdocker@1e349b1c69884f9f38f7afa567869b975104828c
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202208041541
+        image: ghcr.io/osbuild/osbuild-ci:latest-202209070757
         run: |
           git config --global --add safe.directory /osb/workdir
           python3 -m pytest \

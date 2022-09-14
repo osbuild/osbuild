@@ -1145,7 +1145,7 @@
               },
               {
                 "start": 413696,
-                "size": 20557791,
+                "size": 20555776,
                 "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                 "uuid": "CA7D7CCB-63ED-4C53-861C-1742536059CC"
               }
@@ -1196,7 +1196,7 @@
               "options": {
                 "filename": "disk.img",
                 "start": 413696,
-                "size": 20557791,
+                "size": 20555776,
                 "lock": true
               }
             }
@@ -1221,7 +1221,7 @@
               "options": {
                 "filename": "disk.img",
                 "start": 413696,
-                "size": 20557791
+                "size": 20555776
               }
             },
             "device": {
@@ -1249,7 +1249,7 @@
               "options": {
                 "filename": "disk.img",
                 "start": 413696,
-                "size": 20557791
+                "size": 20555776
               }
             },
             "lvm": {
@@ -1313,7 +1313,7 @@
               "options": {
                 "filename": "disk.img",
                 "start": 413696,
-                "size": 20557791
+                "size": 20555776
               }
             },
             "lvm": {
@@ -1379,7 +1379,7 @@
               "options": {
                 "filename": "disk.img",
                 "start": 413696,
-                "size": 20557791
+                "size": 20555776
               }
             },
             "device": {
