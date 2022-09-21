@@ -100,7 +100,8 @@ to build OSTree based images.
 %package        selinux
 Summary:        SELinux policies
 Requires:       %{name} = %{version}-%{release}
-BuildRequires:  selinux-policy
+Requires:       selinux-policy-%{selinuxtype}
+Requires(post): selinux-policy-%{selinuxtype}
 BuildRequires:  selinux-policy-devel
 %{?selinux_requires}
 
@@ -129,7 +130,7 @@ make man
 make -f /usr/share/selinux/devel/Makefile osbuild.pp
 bzip2 -9 osbuild.pp
 
-%pre
+%pre selinux
 %selinux_relabel_pre -s %{selinuxtype}
 
 %install
@@ -173,6 +174,7 @@ install -p -m 0644 -t %{buildroot}%{_mandir}/man5/ docs/*.5
 # SELinux
 install -D -m 0644 -t %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype} %{name}.pp.bz2
 install -D -m 0644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_selinux.8
+install -D -p -m 0644 selinux/osbuild.if %{buildroot}%{_datadir}/selinux/devel/include/distributed/%{name}.if
 
 # Udev rules
 mkdir -p %{buildroot}%{_udevrulesdir}
@@ -230,7 +232,8 @@ exit 0
 %files selinux
 %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
 %{_mandir}/man8/%{name}_selinux.8.*
-%ghost %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
+%{_datadir}/selinux/devel/include/distributed/%{name}.if
+%ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
 
 %post selinux
 %selinux_modules_install -s %{selinuxtype} %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
