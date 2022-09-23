@@ -167,6 +167,63 @@ def test_fcntl_flock():
         os.close(fd2)
 
 
+def test_libc():
+    #
+    # Test that the Libc class can be instantiated and provides a suitable
+    # default singleton. Verify the expected interfaces exist (though tests
+    # for them are separate).
+    #
+
+    libc0 = linux.Libc.make()
+    libc1 = linux.Libc.default()
+
+    assert libc0 is not libc1
+    assert libc1 is linux.Libc.default()
+
+    assert libc0.AT_FDCWD
+    assert libc0.RENAME_EXCHANGE
+    assert libc0.RENAME_NOREPLACE
+    assert libc0.RENAME_WHITEOUT
+    assert libc0.renameat2
+
+
+def test_libc_renameat2_errcheck():
+    #
+    # Verify the `renameat(2)` system call on `Libc` correctly turns errors into
+    # python exceptions.
+    #
+
+    libc = linux.Libc.default()
+
+    with pytest.raises(OSError):
+        libc.renameat2(oldpath=b"", newpath=b"")
+
+
+def test_libc_renameat2_exchange(tmpdir):
+    #
+    # Verify the `renameat(2)` system call on `Libc` with the
+    # `RENAME_EXCHANGE` flag. This swaps two files atomically.
+    #
+
+    libc = linux.Libc.default()
+
+    with open(f"{tmpdir}/foo", "x", encoding="utf8") as f:
+        f.write("foo")
+    with open(f"{tmpdir}/bar", "x", encoding="utf8") as f:
+        f.write("bar")
+
+    libc.renameat2(
+        oldpath=f"{tmpdir}/foo".encode(),
+        newpath=f"{tmpdir}/bar".encode(),
+        flags=linux.Libc.RENAME_EXCHANGE,
+    )
+
+    with open(f"{tmpdir}/foo", "r", encoding="utf8") as f:
+        assert f.read() == "bar"
+    with open(f"{tmpdir}/bar", "r", encoding="utf8") as f:
+        assert f.read() == "foo"
+
+
 def test_proc_boot_id():
     #
     # Test the `proc_boot_id()` function which reads the current boot-id

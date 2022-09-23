@@ -28,6 +28,7 @@ __all__ = [
     "fcntl_flock",
     "ioctl_get_immutable",
     "ioctl_toggle_immutable",
+    "Libc",
     "proc_boot_id",
 ]
 
@@ -419,6 +420,71 @@ def fcntl_flock(fd: int, lock_type: int, wait: bool = False):
     #
 
     fcntl.fcntl(fd, lock_cmd, arg_flock64)
+
+
+class Libc:
+    """Safe Access to libc
+
+    This class provides selected safe accessors to libc functionality. It is
+    highly linux-specific and uses `ctypes.CDLL` to access `libc`.
+    """
+
+    AT_FDCWD = ctypes.c_int(-100)
+    RENAME_EXCHANGE = ctypes.c_uint(2)
+    RENAME_NOREPLACE = ctypes.c_uint(1)
+    RENAME_WHITEOUT = ctypes.c_uint(4)
+
+    _lock = threading.Lock()
+    _inst = None
+
+    def __init__(self, lib: ctypes.CDLL):
+        self._lib = lib
+
+        # prototype: renameat2
+        proto = ctypes.CFUNCTYPE(
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_uint,
+            use_errno=True,
+        )(
+            ("renameat2", self._lib),
+            (
+                (1, "olddirfd", self.AT_FDCWD),
+                (1, "oldpath"),
+                (1, "newdirfd", self.AT_FDCWD),
+                (1, "newpath"),
+                (1, "flags", 0),
+            ),
+        )
+        setattr(proto, "errcheck", self._errcheck_errno)
+        setattr(proto, "__name__", "renameat2")
+        self.renameat2 = proto
+
+    @staticmethod
+    def make() -> "Libc":
+        """Create a new instance"""
+
+        return Libc(ctypes.CDLL("", use_errno=True))
+
+    @classmethod
+    def default(cls) -> "Libc":
+        """Return and possibly create the default singleton instance"""
+
+        with cls._lock:
+            if cls._inst is None:
+                cls._inst = cls.make()
+            return cls._inst
+
+    @staticmethod
+    def _errcheck_errno(result, func, args):
+        if result < 0:
+            err = ctypes.get_errno()
+            msg = f"{func.__name__}{args} -> {result}: error ({err}): {os.strerror(err)}"
+            raise OSError(err, msg)
+        return result
 
 
 def proc_boot_id(appid: str):
