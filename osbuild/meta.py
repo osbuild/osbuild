@@ -539,6 +539,7 @@ class Index:
         self._format_info: Dict[Tuple[str, Any], Any] = {}
         self._schemata: Dict[Tuple[str, Any, str], Schema] = {}
         self._runners: List[RunnerInfo] = []
+        self._host_runner: Optional[RunnerInfo] = None
 
     @staticmethod
     def list_formats() -> List[str]:
@@ -678,5 +679,8 @@ class Index:
     def detect_host_runner(self) -> RunnerInfo:
         """Use os-release(5) to detect the runner for the host"""
 
-        osname = osrelease.describe_os(*osrelease.DEFAULT_PATHS)
-        return self.detect_runner("org.osbuild." + osname)
+        if not self._host_runner:
+            osname = osrelease.describe_os(*osrelease.DEFAULT_PATHS)
+            self._host_runner = self.detect_runner("org.osbuild." + osname)
+
+        return self._host_runner
