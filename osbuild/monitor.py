@@ -102,6 +102,13 @@ class LogMonitor(BaseMonitor):
         self.out.write(f"Pipeline {pipeline.name}: {pipeline.id}")
         self.out.term(vt.reset)
         self.out.write("\n")
+        self.out.write("Build\n  root: ")
+        if pipeline.build:
+            self.out.write(pipeline.build)
+        else:
+            self.out.write("<host>")
+        self.out.write(f"\n  runner: {pipeline.runner.name} ({pipeline.runner.exec})")
+        self.out.write("\n")
 
     def stage(self, stage):
         self.module(stage)
