@@ -493,15 +493,16 @@ class RunnerInfo:
     specific distribution and version.
     """
 
-    def __init__(self, distro: str, version: int) -> None:
+    def __init__(self, distro: str, version: int, path: str) -> None:
         self.distro = distro
         self.version = version
+        self.path = path
 
     @classmethod
     def from_path(cls, path: str):
         name = os.path.basename(path)
         distro, version = cls.parse_name(name)
-        return cls(distro, version)
+        return cls(distro, version, path)
 
     @staticmethod
     def parse_name(name: str) -> Tuple[str, int]:
