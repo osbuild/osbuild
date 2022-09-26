@@ -534,7 +534,7 @@ class Index:
     """
 
     def __init__(self, path: str):
-        self.path = path
+        self.path = os.path.abspath(path)
         self._module_info: Dict[Tuple[str, Any], Any] = {}
         self._format_info: Dict[Tuple[str, Any], Any] = {}
         self._schemata: Dict[Tuple[str, Any, str], Schema] = {}
