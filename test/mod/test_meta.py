@@ -64,8 +64,6 @@ def test_runner_detection(tempdir):
     runners = os.path.join(tempdir, "runners")
     os.makedirs(runners)
 
-    meta = osbuild.meta.Index(tempdir)
-
     table = {
         "arch": {
             "base": "",
@@ -102,6 +100,7 @@ def test_runner_detection(tempdir):
         base = info["base"] or 0
         versions = info["versions"]
         want = create_runners(runners, distro, str(base), versions)
+        meta = osbuild.meta.Index(tempdir)
         have = meta.list_runners(distro)
         assert len(want) == len(have)
         want_all += want
