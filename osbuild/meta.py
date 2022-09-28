@@ -537,6 +537,7 @@ class Index:
         self._module_info: Dict[Tuple[str, Any], Any] = {}
         self._format_info: Dict[Tuple[str, Any], Any] = {}
         self._schemata: Dict[Tuple[str, Any, str], Schema] = {}
+        self._runners: List[RunnerInfo] = []
 
     @staticmethod
     def list_formats() -> List[str]:
@@ -634,13 +635,15 @@ class Index:
         If `distro` is specified, only runners matching that distro
         will be returned.
         """
-        path = os.path.join(self.path, "runners")
-        names = filter(lambda f: os.path.isfile(f"{path}/{f}"),
-                       os.listdir(path))
-        paths = map(lambda n: os.path.join(path, n), names)
-        mapped = map(RunnerInfo.from_path, paths)
-        runners = sorted(mapped, key=lambda r: (r.distro, r.version))
+        if not self._runners:
+            path = os.path.join(self.path, "runners")
+            names = filter(lambda f: os.path.isfile(f"{path}/{f}"),
+                           os.listdir(path))
+            paths = map(lambda n: os.path.join(path, n), names)
+            mapped = map(RunnerInfo.from_path, paths)
+            self._runners = sorted(mapped, key=lambda r: (r.distro, r.version))
 
+        runners = self._runners[:]
         if distro:
             runners = [r for r in runners if r.distro == distro]
 
