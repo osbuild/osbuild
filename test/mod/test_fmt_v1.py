@@ -57,7 +57,7 @@ BASIC_PIPELINE = {
                     }
                 ]
             },
-            "runner": "org.osbuild.test"
+            "runner": "org.osbuild.linux"
         },
         "stages": [
             {
@@ -231,7 +231,7 @@ class TestFormatV1(unittest.TestCase):
                             }
                         ]
                     },
-                    "runner": "org.osbuild.test",
+                    "runner": "org.osbuild.linux",
                     "stages": [
                         {
                             "name": "org.osbuild.noop"
