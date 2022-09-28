@@ -271,6 +271,11 @@ class BuildRoot(contextlib.AbstractContextManager):
             api_path = "/run/osbuild/api/" + api.endpoint
             mounts += ["--bind", api.socket_address, api_path]
 
+        # Bind mount the runner into the container at a well known location
+        runner_name = os.path.basename(self._runner)
+        runner = f"/run/osbuild/runner/{runner_name}"
+        mounts += ["--ro-bind", self._runner, runner]
+
         cmd = [
             "bwrap",
             "--chdir", "/",
@@ -284,7 +289,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         cmd += self.build_capabilities_args()
 
         cmd += mounts
-        cmd += ["--", f"/run/osbuild/lib/runners/{self._runner}"]
+        cmd += ["--", runner]
         cmd += argv
 
         # Setup a new environment for the container.
