@@ -141,7 +141,7 @@ class TestFormatV1(unittest.TestCase):
         pl = manifest["build"]
         have = pl.stages[0]
         want = build["pipeline"]["stages"][0]
-        self.assertEqual(pl.runner, runner)
+        self.assertEqual(pl.runner.name, runner)
         check_stage(have, want)
 
         runner = build["runner"]
@@ -150,14 +150,14 @@ class TestFormatV1(unittest.TestCase):
         pl = manifest["tree"]
         have = pl.stages[0]
         want = description["pipeline"]["stages"][0]
-        self.assertEqual(pl.runner, runner)
+        self.assertEqual(pl.runner.name, runner)
         check_stage(have, want)
 
         # the assembler pipeline
         pl = manifest["assembler"]
         have = pl.stages[0]
         want = description["pipeline"]["assembler"]
-        self.assertEqual(pl.runner, runner)
+        self.assertEqual(pl.runner.name, runner)
         check_stage(have, want)
 
     def test_describe(self):
@@ -211,6 +211,7 @@ class TestFormatV1(unittest.TestCase):
 
         self.assertIsNotNone(res)
         result = fmt.output(manifest, res)
+        print(result)
         self.assertIsNotNone(result)
         self.assertIn("success", result)
         self.assertFalse(result["success"])

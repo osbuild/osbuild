@@ -212,13 +212,13 @@ class TestFormatV2(unittest.TestCase):
         self.assertIsNotNone(tree)
         self.assertIsNotNone(tree.build)
         self.assertEqual(tree.build, build.id)
-        self.assertEqual(tree.runner, "org.osbuild.linux")
+        self.assertEqual(tree.runner.name, "org.osbuild.linux")
 
         assembler = manifest["assembler"]
         self.assertIsNotNone(assembler)
         self.assertIsNotNone(assembler.build)
         self.assertEqual(assembler.build, build.id)
-        self.assertEqual(assembler.runner, "org.osbuild.linux")
+        self.assertEqual(assembler.runner.name, "org.osbuild.linux")
 
     def test_format_info(self):
         index = self.index

@@ -7,7 +7,7 @@ from typing import Any, Dict
 from osbuild.meta import Index, ModuleInfo, ValidationResult
 
 from ..inputs import Input
-from ..pipeline import Manifest, Pipeline, Stage, detect_host_runner
+from ..pipeline import Manifest, Pipeline, Runner, Stage
 from ..sources import Source
 
 VERSION = "2"
@@ -130,7 +130,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         runner = runners.get(p.id)
         if runner:
-            desc["runner"] = runner
+            desc["runner"] = runner.name
 
         stages = [
             describe_stage(stage)
@@ -325,12 +325,21 @@ def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Ma
 def load_pipeline(description: Dict, index: Index, manifest: Manifest, source_refs: set):
     name = description["name"]
     build = description.get("build")
-    runner = description.get("runner")
     source_epoch = description.get("source-epoch")
 
     if build and build.startswith("name:"):
         target = resolve_ref(build, manifest)
         build = target
+
+    # NB: The runner mapping will later be changed in `load`.
+    # The host runner here is just to always have a Runner
+    # (instead of a Optional[Runner]) to make mypy happy
+    runner_name = description.get("runner")
+    runner = None
+    if runner_name:
+        runner = Runner(index.detect_runner(runner_name), runner_name)
+    else:
+        runner = Runner(index.detect_host_runner())
 
     pl = manifest.add_pipeline(name, runner, build, source_epoch)
 
@@ -365,7 +374,7 @@ def load(description: Dict, index: Index) -> Manifest:
     # go through the pipelines and fix things up
     pipelines = manifest.pipelines.values()
 
-    host_runner = detect_host_runner()
+    host_runner = Runner(index.detect_host_runner())
     runners = {
         pl.id: pl.runner for pl in pipelines
     }
