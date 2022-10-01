@@ -371,7 +371,11 @@ class Manifest:
         self.sources: List[Source] = []
 
     def add_pipeline(
-            self, name: str, runner: Optional[str], build: Optional[str] = None, source_epoch: Optional[int] = None
+        self,
+        name: str,
+        runner: Runner,
+        build: Optional[str] = None,
+        source_epoch: Optional[int] = None
     ) -> Pipeline:
         pipeline = Pipeline(name, runner, build, source_epoch)
         if name in self.pipelines:
