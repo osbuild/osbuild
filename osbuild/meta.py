@@ -484,6 +484,45 @@ class FormatInfo:
         return cls(mod)
 
 
+class RunnerInfo:
+    """Information about a runner
+
+    Class that represents an actual available runner for a
+    specific distribution and version.
+    """
+
+    def __init__(self, distro: str, version: int) -> None:
+        self.distro = distro
+        self.version = version
+
+    @classmethod
+    def from_path(cls, path: str):
+        name = os.path.basename(path)
+        distro, version = cls.parse_name(name)
+        return cls(distro, version)
+
+    @staticmethod
+    def parse_name(name: str) -> Tuple[str, int]:
+        """Parses a runner name into a string & version tuple
+
+        The name is assumed to be "<name><version>" and version
+        to be a single integer. If the name does not contain a
+        version suffix it will default to 0.
+        """
+        version = 0
+
+        i = len(name) - 1
+
+        while i > 0 and name[i].isdigit():
+            i -= 1
+
+        vstr = name[i+1:]
+        if vstr:
+            version = int(vstr)
+
+        return name[:i+1], version
+
+
 class Index:
     """Index of modules and formats
 
@@ -585,3 +624,47 @@ class Index:
         self._schemata[(klass, name, version)] = schema
 
         return schema
+
+    def list_runners(self, distro: Optional[str] = None) -> List[RunnerInfo]:
+        """List all available runner modules
+
+        The list is sorted by distribution and version (ascending).
+        If `distro` is specified, only runners matching that distro
+        will be returned.
+        """
+        path = os.path.join(self.path, "runners")
+        names = filter(lambda f: os.path.isfile(f"{path}/{f}"),
+                       os.listdir(path))
+        paths = map(lambda n: os.path.join(path, n), names)
+        mapped = map(RunnerInfo.from_path, paths)
+        runners = sorted(mapped, key=lambda r: (r.distro, r.version))
+
+        if distro:
+            runners = [r for r in runners if r.distro == distro]
+
+        return runners
+
+    def detect_runner(self, name) -> RunnerInfo:
+        """Detect the runner for the given name
+
+        Name here refers to the combination of distribution with an
+        optional version suffix, e.g. `org.osbuild.fedora30`.
+        This functions will then return the best existing runner,
+        i.e. a candidate with the highest version number that
+        fullfils the following criteria:
+          1) distribution of the candidate matches exactly
+          2) version of the candidate is smaller or equal
+        If no such candidate exists, a `ValueError` will be thrown.
+        """
+        name, version = RunnerInfo.parse_name(name)
+        candidate = None
+
+        # Get all candidates for the specified distro (1)
+        candidates = self.list_runners(name)
+
+        for candidate in reversed(candidates):
+            if candidate.version <= version:
+                return candidate
+
+        # candidate None or is too new for version (2)
+        raise ValueError(f"No suitable runner for {name}")
