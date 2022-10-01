@@ -13,7 +13,7 @@ import osbuild
 import osbuild.meta
 from osbuild.monitor import NullMonitor
 from osbuild.objectstore import ObjectStore
-from osbuild.pipeline import Manifest, detect_host_runner
+from osbuild.pipeline import Manifest, Runner
 
 from .. import test
 
@@ -43,7 +43,7 @@ class TestDescriptions(unittest.TestCase):
             data = pathlib.Path(tmpdir, "data")
             storedir = pathlib.Path(tmpdir, "store")
             root = pathlib.Path("/")
-            runner = detect_host_runner()
+            runner = Runner(index.detect_host_runner())
             monitor = NullMonitor(sys.stderr.fileno())
             libdir = os.path.abspath(os.curdir)
             store = ObjectStore(storedir)
@@ -124,19 +124,21 @@ class TestDescriptions(unittest.TestCase):
     # pylint: disable=too-many-statements
     def test_on_demand(self):
         index = osbuild.meta.Index(os.curdir)
+        host_runner = Runner(index.detect_host_runner())
+        runner = Runner(index.detect_runner("org.osbuild.linux"))
 
         manifest = Manifest()
         noop = index.get_module_info("Stage", "org.osbuild.noop")
         noip = index.get_module_info("Input", "org.osbuild.noop")
 
         # the shared build pipeline
-        build = manifest.add_pipeline("build", None, None)
+        build = manifest.add_pipeline("build", host_runner, None)
         build.add_stage(noop, {"option": 1})
 
         # a pipeline simulating some intermediate artefact
         # that other pipeline need as dependency
         dep = manifest.add_pipeline("dep",
-                                    "org.osbuild.linux",
+                                    runner,
                                     build.id)
 
         dep.add_stage(noop, {"option": 2})
@@ -146,7 +148,7 @@ class TestDescriptions(unittest.TestCase):
         # not be built unless explicitly requested
         # has an input that depends on `dep`
         ul = manifest.add_pipeline("unlinked",
-                                   "org.osbuild.linux",
+                                   runner,
                                    build.id)
 
         stage = ul.add_stage(noop, {"option": 3})
@@ -155,14 +157,14 @@ class TestDescriptions(unittest.TestCase):
 
         # the main os root file system
         rootfs = manifest.add_pipeline("rootfs",
-                                       "org.osbuild.inux",
+                                       runner,
                                        build.id)
         stage = rootfs.add_stage(noop, {"option": 4})
 
         # the main raw image artefact, depending on "dep" and
         # "rootfs"
         image = manifest.add_pipeline("image",
-                                      "org.osbuild.inux",
+                                      runner,
                                       build.id)
 
         stage = image.add_stage(noop, {"option": 5})
@@ -177,7 +179,7 @@ class TestDescriptions(unittest.TestCase):
 
         # some compression of the image, like a qcow2
         qcow2 = manifest.add_pipeline("qcow2",
-                                      "org.osbuild.inux",
+                                      runner,
                                       build.id)
         stage = qcow2.add_stage(noop, {"option": 7})
         ip = stage.add_input("image", noip, "org.osbuild.pipeline")

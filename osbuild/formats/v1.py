@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from osbuild.meta import Index, ValidationResult
 
-from ..pipeline import BuildResult, Manifest, Pipeline, detect_host_runner
+from ..pipeline import BuildResult, Manifest, Pipeline, Runner
 
 VERSION = "1"
 
@@ -32,7 +32,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict[str, Any]:
             build = manifest[pipeline.build]
             description["build"] = {
                 "pipeline": describe_pipeline(build),
-                "runner": pipeline.runner
+                "runner": pipeline.runner.name
             }
 
         if pipeline.stages:
@@ -91,7 +91,10 @@ def load_build(description: Dict, index: Index, manifest: Manifest, n: int):
     else:
         build_pipeline = None
 
-    return build_pipeline, description["runner"]
+    runner_name = description["runner"]
+    runner_info = index.detect_runner(runner_name)
+
+    return build_pipeline, Runner(runner_info, runner_name)
 
 
 def load_stage(description: Dict, index: Index, pipeline: Pipeline):
@@ -146,7 +149,7 @@ def load_pipeline(description: Dict, index: Index, manifest: Manifest, n: int = 
     if build:
         build_pipeline, runner = load_build(build, index, manifest, n)
     else:
-        build_pipeline, runner = None, detect_host_runner()
+        build_pipeline, runner = None, Runner(index.detect_host_runner())
 
     # the "main" pipeline is called `tree`, since it is building the
     # tree that will later be used by the `assembler`. Nested build

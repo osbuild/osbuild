@@ -145,7 +145,7 @@ class Stage:
     def run(self, tree, runner, build_tree, store, monitor, libdir, timeout=None):
         with contextlib.ExitStack() as cm:
 
-            build_root = buildroot.BuildRoot(build_tree, runner, libdir, store.tmp)
+            build_root = buildroot.BuildRoot(build_tree, runner.path, libdir, store.tmp)
             cm.enter_context(build_root)
 
             # if we have a build root, then also bind-mount the boot
@@ -239,8 +239,22 @@ class Stage:
         return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
 
 
+class Runner:
+    def __init__(self, info, name: Optional[str] = None) -> None:
+        self.info = info  # `meta.RunnerInfo`
+        self.name = name or os.path.basename(info.path)
+
+    @property
+    def path(self):
+        return self.info.path
+
+    @property
+    def exec(self):
+        return os.path.basename(self.info.path)
+
+
 class Pipeline:
-    def __init__(self, name: str, runner=None, build=None, source_epoch=None):
+    def __init__(self, name: str, runner: Runner, build=None, source_epoch=None):
         self.name = name
         self.build = build
         self.runner = runner

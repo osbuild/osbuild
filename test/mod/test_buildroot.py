@@ -9,9 +9,9 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
+import osbuild.meta
 from osbuild.buildroot import BuildRoot
 from osbuild.monitor import LogMonitor, NullMonitor
-from osbuild.pipeline import detect_host_runner
 from osbuild.util import linux
 
 from ..test import TestBase
@@ -23,9 +23,15 @@ def tempdir_fixture():
         yield tmp
 
 
+@pytest.fixture(name="runner")
+def runner_fixture():
+    meta = osbuild.meta.Index(os.curdir)
+    runner = meta.detect_host_runner()
+    return runner.path
+
+
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_basic(tempdir):
-    runner = detect_host_runner()
+def test_basic(tempdir, runner):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
@@ -69,8 +75,7 @@ def test_runner_fail(tempdir):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_output(tempdir):
-    runner = detect_host_runner()
+def test_output(tempdir, runner):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
@@ -88,8 +93,7 @@ def test_output(tempdir):
 
 @pytest.mark.skipif(not TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_bind_mounts(tempdir):
-    runner = detect_host_runner()
+def test_bind_mounts(tempdir, runner):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
@@ -122,12 +126,11 @@ def test_bind_mounts(tempdir):
 
 @pytest.mark.skipif(not TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not os.path.exists("/sys/fs/selinux"), reason="no SELinux")
-def test_selinuxfs_ro(tempdir):
+def test_selinuxfs_ro(tempdir, runner):
     # /sys/fs/selinux must never be writable in the container
     # because RPM and other tools must not assume the policy
     # of the host is the valid policy
 
-    runner = detect_host_runner()
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
@@ -148,8 +151,7 @@ def test_selinuxfs_ro(tempdir):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_proc_overrides(tempdir):
-    runner = detect_host_runner()
+def test_proc_overrides(tempdir, runner):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
@@ -167,8 +169,7 @@ def test_proc_overrides(tempdir):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_timeout(tempdir):
-    runner = detect_host_runner()
+def test_timeout(tempdir, runner):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
@@ -187,8 +188,7 @@ def test_timeout(tempdir):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_env_isolation(tempdir):
-    runner = detect_host_runner()
+def test_env_isolation(tempdir, runner):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
@@ -229,8 +229,7 @@ def test_env_isolation(tempdir):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_caps(tempdir):
-    runner = detect_host_runner()
+def test_caps(tempdir, runner):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
