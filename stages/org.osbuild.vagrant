@@ -2,10 +2,138 @@
 import json
 import os
 import subprocess
+import random
 import sys
+import uuid
 
 import osbuild.api
 
+
+# https://github.com/hashicorp/vagrant/blob/241810b28af77fbb008c6863ce8a180919d8b86b/website/content/docs/providers/virtualbox/boxes.mdx#raw-contents
+BOX_XML = """<?xml version="1.0"?>
+<Envelope ovf:version="1.0" xml:lang="en-US" xmlns="http://schemas.dmtf.org/ovf/envelope/1" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vbox="http://www.virtualbox.org/ovf/machine">
+  <References>
+    <File ovf:id="file1" ovf:href="{DISK_NAME}"/>
+  </References>
+  <DiskSection>
+    <Info>List of the virtual disks used in the package</Info>
+    <Disk ovf:capacity="{DISK_CAPACITY}" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" vbox:uuid="{DISK_UUID}"/>
+  </DiskSection>
+  <NetworkSection>
+    <Info>Logical networks used in the package</Info>
+    <Network ovf:name="NAT">
+      <Description>Logical network used by this appliance.</Description>
+    </Network>
+  </NetworkSection>
+  <VirtualSystem ovf:id="packer-virtualbox-UNIX">
+    <Info>A virtual machine</Info>
+    <OperatingSystemSection ovf:id="100">
+      <Info>The kind of installed guest operating system</Info>
+      <Description>Linux26_64</Description>
+      <vbox:OSType ovf:required="false">{OS_TYPE}</vbox:OSType>
+    </OperatingSystemSection>
+    <VirtualHardwareSection>
+      <Info>Virtual hardware requirements for a virtual machine</Info>
+      <System>
+        <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
+        <vssd:InstanceID>0</vssd:InstanceID>
+        <vssd:VirtualSystemIdentifier>packer-virtualbox-UNIX</vssd:VirtualSystemIdentifier>
+        <vssd:VirtualSystemType>virtualbox-2.2</vssd:VirtualSystemType>
+      </System>
+      <Item>
+        <rasd:Caption>2 virtual CPU</rasd:Caption>
+        <rasd:Description>Number of virtual CPUs</rasd:Description>
+        <rasd:ElementName>2 virtual CPU</rasd:ElementName>
+        <rasd:InstanceID>1</rasd:InstanceID>
+        <rasd:ResourceType>3</rasd:ResourceType>
+        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+      </Item>
+      <Item>
+        <rasd:AllocationUnits>MegaBytes</rasd:AllocationUnits>
+        <rasd:Caption>1024 MB of memory</rasd:Caption>
+        <rasd:Description>Memory Size</rasd:Description>
+        <rasd:ElementName>1024 MB of memory</rasd:ElementName>
+        <rasd:InstanceID>2</rasd:InstanceID>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:VirtualQuantity>1024</rasd:VirtualQuantity>
+      </Item>
+      <Item>
+        <rasd:Address>0</rasd:Address>
+        <rasd:Caption>ideController0</rasd:Caption>
+        <rasd:Description>IDE Controller</rasd:Description>
+        <rasd:ElementName>ideController0</rasd:ElementName>
+        <rasd:InstanceID>3</rasd:InstanceID>
+        <rasd:ResourceSubType>PIIX4</rasd:ResourceSubType>
+        <rasd:ResourceType>5</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:Address>1</rasd:Address>
+        <rasd:Caption>ideController1</rasd:Caption>
+        <rasd:Description>IDE Controller</rasd:Description>
+        <rasd:ElementName>ideController1</rasd:ElementName>
+        <rasd:InstanceID>4</rasd:InstanceID>
+        <rasd:ResourceSubType>PIIX4</rasd:ResourceSubType>
+        <rasd:ResourceType>5</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        <rasd:Caption>disk1</rasd:Caption>
+        <rasd:Description>Disk Image</rasd:Description>
+        <rasd:ElementName>disk1</rasd:ElementName>
+        <rasd:HostResource>/disk/vmdisk1</rasd:HostResource>
+        <rasd:InstanceID>5</rasd:InstanceID>
+        <rasd:Parent>3</rasd:Parent>
+        <rasd:ResourceType>17</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Caption>Ethernet adapter on 'NAT'</rasd:Caption>
+        <rasd:Connection>NAT</rasd:Connection>
+        <rasd:ElementName>Ethernet adapter on 'NAT'</rasd:ElementName>
+        <rasd:InstanceID>6</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </Item>
+    </VirtualHardwareSection>
+    <vbox:Machine ovf:required="false" version="1.16-linux" uuid="{MACHINE_UUID}" name="packer-virtualbox-UNIX" OSType="{OS_TYPE}" snapshotFolder="Snapshots">
+      <ovf:Info>Complete VirtualBox machine configuration in VirtualBox format</ovf:Info>
+      <Hardware>
+        <CPU count="2">
+          <PAE enabled="true"/>
+          <LongMode enabled="true"/>
+          <X2APIC enabled="true"/>
+          <HardwareVirtExLargePages enabled="false"/>
+        </CPU>
+        <Memory RAMSize="1024"/>
+        <Boot>
+          <Order position="1" device="HardDisk"/>
+          <Order position="2" device="DVD"/>
+          <Order position="3" device="None"/>
+          <Order position="4" device="None"/>
+        </Boot>
+        <BIOS>
+          <IOAPIC enabled="true"/>
+          <SmbiosUuidLittleEndian enabled="true"/>
+        </BIOS>
+        <Network>
+          <Adapter slot="0" enabled="true" MACAddress="{MAC_ADDRESS}" type="82540EM">
+            <NAT/>
+          </Adapter>
+        </Network>
+        <AudioAdapter driver="OSS" enabledIn="false" enabledOut="false"/>
+        <Clipboard/>
+      </Hardware>
+      <StorageControllers>
+        <StorageController name="IDE Controller" type="PIIX4" PortCount="2" useHostIOCache="true" Bootable="true">
+          <AttachedDevice type="HardDisk" hotpluggable="false" port="0" device="0">
+            <Image uuid="{DISK_UUID}"/>
+          </AttachedDevice>
+        </StorageController>
+      </StorageControllers>
+    </vbox:Machine>
+  </VirtualSystem>
+</Envelope>
+"""
 
 def parse_input(inputs):
     image = inputs["image"]
@@ -23,7 +151,11 @@ def main(tree, options, inputs):
     # https://github.com/vagrant-libvirt/vagrant-libvirt/tree/master/example_box
     target = os.path.join(tree, "box.img")
     provider = options["provider"]
+    if provider == "virtualbox":
+        # the box has to be named .vmdk because Virtualbox does not detet the mimetype..
+        target = os.path.join(tree, "box.vmdk")
     subprocess.run(["cp", "-a", "--reflink=auto", source, target], check=True)
+    vagrant_content = ""
 
     metadata = {"provider": options["provider"]}
     if provider == "libvirt":
@@ -31,12 +163,28 @@ def main(tree, options, inputs):
         # virtual image size as rounded numbwr
         data = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", target]))
         metadata["virtual_size"] = data['virtual-size'] // 1000 ** 3
+        vagrant_content = """
+config.vm.provider :libvirt do |libvirt|
+  libvirt.driver = "kvm"
+end
+        """
 
-    vagrantfile = """
+    if provider == "virtualbox":
+        # https://github.com/mirror/vbox/blob/b9657cd5351cf17432b664009cc25bb480dc64c1/src/VBox/Main/src-server/HostImpl.cpp#L3267
+        # VirtualBox-6.1.12 src/VBox/NetworkServices/Dhcpd/Config.cpp line 276
+        mac_address = "080027"
+        for _ in range(0, 3):
+            mac_address += "".join(random.sample("0123456789abcdef", 2))
+        vagrant_content = f"config.vm.base_mac = \"{mac_address}\""
+
+        data = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", target]))
+        xml = BOX_XML.format(MAC_ADDRESS=mac_address, MACHINE_UUID=str(uuid.uuid4()),
+                             DISK_UUID=str(uuid.uuid4()), DISK_CAPACITY=data['virtual-size'] // 1000 ** 3, DISK_NAME=os.path.basename(target), OS_TYPE="ArchLinux_64")
+        open(f"{tree}/box.ovf", "w", encoding="utf8").write(xml)
+
+    vagrantfile = f"""
 Vagrant.configure("2") do |config|
-  config.vm.provider :libvirt do |libvirt|
-    libvirt.driver = "kvm"
-  end
+  {vagrant_content}
 end
 """
     open(f"{tree}/Vagrantfile", "w", encoding="utf8").write(vagrantfile)
