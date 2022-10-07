@@ -1,0 +1,1093 @@
+{
+  "version": "2",
+  "pipelines": [
+    {
+      "name": "build",
+      "runner": "org.osbuild.arch",
+      "stages": [
+        {
+          "type": "org.osbuild.pacman.conf"
+        },
+        {
+          "type": "org.osbuild.pacman",
+          "inputs": {
+            "packages": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.source",
+              "references": {
+                "sha256:e95035b7ea2f0693b8b2ca9529fd25f0e34a5ad1a10a40ecb98be5a1a66d7a7a": {},
+                "sha256:efebeab3db859ae0a9d29b81bf30fbad8bbd89a1bb18722b31be363a57ebcc2c": {},
+                "sha256:3f78298bbe59e3cd3e1eb5c75f087a648feac5cdb72418bd85a18e398024dae3": {},
+                "sha256:87fbc54f1011cbe1024428b48b9918e7e0dce5ba70c70f42efa7caa2a26403be": {},
+                "sha256:c22d96dfbf977753728df449071dba5cb345031169e7cc8fcc6debe5875caacb": {},
+                "sha256:46b4f5e2f63be1203d3238db3fed6529fceb4c9c03a2f81f5496f6267b4b6098": {},
+                "sha256:ed22cbee6b912a4c90c24e4cf5da3799593cb229cfaefc43c61841a04bab589c": {},
+                "sha256:1250af6ef0073ed76393cf3184f56bdd9fd5cbd86cef5f290917bea57d81c62a": {},
+                "sha256:6c0aaafab325356d9ce76c8029a3f8d73d2299a5cff605892eef4530472318a7": {},
+                "sha256:31674d666e41c22b2d82a4174e877952a67d42ec70ab05d14c3091b2ffe868a0": {},
+                "sha256:20873a994a0728de5b05857129c290e9a8c9bba2236cc30bcffa7b746ffe9218": {},
+                "sha256:7076fc302df82ddfa249e99e35897271fb2a62a585e7ccb51896aac8d47b4775": {},
+                "sha256:db50111f2f8d9e4866012b69eb90062fbedbc7526c64baac45fb064490e851b1": {},
+                "sha256:634206f58e35e2c71c174bb5563f1a8af8ef17d99b2951aee71eba600cbcbb07": {},
+                "sha256:a5b9db3ae1a0cdb774e5253b76d3ee3f2a9007056b6aa309858e186c5aaedde6": {},
+                "sha256:b4f3d847d8187dc866115797709b798312250e78af25c47f801b301aaf161682": {},
+                "sha256:2b6d0f4ee6782993ef673aef2d71c3adbc6f7c31aad7b374a12fde43b8c333b0": {},
+                "sha256:680b525f844a52a0bb2bbd96ac243ffbf538ee977fa0f6590e389ab7f7e31b3e": {},
+                "sha256:56780de99543fdda3c70067618ea91a8818845b94704fbf785903f1c4a004839": {},
+                "sha256:2ec675610224ffd3de19ab566e40af1e7059dc453e5763aadf679c3567e83922": {},
+                "sha256:f28ba894794210b7b3ebab631c33bebf160855dae3f4ee060f09a96e72a41b01": {},
+                "sha256:875cdf284e292f3149bebebd0708532eb100091f75d3aa0a2461b51a003ff578": {},
+                "sha256:f277ae8d07bf0633104b266b4200104e4d77743a73feeea20c49f7ce7ff1aa81": {},
+                "sha256:e00cd6bc82122b4454a94e10ec54766d97e34c5ba853dba3357f12e415029334": {},
+                "sha256:e26fa31a42b9d3cd2775e297834455b3a52dc6b4ccbb1bac056d56ec5af90caa": {},
+                "sha256:854a56780e83beb1e88e65817466c792c475c8cce9bcb1bc7f436a2d7f563eff": {},
+                "sha256:1182ef8c204658c4d97d431c9950da72bacd24f45ad0315131a1e48e8a09ea2a": {},
+                "sha256:31891d5615fd02cbe46d9ccfeba52a379ae01788ab22cc44c0024d9b444a1330": {},
+                "sha256:66733f3bb931044b0d94dd1f594aef235289629241241f992be49d9b14859f29": {},
+                "sha256:d51d82c8eee61c5d0b9a3ff52803f303aba8042da05f105844ce1c2116cf02eb": {},
+                "sha256:a9be9bfa302b9e8034250b4deaec0013caa8c281b4039edb294ae630ec81be80": {},
+                "sha256:3ef393613cfa06aecc61e10edd0ea5d474c7a58b368d6ecd1fccd2f8503ae59d": {},
+                "sha256:4f15ca3006d1e4d1ff2f0bbba0e49a981cf32cb7fa1e3450f92240b4908f4001": {},
+                "sha256:b2e09e3f2d22242eab7e4467fecc8c32d1f831040e82f7b5c6686df198e71f68": {},
+                "sha256:7c1bd7dfde1846ad29668921bf67b5ec62d0f9fa92d6ca39ebfaef469d2776ba": {},
+                "sha256:c5da8028d145e04c8be46caa9bbb8e01dcb770f928bacd00f0a9db11c623e343": {},
+                "sha256:b66a64a1417bddd5de325f50f0b16fa8d02fe440af8e410af6c5e41d1e3de043": {},
+                "sha256:715b2426f5797925370caac894005079b969bf2f499e55e38b0c828672664e5b": {},
+                "sha256:b98da97cbe4cc3698629065238eaf167726534783562a1be018f60c5967cdc54": {},
+                "sha256:ab921d4fd019a30e0553491e70fa6bedbb4a6a6b565e2d9a3477b02ac437839a": {},
+                "sha256:6f21446569d720583daf1529e238199d1b77762c8c158dbdba3e603d3c1fd9c8": {},
+                "sha256:cd510f5f030562c761439b03126297469733fc52ad968a03d581c9159e0e34e4": {},
+                "sha256:994b1850653ff9bc03bd75f127e8c72d5fb2713a4028724f43cd09e3dcaec66c": {},
+                "sha256:4413cec6fc38badbf130f6cc9f4842ee0f60abf74ed290f390fba9c854a8df94": {},
+                "sha256:1eab9a225fb40ce3cd661b4252eda36cb11a499ed883e7a5e3cb0403b45b8a0b": {},
+                "sha256:e63a3d5a763692792b7baa16f98b4630e9a5ece0dd99986414cc8e2277dd6874": {},
+                "sha256:2fe1c9ef8d771e387503e8ee1ca8df2a4f0a077b7ae4aba2e59bfc415388d876": {},
+                "sha256:00ceae518c3f0f640c5574572dc3f5bce783d085e230a09697a41a0e0f51a815": {},
+                "sha256:0a5c814a0f293c1f7998e9b3403b8ebb3a1f367f3763675deb585a525bb1c7ec": {},
+                "sha256:26540a8e518aedad8cc8a39233321f1b153e56775daad69a9b35375632142618": {},
+                "sha256:15d0d148de2e3da23e8f92d0b5b259c5ab3f469eef0fa67395ac66299c6ea035": {},
+                "sha256:4864de7eb3dcec08d6d119b61d1ae7edd2873b84ab35657dfa19d2225447244c": {},
+                "sha256:2113782a20de5cdcac82f060ab917982a38fad26bd6c3fbc0f6187d1b918931a": {},
+                "sha256:881eb953d296d1426644ca0dcd553e4a4ac4779217eb0750588f4d5b41f837cf": {},
+                "sha256:884ab4790986a2973c949b3fc3193aa43c9533b8980481ed4cbe1413eb66a223": {},
+                "sha256:ced86ae0946264ae073b34bc0800ae76865dce03d77753afd7e1a0edaa2f0717": {},
+                "sha256:3cf3b9e4509cbebf6fdf1c241a428ada2f19f1aeb38ec94532e58196ce7b7075": {},
+                "sha256:d4279f58187b2c284ed74f49b0b8e3a8f57f02c5d21b0064fad9d3da62ffb649": {},
+                "sha256:3ad95b958753a4288b8b7f96e55566469a5e00d80ac6168896f5295f3be3dafb": {},
+                "sha256:2af1d0bf938aec22de6f99600ce586d6516af2392432495c885fe89c07106d7a": {},
+                "sha256:7d0355dec2d861b68035150bd0f278ebb88f004c0e66cf0bebfcd736bdb0f20c": {},
+                "sha256:d7518d4dae1a383f91f74c872520e985c2cc7f92b6c7f477b47b365bc6d2463d": {},
+                "sha256:b71dcb2153d5165a4af3c90510d1431cc3902f766ffcc3db2e7060282fcb3f1c": {},
+                "sha256:6d52a761734fde3a966b3beeda789257bbd9a87bb673f67065002d74228745b0": {},
+                "sha256:e1c8369fc243392abdac07c8153b950a7380ae651ffc282e39ef6fa23a52aaeb": {},
+                "sha256:3f18a5902557c078b12fd20704b93db28718b9e4d8621e4dab1c468b22d7aaa4": {},
+                "sha256:f826448a5190b2cbe1983643e234023224ffba4b2a7f2bc7e0a34bd305ac9c5f": {},
+                "sha256:53d5785144d44f0d5541b7270b263afeeecde0897307443c065dfb68796dbfe5": {},
+                "sha256:d243bcc71f0f1ba0ed18588be97862b00291df01b6d1cf0d7551dbfa17369684": {},
+                "sha256:dc7fd56921d97cc990934743b081436003499eac94b9ffdba3e11f735664c279": {},
+                "sha256:5095c3ccea91e860e27b86c714a83f146ac0c376250ae6f75acf8f101bdd36f8": {},
+                "sha256:ebebe8bcbee1d6e516836a9cc6f73c9ac6b8b2f9e6bb813ecb918354744df213": {},
+                "sha256:64fc7f847bd7e8a8ffcdbf6397b3d522f2bbfda396019ad1520622558eed38a9": {},
+                "sha256:5f411b8854f6f56f0bb81418372f7bc6105203d508b9f0d8e85688a2658111c0": {},
+                "sha256:9edf03c96450765ba1a7fec4bf077cdd3ed1891ba4ae5eedd64104e281a10c58": {},
+                "sha256:4387b824234ba222a2839c27ccbeb03819d4f34f45161030f3175945f8a357b3": {},
+                "sha256:5f3e2263c82ec153688f45648ed8ebb33b97634861f9ea18b117bb4ac385eb4f": {},
+                "sha256:791edb9d97f03193181b2dc82ed94c4414abf234ffa09b8f329da49f43c29156": {},
+                "sha256:f771af88115ad585ee72e269ae106722f14884fe3cd1c8a18e6fa0231113642f": {},
+                "sha256:3363a3b7943330c80bbba5b804c2214135137a0086489ee2ca9bbc884e8c7a87": {},
+                "sha256:c319240419d00daf13ece3ae954c430b53406632c11dc00cd06212b1ae51a6ec": {},
+                "sha256:cc9555455c963f826782bbb9a483d970bb4a7209df73b64fa925f839014595a4": {},
+                "sha256:020a23a7be7fe69cc1605b9a8cbf3e7c2b6fd10ed06cf6480c4b06cbd4d6e47f": {},
+                "sha256:0e9de3ed449e4f061c34d640d5cd3cdf1232cb89b2da4be9ea5577bbfcbe834c": {},
+                "sha256:8d357ca0eb2c479d9dabad04087394c9df4764ed9672e01ee768aee42e1c320d": {},
+                "sha256:a16739c482654dc5c33e4d934c9d6f95e1949eb087f56f42fff4b1e579fba866": {},
+                "sha256:8e40343ff1fbc33231ce891f46abb8b21bdd0bc34c84a9ffd369fd03627afb74": {},
+                "sha256:67dc2d5ab7e63b7dfd32e92535655da5763fe568bc47cb0318430784ab058bef": {},
+                "sha256:e738ef92d6bb9f33aeb83d5819f35fc61a87b7e4019fe5e9f1150f7b473503c2": {},
+                "sha256:70b76e351a4ab2477bf1d2351c7aca4a20e6aac697054aae5cc403144cc7e8fe": {},
+                "sha256:05be445becad0470491beceb00e5429e93a1ba2ef2e084ab46b4296ccfe2ee25": {},
+                "sha256:f028747206acc42d27e857efb036bdac10cbd2aa109c0baa2b772d20ddf15d84": {},
+                "sha256:24f50ac3dc796555e4ee0a379ecb373f7bff9a7522d885a57d9694ddfa6a1e5f": {},
+                "sha256:c75bd25583f2a417705c68f02b211f4b039387a841a54ec38420b0e29e8fac3e": {},
+                "sha256:cece5fd1b08d5f653674836f02ef872cd481ea02fb18a3488ccf0ab031efbfe4": {},
+                "sha256:02d027c45f1e73f8f865133373b481cd158f36d4deb65f27b96de6fa9a443efd": {},
+                "sha256:bde2c4042c00e64d0a592b4e3acd3f582ee147cf717a741f7d33bd0292e08806": {},
+                "sha256:53bdec110ccbc1bc69ca02a180e68830ec8cfbb8b81046330ad6b18ce11718b6": {},
+                "sha256:0fda885a3b7a3a560f131fe94f427f6621fd861f7deacbeb1ff3ce3926a4d6b9": {},
+                "sha256:7a6fb64596dffce6084aac033250610b12dd8b3f010d758fe94bf562b5ddd994": {},
+                "sha256:63ce22de74cd35d481a7b7f8e93e00ed4c4d461651e9f09e9d45f5cdda72c8c2": {},
+                "sha256:3897a6f95e375f5d16676436cf963e706eb08cd6007bb9d4dfccc1221da366c6": {},
+                "sha256:ed84350ddee5a6d5e22de22b53b262ed45b608a4ad2377f3d3402804e41c24ca": {},
+                "sha256:6f7b8e54cad1d77b8dbfe368f65f7b82433ed4a0a4272635a9de708897643e88": {},
+                "sha256:00eee630560008c47147b8539b091063dae976c72711dc84ae068087f69b223b": {},
+                "sha256:20613567a1fef3afbbbbc4f9df5c52071929cff0e1d1e5715c9001be415f2ec5": {},
+                "sha256:ac3a1b768a6ae4db5e62c5eacfecd570a8ca8c81e834b20cea4d0e294b559cbb": {},
+                "sha256:ccde03c19d231ada9f2e081b2aedb679dd9a230b6622603991903ee812045cee": {},
+                "sha256:0e8d215fa662e360eeda534ab12d28b1456bbd0c2f032b6dcdfef0ba7f4a07b9": {},
+                "sha256:171f5026e4d7ac0aa9634e5fa02bd1d9308935116e46145237bd9a2f004452bb": {},
+                "sha256:3a0b8129df80e15f0c230d51a04e8e7487d0de1d8e7aa54b7e70562e2783fa95": {},
+                "sha256:8ecf4dd70a18869a506ae9e027d6c16aab99bb1d8028f6fa7c56ee7ea9399709": {},
+                "sha256:9e62ca286ea8c3e3a6ab714b8ec5781e0a494bb7ef96e0f47f35a5c74b84ecfe": {},
+                "sha256:5ce4b3101809d2c0ccb99a7269af25524f8a24a73ee87dee5c0dc08176b8d178": {},
+                "sha256:cbf77b00a044fd20f6af21ef18305c2fe9dc74e584d0f9330c28e6c229d4c251": {},
+                "sha256:bba23f8e734ce5ef01d41778aedabea644e4d317abe989b6ae8b129fd5188c2e": {},
+                "sha256:9d5872d4ae062829ca32adc4b08ccef92ff8f24fd2eae9f443b450837e324ba4": {},
+                "sha256:95355372805a1819887d15da8ad1dccdc35f7ca9b9342b6765c47578d028e0ba": {},
+                "sha256:1ff182b181f8099e2f674992dc25bf2b187f4cca9917f6416a7bef4091db30a7": {},
+                "sha256:ca69620a719e5a66b5cd7dff2d06b178eeaf30e8b98152beb50f356bdfa3030e": {},
+                "sha256:8eff53a38cc4c0f5dc8ca4a964de6e474dbdf649fdb5de67196d89b738db5fc3": {},
+                "sha256:fb36c6df48dcdbf3789fe1b2896dd99200a7e6194e75b7c21da4a310f4316418": {},
+                "sha256:8a5208b72af27be5f2505d34decea77357d55efbc9fd8d65bca52b8cc3a7447e": {},
+                "sha256:4f18d2a6e25720a111fcbc3fce9044af74434cf5cd9fff4e02bedfde17410e7b": {},
+                "sha256:35e35977dee21015b76afbc15e06e6e4cf8b46bdcbdf8751c1522ecf17aab16a": {},
+                "sha256:c2ab3cab1a0c6857b63a6879c647a40e9699a086ce9b580b06c5171694bcef4e": {},
+                "sha256:8bca92d8969f7d63690ebec4fd59204daa368717bdd83778b6125b39761f8c74": {},
+                "sha256:2eb4019485af893e4f738fb4beaf98d67bd176760f08970ca09a082b9767dead": {},
+                "sha256:2ee2cd3e2cf3e925d299bed02528fc1efa56558b48c3038de5c4df7e49d248e0": {},
+                "sha256:2e5d571d455f2543ade57b4b865f247b0b738c5b6f95dacce53aef87e9e868ed": {},
+                "sha256:5b8f47f7d2dd86f51c4b422078946d5d287afe9a662aca003e86999ee3b7d559": {},
+                "sha256:bb5258ca290e4fe26bdad457f350c5a9f7e6b4077fb5d209ce6cdb89063c90e8": {},
+                "sha256:6ac2299d6a5d3d4e299437ad00bad735834d384122644dc700f882066d8bf88b": {},
+                "sha256:bc086474f67635fc640e86bdf8dde38fb867eca33de6212cb2e5a55225ab14e3": {},
+                "sha256:358b59512c6ed5d0537eba3008fd240adec8d750f681c39efbc2c9684d9cb713": {},
+                "sha256:41a03f13cac8bc2a79ff7efcd9e0ade82ffd2d02e15d0c260a7f5e04f2a4fd22": {},
+                "sha256:e40c3e3405f18741c42ff4a30370bcaae1145bc6c8fe0175d413757290875174": {},
+                "sha256:a32fde4c51509f1e4b51b5518bf28eca1931088e4d7a826ed6defa12c7b6a862": {},
+                "sha256:b52e35e750a9ba39dcd3ded4f5abbee477706121f2af34874f979a9fa55b1949": {},
+                "sha256:df465e8dea879d6784eba9e797e3d0bafa916beb3f0e68b782dc53002559272d": {},
+                "sha256:753ed4b6f88cfa67e6b99142d2cabe7088baa09ef0ace17297fc88085f5db0fc": {},
+                "sha256:15028d51086b88347cd13d1c4fba633aa43b2ec06a2d58fab1ca7ff54a7d1d91": {},
+                "sha256:e4abb35654786681fa8a10458d48167e395d4b2cadb7101fd2289150eca60511": {},
+                "sha256:00d05819a6219990894ea04c5551638984c7fe122d84f6c1383b1e7d2bb4f782": {},
+                "sha256:175667a8bda94fb632c8532e522388004b578f0d3b81a8b0b72b510f550ef309": {},
+                "sha256:25ddfff39297f3886669e59c71b6d7ecb1dbbcd4e54550b216d2302786a1a197": {},
+                "sha256:f09bc3f24781ea0bc84150886353c0cc564b755cae1f7be677bb0c119416fa31": {},
+                "sha256:8b7b48fdc41d8c5f6f5bdffe855717f8a8471b36f7e78a928d0fa14041fb94f5": {},
+                "sha256:50df8e44901ec0b8598e65ae42a42f8c741c1c0cf971aa07a19d58b3cef7a7c4": {},
+                "sha256:8cc5a1232ca4265bbdfa3c05be919a4ff47974144d721fe9fda271c9bbdf7ec9": {},
+                "sha256:2781904c33ab87e2f737bf329c115d375f9637dc09daaa369d0bd8c9390b1615": {},
+                "sha256:c73ccbb066357a7a1b9f47d6e298de5f3410a19afcd9dcf2dedb5ae2534573b6": {},
+                "sha256:1a7d285c338995e3e7361cbf63e13bb065f6d104eff255de08ca2ffb61e9b1eb": {},
+                "sha256:4fee095b88c80ebaf6a7d5a3a4c75783b8fbba8655721b352cf9196c0c71b138": {},
+                "sha256:bd0281583c090d7a2687425466a457d7edb41bb3fc51d099e5bb06acb94b132d": {},
+                "sha256:27875f58848dec939228fa7be7179343d937338dd3851ed06cb976cc15215567": {},
+                "sha256:f32dd4b6c9e5138f6eee84b585f1ca4dabcd6717c59a468e9c8f87b294b76a49": {},
+                "sha256:cabb2e618c3941c8d21232b3265aa9ebe7afb5025afe6d92aa2cb35319584a68": {},
+                "sha256:bf78700d2bfb743c72b4a6478b6743a11cec1136eb4e7acac12cbad47dabf3f6": {},
+                "sha256:c1d94b30d26da71e58f410726e489ebb303f650519eee7bfb7223881de1a95c9": {},
+                "sha256:4cf16b1a3f5246316cb63a5a71e650d8c4ef562b130902928b63b3ddb257bbfe": {},
+                "sha256:94206480bbfe53eada94878bf5909c867354dc0921457c51e6513911ac62044e": {},
+                "sha256:e5a3ad98e21099f6279daa2d72804c11d237de2ec1887584edffa4205c289789": {},
+                "sha256:07f6b1b09c88c28145c28c6cae3e9961334163d7f2361817c27b85f38f285030": {},
+                "sha256:9f45f25b6f34d774e7550e78c66169937e8cb32f6b362e31f7664fcf1972e5ad": {},
+                "sha256:a21416cd89fb4d9e00116dc0c31f70fe5cf7bf4027a91db9cf77c4e3e3e687f0": {},
+                "sha256:f7d8bfb69913929c756ecc472aab444629c9b29d532a77ef86e90b42bf32b59a": {},
+                "sha256:73060e6f29d171f65dddd23aa86dca8fb96d908dfd65f3496c147b3ffc7f1a4a": {},
+                "sha256:f8d6007479c6316f6f6a7d819454c9d505c9cd25285d88eb2322f24d0446ea38": {},
+                "sha256:422a83dd8db6c2bffc9fcdc17ba4621d7fd5ec5ab9871ff1de92ec8f8c1dc0d8": {},
+                "sha256:e68a55508c27384f663cc30d0898c64e8000498ec25c83ad27b77a14fd7247e4": {},
+                "sha256:3aa85ab3220d9545eab2a01be8d1c2f2aab5679e1eb9eb4a1e6be388b10f4a59": {},
+                "sha256:9e0f5660cc95a9c71b8dfd03d38c58b80ba6b2aef928a8442b5fe7c18dc8cdd5": {},
+                "sha256:706d569c8bc49021a44ab2222f02bd724f861a0feff95cbd7da69bc439ab7346": {},
+                "sha256:ab7fe6abad11a64d7cf22a3e6b9011b6d74c88489e47a99913836903b5a2f63c": {},
+                "sha256:77942fada92e17491cf05dc9e21c16a5da5e478570336ef72a7f367525ef099c": {},
+                "sha256:e6b2ac7b33a690917725b95db2f347243c589952512f95392dd0a4e41f2e9172": {},
+                "sha256:1b2dfa4cd3dcd3753f4daacab2e20e7bdc979063c7fa205f7ac23ea340c19958": {},
+                "sha256:f96a99626de7c90fe23acb3b0964a2edeb598eb777c944d90b6a153eaa9a1560": {},
+                "sha256:93b04f6b1ae196d091e38f4c6720a478daf056cd4e08a74460c67229489bb574": {},
+                "sha256:a310c44b232b0b20f17a0319e8b1a7a01c607d99a51cf72fbc9eef56cd9f5c56": {},
+                "sha256:988a76bc119e6fdf4afdc7f767d020f108e2f8a5f6ae09c5215ad2391a9f9816": {},
+                "sha256:80d5582d0200e81bdb578e6aefd162308d8e86dfc2681418f460cff67d287fc9": {},
+                "sha256:5080de1de185e8abfccf1fcc730f6712e791e24cc3c9f358afce1c9cea3d1b39": {},
+                "sha256:55d603c27b9f8975b435c71d9ba26342a0fa0e3d1bd0086e0f6023d4074b47c9": {},
+                "sha256:b4c1972e64a456170852e38c64b03728db1cfa64f1cbf8741ee90b7563ca3c49": {},
+                "sha256:64e1d1c17ca6653da9831201cd1bc2d7fa9284a40e4d1e986009004ce84d24aa": {},
+                "sha256:229860673f502f1c0968519991bc65c9fc506de2e3ac56dbd4f476470cc6672a": {},
+                "sha256:23a980a06283d814b675ce5ec26e927052008bdde8bcc1af3e7214d9fa54499d": {},
+                "sha256:d55a00ada5a36e6976e4e7a5c89382cfb5e506c07e62dd6655b8173fa25f929a": {},
+                "sha256:3f7a056ceab6278903304300caa25436e6d966642c8ec5c0a46fe23a0c6765cb": {},
+                "sha256:714fbe4be77f5148f4162cd7f0c0c9af3b658e80413d2902394fad6267992696": {},
+                "sha256:a0262e191dd3b00343e79e3521159c963e26b7a438d4cc44137c64cf0da90516": {},
+                "sha256:1e3955f34198403b3a830c8fb4f43057a53363e3308d7a12d284db44ac3bdafb": {},
+                "sha256:06f29c87b27a5ea8fcefe8d1ee14189eb965e94fda58faa4fbe1f6ffd04e27f0": {},
+                "sha256:bc023fe47374b6233a71e75aa8c7cac6905bc104e30b3ba8f8412aa9bcff9535": {},
+                "sha256:72268364ee755bf6040c5099e221c9f8f842f755a9edad726587ed7bebb98bb9": {},
+                "sha256:e8a7381025dd80e898119b980b741d3ecbea41ac2b870abc0e930fbd7d046c6d": {},
+                "sha256:f4e2022fae1aebc23c5c3350e69a24188599e910a3f5463680116ef58251dc94": {},
+                "sha256:3393ccec8adc6554fd66dee0ee2cd54c5082598763746eb0c57b00005aec3d21": {},
+                "sha256:f47f93031da31e1c24808015ef693042f9ed9b23ea8051da66c3fdec41fd9e04": {},
+                "sha256:b0f5b80b8edbdc2fd19bbe1a1bc5c138ee99956317e87f9e2029c6b1c3934902": {},
+                "sha256:2d90eda9f3c75958109a676d19471e7b639f061c99eb7d48a323185f2148736f": {},
+                "sha256:b2892c9f4f515fd07029a2e3226faa61b5a3e695a9abe9f9a3f46e442a7d8aab": {},
+                "sha256:c32048690ca1aaa68fdd2f913e19fa668a482603e4a7d0b2bab7b1bb90e623e8": {},
+                "sha256:917193227d1af3ab3a6c3203febbfe9bc684558034cfc37de013a6b8f907756e": {},
+                "sha256:67807e3bf691451a262038403f75a4d7e1b1a3721d5ada24a91d95c0d87318fa": {},
+                "sha256:8c77550575f460d9e5765e8e2733157287e3c6a60c774305510e7d95f762176e": {},
+                "sha256:58579e9bb14acb88538013f72a4dac7c278ebf3c1cc23e269602447b035ff4d9": {},
+                "sha256:77dd6904bf585fcb1f585c9e15037be9aaea55e666cfdabde6086f4e2983dc12": {},
+                "sha256:2c11edcb807ff261ec5a4943e5598e00eee3f7b0fa533fb350e83e08a7d7f2fb": {},
+                "sha256:0258afce63eeb53fa1a9e59fcb05c3449de32b508bf473f7d67692e8069ec747": {},
+                "sha256:f604b1d05f5610b24acbfe9d1cf48f751e0db7a1934ef71d0b2ba9bc47e72805": {},
+                "sha256:5b527c9660d3eb76ebdc2403f125decb4eb26d6676c52e48c06bf6629685ac76": {},
+                "sha256:d90e1bc9d5f2469e9189e58152b5d1a0365191870ba70305bcd537981b64ec81": {},
+                "sha256:d93f131235822eabe12469333e675269abef2b7e2e8386c889150f935bf72dd7": {},
+                "sha256:48ee1afc8d7d9cbada8d889f1fa324345f7d12bdc0694633d7170627d40788b4": {},
+                "sha256:4d45e8710ba2150504f0c1e5fb04a16eff79e3a3ea49a7347e7e8fbba75d205c": {},
+                "sha256:c09c854604da2b2b7fea13137336b41fe2354b3ace7ca503f439fe6bd9bc9b0d": {},
+                "sha256:6b9e47fc36bc0abcbe74d17ffa615f294a6674110c334e580ea19d2781491156": {},
+                "sha256:092d6216ab17be41c0fd9116a522d27e9ae0db4ac83ad208a35867c51cb133c7": {},
+                "sha256:8f99f88989cfea87a08cc9a2b448cd7aa4b0f44c9595b0f02bdd953008adea0b": {},
+                "sha256:2a9c0ccfb82095932eff04be55a09811b4dbf6e8f40a07aa5a92a54ddc4089f4": {},
+                "sha256:afb816b7762c3a247973a99ab2f648dd7e30b4578cc872ac11458cd57b930b0d": {},
+                "sha256:ea09f94081a8980abde7b50d3bb9d9b795db57b82e43086d0ff7e2ca34ea78a7": {},
+                "sha256:a5134c5021b65a27cee71b2a2032b6cb311826fb684082f90152b16eaa214641": {},
+                "sha256:050daafcf50ec4ae3e778d028c127a8805c94e5d7c8aab17c6d8d12f114e4d5a": {},
+                "sha256:14984c1f7a8265266439e374956532b3727eead8118d48dd9c91d542642c67c8": {},
+                "sha256:41a2e73d80ba2aff26ac0352e0c99fe306b7219637c051efc2ec18d5b86982be": {},
+                "sha256:ed745874250160c5e9a347bef2caf339a1f8a1588fab5a06401f66fb6b031eb7": {},
+                "sha256:90513d5339085737248f0c4d7b1eb2267f617269fc533fcaae4fd71e24552a50": {},
+                "sha256:f75359004f12920b406ca3290f63c105ff23192129fd0e330f79d0afbd7a935c": {},
+                "sha256:8d61826ed9d157daf7b6e359af179883c58fc3677d284e161e0781b429551277": {},
+                "sha256:83225cf0cc706cb6078a3cf6673ac234d0ac4f5712339a30276cb74c1d49e0e4": {},
+                "sha256:d10ceb0677b26c55de0d5d7ec4e71a7eb020e50a86431cc185e5796bb9447a94": {},
+                "sha256:442738b586563901f28232cac808856bc9080751eed11b5b144f5ec95ff62ee8": {},
+                "sha256:53b6bbe7a539cf395a3cba1e8d589b0acd160a45ed8024e5aa0414301947b18f": {},
+                "sha256:eca12ceaef774299ed7022de9b00dd7ce379186da4c223cf357fc157a9064da6": {},
+                "sha256:6cc25d86e6571e71984814be73e38c997aec6be95fde201ac34650cdd8d60864": {}
+              }
+            }
+          },
+          "options": {}
+        }
+      ]
+    },
+    {
+      "name": "os",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.pacman.conf",
+          "options": {
+            "repositories": [
+              {
+                "name": "core",
+                "include": "/etc/pacman.d/mirrorlist"
+              },
+              {
+                "name": "extra",
+                "include": "/etc/pacman.d/mirrorlist"
+              },
+              {
+                "name": "community",
+                "include": "/etc/pacman.d/mirrorlist"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.pacman.mirrorlist.conf",
+          "options": {
+            "mirrors": [
+              "https://europe.mirror.pkgbuild.com/$repo/os/$arch"
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.pacman",
+          "inputs": {
+            "packages": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.source",
+              "references": {
+                "sha256:3f78298bbe59e3cd3e1eb5c75f087a648feac5cdb72418bd85a18e398024dae3": {},
+                "sha256:87fbc54f1011cbe1024428b48b9918e7e0dce5ba70c70f42efa7caa2a26403be": {},
+                "sha256:e95035b7ea2f0693b8b2ca9529fd25f0e34a5ad1a10a40ecb98be5a1a66d7a7a": {},
+                "sha256:efebeab3db859ae0a9d29b81bf30fbad8bbd89a1bb18722b31be363a57ebcc2c": {},
+                "sha256:c22d96dfbf977753728df449071dba5cb345031169e7cc8fcc6debe5875caacb": {},
+                "sha256:46b4f5e2f63be1203d3238db3fed6529fceb4c9c03a2f81f5496f6267b4b6098": {},
+                "sha256:ed22cbee6b912a4c90c24e4cf5da3799593cb229cfaefc43c61841a04bab589c": {},
+                "sha256:1250af6ef0073ed76393cf3184f56bdd9fd5cbd86cef5f290917bea57d81c62a": {},
+                "sha256:6c0aaafab325356d9ce76c8029a3f8d73d2299a5cff605892eef4530472318a7": {},
+                "sha256:31674d666e41c22b2d82a4174e877952a67d42ec70ab05d14c3091b2ffe868a0": {},
+                "sha256:20873a994a0728de5b05857129c290e9a8c9bba2236cc30bcffa7b746ffe9218": {},
+                "sha256:2ec675610224ffd3de19ab566e40af1e7059dc453e5763aadf679c3567e83922": {},
+                "sha256:f28ba894794210b7b3ebab631c33bebf160855dae3f4ee060f09a96e72a41b01": {},
+                "sha256:875cdf284e292f3149bebebd0708532eb100091f75d3aa0a2461b51a003ff578": {},
+                "sha256:a5b9db3ae1a0cdb774e5253b76d3ee3f2a9007056b6aa309858e186c5aaedde6": {},
+                "sha256:f277ae8d07bf0633104b266b4200104e4d77743a73feeea20c49f7ce7ff1aa81": {},
+                "sha256:e00cd6bc82122b4454a94e10ec54766d97e34c5ba853dba3357f12e415029334": {},
+                "sha256:e26fa31a42b9d3cd2775e297834455b3a52dc6b4ccbb1bac056d56ec5af90caa": {},
+                "sha256:854a56780e83beb1e88e65817466c792c475c8cce9bcb1bc7f436a2d7f563eff": {},
+                "sha256:1182ef8c204658c4d97d431c9950da72bacd24f45ad0315131a1e48e8a09ea2a": {},
+                "sha256:31891d5615fd02cbe46d9ccfeba52a379ae01788ab22cc44c0024d9b444a1330": {},
+                "sha256:66733f3bb931044b0d94dd1f594aef235289629241241f992be49d9b14859f29": {},
+                "sha256:d51d82c8eee61c5d0b9a3ff52803f303aba8042da05f105844ce1c2116cf02eb": {},
+                "sha256:a9be9bfa302b9e8034250b4deaec0013caa8c281b4039edb294ae630ec81be80": {},
+                "sha256:3ef393613cfa06aecc61e10edd0ea5d474c7a58b368d6ecd1fccd2f8503ae59d": {},
+                "sha256:4f15ca3006d1e4d1ff2f0bbba0e49a981cf32cb7fa1e3450f92240b4908f4001": {},
+                "sha256:b2e09e3f2d22242eab7e4467fecc8c32d1f831040e82f7b5c6686df198e71f68": {},
+                "sha256:2b6d0f4ee6782993ef673aef2d71c3adbc6f7c31aad7b374a12fde43b8c333b0": {},
+                "sha256:b4f3d847d8187dc866115797709b798312250e78af25c47f801b301aaf161682": {},
+                "sha256:7076fc302df82ddfa249e99e35897271fb2a62a585e7ccb51896aac8d47b4775": {},
+                "sha256:bc086474f67635fc640e86bdf8dde38fb867eca33de6212cb2e5a55225ab14e3": {},
+                "sha256:41a03f13cac8bc2a79ff7efcd9e0ade82ffd2d02e15d0c260a7f5e04f2a4fd22": {},
+                "sha256:7c1bd7dfde1846ad29668921bf67b5ec62d0f9fa92d6ca39ebfaef469d2776ba": {},
+                "sha256:8d61826ed9d157daf7b6e359af179883c58fc3677d284e161e0781b429551277": {},
+                "sha256:83225cf0cc706cb6078a3cf6673ac234d0ac4f5712339a30276cb74c1d49e0e4": {},
+                "sha256:ced86ae0946264ae073b34bc0800ae76865dce03d77753afd7e1a0edaa2f0717": {},
+                "sha256:eca12ceaef774299ed7022de9b00dd7ce379186da4c223cf357fc157a9064da6": {},
+                "sha256:b98da97cbe4cc3698629065238eaf167726534783562a1be018f60c5967cdc54": {},
+                "sha256:ab921d4fd019a30e0553491e70fa6bedbb4a6a6b565e2d9a3477b02ac437839a": {},
+                "sha256:c5da8028d145e04c8be46caa9bbb8e01dcb770f928bacd00f0a9db11c623e343": {},
+                "sha256:b66a64a1417bddd5de325f50f0b16fa8d02fe440af8e410af6c5e41d1e3de043": {},
+                "sha256:715b2426f5797925370caac894005079b969bf2f499e55e38b0c828672664e5b": {},
+                "sha256:634206f58e35e2c71c174bb5563f1a8af8ef17d99b2951aee71eba600cbcbb07": {},
+                "sha256:680b525f844a52a0bb2bbd96ac243ffbf538ee977fa0f6590e389ab7f7e31b3e": {},
+                "sha256:6f21446569d720583daf1529e238199d1b77762c8c158dbdba3e603d3c1fd9c8": {},
+                "sha256:781b41d3f73573e0d85701153d885f1fedf3760c69f5cb64cfb4a8e7dfed2454": {},
+                "sha256:498ead5a5f6d41790d1e40e490bf4b1841af615bace81a5b643ae550f9342a2c": {},
+                "sha256:afb816b7762c3a247973a99ab2f648dd7e30b4578cc872ac11458cd57b930b0d": {},
+                "sha256:2fe1c9ef8d771e387503e8ee1ca8df2a4f0a077b7ae4aba2e59bfc415388d876": {},
+                "sha256:53bdec110ccbc1bc69ca02a180e68830ec8cfbb8b81046330ad6b18ce11718b6": {},
+                "sha256:0fda885a3b7a3a560f131fe94f427f6621fd861f7deacbeb1ff3ce3926a4d6b9": {},
+                "sha256:90513d5339085737248f0c4d7b1eb2267f617269fc533fcaae4fd71e24552a50": {},
+                "sha256:bb5258ca290e4fe26bdad457f350c5a9f7e6b4077fb5d209ce6cdb89063c90e8": {},
+                "sha256:5b8f47f7d2dd86f51c4b422078946d5d287afe9a662aca003e86999ee3b7d559": {},
+                "sha256:7dd92d71716daf4848b3bddd485738b2ac3450970925a4357ac885e8741ef821": {},
+                "sha256:680ab02725c4588553e1abb3471fb817ef7d82bb9b347a684575b32b03c751e4": {},
+                "sha256:358b59512c6ed5d0537eba3008fd240adec8d750f681c39efbc2c9684d9cb713": {},
+                "sha256:e40c3e3405f18741c42ff4a30370bcaae1145bc6c8fe0175d413757290875174": {},
+                "sha256:a32fde4c51509f1e4b51b5518bf28eca1931088e4d7a826ed6defa12c7b6a862": {},
+                "sha256:b80cd453bd808e84b065120b8757dc11f9d3de811764392f9f22fbff8757b13e": {},
+                "sha256:0ee561edfbc1c7c6a204f7cfa43437c3362311b4fd09ea0541134aaea3a8cc07": {},
+                "sha256:5d034a957d1fea7643759dca620acd6dc2521cad466cd59c9812be52c75f050c": {},
+                "sha256:db50111f2f8d9e4866012b69eb90062fbedbc7526c64baac45fb064490e851b1": {},
+                "sha256:56780de99543fdda3c70067618ea91a8818845b94704fbf785903f1c4a004839": {},
+                "sha256:cd510f5f030562c761439b03126297469733fc52ad968a03d581c9159e0e34e4": {},
+                "sha256:994b1850653ff9bc03bd75f127e8c72d5fb2713a4028724f43cd09e3dcaec66c": {},
+                "sha256:4413cec6fc38badbf130f6cc9f4842ee0f60abf74ed290f390fba9c854a8df94": {},
+                "sha256:1eab9a225fb40ce3cd661b4252eda36cb11a499ed883e7a5e3cb0403b45b8a0b": {},
+                "sha256:e63a3d5a763692792b7baa16f98b4630e9a5ece0dd99986414cc8e2277dd6874": {},
+                "sha256:00ceae518c3f0f640c5574572dc3f5bce783d085e230a09697a41a0e0f51a815": {},
+                "sha256:0a5c814a0f293c1f7998e9b3403b8ebb3a1f367f3763675deb585a525bb1c7ec": {},
+                "sha256:26540a8e518aedad8cc8a39233321f1b153e56775daad69a9b35375632142618": {},
+                "sha256:15d0d148de2e3da23e8f92d0b5b259c5ab3f469eef0fa67395ac66299c6ea035": {},
+                "sha256:4864de7eb3dcec08d6d119b61d1ae7edd2873b84ab35657dfa19d2225447244c": {},
+                "sha256:2113782a20de5cdcac82f060ab917982a38fad26bd6c3fbc0f6187d1b918931a": {},
+                "sha256:881eb953d296d1426644ca0dcd553e4a4ac4779217eb0750588f4d5b41f837cf": {},
+                "sha256:884ab4790986a2973c949b3fc3193aa43c9533b8980481ed4cbe1413eb66a223": {},
+                "sha256:3cf3b9e4509cbebf6fdf1c241a428ada2f19f1aeb38ec94532e58196ce7b7075": {},
+                "sha256:d4279f58187b2c284ed74f49b0b8e3a8f57f02c5d21b0064fad9d3da62ffb649": {},
+                "sha256:3ad95b958753a4288b8b7f96e55566469a5e00d80ac6168896f5295f3be3dafb": {},
+                "sha256:2af1d0bf938aec22de6f99600ce586d6516af2392432495c885fe89c07106d7a": {},
+                "sha256:7d0355dec2d861b68035150bd0f278ebb88f004c0e66cf0bebfcd736bdb0f20c": {},
+                "sha256:d7518d4dae1a383f91f74c872520e985c2cc7f92b6c7f477b47b365bc6d2463d": {},
+                "sha256:b71dcb2153d5165a4af3c90510d1431cc3902f766ffcc3db2e7060282fcb3f1c": {},
+                "sha256:6d52a761734fde3a966b3beeda789257bbd9a87bb673f67065002d74228745b0": {},
+                "sha256:e1c8369fc243392abdac07c8153b950a7380ae651ffc282e39ef6fa23a52aaeb": {},
+                "sha256:3f18a5902557c078b12fd20704b93db28718b9e4d8621e4dab1c468b22d7aaa4": {},
+                "sha256:f826448a5190b2cbe1983643e234023224ffba4b2a7f2bc7e0a34bd305ac9c5f": {},
+                "sha256:53d5785144d44f0d5541b7270b263afeeecde0897307443c065dfb68796dbfe5": {},
+                "sha256:d243bcc71f0f1ba0ed18588be97862b00291df01b6d1cf0d7551dbfa17369684": {},
+                "sha256:dc7fd56921d97cc990934743b081436003499eac94b9ffdba3e11f735664c279": {},
+                "sha256:1ff182b181f8099e2f674992dc25bf2b187f4cca9917f6416a7bef4091db30a7": {},
+                "sha256:ca69620a719e5a66b5cd7dff2d06b178eeaf30e8b98152beb50f356bdfa3030e": {},
+                "sha256:8eff53a38cc4c0f5dc8ca4a964de6e474dbdf649fdb5de67196d89b738db5fc3": {},
+                "sha256:fb36c6df48dcdbf3789fe1b2896dd99200a7e6194e75b7c21da4a310f4316418": {},
+                "sha256:9d5872d4ae062829ca32adc4b08ccef92ff8f24fd2eae9f443b450837e324ba4": {},
+                "sha256:8a5208b72af27be5f2505d34decea77357d55efbc9fd8d65bca52b8cc3a7447e": {},
+                "sha256:4f18d2a6e25720a111fcbc3fce9044af74434cf5cd9fff4e02bedfde17410e7b": {},
+                "sha256:35e35977dee21015b76afbc15e06e6e4cf8b46bdcbdf8751c1522ecf17aab16a": {},
+                "sha256:c2ab3cab1a0c6857b63a6879c647a40e9699a086ce9b580b06c5171694bcef4e": {},
+                "sha256:8bca92d8969f7d63690ebec4fd59204daa368717bdd83778b6125b39761f8c74": {},
+                "sha256:2eb4019485af893e4f738fb4beaf98d67bd176760f08970ca09a082b9767dead": {},
+                "sha256:2ee2cd3e2cf3e925d299bed02528fc1efa56558b48c3038de5c4df7e49d248e0": {},
+                "sha256:2e5d571d455f2543ade57b4b865f247b0b738c5b6f95dacce53aef87e9e868ed": {},
+                "sha256:6ac2299d6a5d3d4e299437ad00bad735834d384122644dc700f882066d8bf88b": {},
+                "sha256:b52e35e750a9ba39dcd3ded4f5abbee477706121f2af34874f979a9fa55b1949": {},
+                "sha256:618dd918bf95965ff7b759e3dc49a268d80346f6da7b75e82ebebda8d313ff1f": {},
+                "sha256:92f208c1d24b667f22d4e304812f19674af51fd8f27bc0f7343de6c06d7b2cb4": {},
+                "sha256:229860673f502f1c0968519991bc65c9fc506de2e3ac56dbd4f476470cc6672a": {},
+                "sha256:6dbfa08b1c936b5ad791db1ca3523987ad3a31eba0dc37ed157da04e062a1781": {},
+                "sha256:d5fae32d2fd8de6e53e4aaeddbf14d4cbec35920a38f2407bb764ad27e223778": {},
+                "sha256:5095c3ccea91e860e27b86c714a83f146ac0c376250ae6f75acf8f101bdd36f8": {},
+                "sha256:ebebe8bcbee1d6e516836a9cc6f73c9ac6b8b2f9e6bb813ecb918354744df213": {},
+                "sha256:64fc7f847bd7e8a8ffcdbf6397b3d522f2bbfda396019ad1520622558eed38a9": {},
+                "sha256:d10ceb0677b26c55de0d5d7ec4e71a7eb020e50a86431cc185e5796bb9447a94": {},
+                "sha256:442738b586563901f28232cac808856bc9080751eed11b5b144f5ec95ff62ee8": {},
+                "sha256:53b6bbe7a539cf395a3cba1e8d589b0acd160a45ed8024e5aa0414301947b18f": {},
+                "sha256:6cc25d86e6571e71984814be73e38c997aec6be95fde201ac34650cdd8d60864": {},
+                "sha256:460c8b053e1b4d10fb85627c6bb3cccc481a088c64c65400a4f76c73e670194c": {},
+                "sha256:f75359004f12920b406ca3290f63c105ff23192129fd0e330f79d0afbd7a935c": {},
+                "sha256:f32dd4b6c9e5138f6eee84b585f1ca4dabcd6717c59a468e9c8f87b294b76a49": {},
+                "sha256:fdf7a13b06d1a4473fb2667a234e265790f63a33d12773de9352cc28edcf894a": {},
+                "sha256:fbc2502dad9ad72455f8f74a9c9d02c46ab8b6b527480ec12084725321fb78ed": {},
+                "sha256:337d2d815bd389613f57ce657dd6bf4837aef4a13a2982e139ef7c84b7e6e607": {},
+                "sha256:c0c22d61536e253150e85a0ac1f2e615f78da82bda57380b0ef42b98baacd3d3": {},
+                "sha256:a94a94e304b9a7ed7deabe38e0d202390baf0760d3309dbdf670b2aa5154781a": {},
+                "sha256:587ae09086a670c2b3721aa0abec3ef15ae6800c954c4c038fcc9ee382430386": {},
+                "sha256:b85cd65ef0f8939d3dc38fbd61b8b720ba109ecb03deabceb4cf05204d4be490": {},
+                "sha256:fcd377c25413738917203bf3c51203c84a10af8d98d071db052e69a0607386e4": {},
+                "sha256:41e74281dd17ef4c7e1b184e0d5483a209919d2beac4b1d6abb466513839ea37": {},
+                "sha256:803e1c14c70ad3e125062a8c50ebab490edc7bc826c180a7b895cefd88c7dc7b": {},
+                "sha256:9e0f5660cc95a9c71b8dfd03d38c58b80ba6b2aef928a8442b5fe7c18dc8cdd5": {},
+                "sha256:80d5582d0200e81bdb578e6aefd162308d8e86dfc2681418f460cff67d287fc9": {},
+                "sha256:d0091703a791be9f919f6c08bce63b9224c7c8e9ac1a89a7dd01bba2ac9ac31b": {},
+                "sha256:6bd2a8c2d636ea81f598d431bdf2b2d5bf6ae5dab86bd081f11830da6a49e059": {},
+                "sha256:9012ffdf2c3076c32c11f9896b603dd2d09610bdf79bf184fdbb76139ecd0198": {},
+                "sha256:31631ce69a4f1c2e9e4779ce53652e4eeac499cd67f7e08f2aeb73211d520706": {},
+                "sha256:388ea9fcb9a8428476cdf90f67773762816918d03888badaa7768047852e8f48": {},
+                "sha256:23a980a06283d814b675ce5ec26e927052008bdde8bcc1af3e7214d9fa54499d": {},
+                "sha256:d55a00ada5a36e6976e4e7a5c89382cfb5e506c07e62dd6655b8173fa25f929a": {},
+                "sha256:0f369b403e02afdbebfd5d9f25f419c176fea21f1e134f77f902a5f513117117": {},
+                "sha256:cf2d1e04baa6f21c4544d0a1c07d49a778b3a899a3237fee04c1e556b0a16788": {},
+                "sha256:ab9a5423f6dfa8a0cecb9307662c3d830ad00879b1d2ca908182cfe568a76b88": {},
+                "sha256:b69e04280bd42602300b7451fd38b3e8c570640d7ee3b1a773344d09da51081a": {},
+                "sha256:7b6f6e0f587453636ff767ff0aefcec954b39748c1a09d9c5ca6b6f730404397": {},
+                "sha256:6905b663f04b305ce0174d67f2b612dcd367f38646eaf87d106c907dafae4cbe": {},
+                "sha256:ded1e1da281371a4372cdaef4976a306be8262a7bc5c775f62bb063c9610f308": {},
+                "sha256:bb93d20331b6482e090041d7ab0d7b1ee1979f3f874c394b9e8474d2b1c601b8": {},
+                "sha256:3aa85ab3220d9545eab2a01be8d1c2f2aab5679e1eb9eb4a1e6be388b10f4a59": {},
+                "sha256:7b8a082b89968bd208f8beef234a12a16dc1391313f4dd57fc0f4fc61571b561": {},
+                "sha256:fa7255ed0c71038b8d4e1088c92f1d1465b98a5d7d2ffee918c2eb87944109a3": {},
+                "sha256:14123d637a10977756d523e19aac05b4fdff754f44bf01f7fc230235cbef82f9": {},
+                "sha256:447e0d1ca87ba3b605acf320d89375ac7cff478a3fca92b6cbabc5fafa4d1cdc": {},
+                "sha256:9f1469314e24d7af84d50445dec0eb417146913bc8896f4d596b1cb10cf94a24": {},
+                "sha256:beac9bad69494e4c8033c8b5f79cab907de080b20e808f685b1d64c9d844558e": {},
+                "sha256:aadac18ee3e5ca0ac1e45a450937cabc1b4cc20bdf16aa58e5a9dda2da5340db": {},
+                "sha256:bb5b4de8571c6f28b3727ed995b53404edc3b6ff94b53752755e1c41d92dde0a": {},
+                "sha256:1a40b8a5cd4c9bf0e758909dd7476d58b62e4cdf2c4ffd9d18281258f356bcbe": {}
+              }
+            }
+          },
+          "options": {}
+        },
+        {
+          "type": "org.osbuild.pacman-keyring"
+        },
+        {
+          "type": "org.osbuild.systemd",
+          "options": {
+            "enabled_services": [
+              "vboxservice.service",
+              "sshd.service",
+              "NetworkManager.service"
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.users",
+          "options": {
+            "users": {
+              "vagrant": {
+                "password": "$6$8dbFyte9oE3ugPHO$q0cTMv1oAgK/ZVXUTSUqj1aXzrhniNqfylqbcW.LgElYRJNRGSr4hBE7hghu2oP1nKn68u13/YmDkKH.s6yil0",
+                "home": "/home/vagrant",
+                "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"
+              }
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.fstab",
+          "options": {
+            "filesystems": [
+              {
+                "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+                "vfs_type": "xfs",
+                "path": "/",
+                "options": "defaults"
+              },
+              {
+                "uuid": "7B77-95E7",
+                "vfs_type": "vfat",
+                "path": "/boot/efi",
+                "options": "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+                "passno": 2
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.grub2.legacy",
+          "options": {
+            "rootfs": {
+              "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
+            },
+            "bios": {
+              "platform": "i386-pc"
+            },
+            "entries": [
+              {
+                "id": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
+                "default": true,
+                "product": {
+                  "name": "Arch Linux",
+                  "version": "latest",
+                  "nick": "Arch"
+                },
+                "kernel": "linux"
+              }
+            ],
+            "config": {
+              "cmdline": "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y enforcing=0",
+              "distributor": "$(sed 's, release .*$,,g' /etc/system-release)",
+              "serial": "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
+              "terminal_input": [
+                "serial",
+                "console"
+              ],
+              "terminal_output": [
+                "serial",
+                "console"
+              ]
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.mkinitcpio"
+        },
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "inlinefile": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.source",
+              "references": {
+                "sha256:ade439e2059e123fdcf65c06bab4566e6cd2aea403d3d6946fe81a1c41658f8d": {}
+              }
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": "input://inlinefile/sha256:ade439e2059e123fdcf65c06bab4566e6cd2aea403d3d6946fe81a1c41658f8d",
+                "to": "tree:////etc/sudoers.d/vagrant"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "image",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.truncate",
+          "options": {
+            "filename": "disk.img",
+            "size": "10737418240"
+          }
+        },
+        {
+          "type": "org.osbuild.sfdisk",
+          "options": {
+            "label": "gpt",
+            "uuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+            "partitions": [
+              {
+                "bootable": true,
+                "size": 2048,
+                "start": 2048,
+                "type": "21686148-6449-6E6F-744E-656564454649",
+                "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+              },
+              {
+                "size": 204800,
+                "start": 4096,
+                "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+                "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
+              },
+              {
+                "size": 20762524,
+                "start": 208896,
+                "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+                "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
+              }
+            ]
+          },
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img"
+              }
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.mkfs.fat",
+          "options": {
+            "volid": "7B7795E7"
+          },
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 4096,
+                "size": 204800
+              }
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.mkfs.xfs",
+          "options": {
+            "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+            "label": "root"
+          },
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 208896,
+                "size": 20762524
+              }
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "root-tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:os"
+              ]
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": "input://root-tree/",
+                "to": "mount://root/"
+              }
+            ]
+          },
+          "devices": {
+            "efi": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 4096,
+                "size": 204800
+              }
+            },
+            "root": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 208896,
+                "size": 20762524
+              }
+            }
+          },
+          "mounts": [
+            {
+              "name": "root",
+              "type": "org.osbuild.xfs",
+              "source": "root",
+              "target": "/"
+            },
+            {
+              "name": "efi",
+              "type": "org.osbuild.fat",
+              "source": "efi",
+              "target": "/boot/efi"
+            }
+          ]
+        },
+        {
+          "type": "org.osbuild.grub2.inst",
+          "options": {
+            "filename": "disk.img",
+            "platform": "i386-pc",
+            "location": 2048,
+            "core": {
+              "type": "mkimage",
+              "partlabel": "gpt",
+              "filesystem": "xfs",
+              "binary": "grub-mkimage"
+            },
+            "prefix": {
+              "type": "partition",
+              "partlabel": "gpt",
+              "number": 2,
+              "path": "/boot/grub2"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "vmdk",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.qemu",
+          "inputs": {
+            "image": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:image": {
+                  "file": "disk.img"
+                }
+              }
+            }
+          },
+          "options": {
+            "filename": "disk.vmdk",
+            "format": {
+              "type": "vmdk"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "vagrant",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.vagrant",
+          "inputs": {
+            "image": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:vmdk": {
+                  "file": "disk.vmdk"
+                }
+              }
+            }
+          },
+          "options": {
+            "provider": "virtualbox"
+          }
+        }
+      ]
+    },
+    {
+      "name": "vagrant-virtualbox",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.tar",
+          "options": {
+            "filename": "vagrant-virtualbox.box"
+          },
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:vagrant"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "sources": {
+    "org.osbuild.curl": {
+      "items": {
+        "sha256:0f369b403e02afdbebfd5d9f25f419c176fea21f1e134f77f902a5f513117117": "https://archive.archlinux.org/repos/2022/01/22/community/os/x86_64/jansson-2.14-1-x86_64.pkg.tar.zst",
+        "sha256:ded1e1da281371a4372cdaef4976a306be8262a7bc5c775f62bb063c9610f308": "https://archive.archlinux.org/repos/2022/01/22/community/os/x86_64/libnewt-0.52.21-8-x86_64.pkg.tar.zst",
+        "sha256:fa7255ed0c71038b8d4e1088c92f1d1465b98a5d7d2ffee918c2eb87944109a3": "https://archive.archlinux.org/repos/2022/01/22/community/os/x86_64/libpgm-5.3.128-1-x86_64.pkg.tar.zst",
+        "sha256:9012ffdf2c3076c32c11f9896b603dd2d09610bdf79bf184fdbb76139ecd0198": "https://archive.archlinux.org/repos/2022/01/22/community/os/x86_64/virtualbox-guest-utils-nox-6.1.32-2-x86_64.pkg.tar.zst",
+        "sha256:bb5b4de8571c6f28b3727ed995b53404edc3b6ff94b53752755e1c41d92dde0a": "https://archive.archlinux.org/repos/2022/01/22/community/os/x86_64/xxhash-0.8.1-2-x86_64.pkg.tar.zst",
+        "sha256:14123d637a10977756d523e19aac05b4fdff754f44bf01f7fc230235cbef82f9": "https://archive.archlinux.org/repos/2022/01/22/community/os/x86_64/zeromq-4.3.4-2-x86_64.pkg.tar.zst",
+        "sha256:20873a994a0728de5b05857129c290e9a8c9bba2236cc30bcffa7b746ffe9218": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/acl-2.3.1-2-x86_64.pkg.tar.zst",
+        "sha256:d243bcc71f0f1ba0ed18588be97862b00291df01b6d1cf0d7551dbfa17369684": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/archlinux-keyring-20220224-1-any.pkg.tar.zst",
+        "sha256:8eff53a38cc4c0f5dc8ca4a964de6e474dbdf649fdb5de67196d89b738db5fc3": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/argon2-20190702-4-x86_64.pkg.tar.zst",
+        "sha256:31674d666e41c22b2d82a4174e877952a67d42ec70ab05d14c3091b2ffe868a0": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/attr-2.5.1-2-x86_64.pkg.tar.zst",
+        "sha256:d51d82c8eee61c5d0b9a3ff52803f303aba8042da05f105844ce1c2116cf02eb": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/audit-3.0.7-1-x86_64.pkg.tar.zst",
+        "sha256:d5fae32d2fd8de6e53e4aaeddbf14d4cbec35920a38f2407bb764ad27e223778": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/base-2-2-any.pkg.tar.xz",
+        "sha256:6c0aaafab325356d9ce76c8029a3f8d73d2299a5cff605892eef4530472318a7": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/bash-5.1.016-1-x86_64.pkg.tar.zst",
+        "sha256:442738b586563901f28232cac808856bc9080751eed11b5b144f5ec95ff62ee8": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/binutils-2.38-4-x86_64.pkg.tar.zst",
+        "sha256:e63a3d5a763692792b7baa16f98b4630e9a5ece0dd99986414cc8e2277dd6874": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/brotli-1.0.9-7-x86_64.pkg.tar.zst",
+        "sha256:ebebe8bcbee1d6e516836a9cc6f73c9ac6b8b2f9e6bb813ecb918354744df213": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/btrfs-progs-5.16.2-1-x86_64.pkg.tar.zst",
+        "sha256:7076fc302df82ddfa249e99e35897271fb2a62a585e7ccb51896aac8d47b4775": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/bzip2-1.0.8-4-x86_64.pkg.tar.zst",
+        "sha256:1eab9a225fb40ce3cd661b4252eda36cb11a499ed883e7a5e3cb0403b45b8a0b": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/ca-certificates-20210603-1-any.pkg.tar.zst",
+        "sha256:4413cec6fc38badbf130f6cc9f4842ee0f60abf74ed290f390fba9c854a8df94": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/ca-certificates-mozilla-3.77-1-x86_64.pkg.tar.zst",
+        "sha256:994b1850653ff9bc03bd75f127e8c72d5fb2713a4028724f43cd09e3dcaec66c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/ca-certificates-utils-20210603-1-any.pkg.tar.zst",
+        "sha256:b2e09e3f2d22242eab7e4467fecc8c32d1f831040e82f7b5c6686df198e71f68": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/coreutils-9.0-2-x86_64.pkg.tar.zst",
+        "sha256:fb36c6df48dcdbf3789fe1b2896dd99200a7e6194e75b7c21da4a310f4316418": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/cryptsetup-2.4.3-2-x86_64.pkg.tar.zst",
+        "sha256:4864de7eb3dcec08d6d119b61d1ae7edd2873b84ab35657dfa19d2225447244c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/curl-7.82.0-2-x86_64.pkg.tar.zst",
+        "sha256:80d5582d0200e81bdb578e6aefd162308d8e86dfc2681418f460cff67d287fc9": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/db-5.3.28-5-x86_64.pkg.tar.xz",
+        "sha256:9d5872d4ae062829ca32adc4b08ccef92ff8f24fd2eae9f443b450837e324ba4": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/dbus-1.14.0-1-x86_64.pkg.tar.zst",
+        "sha256:1ff182b181f8099e2f674992dc25bf2b187f4cca9917f6416a7bef4091db30a7": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/device-mapper-2.03.15-1-x86_64.pkg.tar.zst",
+        "sha256:53b6bbe7a539cf395a3cba1e8d589b0acd160a45ed8024e5aa0414301947b18f": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/diffutils-3.8-1-x86_64.pkg.tar.zst",
+        "sha256:b85cd65ef0f8939d3dc38fbd61b8b720ba109ecb03deabceb4cf05204d4be490": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/ding-libs-0.6.1-4-x86_64.pkg.tar.zst",
+        "sha256:fdf7a13b06d1a4473fb2667a234e265790f63a33d12773de9352cc28edcf894a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/dnssec-anchors-20190629-3-any.pkg.tar.zst",
+        "sha256:64fc7f847bd7e8a8ffcdbf6397b3d522f2bbfda396019ad1520622558eed38a9": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/dosfstools-4.2-2-x86_64.pkg.tar.zst",
+        "sha256:875cdf284e292f3149bebebd0708532eb100091f75d3aa0a2461b51a003ff578": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/e2fsprogs-1.46.5-3-x86_64.pkg.tar.zst",
+        "sha256:db50111f2f8d9e4866012b69eb90062fbedbc7526c64baac45fb064490e851b1": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/expat-2.4.8-1-x86_64.pkg.tar.zst",
+        "sha256:41a03f13cac8bc2a79ff7efcd9e0ade82ffd2d02e15d0c260a7f5e04f2a4fd22": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/file-5.41-1-x86_64.pkg.tar.zst",
+        "sha256:87fbc54f1011cbe1024428b48b9918e7e0dce5ba70c70f42efa7caa2a26403be": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/filesystem-2021.12.07-1-x86_64.pkg.tar.zst",
+        "sha256:7c1bd7dfde1846ad29668921bf67b5ec62d0f9fa92d6ca39ebfaef469d2776ba": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/findutils-4.9.0-1-x86_64.pkg.tar.zst",
+        "sha256:83225cf0cc706cb6078a3cf6673ac234d0ac4f5712339a30276cb74c1d49e0e4": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gawk-5.1.1-1-x86_64.pkg.tar.zst",
+        "sha256:46b4f5e2f63be1203d3238db3fed6529fceb4c9c03a2f81f5496f6267b4b6098": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gcc-libs-11.2.0-4-x86_64.pkg.tar.zst",
+        "sha256:9e0f5660cc95a9c71b8dfd03d38c58b80ba6b2aef928a8442b5fe7c18dc8cdd5": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gdbm-1.23-1-x86_64.pkg.tar.zst",
+        "sha256:90513d5339085737248f0c4d7b1eb2267f617269fc533fcaae4fd71e24552a50": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gettext-0.21-2-x86_64.pkg.tar.zst",
+        "sha256:d4279f58187b2c284ed74f49b0b8e3a8f57f02c5d21b0064fad9d3da62ffb649": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/glib2-2.72.0-1-x86_64.pkg.tar.zst",
+        "sha256:c22d96dfbf977753728df449071dba5cb345031169e7cc8fcc6debe5875caacb": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/glibc-2.35-3-x86_64.pkg.tar.zst",
+        "sha256:2ec675610224ffd3de19ab566e40af1e7059dc453e5763aadf679c3567e83922": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gmp-6.2.1-1-x86_64.pkg.tar.zst",
+        "sha256:3f18a5902557c078b12fd20704b93db28718b9e4d8621e4dab1c468b22d7aaa4": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gnupg-2.2.32-2-x86_64.pkg.tar.zst",
+        "sha256:6d52a761734fde3a966b3beeda789257bbd9a87bb673f67065002d74228745b0": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gnutls-3.7.4-1-x86_64.pkg.tar.zst",
+        "sha256:f826448a5190b2cbe1983643e234023224ffba4b2a7f2bc7e0a34bd305ac9c5f": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gpgme-1.17.1-1-x86_64.pkg.tar.zst",
+        "sha256:7b6f6e0f587453636ff767ff0aefcec954b39748c1a09d9c5ca6b6f730404397": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gpm-1.20.7.r38.ge82d1a6-4-x86_64.pkg.tar.zst",
+        "sha256:eca12ceaef774299ed7022de9b00dd7ce379186da4c223cf357fc157a9064da6": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/grep-3.7-1-x86_64.pkg.tar.zst",
+        "sha256:f75359004f12920b406ca3290f63c105ff23192129fd0e330f79d0afbd7a935c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/grub-2:2.06-5-x86_64.pkg.tar.zst",
+        "sha256:fcd377c25413738917203bf3c51203c84a10af8d98d071db052e69a0607386e4": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gssproxy-0.8.4-1-x86_64.pkg.tar.zst",
+        "sha256:0ee561edfbc1c7c6a204f7cfa43437c3362311b4fd09ea0541134aaea3a8cc07": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/gzip-1.12-1-x86_64.pkg.tar.zst",
+        "sha256:bb5258ca290e4fe26bdad457f350c5a9f7e6b4077fb5d209ce6cdb89063c90e8": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/hwdata-0.358-1-any.pkg.tar.zst",
+        "sha256:3f78298bbe59e3cd3e1eb5c75f087a648feac5cdb72418bd85a18e398024dae3": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/iana-etc-20220205-1-any.pkg.tar.zst",
+        "sha256:53bdec110ccbc1bc69ca02a180e68830ec8cfbb8b81046330ad6b18ce11718b6": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/icu-70.1-1-x86_64.pkg.tar.zst",
+        "sha256:6dbfa08b1c936b5ad791db1ca3523987ad3a31eba0dc37ed157da04e062a1781": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/iproute2-5.17.0-2-x86_64.pkg.tar.zst",
+        "sha256:2ee2cd3e2cf3e925d299bed02528fc1efa56558b48c3038de5c4df7e49d248e0": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/iptables-1:1.8.7-1-x86_64.pkg.tar.zst",
+        "sha256:92f208c1d24b667f22d4e304812f19674af51fd8f27bc0f7343de6c06d7b2cb4": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/iputils-20211215-1-x86_64.pkg.tar.zst",
+        "sha256:3ad95b958753a4288b8b7f96e55566469a5e00d80ac6168896f5295f3be3dafb": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/json-c-0.15-3-x86_64.pkg.tar.zst",
+        "sha256:2e5d571d455f2543ade57b4b865f247b0b738c5b6f95dacce53aef87e9e868ed": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/kbd-2.4.0-2-x86_64.pkg.tar.zst",
+        "sha256:e26fa31a42b9d3cd2775e297834455b3a52dc6b4ccbb1bac056d56ec5af90caa": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/keyutils-1.6.3-1-x86_64.pkg.tar.zst",
+        "sha256:5b8f47f7d2dd86f51c4b422078946d5d287afe9a662aca003e86999ee3b7d559": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/kmod-29-3-x86_64.pkg.tar.zst",
+        "sha256:854a56780e83beb1e88e65817466c792c475c8cce9bcb1bc7f436a2d7f563eff": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/krb5-1.19.3-1-x86_64.pkg.tar.zst",
+        "sha256:fbc2502dad9ad72455f8f74a9c9d02c46ab8b6b527480ec12084725321fb78ed": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/ldns-1.8.1-1-x86_64.pkg.tar.zst",
+        "sha256:b80cd453bd808e84b065120b8757dc11f9d3de811764392f9f22fbff8757b13e": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/less-1:590-1-x86_64.pkg.tar.zst",
+        "sha256:56780de99543fdda3c70067618ea91a8818845b94704fbf785903f1c4a004839": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libarchive-3.6.1-1-x86_64.pkg.tar.zst",
+        "sha256:884ab4790986a2973c949b3fc3193aa43c9533b8980481ed4cbe1413eb66a223": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libassuan-2.5.5-1-x86_64.pkg.tar.zst",
+        "sha256:229860673f502f1c0968519991bc65c9fc506de2e3ac56dbd4f476470cc6672a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libbpf-0.7.0-1-x86_64.pkg.tar.zst",
+        "sha256:4f15ca3006d1e4d1ff2f0bbba0e49a981cf32cb7fa1e3450f92240b4908f4001": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libcap-2.63-2-x86_64.pkg.tar.zst",
+        "sha256:66733f3bb931044b0d94dd1f594aef235289629241241f992be49d9b14859f29": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libcap-ng-0.8.2-7-x86_64.pkg.tar.zst",
+        "sha256:f32dd4b6c9e5138f6eee84b585f1ca4dabcd6717c59a468e9c8f87b294b76a49": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libedit-20210910_3.1-1-x86_64.pkg.tar.zst",
+        "sha256:6ac2299d6a5d3d4e299437ad00bad735834d384122644dc700f882066d8bf88b": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libelf-0.186-5-x86_64.pkg.tar.zst",
+        "sha256:41e74281dd17ef4c7e1b184e0d5483a209919d2beac4b1d6abb466513839ea37": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libevent-2.1.12-1-x86_64.pkg.tar.zst",
+        "sha256:b66a64a1417bddd5de325f50f0b16fa8d02fe440af8e410af6c5e41d1e3de043": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libffi-3.4.2-5-x86_64.pkg.tar.zst",
+        "sha256:ab921d4fd019a30e0553491e70fa6bedbb4a6a6b565e2d9a3477b02ac437839a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libgcrypt-1.10.1-1-x86_64.pkg.tar.zst",
+        "sha256:b98da97cbe4cc3698629065238eaf167726534783562a1be018f60c5967cdc54": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libgpg-error-1.45-1-x86_64.pkg.tar.zst",
+        "sha256:00ceae518c3f0f640c5574572dc3f5bce783d085e230a09697a41a0e0f51a815": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libidn2-2.3.2-1-x86_64.pkg.tar.zst",
+        "sha256:881eb953d296d1426644ca0dcd553e4a4ac4779217eb0750588f4d5b41f837cf": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libksba-1.6.0-1-x86_64.pkg.tar.zst",
+        "sha256:e00cd6bc82122b4454a94e10ec54766d97e34c5ba853dba3357f12e415029334": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libldap-2.6.1-1-x86_64.pkg.tar.zst",
+        "sha256:8a5208b72af27be5f2505d34decea77357d55efbc9fd8d65bca52b8cc3a7447e": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libmnl-1.0.4-3-x86_64.pkg.tar.xz",
+        "sha256:2eb4019485af893e4f738fb4beaf98d67bd176760f08970ca09a082b9767dead": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libnetfilter_conntrack-1.0.9-1-x86_64.pkg.tar.zst",
+        "sha256:8bca92d8969f7d63690ebec4fd59204daa368717bdd83778b6125b39761f8c74": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libnfnetlink-1.0.1-4-x86_64.pkg.tar.zst",
+        "sha256:4f18d2a6e25720a111fcbc3fce9044af74434cf5cd9fff4e02bedfde17410e7b": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libnftnl-1.2.1-1-x86_64.pkg.tar.zst",
+        "sha256:0a5c814a0f293c1f7998e9b3403b8ebb3a1f367f3763675deb585a525bb1c7ec": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libnghttp2-1.47.0-1-x86_64.pkg.tar.zst",
+        "sha256:35e35977dee21015b76afbc15e06e6e4cf8b46bdcbdf8751c1522ecf17aab16a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libnl-3.5.0-3-x86_64.pkg.tar.zst",
+        "sha256:715b2426f5797925370caac894005079b969bf2f499e55e38b0c828672664e5b": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libp11-kit-0.24.1-1-x86_64.pkg.tar.zst",
+        "sha256:c2ab3cab1a0c6857b63a6879c647a40e9699a086ce9b580b06c5171694bcef4e": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libpcap-1.10.1-2-x86_64.pkg.tar.zst",
+        "sha256:26540a8e518aedad8cc8a39233321f1b153e56775daad69a9b35375632142618": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libpsl-0.21.1-1-x86_64.pkg.tar.zst",
+        "sha256:f277ae8d07bf0633104b266b4200104e4d77743a73feeea20c49f7ce7ff1aa81": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libsasl-2.1.27-3-x86_64.pkg.tar.zst",
+        "sha256:bc086474f67635fc640e86bdf8dde38fb867eca33de6212cb2e5a55225ab14e3": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libseccomp-2.5.3-3-x86_64.pkg.tar.zst",
+        "sha256:7d0355dec2d861b68035150bd0f278ebb88f004c0e66cf0bebfcd736bdb0f20c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libsecret-0.20.5-2-x86_64.pkg.tar.zst",
+        "sha256:15d0d148de2e3da23e8f92d0b5b259c5ab3f469eef0fa67395ac66299c6ea035": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libssh2-1.10.0-1-x86_64.pkg.tar.zst",
+        "sha256:c5da8028d145e04c8be46caa9bbb8e01dcb770f928bacd00f0a9db11c623e343": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libtasn1-4.18.0-1-x86_64.pkg.tar.zst",
+        "sha256:1182ef8c204658c4d97d431c9950da72bacd24f45ad0315131a1e48e8a09ea2a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libtirpc-1.3.2-1-x86_64.pkg.tar.zst",
+        "sha256:2fe1c9ef8d771e387503e8ee1ca8df2a4f0a077b7ae4aba2e59bfc415388d876": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libunistring-0.9.10-3-x86_64.pkg.tar.zst",
+        "sha256:a9be9bfa302b9e8034250b4deaec0013caa8c281b4039edb294ae630ec81be80": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libxcrypt-4.4.28-2-x86_64.pkg.tar.zst",
+        "sha256:0fda885a3b7a3a560f131fe94f427f6621fd861f7deacbeb1ff3ce3926a4d6b9": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/libxml2-2.9.13-1-x86_64.pkg.tar.zst",
+        "sha256:5d034a957d1fea7643759dca620acd6dc2521cad466cd59c9812be52c75f050c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/licenses-20220125-1-any.pkg.tar.zst",
+        "sha256:460c8b053e1b4d10fb85627c6bb3cccc481a088c64c65400a4f76c73e670194c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/linux-5.17.2.arch3-1-x86_64.pkg.tar.zst",
+        "sha256:e95035b7ea2f0693b8b2ca9529fd25f0e34a5ad1a10a40ecb98be5a1a66d7a7a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/linux-api-headers-5.16.8-1-any.pkg.tar.zst",
+        "sha256:634206f58e35e2c71c174bb5563f1a8af8ef17d99b2951aee71eba600cbcbb07": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/lz4-1:1.9.3-2-x86_64.pkg.tar.zst",
+        "sha256:5095c3ccea91e860e27b86c714a83f146ac0c376250ae6f75acf8f101bdd36f8": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/lzo-2.10-3-x86_64.pkg.tar.xz",
+        "sha256:6cc25d86e6571e71984814be73e38c997aec6be95fde201ac34650cdd8d60864": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/mkinitcpio-31-2-any.pkg.tar.zst",
+        "sha256:d10ceb0677b26c55de0d5d7ec4e71a7eb020e50a86431cc185e5796bb9447a94": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/mkinitcpio-busybox-1.35.0-1-x86_64.pkg.tar.zst",
+        "sha256:8d61826ed9d157daf7b6e359af179883c58fc3677d284e161e0781b429551277": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/mpfr-4.1.0.p13-2-x86_64.pkg.tar.zst",
+        "sha256:ed22cbee6b912a4c90c24e4cf5da3799593cb229cfaefc43c61841a04bab589c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/ncurses-6.3-2-x86_64.pkg.tar.zst",
+        "sha256:b71dcb2153d5165a4af3c90510d1431cc3902f766ffcc3db2e7060282fcb3f1c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/nettle-3.7.3-1-x86_64.pkg.tar.zst",
+        "sha256:803e1c14c70ad3e125062a8c50ebab490edc7bc826c180a7b895cefd88c7dc7b": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/nfs-utils-2.6.1-1-x86_64.pkg.tar.zst",
+        "sha256:587ae09086a670c2b3721aa0abec3ef15ae6800c954c4c038fcc9ee382430386": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/nfsidmap-2.6.1-1-x86_64.pkg.tar.zst",
+        "sha256:2113782a20de5cdcac82f060ab917982a38fad26bd6c3fbc0f6187d1b918931a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/npth-1.6-3-x86_64.pkg.tar.zst",
+        "sha256:23a980a06283d814b675ce5ec26e927052008bdde8bcc1af3e7214d9fa54499d": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/nspr-4.33-2-x86_64.pkg.tar.zst",
+        "sha256:d55a00ada5a36e6976e4e7a5c89382cfb5e506c07e62dd6655b8173fa25f929a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/nss-3.77-1-x86_64.pkg.tar.zst",
+        "sha256:337d2d815bd389613f57ce657dd6bf4837aef4a13a2982e139ef7c84b7e6e607": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/openssh-9.0p1-1-x86_64.pkg.tar.zst",
+        "sha256:a5b9db3ae1a0cdb774e5253b76d3ee3f2a9007056b6aa309858e186c5aaedde6": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/openssl-1.1.1.n-1-x86_64.pkg.tar.zst",
+        "sha256:cd510f5f030562c761439b03126297469733fc52ad968a03d581c9159e0e34e4": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/p11-kit-0.24.1-1-x86_64.pkg.tar.zst",
+        "sha256:dc7fd56921d97cc990934743b081436003499eac94b9ffdba3e11f735664c279": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/pacman-6.0.1-4-x86_64.pkg.tar.zst",
+        "sha256:53d5785144d44f0d5541b7270b263afeeecde0897307443c065dfb68796dbfe5": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/pacman-mirrorlist-20220410-1-any.pkg.tar.zst",
+        "sha256:3ef393613cfa06aecc61e10edd0ea5d474c7a58b368d6ecd1fccd2f8503ae59d": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/pam-1.5.2-1-x86_64.pkg.tar.zst",
+        "sha256:31891d5615fd02cbe46d9ccfeba52a379ae01788ab22cc44c0024d9b444a1330": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/pambase-20211210-1-any.pkg.tar.zst",
+        "sha256:7dd92d71716daf4848b3bddd485738b2ac3450970925a4357ac885e8741ef821": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/pciutils-3.7.0-2-x86_64.pkg.tar.zst",
+        "sha256:ced86ae0946264ae073b34bc0800ae76865dce03d77753afd7e1a0edaa2f0717": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/pcre-8.45-1-x86_64.pkg.tar.zst",
+        "sha256:a32fde4c51509f1e4b51b5518bf28eca1931088e4d7a826ed6defa12c7b6a862": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/pcre2-10.39-1-x86_64.pkg.tar.zst",
+        "sha256:d0091703a791be9f919f6c08bce63b9224c7c8e9ac1a89a7dd01bba2ac9ac31b": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/perl-5.34.1-1-x86_64.pkg.tar.zst",
+        "sha256:d7518d4dae1a383f91f74c872520e985c2cc7f92b6c7f477b47b365bc6d2463d": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/pinentry-1.2.0-1-x86_64.pkg.tar.zst",
+        "sha256:ca69620a719e5a66b5cd7dff2d06b178eeaf30e8b98152beb50f356bdfa3030e": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/popt-1.18-3-x86_64.pkg.tar.zst",
+        "sha256:781b41d3f73573e0d85701153d885f1fedf3760c69f5cb64cfb4a8e7dfed2454": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/procps-ng-3.3.17-1-x86_64.pkg.tar.zst",
+        "sha256:680ab02725c4588553e1abb3471fb817ef7d82bb9b347a684575b32b03c751e4": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/psmisc-23.4-1-x86_64.pkg.tar.zst",
+        "sha256:1250af6ef0073ed76393cf3184f56bdd9fd5cbd86cef5f290917bea57d81c62a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/readline-8.1.002-1-x86_64.pkg.tar.zst",
+        "sha256:a94a94e304b9a7ed7deabe38e0d202390baf0760d3309dbdf670b2aa5154781a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/rpcbind-1.2.6-2-x86_64.pkg.tar.zst",
+        "sha256:498ead5a5f6d41790d1e40e490bf4b1841af615bace81a5b643ae550f9342a2c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/sed-4.8-1-x86_64.pkg.tar.zst",
+        "sha256:358b59512c6ed5d0537eba3008fd240adec8d750f681c39efbc2c9684d9cb713": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/shadow-4.11.1-1-x86_64.pkg.tar.zst",
+        "sha256:e1c8369fc243392abdac07c8153b950a7380ae651ffc282e39ef6fa23a52aaeb": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/sqlite-3.38.2-1-x86_64.pkg.tar.zst",
+        "sha256:c0c22d61536e253150e85a0ac1f2e615f78da82bda57380b0ef42b98baacd3d3": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/sudo-1.9.10-1-x86_64.pkg.tar.zst",
+        "sha256:b52e35e750a9ba39dcd3ded4f5abbee477706121f2af34874f979a9fa55b1949": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/systemd-250.4-2-x86_64.pkg.tar.zst",
+        "sha256:6f21446569d720583daf1529e238199d1b77762c8c158dbdba3e603d3c1fd9c8": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/systemd-libs-250.4-2-x86_64.pkg.tar.zst",
+        "sha256:618dd918bf95965ff7b759e3dc49a268d80346f6da7b75e82ebebda8d313ff1f": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/systemd-sysvcompat-250.4-2-x86_64.pkg.tar.zst",
+        "sha256:afb816b7762c3a247973a99ab2f648dd7e30b4578cc872ac11458cd57b930b0d": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/tar-1.34-1-x86_64.pkg.tar.zst",
+        "sha256:2af1d0bf938aec22de6f99600ce586d6516af2392432495c885fe89c07106d7a": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/tpm2-tss-3.2.0-1-x86_64.pkg.tar.zst",
+        "sha256:efebeab3db859ae0a9d29b81bf30fbad8bbd89a1bb18722b31be363a57ebcc2c": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/tzdata-2022a-1-x86_64.pkg.tar.zst",
+        "sha256:e40c3e3405f18741c42ff4a30370bcaae1145bc6c8fe0175d413757290875174": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/util-linux-2.38-1-x86_64.pkg.tar.zst",
+        "sha256:f28ba894794210b7b3ebab631c33bebf160855dae3f4ee060f09a96e72a41b01": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/util-linux-libs-2.38-1-x86_64.pkg.tar.zst",
+        "sha256:ab9a5423f6dfa8a0cecb9307662c3d830ad00879b1d2ca908182cfe568a76b88": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/wpa_supplicant-2:2.10-4-x86_64.pkg.tar.zst",
+        "sha256:b4f3d847d8187dc866115797709b798312250e78af25c47f801b301aaf161682": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/xz-5.2.5-3-x86_64.pkg.tar.zst",
+        "sha256:2b6d0f4ee6782993ef673aef2d71c3adbc6f7c31aad7b374a12fde43b8c333b0": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/zlib-1:1.2.12-1-x86_64.pkg.tar.zst",
+        "sha256:680b525f844a52a0bb2bbd96ac243ffbf538ee977fa0f6590e389ab7f7e31b3e": "https://archive.archlinux.org/repos/2022/01/22/core/os/x86_64/zstd-1.5.2-3-x86_64.pkg.tar.zst",
+        "sha256:9f1469314e24d7af84d50445dec0eb417146913bc8896f4d596b1cb10cf94a24": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/bluez-libs-5.64-2-x86_64.pkg.tar.zst",
+        "sha256:31631ce69a4f1c2e9e4779ce53652e4eeac499cd67f7e08f2aeb73211d520706": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/js78-78.15.0-4-x86_64.pkg.tar.zst",
+        "sha256:3aa85ab3220d9545eab2a01be8d1c2f2aab5679e1eb9eb4a1e6be388b10f4a59": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/libdaemon-0.14-5-x86_64.pkg.tar.zst",
+        "sha256:b69e04280bd42602300b7451fd38b3e8c570640d7ee3b1a773344d09da51081a": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/libmm-glib-1.18.6-1-x86_64.pkg.tar.zst",
+        "sha256:bb93d20331b6482e090041d7ab0d7b1ee1979f3f874c394b9e8474d2b1c601b8": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/libndp-1.8-1-x86_64.pkg.tar.zst",
+        "sha256:cf2d1e04baa6f21c4544d0a1c07d49a778b3a899a3237fee04c1e556b0a16788": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/libnm-1.36.4-1-x86_64.pkg.tar.zst",
+        "sha256:7b8a082b89968bd208f8beef234a12a16dc1391313f4dd57fc0f4fc61571b561": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/libsodium-1.0.18-2-x86_64.pkg.tar.zst",
+        "sha256:3cf3b9e4509cbebf6fdf1c241a428ada2f19f1aeb38ec94532e58196ce7b7075": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/libsysprof-capture-3.44.0-1-x86_64.pkg.tar.zst",
+        "sha256:447e0d1ca87ba3b605acf320d89375ac7cff478a3fca92b6cbabc5fafa4d1cdc": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/libteam-1.31-5-x86_64.pkg.tar.zst",
+        "sha256:beac9bad69494e4c8033c8b5f79cab907de080b20e808f685b1d64c9d844558e": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/mobile-broadband-provider-info-20220315-1-any.pkg.tar.zst",
+        "sha256:aadac18ee3e5ca0ac1e45a450937cabc1b4cc20bdf16aa58e5a9dda2da5340db": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/networkmanager-1.36.4-1-x86_64.pkg.tar.zst",
+        "sha256:6bd2a8c2d636ea81f598d431bdf2b2d5bf6ae5dab86bd081f11830da6a49e059": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/ntp-4.2.8.p15-1-x86_64.pkg.tar.zst",
+        "sha256:388ea9fcb9a8428476cdf90f67773762816918d03888badaa7768047852e8f48": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/polkit-0.120-5-x86_64.pkg.tar.zst",
+        "sha256:1a40b8a5cd4c9bf0e758909dd7476d58b62e4cdf2c4ffd9d18281258f356bcbe": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/rsync-3.2.3-4-x86_64.pkg.tar.zst",
+        "sha256:6905b663f04b305ce0174d67f2b612dcd367f38646eaf87d106c907dafae4cbe": "https://archive.archlinux.org/repos/2022/01/22/extra/os/x86_64/slang-2.3.2-2-x86_64.pkg.tar.zst",
+        "sha256:24f50ac3dc796555e4ee0a379ecb373f7bff9a7522d885a57d9694ddfa6a1e5f": "https://archive.archlinux.org/repos/2022/04/14/community/os/x86_64/dtc-1.6.1-4-x86_64.pkg.tar.zst",
+        "sha256:2c11edcb807ff261ec5a4943e5598e00eee3f7b0fa533fb350e83e08a7d7f2fb": "https://archive.archlinux.org/repos/2022/04/14/community/os/x86_64/hidapi-0.11.2-1-x86_64.pkg.tar.zst",
+        "sha256:714fbe4be77f5148f4162cd7f0c0c9af3b658e80413d2902394fad6267992696": "https://archive.archlinux.org/repos/2022/04/14/community/os/x86_64/libnfs-5.0.1-2-x86_64.pkg.tar.zst",
+        "sha256:2d90eda9f3c75958109a676d19471e7b639f061c99eb7d48a323185f2148736f": "https://archive.archlinux.org/repos/2022/04/14/community/os/x86_64/libslirp-4.6.1-1-x86_64.pkg.tar.zst",
+        "sha256:a5134c5021b65a27cee71b2a2032b6cb311826fb684082f90152b16eaa214641": "https://archive.archlinux.org/repos/2022/04/14/community/os/x86_64/liburcu-0.13.1-1-x86_64.pkg.tar.zst",
+        "sha256:4d45e8710ba2150504f0c1e5fb04a16eff79e3a3ea49a7347e7e8fbba75d205c": "https://archive.archlinux.org/repos/2022/04/14/community/os/x86_64/usbredir-0.12.0-1-x86_64.pkg.tar.zst",
+        "sha256:64e1d1c17ca6653da9831201cd1bc2d7fa9284a40e4d1e986009004ce84d24aa": "https://archive.archlinux.org/repos/2022/04/14/core/os/x86_64/libaio-0.3.112-3-x86_64.pkg.tar.zst",
+        "sha256:ea09f94081a8980abde7b50d3bb9d9b795db57b82e43086d0ff7e2ca34ea78a7": "https://archive.archlinux.org/repos/2022/04/14/core/os/x86_64/libinih-53-2-x86_64.pkg.tar.zst",
+        "sha256:14984c1f7a8265266439e374956532b3727eead8118d48dd9c91d542642c67c8": "https://archive.archlinux.org/repos/2022/04/14/core/os/x86_64/libnsl-2.0.0-2-x86_64.pkg.tar.zst",
+        "sha256:ab7fe6abad11a64d7cf22a3e6b9011b6d74c88489e47a99913836903b5a2f63c": "https://archive.archlinux.org/repos/2022/04/14/core/os/x86_64/libusb-1.0.26-1-x86_64.pkg.tar.zst",
+        "sha256:41a2e73d80ba2aff26ac0352e0c99fe306b7219637c051efc2ec18d5b86982be": "https://archive.archlinux.org/repos/2022/04/14/core/os/x86_64/python-3.10.4-1-x86_64.pkg.tar.zst",
+        "sha256:050daafcf50ec4ae3e778d028c127a8805c94e5d7c8aab17c6d8d12f114e4d5a": "https://archive.archlinux.org/repos/2022/04/14/core/os/x86_64/xfsprogs-5.15.0-1-x86_64.pkg.tar.zst",
+        "sha256:f7d8bfb69913929c756ecc472aab444629c9b29d532a77ef86e90b42bf32b59a": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/adobe-source-code-pro-fonts-2.038ro+1.058it+1.018var-1-any.pkg.tar.zst",
+        "sha256:8b7b48fdc41d8c5f6f5bdffe855717f8a8471b36f7e78a928d0fa14041fb94f5": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/adwaita-icon-theme-42.0-1-any.pkg.tar.zst",
+        "sha256:4387b824234ba222a2839c27ccbeb03819d4f34f45161030f3175945f8a357b3": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/alsa-lib-1.2.6.1-1-x86_64.pkg.tar.zst",
+        "sha256:5f411b8854f6f56f0bb81418372f7bc6105203d508b9f0d8e85688a2658111c0": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/alsa-topology-conf-1.2.5.1-1-any.pkg.tar.zst",
+        "sha256:9edf03c96450765ba1a7fec4bf077cdd3ed1891ba4ae5eedd64104e281a10c58": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/alsa-ucm-conf-1.2.6.3-1-any.pkg.tar.zst",
+        "sha256:753ed4b6f88cfa67e6b99142d2cabe7088baa09ef0ace17297fc88085f5db0fc": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/at-spi2-atk-2.38.0-1-x86_64.pkg.tar.zst",
+        "sha256:df465e8dea879d6784eba9e797e3d0bafa916beb3f0e68b782dc53002559272d": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/at-spi2-core-2.44.0-2-x86_64.pkg.tar.zst",
+        "sha256:3897a6f95e375f5d16676436cf963e706eb08cd6007bb9d4dfccc1221da366c6": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/atk-2.38.0-1-x86_64.pkg.tar.zst",
+        "sha256:706d569c8bc49021a44ab2222f02bd724f861a0feff95cbd7da69bc439ab7346": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/avahi-0.8+22+gfd482a7-3-x86_64.pkg.tar.zst",
+        "sha256:05be445becad0470491beceb00e5429e93a1ba2ef2e084ab46b4296ccfe2ee25": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/cairo-1.17.6-2-x86_64.pkg.tar.zst",
+        "sha256:e5a3ad98e21099f6279daa2d72804c11d237de2ec1887584edffa4205c289789": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/cantarell-fonts-1:0.303.1-1-any.pkg.tar.zst",
+        "sha256:0e8d215fa662e360eeda534ab12d28b1456bbd0c2f032b6dcdfef0ba7f4a07b9": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/dconf-0.40.0-1-x86_64.pkg.tar.zst",
+        "sha256:8cc5a1232ca4265bbdfa3c05be919a4ff47974144d721fe9fda271c9bbdf7ec9": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/desktop-file-utils-0.26-2-x86_64.pkg.tar.zst",
+        "sha256:f4e2022fae1aebc23c5c3350e69a24188599e910a3f5463680116ef58251dc94": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/flac-1.3.4-2-x86_64.pkg.tar.zst",
+        "sha256:c319240419d00daf13ece3ae954c430b53406632c11dc00cd06212b1ae51a6ec": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/fontconfig-2:2.14.0-1-x86_64.pkg.tar.zst",
+        "sha256:3363a3b7943330c80bbba5b804c2214135137a0086489ee2ca9bbc884e8c7a87": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/freetype2-2.12.0-1-x86_64.pkg.tar.zst",
+        "sha256:cbf77b00a044fd20f6af21ef18305c2fe9dc74e584d0f9330c28e6c229d4c251": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/fribidi-1.0.11-1-x86_64.pkg.tar.zst",
+        "sha256:c75bd25583f2a417705c68f02b211f4b039387a841a54ec38420b0e29e8fac3e": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/fuse-common-3.10.5-1-x86_64.pkg.tar.zst",
+        "sha256:cece5fd1b08d5f653674836f02ef872cd481ea02fb18a3488ccf0ab031efbfe4": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/fuse3-3.10.5-1-x86_64.pkg.tar.zst",
+        "sha256:63ce22de74cd35d481a7b7f8e93e00ed4c4d461651e9f09e9d45f5cdda72c8c2": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/gdk-pixbuf2-2.42.8-1-x86_64.pkg.tar.zst",
+        "sha256:f604b1d05f5610b24acbfe9d1cf48f751e0db7a1934ef71d0b2ba9bc47e72805": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/giflib-5.2.1-2-x86_64.pkg.tar.zst",
+        "sha256:f8d6007479c6316f6f6a7d819454c9d505c9cd25285d88eb2322f24d0446ea38": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/glib-networking-1:2.72.0-1-x86_64.pkg.tar.zst",
+        "sha256:791edb9d97f03193181b2dc82ed94c4414abf234ffa09b8f329da49f43c29156": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/graphite-1:1.3.14-1-x86_64.pkg.tar.zst",
+        "sha256:73060e6f29d171f65dddd23aa86dca8fb96d908dfd65f3496c147b3ffc7f1a4a": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/gsettings-desktop-schemas-42.0-1-any.pkg.tar.zst",
+        "sha256:f09bc3f24781ea0bc84150886353c0cc564b755cae1f7be677bb0c119416fa31": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/gtk-update-icon-cache-1:4.6.2-2-x86_64.pkg.tar.zst",
+        "sha256:988a76bc119e6fdf4afdc7f767d020f108e2f8a5f6ae09c5215ad2391a9f9816": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/gtk3-1:3.24.33-2-x86_64.pkg.tar.zst",
+        "sha256:f771af88115ad585ee72e269ae106722f14884fe3cd1c8a18e6fa0231113642f": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/harfbuzz-4.2.0-1-x86_64.pkg.tar.zst",
+        "sha256:175667a8bda94fb632c8532e522388004b578f0d3b81a8b0b72b510f550ef309": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/hicolor-icon-theme-0.17-2-any.pkg.tar.zst",
+        "sha256:917193227d1af3ab3a6c3203febbfe9bc684558034cfc37de013a6b8f907756e": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/iniparser-4.1-4-x86_64.pkg.tar.zst",
+        "sha256:e6b2ac7b33a690917725b95db2f347243c589952512f95392dd0a4e41f2e9172": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/iso-codes-4.9.0-1-any.pkg.tar.zst",
+        "sha256:b4c1972e64a456170852e38c64b03728db1cfa64f1cbf8741ee90b7563ca3c49": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/jack2-1.9.20-4-x86_64.pkg.tar.zst",
+        "sha256:50df8e44901ec0b8598e65ae42a42f8c741c1c0cf971aa07a19d58b3cef7a7c4": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/json-glib-1.6.6-2-x86_64.pkg.tar.zst",
+        "sha256:07f6b1b09c88c28145c28c6cae3e9961334163d7f2361817c27b85f38f285030": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/lcms2-2.13.1-1-x86_64.pkg.tar.zst",
+        "sha256:a0262e191dd3b00343e79e3521159c963e26b7a438d4cc44137c64cf0da90516": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libasyncns-0.8+3+g68cd5af-3-x86_64.pkg.tar.zst",
+        "sha256:3f7a056ceab6278903304300caa25436e6d966642c8ec5c0a46fe23a0c6765cb": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libcacard-2.7.0-2-x86_64.pkg.tar.zst",
+        "sha256:1b2dfa4cd3dcd3753f4daacab2e20e7bdc979063c7fa205f7ac23ea340c19958": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libcloudproviders-0.3.1-2-x86_64.pkg.tar.zst",
+        "sha256:9f45f25b6f34d774e7550e78c66169937e8cb32f6b362e31f7664fcf1972e5ad": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libcolord-1.4.6-1-x86_64.pkg.tar.zst",
+        "sha256:77942fada92e17491cf05dc9e21c16a5da5e478570336ef72a7f367525ef099c": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libcups-1:2.4.1-1-x86_64.pkg.tar.zst",
+        "sha256:8ecf4dd70a18869a506ae9e027d6c16aab99bb1d8028f6fa7c56ee7ea9399709": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libdatrie-0.2.13-1-x86_64.pkg.tar.zst",
+        "sha256:c73ccbb066357a7a1b9f47d6e298de5f3410a19afcd9dcf2dedb5ae2534573b6": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libdrm-2.4.110-1-x86_64.pkg.tar.zst",
+        "sha256:ccde03c19d231ada9f2e081b2aedb679dd9a230b6622603991903ee812045cee": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libepoxy-1.5.10-1-x86_64.pkg.tar.zst",
+        "sha256:c1d94b30d26da71e58f410726e489ebb303f650519eee7bfb7223881de1a95c9": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libglvnd-1.4.0-1-x86_64.pkg.tar.zst",
+        "sha256:77dd6904bf585fcb1f585c9e15037be9aaea55e666cfdabde6086f4e2983dc12": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libibus-1.5.26-2-x86_64.pkg.tar.zst",
+        "sha256:1e3955f34198403b3a830c8fb4f43057a53363e3308d7a12d284db44ac3bdafb": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libice-1.0.10-3-x86_64.pkg.tar.zst",
+        "sha256:02d027c45f1e73f8f865133373b481cd158f36d4deb65f27b96de6fa9a443efd": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libjpeg-turbo-2.1.3-1-x86_64.pkg.tar.zst",
+        "sha256:bc023fe47374b6233a71e75aa8c7cac6905bc104e30b3ba8f8412aa9bcff9535": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libogg-1.3.5-1-x86_64.pkg.tar.zst",
+        "sha256:bd0281583c090d7a2687425466a457d7edb41bb3fc51d099e5bb06acb94b132d": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libomxil-bellagio-0.9.3-3-x86_64.pkg.tar.zst",
+        "sha256:2781904c33ab87e2f737bf329c115d375f9637dc09daaa369d0bd8c9390b1615": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libpciaccess-0.16-2-x86_64.pkg.tar.zst",
+        "sha256:5f3e2263c82ec153688f45648ed8ebb33b97634861f9ea18b117bb4ac385eb4f": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libpng-1.6.37-3-x86_64.pkg.tar.zst",
+        "sha256:a21416cd89fb4d9e00116dc0c31f70fe5cf7bf4027a91db9cf77c4e3e3e687f0": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libproxy-0.4.17-6-x86_64.pkg.tar.zst",
+        "sha256:b0f5b80b8edbdc2fd19bbe1a1bc5c138ee99956317e87f9e2029c6b1c3934902": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libpulse-15.0-4-x86_64.pkg.tar.zst",
+        "sha256:25ddfff39297f3886669e59c71b6d7ecb1dbbcd4e54550b216d2302786a1a197": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/librsvg-2:2.54.0-2-x86_64.pkg.tar.zst",
+        "sha256:55d603c27b9f8975b435c71d9ba26342a0fa0e3d1bd0086e0f6023d4074b47c9": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libsamplerate-0.2.2-1-x86_64.pkg.tar.zst",
+        "sha256:06f29c87b27a5ea8fcefe8d1ee14189eb965e94fda58faa4fbe1f6ffd04e27f0": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libsm-1.2.3-2-x86_64.pkg.tar.zst",
+        "sha256:f47f93031da31e1c24808015ef693042f9ed9b23ea8051da66c3fdec41fd9e04": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libsndfile-1.1.0-2-x86_64.pkg.tar.zst",
+        "sha256:422a83dd8db6c2bffc9fcdc17ba4621d7fd5ec5ab9871ff1de92ec8f8c1dc0d8": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libsoup-2.74.2-2-x86_64.pkg.tar.zst",
+        "sha256:93b04f6b1ae196d091e38f4c6720a478daf056cd4e08a74460c67229489bb574": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libsoup3-3.0.6-1-x86_64.pkg.tar.zst",
+        "sha256:b2892c9f4f515fd07029a2e3226faa61b5a3e695a9abe9f9a3f46e442a7d8aab": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libssh-0.9.6-1-x86_64.pkg.tar.zst",
+        "sha256:f96a99626de7c90fe23acb3b0964a2edeb598eb777c944d90b6a153eaa9a1560": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libstemmer-2.2.0-2-x86_64.pkg.tar.zst",
+        "sha256:9e62ca286ea8c3e3a6ab714b8ec5781e0a494bb7ef96e0f47f35a5c74b84ecfe": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libthai-0.1.29-1-x86_64.pkg.tar.zst",
+        "sha256:bde2c4042c00e64d0a592b4e3acd3f582ee147cf717a741f7d33bd0292e08806": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libtiff-4.3.0-2-x86_64.pkg.tar.zst",
+        "sha256:27875f58848dec939228fa7be7179343d937338dd3851ed06cb976cc15215567": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libunwind-1.6.2-1-x86_64.pkg.tar.zst",
+        "sha256:c32048690ca1aaa68fdd2f913e19fa668a482603e4a7d0b2bab7b1bb90e623e8": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/liburing-2.1-1-x86_64.pkg.tar.zst",
+        "sha256:3393ccec8adc6554fd66dee0ee2cd54c5082598763746eb0c57b00005aec3d21": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libvorbis-1.3.7-3-x86_64.pkg.tar.zst",
+        "sha256:5b527c9660d3eb76ebdc2403f125decb4eb26d6676c52e48c06bf6629685ac76": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libwebp-1.2.2-1-x86_64.pkg.tar.zst",
+        "sha256:8e40343ff1fbc33231ce891f46abb8b21bdd0bc34c84a9ffd369fd03627afb74": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libx11-1.7.5-1-x86_64.pkg.tar.zst",
+        "sha256:0e9de3ed449e4f061c34d640d5cd3cdf1232cb89b2da4be9ea5577bbfcbe834c": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxau-1.0.9-3-x86_64.pkg.tar.zst",
+        "sha256:8d357ca0eb2c479d9dabad04087394c9df4764ed9672e01ee768aee42e1c320d": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxcb-1.14-1-x86_64.pkg.tar.zst",
+        "sha256:171f5026e4d7ac0aa9634e5fa02bd1d9308935116e46145237bd9a2f004452bb": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxcomposite-0.4.5-3-x86_64.pkg.tar.zst",
+        "sha256:6f7b8e54cad1d77b8dbfe368f65f7b82433ed4a0a4272635a9de708897643e88": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxcursor-1.2.1-1-x86_64.pkg.tar.zst",
+        "sha256:3a0b8129df80e15f0c230d51a04e8e7487d0de1d8e7aa54b7e70562e2783fa95": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxdamage-1.1.5-3-x86_64.pkg.tar.zst",
+        "sha256:020a23a7be7fe69cc1605b9a8cbf3e7c2b6fd10ed06cf6480c4b06cbd4d6e47f": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxdmcp-1.1.3-3-x86_64.pkg.tar.zst",
+        "sha256:67dc2d5ab7e63b7dfd32e92535655da5763fe568bc47cb0318430784ab058bef": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxext-1.3.4-3-x86_64.pkg.tar.zst",
+        "sha256:ed84350ddee5a6d5e22de22b53b262ed45b608a4ad2377f3d3402804e41c24ca": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxfixes-6.0.0-1-x86_64.pkg.tar.zst",
+        "sha256:5ce4b3101809d2c0ccb99a7269af25524f8a24a73ee87dee5c0dc08176b8d178": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxft-2.3.4-1-x86_64.pkg.tar.zst",
+        "sha256:ac3a1b768a6ae4db5e62c5eacfecd570a8ca8c81e834b20cea4d0e294b559cbb": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxi-1.8-1-x86_64.pkg.tar.zst",
+        "sha256:00eee630560008c47147b8539b091063dae976c72711dc84ae068087f69b223b": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxinerama-1.1.4-3-x86_64.pkg.tar.zst",
+        "sha256:00d05819a6219990894ea04c5551638984c7fe122d84f6c1383b1e7d2bb4f782": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxkbcommon-1.4.0-1-x86_64.pkg.tar.zst",
+        "sha256:20613567a1fef3afbbbbc4f9df5c52071929cff0e1d1e5715c9001be415f2ec5": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxrandr-1.5.2-3-x86_64.pkg.tar.zst",
+        "sha256:e738ef92d6bb9f33aeb83d5819f35fc61a87b7e4019fe5e9f1150f7b473503c2": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxrender-0.9.10-4-x86_64.pkg.tar.zst",
+        "sha256:4fee095b88c80ebaf6a7d5a3a4c75783b8fbba8655721b352cf9196c0c71b138": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxshmfence-1.3-2-x86_64.pkg.tar.zst",
+        "sha256:95355372805a1819887d15da8ad1dccdc35f7ca9b9342b6765c47578d028e0ba": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxtst-1.2.3-4-x86_64.pkg.tar.zst",
+        "sha256:1a7d285c338995e3e7361cbf63e13bb065f6d104eff255de08ca2ffb61e9b1eb": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libxxf86vm-1.1.4-4-x86_64.pkg.tar.zst",
+        "sha256:f028747206acc42d27e857efb036bdac10cbd2aa109c0baa2b772d20ddf15d84": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/libyaml-0.2.5-1-x86_64.pkg.tar.zst",
+        "sha256:cabb2e618c3941c8d21232b3265aa9ebe7afb5025afe6d92aa2cb35319584a68": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/llvm-libs-13.0.1-2-x86_64.pkg.tar.zst",
+        "sha256:bf78700d2bfb743c72b4a6478b6743a11cec1136eb4e7acac12cbad47dabf3f6": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/lm_sensors-1:3.6.0.r41.g31d1f125-1-x86_64.pkg.tar.zst",
+        "sha256:94206480bbfe53eada94878bf5909c867354dc0921457c51e6513911ac62044e": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/mesa-22.0.1-3-x86_64.pkg.tar.zst",
+        "sha256:67807e3bf691451a262038403f75a4d7e1b1a3721d5ada24a91d95c0d87318fa": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/ndctl-72.1-1-x86_64.pkg.tar.zst",
+        "sha256:8c77550575f460d9e5765e8e2733157287e3c6a60c774305510e7d95f762176e": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/numactl-2.0.14-2-x86_64.pkg.tar.zst",
+        "sha256:5080de1de185e8abfccf1fcc730f6712e791e24cc3c9f358afce1c9cea3d1b39": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/opus-1.3.1-3-x86_64.pkg.tar.zst",
+        "sha256:bba23f8e734ce5ef01d41778aedabea644e4d317abe989b6ae8b129fd5188c2e": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/pango-1:1.50.6-1-x86_64.pkg.tar.zst",
+        "sha256:70b76e351a4ab2477bf1d2351c7aca4a20e6aac697054aae5cc403144cc7e8fe": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/pixman-0.40.0-1-x86_64.pkg.tar.zst",
+        "sha256:ed745874250160c5e9a347bef2caf339a1f8a1588fab5a06401f66fb6b031eb7": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/pyalpm-0.10.6-4-x86_64.pkg.tar.zst",
+        "sha256:2a9c0ccfb82095932eff04be55a09811b4dbf6e8f40a07aa5a92a54ddc4089f4": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/qemu-6.2.0-4-x86_64.pkg.tar.zst",
+        "sha256:e68a55508c27384f663cc30d0898c64e8000498ec25c83ad27b77a14fd7247e4": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/rest-0.8.1+r4+ge5ee6ef-1-x86_64.pkg.tar.zst",
+        "sha256:0258afce63eeb53fa1a9e59fcb05c3449de32b508bf473f7d67692e8069ec747": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/sdl2-2.0.20-2-x86_64.pkg.tar.zst",
+        "sha256:d90e1bc9d5f2469e9189e58152b5d1a0365191870ba70305bcd537981b64ec81": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/sdl2_image-2.0.5-2-x86_64.pkg.tar.zst",
+        "sha256:58579e9bb14acb88538013f72a4dac7c278ebf3c1cc23e269602447b035ff4d9": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/seabios-1.16.0-1-any.pkg.tar.zst",
+        "sha256:7a6fb64596dffce6084aac033250610b12dd8b3f010d758fe94bf562b5ddd994": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/shared-mime-info-2.0+144+g13695c7-1-x86_64.pkg.tar.zst",
+        "sha256:d93f131235822eabe12469333e675269abef2b7e2e8386c889150f935bf72dd7": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/snappy-1.1.9-2-x86_64.pkg.tar.zst",
+        "sha256:e8a7381025dd80e898119b980b741d3ecbea41ac2b870abc0e930fbd7d046c6d": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/speex-1.2.0-3-x86_64.pkg.tar.zst",
+        "sha256:72268364ee755bf6040c5099e221c9f8f842f755a9edad726587ed7bebb98bb9": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/speexdsp-1.2.0-2-x86_64.pkg.tar.zst",
+        "sha256:48ee1afc8d7d9cbada8d889f1fa324345f7d12bdc0694633d7170627d40788b4": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/spice-0.15.0-1-x86_64.pkg.tar.zst",
+        "sha256:a310c44b232b0b20f17a0319e8b1a7a01c607d99a51cf72fbc9eef56cd9f5c56": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/tracker3-3.3.0-1-x86_64.pkg.tar.zst",
+        "sha256:6b9e47fc36bc0abcbe74d17ffa615f294a6674110c334e580ea19d2781491156": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/vde2-2.3.2-21-x86_64.pkg.tar.zst",
+        "sha256:c09c854604da2b2b7fea13137336b41fe2354b3ace7ca503f439fe6bd9bc9b0d": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/virglrenderer-0.9.1-1-x86_64.pkg.tar.zst",
+        "sha256:092d6216ab17be41c0fd9116a522d27e9ae0db4ac83ad208a35867c51cb133c7": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/vte-common-0.68.0-1-x86_64.pkg.tar.zst",
+        "sha256:8f99f88989cfea87a08cc9a2b448cd7aa4b0f44c9595b0f02bdd953008adea0b": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/vte3-0.68.0-1-x86_64.pkg.tar.zst",
+        "sha256:4cf16b1a3f5246316cb63a5a71e650d8c4ef562b130902928b63b3ddb257bbfe": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/vulkan-icd-loader-1.3.208-1-x86_64.pkg.tar.zst",
+        "sha256:15028d51086b88347cd13d1c4fba633aa43b2ec06a2d58fab1ca7ff54a7d1d91": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/wayland-1.20.0-2-x86_64.pkg.tar.zst",
+        "sha256:cc9555455c963f826782bbb9a483d970bb4a7209df73b64fa925f839014595a4": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/xcb-proto-1.14.1-5-any.pkg.tar.zst",
+        "sha256:e4abb35654786681fa8a10458d48167e395d4b2cadb7101fd2289150eca60511": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/xkeyboard-config-2.35.1-1-any.pkg.tar.zst",
+        "sha256:a16739c482654dc5c33e4d934c9d6f95e1949eb087f56f42fff4b1e579fba866": "https://archive.archlinux.org/repos/2022/04/14/extra/os/x86_64/xorgproto-2021.5-1-any.pkg.tar.zst"
+      }
+    },
+    "org.osbuild.inline": {
+      "items": {
+        "sha256:ade439e2059e123fdcf65c06bab4566e6cd2aea403d3d6946fe81a1c41658f8d": {
+          "encoding": "base64",
+          "data": "RGVmYXVsdHM6dmFncmFudCAhcmVxdWlyZXR0eQp2YWdyYW50IEFMTD0oQUxMKSBOT1BBU1NXRDogQUxM"
+        }
+      }
+    }
+  }
+}

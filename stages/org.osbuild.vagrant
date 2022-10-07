@@ -6,6 +6,18 @@ import sys
 
 import osbuild.api
 
+VAGRANTFILE = """Vagrant.configure("2") do |config|
+    {content}
+end
+"""
+
+VAGRANTFILE_LIBVIRT = """config.vm.provider :libvirt do |libvirt|
+  libvirt.driver = "kvm"
+end
+"""
+
+VAGRANTFILE_VIRTUALBOX = 'config.vm.base_mac = "{mac_address}"\n'
+
 
 def parse_input(inputs):
     image = inputs["image"]
@@ -19,32 +31,42 @@ def parse_input(inputs):
 
 def main(tree, options, inputs):
     source = parse_input(inputs)
+
     # vagrant-libvirt expects box.img to be the qcow2 image
     # https://github.com/vagrant-libvirt/vagrant-libvirt/tree/master/example_box
     target = os.path.join(tree, "box.img")
     provider = options["provider"]
+
+    if provider == "virtualbox":
+        # the box has to be named .vmdk because Virtualbox does not detect the mimetype..
+        target = os.path.join(tree, "box.vmdk")
+
     subprocess.run(["cp", "-a", "--reflink=auto", source, target], check=True)
+    vagrant_content = ""
 
     metadata = {"provider": options["provider"]}
     if provider == "libvirt":
         metadata["format"] = "qcow2"
         # virtual image size as rounded numbwr
-        data = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", target]))
-        metadata["virtual_size"] = data['virtual-size'] // 1000 ** 3
+        data = json.loads(
+            subprocess.check_output(
+                ["qemu-img", "info", "--output", "json", target]
+            )
+        )
+        metadata["virtual_size"] = data["virtual-size"] // 1000**3
+        vagrant_content = VAGRANTFILE_LIBVIRT
 
-    vagrantfile = """
-Vagrant.configure("2") do |config|
-  config.vm.provider :libvirt do |libvirt|
-    libvirt.driver = "kvm"
-  end
-end
-"""
-    open(f"{tree}/Vagrantfile", "w", encoding="utf8").write(vagrantfile)
+    if provider == "virtualbox":
+        vagrant_content = VAGRANTFILE_VIRTUALBOX.format(mac_address=options["virtualbox"]["mac_address"])
+
+    with open(f"{tree}/Vagrantfile", "w", encoding="utf8") as fp:
+        fp.write(VAGRANTFILE.format(content=vagrant_content))
+
     with open(f"{tree}/metadata.json", "w", encoding="utf8") as fp:
         json.dump(metadata, fp)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"], args["inputs"])
     sys.exit(r)

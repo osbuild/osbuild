@@ -11,19 +11,53 @@
   ],
   "schema_2": {
     "options": {
-      "additionalProperties": false,
-      "required": [
-        "provider"
-      ],
-      "properties": {
-        "provider": {
-          "type": "string",
-          "description": "type of Vagrant box",
-          "enum": [
-            "libvirt"
-          ]
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider"
+          ],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": [
+                "libvirt"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider",
+            "virtualbox"
+          ],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": [
+                "virtualbox"
+              ]
+            },
+            "virtualbox": {
+              "type": "object",
+              "description": "VirtualBox specific settings",
+              "additionalProperties": false,
+              "required": [
+                "mac_address"
+              ],
+              "properties": {
+                "mac_address": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{12}$"
+                }
+              }
+            }
+          }
         }
-      }
+      ]
     },
     "inputs": {
       "type": "object",
