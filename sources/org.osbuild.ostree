@@ -14,6 +14,7 @@ import uuid
 
 from osbuild import sources
 from osbuild.util.ostree import show
+from osbuild.util.rhsm import Subscriptions
 
 SCHEMA = """
 "additionalProperties": false,
@@ -42,6 +43,19 @@ SCHEMA = """
                 "items": {
                   "type": "string",
                   "description": "GPG keys to verify the commits"
+                }
+              },
+              "secrets": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the secrets provider."
+                  }
                 }
               }
             }
@@ -89,13 +103,18 @@ class OSTreeSource(sources.SourceService):
         gpg = remote.get("gpgkeys", [])
         uid = str(uuid.uuid4())
 
-        verify_args = []
+        remote_add_args = []
         if not gpg:
-            verify_args = ["--no-gpg-verify"]
+            remote_add_args = ["--no-gpg-verify"]
+
+        if remote.get("secrets", {}).get("name") == "org.osbuild.rhsm.consumer":
+            secrets = Subscriptions.get_consumer_secrets()
+            remote_add_args.append("--tls-client-key-path=%s", secrets['consumer_key'])
+            remote_add_args.append("--tls-client-cert-path=%s", secrets['consumer_cert'])
 
         ostree("remote", "add",
                uid, url,
-               *verify_args,
+               *remote_add_args,
                repo=self.repo)
 
         for key in gpg:

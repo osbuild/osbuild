@@ -38,6 +38,20 @@ class Subscriptions:
 
         raise RuntimeError("no matching rhsm key and cert")
 
+    @staticmethod
+    def get_consumer_secrets():
+        """Returns the consumer identity certificate which uniquely identifies the system"""
+        key = "/etc/pki/consumer/cert.pem"
+        cert = "/etc/pki/consumer/key.pem"
+
+        if not (os.path.exists(key) and os.path.exists(cert)):
+            raise RuntimeError("rhsm consumer key and cert not found")
+
+        return {
+            'consumer_key': key,
+            'consumer_cert': cert
+        }
+
     @classmethod
     def from_host_system(cls):
         """Read redhat.repo file and process the list of repositories in there."""
