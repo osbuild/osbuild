@@ -109,8 +109,8 @@ class OSTreeSource(sources.SourceService):
 
         if remote.get("secrets", {}).get("name") == "org.osbuild.rhsm.consumer":
             secrets = Subscriptions.get_consumer_secrets()
-            remote_add_args.append("--tls-client-key-path=%s", secrets['consumer_key'])
-            remote_add_args.append("--tls-client-cert-path=%s", secrets['consumer_cert'])
+            remote_add_args.append(f"--set=\"tls-client-key-path={secrets['consumer_key']}\"")
+            remote_add_args.append(f"--set=\"tls-client-cert-path={secrets['consumer_cert']}\"")
 
         ostree("remote", "add",
                uid, url,
