@@ -768,6 +768,69 @@
       ]
     },
     {
+      "name": "image",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.squashfs",
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:tree"
+              ]
+            }
+          },
+          "options": {
+            "filename": "rootfs.img",
+            "compression": {
+              "method": "lz4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "initrd",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.gunzip",
+          "inputs": {
+            "file": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:tree": {
+                  "file": "/boot/initramfs-5.18.13-200.fc36.x86_64.img"
+                }
+              }
+            }
+          },
+          "options": {
+            "path": "initramfs.img"
+          }
+        },
+        {
+          "type": "org.osbuild.cpio.out",
+          "options": {
+            "filename": "initramfs.img",
+            "append": true
+          },
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:image"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "uki",
       "build": "name:build",
       "stages": [
@@ -776,7 +839,9 @@
           "options": {
             "filename": "linux.efi",
             "kernel": {
-              "opts": []
+              "opts": [
+                "root=live:/rootfs.img"
+              ]
             }
           },
           "inputs": {
@@ -793,8 +858,8 @@
               "type": "org.osbuild.files",
               "origin": "org.osbuild.pipeline",
               "references": {
-                "name:tree": {
-                  "file": "/boot/initramfs-5.18.13-200.fc36.x86_64.img"
+                "name:initrd": {
+                  "file": "/initramfs.img"
                 }
               }
             },

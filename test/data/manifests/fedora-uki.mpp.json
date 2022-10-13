@@ -140,6 +140,71 @@
       ]
     },
     {
+      "name": "image",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.squashfs",
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:tree"
+              ]
+            }
+          },
+          "options": {
+            "filename": "rootfs.img",
+            "compression": {
+              "method": "lz4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "initrd",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.gunzip",
+          "inputs": {
+            "file": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:tree": {
+                  "file": {
+                    "mpp-format-string": "/boot/initramfs-{rpms['tree']['kernel'].evra}.img"
+                  }
+                }
+              }
+            }
+          },
+          "options": {
+            "path": "initramfs.img"
+          }
+        },
+        {
+          "type": "org.osbuild.cpio.out",
+          "options": {
+            "filename": "initramfs.img",
+            "append": true
+          },
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:image"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "uki",
       "build": "name:build",
       "stages": [
@@ -148,7 +213,9 @@
           "options": {
             "filename": "linux.efi",
             "kernel": {
-              "opts": []
+              "opts": [
+                "root=live:/rootfs.img"
+              ]
             }
           },
           "inputs": {
@@ -167,9 +234,9 @@
               "type": "org.osbuild.files",
               "origin": "org.osbuild.pipeline",
               "references": {
-                "name:tree": {
+                "name:initrd": {
                   "file": {
-                    "mpp-format-string": "/boot/initramfs-{rpms['tree']['kernel'].evra}.img"
+                    "mpp-format-string": "/initramfs.img"
                   }
                 }
               }
