@@ -1,0 +1,139 @@
+#!/usr/bin/python3
+"""
+Assembles the tree into a CPIO archive.
+
+Uses the buildhost's `cpio` command, to create an archive
+at `filename` with the contents of the input `tree`. If
+`append` is `true`, its files will be added to an existing
+archive. The default format is `newc` , the "new (SVR4)
+portable format", which is also used by `dracut`(8).
+
+Buildhost commands used: `cpio`
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "required": ["filename"],
+  "properties": {
+    "filename": {
+      "description": "Filename for tar archive",
+      "type": "string"
+    },
+    "append": {
+      "type": "boolean",
+      "description": "Append to an existing archive.",
+      "default": false
+    },
+    "format": {
+      "description": "Archive format to use",
+      "type": "string",
+      "enum": ["bin", "odc", "newc", "crc", "tar", "ustar"],
+      "default": "newc"
+    },
+    "root-node": {
+      "description": "How to handle the root node: include or omit",
+      "enum": ["include", "omit"],
+      "default": "include"
+    },
+    "reproducible": {
+      "type": "boolean",
+      "description": "Produce device-independent, reproducible archives.",
+      "default": true
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["user"],
+      "properties": {
+        "user": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        }
+      }
+    }
+  }
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tree"],
+  "properties": {
+    "tree": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
+def iter_files(tree, include):
+    for root, _, files in os.walk(tree, topdown=True):
+        for f in files:
+            path = os.path.relpath(os.path.join(root, f), tree)
+            yield path
+        if tree != root or include:
+            yield os.path.relpath(root, tree)
+
+
+def main(inputs, output_dir, options):
+    tree = inputs["tree"]["path"]
+    filename = options["filename"].lstrip("/")
+    outfmt = options.get("format", "newc")
+    root_node = options.get("root-node", "include")
+    append = options.get("append", False)
+    reproducible = options.get("reproducible", True)
+    owner = options.get("owner", {})
+
+    extra_args = []
+
+    if reproducible:
+        extra_args += ["--reproducible"]
+
+    if append:
+        extra_args += ["--append"]
+
+    if owner:
+        user = owner["user"]
+        group = owner.get("group")
+
+        user_arg = f"--owner={user}"
+        if group:
+            user_arg += f":{group}"
+        extra_args += [user_arg]
+
+    cmd = [
+        "cpio",
+        "-v",
+        "-o",
+        f"--format={outfmt}",
+        "--null",
+        *extra_args,
+        "-O", os.path.join(output_dir, filename),
+        "-D", tree,
+    ]
+
+    files = "\0".join([str(f) for f in iter_files(tree, root_node == "include")])
+
+    subprocess.run(
+        cmd,
+        check=True,
+        input=files.encode("utf-8"),
+    )
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"], args["options"])
+    sys.exit(r)
