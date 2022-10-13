@@ -39,6 +39,7 @@
                   }
                 ],
                 "packages": [
+                  "binutils",
                   "btrfs-progs",
                   "cryptsetup",
                   "dnf",
