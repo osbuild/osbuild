@@ -1,0 +1,176 @@
+#!/usr/bin/python3
+"""
+Create a Unified Kernel Image
+
+A Unified Kernel Image (UKI) is a UEFI executable that contains
+a UEFI stub loader, together with the kernel, the initrd, the
+kernel command line and (optionally) a splash screen.
+
+For more information see the specification at:
+https://github.com/uapi-group/specifications/blob/main/specs/unified_kernel_image.md
+
+Host commands: objdump, objcopy
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+from typing import Dict, Tuple
+
+import osbuild
+from osbuild.util import pe32p
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "required": ["filename"],
+  "properties": {
+    "filename": {
+      "description": "Filename to use for the resulting UKI",
+      "type": "string"
+    },
+    "kernel": {
+      "type": "object",
+      "required": ["opts"],
+      "properties": {
+        "opts": {
+          "description": "Array of kernel options for the UKI",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kernel", "initrd", "osrel"],
+  "properties": {
+    "osrel": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "kernel": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "initrd": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
+def align_up(address: int, alignment: int) -> int:
+    if address % alignment == 0:
+        return address
+    return ((address + alignment) // alignment) * alignment
+
+
+def detect_start_offset(stub: str) -> Tuple[int, int]:
+
+    with open(stub, "rb") as f:
+        coff = pe32p.read_coff_header(f)
+        opt = pe32p.read_optional_header(f, coff)
+        sections = pe32p.read_sections(f, coff)
+
+    assert sections, "No sections found in stub"
+
+    last = sections[-1]
+
+    offset = last.VirtualAddress + last.VirtualSize
+
+    # per spec should be SectionAlignment >= FileAlignment,
+    # but this also handles the case that the former is `0`
+    alignment = max(opt.SectionAlignment, opt.FileAlignment)
+
+    def align(addr):
+        return align_up(addr, alignment)
+
+    return align(offset), align
+
+
+def parse_inputs(inputs) -> Dict[str, str]:
+    known = {
+        "osrel": "osrel",
+        "kernel": "linux",
+        "initrd": "initrd",
+    }
+
+    res = {}
+    for i, n in known.items():
+        data = inputs[i]
+        files = data["data"]["files"]
+        assert len(files) == 1
+        filename, _ = files.popitem()
+        res[n] = os.path.join(data["path"], filename)
+
+    return res
+
+
+def make_kernel_options(options) -> str:
+    kernel = options.get("kernel", {})
+    opts = kernel.get("opts", [])
+    data = " ".join(opts)
+    f, path = tempfile.mkstemp(dir="/run", prefix="kernel-cmdline", text=True)
+    with os.fdopen(f, "w", encoding="utf8") as f:
+        f.write(data)
+
+    return path
+
+
+def main(tree, inputs, options) -> int:
+    filename = options["filename"]
+    stub = "/usr/lib/systemd/boot/efi/linuxx64.efi.stub"
+
+    sections = [
+        "osrel",
+        "cmdline",
+        "splash",
+        "linux",
+        "initrd",
+    ]
+
+    files = parse_inputs(inputs)
+    files["cmdline"] = make_kernel_options(options)
+
+    argv = ["objcopy"]
+
+    offset, align = detect_start_offset(stub)
+
+    for name in sections:
+        path = files.get(name)
+
+        if not path:
+            print(f"skipping {name}")
+            continue
+
+        argv += [
+            "--add-section", f".{name}={path}",
+            "--change-section-vma", f".{name}={offset}"
+        ]
+
+        offset = align(offset + os.stat(path).st_size)
+
+    argv += [
+        stub,
+        os.path.join(tree, filename.lstrip("/"))
+    ]
+
+    print(argv)
+
+    subprocess.run(argv, check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["inputs"], args["options"])
+    sys.exit(r)
