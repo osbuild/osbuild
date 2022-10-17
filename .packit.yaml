@@ -18,7 +18,8 @@ actions:
   get-current-version: bash -c "git describe --tags --abbrev=0 | sed 's|v||'"
 
 jobs:
-- job: copr_build
+- &copr
+  job: copr_build
   trigger: pull_request
   targets:
   - centos-stream-8-aarch64
@@ -33,24 +34,11 @@ jobs:
   - fedora-all-s390x
   - fedora-all-ppc64le
   - fedora-all
-- job: copr_build
+- <<: *copr
   trigger: commit
   branch: main
   owner: "@osbuild" # copr repo namespace
   project: osbuild  # copr repo name so you can consume the builds
-  targets:
-  - centos-stream-8-aarch64
-  - centos-stream-8-x86_64
-  - centos-stream-9-aarch64
-  - centos-stream-9-x86_64
-  - epel-8-aarch64
-  - epel-8-x86_64
-  - epel-9-aarch64
-  - epel-9-x86_64
-  - fedora-all-aarch64
-  - fedora-all-s390x
-  - fedora-all-ppc64le
-  - fedora-all
 - job: propose_downstream
   trigger: release
   dist_git_branches:
