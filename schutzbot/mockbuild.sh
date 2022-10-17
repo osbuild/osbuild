@@ -109,9 +109,12 @@ make srpm
 # override template repositories
 template_override
 
+greenprint "🎟 Adding user to mock group"
+sudo usermod -a -G mock "$(whoami)"
+
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
-sudo mock -r $MOCK_CONFIG --no-bootstrap-chroot \
+mock -r $MOCK_CONFIG --no-bootstrap-chroot \
     --resultdir $REPO_DIR \
     rpmbuild/SRPMS/*.src.rpm
 sudo chown -R $USER ${REPO_DIR}
