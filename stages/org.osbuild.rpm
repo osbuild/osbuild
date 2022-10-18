@@ -272,7 +272,7 @@ def create_machine_id_if_needed(tree):
     os.makedirs(f"{tree}/etc", exist_ok=True)
     with open(path, "w", encoding="utf8") as f:
         # create a fake machine ID to improve reproducibility
-        f.write("ffffffffffffffffffffffffffffffff")
+        f.write("ffffffffffffffffffffffffffffffff\n")
         os.fchmod(f.fileno(), 0o400)
 
     return True
