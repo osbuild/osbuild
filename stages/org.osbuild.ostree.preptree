@@ -29,7 +29,7 @@ in `etc_group_members` will be stored in /etc/groups instead of
 /usr/etc/groups (which is read-only). Therefore all groups that
 human users need to be part of.
 
-[1] https://ostree.readthedocs.io/en/latest/manual/adapting-existing/
+[1] https://ostreedev.github.io/ostree/adapting-existing/
 [2] https://rpm-ostree.readthedocs.io/en/latest/manual/treefile/
 """
 
