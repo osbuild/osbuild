@@ -1,0 +1,59 @@
+#!/usr/bin/python3
+"""
+Create an Anaconda interactive defaults file
+
+Interactive defaults files are a way to program
+the Anaconda installer.  This stage can be used
+to create such an interactive defaults file at
+the location expected by anaconda.
+
+Only a very limited set of available kickstart
+commands are supported here.
+"""
+
+import os
+import sys
+
+import osbuild.api
+
+SCHEMA = """
+"additionalProperties": false,
+"properties": {
+  "liveimg": {
+    "type": "object",
+    "required": ["url"],
+    "properties": {
+      "url": {
+        "type": "string"
+      }
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    path = "usr/share/anaconda/interactive-defaults.ks"
+
+    config = []
+
+    liveimg = options.get("liveimg")
+    if liveimg:
+        url = liveimg["url"]
+        config += [f"liveimg --url {url}"]
+
+    target = os.path.join(tree, path)
+    base = os.path.dirname(target)
+    os.makedirs(base, exist_ok=True)
+
+    with open(target, "w", encoding="utf8") as f:
+        f.write("\n".join(config))
+        f.write("\n")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
