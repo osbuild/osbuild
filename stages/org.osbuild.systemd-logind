@@ -10,6 +10,7 @@ Drop-in configuration files can currently specify the following subset of
 options:
   - 'Login' section
     - 'NAutoVTs' option
+    - 'ReserveVT' option
 
 At least one option must be specified in the 'Login' section.
 """
@@ -46,6 +47,11 @@ SCHEMA = r"""
             "type": "integer",
             "minimum": 0,
             "description": "Configures how many virtual terminals (VTs) to allocate by default."
+          },
+          "ReserveVT": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Reserve a VT exclusively for autovt@.service activation (defaults to 6)."
           }
         }
       }
