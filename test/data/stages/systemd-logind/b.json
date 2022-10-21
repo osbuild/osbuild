@@ -460,7 +460,8 @@
           "filename": "10-ec2-getty-fix.conf",
           "config": {
             "Login": {
-              "NAutoVTs": 0
+              "NAutoVTs": 0,
+              "ReserveVT": 2
             }
           }
         }
