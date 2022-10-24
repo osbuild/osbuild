@@ -462,7 +462,8 @@
             "layouts": [
               "cz"
             ]
-          }
+          },
+          "font": "eurlatgr"
         }
       }
     ]

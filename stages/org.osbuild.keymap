@@ -6,7 +6,8 @@ The 'keymap' option sets the default console keyboard layout for vconsole.
 Its value is a keymap, such as 'us' or 'de-latin1'.
 
 Removes any existing /etc/vconsole.conf, then runs `systemd-firstboot` with the
-`--keymap` option, which sets KEYMAP in /etc/vconsole.conf.
+`--keymap` option, which sets KEYMAP in /etc/vconsole.conf. If `font` is given
+will additionally set the FONT attribute.
 
 The 'x11-keymap' option configures the X11 keyboard settings. The value of
 the option is a dictionary with keys representing settings which can be
@@ -48,6 +49,10 @@ SCHEMA = """
         }
       }
     }
+  },
+  "font": {
+    "type": "string",
+    "description": "Configures the console font."
   }
 }
 """
@@ -73,24 +78,31 @@ EndSection
         f.write(file_content)
 
 
-def configure_vconsole(tree, vconsole_keymap):
+def configure_vconsole(tree, vconsole_keymap, font):
     # We need to remove the /etc/vconsole.conf file first, because it is created while we install RPM packages.
     # systemd-firstboot expects that if /etc/vconsole.conf exists it is a user-defined value and does not change it, but
     # the assumption is wrong, because it contains a default value from RPM package.
+
+    vconsole = os.path.join(tree, "etc", "vconsole.conf")
     try:
-        os.remove(f"{tree}/etc/vconsole.conf")
+        os.remove(vconsole)
         print("/etc/vconsole.conf already exists. Replacing.")
     except FileNotFoundError:
         pass
 
     subprocess.run(["systemd-firstboot", f"--root={tree}", f"--keymap={vconsole_keymap}"], check=True)
 
+    if font:
+        with open(vconsole, "a", encoding="utf-8") as f:
+            f.write(f"FONT={font}\n")
+
 
 def main(tree, options):
     keymap = options["keymap"]
     x11_keymap = options.get("x11-keymap", {})
+    font = options.get("font", "")
 
-    configure_vconsole(tree, keymap)
+    configure_vconsole(tree, keymap, font)
     if x11_keymap:
         configure_xkb(tree, x11_keymap)
 
