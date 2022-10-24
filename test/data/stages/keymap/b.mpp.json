@@ -37,7 +37,8 @@
             "layouts": [
               "cz"
             ]
-          }
+          },
+          "font": "eurlatgr"
         }
       }
     ]
