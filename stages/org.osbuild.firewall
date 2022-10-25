@@ -63,26 +63,29 @@ SCHEMA = """
     "description": "Set default zone for connections and interfaces where no zone has been selected.",
     "type": "string"
   },
-  "sources": {
-    "description": "Bind the source to a zone",
+  "zones": {
+    "description": "Bind a list of network sources to a zone to restrict traffic from those sources based on the settings of the zone.",
     "type": "array",
+    "minItems": 1,
     "items": {
-      "type": "object",
       "additionalProperties": false,
-      "required": ["sources"],
+      "type": "object",
+      "description": "configuration for each zone",
+      "required": ["name", "sources"],
       "properties": {
+        "name": {
+          "type": "string",
+          "description": "name of the zone, if left empty the sources will apply to the default zone.",
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
         "sources": {
-          "description": "A list of sources",
           "type": "array",
-          "minItems": 1,
+          "description": "list of sources for the zone",
           "items": {
+            "additionalProperties": false,
             "type": "string",
             "description": "A source: <source>[/<mask>]|<MAC>|ipset:<ipset>"
           }
-        },
-        "zone": {
-          "description": "The zone to apply the source to",
-          "type": "string"
         }
       }
     }
@@ -98,7 +101,7 @@ def main(tree, options):
     # you can also define you own XML files in /etc/firewalld.
     enabled_services = options.get("enabled_services", [])
     disabled_services = options.get("disabled_services", [])
-    sources = options.get("sources", [])
+    zones = options.get("zones", [])
 
     default_zone = options.get("default_zone", "")
 
@@ -117,14 +120,33 @@ def main(tree, options):
                        list(map(lambda x: f"--remove-service={x}", disabled_services)),
                        check=True)
 
-    for zone_sources in sources:
-        # specifying an empty zone flag results in the source being applied to the default zone
-        zone = zone_sources.get("zone", "")
-        subprocess.run(["chroot",
-                        tree,
-                        "firewall-offline-cmd", f"--zone={zone}"] +
-                       list(map(lambda x: f"--add-source={x}", zone_sources["sources"])),
-                       check=True)
+    for zone_item in zones:
+        # specifying an empty zone flag results in the source being applied to
+        # the default zone
+        zone_name = zone_item['name']
+        # check that the given zone exists, if not create it
+        if zone_name != "":
+            res = subprocess.run(["chroot",
+                                  tree,
+                                  "firewall-offline-cmd",
+                                  f"--info-zone={zone_name}"],
+                                 check=False)
+            # INVALID_ZONE error code
+            if res.returncode == 112:
+                res = subprocess.run(["chroot",
+                                      tree,
+                                      "firewall-offline-cmd",
+                                      f"--new-zone={zone_name}"],
+                                     check=False)
+            if res.returncode != 0:
+                return 1
+        if zone_item.get("sources", []):
+            subprocess.run(["chroot",
+                            tree,
+                            "firewall-offline-cmd", f"--zone={zone_name}"] +
+                           list(map(lambda x: f"--add-source={x}",
+                                    zone_item['sources'])),
+                           check=True)
 
     return 0
 

@@ -2,7 +2,9 @@
   "added_files": [
     "/etc/firewalld/firewalld.conf.old",
     "/etc/firewalld/zones/trusted.xml",
-    "/etc/firewalld/zones/trusted.xml.old"
+    "/etc/firewalld/zones/trusted.xml.old",
+    "/etc/firewalld/zones/new-zone.xml",
+    "/etc/firewalld/zones/new-zone.xml.old"
   ],
   "deleted_files": [],
   "differences": {
