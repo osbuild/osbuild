@@ -24,7 +24,7 @@ jobs:
       with:
            fetch-depth: 2  # codecov requires this (https://github.com/codecov/codecov-action/issues/190)
     - name: "Run Tests"
-      uses: osbuild/containers/src/actions/privdocker@1e349b1c69884f9f38f7afa567869b975104828c
+      uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
         image: ghcr.io/osbuild/osbuild-ci:latest-202209070757
         run: |
