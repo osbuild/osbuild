@@ -407,7 +407,13 @@ class ImageManifest:
         self.digest = "sha256:" + hashlib.sha256(raw).hexdigest()
 
     def is_manifest_list(self):
-        return self.media_type in ("application/vnd.docker.distribution.manifest.list.v2+json", "application/vnd.oci.image.index.v1+json")
+        #  Check if mediaType is set according to docker or oci specifications
+        if self.media_type in ("application/vnd.docker.distribution.manifest.list.v2+json", "application/vnd.oci.image.index.v1+json"):
+            return True
+        # According to the OCI spec, setting mediaType is not mandatory. So, if it is not set at all, check for the existance of manifests
+        if self.media_type == "" and self.json.get("manifests") is not None:
+            return True
+        return False
 
     def _match_platform(self, wanted_arch, wanted_os, wanted_variant):
         for m in self.json.get("manifests", []):
