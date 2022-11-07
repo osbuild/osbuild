@@ -140,13 +140,6 @@ class Object:
         name = f"object-{self._id[:7]}-"
         return self.store.tempdir(prefix=name, suffix=suffix)
 
-    def __enter__(self):
-        self._check_mode(Object.Mode.WRITE)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.cleanup()
-
     def export(self, to_directory: PathLike):
         """Copy object into an external directory"""
         with self.read() as from_directory:
