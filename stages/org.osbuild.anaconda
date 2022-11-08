@@ -4,9 +4,6 @@ Configure basic aspects of the anaconda installer
 
 Create an anaconda configuration file `90-osbuild.conf` in
 the folder `/etc/anaconda/conf.d` to configure anaconda.
-
-Currently only the list of enabled kickstart modules is
-configurable via the `kickstart-modules` option.
 """
 
 import os
@@ -16,13 +13,40 @@ import osbuild.api
 
 SCHEMA = """
 "additionalProperties": true,
-"required": ["kickstart-modules"],
 "properties": {
   "kickstart-modules": {
     "type": "array",
     "description": "Kick start modules to enable",
     "items": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^[A-Za-z_.*-]+$"
+    },
+    "minItems": 1
+  },
+  "optional-modules": {
+    "type": "array",
+    "description": "Optional modules to enable",
+    "items": {
+      "type": "string",
+      "pattern": "^[A-Za-z_.*-]+$"
+    },
+    "minItems": 1
+  },
+  "forbidden-modules": {
+    "type": "array",
+    "description": "Modules to forbid",
+    "items": {
+      "type": "string",
+      "pattern": "^[A-Za-z_.*-]+$"
+    },
+    "minItems": 1
+  },
+  "activatable-modules": {
+    "type": "array",
+    "description": "Modules to activate",
+    "items": {
+      "type": "string",
+      "pattern": "^[A-Za-z_.*-]+$"
     },
     "minItems": 1
   }
@@ -33,20 +57,39 @@ CONFIG = """
 # osbuild customizations
 
 [Anaconda]
-# List of enabled Anaconda DBus modules
-kickstart_modules =
 """
 
 
 def main(tree, options):
-    modules = options["kickstart-modules"]
     product_dir = os.path.join(tree, "etc/anaconda/conf.d")
     os.makedirs(product_dir, exist_ok=True)
 
     with open(os.path.join(product_dir, "90-osbuild.conf"), "w", encoding="utf8") as f:
         f.write(CONFIG)
-        for m in modules:
-            f.write(f"    {m}\n")
+
+        if "kickstart-modules" in options:
+            f.write("kickstart_modules =\n")
+
+            for m in options["kickstart-modules"]:
+                f.write(f"    {m}\n")
+
+        if "activatable-modules" in options:
+            f.write("activatable_modules =\n")
+
+            for m in options["activatable-modules"]:
+                f.write(f"    {m}\n")
+
+        if "forbidden-modules" in options:
+            f.write("forbidden_modules =\n")
+
+            for m in options["forbidden-modules"]:
+                f.write(f"    {m}\n")
+
+        if "optional-modules" in options:
+            f.write("optional_modules =\n")
+
+            for m in options["optional-modules"]:
+                f.write(f"    {m}\n")
 
 
 if __name__ == '__main__':
