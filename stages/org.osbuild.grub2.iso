@@ -53,6 +53,19 @@ SCHEMA_2 = """
     },
     "vendor": {
         "type": "string"
+    },
+    "config": {
+      "description": "Configuration options for grub itself",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "timeout": {
+          "description": "Timeout in seconds",
+          "type": "integer",
+          "minimum": 0,
+          "default": 60
+        }
+      }
     }
   }
 }
@@ -75,7 +88,7 @@ insmod gzio
 insmod part_gpt
 insmod ext2
 
-set timeout=60
+set timeout=${timeout}
 ### END /etc/grub.d/00_header ###
 
 search --no-floppy --set=root -l '${isolabel}'
@@ -110,6 +123,8 @@ def main(root, options):
     vendor = options["vendor"]
     kdir = options["kernel"].get("dir", "/images/pxeboot")
     kopts = options["kernel"].get("opts")
+    cfg = options.get("config", {})
+    timeout = cfg.get("timeout", 60)
 
     efidir = os.path.join(root, "EFI", "BOOT")
     os.makedirs(efidir)
@@ -141,7 +156,8 @@ def main(root, options):
         "kernelpath": os.path.join(kdir, "vmlinuz"),
         "initrdpath": os.path.join(kdir, "initrd.img"),
         "isolabel": isolabel,
-        "root": " ".join(kopts)
+        "root": " ".join(kopts),
+        "timeout": timeout
     })
 
     config = os.path.join(efidir, "grub.cfg")
