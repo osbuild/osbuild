@@ -109,6 +109,17 @@
           }
         },
         {
+          "type": "org.osbuild.systemd-journald",
+          "options": {
+            "filename": "10-persistent.conf",
+            "config": {
+              "Journal": {
+                "Storage": "persistent"
+              }
+            }
+          }
+        },
+        {
           "type": "org.osbuild.selinux",
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
