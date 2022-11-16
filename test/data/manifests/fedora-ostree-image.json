@@ -1014,6 +1014,7 @@
               "label": "root"
             },
             "kernel_opts": [
+              "rw",
               "console=tty0",
               "console=ttyS0",
               "systemd.log_target=console",
