@@ -4,7 +4,7 @@ import os
 import subprocess
 import tempfile
 import uuid
-from typing import Iterator, Optional, Set
+from typing import Optional, Set
 
 from osbuild.util import jsoncomm, rmrf
 from osbuild.util.mnt import mount, umount
@@ -52,43 +52,9 @@ class Object:
         self._check_mode(Object.Mode.WRITE)
         base.clone(self._path)
 
-    @contextlib.contextmanager
-    def write(self) -> Iterator[str]:
-        """Return a path that can be written to"""
-        self._check_mode(Object.Mode.WRITE)
-
-        with self.tempdir("writer") as target:
-            mount(self._path, target, ro=False)
-            try:
-                yield target
-            finally:
-                umount(target)
-
-    @contextlib.contextmanager
-    def read(self) -> Iterator[PathLike]:
-        with self.tempdir("reader") as target:
-            with self.read_at(target) as path:
-                yield path
-
-    @contextlib.contextmanager
-    def read_at(self, target: PathLike, path: str = "/") -> Iterator[PathLike]:
-        """Read the object or a part of it at given location
-
-        Map the tree or a part of it specified via `path` at the
-        specified path `target`.
-        """
-        self._check_mode(Object.Mode.READ)
-
-        if self._path is None:
-            raise RuntimeError("read_at with no path.")
-
-        path = os.path.join(self._path, path.lstrip("/"))
-
-        mount(path, target)
-        try:
-            yield target
-        finally:
-            umount(target)
+    @property
+    def tree(self) -> str:
+        return self._path
 
     def store_tree(self):
         """Store the tree with a fresh name and close it
@@ -142,17 +108,16 @@ class Object:
 
     def export(self, to_directory: PathLike):
         """Copy object into an external directory"""
-        with self.read() as from_directory:
-            subprocess.run(
-                [
-                    "cp",
-                    "--reflink=auto",
-                    "-a",
-                    os.fspath(from_directory) + "/.",
-                    os.fspath(to_directory),
-                ],
-                check=True,
-            )
+        subprocess.run(
+            [
+                "cp",
+                "--reflink=auto",
+                "-a",
+                os.fspath(self.tree) + "/.",
+                os.fspath(to_directory),
+            ],
+            check=True,
+        )
 
     def clone(self, to_directory: PathLike):
         """Clone the object to the specified directory"""
@@ -170,6 +135,9 @@ class Object:
             check=True,
         )
 
+    def __fspath__(self):
+        return self.tree
+
 
 class HostTree:
     """Read-only access to the host file system
@@ -179,30 +147,43 @@ class HostTree:
     the host file-system.
     """
 
+    _root: Optional[tempfile.TemporaryDirectory]
+
     def __init__(self, store):
         self.store = store
+        self._root = None
+        self.init()
 
-    @staticmethod
-    def write():
-        raise ValueError("Cannot write to host")
+    def init(self):
+        if self._root:
+            return
 
-    @contextlib.contextmanager
-    def read(self):
-        with self.store.tempdir() as tmp:
-            # Create a bare bones root file system
-            # with just /usr mounted from the host
-            usr = os.path.join(tmp, "usr")
-            os.makedirs(usr)
+        self._root = self.store.tempdir(prefix="host")
 
-            mount(tmp, tmp)  # ensure / is read-only
-            mount("/usr", usr)
-            try:
-                yield tmp
-            finally:
-                umount(tmp)
+        root = self._root.name
+        # Create a bare bones root file system
+        # with just /usr mounted from the host
+        usr = os.path.join(root, "usr")
+        os.makedirs(usr)
+
+        # ensure / is read-only
+        mount(root, root)
+        mount("/usr", usr)
+
+    @property
+    def tree(self) -> os.PathLike:
+        if not self._root:
+            raise AssertionError("HostTree not initialized")
+        return self._root.name
 
     def cleanup(self):
-        pass  # noop for the host
+        if self._root:
+            umount(self._root.name)
+            self._root.cleanup()
+            self._root = None
+
+    def __fspath__(self) -> os.PathLike:
+        return self.tree
 
 
 class ObjectStore(contextlib.AbstractContextManager):
@@ -216,6 +197,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         os.makedirs(self.refs, exist_ok=True)
         os.makedirs(self.tmp, exist_ok=True)
         self._objs: Set[Object] = set()
+        self._host_tree: Optional[HostTree] = None
 
     def _get_floating(self, object_id: str) -> Optional[Object]:
         """Internal: get a non-committed object"""
@@ -223,6 +205,12 @@ class ObjectStore(contextlib.AbstractContextManager):
             if obj.mode == Object.Mode.READ and obj.id == object_id:
                 return obj
         return None
+
+    @property
+    def host_tree(self) -> HostTree:
+        if not self._host_tree:
+            self._host_tree = HostTree(self)
+        return self._host_tree
 
     def contains(self, object_id):
         if not object_id:
@@ -318,6 +306,10 @@ class ObjectStore(contextlib.AbstractContextManager):
 
     def cleanup(self):
         """Cleanup all created Objects that are still alive"""
+        if self._host_tree:
+            self._host_tree.cleanup()
+            self._host_tree = None
+
         for obj in self._objs:
             obj.cleanup()
 
@@ -348,9 +340,7 @@ class StoreServer(api.BaseAPI):
             sock.send({"path": None})
             return
 
-        reader = obj.read()
-        path = self._stack.enter_context(reader)
-        sock.send({"path": path})
+        sock.send({"path": obj.tree})
 
     def _read_tree_at(self, msg, sock):
         object_id = msg["object-id"]
@@ -363,14 +353,16 @@ class StoreServer(api.BaseAPI):
             return
 
         try:
-            reader = obj.read_at(target, subtree)
-            path = self._stack.enter_context(reader)
+            source = os.path.join(obj, subtree.lstrip("/"))
+            mount(source, target)
+            self._stack.callback(umount, target)
+
         # pylint: disable=broad-except
         except Exception as e:
             sock.send({"error": str(e)})
             return
 
-        sock.send({"path": path})
+        sock.send({"path": target})
 
     def _mkdtemp(self, msg, sock):
         args = {
