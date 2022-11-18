@@ -304,7 +304,7 @@ class Pipeline:
         # build on the host
 
         if not self.build:
-            build_tree = objectstore.HostTree(object_store)
+            build_tree = object_store.host_tree
         else:
             build_tree = object_store.get(self.build)
 
@@ -333,19 +333,18 @@ class Pipeline:
 
         while todo:
             stage = todo.pop()
-            with build_tree.read() as build_path, tree.write() as path:
 
-                monitor.stage(stage)
+            monitor.stage(stage)
 
-                r = stage.run(path,
-                              self.runner,
-                              build_path,
-                              object_store,
-                              monitor,
-                              libdir,
-                              stage_timeout)
+            r = stage.run(tree,
+                          self.runner,
+                          build_tree,
+                          object_store,
+                          monitor,
+                          libdir,
+                          stage_timeout)
 
-                monitor.result(r)
+            monitor.result(r)
 
             results["stages"].append(r)
             if not r.success:

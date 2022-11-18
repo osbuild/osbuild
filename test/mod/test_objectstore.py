@@ -44,9 +44,9 @@ class TestObjectStore(unittest.TestCase):
             # new object should be in write mode
             assert tree.mode == objectstore.Object.Mode.WRITE
 
-            with tree.write() as path:
-                p = Path(path, "A")
-                p.touch()
+            p = Path(tree, "A")
+            p.touch()
+
             # consumes the object, puts it into read mode
             object_store.commit(tree, "a")
 
@@ -59,11 +59,10 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(object_store.objects)) == 1
 
             tree = object_store.new("b")
-            with tree.write() as path:
-                p = Path(path, "A")
-                p.touch()
-                p = Path(path, "B")
-                p.touch()
+            p = Path(tree, "A")
+            p.touch()
+            p = Path(tree, "B")
+            p.touch()
 
             # consumes the object, puts it into read mode
             object_store.commit(tree, "b")
@@ -89,9 +88,9 @@ class TestObjectStore(unittest.TestCase):
             with objectstore.ObjectStore(tmp) as object_store:
                 tree = object_store.new("a")
                 self.assertEqual(len(os.listdir(object_store.tmp)), 1)
-                with tree.write() as path:
-                    p = Path(path, "A")
-                    p.touch()
+                p = Path(tree, "A")
+                p.touch()
+
             # there should be no temporary Objects dirs anymore
             self.assertEqual(len(os.listdir(object_store.tmp)), 0)
 
@@ -105,9 +104,8 @@ class TestObjectStore(unittest.TestCase):
                 assert len(os.listdir(store.refs)) == 0
 
                 tree = store.new("a")
-                with tree.write() as path, \
-                        open(os.path.join(path, "data"), "w",
-                             encoding="utf-8") as f:
+                with open(os.path.join(tree, "data"), "w",
+                          encoding="utf-8") as f:
                     f.write(data)
                     st = os.fstat(f.fileno())
                     data_inode = st.st_ino
@@ -119,13 +117,12 @@ class TestObjectStore(unittest.TestCase):
                 tree = store.get("x")
                 assert tree is not None
 
-                with tree.read() as path:
-                    with open(os.path.join(path, "data"), "r",
-                              encoding="utf-8") as f:
-                        st = os.fstat(f.fileno())
-                        self.assertNotEqual(st.st_ino, data_inode)
-                        data_read = f.read()
-                        self.assertEqual(data, data_read)
+                with open(os.path.join(tree, "data"), "r",
+                          encoding="utf-8") as f:
+                    st = os.fstat(f.fileno())
+                    self.assertNotEqual(st.st_ino, data_inode)
+                    data_read = f.read()
+                    self.assertEqual(data, data_read)
 
     def test_commit_consume(self):
         # operate with a clean object store
@@ -137,8 +134,7 @@ class TestObjectStore(unittest.TestCase):
                 assert len(os.listdir(store.refs)) == 0
 
                 tree = store.new("a")
-                with tree.write() as path, \
-                        open(os.path.join(path, "data"), "w", encoding="utf8") as f:
+                with open(os.path.join(tree, "data"), "w", encoding="utf8") as f:
                     f.write(data)
                     st = os.fstat(f.fileno())
                     data_inode = st.st_ino
@@ -149,8 +145,7 @@ class TestObjectStore(unittest.TestCase):
 
                 # check that "data" is still the very
                 # same file after committing
-                with tree.read() as path, \
-                        open(os.path.join(path, "data"), "r", encoding="utf8") as f:
+                with open(os.path.join(tree, "data"), "r", encoding="utf8") as f:
                     st = os.fstat(f.fileno())
                     self.assertEqual(st.st_ino, data_inode)
                     data_read = f.read()
@@ -162,10 +157,9 @@ class TestObjectStore(unittest.TestCase):
             assert len(os.listdir(store.objects)) == 0
 
             base = store.new("a")
-            with base.write() as path:
-                p = Path(path, "A")
-                p.touch()
-                store.commit(base, "a")
+            p = Path(base, "A")
+            p.touch()
+            store.commit(base, "a")
 
             assert store.contains("a")
             assert store_path(store, "a", "A")
@@ -173,30 +167,26 @@ class TestObjectStore(unittest.TestCase):
             tree = store.new("b")
             tree.init(base)
 
-            with tree.write() as path:
-                p = Path(path, "B")
-                p.touch()
+            p = Path(tree, "B")
+            p.touch()
 
             tree.finalize()
 
-            with tree.read() as path:
-                assert os.path.exists(f"{path}/A")
-                assert os.path.exists(f"{path}/B")
+            assert os.path.exists(os.path.join(tree, "A"))
+            assert os.path.exists(os.path.join(tree, "B"))
 
     def test_snapshot(self):
         with objectstore.ObjectStore(self.store) as store:
             tree = store.new("b")
-            with tree.write() as path:
-                p = Path(path, "A")
-                p.touch()
+            p = Path(tree, "A")
+            p.touch()
 
             assert not store.contains("a")
             store.commit(tree, "a")  # store via "a", creates a clone
             assert store.contains("a")
 
-            with tree.write() as path:
-                p = Path(path, "B")
-                p.touch()
+            p = Path(tree, "B")
+            p.touch()
             store.commit(tree, "b")
 
             # check the references exist
@@ -210,19 +200,21 @@ class TestObjectStore(unittest.TestCase):
             assert store_path(store, "b", "B")
 
     def test_host_tree(self):
-        object_store = objectstore.ObjectStore(self.store)
-        host = objectstore.HostTree(object_store)
+        with objectstore.ObjectStore(self.store) as store:
+            host = store.host_tree
 
-        # check we cannot call `write`
-        with self.assertRaises(ValueError):
-            with host.write() as _:
-                pass
+            assert host.tree
+            assert os.fspath(host)
 
-        # check we actually cannot write to the path
-        with host.read() as path:
-            p = Path(path, "osbuild-test-file")
+            # check we actually cannot write to the path
+            p = Path(host.tree, "osbuild-test-file")
             with self.assertRaises(OSError):
                 p.touch()
+                print("FOO")
+
+        # We cannot access the tree property after cleanup
+        with self.assertRaises(AssertionError):
+            _ = host.tree
 
     # pylint: disable=too-many-statements
     def test_store_server(self):
@@ -250,16 +242,12 @@ class TestObjectStore(unittest.TestCase):
             assert name.startswith("prefix")
             assert name.endswith("suffix")
 
-            path = client.read_tree("42")
-            assert path is None
-
             obj = store.new("42")
-            with obj.write() as path:
-                p = Path(path, "file.txt")
-                p.write_text("osbuild")
+            p = Path(obj, "file.txt")
+            p.write_text("osbuild")
 
-                p = Path(path, "directory")
-                p.mkdir()
+            p = Path(obj, "directory")
+            p.mkdir()
             obj.finalize()
 
             mountpoint = Path(tmpdir, "mountpoint")
@@ -300,9 +288,3 @@ class TestObjectStore(unittest.TestCase):
 
             with self.assertRaises(RuntimeError):
                 _ = client.read_tree_at("42", tmpdir, "/nonexistent")
-
-            # The tree is being read via the client, should
-            # not be able to write to it
-            with self.assertRaises(ValueError):
-                with obj.write() as _:
-                    pass
