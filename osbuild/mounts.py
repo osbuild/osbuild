@@ -60,12 +60,14 @@ class MountManager:
 
         source = self.devices.device_abspath(mount.device)
 
+        root = os.fspath(self.root)
+
         args = {
             "source": source,
             "target": mount.target,
 
-            "root": self.root,
-            "tree": self.devices.tree,
+            "root": root,
+            "tree": os.fspath(self.devices.tree),
 
             "options": mount.options,
         }
@@ -80,10 +82,10 @@ class MountManager:
             self.mounts[mount.name] = res
             return res
 
-        if not path.startswith(self.root):
+        if not path.startswith(root):
             raise RuntimeError(f"returned path '{path}' has wrong prefix")
 
-        path = os.path.relpath(path, self.root)
+        path = os.path.relpath(path, root)
 
         self.mounts[mount.name] = path
 
