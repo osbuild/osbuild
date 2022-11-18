@@ -75,7 +75,7 @@ class DeviceManager:
         args = {
             # global options
             "dev": self.devpath,
-            "tree": self.tree,
+            "tree": os.fspath(self.tree),
 
             "parent": parent,
 
