@@ -13,12 +13,15 @@ support in osbuild itself is abstract.
 """
 
 import abc
+import errno
 import hashlib
 import json
 import os
+import stat
 from typing import Any, Dict, Optional
 
 from osbuild import host
+from osbuild.util import ctx
 
 
 class Device:
@@ -94,6 +97,13 @@ class DeviceManager:
 
 class DeviceService(host.Service):
     """Device host service"""
+
+    @staticmethod
+    def ensure_device_node(path, major: int, minor: int, dir_fd=None):
+        """Ensure that the specified device node exists at the given path"""
+        mode = 0o666 | stat.S_IFBLK
+        with ctx.suppress_oserror(errno.EEXIST):
+            os.mknod(path, mode, os.makedev(major, minor), dir_fd=dir_fd)
 
     @abc.abstractmethod
     def open(self, devpath: str, parent: str, tree: str, options: Dict):
