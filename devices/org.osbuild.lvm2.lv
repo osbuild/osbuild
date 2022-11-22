@@ -30,7 +30,6 @@ Required host tools: lvchange, pvdisplay, lvdisplay
 
 import json
 import os
-import stat
 import subprocess
 import sys
 import time
@@ -198,7 +197,7 @@ class LVService(devices.DeviceService):
         fullpath = os.path.join(devpath, devname)
 
         os.makedirs(os.path.join(devpath, vg), exist_ok=True)  # type: ignore
-        os.mknod(fullpath, 0o666 | stat.S_IFBLK, os.makedev(major, minor))
+        self.ensure_device_node(fullpath, major, minor)
 
         data = {
             "path": devname,
