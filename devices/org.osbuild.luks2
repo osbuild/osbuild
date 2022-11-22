@@ -15,7 +15,6 @@ Host commands used: `cryptsetup`, `dmsetup`
 import argparse
 import contextlib
 import os
-import stat
 import subprocess
 import sys
 import uuid
@@ -112,7 +111,7 @@ class CryptDeviceService(devices.DeviceService):
         subpath = os.path.join("mapper", devname)
         fullpath = os.path.join(devpath, subpath)
         os.makedirs(os.path.join(devpath, "mapper"), exist_ok=True)
-        os.mknod(fullpath, 0o666 | stat.S_IFBLK, os.makedev(major, minor))
+        self.ensure_device_node(fullpath, major, minor)
 
         data = {
             "path": subpath,
