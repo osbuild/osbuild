@@ -18,7 +18,6 @@ __all__ = [
 
 
 class Object:
-
     class Mode(enum.Enum):
         READ = 0
         WRITE = 1
@@ -32,12 +31,13 @@ class Object:
         if self.mode == Object.Mode.READ:
             path = self.store.resolve_ref(uid)
             assert path is not None
-            self._path = path
+            self._path = os.path.join(path, "data")
         else:
             workdir = self.tempdir("workdir")
-            self._path = os.path.join(workdir.name, "object")
-            os.makedirs(self._path)
             self._workdir = workdir
+            self._path = os.path.join(workdir.name, "data")
+            tree = os.path.join(self._path, "tree")
+            os.makedirs(tree)
 
     @property
     def id(self) -> Optional[str]:
@@ -54,7 +54,7 @@ class Object:
 
     @property
     def tree(self) -> str:
-        return self._path
+        return os.path.join(self._path, "tree")
 
     def store_tree(self):
         """Store the tree with a fresh name and close it
@@ -68,7 +68,9 @@ class Object:
 
         name = str(uuid.uuid4())
 
-        destination = os.path.join(self.store.objects, name)
+        base = os.path.join(self.store.objects, name)
+        os.makedirs(base)
+        destination = os.path.join(base, "data")
         os.rename(self._path, destination)
         self._path = destination
 
@@ -90,7 +92,7 @@ class Object:
             # manually remove the tree, it might contain
             # files with immutable flag set, which will
             # throw off standard Python 3 tempdir cleanup
-            rmrf.rmtree(os.path.join(workdir.name, "object"))
+            rmrf.rmtree(os.path.join(workdir.name, "data"))
 
             workdir.cleanup()
             self._workdir = None

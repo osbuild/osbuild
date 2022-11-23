@@ -20,7 +20,7 @@ def store_path(store: objectstore.ObjectStore, ref: str, path: str) -> bool:
     obj = store.resolve_ref(ref)
     if not obj or not os.path.exists(obj):
         return False
-    return os.path.exists(os.path.join(obj, path))
+    return os.path.exists(os.path.join(obj, "data", "tree", path))
 
 
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
