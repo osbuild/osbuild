@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 Construct an ext4 file-system via mkfs.ext4(8)
 

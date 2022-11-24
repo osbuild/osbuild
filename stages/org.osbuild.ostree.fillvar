@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 Pre-populate /var directory for a given stateroot.
 """

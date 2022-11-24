@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 Configure GRUB2 bootloader and set boot options (legacy, i.e. non-BLS)
 

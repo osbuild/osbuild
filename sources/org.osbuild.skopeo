@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Fetch container image from a registry using skopeo
 
 Buildhost commands used: `skopeo`.

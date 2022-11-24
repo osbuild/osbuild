@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 Initialize the Arch Linux keyring for Arch based distributions
 

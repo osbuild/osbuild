@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 Install the grub2 boot loader for non-UEFI systems or hybrid boot
 

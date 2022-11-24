@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Fetch OSTree commits from an repository
 
 Uses ostree to pull specific commits from (remote) repositories

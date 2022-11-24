@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 Initialize the sysroot and pull and deploy an OStree commit
 
