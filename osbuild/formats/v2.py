@@ -394,6 +394,18 @@ def load(description: Dict, index: Index) -> Manifest:
 def output(manifest: Manifest, res: Dict) -> Dict:
     """Convert a result into the v2 format"""
 
+    def collect_metadata(p: Pipeline) -> Dict[str, Any]:
+        data: Dict[str, Any] = {}
+        r = res.get(p.id, {})
+        for stage in r.get("stages", []):
+            md = stage.metadata
+            if not md:
+                continue
+            val = data.setdefault(stage.name, {})
+            val.update(md)
+
+        return data
+
     result: Dict[str, Any] = {}
 
     if not res["success"]:
@@ -424,16 +436,7 @@ def output(manifest: Manifest, res: Dict) -> Dict:
 
         # gather all the metadata
         for p in manifest.pipelines.values():
-            data: Dict[str, Any] = {}
-            r = res.get(p.id, {})
-            for stage in r.get("stages", []):
-                md = stage.metadata
-                if not md:
-                    continue
-                name = stage.name
-                val = data.setdefault(name, {})
-                val.update(md)
-
+            data: Dict[str, Any] = collect_metadata(p)
             if data:
                 result["metadata"][p.name] = data
 
