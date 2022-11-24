@@ -8,7 +8,7 @@ import sys
 import tempfile
 import threading
 import traceback
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from .util import jsoncomm
 from .util.types import PathLike
@@ -215,3 +215,69 @@ def metadata(data: Dict, path="/run/osbuild/api/osbuild"):
             "metadata": 0
         }
         client.send(msg, fds=[f.fileno()])
+
+
+def default_main(
+    schema_1: Optional[str] = None,
+    schema_2: Optional[str] = None,
+    info: Optional[str] = None,
+    capabilities: Optional[List[str]] = None,
+) -> None:
+    """Provides a default 'main' implementation for osbuild modules. This
+    registers `--schema-1` and `--schema-2` arguments to print available
+    schemas."""
+
+    # Argument parsing is implemented naively (without the use of argparse) to
+    # keep our command line 'API' as simple as possible to implement in other
+    # languages without having to emulate argparse in those languages.
+
+    # The all flag gives us all information about a stage
+    if "--all" in sys.argv or "-a" in sys.argv:
+        data = {
+            "schema": {
+                "1": schema_1.strip() if schema_1 is not None else None,
+                "2": schema_2.strip() if schema_2 is not None else None,
+            },
+            "desc": info.strip().splitlines()[0] if info is not None else None,
+            "info": "".join(info.strip().splitlines()[1:]) if info is not None else None,
+            "caps": capabilities if capabilities else [],
+        }
+
+        print(json.dumps(data))
+        sys.exit(0)
+
+    # When info is requested the module responds with its docstring
+    if "--info" in sys.argv or "-i" in sys.argv:
+        if info is not None:
+            print(info)
+        else:
+            print("This module has no available information.", file=sys.stderr)
+            sys.exit(1)
+
+        sys.exit(0)
+
+    # When the schema is requested the module responds in JSON format with a
+    # `vX` keys where `X` is the version, and the schemas as strings.
+    if "--schema" in sys.argv or "-s" in sys.argv:
+        schema = {
+            "v1": schema_1.strip() if schema_1 is not None else None,
+            "v2": schema_2.strip() if schema_2 is not None else None,
+        }
+
+        # When there are no schemas registered at all.
+        if not schema:
+            print("This module has no available schemas.", file=sys.stderr)
+            sys.exit(1)
+
+        print(json.dumps(schema))
+        sys.exit(0)
+
+    # When the capabilities are requested the module responds in JSON format
+    if "--capabilities" in sys.argv or "-c" in sys.argv:
+        # When there are no schemas registered at all.
+        if capabilities is None:
+            print("This module does not require capabilities.", file=sys.stderr)
+            sys.exit(1)
+
+        print(json.dumps(capabilities))
+        sys.exit(0)
