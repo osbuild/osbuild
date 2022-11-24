@@ -20,13 +20,13 @@ called `FormatInfo` together with `Index.get_format_inf` and
 inferred for a specific manifest description via a helper
 method called `detect_format_info`
 """
-import ast
 import contextlib
 import copy
 import importlib.util
 import json
 import os
 import pkgutil
+import subprocess
 import sys
 from collections import deque
 from typing import (Any, Deque, Dict, List, Optional, Sequence, Set, Tuple,
@@ -383,79 +383,55 @@ class ModuleInfo:
         return schema
 
     @classmethod
-    def _parse_schema(cls, klass, name, node):
-        if not node:
+    def _parse_schema(cls, klass, name, value):
+        if not value:
             return {}
 
-        value = node.value
-        if not isinstance(value, ast.Str):
+        if not isinstance(value, str):
             return {}
 
         try:
-            return json.loads("{" + value.s + "}")
+            return json.loads("{" + value + "}")
         except json.decoder.JSONDecodeError as e:
             msg = "Invalid schema: " + e.msg
             line = e.doc.splitlines()[e.lineno - 1]
             fullname = cls.MODULES[klass] + "/" + name
-            lineno = e.lineno + node.lineno - 1
-            detail = fullname, lineno, e.colno, line
+            detail = fullname, e.lineno, e.colno, line
             raise SyntaxError(msg, detail) from None
 
     @classmethod
-    def _parse_caps(cls, _klass, _name, node):
-        if not node:
-            return set()
-
-        return {e.s for e in node.value.elts}
+    def _parse_caps(cls, _klass, _name, values):
+        return set(values)
 
     @classmethod
     def load(cls, root, klass, name) -> Optional["ModuleInfo"]:
-        names = ["SCHEMA", "SCHEMA_2", "CAPABILITIES"]
-
-        def filter_type(lst, target):
-            return [x for x in lst if isinstance(x, target)]
-
-        def targets(a):
-            return [t.id for t in filter_type(a.targets, ast.Name)]
-
         base = cls.MODULES.get(klass)
         if not base:
             raise ValueError(f"Unsupported type: {klass}")
 
         path = os.path.join(root, base, name)
+
         try:
-            with open(path, encoding="utf8") as f:
-                data = f.read()
-        except FileNotFoundError:
+            data = json.loads(subprocess.check_output([path, "-a"]))
+        except subprocess.CalledProcessError:
+            return None
+        except json.decoder.JSONDecodeError:
             return None
 
-        tree = ast.parse(data, name)
+        def parse_schema(value):
+            return cls._parse_schema(klass, name, value)
 
-        docstring = ast.get_docstring(tree)
-        doclist = docstring.split("\n") if docstring else []
-
-        assigns = filter_type(tree.body, ast.Assign)
-        values = {
-            t: a
-            for a in assigns
-            for t in targets(a)
-            if t in names
-        }
-
-        def parse_schema(node):
-            return cls._parse_schema(klass, name, node)
-
-        def parse_caps(node):
-            return cls._parse_caps(klass, name, node)
+        def parse_caps(value):
+            return cls._parse_caps(klass, name, value)
 
         info = {
             'schema': {
-                "1": parse_schema(values.get("SCHEMA")),
-                "2": parse_schema(values.get("SCHEMA_2")),
+                "1": parse_schema(data["schema"]["1"]),
+                "2": parse_schema(data["schema"]["2"]),
             },
-            'desc': doclist[0],
-            'info': "\n".join(doclist[1:]),
-            'caps': parse_caps(values.get("CAPABILITIES"))
+            'desc': data["desc"],
+            'info': data["info"],
+            'caps': parse_caps(data["caps"])
         }
         return cls(klass, name, path, info)
 
