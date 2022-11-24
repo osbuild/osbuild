@@ -18,10 +18,16 @@ import sys
 import tempfile
 from operator import itemgetter
 
-# pylint: disable=import-error
-import pyalpm
-
 from osbuild import api
+
+# This seems weird but because we execute modules to get their schema all
+# modules should be importable to be able to reach `main`.
+try:
+    # pylint: disable=import-error
+    import pyalpm
+except ImportError:
+    pass
+
 
 SCHEMA_2 = """
 "options": {
@@ -138,6 +144,8 @@ def main(tree, inputs):
 
 
 if __name__ == '__main__':
+    api.default_main(schema_2=SCHEMA_2, info=sys.modules["__main__"].__doc__.strip())
+
     args = api.arguments()
     r = main(args["tree"], args["inputs"])
     sys.exit(r)

@@ -137,6 +137,7 @@ def main(args, options):
 
 
 if __name__ == '__main__':
+    osbuild.api.default_main(schema_2=SCHEMA_2, info=sys.modules["__main__"].__doc__.strip(), capabilities=CAPABILITIES)
     _args = osbuild.api.arguments()
     r = main(_args, _args["options"])
     sys.exit(r)

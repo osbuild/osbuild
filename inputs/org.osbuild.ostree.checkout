@@ -13,7 +13,7 @@ import os
 import subprocess
 import sys
 
-from osbuild import inputs
+from osbuild import api, inputs
 
 SCHEMA = """
 "additionalProperties": false,
@@ -123,6 +123,7 @@ class OSTreeCheckoutInput(inputs.InputService):
 
 
 def main():
+    api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     service = OSTreeCheckoutInput.from_args(sys.argv[1:])
     service.main()
 

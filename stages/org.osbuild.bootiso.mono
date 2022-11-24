@@ -428,6 +428,7 @@ def main(inputs, root, options, workdir, loop_client):
 
 
 if __name__ == '__main__':
+    osbuild.api.default_main(schema_2=SCHEMA_2, info=sys.modules["__main__"].__doc__.strip())
     args = osbuild.api.arguments()
     _output_dir = args["tree"]
     with tempfile.TemporaryDirectory(dir=_output_dir) as _workdir:

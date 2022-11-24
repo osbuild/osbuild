@@ -71,6 +71,7 @@ def main(devices, options):
 
 
 if __name__ == '__main__':
+    osbuild.api.default_main(schema_2=SCHEMA_2)
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

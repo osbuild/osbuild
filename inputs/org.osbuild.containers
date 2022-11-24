@@ -20,7 +20,7 @@ root of the tree is used as the oci archive file to install.
 import os
 import sys
 
-from osbuild import inputs
+from osbuild import api, inputs
 
 SCHEMA = r"""
 "definitions": {
@@ -208,6 +208,7 @@ class ContainersInput(inputs.InputService):
 
 
 def main():
+    api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     service = ContainersInput.from_args(sys.argv[1:])
     service.main()
 

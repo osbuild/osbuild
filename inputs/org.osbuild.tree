@@ -10,7 +10,7 @@ string it returns an empty tree.
 
 import sys
 
-from osbuild import inputs
+from osbuild import api, inputs
 
 SCHEMA = """
 "additionalProperties": false,
@@ -90,6 +90,7 @@ class TreeInput(inputs.InputService):
 
 
 def main():
+    api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     service = TreeInput.from_args(sys.argv[1:])
     service.main()
 

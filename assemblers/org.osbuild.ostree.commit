@@ -186,6 +186,7 @@ def main(tree, output_dir, options, meta):
 
 
 if __name__ == '__main__':
+    api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip(), capabilities=CAPABILITIES)
     args = api.arguments()
     args_input = args["inputs"]["tree"]["path"]
     args_output = args["tree"]

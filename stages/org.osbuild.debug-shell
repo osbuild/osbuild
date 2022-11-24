@@ -65,6 +65,7 @@ UnsetEnvironment=LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETAR
 
 
 if __name__ == '__main__':
+    osbuild.api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

@@ -65,5 +65,6 @@ def main(tree, options):
 
 
 if __name__ == "__main__":
+    osbuild.api.default_main(schema_2=SCHEMA_2)
     args = osbuild.api.arguments()
     sys.exit(main(args["tree"], args["options"]))

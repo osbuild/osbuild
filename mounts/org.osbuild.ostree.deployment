@@ -19,7 +19,7 @@ import subprocess
 import sys
 from typing import Dict
 
-from osbuild import mounts
+from osbuild import api, mounts
 from osbuild.util import ostree
 
 SCHEMA_2 = """
@@ -128,6 +128,7 @@ class OSTreeDeploymentMount(mounts.MountService):
 
 
 def main():
+    api.default_main(schema_2=SCHEMA_2, info=sys.modules["__main__"].__doc__.strip())
     service = OSTreeDeploymentMount.from_args(sys.argv[1:])
     service.main()
 

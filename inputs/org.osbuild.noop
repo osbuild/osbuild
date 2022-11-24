@@ -11,7 +11,7 @@ import os
 import sys
 import uuid
 
-from osbuild import inputs
+from osbuild import api, inputs
 
 SCHEMA = """
 "additionalProperties": true
@@ -36,6 +36,7 @@ class NoopInput(inputs.InputService):
 
 
 def main():
+    api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     service = NoopInput.from_args(sys.argv[1:])
     service.main()
 

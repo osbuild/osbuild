@@ -16,7 +16,7 @@ import contextlib
 import os
 import sys
 
-from osbuild import sources
+from osbuild import api, sources
 from osbuild.util.checksum import verify_file
 
 SCHEMA = """
@@ -79,6 +79,7 @@ class InlineSource(sources.SourceService):
 
 
 def main():
+    api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     service = InlineSource.from_args(sys.argv[1:])
     service.main()
 

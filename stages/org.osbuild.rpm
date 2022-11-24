@@ -395,6 +395,7 @@ def main(tree, inputs, options):
 
 
 if __name__ == '__main__':
+    api.default_main(schema_1=SCHEMA, schema_2=SCHEMA_2, info=sys.modules["__main__"].__doc__.strip())
     args = api.arguments()
     r = main(args["tree"], args["inputs"], args["options"])
     sys.exit(r)

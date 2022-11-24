@@ -10,7 +10,7 @@ Host commands used: mount
 import sys
 from typing import Dict
 
-from osbuild import mounts
+from osbuild import api, mounts
 
 SCHEMA_2 = """
 "additionalProperties": false,
@@ -45,6 +45,7 @@ class XfsMount(mounts.FileSystemMountService):
 
 
 def main():
+    api.default_main(schema_2=SCHEMA_2, info=sys.modules["__main__"].__doc__.strip())
     service = XfsMount.from_args(sys.argv[1:])
     service.main()
 

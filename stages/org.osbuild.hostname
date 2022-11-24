@@ -42,6 +42,7 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
+    osbuild.api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

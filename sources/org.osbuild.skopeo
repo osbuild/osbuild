@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 
-from osbuild import sources
+from osbuild import api, sources
 from osbuild.util import ctx
 
 SCHEMA = """
@@ -117,6 +117,7 @@ class SkopeoSource(sources.SourceService):
 
 
 def main():
+    api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     service = SkopeoSource.from_args(sys.argv[1:])
     service.main()
 

@@ -12,7 +12,7 @@ import subprocess
 import sys
 import uuid
 
-from osbuild import sources
+from osbuild import api, sources
 from osbuild.util.ostree import show
 from osbuild.util.rhsm import Subscriptions
 
@@ -157,6 +157,7 @@ class OSTreeSource(sources.SourceService):
 
 
 def main():
+    api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     service = OSTreeSource.from_args(sys.argv[1:])
     service.main()
 

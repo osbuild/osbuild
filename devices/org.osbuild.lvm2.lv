@@ -35,7 +35,7 @@ import sys
 import time
 from typing import Dict, Tuple, Union
 
-from osbuild import devices
+from osbuild import api, devices
 
 SCHEMA = """
 "additionalProperties": false,
@@ -223,6 +223,7 @@ class LVService(devices.DeviceService):
 
 
 def main():
+    api.default_main(schema_1=SCHEMA, info=sys.modules["__main__"].__doc__.strip())
     service = LVService.from_args(sys.argv[1:])
     service.main()
 
