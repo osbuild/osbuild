@@ -26,7 +26,13 @@ SCHEMA_2 = """
   },
   "options": {
     "type": "object",
-    "additionalProperties": true
+    "additionalProperties": false,
+    "properties": {
+      "readonly": {
+        "description": "mount the source as a readonly device",
+        "type": "boolean"
+      }
+    }
   }
 }
 """
@@ -34,8 +40,8 @@ SCHEMA_2 = """
 
 class FatMount(mounts.FileSystemMountService):
 
-    def translate_options(self, _options: Dict):
-        return ["-t", "vfat"]
+    def translate_options(self, options: Dict):
+        return ["-t", "vfat"] + super().translate_options(options)
 
 
 def main():
