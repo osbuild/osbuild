@@ -168,21 +168,21 @@ def osbuild_cli():
                 for pid in exports:
                     export(pid, output_directory, object_store, manifest)
 
+            if args.json:
+                r = fmt.output(manifest, r)
+                json.dump(r, sys.stdout)
+                sys.stdout.write("\n")
+            else:
+                if r["success"]:
+                    for name, pl in manifest.pipelines.items():
+                        print(f"{name + ':': <10}\t{pl.id}")
+                else:
+                    print()
+                    print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
+
+            return 0 if r["success"] else 1
+
     except KeyboardInterrupt:
         print()
         print(f"{vt.reset}{vt.bold}{vt.red}Aborted{vt.reset}")
         return 130
-
-    if args.json:
-        r = fmt.output(manifest, r)
-        json.dump(r, sys.stdout)
-        sys.stdout.write("\n")
-    else:
-        if r["success"]:
-            for name, pl in manifest.pipelines.items():
-                print(f"{name + ':': <10}\t{pl.id}")
-        else:
-            print()
-            print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
-
-    return 0 if r["success"] else 1
