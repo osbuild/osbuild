@@ -123,8 +123,11 @@ class FileSystemMountService(MountService):
         self.mountpoint = None
         self.check = False
 
+    # pylint: disable=no-self-use
     @abc.abstractmethod
     def translate_options(self, options: Dict) -> List:
+        if options.get("readonly", False):
+            return ["-o", "ro"]
         return []
 
     def mount(self, args: Dict):
