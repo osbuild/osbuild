@@ -7,6 +7,7 @@ from typing import Any, Dict
 from osbuild.meta import Index, ModuleInfo, ValidationResult
 
 from ..inputs import Input
+from ..objectstore import ObjectStore
 from ..pipeline import Manifest, Pipeline, Runner, Stage
 from ..sources import Source
 
@@ -391,14 +392,21 @@ def load(description: Dict, index: Index) -> Manifest:
 
 
 #pylint: disable=too-many-branches
-def output(manifest: Manifest, res: Dict) -> Dict:
+def output(manifest: Manifest, res: Dict, store: ObjectStore = None) -> Dict:
     """Convert a result into the v2 format"""
 
     def collect_metadata(p: Pipeline) -> Dict[str, Any]:
         data: Dict[str, Any] = {}
-        r = res.get(p.id, {})
-        for stage in r.get("stages", []):
-            md = stage.metadata
+
+        if not store:  # for testing
+            return data
+
+        obj = store.get(p.id)
+        if not obj:
+            return data
+
+        for stage in p.stages:
+            md = obj.meta.get(stage.id)
             if not md:
                 continue
             val = data.setdefault(stage.name, {})
