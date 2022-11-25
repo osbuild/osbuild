@@ -195,17 +195,17 @@ def load(description: Dict, index: Index) -> Manifest:
     return manifest
 
 
-def output(manifest: Manifest, res: Dict) -> Dict:
+def output(manifest: Manifest, res: Dict, store=None) -> Dict:
     """Convert a result into the v1 format"""
 
-    def result_for_stage(result: BuildResult):
+    def result_for_stage(result: BuildResult, obj):
         return {
             "id": result.id,
             "type": result.name,
             "success": result.success,
             "error": result.error,
             "output": result.output,
-            "metadata": result.metadata,
+            "metadata": obj and obj.meta.get(result.id),
         }
 
     def result_for_pipeline(pipeline):
@@ -223,10 +223,12 @@ def output(manifest: Manifest, res: Dict) -> Dict:
             retval["build"] = result_for_pipeline(build)
             retval["success"] = retval["build"]["success"]
 
+        obj = store and pipeline.id and store.get(pipeline.id)
+
         stages = current.get("stages")
         if stages:
             retval["stages"] = [
-                result_for_stage(r) for r in stages
+                result_for_stage(r, obj) for r in stages
             ]
         return retval
 
@@ -244,8 +246,9 @@ def output(manifest: Manifest, res: Dict) -> Dict:
 
     # The assembler pipeline must have exactly one stage
     # which is the v1 assembler
+    obj = store and store.get(assembler.id)
     stage = current["stages"][0]
-    result["assembler"] = result_for_stage(stage)
+    result["assembler"] = result_for_stage(stage, obj)
     if not result["assembler"]["success"]:
         result["success"] = False
 

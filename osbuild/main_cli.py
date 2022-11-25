@@ -169,7 +169,7 @@ def osbuild_cli():
                     export(pid, output_directory, object_store, manifest)
 
             if args.json:
-                r = fmt.output(manifest, r)
+                r = fmt.output(manifest, r, object_store)
                 json.dump(r, sys.stdout)
                 sys.stdout.write("\n")
             else:
