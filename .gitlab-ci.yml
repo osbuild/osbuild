@@ -104,8 +104,6 @@ Manifests:
           - aws/fedora-36-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
-          - aws/centos-stream-9-x86_64
-          - aws/centos-stream-9-aarch64
       - RUNNER:
           - aws/rhel-8.6-ga-x86_64
           - aws/rhel-8.6-ga-aarch64
@@ -113,8 +111,6 @@ Manifests:
           - aws/rhel-9.0-ga-aarch64
           - aws/rhel-8.7-nightly-x86_64
           - aws/rhel-8.7-nightly-aarch64
-          - aws/rhel-9.1-nightly-x86_64
-          - aws/rhel-9.1-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
 finish:
