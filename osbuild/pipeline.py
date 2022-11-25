@@ -43,12 +43,11 @@ def cleanup(*objs):
 
 
 class BuildResult:
-    def __init__(self, origin, returncode, output, metadata, error):
+    def __init__(self, origin, returncode, output, error):
         self.name = origin.name
         self.id = origin.id
         self.success = returncode == 0
         self.output = output
-        self.metadata = metadata
         self.error = error
 
     def as_dict(self):
@@ -239,7 +238,7 @@ class Stage:
             if r.returncode == 0:
                 tree.meta.set(self.id, api.metadata)
 
-        return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
+        return BuildResult(self, r.returncode, r.output, api.error)
 
 
 class Runner:
