@@ -40,16 +40,16 @@ class TestDescriptions(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
 
-            data = pathlib.Path(tmpdir, "data")
             storedir = pathlib.Path(tmpdir, "store")
             root = pathlib.Path("/")
             runner = Runner(index.detect_host_runner())
             monitor = NullMonitor(sys.stderr.fileno())
             libdir = os.path.abspath(os.curdir)
             store = ObjectStore(storedir)
-            data.mkdir()
 
-            res = stage.run(data, runner, root, store, monitor, libdir)
+            with ObjectStore(storedir) as store:
+                data = store.new(stage.id)
+                res = stage.run(data, runner, root, store, monitor, libdir)
 
         self.assertEqual(res.success, True)
         self.assertEqual(res.id, stage.id)

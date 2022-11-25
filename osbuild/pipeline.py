@@ -236,6 +236,9 @@ class Stage:
                                readonly_binds=ro_binds,
                                extra_env=extra_env)
 
+            if r.returncode == 0:
+                tree.meta.set(self.id, api.metadata)
+
         return BuildResult(self, r.returncode, r.output, api.metadata, api.error)
 
 
