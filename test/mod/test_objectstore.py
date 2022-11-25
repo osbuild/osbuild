@@ -254,6 +254,32 @@ class TestObjectStore(unittest.TestCase):
 
             md.set("a", data)
             assert md.get("a") == data
+
+        with objectstore.ObjectStore(self.store) as store:
+            obj = store.new("a")
+            p = Path(obj, "A")
+            p.touch()
+
+            obj.meta.set("md", data)
+            assert obj.meta.get("md") == data
+
+            store.commit(obj, "x")
+            obj.meta.set("extra", extra)
+            assert obj.meta.get("extra") == extra
+
+            store.commit(obj, "a")
+
+        with objectstore.ObjectStore(self.store) as store:
+            obj = store.get("a")
+
+            assert obj.meta.get("md") == data
+            assert obj.meta.get("extra") == extra
+
+            ext = store.get("x")
+
+            assert ext.meta.get("md") == data
+            assert ext.meta.get("extra") is None
+
     def test_host_tree(self):
         with objectstore.ObjectStore(self.store) as store:
             host = store.host_tree

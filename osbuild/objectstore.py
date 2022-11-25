@@ -5,7 +5,7 @@ import os
 import subprocess
 import tempfile
 import uuid
-from typing import Optional, Set
+from typing import Any, Optional, Set
 
 from osbuild.util import jsoncomm, rmrf
 from osbuild.util.mnt import mount, umount
@@ -16,6 +16,17 @@ from . import api
 __all__ = [
     "ObjectStore",
 ]
+
+
+class PathAdapter:
+    """Expose an object attribute as `os.PathLike`"""
+
+    def __init__(self, obj: Any, attr: str) -> None:
+        self.obj = obj
+        self.attr = attr
+
+    def __fspath__(self):
+        return getattr(self.obj, self.attr)
 
 
 class Object:
@@ -111,6 +122,12 @@ class Object:
             tree = os.path.join(self._path, "tree")
             os.makedirs(tree)
 
+        # Expose our base path as `os.PathLike` via `PathAdater`
+        # so any changes to it, e.g. via `store_tree`, will be
+        # automatically picked up by `Metadata`.
+        wrapped = PathAdapter(self, "_path")
+        self._meta = self.Metadata(wrapped, folder="meta")
+
     @property
     def id(self) -> Optional[str]:
         return self._id
@@ -127,6 +144,10 @@ class Object:
     @property
     def tree(self) -> str:
         return os.path.join(self._path, "tree")
+
+    @property
+    def meta(self) -> Metadata:
+        return self._meta
 
     def store_tree(self):
         """Store the tree with a fresh name and close it
