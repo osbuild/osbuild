@@ -199,6 +199,61 @@ class TestObjectStore(unittest.TestCase):
             assert store_path(store, "b", "A")
             assert store_path(store, "b", "B")
 
+    def test_metadata(self):
+
+        # test metadata object directly first
+        with tempfile.TemporaryDirectory() as tmp:
+            md = objectstore.Object.Metadata(tmp)
+
+            assert os.fspath(md) == tmp
+
+            with self.assertRaises(KeyError):
+                with md.read("a"):
+                    pass
+
+            # do not write anything to the file, it should not get stored
+            with md.write("a"):
+                pass
+
+            assert len(list(os.scandir(tmp))) == 0
+
+            # also we should not write anything if an exception was raised
+            with self.assertRaises(AssertionError):
+                with md.write("a") as f:
+                    f.write("{}")
+                    raise AssertionError
+
+            with md.write("a") as f:
+                f.write("{}")
+
+            assert len(list(os.scandir(tmp))) == 1
+
+            with md.read("a") as f:
+                assert f.read() == "{}"
+
+        data = {
+            "boolean": True,
+            "number": 42,
+            "string": "yes, please"
+        }
+
+        extra = {
+            "extra": "data"
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            md = objectstore.Object.Metadata(tmp)
+
+            d = md.get("a")
+            assert d is None
+
+            md.set("a", None)
+            with self.assertRaises(KeyError):
+                with md.read("a"):
+                    pass
+
+            md.set("a", data)
+            assert md.get("a") == data
     def test_host_tree(self):
         with objectstore.ObjectStore(self.store) as store:
             host = store.host_tree

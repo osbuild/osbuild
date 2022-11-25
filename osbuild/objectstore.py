@@ -1,5 +1,6 @@
 import contextlib
 import enum
+import json
 import os
 import subprocess
 import tempfile
@@ -21,6 +22,77 @@ class Object:
     class Mode(enum.Enum):
         READ = 0
         WRITE = 1
+
+    class Metadata:
+        """store and retrieve metadata for an object"""
+
+        def __init__(self, base, folder: Optional[str] = None) -> None:
+            self.base = base
+            self.folder = folder
+            os.makedirs(self.path, exist_ok=True)
+
+        def _path_for_key(self, key) -> str:
+            assert key
+            name = f"{key}.json"
+            return os.path.join(self.path, name)
+
+        @property
+        def path(self):
+            if not self.folder:
+                return self.base
+            return os.path.join(self.base, self.folder)
+
+        @contextlib.contextmanager
+        def write(self, key):
+
+            tmp = tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf8",
+                dir=self.path,
+                prefix=".",
+                suffix=".tmp.json",
+                delete=True,
+            )
+
+            with tmp as f:
+                yield f
+
+                f.flush()
+
+                # if nothing was written to the file
+                si = os.stat(tmp.name)
+                if si.st_size == 0:
+                    return
+
+                dest = self._path_for_key(key)
+                # ensure it is proper json?
+                os.link(tmp.name, dest)
+
+        @contextlib.contextmanager
+        def read(self, key):
+            dest = self._path_for_key(key)
+            try:
+                with open(dest, "r", encoding="utf8") as f:
+                    yield f
+            except FileNotFoundError:
+                raise KeyError(f"No metadata for '{key}'") from None
+
+        def set(self, key: str, data):
+
+            if data is None:
+                return
+
+            with self.write(key) as f:
+                json.dump(data, f, indent=2)
+
+        def get(self, key: str):
+            with contextlib.suppress(KeyError):
+                with self.read(key) as f:
+                    return json.load(f)
+            return None
+
+        def __fspath__(self):
+            return self.path
 
     def __init__(self, store: "ObjectStore", uid: str, mode: Mode):
         self._mode = mode
