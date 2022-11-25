@@ -2,8 +2,10 @@
 # Test for API infrastructure
 #
 
+import json
 import multiprocessing as mp
 import os
+import pathlib
 import tempfile
 import unittest
 
@@ -99,19 +101,14 @@ class TestAPI(unittest.TestCase):
         # Check that `api.metadata` leads to `API.metadata` being
         # set correctly
         tmpdir = self.tmp.name
-        path = os.path.join(tmpdir, "osbuild-api")
+        path = pathlib.Path(tmpdir, "metadata")
+        path.touch()
 
-        def metadata(path):
-            data = {"meta": "42"}
-            osbuild.api.metadata(data, path=path)
-            return 0
+        data = {"meta": "42"}
+        osbuild.api.metadata(data, path=path)
 
-        api = osbuild.api.API(socket_address=path)
-        with api:
-            p = mp.Process(target=metadata, args=(path, ))
-            p.start()
-            p.join()
-            self.assertEqual(p.exitcode, 0)
-        metadata = api.metadata  # pylint: disable=no-member
+        with open(path, "r", encoding="utf8") as f:
+            metadata = json.load(f)
+
         assert metadata
-        self.assertEqual(metadata, {"meta": "42"})
+        self.assertEqual(metadata, data)
