@@ -185,6 +185,10 @@ class Stage:
                 "mounts": mounts,
             }
 
+            meta = cm.enter_context(
+                tree.meta.write(self.id)
+            )
+
             ro_binds = [
                 f"{self.info.path}:/run/osbuild/bin/{self.name}",
                 f"{inputs_tmpdir}:{inputs_mapped}",
@@ -193,6 +197,7 @@ class Stage:
 
             binds = [
                 os.fspath(tree) + ":/run/osbuild/tree",
+                meta.name + ":/run/osbuild/meta",
                 f"{mounts_tmpdir}:{mounts_mapped}"
             ]
 
@@ -234,9 +239,6 @@ class Stage:
                                binds=binds,
                                readonly_binds=ro_binds,
                                extra_env=extra_env)
-
-            if r.returncode == 0:
-                tree.meta.set(self.id, api.metadata)
 
         return BuildResult(self, r.returncode, r.output, api.error)
 
