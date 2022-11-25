@@ -158,14 +158,14 @@
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221115/"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124"
           }
         ],
         "aarch64": [
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221115/"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124"
           }
         ]
       },
@@ -175,14 +175,14 @@
           {
             "title": "fedora-modular",
             "name": "fedora-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-modular-development-20221115/"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-modular-20221124"
           }
         ],
         "aarch64": [
           {
             "title": "fedora-modular",
             "name": "fedora-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-modular-development-20221115/"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-modular-20221124"
           }
         ]
       },
@@ -192,14 +192,14 @@
           {
             "title": "updates",
             "name": "updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221115/"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20221124"
           }
         ],
         "aarch64": [
           {
             "title": "updates",
             "name": "updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221115/"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20221124"
           }
         ]
       },
@@ -209,14 +209,14 @@
           {
             "title": "updates-modular",
             "name": "updates-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-modular-development-20221115/"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-modular-20221124"
           }
         ],
         "aarch64": [
           {
             "title": "updates-modular",
             "name": "updates-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-modular-development-20221115/"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-modular-20221124"
           }
         ]
       }
