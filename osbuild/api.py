@@ -47,7 +47,7 @@ class BaseAPI(abc.ABC):
         self.thread = None
         self._socketdir = None
 
-    @property
+    @property  # type: ignore
     @classmethod
     @abc.abstractmethod
     def endpoint(cls):

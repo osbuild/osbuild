@@ -114,7 +114,7 @@ class CStruct:
 class Header:
     """Abstract base class for all headers"""
 
-    @property
+    @property  # type: ignore
     @classmethod
     @abc.abstractmethod
     def struct(cls) -> Union[struct.Struct, CStruct]:

@@ -82,7 +82,7 @@ class SourceService(host.Service):
             for _ in executor.map(self.fetch_one, *zip(*transformed)):
                 pass
 
-    @property
+    @property  # type: ignore
     @classmethod
     @abstractmethod
     def content_type(cls):
