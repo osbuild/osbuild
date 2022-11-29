@@ -303,7 +303,7 @@ class TestObjectStore(unittest.TestCase):
         with contextlib.ExitStack() as stack:
 
             store = objectstore.ObjectStore(self.store)
-            stack.enter_context(stack)
+            stack.enter_context(store)
 
             tmpdir = tempfile.TemporaryDirectory()
             tmpdir = stack.enter_context(tmpdir)
