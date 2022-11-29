@@ -151,7 +151,8 @@ def main(tree, options):
 
         passwd = getpwnam(tree, name)
         if passwd is not None:
-            if uid is not None:
+            # `pw_uid` is the third field of `struct passwd` see `getpwnam(3)`
+            if uid is not None and passwd[2] != str(uid):
                 print(f"Error: can't set uid of existing user '{name}'")
                 return 1
             usermod(tree, name, gid, groups, description, home, shell, password)
