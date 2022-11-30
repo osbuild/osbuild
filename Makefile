@@ -302,3 +302,5 @@ bump-version:
 	sed -i "s|Release:\(\s*\)[[:digit:]]\+|Release:\11|" osbuild.spec
 	sed -i "s|version=\"$(VERSION)\"|version=\"$(NEXT_VERSION)\"|" setup.py
 	sed -i "s|__version__ = \"$(VERSION)\"|__version__ = \"$(NEXT_VERSION)\"|" osbuild/__init__.py
+	sed -i "s|version = \"$(VERSION).0.0\"|version = \"$(NEXT_VERSION).0.0\"|" library/libosbuild/Cargo.toml
+	sed -i "s|version = \"$(VERSION).0.0\"|version = \"$(NEXT_VERSION).0.0\"|" library/libosbuild-py/Cargo.toml

@@ -1,0 +1,10 @@
+[package]
+name = "osbuild"
+version = "73.0.0"
+edition = "2021"
+description = "`osbuild` library modules."
+
+[dependencies]
+walkdir = "^2.3.2"
+cap-std = "^1.0.1"
+cap-std-ext = "^1.0.1"
