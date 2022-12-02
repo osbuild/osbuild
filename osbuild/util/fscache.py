@@ -35,10 +35,12 @@ class FsCacheInfo(NamedTuple):
 
     creation_boot_id - Hashed linux boot-id at the time of cache-creation
     maximum_size - Maximum cache size in bytes, or "unlimited"
+    version - version of the cache data structures
     """
 
     creation_boot_id: Optional[str] = None
     maximum_size: MaximumSizeType = None
+    version: Optional[int] = None
 
     @classmethod
     def from_json(cls, data: Any) -> "FsCacheInfo":
@@ -54,6 +56,7 @@ class FsCacheInfo(NamedTuple):
 
         creation_boot_id = None
         maximum_size: MaximumSizeType = None
+        version = None
 
         # parse "creation-boot-id"
         _creation_boot_id = data.get("creation-boot-id", None)
@@ -67,10 +70,16 @@ class FsCacheInfo(NamedTuple):
         elif isinstance(_maximum_size, str) and _maximum_size == "unlimited":
             maximum_size = "unlimited"
 
+        # parse "version"
+        _version = data.get("version", None)
+        if isinstance(_version, int):
+            version = _version
+
         # create immutable tuple
         return cls(
             creation_boot_id,
             maximum_size,
+            version,
         )
 
     def to_json(self) -> Dict[str, Any]:
@@ -86,6 +95,8 @@ class FsCacheInfo(NamedTuple):
             data["creation-boot-id"] = self.creation_boot_id
         if self.maximum_size is not None:
             data["maximum-size"] = self.maximum_size
+        if self.version is not None:
+            data["version"] = self.version
         return data
 
 
@@ -195,6 +206,8 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
     _filename_cache_size = "cache.size"
     _filename_object_info = "object.info"
     _filename_object_lock = "object.lock"
+    _version_current = 1
+    _version_minimum = 1
 
     # constant properties
     _appid: str
@@ -551,7 +564,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         # Create the file-scaffolding of the cache. We fill in the default
         # information and ignore racing operations.
         with self._atomic_file(self._filename_cache_info, self._dirname_objects, ignore_exist=True) as f:
-            f.write("{}")
+            json.dump({"version": self._version_current}, f)
         with self._atomic_file(self._filename_cache_lock, self._dirname_objects, ignore_exist=True) as f:
             pass
         with self._atomic_file(self._filename_cache_size, self._dirname_objects, ignore_exist=True) as f:
@@ -603,6 +616,11 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
     def _is_active(self):
         # Internal helper to verify we are in an active context-manager.
         return self._active
+
+    def _is_compatible(self):
+        # Internal helper to verify the cache-version is supported.
+        return self._info.version is not None and \
+            self._version_minimum <= self._info.version <= self._version_current
 
     def __enter__(self):
         assert not self._active
@@ -662,6 +680,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         """
 
         assert self._is_active()
+        assert self._is_compatible()
 
         # Open the cache-size and lock it for writing. But instead of writing
         # directly to it, we replace it with a new file. This guarantees that
@@ -754,6 +773,10 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         Hence, any cache management routine will discard it.
         """
 
+        # We check for an active context, but we never check for
+        # version-compatibility, because there is no way we can run without
+        # a staging area. Hence, the staging-area has to be backwards
+        # compatible at all times.
         assert self._is_active()
 
         uuidname = None
@@ -804,6 +827,15 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
 
         if not name:
             raise ValueError()
+
+        # If the cache-version is incompatible to this implementation, we short
+        # this call into the staging-area (which is always compatible). This
+        # avoids raising an exception (at the cost of dealing with this in the
+        # caller), and instead just creates a temporary copy which we discard.
+        if not self._is_compatible():
+            with self.stage() as p:
+                yield p
+            return
 
         uuidname = None
         lockfd = None
@@ -912,6 +944,8 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
 
         if not name:
             raise ValueError()
+        if not self._is_compatible():
+            raise self.MissError()
 
         with contextlib.ExitStack() as es:
             # Use an ExitStack so we can catch exceptions raised by the
@@ -1005,7 +1039,8 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 info = FsCacheInfo.from_json(info_raw)
 
                 # Replace the file with the new values. This releases the lock.
-                with self._atomic_file(self._filename_cache_info, self._dirname_objects, replace=True) as f:
-                    json.dump(info_raw, f)
+                if self._is_compatible():
+                    with self._atomic_file(self._filename_cache_info, self._dirname_objects, replace=True) as f:
+                        json.dump(info_raw, f)
 
         self._load_cache_info(info)

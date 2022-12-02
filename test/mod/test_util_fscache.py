@@ -4,6 +4,7 @@
 
 # pylint: disable=protected-access
 
+import json
 import os
 import tempfile
 
@@ -194,7 +195,7 @@ def test_scaffolding(tmpdir):
     assert len(list(os.scandir(os.path.join(tmpdir, cache._dirname_stage)))) == 0
 
     with open(os.path.join(tmpdir, cache._filename_cache_info), "r", encoding="utf8") as f:
-        assert f.read() == "{}"
+        assert json.load(f) == {"version": 1}
     with open(os.path.join(tmpdir, cache._filename_cache_lock), "r", encoding="utf8") as f:
         assert f.read() == ""
     with open(os.path.join(tmpdir, cache._filename_cache_size), "r", encoding="utf8") as f:
@@ -210,7 +211,7 @@ def test_cache_info(tmpdir):
     cache = fscache.FsCache("osbuild-test-appid", tmpdir)
 
     with cache:
-        assert cache._info == fscache.FsCacheInfo()
+        assert cache._info == fscache.FsCacheInfo(version=1)
         assert cache.info == cache._info
 
         assert cache.info.maximum_size is None
