@@ -24,6 +24,7 @@
               }
             ],
             "packages": [
+              "pam",
               "shadow-utils"
             ]
           }
@@ -42,6 +43,21 @@
             "nohome": {
               "home": "",
               "uid": 1337
+            },
+            "elodie": {
+              "home": "",
+              "uid": 2000
+            }
+          }
+        }
+      },
+      {
+        "name": "org.osbuild.users",
+        "options": {
+          "users": {
+            "elodie": {
+              "home": "/home/elodie",
+              "uid": 2000
             }
           }
         }

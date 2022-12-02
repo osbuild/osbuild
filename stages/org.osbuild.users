@@ -2,12 +2,13 @@
 """
 Add or modify user accounts
 
-Add or modify user accounts inside the tree.
-
 WARNING: This stage uses chroot() to run the `useradd` or `usermod` binary
 from inside the tree. This will fail for cross-arch builds and may fail or
 misbehave if the `usermod`/`useradd` binary inside the tree makes incorrect
 assumptions about its host system.
+When an existing user is modified the `mkhomedir_helper(8)` program is run
+inside a chroot to ensure that a home dir exists for the user, as `usermod`
+does not create it (it will move existing dirs though).
 """
 
 
@@ -139,6 +140,16 @@ def add_ssh_key(root, user, key):
     os.chmod(authorized_keys, 0o600)
 
 
+def ensure_homedir(root, name, home):
+    if not home:
+        return
+
+    if os.path.exists(os.path.join(root, home.lstrip("/"))):
+        return
+
+    subprocess.run(["chroot", root, "mkhomedir_helper", name], check=True)
+
+
 def main(tree, options):
     users = options["users"]
 
@@ -158,6 +169,10 @@ def main(tree, options):
                 print(f"Error: can't set uid of existing user '{name}'")
                 return 1
             usermod(tree, name, gid, groups, description, home, shell, password)
+
+            # ensure the home directory exists, see module doc string for details
+            _, _, _, _, _, home, _ = getpwnam(tree, name)
+            ensure_homedir(tree, name, home)
         else:
             useradd(tree, name, uid, gid, groups, description, home, shell, password)
 
