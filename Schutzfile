@@ -2,7 +2,7 @@
   "global": {
     "dependencies": {
       "manifest-db": {
-        "commit": "7e8bd7950ba0768bd5f1c416e75ff8c56365b79b"
+        "commit": "159a90f83ddc64fcd030d299bea333a7c663247f"
       }
     }
   },
