@@ -15,12 +15,10 @@ from .. import test
 
 
 def store_path(store: objectstore.ObjectStore, ref: str, path: str) -> bool:
-    if not store.contains(ref):
+    obj = store.get(ref)
+    if not obj:
         return False
-    obj = store.resolve_ref(ref)
-    if not obj or not os.path.exists(obj):
-        return False
-    return os.path.exists(os.path.join(obj, "data", "tree", path))
+    return os.path.exists(os.path.join(obj, path))
 
 
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
@@ -35,8 +33,9 @@ class TestObjectStore(unittest.TestCase):
     def test_basic(self):
         # always use a temporary store so item counting works
         with objectstore.ObjectStore(self.store) as object_store:
+            object_store.maximum_size = 1024*1024*1024
+
             # No objects or references should be in the store
-            assert len(os.listdir(object_store.refs)) == 0
             assert len(os.listdir(object_store.objects)) == 0
 
             tree = object_store.new("a")
@@ -47,157 +46,51 @@ class TestObjectStore(unittest.TestCase):
             p = Path(tree, "A")
             p.touch()
 
-            # consumes the object, puts it into read mode
-            object_store.commit(tree, "a")
-
+            tree.finalize()  # put the object into READ mode
             assert tree.mode == objectstore.Object.Mode.READ
 
-            assert object_store.contains("a")
+            # commit makes a copy, if space
+            object_store.commit(tree, "a")
             assert store_path(object_store, "a", "A")
 
-            assert len(os.listdir(object_store.refs)) == 1
-            assert len(os.listdir(object_store.objects)) == 1
+            # second object, based on the first one
+            obj2 = object_store.new("b")
+            obj2.init(tree)
 
-            tree = object_store.new("b")
-            p = Path(tree, "A")
-            p.touch()
-            p = Path(tree, "B")
+            p = Path(obj2, "B")
             p.touch()
 
-            # consumes the object, puts it into read mode
+            obj2.finalize()  # put the object into READ mode
+            assert obj2.mode == objectstore.Object.Mode.READ
+
+            # commit always makes a copy, if space
             object_store.commit(tree, "b")
 
             assert object_store.contains("b")
+            assert store_path(object_store, "b", "A")
             assert store_path(object_store, "b", "B")
 
-            assert len(os.listdir(object_store.refs)) == 2
             assert len(os.listdir(object_store.objects)) == 2
-            # assert len(os.listdir(f"{object_store.refs}/b/")) == 2
 
-            self.assertEqual(object_store.resolve_ref(None), None)
-            self.assertEqual(object_store.resolve_ref("a"),
-                             f"{object_store.refs}/a")
-
+            # object should exist and should be in read mode
             tree = object_store.get("b")
             assert tree is not None
             assert tree.mode == objectstore.Object.Mode.READ
 
     def test_cleanup(self):
         # always use a temporary store so item counting works
-        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
-            with objectstore.ObjectStore(tmp) as object_store:
-                tree = object_store.new("a")
-                self.assertEqual(len(os.listdir(object_store.tmp)), 1)
-                p = Path(tree, "A")
-                p.touch()
+        with objectstore.ObjectStore(self.store) as object_store:
+            object_store.maximum_size = 1024*1024*1024
 
-            # there should be no temporary Objects dirs anymore
-            self.assertEqual(len(os.listdir(object_store.tmp)), 0)
-
-    def test_commit_clone(self):
-        # operate with a clean object store
-        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
-            # sample data to be used for read, write checks
-            data = "23"
-
-            with objectstore.ObjectStore(tmp) as store:
-                assert len(os.listdir(store.refs)) == 0
-
-                tree = store.new("a")
-                with open(os.path.join(tree, "data"), "w",
-                          encoding="utf-8") as f:
-                    f.write(data)
-                    st = os.fstat(f.fileno())
-                    data_inode = st.st_ino
-
-                # commit the object as "x", making a copy
-                store.commit(tree, "x")
-
-                # check that "data" got indeed copied
-                tree = store.get("x")
-                assert tree is not None
-
-                with open(os.path.join(tree, "data"), "r",
-                          encoding="utf-8") as f:
-                    st = os.fstat(f.fileno())
-                    self.assertNotEqual(st.st_ino, data_inode)
-                    data_read = f.read()
-                    self.assertEqual(data, data_read)
-
-    def test_commit_consume(self):
-        # operate with a clean object store
-        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
-            # sample data to be used for read, write checks
-            data = "23"
-
-            with objectstore.ObjectStore(tmp) as store:
-                assert len(os.listdir(store.refs)) == 0
-
-                tree = store.new("a")
-                with open(os.path.join(tree, "data"), "w", encoding="utf8") as f:
-                    f.write(data)
-                    st = os.fstat(f.fileno())
-                    data_inode = st.st_ino
-
-                # commit the object as "a"
-                store.commit(tree, "a")
-                assert len(os.listdir(store.refs)) == 1
-
-                # check that "data" is still the very
-                # same file after committing
-                with open(os.path.join(tree, "data"), "r", encoding="utf8") as f:
-                    st = os.fstat(f.fileno())
-                    self.assertEqual(st.st_ino, data_inode)
-                    data_read = f.read()
-                    self.assertEqual(data, data_read)
-
-    def test_object_base(self):
-        with objectstore.ObjectStore(self.store) as store:
-            assert len(os.listdir(store.refs)) == 0
-            assert len(os.listdir(store.objects)) == 0
-
-            base = store.new("a")
-            p = Path(base, "A")
-            p.touch()
-            store.commit(base, "a")
-
-            assert store.contains("a")
-            assert store_path(store, "a", "A")
-
-            tree = store.new("b")
-            tree.init(base)
-
-            p = Path(tree, "B")
-            p.touch()
-
-            tree.finalize()
-
-            assert os.path.exists(os.path.join(tree, "A"))
-            assert os.path.exists(os.path.join(tree, "B"))
-
-    def test_snapshot(self):
-        with objectstore.ObjectStore(self.store) as store:
-            tree = store.new("b")
+            stage = os.path.join(object_store, "stage")
+            tree = object_store.new("a")
+            self.assertEqual(len(os.listdir(stage)), 1)
             p = Path(tree, "A")
             p.touch()
 
-            assert not store.contains("a")
-            store.commit(tree, "a")  # store via "a", creates a clone
-            assert store.contains("a")
-
-            p = Path(tree, "B")
-            p.touch()
-            store.commit(tree, "b")
-
-            # check the references exist
-            assert os.path.exists(f"{store.refs}/a")
-            assert os.path.exists(f"{store.refs}/b")
-
-            # check the contents of the trees
-            assert store_path(store, "a", "A")
-            assert not store_path(store, "a", "B")
-            assert store_path(store, "b", "A")
-            assert store_path(store, "b", "B")
+        # there should be no temporary Objects dirs anymore
+        with objectstore.ObjectStore(self.store) as object_store:
+            assert object_store.get("A") is None
 
     def test_metadata(self):
 
@@ -256,6 +149,7 @@ class TestObjectStore(unittest.TestCase):
             assert md.get("a") == data
 
         with objectstore.ObjectStore(self.store) as store:
+            store.maximum_size = 1024*1024*1024
             obj = store.new("a")
             p = Path(obj, "A")
             p.touch()

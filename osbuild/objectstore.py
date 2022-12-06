@@ -4,10 +4,10 @@ import json
 import os
 import subprocess
 import tempfile
-import uuid
-from typing import Any, Optional, Set
+from typing import Any, Optional, Set, Union
 
-from osbuild.util import jsoncomm, rmrf
+from osbuild.util import jsoncomm
+from osbuild.util.fscache import FsCache, FsCacheInfo
 from osbuild.util.mnt import mount, umount
 from osbuild.util.types import PathLike
 
@@ -105,28 +105,50 @@ class Object:
         def __fspath__(self):
             return self.path
 
-    def __init__(self, store: "ObjectStore", uid: str, mode: Mode):
+    def __init__(self, cache: FsCache, uid: str, mode: Mode):
+        self._cache = cache
         self._mode = mode
-        self._workdir = None
         self._id = uid
-        self.store = store
+        self._path = None
+        self._meta: Optional[Object.Metadata] = None
+        self._stack: Optional[contextlib.ExitStack] = None
 
+    def _open_for_reading(self):
+        name = self._stack.enter_context(
+            self._cache.load(self.id)
+        )
+        self._path = os.path.join(self._cache, name)
+
+    def _open_for_writing(self):
+        name = self._stack.enter_context(
+            self._cache.stage()
+        )
+        self._path = os.path.join(self._cache, name)
+        os.makedirs(os.path.join(self._path, "tree"))
+
+    def __enter__(self):
+        assert not self.active
+        self._stack = contextlib.ExitStack()
         if self.mode == Object.Mode.READ:
-            path = self.store.resolve_ref(uid)
-            assert path is not None
-            self._path = os.path.join(path, "data")
+            self._open_for_reading()
         else:
-            workdir = self.tempdir("workdir")
-            self._workdir = workdir
-            self._path = os.path.join(workdir.name, "data")
-            tree = os.path.join(self._path, "tree")
-            os.makedirs(tree)
+            self._open_for_writing()
 
         # Expose our base path as `os.PathLike` via `PathAdater`
         # so any changes to it, e.g. via `store_tree`, will be
         # automatically picked up by `Metadata`.
         wrapped = PathAdapter(self, "_path")
         self._meta = self.Metadata(wrapped, folder="meta")
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        assert self.active
+        self.cleanup()
+
+    @property
+    def active(self) -> bool:
+        return self._stack is not None
 
     @property
     def id(self) -> Optional[str]:
@@ -139,38 +161,21 @@ class Object:
     def init(self, base: "Object"):
         """Initialize the object with the base object"""
         self._check_mode(Object.Mode.WRITE)
+        assert self.active
+        assert self._path
         base.clone(self._path)
 
     @property
     def tree(self) -> str:
+        assert self.active
+        assert self._path
         return os.path.join(self._path, "tree")
 
     @property
     def meta(self) -> Metadata:
+        assert self.active
+        assert self._meta
         return self._meta
-
-    def store_tree(self):
-        """Store the tree with a fresh name and close it
-
-        Moves the tree atomically by using rename(2), to a
-        randomly generated unique name.
-
-        This puts the object into the READ state.
-        """
-        self._check_mode(Object.Mode.WRITE)
-
-        name = str(uuid.uuid4())
-
-        base = os.path.join(self.store.objects, name)
-        os.makedirs(base)
-        destination = os.path.join(base, "data")
-        os.rename(self._path, destination)
-        self._path = destination
-
-        self.finalize()
-        self.cleanup()
-
-        return name
 
     def finalize(self):
         if self.mode != Object.Mode.WRITE:
@@ -180,26 +185,14 @@ class Object:
         self._mode = Object.Mode.READ
 
     def cleanup(self):
-        workdir = self._workdir
-        if workdir:
-            # manually remove the tree, it might contain
-            # files with immutable flag set, which will
-            # throw off standard Python 3 tempdir cleanup
-            rmrf.rmtree(os.path.join(workdir.name, "data"))
-
-            workdir.cleanup()
-            self._workdir = None
+        if self._stack:
+            self._stack.close()
+            self._stack = None
 
     def _check_mode(self, want: Mode):
         """Internal: Raise a ValueError if we are not in the desired mode"""
         if self.mode != want:
             raise ValueError(f"Wrong object mode: {self.mode}, want {want}")
-
-    def tempdir(self, suffix=None):
-        if suffix:
-            suffix = "-" + suffix
-        name = f"object-{self._id[:7]}-"
-        return self.store.tempdir(prefix=name, suffix=suffix)
 
     def export(self, to_directory: PathLike):
         """Copy object into an external directory"""
@@ -283,16 +276,14 @@ class HostTree:
 
 class ObjectStore(contextlib.AbstractContextManager):
     def __init__(self, store: PathLike):
-        self.store = store
-        self.objects = os.path.join(store, "objects")
-        self.refs = os.path.join(store, "refs")
+        self.cache = FsCache("osbuild", store)
         self.tmp = os.path.join(store, "tmp")
         os.makedirs(self.store, exist_ok=True)
         os.makedirs(self.objects, exist_ok=True)
-        os.makedirs(self.refs, exist_ok=True)
         os.makedirs(self.tmp, exist_ok=True)
         self._objs: Set[Object] = set()
         self._host_tree: Optional[HostTree] = None
+        self._stack = contextlib.ExitStack()
 
     def _get_floating(self, object_id: str) -> Optional[Object]:
         """Internal: get a non-committed object"""
@@ -302,7 +293,32 @@ class ObjectStore(contextlib.AbstractContextManager):
         return None
 
     @property
+    def maximum_size(self) -> Optional[Union[int, str]]:
+        info = self.cache.info
+        return info.maximum_size
+
+    @maximum_size.setter
+    def maximum_size(self, size: Union[int, str]):
+        info = FsCacheInfo(maximum_size=size)
+        self.cache.info = info
+
+    @property
+    def active(self) -> bool:
+        #pylint: disable=protected-access
+        return self.cache._is_active()
+
+    @property
+    def store(self):
+        return os.fspath(self.cache)
+
+    @property
+    def objects(self):
+        return os.path.join(self.cache, "objects")
+
+    @property
     def host_tree(self) -> HostTree:
+        assert self.active
+
         if not self._host_tree:
             self._host_tree = HostTree(self)
         return self._host_tree
@@ -314,13 +330,11 @@ class ObjectStore(contextlib.AbstractContextManager):
         if self._get_floating(object_id):
             return True
 
-        return os.access(self.resolve_ref(object_id), os.F_OK)
-
-    def resolve_ref(self, object_id: Optional[str]) -> Optional[str]:
-        """Returns the path to the given object_id"""
-        if not object_id:
-            return None
-        return os.path.join(self.refs, object_id)
+        try:
+            with self.cache.load(object_id):
+                return True
+        except FsCache.MissError:
+            return False
 
     def tempdir(self, prefix=None, suffix=None):
         """Return a tempfile.TemporaryDirectory within the store"""
@@ -329,75 +343,51 @@ class ObjectStore(contextlib.AbstractContextManager):
                                            suffix=suffix)
 
     def get(self, object_id):
+        assert self.active
+
         obj = self._get_floating(object_id)
         if obj:
             return obj
 
-        if not self.contains(object_id):
+        try:
+            obj = Object(self.cache, object_id, Object.Mode.READ)
+            self._stack.enter_context(obj)
+            return obj
+        except FsCache.MissError:
             return None
-
-        return Object(self, object_id, Object.Mode.READ)
 
     def new(self, object_id: str):
         """Creates a new `Object` and open it for writing.
 
-        It returns a temporary instance of `Object`, the base
-        optionally set to `base_id`. It can be used to interact
-        with the store.
-        If changes to the object's content were made (by calling
-        `Object.write`), these must manually be committed to the
-        store via `commit()`.
+        It returns a instance of `Object` that can be used to
+        write tree and metadata. Use `commit` to attempt to
+        store the object in the cache.
         """
+        assert self.active
 
-        obj = Object(self, object_id, Object.Mode.WRITE)
+        obj = Object(self.cache, object_id, Object.Mode.WRITE)
+        self._stack.enter_context(obj)
 
         self._objs.add(obj)
 
         return obj
 
-    def commit(self, obj: Object, object_id: str) -> str:
-        """Commits a Object to the object store
+    def commit(self, obj: Object, object_id: str):
+        """Commits the Object to the object cache as `object_id`.
 
-        Move the contents of the obj (Object) to object directory
-        of the store with a universally unique name. Creates a
-        symlink to that ('objects/{hash}') in the references
-        directory with the object_id as the name ('refs/{object_id}).
-        If the link already exists, it will be atomically replaced.
-
-        If object_id is different from the id of the object, a copy
-        of the object will be stored.
-
-        Returns: The name of the object
+        Attempts to store the contents of `obj` and its metadata
+        in the object cache. Whether anything is actually stored
+        depends on the configuration of the cache, i.e. its size
+        and how much free space is left or can be made available.
+        Therefore the caller should not assume that the stored
+        object can be retrived at all.
         """
 
-        # The supplied object_id is not the object's final id, so
-        # we have to make a copy first
-        if obj.id != object_id:
-            tmp = self.new(object_id)
-            tmp.init(obj)
-            obj = tmp
+        assert self.active
 
-        # The object is stored in the objects directory using its unique
-        # name. This means that each commit will always result in a new
-        # object in the store, even if an identical one exists.
-        object_name = obj.store_tree()
-
-        # symlink the object_id (config hash) in the refs directory to the
-        # object name in the objects directory. If a symlink by that name
-        # already exists, atomically replace it, but leave the backing object
-        # in place (it may be in use).
-        with self.tempdir() as tmp:
-            link = f"{tmp}/link"
-            os.symlink(f"../objects/{object_name}", link)
-
-            ref = self.resolve_ref(object_id)
-
-            if not ref:
-                raise RuntimeError("commit with unresolvable ref")
-
-            os.replace(link, ref)
-
-        return object_name
+        with self.cache.store(object_id) as name:
+            path = os.path.join(self.cache, name)
+            obj.clone(path)
 
     def cleanup(self):
         """Cleanup all created Objects that are still alive"""
@@ -405,10 +395,19 @@ class ObjectStore(contextlib.AbstractContextManager):
             self._host_tree.cleanup()
             self._host_tree = None
 
-        for obj in self._objs:
-            obj.cleanup()
+        self._stack.close()
+        self._objs = set()
+
+    def __fspath__(self):
+        return os.fspath(self.store)
+
+    def __enter__(self):
+        assert not self.active
+        self._stack.enter_context(self.cache)
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        assert self.active
         self.cleanup()
 
 
