@@ -15,6 +15,7 @@ import osbuild
 import osbuild.meta
 import osbuild.monitor
 from osbuild.objectstore import ObjectStore
+from osbuild.util.parsing import parse_size
 from osbuild.util.term import fmt as vt
 
 
@@ -66,6 +67,8 @@ def parse_arguments(sys_argv):
                         help="directory where intermediary os trees are stored")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath, default="/usr/lib/osbuild",
                         help="directory containing stages, assemblers, and the osbuild library")
+    parser.add_argument("--cache-max-size", metavar="SIZE", type=parse_size, default=None,
+                        help="maximum size of the cache (bytes) or 'unlimited' for no restriction")
     parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
                         help="stage to commit to the object store during build (can be passed multiple times)")
     parser.add_argument("--export", metavar="ID", action="append", type=str, default=[],
@@ -150,6 +153,9 @@ def osbuild_cli():
 
     try:
         with ObjectStore(args.store) as object_store:
+            if args.cache_max_size is not None:
+                object_store.maximum_size = args.cache_max_size
+
             stage_timeout = args.stage_timeout
 
             pipelines = manifest.depsolve(object_store, exports)

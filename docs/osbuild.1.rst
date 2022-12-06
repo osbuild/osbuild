@@ -43,6 +43,9 @@ is not listed here, **osbuild** will deny startup and exit with an error.
                                 are stored
 -l DIR, --libdir=DIR            directory containing stages, assemblers, and
                                 the osbuild library
+--cache-max-size=SIZE           maximum size of the cache (bytes) or 'unlimited'
+                                for no restriction (size may include an optional
+                                unit suffix, like kB, kiB, MB, MiB and so on)
 --checkpoint=CHECKPOINT         stage to commit to the object store during
                                 build (can be passed multiple times)
 --export=OBJECT                 object to export (can be passed multiple times)

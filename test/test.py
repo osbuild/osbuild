@@ -12,6 +12,7 @@ import tempfile
 import unittest
 
 import osbuild.meta
+from osbuild.objectstore import ObjectStore
 from osbuild.util import linux
 
 
@@ -277,6 +278,8 @@ class OSBuild(contextlib.AbstractContextManager):
     _exitstack = None
     _cachedir = None
 
+    maximum_cache_size = 20 * 1024 * 1024 * 1024  # 20 GB
+
     def __init__(self, *, cache_from=None):
         self._cache_from = cache_from
 
@@ -296,6 +299,9 @@ class OSBuild(contextlib.AbstractContextManager):
                     os.path.join(self._cache_from, "."),
                     self._cachedir
                 ], check=True)
+
+            with ObjectStore(self._cachedir) as store:
+                store.maximum_size = self.maximum_cache_size
 
             # Keep our ExitStack for `__exit__()`.
             self._exitstack = self._exitstack.pop_all()
