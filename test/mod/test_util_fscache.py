@@ -39,7 +39,7 @@ def test_calculate_size(tmpdir):
     assert fscache.FsCache._calculate_size(os.path.join(tmpdir, "dir")) == 6
 
 
-def test_pathlike(tmpdir: os.PathLike[str]):
+def test_pathlike(tmpdir):
     #
     # Verify behavior of `__fspath__()`.
     #
