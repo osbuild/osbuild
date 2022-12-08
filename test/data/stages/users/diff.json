@@ -59,14 +59,14 @@
     },
     "/etc/shadow": {
       "content": [
-        "sha256:8678806de0e5b1fdb007faf8b578cb2c9ab07f142e70e33c0c8911fc21d7505b",
-        "sha256:6cf38fa9f162dc3c2c298f70a3121b8e833aaee69da8e5b9c8d0ce63ab36b6cc"
+        null,
+        null
       ]
     },
     "/etc/shadow-": {
       "content": [
-        "sha256:3c721cbb129ba0cb511a9c0834e7c6ee8719262086a066b0f4c319316431779b",
-        "sha256:ee6d24934e803a758ee9af3295e5f142e3a3a4ed4fbd740d6aa50a419cd56afb"
+        null,
+        null
       ]
     },
     "/etc/subgid": {
