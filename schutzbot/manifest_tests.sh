@@ -17,7 +17,7 @@ OSBUILD_LABEL=$(matchpathcon -n /usr/bin/osbuild)
 chcon $OSBUILD_LABEL tools/image-info
 
 # set the maximum cache size to unlimited
-echo "{}" | sudo osbuild --cache-max-size unlimited -
+echo "{}" | sudo osbuild --store /var/lib/osbuild/store --cache-max-size unlimited -
 
 # run the tests from the manifest-db for this arch+distro
 echo "Running the osbuild-image-test for arch $ARCH and ditribution $DISTRO_CODE"
