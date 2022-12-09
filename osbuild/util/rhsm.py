@@ -41,8 +41,8 @@ class Subscriptions:
     @staticmethod
     def get_consumer_secrets():
         """Returns the consumer identity certificate which uniquely identifies the system"""
-        key = "/etc/pki/consumer/cert.pem"
-        cert = "/etc/pki/consumer/key.pem"
+        key = "/etc/pki/consumer/key.pem"
+        cert = "/etc/pki/consumer/cert.pem"
 
         if not (os.path.exists(key) and os.path.exists(cert)):
             raise RuntimeError("rhsm consumer key and cert not found")
