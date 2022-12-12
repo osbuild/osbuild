@@ -69,6 +69,16 @@ Summary:        %{summary}
 %description -n python3-%{pypi_name}
 A build system for OS images
 
+%package        containers
+Summary:        Containers support
+Requires:       %{name} = %{version}-%{release}
+Requires:       skopeo
+Obsoletes:      osbuild < 74-1
+
+%description containers
+Contains the necessary stages and input host
+services to embed container images.
+
 %package        lvm2
 Summary:        LVM2 support
 Requires:       %{name} = %{version}-%{release}
@@ -193,6 +203,10 @@ exit 0
 %{_datadir}/osbuild/schemas
 %{pkgdir}
 %{_udevrulesdir}/*.rules
+# the following files are in the containers sub-package
+%exclude %{pkgdir}/inputs/org.osbuild.containers
+%exclude %{pkgdir}/sources/org.osbuild.skopeo
+%exclude %{pkgdir}/stages/org.osbuild.skopeo
 # the following files are in the lvm2 sub-package
 %exclude %{pkgdir}/devices/org.osbuild.lvm2*
 %exclude %{pkgdir}/stages/org.osbuild.lvm2*
@@ -212,6 +226,11 @@ exit 0
 %doc README.md
 %{python3_sitelib}/%{pypi_name}-*.egg-info/
 %{python3_sitelib}/%{pypi_name}/
+
+%files containers
+%{pkgdir}/inputs/org.osbuild.containers
+%{pkgdir}/sources/org.osbuild.skopeo
+%{pkgdir}/stages/org.osbuild.skopeo
 
 %files lvm2
 %{pkgdir}/devices/org.osbuild.lvm2*

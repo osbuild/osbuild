@@ -55,4 +55,4 @@ sudo dnf -y install osbuild-composer-tests
 sudo mkdir -p /etc/osbuild-composer/repositories
 
 # Temp fix until composer gains these dependencies
-sudo dnf -y install osbuild-luks2 osbuild-lvm2
+sudo dnf -y install osbuild-luks2 osbuild-lvm2 osbuild-containers
