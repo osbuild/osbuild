@@ -9,6 +9,7 @@ are called on the monitor object at certain events. Consult the
 """
 
 import abc
+import datetime
 import json
 import os
 import sys
@@ -108,6 +109,10 @@ class LogMonitor(BaseMonitor):
         else:
             self.out.write("<host>")
         self.out.write(f"\n  runner: {pipeline.runner.name} ({pipeline.runner.exec})")
+        source_epoch = pipeline.source_epoch
+        if source_epoch is not None:
+            timepoint = datetime.datetime.fromtimestamp(source_epoch).strftime('%c')
+            self.out.write(f"\n  source-epoch: {timepoint} [{source_epoch}]")
         self.out.write("\n")
 
     def stage(self, stage):
