@@ -423,6 +423,10 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         with self.cache.store(object_id) as name:
             path = os.path.join(self.cache, name)
+            # we clamp the mtime of `obj` itself so that it
+            # resuming a snapshop and building with a snapshot
+            # goes through the same code path
+            obj.clamp_mtime()
             obj.clone(path)
 
     def cleanup(self):
