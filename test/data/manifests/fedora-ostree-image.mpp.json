@@ -63,6 +63,7 @@
     {
       "name": "image-tree",
       "build": "name:build",
+      "source-epoch": 1659397331,
       "stages": [
         {
           "type": "org.osbuild.ostree.init-fs"
