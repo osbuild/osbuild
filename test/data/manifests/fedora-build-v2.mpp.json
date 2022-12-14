@@ -10,6 +10,7 @@
   "pipelines": [
     {
       "name": "build",
+      "source-epoch": 1659397331,
       "stages": [
         {
           "type": "org.osbuild.rpm",
