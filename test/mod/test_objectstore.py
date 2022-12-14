@@ -201,7 +201,60 @@ def test_host_tree(tmpdir):
         _ = host.tree
 
 
+def test_source_epoch(object_store):
+    tree = object_store.new("a")
+    tree.source_epoch = 946688461
+
+    t = Path(tree)
+
+    a = Path(tree, "A")
+    a.touch()
+
+    d = Path(tree, "d")
+    d.mkdir()
+
+    l = Path(tree, "l")
+    l.symlink_to(d, target_is_directory=True)
+
+    for i in (a, d, l, t):
+        si = i.stat(follow_symlinks=False)
+        before = si.st_mtime
+        assert before != tree.source_epoch
+
+    # FINALIZING
+    tree.finalize()
+
+    for i in (a, d, l, t):
+        si = i.stat(follow_symlinks=False)
+        after = si.st_mtime
+
+        assert after != before, f"mtime not changed for {i}"
+        assert after == tree.source_epoch
+
+    baum = object_store.new("b")
+    baum.init(tree)
+
+    assert baum.created == tree.created
+
+    b = Path(tree, "B")
+    b.touch()
+
+    si = b.stat(follow_symlinks=False)
+    before = si.st_mtime
+
+    assert before != tree.source_epoch
+
+    # FINALIZING
+    baum.finalize()
+    si = a.stat(follow_symlinks=False)
+    after = si.st_mtime
+
+    assert after != before
+    assert after == tree.source_epoch
+
 # pylint: disable=too-many-statements
+
+
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="Need root for bind mount")
 def test_store_server(tmpdir):
     with contextlib.ExitStack() as stack:
