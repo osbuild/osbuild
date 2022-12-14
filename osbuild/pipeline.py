@@ -319,6 +319,7 @@ class Pipeline:
         # an intermediate checkpoint exists: Find the last stage that
         # already exists in the store and use that as the base.
         tree = object_store.new(self.id)
+        tree.source_epoch = self.source_epoch
 
         todo = collections.deque()
         for stage in reversed(self.stages):
