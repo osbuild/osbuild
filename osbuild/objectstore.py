@@ -10,6 +10,7 @@ from typing import Any, Optional, Set, Union
 from osbuild.util import jsoncomm
 from osbuild.util.fscache import FsCache, FsCacheInfo
 from osbuild.util.mnt import mount, umount
+from osbuild.util.path import clamp_mtime
 from osbuild.util.types import PathLike
 
 from . import api
@@ -113,6 +114,7 @@ class Object:
         self._path = None
         self._meta: Optional[Object.Metadata] = None
         self._stack: Optional[contextlib.ExitStack] = None
+        self.source_epoch = None  # see finalize()
 
     def _open_for_reading(self):
         name = self._stack.enter_context(
@@ -196,9 +198,24 @@ class Object:
         assert info, "info metadata missing"
         return info["created"]
 
+    def clamp_mtime(self):
+        """Clamp mtime of files and dirs to source_epoch
+
+        If a source epoch is specified we clamp all files that
+        are newer then our own creation timestap to the given
+        source epoch. As a result all files created during the
+        build should receive the source epoch modification time
+        """
+        if self.source_epoch is None:
+            return
+
+        clamp_mtime(self.tree, self.created, self.source_epoch)
+
     def finalize(self):
         if self.mode != Object.Mode.WRITE:
             return
+
+        self.clamp_mtime()
 
         # put the object into the READER state
         self._mode = Object.Mode.READ
