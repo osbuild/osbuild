@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import tempfile
+import time
 from typing import Any, Optional, Set, Union
 
 from osbuild.util import jsoncomm
@@ -140,6 +141,11 @@ class Object:
         wrapped = PathAdapter(self, "_path")
         self._meta = self.Metadata(wrapped, folder="meta")
 
+        if self.mode == Object.Mode.WRITE:
+            self.meta.set("info", {
+                "created": int(time.time()),
+            })
+
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
@@ -176,6 +182,19 @@ class Object:
         assert self.active
         assert self._meta
         return self._meta
+
+    @property
+    def created(self) -> int:
+        """When was the object created
+
+        It is stored as `created` in the `info` metadata entry,
+        and thus will also get overwritten if the metadata gets
+        overwritten via `init()`.
+        NB: only valid to access when the object is active.
+        """
+        info = self.meta.get("info")
+        assert info, "info metadata missing"
+        return info["created"]
 
     def finalize(self):
         if self.mode != Object.Mode.WRITE:
