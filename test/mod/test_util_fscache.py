@@ -290,6 +290,44 @@ def test_load(tmpdir):
                 pass
 
 
+def test_store_tree(tmpdir):
+    #
+    # API tests for the `store_tree()` method.
+    #
+
+    cache = fscache.FsCache("osbuild-test-appid", tmpdir)
+
+    with pytest.raises(AssertionError):
+        cache.store_tree("foobar", "invalid/dir")
+
+    with cache:
+        cache.info = cache.info._replace(maximum_size=1024*1024*1024)
+
+        with pytest.raises(ValueError):
+            cache.store_tree("", "invalid/dir")
+        with pytest.raises(RuntimeError):
+            cache.store_tree("key", "invalid/dir")
+
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+            with open(os.path.join(tmp, "outside"), "x", encoding="utf8") as f:
+                f.write("foo")
+            os.mkdir(os.path.join(tmp, "tree"))
+            with open(os.path.join(tmp, "tree", "inside"), "x", encoding="utf8") as f:
+                f.write("bar")
+            with open(os.path.join(tmp, "tree", "more-inside"), "x", encoding="utf8") as f:
+                f.write("foobar")
+
+            cache.store_tree("key", os.path.join(tmp, "tree"))
+
+            with cache.load("key") as rpath:
+                assert len(list(os.scandir(os.path.join(cache, rpath)))) == 1
+                assert len(list(os.scandir(os.path.join(cache, rpath, "tree")))) == 2
+                with open(os.path.join(cache, rpath, "tree", "inside"), "r", encoding="utf8") as f:
+                    assert f.read() == "bar"
+                with open(os.path.join(cache, rpath, "tree", "more-inside"), "r", encoding="utf8") as f:
+                    assert f.read() == "foobar"
+
+
 def test_basic(tmpdir):
     #
     # A basic cache store+load test.
