@@ -171,13 +171,27 @@ class Object:
         self._check_mode(Object.Mode.WRITE)
         assert self.active
         assert self._path
-        base.clone(self._path)
+
+        subprocess.run(
+            [
+                "cp",
+                "--reflink=auto",
+                "-a",
+                os.fspath(base.path) + "/.",
+                os.fspath(self.path),
+            ],
+            check=True,
+        )
+
+    @property
+    def path(self) -> str:
+        assert self.active
+        assert self._path
+        return self._path
 
     @property
     def tree(self) -> str:
-        assert self.active
-        assert self._path
-        return os.path.join(self._path, "tree")
+        return os.path.join(self.path, "tree")
 
     @property
     def meta(self) -> Metadata:
@@ -238,22 +252,6 @@ class Object:
                 "--reflink=auto",
                 "-a",
                 os.fspath(self.tree) + "/.",
-                os.fspath(to_directory),
-            ],
-            check=True,
-        )
-
-    def clone(self, to_directory: PathLike):
-        """Clone the object to the specified directory"""
-
-        assert self._path
-
-        subprocess.run(
-            [
-                "cp",
-                "--reflink=auto",
-                "-a",
-                os.fspath(self._path) + "/.",
                 os.fspath(to_directory),
             ],
             check=True,
@@ -421,13 +419,12 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         assert self.active
 
-        with self.cache.store(object_id) as name:
-            path = os.path.join(self.cache, name)
-            # we clamp the mtime of `obj` itself so that it
-            # resuming a snapshop and building with a snapshot
-            # goes through the same code path
-            obj.clamp_mtime()
-            obj.clone(path)
+        # we clamp the mtime of `obj` itself so that it
+        # resuming a snapshop and building with a snapshot
+        # goes through the same code path
+        obj.clamp_mtime()
+
+        self.cache.store_tree(object_id, obj.path + "/.")
 
     def cleanup(self):
         """Cleanup all created Objects that are still alive"""

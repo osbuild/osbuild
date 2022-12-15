@@ -13,6 +13,7 @@ import ctypes
 import errno
 import json
 import os
+import subprocess
 import uuid
 from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
 
@@ -1044,3 +1045,49 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                         json.dump(info_raw, f)
 
         self._load_cache_info(info)
+
+    def store_tree(self, name: str, tree: Any):
+        """Store file system tree in cache
+
+        Create a new entry in the object store containing a copy of the file
+        system tree specified as `tree`. This behaves like `store()` but instead
+        of providing a context to the caller it will copy the specified tree.
+
+        Similar to `store()`, when the entry is committed it is immediately
+        unlocked and released to the cache. This means it might vanish at any
+        moment due to a parallel cleanup. Hence, a caller cannot rely on the
+        object being available in the cache once this call returns.
+
+        If `tree` points to a file, the file is copied. If it points to a
+        directory, the entire directory tree is copied including the root entry
+        itself. To copy an entire directory without its root entry, use the
+        `path/.` notation. Links are never followed but copied verbatim.
+        All metadata is preserved, if possible.
+
+        Parameters:
+        -----------
+        name
+            Name to store the object under.
+        tree:
+            Path to the file system tree to copy.
+        """
+
+        with self.store(name) as rpath_data:
+            r = subprocess.run(
+                [
+                    "cp",
+                    "--reflink=auto",
+                    "-a",
+                    "--",
+                    os.fspath(tree),
+                    self._path(rpath_data),
+                ],
+                check=False,
+                encoding="utf-8",
+                stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE,
+            )
+            if r.returncode != 0:
+                code = r.returncode
+                msg = r.stdout.strip()
+                raise RuntimeError(f"Cannot copy into file-system cache ({code}): {msg}")
