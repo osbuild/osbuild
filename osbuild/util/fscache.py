@@ -59,19 +59,19 @@ class FsCacheInfo(NamedTuple):
         version = None
 
         # parse "creation-boot-id"
-        _creation_boot_id = data.get("creation-boot-id", None)
+        _creation_boot_id = data.get("creation-boot-id")
         if isinstance(_creation_boot_id, str) and len(_creation_boot_id) == 32:
             creation_boot_id = _creation_boot_id
 
         # parse "maximum-size"
-        _maximum_size = data.get("maximum-size", None)
+        _maximum_size = data.get("maximum-size")
         if isinstance(_maximum_size, int):
             maximum_size = _maximum_size
         elif isinstance(_maximum_size, str) and _maximum_size == "unlimited":
             maximum_size = "unlimited"
 
         # parse "version"
-        _version = data.get("version", None)
+        _version = data.get("version")
         if isinstance(_version, int):
             version = _version
 
