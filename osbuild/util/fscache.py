@@ -438,28 +438,35 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 with os.fdopen(fd, "r+", closefd=False, encoding="utf8") as file:
                     yield file
 
-                if replace:
-                    flags = ctypes.c_uint(0)
-                else:
-                    flags = self._libc.RENAME_NOREPLACE
-
                 suppress = []
                 if ignore_exist:
                     suppress.append(errno.EEXIST)
 
-                # As a last step, move the file to the desired location.
-                with ctx.suppress_oserror(*suppress):
-                    self._libc.renameat2(
-                        oldpath=self._path(rpath_tmp).encode(),
-                        newpath=self._path(rpath).encode(),
-                        flags=flags,
+                if replace:
+                    # Move the file into the desired location, possibly
+                    # replacing any existing entry.
+                    os.rename(
+                        src=self._path(rpath_tmp),
+                        dst=self._path(rpath),
                     )
+                else:
+                    # Preferably, we used `RENAME_NOREPLACE`, but this is not
+                    # supported on NFS. Instead, we create a hard-link, which
+                    # will fail if the target already exists. We rely on the
+                    # cleanup-path to drop the original link.
+                    with ctx.suppress_oserror(*suppress):
+                        os.link(
+                            src=self._path(rpath_tmp),
+                            dst=self._path(rpath),
+                            follow_symlinks=False,
+                        )
         finally:
             if rpath_tmp is not None:
-                # If the temporary file exists, we delete it on error. If we
-                # haven't created it, or if we already moved it, this will be a
-                # no-op. Due to the unique name, we will never delete a file we
-                # do not own.
+                # If the temporary file exists, we delete it. If we haven't
+                # created it, or if we already moved it, this will be a no-op.
+                # Due to the unique name, we will never delete a file we do not
+                # own. If we hard-linked the file, this merely deletes the
+                # original temporary link.
                 # On fatal errors, we leak the file into the object store. Due
                 # to the released lock and UUID name, cache management will
                 # clean it up.
