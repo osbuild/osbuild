@@ -900,12 +900,16 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 # As last step move the entry to the desired location. If the
                 # target name is already taken, we bail out and pretend the
                 # entry was immediately overwritten by another one.
+                #
+                # Preferably, we used RENAME_NOREPLACE, but this is not
+                # available on all file-systems. Hence, we rely on the fact
+                # that non-empty directories cannot be replaced, so we
+                # automatically get RENAME_NOREPLACE behavior.
                 path_name = self._path(self._dirname_objects, name)
                 try:
-                    self._libc.renameat2(
-                        oldpath=path_uuid.encode(),
-                        newpath=path_name.encode(),
-                        flags=self._libc.RENAME_NOREPLACE,
+                    os.rename(
+                        src=path_uuid,
+                        dst=path_name,
                     )
                 except OSError as e:
                     ignore = [errno.EEXIST, errno.ENOTDIR, errno.ENOTEMPTY]
