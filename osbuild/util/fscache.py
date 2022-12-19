@@ -9,7 +9,6 @@ the cache under a given limit.
 # pylint: disable=too-many-lines
 
 import contextlib
-import ctypes
 import errno
 import json
 import os
@@ -212,7 +211,6 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
 
     # constant properties
     _appid: str
-    _libc: linux.Libc
     _path_cache: Any
 
     # context-manager properties
@@ -242,7 +240,6 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         """
 
         self._appid = appid
-        self._libc = linux.Libc.default()
         self._path_cache = os.fspath(path_cache)
 
         self._active = False
