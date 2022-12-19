@@ -354,9 +354,32 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 # acquiring the lock. Hence, run `stat(2)` on the path again
                 # and compare it to `fstat(2)` of the open file. If they differ
                 # simply retry.
-                st_fd = os.stat(fd)
-                st_path = os.stat(path)
-                if st_fd.st_dev != st_path.st_dev or st_fd.st_ino != st_path.st_ino:
+                # On NFS, the lock-acquisition has invalidated the caches, hence
+                # the metadata is refetched. On linux, the first query will
+                # succeed and reflect the drop in link-count. Every further
+                # query will yield `ESTALE`. Yet, we cannot rely on being the
+                # first to query, so proceed carefully.
+                # On non-NFS, information is coherent and we can simply proceed
+                # comparing the DEV+INO information to see whether the file was
+                # replaced.
+
+                retry = False
+
+                try:
+                    st_fd = os.stat(fd)
+                except OSError as e:
+                    if e.errno != errno.ESTALE:
+                        raise
+                    retry = True
+
+                try:
+                    st_path = os.stat(path)
+                except OSError as e:
+                    if e.errno not in [errno.ENOENT, errno.ESTALE]:
+                        raise
+                    retry = True
+
+                if retry or st_fd.st_dev != st_path.st_dev or st_fd.st_ino != st_path.st_ino:
                     linux.fcntl_flock(fd, linux.fcntl.F_UNLCK)
                     os.close(fd)
                     fd = None
