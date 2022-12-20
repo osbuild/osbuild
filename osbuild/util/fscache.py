@@ -211,6 +211,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
 
     # constant properties
     _appid: str
+    _tracers: Dict[str, Any]
     _path_cache: Any
 
     # context-manager properties
@@ -240,6 +241,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         """
 
         self._appid = appid
+        self._tracers = {}
         self._path_cache = os.fspath(path_cache)
 
         self._active = False
@@ -247,6 +249,26 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         self._lock = None
         self._info = FsCacheInfo()
         self._info_maximum_size = 0
+
+    def _trace(self, trace: str):
+        """Trace execution
+
+        Execute registered trace-hooks for the given trace string. This allows
+        tests to register callbacks that are executed at runtime at a specific
+        location in the code. During normal operation, no such hooks should be
+        used.
+
+        The trace-hooks are used to trigger race-conditions during tests and
+        verify they are handled gracefully.
+
+        Parameters:
+        -----------
+        trace
+            The trace-hook to run.
+        """
+
+        if trace in self._tracers:
+            self._tracers[trace]()
 
     @staticmethod
     def _calculate_size(path_target: str) -> int:
@@ -347,7 +369,9 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 if write:
                     flags = flags | os.O_RDWR
                     lock = linux.fcntl.F_WRLCK
+                self._trace("_atomic_open:open")
                 fd = os.open(path, flags, 0o644)
+                self._trace("_atomic_open:lock")
                 linux.fcntl_flock(fd, lock, wait=wait)
 
                 # The file might have been replaced between opening it and
