@@ -204,6 +204,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
     _filename_cache_info = "cache.info"
     _filename_cache_lock = "cache.lock"
     _filename_cache_size = "cache.size"
+    _filename_cache_tag = "CACHEDIR.TAG"
     _filename_object_info = "object.info"
     _filename_object_lock = "object.lock"
     _version_current = 1
@@ -615,6 +616,11 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
 
         # Create the file-scaffolding of the cache. We fill in the default
         # information and ignore racing operations.
+        with self._atomic_file(self._filename_cache_tag, self._dirname_objects, ignore_exist=True) as f:
+            f.write(
+                "Signature: 8a477f597d28d172789f06886806bc55\n"
+                "# This is a cache directory tag created by osbuild (see https://bford.info/cachedir/)\n"
+            )
         with self._atomic_file(self._filename_cache_info, self._dirname_objects, ignore_exist=True) as f:
             json.dump({"version": self._version_current}, f)
         with self._atomic_file(self._filename_cache_lock, self._dirname_objects, ignore_exist=True) as f:

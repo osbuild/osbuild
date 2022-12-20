@@ -190,16 +190,32 @@ def test_scaffolding(tmpdir):
     with cache:
         pass
 
-    assert len(list(os.scandir(tmpdir))) == 5
+    assert len(list(os.scandir(tmpdir))) == 6
     assert len(list(os.scandir(os.path.join(tmpdir, cache._dirname_objects)))) == 0
     assert len(list(os.scandir(os.path.join(tmpdir, cache._dirname_stage)))) == 0
 
+    with open(os.path.join(tmpdir, cache._filename_cache_tag), "r", encoding="utf8") as f:
+        assert len(f.read()) > 0
     with open(os.path.join(tmpdir, cache._filename_cache_info), "r", encoding="utf8") as f:
         assert json.load(f) == {"version": 1}
     with open(os.path.join(tmpdir, cache._filename_cache_lock), "r", encoding="utf8") as f:
         assert f.read() == ""
     with open(os.path.join(tmpdir, cache._filename_cache_size), "r", encoding="utf8") as f:
         assert f.read() == "0"
+
+
+def test_cachedir_tag(tmpdir):
+    #
+    # Verify compatibility to the cachedir-tag specification.
+    #
+
+    cache = fscache.FsCache("osbuild-test-appid", tmpdir)
+
+    with cache:
+        pass
+
+    with open(os.path.join(tmpdir, "CACHEDIR.TAG"), "r", encoding="utf8") as f:
+        assert f.read(43) == "Signature: 8a477f597d28d172789f06886806bc55"
 
 
 def test_cache_info(tmpdir):
