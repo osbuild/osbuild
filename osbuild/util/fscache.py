@@ -34,11 +34,15 @@ class FsCacheInfo(NamedTuple):
     tuple and used to query or set the configuration of a cache.
 
     creation_boot_id - Hashed linux boot-id at the time of cache-creation
+    high_watermark - Cache size watermark as percentage to start reclaim
+    low_watermark - Cache size watermark as percentage to stop reclaim
     maximum_size - Maximum cache size in bytes, or "unlimited"
     version - version of the cache data structures
     """
 
     creation_boot_id: Optional[str] = None
+    high_watermark: Optional[int] = None
+    low_watermark: Optional[int] = None
     maximum_size: MaximumSizeType = None
     version: Optional[int] = None
 
@@ -55,6 +59,8 @@ class FsCacheInfo(NamedTuple):
             return cls()
 
         creation_boot_id = None
+        high_watermark = None
+        low_watermark = None
         maximum_size: MaximumSizeType = None
         version = None
 
@@ -62,6 +68,16 @@ class FsCacheInfo(NamedTuple):
         _creation_boot_id = data.get("creation-boot-id")
         if isinstance(_creation_boot_id, str) and len(_creation_boot_id) == 32:
             creation_boot_id = _creation_boot_id
+
+        # parse "high-watermark"
+        _high_watermark = data.get("high-watermark")
+        if isinstance(_high_watermark, int) and (0 <= _high_watermark <= 100):
+            high_watermark = _high_watermark
+
+        # parse "low-watermark"
+        _low_watermark = data.get("low-watermark")
+        if isinstance(_low_watermark, int) and (0 <= _low_watermark <= 100):
+            low_watermark = _low_watermark
 
         # parse "maximum-size"
         _maximum_size = data.get("maximum-size")
@@ -78,6 +94,8 @@ class FsCacheInfo(NamedTuple):
         # create immutable tuple
         return cls(
             creation_boot_id,
+            high_watermark,
+            low_watermark,
             maximum_size,
             version,
         )
@@ -93,6 +111,10 @@ class FsCacheInfo(NamedTuple):
         data: Dict[str, Any] = {}
         if self.creation_boot_id is not None:
             data["creation-boot-id"] = self.creation_boot_id
+        if self.high_watermark is not None:
+            data["high-watermark"] = self.high_watermark
+        if self.low_watermark is not None:
+            data["low-watermark"] = self.low_watermark
         if self.maximum_size is not None:
             data["maximum-size"] = self.maximum_size
         if self.version is not None:

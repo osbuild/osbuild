@@ -231,17 +231,34 @@ def test_cache_info(tmpdir):
         assert cache._info == fscache.FsCacheInfo(version=1)
         assert cache.info == cache._info
 
+        assert cache.info.high_watermark is None
+        assert cache.info.low_watermark is None
         assert cache.info.maximum_size is None
         assert cache.info.creation_boot_id is None
+
         cache.info = fscache.FsCacheInfo(maximum_size=1024)
         assert cache.info.maximum_size == 1024
         assert cache.info.creation_boot_id is None
+
         cache.info = fscache.FsCacheInfo(creation_boot_id="0"*32)
         assert cache.info.maximum_size == 1024
         assert cache.info.creation_boot_id == "0"*32
+
         cache.info = fscache.FsCacheInfo(maximum_size=2048, creation_boot_id="1"*32)
         assert cache.info.maximum_size == 2048
         assert cache.info.creation_boot_id == "1"*32
+
+        cache.info = fscache.FsCacheInfo(high_watermark=80, low_watermark=50)
+        assert cache.info.high_watermark == 80
+        assert cache.info.low_watermark == 50
+
+        cache.info = fscache.FsCacheInfo(high_watermark=-10, low_watermark=-10)
+        assert cache.info.high_watermark is None
+        assert cache.info.low_watermark is None
+
+        cache.info = fscache.FsCacheInfo(high_watermark=120, low_watermark=120)
+        assert cache.info.high_watermark is None
+        assert cache.info.low_watermark is None
 
     assert not fscache.FsCacheInfo().to_json()
     assert fscache.FsCacheInfo(creation_boot_id="0"*32).to_json() == {
@@ -271,6 +288,23 @@ def test_cache_info(tmpdir):
         "unknown0": "foobar",
         "unknown1": ["foo", "bar"],
     }) == fscache.FsCacheInfo(creation_boot_id="0"*32)
+
+    info_json = {
+        "creation-boot-id": "0"*32,
+        "high-watermark": 80,
+        "low-watermark": 50,
+        "maximum-size": 1024,
+        "version": 1,
+    }
+    info_typed = fscache.FsCacheInfo(
+        creation_boot_id="0"*32,
+        high_watermark=80,
+        low_watermark=50,
+        maximum_size=1024,
+        version=1,
+    )
+    assert fscache.FsCacheInfo.from_json(info_json) == info_typed
+    assert info_typed.to_json() == info_json
 
 
 def test_store(tmpdir):
