@@ -567,10 +567,15 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                     # of the anonymous lock-file into the new directory. A
                     # parallel cleanup might have deleted the empty directory,
                     # so catch `ENOENT` and retry.
+                    # Parallel cleanups might have also claimed a lock
+                    # themselves, in that case retry as well. If we end up
+                    # locking the entry just after a cleanup deleted its lock,
+                    # we end up reclaiming the entry, which the cleanup must
+                    # honor gracefully.
                     try:
                         es.close()
                     except OSError as e:
-                        if e.errno == errno.ENOENT:
+                        if e.errno in [errno.EEXIST, errno.ENOENT]:
                             continue
                         raise
 
@@ -584,7 +589,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 with ctx.suppress_oserror(errno.ENOENT, errno.ENOTDIR):
                     os.unlink(self._path(rpath_lock))
             if rpath_dir is not None:
-                with ctx.suppress_oserror(errno.ENOENT, errno.ENOTDIR):
+                with ctx.suppress_oserror(errno.EBUSY, errno.ENOENT, errno.ENOTDIR, errno.ENOTEMPTY):
                     os.rmdir(self._path(rpath_dir))
             raise
 
@@ -813,9 +818,11 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         # With everything gone, we unlink the lock-file and eventually delete
         # the directory. Again, cleanup routines might have raced us, so avoid
         # failing in case the entries are already gone.
+        # Additionally, if the entry is reclaimed just before we can drop the
+        # directory, make sure to ignore it and leave it around.
         with ctx.suppress_oserror(errno.ENOENT, errno.ENOTDIR):
             os.unlink(path_lock)
-        with ctx.suppress_oserror(errno.ENOENT, errno.ENOTDIR):
+        with ctx.suppress_oserror(errno.EBUSY, errno.ENOENT, errno.ENOTDIR, errno.ENOTEMPTY):
             os.rmdir(path_dir)
 
     @contextlib.contextmanager
