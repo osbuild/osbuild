@@ -2,15 +2,16 @@
 # Tests for the 'osbuild.util.fscache' module.
 #
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access,too-many-statements
 
+import contextlib
 import json
 import os
 import tempfile
 
 import pytest
 
-from osbuild.util import fscache
+from osbuild.util import fscache, linux
 
 
 @pytest.fixture(name="tmpdir")
@@ -385,3 +386,191 @@ def test_size_discard(tmpdir):
         with pytest.raises(fscache.FsCache.MissError):
             with cache.load("foo") as rpath:
                 pass
+
+
+def test_stale_discard(tmpdir):
+    #
+    # Run cache-maintenance on a cache with artificially created stale entries
+    # and verify they are deleted properly, but any non-stale entries remain.
+    #
+
+    cache = fscache.FsCache("osbuild-test-appid", tmpdir)
+    with cache:
+        with contextlib.ExitStack() as es:
+            n_stage = 0
+            n_objects = 0
+
+            #
+            # Create stage-entries with all possible combinations.
+            #
+
+            # stage: unlocked file
+            with open(os.path.join(cache, cache._dirname_stage, "stale-0"), "x", encoding="utf8") as f:
+                f.write("foo")
+
+            # stage: unlocked temporary file
+            with open(os.path.join(cache, cache._dirname_stage, "uuid-0"), "x", encoding="utf8") as f:
+                f.write("foo")
+
+            # stage: empty directory
+            os.mkdir(os.path.join(cache, cache._dirname_stage, "stale-1"))
+
+            # stage: directory without info
+            os.mkdir(os.path.join(cache, cache._dirname_stage, "stale-2"))
+            with open(os.path.join(cache, cache._dirname_stage, "stale-2", "foo"), "x", encoding="utf8") as f:
+                f.write("foo")
+
+            # stage: directory with lock without info
+            os.mkdir(os.path.join(cache, cache._dirname_stage, "stale-3"))
+            with open(os.path.join(cache, cache._dirname_stage, "stale-3", cache._filename_object_lock), "x", encoding="utf8") as f:
+                pass
+
+            # stage: directory without lock with info
+            os.mkdir(os.path.join(cache, cache._dirname_stage, "stale-4"))
+            with open(os.path.join(cache, cache._dirname_stage, "stale-4", cache._filename_object_info), "x", encoding="utf8") as f:
+                f.write("{}")
+
+            # stage: temporary directory without lock with info
+            os.mkdir(os.path.join(cache, cache._dirname_stage, "uuid-1"))
+            with open(os.path.join(cache, cache._dirname_stage, "uuid-1", cache._filename_object_info), "x", encoding="utf8") as f:
+                f.write("{}")
+
+            # stage: directory with lock with info
+            os.mkdir(os.path.join(cache, cache._dirname_stage, "stale-5"))
+            with open(os.path.join(cache, cache._dirname_stage, "stale-5", cache._filename_object_lock), "x", encoding="utf8") as f:
+                pass
+            with open(os.path.join(cache, cache._dirname_stage, "stale-5", cache._filename_object_info), "x", encoding="utf8") as f:
+                f.write("{}")
+
+            # stage: temporary directory with lock with info
+            os.mkdir(os.path.join(cache, cache._dirname_stage, "uuid-2"))
+            with open(os.path.join(cache, cache._dirname_stage, "uuid-2", cache._filename_object_lock), "x", encoding="utf8") as f:
+                pass
+            with open(os.path.join(cache, cache._dirname_stage, "uuid-2", cache._filename_object_info), "x", encoding="utf8") as f:
+                f.write("{}")
+
+            # stage: locked file
+            n_stage += 1
+            f = es.enter_context(
+                open(os.path.join(cache, cache._dirname_stage, "live-0"), "x+", encoding="utf8")
+            )
+            linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
+
+            # stage: locked temporary file
+            n_stage += 1
+            f = es.enter_context(
+                open(os.path.join(cache, cache._dirname_stage, "uuid-live-3"), "x+", encoding="utf8")
+            )
+            linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
+
+            # stage: locked dir
+            n_stage += 1
+            os.mkdir(os.path.join(cache, cache._dirname_stage, "live-1"))
+            f = es.enter_context(
+                open(os.path.join(cache, cache._dirname_stage, "live-1", cache._filename_object_lock), "x+", encoding="utf8")
+            )
+            linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
+
+            # stage: locked temporary dir
+            n_stage += 1
+            os.mkdir(os.path.join(cache, cache._dirname_stage, "uuid-live-4"))
+            f = es.enter_context(
+                open(os.path.join(cache, cache._dirname_stage, "uuid-live-4", cache._filename_object_lock), "x+", encoding="utf8")
+            )
+            linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
+
+            #
+            # Create objects-entries with all possible combinations.
+            #
+
+            # objects: unlocked file
+            n_objects += 1
+            with open(os.path.join(cache, cache._dirname_objects, "live-0"), "x", encoding="utf8") as f:
+                f.write("foo")
+
+            # objects: unlocked temporary file
+            with open(os.path.join(cache, cache._dirname_objects, "uuid-0"), "x", encoding="utf8") as f:
+                f.write("foo")
+
+            # objects: empty directory
+            os.mkdir(os.path.join(cache, cache._dirname_objects, "stale-0"))
+
+            # objects: directory without info
+            os.mkdir(os.path.join(cache, cache._dirname_objects, "stale-1"))
+            with open(os.path.join(cache, cache._dirname_objects, "stale-1", "foo"), "x", encoding="utf8") as f:
+                f.write("foo")
+
+            # objects: directory with lock without info
+            os.mkdir(os.path.join(cache, cache._dirname_objects, "stale-2"))
+            with open(os.path.join(cache, cache._dirname_objects, "stale-2", cache._filename_object_lock), "x", encoding="utf8") as f:
+                pass
+
+            # objects: directory without lock with info
+            n_objects += 1
+            os.mkdir(os.path.join(cache, cache._dirname_objects, "live-1"))
+            with open(os.path.join(cache, cache._dirname_objects, "live-1", cache._filename_object_info), "x", encoding="utf8") as f:
+                f.write("{}")
+
+            # objects: temporary directory without lock with info
+            os.mkdir(os.path.join(cache, cache._dirname_objects, "uuid-1"))
+            with open(os.path.join(cache, cache._dirname_objects, "uuid-1", cache._filename_object_info), "x", encoding="utf8") as f:
+                f.write("{}")
+
+            # objects: directory with lock with info
+            n_objects += 1
+            os.mkdir(os.path.join(cache, cache._dirname_objects, "live-2"))
+            with open(os.path.join(cache, cache._dirname_objects, "live-2", cache._filename_object_lock), "x", encoding="utf8") as f:
+                pass
+            with open(os.path.join(cache, cache._dirname_objects, "live-2", cache._filename_object_info), "x", encoding="utf8") as f:
+                f.write("{}")
+
+            # objects: temporary directory with lock with info
+            os.mkdir(os.path.join(cache, cache._dirname_objects, "uuid-2"))
+            with open(os.path.join(cache, cache._dirname_objects, "uuid-2", cache._filename_object_lock), "x", encoding="utf8") as f:
+                pass
+            with open(os.path.join(cache, cache._dirname_objects, "uuid-2", cache._filename_object_info), "x", encoding="utf8") as f:
+                f.write("{}")
+
+            # objects: locked file
+            n_objects += 1
+            f = es.enter_context(
+                open(os.path.join(cache, cache._dirname_objects, "live-3"), "x+", encoding="utf8")
+            )
+            linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
+
+            # objects: locked temporary file
+            n_objects += 1
+            f = es.enter_context(
+                open(os.path.join(cache, cache._dirname_objects, "uuid-live-3"), "x+", encoding="utf8")
+            )
+            linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
+
+            # objects: locked dir
+            n_objects += 1
+            os.mkdir(os.path.join(cache, cache._dirname_objects, "live-4"))
+            f = es.enter_context(
+                open(os.path.join(cache, cache._dirname_objects, "live-4", cache._filename_object_lock), "x+", encoding="utf8")
+            )
+            linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
+
+            # objects: locked temporary dir
+            n_objects += 1
+            os.mkdir(os.path.join(cache, cache._dirname_objects, "uuid-live-4"))
+            f = es.enter_context(
+                open(os.path.join(cache, cache._dirname_objects, "uuid-live-4", cache._filename_object_lock), "x+", encoding="utf8")
+            )
+            linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
+
+            #
+            # Run cache-maintenance and verify contents.
+            #
+
+            cache._mt_objects(cache._dirname_stage, visible=False)
+            cache._mt_objects(cache._dirname_objects, visible=True)
+
+            assert len(list(os.scandir(os.path.join(cache, cache._dirname_stage)))) == n_stage
+            assert len(list(os.scandir(os.path.join(cache, cache._dirname_objects)))) == n_objects
+
+            with os.scandir(os.path.join(cache, cache._dirname_stage)) as scan:
+                for entry in scan:
+                    assert entry.name.startswith("live-") or entry.name.startswith("uuid-live-")

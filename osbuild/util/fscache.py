@@ -1065,6 +1065,171 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 self._dirname_data,
             )
 
+    def _mt_stale_file(self, rpath_dir: str, name: str, *, visible: bool):
+        """Stale-file maintenance
+
+        This runs as part of the cache-maintenance and checks whether the
+        specified file should be considered stale. In this case, this will
+        delete the file.
+
+        This must be called on a root-level file object, that is, either a
+        staging-entry or a committed cache object. If the entry is not visible
+        to lookups, it will be considered stale unless it is actively in use.
+
+        Parameters:
+        -----------
+        rpath_dir
+            Relative path from cache-root to the directory the object
+            resides in.
+        name
+            Name of the file in `rpath_dir`.
+        visible
+            Whether the file is visible to lookups.
+        """
+
+        assert self._is_active()
+
+        # If the file is visible to lookups and it is not a temporary, then
+        # it is never stale. Hence, leave it around.
+        if visible and not name.startswith("uuid-"):
+            return
+
+        try:
+            # Try a write-lock. If we got it, the file is considered stale
+            # and we can safely drop it.
+            with self._atomic_open(
+                os.path.join(rpath_dir, name),
+                write=True,
+                wait=False,
+            ) as fd:
+                os.unlink(self._path(rpath_dir, name))
+        except OSError as e:
+            # If the lock cannot be acquired, or if the file or its directory
+            # are gone, we leave it be.
+            if e.errno not in [errno.EAGAIN, errno.EISDIR, errno.ENOENT, errno.ENOTDIR]:
+                raise
+
+    def _mt_stale_dir(self, rpath_dir: str, name: str, *, visible: bool):
+        """Stale-directory maintenance
+
+        This runs as part of the cache-maintenance and checks whether the
+        specified directory should be considered stale. In this case, this will
+        delete the entire directory.
+
+        This must be called on a root-level directory object, that is, either a
+        staging-entry or a committed cache object. If the entry is not visible
+        to lookups, it will be considered stale unless it is actively in use.
+
+        Parameters:
+        -----------
+        rpath_dir
+            Relative path from cache-root to the directory the object
+            resides in.
+        name
+            Name of the directory in `rpath_dir`.
+        visible
+            Whether the directory is visible to lookups.
+        """
+
+        assert self._is_active()
+
+        try:
+            # Try a write-lock on the lock-file. If we got it, the entire dir
+            # is considered stale and we can safely drop it. Pass `O_CREAT` to
+            # ensure the lock-file is created in case the directory is stale
+            # but has no lock-file.
+            with self._atomic_open(
+                os.path.join(
+                    rpath_dir,
+                    name,
+                    self._filename_object_lock,
+                ),
+                write=False,
+                wait=False,
+                oflags=os.O_CREAT | os.O_RDWR,
+            ) as fd:
+                # We got a read-lock on the entry, which means there cannot be
+                # another writer and the entry must be either complete or
+                # stale. If we consider the entry stale, we proceed with
+                # upgrading our lock to a write-lock. If that fails, the entry
+                # is still in use and we bail out. Otherwise, we can safely
+                # delete it.
+                # However, before we consider the entry stale, we check whether
+                # the entry is visible to lookups, is not a temporary, and has
+                # the object-info file present. If that is the case, the entry
+                # is live and should remain cached.
+                if visible and not name.startswith("uuid-"):
+                    if os.access(
+                        self._path(
+                            rpath_dir,
+                            name,
+                            self._filename_object_info,
+                        ),
+                        os.R_OK,
+                    ):
+                        return
+
+                linux.fcntl_flock(fd, linux.fcntl.F_WRLCK, wait=False)
+                self._rm_r_object(os.path.join(rpath_dir, name))
+        except OSError as e:
+            # If the lock cannot be acquired, or if the file or its directory
+            # are gone, we leave it be.
+            if e.errno not in [errno.EAGAIN, errno.ENOENT, errno.ENOTDIR]:
+                raise
+
+    def _mt_objects(self, rpath_dir: str, *, visible: bool):
+        """Perform object maintenance
+
+        Iterate the entire specified object-directory looking for stale
+        entries. Delete anything that is no longer in use.
+
+        Parameters:
+        -----------
+        rpath_dir
+            Relative path from the cache root to the object directory. This
+            usually is either `stage` or `objects`.
+        visible
+            Whether this object directory is visible to lookups or not. If
+            true, entries are never considered stale, unless they are
+            corrupted. If false, any unlocked entry is considered stale.
+        """
+
+        assert self._is_active()
+        assert self._is_compatible()
+
+        with os.scandir(self._path(rpath_dir)) as scan:
+            for entry in scan:
+                if entry.is_symlink():
+                    # We do not create top-level symlinks, so lets leave them
+                    # around, as we cannot tell what they are for.
+                    pass
+                elif entry.is_file(follow_symlinks=False):
+                    self._mt_stale_file(rpath_dir, entry.name, visible=visible)
+                elif entry.is_dir(follow_symlinks=False):
+                    self._mt_stale_dir(rpath_dir, entry.name, visible=visible)
+                else:
+                    # Whatever other file-type was placed here, we did not
+                    # produce, so we cannot tell its purpose and thus leave
+                    # it around.
+                    pass
+
+    def maintenance(self):
+        """Perform cache maintenance
+
+        Run a series of maintenance tasks on the cache. Those tasks will drop
+        outdated content, delete possible intermediaries of previous crashed
+        runs, reduce cache size according to the configured watermarks, and
+        more.
+        """
+
+        assert self._is_active()
+
+        if not self._is_compatible():
+            return
+
+        self._mt_objects(self._dirname_stage, visible=False)
+        self._mt_objects(self._dirname_objects, visible=True)
+
     @property
     def info(self) -> FsCacheInfo:
         """Query Cache Information
