@@ -1037,6 +1037,28 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                     raise self.MissError() from None
                 raise e
 
+            # If no object-info is present, the object is corrupted and we
+            # must not consider it valid. Bail out and treat this as a cache
+            # miss.
+            try:
+                with open(
+                    self._path(
+                        self._dirname_objects,
+                        name,
+                        self._filename_object_info,
+                    ),
+                    "r",
+                    encoding="utf8",
+                ):
+                    # So far we are not interested in the object-info, but
+                    # in the future, we will parse and return this alongside
+                    # to the caller.
+                    pass
+            except OSError as e:
+                if e.errno in [errno.ENOENT, errno.ENOTDIR]:
+                    raise self.MissError() from None
+                raise e
+
             yield os.path.join(
                 self._dirname_objects,
                 name,
