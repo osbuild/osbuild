@@ -1081,6 +1081,11 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                     raise self.MissError() from None
                 raise e
 
+            # Update the timestamps of the entry root directory to mark this
+            # entry as used and thus lessen the chances of it being garbage
+            # collected by cache maintenance.
+            os.utime(self._path(self._dirname_objects, name), follow_symlinks=False)
+
             yield os.path.join(
                 self._dirname_objects,
                 name,

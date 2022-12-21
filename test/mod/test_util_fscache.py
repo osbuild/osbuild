@@ -422,6 +422,30 @@ def test_size_discard(tmpdir):
                 pass
 
 
+def test_mtime_update(tmpdir):
+    #
+    # Verify that any cache-hit will update the `mtime` of the given entry.
+    #
+
+    cache = fscache.FsCache("osbuild-test-appid", tmpdir)
+    with cache:
+        cache.info = cache.info._replace(maximum_size=1024)
+
+        with cache.store("foo") as rpath:
+            with open(cache._path(rpath, "bar"), "x", encoding="utf8") as f:
+                f.write("foobar")
+
+        os.utime(cache._path(cache._dirname_objects, "foo"), (1024, 1024))
+
+        assert os.stat(cache._path(cache._dirname_objects, "foo")).st_mtime == 1024
+
+        with cache.load("foo") as rpath:
+            with open(cache._path(rpath, "bar"), "r", encoding="utf8") as f:
+                assert f.read() == "foobar"
+
+        assert os.stat(cache._path(cache._dirname_objects, "foo")).st_mtime > 1024
+
+
 def test_stale_discard(tmpdir):
     #
     # Run cache-maintenance on a cache with artificially created stale entries
