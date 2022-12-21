@@ -767,6 +767,9 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         assert self._is_active()
         assert self._is_compatible()
 
+        if diff == 0:
+            return True
+
         # Open the cache-size and lock it for writing. But instead of writing
         # directly to it, we replace it with a new file. This guarantees that
         # we cannot crash while writing a partial size, but always atomically
