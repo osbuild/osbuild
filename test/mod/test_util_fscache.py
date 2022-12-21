@@ -632,3 +632,89 @@ def test_stale_discard(tmpdir):
             with os.scandir(os.path.join(cache, cache._dirname_stage)) as scan:
                 for entry in scan:
                     assert entry.name.startswith("live-") or entry.name.startswith("uuid-live-")
+
+
+def test_watermark(tmpdir):
+    #
+    # Run cache-maintenance on a cache and check watermark adjustments.
+    #
+
+    cache = fscache.FsCache("osbuild-test-appid", tmpdir)
+    with cache:
+        cache.info = cache.info._replace(
+            high_watermark=50,
+            low_watermark=25,
+            maximum_size=32,
+        )
+
+        # Create 2 cache entries with 8-bytes each.
+
+        with cache.store("foo-0") as rpath:
+            with open(cache._path(rpath, "bar"), "x", encoding="utf8") as f:
+                f.write("01234567")
+        os.utime(cache._path(cache, cache._dirname_objects, "foo-0"), (1024, 1024))
+
+        with cache.store("foo-1") as rpath:
+            with open(cache._path(rpath, "bar"), "x", encoding="utf8") as f:
+                f.write("01234567")
+        os.utime(cache._path(cache, cache._dirname_objects, "foo-1"), (2048, 2048))
+
+        # Trigger reclaim and verify it was a no-op.
+
+        assert cache._cache_size() == 16
+        cache._mt_reclaim()
+        assert cache._cache_size() == 16
+
+        with cache.load("foo-0") as rpath:
+            pass
+        with cache.load("foo-1") as rpath:
+            pass
+
+        # Create 1 more cache entry with 12-bytes
+
+        with cache.store("foo-2") as rpath:
+            with open(cache._path(rpath, "bar"), "x", encoding="utf8") as f:
+                f.write("012345678901")
+        os.utime(cache._path(cache, cache._dirname_objects, "foo-2"), (512, 512))
+
+        # Trigger reclaim and verify the oldest entries are dropped, leaving
+        # only one 8-byte entry.
+
+        assert cache._cache_size() == 28
+        cache._mt_reclaim()
+        assert cache._cache_size() == 8
+
+        with pytest.raises(fscache.FsCache.MissError):
+            with cache.load("foo-0") as rpath:
+                pass
+        with cache.load("foo-1") as rpath:
+            pass
+        with pytest.raises(fscache.FsCache.MissError):
+            with cache.load("foo-2") as rpath:
+                pass
+
+        # Restore timestamps, which were updated by the cache-hits.
+
+        os.utime(cache._path(cache, cache._dirname_objects, "foo-1"), (2048, 2048))
+
+        # Create 1 more cache entry with 12-bytes, but newer than any other.
+
+        with cache.store("foo-3") as rpath:
+            with open(cache._path(rpath, "bar"), "x", encoding="utf8") as f:
+                f.write("012345678901")
+        os.utime(cache._path(cache, cache._dirname_objects, "foo-3"), (4096, 4096))
+
+        # Trigger reclaim and verify the cache is now empty. The newest object
+        # in the cache is bigger than the low-watermark threshold, so nothing
+        # will remain.
+
+        assert cache._cache_size() == 20
+        cache._mt_reclaim()
+        assert cache._cache_size() == 0
+
+        with pytest.raises(fscache.FsCache.MissError):
+            with cache.load("foo-1") as rpath:
+                pass
+        with pytest.raises(fscache.FsCache.MissError):
+            with cache.load("foo-3") as rpath:
+                pass

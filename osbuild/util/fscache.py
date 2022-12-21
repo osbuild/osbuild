@@ -747,6 +747,18 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         # the cache is entirely empty, we cannot know whether there are other
         # parallel accesses (without unreasonable effort).
 
+    def _cache_size(self) -> int:
+        """Read cache size
+
+        Read the current total cache size. This is not synchronized and thus
+        will be outdated as soon as the information is available.
+        """
+
+        assert self._is_active()
+
+        with open(self._path(self._filename_cache_size), "r", encoding="utf8") as f:
+            return json.load(f)
+
     def _update_cache_size(self, diff: int) -> bool:
         """Update cache size
 
@@ -1095,7 +1107,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 self._dirname_data,
             )
 
-    def _mt_stale_file(self, rpath_dir: str, name: str, *, visible: bool):
+    def _mt_stale_file(self, rpath_dir: str, name: str, *, visible: bool, reclaim: bool = False):
         """Stale-file maintenance
 
         This runs as part of the cache-maintenance and checks whether the
@@ -1106,6 +1118,8 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         staging-entry or a committed cache object. If the entry is not visible
         to lookups, it will be considered stale unless it is actively in use.
 
+        Returns the number of bytes reclaimed. For stale entries, this is 0.
+
         Parameters:
         -----------
         rpath_dir
@@ -1115,14 +1129,19 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             Name of the file in `rpath_dir`.
         visible
             Whether the file is visible to lookups.
+        reclaim
+            Whether to reclaim non-stale entries as well.
         """
 
         assert self._is_active()
 
         # If the file is visible to lookups and it is not a temporary, then
-        # it is never stale. Hence, leave it around.
+        # it is never stale. Hence, leave it around, except for reclaim.
         if visible and not name.startswith("uuid-"):
-            return
+            if not reclaim:
+                return 0
+        else:
+            reclaim = False
 
         try:
             # Try a write-lock. If we got it, the file is considered stale
@@ -1132,14 +1151,21 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 write=True,
                 wait=False,
             ) as fd:
+                reclaimed = 0
+                if reclaim:
+                    reclaimed = os.stat(fd).st_size
                 os.unlink(self._path(rpath_dir, name))
+                self._update_cache_size(-reclaimed)
+                return reclaimed
         except OSError as e:
             # If the lock cannot be acquired, or if the file or its directory
             # are gone, we leave it be.
             if e.errno not in [errno.EAGAIN, errno.EISDIR, errno.ENOENT, errno.ENOTDIR]:
                 raise
 
-    def _mt_stale_dir(self, rpath_dir: str, name: str, *, visible: bool):
+        return 0
+
+    def _mt_stale_dir(self, rpath_dir: str, name: str, *, visible: bool, reclaim: bool = False):
         """Stale-directory maintenance
 
         This runs as part of the cache-maintenance and checks whether the
@@ -1150,6 +1176,8 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         staging-entry or a committed cache object. If the entry is not visible
         to lookups, it will be considered stale unless it is actively in use.
 
+        Returns the number of bytes reclaimed. For stale entries, this is 0.
+
         Parameters:
         -----------
         rpath_dir
@@ -1159,9 +1187,13 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             Name of the directory in `rpath_dir`.
         visible
             Whether the directory is visible to lookups.
+        reclaim
+            Whether to reclaim non-stale entries as well.
         """
 
         assert self._is_active()
+
+        reclaimed = 0
 
         try:
             # Try a write-lock on the lock-file. If we got it, the entire dir
@@ -1188,24 +1220,35 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                 # the entry is visible to lookups, is not a temporary, and has
                 # the object-info file present. If that is the case, the entry
                 # is live and should remain cached.
+                # On reclaim, we read the object size and proceed with deletion
+                # forwarding the size to the caller.
                 if visible and not name.startswith("uuid-"):
-                    if os.access(
-                        self._path(
-                            rpath_dir,
-                            name,
-                            self._filename_object_info,
-                        ),
-                        os.R_OK,
-                    ):
-                        return
+                    try:
+                        with open(
+                            self._path(rpath_dir, name, self._filename_object_info),
+                            "r",
+                            encoding="utf8",
+                        ) as f:
+                            if not reclaim:
+                                return 0
+
+                            info = json.load(f)
+                            reclaimed = info.get("size", 0)
+                    except OSError as e:
+                        if e.errno not in [errno.ENOENT, errno.ENOTDIR]:
+                            raise
 
                 linux.fcntl_flock(fd, linux.fcntl.F_WRLCK, wait=False)
                 self._rm_r_object(os.path.join(rpath_dir, name))
+                self._update_cache_size(-reclaimed)
+                return reclaimed
         except OSError as e:
             # If the lock cannot be acquired, or if the file or its directory
             # are gone, we leave it be.
             if e.errno not in [errno.EAGAIN, errno.ENOENT, errno.ENOTDIR]:
                 raise
+
+        return 0
 
     def _mt_objects(self, rpath_dir: str, *, visible: bool):
         """Perform object maintenance
@@ -1243,6 +1286,85 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                     # it around.
                     pass
 
+    def _mt_reclaim(self):
+        """Maintenance reclaim
+
+        Reduce the cache-size according to the configured watermark levels,
+        making space for new entries by deleting rarely used entries.
+
+        If the cache size exceeds the configured high watermark level, this
+        will start a reclaim operation and delete cache entries until the
+        low watermark level is reached. An LRU-based logic is used to delete
+        cold cache entries first.
+        """
+
+        assert self._is_active()
+        assert self._is_compatible()
+
+        #
+        # Read the current cache size and compare it to the watermark levels.
+        # If we do not reach the high-watermark, there is nothing to do.
+        #
+
+        if self._info_maximum_size < 0:
+            return
+
+        high_watermark = self._info.high_watermark or 100
+        low_watermark = self._info.low_watermark or 80
+        high_limit = self._info_maximum_size * high_watermark / 100
+        low_limit = self._info_maximum_size * low_watermark / 100
+
+        size = self._cache_size()
+        if size <= high_limit:
+            return
+
+        #
+        # First iterate all objects and collect their last modification time
+        # (i.e., mtime). We avoid any further queries to keep this fast. We
+        # then sort by `mtime` to get an LRU-list of all cache entries.
+        #
+
+        entries = []
+
+        with os.scandir(self._path(self._dirname_objects)) as scan:
+            for entry in scan:
+                try:
+                    st = entry.stat(follow_symlinks=False)
+                except OSError as e:
+                    if e.errno not in [errno.ENOENT, errno.ENOTDIR]:
+                        raise
+                    continue
+
+                if entry.is_file(follow_symlinks=False):
+                    entries.append({
+                        "name": entry.name,
+                        "file": True,
+                        "mtime": st.st_mtime,
+                    })
+                elif entry.is_dir(follow_symlinks=False):
+                    entries.append({
+                        "name": entry.name,
+                        "file": False,
+                        "mtime": st.st_mtime,
+                    })
+
+        entries = sorted(entries, key=lambda v: v["mtime"])
+
+        #
+        # Iterate the LRU-list one element at a time and delete the entries
+        # until the low watermark level is reached.
+        #
+
+        reclaimed = 0
+        for entry in entries:
+            if entry["file"]:
+                reclaimed += self._mt_stale_file(self._dirname_objects, entry["name"], visible=True, reclaim=True)
+            else:
+                reclaimed += self._mt_stale_dir(self._dirname_objects, entry["name"], visible=True, reclaim=True)
+
+            if size - reclaimed <= low_limit:
+                break
+
     def maintenance(self):
         """Perform cache maintenance
 
@@ -1259,6 +1381,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
 
         self._mt_objects(self._dirname_stage, visible=False)
         self._mt_objects(self._dirname_objects, visible=True)
+        self._mt_reclaim()
 
     @property
     def info(self) -> FsCacheInfo:
