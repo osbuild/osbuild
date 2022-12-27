@@ -217,16 +217,16 @@ def test_source_epoch(object_store):
     l.symlink_to(d, target_is_directory=True)
 
     for i in (a, d, l, t):
-        si = i.stat(follow_symlinks=False)
-        before = si.st_mtime
+        si = os.stat(i, follow_symlinks=False)
+        before = int(si.st_mtime)
         assert before != tree.source_epoch
 
     # FINALIZING
     tree.finalize()
 
     for i in (a, d, l, t):
-        si = i.stat(follow_symlinks=False)
-        after = si.st_mtime
+        si = os.stat(i, follow_symlinks=False)
+        after = int(si.st_mtime)
 
         assert after != before, f"mtime not changed for {i}"
         assert after == tree.source_epoch
@@ -239,15 +239,15 @@ def test_source_epoch(object_store):
     b = Path(tree, "B")
     b.touch()
 
-    si = b.stat(follow_symlinks=False)
-    before = si.st_mtime
+    si = os.stat(b, follow_symlinks=False)
+    before = int(si.st_mtime)
 
     assert before != tree.source_epoch
 
     # FINALIZING
     baum.finalize()
-    si = a.stat(follow_symlinks=False)
-    after = si.st_mtime
+    si = os.stat(a, follow_symlinks=False)
+    after = int(si.st_mtime)
 
     assert after != before
     assert after == tree.source_epoch
