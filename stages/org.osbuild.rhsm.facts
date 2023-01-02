@@ -22,20 +22,13 @@ SCHEMA = r"""
 
 
 def main(tree, options):
-    path = os.path.join(tree, "usr/share/osbuild/self")
-    file = os.path.join(path, "rhsm.facts")
+    path = os.path.join(tree, "etc/rhsm/facts")
+    file = os.path.join(path, "osbuild.facts")
 
     os.makedirs(path, exist_ok=True)
 
     with open(file, "x", encoding="utf8") as f:
         json.dump(options["facts"], f)
-
-    os.makedirs(os.path.join(tree, "etc/rhsm/facts"), exist_ok=True)
-
-    os.symlink(
-        "/usr/share/osbuild/self/rhsm.facts",
-        os.path.join(tree, "etc/rhsm/facts/osbuild.facts"),
-    )
 
     return 0
 
