@@ -10,7 +10,7 @@ Version:        76
 
 Name:           %{pypi_name}
 Release:        1%{?dist}
-License:        ASL 2.0
+License:        Apache-2.0
 
 URL:            %{forgeurl}
 
