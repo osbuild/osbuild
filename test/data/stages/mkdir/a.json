@@ -362,6 +362,10 @@
             "paths": [
               {
                 "path": "a"
+              },
+              {
+                "path": "c/d",
+                "parents": true
               }
             ]
           }
