@@ -62,6 +62,11 @@ def main(tree, options):
         else:
             os.mkdir(target, mode)
 
+        # Documentation for os.mkdir() says that the mode is
+        # ignored on some systems. Also umask value may affect
+        # the final mode. So we set the mode explicitly.
+        os.chmod(target, mode, follow_symlinks=False)
+
     return 0
 
 
