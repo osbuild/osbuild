@@ -20,12 +20,21 @@
                 "path": "a"
               },
               {
+                "path": "c/d",
+                "parents": true
+              },
+              {
                 "path": "a/b",
                 "mode": 448
               },
               {
                 "path": "b/c/d",
                 "parents": true
+              },
+              {
+                "path": "c",
+                "mode": 448,
+                "exist_ok": true
               }
             ]
           }

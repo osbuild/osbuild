@@ -36,8 +36,12 @@ SCHEMA_2 = r"""
             "type": "boolean",
             "description": "Create intermediate directories",
             "default": false
+          },
+          "exist_ok": {
+            "type": "boolean",
+            "description": "Do not fail if the directory already exists",
+            "default": false
           }
-
         }
       }
     }
@@ -50,17 +54,21 @@ def main(tree, options):
     for item in options["paths"]:
         path = item["path"]
         mode = item.get("mode", 0o777)
-
         parents = item.get("parents", False)
+        exist_ok = item.get("exist_ok", False)
 
         target = os.path.join(tree, path.lstrip("/"))
         if not in_tree(target, tree):
             raise ValueError(f"path {path} not in tree")
 
         if parents:
-            os.makedirs(target, mode=mode)
+            os.makedirs(target, mode=mode, exist_ok=exist_ok)
         else:
-            os.mkdir(target, mode)
+            try:
+                os.mkdir(target, mode)
+            except FileExistsError:
+                if not exist_ok:
+                    raise
 
         # Documentation for os.mkdir() says that the mode is
         # ignored on some systems. Also umask value may affect
