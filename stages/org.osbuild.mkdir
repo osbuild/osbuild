@@ -70,11 +70,6 @@ def main(tree, options):
                 if not exist_ok:
                     raise
 
-        # Documentation for os.mkdir() says that the mode is
-        # ignored on some systems. Also umask value may affect
-        # the final mode. So we set the mode explicitly.
-        os.chmod(target, mode, follow_symlinks=False)
-
     return 0
 
 
