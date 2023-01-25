@@ -31,6 +31,24 @@ SCHEMA_2 = """
       "readonly": {
         "description": "mount the source as a readonly device",
         "type": "boolean"
+      },
+      "uid": {
+        "description": "mount the source with given uid",
+        "type": "integer"
+      },
+      "gid": {
+        "description": "mount the source with given guid",
+        "type": "integer"
+      },
+      "umask": {
+        "description": "mount the source with given umask",
+        "type": "string",
+        "pattern": "^[0-7][0-7][0-7]$"
+      },
+      "shortname": {
+        "description": "mount the source with given shortname",
+        "type": "string",
+        "enum": ["lower", "win95", "winnt", "mixed"]
       }
     }
   }

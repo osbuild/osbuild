@@ -126,8 +126,19 @@ class FileSystemMountService(MountService):
     # pylint: disable=no-self-use
     @abc.abstractmethod
     def translate_options(self, options: Dict) -> List:
-        if options.get("readonly", False):
-            return ["-o", "ro"]
+        opts = []
+        if options.get("readonly"):
+            opts.append("ro")
+        if "uid" in options:
+            opts.append(f"uid={options['uid']}")
+        if "gid" in options:
+            opts.append(f"gid={options['gid']}")
+        if "umask" in options:
+            opts.append(f"umask={options['umask']}")
+        if "shortname" in options:
+            opts.append(f"shortname={options['shortname']}")
+        if opts:
+            return ["-o", ",".join(opts)]
         return []
 
     def mount(self, args: Dict):
