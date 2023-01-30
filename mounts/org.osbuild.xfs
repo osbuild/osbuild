@@ -30,7 +30,8 @@ SCHEMA_2 = """
     "properties": {
       "readonly": {
         "description": "mount the source as a readonly device",
-        "type": "boolean"
+        "type": "boolean",
+        "default": false
       }
     }
   }
