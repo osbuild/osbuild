@@ -26,7 +26,7 @@ SCHEMA_2 = """
       "required": ["method"],
       "properties": {
         "method": {
-          "enum": ["gzip", "xz", "lz4"]
+          "enum": ["gzip", "lz4", "xz", "zstd"]
         },
         "options": {
           "type": "object",
