@@ -6,10 +6,12 @@ The OpenSCAP scanner can be run on the image tree and the remediation can be car
 out during build time. The stage takes the OpenSCAP config as input and then runs the
 the utility in chroot to scan and remediate [1] the tree during image at build time.
 
-The stage generates an html report and xml results file both saved to the `/openscap_data`
-directory.
+The stage generates an html report and xml results file both saved to the `data_dir`
+directory. It defaults to `/root` if not configured.
 
 [1] https://github.com/OpenSCAP/openscap/blob/maint-1.3/docs/manual/manual.adoc#remediating-system
+
+Buildhost commands used: `chroot`, `xz`.
 """
 
 
@@ -25,6 +27,7 @@ SCHEMA = """
 "properties": {
   "data_dir": {
     "type": "string",
+    "default": "/root",
     "description": "Path to directory where OpenSCAP reports and results should be saved"
   },
   "config": {
@@ -35,19 +38,19 @@ SCHEMA = """
     "properties": {
       "profile_id": {
         "type": "string",
-        "description": "The scap profile id"
+        "description": "The SCAP (XCCDF) profile id"
       },
       "datastream": {
         "type": "string",
-        "description": "The path to the datastream file"
+        "description": "The path to the data stream file"
       },
       "datastream_id": {
         "type": "string",
-        "description": "The datastream id"
+        "description": "The data stream id"
       },
       "xccdf_id": {
         "type": "string",
-        "description": "The xccdf id"
+        "description": "The XCCDF id"
       },
       "benchmark_id": {
         "type": "string",
@@ -61,19 +64,22 @@ SCHEMA = """
         "type": "string",
         "description": "The tailoring id"
       },
-      "xml_results": {
-        "type": "string",
-        "description": "Filename for saving the xml result file",
-        "default": "eval_remediate_results.xml"
-      },
       "arf_results": {
         "type": "string",
-        "description": "Filename for saving the arf result file"
+        "description": "Filename for storing the ARF results file"
+      },
+      "xml_results": {
+        "type": "string",
+        "description": "Filename for storing the ARF results file (synonym for arf_results)"
+      },
+      "xccdf_results": {
+        "type": "string",
+        "default": "oscap_eval_xccdf_results.xml",
+        "description": "Filename for storing the XCCDF results file"
       },
       "html_report": {
         "type": "string",
-        "description": "Filename for saving the html report",
-        "default": "eval_remediate_report.html"
+        "description": "Filename for saving the final HTML report"
       },
       "verbose_log": {
         "type": "string",
@@ -81,62 +87,180 @@ SCHEMA = """
       },
       "verbose_level": {
         "type": "string",
-        "enum": ["DEVEL", "INFO", "ERROR", "WARNING"],
+        "enum": ["DEVEL", "INFO", "WARNING", "ERROR"],
         "description": "The verbosity level for the log messages"
+      },
+      "compress_results": {
+        "type": "boolean",
+        "default": false,
+        "description": "Compress ARF and XCCDF results file(s) with xz"
       }
     }
   }
 }
 """
 
-XML_RESULTS = "eval_remediate_results.xml"
-HTML_REPORT = "eval_remediate_report.html"
+DATA_DIR = "/root"
+XCCDF_RESULTS = "oscap_eval_xccdf_results.xml"
+REMEDIATION_SCRIPT = "oscap_remediation.bash"
 
 
+# pylint: disable=too-many-statements,too-many-branches
 def main(tree, options):
     # required vars
     config = options["config"]
-    profile = config["profile_id"]
+    profile_id = config["profile_id"]
     datastream = config["datastream"]
     # optional vars
     xccdf_id = config.get("xccdf_id")
-    data_dir = options.get("data_dir")
+    data_dir = options.get("data_dir", DATA_DIR)
     ds_id = config.get("datastream_id")
     tailoring = config.get("tailoring")
-    xml_results = config.get("xml_results", XML_RESULTS)
-    html_report = config.get("html_report", HTML_REPORT)
+    arf_results = config.get("arf_results", config.get("xml_results"))
+    xccdf_results = config.get("xccdf_results", XCCDF_RESULTS)
+    html_report = config.get("html_report")
+    verbose_log = config.get("verbose_log")
+    verbose_level = config.get("verbose_level", "INFO" if verbose_log is not None else None)
+    compress_results = config.get("compress_results", False)
 
-    # run openscap in chroot on the image tree
+    data_dir = data_dir.lstrip('/')
+    os.makedirs(f"{tree}/{data_dir}", exist_ok=True)
+
+    # build common data stream-related args list
+    ds_args = ["--profile", profile_id]
+    if ds_id is not None:
+        ds_args.extend(["--datastream-id", ds_id])
+    if xccdf_id is not None:
+        ds_args.extend(["--xccdf-id", xccdf_id])
+    if tailoring is not None:
+        ds_args.extend(["--tailoring-file", tailoring])
+
+    # run openscap in chroot on the image tree (scan)
     cmd = [
         "/usr/sbin/chroot", tree,
-        "/usr/bin/oscap", "xccdf", "eval",
-        "--remediate", "--profile", profile
+        "/usr/bin/oscap",
+        "xccdf", "eval"
     ]
 
-    if data_dir is not None:
-        os.makedirs(f"{tree}/{data_dir.lstrip('/')}", exist_ok=True)
+    if verbose_level is not None:
+        cmd.extend(["--verbose", verbose_level])
+    if verbose_log is not None:
+        cmd.extend(["--verbose-log-file", f"{data_dir}/{verbose_log}.eval"])
+
+    cmd.extend(ds_args)
+
+    if arf_results is not None:
         # run with command in chroot so full path ok
-        cmd.extend(["--results", f"{data_dir}/{xml_results}"])
-        cmd.extend(["--report", f"{data_dir}/{html_report}"])
+        cmd.extend(["--results-arf", f"{data_dir}/{arf_results}"])
 
-    if ds_id is not None:
-        cmd.extend(["--datastream-id", ds_id])
-
-    if xccdf_id is not None:
-        cmd.extend(["--xccdf-id", xccdf_id])
-
-    if tailoring is not None:
-        cmd.extend(["--tailoring-file", tailoring])
-
+    cmd.extend(["--results", f"{data_dir}/{xccdf_results}"])
     cmd.append(datastream)
 
-    res = subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, check=False)
+    print("OpenSCAP (evaluate): ", repr(cmd))
+    # we need to
+    # 1) inform the scanner that the system is offline (OSCAP_PROBE_ROOT="")
+    # the variable will make OVAL probes to be less affected by the absence
+    # of dynamic things like /proc /dev etc and also will define the path prefix
+    # (we keep it empty since our process is already chrooted into the image filesystem)
+    # 2) provide important environment variables in OSCAP_CONTAINER_VARS as
+    # the probe does not have access to /proc
+    res = subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, check=False,
+                         env=dict(os.environ,
+                                  OSCAP_PROBE_ROOT="",
+                                  OSCAP_CONTAINER_VARS="container=bwrap-osbuild"))
 
     # oscap return values are:
     # 0 → success
-    # 2 → -- no error, but some checks/remediation failed
+    # 2 → no error, but some checks/remediation failed
     if res.returncode not in (0, 2):
-        raise RuntimeError("oscap content evaluation and remediation failed")
+        raise RuntimeError("oscap content evaluation failed")
+
+    # run openscap in chroot on the image tree (generate remediation script)
+    cmd = [
+        "/usr/sbin/chroot", tree,
+        "/usr/bin/oscap",
+        "xccdf", "generate", "fix"
+    ]
+
+    if verbose_level is not None:
+        cmd.extend(["--verbose", verbose_level])
+    if verbose_log is not None:
+        cmd.extend(["--verbose-log-file", f"{data_dir}/{verbose_log}.generate-fix"])
+
+    cmd.extend(ds_args)
+
+    cmd.extend(["--fix-type", "bash",
+                "--output", f"{data_dir}/{REMEDIATION_SCRIPT}"])
+    cmd.append(f"{data_dir}/{xccdf_results}")
+
+    print("OpenSCAP (generate remediation): ", repr(cmd))
+    res = subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, check=False)
+
+    if res.returncode not in (0, 2):
+        raise RuntimeError("oscap failed to generate remediation script")
+
+    # run the remediation script
+    cmd = [
+        "/usr/sbin/chroot", tree,
+        "/usr/bin/bash",
+        f"{data_dir}/{REMEDIATION_SCRIPT}"
+    ]
+
+    log = None
+    if verbose_log is not None:
+        log = open(f"{tree}/{data_dir}/{verbose_log}.remediation", "w", encoding="utf8")
+
+    print("OpenSCAP remediation script cmd: ", repr(cmd))
+    res = subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, stderr=log, check=False)
+
+    if log is not None:
+        log.close()
+
+    # run openscap in chroot on the remediated image tree to generate final report
+    if html_report is not None:
+        cmd = [
+            "/usr/sbin/chroot", tree,
+            "/usr/bin/oscap",
+            "xccdf", "eval"
+        ]
+
+        if verbose_level is not None:
+            cmd.extend(["--verbose", verbose_level])
+        if verbose_log is not None:
+            cmd.extend(["--verbose-log-file", f"{data_dir}/{verbose_log}.eval-remediated"])
+
+        # currently the xmlsec might become broken because of certain
+        # encryption policies enforced during the system hardening,
+        # but we can skip this step for the second run
+        cmd.extend(["--skip-signature-validation"])
+
+        cmd.extend(ds_args)
+
+        cmd.extend(["--report", f"{data_dir}/{html_report}"])
+        cmd.append(datastream)
+
+        print("OpenSCAP (re-evaluate remediated): ", repr(cmd))
+        res = subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, check=False,
+                             env=dict(os.environ,
+                                      OSCAP_PROBE_ROOT="",
+                                      OSCAP_CONTAINER_VARS="container=bwrap-osbuild"))
+
+        if res.returncode not in (0, 2):
+            raise RuntimeError("oscap content re-evaluation failed")
+
+    # pack result files, it could save dozens of megabytes
+    if compress_results:
+        cmd = [
+            "xz"
+        ]
+
+        if arf_results is not None:
+            cmd.extend([f"{tree}/{data_dir}/{arf_results}"])
+
+        cmd.extend([f"{tree}/{data_dir}/{xccdf_results}"])
+
+        print("Pack the result files: ", repr(cmd))
+        res = subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, check=False)
 
     return 0
 

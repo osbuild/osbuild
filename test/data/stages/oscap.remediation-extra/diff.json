@@ -39,8 +39,14 @@
     "/etc/systemd/system/debug-shell.service",
     "/etc/systemd/system/systemd-coredump.service",
     "/etc/systemd/system/systemd-coredump.socket",
-    "/var/tmp/oscap_eval_xccdf_results.xml",
-    "/var/tmp/oscap_remediation.bash"
+    "/root/log.eval",
+    "/root/log.eval-remediated",
+    "/root/log.generate-fix",
+    "/root/log.remediation",
+    "/root/report.html",
+    "/root/results_arf.xml.xz",
+    "/root/oscap_eval_xccdf_results.xml.xz",
+    "/root/oscap_remediation.bash"
   ],
   "deleted_files": [],
   "differences": {
