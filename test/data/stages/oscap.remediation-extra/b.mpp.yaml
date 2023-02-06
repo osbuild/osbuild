@@ -1,0 +1,39 @@
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - openscap-scanner
+                - scap-security-guide
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+      - type: org.osbuild.oscap.remediation
+        options:
+          config:
+            datastream: /usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml
+            profile_id: xccdf_org.ssgproject.content_profile_ospp
+            arf_results: results_arf.xml
+            html_report: report.html
+            verbose_log: log
+            compress_results: true
