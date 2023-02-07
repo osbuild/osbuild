@@ -1,0 +1,60 @@
+#!/usr/bin/python3
+"""
+Write systemwide initialization files, executed for login shells.
+
+Write files to /etc/profile.d with key-value pairs to be set in the shell environment.
+Each file written is sourced by the login shell on initialization.
+"""
+import os
+import sys
+
+import osbuild.api
+
+SCHEMA_2 = r"""
+"options": {
+  "properties": {
+    "patternProperties": {
+      "^[\\w.-_]{1,250}$": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "env": {
+            "type": "array",
+            "description": "Environment variables to set and export on shell init.",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["key", "value"],
+              "properties": {
+                "key": "string",
+                "value": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    for filename, opts in options.items():
+        lines = []
+        for item in opts["env"]:
+            key = item["key"]
+            value = item["value"]
+            lines.append(f'export {key}="{value}"\n')
+
+        path = os.path.join(tree, "etc/profile.d", filename)
+        with open(path, "w", encoding="utf8") as f:
+            f.writelines(lines)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    sys.exit(main(args["tree"], args["options"]))
