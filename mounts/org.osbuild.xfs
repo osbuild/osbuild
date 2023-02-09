@@ -32,6 +32,11 @@ SCHEMA_2 = """
         "description": "mount the source as a readonly device",
         "type": "boolean",
         "default": false
+      },
+      "norecovery": {
+        "description": "Don't load the journal on mounting",
+        "type": "boolean",
+        "default": false
       }
     }
   }
