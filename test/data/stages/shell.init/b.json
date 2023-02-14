@@ -397,7 +397,7 @@
             "test_env": {
               "env": [
                 {
-                  "key": "var",
+                  "key": "VAR",
                   "value": "val"
                 }
               ]
@@ -405,11 +405,11 @@
             "test_env.2": {
               "env": [
                 {
-                  "key": "one",
+                  "key": "ONE",
                   "value": "1"
                 },
                 {
-                  "key": "two",
+                  "key": "TWO",
                   "value": "2"
                 }
               ]
