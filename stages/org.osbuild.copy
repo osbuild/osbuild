@@ -9,6 +9,14 @@ destination is an url. Supported locations ('schemes') are `tree`,
 The path format follows the rsync convention that if the paths
 ends with a slash `/` the content of that directory is copied not
 the directory itself.
+
+Note that the stage by default does not remove the destination
+before copying. As a result, if the destination is an existing
+symlink to a file, then this file will be overwritten, instead of
+the symlink being replaced. If you want to replace the symlink
+with a file, you need to set the `remove_destination` option to
+`true`. This option works only for files, not directories or
+symlinks to directories.
 """
 
 import os
@@ -54,6 +62,11 @@ SCHEMA_2 = r"""
                 "pattern": "^tree:\/\/\/"
               }
             ]
+          },
+          "remove_destination": {
+            "type": "boolean",
+            "description": "Remove the destination before copying. Works only for files, not directories.",
+            "default": false
           }
         }
       }
@@ -126,12 +139,14 @@ def main(args, options):
     for path in items:
         src = parse_location(path["from"], args)
         dst = parse_location(path["to"], args)
+        remove_destination = path.get("remove_destination", False)
 
         print(f"copying '{src}' -> '{dst}'")
 
-        subprocess.run(["cp", "-a", "--reflink=auto",
-                        src, dst],
-                       check=True)
+        cmd = ["cp", "-a", "--reflink=auto"]
+        if remove_destination:
+            cmd.append("--remove-destination")
+        subprocess.run(cmd + [src, dst], check=True)
 
     return 0
 
