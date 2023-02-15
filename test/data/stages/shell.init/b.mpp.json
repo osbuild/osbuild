@@ -51,25 +51,27 @@
         {
           "type": "org.osbuild.shell.init",
           "options": {
-            "test_env": {
-              "env": [
-                {
-                  "key": "VAR",
-                  "value": "val"
-                }
-              ]
-            },
-            "test_env.2": {
-              "env": [
-                {
-                  "key": "ONE",
-                  "value": "1"
-                },
-                {
-                  "key": "TWO",
-                  "value": "2"
-                }
-              ]
+            "files": {
+              "test_env": {
+                "env": [
+                  {
+                    "key": "VAR",
+                    "value": "val"
+                  }
+                ]
+              },
+              "test_env.2": {
+                "env": [
+                  {
+                    "key": "ONE",
+                    "value": "1"
+                  },
+                  {
+                    "key": "TWO",
+                    "value": "2"
+                  }
+                ]
+              }
             }
           }
         }
