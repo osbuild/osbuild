@@ -12,26 +12,33 @@ import osbuild.api
 
 SCHEMA_2 = r"""
 "options": {
+  "additionalProperties": false,
   "properties": {
-    "patternProperties": {
-      "^[a-zA-Z0-9\\.\\-_]{1,250}$": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "env": {
-            "type": "array",
-            "description": "Environment variables to set and export on shell init.",
-            "minItems": 1,
-            "items": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["key", "value"],
-              "properties": {
-                "key": {
-                  "type": "string",
-                  "pattern": "^[A-Z_][A-Z0-9_]*$"
-                },
-                "value": "string"
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-zA-Z0-9\\.\\-_]{1,250}$": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "env": {
+              "type": "array",
+              "description": "Environment variables to set and export on shell init.",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["key", "value"],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "pattern": "^[A-Z_][A-Z0-9_]*$"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -44,7 +51,8 @@ SCHEMA_2 = r"""
 
 
 def main(tree, options):
-    for filename, opts in options.items():
+    files = options.get("files", {})
+    for filename, opts in files.items():
         lines = []
         for item in opts["env"]:
             key = item["key"]
