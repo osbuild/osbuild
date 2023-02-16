@@ -33,6 +33,7 @@ Requires:       glibc
 Requires:       policycoreutils
 Requires:       qemu-img
 Requires:       systemd
+Requires:       skopeo
 Requires:       tar
 Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
