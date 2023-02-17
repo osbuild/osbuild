@@ -303,13 +303,17 @@ def main(tree, inputs, options):
 
     for filename, data in packages.items():
         if data.get("rpm.check_gpg"):
-            subprocess.run([
-                "rpmkeys",
-                *rpm_args,
-                "--root", tree,
-                "--checksig",
-                filename
-            ], cwd=pkgpath, stdout=subprocess.DEVNULL, check=True)
+            try:
+                subprocess.run([
+                    "rpmkeys",
+                    *rpm_args,
+                    "--root", tree,
+                    "--checksig",
+                    filename
+                ], cwd=pkgpath, stdout=subprocess.DEVNULL, check=True)
+            except Exception:
+                print(f"Signature check failed on {filename}, lookup package name in manifest.")
+                raise
 
     for source in ("/dev", "/sys", "/proc"):
         target = os.path.join(tree, source.lstrip("/"))
