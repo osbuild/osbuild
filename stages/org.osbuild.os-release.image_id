@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+"""
+Adds IMAGE_ID variable into /etc/os-release according to specification:
+    https://www.freedesktop.org/software/systemd/man/os-release.html#IMAGE_ID=
+"""
+
+import os
+import sys
+
+import osbuild.api
+
+SCHEMA = r"""
+"additionalProperties": false,
+"required": ["image_id"],
+"properties": {
+  "image_id": {
+    "type": "string",
+    "description": "Unique ID identifying this image"
+  }
+}
+"""
+
+
+def main(tree, options):
+    path = os.path.join(tree, "etc/os-release")
+
+    with open(path, "a+", encoding="utf8") as f:
+        f.write(f'IMAGE_ID={options["image_id"]}\n')
+
+    return 0
+
+
+if __name__ == "__main__":
+    args = osbuild.api.arguments()
+    sys.exit(main(args["tree"], args["options"]))
