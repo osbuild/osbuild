@@ -21,7 +21,8 @@ import sys
 
 import osbuild.api
 
-STAGE_OPTS = """
+SCHEMA = """
+"additionalProperties": false,
 "properties": {
   "network": {
     "type": "array",
@@ -46,7 +47,7 @@ def main(tree, options):
     with open(f"{tree}/boot/ignition.firstboot", "w", encoding="utf8") as f:
         if network:
             netstr = " ".join(network)
-            f.write(f"set ignition_network_kcmdline={netstr}")
+            f.write(f"set ignition_network_kcmdline='{netstr}'")
 
     return 0
 
