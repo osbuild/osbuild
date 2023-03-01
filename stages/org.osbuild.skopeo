@@ -85,8 +85,8 @@ def main(inputs, output, options):
             linkname = os.path.join(tmpdir, "image.tar")
             os.symlink(source, linkname)
 
-            if container_format == "docker-archive":
-                source = f"docker-archive:{linkname}"
+            if container_format == "dir":
+                source = f"dir:{linkname}"
             elif container_format == "oci-archive":
                 source = f"oci-archive:{linkname}"
             else:
