@@ -103,7 +103,7 @@ class SkopeoSource(sources.SourceService):
                            check=True)
 
             # Verify that the digest supplied downloaded the correct container image id.
-            # The image id is the digest of the config, but skopeo can' currently
+            # The image id is the digest of the config, but skopeo can't currently
             # get the config id, only the full config, so we checksum it ourselves.
             res = subprocess.check_output(["skopeo", "inspect", "--raw", "--config", destination])
             downloaded_id = "sha256:" + hashlib.sha256(res).hexdigest()
