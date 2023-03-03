@@ -67,7 +67,7 @@ def test_loopback_basic(tmpdir):
         with pytest.raises(OSError):
             with open(testfile, "wb") as f:
                 f.truncate(1)
-                lo.set_fd(f.fileno())
+                lo.configure(f.fileno())
 
         lo.close()
 

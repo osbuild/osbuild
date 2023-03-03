@@ -48,20 +48,18 @@ class LoopServer(api.BaseAPI):
             # file descriptor to it is racy, so we must use a retry loop
             lo = loop.Loop(self.ctl.get_unbound())
             try:
-                lo.set_fd(fd)
-            except OSError as e:
-                lo.close()
-                if e.errno == errno.EBUSY:
-                    continue
-                raise e
-            # `set_status` returns EBUSY when the pages from the previously
-            # bound file have not been fully cleared yet.
-            try:
-                lo.set_status(offset=offset, sizelimit=sizelimit, autoclear=True)
+                lo.configure(fd, offset=offset, sizelimit=sizelimit, autoclear=True)
             except BlockingIOError:
                 lo.clear_fd()
                 lo.close()
                 continue
+            except OSError as e:
+                lo.close()
+                # `configure` returns EBUSY when the pages from the previously
+                # bound file have not been fully cleared yet.
+                if e.errno == errno.EBUSY:
+                    continue
+                raise e
             break
 
         lo.mknod(dir_fd)
