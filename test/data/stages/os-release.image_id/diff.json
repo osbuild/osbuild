@@ -1,0 +1,12 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/usr/lib/os-release": {
+      "content": [
+        "sha256:a89f49dc1743805139a17343e7181261d856eea94090067e63b922638ee2be32",
+        "sha256:053ad4b8c297d286887302fad4a0108c77e169a4f243ee6120a49081bea4eafb"
+      ]
+    }
+  }
+}
