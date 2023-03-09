@@ -82,7 +82,7 @@ def main(inputs, output, options):
         # treats them special, like e.g. /some/path:tag, so we make a symlink to the real name
         # and pass the symlink name to skopeo to make it work with anything
         with tempfile.TemporaryDirectory() as tmpdir:
-            linkname = os.path.join(tmpdir, "image.tar")
+            linkname = os.path.join(tmpdir, "image")
             os.symlink(source, linkname)
 
             if container_format == "dir":
