@@ -322,6 +322,7 @@ import hawkey
 import rpm
 import yaml
 
+from osbuild.util import containers
 from osbuild.util.rhsm import Subscriptions
 
 # We need to resolve an image name to a resolved image manifest digest
@@ -407,13 +408,7 @@ class ImageManifest:
         self.digest = "sha256:" + hashlib.sha256(raw).hexdigest()
 
     def is_manifest_list(self):
-        #  Check if mediaType is set according to docker or oci specifications
-        if self.media_type in ("application/vnd.docker.distribution.manifest.list.v2+json", "application/vnd.oci.image.index.v1+json"):
-            return True
-        # According to the OCI spec, setting mediaType is not mandatory. So, if it is not set at all, check for the existance of manifests
-        if self.media_type == "" and self.json.get("manifests") is not None:
-            return True
-        return False
+        return containers.is_manifest_list(self.json)
 
     def _match_platform(self, wanted_arch, wanted_os, wanted_variant):
         for m in self.json.get("manifests", []):
