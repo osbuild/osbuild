@@ -28,7 +28,7 @@ SCHEMA = """
 "required": ["path"],
 "properties": {
   "path": {
-
+    "type": "string"
   },
   "basearch": {
     "type": "string",
