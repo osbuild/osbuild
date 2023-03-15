@@ -13,10 +13,11 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
+import xml
 from collections.abc import Mapping
 from typing import Dict
 
-from osbuild.util import selinux
+from osbuild.util import checksum, selinux
 
 from .. import initrd, test
 
@@ -455,3 +456,42 @@ class TestStages(test.TestBase):
 
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")
+
+    def test_ovf(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "ovf")
+
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb.compile_file(os.path.join(testdir, "ovf.json"), exports=["vmdk"], output_dir=outdir)
+
+            vmdk = os.path.join(outdir, "vmdk", "image.vmdk")
+            assert os.path.isfile(vmdk)
+
+            ovf = os.path.join(outdir, "vmdk", "image.ovf")
+            assert os.path.isfile(ovf)
+
+            # verify the manifest
+            mf = os.path.join(outdir, "vmdk", "image.mf")
+            assert os.path.isfile(mf)
+
+            with open(mf, "r", encoding="utf-8") as f:
+                ovf_line = f.readline().split(" ")
+                assert ovf_line[0] == f"SHA256({os.path.basename(ovf)})="
+                assert ovf_line[1].rstrip() == checksum.hexdigest_file(ovf, "sha256")
+                vmdk_line = f.readline().split(" ")
+                assert vmdk_line[0] == f"SHA256({os.path.basename(vmdk)})="
+                assert vmdk_line[1].rstrip() == checksum.hexdigest_file(vmdk, "sha256")
+
+            ovf_tree = xml.etree.ElementTree.parse(ovf)
+            ovf_tree_root = ovf_tree.getroot()
+
+            ovf_tree_file = ovf_tree_root[0][0]
+            assert ovf_tree_file.attrib["{http://schemas.dmtf.org/ovf/envelope/1}href"] == "image.vmdk"
+            assert ovf_tree_file.attrib["{http://schemas.dmtf.org/ovf/envelope/1}size"] == str(os.stat(vmdk).st_size)
+
+            ovf_tree_disk = ovf_tree_root[1][1]
+            res = subprocess.run(["qemu-img", "info", "--output=json", vmdk], check=True, capture_output=True)
+            capacity = ovf_tree_disk.attrib["{http://schemas.dmtf.org/ovf/envelope/1}capacity"]
+            assert capacity == str(json.loads(res.stdout)["virtual-size"])
+            pop_size = ovf_tree_disk.attrib["{http://schemas.dmtf.org/ovf/envelope/1}populatedSize"]
+            assert pop_size == str(os.stat(vmdk).st_size)

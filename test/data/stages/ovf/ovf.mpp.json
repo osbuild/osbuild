@@ -1,0 +1,58 @@
+{
+  "version": "2",
+  "pipelines": [
+    {
+      "mpp-import-pipeline": {
+        "path": "../manifests/f34-build-v2.json",
+        "id": "build"
+      },
+      "runner": "org.osbuild.fedora34"
+    },
+    {
+      "name": "image",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.truncate",
+          "options": {
+            "filename": "image.raw",
+            "size": "104857600"
+          }
+        }
+      ]
+    },
+    {
+      "name": "vmdk",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.qemu",
+          "inputs": {
+            "image": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:image": {
+                  "file": "image.raw"
+                }
+              }
+            }
+          },
+          "options": {
+            "filename": "image.vmdk",
+            "format": {
+              "type": "vmdk",
+              "subformat": "streamOptimized"
+            }
+          }
+        },
+        {
+          "type": "org.osbuild.ovf",
+          "options": {
+            "vmdk": "image.vmdk"
+          }
+        }
+      ]
+    }
+  ]
+}
