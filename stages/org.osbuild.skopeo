@@ -7,6 +7,7 @@ input (reading from a skopeo source or a file in a pipeline).
 Buildhost commands used: `skopeo`.
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -22,6 +23,11 @@ SCHEMA_2 = r"""
   "properties": {
     "images": {
       "type": "object",
+      "additionalProperties": true
+    },
+    "manifest-lists": {
+      "type": "object",
+      "description": "Optional manifest lists to merge into images. The metadata must specify an image ID to merge to.",
       "additionalProperties": true
     }
   }
@@ -53,20 +59,70 @@ SCHEMA_2 = r"""
 """
 
 
+def parse_manifest_list(manifests):
+    """Return a map with single-image manifest digests as keys and the manifest-list digest as the value for each"""
+    manifest_files = manifests["data"]["files"]
+    manifest_map = {}
+    for fname in manifest_files:
+        filepath = os.path.join(manifests["path"], fname)
+        with open(filepath, mode="r", encoding="utf-8") as mfile:
+            data = json.load(mfile)
+
+        for manifest in data["manifests"]:
+            digest = manifest["digest"]  # single image manifest digest
+            manifest_map[digest] = fname
+
+    return manifest_map
+
+
+def manifest_digest(path):
+    """Get the manifest digest for a container at path, stored in dir: format"""
+    return subprocess.check_output(["skopeo", "manifest-digest", os.path.join(path, "manifest.json")]).decode().strip()
+
+
 def parse_input(inputs):
+    manifests = inputs.get("manifest-lists")
+    manifest_map = {}
+    manifest_files = {}
+    if manifests:
+        manifest_files = manifests["data"]["files"]
+        # reverse map manifest-digest -> manifest-list path
+        manifest_map = parse_manifest_list(manifests)
+
     images = inputs["images"]
     archives = images["data"]["archives"]
 
-    res = []
-    for filename, data in archives.items():
-        filepath = os.path.join(images["path"], filename)
+    res = {}
+    for checksum, data in archives.items():
+        filepath = os.path.join(images["path"], checksum)
+        list_path = None
+        if data["format"] == "dir":
+            digest = manifest_digest(filepath)
 
-        res.append((filepath, data))
+            # get the manifest list path for this image
+            list_digest = manifest_map.get(digest)
+            if list_digest:
+                # make sure all manifest files are used
+                del manifest_files[list_digest]
+                list_path = os.path.join(manifests["path"], list_digest)
+
+        res[checksum] = {
+            "filepath": filepath,
+            "manifest-list": list_path,
+            "data": data,
+        }
+
+    if manifest_files:
+        raise RuntimeError(
+            "The following manifest lists specified in the input did not match any of the container images: " +
+            ", ".join(manifest_files)
+        )
+
     return res
 
 
 def main(inputs, output, options):
-    files = parse_input(inputs)
+    images = parse_input(inputs)
 
     destination = options["destination"]
     # The destination type is always containers-storage atm, so ignore "type"
@@ -74,7 +130,9 @@ def main(inputs, output, options):
     storage_root = destination.get("storage-path", "/var/lib/containers/storage")
     storage_driver = destination.get("storage-driver", "overlay")
 
-    for source, source_data in files:
+    for image in images.values():
+        source = image["filepath"]
+        source_data = image["data"]
         container_format = source_data["format"]
         image_name = source_data["name"]
 
