@@ -121,6 +121,27 @@ def parse_input(inputs):
     return res
 
 
+def merge_manifest(list_manifest, destination):
+    """
+    Merge the list manifest into the image directory. This preserves the manifest list with the image in the registry so
+    that users can run or inspect a container using the original manifest list digest used to pull the container.
+
+    See https://github.com/containers/skopeo/issues/1935
+    """
+    # calculate the checksum of the manifest of the container image in the destination
+    dest_manifest = os.path.join(destination, "manifest.json")
+    manifest_checksum = subprocess.check_output(["skopeo", "manifest-digest", dest_manifest]).decode().strip()
+    parts = manifest_checksum.split(":")
+    assert len(parts) == 2, f"unexpected output for skopeo manifest-digest: {manifest_checksum}"
+    manifest_checksum = parts[1]
+
+    # rename the manifest to its checksum
+    os.rename(dest_manifest, os.path.join(destination, manifest_checksum + ".manifest.json"))
+
+    # copy the index manifest into the destination
+    subprocess.run(["cp", "--reflink=auto", "-a", list_manifest, dest_manifest], check=True)
+
+
 def main(inputs, output, options):
     images = parse_input(inputs)
 
@@ -136,24 +157,25 @@ def main(inputs, output, options):
         container_format = source_data["format"]
         image_name = source_data["name"]
 
-        # We can't have special characters like ":" in the source names because containers/image
-        # treats them special, like e.g. /some/path:tag, so we make a symlink to the real name
-        # and pass the symlink name to skopeo to make it work with anything
         with tempfile.TemporaryDirectory() as tmpdir:
-            linkname = os.path.join(tmpdir, "image")
-            os.symlink(source, linkname)
+            tmp_source = os.path.join(tmpdir, "image")
 
-            if container_format == "dir":
-                source = f"dir:{linkname}"
-            elif container_format == "oci-archive":
-                source = f"oci-archive:{linkname}"
+            if container_format == "dir" and image["manifest-list"]:
+                # copy the source container to the tmp source so we can merge the manifest into it
+                subprocess.run(["cp", "-a", "--reflink=auto", source, tmp_source], check=True)
+                merge_manifest(image["manifest-list"], tmp_source)
             else:
+                # We can't have special characters like ":" in the source names because containers/image
+                # treats them special, like e.g. /some/path:tag, so we make a symlink to the real name
+                # and pass the symlink name to skopeo to make it work with anything
+                os.symlink(source, tmp_source)
+
+            if container_format not in ("dir", "oci-archive"):
                 raise RuntimeError(f"Unknown container format {container_format}")
 
+            source = f"{container_format}:{tmp_source}"
             dest = f"containers-storage:[{storage_driver}@{output}{storage_root}+/run/containers/storage]{image_name}"
-
-            subprocess.run(["skopeo", "copy", source, dest],
-                           check=True)
+            subprocess.run(["skopeo", "copy", source, dest], check=True)
 
     if storage_driver == "overlay":
         # Each time the overlay backend runs on an xfs fs it creates this file:
