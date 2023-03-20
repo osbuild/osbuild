@@ -21,3 +21,5 @@ cov-int/
 
 venv
 .venv
+
+/.tox

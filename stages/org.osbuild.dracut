@@ -129,7 +129,7 @@ def yesno(name: str, value: bool) -> str:
     return f"--{prefix}{name}"
 
 
-#pylint: disable=too-many-branches
+# pylint: disable=too-many-branches
 def main(tree, options):
     kernels = options["kernel"]
     compress = options.get("compress")

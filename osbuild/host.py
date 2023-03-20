@@ -272,7 +272,7 @@ class Service(abc.ABC):
                 # an exception in `sock.send` later.
                 self._check_fds(reply_fds)
 
-            except:  # pylint: disable=bare-except
+            except Exception:  # pylint: disable=broad-exception-caught
                 reply_fds = self._close_all(reply_fds)
                 _, val, tb = sys.exc_info()
                 reply = self.protocol.encode_exception(val, tb)
@@ -351,7 +351,7 @@ class ServiceClient:
     def call_with_fds(self, method: str,
                       args: Optional[Union[List[str], Dict[str, Any]]] = None,
                       fds: Optional[List[int]] = None,
-                      on_signal: Callable[[Any, Optional[Iterable[int]]], None] = None
+                      on_signal: Optional[Callable[[Any, Optional[Iterable[int]]], None]] = None
                       ) -> Tuple[Any, Optional[Iterable[int]]]:
         """
         Remotely call a method and return the result, including file

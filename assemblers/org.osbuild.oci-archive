@@ -228,7 +228,7 @@ def create_oci_dir(tree, output_dir, options):
     blobs = os.path.join(output_dir, "blobs", "sha256")
     os.makedirs(blobs)
 
-    ## layers / rootfs
+    # layers / rootfs
 
     digest, info = blobs_add_layer(blobs, tree)
 

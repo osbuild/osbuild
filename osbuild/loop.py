@@ -119,7 +119,7 @@ class Loop:
 
         self.devname = f"loop{minor}"
         self.minor = minor
-        self.on_close: Optional[Callable[["Loop"], None]] = None
+        self.on_close = None
 
         with contextlib.ExitStack() as stack:
             if not dir_fd:

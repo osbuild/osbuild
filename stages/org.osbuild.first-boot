@@ -50,7 +50,7 @@ After=network-online.target"""
 
     execs = "\n"
     for command in commands:
-        execs += f"ExecStart={command}\n"
+        execs += f"ExecStart={command}\n"  # pylint: disable=consider-using-join
 
     service = f"""[Unit]
 Description=OSBuild First Boot Service

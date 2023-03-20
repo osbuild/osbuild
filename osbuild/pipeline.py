@@ -383,7 +383,7 @@ class Manifest:
 
     def __init__(self):
         self.pipelines = collections.OrderedDict()
-        self.sources: List[Source] = []
+        self.sources = []
 
     def add_pipeline(
         self,
