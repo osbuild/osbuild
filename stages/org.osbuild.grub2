@@ -484,7 +484,7 @@ class GrubConfig:
         return data
 
 
-#pylint: disable=too-many-statements,too-many-branches
+# pylint: disable=too-many-statements,too-many-branches
 def main(tree, options):
     root_fs = options.get("rootfs")
     boot_fs = options.get("bootfs")

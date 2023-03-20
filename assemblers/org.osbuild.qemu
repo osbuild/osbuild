@@ -502,7 +502,7 @@ def grub2_partition_id(pt: PartitionTable):
     return label2grub[pt.label]
 
 
-#pylint: disable=too-many-branches
+# pylint: disable=too-many-branches
 def install_grub2(image: str, pt: PartitionTable, options):
     """Install grub2 to image"""
     platform = options.get("platform", "i386-pc")
@@ -637,7 +637,7 @@ def install_zipl(root: str, device: str, pt: PartitionTable):
                    check=True)
 
 
-#pylint: disable=too-many-branches
+# pylint: disable=too-many-branches
 def main(tree, output_dir, options, loop_client):
     fmt = options["format"]
     filename = options["filename"]

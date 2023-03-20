@@ -4,7 +4,7 @@ on: [pull_request, push]
 
 jobs:
   test_suite:
-    name: "Test Suite"
+    name: "Unittest"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -19,17 +19,21 @@ jobs:
         - "test.run.test_noop"
         - "test.run.test_sources"
         - "test.run.test_stages"
-        - "test.src"
+        environment:
+        - "py36"
+        - "py37"
+        - "py38"
+        - "py39"
+        - "py310"
+        - "py311"
+        - "py312"
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v3
-    - name: "Run Tests"
+    - name: "Run"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202304110753
+        image: ghcr.io/osbuild/osbuild-ci:latest-202304251412
         run: |
-          python3 -m pytest \
-            --pyargs "${{ matrix.test }}" \
-            --rootdir=. \
-            --cov-report=xml --cov=osbuild \
-            -v
+          TEST_CATEGORY="${{ matrix.test }}" \
+          tox -e "${{ matrix.environment }}"

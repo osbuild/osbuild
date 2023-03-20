@@ -6,7 +6,8 @@ import subprocess
 import sys
 import tempfile
 import typing
-from typing import Any, List
+# pylint doesn't understand the string-annotation below
+from typing import Any, List  # pylint: disable=unused-import
 
 from .types import PathLike
 
@@ -222,7 +223,7 @@ class SubIdsDB:
     """
 
     def __init__(self) -> None:
-        self.db: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        self.db: 'collections.OrderedDict[str, Any]' = collections.OrderedDict()
 
     def read(self, fp) -> int:
         idx = 0

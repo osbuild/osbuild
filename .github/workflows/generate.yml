@@ -1,10 +1,10 @@
-name: Checks
+name: Generate
 
 on: [pull_request, push]
 
 jobs:
-  documentation:
-    name: "📚 Documentation"
+  generate_documentation:
+    name: "Documentation"
     runs-on: ubuntu-latest
     container:
       image: docker.io/library/python:3.7
@@ -33,8 +33,8 @@ jobs:
           test -d docs
           test -f docs/osbuild.1
 
-  test_data:
-    name: "Regenerate Test Data"
+  generate_test_data:
+    name: "Test Data"
     runs-on: ubuntu-latest
     steps:
     - name: "Clone Repository"
@@ -42,17 +42,7 @@ jobs:
     - name: "Regenerate Test Data"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202304110753
+        image: ghcr.io/osbuild/osbuild-ci:latest-202304251412
         run: |
           make test-data
           git diff --exit-code -- ./test/data
-
-  codespell:
-    name: "Spell check"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: codespell-project/actions-codespell@master
-        with:
-          ignore_words_list: msdos, pullrequest
-          skip: ./.git,coverity,rpmbuild,samples

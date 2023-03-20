@@ -309,7 +309,7 @@ def create_oci_dir(inputs, output_dir, options, create_time):
     blobs = os.path.join(output_dir, "blobs", "sha256")
     os.makedirs(blobs)
 
-    ## layers / rootfs
+    # layers / rootfs
     for ip in sorted(inputs.keys()):
         tree = inputs[ip]["path"]
         digest, info = blobs_add_layer(blobs, tree)

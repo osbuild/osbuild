@@ -338,7 +338,7 @@ class ObjectStore(contextlib.AbstractContextManager):
 
     @property
     def active(self) -> bool:
-        #pylint: disable=protected-access
+        # pylint: disable=protected-access
         return self.cache._is_active()
 
     @property

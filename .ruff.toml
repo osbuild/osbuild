@@ -1,0 +1,6 @@
+line-length = 120
+
+ignore = [
+    "E741",  # ambiguous variable names
+    "E501",  # line too long
+]
