@@ -126,6 +126,7 @@ def test_bind_mounts(tempdir, runner):
 
 @pytest.mark.skipif(not TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not os.path.exists("/sys/fs/selinux"), reason="no SELinux")
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
 def test_selinuxfs_ro(tempdir, runner):
     # /sys/fs/selinux must never be writable in the container
     # because RPM and other tools must not assume the policy
