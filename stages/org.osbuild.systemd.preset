@@ -1,0 +1,59 @@
+#!/usr/bin/python3
+"""
+Configure Systemd services through presets.
+
+Enable or disable systemd services through presets.
+"""
+
+import sys
+
+import osbuild.api
+
+SCHEMA = r"""
+"additionalProperties": false,
+"properties": {
+  "presets": {
+    "type": "array",
+    "minItems": 1,
+    "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "state"],
+      "properties": {
+        "name": {"type": "string"},
+        "state": {
+          "type": "string",
+          "enum": ["enable", "disable"]
+        }
+      }
+    },
+    "description": "Array of systemd unit names and their preset logic."
+  }
+}
+"""
+
+
+def main(tree, options):
+    presets = options.get("presets")
+
+    if presets:
+        svcs = {}
+
+        for svc in presets:
+            # verify that we don't have duplicate service names with different
+            # states
+            if svc["name"] in svcs:
+                raise RuntimeError(f"{svc['name']!r} has multiple defined states.")
+
+            svcs[svc["name"]] = svc["state"]
+
+        with open(f"{tree}/usr/lib/systemd/system-preset/50-osbuild.preset", "w", encoding="utf8") as f:
+            f.writelines(f"{state} {name}\n" for name, state in svcs.items())
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
