@@ -222,6 +222,44 @@
       }
     ]
   },
+  "fedora-38": {
+    "repos": [
+      {
+        "file": "/etc/yum.repos.d/fedora.repo",
+        "x86_64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230316"
+          }
+        ],
+        "aarch64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-branched-20230316"
+          }
+        ]
+      },
+      {
+        "file": "/etc/yum.repos.d/fedora-modular.repo",
+        "x86_64": [
+          {
+            "title": "fedora-modular",
+            "name": "fedora-modular",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-modular-20230316"
+          }
+        ],
+        "aarch64": [
+          {
+            "title": "fedora-modular",
+            "name": "fedora-modular",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-branched-modular-20230316"
+          }
+        ]
+      }
+    ]
+  },
   "centos-stream-9": {
     "repos": [
       {
