@@ -351,7 +351,7 @@ class ServiceClient:
     def call_with_fds(self, method: str,
                       args: Optional[Union[List[str], Dict[str, Any]]] = None,
                       fds: Optional[List[int]] = None,
-                      on_signal: Callable[[Any, Optional[Iterable[int]]], None] = None
+                      on_signal: Optional[Callable[[Any, Optional[Iterable[int]]], None]] = None
                       ) -> Tuple[Any, Optional[Iterable[int]]]:
         """
         Remotely call a method and return the result, including file

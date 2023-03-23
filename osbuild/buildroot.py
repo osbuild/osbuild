@@ -15,7 +15,7 @@ import stat
 import subprocess
 import tempfile
 import time
-from typing import Optional, Set
+from typing import Set
 
 from osbuild.api import BaseAPI
 from osbuild.util import linux
@@ -101,7 +101,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         self.proc = None
         self.tmp = None
         self.mount_boot = True
-        self.caps: Optional[set] = None
+        self.caps = None
 
     @staticmethod
     def _mknod(path, name, mode, major, minor):

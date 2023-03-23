@@ -2,7 +2,7 @@
 
 Second, and current, version of the manifest description
 """
-from typing import Any, Dict
+from typing import Optional, Any, Dict
 
 from osbuild.meta import Index, ModuleInfo, ValidationResult
 
@@ -392,7 +392,7 @@ def load(description: Dict, index: Index) -> Manifest:
 
 
 #pylint: disable=too-many-branches
-def output(manifest: Manifest, res: Dict, store: ObjectStore = None) -> Dict:
+def output(manifest: Manifest, res: Dict, store: Optional[ObjectStore] = None) -> Dict:
     """Convert a result into the v2 format"""
 
     def collect_metadata(p: Pipeline) -> Dict[str, Any]:
