@@ -69,8 +69,9 @@ jobs:
         image: ghcr.io/osbuild/osbuild-ci:latest-202209070757
         run: |
           git config --global --add safe.directory /osb/workdir
+          python3 -m pip install -r requirements.lint.txt
           python3 -m pytest \
-            test/src/test_pylint.py \
+            test/src/test_lint.py \
             -k autopep8 \
             --rootdir=. \
             -v
