@@ -17,7 +17,7 @@ try:
     import rich
     import typer
     from rich.tree import Tree
-except ImportError as import_error:
+except ImportError:
     print(
         "You are missing dependencies, please install `python3-attrs`, `python3-rich`, `python3-typer` or their `pip` equivalents."
     )
