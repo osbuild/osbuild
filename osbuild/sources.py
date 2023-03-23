@@ -4,7 +4,6 @@ import contextlib
 import json
 import os
 import tempfile
-from abc import abstractmethod
 from typing import Dict, Tuple
 
 from . import host
@@ -53,6 +52,9 @@ class Source:
 class SourceService(host.Service):
     """Source host service"""
 
+    """The content type of the source."""
+    content_type: str
+
     max_workers = 1
 
     def __init__(self, *args, **kwargs):
@@ -81,12 +83,6 @@ class SourceService(host.Service):
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             for _ in executor.map(self.fetch_one, *zip(*transformed)):
                 pass
-
-    @property
-    @classmethod
-    @abstractmethod
-    def content_type(cls):
-        """The content type of the source."""
 
     @staticmethod
     def load_items(fds):

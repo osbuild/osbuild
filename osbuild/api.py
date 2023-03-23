@@ -40,18 +40,15 @@ class BaseAPI(abc.ABC):
     call `_message.`
     """
 
+    """The name of the API endpoint"""
+    endpoint: str
+
     def __init__(self, socket_address: Optional[PathLike] = None):
         self.socket_address = socket_address
         self.barrier = threading.Barrier(2)
         self.event_loop = None
         self.thread = None
         self._socketdir = None
-
-    @property
-    @classmethod
-    @abc.abstractmethod
-    def endpoint(cls):
-        """The name of the API endpoint"""
 
     @abc.abstractmethod
     def _message(self, msg: Dict, fds: jsoncomm.FdSet, sock: jsoncomm.Socket):

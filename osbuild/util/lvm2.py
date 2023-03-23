@@ -18,7 +18,6 @@ LVM2 sources[1], specifically:
 [1] https://github.com/lvmteam/lvm2 (commit 8801a86)
 """
 
-import abc
 import binascii
 import io
 import json
@@ -114,11 +113,8 @@ class CStruct:
 class Header:
     """Abstract base class for all headers"""
 
-    @property
-    @classmethod
-    @abc.abstractmethod
-    def struct(cls) -> Union[struct.Struct, CStruct]:
-        """Definition of the underlying struct data"""
+    """Definition of the underlying struct data"""
+    struct: Union[struct.Struct, CStruct]
 
     def __init__(self, data):
         self.data = data
