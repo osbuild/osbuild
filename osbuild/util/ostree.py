@@ -67,6 +67,7 @@ class Treefile:
         "boot-location": Param(str),
         "etc-group-members": Param(List[str]),
         "machineid-compat": Param(bool),
+        "recommends": Param(bool),
         "initramfs-args": Param(List[str]),
     }
 

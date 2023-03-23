@@ -58,6 +58,11 @@ SCHEMA = """
     "type": "array",
     "items": { "type": "string" }
   },
+  "recommends": {
+    "description": "Install `Recommends`",
+    "type": "boolean",
+    "default": true
+  },
   "tmp-is-dir": {
     "description": "Create a regular directory for /tmp",
     "type": "boolean",
@@ -112,6 +117,7 @@ def main(tree, options):
     etc_group_members = options.get("etc_group_members", [])
     initramfs = options.get("initramfs-args", [])
     tmp_is_dir = options.get("tmp-is-dir", True)
+    recommends = options.get("recommends", True)
 
     # rpm-ostree will either ensure that machine-id is empty
     # when machineid-compat is 'true' is or will remove it
@@ -160,6 +166,7 @@ def main(tree, options):
     treefile = ostree.Treefile()
     treefile["boot-location"] = "new"
     treefile["machineid-compat"] = machineid_compat
+    treefile["recommends"] = recommends
     treefile["etc-group-members"] = etc_group_members
     treefile["initramfs-args"] = initramfs
 
