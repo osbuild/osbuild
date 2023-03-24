@@ -21,8 +21,6 @@ jobs:
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v3
-      with:
-           fetch-depth: 2  # codecov requires this (https://github.com/codecov/codecov-action/issues/190)
     - name: "Run Tests"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
@@ -33,5 +31,3 @@ jobs:
             --rootdir=. \
             --cov-report=xml --cov=osbuild \
             -v
-    - name: Send coverage to codecov.io
-      run: bash <(curl -s https://codecov.io/bash)
