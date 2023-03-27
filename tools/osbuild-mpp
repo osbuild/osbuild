@@ -1495,12 +1495,14 @@ class ManifestFileV2(ManifestFile):
             return
 
         refs = element_enter(inputs_images, "references", {})
+        manifest_lists = []
 
         for image in element_enter(mpp, "images", []):
             source = image["source"]
             name = image.get("name", source)
             digest = image.get("digest", None)
             tag = image.get("tag", None)
+            index = image.get("index", False)
 
             main_manifest = ImageManifest.load(source, tag=tag, digest=digest)
 
@@ -1528,6 +1530,23 @@ class ManifestFileV2(ManifestFile):
             refs[image_id] = {
                 "name": name
             }
+
+            if index:
+                manifest_lists.append(main_manifest.digest)
+                container_index_source = element_enter(self.sources, "org.osbuild.skopeo-index", {})
+                index_items = element_enter(container_index_source, "items", {})
+                index_items[main_manifest.digest] = {
+                    "image": {
+                        "name": source
+                    }
+                }
+
+        # if we collected manifest lists, create the manifest-lists input array for the stage
+        if manifest_lists:
+            inputs_manifests = element_enter(inputs, "manifest-lists", {})
+            inputs_manifests["type"] = "org.osbuild.files"
+            inputs_manifests["origin"] = "org.osbuild.source"
+            inputs_manifests["references"] = manifest_lists
 
 
 def main():
