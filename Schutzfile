@@ -301,47 +301,6 @@
       }
     ]
   },
-  "rhel-8.7": {
-    "repos": [
-      {
-        "file": "/etc/yum.repos.d/rhel8internal.repo",
-        "x86_64": [
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.7-20221115"
-          },
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20221115"
-          },
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-crb-n8.7-20221115"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.7-20221115"
-          },
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.7-20221115"
-          },
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-crb-n8.7-20221115"
-          }
-        ]
-      }
-    ]
-  },
   "rhel-8.8": {
     "repos": [
       {
@@ -378,47 +337,6 @@
             "title": "RHEL-8-RPMREPO-NIGHTLY-CRB",
             "name": "crb",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-crb-n8.8-20221115"
-          }
-        ]
-      }
-    ]
-  },
-  "rhel-9.1": {
-    "repos": [
-      {
-        "file": "/etc/yum.repos.d/rhel9internal.repo",
-        "x86_64": [
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221115"
-          },
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221115"
-          },
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-crb-n9.1-20221115"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20221115"
-          },
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221115"
-          },
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-crb-n9.1-20221115"
           }
         ]
       }
