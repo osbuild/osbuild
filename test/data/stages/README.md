@@ -6,32 +6,32 @@ new test-bed for your new stage do the following:
 1. Create a folder with the name of your stage.
 
    If your stage is named `org.osbuild.my-new-stage` the folder should be named
-   `my-new-stage`. 
+   `my-new-stage`.
 
 2. Populate the test folder.
 
    The test folder is expected to have a `a.mpp.json`, `b.mpp.json`, `a.json`,
    `b.json` and `diff.json`.
-   
+
    `(a|b).mpp.json` and `dif.json`files are the ones that you will need to
    provide, `(a|b).json` will be generated based on the their
    ManifestPreProcessor json file counterpart (`.mpp.json`).
-   
+
    The `a.mpp.json` file must provide the instructions for a minimal artifact
    build using the minimum amount of pipelines and stages; you must not add
    your new stage to this build. The artifact described in `b.mpp.json` will
    have the same build as the one described in `a.mpp.json` but you must add
    your new stage to the build.
-   
+
    Once `(a|b).mpp.json` are made, run:
-   
+
    ```bash
    make test/data/stages/my-new-stage/a.json
    make test/data/stages/my-new-stage/b.json
-   ``` 
-   
+   ```
+
    to generate `a.json` and `b.json` respectively.
-   
+
    During the tests the artifacts described by `a.json` and `b.json` will be
    built and their final states will be compared. In order for your new stage
    test to pass, every change in artifact b's state must have been accounted
@@ -39,7 +39,7 @@ new test-bed for your new stage do the following:
 
 3. Add the five required test files to your commit (`a.mmp.json`, `b.mpp.json`,
    `a.json`, `b.json` and `diff.json`) and the GitHub CI will do the rest.
-   
+
 ## Crafting `(a|b).mpp.json` test files
 
 `(a|b).mpp.json` files can be based on OSBuild manifest v1 and v2. v2 is
@@ -53,7 +53,7 @@ Example of minimal `a.mpp.json`:
 ```
 {
   "version": "2",
-  # Specify the pipelines needed by your artifact, at a minimum it should 
+  # Specify the pipelines needed by your artifact, at a minimum it should
   # specify a base image. Other pipelines should install any needed
   # dependencies, create files, change permissions etc.
   "pipelines": [
@@ -71,7 +71,7 @@ Example of minimal `a.mpp.json`:
       "build": "name:build",
       "stages": [
         {
-          # on manifest v1 this file was known as "name", watch out
+          # on manifest v1 this field was known as "name", watch out
           "type": "org.osbuild.rpm",
           "inputs": {
             "packages": {
