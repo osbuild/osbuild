@@ -117,7 +117,7 @@ OVF_TEMPLATE = """<?xml version="1.0"?>
 
 def virtual_size(vmdk):
     cmd = ["qemu-img", "info", "--output=json", vmdk]
-    res = subprocess.run(cmd, check=True, capture_output=True)
+    res = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, encoding="utf8")
     if res.returncode != 0:
         raise RuntimeError("Unable to determine vmdk size")
     return json.loads(res.stdout)["virtual-size"]
