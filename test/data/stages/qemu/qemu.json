@@ -327,7 +327,8 @@
                 "sha256:c8e0cdf3260afc4ce9c115f30df68182faaa02944cdaeeb5c20161430f82c8e5": {},
                 "sha256:f31a3bafd2e4ef16ca7d51fe792c59c1b36bf5efbcbd0ca631472b37e0a8b970": {},
                 "sha256:aa2696cbb562dccf02732a581d94b33da26c682d53b5611095c4b130a2b41635": {},
-                "sha256:0ebe43a9bef7ec2dc4cb98350fbde2e55dae886f905e2d9cea837da3fb613c87": {}
+                "sha256:0ebe43a9bef7ec2dc4cb98350fbde2e55dae886f905e2d9cea837da3fb613c87": {},
+                "sha256:669baae457a85934af59f38d034b9b2aed73eb8e0ec8b1d17d3bdea32ce0c92f": {}
               }
             }
           },
@@ -895,7 +896,8 @@
         "sha256:c8e0cdf3260afc4ce9c115f30df68182faaa02944cdaeeb5c20161430f82c8e5": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/x/xz-libs-5.2.5-5.fc34.x86_64.rpm",
         "sha256:f31a3bafd2e4ef16ca7d51fe792c59c1b36bf5efbcbd0ca631472b37e0a8b970": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/x/xz-lzma-compat-5.2.5-5.fc34.x86_64.rpm",
         "sha256:aa2696cbb562dccf02732a581d94b33da26c682d53b5611095c4b130a2b41635": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/z/zchunk-libs-1.1.9-2.fc34.x86_64.rpm",
-        "sha256:0ebe43a9bef7ec2dc4cb98350fbde2e55dae886f905e2d9cea837da3fb613c87": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/z/zlib-1.2.11-26.fc34.x86_64.rpm"
+        "sha256:0ebe43a9bef7ec2dc4cb98350fbde2e55dae886f905e2d9cea837da3fb613c87": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/z/zlib-1.2.11-26.fc34.x86_64.rpm",
+        "sha256:669baae457a85934af59f38d034b9b2aed73eb8e0ec8b1d17d3bdea32ce0c92f": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/z/zstd-1.4.9-1.fc34.x86_64.rpm"
       }
     }
   }
