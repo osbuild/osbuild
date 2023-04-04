@@ -13,7 +13,7 @@ new test-bed for your new stage do the following:
    The test folder is expected to have a `a.mpp.json`, `b.mpp.json`, `a.json`,
    `b.json` and `diff.json`.
    
-   `(a|b).mpp.json` and `dif.json`files are the ones that you will need to
+   `(a|b).mpp.json` and `diff.json`files are the ones that you will need to
    provide, `(a|b).json` will be generated based on the their
    ManifestPreProcessor json file counterpart (`.mpp.json`).
    
