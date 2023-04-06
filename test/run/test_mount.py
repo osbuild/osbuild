@@ -27,7 +27,7 @@ def tmpdir_fixture():
 
 @contextmanager
 def make_arguments(opts):
-    os.mkdir("/run/osbuild/api")
+    os.makedirs("/run/osbuild/api")
     with open("/run/osbuild/api/arguments", "w", encoding="utf-8") as f:
         json.dump(opts, f)
     try:
