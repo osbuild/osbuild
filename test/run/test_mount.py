@@ -70,8 +70,11 @@ def create_image(tmpdir):
     }
 
     with make_arguments(mkfsopts):
+        env = os.environ.copy()
+        env["PYTHONPATH"] = os.curdir
         subprocess.run(
             [os.path.join(os.curdir, "stages",  "org.osbuild.mkfs.fat")],
+            env=env,
             check=True,
             stdout=sys.stdout,
             stderr=sys.stderr)
