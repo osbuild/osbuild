@@ -1,0 +1,64 @@
+#!/usr/bin/python3
+"""
+Write wpa_supplicant configuration file.
+
+Allows a person to write SSIDs to the `wpa_supplicant` configuration file which
+lets an image connect to wifi on first boot.
+
+WARNING: This stage expects the passphrase and SSID 'in-the-clear' in your manifest.
+"""
+
+
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["ssids"],
+"properties": {
+  "ssids": {
+    "type": "array",
+    "description": "List of SSID objects to configure",
+    "minItems": 1,
+    "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "passphrase"],
+      "properties": {
+        "name": {"type": "string"},
+        "passphrase": {"type": "string"}
+      }
+    }
+  }
+}
+"""
+
+
+def main(_, options):
+    ssids = options["networks"]
+
+    with open(
+        "/etc/wpa_supplicant/wpa_supplicant.conf", "w", encoding="utf8"
+    ) as f:
+        for ssid in ssids:
+            name = ssid["name"]
+            passphrase = ssid.get["passphrase"]
+
+            output = subprocess.check_output(
+                [
+                    "/usr/sbin/wpa_supplicant",
+                    name,
+                    passphrase,
+                ]
+            )
+
+            f.write(output)
+            f.write("\n")
+
+
+if __name__ == "__main__":
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

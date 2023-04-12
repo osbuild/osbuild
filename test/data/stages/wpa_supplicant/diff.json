@@ -1,0 +1,12 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/wpa_supplicant/wpa_supplicant.conf": {
+      "content": [
+        "sha256:28e1a3a05d8033716719a72bd81115294b7b8ec5044f13611fbf7a88f48a9356",
+        "sha256:f8c4294f05042cd0bde72976393c0fe36df74127994c65a26089eb70aa4429af"
+      ]
+    }
+  }
+}
