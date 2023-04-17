@@ -81,6 +81,8 @@ def read_partition_table(device):
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 @pytest.mark.parametrize("fs_type", ["ext4", "xfs", "btrfs"])
 def test_rawfs(osbuild, fs_type):
+    if not test.TestBase.has_filesystem_support(fs_type):
+        pytest.skip(f"The {fs_type} was explicitly marked as unsupported on this platform.")
     options = {
         "filename": "image.raw",
         "root_fs_uuid": "016a1cda-5182-4ab3-bf97-426b00b74eb0",
@@ -150,17 +152,13 @@ def test_ostree(osbuild):
 @pytest.mark.skipif(not test.TestBase.have_tree_diff(), reason="tree-diff missing")
 @pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
-@pytest.mark.parametrize(
-    "fmt,fs_type",
-    [("raw", "ext4"), ("raw", "xfs"), ("raw", "btrfs"),
-     ("raw.xz", "ext4"), ("raw.xz", "xfs"), ("raw.xz", "btrfs"),
-     ("qcow2", "ext4"), ("qcow2", "xfs"), ("qcow2", "btrfs"),
-     ("vmdk", "ext4"), ("vmdk", "xfs"), ("vmdk", "btrfs"),
-     ("vdi", "ext4"), ("vdi", "xfs"), ("vdi", "btrfs")]
-)
+@pytest.mark.parametrize("fmt,", ["raw", "raw.xz", "qcow2", "vmdk", "vdi"])
+@pytest.mark.parametrize("fs_type", ["ext4", "xfs", "btrfs"])
 def test_qemu(osbuild, fmt, fs_type):
     loctl = loop.LoopControl()
     with osbuild as osb:
+        if not test.TestBase.has_filesystem_support(fs_type):
+            pytest.skip(f"The {fs_type} was explicitly marked as unsupported on this platform.")
         options = {
             "format": fmt,
             "filename": f"image.{fmt}",
