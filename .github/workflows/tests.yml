@@ -28,8 +28,10 @@ jobs:
       with:
         image: ghcr.io/osbuild/osbuild-ci:latest-202304110753
         run: |
+          cat /proc/filesystems
           python3 -m pytest \
             --pyargs "${{ matrix.test }}" \
             --rootdir=. \
             --cov-report=xml --cov=osbuild \
             -v
+          cat /proc/filesystems
