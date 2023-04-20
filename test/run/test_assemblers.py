@@ -23,7 +23,7 @@ def osbuild_fixture():
     yield test.OSBuild()
 
 
-def assertImageFile(filename, fmt, expected_size=None):
+def assertImageFile(filename, fmt, expected_size):
     info = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", filename]))
     assert info["format"] == fmt
     assert info["virtual-size"] == expected_size
