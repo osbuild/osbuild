@@ -90,7 +90,7 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID%.*}.noarch.rpm
-    sudo rpm -Uvh /tmp/epel.rpm
+    sudo dnf install -y /tmp/epel.rpm
 fi
 
 # Install requirements for building RPMs in mock.
