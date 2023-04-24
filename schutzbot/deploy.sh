@@ -7,9 +7,6 @@ DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 source /etc/os-release
 ARCH=$(uname -m)
 
-# Add osbuild team ssh keys.
-cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
-
 # Distro version that this script is running on.
 DISTRO_VERSION=${ID}-${VERSION_ID}
 
