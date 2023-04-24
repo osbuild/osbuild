@@ -7,6 +7,7 @@ stages:
 .terraform:
   before_script:
     - schutzbot/ci_details.sh > ci-details-before-run
+    - cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
   after_script:
     - schutzbot/ci_details.sh > ci-details-after-run
     - schutzbot/update_github_status.sh update
