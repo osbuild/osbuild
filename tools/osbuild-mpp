@@ -360,7 +360,7 @@ class ImageManifest:
             src = f"docker://{imagename}"
 
         res = subprocess.run(["skopeo", "inspect", "--raw", src],
-                             capture_output=True,
+                             stdout=subprocess.PIPE,
                              check=True)
         m = ImageManifest(res.stdout)
         m.name = imagename
