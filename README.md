@@ -27,7 +27,7 @@ Please refer to the [developer guide](https://www.osbuild.org/guides/developer-g
 The requirements for this project are:
 
  * `bubblewrap >= 0.4.0`
- * `python >= 3.7`
+ * `python >= 3.6`
 
 Additionally, the built-in stages require:
 
