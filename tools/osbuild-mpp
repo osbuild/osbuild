@@ -245,6 +245,7 @@ Example:
           "type": "21686148-6449-6E6F-744E-656564454649",
           "bootable": true,
           "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+          "attrs": [ 60 ]
         },
         ...
     }
@@ -315,7 +316,7 @@ import sys
 import tempfile
 import urllib.parse
 import urllib.request
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import dnf
 import hawkey
@@ -771,7 +772,8 @@ class Partition:
                  size: int = None,
                  bootable: bool = False,
                  name: str = None,
-                 uuid: str = None):
+                 uuid: str = None,
+                 attrs: List[int] = None):
         self.id = uid
         self.type = pttype
         self.start = start
@@ -779,6 +781,7 @@ class Partition:
         self.bootable = bootable
         self.name = name
         self.uuid = uuid
+        self.attrs = attrs
         self.index = None
 
     @property
@@ -797,7 +800,8 @@ class Partition:
                 size=js.get("size"),
                 bootable=js.get("bootable"),
                 name=js.get("name"),
-                uuid=js.get("uuid"))
+                uuid=js.get("uuid"),
+                attrs=js.get("attrs"))
         return p
 
     def to_dict(self):
@@ -815,6 +819,8 @@ class Partition:
             data["name"] = self.name
         if self.uuid:
             data["uuid"] = self.uuid
+        if self.attrs:
+            data["attrs"] = list(self.attrs)
 
         return data
 
@@ -840,10 +846,24 @@ class PartitionTable:
         command = f"label: {self.label}\nlabel-id: {self.uuid}"
         for partition in self.partitions:
             fields = []
-            for field in ["start", "size", "type", "name", "uuid"]:
+            for field in ["start", "size", "type", "name", "uuid", "attrs"]:
                 value = getattr(partition, field)
-                if value:
-                    fields += [f'{field}="{value}"']
+                if not value:
+                    continue
+                if field == "attrs":
+                    resv = {
+                        0: "RequiredPartition",
+                        1: "NoBlockIOProtocol",
+                        2: "LegacyBIOSBootable"
+                    }
+                    attrs = []
+                    for bit in value:
+                        if bit in resv:
+                            attrs.append(resv[bit])
+                        elif 48 <= bit <= 63:
+                            attrs.append(str(bit))
+                    value = ",".join(attrs)
+                fields += [f'{field}="{value}"']
             if partition.bootable:
                 fields += ["bootable"]
             command += "\n" + ", ".join(fields)
