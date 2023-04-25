@@ -73,7 +73,13 @@ def can_setup_netns() -> bool:
 def runFileServer(barrier, directory):
     class Handler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, request, client_address, server):
-            super().__init__(request, client_address, server, directory=directory)
+            super().__init__(request, client_address, server)
+
+        def translate_path(self, path: str) -> str:
+            translated_path = super().translate_path(path)
+            common = os.path.commonpath([translated_path, directory])
+            translated_path = os.path.join(directory, os.path.relpath(translated_path, common))
+            return translated_path
 
         def guess_type(self, path):
             try:
