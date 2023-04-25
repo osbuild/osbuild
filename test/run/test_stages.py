@@ -325,7 +325,7 @@ class TestStages(test.TestBase):
 
                 qemu_img_run = subprocess.run(
                     ["qemu-img", "info", "--output=json", ip],
-                    capture_output=True,
+                    stdout=subprocess.PIPE,
                     check=True,
                     encoding="utf8"
                 )
@@ -490,7 +490,7 @@ class TestStages(test.TestBase):
             assert ovf_tree_file.attrib["{http://schemas.dmtf.org/ovf/envelope/1}size"] == str(os.stat(vmdk).st_size)
 
             ovf_tree_disk = ovf_tree_root[1][1]
-            res = subprocess.run(["qemu-img", "info", "--output=json", vmdk], check=True, capture_output=True)
+            res = subprocess.run(["qemu-img", "info", "--output=json", vmdk], check=True, stdout=subprocess.PIPE)
             capacity = ovf_tree_disk.attrib["{http://schemas.dmtf.org/ovf/envelope/1}capacity"]
             assert capacity == str(json.loads(res.stdout)["virtual-size"])
             pop_size = ovf_tree_disk.attrib["{http://schemas.dmtf.org/ovf/envelope/1}populatedSize"]

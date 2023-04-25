@@ -163,7 +163,7 @@ def test_all_options(tmpdir):
                 assert st.st_gid == 0
 
                 shortname_tested = False
-                proc = subprocess.run("mount", capture_output=True, check=True)
+                proc = subprocess.run("mount", stdout=subprocess.PIPE, check=True)
                 for line in proc.stdout.splitlines():
                     strline = line.decode("utf-8")
                     if mountpoint in strline:
