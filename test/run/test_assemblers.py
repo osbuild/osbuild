@@ -98,6 +98,7 @@ def test_rawfs(osbuild, fs_type):
 @pytest.mark.skipif(not test.TestBase.have_tree_diff(), reason="tree-diff missing")
 @pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
+@pytest.mark.skipif(not test.TestBase.have_rpm_ostree(), reason="rpm-ostree missing")
 def test_ostree(osbuild):
     with osbuild as osb:
         with open(os.path.join(test.TestBase.locate_test_data(),
