@@ -37,6 +37,7 @@ Requires:       tar
 Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
 Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
+Requires:       python3-librepo
 
 # This is required for `osbuild`, for RHEL-10 and above
 # the stdlib toml package can be used instead

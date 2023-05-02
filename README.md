@@ -49,6 +49,7 @@ Additionally, the built-in stages require:
  * `tar >= 1.32`
  * `util-linux >= 235`
  * `skopeo`
+ * `python3-librepo`
 
 At build-time, the following software is required:
 
