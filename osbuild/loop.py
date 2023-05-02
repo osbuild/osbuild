@@ -348,7 +348,7 @@ class Loop:
 
         Setting sizelimit means the size of the loopback device is taken
         to be the max of the size of the backing file and the limit. A
-        limit of 0 is taken to mean unlimited.
+        limit of 0 means unlimited.
 
         Enabling autoclear has the same effect as calling clear_fd().
 
@@ -398,7 +398,7 @@ class Loop:
 
         Setting sizelimit means the size of the loopback device is taken
         to be the max of the size of the backing file and the limit. A
-        limit of 0 is taken to mean unlimited.
+        limit of 0 means unlimited.
 
         Enabling autoclear has the same effect as calling clear_fd().
 
