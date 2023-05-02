@@ -97,6 +97,10 @@ SCHEMA = r"""
       "repo_gpgcheck": {
         "type": "boolean",
         "description": "Whether to perform GPG signature check on this repository's metadata."
+      },
+      "sslverify": {
+        "type": "boolean",
+        "description": "Whether to verify SSL certificates on SSL connections."
       }
     }
   }
