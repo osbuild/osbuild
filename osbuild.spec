@@ -38,6 +38,7 @@ Requires:       tar
 Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
 Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
+Requires:       python3-librepo
 
 # Turn off dependency generators for runners. The reason is that runners are
 # tailored to the platform, e.g. on RHEL they are using platform-python. We
