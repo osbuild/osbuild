@@ -133,6 +133,8 @@ def load_source(name: str, description: Dict, index: Index, manifest: Manifest):
         items = description["urls"]
     elif name == "org.osbuild.ostree":
         items = description["commits"]
+    elif name == "org.osbuild.librepo":
+        items = description["items"]
     else:
         raise ValueError(f"Unknown source type: {name}")
 

@@ -29,6 +29,7 @@ RUN dnf install -y \
     python3-iniparse \
     python3-mako \
     python3-jsonschema \
+    python3-librepo \
     python3-pip \
     python3-pycodestyle \
     python3-pylint \
