@@ -80,7 +80,8 @@
               "name": "Very cool repo",
               "priority": 42,
               "gpgcheck": true,
-              "repo_gpgcheck": true
+              "repo_gpgcheck": true,
+              "sslverify": true
             }
           ]
         }
