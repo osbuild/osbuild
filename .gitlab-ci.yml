@@ -74,7 +74,9 @@ OSTree Images:
           - aws/rhel-8.7-ga-x86_64
           - aws/rhel-9.1-ga-x86_64
           - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-8.9-nightly-x86_64
           - aws/rhel-9.2-nightly-x86_64
+          - aws/rhel-9.3-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
 SonarQube:
@@ -115,10 +117,14 @@ Manifests:
           - aws/rhel-8.7-ga-aarch64
           - aws/rhel-8.8-nightly-x86_64
           - aws/rhel-8.8-nightly-aarch64
+          - aws/rhel-8.9-nightly-x86_64
+          - aws/rhel-8.9-nightly-aarch64
           - aws/rhel-9.1-ga-x86_64
           - aws/rhel-9.1-ga-aarch64
           - aws/rhel-9.2-nightly-x86_64
           - aws/rhel-9.2-nightly-aarch64
+          - aws/rhel-9.3-nightly-x86_64
+          - aws/rhel-9.3-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
 finish:
