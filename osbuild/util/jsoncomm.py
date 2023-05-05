@@ -9,6 +9,7 @@ unicast message transmission.
 import array
 import contextlib
 import errno
+import gzip
 import json
 import os
 import socket
@@ -364,7 +365,7 @@ class Socket(contextlib.AbstractContextManager):
             raise BufferError
 
         try:
-            payload = json.loads(msg[0])
+            payload = json.loads(gzip.decompress(msg[0]))
         except json.JSONDecodeError as e:
             raise BufferError from e
 
@@ -399,7 +400,7 @@ class Socket(contextlib.AbstractContextManager):
         if not self._socket:
             raise RuntimeError("Tried to send without socket.")
 
-        serialized = json.dumps(payload).encode()
+        serialized = gzip.compress(json.dumps(payload).encode())
         cmsg = []
         if fds:
             cmsg.append((socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds)))
