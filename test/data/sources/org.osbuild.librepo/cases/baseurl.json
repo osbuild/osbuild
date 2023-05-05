@@ -1,0 +1,25 @@
+{
+  "expects": "success",
+  "org.osbuild.librepo": {
+    "items": {
+      "sha256:99fa21f1b67fea84dcb9b3c7f7e09a4f150095cfa7163a19d03972fd7c826f00": {
+        "path": "Packages/a/a",
+        "mirror": "0cde5945566ff3feb627eaa84e31223d2b8be54fb446222cded36fc5e5debcc2"
+      },
+      "sha256:77e6ed0bed2d720e44d77643f66b05f0eb42b06379990e5ef658ef314c415827": {
+        "path": "Packages/b/b",
+        "mirror": "0cde5945566ff3feb627eaa84e31223d2b8be54fb446222cded36fc5e5debcc2"
+      }
+    },
+    "options": {
+        "mirrors": {
+          "0cde5945566ff3feb627eaa84e31223d2b8be54fb446222cded36fc5e5debcc2": {
+            "url": "http://localhost/sources/org.osbuild.librepo/data/",
+            "type": "baseurl",
+            "fastest-mirror": true,
+            "name": "baseurl"
+          }
+        }
+    }
+  }
+}
