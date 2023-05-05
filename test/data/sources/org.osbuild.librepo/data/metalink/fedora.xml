@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <metalink version="3.0" xmlns="http://www.metalinker.org/">
+   <files>
+     <file name="repomd.xml">
+       <resources maxconnections="1">
+           <url protocol="http" type="http" location="us" preference="100">http://localhost/sources/org.osbuild.librepo/data/repodata/repomd.xml</url>
+       </resources>
+     </file>
+   </files>
+ </metalink>
