@@ -1,5 +1,4 @@
-OSBuild
-=======
+# OSBuild
 
 Build-Pipelines for Operating System Artifacts
 
@@ -11,18 +10,20 @@ build pipeline that is more comprehensible, reproducible, and extendable.
 See the `osbuild(1)` man-page for details on how to run osbuild, the definition
 of the pipeline description, and more.
 
-### Project
+## Project
 
  * **Website**: <https://www.osbuild.org>
  * **Bug Tracker**: <https://github.com/osbuild/osbuild/issues>
  * **IRC**: #osbuild on [Libera.Chat](https://libera.chat/)
+ * **Matrix**: #image-builder on [fedoraproject.org](https://matrix.to/#/#image-builder:fedoraproject.org)
+ * **Mailing List**: image-builder@redhat.com
  * **Changelog**: <https://github.com/osbuild/osbuild/releases>
 
-#### Contributing
+### Contributing
 
 Please refer to the [developer guide](https://www.osbuild.org/guides/developer-guide/developer-guide.html) to learn about our workflow, code style and more.
 
-### Requirements
+## Requirements
 
 The requirements for this project are:
 
@@ -49,7 +50,7 @@ Testing requires additional software:
 
  * `pytest`
 
-### Install
+## Installation
 
 Installing `osbuild` requires to not only install the `osbuild` module, but also
 additional artifacts such as tools (i.e: `osbuild-mpp`) sources, stages, schemas
@@ -71,13 +72,13 @@ be installed in the system using the distribution package manager, i.e:
 sudo dnf install ./rpmbuild/RPMS/noarch/*.rpm
 ```
 
-### Repository:
+## Repository
 
  - **web**:   <https://github.com/osbuild/osbuild>
  - **https**: `https://github.com/osbuild/osbuild.git`
  - **ssh**:   `git@github.com:osbuild/osbuild.git`
 
-### License:
+## License
 
  - **Apache-2.0**
  - See LICENSE file for details.
