@@ -127,7 +127,7 @@ def write_template(vmdk):
     dirname, basename = os.path.split(vmdk)
     ovf_data = OVF_TEMPLATE.format(vmdk_size=os.stat(vmdk).st_size,
                                    vmdk_capacity=virtual_size(vmdk), image_name=basename)
-    ovf = f"{os.path.join(dirname, basename.removesuffix('.vmdk'))}.ovf"
+    ovf = f"{os.path.join(dirname, os.path.splitext(basename)[0])}.ovf"
     with open(ovf, "w", encoding="utf8") as f:
         f.write(ovf_data)
     return ovf
@@ -135,7 +135,7 @@ def write_template(vmdk):
 
 def write_manifest(vmdk, ovf):
     dirname, basename = os.path.split(vmdk)
-    mf = f"{os.path.join(dirname, basename.removesuffix('.vmdk'))}.mf"
+    mf = f"{os.path.join(dirname, os.path.splitext(basename)[0])}.mf"
     with open(mf, "w", encoding="utf8") as f:
         f.write(f"SHA256({os.path.basename(ovf)})= {checksum.hexdigest_file(ovf, 'sha256')}\n")
         f.write(f"SHA256({basename})= {checksum.hexdigest_file(vmdk, 'sha256')}\n")
