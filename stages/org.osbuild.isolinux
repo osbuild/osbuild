@@ -190,7 +190,7 @@ def main(tree, inputs, options):
     version = options["product"]["version"]
 
     kdir = options["kernel"]["dir"]
-    kopts = options["kernel"].get("opts")
+    kopts = options["kernel"].get("opts", [])
     debug = options.get("debug", False)
 
     data = inputs["data"]["path"]
