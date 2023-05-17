@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+"""
+Configure basic aspects of the `/etc/sysconfig/livesys` file, necessary for
+live installations.
+"""
+
+import os
+import sys
+
+import osbuild.api
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "required": ["livesys_session"],
+  "properties": {
+    "livesys_session": {
+      "type": "string",
+      "description": "Livesys session to use"
+    }
+  }
+}
+"""
+
+PATH = "etc/sysconfig/livesys"
+
+CONFIG = """
+livesys_session="{livesys_session}"
+"""
+
+
+def main(tree, options):
+    livesys_session = options["livesys_session"]
+
+    with open(os.path.join(tree, PATH), "w", encoding="utf8") as f:
+        f.write(CONFIG.format(livesys_session=livesys_session))
+
+        os.fchown(f.fileno(), 0, 0)
+        os.fchmod(f.fileno(), 0o644)
+
+
+if __name__ == "__main__":
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"], stage_args["options"])
+    sys.exit(r)
