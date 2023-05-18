@@ -37,6 +37,10 @@ SCHEMA_2 = """
         "description": "Don't load the journal on mounting",
         "type": "boolean",
         "default": false
+      },
+      "subvol": {
+        "description": "Subvolume to be mounted",
+        "type": "string"
       }
     }
   }

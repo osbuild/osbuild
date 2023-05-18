@@ -139,6 +139,8 @@ class FileSystemMountService(MountService):
             opts.append(f"umask={options['umask']}")
         if "shortname" in options:
             opts.append(f"shortname={options['shortname']}")
+        if "subvol" in options:
+            opts.append(f"subvol={options['subvol']}")
         if opts:
             return ["-o", ",".join(opts)]
         return []
