@@ -1,0 +1,59 @@
+#!/usr/bin/python3
+"""
+Create subvolumes on a mounted btrfs partition.
+
+See `btrfs`(8).
+
+Buildhost commands used: `btrfs`.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "properties": {
+     "subvolumes": {
+       "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          }
+        }
+     }
+  }
+},
+"devices": {
+  "type": "object",
+  "additionalProperties": true
+},
+"mounts": {
+  "type": "array"
+}
+"""
+
+
+def main(paths, options):
+    volume = paths["mounts"]
+
+    for vol in options["subvolumes"]:
+        name = vol["name"].lstrip("/")
+        subvol = os.path.join(volume, name)
+
+        cmd = ["btrfs", "subvolume", "create", subvol]
+        subprocess.run(cmd, encoding='utf-8', check=True)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    ret = main(args["paths"], args["options"])
+    sys.exit(ret)
