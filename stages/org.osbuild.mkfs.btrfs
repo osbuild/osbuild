@@ -37,6 +37,11 @@ SCHEMA_2 = r"""
       "description": "Label for the file system",
       "type": "string",
       "maxLength": 256
+    },
+    "metadata": {
+      "description": "Profile for the metadata block groups",
+      "type": "string",
+      "enum": ["single", "dup"]
     }
   }
 }
@@ -48,10 +53,14 @@ def main(devices, options):
 
     uuid = options["uuid"]
     label = options.get("label")
+    metadata = options.get("metadata")
     opts = []
 
     if label:
         opts = ["-L", label]
+
+    if metadata:
+        opts += ["-m", metadata]
 
     subprocess.run(["mkfs.btrfs", "-U", uuid] + opts + [device],
                    encoding='utf8', check=True)
