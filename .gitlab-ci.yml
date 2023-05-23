@@ -92,14 +92,15 @@ Manifests:
   extends: .terraform
   script:
     - schutzbot/deploy.sh
-    - schutzbot/manifest_tests.sh
+    - schutzbot/manifest_tests.sh ${PARALLEL_EXEC}
   artifacts:
     when: always
     paths:
       - manifest-db/generated-image-infos/
   parallel:
     matrix:
-      - RUNNER:
+      - PARALLEL_EXEC: ["1/4", "2/4", "3/4", "4/4"]
+        RUNNER:
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
@@ -108,7 +109,8 @@ Manifests:
           - aws/centos-stream-8-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
-      - RUNNER:
+      - PARALLEL_EXEC: ["1/4", "2/4", "3/4", "4/4"]
+        RUNNER:
           - aws/rhel-8.7-ga-x86_64
           - aws/rhel-8.7-ga-aarch64
           - aws/rhel-8.8-nightly-x86_64
