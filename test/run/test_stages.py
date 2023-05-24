@@ -458,6 +458,12 @@ class TestStages(test.TestBase):
             for p in table["partitions"]:
                 p["node"] = os.path.basename(p["node"])
 
+            # Old versions of sfdisk (e.g. on RHEL-8), do not include
+            # the 'sectorsize' in the output, so we delete it from the
+            # expected output if it is not present in the actual output
+            if "sectorsize" not in table:
+                del want["partitiontable"]["sectorsize"]
+
             self.assertEqual(have, want)
 
             # cache the downloaded data for the files source
