@@ -469,6 +469,56 @@ class TestStages(test.TestBase):
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")
 
+    @unittest.skipUnless(have_sfdisk_with_json(), "Need sfdisk with JSON support")
+    def test_sfdisk(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "sfdisk")
+
+        imgname = "disk.img"
+
+        with open(os.path.join(testdir, f"{imgname}.json"), "r", encoding="utf8") as f:
+            want = json.load(f)
+
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+
+            osb.compile_file(os.path.join(testdir, "sfdisk.json"),
+                             checkpoints=["tree"],
+                             exports=["tree"],
+                             output_dir=outdir)
+
+            target = os.path.join(outdir, "tree", imgname)
+
+            assert os.path.exists(target)
+
+            r = subprocess.run(["sfdisk", "--json", target],
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE,
+                               encoding="utf8",
+                               check=False)
+
+            have = json.loads(r.stdout)
+
+            table = have["partitiontable"]
+
+            # remove entries that are not stable across `sfdisk`
+            # invocations: "device"
+            if "device" in table:
+                del table["device"]
+
+            for p in table["partitions"]:
+                p["node"] = os.path.basename(p["node"])
+
+            # Old versions of sfdisk (e.g. on RHEL-8), do not include
+            # the 'sectorsize' in the output, so we delete it from the
+            # expected output if it is not present in the actual output
+            if "sectorsize" not in table:
+                del want["partitiontable"]["sectorsize"]
+
+            self.assertEqual(have, want)
+
+            # cache the downloaded data for the files source
+            osb.copy_source_data(self.store, "org.osbuild.files")
+
     def test_ovf(self):
         datadir = self.locate_test_data()
         testdir = os.path.join(datadir, "stages", "ovf")
