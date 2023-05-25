@@ -121,7 +121,7 @@ Contains additional tools and utilities for development of
 manifests and osbuild.
 
 %prep
-%forgesetup
+%forgeautosetup -p1
 
 %build
 %py3_build
