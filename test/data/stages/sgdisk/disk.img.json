@@ -13,7 +13,7 @@
         "size": 1024000,
         "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
         "uuid": "80B68AE7-3531-478C-A5FF-9B80F1CB07E9",
-        "name": "\"EFI System Partition\"",
+        "name": "EFI System Partition",
         "attrs": "LegacyBIOSBootable"
       },
       {
@@ -22,7 +22,7 @@
         "size": 1024000,
         "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
         "uuid": "CFE2BEB6-0BB8-4FB6-9075-2E79413AB707",
-        "name": "\"boot\"",
+        "name": "boot",
         "attrs": "LegacyBIOSBootable"
       },
       {
@@ -31,7 +31,7 @@
         "size": 4096,
         "type": "FAC7F1FB-3E8D-4137-A512-961DE09A5549",
         "uuid": "6E2E131D-14C4-4278-876A-5067C40EAECD",
-        "name": "\"BIOS boot\""
+        "name": "BIOS boot"
       },
       {
         "node": "disk.img4",
@@ -39,7 +39,7 @@
         "size": 18917343,
         "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
         "uuid": "646E1B09-9358-4A9C-B630-E3C0C296F7C6",
-        "name": "\"LVM\""
+        "name": "LVM"
       }
     ]
   }

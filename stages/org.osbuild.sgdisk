@@ -30,6 +30,11 @@ SCHEMA_2 = r"""
       "description": "UUID for the disk image's partition table",
       "type": "string"
     },
+    "quote_partition_name": {
+      "description": "Quote partition names passed to sgdisk, so that they end up quoted in the partition table. This is old behavior kept for backward compatibility.",
+      "type": "boolean",
+      "default": true
+    },
     "partitions": {
       "description": "Partition layout ",
       "type": "array",
@@ -109,7 +114,7 @@ class PartitionTable:
     def __getitem__(self, key) -> Partition:
         return self.partitions[key]
 
-    def write_to(self, target):
+    def write_to(self, target, quote_partition_name):
         """Write the partition table to disk"""
         # generate the command for sfdisk to create the table
 
@@ -138,8 +143,9 @@ class PartitionTable:
             ]
 
             if part.name:
+                part_name = f'"{part.name}"' if quote_partition_name else part.name
                 cmd += [
-                    "-c", f'{idx}:"{part.name}"'
+                    "-c", f"{idx}:{part_name}"
                 ]
 
             if part.uuid:
@@ -180,12 +186,13 @@ def main(devices, options):
     device = devices["device"]["path"]
 
     ptuuid = options["uuid"]
+    quote_partition_name = options.get("quote_partition_name", True)
     partitions = options.get("partitions")
 
     parts = [partition_from_json(p) for p in partitions]
     pt = PartitionTable(ptuuid, parts)
 
-    pt.write_to(device)
+    pt.write_to(device, quote_partition_name)
 
     subprocess.run(["sgdisk", "-p", device],
                    encoding='utf8',
