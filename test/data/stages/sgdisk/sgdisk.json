@@ -375,6 +375,7 @@
           },
           "options": {
             "uuid": "68ad7ade-3fa7-4844-8b2f-1c4cd30bef70",
+            "quote_partition_name": false,
             "partitions": [
               {
                 "uuid": "80b68ae7-3531-478c-a5ff-9b80f1cb07e9",
