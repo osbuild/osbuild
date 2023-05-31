@@ -16,11 +16,34 @@ import osbuild.api
 
 SCHEMA = """
 "additionalProperties": true,
-"required": ["kickstart-modules"],
 "properties": {
   "kickstart-modules": {
     "type": "array",
     "description": "Kick start modules to enable",
+    "items": {
+      "type": "string"
+    },
+    "minItems": 1
+  },
+  "activatable-modules": {
+    "type": "array",
+    "description": "Kick start modules to activate",
+    "items": {
+      "type": "string"
+    },
+    "minItems": 1
+  },
+  "forbidden-modules": {
+    "type": "array",
+    "description": "Kick start modules to forbid",
+    "items": {
+      "type": "string"
+    },
+    "minItems": 1
+  },
+  "optional-modules": {
+    "type": "array",
+    "description": "Kick start modules to activate but are allowed to fail",
     "items": {
       "type": "string"
     },
@@ -33,24 +56,25 @@ CONFIG = """
 # osbuild customizations
 
 [Anaconda]
-# List of enabled Anaconda DBus modules
-kickstart_modules =
 """
 
 
 def main(tree, options):
-    modules = options["kickstart-modules"]
     product_dir = os.path.join(tree, "etc/anaconda/conf.d")
     os.makedirs(product_dir, exist_ok=True)
 
-    with open(os.path.join(product_dir, "90-osbuild.conf"), "w", encoding="utf8") as f:
+    with open(
+        os.path.join(product_dir, "90-osbuild.conf"), "w", encoding="utf8"
+    ) as f:
         f.write(CONFIG)
-        for m in modules:
-            f.write(f"    {m}\n")
+
+        for grouping in options:
+            f.write(grouping.replace("-", "_") + "=\n")
+            for m in options[grouping]:
+                f.write(f"    {m}\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["options"])
     sys.exit(r)
