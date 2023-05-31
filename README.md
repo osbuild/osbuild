@@ -14,7 +14,6 @@ of the pipeline description, and more.
 
  * **Website**: <https://www.osbuild.org>
  * **Bug Tracker**: <https://github.com/osbuild/osbuild/issues>
- * **IRC**: #osbuild on [Libera.Chat](https://libera.chat/)
  * **Matrix**: #image-builder on [fedoraproject.org](https://matrix.to/#/#image-builder:fedoraproject.org)
  * **Mailing List**: image-builder@redhat.com
  * **Changelog**: <https://github.com/osbuild/osbuild/releases>
