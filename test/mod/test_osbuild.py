@@ -277,6 +277,10 @@ class TestDescriptions(unittest.TestCase):
             klass, name = module
             try:
                 info = osbuild.meta.ModuleInfo.load(os.curdir, klass, name)
+                if not info.opts[version]:
+                    print(f"{klass} '{name}' does not support version '{version}'")
+                    continue
+
                 schema = osbuild.meta.Schema(info.get_schema(version), name)
                 res = schema.check()
                 if not res:
@@ -285,6 +289,9 @@ class TestDescriptions(unittest.TestCase):
                     self.fail(str(res) + "\n  " + err)
             except json.decoder.JSONDecodeError as e:
                 msg = f"{klass} '{name}' has invalid STAGE_OPTS\n\t" + str(e)
+                self.fail(msg)
+            except Exception as e:
+                msg = f"{klass} '{name}': " + str(e)
                 self.fail(msg)
 
     def test_moduleinfo(self):
