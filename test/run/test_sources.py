@@ -134,6 +134,14 @@ def test_sources(source, case, tmpdir):
     items = desc.get("items", {})
     options = desc.get("options", {})
 
+    # What version to use for validation?
+    version = "2" if info.opts["2"] else "1"
+    schema = osbuild.meta.Schema(info.get_schema(version=version), source)
+    res = schema.validate(desc)
+    # NOTE: ValidationResult overrides __bool__ to return res.valid
+    if not res:
+        raise RuntimeError(f"Validation failed on {source}:{case}:{res.as_dict()}")
+
     src = osbuild.sources.Source(info, items, options)
 
     with osbuild.objectstore.ObjectStore(tmpdir) as store, \
