@@ -41,6 +41,9 @@ SCHEMA_2 = """
       "subvol": {
         "description": "Subvolume to be mounted",
         "type": "string"
+      },
+      "compress": {
+        "type": "string"
       }
     }
   }

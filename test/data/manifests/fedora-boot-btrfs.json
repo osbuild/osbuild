@@ -949,7 +949,7 @@
                 "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
                 "vfs_type": "btrfs",
                 "path": "/",
-                "options": "subvol=root"
+                "options": "subvol=root,compress=zstd:1"
               },
               {
                 "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
@@ -969,7 +969,7 @@
                 "vfs_type": "btrfs",
                 "path": "/home",
                 "passno": 3,
-                "options": "subvol=home"
+                "options": "subvol=home,compress=zstd:1"
               }
             ]
           }
@@ -1204,7 +1204,8 @@
               "source": "root",
               "target": "/",
               "options": {
-                "subvol": "root"
+                "subvol": "root",
+                "compress": "zstd:1"
               }
             },
             {
@@ -1213,7 +1214,8 @@
               "source": "root",
               "target": "/home",
               "options": {
-                "subvol": "home"
+                "subvol": "home",
+                "compress": "zstd:1"
               }
             },
             {

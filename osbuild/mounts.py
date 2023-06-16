@@ -141,6 +141,8 @@ class FileSystemMountService(MountService):
             opts.append(f"shortname={options['shortname']}")
         if "subvol" in options:
             opts.append(f"subvol={options['subvol']}")
+        if "compress" in options:
+            opts.append(f"compress={options['compress']}")
         if opts:
             return ["-o", ",".join(opts)]
         return []
