@@ -64,7 +64,7 @@ pipelines:
             - uuid: 6e4ff95f-f662-45ee-a82a-bdf44a2d0b75
               vfs_type: btrfs
               path: /
-              options: subvol=root
+              options: subvol=root,compress=zstd:1
             - uuid: 0194fdc2-fa2f-4cc0-81d3-ff12045b73c8
               vfs_type: ext4
               path: /boot
@@ -78,7 +78,7 @@ pipelines:
               vfs_type: btrfs
               path: /home
               passno: 3
-              options: subvol=home
+              options: subvol=home,compress=zstd:1
       - type: org.osbuild.grub2
         options:
           root_fs_uuid: 6e4ff95f-f662-45ee-a82a-bdf44a2d0b75
@@ -230,12 +230,14 @@ pipelines:
             target: /
             options:
               subvol: root
+              compress: zstd:1
           - name: home
             type: org.osbuild.btrfs
             source: root
             target: /home
             options:
               subvol: home
+              compress: zstd:1
           - name: boot
             type: org.osbuild.ext4
             source: boot
