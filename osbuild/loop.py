@@ -381,6 +381,7 @@ class Loop:
         Bind and configure in a single operation a file descriptor to the
         loopback device.
         Only supported for kenel >= 5.8
+        Will fall back to set_fd/set_status otherwise.
 
         The loopback device must be unbound. The backing file must be
         either a regular file or a block device. If the backing file is
@@ -430,7 +431,13 @@ class Loop:
         # Keep same behavior here by setting the value to 0.
         config.block_size = 0
         config.info = self._config_info(LoopInfo(), offset, sizelimit, autoclear, partscan)
-        fcntl.ioctl(self.fd, self.LOOP_CONFIGURE, config)
+        try:
+            fcntl.ioctl(self.fd, self.LOOP_CONFIGURE, config)
+        except OSError as e:
+            if e.errno != errno.EINVAL:
+                raise
+            fcntl.ioctl(self.fd, self.LOOP_SET_FD, config.fd)
+            fcntl.ioctl(self.fd, self.LOOP_SET_STATUS64, config.info)
 
     def get_status(self) -> LoopInfo:
         """Get properties of the loopback device
