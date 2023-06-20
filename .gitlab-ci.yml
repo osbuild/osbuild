@@ -35,8 +35,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
           - aws/fedora-38-x86_64
@@ -50,12 +48,8 @@ RPM:
           - aws/rhel-9.1-ga-x86_64
           - aws/rhel-9.1-ga-aarch64
       - RUNNER:
-          - aws/rhel-8.8-nightly-x86_64
-          - aws/rhel-8.8-nightly-aarch64
           - aws/rhel-8.9-nightly-x86_64
           - aws/rhel-8.9-nightly-aarch64
-          - aws/rhel-9.2-nightly-x86_64
-          - aws/rhel-9.2-nightly-aarch64
           - aws/rhel-9.3-nightly-x86_64
           - aws/rhel-9.3-nightly-aarch64
         INTERNAL_NETWORK: "true"
@@ -69,13 +63,10 @@ OSTree Images:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-36-x86_64
           - aws/fedora-37-x86_64
           - aws/rhel-8.7-ga-x86_64
           - aws/rhel-9.1-ga-x86_64
-          - aws/rhel-8.8-nightly-x86_64
           - aws/rhel-8.9-nightly-x86_64
-          - aws/rhel-9.2-nightly-x86_64
           - aws/rhel-9.3-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
@@ -103,8 +94,6 @@ Manifests:
     matrix:
       - PARALLEL_EXEC: ["1/4", "2/4", "3/4", "4/4"]
         RUNNER:
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
           - aws/centos-stream-8-x86_64
@@ -115,14 +104,10 @@ Manifests:
         RUNNER:
           - aws/rhel-8.7-ga-x86_64
           - aws/rhel-8.7-ga-aarch64
-          - aws/rhel-8.8-nightly-x86_64
-          - aws/rhel-8.8-nightly-aarch64
           - aws/rhel-8.9-nightly-x86_64
           - aws/rhel-8.9-nightly-aarch64
           - aws/rhel-9.1-ga-x86_64
           - aws/rhel-9.1-ga-aarch64
-          - aws/rhel-9.2-nightly-x86_64
-          - aws/rhel-9.2-nightly-aarch64
           - aws/rhel-9.3-nightly-x86_64
           - aws/rhel-9.3-nightly-aarch64
         INTERNAL_NETWORK: "true"
