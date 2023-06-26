@@ -58,10 +58,10 @@ source tools/set-env-variables.sh
 
 # Register RHEL if we are provided with a registration script and intend to do that.
 REGISTER="${REGISTER:-'false'}"
-if [[ $REGISTER == "true" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+if [[ $REGISTER == "true" && -n "${V2_RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
+    sudo chmod +x "$V2_RHN_REGISTRATION_SCRIPT"
+    sudo "$V2_RHN_REGISTRATION_SCRIPT"
 fi
 
 # Mock configuration file to use for building RPMs.
