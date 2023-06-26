@@ -17,15 +17,17 @@ osbuild is the path. The input options are just passed to the
 """
 
 import abc
+import contextlib
 import hashlib
 import json
 import os
+import tempfile
 from typing import Any, Dict, Optional, Tuple
 
 from osbuild import host
 from osbuild.util.types import PathLike
 
-from .objectstore import StoreClient, StoreServer
+from .objectstore import ObjectStore, StoreClient, StoreServer
 
 
 class Input:
@@ -66,7 +68,7 @@ class InputManager:
         self.root = root
         self.inputs: Dict[str, Input] = {}
 
-    def map(self, ip: Input) -> Tuple[str, Dict]:
+    def map(self, ip: Input, store: ObjectStore) -> Tuple[str, Dict]:
 
         target = os.path.join(self.root, ip.name)
         os.makedirs(target)
@@ -87,8 +89,10 @@ class InputManager:
             }
         }
 
-        client = self.service_manager.start(f"input/{ip.name}", ip.info.path)
-        reply = client.call("map", args)
+        with make_args_file(store.tmp, args) as fd:
+            fds = [fd]
+            client = self.service_manager.start(f"input/{ip.name}", ip.info.path)
+            reply, _ = client.call_with_fds("map", {}, fds)
 
         path = reply["path"]
 
@@ -100,6 +104,14 @@ class InputManager:
         self.inputs[ip.name] = reply
 
         return reply
+
+
+@contextlib.contextmanager
+def make_args_file(tmp, args):
+    with tempfile.TemporaryFile("w+", dir=tmp, encoding="utf-8") as f:
+        json.dump(args, f)
+        f.seek(0)
+        yield f.fileno()
 
 
 class InputService(host.Service):
@@ -115,8 +127,10 @@ class InputService(host.Service):
     def stop(self):
         self.unmap()
 
-    def dispatch(self, method: str, args, _fds):
+    def dispatch(self, method: str, _, _fds):
         if method == "map":
+            with os.fdopen(_fds.steal(0)) as f:
+                args = json.load(f)
             store = StoreClient(connect_to=args["api"]["store"])
             r = self.map(store,
                          args["origin"],

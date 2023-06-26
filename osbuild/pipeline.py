@@ -209,7 +209,7 @@ class Stage:
 
             ipmgr = InputManager(mgr, storeapi, inputs_tmpdir)
             for key, ip in self.inputs.items():
-                data = ipmgr.map(ip)
+                data = ipmgr.map(ip, store)
                 inputs[key] = data
 
             devmgr = DeviceManager(mgr, build_root.dev, tree)
