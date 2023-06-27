@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+"""
+Mark packages in the DNF state database.
+"""
+
+import shutil
+import subprocess
+import sys
+
+from osbuild import api
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "properties": {
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Packages and their marks.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "mark"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Package name."
+          },
+          "mark": {
+            "type": "string",
+            "enum": ["install", "group"],
+            "description": "Package mark."
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def mark(tree, packages):
+    dnf_bin = shutil.which("dnf-3")
+
+    if not dnf_bin:
+        print("dnf not found")
+        return 1
+
+    markings = {}
+
+    for package in packages:
+        if package["mark"] not in markings:
+            markings[package["mark"]] = []
+
+        markings[package["mark"]] += [package]
+
+    if "install" in markings:
+        subprocess.run(
+            [dnf_bin, "--installroot", tree, "mark", "-y", "install"]
+            + [package["name"] for package in markings["install"]],
+            check=True,
+        )
+
+    if "group" in markings:
+        subprocess.run(
+            [dnf_bin, "--installroot", tree, "mark", "-y", "group"]
+            + [package["name"] for package in markings["group"]],
+            check=True,
+        )
+
+    return 0
+
+
+def main(tree, options):
+    return mark(tree, options["packages"])
+
+
+if __name__ == "__main__":
+    args = api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
