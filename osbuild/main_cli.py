@@ -8,6 +8,7 @@ used from tests to run the cli.
 
 import argparse
 import json
+import logging
 import os
 import sys
 
@@ -16,15 +17,22 @@ import osbuild.meta
 import osbuild.monitor
 from osbuild.objectstore import ObjectStore
 from osbuild.util.parsing import parse_size
-from osbuild.util.term import fmt as vt
+
+log = logging.getLogger(__name__)
 
 
 def parse_manifest(path):
-    if path == "-":
-        manifest = json.load(sys.stdin)
-    else:
-        with open(path, encoding="utf8") as f:
-            manifest = json.load(f)
+    log.debug("parsing manifest %r", path)
+
+    try:
+        if path == "-":
+            manifest = json.load(sys.stdin)
+        else:
+            with open(path, encoding="utf8") as f:
+                manifest = json.load(f)
+    except ValueError as e:
+        log.fatal("failed to parse manifest as json: %s", e)
+        raise SystemExit(1) from e
 
     return manifest
 
@@ -33,18 +41,11 @@ def show_validation(result, name):
     if name == "-":
         name = "<stdin>"
 
-    print(f"{vt.bold}{name}{vt.reset} ", end='')
-
-    if result:
-        print(f"is {vt.bold}{vt.green}valid{vt.reset}")
-        return
-
-    print(f"has {vt.bold}{vt.red}errors{vt.reset}:")
-    print("")
-
     for error in result:
-        print(f"{vt.bold}{error.id}{vt.reset}:")
-        print(f"  {error.message}\n")
+        if len(error.message) > 100:
+            log.error("manifest validation error %r at %r", error.message[:50] + "..." + error.message[-50:], error.id)
+        else:
+            log.error("manifest validation error %r at %r", error.message, error.id)
 
 
 def export(name_or_id, output_directory, store, manifest):
@@ -93,6 +94,9 @@ def parse_arguments(sys_argv):
     parser.add_argument("--version", action="version",
                         help="return the version of osbuild",
                         version="%(prog)s " + osbuild.__version__)
+    parser.add_argument("-v", action="count",
+                        help="set logging verbosity",
+                        default=0)
 
     return parser.parse_args(sys_argv[1:])
 
@@ -100,14 +104,21 @@ def parse_arguments(sys_argv):
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
 def osbuild_cli():
     args = parse_arguments(sys.argv)
-    desc = parse_manifest(args.manifest_path)
 
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s %(module)s: %(message)s",
+        level=0 + (logging.WARNING - args.v * 10)
+    )
+
+    log.info("starting build of manifest %s", args.manifest_path)
+
+    desc = parse_manifest(args.manifest_path)
     index = osbuild.meta.Index(args.libdir)
 
     # detect the format from the manifest description
     info = index.detect_format_info(desc)
     if not info:
-        print("Unsupported manifest format")
+        log.fatal("cannot determine manifest format")
         return 2
     fmt = info.module
 
@@ -123,19 +134,24 @@ def osbuild_cli():
 
     manifest = fmt.load(desc, index)
 
-    exports = set(args.export)
-    unresolved = [e for e in exports if e not in manifest]
-    if unresolved:
-        for name in unresolved:
-            print(f"Export {vt.bold}{name}{vt.reset} not found!")
-        print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
-        return 1
+    exports = set()
+    if args.export:
+        exports = set(args.export)
+        available = [e.name for e in manifest]
+        unresolved = [e for e in exports if e not in available]
+        if unresolved:
+            log.fatal(
+                "exports requested that do not exist in manifest: %s. available exports are: %s",
+                ", ".join(unresolved),
+                ", ".join(available))
+            return 1
 
     if args.checkpoint:
         marked = manifest.mark_checkpoints(args.checkpoint)
         if not marked:
-            print("No checkpoints matched provided patterns!")
-            print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
+            log.fatal(
+                "no checkpoints matched provided patterns: %s",
+                ", ".join(marked))
             return 1
 
     if args.inspect:
@@ -145,9 +161,8 @@ def osbuild_cli():
         return 0
 
     output_directory = args.output_directory
-
     if exports and not output_directory:
-        print("Need --output-directory for --export")
+        log.fatal("`--output-directory` must be passed when an `--export` is requested")
         return 1
 
     monitor_name = args.monitor
@@ -164,7 +179,15 @@ def osbuild_cli():
 
             pipelines = manifest.depsolve(object_store, exports)
 
+            log.info("manifest contains %d pipelines: %s", len(pipelines), ", ".join(pipelines))
+
+            log.debug("starting downloads")
+
             manifest.download(object_store, monitor, args.libdir)
+
+            log.debug("downloads complete")
+
+            log.debug("starting build")
 
             r = manifest.build(
                 object_store,
@@ -187,12 +210,10 @@ def osbuild_cli():
                     for name, pl in manifest.pipelines.items():
                         print(f"{name + ':': <10}\t{pl.id}")
                 else:
-                    print()
-                    print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
+                    log.fatal("failed building manifest")
 
             return 0 if r["success"] else 1
 
     except KeyboardInterrupt:
-        print()
-        print(f"{vt.reset}{vt.bold}{vt.red}Aborted{vt.reset}")
+        log.fatal("build aborted through keyboard interrupt")
         return 130
