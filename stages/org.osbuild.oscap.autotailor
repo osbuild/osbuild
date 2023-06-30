@@ -1,0 +1,95 @@
+#!/usr/bin/python3
+"""
+Execute oscap autotailor
+
+The autotailor stage produces a tailoring file that the OpenSCAP scanner can use to scan
+and remediate a system. The autotailor rules override a base profile either enabling or
+disabling (selecting or unselecting) a given rule for the profile. The autotailor command
+generates and xml diff between the user provided overrides and the base profile.
+"""
+
+
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA = """
+"additionalProperties": false,
+"required": ["filepath", "config"],
+"properties": {
+  "filepath": {
+    "type": "string",
+    "description": "Filename and path to where the tailoring file will be saved"
+  },
+  "config": {
+    "additionalProperties": false,
+    "required": ["profile_id", "datastream", "new_profile"],
+    "type": "object",
+    "description": "OpenSCAP configuration variables",
+    "properties": {
+      "profile_id": {
+        "type": "string",
+        "description": "The base OpenSCAP profile"
+      },
+      "datastream": {
+        "type": "string",
+        "description": "The path to the datastream file"
+      },
+      "new_profile": {
+        "type": "string",
+        "description": "The name of the new customized OpenSCAP profile"
+      },
+      "selected": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "The rules to select in addition to the base OpenSCAP profile"
+      },
+      "unselected": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "The rules to deselect from the base OpenSCAP profile"
+      }
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    # required vars
+    config = options["config"]
+    filepath = options["filepath"]
+    profile = config["profile_id"]
+    datastream = config["datastream"]
+    new_profile = config["new_profile"]
+
+    # tailoring rules
+    selected = config.get("selected", [])
+    unselected = config.get("unselected", [])
+
+    cmd = [
+        "/usr/bin/autotailor",
+        "--output", f"{tree}/{filepath.lstrip('/')}",
+        "--new-profile-id", new_profile
+    ]
+
+    for s in selected:
+        cmd.extend(["--select", s])
+
+    for u in unselected:
+        cmd.extend(["--unselect", u])
+
+    # first positional arguement is for the datastream
+    # second positional arguement is for the base profile
+    cmd.extend([datastream, profile])
+
+    subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, check=True)
+
+    return 0
+
+
+if __name__ == "__main__":
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
