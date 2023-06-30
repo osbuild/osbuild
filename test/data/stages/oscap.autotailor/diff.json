@@ -1,0 +1,11 @@
+{
+  "added_files": [
+    "/usr",
+    "/usr/share",
+    "/usr/share/osbuild",
+    "/usr/share/osbuild/oscap",
+    "/usr/share/osbuild/oscap/tailoring.xml"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}

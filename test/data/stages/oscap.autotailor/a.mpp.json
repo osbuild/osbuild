@@ -1,0 +1,21 @@
+{
+  "version": "2",
+  "pipelines": [
+    {
+      "mpp-import-pipeline": {
+        "path": "../manifests/f34-build-v2.json",
+        "id": "build"
+      },
+      "runner": "org.osbuild.fedora34"
+    },
+    {
+      "name": "tree",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.noop"
+        }
+      ]
+    }
+  ]
+}
