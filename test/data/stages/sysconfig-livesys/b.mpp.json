@@ -30,7 +30,7 @@
         }
       },
       {
-        "name": "org.osbuild.livesys",
+        "name": "org.osbuild.sysconfig-livesys",
         "options": {
           "livesys_session": "gnome"
         }
