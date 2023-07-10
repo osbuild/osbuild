@@ -378,7 +378,7 @@ def main(tree, inputs, options):
         print("deleting the fake machine id")
         machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
         machine_id_file.unlink()
-        machine_id_file.touch()
+        machine_id_file.touch(mode=0o444)
 
     if ostree_booted:
         os.unlink(ostree_booted)
