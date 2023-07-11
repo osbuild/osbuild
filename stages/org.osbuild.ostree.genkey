@@ -1,0 +1,96 @@
+#!/usr/bin/python3
+"""Generate ed25519 public/private keypair in format used by `ostree sign`.
+
+This is used with the org.osbuild.ostree.sign stage, and these can be
+used with composefs to tie an initrd and ostree commit together. See
+https://ostreedev.github.io/ostree/composefs/#signatures for details
+of how this works.
+
+Notes:
+  - Requires 'openssl' in the buildroot.
+"""
+
+import base64
+import os
+import subprocess
+import sys
+import tempfile
+
+import osbuild.api
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "required": ["publickey", "secretkey"],
+  "properties": {
+    "publickey": {
+      "description": "Path of generated public key",
+      "type": "string",
+      "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+    },
+    "secretkey": {
+      "description": "Path of generated secret key",
+      "type": "string",
+      "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+    }
+  }
+}
+"""
+
+
+def openssl(*args):
+    args = list(args)
+    print("openssl " + " ".join(args), file=sys.stderr)
+    subprocess.run(["openssl"] + args,
+                   encoding="utf8",
+                   stdout=sys.stderr,
+                   input=None,
+                   check=True)
+
+
+def openssl_stdout(*args):
+    args = list(args)
+    print("openssl " + " ".join(args), file=sys.stderr)
+    res = subprocess.run(["openssl"] + args,
+                         stdout=subprocess.PIPE,
+                         input=None,
+                         check=True)
+
+    return res.stdout
+
+# Based on gen_ed25519_keys() in https://github.com/ostreedev/ostree/blob/main/tests/libtest.sh
+
+
+def main(args, options):
+    tree = args["tree"]
+    pubkeyfile = os.path.join(tree, options["publickey"].lstrip("/"))
+    seckeyfile = os.path.join(tree, options["secretkey"].lstrip("/"))
+
+    with tempfile.TemporaryDirectory(dir=tree) as tmpdir:
+        # Generate key
+        pemfile = os.path.join(tmpdir, "key.pem")
+        openssl("genpkey", "-algorithm", "ed25519", "-outform", "PEM", "-out", pemfile)
+
+        # Extract the seed/public parts from generated key (last 32 byte in PEM file)
+        pubkey = openssl_stdout("pkey", "-outform", "DER", "-pubout", "-in", pemfile)[-32:]
+        seed = openssl_stdout("pkey", "-outform", "DER", "-in", pemfile)[-32:]
+
+        # Private key is seed and public key joined
+        seckey = seed + pubkey
+
+        # Ostree stores keys in base64
+        pubkey_b64 = base64.b64encode(pubkey).decode("utf8")
+        seckey_b64 = base64.b64encode(seckey).decode("utf8")
+
+        with open(pubkeyfile, "w", encoding="utf8") as f:
+            f.write(pubkey_b64)
+
+        with open(seckeyfile, "w", encoding="utf8") as f:
+            f.write(seckey_b64)
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args,
+             stage_args["options"])
+    sys.exit(r)
