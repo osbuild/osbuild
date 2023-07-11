@@ -1,0 +1,60 @@
+#!/usr/bin/python3
+"""Apply post-copy updates to an ostree repo/deployment
+
+The way osbuild works the ostree deployment is built in a chroot and
+stored as a regular directory of files before finally being copied to
+the physical filesystem. This means that for example, ostree fs-verity
+support doesn't work, as the fs-verity setting of files is not copied.
+
+To support fs-verity in generated images you have to run this stage
+after copying the final ostree tree onto the target filesystem.
+
+Notes:
+ - Ensure the target filesystem supports fs-verity. See e.g. the
+   `verity` option in org.osbuild.mkfs.ext4.
+ - Requires ostree version 2023.8 or later in the buildroot.
+"""
+
+import os
+import sys
+
+import osbuild.api
+from osbuild.util import ostree
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "properties": {
+     "sysroot": {
+       "type": "string",
+      "description": "Custom sysroot path",
+      "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+    }
+  }
+},
+"devices": {
+  "type": "object",
+  "additionalProperties": true
+},
+"mounts": {
+  "type": "array"
+}
+"""
+
+
+def main(paths, options):
+    custom_sysroot = options.get("sysroot")
+    root = paths["mounts"]
+
+    sysroot = root
+    if custom_sysroot:
+        sysroot = os.path.join(root, custom_sysroot.lstrip("/"))
+
+    ostree.cli("admin", "post-copy", sysroot=sysroot)
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["paths"],
+             stage_args["options"])
+    sys.exit(r)
