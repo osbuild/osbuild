@@ -1,0 +1,55 @@
+#!/usr/bin/python3
+"""Sign a commit in an ostree repo
+
+Given an ostree commit (referenced by a ref) in a repo and an ed25519
+secret key this adds a signature to the commit detached metadata.
+This commit can then be used to validate the commit, during ostree
+pull, during boot, or at any other time.
+
+"""
+
+import os
+import sys
+
+from osbuild import api
+from osbuild.util import ostree
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "required": ["repo", "ref", "key"],
+  "properties": {
+    "repo": {
+      "description": "Location of the OSTree repo.",
+      "type": "string"
+    },
+    "ref": {
+      "description": "OSTree branch name or commit to sign",
+      "type": "string",
+      "default": ""
+    },
+    "key": {
+      "description": "Path to the secret key",
+      "type": "string",
+      "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    repo = os.path.join(tree, options["repo"].lstrip("/"))
+    ref = options["ref"]
+    keyfile = os.path.join(tree, options["key"].lstrip("/"))
+
+    ostree.cli("sign", ref, **{"repo": repo, "keys-file": keyfile})
+
+
+if __name__ == '__main__':
+    stage_args = api.arguments()
+
+    r = main(stage_args["tree"],
+             stage_args["options"])
+
+    sys.exit(r)
