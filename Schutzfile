@@ -260,6 +260,44 @@
       }
     ]
   },
+  "fedora-39": {
+    "repos": [
+      {
+        "file": "/etc/yum.repos.d/fedora.repo",
+        "x86_64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230627"
+          }
+        ],
+        "aarch64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230627"
+          }
+        ]
+      },
+      {
+        "file": "/etc/yum.repos.d/fedora-modular.repo",
+        "x86_64": [
+          {
+            "title": "fedora-modular",
+            "name": "fedora-modular",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-modular-20230627"
+          }
+        ],
+        "aarch64": [
+          {
+            "title": "fedora-modular",
+            "name": "fedora-modular",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-modular-20230627"
+          }
+        ]
+      }
+    ]
+  },
   "centos-stream-9": {
     "repos": [
       {
