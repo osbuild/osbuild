@@ -153,6 +153,17 @@ SCHEMA = r"""
         }
       }
     }
+  },
+  "livesys": {
+    "additionalProperties": false,
+    "type": "object",
+    "required": ["session"],
+    "properties": {
+      "session": {
+        "type": "string",
+        "description": "Livesys session to use"
+      }
+    }
   }
 }
 """
@@ -161,6 +172,17 @@ SCHEMA = r"""
 # sysconfig uses yes and no instead of true and false
 def bool_to_string(value):
     return "yes" if value else "no"
+
+
+def configure_livesys(tree, livesys_options):
+    if not livesys_options:
+        return
+
+    with open(f"{tree}/etc/sysconfig/livesys", "w", encoding="utf8") as livesys_file:
+        livesys_file.write("livesys_session=\"{livesys_options['session']}\"\n")
+
+        os.fchown(livesys_file.fileno(), 0, 0)
+        os.fchmod(livesys_file.fileno(), 0o644)
 
 
 def configure_kernel(tree, kernel_options):
@@ -240,10 +262,12 @@ def main(tree, options):
     kernel_options = options.get("kernel", {})
     network_options = options.get("network", {})
     network_scripts_options = options.get("network-scripts", {})
+    livesys_options = options.get("livesys", {})
 
     configure_kernel(tree, kernel_options)
     configure_network(tree, network_options)
     configure_network_scripts(tree, network_scripts_options)
+    configure_livesys(tree, livesys_options)
 
     return 0
 
