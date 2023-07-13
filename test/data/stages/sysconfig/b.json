@@ -303,6 +303,13 @@
                 "ipv6init": true
               }
             }
+          },
+          "livesys": {
+            "session": "gnome"
+          },
+          "desktop": {
+            "preferred": "/usr/bin/gnome",
+            "displaymanager": "/usr/bin/gdm"
           }
         }
       }

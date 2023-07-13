@@ -2,7 +2,9 @@
   "added_files": [
     "/etc/sysconfig/network-scripts",
     "/etc/sysconfig/network-scripts/ifcfg-eth0",
-    "/etc/sysconfig/network-scripts/ifcfg-eth1"
+    "/etc/sysconfig/network-scripts/ifcfg-eth1",
+    "/etc/sysconfig/desktop",
+    "/etc/sysconfig/livesys"
   ],
   "deleted_files": [],
   "differences": {
