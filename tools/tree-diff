@@ -84,7 +84,7 @@ def symlink_diff(name, dir_fd1, dir_fd2, path, differences):
 # pylint: disable=too-many-branches
 def diff_aux(dir_fd1, dir_fd2, path, report):
     entries1 = set()
-    with os.scandir(dir_fd1) as it:
+    with os.scandir(f"/proc/self/fd/{dir_fd1}") as it:
         for dirent in it:
             try:
                 stat2 = os.stat(dirent.name, dir_fd=dir_fd2, follow_symlinks=False)
@@ -134,7 +134,7 @@ def diff_aux(dir_fd1, dir_fd2, path, report):
                 diff_aux(child_fd1, child_fd2, os.path.join(path, dirent.name), report)
                 os.close(child_fd2)
                 os.close(child_fd1)
-    with os.scandir(dir_fd2) as it:
+    with os.scandir(f"/proc/self/fd/{dir_fd2}") as it:
         for dirent in it:
             if dirent.name not in entries1:
                 report["added_files"] += [os.path.join(path, dirent.name)]
@@ -156,7 +156,7 @@ def diff(dir_fd1, dir_fd2, report):
 
 
 def list_dir(dir_fd, path, target_list):
-    with os.scandir(dir_fd) as it:
+    with os.scandir(f"/proc/self/fd/{dir_fd}") as it:
         for dirent in it:
             p = os.path.join(path, dirent.name)
             target_list.append(p)

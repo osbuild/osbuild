@@ -13,10 +13,11 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
+import xml
 from collections.abc import Mapping
-from typing import Dict
+from typing import Callable, Dict, Optional
 
-from osbuild.util import selinux
+from osbuild.util import checksum, selinux
 
 from .. import initrd, test
 
@@ -324,7 +325,7 @@ class TestStages(test.TestBase):
 
                 qemu_img_run = subprocess.run(
                     ["qemu-img", "info", "--output=json", ip],
-                    capture_output=True,
+                    stdout=subprocess.PIPE,
                     check=True,
                     encoding="utf8"
                 )
@@ -365,9 +366,16 @@ class TestStages(test.TestBase):
             osb.copy_source_data(self.store, "org.osbuild.files")
 
     @unittest.skipUnless(have_sfdisk_with_json(), "Need sfdisk with JSON support")
-    def test_parted(self):
+    def _test_partitioning_stage(self, stage_name, sfdisk_out_filter_fn: Optional[Callable[[Dict], Dict]] = None):
+        """
+        Helper function for testing partitioning stages.
+
+        :param stage_name: Name of the partitioning stage to test
+        :param sfdisk_out_filter_fn: Optional function to filter the output of sfdisk
+               before comparing it with the expected output.
+        """
         datadir = self.locate_test_data()
-        testdir = os.path.join(datadir, "stages", "parted")
+        testdir = os.path.join(datadir, "stages", stage_name)
 
         imgname = "disk.img"
 
@@ -376,7 +384,7 @@ class TestStages(test.TestBase):
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
-            osb.compile_file(os.path.join(testdir, "parted.json"),
+            osb.compile_file(os.path.join(testdir, f"{stage_name}.json"),
                              checkpoints=["tree"],
                              exports=["tree"],
                              output_dir=outdir)
@@ -393,65 +401,98 @@ class TestStages(test.TestBase):
 
             have = json.loads(r.stdout)
 
-            table = have["partitiontable"]
+            if sfdisk_out_filter_fn is not None:
+                have = sfdisk_out_filter_fn(have)
 
+            # Old versions of sfdisk (e.g. on RHEL-8), do not include
+            # the 'sectorsize' in the output, so we delete it from the
+            # expected output if it is not present in the actual output
+            if "sectorsize" not in have["partitiontable"]:
+                del want["partitiontable"]["sectorsize"]
+
+            self.assertEqual(want, have)
+
+            # cache the downloaded data for the files source
+            osb.copy_source_data(self.store, "org.osbuild.files")
+
+    def test_parted(self):
+        def filter_sfdisk_output(sfdisk_output: Dict) -> Dict:
+            table = sfdisk_output["partitiontable"]
             # remove entries that are not stable across `parted`
             # invocations: "device", "id" and uuids in general
             if "device" in table:
                 del table["device"]
             if "id" in table:
                 del table["id"]
-
             for p in table["partitions"]:
                 if "uuid" in p:
                     del p["uuid"]
                 p["node"] = os.path.basename(p["node"])
+            return sfdisk_output
 
-            self.assertEqual(have, want)
+        self._test_partitioning_stage("parted", filter_sfdisk_output)
 
-            # cache the downloaded data for the files source
-            osb.copy_source_data(self.store, "org.osbuild.files")
-
-    @unittest.skipUnless(have_sfdisk_with_json(), "Need sfdisk with JSON support")
     def test_sgdisk(self):
-        datadir = self.locate_test_data()
-        testdir = os.path.join(datadir, "stages", "sgdisk")
-
-        imgname = "disk.img"
-
-        with open(os.path.join(testdir, f"{imgname}.json"), "r", encoding="utf8") as f:
-            want = json.load(f)
-
-        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
-
-            osb.compile_file(os.path.join(testdir, "sgdisk.json"),
-                             checkpoints=["tree"],
-                             exports=["tree"],
-                             output_dir=outdir)
-
-            target = os.path.join(outdir, "tree", imgname)
-
-            assert os.path.exists(target)
-
-            r = subprocess.run(["sfdisk", "--json", target],
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE,
-                               encoding="utf8",
-                               check=False)
-
-            have = json.loads(r.stdout)
-
-            table = have["partitiontable"]
-
+        def filter_sfdisk_output(sfdisk_output: Dict) -> Dict:
+            table = sfdisk_output["partitiontable"]
             # remove entries that are not stable across `parted`
             # invocations: "device", "id"
             if "device" in table:
                 del table["device"]
-
             for p in table["partitions"]:
                 p["node"] = os.path.basename(p["node"])
+            return sfdisk_output
 
-            self.assertEqual(have, want)
+        self._test_partitioning_stage("sgdisk", filter_sfdisk_output)
 
-            # cache the downloaded data for the files source
-            osb.copy_source_data(self.store, "org.osbuild.files")
+    def test_sfdisk(self):
+        def filter_sfdisk_output(sfdisk_output: Dict) -> Dict:
+            table = sfdisk_output["partitiontable"]
+            # remove entries that are not stable across `sfdisk`
+            # invocations: "device"
+            if "device" in table:
+                del table["device"]
+            for p in table["partitions"]:
+                p["node"] = os.path.basename(p["node"])
+            return sfdisk_output
+
+        self._test_partitioning_stage("sfdisk", filter_sfdisk_output)
+
+    def test_ovf(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "ovf")
+
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb.compile_file(os.path.join(testdir, "ovf.json"), exports=["vmdk"], output_dir=outdir)
+
+            vmdk = os.path.join(outdir, "vmdk", "image.vmdk")
+            assert os.path.isfile(vmdk)
+
+            ovf = os.path.join(outdir, "vmdk", "image.ovf")
+            assert os.path.isfile(ovf)
+
+            # verify the manifest
+            mf = os.path.join(outdir, "vmdk", "image.mf")
+            assert os.path.isfile(mf)
+
+            with open(mf, "r", encoding="utf-8") as f:
+                ovf_line = f.readline().split(" ")
+                assert ovf_line[0] == f"SHA256({os.path.basename(ovf)})="
+                assert ovf_line[1].rstrip() == checksum.hexdigest_file(ovf, "sha256")
+                vmdk_line = f.readline().split(" ")
+                assert vmdk_line[0] == f"SHA256({os.path.basename(vmdk)})="
+                assert vmdk_line[1].rstrip() == checksum.hexdigest_file(vmdk, "sha256")
+
+            ovf_tree = xml.etree.ElementTree.parse(ovf)
+            ovf_tree_root = ovf_tree.getroot()
+
+            ovf_tree_file = ovf_tree_root[0][0]
+            assert ovf_tree_file.attrib["{http://schemas.dmtf.org/ovf/envelope/1}href"] == "image.vmdk"
+            assert ovf_tree_file.attrib["{http://schemas.dmtf.org/ovf/envelope/1}size"] == str(os.stat(vmdk).st_size)
+
+            ovf_tree_disk = ovf_tree_root[1][1]
+            res = subprocess.run(["qemu-img", "info", "--output=json", vmdk], check=True, stdout=subprocess.PIPE)
+            capacity = ovf_tree_disk.attrib["{http://schemas.dmtf.org/ovf/envelope/1}capacity"]
+            assert capacity == str(json.loads(res.stdout)["virtual-size"])
+            pop_size = ovf_tree_disk.attrib["{http://schemas.dmtf.org/ovf/envelope/1}populatedSize"]
+            assert pop_size == str(os.stat(vmdk).st_size)

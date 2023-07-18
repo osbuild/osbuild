@@ -13,7 +13,9 @@ jobs:
         - "test.mod"
         - "test.run.test_assemblers"
         - "test.run.test_boot"
+        - "test.run.test_devices"
         - "test.run.test_executable"
+        - "test.run.test_mount"
         - "test.run.test_noop"
         - "test.run.test_sources"
         - "test.run.test_stages"
@@ -21,17 +23,13 @@ jobs:
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v3
-      with:
-           fetch-depth: 2  # codecov requires this (https://github.com/codecov/codecov-action/issues/190)
     - name: "Run Tests"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202209070757
+        image: ghcr.io/osbuild/osbuild-ci:latest-202304110753
         run: |
           python3 -m pytest \
             --pyargs "${{ matrix.test }}" \
             --rootdir=. \
             --cov-report=xml --cov=osbuild \
             -v
-    - name: Send coverage to codecov.io
-      run: bash <(curl -s https://codecov.io/bash)

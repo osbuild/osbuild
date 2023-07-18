@@ -1,0 +1,71 @@
+#!/usr/bin/python3
+"""
+Compress a file
+
+Buildhost commands used: `zstd`.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+SCHEMA_2 = r"""
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["file"],
+  "properties": {
+    "file": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": false,
+  "required": ["filename"],
+  "properties": {
+    "filename": {
+      "description": "Filename to use for the compressed file",
+      "type": "string"
+    }
+  }
+}
+"""
+
+
+def parse_input(inputs):
+    image = inputs["file"]
+    files = image["data"]["files"]
+    assert len(files) == 1
+
+    filename, _ = files.popitem()
+    filepath = os.path.join(image["path"], filename)
+    return filepath
+
+
+def main(inputs, output, options):
+    filename = options["filename"].lstrip("/")
+
+    source = parse_input(inputs)
+    target = os.path.join(output, filename)
+
+    with open(target, "w", encoding="utf8") as f:
+
+        cmd = [
+            "zstd", "--keep", "--stdout", "-T0", "-1", source
+        ]
+
+        subprocess.run(
+            cmd, stdout=f, check=True
+        )
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"], args["options"])
+    sys.exit(r)

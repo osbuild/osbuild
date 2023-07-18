@@ -129,6 +129,8 @@ class FileSystemMountService(MountService):
         opts = []
         if options.get("readonly"):
             opts.append("ro")
+        if options.get("norecovery"):
+            opts.append("norecovery")
         if "uid" in options:
             opts.append(f"uid={options['uid']}")
         if "gid" in options:

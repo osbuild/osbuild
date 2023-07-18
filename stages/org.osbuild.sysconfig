@@ -153,6 +153,35 @@ SCHEMA = r"""
         }
       }
     }
+  },
+  "livesys": {
+    "additionalProperties": false,
+    "type": "object",
+    "required": ["session"],
+    "properties": {
+      "session": {
+        "type": "string",
+        "description": "Livesys session to use"
+      }
+    }
+  },
+  "desktop": {
+    "additionalProperties": false,
+    "type": "object",
+    "anyOf": [
+      {"required": ["preferred"]},
+      {"required": ["displaymanager"]}
+    ],
+    "properties": {
+      "preferred": {
+        "type": "string",
+        "description": "Preferred desktop to use."
+      },
+      "displaymanager": {
+        "type": "string",
+        "description": "Displaymanager to use."
+      }
+    }
   }
 }
 """
@@ -161,6 +190,32 @@ SCHEMA = r"""
 # sysconfig uses yes and no instead of true and false
 def bool_to_string(value):
     return "yes" if value else "no"
+
+
+def configure_livesys(tree, livesys_options):
+    if not livesys_options:
+        return
+
+    with open(f"{tree}/etc/sysconfig/livesys", "w", encoding="utf8") as livesys_file:
+        livesys_file.write("livesys_session=\"{livesys_options['session']}\"\n")
+
+        os.fchown(livesys_file.fileno(), 0, 0)
+        os.fchmod(livesys_file.fileno(), 0o644)
+
+
+def configure_desktop(tree, desktop_options):
+    if not desktop_options:
+        return
+
+    with open(f"{tree}/etc/sysconfig/desktop", "w", encoding="utf8") as desktop_file:
+        if "preferred" in desktop_options:
+            desktop_file.write("PREFERRED={desktop_options['preferred']}\n")
+
+        if "displaymanager" in desktop_options:
+            desktop_file.write("DISPLAYMANAGER={desktop_options['displaymanager']}\n")
+
+        os.fchown(desktop_file.fileno(), 0, 0)
+        os.fchmod(desktop_file.fileno(), 0o644)
 
 
 def configure_kernel(tree, kernel_options):
@@ -240,10 +295,14 @@ def main(tree, options):
     kernel_options = options.get("kernel", {})
     network_options = options.get("network", {})
     network_scripts_options = options.get("network-scripts", {})
+    livesys_options = options.get("livesys", {})
+    desktop_options = options.get("desktop", {})
 
     configure_kernel(tree, kernel_options)
     configure_network(tree, network_options)
     configure_network_scripts(tree, network_scripts_options)
+    configure_livesys(tree, livesys_options)
+    configure_desktop(tree, desktop_options)
 
     return 0
 

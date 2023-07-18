@@ -149,12 +149,22 @@ class PartitionTable:
             fields = []
             for field in ["start", "size", "type", "name", "uuid", "attrs"]:
                 value = getattr(partition, field)
-                if value:
-                    if field == "attrs":
-                        # make a list into a comma-separated string
-                        attr_list = [str(element) for element in value]
-                        value = ",".join(attr_list)
-                    fields += [f'{field}="{value}"']
+                if not value:
+                    continue
+                if field == "attrs":
+                    resv = {
+                        0: "RequiredPartition",
+                        1: "NoBlockIOProtocol",
+                        2: "LegacyBIOSBootable"
+                    }
+                    attrs = []
+                    for bit in value:
+                        if bit in resv:
+                            attrs.append(resv[bit])
+                        elif 48 <= bit <= 63:
+                            attrs.append(str(bit))
+                    value = ",".join(attrs)
+                fields += [f'{field}="{value}"']
             if partition.bootable:
                 fields += ["bootable"]
             command += "\n" + ", ".join(fields)

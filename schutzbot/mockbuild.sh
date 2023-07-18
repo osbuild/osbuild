@@ -32,15 +32,36 @@ function template_override {
     echo '"""' | sudo tee -a /etc/mock/templates/"$TEMPLATE"
 }
 
+# Retry dnf install up to 5 times with exponential backoff time
+function dnf_install_with_retry {
+    local n=1
+    local attempts=5
+    local timeout=1
+    while true; do
+        if sudo dnf install -y "$@"; then
+            break
+        elif [ $n -lt $attempts ]; then
+            ((n++))
+            # exponentially increase the timeout
+            timeout=$((n ** 2))
+            echo "Retrying dnf install in $timeout seconds..."
+            sleep "$timeout"
+        else
+            echo "dnf install failed after $n attempts: aborting" >&2
+            return 1
+        fi
+    done
+}
+
 # Get OS and architecture details.
 source tools/set-env-variables.sh
 
 # Register RHEL if we are provided with a registration script and intend to do that.
 REGISTER="${REGISTER:-'false'}"
-if [[ $REGISTER == "true" && -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
+if [[ $REGISTER == "true" && -n "${V2_RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
+    sudo chmod +x "$V2_RHN_REGISTRATION_SCRIPT"
+    sudo "$V2_RHN_REGISTRATION_SCRIPT"
 fi
 
 # Mock configuration file to use for building RPMs.
@@ -90,12 +111,12 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID%.*}.noarch.rpm
-    sudo rpm -Uvh /tmp/epel.rpm
+    dnf_install_with_retry /tmp/epel.rpm
 fi
 
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
-sudo dnf -y install createrepo_c make mock python3-pip rpm-build s3cmd
+dnf_install_with_retry createrepo_c make mock python3-pip rpm-build s3cmd
 
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"

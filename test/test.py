@@ -15,6 +15,8 @@ import osbuild.meta
 from osbuild.objectstore import ObjectStore
 from osbuild.util import linux
 
+from .conftest import unsupported_filesystems
+
 
 class TestBase(unittest.TestCase):
     """Base Class for Tests
@@ -262,6 +264,18 @@ class TestBase(unittest.TestCase):
         checkout = TestBase.locate_test_checkout()
         output = subprocess.check_output([os.path.join(checkout, "tools/tree-diff"), path1, path2])
         return json.loads(output)
+
+    @staticmethod
+    def has_filesystem_support(fs: str) -> bool:
+        """Check File-System Support
+
+        Check whether the current test-run has support for the given file-system.
+        The assumption is that any file-system is treated as supported, unless
+        explicitly marked as unsupported when executing pytest. This allows us
+        to skip tests for file-systems that are not supported on specific
+        platforms.
+        """
+        return fs not in unsupported_filesystems
 
 
 class OSBuild(contextlib.AbstractContextManager):

@@ -245,6 +245,7 @@ Example:
           "type": "21686148-6449-6E6F-744E-656564454649",
           "bootable": true,
           "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+          "attrs": [ 60 ]
         },
         ...
     }
@@ -315,13 +316,14 @@ import sys
 import tempfile
 import urllib.parse
 import urllib.request
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import dnf
 import hawkey
 import rpm
 import yaml
 
+from osbuild.util import containers
 from osbuild.util.rhsm import Subscriptions
 
 # We need to resolve an image name to a resolved image manifest digest
@@ -359,7 +361,7 @@ class ImageManifest:
             src = f"docker://{imagename}"
 
         res = subprocess.run(["skopeo", "inspect", "--raw", src],
-                             capture_output=True,
+                             stdout=subprocess.PIPE,
                              check=True)
         m = ImageManifest(res.stdout)
         m.name = imagename
@@ -407,13 +409,7 @@ class ImageManifest:
         self.digest = "sha256:" + hashlib.sha256(raw).hexdigest()
 
     def is_manifest_list(self):
-        #  Check if mediaType is set according to docker or oci specifications
-        if self.media_type in ("application/vnd.docker.distribution.manifest.list.v2+json", "application/vnd.oci.image.index.v1+json"):
-            return True
-        # According to the OCI spec, setting mediaType is not mandatory. So, if it is not set at all, check for the existance of manifests
-        if self.media_type == "" and self.json.get("manifests") is not None:
-            return True
-        return False
+        return containers.is_manifest_list(self.json)
 
     def _match_platform(self, wanted_arch, wanted_os, wanted_variant):
         for m in self.json.get("manifests", []):
@@ -776,7 +772,8 @@ class Partition:
                  size: int = None,
                  bootable: bool = False,
                  name: str = None,
-                 uuid: str = None):
+                 uuid: str = None,
+                 attrs: List[int] = None):
         self.id = uid
         self.type = pttype
         self.start = start
@@ -784,6 +781,7 @@ class Partition:
         self.bootable = bootable
         self.name = name
         self.uuid = uuid
+        self.attrs = attrs
         self.index = None
 
     @property
@@ -802,7 +800,8 @@ class Partition:
                 size=js.get("size"),
                 bootable=js.get("bootable"),
                 name=js.get("name"),
-                uuid=js.get("uuid"))
+                uuid=js.get("uuid"),
+                attrs=js.get("attrs"))
         return p
 
     def to_dict(self):
@@ -820,6 +819,8 @@ class Partition:
             data["name"] = self.name
         if self.uuid:
             data["uuid"] = self.uuid
+        if self.attrs:
+            data["attrs"] = list(self.attrs)
 
         return data
 
@@ -845,10 +846,24 @@ class PartitionTable:
         command = f"label: {self.label}\nlabel-id: {self.uuid}"
         for partition in self.partitions:
             fields = []
-            for field in ["start", "size", "type", "name", "uuid"]:
+            for field in ["start", "size", "type", "name", "uuid", "attrs"]:
                 value = getattr(partition, field)
-                if value:
-                    fields += [f'{field}="{value}"']
+                if not value:
+                    continue
+                if field == "attrs":
+                    resv = {
+                        0: "RequiredPartition",
+                        1: "NoBlockIOProtocol",
+                        2: "LegacyBIOSBootable"
+                    }
+                    attrs = []
+                    for bit in value:
+                        if bit in resv:
+                            attrs.append(resv[bit])
+                        elif 48 <= bit <= 63:
+                            attrs.append(str(bit))
+                    value = ",".join(attrs)
+                fields += [f'{field}="{value}"']
             if partition.bootable:
                 fields += ["bootable"]
             command += "\n" + ", ".join(fields)
@@ -1500,12 +1515,14 @@ class ManifestFileV2(ManifestFile):
             return
 
         refs = element_enter(inputs_images, "references", {})
+        manifest_lists = []
 
         for image in element_enter(mpp, "images", []):
             source = image["source"]
             name = image.get("name", source)
             digest = image.get("digest", None)
             tag = image.get("tag", None)
+            index = image.get("index", False)
 
             main_manifest = ImageManifest.load(source, tag=tag, digest=digest)
 
@@ -1533,6 +1550,23 @@ class ManifestFileV2(ManifestFile):
             refs[image_id] = {
                 "name": name
             }
+
+            if index:
+                manifest_lists.append(main_manifest.digest)
+                container_index_source = element_enter(self.sources, "org.osbuild.skopeo-index", {})
+                index_items = element_enter(container_index_source, "items", {})
+                index_items[main_manifest.digest] = {
+                    "image": {
+                        "name": source
+                    }
+                }
+
+        # if we collected manifest lists, create the manifest-lists input array for the stage
+        if manifest_lists:
+            inputs_manifests = element_enter(inputs, "manifest-lists", {})
+            inputs_manifests["type"] = "org.osbuild.files"
+            inputs_manifests["origin"] = "org.osbuild.source"
+            inputs_manifests["references"] = manifest_lists
 
 
 def main():

@@ -91,6 +91,7 @@ class TestObjectStore(test.TestBase):
             self.assertEqual(v, js[p])
 
     @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
+    @unittest.skipUnless(test.TestBase.have_rpm_ostree(), "rpm-ostree missing")
     def test_show_commit(self):
         repo_path = os.path.join(self.locate_test_data(), "sources/org.osbuild.ostree/data/repo")
         ostree.show(repo_path, "d6243b0d0ca3dc2aaef2e0eb3e9f1f4836512c2921007f124b285f7c466464d8")

@@ -18,7 +18,6 @@ LVM2 sources[1], specifically:
 [1] https://github.com/lvmteam/lvm2 (commit 8801a86)
 """
 
-import abc
 import binascii
 import io
 import json
@@ -27,7 +26,7 @@ import re
 import struct
 import sys
 from collections import OrderedDict
-from typing import BinaryIO, Dict, List, Union
+from typing import BinaryIO, ClassVar, Dict, List, Union
 
 PathLike = Union[str, bytes, os.PathLike]
 
@@ -114,11 +113,8 @@ class CStruct:
 class Header:
     """Abstract base class for all headers"""
 
-    @property
-    @classmethod
-    @abc.abstractmethod
-    def struct(cls) -> Union[struct.Struct, CStruct]:
-        """Definition of the underlying struct data"""
+    struct: ClassVar[Union[struct.Struct, CStruct]]
+    """Definition of the underlying struct data"""
 
     def __init__(self, data):
         self.data = data

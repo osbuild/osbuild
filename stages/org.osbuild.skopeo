@@ -7,6 +7,7 @@ input (reading from a skopeo source or a file in a pipeline).
 Buildhost commands used: `skopeo`.
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -22,6 +23,11 @@ SCHEMA_2 = r"""
   "properties": {
     "images": {
       "type": "object",
+      "additionalProperties": true
+    },
+    "manifest-lists": {
+      "type": "object",
+      "description": "Optional manifest lists to merge into images. The metadata must specify an image ID to merge to.",
       "additionalProperties": true
     }
   }
@@ -53,20 +59,91 @@ SCHEMA_2 = r"""
 """
 
 
+def parse_manifest_list(manifests):
+    """Return a map with single-image manifest digests as keys and the manifest-list digest as the value for each"""
+    manifest_files = manifests["data"]["files"]
+    manifest_map = {}
+    for fname in manifest_files:
+        filepath = os.path.join(manifests["path"], fname)
+        with open(filepath, mode="r", encoding="utf-8") as mfile:
+            data = json.load(mfile)
+
+        for manifest in data["manifests"]:
+            digest = manifest["digest"]  # single image manifest digest
+            manifest_map[digest] = fname
+
+    return manifest_map
+
+
+def manifest_digest(path):
+    """Get the manifest digest for a container at path, stored in dir: format"""
+    return subprocess.check_output(["skopeo", "manifest-digest", os.path.join(path, "manifest.json")]).decode().strip()
+
+
 def parse_input(inputs):
+    manifests = inputs.get("manifest-lists")
+    manifest_map = {}
+    manifest_files = {}
+    if manifests:
+        manifest_files = manifests["data"]["files"]
+        # reverse map manifest-digest -> manifest-list path
+        manifest_map = parse_manifest_list(manifests)
+
     images = inputs["images"]
     archives = images["data"]["archives"]
 
-    res = []
-    for filename, data in archives.items():
-        filepath = os.path.join(images["path"], filename)
+    res = {}
+    for checksum, data in archives.items():
+        filepath = os.path.join(images["path"], checksum)
+        list_path = None
+        if data["format"] == "dir":
+            digest = manifest_digest(filepath)
 
-        res.append((filepath, data))
+            # get the manifest list path for this image
+            list_digest = manifest_map.get(digest)
+            if list_digest:
+                # make sure all manifest files are used
+                del manifest_files[list_digest]
+                list_path = os.path.join(manifests["path"], list_digest)
+
+        res[checksum] = {
+            "filepath": filepath,
+            "manifest-list": list_path,
+            "data": data,
+        }
+
+    if manifest_files:
+        raise RuntimeError(
+            "The following manifest lists specified in the input did not match any of the container images: " +
+            ", ".join(manifest_files)
+        )
+
     return res
 
 
+def merge_manifest(list_manifest, destination):
+    """
+    Merge the list manifest into the image directory. This preserves the manifest list with the image in the registry so
+    that users can run or inspect a container using the original manifest list digest used to pull the container.
+
+    See https://github.com/containers/skopeo/issues/1935
+    """
+    # calculate the checksum of the manifest of the container image in the destination
+    dest_manifest = os.path.join(destination, "manifest.json")
+    manifest_checksum = subprocess.check_output(["skopeo", "manifest-digest", dest_manifest]).decode().strip()
+    parts = manifest_checksum.split(":")
+    assert len(parts) == 2, f"unexpected output for skopeo manifest-digest: {manifest_checksum}"
+    manifest_checksum = parts[1]
+
+    # rename the manifest to its checksum
+    os.rename(dest_manifest, os.path.join(destination, manifest_checksum + ".manifest.json"))
+
+    # copy the index manifest into the destination
+    subprocess.run(["cp", "--reflink=auto", "-a", list_manifest, dest_manifest], check=True)
+
+
 def main(inputs, output, options):
-    files = parse_input(inputs)
+    images = parse_input(inputs)
 
     destination = options["destination"]
     # The destination type is always containers-storage atm, so ignore "type"
@@ -74,28 +151,31 @@ def main(inputs, output, options):
     storage_root = destination.get("storage-path", "/var/lib/containers/storage")
     storage_driver = destination.get("storage-driver", "overlay")
 
-    for source, source_data in files:
+    for image in images.values():
+        source = image["filepath"]
+        source_data = image["data"]
         container_format = source_data["format"]
         image_name = source_data["name"]
 
-        # We can't have special characters like ":" in the source names because containers/image
-        # treats them special, like e.g. /some/path:tag, so we make a symlink to the real name
-        # and pass the symlink name to skopeo to make it work with anything
         with tempfile.TemporaryDirectory() as tmpdir:
-            linkname = os.path.join(tmpdir, "image.tar")
-            os.symlink(source, linkname)
+            tmp_source = os.path.join(tmpdir, "image")
 
-            if container_format == "docker-archive":
-                source = f"docker-archive:{linkname}"
-            elif container_format == "oci-archive":
-                source = f"oci-archive:{linkname}"
+            if container_format == "dir" and image["manifest-list"]:
+                # copy the source container to the tmp source so we can merge the manifest into it
+                subprocess.run(["cp", "-a", "--reflink=auto", source, tmp_source], check=True)
+                merge_manifest(image["manifest-list"], tmp_source)
             else:
+                # We can't have special characters like ":" in the source names because containers/image
+                # treats them special, like e.g. /some/path:tag, so we make a symlink to the real name
+                # and pass the symlink name to skopeo to make it work with anything
+                os.symlink(source, tmp_source)
+
+            if container_format not in ("dir", "oci-archive"):
                 raise RuntimeError(f"Unknown container format {container_format}")
 
+            source = f"{container_format}:{tmp_source}"
             dest = f"containers-storage:[{storage_driver}@{output}{storage_root}+/run/containers/storage]{image_name}"
-
-            subprocess.run(["skopeo", "copy", source, dest],
-                           check=True)
+            subprocess.run(["skopeo", "copy", source, dest], check=True)
 
     if storage_driver == "overlay":
         # Each time the overlay backend runs on an xfs fs it creates this file:

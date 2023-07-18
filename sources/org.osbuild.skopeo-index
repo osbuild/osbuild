@@ -1,0 +1,117 @@
+#!/usr/bin/python3
+"""Fetch container manifest list from a registry using skopeo
+
+The manifest is stored as a single file indexed by its content hash.
+
+Buildhost commands used: `skopeo`.
+"""
+
+import errno
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+from osbuild import sources
+from osbuild.util import containers, ctx
+
+SCHEMA = """
+"additionalProperties": false,
+"definitions": {
+  "item": {
+    "description": "The manifest list to fetch",
+    "type": "object",
+    "additionalProperties": false,
+    "patternProperties": {
+      "sha256:[0-9a-f]{64}": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["image"],
+        "properties": {
+          "image": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the image (including registry)."
+              },
+              "tls-verify": {
+                "type": "boolean",
+                "description": "Require https (default true)."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+},
+"properties": {
+  "items": {"$ref": "#/definitions/item"},
+  "digests": {"$ref": "#/definitions/item"}
+},
+"oneOf": [{
+  "required": ["items"]
+}, {
+  "required": ["digests"]
+}]
+"""
+
+
+class SkopeoIndexSource(sources.SourceService):
+
+    content_type = "org.osbuild.files"
+
+    def fetch_one(self, checksum, desc):
+        digest = checksum
+        image = desc["image"]
+        imagename = image["name"]
+        tls_verify = image.get("tls-verify", True)
+
+        with tempfile.TemporaryDirectory(prefix="tmp-download-", dir=self.cache) as tmpdir:
+            archive_dir = os.path.join(tmpdir, "index")
+            os.makedirs(archive_dir)
+            os.chmod(archive_dir, 0o755)
+
+            source = f"docker://{imagename}@{digest}"
+
+            destination = f"dir:{archive_dir}"
+
+            extra_args = []
+            if not tls_verify:
+                extra_args.append("--src-tls-verify=false")
+
+            subprocess.run(["skopeo", "copy", "--multi-arch=index-only", *extra_args, source, destination],
+                           encoding="utf-8", check=True)
+
+            # Verify that the digest supplied downloaded a manifest-list.
+            res = subprocess.check_output(["skopeo", "inspect", "--raw", destination])
+            if not containers.is_manifest_list(json.loads(res)):
+                raise RuntimeError(
+                    f"{imagename}@{digest} is not a manifest-list")
+
+            # use skopeo to calculate the checksum instead of our verify utility to make sure it's computed properly for
+            # all types of manifests and handles any potential future changes to the way it's calculated
+            manifest_path = os.path.join(archive_dir, "manifest.json")
+            dl_checksum = subprocess.check_output(["skopeo", "manifest-digest", manifest_path]).decode().strip()
+            if dl_checksum != checksum:
+                raise RuntimeError(
+                    f"Downloaded manifest-list {imagename}@{digest} has a checksum of {dl_checksum}, "
+                    f"but expected {checksum}"
+                )
+
+            # Move manifest into place on successful download
+            with ctx.suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
+                os.rename(f"{archive_dir}/manifest.json", f"{self.cache}/{digest}")
+
+
+def main():
+    service = SkopeoIndexSource.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()

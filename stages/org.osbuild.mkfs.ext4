@@ -37,6 +37,10 @@ SCHEMA_2 = r"""
       "description": "Label for the file system",
       "type": "string",
       "maxLength": 16
+    },
+    "verity": {
+      "description": "Enable fs-verity support",
+      "type": "boolean"
     }
   }
 }
@@ -48,10 +52,17 @@ def main(devices, options):
 
     uuid = options["uuid"]
     label = options.get("label")
+    verity = options.get("verity")
     opts = []
 
     if label:
         opts = ["-L", label]
+
+    if verity is not None:
+        if verity:
+            opts += ["-O", "verity"]
+        else:
+            opts += ["-O", "^verity"]
 
     subprocess.run(["mkfs.ext4", "-U", uuid] + opts + [device],
                    encoding='utf8', check=True)

@@ -21,6 +21,7 @@ import os
 import sys
 
 from osbuild import inputs
+from osbuild.util.mnt import MountGuard
 
 SCHEMA = r"""
 "definitions": {
@@ -159,15 +160,22 @@ SCHEMA = r"""
 
 class ContainersInput(inputs.InputService):
 
-    @staticmethod
-    def map_source_ref(source, ref, _data, target):
-        cache_dir = os.path.join(source, ref)
-        os.link(os.path.join(cache_dir, "container-image.tar"), os.path.join(target, ref))
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mg = MountGuard()
 
-        return ref, "docker-archive"
+    def map_source_ref(self, source, ref, target):
+        source_archive = os.path.join(source, ref, "image")
+        dest = os.path.join(target, ref)
+
+        # bind mount the input directory to the destination
+        os.makedirs(dest)
+        self.mg.mount(source_archive, dest)
+
+        return ref, "dir"
 
     @staticmethod
-    def map_pipeline_ref(store, ref, _data, target):
+    def map_pipeline_ref(store, ref, target):
         # prepare the mount point
         os.makedirs(target, exist_ok=True)
         print("target", target)
@@ -188,9 +196,9 @@ class ContainersInput(inputs.InputService):
 
         for ref, data in refs.items():
             if origin == "org.osbuild.source":
-                ref, container_format = self.map_source_ref(source, ref, data, target)
+                ref, container_format = self.map_source_ref(source, ref, target)
             else:
-                ref, container_format = self.map_pipeline_ref(store, ref, data, target)
+                ref, container_format = self.map_pipeline_ref(store, ref, target)
 
             images[ref] = {
                 "format": container_format,
@@ -205,6 +213,9 @@ class ContainersInput(inputs.InputService):
             }
         }
         return reply
+
+    def unmap(self):
+        self.mg.umount()
 
 
 def main():

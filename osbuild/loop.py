@@ -52,6 +52,15 @@ class LoopInfo(ctypes.Structure):
                 self.lo_inode == info.st_ino)
 
 
+class LoopConfig(ctypes.Structure):
+    _fields_ = [
+        ('fd', ctypes.c_uint32),
+        ('block_size', ctypes.c_uint32),
+        ('info', LoopInfo),
+        ('__reserved', ctypes.c_uint64*8),
+    ]
+
+
 class Loop:
     """Loopback device
 
@@ -60,8 +69,8 @@ class Loop:
 
     Methods
     -------
-    set_fd(fd)
-        Bind a file descriptor to the loopback device
+    loop_configure(fd)
+        Bind a file descriptor to the loopback device and set properties of the loopback device
     clear_fd()
         Unbind the file descriptor from the loopback device
     change_fd(fd)
@@ -89,6 +98,7 @@ class Loop:
     LOOP_SET_CAPACITY = 0x4C07
     LOOP_SET_DIRECT_IO = 0x4C08
     LOOP_SET_BLOCK_SIZE = 0x4C09
+    LOOP_CONFIGURE = 0x4C0A
 
     def __init__(self, minor, dir_fd=None):
         """
@@ -182,18 +192,9 @@ class Loop:
         linux.ioctl_blockdev_flushbuf(self.fd)
 
     def set_fd(self, fd):
-        """Bind a file descriptor to the loopback device
-
-        The loopback device must be unbound. The backing file must be
-        either a regular file or a block device. If the backing file is
-        itself a loopback device, then a cycle must not be created. If
-        the backing file is opened read-only, then the resulting
-        loopback device will be read-only too.
-
-        Parameters
-        ----------
-        fd : int
-            the file descriptor to bind
+        """
+        Deprecated, use configure instead.
+        TODO delete this after image-info gets updated.
         """
 
         fcntl.ioctl(self.fd, self.LOOP_SET_FD, fd)
@@ -315,6 +316,24 @@ class Loop:
         # it is bound, check if it is bound by `fd`
         return loop_info.is_bound_to(file_info)
 
+    def _config_info(self, info, offset, sizelimit, autoclear, partscan):
+        #  pylint: disable=attribute-defined-outside-init
+        if offset:
+            info.lo_offset = offset
+        if sizelimit:
+            info.lo_sizelimit = sizelimit
+        if autoclear is not None:
+            if autoclear:
+                info.lo_flags |= self.LO_FLAGS_AUTOCLEAR
+            else:
+                info.lo_flags &= ~self.LO_FLAGS_AUTOCLEAR
+        if partscan is not None:
+            if partscan:
+                info.lo_flags |= self.LO_FLAGS_PARTSCAN
+            else:
+                info.lo_flags &= ~self.LO_FLAGS_PARTSCAN
+        return info
+
     def set_status(self, offset=None, sizelimit=None, autoclear=None, partscan=None):
         """Set properties of the loopback device
 
@@ -329,7 +348,7 @@ class Loop:
 
         Setting sizelimit means the size of the loopback device is taken
         to be the max of the size of the backing file and the limit. A
-        limit of 0 is taken to mean unlimited.
+        limit of 0 means unlimited.
 
         Enabling autoclear has the same effect as calling clear_fd().
 
@@ -353,23 +372,72 @@ class Loop:
             unchanged (default is None)
         """
 
-        #  pylint: disable=attribute-defined-outside-init
-        info = self.get_status()
-        if offset:
-            info.lo_offset = offset
-        if sizelimit:
-            info.lo_sizelimit = sizelimit
-        if autoclear is not None:
-            if autoclear:
-                info.lo_flags |= self.LO_FLAGS_AUTOCLEAR
-            else:
-                info.lo_flags &= ~self.LO_FLAGS_AUTOCLEAR
-        if partscan is not None:
-            if partscan:
-                info.lo_flags |= self.LO_FLAGS_PARTSCAN
-            else:
-                info.lo_flags &= ~self.LO_FLAGS_PARTSCAN
+        info = self._config_info(self.get_status(), offset, sizelimit, autoclear, partscan)
         fcntl.ioctl(self.fd, self.LOOP_SET_STATUS64, info)
+
+    def configure(self, fd: int, offset=None, sizelimit=None, autoclear=None, partscan=None):
+        """
+        Configure the loopback device
+        Bind and configure in a single operation a file descriptor to the
+        loopback device.
+        Only supported for kenel >= 5.8
+        Will fall back to set_fd/set_status otherwise.
+
+        The loopback device must be unbound. The backing file must be
+        either a regular file or a block device. If the backing file is
+        itself a loopback device, then a cycle must not be created. If
+        the backing file is opened read-only, then the resulting
+        loopback device will be read-only too.
+
+        The properties will be cleared once the device is unbound, but preserved
+        by changing the backing file descriptor.
+
+        Note that this operation is not atomic: All the current properties
+        are read out, the ones specified in this function call are modified,
+        and then they are written back. For this reason, concurrent
+        modification of the properties must be avoided.
+
+        Setting sizelimit means the size of the loopback device is taken
+        to be the max of the size of the backing file and the limit. A
+        limit of 0 means unlimited.
+
+        Enabling autoclear has the same effect as calling clear_fd().
+
+        When partscan is first enabled, the partition table of the
+        device is scanned, and new blockdevices potentially added for
+        the partitions.
+
+        Parameters
+        ----------
+        fd : int
+            the file descriptor to bind
+        offset : int, optional
+            The offset in bytes from the start of the backing file, or
+            None to leave unchanged (default is None)
+        sizelimit : int, optional
+            The max size in bytes to make the loopback device, or None
+            to leave unchanged (default is None)
+        autoclear : bool, optional
+            Whether or not to enable autoclear, or None to leave unchanged
+            (default is None)
+        partscan : bool, optional
+            Whether or not to enable partition scanning, or None to leave
+            unchanged (default is None)
+        """
+        #  pylint: disable=attribute-defined-outside-init
+        config = LoopConfig()
+        config.fd = fd
+        # Previous implementation was not configuring the block size.
+        # Keep same behavior here by setting the value to 0.
+        config.block_size = 0
+        config.info = self._config_info(LoopInfo(), offset, sizelimit, autoclear, partscan)
+        try:
+            fcntl.ioctl(self.fd, self.LOOP_CONFIGURE, config)
+        except OSError as e:
+            if e.errno != errno.EINVAL:
+                raise
+            fcntl.ioctl(self.fd, self.LOOP_SET_FD, config.fd)
+            fcntl.ioctl(self.fd, self.LOOP_SET_STATUS64, config.info)
 
     def get_status(self) -> LoopInfo:
         """Get properties of the loopback device
@@ -598,21 +666,18 @@ class LoopControl:
                     continue
 
             try:
-                lo.set_fd(fd)
-            except OSError as e:
-                lo.close()
-                if e.errno == errno.EBUSY:
-                    continue
-                raise e
-
-            # `set_status` returns EBUSY when the pages from the
-            # previously bound file have not been fully cleared yet.
-            try:
-                lo.set_status(**kwargs)
+                lo.configure(fd, **kwargs)
             except BlockingIOError:
                 lo.clear_fd()
                 lo.close()
                 continue
+            except OSError as e:
+                lo.close()
+                # `loop_configure` returns EBUSY when the pages from the
+                # previously bound file have not been fully cleared yet.
+                if e.errno == errno.EBUSY:
+                    continue
+                raise e
             break
 
         return lo

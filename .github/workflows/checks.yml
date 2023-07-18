@@ -42,7 +42,7 @@ jobs:
     - name: "Regenerate Test Data"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202209070757
+        image: ghcr.io/osbuild/osbuild-ci:latest-202304110753
         run: |
           make test-data
           git diff --exit-code -- ./test/data
@@ -56,21 +56,3 @@ jobs:
         with:
           ignore_words_list: msdos, pullrequest
           skip: ./.git,coverity,rpmbuild,samples
-
-  source:
-    name: "Source code checks"
-    runs-on: ubuntu-latest
-    steps:
-    - name: "Clone Repository"
-      uses: actions/checkout@v3
-    - name: "Run Tests"
-      uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
-      with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202209070757
-        run: |
-          git config --global --add safe.directory /osb/workdir
-          python3 -m pytest \
-            test/src/test_pylint.py \
-            -k autopep8 \
-            --rootdir=. \
-            -v

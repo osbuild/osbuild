@@ -1,7 +1,7 @@
 %global         forgeurl https://github.com/osbuild/osbuild
 %global         selinuxtype targeted
 
-Version:        78
+Version:        90
 
 %forgemeta
 
@@ -33,6 +33,7 @@ Requires:       glibc
 Requires:       policycoreutils
 Requires:       qemu-img
 Requires:       systemd
+Requires:       skopeo
 Requires:       tar
 Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
@@ -120,7 +121,7 @@ Contains additional tools and utilities for development of
 manifests and osbuild.
 
 %prep
-%forgesetup
+%forgeautosetup -p1
 
 %build
 %py3_build

@@ -7,6 +7,7 @@ stages:
 .terraform:
   before_script:
     - schutzbot/ci_details.sh > ci-details-before-run
+    - cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
   after_script:
     - schutzbot/ci_details.sh > ci-details-after-run
     - schutzbot/update_github_status.sh update
@@ -34,29 +35,25 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
+          - aws/fedora-38-x86_64
+          - aws/fedora-38-aarch64
+          - aws/fedora-39-x86_64
+          - aws/fedora-39-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-8.6-ga-aarch64
-          - aws/rhel-9.0-ga-x86_64
-          - aws/rhel-9.0-ga-aarch64
+          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.7-ga-aarch64
+          - aws/rhel-9.1-ga-x86_64
+          - aws/rhel-9.1-ga-aarch64
       - RUNNER:
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-8.7-nightly-aarch64
-          - aws/rhel-8.8-nightly-x86_64
-          - aws/rhel-8.8-nightly-aarch64
-          - aws/rhel-9.1-nightly-x86_64
-          - aws/rhel-9.1-nightly-aarch64
-          - aws/rhel-9.2-nightly-x86_64
-          - aws/rhel-9.2-nightly-aarch64
+          - aws/rhel-8.9-nightly-x86_64
+          - aws/rhel-8.9-nightly-aarch64
+          - aws/rhel-9.3-nightly-x86_64
+          - aws/rhel-9.3-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
 OSTree Images:
@@ -68,11 +65,11 @@ OSTree Images:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-36-x86_64
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-9.1-nightly-x86_64
+          - aws/fedora-37-x86_64
+          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-9.1-ga-x86_64
+          - aws/rhel-8.9-nightly-x86_64
+          - aws/rhel-9.3-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
 SonarQube:
@@ -90,27 +87,31 @@ Manifests:
   extends: .terraform
   script:
     - schutzbot/deploy.sh
-    - schutzbot/manifest_tests.sh
+    - schutzbot/manifest_tests.sh ${PARALLEL_EXEC}
   artifacts:
     when: always
     paths:
       - manifest-db/generated-image-infos/
   parallel:
     matrix:
-      - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
+      - PARALLEL_EXEC: ["1/4", "2/4", "3/4", "4/4"]
+        RUNNER:
+          - aws/fedora-37-x86_64
+          - aws/fedora-37-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
-      - RUNNER:
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-8.6-ga-aarch64
-          - aws/rhel-9.0-ga-x86_64
-          - aws/rhel-9.0-ga-aarch64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-8.7-nightly-aarch64
+          - aws/centos-stream-9-x86_64
+          - aws/centos-stream-9-aarch64
+      - PARALLEL_EXEC: ["1/4", "2/4", "3/4", "4/4"]
+        RUNNER:
+          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.7-ga-aarch64
+          - aws/rhel-8.9-nightly-x86_64
+          - aws/rhel-8.9-nightly-aarch64
+          - aws/rhel-9.1-ga-x86_64
+          - aws/rhel-9.1-ga-aarch64
+          - aws/rhel-9.3-nightly-x86_64
+          - aws/rhel-9.3-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
 finish:
