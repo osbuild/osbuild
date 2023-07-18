@@ -194,6 +194,7 @@ def pretty_print(
 @man.command(name="diff")
 def pretty_diff(
     manifest_paths: list[str],
+    simple: bool = typer.Option(False, help="Use `diff` instead of `vimdiff`"),
     ignore_stage: list[str] = typer.Option([]),
     resolve_sources: bool = typer.Option(
         True, help="Resolve content hashes of sources to their names."
@@ -225,7 +226,7 @@ def pretty_diff(
 
             paths.append(path)
 
-        subprocess.run(["vimdiff"] + paths, check=True)
+        subprocess.run((["diff", "-u"] if simple else ["vimdiff"]) + paths)
 
     return 0
 
