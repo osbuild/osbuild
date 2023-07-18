@@ -148,12 +148,16 @@ class Manifest:
                 data = json.load(f)
         except FileNotFoundError:
             con.print(f"[bold][red]Could not open file {path!r}[/red][/bold]")
-            return 1
+            raise SystemExit(1)
 
         # We deal with this possibly being a 'wrapped' manifest, one produced
         # by `osbuild-composer`.
         if "manifest" in data:
             data = data["manifest"]
+
+        if data.get("version") != "2":
+            con.print(f"[bold][red]Could not parse file {path!r}, wrong manifest version.[/red][/bold]")
+            raise SystemExit(1)
 
         return cls(os.path.basename(path), data)
 
