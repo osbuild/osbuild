@@ -15,6 +15,7 @@ setuptools.setup(
         ]
     },
     scripts=[
-        "tools/osbuild-mpp"
+        "tools/osbuild-mpp",
+        "tools/osbuild-dev"
     ],
 )
