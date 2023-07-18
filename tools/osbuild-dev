@@ -4,20 +4,22 @@ mostly centered around manifest reading."""
 
 # pylint: disable=unsupported-membership-test,unsupported-delete-operation
 # pylint: disable=unsubscriptable-object
+# pylint: disable=raise-missing-from
+# pylint: disable=subprocess-run-check
 
 import json
 import os
 import secrets
 import subprocess
 import tempfile
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 
 try:
     import attrs
     import rich
     import typer
     from rich.tree import Tree
-except ImportError as import_error:
+except ImportError:
     print(
         "You are missing dependencies, please install `python3-attrs`, `python3-rich`, `python3-typer` or their `pip` equivalents."
     )
@@ -35,6 +37,26 @@ con = rich.console.Console()
 @cli.callback()
 def main() -> int:
     return 0
+
+
+def detect_and_parse_inputs(inputs) -> Iterator[str]:
+    """There are three valid formats for inputs to exist in, see:
+    https://github.com/osbuild/osbuild/pull/1003. This function detects which
+    one is in use and yields its hashes."""
+    if isinstance(inputs, dict):
+        yield from inputs.keys()
+    elif isinstance(inputs, list):
+        if isinstance(inputs[0], str):
+            yield from inputs
+        elif isinstance(inputs[0], dict):
+            for value in inputs:
+                yield value["id"]
+        else:
+            con.print("[bold][red]Could not understand inputs format[/red][/bold]")
+            raise SystemExit(1)
+    else:
+        con.print("[bold][red]Could not understand inputs format[/red][/bold]")
+        raise SystemExit(1)
 
 
 def json_as_terminal_tree(tree: Optional[Tree], data: Any, name: str) -> Tree:
@@ -93,20 +115,19 @@ class Manifest:
 
         # We can't handle all source types but some we can
         if "org.osbuild.curl" in self.data["sources"]:
-            for name, source in self.data["sources"]["org.osbuild.curl"][
+            for hasj, url in self.data["sources"]["org.osbuild.curl"][
                 "items"
             ].items():
-                sources[name] = source["url"]
+                sources[hasj] = url
 
         for pipeline in self.data["pipelines"]:
             for stage in pipeline["stages"]:
                 if stage["type"] == "org.osbuild.rpm":
-                    for index, reference in enumerate(
-                        stage["inputs"]["packages"]["references"]
-                    ):
-                        stage["inputs"]["packages"]["references"][
-                            index
-                        ] = sources[reference["id"]].split("/")[-1]
+                    stage["inputs"]["packages"]["references"] = {
+                        reference: sources[reference].split("/")[-1]
+                        for reference in
+                        detect_and_parse_inputs(stage["inputs"]["packages"]["references"])
+                    }
 
     def print_for_terminal(self, path: Optional[str] = None) -> None:
         if path is None:
