@@ -120,6 +120,9 @@ class CurlSource(sources.SourceService):
         secrets = desc.get("secrets")
         insecure = desc.get("insecure")
         url = self._quote_url(desc.get("url"))
+
+        print("downloading", url)
+
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
         with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
