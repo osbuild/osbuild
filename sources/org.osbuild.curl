@@ -157,6 +157,7 @@ class CurlSource(sources.SourceService):
                 return_code = curl.returncode
                 if return_code == 0:
                     break
+                print("retrying", url)
             else:
                 raise RuntimeError(f"curl: error downloading {url}: error code {return_code}")
 
