@@ -116,6 +116,13 @@ Summary:        Extra tools and utilities
 Requires:       %{name} = %{version}-%{release}
 Requires:       python3-pyyaml
 
+# These are required for `osbuild-dev`, only packaged for Fedora
+%if 0%{?fedora}
+Requires:       python3-rich
+Requires:       python3-attrs
+Requires:       python3-typer
+%endif
+
 %description    tools
 Contains additional tools and utilities for development of
 manifests and osbuild.
@@ -180,6 +187,9 @@ install -D -p -m 0644 selinux/osbuild.if %{buildroot}%{_datadir}/selinux/devel/i
 # Udev rules
 mkdir -p %{buildroot}%{_udevrulesdir}
 install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
+
+# Remove `osbuild-dev` on non-fedora systems
+%{!?fedora:rm %{buildroot}%{_bindir}/osbuild-dev}
 
 %check
 exit 0
@@ -249,6 +259,7 @@ fi
 
 %files tools
 %{_bindir}/osbuild-mpp
+%{?fedora:%{_bindir}/osbuild-dev}
 
 
 %changelog
