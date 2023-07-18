@@ -533,7 +533,8 @@ def test_stale_discard(tmpdir):
             n_stage += 1
             os.mkdir(os.path.join(cache, cache._dirname_stage, "uuid-live-4"))
             f = es.enter_context(
-                open(os.path.join(cache, cache._dirname_stage, "uuid-live-4", cache._filename_object_lock), "x+", encoding="utf8")
+                open(os.path.join(cache, cache._dirname_stage, "uuid-live-4",
+                     cache._filename_object_lock), "x+", encoding="utf8")
             )
             linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
 
@@ -607,7 +608,8 @@ def test_stale_discard(tmpdir):
             n_objects += 1
             os.mkdir(os.path.join(cache, cache._dirname_objects, "live-4"))
             f = es.enter_context(
-                open(os.path.join(cache, cache._dirname_objects, "live-4", cache._filename_object_lock), "x+", encoding="utf8")
+                open(os.path.join(cache, cache._dirname_objects, "live-4",
+                     cache._filename_object_lock), "x+", encoding="utf8")
             )
             linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
 
@@ -615,7 +617,8 @@ def test_stale_discard(tmpdir):
             n_objects += 1
             os.mkdir(os.path.join(cache, cache._dirname_objects, "uuid-live-4"))
             f = es.enter_context(
-                open(os.path.join(cache, cache._dirname_objects, "uuid-live-4", cache._filename_object_lock), "x+", encoding="utf8")
+                open(os.path.join(cache, cache._dirname_objects, "uuid-live-4",
+                     cache._filename_object_lock), "x+", encoding="utf8")
             )
             linux.fcntl_flock(f.fileno(), linux.fcntl.F_RDLCK)
 
