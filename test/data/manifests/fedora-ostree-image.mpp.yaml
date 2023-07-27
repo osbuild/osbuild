@@ -1,563 +1,354 @@
-{
-  "mpp-vars": {
-    "arch": "x86_64",
-    "release": 36,
-    "releasever": "f$release",
-    "snapshot": "20220617",
-    "updates": "20220801"
-  },
-  "version": "2",
-  "mpp-define-image": {
-    "id": "image",
-    "size": "10737418240",
-    "table": {
-      "uuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-      "label": "gpt",
-      "partitions": [
-        {
-          "id": "bios-boot",
-          "size": 2048,
-          "type": "21686148-6449-6E6F-744E-656564454649",
-          "bootable": true,
-          "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
-        },
-        {
-          "id": "efi",
-          "size": 204800,
-          "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
-          "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
-        },
-        {
-          "id": "boot",
-          "size": 204800,
-          "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-          "uuid": "61B2905B-DF3E-4FB3-80FA-49D1E773AA32"
-        },
-        {
-          "id": "luks",
-          "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-          "uuid": "CA7D7CCB-63ED-4C53-861C-1742536059CC"
-        }
-      ]
-    }
-  },
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "fedora-build-v2.mpp.yaml",
-        "id": "build"
-      },
-      "runner": {
-        "mpp-format-string": "org.osbuild.fedora{release}"
-      }
-    },
-    {
-      "mpp-import-pipelines": {
-        "path": "fedora-ostree-commit.mpp.yaml",
-        "ids": [
-          "ostree-tree",
-          "ostree-commit"
-        ]
-      }
-    },
-    {
-      "name": "image-tree",
-      "build": "name:build",
-      "source-epoch": 1659397331,
-      "stages": [
-        {
-          "type": "org.osbuild.ostree.init-fs"
-        },
-        {
-          "type": "org.osbuild.ostree.pull",
-          "options": {
-            "repo": "/ostree/repo",
-            "remote": "osbuild"
-          },
-          "inputs": {
-            "commits": {
-              "type": "org.osbuild.ostree",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:ostree-commit": {
-                  "ref": "fedora/x86_64/osbuild"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.ostree.os-init",
-          "options": {
-            "osname": "fedora"
-          }
-        },
-        {
-          "type": "org.osbuild.ostree.config",
-          "options": {
-            "repo": "/ostree/repo",
-            "config": {
-              "sysroot": {
-                "readonly": true,
-                "bootloader": "none"
-              }
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.mkdir",
-          "options": {
-            "paths": [
-              {
-                "path": "/boot/efi",
-                "mode": 448
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.ostree.deploy",
-          "options": {
-            "osname": "fedora",
-            "ref": "fedora/x86_64/osbuild",
-            "remote": "osbuild",
-            "mounts": [
-              "/boot",
-              "/boot/efi"
-            ],
-            "rootfs": {
-              "label": "root"
-            },
-            "kernel_opts": [
-              "rw",
-              "console=tty0",
-              "console=ttyS0",
-              "systemd.log_target=console",
-              "systemd.journald.forward_to_console=1",
-              "luks.uuid=aedd1eef-f24e-425e-a9f3-bb5a1c996a95"
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.ostree.fillvar",
-          "options": {
-            "deployment": {
-              "osname": "fedora",
-              "ref": "fedora/x86_64/osbuild"
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.fstab",
-          "mounts": [
-            {
-              "type": "org.osbuild.ostree.deployment",
-              "name": "ostree.deployment",
-              "options": {
-                "deployment": {
-                  "osname": "fedora",
-                  "ref": "fedora/x86_64/osbuild"
-                }
-              }
-            }
-          ],
-          "options": {
-            "filesystems": [
-              {
-                "label": "boot",
-                "vfs_type": "ext4",
-                "path": "/boot",
-                "freq": 1,
-                "passno": 1
-              },
-              {
-                "label": "root",
-                "vfs_type": "xfs",
-                "path": "/",
-                "freq": 1,
-                "passno": 1
-              },
-              {
-                "label": "ESP",
-                "vfs_type": "vfat",
-                "path": "/boot/efi",
-                "options": "umask=0077,shortname=winnt",
-                "freq": 0,
-                "passno": 2
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.ostree.selinux",
-          "options": {
-            "deployment": {
-              "osname": "fedora",
-              "ref": "fedora/x86_64/osbuild"
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.grub2",
-          "options": {
-            "rootfs": {
-              "label": "root"
-            },
-            "bootfs": {
-              "label": "boot"
-            },
-            "uefi": {
-              "vendor": "fedora",
-              "install": true
-            },
-            "legacy": "i386-pc",
-            "write_defaults": false,
-            "greenboot": true
-          }
-        }
-      ]
-    },
-    {
-      "name": "image",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.truncate",
-          "options": {
-            "filename": "disk.img",
-            "size": {
-              "mpp-format-string": "{image.size}"
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.sfdisk",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img"
-              }
-            }
-          },
-          "options": {
-            "mpp-format-json": "{image.layout}"
-          }
-        },
-        {
-          "type": "org.osbuild.mkfs.fat",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['efi'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['efi'].size}"
-                },
-                "lock": true
-              }
-            }
-          },
-          "options": {
-            "label": "ESP",
-            "volid": "7B7795E7"
-          }
-        },
-        {
-          "type": "org.osbuild.mkfs.ext4",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['boot'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['boot'].size}"
-                },
-                "lock": true
-              }
-            }
-          },
-          "options": {
-            "uuid": "156f0420-627b-4151-ae6f-fda298097515",
-            "label": "boot"
-          }
-        },
-        {
-          "type": "org.osbuild.luks2.format",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['luks'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['luks'].size}"
-                },
-                "lock": true
-              }
-            }
-          },
-          "options": {
-            "passphrase": "osbuild",
-            "uuid": "aedd1eef-f24e-425e-a9f3-bb5a1c996a95",
-            "label": "luks",
-            "pbkdf": {
-              "method": "argon2i",
-              "memory": 32,
-              "parallelism": 1,
-              "iterations": 4
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.lvm2.create",
-          "devices": {
-            "luks": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['luks'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['luks'].size}"
-                }
-              }
-            },
-            "device": {
-              "type": "org.osbuild.luks2",
-              "parent": "luks",
-              "options": {
-                "passphrase": "osbuild"
-              }
-            }
-          },
-          "options": {
-            "volumes": [
-              {
-                "name": "root",
-                "extents": "100%FREE"
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.mkfs.xfs",
-          "devices": {
-            "luks": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['luks'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['luks'].size}"
-                }
-              }
-            },
-            "lvm": {
-              "type": "org.osbuild.luks2",
-              "parent": "luks",
-              "options": {
-                "passphrase": "osbuild"
-              }
-            },
-            "device": {
-              "type": "org.osbuild.lvm2.lv",
-              "parent": "lvm",
-              "options": {
-                "volume": "root"
-              }
-            }
-          },
-          "options": {
-            "uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-            "label": "root"
-          }
-        },
-        {
-          "type": "org.osbuild.copy",
-          "inputs": {
-            "tree": {
-              "type": "org.osbuild.tree",
-              "origin": "org.osbuild.pipeline",
-              "references": [
-                "name:image-tree"
-              ]
-            }
-          },
-          "options": {
-            "paths": [
-              {
-                "from": "input://tree/",
-                "to": "mount://root/"
-              }
-            ]
-          },
-          "devices": {
-            "efi": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['efi'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['efi'].size}"
-                }
-              }
-            },
-            "boot": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['boot'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['boot'].size}"
-                }
-              }
-            },
-            "luks": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['luks'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['luks'].size}"
-                }
-              }
-            },
-            "lvm": {
-              "type": "org.osbuild.luks2",
-              "parent": "luks",
-              "options": {
-                "passphrase": "osbuild"
-              }
-            },
-            "root": {
-              "type": "org.osbuild.lvm2.lv",
-              "parent": "lvm",
-              "options": {
-                "volume": "root"
-              }
-            }
-          },
-          "mounts": [
-            {
-              "name": "root",
-              "type": "org.osbuild.xfs",
-              "source": "root",
-              "target": "/"
-            },
-            {
-              "name": "boot",
-              "type": "org.osbuild.ext4",
-              "source": "boot",
-              "target": "/boot"
-            },
-            {
-              "name": "efi",
-              "type": "org.osbuild.fat",
-              "source": "efi",
-              "target": "/boot/efi"
-            }
-          ]
-        },
-        {
-          "type": "org.osbuild.grub2.inst",
-          "options": {
-            "platform": "i386-pc",
-            "filename": "disk.img",
-            "location": {
-              "mpp-format-int": "{image.layout['bios-boot'].start}"
-            },
-            "core": {
-              "type": "mkimage",
-              "partlabel": "gpt",
-              "filesystem": "ext4"
-            },
-            "prefix": {
-              "type": "partition",
-              "partlabel": {
-                "mpp-format-string": "{image.layout.label}"
-              },
-              "number": {
-                "mpp-format-int": "{image.layout['boot'].index}"
-              },
-              "path": "/grub2"
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.lvm2.metadata",
-          "devices": {
-            "luks": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['luks'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['luks'].size}"
-                }
-              }
-            },
-            "device": {
-              "type": "org.osbuild.luks2",
-              "parent": "luks",
-              "options": {
-                "passphrase": "osbuild"
-              }
-            }
-          },
-          "options": {
-            "vg_name": "osbuild",
-            "creation_host": "osbuild",
-            "description": "Built with osbuild"
-          }
-        }
-      ]
-    },
-    {
-      "name": "qcow2",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "disk.img"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "disk.qcow2",
-            "format": {
-              "type": "qcow2",
-              "compat": "1.1"
-            }
-          }
-        }
-      ]
-    }
-  ]
-}
+mpp-vars:
+  arch: x86_64
+  release: 36
+  releasever: f$release
+  snapshot: '20220617'
+  updates: '20220801'
+version: '2'
+mpp-define-image:
+  id: image
+  size: '10737418240'
+  table:
+    uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+    label: gpt
+    partitions:
+      - id: bios-boot
+        size: 2048
+        type: 21686148-6449-6E6F-744E-656564454649
+        bootable: true
+        uuid: FAC7F1FB-3E8D-4137-A512-961DE09A5549
+      - id: efi
+        size: 204800
+        type: C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+        uuid: 68B2905B-DF3E-4FB3-80FA-49D1E773AA33
+      - id: boot
+        size: 204800
+        type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+        uuid: 61B2905B-DF3E-4FB3-80FA-49D1E773AA32
+      - id: luks
+        type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+        uuid: CA7D7CCB-63ED-4C53-861C-1742536059CC
+pipelines:
+  - mpp-import-pipeline:
+      path: fedora-build-v2.mpp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - mpp-import-pipelines:
+      path: fedora-ostree-commit.mpp.yaml
+      ids:
+        - ostree-tree
+        - ostree-commit
+  - name: image-tree
+    build: name:build
+    source-epoch: 1659397331
+    stages:
+      - type: org.osbuild.ostree.init-fs
+      - type: org.osbuild.ostree.pull
+        options:
+          repo: /ostree/repo
+          remote: osbuild
+        inputs:
+          commits:
+            type: org.osbuild.ostree
+            origin: org.osbuild.pipeline
+            references:
+              name:ostree-commit:
+                ref: fedora/x86_64/osbuild
+      - type: org.osbuild.ostree.os-init
+        options:
+          osname: fedora
+      - type: org.osbuild.ostree.config
+        options:
+          repo: /ostree/repo
+          config:
+            sysroot:
+              readonly: true
+              bootloader: none
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: /boot/efi
+              mode: 448
+      - type: org.osbuild.ostree.deploy
+        options:
+          osname: fedora
+          ref: fedora/x86_64/osbuild
+          remote: osbuild
+          mounts:
+            - /boot
+            - /boot/efi
+          rootfs:
+            label: root
+          kernel_opts:
+            - rw
+            - console=tty0
+            - console=ttyS0
+            - systemd.log_target=console
+            - systemd.journald.forward_to_console=1
+            - luks.uuid=aedd1eef-f24e-425e-a9f3-bb5a1c996a95
+      - type: org.osbuild.ostree.fillvar
+        options:
+          deployment:
+            osname: fedora
+            ref: fedora/x86_64/osbuild
+      - type: org.osbuild.fstab
+        mounts:
+          - type: org.osbuild.ostree.deployment
+            name: ostree.deployment
+            options:
+              deployment:
+                osname: fedora
+                ref: fedora/x86_64/osbuild
+        options:
+          filesystems:
+            - label: boot
+              vfs_type: ext4
+              path: /boot
+              freq: 1
+              passno: 1
+            - label: root
+              vfs_type: xfs
+              path: /
+              freq: 1
+              passno: 1
+            - label: ESP
+              vfs_type: vfat
+              path: /boot/efi
+              options: umask=0077,shortname=winnt
+              freq: 0
+              passno: 2
+      - type: org.osbuild.ostree.selinux
+        options:
+          deployment:
+            osname: fedora
+            ref: fedora/x86_64/osbuild
+      - type: org.osbuild.grub2
+        options:
+          rootfs:
+            label: root
+          bootfs:
+            label: boot
+          uefi:
+            vendor: fedora
+            install: true
+          legacy: i386-pc
+          write_defaults: false
+          greenboot: true
+  - name: image
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size:
+            mpp-format-string: '{image.size}'
+      - type: org.osbuild.sfdisk
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+        options:
+          mpp-format-json: '{image.layout}'
+      - type: org.osbuild.mkfs.fat
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''efi''].start}'
+              size:
+                mpp-format-int: '{image.layout[''efi''].size}'
+              lock: true
+        options:
+          label: ESP
+          volid: 7B7795E7
+      - type: org.osbuild.mkfs.ext4
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+              lock: true
+        options:
+          uuid: 156f0420-627b-4151-ae6f-fda298097515
+          label: boot
+      - type: org.osbuild.luks2.format
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''luks''].start}'
+              size:
+                mpp-format-int: '{image.layout[''luks''].size}'
+              lock: true
+        options:
+          passphrase: osbuild
+          uuid: aedd1eef-f24e-425e-a9f3-bb5a1c996a95
+          label: luks
+          pbkdf:
+            method: argon2i
+            memory: 32
+            parallelism: 1
+            iterations: 4
+      - type: org.osbuild.lvm2.create
+        devices:
+          luks:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''luks''].start}'
+              size:
+                mpp-format-int: '{image.layout[''luks''].size}'
+          device:
+            type: org.osbuild.luks2
+            parent: luks
+            options:
+              passphrase: osbuild
+        options:
+          volumes:
+            - name: root
+              extents: 100%FREE
+      - type: org.osbuild.mkfs.xfs
+        devices:
+          luks:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''luks''].start}'
+              size:
+                mpp-format-int: '{image.layout[''luks''].size}'
+          lvm:
+            type: org.osbuild.luks2
+            parent: luks
+            options:
+              passphrase: osbuild
+          device:
+            type: org.osbuild.lvm2.lv
+            parent: lvm
+            options:
+              volume: root
+        options:
+          uuid: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
+          label: root
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:image-tree
+        options:
+          paths:
+            - from: input://tree/
+              to: mount://root/
+        devices:
+          efi:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''efi''].start}'
+              size:
+                mpp-format-int: '{image.layout[''efi''].size}'
+          boot:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+          luks:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''luks''].start}'
+              size:
+                mpp-format-int: '{image.layout[''luks''].size}'
+          lvm:
+            type: org.osbuild.luks2
+            parent: luks
+            options:
+              passphrase: osbuild
+          root:
+            type: org.osbuild.lvm2.lv
+            parent: lvm
+            options:
+              volume: root
+        mounts:
+          - name: root
+            type: org.osbuild.xfs
+            source: root
+            target: /
+          - name: boot
+            type: org.osbuild.ext4
+            source: boot
+            target: /boot
+          - name: efi
+            type: org.osbuild.fat
+            source: efi
+            target: /boot/efi
+      - type: org.osbuild.grub2.inst
+        options:
+          platform: i386-pc
+          filename: disk.img
+          location:
+            mpp-format-int: '{image.layout[''bios-boot''].start}'
+          core:
+            type: mkimage
+            partlabel: gpt
+            filesystem: ext4
+          prefix:
+            type: partition
+            partlabel:
+              mpp-format-string: '{image.layout.label}'
+            number:
+              mpp-format-int: '{image.layout[''boot''].index}'
+            path: /grub2
+      - type: org.osbuild.lvm2.metadata
+        devices:
+          luks:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''luks''].start}'
+              size:
+                mpp-format-int: '{image.layout[''luks''].size}'
+          device:
+            type: org.osbuild.luks2
+            parent: luks
+            options:
+              passphrase: osbuild
+        options:
+          vg_name: osbuild
+          creation_host: osbuild
+          description: Built with osbuild
+  - name: qcow2
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: disk.img
+        options:
+          filename: disk.qcow2
+          format:
+            type: qcow2
+            compat: '1.1'

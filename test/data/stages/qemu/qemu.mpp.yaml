@@ -1,236 +1,136 @@
-{
-  "version": "2",
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build-v2.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    {
-      "name": "image",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.truncate",
-          "options": {
-            "filename": "image.raw",
-            "size": "104857600"
-          }
-        }
-      ]
-    },
-    {
-      "name": "image.qcow2",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "image.raw"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "image.qcow2",
-            "format": {
-              "type": "qcow2"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "image-v1.1.qcow2",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "image.raw"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "image-v1.1.qcow2",
-            "format": {
-              "type": "qcow2",
-              "compat": "1.1"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "image.vdi",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "image.raw"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "image.vdi",
-            "format": {
-              "type": "vdi"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "image.vmdk",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "image.raw"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "image.vmdk",
-            "format": {
-              "type": "vmdk"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "image-stream.vmdk",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "image.raw"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "image-stream.vmdk",
-            "format": {
-              "type": "vmdk",
-              "subformat": "streamOptimized"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "image.vpc",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "image.raw"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "image.vpc",
-            "format": {
-              "type": "vpc"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "image-no-force-size.vpc",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "image.raw"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "image-no-force-size.vpc",
-            "format": {
-              "type": "vpc",
-              "force_size": false
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "image.vhdx",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "image.raw"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "image.vhdx",
-            "format": {
-              "type": "vhdx"
-            }
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+pipelines:
+  - mpp-import-pipeline:
+      path: ../manifests/f34-build-v2.json
+      id: build
+    runner: org.osbuild.fedora34
+  - name: image
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: image.raw
+          size: '104857600'
+  - name: image.qcow2
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: image.raw
+        options:
+          filename: image.qcow2
+          format:
+            type: qcow2
+  - name: image-v1.1.qcow2
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: image.raw
+        options:
+          filename: image-v1.1.qcow2
+          format:
+            type: qcow2
+            compat: '1.1'
+  - name: image.vdi
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: image.raw
+        options:
+          filename: image.vdi
+          format:
+            type: vdi
+  - name: image.vmdk
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: image.raw
+        options:
+          filename: image.vmdk
+          format:
+            type: vmdk
+  - name: image-stream.vmdk
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: image.raw
+        options:
+          filename: image-stream.vmdk
+          format:
+            type: vmdk
+            subformat: streamOptimized
+  - name: image.vpc
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: image.raw
+        options:
+          filename: image.vpc
+          format:
+            type: vpc
+  - name: image-no-force-size.vpc
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: image.raw
+        options:
+          filename: image-no-force-size.vpc
+          format:
+            type: vpc
+            force_size: false
+  - name: image.vhdx
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: image.raw
+        options:
+          filename: image.vhdx
+          format:
+            type: vhdx
