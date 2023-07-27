@@ -10,7 +10,7 @@
   "pipelines": [
     {
       "mpp-import-pipeline": {
-        "path": "centos-stream-build.mpp.json",
+        "path": "centos-stream-build.mpp.yaml",
         "id": "build"
       },
       "runner": {

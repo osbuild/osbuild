@@ -32,9 +32,9 @@ do not allow comments, this file shortly describes their purpose.
    this manifest's tree is constructed just from the filesystem package and is
    marked using the selinux stage.
 
-   Manifests ending on `.mpp.json` are fed through the ManifestPreProcessors
+   Manifests ending on `.mpp.yaml` are fed through the ManifestPreProcessors
    and then stored in the same directory with an `.json` extension (replacing
-   `.mpp.json`). generated files are committed to the repository. Nevertheless,
+   `.mpp.yaml`). generated files are committed to the repository. Nevertheless,
    if you need to regenerate them, use `make test-data`.
 
  * `./sources/`:

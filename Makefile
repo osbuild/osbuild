@@ -203,13 +203,13 @@ coverity-clean-all: coverity-clean
 # for linters and other tests on the source code.
 #
 
-TEST_MANIFESTS_MPP = $(filter-out $(SRCDIR)/test/data/manifests/fedora-build.mpp.json, \
-             $(wildcard $(SRCDIR)/test/data/manifests/*.mpp.json)) \
-		     $(wildcard $(SRCDIR)/test/data/stages/*/*.mpp.json)
-TEST_MANIFESTS_GEN = $(TEST_MANIFESTS_MPP:%.mpp.json=%.json)
+TEST_MANIFESTS_MPP = $(filter-out $(SRCDIR)/test/data/manifests/fedora-build.mpp.yaml, \
+             $(wildcard $(SRCDIR)/test/data/manifests/*.mpp.yaml)) \
+		     $(wildcard $(SRCDIR)/test/data/stages/*/*.mpp.yaml)
+TEST_MANIFESTS_GEN = $(TEST_MANIFESTS_MPP:%.mpp.yaml=%.json)
 
 .PHONY: $(TEST_MANIFESTS_GEN)
-$(TEST_MANIFESTS_GEN): %.json: %.mpp.json
+$(TEST_MANIFESTS_GEN): %.json: %.mpp.yaml
 	$(SRCDIR)/tools/osbuild-mpp -I "$(SRCDIR)/test/data/manifests" "$<" "$@"
 
 $(SRCDIR)/test/data/manifests/f34-base.json: $(SRCDIR)/test/data/manifests/f34-build.json
