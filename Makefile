@@ -215,8 +215,6 @@ $(TEST_MANIFESTS_GEN): %.json: %.mpp.yaml
 $(SRCDIR)/test/data/manifests/f34-base.json: $(SRCDIR)/test/data/manifests/f34-build.json
 $(SRCDIR)/test/data/manifests/fedora-boot.json: $(SRCDIR)/test/data/manifests/f34-build.json
 $(SRCDIR)/test/data/manifests/filesystem.json: $(SRCDIR)/test/data/manifests/f34-build.json
-$(SRCDIR)/test/data/manifests/fedora-container.json: $(SRCDIR)/test/data/manifests/f34-build-v2.json
-$(SRCDIR)/test/data/manifests/fedora-ostree-container.json: $(SRCDIR)/test/data/manifests/f34-build-v2.json
 
 .PHONY: test-data
 test-data: $(TEST_MANIFESTS_GEN)
