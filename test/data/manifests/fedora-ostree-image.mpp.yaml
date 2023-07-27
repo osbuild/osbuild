@@ -1,9 +1,3 @@
-mpp-vars:
-  arch: x86_64
-  release: 36
-  releasever: f$release
-  snapshot: '20220617'
-  updates: '20220801'
 version: '2'
 mpp-define-image:
   id: image
@@ -29,6 +23,8 @@ mpp-define-image:
         type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
         uuid: CA7D7CCB-63ED-4C53-861C-1742536059CC
 pipelines:
+  - mpp-import-pipelines:
+      path: fedora-vars.ipp.yaml
   - mpp-import-pipeline:
       path: fedora-build-v2.ipp.yaml
       id: build
