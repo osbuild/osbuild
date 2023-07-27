@@ -1,24 +1,96 @@
 {
+  "added_directories": [
+    "/var/lib/authselect/backups"
+  ],
   "added_files": [
     "/boot/grub2/grubenv",
     "/dev/null",
+    "/dev/shm",
+    "/etc/authselect/custom/hardening",
+    "/etc/authselect/custom/hardening/README",
+    "/etc/authselect/custom/hardening/REQUIREMENTS",
+    "/etc/authselect/custom/hardening/dconf-db",
+    "/etc/authselect/custom/hardening/dconf-locks",
+    "/etc/authselect/custom/hardening/fingerprint-auth",
+    "/etc/authselect/custom/hardening/nsswitch.conf",
+    "/etc/authselect/custom/hardening/password-auth",
+    "/etc/authselect/custom/hardening/postlogin",
+    "/etc/authselect/custom/hardening/smartcard-auth",
+    "/etc/authselect/custom/hardening/system-auth",
     "/etc/chrony.conf",
+    "/etc/default/grub",
     "/etc/dnf/automatic.conf",
     "/etc/dracut.conf.d/40-fips.conf",
+    "/etc/fstab",
+    "/etc/kernel/cmdline",
     "/etc/modprobe.d/atm.conf",
     "/etc/modprobe.d/can.conf",
     "/etc/modprobe.d/firewire-core.conf",
     "/etc/modprobe.d/tipc.conf",
+    "/etc/profile.d/tmout.sh",
     "/etc/rsyslog.conf",
     "/etc/rsyslog.d",
     "/etc/rsyslog.d/cron.conf",
     "/etc/selinux/config",
-    "/etc/system-fips",
     "/var/tmp/eval_remediate_report.html",
     "/var/tmp/eval_remediate_results.xml"
   ],
   "deleted_files": [],
   "differences": {
+    "/etc/authselect/authselect.conf": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/dconf-db": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/dconf-locks": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/fingerprint-auth": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/nsswitch.conf": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/password-auth": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/postlogin": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/smartcard-auth": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/system-auth": {
+      "content": [
+        null,
+        null
+      ]
+    },
     "/etc/crypto-policies/back-ends/bind.config": {
       "symlink": [
         "/usr/share/crypto-policies/DEFAULT/bind.txt",
@@ -35,6 +107,12 @@
       "symlink": [
         "/usr/share/crypto-policies/DEFAULT/java.txt",
         "/usr/share/crypto-policies/FIPS/java.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/javasystem.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/javasystem.txt",
+        "/usr/share/crypto-policies/FIPS/javasystem.txt"
       ]
     },
     "/etc/crypto-policies/back-ends/krb5.config": {
@@ -85,6 +163,18 @@
         "/usr/share/crypto-policies/FIPS/opensslcnf.txt"
       ]
     },
+    "/etc/crypto-policies/back-ends/rpm-sequoia.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/rpm-sequoia.txt",
+        "/usr/share/crypto-policies/FIPS/rpm-sequoia.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/sequoia.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/sequoia.txt",
+        "/usr/share/crypto-policies/FIPS/sequoia.txt"
+      ]
+    },
     "/etc/crypto-policies/config": {
       "content": [
         "sha256:ecae097fb02a733ac98c03d7527fd923d5c9607c6a02feb5f0d388375f3e70dc",
@@ -93,8 +183,8 @@
     },
     "/etc/crypto-policies/state/CURRENT.pol": {
       "content": [
-        "sha256:37e69af9169312ad09662024b58da264b2eea5a602c058825b4f8d3616334e1d",
-        "sha256:ec5a6d3a15a4d1c4a424618267b95ed3602d903b438b9ad12ad27686ca51e3fb"
+        "sha256:34459f8b102d05d1df56885c4a103e68ae6353f88ef41386402edf97c56eb505",
+        "sha256:3433137c54925eb3618bc7a34e33dfbc2d8fedad947256b91aa7ba7ac49eea51"
       ]
     },
     "/etc/crypto-policies/state/current": {
@@ -103,52 +193,46 @@
         "sha256:858dd9c983a8e87bbb242952b737f33499c99ff5fd8b377b218da3836357c874"
       ]
     },
-    "/etc/pam.d/password-auth": {
+    "/etc/security/faillock.conf": {
       "content": [
-        "sha256:ca14e0b19bd9714133b7e5048fe2183c9447c7a433c873d1add2e8b2a45661d4",
-        "sha256:7b29643d80a4984fe8bca65447b2a4a062b4853ea7e0605c0dcf3e3aaaee9b80"
-      ]
-    },
-    "/etc/pam.d/system-auth": {
-      "content": [
-        "sha256:ca14e0b19bd9714133b7e5048fe2183c9447c7a433c873d1add2e8b2a45661d4",
-        "sha256:7b29643d80a4984fe8bca65447b2a4a062b4853ea7e0605c0dcf3e3aaaee9b80"
-      ]
-    },
-    "/etc/pki/tls/openssl.cnf": {
-      "content": [
-        "sha256:24b1b1d2c08d740c1c60097a6cfff0b0af26f05fd66275ab75c12d6adbf8b36c",
-        "sha256:ca0570541c440f7ff2bca6369ddc0d50ff439221b39965aa1e97b862eac7242d"
-      ]
-    },
-    "/etc/profile": {
-      "content": [
-        "sha256:ccf50451c280412efb0dc1361e1cea70fd4cec8a5883d5952bcd5a44fd9f6861",
-        "sha256:0494610ae6ce48cb9257b263262902bd7983895851426e239f9dd010d6e7bfdf"
+        "sha256:5c8c902912f0bb59f86b86517f2127ea0c57c5d05b17c4aa62f5bc06c7043c78",
+        "sha256:41bd2ba3b10f12377f3f766acb790f36a38e3ef24a05093d4bf2a15624d39ece"
       ]
     },
     "/etc/security/pwquality.conf": {
       "content": [
         "sha256:8c6951c20f2489549e8793711818cfb0318e26fe8ced35da930a70a3cac757c8",
-        "sha256:fce9d691653a3d76c22d2874572b236cd56440474eb7690b8f2597f7b9505065"
+        "sha256:2472eda92cb43fa38e231f104e979c2c080c4c67bccf5f9e6e7788f33bb05f82"
       ]
     },
     "/etc/sysctl.conf": {
       "content": [
         "sha256:51d16ee2e7eef12dd42e924af6b835861e8b79d11921ba0418d7d0aec7a2a93b",
-        "sha256:79b47e7941520260a5a6d351e763c19dc94758ad48a57503dcdd4bc5f6879de5"
+        "sha256:92aa2a3f72f18d68ed3f2bda68a2fc214689996c549fd6f56780fee0e7ea275a"
       ]
     },
     "/etc/systemd/coredump.conf": {
       "content": [
-        "sha256:6b5ec67856213a8b4643bac777c8db5acbee4c8466a954c4c9dda561532cb9f4",
-        "sha256:a70077aa8e912fa514b0a413aac229f15cdccfe71e911b7c45d90cbc14743ecc"
+        "sha256:72f8630b657da48549b2bd9ba5e855939e4afec3d4ee60574fc5757cfc767bd6",
+        "sha256:67206831694bca3b569ad27ca9b577101e45b9dc19fbfd68b1722949c862ba9d"
       ]
     },
     "/usr/lib/issue": {
       "content": [
         "sha256:9489d28fbd325690224dd76c0d7ae403177e15a0d63758cc0171327b5ba2aa85",
         "sha256:0a48f732f0a2ae7c1c1884c5a5db85eda09a6506489c137656707957f2b84686"
+      ]
+    },
+    "/usr/lib/sysctl.d/10-default-yama-scope.conf": {
+      "content": [
+        "sha256:2411b554d569a269581e12f946b5746e6eab4d0be621df030865cd7528ddca95",
+        "sha256:252f244f9ec7433c86bc21b1003de48a53bc3c35349a11789ed21a69ba0dec69"
+      ]
+    },
+    "/usr/lib/sysctl.d/50-coredump.conf": {
+      "content": [
+        "sha256:fa3e45fa358e07c53128adca1fc663e3c294a27795d7629db598c541d4ad806b",
+        "sha256:90368094e1eb7c6a3ac68e623706185531ad76edd8ebca80b394538f230910c0"
       ]
     }
   }

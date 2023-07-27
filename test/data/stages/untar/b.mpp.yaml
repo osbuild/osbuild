@@ -6,10 +6,13 @@ sources:
         encoding: base64
         data: H4sIAAAAAAAAA+3RQQrCMBCF4Vl7ipygnWlich5RqYVIoEb0+FpxIRQUQRHh/zZvMW/xYJp2t825tKcy5k1Tz1U+T69iCFNaWupj3kWxYOq7oMknUfMWTZx+YcvM8VBXo3PSD+t9edJ7df9Tt+8vfr0CAAAAAAAAAAAAAAAAAPCuCyJD8KoAKAAA
 pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
   - mpp-import-pipeline:
-      path: ../manifests/f34-build-v2.json
+      path: ../manifests/fedora-build-v2.ipp.yaml
       id: build
-    runner: org.osbuild.fedora34
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
   - name: tree
     build: name:build
     stages:

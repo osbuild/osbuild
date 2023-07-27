@@ -2,6 +2,54 @@
   "added_files": [],
   "deleted_files": [],
   "differences": {
+    "/etc/authselect/dconf-db": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/dconf-locks": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/fingerprint-auth": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/nsswitch.conf": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/password-auth": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/postlogin": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/smartcard-auth": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/authselect/system-auth": {
+      "content": [
+        null,
+        null
+      ]
+    },
     "/etc/cron.daily/osbuild": {
       "content": [
         "sha256:83295306cc9de4124f31502285f9b267176209c277266215bcae8c32b4e808dd",
@@ -14,13 +62,13 @@
         null
       ]
     },
-    "/var/cache/ldconfig/aux-cache": {
+    "/usr/lib/sysimage/rpm/rpmdb.sqlite": {
       "content": [
         null,
         null
       ]
     },
-    "/var/lib/rpm/rpmdb.sqlite": {
+    "/var/cache/ldconfig/aux-cache": {
       "content": [
         null,
         null

@@ -1,9 +1,12 @@
 version: '2'
 pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
   - mpp-import-pipeline:
-      path: ../manifests/f34-build-v2.json
+      path: ../manifests/fedora-build-v2.ipp.yaml
       id: build
-    runner: org.osbuild.fedora34
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
   - name: tree
     build: name:build
     stages:
