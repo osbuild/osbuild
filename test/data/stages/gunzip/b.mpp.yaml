@@ -1,66 +1,37 @@
-{
-  "version": "2",
-  "sources": {
-    "org.osbuild.inline": {
-      "items": {
-        "sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0": {
-          "encoding": "base64",
-          "data": "SGFsbG8gV2VsdAo="
-        }
-      }
-    }
-  },
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build-v2.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    {
-      "name": "tree-compressed",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.gzip",
-          "inputs": {
-            "file": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "references": {
-                "sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0": {}
-              }
-            }
-          },
-          "options": {
-            "filename": "compressed.gz"
-          }
-        }
-      ]
-    },
-    {
-      "name": "tree",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.gunzip",
-          "inputs": {
-            "file": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:tree-compressed": {
-                  "file": "/compressed.gz"
-                }
-              }
-            }
-          },
-          "options": {
-            "path": "uncompressed.txt"
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+sources:
+  org.osbuild.inline:
+    items:
+      sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0:
+        encoding: base64
+        data: SGFsbG8gV2VsdAo=
+pipelines:
+  - mpp-import-pipeline:
+      path: ../manifests/f34-build-v2.json
+      id: build
+    runner: org.osbuild.fedora34
+  - name: tree-compressed
+    build: name:build
+    stages:
+      - type: org.osbuild.gzip
+        inputs:
+          file:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0: {}
+        options:
+          filename: compressed.gz
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.gunzip
+        inputs:
+          file:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:tree-compressed:
+                file: /compressed.gz
+        options:
+          path: uncompressed.txt

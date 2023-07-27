@@ -1,45 +1,22 @@
-{
-  "version": "2",
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build-v2.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    {
-      "name": "tree",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.mkdir",
-          "options": {
-            "paths": [
-              {
-                "path": "a"
-              },
-              {
-                "path": "c/d",
-                "parents": true
-              },
-              {
-                "path": "a/b",
-                "mode": 448
-              },
-              {
-                "path": "b/c/d",
-                "parents": true
-              },
-              {
-                "path": "c",
-                "mode": 448,
-                "exist_ok": true
-              }
-            ]
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+pipelines:
+  - mpp-import-pipeline:
+      path: ../manifests/f34-build-v2.json
+      id: build
+    runner: org.osbuild.fedora34
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: a
+            - path: c/d
+              parents: true
+            - path: a/b
+              mode: 448
+            - path: b/c/d
+              parents: true
+            - path: c
+              mode: 448
+              exist_ok: true

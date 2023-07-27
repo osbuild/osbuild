@@ -1,473 +1,294 @@
-{
-  "version": "2",
-  "pipelines": [
-    {
-      "name": "build",
-      "runner": "org.osbuild.arch",
-      "stages": [
-        {
-          "type": "org.osbuild.pacman.conf"
-        },
-        {
-          "type": "org.osbuild.pacman",
-          "inputs": {
-            "packages": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "mpp-depsolve": {
-                "architecture": "x86_64",
-                "module-platform-id": "f34",
-                "solver": "alpm",
-                "repos": [
-                  {
-                    "id": "core",
-                    "baseurl": "https://archive.archlinux.org/repos/2022/04/14/$repo/os/$arch"
-                  },
-                  {
-                    "id": "community",
-                    "baseurl": "https://archive.archlinux.org/repos/2022/04/14/$repo/os/$arch"
-                  },
-                  {
-                    "id": "extra",
-                    "baseurl": "https://archive.archlinux.org/repos/2022/04/14/$repo/os/$arch"
-                  }
-                ],
-                "packages": [
-                  "pacman",
-                  "btrfs-progs",
-                  "dosfstools",
-                  "e2fsprogs",
-                  "qemu",
-                  "systemd",
-                  "tar",
-                  "xfsprogs",
-                  "xz",
-                  "python",
-                  "pyalpm",
-                  "grub",
-                  "mkinitcpio"
-                ]
-              }
-            }
-          },
-          "options": {}
-        }
-      ]
-    },
-    {
-      "name": "os",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.pacman.conf",
-          "options": {
-            "repositories": [
-              {
-                "name": "core",
-                "include": "/etc/pacman.d/mirrorlist"
-              },
-              {
-                "name": "extra",
-                "include": "/etc/pacman.d/mirrorlist"
-              },
-              {
-                "name": "community",
-                "include": "/etc/pacman.d/mirrorlist"
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.pacman.mirrorlist.conf",
-          "options": {
-            "mirrors": [
-              "https://europe.mirror.pkgbuild.com/$repo/os/$arch"
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.pacman",
-          "inputs": {
-            "packages": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "mpp-depsolve": {
-                "architecture": "x86_64",
-                "module-platform-id": "f34",
-                "solver": "alpm",
-                "repos": [
-                  {
-                    "id": "core",
-                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
-                  },
-                  {
-                    "id": "community",
-                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
-                  },
-                  {
-                    "id": "extra",
-                    "baseurl": "https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch"
-                  }
-                ],
-                "packages": [
-                  "base",
-                  "bash",
-                  "pacman",
-                  "btrfs-progs",
-                  "dosfstools",
-                  "e2fsprogs",
-                  "systemd",
-                  "linux",
-                  "mkinitcpio",
-                  "tar",
-                  "grub",
-                  "openssh",
-                  "sudo",
-                  "nfs-utils",
-                  "ntp",
-                  "virtualbox-guest-utils-nox",
-                  "polkit",
-                  "networkmanager",
-                  "rsync"
-                ]
-              }
-            }
-          },
-          "options": {}
-        },
-        {
-          "type": "org.osbuild.pacman-keyring"
-        },
-        {
-          "type": "org.osbuild.systemd",
-          "options": {
-            "enabled_services": [
-              "vboxservice.service",
-              "sshd.service",
-              "NetworkManager.service"
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.users",
-          "options": {
-            "users": {
-            "vagrant": {
-              "password": "$6$8dbFyte9oE3ugPHO$q0cTMv1oAgK/ZVXUTSUqj1aXzrhniNqfylqbcW.LgElYRJNRGSr4hBE7hghu2oP1nKn68u13/YmDkKH.s6yil0",
-              "home": "/home/vagrant",
-              "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"
-            }
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.fstab",
-          "options": {
-            "filesystems": [
-              {
-                "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-                "vfs_type": "xfs",
-                "path": "/",
-                "options": "defaults"
-              },
-              {
-                "uuid": "7B77-95E7",
-                "vfs_type": "vfat",
-                "path": "/boot/efi",
-                "options": "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-                "passno": 2
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.grub2.legacy",
-          "options": {
-            "rootfs": {
-              "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
-            },
-            "bios": {
-              "platform": "i386-pc"
-            },
-            "entries": [
-              {
-                "id": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-                "default": true,
-                "product": {
-                  "name": "Arch Linux",
-                  "version": "latest",
-                  "nick": "Arch"
-                },
-                "kernel": "linux"
-              }
-            ],
-            "config": {
-              "cmdline": "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y enforcing=0",
-              "distributor": "$(sed 's, release .*$,,g' /etc/system-release)",
-              "serial": "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
-              "terminal_input": [
-                "serial",
-                "console"
-              ],
-              "terminal_output": [
-                "serial",
-                "console"
-              ]
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.mkinitcpio"
-        },
-        {
-          "type": "org.osbuild.copy",
-          "inputs": {
-            "inlinefile": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "mpp-embed": {
-                "id": "vagrant-sudoers",
-                "text": "Defaults:vagrant !requiretty\nvagrant ALL=(ALL) NOPASSWD: ALL"
-              }
-            }
-          },
-          "options": {
-            "paths": [
-              {
-                "from": {
-                  "mpp-format-string": "input://inlinefile/{embedded['vagrant-sudoers']}"
-                },
-                "to": "tree:////etc/sudoers.d/vagrant"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "image",
-      "build": "name:build",
-      "stages": [
-          {
-            "type": "org.osbuild.truncate",
-            "options": {
-              "filename": "disk.img",
-              "size": "10737418240"
-            }
-          },
-          {
-            "type": "org.osbuild.sfdisk",
-            "options": {
-              "label": "gpt",
-              "uuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-              "partitions": [
-                {
-                  "bootable": true,
-                  "size": 2048,
-                  "start": 2048,
-                  "type": "21686148-6449-6E6F-744E-656564454649",
-                  "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
-                },
-                {
-                  "size": 204800,
-                  "start": 4096,
-                  "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
-                  "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
-                },
-                {
-                  "size": 20762524,
-                  "start": 208896,
-                  "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-                  "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
-                }
-              ]
-            },
-            "devices": {
-              "device": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img"
-                }
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.mkfs.fat",
-            "options": {
-              "volid": "7B7795E7"
-            },
-            "devices": {
-              "device": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img",
-                  "start": 4096,
-                  "size": 204800
-                }
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.mkfs.xfs",
-            "options": {
-              "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "label": "root"
-            },
-            "devices": {
-              "device": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img",
-                  "start": 208896,
-                  "size": 20762524
-                }
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.copy",
-            "inputs": {
-              "root-tree": {
-                "type": "org.osbuild.tree",
-                "origin": "org.osbuild.pipeline",
-                "references": [
-                  "name:os"
-                ]
-              }
-            },
-            "options": {
-              "paths": [
-                {
-                  "from": "input://root-tree/",
-                  "to": "mount://root/"
-                }
-              ]
-            },
-            "devices": {
-              "efi": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img",
-                  "start": 4096,
-                  "size": 204800
-                }
-              },
-              "root": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img",
-                  "start": 208896,
-                  "size": 20762524
-                }
-              }
-            },
-            "mounts": [
-              {
-                "name": "root",
-                "type": "org.osbuild.xfs",
-                "source": "root",
-                "target": "/"
-              },
-              {
-                "name": "efi",
-                "type": "org.osbuild.fat",
-                "source": "efi",
-                "target": "/boot/efi"
-              }
-            ]
-          },
-          {
-            "type": "org.osbuild.grub2.inst",
-            "options": {
-              "filename": "disk.img",
-              "platform": "i386-pc",
-              "location": 2048,
-              "core": {
-                "type": "mkimage",
-                "partlabel": "gpt",
-                "filesystem": "xfs",
-                "binary": "grub-mkimage"
-              },
-              "prefix": {
-                "type": "partition",
-                "partlabel": "gpt",
-                "number": 2,
-                "path": "/boot/grub2"
-              }
-            }
-          }
-      ]
-    },
-    {
-      "name": "qcow2",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "disk.img"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "disk.qcow2",
-            "format": {
-              "type": "qcow2",
-              "compat": "1.1"
-            }
-          }
-        }
-      ]
-     },
-    {
-      "name": "vagrant",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.vagrant",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:qcow2": {
-                  "file": "disk.qcow2"
-                }
-              }
-            }
-          },
-          "options": {
-            "provider": "libvirt"
-          }
-        }
-      ]
-    },
-      {
-        "name": "vagrant-libvirt",
-        "build": "name:build",
-        "stages": [
-          {
-            "type": "org.osbuild.tar",
-            "options": {
-              "filename": "vagrant-libvirt.box"
-            },
-            "inputs": {
-              "tree": {
-                "type": "org.osbuild.tree",
-                "origin": "org.osbuild.pipeline",
-                "references": [
-                  "name:vagrant"
-                ]
-              }
-            }
-          }
-        ]
-      }
-  ]
-}
+version: '2'
+pipelines:
+  - name: build
+    runner: org.osbuild.arch
+    stages:
+      - type: org.osbuild.pacman.conf
+      - type: org.osbuild.pacman
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: x86_64
+              module-platform-id: f34
+              solver: alpm
+              repos:
+                - id: core
+                  baseurl: https://archive.archlinux.org/repos/2022/04/14/$repo/os/$arch
+                - id: community
+                  baseurl: https://archive.archlinux.org/repos/2022/04/14/$repo/os/$arch
+                - id: extra
+                  baseurl: https://archive.archlinux.org/repos/2022/04/14/$repo/os/$arch
+              packages:
+                - pacman
+                - btrfs-progs
+                - dosfstools
+                - e2fsprogs
+                - qemu
+                - systemd
+                - tar
+                - xfsprogs
+                - xz
+                - python
+                - pyalpm
+                - grub
+                - mkinitcpio
+        options: {}
+  - name: os
+    build: name:build
+    stages:
+      - type: org.osbuild.pacman.conf
+        options:
+          repositories:
+            - name: core
+              include: /etc/pacman.d/mirrorlist
+            - name: extra
+              include: /etc/pacman.d/mirrorlist
+            - name: community
+              include: /etc/pacman.d/mirrorlist
+      - type: org.osbuild.pacman.mirrorlist.conf
+        options:
+          mirrors:
+            - https://europe.mirror.pkgbuild.com/$repo/os/$arch
+      - type: org.osbuild.pacman
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: x86_64
+              module-platform-id: f34
+              solver: alpm
+              repos:
+                - id: core
+                  baseurl: https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch
+                - id: community
+                  baseurl: https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch
+                - id: extra
+                  baseurl: https://archive.archlinux.org/repos/2022/01/22/$repo/os/$arch
+              packages:
+                - base
+                - bash
+                - pacman
+                - btrfs-progs
+                - dosfstools
+                - e2fsprogs
+                - systemd
+                - linux
+                - mkinitcpio
+                - tar
+                - grub
+                - openssh
+                - sudo
+                - nfs-utils
+                - ntp
+                - virtualbox-guest-utils-nox
+                - polkit
+                - networkmanager
+                - rsync
+        options: {}
+      - type: org.osbuild.pacman-keyring
+      - type: org.osbuild.systemd
+        options:
+          enabled_services:
+            - vboxservice.service
+            - sshd.service
+            - NetworkManager.service
+      - type: org.osbuild.users
+        options:
+          users:
+            vagrant:
+              password: $6$8dbFyte9oE3ugPHO$q0cTMv1oAgK/ZVXUTSUqj1aXzrhniNqfylqbcW.LgElYRJNRGSr4hBE7hghu2oP1nKn68u13/YmDkKH.s6yil0
+              home: /home/vagrant
+              key: ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
+      - type: org.osbuild.fstab
+        options:
+          filesystems:
+            - uuid: 0194fdc2-fa2f-4cc0-81d3-ff12045b73c8
+              vfs_type: xfs
+              path: /
+              options: defaults
+            - uuid: 7B77-95E7
+              vfs_type: vfat
+              path: /boot/efi
+              options: defaults,uid=0,gid=0,umask=077,shortname=winnt
+              passno: 2
+      - type: org.osbuild.grub2.legacy
+        options:
+          rootfs:
+            uuid: 0194fdc2-fa2f-4cc0-81d3-ff12045b73c8
+          bios:
+            platform: i386-pc
+          entries:
+            - id: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
+              default: true
+              product:
+                name: Arch Linux
+                version: latest
+                nick: Arch
+              kernel: linux
+          config:
+            cmdline: ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y enforcing=0
+            distributor: $(sed 's, release .*$,,g' /etc/system-release)
+            serial: serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1
+            terminal_input:
+              - serial
+              - console
+            terminal_output:
+              - serial
+              - console
+      - type: org.osbuild.mkinitcpio
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: vagrant-sudoers
+              text: "Defaults:vagrant !requiretty\nvagrant ALL=(ALL) NOPASSWD: ALL"
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['vagrant-sudoers']}
+              to: tree:////etc/sudoers.d/vagrant
+  - name: image
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size: '10737418240'
+      - type: org.osbuild.sfdisk
+        options:
+          label: gpt
+          uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+          partitions:
+            - bootable: true
+              size: 2048
+              start: 2048
+              type: 21686148-6449-6E6F-744E-656564454649
+              uuid: FAC7F1FB-3E8D-4137-A512-961DE09A5549
+            - size: 204800
+              start: 4096
+              type: C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+              uuid: 68B2905B-DF3E-4FB3-80FA-49D1E773AA33
+            - size: 20762524
+              start: 208896
+              type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+              uuid: 6264D520-3FB9-423F-8AB8-7A0A8E3D3562
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+      - type: org.osbuild.mkfs.fat
+        options:
+          volid: 7B7795E7
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 4096
+              size: 204800
+      - type: org.osbuild.mkfs.xfs
+        options:
+          uuid: 0194fdc2-fa2f-4cc0-81d3-ff12045b73c8
+          label: root
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 208896
+              size: 20762524
+      - type: org.osbuild.copy
+        inputs:
+          root-tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:os
+        options:
+          paths:
+            - from: input://root-tree/
+              to: mount://root/
+        devices:
+          efi:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 4096
+              size: 204800
+          root:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 208896
+              size: 20762524
+        mounts:
+          - name: root
+            type: org.osbuild.xfs
+            source: root
+            target: /
+          - name: efi
+            type: org.osbuild.fat
+            source: efi
+            target: /boot/efi
+      - type: org.osbuild.grub2.inst
+        options:
+          filename: disk.img
+          platform: i386-pc
+          location: 2048
+          core:
+            type: mkimage
+            partlabel: gpt
+            filesystem: xfs
+            binary: grub-mkimage
+          prefix:
+            type: partition
+            partlabel: gpt
+            number: 2
+            path: /boot/grub2
+  - name: qcow2
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: disk.img
+        options:
+          filename: disk.qcow2
+          format:
+            type: qcow2
+            compat: '1.1'
+  - name: vagrant
+    build: name:build
+    stages:
+      - type: org.osbuild.vagrant
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:qcow2:
+                file: disk.qcow2
+        options:
+          provider: libvirt
+  - name: vagrant-libvirt
+    build: name:build
+    stages:
+      - type: org.osbuild.tar
+        options:
+          filename: vagrant-libvirt.box
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:vagrant

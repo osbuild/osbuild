@@ -1,72 +1,45 @@
-{
-  "version": "2",
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build-v2.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    {
-      "name": "tree",
-      "build": "name:build",
-      "stages": [
-       {
-          "type": "org.osbuild.truncate",
-          "options": {
-            "filename": "disk.img",
-            "size": "10737418240"
-          }
-        },
-         {
-          "type": "org.osbuild.sfdisk",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img"
-              }
-            }
-          },
-          "options": {
-            "uuid": "68ad7ade-3fa7-4844-8b2f-1c4cd30bef70",
-            "label": "gpt",
-            "partitions": [
-              {
-                "uuid": "80b68ae7-3531-478c-a5ff-9b80f1cb07e9",
-                "start": 2048,
-                "size": 1024000,
-                "bootable": true,
-                "name": "EFI System Partition",
-                "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-              },
-              {
-                "uuid": "cfe2beb6-0bb8-4fb6-9075-2e79413ab707",
-                "start": 1026048,
-                "size": 1024000,
-                "name": "boot",
-                "bootable": true,
-                "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172"
-              },
-              {
-                "uuid": "6e2e131d-14c4-4278-876a-5067c40eaecd",
-                "start": 2050048,
-                "size": 4096,
-                "type": "FAC7F1FB-3E8D-4137-A512-961DE09A5549",
-                "name": "BIOS boot"
-              },
-              {
-                "uuid": "646e1b09-9358-4a9c-b630-e3c0c296f7c6",
-                "start": 2054144,
-                "size": 18917343,
-                "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
-                "name": "LVM"
-              }
-            ]
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+pipelines:
+  - mpp-import-pipeline:
+      path: ../manifests/f34-build-v2.json
+      id: build
+    runner: org.osbuild.fedora34
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size: '10737418240'
+      - type: org.osbuild.sfdisk
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+        options:
+          uuid: 68ad7ade-3fa7-4844-8b2f-1c4cd30bef70
+          label: gpt
+          partitions:
+            - uuid: 80b68ae7-3531-478c-a5ff-9b80f1cb07e9
+              start: 2048
+              size: 1024000
+              bootable: true
+              name: EFI System Partition
+              type: C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+            - uuid: cfe2beb6-0bb8-4fb6-9075-2e79413ab707
+              start: 1026048
+              size: 1024000
+              name: boot
+              bootable: true
+              type: BC13C2FF-59E6-4262-A352-B275FD6F7172
+            - uuid: 6e2e131d-14c4-4278-876a-5067c40eaecd
+              start: 2050048
+              size: 4096
+              type: FAC7F1FB-3E8D-4137-A512-961DE09A5549
+              name: BIOS boot
+            - uuid: 646e1b09-9358-4a9c-b630-e3c0c296f7c6
+              start: 2054144
+              size: 18917343
+              type: E6D6D379-F507-44C2-A23C-238F2A3DF928
+              name: LVM

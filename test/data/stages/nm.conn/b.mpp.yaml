@@ -1,62 +1,40 @@
-{
-  "pipeline": {
-    "build": {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build.json"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    "stages": [
-      {
-        "name": "org.osbuild.nm.conn",
-        "options": {
-          "filename": "osbuild.nmconnection",
-          "settings": {
-            "connection": {
-              "type": "ethernet",
-              "id": "static-conn",
-              "uuid": "5fb8f75a-7fde-4906-a51e-a70e56c58742",
-              "interface-name": "eth0",
-              "autoconnect-priority": 0,
-              "autoconnect": true
-            },
-            "ipv4": {
-              "method": "manual",
-              "address": [
-                "10.23.0.3/24"
-              ]
-            },
-            "ipv6": {
-              "method": "ignore"
-            }
-          }
-        }
-      },
-      {
-        "name": "org.osbuild.nm.conn",
-        "options": {
-          "path": "/etc/NetworkManager/system-connections/test.conf",
-          "settings": {
-            "connection": {
-              "type": "ethernet",
-              "id": "static-conn",
-              "uuid": "6fb8f75a-7fde-4906-a51e-a70e56c58742",
-              "interface-name": "eth1",
-              "autoconnect-priority": 0,
-              "autoconnect": true
-            },
-            "ipv4": {
-              "method": "manual",
-              "address": [
-                "10.24.0.5/24"
-              ]
-            },
-            "ipv6": {
-              "method": "ignore"
-            }
-          }
-        }
-      }
-    ]
-  }
-}
+pipeline:
+  build:
+    mpp-import-pipeline:
+      path: ../manifests/f34-build.json
+    runner: org.osbuild.fedora34
+  stages:
+    - name: org.osbuild.nm.conn
+      options:
+        filename: osbuild.nmconnection
+        settings:
+          connection:
+            type: ethernet
+            id: static-conn
+            uuid: 5fb8f75a-7fde-4906-a51e-a70e56c58742
+            interface-name: eth0
+            autoconnect-priority: 0
+            autoconnect: true
+          ipv4:
+            method: manual
+            address:
+              - 10.23.0.3/24
+          ipv6:
+            method: ignore
+    - name: org.osbuild.nm.conn
+      options:
+        path: /etc/NetworkManager/system-connections/test.conf
+        settings:
+          connection:
+            type: ethernet
+            id: static-conn
+            uuid: 6fb8f75a-7fde-4906-a51e-a70e56c58742
+            interface-name: eth1
+            autoconnect-priority: 0
+            autoconnect: true
+          ipv4:
+            method: manual
+            address:
+              - 10.24.0.5/24
+          ipv6:
+            method: ignore

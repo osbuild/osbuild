@@ -1,106 +1,59 @@
-{
-  "version": "2",
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build-v2.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    {
-      "name": "tree",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.rpm",
-          "inputs": {
-            "packages": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "mpp-depsolve": {
-                "architecture": "x86_64",
-                "module-platform-id": "f34",
-                "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/",
-                "repos": [
-                  {
-                    "id": "default",
-                    "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
-                  }
-                ],
-                "packages": [
-                  "systemd-udev"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.udev.rules",
-          "options": {
-            "filename": "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules",
-            "rules": [
-              {
-                "comment": [
-                  "Accelerated Networking on Azure exposes a new SRIOV interface to the VM.",
-                  "This interface is transparently bonded to the synthetic interface,",
-                  "so NetworkManager should just ignore any SRIOV interfaces."
-                ]
-              },
-              [
-                {
-                  "key": "SUBSYSTEM",
-                  "op": "==",
-                  "val": "net"
-                },
-                {
-                  "key": "DRIVERS",
-                  "op": "==",
-                  "val": "hv_pci"
-                },
-                {
-                  "key": {
-                    "name": "ACTION"
-                  },
-                  "op": "==",
-                  "val": "add"
-                },
-                {
-                  "key": {
-                    "name": "ENV",
-                    "arg": "NM_UNMANAGED"
-                  },
-                  "op": "=",
-                  "val": "1"
-                }
-              ]
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.udev.rules",
-          "options": {
-            "filename": "/etc/udev/rules.d/osbuild.rules",
-            "rules": [
-              {
-                "comment": [
-                  "Test\"\n"
-                ]
-              },
-              [
-                {
-                  "key": {
-                    "name": "ENV",
-                    "arg": "test"
-                  },
-                  "op": "=",
-                  "val": "\"foo\""
-                }
-              ]
-            ]
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+pipelines:
+  - mpp-import-pipeline:
+      path: ../manifests/f34-build-v2.json
+      id: build
+    runner: org.osbuild.fedora34
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: x86_64
+              module-platform-id: f34
+              baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/
+              repos:
+                - id: default
+                  baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/
+              packages:
+                - systemd-udev
+      - type: org.osbuild.udev.rules
+        options:
+          filename: /etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules
+          rules:
+            - comment:
+                - Accelerated Networking on Azure exposes a new SRIOV interface to the VM.
+                - This interface is transparently bonded to the synthetic interface,
+                - so NetworkManager should just ignore any SRIOV interfaces.
+            - - key: SUBSYSTEM
+                op: ==
+                val: net
+              - key: DRIVERS
+                op: ==
+                val: hv_pci
+              - key:
+                  name: ACTION
+                op: ==
+                val: add
+              - key:
+                  name: ENV
+                  arg: NM_UNMANAGED
+                op: '='
+                val: '1'
+      - type: org.osbuild.udev.rules
+        options:
+          filename: /etc/udev/rules.d/osbuild.rules
+          rules:
+            - comment:
+                - 'Test"
+
+                  '
+            - - key:
+                  name: ENV
+                  arg: test
+                op: '='
+                val: '"foo"'

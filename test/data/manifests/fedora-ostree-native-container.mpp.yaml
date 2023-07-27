@@ -1,52 +1,31 @@
-{
-  "mpp-vars": {
-    "arch": "x86_64",
-    "release": 36,
-    "releasever": "f$release",
-    "snapshot": "20220617",
-    "updates": "20220715"
-  },
-  "version": "2",
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "fedora-build-v2.mpp.yaml",
-        "id": "build"
-      },
-      "runner": {
-        "mpp-format-string": "org.osbuild.fedora{release}"
-      }
-    },
-    {
-      "mpp-import-pipelines": {
-        "path": "fedora-ostree-commit.mpp.yaml",
-        "ids": [
-          "ostree-tree",
-          "ostree-commit"
-        ]
-      }
-    },
-    {
-      "name": "container",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.ostree.encapsulate",
-          "options": {
-            "filename": "ostree-container.tar",
-            "max_layers": 1
-          },
-          "inputs": {
-            "commit": {
-              "type": "org.osbuild.ostree",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:ostree-commit": {}
-              }
-            }
-          }
-        }
-      ]
-    }
-  ]
-}
+mpp-vars:
+  arch: x86_64
+  release: 36
+  releasever: f$release
+  snapshot: '20220617'
+  updates: '20220715'
+version: '2'
+pipelines:
+  - mpp-import-pipeline:
+      path: fedora-build-v2.mpp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - mpp-import-pipelines:
+      path: fedora-ostree-commit.mpp.yaml
+      ids:
+        - ostree-tree
+        - ostree-commit
+  - name: container
+    build: name:build
+    stages:
+      - type: org.osbuild.ostree.encapsulate
+        options:
+          filename: ostree-container.tar
+          max_layers: 1
+        inputs:
+          commit:
+            type: org.osbuild.ostree
+            origin: org.osbuild.pipeline
+            references:
+              name:ostree-commit: {}

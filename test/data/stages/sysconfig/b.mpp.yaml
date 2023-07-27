@@ -1,54 +1,37 @@
-{
-  "pipeline": {
-    "build": {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build.json"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    "stages": [
-      {
-        "name": "org.osbuild.sysconfig",
-        "options": {
-          "kernel": {
-            "update_default": true,
-            "default_kernel": "kernel"
-          },
-          "network": {
-            "networking": true,
-            "no_zero_conf": true
-          },
-          "network-scripts": {
-            "ifcfg": {
-              "eth0": {
-                "device": "eth0",
-                "bootproto": "dhcp",
-                "onboot": true,
-                "type": "Ethernet",
-                "userctl": true,
-                "peerdns": true,
-                "ipv6init": false
-              },
-              "eth1": {
-                "device": "eth1",
-                "bootproto": "dhcp",
-                "onboot": true,
-                "type": "Ethernet",
-                "userctl": false,
-                "peerdns": true,
-                "ipv6init": true
-              }
-            }
-          },
-          "livesys": {
-            "session": "gnome"
-          },
-          "desktop": {
-            "preferred": "/usr/bin/gnome",
-            "displaymanager": "/usr/bin/gdm"
-          }
-        }
-      }
-    ]
-  }
-}
+pipeline:
+  build:
+    mpp-import-pipeline:
+      path: ../manifests/f34-build.json
+    runner: org.osbuild.fedora34
+  stages:
+    - name: org.osbuild.sysconfig
+      options:
+        kernel:
+          update_default: true
+          default_kernel: kernel
+        network:
+          networking: true
+          no_zero_conf: true
+        network-scripts:
+          ifcfg:
+            eth0:
+              device: eth0
+              bootproto: dhcp
+              onboot: true
+              type: Ethernet
+              userctl: true
+              peerdns: true
+              ipv6init: false
+            eth1:
+              device: eth1
+              bootproto: dhcp
+              onboot: true
+              type: Ethernet
+              userctl: false
+              peerdns: true
+              ipv6init: true
+        livesys:
+          session: gnome
+        desktop:
+          preferred: /usr/bin/gnome
+          displaymanager: /usr/bin/gdm

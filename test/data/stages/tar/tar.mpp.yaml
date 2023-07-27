@@ -1,66 +1,39 @@
-{
-  "version": "2",
-  "sources": {
-    "org.osbuild.inline": {}
-  },
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build-v2.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    {
-      "name": "input-tree",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.copy",
-          "inputs": {
-            "inlinefile": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "mpp-embed": {
-                "id": "42",
-                "text": "42\n"
-              }
-            }
-          },
-          "options": {
-            "paths": [
-              {
-                "from": {
-                  "mpp-format-string": "input://inlinefile/{embedded['42']}"
-                },
-                "to": "tree:///testfile"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "tree",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.tar",
-          "inputs": {
-            "tree": {
-              "type": "org.osbuild.tree",
-              "origin": "org.osbuild.pipeline",
-              "references": [
-                "name:input-tree"
-              ]
-            }
-          },
-          "options": {
-            "filename": "tarfile.tar",
-            "root-node": "omit"
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+sources:
+  org.osbuild.inline: {}
+pipelines:
+  - mpp-import-pipeline:
+      path: ../manifests/f34-build-v2.json
+      id: build
+    runner: org.osbuild.fedora34
+  - name: input-tree
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: '42'
+              text: '42
+
+                '
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['42']}
+              to: tree:///testfile
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.tar
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:input-tree
+        options:
+          filename: tarfile.tar
+          root-node: omit

@@ -1,23 +1,12 @@
-{
-  "pipeline": {
-    "build": {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build.json"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    "stages": [
-      {
-        "name": "org.osbuild.resolv-conf",
-        "options": {
-          "nameserver": [
-            "1.2.3.4"
-          ],
-          "search": [
-            "osbuild.org"
-          ]
-        }
-      }
-    ]
-  }
-}
+pipeline:
+  build:
+    mpp-import-pipeline:
+      path: ../manifests/f34-build.json
+    runner: org.osbuild.fedora34
+  stages:
+    - name: org.osbuild.resolv-conf
+      options:
+        nameserver:
+          - 1.2.3.4
+        search:
+          - osbuild.org

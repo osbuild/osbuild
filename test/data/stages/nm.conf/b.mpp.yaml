@@ -1,59 +1,31 @@
-{
-  "pipeline": {
-    "build": {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build.json"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    "stages": [
-      {
-        "name": "org.osbuild.nm.conf",
-        "options": {
-          "path": "/etc/NetworkManager/NetworkManager.conf",
-          "settings": {
-            "main": {
-              "plugins": [
-                "keyfile"
-              ],
-              "no-auto-default": [
-                "*"
-              ]
-            },
-            "global-dns-domain": [
-              {
-                "name": "*",
-                "config": {
-                  "servers": [
-                    "8.8.8.8"
-                  ]
-                }
-              }
-            ],
-            "device": [
-              {
-                "config": {
-                  "wifi.scan-rand-mac-address": false
-                }
-              }
-            ]
-          }
-        }
-      },
-      {
-        "name": "org.osbuild.nm.conf",
-        "options": {
-          "path": "/etc/NetworkManager/conf.d/99-unmanaged-devices.conf",
-          "settings": {
-            "keyfile": {
-              "unmanaged-devices": [
-                "interface-name:veth*",
-                "interface-name:starfish0"
-              ]
-            }
-          }
-        }
-      }
-    ]
-  }
-}
+pipeline:
+  build:
+    mpp-import-pipeline:
+      path: ../manifests/f34-build.json
+    runner: org.osbuild.fedora34
+  stages:
+    - name: org.osbuild.nm.conf
+      options:
+        path: /etc/NetworkManager/NetworkManager.conf
+        settings:
+          main:
+            plugins:
+              - keyfile
+            no-auto-default:
+              - '*'
+          global-dns-domain:
+            - name: '*'
+              config:
+                servers:
+                  - 8.8.8.8
+          device:
+            - config:
+                wifi.scan-rand-mac-address: false
+    - name: org.osbuild.nm.conf
+      options:
+        path: /etc/NetworkManager/conf.d/99-unmanaged-devices.conf
+        settings:
+          keyfile:
+            unmanaged-devices:
+              - interface-name:veth*
+              - interface-name:starfish0

@@ -1,63 +1,36 @@
-{
-  "version": "2",
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build-v2.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    {
-      "name": "tree",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.rpm",
-          "inputs": {
-            "packages": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "mpp-depsolve": {
-                "architecture": "x86_64",
-                "module-platform-id": "f34",
-                "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/",
-                "repos": [
-                  {
-                    "id": "default",
-                    "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/"
-                  }
-                ],
-                "packages": [
-                  "containers-common"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.containers.storage.conf",
-          "options": {
-            "comment": [
-              "Allow extra containers at '/usr/share/containers/storage'",
-              "Use 'nodev' for security and 'metacopy' to allow better",
-              "pagecache sharing of base-layers"
-            ],
-            "config": {
-              "storage": {
-                "options": {
-                  "additionalimagestores": [
-                    "/usr/share/container/storage"
-                  ],
-                  "overlay": {
-                    "mountopt": "nodev,metacopy=on"
-                  }
-                }
-              }
-            }
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+pipelines:
+  - mpp-import-pipeline:
+      path: ../manifests/f34-build-v2.json
+      id: build
+    runner: org.osbuild.fedora34
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: x86_64
+              module-platform-id: f34
+              baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/
+              repos:
+                - id: default
+                  baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/
+              packages:
+                - containers-common
+      - type: org.osbuild.containers.storage.conf
+        options:
+          comment:
+            - Allow extra containers at '/usr/share/containers/storage'
+            - Use 'nodev' for security and 'metacopy' to allow better
+            - pagecache sharing of base-layers
+          config:
+            storage:
+              options:
+                additionalimagestores:
+                  - /usr/share/container/storage
+                overlay:
+                  mountopt: nodev,metacopy=on

@@ -1,40 +1,22 @@
-{
-  "version": "2",
-  "sources": {
-    "org.osbuild.inline": {
-      "items": {
-        "sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0": {
-          "encoding": "base64",
-          "data": "SGFsbG8gV2VsdAo="
-        }
-      }
-    }
-  },
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build-v2.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    {
-      "name": "tree",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.fdo",
-          "inputs": {
-            "rootcerts": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "references": {
-                "sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0": {}
-              }
-            }
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+sources:
+  org.osbuild.inline:
+    items:
+      sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0:
+        encoding: base64
+        data: SGFsbG8gV2VsdAo=
+pipelines:
+  - mpp-import-pipeline:
+      path: ../manifests/f34-build-v2.json
+      id: build
+    runner: org.osbuild.fedora34
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.fdo
+        inputs:
+          rootcerts:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0: {}

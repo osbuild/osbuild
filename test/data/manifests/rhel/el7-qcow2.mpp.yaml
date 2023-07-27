@@ -1,562 +1,362 @@
-{
-  "version": "2",
-  "mpp-define-image": {
-    "id": "image",
-    "size": "10737418240",
-    "table": {
-      "uuid": "50ED4083-6F86-4793-9092-1336C9903E86",
-      "label": "gpt",
-      "partitions": [
-        {
-          "id": "efi",
-          "bootable": true,
-          "size": 1024000,
-          "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
-        },
-        {
-          "id": "boot",
-          "size": 1024000,
-          "uuid": "61B2905B-DF3E-4FB3-80FA-49D1E773AA32"
-        },
-        {
-          "id": "bios-boot",
-          "size": 4096,
-          "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
-        },
-        {
-          "id": "lvm",
-          "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
-        }
-      ]
-    }
-  },
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "el7-build.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.rhel7"
-    },
-    {
-      "name": "image-tree",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.rpm",
-          "options": {
-            "gpgkeys": [
-              "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBErgSTsBEACh2A4b0O9t+vzC9VrVtL1AKvUWi9OPCjkvR7Xd8DtJxeeMZ5eF\n0HtzIG58qDRybwUe89FZprB1ffuUKzdE+HcL3FbNWSSOXVjZIersdXyH3NvnLLLF\n0DNRB2ix3bXG9Rh/RXpFsNxDp2CEMdUvbYCzE79K1EnUTVh1L0Of023FtPSZXX0c\nu7Pb5DI5lX5YeoXO6RoodrIGYJsVBQWnrWw4xNTconUfNPk0EGZtEnzvH2zyPoJh\nXGF+Ncu9XwbalnYde10OCvSWAZ5zTCpoLMTvQjWpbCdWXJzCm6G+/hx9upke546H\n5IjtYm4dTIVTnc3wvDiODgBKRzOl9rEOCIgOuGtDxRxcQkjrC+xvg5Vkqn7vBUyW\n9pHedOU+PoF3DGOM+dqv+eNKBvh9YF9ugFAQBkcG7viZgvGEMGGUpzNgN7XnS1gj\n/DPo9mZESOYnKceve2tIC87p2hqjrxOHuI7fkZYeNIcAoa83rBltFXaBDYhWAKS1\nPcXS1/7JzP0ky7d0L6Xbu/If5kqWQpKwUInXtySRkuraVfuK3Bpa+X1XecWi24JY\nHVtlNX025xx1ewVzGNCTlWn1skQN2OOoQTV4C8/qFpTW6DTWYurd4+fE0OJFJZQF\nbuhfXYwmRlVOgN5i77NTIJZJQfYFj38c/Iv5vZBPokO6mffrOTv3MHWVgQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChyZWxlYXNlIGtleSAyKSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjYEEwECACAFAkrgSTsCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAK\nCRAZni+R/UMdUWzpD/9s5SFR/ZF3yjY5VLUFLMXIKUztNN3oc45fyLdTI3+UClKC\n2tEruzYjqNHhqAEXa2sN1fMrsuKec61Ll2NfvJjkLKDvgVIh7kM7aslNYVOP6BTf\nC/JJ7/ufz3UZmyViH/WDl+AYdgk3JqCIO5w5ryrC9IyBzYv2m0HqYbWfphY3uHw5\nun3ndLJcu8+BGP5F+ONQEGl+DRH58Il9Jp3HwbRa7dvkPgEhfFR+1hI+Btta2C7E\n0/2NKzCxZw7Lx3PBRcU92YKyaEihfy/aQKZCAuyfKiMvsmzs+4poIX7I9NQCJpyE\nIGfINoZ7VxqHwRn/d5mw2MZTJjbzSf+Um9YJyA0iEEyD6qjriWQRbuxpQXmlAJbh\n8okZ4gbVFv1F8MzK+4R8VvWJ0XxgtikSo72fHjwha7MAjqFnOq6eo6fEC/75g3NL\nGht5VdpGuHk0vbdENHMC8wS99e5qXGNDued3hlTavDMlEAHl34q2H9nakTGRF5Ki\nJUfNh3DVRGhg8cMIti21njiRh7gyFI2OccATY7bBSr79JhuNwelHuxLrCFpY7V25\nOFktl15jZJaMxuQBqYdBgSay2G0U6D1+7VsWufpzd/Abx1/c3oi9ZaJvW22kAggq\ndzdA27UUYjWvx42w9menJwh/0jeQcTecIUd0d0rFcw/c1pvgMMl/Q73yzKgKYw==\n=zbHE\n-----END PGP PUBLIC KEY BLOCK-----\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBFsy23UBEACUKSphFEIEvNpy68VeW4Dt6qv+mU6am9a2AAl10JANLj1oqWX+\noYk3en1S6cVe2qehSL5DGVa3HMUZkP3dtbD4SgzXzxPodebPcr4+0QNWigkUisri\nXGL5SCEcOP30zDhZvg+4mpO2jMi7Kc1DLPzBBkgppcX91wa0L1pQzBcvYMPyV/Dh\nKbQHR75WdkP6OA2JXdfC94nxYq+2e0iPqC1hCP3Elh+YnSkOkrawDPmoB1g4+ft/\nxsiVGVy/W0ekXmgvYEHt6si6Y8NwXgnTMqxeSXQ9YUgVIbTpsxHQKGy76T5lMlWX\n4LCOmEVomBJg1SqF6yi9Vu8TeNThaDqT4/DddYInd0OO69s0kGIXalVgGYiW2HOD\nx2q5R1VGCoJxXomz+EbOXY+HpKPOHAjU0DB9MxbU3S248LQ69nIB5uxysy0PSco1\nsdZ8sxRNQ9Dw6on0Nowx5m6Thefzs5iK3dnPGBqHTT43DHbnWc2scjQFG+eZhe98\nEll/kb6vpBoY4bG9/wCG9qu7jj9Z+BceCNKeHllbezVLCU/Hswivr7h2dnaEFvPD\nO4GqiWiwOF06XaBMVgxA8p2HRw0KtXqOpZk+o+sUvdPjsBw42BB96A1yFX4jgFNA\nPyZYnEUdP6OOv9HSjnl7k/iEkvHq/jGYMMojixlvXpGXhnt5jNyc4GSUJQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChhdXhpbGlhcnkga2V5KSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjkEEwECACMFAlsy23UCGwMHCwkIBwMCAQYVCAIJCgsEFgIDAQIeAQIX\ngAAKCRD3b2bD1AgnknqOD/9fB2ASuG2aJIiap4kK58R+RmOVM4qgclAnaG57+vjI\nnKvyfV3NH/keplGNRxwqHekfPCqvkpABwhdGEXIE8ILqnPewIMr6PZNZWNJynZ9i\neSMzVuCG7jDoGyQ5/6B0f6xeBtTeBDiRl7+Alehet1twuGL1BJUYG0QuLgcEzkaE\n/gkuumeVcazLzz7L12D22nMk66GxmgXfqS5zcbqOAuZwaA6VgSEgFdV2X2JU79zS\nBQJXv7NKc+nDXFG7M7EHjY3Rma3HXkDbkT8bzh9tJV7Z7TlpT829pStWQyoxKCVq\nsEX8WsSapTKA3P9YkYCwLShgZu4HKRFvHMaIasSIZWzLu+RZH/4yyHOhj0QB7XMY\neHQ6fGSbtJ+K6SrpHOOsKQNAJ0hVbSrnA1cr5+2SDfel1RfYt0W9FA6DoH/S5gAR\ndzT1u44QVwwp3U+eFpHphFy//uzxNMtCjjdkpzhYYhOCLNkDrlRPb+bcoL/6ePSr\n016PA7eEnuC305YU1Ml2WcCn7wQV8x90o33klJmEkWtXh3X39vYtI4nCPIvZn1eP\nVy+F+wWt4vN2b8oOdlzc2paOembbCo2B+Wapv5Y9peBvlbsDSgqtJABfK8KQq/jK\nYl3h5elIa1I3uNfczeHOnf1enLOUOlq630yeM/yHizz99G1g+z/guMh5+x/OHraW\niLkCDQRbMtt1ARAA1lNsWklhS9LoBdolTVtg65FfdFJr47pzKRGYIoGLbcJ155ND\nG+P8UrM06E/ah06EEWuvu2YyyYAz1iYGsCwHAXtbEJh+1tF0iOVx2vnZPgtIGE9V\nP95V5ZvWvB3bdke1z8HadDA+/Ve7fbwXXLa/z9QhSQgsJ8NS8KYnDDjI4EvQtv0i\nPVLY8+u8z6VyiV9RJyn8UEZEJdbFDF9AZAT8103w8SEo/cvIoUbVKZLGcXdAIjCa\ny04u6jsrMp9UGHZX7+srT+9YHDzQixei4IdmxUcqtiNR2/bFHpHCu1pzYjXj968D\n8Ng2txBXDgs16BF/9l++GWKz2dOSH0jdS6sFJ/Dmg7oYnJ2xKSJEmcnV8Z0M1n4w\nXR1t/KeKZe3aR+RXCAEVC5dQ3GbRW2+WboJ6ldgFcVcOv6iOSWP9TrLzFPOpCsIr\nnHE+cMBmPHq3dUm7KeYXQ6wWWmtXlw6widf7cBcGFeELpuU9klzqdKze8qo2oMkf\nrfxIq8zdciPxZXb/75dGWs6dLHQmDpo4MdQVskw5vvwHicMpUpGpxkX7X1XAfdQf\nyIHLGT4ZXuMLIMUPdzJE0Vwt/RtJrZ+feLSv/+0CkkpGHORYroGwIBrJ2RikgcV2\nbc98V/27Kz2ngUCEwnmlhIcrY4IGAAZzUAl0GLHSevPbAREu4fDW4Y+ztOsAEQEA\nAYkCHwQYAQIACQUCWzLbdQIbDAAKCRD3b2bD1AgnkusfD/9U4sPtZfMw6cII167A\nXRZOO195G7oiAnBUw5AW6EK0SAHVZcuW0LMMXnGe9f4UsEUgCNwo5mvLWPxzKqFq\n6/G3kEZVFwZ0qrlLoJPeHNbOcfkeZ9NgD/OhzQmdylM0IwGM9DMrm2YS4EVsmm2b\n53qKIfIyysp1yAGcTnBwBbZ85osNBl2KRDIPhMs0bnmGB7IAvwlSb+xm6vWKECkO\nlwQDO5Kg8YZ8+Z3pn/oS688t/fPXvWLZYUqwR63oWfIaPJI7Ahv2jJmgw1ofL81r\n2CE3T/OydtUeGLzqWJAB8sbUgT3ug0cjtxsHuroQBSYBND3XDb/EQh5GeVVnGKKH\ngESLFAoweoNjDSXrlIu1gFjCDHF4CqBRmNYKrNQjLmhCrSfwkytXESJwlLzFKY8P\nK1yZyTpDC9YK0G7qgrk7EHmH9JAZTQ5V65pp0vR9KvqTU5ewkQDIljD2f3FIqo2B\nSKNCQE+N6NjWaTeNlU75m+yZocKObSPg0zS8FAuSJetNtzXA7ouqk34OoIMQj4gq\nUnh/i1FcZAd4U6Dtr9aRZ6PeLlm6MJ/h582L6fJLNEu136UWDtJj5eBYEzX13l+d\nSC4PEHx7ZZRwQKptl9NkinLZGJztg175paUu8C34sAv+SQnM20c0pdOXAq9GKKhi\nvt61kpkXoRGxjTlc6h+69aidSg==\n=ls8J\n-----END PGP PUBLIC KEY BLOCK-----\n"
-            ],
-            "exclude": {
-              "docs": true
-            }
-          },
-          "inputs": {
-            "packages": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.source",
-              "mpp-depsolve": {
-                "architecture": "x86_64",
-                "module-platform-id": "7",
-                "repos": [
-                  {
-                    "id": "os",
-                    "baseurl": "http://download.eng.brq.redhat.com/rhel-7/nightly/updates/RHEL-7/latest-RHEL-7.9/compose/Server/x86_64/os/"
-                  }
-                ],
-                "packages": [
-                  "@core",
-                  "lvm2",
-                  "grub2-efi-x64",
-                  "shim-x64",
-                  "kernel",
-                  "nfs-utils",
-                  "yum-utils",
-                  "cloud-init",
-                  "rhn-setup",
-                  "yum-rhn-plugin",
-                  "cloud-utils-growpart",
-                  "dracut-config-generic",
-                  "dracut-norescue",
-                  "firewalld",
-                  "tar",
-                  "tcpdump",
-                  "rsync"
-                ],
-                "excludes": [
-                  "aic94xx-firmware",
-                  "alsa-firmware",
-                  "alsa-lib",
-                  "alsa-tools-firmware",
-                  "ivtv-firmware",
-                  "iwl1000-firmware",
-                  "iwl100-firmware",
-                  "iwl105-firmware",
-                  "iwl135-firmware",
-                  "iwl2000-firmware",
-                  "iwl2030-firmware",
-                  "iwl3160-firmware",
-                  "iwl3945-firmware",
-                  "iwl4965-firmware",
-                  "iwl5000-firmware",
-                  "iwl5150-firmware",
-                  "iwl6000-firmware",
-                  "iwl6000g2a-firmware",
-                  "iwl6000g2b-firmware",
-                  "iwl6050-firmware",
-                  "iwl7260-firmware",
-                  "libertas-sd8686-firmware",
-                  "libertas-sd8787-firmware",
-                  "libertas-usb8388-firmware"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.fix-bls",
-          "options": {}
-        },
-        {
-          "type": "org.osbuild.locale",
-          "options": {
-            "language": "en_US.UTF-8"
-          }
-        },
-        {
-          "type": "org.osbuild.timezone",
-          "options": {
-            "zone": "America/New_York"
-          }
-        },
-        {
-          "type": "org.osbuild.systemd",
-          "options": {
-            "enabled_services": [
-              "NetworkManager.service",
-              "cloud-config",
-              "cloud-final",
-              "cloud-init",
-              "cloud-init-local",
-              "firewalld.service",
-              "sshd.service"
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.fstab",
-          "options": {
-            "filesystems": [
-              {
-                "label": "boot",
-                "vfs_type": "xfs",
-                "path": "/boot",
-                "freq": 1,
-                "passno": 1
-              },
-              {
-                "label": "ESP",
-                "vfs_type": "vfat",
-                "path": "/boot/efi",
-                "options": "umask=0077,shortname=winnt",
-                "freq": 0,
-                "passno": 2
-              },
-              {
-                "label": "root",
-                "vfs_type": "xfs",
-                "path": "/",
-                "freq": 1,
-                "passno": 1
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.grub2.legacy",
-          "options": {
-            "architecture": "x64",
-            "rootfs": {
-              "device": "/dev/mapper/rootvg-rootlv"
-            },
-            "bootfs": {
-              "uuid": "156f0420-627b-4151-ae6f-fda298097515"
-            },
-            "bios": "i386-pc",
-            "uefi": {
-              "vendor": "redhat"
-            },
-            "entries": [
-              {
-                "id": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-                "default": true,
-                "product": {
-                  "name": "Red Hat Enterprise Linux Server",
-                  "version": "7.9",
-                  "nick": "Maipo"
-                },
-                "kernel": {
-                  "mpp-format-string": "{rpms['image-tree']['kernel'].evra}"
-                }
-              },
-              {
-                "id": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-                "product": {
-                  "name": "Red Hat Enterprise Linux Server",
-                  "version": "7.9",
-                  "nick": "Maipo"
-                },
-                "kernel": "0-rescue-ffffffffffffffffffffffffffffffff"
-              }
-            ],
-            "config": {
-              "cmdline": "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y enforcing=0",
-              "distributor": "$(sed 's, release .*$,,g' /etc/system-release)",
-              "serial": "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
-              "terminal_input": [
-                "serial",
-                "console"
-              ],
-              "terminal_output": [
-                "serial",
-                "console"
-              ]
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.selinux",
-          "options": {
-            "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
-          }
-        }
-      ]
-    },
-    {
-      "name": "image",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.truncate",
-          "options": {
-            "filename": "disk.img",
-            "size": {
-              "mpp-format-string": "{image.size}"
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.parted",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img"
-              }
-            }
-          },
-          "options": {
-            "label": "gpt",
-            "partitions": [
-              {
-                "start": {
-                  "mpp-format-int": "{image.layout['efi'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['efi'].size}"
-                },
-                "bootable": true,
-                "name": "EFI System Partition"
-              },
-              {
-                "start": {
-                  "mpp-format-int": "{image.layout['boot'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['boot'].size}"
-                },
-                "name": "boot"
-              },
-              {
-                "start": {
-                  "mpp-format-int": "{image.layout['bios-boot'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['bios-boot'].size}"
-                },
-                "type": "bios_grub",
-                "name": "BIOS boot"
-              },
-              {
-                "start": {
-                  "mpp-format-int": "{image.layout['lvm'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['lvm'].size}"
-                },
-                "type": "lvm",
-                "name": "LVM"
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.mkfs.fat",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['efi'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['efi'].size}"
-                }
-              }
-            }
-          },
-          "options": {
-            "label": "ESP",
-            "volid": "7B7795E7"
-          }
-        },
-        {
-          "type": "org.osbuild.mkfs.xfs",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['boot'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['boot'].size}"
-                }
-              }
-            }
-          },
-          "options": {
-            "uuid": "156f0420-627b-4151-ae6f-fda298097515",
-            "label": "boot"
-          }
-        },
-        {
-          "type": "org.osbuild.lvm2.create",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['lvm'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['lvm'].size}"
-                }
-              }
-            }
-          },
-          "options": {
-            "volumes": [
-              {
-                "name": "rootlv",
-                "size": "100%FREE"
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.mkfs.xfs",
-          "devices": {
-            "lvm": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['lvm'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['lvm'].size}"
-                }
-              }
-            },
-            "device": {
-              "type": "org.osbuild.lvm2.lv",
-              "parent": "lvm",
-              "options": {
-                "volume": "rootlv"
-              }
-            }
-          },
-          "options": {
-            "uuid": "76a22bf4-f153-4541-b6c7-0332c0dfaeac",
-            "label": "root"
-          }
-        },
-        {
-          "type": "org.osbuild.copy",
-          "inputs": {
-            "tree": {
-              "type": "org.osbuild.tree",
-              "origin": "org.osbuild.pipeline",
-              "references": [
-                "name:image-tree"
-              ]
-            }
-          },
-          "options": {
-            "paths": [
-              {
-                "from": "input://tree/",
-                "to": "mount://root/"
-              }
-            ]
-          },
-          "devices": {
-            "efi": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['efi'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['efi'].size}"
-                }
-              }
-            },
-            "boot": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['boot'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['boot'].size}"
-                }
-              }
-            },
-            "lvm": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['lvm'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['lvm'].size}"
-                }
-              }
-            },
-            "root": {
-              "type": "org.osbuild.lvm2.lv",
-              "parent": "lvm",
-              "options": {
-                "volume": "rootlv"
-              }
-            }
-          },
-          "mounts": [
-            {
-              "name": "root",
-              "type": "org.osbuild.xfs",
-              "source": "root",
-              "target": "/"
-            },
-            {
-              "name": "boot",
-              "type": "org.osbuild.xfs",
-              "source": "boot",
-              "target": "/boot"
-            },
-            {
-              "name": "efi",
-              "type": "org.osbuild.fat",
-              "source": "efi",
-              "target": "/boot/efi"
-            }
-          ]
-        },
-        {
-          "type": "org.osbuild.grub2.inst",
-          "options": {
-            "platform": "i386-pc",
-            "filename": "disk.img",
-            "location": {
-              "mpp-format-int": "{image.layout['bios-boot'].start}"
-            },
-            "core": {
-              "type": "mkimage",
-              "partlabel": "gpt",
-              "filesystem": "xfs"
-            },
-            "prefix": {
-              "type": "partition",
-              "partlabel": {
-                "mpp-format-string": "{image.layout.label}"
-              },
-              "number": {
-                "mpp-format-int": "{image.layout['boot'].index}"
-              },
-              "path": "/grub2"
-            }
-          }
-        },
-        {
-          "type": "org.osbuild.lvm2.metadata",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": {
-                  "mpp-format-int": "{image.layout['lvm'].start}"
-                },
-                "size": {
-                  "mpp-format-int": "{image.layout['lvm'].size}"
-                },
-                "lock": true
-              }
-            }
-          },
-          "options": {
-            "vg_name": "rootvg",
-            "creation_host": "osbuild",
-            "description": "Built with osbuild"
-          }
-        }
-      ]
-    },
-    {
-      "name": "qcow2",
-      "build": "name:build",
-      "stages": [
-        {
-          "type": "org.osbuild.qemu",
-          "inputs": {
-            "image": {
-              "type": "org.osbuild.files",
-              "origin": "org.osbuild.pipeline",
-              "references": {
-                "name:image": {
-                  "file": "disk.img"
-                }
-              }
-            }
-          },
-          "options": {
-            "filename": "disk.qcow2",
-            "format": {
-              "type": "qcow2",
-              "compat": "0.10"
-            }
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+mpp-define-image:
+  id: image
+  size: '10737418240'
+  table:
+    uuid: 50ED4083-6F86-4793-9092-1336C9903E86
+    label: gpt
+    partitions:
+      - id: efi
+        bootable: true
+        size: 1024000
+        uuid: 68B2905B-DF3E-4FB3-80FA-49D1E773AA33
+      - id: boot
+        size: 1024000
+        uuid: 61B2905B-DF3E-4FB3-80FA-49D1E773AA32
+      - id: bios-boot
+        size: 4096
+        uuid: FAC7F1FB-3E8D-4137-A512-961DE09A5549
+      - id: lvm
+        uuid: 6264D520-3FB9-423F-8AB8-7A0A8E3D3562
+pipelines:
+  - mpp-import-pipeline:
+      path: el7-build.json
+      id: build
+    runner: org.osbuild.rhel7
+  - name: image-tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        options:
+          gpgkeys:
+            - "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBErgSTsBEACh2A4b0O9t+vzC9VrVtL1AKvUWi9OPCjkvR7Xd8DtJxeeMZ5eF\n0HtzIG58qDRybwUe89FZprB1ffuUKzdE+HcL3FbNWSSOXVjZIersdXyH3NvnLLLF\n0DNRB2ix3bXG9Rh/RXpFsNxDp2CEMdUvbYCzE79K1EnUTVh1L0Of023FtPSZXX0c\nu7Pb5DI5lX5YeoXO6RoodrIGYJsVBQWnrWw4xNTconUfNPk0EGZtEnzvH2zyPoJh\nXGF+Ncu9XwbalnYde10OCvSWAZ5zTCpoLMTvQjWpbCdWXJzCm6G+/hx9upke546H\n5IjtYm4dTIVTnc3wvDiODgBKRzOl9rEOCIgOuGtDxRxcQkjrC+xvg5Vkqn7vBUyW\n9pHedOU+PoF3DGOM+dqv+eNKBvh9YF9ugFAQBkcG7viZgvGEMGGUpzNgN7XnS1gj\n/DPo9mZESOYnKceve2tIC87p2hqjrxOHuI7fkZYeNIcAoa83rBltFXaBDYhWAKS1\nPcXS1/7JzP0ky7d0L6Xbu/If5kqWQpKwUInXtySRkuraVfuK3Bpa+X1XecWi24JY\nHVtlNX025xx1ewVzGNCTlWn1skQN2OOoQTV4C8/qFpTW6DTWYurd4+fE0OJFJZQF\nbuhfXYwmRlVOgN5i77NTIJZJQfYFj38c/Iv5vZBPokO6mffrOTv3MHWVgQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChyZWxlYXNlIGtleSAyKSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjYEEwECACAFAkrgSTsCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAK\nCRAZni+R/UMdUWzpD/9s5SFR/ZF3yjY5VLUFLMXIKUztNN3oc45fyLdTI3+UClKC\n2tEruzYjqNHhqAEXa2sN1fMrsuKec61Ll2NfvJjkLKDvgVIh7kM7aslNYVOP6BTf\nC/JJ7/ufz3UZmyViH/WDl+AYdgk3JqCIO5w5ryrC9IyBzYv2m0HqYbWfphY3uHw5\nun3ndLJcu8+BGP5F+ONQEGl+DRH58Il9Jp3HwbRa7dvkPgEhfFR+1hI+Btta2C7E\n0/2NKzCxZw7Lx3PBRcU92YKyaEihfy/aQKZCAuyfKiMvsmzs+4poIX7I9NQCJpyE\nIGfINoZ7VxqHwRn/d5mw2MZTJjbzSf+Um9YJyA0iEEyD6qjriWQRbuxpQXmlAJbh\n8okZ4gbVFv1F8MzK+4R8VvWJ0XxgtikSo72fHjwha7MAjqFnOq6eo6fEC/75g3NL\nGht5VdpGuHk0vbdENHMC8wS99e5qXGNDued3hlTavDMlEAHl34q2H9nakTGRF5Ki\nJUfNh3DVRGhg8cMIti21njiRh7gyFI2OccATY7bBSr79JhuNwelHuxLrCFpY7V25\nOFktl15jZJaMxuQBqYdBgSay2G0U6D1+7VsWufpzd/Abx1/c3oi9ZaJvW22kAggq\ndzdA27UUYjWvx42w9menJwh/0jeQcTecIUd0d0rFcw/c1pvgMMl/Q73yzKgKYw==\n=zbHE\n-----END PGP PUBLIC KEY BLOCK-----\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n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\nvt61kpkXoRGxjTlc6h+69aidSg==\n=ls8J\n-----END PGP PUBLIC KEY BLOCK-----\n"
+          exclude:
+            docs: true
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: x86_64
+              module-platform-id: '7'
+              repos:
+                - id: os
+                  baseurl: http://download.eng.brq.redhat.com/rhel-7/nightly/updates/RHEL-7/latest-RHEL-7.9/compose/Server/x86_64/os/
+              packages:
+                - '@core'
+                - lvm2
+                - grub2-efi-x64
+                - shim-x64
+                - kernel
+                - nfs-utils
+                - yum-utils
+                - cloud-init
+                - rhn-setup
+                - yum-rhn-plugin
+                - cloud-utils-growpart
+                - dracut-config-generic
+                - dracut-norescue
+                - firewalld
+                - tar
+                - tcpdump
+                - rsync
+              excludes:
+                - aic94xx-firmware
+                - alsa-firmware
+                - alsa-lib
+                - alsa-tools-firmware
+                - ivtv-firmware
+                - iwl1000-firmware
+                - iwl100-firmware
+                - iwl105-firmware
+                - iwl135-firmware
+                - iwl2000-firmware
+                - iwl2030-firmware
+                - iwl3160-firmware
+                - iwl3945-firmware
+                - iwl4965-firmware
+                - iwl5000-firmware
+                - iwl5150-firmware
+                - iwl6000-firmware
+                - iwl6000g2a-firmware
+                - iwl6000g2b-firmware
+                - iwl6050-firmware
+                - iwl7260-firmware
+                - libertas-sd8686-firmware
+                - libertas-sd8787-firmware
+                - libertas-usb8388-firmware
+      - type: org.osbuild.fix-bls
+        options: {}
+      - type: org.osbuild.locale
+        options:
+          language: en_US.UTF-8
+      - type: org.osbuild.timezone
+        options:
+          zone: America/New_York
+      - type: org.osbuild.systemd
+        options:
+          enabled_services:
+            - NetworkManager.service
+            - cloud-config
+            - cloud-final
+            - cloud-init
+            - cloud-init-local
+            - firewalld.service
+            - sshd.service
+      - type: org.osbuild.fstab
+        options:
+          filesystems:
+            - label: boot
+              vfs_type: xfs
+              path: /boot
+              freq: 1
+              passno: 1
+            - label: ESP
+              vfs_type: vfat
+              path: /boot/efi
+              options: umask=0077,shortname=winnt
+              freq: 0
+              passno: 2
+            - label: root
+              vfs_type: xfs
+              path: /
+              freq: 1
+              passno: 1
+      - type: org.osbuild.grub2.legacy
+        options:
+          architecture: x64
+          rootfs:
+            device: /dev/mapper/rootvg-rootlv
+          bootfs:
+            uuid: 156f0420-627b-4151-ae6f-fda298097515
+          bios: i386-pc
+          uefi:
+            vendor: redhat
+          entries:
+            - id: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
+              default: true
+              product:
+                name: Red Hat Enterprise Linux Server
+                version: '7.9'
+                nick: Maipo
+              kernel:
+                mpp-format-string: '{rpms[''image-tree''][''kernel''].evra}'
+            - id: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
+              product:
+                name: Red Hat Enterprise Linux Server
+                version: '7.9'
+                nick: Maipo
+              kernel: 0-rescue-ffffffffffffffffffffffffffffffff
+          config:
+            cmdline: ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y enforcing=0
+            distributor: $(sed 's, release .*$,,g' /etc/system-release)
+            serial: serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1
+            terminal_input:
+              - serial
+              - console
+            terminal_output:
+              - serial
+              - console
+      - type: org.osbuild.selinux
+        options:
+          file_contexts: etc/selinux/targeted/contexts/files/file_contexts
+  - name: image
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size:
+            mpp-format-string: '{image.size}'
+      - type: org.osbuild.parted
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+        options:
+          label: gpt
+          partitions:
+            - start:
+                mpp-format-int: '{image.layout[''efi''].start}'
+              size:
+                mpp-format-int: '{image.layout[''efi''].size}'
+              bootable: true
+              name: EFI System Partition
+            - start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+              name: boot
+            - start:
+                mpp-format-int: '{image.layout[''bios-boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''bios-boot''].size}'
+              type: bios_grub
+              name: BIOS boot
+            - start:
+                mpp-format-int: '{image.layout[''lvm''].start}'
+              size:
+                mpp-format-int: '{image.layout[''lvm''].size}'
+              type: lvm
+              name: LVM
+      - type: org.osbuild.mkfs.fat
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''efi''].start}'
+              size:
+                mpp-format-int: '{image.layout[''efi''].size}'
+        options:
+          label: ESP
+          volid: 7B7795E7
+      - type: org.osbuild.mkfs.xfs
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+        options:
+          uuid: 156f0420-627b-4151-ae6f-fda298097515
+          label: boot
+      - type: org.osbuild.lvm2.create
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''lvm''].start}'
+              size:
+                mpp-format-int: '{image.layout[''lvm''].size}'
+        options:
+          volumes:
+            - name: rootlv
+              size: 100%FREE
+      - type: org.osbuild.mkfs.xfs
+        devices:
+          lvm:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''lvm''].start}'
+              size:
+                mpp-format-int: '{image.layout[''lvm''].size}'
+          device:
+            type: org.osbuild.lvm2.lv
+            parent: lvm
+            options:
+              volume: rootlv
+        options:
+          uuid: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
+          label: root
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:image-tree
+        options:
+          paths:
+            - from: input://tree/
+              to: mount://root/
+        devices:
+          efi:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''efi''].start}'
+              size:
+                mpp-format-int: '{image.layout[''efi''].size}'
+          boot:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+          lvm:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''lvm''].start}'
+              size:
+                mpp-format-int: '{image.layout[''lvm''].size}'
+          root:
+            type: org.osbuild.lvm2.lv
+            parent: lvm
+            options:
+              volume: rootlv
+        mounts:
+          - name: root
+            type: org.osbuild.xfs
+            source: root
+            target: /
+          - name: boot
+            type: org.osbuild.xfs
+            source: boot
+            target: /boot
+          - name: efi
+            type: org.osbuild.fat
+            source: efi
+            target: /boot/efi
+      - type: org.osbuild.grub2.inst
+        options:
+          platform: i386-pc
+          filename: disk.img
+          location:
+            mpp-format-int: '{image.layout[''bios-boot''].start}'
+          core:
+            type: mkimage
+            partlabel: gpt
+            filesystem: xfs
+          prefix:
+            type: partition
+            partlabel:
+              mpp-format-string: '{image.layout.label}'
+            number:
+              mpp-format-int: '{image.layout[''boot''].index}'
+            path: /grub2
+      - type: org.osbuild.lvm2.metadata
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''lvm''].start}'
+              size:
+                mpp-format-int: '{image.layout[''lvm''].size}'
+              lock: true
+        options:
+          vg_name: rootvg
+          creation_host: osbuild
+          description: Built with osbuild
+  - name: qcow2
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:image:
+                file: disk.img
+        options:
+          filename: disk.qcow2
+          format:
+            type: qcow2
+            compat: '0.10'

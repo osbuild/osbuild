@@ -1,64 +1,37 @@
-{
-  "version": "2",
-  "pipelines": [
-    {
-      "mpp-import-pipeline": {
-        "path": "../manifests/f34-build-v2.json",
-        "id": "build"
-      },
-      "runner": "org.osbuild.fedora34"
-    },
-    {
-      "name": "tree",
-      "build": "name:build",
-      "stages": [
-       {
-          "type": "org.osbuild.truncate",
-          "options": {
-            "filename": "disk.img",
-            "size": "10737418240"
-          }
-        },
-         {
-          "type": "org.osbuild.parted",
-          "devices": {
-            "device": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img"
-              }
-            }
-          },
-          "options": {
-            "label": "gpt",
-            "partitions": [
-              {
-                "start": 2048,
-                "size": 1024000,
-                "bootable": true,
-                "name": "EFI System Partition"
-              },
-              {
-                "start": 1026048,
-                "size": 1024000,
-                "name": "boot"
-              },
-              {
-                "start": 2050048,
-                "size": 4096,
-                "type": "bios_grub",
-                "name": "BIOS boot"
-              },
-              {
-                "start": 2054144,
-                "size": 18917343,
-                "type": "lvm",
-                "name": "LVM"
-              }
-            ]
-          }
-        }
-      ]
-    }
-  ]
-}
+version: '2'
+pipelines:
+  - mpp-import-pipeline:
+      path: ../manifests/f34-build-v2.json
+      id: build
+    runner: org.osbuild.fedora34
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size: '10737418240'
+      - type: org.osbuild.parted
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+        options:
+          label: gpt
+          partitions:
+            - start: 2048
+              size: 1024000
+              bootable: true
+              name: EFI System Partition
+            - start: 1026048
+              size: 1024000
+              name: boot
+            - start: 2050048
+              size: 4096
+              type: bios_grub
+              name: BIOS boot
+            - start: 2054144
+              size: 18917343
+              type: lvm
+              name: LVM
