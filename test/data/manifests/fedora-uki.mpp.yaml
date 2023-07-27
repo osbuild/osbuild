@@ -7,7 +7,7 @@ mpp-vars:
   updates: '20220801'
 pipelines:
   - mpp-import-pipeline:
-      path: fedora-build-v2.mpp.yaml
+      path: fedora-build-v2.ipp.yaml
       id: build
     runner:
       mpp-format-string: org.osbuild.fedora{release}
