@@ -44,7 +44,7 @@
   "pipelines": [
     {
       "mpp-import-pipeline": {
-        "path": "fedora-build-v2.mpp.json",
+        "path": "fedora-build-v2.mpp.yaml",
         "id": "build"
       },
       "runner": {
@@ -53,7 +53,7 @@
     },
     {
       "mpp-import-pipelines": {
-        "path": "fedora-ostree-commit.mpp.json",
+        "path": "fedora-ostree-commit.mpp.yaml",
         "ids": [
           "ostree-tree",
           "ostree-commit"

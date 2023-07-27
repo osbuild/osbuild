@@ -8,7 +8,7 @@
   "pipeline": {
     "build": {
       "mpp-import-pipeline": {
-        "path": "fedora-build.mpp.json"
+        "path": "fedora-build.mpp.yaml"
       },
       "runner": {
         "mpp-format-string": "org.osbuild.fedora{release}"
