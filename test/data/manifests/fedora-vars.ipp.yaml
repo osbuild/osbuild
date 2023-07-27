@@ -4,6 +4,7 @@ mpp-vars:
   arch: x86_64
   release: 36
   releasever: f$release
+  module_platform_id: platform:$releasever
   snapshot: '20220617'
   updates: '20220801'
   repos:
