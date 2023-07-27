@@ -1,0 +1,8 @@
+version: '2'
+
+mpp-vars:
+  arch: x86_64
+  release: 36
+  releasever: f$release
+  snapshot: '20220617'
+  updates: '20220801'

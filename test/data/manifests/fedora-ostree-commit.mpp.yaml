@@ -1,11 +1,7 @@
-mpp-vars:
-  arch: x86_64
-  release: 36
-  releasever: f$release
-  snapshot: '20220617'
-  updates: '20220801'
 version: '2'
 pipelines:
+  - mpp-import-pipelines:
+      path: fedora-vars.ipp.yaml
   - mpp-import-pipeline:
       path: fedora-build-v2.ipp.yaml
       id: build
