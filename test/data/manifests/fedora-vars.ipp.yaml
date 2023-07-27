@@ -7,6 +7,8 @@ mpp-vars:
   module_platform_id: platform:$releasever
   snapshot: '20230413'
   updates: '20230724'
+  ref: fedora/$arch/osbuild
+  isolabel: Fedora-$release-X86_64
   repos:
     - id: default
       baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$releasever-$arch-fedora-$snapshot/
