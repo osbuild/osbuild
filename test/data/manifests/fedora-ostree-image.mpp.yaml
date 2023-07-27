@@ -30,7 +30,7 @@ mpp-define-image:
         uuid: CA7D7CCB-63ED-4C53-861C-1742536059CC
 pipelines:
   - mpp-import-pipeline:
-      path: fedora-build-v2.mpp.yaml
+      path: fedora-build-v2.ipp.yaml
       id: build
     runner:
       mpp-format-string: org.osbuild.fedora{release}
