@@ -2,7 +2,12 @@
   "added_files": [],
   "deleted_files": [],
   "differences": {
-    "/etc/system-release": {"mode": [41471, 33188]},
+    "/etc/system-release": {
+      "mode": [
+        41471,
+        33188
+      ]
+    },
     "/testfile1": {
       "content": [
         "sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0",
@@ -11,11 +16,11 @@
     },
     "/usr/lib/os-release": {
       "content": [
-        "sha256:a89f49dc1743805139a17343e7181261d856eea94090067e63b922638ee2be32",
+        "sha256:d38ce6163200bfdfa564bc5f9d4a59fb82ae83dc235de835fe97eaafb46de7a2",
         "sha256:0e55092af0746630c98d1b2e0d960617c33f8ea7b55739fd18cb7cd5342a28ca"
       ]
     },
-    "/var/lib/rpm/rpmdb.sqlite": {
+    "/usr/lib/sysimage/rpm/rpmdb.sqlite": {
       "content": [
         null,
         null

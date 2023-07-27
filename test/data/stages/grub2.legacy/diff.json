@@ -11,8 +11,6 @@
     "/boot/efi/EFI/fedora",
     "/boot/efi/EFI/fedora/BOOTIA32.CSV",
     "/boot/efi/EFI/fedora/BOOTX64.CSV",
-    "/boot/efi/EFI/fedora/fonts",
-    "/boot/efi/EFI/fedora/fonts/unicode.pf2",
     "/boot/efi/EFI/fedora/gcdia32.efi",
     "/boot/efi/EFI/fedora/gcdx64.efi",
     "/boot/efi/EFI/fedora/grub.cfg",

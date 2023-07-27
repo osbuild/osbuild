@@ -1,9 +1,12 @@
 version: '2'
 pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
   - mpp-import-pipeline:
-      path: ../manifests/f34-build-v2.json
+      path: ../manifests/fedora-build-v2.ipp.yaml
       id: build
-    runner: org.osbuild.fedora34
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
   - name: tree
     build: name:build
     stages:
@@ -21,6 +24,11 @@ pipelines:
                   baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/
               packages:
                 - systemd-udev
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
       - type: org.osbuild.udev.rules
         options:
           filename: /etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules

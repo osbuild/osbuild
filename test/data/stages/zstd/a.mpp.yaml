@@ -1,9 +1,12 @@
 version: '2'
 pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
   - mpp-import-pipeline:
-      path: ../manifests/f34-build-v2.json
+      path: ../manifests/fedora-build-v2.ipp.yaml
       id: build
-    runner: org.osbuild.fedora34
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
   - name: tree
     build: name:build
     stages:
@@ -13,11 +16,14 @@ pipelines:
             type: org.osbuild.files
             origin: org.osbuild.source
             mpp-depsolve:
-              architecture: x86_64
-              module-platform-id: f34
-              baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/
+              architecture: $arch
+              module-platform-id: $module_platform_id
               repos:
-                - id: default
-                  baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/
+                mpp-eval: repos
               packages:
                 - zstd
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true

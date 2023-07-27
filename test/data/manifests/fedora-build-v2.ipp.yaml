@@ -53,6 +53,8 @@ pipelines:
                 - grub2-efi-x64-cdboot
                 - shim-ia32
                 - grub2-efi-ia32-cdboot
+                - zstd
+                - openscap-utils
         options:
           gpgkeys:
             mpp-eval: gpgkeys
