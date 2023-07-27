@@ -28,8 +28,7 @@ pipelines:
             origin: org.osbuild.source
             mpp-depsolve:
               architecture: $arch
-              module-platform-id: $releasever
-              releasever: $releasever
+              module-platform-id: $module_platform_id
               repos:
                 mpp-eval: repos
               packages:
