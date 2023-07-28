@@ -188,7 +188,10 @@ def main():
     os.close(dir_fd2)
     os.close(dir_fd1)
 
-    print(json.dumps(report, indent=2))
+    report["added_files"].sort()
+    report["deleted_files"].sort()
+
+    print(json.dumps(report, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
