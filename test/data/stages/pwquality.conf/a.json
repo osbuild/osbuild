@@ -453,9 +453,6 @@
             "sha256:0ebe43a9bef7ec2dc4cb98350fbde2e55dae886f905e2d9cea837da3fb613c87"
           ]
         }
-      },
-      {
-        "name": "org.osbuild.pwquality.conf"
       }
     ]
   },

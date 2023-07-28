@@ -1,5 +1,11 @@
 {
   "sources": {},
+  "build": {
+    "runner": "org.osbuild.fedora34",
+    "pipeline": {
+      "stages": []
+    }
+  },
   "pipeline": {
     "stages": [
       {

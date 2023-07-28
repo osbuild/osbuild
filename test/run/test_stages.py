@@ -246,7 +246,7 @@ class TestStages(test.TestBase):
 
             out_b = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
             res = osb.compile_file(os.path.join(test_dir, "b.json"),
-                                   checkpoints=["build", "tree"],
+                                   checkpoints=["build"],
                                    exports=["tree"], output_dir=out_b)
 
             tree1 = os.path.join(out_a, "tree")
@@ -277,7 +277,7 @@ class TestStages(test.TestBase):
             osb = self.osbuild
 
             osb.compile_file(f"{base}/template.json",
-                             checkpoints=["build", "tree"],
+                             checkpoints=["build"],
                              exports=["tree"],
                              output_dir=outdir)
             tree = os.path.join(outdir, "tree")
@@ -314,7 +314,7 @@ class TestStages(test.TestBase):
 
                 jsdata = json.dumps(manifest)
                 osb.compile(jsdata,
-                            checkpoints=["build", "tree"],
+                            checkpoints=["build"],
                             exports=["tree"],
                             output_dir=outdir)
                 tree = os.path.join(outdir, "tree")
@@ -403,7 +403,7 @@ class TestStages(test.TestBase):
             osb = self.osbuild
 
             osb.compile_file(os.path.join(testdir, f"{stage_name}.json"),
-                             checkpoints=["build", "tree"],
+                             checkpoints=["build"],
                              exports=["tree"],
                              output_dir=outdir)
 

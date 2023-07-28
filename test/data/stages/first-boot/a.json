@@ -1,6 +1,12 @@
 {
   "sources": {},
   "pipeline": {
+    "build": {
+      "runner": "org.osbuild.fedora34",
+      "pipeline": {
+        "stages": []
+      }
+    },
     "stages": [
       {
         "name": "org.osbuild.noop"

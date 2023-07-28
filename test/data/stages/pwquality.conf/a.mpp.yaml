@@ -17,4 +17,3 @@ pipeline:
               baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/
           packages:
             - libpwquality
-    - name: org.osbuild.pwquality.conf
