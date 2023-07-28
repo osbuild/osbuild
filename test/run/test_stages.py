@@ -241,12 +241,12 @@ class TestStages(test.TestBase):
 
             out_a = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
             _ = osb.compile_file(os.path.join(test_dir, "a.json"),
-                                 checkpoints=["tree"],
+                                 checkpoints=["build", "tree"],
                                  exports=["tree"], output_dir=out_a)
 
             out_b = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
             res = osb.compile_file(os.path.join(test_dir, "b.json"),
-                                   checkpoints=["tree"],
+                                   checkpoints=["build", "tree"],
                                    exports=["tree"], output_dir=out_b)
 
             tree1 = os.path.join(out_a, "tree")
@@ -277,7 +277,7 @@ class TestStages(test.TestBase):
             osb = self.osbuild
 
             osb.compile_file(f"{base}/template.json",
-                             checkpoints=["tree"],
+                             checkpoints=["build", "tree"],
                              exports=["tree"],
                              output_dir=outdir)
             tree = os.path.join(outdir, "tree")
@@ -314,7 +314,7 @@ class TestStages(test.TestBase):
 
                 jsdata = json.dumps(manifest)
                 osb.compile(jsdata,
-                            checkpoints=["tree"],
+                            checkpoints=["build", "tree"],
                             exports=["tree"],
                             output_dir=outdir)
                 tree = os.path.join(outdir, "tree")
@@ -336,6 +336,7 @@ class TestStages(test.TestBase):
             with tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
                 osb = self.osbuild
                 osb.compile_file(os.path.join(testdir, "qemu.json"),
+                                 checkpoints=["build"],
                                  exports=[image_name],
                                  output_dir=outdir)
 
@@ -363,6 +364,7 @@ class TestStages(test.TestBase):
         with tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
             osb = self.osbuild
             osb.compile_file(os.path.join(testdir, "tar.json"),
+                             checkpoints=["build"],
                              exports=["tree"],
                              output_dir=outdir)
 
@@ -401,7 +403,7 @@ class TestStages(test.TestBase):
             osb = self.osbuild
 
             osb.compile_file(os.path.join(testdir, f"{stage_name}.json"),
-                             checkpoints=["tree"],
+                             checkpoints=["build", "tree"],
                              exports=["tree"],
                              output_dir=outdir)
 
@@ -477,7 +479,10 @@ class TestStages(test.TestBase):
 
         with tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
             osb = self.osbuild
-            osb.compile_file(os.path.join(testdir, "ovf.json"), exports=["vmdk"], output_dir=outdir)
+            osb.compile_file(os.path.join(testdir, "ovf.json"),
+                             checkpoints=["build"],
+                             exports=["vmdk"],
+                             output_dir=outdir)
 
             vmdk = os.path.join(outdir, "vmdk", "image.vmdk")
             assert os.path.isfile(vmdk)
