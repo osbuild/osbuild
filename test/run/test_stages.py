@@ -224,17 +224,20 @@ class TestStages(test.TestBase):
         if not cls.store:
             cls.store = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
 
+        osbuild = test.OSBuild(cache_from=cls.store)
+        # pylint: disable=unnecessary-dunder-call
+        cls.osbuild = osbuild.__enter__()
+
     @classmethod
     def tearDownClass(cls):
+        # pylint: disable=unnecessary-dunder-call
+        cls.osbuild.__exit__(None, None, None)
         if not os.getenv("OSBUILD_TEST_STORE"):
             shutil.rmtree(cls.store)
 
-    def setUp(self):
-        self.osbuild = test.OSBuild(cache_from=self.store)
-
     def run_stage_diff_test(self, test_dir: str):
         with contextlib.ExitStack() as stack:
-            osb = stack.enter_context(self.osbuild)
+            osb = self.osbuild
 
             out_a = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
             _ = osb.compile_file(os.path.join(test_dir, "a.json"),
@@ -263,11 +266,6 @@ class TestStages(test.TestBase):
 
                 self.assertMetadata(metadata, res)
 
-            # cache the downloaded data for the sources by copying
-            # it to self.cache, which is going to be used to initialize
-            # the osbuild cache with.
-            osb.copy_source_data(self.store, "org.osbuild.files")
-
     def test_dracut(self):
         datadir = self.locate_test_data()
         base = os.path.join(datadir, "stages/dracut")
@@ -275,7 +273,8 @@ class TestStages(test.TestBase):
         with open(f"{base}/vanilla.json", "r", encoding="utf8") as f:
             refs = json.load(f)
 
-        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb = self.osbuild
 
             osb.compile_file(f"{base}/template.json",
                              checkpoints=["tree"],
@@ -292,9 +291,6 @@ class TestStages(test.TestBase):
                     b = set(want[key])
                     self.assertEqual(a, b, msg=key)
 
-            # cache the downloaded data for the files source
-            osb.copy_source_data(self.store, "org.osbuild.files")
-
     def test_selinux(self):
         datadir = self.locate_test_data()
         testdir = os.path.join(datadir, "stages", "selinux")
@@ -304,7 +300,8 @@ class TestStages(test.TestBase):
                 manifest = json.load(f)
                 return manifest
 
-        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb = self.osbuild
 
             for t in glob.glob(f"{testdir}/test_*.json"):
                 manifest = load_manifest("f34-base.json")
@@ -326,9 +323,6 @@ class TestStages(test.TestBase):
                     have = selinux.getfilecon(f"{tree}/{path}")
                     self.assertEqual(have, want)
 
-            # cache the downloaded data for the files source
-            osb.copy_source_data(self.store, "org.osbuild.files")
-
     def test_qemu(self):
         datadir = self.locate_test_data()
         testdir = os.path.join(datadir, "stages", "qemu")
@@ -339,7 +333,8 @@ class TestStages(test.TestBase):
             checks = json.load(f)
 
         for image_name, test_data in checks.items():
-            with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            with tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+                osb = self.osbuild
                 osb.compile_file(os.path.join(testdir, "qemu.json"),
                                  exports=[image_name],
                                  output_dir=outdir)
@@ -361,14 +356,12 @@ class TestStages(test.TestBase):
                                 ("Test data is not a subset of the qemu-img output: "
                                  f"{test_data} not <= {qemu_img_run.stdout}"))
 
-                # cache the downloaded data for the files source
-                osb.copy_source_data(self.store, "org.osbuild.files")
-
     def test_tar(self):
         datadir = self.locate_test_data()
         testdir = os.path.join(datadir, "stages", "tar")
 
-        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb = self.osbuild
             osb.compile_file(os.path.join(testdir, "tar.json"),
                              exports=["tree"],
                              output_dir=outdir)
@@ -387,9 +380,6 @@ class TestStages(test.TestBase):
             dot_slash = list(filter(lambda x: x.startswith("./"), names))
             assert not dot_slash
 
-            # cache the downloaded data for the files source
-            osb.copy_source_data(self.store, "org.osbuild.files")
-
     @unittest.skipUnless(have_sfdisk_with_json(), "Need sfdisk with JSON support")
     def _test_partitioning_stage(self, stage_name, sfdisk_out_filter_fn: Optional[Callable[[Dict], Dict]] = None):
         """
@@ -407,7 +397,8 @@ class TestStages(test.TestBase):
         with open(os.path.join(testdir, f"{imgname}.json"), "r", encoding="utf8") as f:
             want = json.load(f)
 
-        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb = self.osbuild
 
             osb.compile_file(os.path.join(testdir, f"{stage_name}.json"),
                              checkpoints=["tree"],
@@ -436,9 +427,6 @@ class TestStages(test.TestBase):
                 del want["partitiontable"]["sectorsize"]
 
             self.assertEqual(want, have)
-
-            # cache the downloaded data for the files source
-            osb.copy_source_data(self.store, "org.osbuild.files")
 
     def test_parted(self):
         def filter_sfdisk_output(sfdisk_output: Dict) -> Dict:
@@ -487,7 +475,8 @@ class TestStages(test.TestBase):
         datadir = self.locate_test_data()
         testdir = os.path.join(datadir, "stages", "ovf")
 
-        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb = self.osbuild
             osb.compile_file(os.path.join(testdir, "ovf.json"), exports=["vmdk"], output_dir=outdir)
 
             vmdk = os.path.join(outdir, "vmdk", "image.vmdk")
