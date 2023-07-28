@@ -4,6 +4,7 @@
 
 import contextlib
 import difflib
+import functools
 import glob
 import json
 import os
@@ -118,6 +119,15 @@ class TestStages(test.TestBase):
             In this case the after content of /etc/shadow doesn't matter.
             The only thing that matters is the before content and that
             the content modification happened.
+
+        The first tree diff can additionally contain an `added_directories`
+        array. Such an entry can be used when you care that a directory is
+        added, but you don't care about its content. This means that all
+        `added_files` in the second tree under the `added_directory` entry
+        in the first tree will be ignored. Note that tree diffs currently
+        don't distinguish between added files and added directories, so the
+        `added_directories` entry is satisfied also if there's a file added
+        with such a name.
         """
 
         def _sorted_tree(tree):
@@ -139,6 +149,22 @@ class TestStages(test.TestBase):
             )
             raise AssertionError(f"{msg}\n\n{diff}")
 
+        def path_equal_or_is_descendant(path, potential_ancestor):
+            """
+            :return: Returns true if path == potential_ancestor or if path is inside potential_ancestor
+            """
+            return path == potential_ancestor or path.startswith(potential_ancestor + "/")
+
+        for added_dir in tree_diff1.get('added_directories', []):
+            original = tree_diff2['added_files']
+
+            filtered = [p for p in original if not path_equal_or_is_descendant(p, added_dir)]
+
+            if len(filtered) == len(original):
+                raise_assertion(f'{added_dir} was not added')
+
+            tree_diff2['added_files'] = filtered
+
         self.assertEqual(tree_diff1['added_files'], tree_diff2['added_files'])
         self.assertEqual(tree_diff1['deleted_files'], tree_diff2['deleted_files'])
 
@@ -146,7 +172,7 @@ class TestStages(test.TestBase):
             raise_assertion('length of differences different')
 
         for (file1, differences1), (file2, differences2) in \
-                zip(tree_diff1['differences'].items(), tree_diff2['differences'].items()):
+            zip(tree_diff1['differences'].items(), tree_diff2['differences'].items()):
 
             if file1 != file2:
                 raise_assertion(f"filename different: {file1}, {file2}")
@@ -155,18 +181,18 @@ class TestStages(test.TestBase):
                 raise_assertion("length of file differences different")
 
             for (difference1_kind, difference1_values), (difference2_kind, difference2_values) in \
-                    zip(differences1.items(), differences2.items()):
+                zip(differences1.items(), differences2.items()):
                 if difference1_kind != difference2_kind:
                     raise_assertion(f"different difference kinds: {difference1_kind}, {difference2_kind}")
 
                 if difference1_values[0] is not None \
-                        and difference2_values[0] is not None \
-                        and difference1_values[0] != difference2_values[0]:
+                    and difference2_values[0] is not None \
+                    and difference1_values[0] != difference2_values[0]:
                     raise_assertion(f"before values are different: {difference1_values[0]}, {difference2_values[0]}")
 
                 if difference1_values[1] is not None \
-                        and difference2_values[1] is not None \
-                        and difference1_values[1] != difference2_values[1]:
+                    and difference2_values[1] is not None \
+                    and difference1_values[1] != difference2_values[1]:
                     raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
 
     def assertMetadata(self, metadata: Dict, result: Dict):
@@ -333,7 +359,7 @@ class TestStages(test.TestBase):
                 qemu_img_out = json.loads(qemu_img_run.stdout)
                 self.assertTrue(mapping_is_subset(test_data, qemu_img_out),
                                 ("Test data is not a subset of the qemu-img output: "
-                                f"{test_data} not <= {qemu_img_run.stdout}"))
+                                 f"{test_data} not <= {qemu_img_run.stdout}"))
 
                 # cache the downloaded data for the files source
                 osb.copy_source_data(self.store, "org.osbuild.files")
@@ -343,7 +369,6 @@ class TestStages(test.TestBase):
         testdir = os.path.join(datadir, "stages", "tar")
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
-
             osb.compile_file(os.path.join(testdir, "tar.json"),
                              exports=["tree"],
                              output_dir=outdir)
