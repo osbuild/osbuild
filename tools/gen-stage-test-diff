@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+import argparse
+import contextlib
+import os
+import subprocess
+import tempfile
+
+
+def run_osbuild(output_directory, store, cache_max_size, libdir, manifest):
+    args = [
+        "osbuild",
+        "--export",
+        "tree",
+        "--output-directory",
+        output_directory,
+        "--store",
+        store,
+        "--cache-max-size",
+        str(cache_max_size),
+        "--checkpoint",
+        "tree",
+        "--checkpoint",
+        "build",
+    ]
+
+    if libdir:
+        args += ["--libdir", libdir]
+
+    args += [manifest]
+
+    try:
+        subprocess.run(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            check=True,
+        )
+    except subprocess.CalledProcessError as err:
+        raise RuntimeError(
+            f"osbuild crashed when building {manifest}:\n\nstdout:\n{err.stdout}\n\nstderr:\n{err.stderr}"
+        )
+
+
+epilog = """
+example:
+
+sudo tools/gen-stage-test-diff \\
+  --store ~/osbuild-store \\
+  --libdir . \\
+  test/data/stages/zstd
+"""
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Generator for diff.json files of stage tests",
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--store",
+        type=str,
+        help="Specify the osbuild store",
+        default=1024 * 1024 * 1024,
+    )
+    parser.add_argument(
+        "--cache-max-size", type=int, help="Specify the osbuild max cache size"
+    )
+    parser.add_argument("--libdir", type=str, help="Specify the osbuild max cache size")
+    parser.add_argument("stage_test", type=str, help="Specify the stage test")
+    args = parser.parse_args()
+
+    with contextlib.ExitStack() as stack:
+        a = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
+        b = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
+
+        store = args.store
+        if not store:
+            store = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
+
+        run_osbuild(
+            a,
+            store,
+            args.cache_max_size,
+            args.libdir,
+            os.path.join(args.stage_test, "a.json"),
+        )
+        run_osbuild(
+            b,
+            store,
+            args.cache_max_size,
+            args.libdir,
+            os.path.join(args.stage_test, "b.json"),
+        )
+
+        subprocess.run(
+            [
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), "tree-diff"),
+                os.path.join(a, "tree"),
+                os.path.join(b, "tree"),
+            ],
+            check=True,
+        )
+
+
+if __name__ == "__main__":
+    main()
