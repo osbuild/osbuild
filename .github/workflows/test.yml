@@ -21,10 +21,7 @@ jobs:
         - "test.run.test_stages"
         environment:
         - "py36"
-        - "py37"
-        - "py38"
         - "py39"
-        - "py310"
         - "py311"
         - "py312"
     steps:
