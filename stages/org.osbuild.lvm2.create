@@ -80,13 +80,9 @@ def main(devices, options):
 
     print(f"LVM2: using vg name '{vg_name}'")
 
-    subprocess.run(["pvcreate", path],
-                   encoding='utf8',
-                   check=True)
+    subprocess.run(["pvcreate", path], encoding="utf8", check=True)
 
-    subprocess.run(["vgcreate", vg_name, path],
-                   encoding='utf8',
-                   check=True)
+    subprocess.run(["vgcreate", vg_name, path], encoding="utf8", check=True)
 
     for volume in volumes:
         name = volume["name"]
@@ -102,10 +98,10 @@ def main(devices, options):
 
         cmd += ["-n", name, vg_name]
 
-        subprocess.run(cmd, encoding='utf8', check=True)
+        subprocess.run(cmd, encoding="utf8", check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

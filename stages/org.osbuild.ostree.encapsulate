@@ -70,12 +70,9 @@ SCHEMA_2 = """
 
 
 def ostree(*args, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    args = list(args) + [f"--{k}={v}" for k, v in kwargs.items()]
     print("rpm-ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["rpm-ostree"] + args,
-                   encoding="utf-8",
-                   stdout=sys.stderr,
-                   check=True)
+    subprocess.run(["rpm-ostree"] + args, encoding="utf-8", stdout=sys.stderr, check=True)
 
 
 def parse_input(inputs):
@@ -83,7 +80,7 @@ def parse_input(inputs):
     data = commits["data"]
     refs = data["refs"]
     assert len(refs) == 1, "Need exactly one commit"
-    commit_id, = refs.keys()
+    (commit_id,) = refs.keys()
     return commits["path"], commit_id, refs[commit_id]
 
 
@@ -109,15 +106,19 @@ def main(tree, inputs, options):
     if maxlayers:
         extra_args += ["--max-layers", str(maxlayers)]
 
-    ostree("container-encapsulate", commit, container,
-           "--format-version", str(formatver),
-           "--repo", source_repo,
-           *extra_args)
+    ostree(
+        "container-encapsulate",
+        commit,
+        container,
+        "--format-version",
+        str(formatver),
+        "--repo",
+        source_repo,
+        *extra_args,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["inputs"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["inputs"], stage_args["options"])
     sys.exit(r)

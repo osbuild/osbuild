@@ -88,26 +88,15 @@ def main(tree, output_dir, options):
         extra_args += ["--xattrs", "--xattrs-include", "*"]
 
     # Set up the tar command.
-    tar_cmd = [
-        "tar",
-        *extra_args,
-        "-cf", f"{output_dir}/{filename}",
-        "-C", tree,
-        "."
-    ]
+    tar_cmd = ["tar", *extra_args, "-cf", f"{output_dir}/{filename}", "-C", tree, "."]
 
     # Make a tarball of the tree.
-    subprocess.run(
-        tar_cmd,
-        stdout=subprocess.DEVNULL,
-        check=True,
-        env=tar_env
-    )
+    subprocess.run(tar_cmd, stdout=subprocess.DEVNULL, check=True, env=tar_env)
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     args_input = args["inputs"]["tree"]["path"]
     args_output = args["tree"]

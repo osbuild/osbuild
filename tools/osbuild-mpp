@@ -337,11 +337,7 @@ from osbuild.util.rhsm import Subscriptions
 class ImageManifest:
     # We hardcode this to what skopeo/fedora does since we don't want to
     # depend on host specific cpu details for image resolving
-    _arch_from_rpm = {
-        "x86_64": "amd64",
-        "aarch64": "arm64",
-        "armhfp": "arm"
-    }
+    _arch_from_rpm = {"x86_64": "amd64", "aarch64": "arm64", "armhfp": "arm"}
     _default_variant = {
         "arm64": "v8",
         "arm": "v7",
@@ -360,9 +356,7 @@ class ImageManifest:
         else:
             src = f"docker://{imagename}"
 
-        res = subprocess.run(["skopeo", "inspect", "--raw", src],
-                             stdout=subprocess.PIPE,
-                             check=True)
+        res = subprocess.run(["skopeo", "inspect", "--raw", src], stdout=subprocess.PIPE, check=True)
         m = ImageManifest(res.stdout)
         m.name = imagename
         m.tag = tag
@@ -449,7 +443,8 @@ class ImageManifest:
 
         if not digest:
             raise RuntimeError(
-                f"No manifest matching architecture '{wanted_arch}', os '{wanted_os}', variant '{wanted_variant}'.")
+                f"No manifest matching architecture '{wanted_arch}', os '{wanted_os}', variant '{wanted_variant}'."
+            )
 
         return ImageManifest.load(self.name, digest=digest)
 
@@ -469,15 +464,16 @@ class ImageManifest:
 class YamlOrderedLoader(yaml.Loader):
     def construct_mapping(self, node, deep=False):
         if not isinstance(node, yaml.MappingNode):
-            raise yaml.constructor.ConstructorError(None, None,
-                                                    f"expected a mapping node, but found {node.id}",
-                                                    node.start_mark)
+            raise yaml.constructor.ConstructorError(
+                None, None, f"expected a mapping node, but found {node.id}", node.start_mark
+            )
         mapping = collections.OrderedDict()
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
             if not isinstance(key, collections.abc.Hashable):
-                raise yaml.constructor.ConstructorError("while constructing a mapping", node.start_mark,
-                                                        "found unhashable key", key_node.start_mark)
+                raise yaml.constructor.ConstructorError(
+                    "while constructing a mapping", node.start_mark, "found unhashable key", key_node.start_mark
+                )
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
         return mapping
@@ -489,7 +485,7 @@ class YamlOrderedLoader(yaml.Loader):
         data.update(value)
 
 
-yaml.add_constructor('tag:yaml.org,2002:map', YamlOrderedLoader.construct_yaml_map)
+yaml.add_constructor("tag:yaml.org,2002:map", YamlOrderedLoader.construct_yaml_map)
 
 
 def yaml_load_ordered(source):
@@ -541,8 +537,7 @@ class PkgInfo:
         return self.nevra
 
 
-class PacmanSolver():
-
+class PacmanSolver:
     def __init__(self, cachedir, persistdir):
         self._cachedir = cachedir or "/tmp/pacsolve"
         self._persistdir = persistdir
@@ -581,8 +576,15 @@ LocalFileSigLevel = Optional
 
     def resolve(self, packages, _):
         self._pacman("-Sy", "--root", self._cachedir, "--config", os.path.join(self._cachedir, "etc", "pacman.conf"))
-        res = self._pacman("-S", "--print", "--print-format", r'{"url": "%l", "version": "%v", "name": "%n"},',
-                           "--sysroot", self._cachedir, *packages)
+        res = self._pacman(
+            "-S",
+            "--print",
+            "--print-format",
+            r'{"url": "%l", "version": "%v", "name": "%n"},',
+            "--sysroot",
+            self._cachedir,
+            *packages,
+        )
         res = "[" + res.strip().rstrip(",") + "]"
         data = json.loads(res)
         packages = []
@@ -590,7 +592,7 @@ LocalFileSigLevel = Optional
             pkginfo = self._pacman("-Sii", "--sysroot", self._cachedir, pkg["name"])
             pkgdata = self.parse_pkg_info(pkginfo)
             p = PkgInfo(
-                "sha256:"+pkgdata["SHA-256 Sum"],
+                "sha256:" + pkgdata["SHA-256 Sum"],
                 pkg["name"],
                 pkg["version"],
                 pkgdata["Architecture"],
@@ -606,6 +608,7 @@ LocalFileSigLevel = Optional
         def parse_line(l):
             k, v = l.split(":", maxsplit=1)
             return k.strip(), v.strip()
+
         return dict([parse_line(line) for line in lines if ":" in line])
 
 
@@ -674,10 +677,22 @@ class DepSolver:
         url = None
         url_keys = ["baseurl", "metalink", "mirrorlist"]
         skip_keys = ["id", "secrets"]
-        supported = ["baseurl", "metalink", "mirrorlist",
-                     "enabled", "metadata_expire", "gpgcheck", "username", "password", "priority",
-                     "sslverify", "sslcacert", "sslclientkey", "sslclientcert",
-                     "skip_if_unavailable"]
+        supported = [
+            "baseurl",
+            "metalink",
+            "mirrorlist",
+            "enabled",
+            "metadata_expire",
+            "gpgcheck",
+            "username",
+            "password",
+            "priority",
+            "sslverify",
+            "sslcacert",
+            "sslclientkey",
+            "sslclientcert",
+            "skip_if_unavailable",
+        ]
 
         for key in desc.keys():
             if key in skip_keys:
@@ -747,8 +762,7 @@ class DepSolver:
         return deps
 
 
-class DepSolverFactory():
-
+class DepSolverFactory:
     def __init__(self, cachedir, persistdir):
         self._cachedir = cachedir
         self._persistdir = persistdir
@@ -765,15 +779,17 @@ class DepSolverFactory():
 
 
 class Partition:
-    def __init__(self,
-                 uid: str = None,
-                 pttype: str = None,
-                 start: int = None,
-                 size: int = None,
-                 bootable: bool = False,
-                 name: str = None,
-                 uuid: str = None,
-                 attrs: List[int] = None):
+    def __init__(
+        self,
+        uid: str = None,
+        pttype: str = None,
+        start: int = None,
+        size: int = None,
+        bootable: bool = False,
+        name: str = None,
+        uuid: str = None,
+        attrs: List[int] = None,
+    ):
         self.id = uid
         self.type = pttype
         self.start = start
@@ -794,14 +810,16 @@ class Partition:
 
     @classmethod
     def from_dict(cls, js):
-        p = cls(uid=js.get("id"),
-                pttype=js.get("type"),
-                start=js.get("start"),
-                size=js.get("size"),
-                bootable=js.get("bootable"),
-                name=js.get("name"),
-                uuid=js.get("uuid"),
-                attrs=js.get("attrs"))
+        p = cls(
+            uid=js.get("id"),
+            pttype=js.get("type"),
+            start=js.get("start"),
+            size=js.get("size"),
+            bootable=js.get("bootable"),
+            name=js.get("name"),
+            uuid=js.get("uuid"),
+            attrs=js.get("attrs"),
+        )
         return p
 
     def to_dict(self):
@@ -851,11 +869,7 @@ class PartitionTable:
                 if not value:
                     continue
                 if field == "attrs":
-                    resv = {
-                        0: "RequiredPartition",
-                        1: "NoBlockIOProtocol",
-                        2: "LegacyBIOSBootable"
-                    }
+                    resv = {0: "RequiredPartition", 1: "NoBlockIOProtocol", 2: "LegacyBIOSBootable"}
                     attrs = []
                     for bit in value:
                         if bit in resv:
@@ -868,20 +882,14 @@ class PartitionTable:
                 fields += ["bootable"]
             command += "\n" + ", ".join(fields)
 
-        subprocess.run(["sfdisk", "-q", "--no-tell-kernel", target],
-                       input=command,
-                       encoding='utf-8',
-                       check=True)
+        subprocess.run(["sfdisk", "-q", "--no-tell-kernel", target], input=command, encoding="utf-8", check=True)
 
         if sync:
             self.update_from(target)
 
     def update_from(self, target):
         """Update and fill in missing information from disk"""
-        r = subprocess.run(["sfdisk", "--json", target],
-                           stdout=subprocess.PIPE,
-                           encoding='utf-8',
-                           check=True)
+        r = subprocess.run(["sfdisk", "--json", target], stdout=subprocess.PIPE, encoding="utf-8", check=True)
         disk_table = json.loads(r.stdout)["partitiontable"]
         disk_parts = disk_table["partitions"]
 
@@ -912,9 +920,7 @@ class PartitionTable:
 
         data["label"] = self.label
 
-        data["partitions"] = [
-            pt.to_dict() for pt in self.partitions
-        ]
+        data["partitions"] = [pt.to_dict() for pt in self.partitions]
 
         return json.dumps(data, indent=2)
 
@@ -954,16 +960,16 @@ class ManifestFile:
                 data = yaml_load_ordered(f)
             except yaml.YAMLError as err:
                 prob = ""
-                if hasattr(err, 'problem_mark'):
+                if hasattr(err, "problem_mark"):
                     mark = err.problem_mark
                     prob = f": {err.problem} at line {mark.line+1} (col {mark.column+1})"
-                print(f"Invalid yaml in \"{path}\"{prob}")
+                print(f'Invalid yaml in "{path}"{prob}')
                 sys.exit(1)
         else:
             try:
                 data = json_load_ordered(f)
             except json.decoder.JSONDecodeError as err:
-                print(f"Invalid json in \"{path}\": {err.msg} at line {err.lineno} (col {err.colno})")
+                print(f'Invalid json in "{path}": {err.msg} at line {err.lineno} (col {err.colno})')
                 sys.exit(1)
 
         version = int(data.get("version", "1"))
@@ -1083,10 +1089,7 @@ class ManifestFile:
             pkginfos[name] = dep
 
             if dep.secrets:
-                data = {
-                    "url": url,
-                    "secrets": {"name": dep.secrets}
-                }
+                data = {"url": url, "secrets": {"name": dep.secrets}}
             else:
                 data = url
 
@@ -1197,7 +1200,7 @@ class ManifestFile:
 
             # pylint: disable=eval-used  # yolo this is fine!
             # Note, we copy local_vars here to avoid eval modifying it
-            res = eval(f'f\'\'\'{format_string}\'\'\'', dict(local_vars))
+            res = eval(f"f'''{format_string}'''", dict(local_vars))
 
             if res_type == "int":
                 res = int(res)
@@ -1436,7 +1439,6 @@ class ManifestFileV2(ManifestFile):
             refs[checksum] = {}
 
     def _process_embed_files(self, stage):
-
         class Embedded(collections.namedtuple("Embedded", ["id", "checksum"])):
             def __str__(self):
                 return self.checksum
@@ -1474,10 +1476,7 @@ class ManifestFileV2(ManifestFile):
                 encoded = base64.b64encode(data).decode("utf-8")
                 source = element_enter(self.sources, "org.osbuild.inline", {})
                 items = element_enter(source, "items", {})
-                items[digest] = {
-                    "encoding": "base64",
-                    "data": encoded
-                }
+                items[digest] = {"encoding": "base64", "data": encoded}
 
             refs = element_enter(ip, "references", {})
             refs[digest] = mpp.get("options", {})
@@ -1547,19 +1546,13 @@ class ManifestFileV2(ManifestFile):
                 }
             }
 
-            refs[image_id] = {
-                "name": name
-            }
+            refs[image_id] = {"name": name}
 
             if index:
                 manifest_lists.append(main_manifest.digest)
                 container_index_source = element_enter(self.sources, "org.osbuild.skopeo-index", {})
                 index_items = element_enter(container_index_source, "items", {})
-                index_items[main_manifest.digest] = {
-                    "image": {
-                        "name": source
-                    }
-                }
+                index_items[main_manifest.digest] = {"image": {"name": source}}
 
         # if we collected manifest lists, create the manifest-lists input array for the stage
         if manifest_lists:
@@ -1581,7 +1574,8 @@ def main():
         help="Path to package cache-directory to use",
     )
     parser.add_argument(
-        "-I", "--import-dir",
+        "-I",
+        "--import-dir",
         dest="searchdirs",
         default=[],
         action="append",
@@ -1590,15 +1584,11 @@ def main():
     parser.add_argument(
         "--sort-keys",
         dest="sort_keys",
-        action='store_true',
+        action="store_true",
         help="Sort keys in generated json",
     )
     parser.add_argument(
-        "-D", "--define",
-        default=[],
-        dest="vars",
-        action='append',
-        help="Set/Override variable, format is key=Json"
+        "-D", "--define", default=[], dest="vars", action="append", help="Set/Override variable, format is key=Json"
     )
     parser.add_argument(
         "src",
@@ -1613,9 +1603,7 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
 
-    defaults = {
-        "arch": rpm.expandMacro("%{_arch}")
-    }
+    defaults = {"arch": rpm.expandMacro("%{_arch}")}
 
     # Override variables from the main of imported files
     overrides = {}

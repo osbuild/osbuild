@@ -25,13 +25,9 @@ SCHEMA = """
 
 
 def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    args = list(args) + [f"--{k}={v}" for k, v in kwargs.items()]
     print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
+    subprocess.run(["ostree"] + args, encoding="utf8", stdout=sys.stderr, input=_input, check=True)
 
 
 def main(tree, options):
@@ -42,8 +38,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["options"])
     sys.exit(r)

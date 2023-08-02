@@ -56,7 +56,7 @@ def parse_blsfile(blsfile):
     params = {}
     with open(blsfile, "r", encoding="utf8") as bls:
         for line in bls:
-            key, value = line.split(' ', 1)
+            key, value = line.split(" ", 1)
             params[key] = value.strip()
     return params
 
@@ -95,20 +95,32 @@ def main(paths, devices, options):
 
     kernel, initrd, kopts = find_kernel(root, kver)
 
-    subprocess.run(["/usr/sbin/zipl",
-                    "--verbose",
-                    "--target", f"{root}/boot",
-                    "--image", kernel,
-                    "--ramdisk", initrd,
-                    "--parameters", kopts,
-                    "--targetbase", device,
-                    "--targettype", "SCSI",
-                    "--targetblocksize", str(blocksize),
-                    "--targetoffset", str(location)],
-                   check=True)
+    subprocess.run(
+        [
+            "/usr/sbin/zipl",
+            "--verbose",
+            "--target",
+            f"{root}/boot",
+            "--image",
+            kernel,
+            "--ramdisk",
+            initrd,
+            "--parameters",
+            kopts,
+            "--targetbase",
+            device,
+            "--targettype",
+            "SCSI",
+            "--targetblocksize",
+            str(blocksize),
+            "--targetoffset",
+            str(location),
+        ],
+        check=True,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["paths"], args["devices"], args["options"])
     sys.exit(r)

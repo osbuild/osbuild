@@ -69,13 +69,9 @@ SCHEMA = """
 
 
 def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    args = list(args) + [f"--{k}={v}" for k, v in kwargs.items()]
     print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf-8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
+    subprocess.run(["ostree"] + args, encoding="utf-8", stdout=sys.stderr, input=_input, check=True)
 
 
 def checkout(checksums, cache, output):
@@ -87,8 +83,7 @@ def checkout(checksums, cache, output):
 
         dest = os.path.join(output, commit)
 
-        ostree("checkout", commit, dest,
-               repo=repo_cache)
+        ostree("checkout", commit, dest, repo=repo_cache)
 
         refs.append(commit)
 
@@ -96,7 +91,6 @@ def checkout(checksums, cache, output):
 
 
 class OSTreeCheckoutInput(inputs.InputService):
-
     def map(self, store, origin, refs, target, _options):
 
         ids = []
@@ -112,12 +106,7 @@ class OSTreeCheckoutInput(inputs.InputService):
             source = store.source("org.osbuild.ostree")
             ids = checkout(refs, source, target)
 
-        reply = {
-            "path": target,
-            "data": {
-                "refs": {i: {"path": i} for i in ids}
-            }
-        }
+        reply = {"path": target, "data": {"refs": {i: {"path": i} for i in ids}}}
 
         return reply
 
@@ -127,5 +116,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

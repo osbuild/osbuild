@@ -107,11 +107,7 @@ def main(tree, options):
     html_report = config.get("html_report", HTML_REPORT)
 
     # run openscap in chroot on the image tree
-    cmd = [
-        "/usr/sbin/chroot", tree,
-        "/usr/bin/oscap", "xccdf", "eval",
-        "--remediate", "--profile", profile
-    ]
+    cmd = ["/usr/sbin/chroot", tree, "/usr/bin/oscap", "xccdf", "eval", "--remediate", "--profile", profile]
 
     if data_dir is not None:
         os.makedirs(f"{tree}/{data_dir.lstrip('/')}", exist_ok=True)

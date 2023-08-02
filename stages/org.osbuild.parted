@@ -71,13 +71,15 @@ SCHEMA_2 = r"""
 
 
 class Partition:
-    def __init__(self,
-                 pttype: str = None,
-                 start: int = None,
-                 size: int = None,
-                 bootable: bool = False,
-                 name: str = None,
-                 uuid: str = None):
+    def __init__(
+        self,
+        pttype: str = None,
+        start: int = None,
+        size: int = None,
+        bootable: bool = False,
+        name: str = None,
+        uuid: str = None,
+    ):
         self.type = pttype
         self.start = start
         self.size = size
@@ -96,12 +98,14 @@ class Partition:
 
     @classmethod
     def from_json(cls, js) -> "Partition":
-        p = cls(pttype=js.get("type"),
-                start=js.get("start"),
-                size=js.get("size"),
-                bootable=js.get("bootable"),
-                name=js.get("name"),
-                uuid=js.get("uuid"))
+        p = cls(
+            pttype=js.get("type"),
+            start=js.get("start"),
+            size=js.get("size"),
+            bootable=js.get("bootable"),
+            name=js.get("name"),
+            uuid=js.get("uuid"),
+        )
         return p
 
 
@@ -117,32 +121,21 @@ class PartitionTable:
     def write_to(self, target):
         """Write the partition table to disk"""
         # generate the command for parted to create the table
-        commands = [
-            "unit", "s",
-            "mklabel", self.label
-        ]
+        commands = ["unit", "s", "mklabel", self.label]
 
         for i, p in enumerate(self.partitions):
 
-            commands += [
-                "mkpart", f'"{p.name}"', str(p.start), str(p.start + p.size - 1)
-            ]
+            commands += ["mkpart", f'"{p.name}"', str(p.start), str(p.start + p.size - 1)]
 
             if p.bootable:
-                commands += ["set", str(i+1), "boot", "on"]
+                commands += ["set", str(i + 1), "boot", "on"]
 
             if p.type:
-                commands += ["set", str(i+1), p.type, "on"]
+                commands += ["set", str(i + 1), p.type, "on"]
 
-        subprocess.run(["parted", "-a", "none", "-s",
-                        target, "--"] + commands,
-                       encoding='utf8',
-                       check=True)
+        subprocess.run(["parted", "-a", "none", "-s", target, "--"] + commands, encoding="utf8", check=True)
 
-        subprocess.run(["parted", "-a", "none", "-s",
-                        target, "--", "print"],
-                       encoding='utf8',
-                       check=True)
+        subprocess.run(["parted", "-a", "none", "-s", target, "--", "print"], encoding="utf8", check=True)
 
 
 def main(devices, options):
@@ -157,7 +150,7 @@ def main(devices, options):
     pt.write_to(device)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

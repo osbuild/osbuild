@@ -84,14 +84,16 @@ class SkopeoIndexSource(sources.SourceService):
             if not tls_verify:
                 extra_args.append("--src-tls-verify=false")
 
-            subprocess.run(["skopeo", "copy", "--multi-arch=index-only", *extra_args, source, destination],
-                           encoding="utf-8", check=True)
+            subprocess.run(
+                ["skopeo", "copy", "--multi-arch=index-only", *extra_args, source, destination],
+                encoding="utf-8",
+                check=True,
+            )
 
             # Verify that the digest supplied downloaded a manifest-list.
             res = subprocess.check_output(["skopeo", "inspect", "--raw", destination])
             if not containers.is_manifest_list(json.loads(res)):
-                raise RuntimeError(
-                    f"{imagename}@{digest} is not a manifest-list")
+                raise RuntimeError(f"{imagename}@{digest} is not a manifest-list")
 
             # use skopeo to calculate the checksum instead of our verify utility to make sure it's computed properly for
             # all types of manifests and handles any potential future changes to the way it's calculated
@@ -113,5 +115,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

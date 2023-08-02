@@ -151,17 +151,11 @@ def main(tree, inputs, options) -> int:
             print(f"skipping {name}")
             continue
 
-        argv += [
-            "--add-section", f".{name}={path}",
-            "--change-section-vma", f".{name}={offset}"
-        ]
+        argv += ["--add-section", f".{name}={path}", "--change-section-vma", f".{name}={offset}"]
 
         offset = align(offset + os.stat(path).st_size)
 
-    argv += [
-        stub,
-        os.path.join(tree, filename.lstrip("/"))
-    ]
+    argv += [stub, os.path.join(tree, filename.lstrip("/"))]
 
     print(argv)
 
@@ -170,7 +164,7 @@ def main(tree, inputs, options) -> int:
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["inputs"], args["options"])
     sys.exit(r)

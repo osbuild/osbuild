@@ -44,18 +44,14 @@ def test_from_host_system():
         {
             "url": "https://cdn.redhat.com/8/jws/1.0/risc_v/os/Packages/fishy-fish-1-1.el8.risc_v.rpm",
             "success": True,
-            "key": "2"
+            "key": "2",
         },
         {
             "url": "https://cdn.redhat.com/8/jws/1.0/os/Packages/fishy-fish-1-1.el8.risc_v.rpm",
             "success": False,
-            "key": ""
+            "key": "",
         },
-        {
-            "url": "https://cdn.redhat.com/1.0/x86_64/os/Packages/aaa.rpm",
-            "success": True,
-            "key": "1"
-        },
+        {"url": "https://cdn.redhat.com/1.0/x86_64/os/Packages/aaa.rpm", "success": True, "key": "1"},
     ]
     for test_case in rpm_url_cases:
         try:

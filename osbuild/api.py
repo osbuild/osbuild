@@ -13,9 +13,7 @@ from typing import ClassVar, Dict, Optional
 from .util import jsoncomm
 from .util.types import PathLike
 
-__all__ = [
-    "API"
-]
+__all__ = ["API"]
 
 
 class BaseAPI(abc.ABC):
@@ -148,7 +146,7 @@ class API(BaseAPI):
         }
 
     def _message(self, msg, fds, sock):
-        if msg["method"] == 'exception':
+        if msg["method"] == "exception":
             self._get_exception(msg)
 
 
@@ -159,14 +157,7 @@ def exception(e, path="/run/osbuild/api/osbuild"):
         with io.StringIO() as out:
             traceback.print_tb(e.__traceback__, file=out)
             stacktrace = out.getvalue()
-        msg = {
-            "method": "exception",
-            "exception": {
-                "type": type(e).__name__,
-                "value": str(e),
-                "traceback": stacktrace
-            }
-        }
+        msg = {"method": "exception", "exception": {"type": type(e).__name__, "value": str(e), "traceback": stacktrace}}
         client.send(msg)
 
     sys.exit(2)

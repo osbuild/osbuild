@@ -94,67 +94,42 @@ def main(inputs, output_dir, options):
     isohybrid = options.get("isohybridmbr")
     isolevel = options.get("isolevel")
 
-    cmd = [
-        "/usr/bin/xorrisofs",
-        "-verbose"
-    ]
+    cmd = ["/usr/bin/xorrisofs", "-verbose"]
 
     if isolevel:
-        cmd += [
-            "-iso-level", str(isolevel)
-        ]
+        cmd += ["-iso-level", str(isolevel)]
 
-    cmd += [
-        "-V", vol_id
-    ]
+    cmd += ["-V", vol_id]
 
     if sys_id:
-        cmd += [
-            "-sysid", sys_id
-        ]
+        cmd += ["-sysid", sys_id]
 
     if isohybrid:
         cmd += [
-            "-isohybrid-mbr", isohybrid,
+            "-isohybrid-mbr",
+            isohybrid,
         ]
 
     if boot:
         image = boot["image"]
         catalog = boot["catalog"]
-        cmd += [
-            "-b", image,
-            "-c", catalog,
-            "-boot-load-size", "4",
-            "-boot-info-table",
-            "-no-emul-boot"
-        ]
+        cmd += ["-b", image, "-c", catalog, "-boot-load-size", "4", "-boot-info-table", "-no-emul-boot"]
 
-    cmd += [
-        "-rock", "-joliet"
-    ]
+    cmd += ["-rock", "-joliet"]
 
     if efi:
-        cmd += [
-            "-eltorito-alt-boot",
-            "-e", efi,
-            "-no-emul-boot"
-        ]
+        cmd += ["-eltorito-alt-boot", "-e", efi, "-no-emul-boot"]
 
         if isohybrid:
             cmd += ["-isohybrid-gpt-basdat"]
 
-    cmd += [
-        '-o', os.path.join(output_dir, filename),
-        tree
-    ]
+    cmd += ["-o", os.path.join(output_dir, filename), tree]
 
     print(cmd)
     subprocess.run(cmd, check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
-    ret = main(args["inputs"],
-               args["tree"],
-               args["options"])
+    ret = main(args["inputs"], args["tree"], args["options"])
     sys.exit(ret)

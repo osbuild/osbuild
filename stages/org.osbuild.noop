@@ -35,7 +35,7 @@ def main(_tree, inputs, options):
         print(f"Not doing anything with Input '{name}'", json.dumps(desc))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args.get("inputs", {}), args.get("options", {}))
     sys.exit(r)

@@ -140,11 +140,7 @@ SCHEMA = r"""
 def grub2_partition_id(label):
     """grub2 partition identifier for the partition table"""
 
-    label2grub = {
-        "mbr": "msdos",
-        "dos": "msdos",
-        "gpt": "gpt"
-    }
+    label2grub = {"mbr": "msdos", "dos": "msdos", "gpt": "gpt"}
 
     if label not in label2grub:
         raise ValueError(f"Unknown partition type: {label}")
@@ -164,9 +160,7 @@ def patch_bios_boot(image_f, location, sector_size):
     image_f.write(struct.pack("<Q", location + 1))
 
 
-def write_boot_image(boot_f: BinaryIO,
-                     image_f: BinaryIO,
-                     core_location: int):
+def write_boot_image(boot_f: BinaryIO, image_f: BinaryIO, core_location: int):
     """Write the boot image (grub2 stage 1) to the MBR"""
 
     # The boot.img file is 512 bytes, but we must only copy the first 440
@@ -181,7 +175,7 @@ def write_boot_image(boot_f: BinaryIO,
     # latter can find the former. To exact location is
     # taken from grub2's "boot.S":
     #  GRUB_BOOT_MACHINE_KERNEL_SECTOR 0x5c (= 92)
-    image_f.seek(0x5c)
+    image_f.seek(0x5C)
     image_f.write(struct.pack("<Q", core_location))
 
 
@@ -198,7 +192,11 @@ def write_core_image(core_f, image_f, location, sector_size):
     shutil.copyfileobj(core_f, image_f)
 
 
-def core_mkimage(platform: str, prefix: str, options: Dict,):
+def core_mkimage(
+    platform: str,
+    prefix: str,
+    options: Dict,
+):
     pt_label = options["partlabel"]
     fs_type = options["filesystem"]
 
@@ -234,15 +232,24 @@ def core_mkimage(platform: str, prefix: str, options: Dict,):
         raise ValueError(f"unknown boot filesystem type: '{fs_type}'")
 
     # now created the core image
-    subprocess.run([options.get("binary", "grub2-mkimage"),
-                    "--verbose",
-                    "--directory", f"/usr/lib/grub/{platform}",
-                    "--prefix", prefix,
-                    "--format", platform,
-                    "--compression", "auto",
-                    "--output", core_path] +
-                   modules,
-                   check=True)
+    subprocess.run(
+        [
+            options.get("binary", "grub2-mkimage"),
+            "--verbose",
+            "--directory",
+            f"/usr/lib/grub/{platform}",
+            "--prefix",
+            prefix,
+            "--format",
+            platform,
+            "--compression",
+            "auto",
+            "--output",
+            core_path,
+        ]
+        + modules,
+        check=True,
+    )
 
     return core_path
 
@@ -299,7 +306,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

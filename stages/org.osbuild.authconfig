@@ -23,10 +23,7 @@ SCHEMA = """
 
 
 def main(tree):
-    cmd = [
-        "/usr/sbin/chroot", tree,
-        "/usr/sbin/authconfig", "--nostart",  "--updateall"
-    ]
+    cmd = ["/usr/sbin/chroot", tree, "/usr/sbin/authconfig", "--nostart", "--updateall"]
 
     subprocess.run(cmd, check=True)
 
@@ -35,7 +32,7 @@ def main(tree):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"])
     sys.exit(r)

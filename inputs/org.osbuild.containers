@@ -159,7 +159,6 @@ SCHEMA = r"""
 
 
 class ContainersInput(inputs.InputService):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mg = MountGuard()
@@ -183,8 +182,7 @@ class ContainersInput(inputs.InputService):
         store.read_tree_at(ref, target)
 
         # Find the archive file in target, we use the first alphabetical regular file
-        files = sorted(filter(lambda f: os.path.isfile(os.path.join(target, f)),
-                              os.listdir(target)))
+        files = sorted(filter(lambda f: os.path.isfile(os.path.join(target, f)), os.listdir(target)))
         if len(files) == 0:
             raise RuntimeError("No archive files in source")
 
@@ -200,18 +198,10 @@ class ContainersInput(inputs.InputService):
             else:
                 ref, container_format = self.map_pipeline_ref(store, ref, target)
 
-            images[ref] = {
-                "format": container_format,
-                "name": data["name"]
-            }
+            images[ref] = {"format": container_format, "name": data["name"]}
             images[ref]["name"] = data["name"]
 
-        reply = {
-            "path": target,
-            "data": {
-                "archives": images
-            }
-        }
+        reply = {"path": target, "data": {"archives": images}}
         return reply
 
     def unmap(self):
@@ -223,5 +213,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

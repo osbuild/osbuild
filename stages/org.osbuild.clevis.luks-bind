@@ -52,25 +52,15 @@ def main(devices, options):
     policy = options["policy"]
     pin = options["pin"]
 
-    command = [
-        "clevis",
-        "luks",
-        "bind",
-        "-k-",
-        "-y",
-        "-f",
-        "-d", path, pin, policy
-    ]
+    command = ["clevis", "luks", "bind", "-k-", "-y", "-f", "-d", path, pin, policy]
 
     # The null|sss pin need this
     os.symlink("/proc/self/fd", "/dev/fd")
 
-    subprocess.run(command,
-                   encoding='utf8', check=True,
-                   input=passphrase)
+    subprocess.run(command, encoding="utf8", check=True, input=passphrase)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

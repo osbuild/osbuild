@@ -112,46 +112,37 @@ def main(tree, options):
     # The options below are "lokkit" compatibility options and can not be used
     # with other options.
     if ports or enabled_services or disabled_services:
-        subprocess.run(["chroot",
-                        tree,
-                        "firewall-offline-cmd"] +
-                       list(map(lambda x: f"--port={x}", ports)) +
-                       list(map(lambda x: f"--service={x}", enabled_services)) +
-                       list(map(lambda x: f"--remove-service={x}", disabled_services)),
-                       check=True)
+        subprocess.run(
+            ["chroot", tree, "firewall-offline-cmd"]
+            + list(map(lambda x: f"--port={x}", ports))
+            + list(map(lambda x: f"--service={x}", enabled_services))
+            + list(map(lambda x: f"--remove-service={x}", disabled_services)),
+            check=True,
+        )
 
     for zone_item in zones:
         # specifying an empty zone flag results in the source being applied to
         # the default zone
-        zone_name = zone_item['name']
+        zone_name = zone_item["name"]
         # check that the given zone exists, if not create it
         if zone_name != "":
-            res = subprocess.run(["chroot",
-                                  tree,
-                                  "firewall-offline-cmd",
-                                  f"--info-zone={zone_name}"],
-                                 check=False)
+            res = subprocess.run(["chroot", tree, "firewall-offline-cmd", f"--info-zone={zone_name}"], check=False)
             # INVALID_ZONE error code
             if res.returncode == 112:
-                res = subprocess.run(["chroot",
-                                      tree,
-                                      "firewall-offline-cmd",
-                                      f"--new-zone={zone_name}"],
-                                     check=False)
+                res = subprocess.run(["chroot", tree, "firewall-offline-cmd", f"--new-zone={zone_name}"], check=False)
             if res.returncode != 0:
                 return 1
         if zone_item.get("sources", []):
-            subprocess.run(["chroot",
-                            tree,
-                            "firewall-offline-cmd", f"--zone={zone_name}"] +
-                           list(map(lambda x: f"--add-source={x}",
-                                    zone_item['sources'])),
-                           check=True)
+            subprocess.run(
+                ["chroot", tree, "firewall-offline-cmd", f"--zone={zone_name}"]
+                + list(map(lambda x: f"--add-source={x}", zone_item["sources"])),
+                check=True,
+            )
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

@@ -130,19 +130,22 @@ class CurlSource(sources.SourceService):
                 curl_command = [
                     "curl",
                     "--silent",
-                    "--speed-limit", "1000",
-                    "--connect-timeout", "30",
+                    "--speed-limit",
+                    "1000",
+                    "--connect-timeout",
+                    "30",
                     "--fail",
                     "--location",
-                    "--output", checksum,
+                    "--output",
+                    checksum,
                 ]
                 if secrets:
-                    if secrets.get('ssl_ca_cert'):
-                        curl_command.extend(["--cacert", secrets.get('ssl_ca_cert')])
-                    if secrets.get('ssl_client_cert'):
-                        curl_command.extend(["--cert", secrets.get('ssl_client_cert')])
-                    if secrets.get('ssl_client_key'):
-                        curl_command.extend(["--key", secrets.get('ssl_client_key')])
+                    if secrets.get("ssl_ca_cert"):
+                        curl_command.extend(["--cacert", secrets.get("ssl_ca_cert")])
+                    if secrets.get("ssl_client_cert"):
+                        curl_command.extend(["--cert", secrets.get("ssl_client_cert")])
+                    if secrets.get("ssl_client_key"):
+                        curl_command.extend(["--key", secrets.get("ssl_client_key")])
 
                 if insecure:
                     curl_command.append("--insecure")
@@ -174,5 +177,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

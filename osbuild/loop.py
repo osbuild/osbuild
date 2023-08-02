@@ -9,11 +9,7 @@ from typing import Callable, Optional
 
 from .util import linux
 
-__all__ = [
-    "Loop",
-    "LoopControl",
-    "UnexpectedDevice"
-]
+__all__ = ["Loop", "LoopControl", "UnexpectedDevice"]
 
 
 class UnexpectedDevice(Exception):
@@ -26,19 +22,19 @@ class UnexpectedDevice(Exception):
 
 class LoopInfo(ctypes.Structure):
     _fields_ = [
-        ('lo_device', ctypes.c_uint64),
-        ('lo_inode', ctypes.c_uint64),
-        ('lo_rdevice', ctypes.c_uint64),
-        ('lo_offset', ctypes.c_uint64),
-        ('lo_sizelimit', ctypes.c_uint64),
-        ('lo_number', ctypes.c_uint32),
-        ('lo_encrypt_type', ctypes.c_uint32),
-        ('lo_encrypt_key_size', ctypes.c_uint32),
-        ('lo_flags', ctypes.c_uint32),
-        ('lo_file_name', ctypes.c_uint8 * 64),
-        ('lo_crypt_name', ctypes.c_uint8 * 64),
-        ('lo_encrypt_key', ctypes.c_uint8 * 32),
-        ('lo_init', ctypes.c_uint64 * 2)
+        ("lo_device", ctypes.c_uint64),
+        ("lo_inode", ctypes.c_uint64),
+        ("lo_rdevice", ctypes.c_uint64),
+        ("lo_offset", ctypes.c_uint64),
+        ("lo_sizelimit", ctypes.c_uint64),
+        ("lo_number", ctypes.c_uint32),
+        ("lo_encrypt_type", ctypes.c_uint32),
+        ("lo_encrypt_key_size", ctypes.c_uint32),
+        ("lo_flags", ctypes.c_uint32),
+        ("lo_file_name", ctypes.c_uint8 * 64),
+        ("lo_crypt_name", ctypes.c_uint8 * 64),
+        ("lo_encrypt_key", ctypes.c_uint8 * 32),
+        ("lo_init", ctypes.c_uint64 * 2),
     ]
 
     @property
@@ -48,16 +44,15 @@ class LoopInfo(ctypes.Structure):
 
     def is_bound_to(self, info: os.stat_result) -> bool:
         """Return if the loop device is bound to the file `info`"""
-        return (self.lo_device == info.st_dev and
-                self.lo_inode == info.st_ino)
+        return self.lo_device == info.st_dev and self.lo_inode == info.st_ino
 
 
 class LoopConfig(ctypes.Structure):
     _fields_ = [
-        ('fd', ctypes.c_uint32),
-        ('block_size', ctypes.c_uint32),
-        ('info', LoopInfo),
-        ('__reserved', ctypes.c_uint64*8),
+        ("fd", ctypes.c_uint32),
+        ("block_size", ctypes.c_uint32),
+        ("info", LoopInfo),
+        ("__reserved", ctypes.c_uint64 * 8),
     ]
 
 
@@ -128,9 +123,11 @@ class Loop:
             self.fd = os.open(self.devname, os.O_RDWR, dir_fd=dir_fd)
 
         info = os.stat(self.fd)
-        if ((not stat.S_ISBLK(info.st_mode)) or
-                (not os.major(info.st_rdev) == self.LOOP_MAJOR) or
-                (not os.minor(info.st_rdev) == minor)):
+        if (
+            (not stat.S_ISBLK(info.st_mode))
+            or (not os.major(info.st_rdev) == self.LOOP_MAJOR)
+            or (not os.minor(info.st_rdev) == minor)
+        ):
             raise UnexpectedDevice(minor, info.st_rdev, info.st_mode)
 
     def __del__(self):
@@ -491,10 +488,12 @@ class Loop:
             Access mode on the created device node (0o600 is default)
         """
 
-        os.mknod(self.devname,
-                 mode=(stat.S_IMODE(mode) | stat.S_IFBLK),
-                 device=os.makedev(self.LOOP_MAJOR, self.minor),
-                 dir_fd=dir_fd)
+        os.mknod(
+            self.devname,
+            mode=(stat.S_IMODE(mode) | stat.S_IFBLK),
+            device=os.makedev(self.LOOP_MAJOR, self.minor),
+            dir_fd=dir_fd,
+        )
 
 
 class LoopControl:
@@ -612,11 +611,7 @@ class LoopControl:
         self._check_open()
         return fcntl.ioctl(self.fd, self.LOOP_CTL_GET_FREE)
 
-    def loop_for_fd(self,
-                    fd: int,
-                    lock: bool = False,
-                    setup: Optional[Callable[[Loop], None]] = None,
-                    **kwargs):
+    def loop_for_fd(self, fd: int, lock: bool = False, setup: Optional[Callable[[Loop], None]] = None, **kwargs):
         """
         Get or create an unbound loopback device and bind it to an fd
 

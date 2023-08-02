@@ -40,16 +40,11 @@ def main(inputs, tree, _options):
 
     for filename, _ in keys.items():
         path = os.path.join(basepath, filename)
-        subprocess.run([
-            "rpmkeys",
-            "--verbose",
-            "--root", tree,
-            "--import", path
-        ], check=True)
+        subprocess.run(["rpmkeys", "--verbose", "--root", tree, "--import", path], check=True)
         print(f"imported key '{filename}'")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"], args["options"])
     sys.exit(r)

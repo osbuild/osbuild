@@ -102,8 +102,10 @@ def main(inputs, output_dir, options):
         "--auto-compress",
         f"--format={tarfmt}",
         *extra_args,
-        "-cf", os.path.join(output_dir, filename),
-        "-C", tree,
+        "-cf",
+        os.path.join(output_dir, filename),
+        "-C",
+        tree,
     ]
 
     # Should we include the root inode or not
@@ -115,17 +117,12 @@ def main(inputs, output_dir, options):
         tar_cmd += os.listdir(tree)
 
     # Make a tarball of the tree.
-    subprocess.run(
-        tar_cmd,
-        stdout=subprocess.DEVNULL,
-        check=True,
-        env=tar_env
-    )
+    subprocess.run(tar_cmd, stdout=subprocess.DEVNULL, check=True, env=tar_env)
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"], args["options"])
     sys.exit(r)

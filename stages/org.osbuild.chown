@@ -85,10 +85,7 @@ def main(tree, options):
 
         # run the chown command in the chroot to ensure that it can
         # set user and group that exist in the tree
-        cmd = [
-            "/usr/sbin/chroot", tree,
-            "chown", *arguments
-        ]
+        cmd = ["/usr/sbin/chroot", tree, "chown", *arguments]
 
         subprocess.run(cmd, check=True)
 

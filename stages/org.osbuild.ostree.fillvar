@@ -44,21 +44,20 @@ def populate_var(sysroot):
     # [1] pyanaconda/payload/rpmostreepayload.py
     # [2] ignition-ostree-populate-var.sh
 
-    for target in ('lib', 'log'):
+    for target in ("lib", "log"):
         os.makedirs(f"{sysroot}/var/{target}", exist_ok=True)
 
-    for target in ('home', 'roothome', 'lib/rpm', 'opt', 'srv',
-                   'usrlocal', 'mnt', 'media', 'spool', 'spool/mail'):
+    for target in ("home", "roothome", "lib/rpm", "opt", "srv", "usrlocal", "mnt", "media", "spool", "spool/mail"):
 
         if os.path.exists(f"{sysroot}/var/{target}"):
             continue
 
-        res = subprocess.run(["systemd-tmpfiles", "--create", "--boot",
-                              "--root=" + sysroot,
-                              "--prefix=/var/" + target],
-                             encoding="utf8",
-                             stdout=sys.stderr,
-                             check=False)
+        res = subprocess.run(
+            ["systemd-tmpfiles", "--create", "--boot", "--root=" + sysroot, "--prefix=/var/" + target],
+            encoding="utf8",
+            stdout=sys.stderr,
+            check=False,
+        )
 
         # According to systemd-tmpfiles(8), the return values are:
         #  0 → success
@@ -83,8 +82,7 @@ def main(tree, options):
         populate_var(deployment)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["options"])
     sys.exit(r)

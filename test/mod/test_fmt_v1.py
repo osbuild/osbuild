@@ -21,59 +21,35 @@ BASIC_PIPELINE = {
     "sources": {
         "org.osbuild.files": {
             "urls": {
-                "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4":
-                "https://internet/curl-7.69.1-1.fc32.x86_64.rpm",
+                "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4": "https://internet/curl-7.69.1-1.fc32.x86_64.rpm",
             }
         },
         "org.osbuild.ostree": {
             "commits": {
                 "439911411ce7868a7b058c2a660e421991eb2df10e2bdce1fa559bd4390105d1": {
-                    "remote": {
-                        "url": "file:///repo",
-                        "gpgkeys": ["data"]
-                    }
+                    "remote": {"url": "file:///repo", "gpgkeys": ["data"]}
                 }
             }
-        }
+        },
     },
     "pipeline": {
         "build": {
             "pipeline": {
                 "build": {
-                    "pipeline": {
-                        "stages": [
-                            {
-                                "name": "org.osbuild.noop",
-                                "options": {"zero": 0}
-                            }
-                        ]
-                    },
-                    "runner": "org.osbuild.linux"
+                    "pipeline": {"stages": [{"name": "org.osbuild.noop", "options": {"zero": 0}}]},
+                    "runner": "org.osbuild.linux",
                 },
-                "stages": [
-                    {
-                        "name": "org.osbuild.noop",
-                        "options": {"one": 1}
-                    }
-                ]
+                "stages": [{"name": "org.osbuild.noop", "options": {"one": 1}}],
             },
-            "runner": "org.osbuild.linux"
+            "runner": "org.osbuild.linux",
         },
-        "stages": [
-            {
-                "name": "org.osbuild.noop",
-                "options": {"one": 2}
-            }
-        ],
-        "assembler": {
-            "name": "org.osbuild.noop"
-        }
-    }
+        "stages": [{"name": "org.osbuild.noop", "options": {"one": 2}}],
+        "assembler": {"name": "org.osbuild.noop"},
+    },
 }
 
 
 class TestFormatV1(unittest.TestCase):
-
     @staticmethod
     def build_manifest(manifest: osbuild.pipeline.Manifest, tmpdir: str):
         """Build a manifest and return the result"""
@@ -92,13 +68,7 @@ class TestFormatV1(unittest.TestCase):
 
         index = osbuild.meta.Index(os.curdir)
 
-        cases = [
-            {},
-            {"assembler": None},
-            {"stages": []},
-            {"build": {}},
-            {"build": None}
-        ]
+        cases = [{}, {"assembler": None}, {"stages": []}, {"build": {}}, {"build": None}]
 
         for pipeline in cases:
             manifest = {"pipeline": pipeline}
@@ -185,24 +155,13 @@ class TestFormatV1(unittest.TestCase):
         self.assertEqual(info.version, "1")
         self.assertEqual(info.module, fmt)
 
-    #pylint: disable=too-many-statements
+    # pylint: disable=too-many-statements
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_format_output(self):
         """Test that output formatting is as expected"""
         index = osbuild.meta.Index(os.curdir)
 
-        description = {
-            "pipeline": {
-                "stages": [
-                    {
-                        "name": "org.osbuild.noop"
-                    },
-                    {
-                        "name": "org.osbuild.error"
-                    }
-                ]
-            }
-        }
+        description = {"pipeline": {"stages": [{"name": "org.osbuild.noop"}, {"name": "org.osbuild.error"}]}}
 
         manifest = fmt.load(description, index)
         self.assertIsNotNone(manifest)
@@ -226,19 +185,9 @@ class TestFormatV1(unittest.TestCase):
         description = {
             "pipeline": {
                 "build": {
-                    "pipeline": {
-                        "stages": [
-                            {
-                                "name": "org.osbuild.error"
-                            }
-                        ]
-                    },
+                    "pipeline": {"stages": [{"name": "org.osbuild.error"}]},
                     "runner": "org.osbuild.linux",
-                    "stages": [
-                        {
-                            "name": "org.osbuild.noop"
-                        }
-                    ]
+                    "stages": [{"name": "org.osbuild.noop"}],
                 }
             }
         }
@@ -263,13 +212,9 @@ class TestFormatV1(unittest.TestCase):
         description = {
             "pipeline": {
                 "stages": [
-                    {
-                        "name": "org.osbuild.noop"
-                    },
+                    {"name": "org.osbuild.noop"},
                 ],
-                "assembler": {
-                    "name": "org.osbuild.error"
-                }
+                "assembler": {"name": "org.osbuild.error"},
             }
         }
 
@@ -295,13 +240,9 @@ class TestFormatV1(unittest.TestCase):
         description = {
             "pipeline": {
                 "stages": [
-                    {
-                        "name": "org.osbuild.noop"
-                    },
+                    {"name": "org.osbuild.noop"},
                 ],
-                "assembler": {
-                    "name": "org.osbuild.noop"
-                }
+                "assembler": {"name": "org.osbuild.noop"},
             }
         }
 
@@ -336,14 +277,7 @@ class TestFormatV1(unittest.TestCase):
         self.assertEqual(res.valid, True)
 
         # something totally invalid (by Ondřej Budai)
-        totally_invalid = {
-            "osbuild": {
-                "state": "awesome",
-                "but": {
-                    "input-validation": 1
-                }
-            }
-        }
+        totally_invalid = {"osbuild": {"state": "awesome", "but": {"input-validation": 1}}}
 
         res = fmt.validate(totally_invalid, index)
         self.assertEqual(res.valid, False)
@@ -351,13 +285,7 @@ class TestFormatV1(unittest.TestCase):
         self.assertEqual(len(res), 1)
 
         # This is missing the runner
-        no_runner = {
-            "pipeline": {
-                "build": {
-                    "pipeline": {}
-                }
-            }
-        }
+        no_runner = {"pipeline": {"build": {"pipeline": {}}}}
 
         res = fmt.validate(no_runner, index)
         self.assertEqual(res.valid, False)
@@ -374,12 +302,9 @@ class TestFormatV1(unittest.TestCase):
                 "build": {  # missing runner
                     "pipeline": {
                         "extra": True,  # should not be there
-                        "stages": [{
-                            "name": "org.osbuild.chrony",
-                            "options": {
-                                "timeservers": "string"  # should be an array
-                            }
-                        }]
+                        "stages": [
+                            {"name": "org.osbuild.chrony", "options": {"timeservers": "string"}}  # should be an array
+                        ],
                     }
                 }
             }
@@ -396,16 +321,18 @@ class TestFormatV1(unittest.TestCase):
         # stage issues
         stage_check = {
             "pipeline": {
-                "stages": [{
-                    "name": "org.osbuild.grub2",
-                    "options": {
-                        "uefi": {
-                            "install": False,
-                            # missing "vendor"
+                "stages": [
+                    {
+                        "name": "org.osbuild.grub2",
+                        "options": {
+                            "uefi": {
+                                "install": False,
+                                # missing "vendor"
+                            },
+                            # missing rootfs or root_fs_uuid
                         },
-                        # missing rootfs or root_fs_uuid
                     }
-                }]
+                ]
             }
         }
 
@@ -417,16 +344,7 @@ class TestFormatV1(unittest.TestCase):
         lst = res[".pipeline.stages[0].options.uefi"]
         self.assertEqual(len(lst), 1)  # missing "osname"
 
-        assembler_check = {
-            "pipeline": {
-                "assembler": {
-                    "name": "org.osbuild.tar",
-                    "options": {
-                        "compression": "foobar"
-                    }
-                }
-            }
-        }
+        assembler_check = {"pipeline": {"assembler": {"name": "org.osbuild.tar", "options": {"compression": "foobar"}}}}
 
         res = fmt.validate(assembler_check, index)
         self.assertEqual(res.valid, False)

@@ -43,9 +43,7 @@ def sequoia():
     # re-enabling SHA1 support with rpm (so we can cross-build CentOS-Stream-9
     # images).
     os.makedirs("/etc/crypto-policies", exist_ok=True)
-    shutil.copytree(
-        "/usr/share/crypto-policies/back-ends/DEFAULT", "/etc/crypto-policies/back-ends"
-    )
+    shutil.copytree("/usr/share/crypto-policies/back-ends/DEFAULT", "/etc/crypto-policies/back-ends")
 
 
 if __name__ == "__main__":

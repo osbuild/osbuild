@@ -104,15 +104,12 @@ SCHEMA = """
 MEDIA_TYPES = {
     "layer": "application/vnd.oci.image.layer.v1.tar",
     "manifest": "application/vnd.oci.image.manifest.v1+json",
-    "config": "application/vnd.oci.image.config.v1+json"
+    "config": "application/vnd.oci.image.config.v1+json",
 }
 
 
 def sha256sum(path: str) -> str:
-    ret = subprocess.run(["sha256sum", path],
-                         stdout=subprocess.PIPE,
-                         encoding="utf8",
-                         check=True)
+    ret = subprocess.run(["sha256sum", path], stdout=subprocess.PIPE, encoding="utf8", check=True)
 
     return ret.stdout.strip().split(" ")[0]
 
@@ -122,11 +119,7 @@ def blobs_add_file(blobs: str, path: str, mtype: str):
     size = os.stat(path).st_size
 
     os.rename(path, os.path.join(blobs, digest))
-    info = {
-        "digest": "sha256:" + digest,
-        "size": size,
-        "mediaType": MEDIA_TYPES[mtype]
-    }
+    info = {"digest": "sha256:" + digest, "size": size, "mediaType": MEDIA_TYPES[mtype]}
 
     print(f"blobs: +{mtype} ({size}, {digest})")
     return info
@@ -150,24 +143,20 @@ def blobs_add_layer(blobs: str, tree: str):
         "--no-selinux",
         "--acls",
         "--xattrs",
-        "-cf", layer_file,
-        "-C", tree,
+        "-cf",
+        layer_file,
+        "-C",
+        tree,
     ] + os.listdir(tree)
 
     print("creating layer")
-    subprocess.run(command,
-                   stdout=subprocess.DEVNULL,
-                   check=True)
+    subprocess.run(command, stdout=subprocess.DEVNULL, check=True)
 
     digest = "sha256:" + sha256sum(layer_file)
 
     print("compressing layer")
     suffix = ".compressed"
-    subprocess.run([compression,
-                    "-S", suffix,
-                    layer_file],
-                   stdout=subprocess.DEVNULL,
-                   check=True)
+    subprocess.run([compression, "-S", suffix, layer_file], stdout=subprocess.DEVNULL, check=True)
 
     layer_file += suffix
 
@@ -181,10 +170,7 @@ def config_from_options(options):
     command = options.get("Cmd", ["sh"])
     env = options.get("Env", ["PATH=" + DEFAULT_PATH])
 
-    config = {
-        "Env": env,
-        "Cmd": command
-    }
+    config = {"Env": env, "Cmd": command}
 
     for name in ["Entrypoint", "User", "Labels", "StopSignal", "WorkingDir"]:
         item = options.get(name)
@@ -208,22 +194,12 @@ def create_oci_dir(tree, output_dir, options):
         "architecture": architecture,
         "os": "linux",
         "config": config_from_options(options["config"]),
-        "rootfs": {
-            "type": "layers",
-            "diff_ids": []
-        }
+        "rootfs": {"type": "layers", "diff_ids": []},
     }
 
-    manifest = {
-        "schemaVersion": 2,
-        "config": None,
-        "layers": []
-    }
+    manifest = {"schemaVersion": 2, "config": None, "layers": []}
 
-    index = {
-        "schemaVersion": 2,
-        "manifests": []
-    }
+    index = {"schemaVersion": 2, "manifests": []}
 
     blobs = os.path.join(output_dir, "blobs", "sha256")
     os.makedirs(blobs)
@@ -265,17 +241,16 @@ def main(tree, output_dir, options):
         command = [
             "tar",
             "--remove-files",
-            "-cf", os.path.join(output_dir, filename),
+            "-cf",
+            os.path.join(output_dir, filename),
             f"--directory={workdir}",
         ] + os.listdir(workdir)
 
         print("creating final archive")
-        subprocess.run(command,
-                       stdout=subprocess.DEVNULL,
-                       check=True)
+        subprocess.run(command, stdout=subprocess.DEVNULL, check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     args_input = args["inputs"]["tree"]["path"]
     args_output = args["tree"]

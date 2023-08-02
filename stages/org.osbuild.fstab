@@ -154,7 +154,7 @@ def main(tree, options):
             f.write(f"{fs_spec}\t{path}\t{vfs_type}\t{options}\t{freq}\t{passno}\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

@@ -59,8 +59,7 @@ def test_runner_fail(tempdir):
 
     logfile = os.path.join(tempdir, "log.txt")
 
-    with BuildRoot("/", runner, libdir, var) as root, \
-            open(logfile, "w", encoding="utf8") as log:
+    with BuildRoot("/", runner, libdir, var) as root, open(logfile, "w", encoding="utf8") as log:
 
         monitor = LogMonitor(log.fileno())
 
@@ -108,16 +107,12 @@ def test_bind_mounts(tempdir, runner):
 
         ro_binds = [f"{scripts}:/scripts"]
 
-        cmd = ["/scripts/mount_flags.py",
-               "/scripts",
-               "ro"]
+        cmd = ["/scripts/mount_flags.py", "/scripts", "ro"]
 
         r = root.run(cmd, monitor, readonly_binds=ro_binds)
         assert r.returncode == 0
 
-        cmd = ["/scripts/mount_flags.py",
-               "/rw-data",
-               "ro"]
+        cmd = ["/scripts/mount_flags.py", "/rw-data", "ro"]
 
         binds = [f"{rw_data}:/rw-data"]
         r = root.run(cmd, monitor, binds=binds, readonly_binds=ro_binds)
@@ -143,9 +138,7 @@ def test_selinuxfs_ro(tempdir, runner):
 
         ro_binds = [f"{scripts}:/scripts"]
 
-        cmd = ["/scripts/mount_flags.py",
-               "/sys/fs/selinux",
-               "ro"]
+        cmd = ["/scripts/mount_flags.py", "/sys/fs/selinux", "ro"]
 
         r = root.run(cmd, monitor, readonly_binds=ro_binds)
         assert r.returncode == 0
@@ -214,7 +207,7 @@ def test_env_isolation(tempdir, runner):
     have = dict(map(lambda x: x.split("=", 1), data.split("\n")))
 
     allowed = [
-        "_",      # added by `env` itself
+        "_",  # added by `env` itself
         "container",
         "LC_CTYPE",
         "PATH",

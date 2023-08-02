@@ -58,13 +58,11 @@ def test_ioctl_toggle_immutable(tmpdir):
         assert not linux.ioctl_get_immutable(f.fileno())
 
         # This time, check that we actually set the same flag as `chattr`.
-        subprocess.run(["chattr", "+i",
-                        f"{tmpdir}/immutable"], check=True)
+        subprocess.run(["chattr", "+i", f"{tmpdir}/immutable"], check=True)
         assert linux.ioctl_get_immutable(f.fileno())
 
         # Same for clearing it.
-        subprocess.run(["chattr", "-i",
-                        f"{tmpdir}/immutable"], check=True)
+        subprocess.run(["chattr", "-i", f"{tmpdir}/immutable"], check=True)
         assert not linux.ioctl_get_immutable(f.fileno())
 
         # Verify we can unlink the file again, once the flag is cleared.

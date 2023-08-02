@@ -151,7 +151,7 @@ def main(args, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _args = osbuild.api.arguments()
     r = main(_args, _args["options"])
     sys.exit(r)

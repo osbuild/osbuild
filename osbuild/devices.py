@@ -79,9 +79,7 @@ class DeviceManager:
             # global options
             "dev": self.devpath,
             "tree": os.fspath(self.tree),
-
             "parent": parent,
-
             # per device options
             "options": dev.options,
         }
@@ -124,10 +122,7 @@ class DeviceService(host.Service):
 
     def dispatch(self, method: str, args, _fds):
         if method == "open":
-            r = self.open(args["dev"],
-                          args["parent"],
-                          args["tree"],
-                          args["options"])
+            r = self.open(args["dev"], args["parent"], args["tree"], args["options"])
             return r, None
         if method == "close":
             r = self.close()

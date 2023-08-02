@@ -12,29 +12,29 @@ from .. import test
 
 @pytest.fixture(name="jsondata", scope="module")
 def jsondata_fixture():
-    return json.dumps({
-        "version": "2",
-        "pipelines": [
-            {
-                "name": "noop",
-                "stages": [
-                    {
-                        "type": "org.osbuild.noop",
-                        "options": {"zero": 0},
-                        "inputs": {
-                            "tree": {
-                                "type": "org.osbuild.noop",
-                                "origin": "org.osbuild.pipeline",
-                                "references": {
-                                    "foo": {}
+    return json.dumps(
+        {
+            "version": "2",
+            "pipelines": [
+                {
+                    "name": "noop",
+                    "stages": [
+                        {
+                            "type": "org.osbuild.noop",
+                            "options": {"zero": 0},
+                            "inputs": {
+                                "tree": {
+                                    "type": "org.osbuild.noop",
+                                    "origin": "org.osbuild.pipeline",
+                                    "references": {"foo": {}},
                                 }
-                            }
+                            },
                         }
-                    }
-                ]
-            }
-        ]
-    })
+                    ],
+                }
+            ],
+        }
+    )
 
 
 @pytest.fixture(name="tmpdir", scope="module")
@@ -47,6 +47,7 @@ def tmpdir_fixture():
 def osbuild_fixture():
     with test.OSBuild() as osb:
         yield osb
+
 
 #
 # Run a noop Pipeline. Run twice to verify the cache does not affect

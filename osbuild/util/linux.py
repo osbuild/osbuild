@@ -74,7 +74,7 @@ def ioctl_get_immutable(fd: int):
     if not isinstance(fd, int) or fd < 0:
         raise ValueError()
 
-    flags = array.array('L', [0])
+    flags = array.array("L", [0])
     fcntl.ioctl(fd, FS_IOC_GETFLAGS, flags, True)
     return bool(flags[0] & FS_IMMUTABLE_FL)
 
@@ -101,7 +101,7 @@ def ioctl_toggle_immutable(fd: int, set_to: bool):
     if not isinstance(fd, int) or fd < 0:
         raise ValueError()
 
-    flags = array.array('L', [0])
+    flags = array.array("L", [0])
     fcntl.ioctl(fd, FS_IOC_GETFLAGS, flags, True)
     if set_to:
         flags[0] |= FS_IMMUTABLE_FL
@@ -151,7 +151,10 @@ class LibCap:
         self._get_bound = get_bound
 
         from_name = lib.cap_from_name
-        from_name.argtypes = (ctypes.c_char_p, ctypes.POINTER(self.cap_value_t),)
+        from_name.argtypes = (
+            ctypes.c_char_p,
+            ctypes.POINTER(self.cap_value_t),
+        )
         from_name.restype = ctypes.c_int
         from_name.errcheck = self._check_result  # type: ignore
         self._from_name = from_name
@@ -254,11 +257,7 @@ def cap_bound_set() -> set:
     if not lib:
         return set()
 
-    res = set(
-        lib.to_name(cap)
-        for cap in range(lib.last_cap() + 1)
-        if lib.get_bound(cap)
-    )
+    res = set(lib.to_name(cap) for cap in range(lib.last_cap() + 1) if lib.get_bound(cap))
 
     return res
 
@@ -276,9 +275,7 @@ def cap_mask_to_set(mask: int) -> set:
             count += 1
             n >>= 1
 
-    res = {
-        lib.to_name(cap) for cap in bits(mask)
-    }
+    res = {lib.to_name(cap) for cap in bits(mask)}
 
     return res
 
@@ -409,7 +406,7 @@ def fcntl_flock(fd: int, lock_type: int, wait: bool = False):
     #     }
     #
 
-    type_flock64 = struct.Struct('=HHIQQII')
+    type_flock64 = struct.Struct("=HHIQQII")
     arg_flock64 = type_flock64.pack(lock_type, 0, 0, 0, 0, 0, 0)
 
     #
@@ -516,6 +513,6 @@ def proc_boot_id(appid: str):
     # From the result, we throw away everything but the lower 128bits and then
     # turn it into a UUID version 4 variant 1.
     h = bytearray(hmac.new(content.encode(), appid.encode(), hashlib.sha256).digest())  # type: ignore
-    h[6] = (h[6] & 0x0f) | 0x40  # mark as version 4
-    h[8] = (h[6] & 0x3f) | 0x80  # mark as variant 1
+    h[6] = (h[6] & 0x0F) | 0x40  # mark as version 4
+    h[8] = (h[6] & 0x3F) | 0x80  # mark as variant 1
     return uuid.UUID(bytes=bytes(h[0:16]))

@@ -39,11 +39,7 @@ def test_loopback_basic(tmpdir):
 
     testfile = os.path.join(tmpdir, "test.img")
 
-    options = {
-        "filename": "image.img",
-        "start": 0,
-        "size": size // 512  # size is in sectors / blocks
-    }
+    options = {"filename": "image.img", "start": 0, "size": size // 512}  # size is in sectors / blocks
 
     dev = devices.Device("loop", info, None, options)
 

@@ -56,13 +56,13 @@ def test_pathlike(tmpdir):
     dir_str: str = os.fspath(tmpdir)
     cache1 = fscache.FsCache("osbuild-test-appid", dir_str)
     assert os.fspath(cache1) == tmpdir
-    assert os.path.join(cache1, "foobar") == os.path.join(tmpdir,  "foobar")
+    assert os.path.join(cache1, "foobar") == os.path.join(tmpdir, "foobar")
 
     # Test with a wrapper-type as argument
     dir_pathlike: Wrapper = Wrapper(os.fspath(tmpdir))
     cache2 = fscache.FsCache("osbuild-test-appid", dir_pathlike)
     assert os.fspath(cache2) == tmpdir
-    assert os.path.join(cache2, "foobar") == os.path.join(tmpdir,  "foobar")
+    assert os.path.join(cache2, "foobar") == os.path.join(tmpdir, "foobar")
 
 
 def test_path(tmpdir):
@@ -147,10 +147,10 @@ def test_atomic_file(tmpdir):
         # Combining `replace` and `ignore_exist` is not allowed.
         with pytest.raises(AssertionError):
             with cache._atomic_file(
-                    os.path.join(rpath_store, "file"),
-                    rpath_store,
-                    replace=True,
-                    ignore_exist=True,
+                os.path.join(rpath_store, "file"),
+                rpath_store,
+                replace=True,
+                ignore_exist=True,
             ) as f:
                 pass
 
@@ -235,41 +235,49 @@ def test_cache_info(tmpdir):
         cache.info = fscache.FsCacheInfo(maximum_size=1024)
         assert cache.info.maximum_size == 1024
         assert cache.info.creation_boot_id is None
-        cache.info = fscache.FsCacheInfo(creation_boot_id="0"*32)
+        cache.info = fscache.FsCacheInfo(creation_boot_id="0" * 32)
         assert cache.info.maximum_size == 1024
-        assert cache.info.creation_boot_id == "0"*32
-        cache.info = fscache.FsCacheInfo(maximum_size=2048, creation_boot_id="1"*32)
+        assert cache.info.creation_boot_id == "0" * 32
+        cache.info = fscache.FsCacheInfo(maximum_size=2048, creation_boot_id="1" * 32)
         assert cache.info.maximum_size == 2048
-        assert cache.info.creation_boot_id == "1"*32
+        assert cache.info.creation_boot_id == "1" * 32
 
     assert not fscache.FsCacheInfo().to_json()
-    assert fscache.FsCacheInfo(creation_boot_id="0"*32).to_json() == {
-        "creation-boot-id": "0"*32,
+    assert fscache.FsCacheInfo(creation_boot_id="0" * 32).to_json() == {
+        "creation-boot-id": "0" * 32,
     }
-    assert fscache.FsCacheInfo(creation_boot_id="0"*32, maximum_size=1024).to_json() == {
-        "creation-boot-id": "0"*32,
+    assert fscache.FsCacheInfo(creation_boot_id="0" * 32, maximum_size=1024).to_json() == {
+        "creation-boot-id": "0" * 32,
         "maximum-size": 1024,
     }
 
     assert fscache.FsCacheInfo.from_json({}) == fscache.FsCacheInfo()
     assert fscache.FsCacheInfo.from_json(None) == fscache.FsCacheInfo()
     assert fscache.FsCacheInfo.from_json("foobar") == fscache.FsCacheInfo()
-    assert fscache.FsCacheInfo.from_json({
-        "creation-boot-id": "0"*32,
-    }) == fscache.FsCacheInfo(creation_boot_id="0"*32)
-    assert fscache.FsCacheInfo.from_json({
-        "creation-boot-id": "0"*32,
-        "maximum-size": 1024,
-    }) == fscache.FsCacheInfo(creation_boot_id="0"*32, maximum_size=1024)
-    assert fscache.FsCacheInfo.from_json({
-        "creation-boot-id": "0"*32,
-        "maximum-size": 1024,
-    }) == fscache.FsCacheInfo(creation_boot_id="0"*32, maximum_size=1024)
-    assert fscache.FsCacheInfo.from_json({
-        "creation-boot-id": "0"*32,
-        "unknown0": "foobar",
-        "unknown1": ["foo", "bar"],
-    }) == fscache.FsCacheInfo(creation_boot_id="0"*32)
+    assert fscache.FsCacheInfo.from_json(
+        {
+            "creation-boot-id": "0" * 32,
+        }
+    ) == fscache.FsCacheInfo(creation_boot_id="0" * 32)
+    assert fscache.FsCacheInfo.from_json(
+        {
+            "creation-boot-id": "0" * 32,
+            "maximum-size": 1024,
+        }
+    ) == fscache.FsCacheInfo(creation_boot_id="0" * 32, maximum_size=1024)
+    assert fscache.FsCacheInfo.from_json(
+        {
+            "creation-boot-id": "0" * 32,
+            "maximum-size": 1024,
+        }
+    ) == fscache.FsCacheInfo(creation_boot_id="0" * 32, maximum_size=1024)
+    assert fscache.FsCacheInfo.from_json(
+        {
+            "creation-boot-id": "0" * 32,
+            "unknown0": "foobar",
+            "unknown1": ["foo", "bar"],
+        }
+    ) == fscache.FsCacheInfo(creation_boot_id="0" * 32)
 
 
 def test_store(tmpdir):
@@ -317,7 +325,7 @@ def test_store_tree(tmpdir):
         cache.store_tree("foobar", "invalid/dir")
 
     with cache:
-        cache.info = cache.info._replace(maximum_size=1024*1024*1024)
+        cache.info = cache.info._replace(maximum_size=1024 * 1024 * 1024)
 
         with pytest.raises(ValueError):
             cache.store_tree("", "invalid/dir")

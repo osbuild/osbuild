@@ -14,20 +14,13 @@ MS_NOSUID = 2
 MS_NODEV = 4
 MS_NOEXEC = 8
 
-KNOWN_FLAGS = {
-    "ro": MS_RDONLY,
-    "nosuid": MS_NOSUID,
-    "nodev": MS_NODEV,
-    "noexec": MS_NOEXEC
-}
+KNOWN_FLAGS = {"ro": MS_RDONLY, "nosuid": MS_NOSUID, "nodev": MS_NODEV, "noexec": MS_NOEXEC}
 
 
 def main():
     parser = argparse.ArgumentParser(description="Check for mount flags")
-    parser.add_argument("path", metavar="PATH",
-                        help="path for the file-system to check for read-only status")
-    parser.add_argument("flags", metavar="FLAGS",
-                        help="comma separated list of flags to check for")
+    parser.add_argument("path", metavar="PATH", help="path for the file-system to check for read-only status")
+    parser.add_argument("flags", metavar="FLAGS", help="comma separated list of flags to check for")
     args = parser.parse_args(sys.argv[1:])
 
     want = 0

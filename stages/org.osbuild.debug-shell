@@ -58,13 +58,14 @@ UnsetEnvironment=LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETAR
     with open(f"{tree}/etc/systemd/system/osbuild-debug-shell.service", "w", encoding="utf8") as f:
         f.write(unit)
 
-    os.symlink("../osbuild-debug-shell.service",
-               f"{tree}/etc/systemd/system/sysinit.target.wants/osbuild-debug-shell.service")
+    os.symlink(
+        "../osbuild-debug-shell.service", f"{tree}/etc/systemd/system/sysinit.target.wants/osbuild-debug-shell.service"
+    )
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

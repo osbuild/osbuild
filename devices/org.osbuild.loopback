@@ -58,7 +58,6 @@ SCHEMA = """
 
 
 class LoopbackService(devices.DeviceService):
-
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
         self.ctl = loop.LoopControl()
@@ -78,12 +77,9 @@ class LoopbackService(devices.DeviceService):
         else:
             sizelimit *= self.sector_size
 
-        lo = self.ctl.loop_for_fd(fd, lock=lock,
-                                  setup=self.setup_loop,
-                                  offset=offset,
-                                  sizelimit=sizelimit,
-                                  partscan=False,
-                                  autoclear=True)
+        lo = self.ctl.loop_for_fd(
+            fd, lock=lock, setup=self.setup_loop, offset=offset, sizelimit=sizelimit, partscan=False, autoclear=True
+        )
 
         return lo
 
@@ -119,7 +115,7 @@ class LoopbackService(devices.DeviceService):
             "node": {
                 "major": self.lo.LOOP_MAJOR,
                 "minor": self.lo.minor,
-            }
+            },
         }
 
         return res
@@ -158,5 +154,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -23,11 +23,9 @@ from .. import initrd, test
 
 
 def have_sfdisk_with_json():
-    r = subprocess.run(["sfdisk", "--version"],
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE,
-                       encoding="utf8",
-                       check=False)
+    r = subprocess.run(
+        ["sfdisk", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf8", check=False
+    )
 
     if r.returncode != 0:
         return False
@@ -60,8 +58,7 @@ def make_stage_tests(klass):
     for t in glob.glob(f"{path}/*/diff.json"):
         test_path = os.path.dirname(t)
         test_name = os.path.basename(test_path).replace("-", "_")
-        setattr(klass, f"test_{test_name}",
-                lambda s, path=test_path: s.run_stage_diff_test(path))
+        setattr(klass, f"test_{test_name}", lambda s, path=test_path: s.run_stage_diff_test(path))
     return klass
 
 
@@ -99,7 +96,6 @@ def mapping_is_subset(subset, other):
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
 @make_stage_tests
 class TestStages(test.TestBase):
-
     def assertTreeDiffsEqual(self, tree_diff1, tree_diff2):
         """
         Asserts two tree diffs for equality.
@@ -131,7 +127,7 @@ class TestStages(test.TestBase):
         tree_diff2 = _sorted_tree(tree_diff2)
 
         def raise_assertion(msg):
-            diff = '\n'.join(
+            diff = "\n".join(
                 difflib.ndiff(
                     pprint.pformat(tree_diff1).splitlines(),
                     pprint.pformat(tree_diff2).splitlines(),
@@ -139,14 +135,15 @@ class TestStages(test.TestBase):
             )
             raise AssertionError(f"{msg}\n\n{diff}")
 
-        self.assertEqual(tree_diff1['added_files'], tree_diff2['added_files'])
-        self.assertEqual(tree_diff1['deleted_files'], tree_diff2['deleted_files'])
+        self.assertEqual(tree_diff1["added_files"], tree_diff2["added_files"])
+        self.assertEqual(tree_diff1["deleted_files"], tree_diff2["deleted_files"])
 
-        if len(tree_diff1['differences']) != len(tree_diff2['differences']):
-            raise_assertion('length of differences different')
+        if len(tree_diff1["differences"]) != len(tree_diff2["differences"]):
+            raise_assertion("length of differences different")
 
-        for (file1, differences1), (file2, differences2) in \
-                zip(tree_diff1['differences'].items(), tree_diff2['differences'].items()):
+        for (file1, differences1), (file2, differences2) in zip(
+            tree_diff1["differences"].items(), tree_diff2["differences"].items()
+        ):
 
             if file1 != file2:
                 raise_assertion(f"filename different: {file1}, {file2}")
@@ -154,19 +151,24 @@ class TestStages(test.TestBase):
             if len(differences1) != len(differences2):
                 raise_assertion("length of file differences different")
 
-            for (difference1_kind, difference1_values), (difference2_kind, difference2_values) in \
-                    zip(differences1.items(), differences2.items()):
+            for (difference1_kind, difference1_values), (difference2_kind, difference2_values) in zip(
+                differences1.items(), differences2.items()
+            ):
                 if difference1_kind != difference2_kind:
                     raise_assertion(f"different difference kinds: {difference1_kind}, {difference2_kind}")
 
-                if difference1_values[0] is not None \
-                        and difference2_values[0] is not None \
-                        and difference1_values[0] != difference2_values[0]:
+                if (
+                    difference1_values[0] is not None
+                    and difference2_values[0] is not None
+                    and difference1_values[0] != difference2_values[0]
+                ):
                     raise_assertion(f"before values are different: {difference1_values[0]}, {difference2_values[0]}")
 
-                if difference1_values[1] is not None \
-                        and difference2_values[1] is not None \
-                        and difference1_values[1] != difference2_values[1]:
+                if (
+                    difference1_values[1] is not None
+                    and difference2_values[1] is not None
+                    and difference1_values[1] != difference2_values[1]
+                ):
                     raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
 
     def assertMetadata(self, metadata: Dict, result: Dict):
@@ -184,8 +186,7 @@ class TestStages(test.TestBase):
                 self.fail(f"stage {stageid} not found in results:\n{js}\n")
             have = stage["metadata"]
             if have != want:
-                diff = difflib.ndiff(pprint.pformat(have).splitlines(),
-                                     pprint.pformat(want).splitlines())
+                diff = difflib.ndiff(pprint.pformat(have).splitlines(), pprint.pformat(want).splitlines())
                 txt = "\n".join(diff)
                 path = f"/tmp/osbuild.metadata.{stageid}.json"
                 with open(path, "w", encoding="utf8") as f:
@@ -211,14 +212,14 @@ class TestStages(test.TestBase):
             osb = stack.enter_context(self.osbuild)
 
             out_a = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
-            _ = osb.compile_file(os.path.join(test_dir, "a.json"),
-                                 checkpoints=["tree"],
-                                 exports=["tree"], output_dir=out_a)
+            _ = osb.compile_file(
+                os.path.join(test_dir, "a.json"), checkpoints=["tree"], exports=["tree"], output_dir=out_a
+            )
 
             out_b = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
-            res = osb.compile_file(os.path.join(test_dir, "b.json"),
-                                   checkpoints=["tree"],
-                                   exports=["tree"], output_dir=out_b)
+            res = osb.compile_file(
+                os.path.join(test_dir, "b.json"), checkpoints=["tree"], exports=["tree"], output_dir=out_b
+            )
 
             tree1 = os.path.join(out_a, "tree")
             tree2 = os.path.join(out_b, "tree")
@@ -251,10 +252,7 @@ class TestStages(test.TestBase):
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
-            osb.compile_file(f"{base}/template.json",
-                             checkpoints=["tree"],
-                             exports=["tree"],
-                             output_dir=outdir)
+            osb.compile_file(f"{base}/template.json", checkpoints=["tree"], exports=["tree"], output_dir=outdir)
             tree = os.path.join(outdir, "tree")
 
             for name, want in refs.items():
@@ -284,16 +282,10 @@ class TestStages(test.TestBase):
                 manifest = load_manifest("f34-base.json")
                 with open(t, encoding="utf8") as f:
                     check = json.load(f)
-                manifest["pipeline"]["stages"].append({
-                    "name": "org.osbuild.selinux",
-                    "options": check["options"]
-                })
+                manifest["pipeline"]["stages"].append({"name": "org.osbuild.selinux", "options": check["options"]})
 
                 jsdata = json.dumps(manifest)
-                osb.compile(jsdata,
-                            checkpoints=["tree"],
-                            exports=["tree"],
-                            output_dir=outdir)
+                osb.compile(jsdata, checkpoints=["tree"], exports=["tree"], output_dir=outdir)
                 tree = os.path.join(outdir, "tree")
 
                 for path, want in check["labels"].items():
@@ -314,9 +306,7 @@ class TestStages(test.TestBase):
 
         for image_name, test_data in checks.items():
             with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
-                osb.compile_file(os.path.join(testdir, "qemu.json"),
-                                 exports=[image_name],
-                                 output_dir=outdir)
+                osb.compile_file(os.path.join(testdir, "qemu.json"), exports=[image_name], output_dir=outdir)
 
                 tree = os.path.join(outdir, image_name)
                 ip = os.path.join(tree, image_name)
@@ -324,16 +314,14 @@ class TestStages(test.TestBase):
                 assert os.path.isfile(ip)
 
                 qemu_img_run = subprocess.run(
-                    ["qemu-img", "info", "--output=json", ip],
-                    stdout=subprocess.PIPE,
-                    check=True,
-                    encoding="utf8"
+                    ["qemu-img", "info", "--output=json", ip], stdout=subprocess.PIPE, check=True, encoding="utf8"
                 )
 
                 qemu_img_out = json.loads(qemu_img_run.stdout)
-                self.assertTrue(mapping_is_subset(test_data, qemu_img_out),
-                                ("Test data is not a subset of the qemu-img output: "
-                                f"{test_data} not <= {qemu_img_run.stdout}"))
+                self.assertTrue(
+                    mapping_is_subset(test_data, qemu_img_out),
+                    ("Test data is not a subset of the qemu-img output: " f"{test_data} not <= {qemu_img_run.stdout}"),
+                )
 
                 # cache the downloaded data for the files source
                 osb.copy_source_data(self.store, "org.osbuild.files")
@@ -344,9 +332,7 @@ class TestStages(test.TestBase):
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
-            osb.compile_file(os.path.join(testdir, "tar.json"),
-                             exports=["tree"],
-                             output_dir=outdir)
+            osb.compile_file(os.path.join(testdir, "tar.json"), exports=["tree"], output_dir=outdir)
 
             tree = os.path.join(outdir, "tree")
             tp = os.path.join(tree, "tarfile.tar")
@@ -384,20 +370,21 @@ class TestStages(test.TestBase):
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
-            osb.compile_file(os.path.join(testdir, f"{stage_name}.json"),
-                             checkpoints=["tree"],
-                             exports=["tree"],
-                             output_dir=outdir)
+            osb.compile_file(
+                os.path.join(testdir, f"{stage_name}.json"), checkpoints=["tree"], exports=["tree"], output_dir=outdir
+            )
 
             target = os.path.join(outdir, "tree", imgname)
 
             assert os.path.exists(target)
 
-            r = subprocess.run(["sfdisk", "--json", target],
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE,
-                               encoding="utf8",
-                               check=False)
+            r = subprocess.run(
+                ["sfdisk", "--json", target],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf8",
+                check=False,
+            )
 
             have = json.loads(r.stdout)
 

@@ -16,9 +16,9 @@ def parse_config(config_file: TextIO):
         line = line.strip()
         if not line:
             continue
-        if line.startswith('#'):
+        if line.startswith("#"):
             continue
-        k, v = line.split('=', 1)
+        k, v = line.split("=", 1)
         config[k.strip()] = v.strip()
     return config
 
@@ -29,10 +29,10 @@ def config_get_policy(config: Dict[str, str]):
     Checks if SELinux is enabled and if so returns the
     policy; otherwise `None` is returned.
     """
-    enabled = config.get('SELINUX', 'disabled')
-    if enabled not in ['enforcing', 'permissive']:
+    enabled = config.get("SELINUX", "disabled")
+    if enabled not in ["enforcing", "permissive"]:
         return None
-    return config.get('SELINUXTYPE', None)
+    return config.get("SELINUXTYPE", None)
 
 
 def setfiles(spec_file: str, root: str, *paths):
@@ -45,18 +45,13 @@ def setfiles(spec_file: str, root: str, *paths):
     Uses the setfiles(8) tool to actually set the contexts.
     """
     for path in paths:
-        subprocess.run(["setfiles", "-F",
-                        "-r", root,
-                        spec_file,
-                        f"{root}{path}"],
-                       check=True)
+        subprocess.run(["setfiles", "-F", "-r", root, spec_file, f"{root}{path}"], check=True)
 
 
 def getfilecon(path: str) -> str:
     """Get the security context associated with `path`"""
-    label = os.getxattr(path, XATTR_NAME_SELINUX,
-                        follow_symlinks=False)
-    return label.decode().strip('\n\0')
+    label = os.getxattr(path, XATTR_NAME_SELINUX, follow_symlinks=False)
+    return label.decode().strip("\n\0")
 
 
 def setfilecon(path: str, context: str) -> None:
@@ -68,9 +63,7 @@ def setfilecon(path: str, context: str) -> None:
     """
 
     try:
-        os.setxattr(path, XATTR_NAME_SELINUX,
-                    context.encode(),
-                    follow_symlinks=True)
+        os.setxattr(path, XATTR_NAME_SELINUX, context.encode(), follow_symlinks=True)
     except OSError as err:
         # in case we get a not-supported error, check if
         # the context we want to set is already set and

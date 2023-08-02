@@ -29,7 +29,7 @@ def errcheck(ret, _func, _args):
 
 
 CLONE_NEWNET = 0x40000000
-libc = ctypes.CDLL('libc.so.6', use_errno=True)
+libc = ctypes.CDLL("libc.so.6", use_errno=True)
 libc.setns.errcheck = errcheck
 
 
@@ -89,7 +89,7 @@ def runFileServer(barrier, directory):
                 pass
             return super().guess_type(path)
 
-    httpd = socketserver.TCPServer(('', 80), Handler)
+    httpd = socketserver.TCPServer(("", 80), Handler)
     barrier.wait()
     httpd.serve_forever()
 
@@ -136,7 +136,6 @@ def test_sources(source, case, tmpdir):
 
     src = osbuild.sources.Source(info, items, options)
 
-    with osbuild.objectstore.ObjectStore(tmpdir) as store, \
-            fileServer(test.TestBase.locate_test_data()):
+    with osbuild.objectstore.ObjectStore(tmpdir) as store, fileServer(test.TestBase.locate_test_data()):
         check_case(src, case_options, store, index.path)
         check_case(src, case_options, store, index.path)

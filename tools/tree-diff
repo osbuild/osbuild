@@ -43,7 +43,7 @@ def selinux_diff(path1, path2, path, differences):
 
     if label1 != label2:
         props = differences.setdefault(path, {})
-        props["selinux"] = [label1.strip('\n\0'), label2.strip('\n\0')]
+        props["selinux"] = [label1.strip("\n\0"), label2.strip("\n\0")]
         return False
     return True
 
@@ -100,27 +100,18 @@ def diff_aux(dir_fd1, dir_fd2, path, report):
                 continue
             entries1.add(dirent.name)
             stat1 = dirent.stat(follow_symlinks=False)
-            selinux_diff(os.path.join(f"/proc/self/fd/{dir_fd1}", dirent.name),
-                         os.path.join(f"/proc/self/fd/{dir_fd2}", dirent.name),
-                         os.path.join(path, dirent.name),
-                         report["differences"])
-            if not stat_diff(stat1,
-                             stat2,
-                             os.path.join(path, dirent.name),
-                             report["differences"]):
+            selinux_diff(
+                os.path.join(f"/proc/self/fd/{dir_fd1}", dirent.name),
+                os.path.join(f"/proc/self/fd/{dir_fd2}", dirent.name),
+                os.path.join(path, dirent.name),
+                report["differences"],
+            )
+            if not stat_diff(stat1, stat2, os.path.join(path, dirent.name), report["differences"]):
                 continue
             if dirent.is_symlink():
-                symlink_diff(dirent.name,
-                             dir_fd1,
-                             dir_fd2,
-                             os.path.join(path, dirent.name),
-                             report["differences"])
+                symlink_diff(dirent.name, dir_fd1, dir_fd2, os.path.join(path, dirent.name), report["differences"])
             elif dirent.is_file(follow_symlinks=False):
-                content_diff(dirent.name,
-                             dir_fd1,
-                             dir_fd2,
-                             os.path.join(path, dirent.name),
-                             report["differences"])
+                content_diff(dirent.name, dir_fd1, dir_fd2, os.path.join(path, dirent.name), report["differences"])
             elif dirent.is_dir(follow_symlinks=False):
                 try:
                     child_fd1 = os.open(dirent.name, os.O_DIRECTORY, dir_fd=dir_fd1)
@@ -171,10 +162,8 @@ def list_dir(dir_fd, path, target_list):
 
 def main():
     parser = argparse.ArgumentParser(description="Recursively compare file system trees")
-    parser.add_argument("dir1", metavar="DIRECTORY1",
-                        help="first directory to compare")
-    parser.add_argument("dir2", metavar="DIRECTORY2",
-                        help="second directory to compare")
+    parser.add_argument("dir1", metavar="DIRECTORY1", help="first directory to compare")
+    parser.add_argument("dir2", metavar="DIRECTORY2", help="second directory to compare")
     args = parser.parse_args()
 
     report = {}

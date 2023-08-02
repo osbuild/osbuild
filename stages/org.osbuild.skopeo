@@ -114,8 +114,8 @@ def parse_input(inputs):
 
     if manifest_files:
         raise RuntimeError(
-            "The following manifest lists specified in the input did not match any of the container images: " +
-            ", ".join(manifest_files)
+            "The following manifest lists specified in the input did not match any of the container images: "
+            + ", ".join(manifest_files)
         )
 
     return res
@@ -190,7 +190,7 @@ def main(inputs, output, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"], args["options"])
     sys.exit(r)

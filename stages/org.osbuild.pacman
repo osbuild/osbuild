@@ -51,24 +51,25 @@ def generate_package_metadata(tree):
     for pkg in db.pkgcache:
         epoch = 0
         version = pkg.version
-        pkgver, pkgrel = version.rsplit('-', 2)
-        if ':' in version:
-            epoch, pkgver = pkgver.split(':')
+        pkgver, pkgrel = version.rsplit("-", 2)
+        if ":" in version:
+            epoch, pkgver = pkgver.split(":")
 
-        packages.append({
-            "name": pkg.name,
-            "version": pkgver,
-            "release": pkgrel,
-            "epoch": epoch,
-            "arch": pkg.arch,
-            "sigmd5": "",
-            "sigpgp": "",
-            "siggpg": ""
-        })
+        packages.append(
+            {
+                "name": pkg.name,
+                "version": pkgver,
+                "release": pkgrel,
+                "epoch": epoch,
+                "arch": pkg.arch,
+                "sigmd5": "",
+                "sigpgp": "",
+                "siggpg": "",
+            }
+        )
 
     data = {"packages": packages}
-    data["packages"] = sorted(data["packages"],
-                              key=itemgetter("name"))
+    data["packages"] = sorted(data["packages"], key=itemgetter("name"))
 
     return data
 
@@ -115,9 +116,7 @@ def main(tree, inputs):
             install_pkgs.append(os.path.relpath(plink, start=tree))
             shutil.copy2(os.path.join(pkgpath, p), plink)
 
-        subprocess.run([
-            "pacman", "-U", "--noconfirm", "--verbose", "--sysroot", tree, *install_pkgs
-        ], check=True)
+        subprocess.run(["pacman", "-U", "--noconfirm", "--verbose", "--sysroot", tree, *install_pkgs], check=True)
 
     # remove temporary machine ID if it was created by us
     if not machine_id_set_previously:
@@ -137,7 +136,7 @@ def main(tree, inputs):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = api.arguments()
     r = main(args["tree"], args["inputs"])
     sys.exit(r)

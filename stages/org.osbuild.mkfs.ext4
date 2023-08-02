@@ -64,11 +64,10 @@ def main(devices, options):
         else:
             opts += ["-O", "^verity"]
 
-    subprocess.run(["mkfs.ext4", "-U", uuid] + opts + [device],
-                   encoding='utf8', check=True)
+    subprocess.run(["mkfs.ext4", "-U", uuid] + opts + [device], encoding="utf8", check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

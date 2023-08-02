@@ -50,13 +50,9 @@ SCHEMA_2 = """
 
 
 def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    args = list(args) + [f"--{k}={v}" for k, v in kwargs.items()]
     print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
+    subprocess.run(["ostree"] + args, encoding="utf8", stdout=sys.stderr, input=_input, check=True)
 
 
 def parse_input(inputs):
@@ -79,16 +75,12 @@ def main(tree, inputs, options):
 
         extra_args = []
         if remote:
-            extra_args.append(f'--remote={remote}')
+            extra_args.append(f"--remote={remote}")
 
-        ostree("pull-local", source_repo, ref,
-               *extra_args,
-               repo=target)
+        ostree("pull-local", source_repo, ref, *extra_args, repo=target)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["inputs"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["inputs"], stage_args["options"])
     sys.exit(r)

@@ -8,8 +8,8 @@ def pytest_addoption(parser):
         action="append",
         default=[],
         metavar="FS",
-        help="List of filesystems to treat as unsupported on the system when running test cases." +
-             "Can be specified multiple times.",
+        help="List of filesystems to treat as unsupported on the system when running test cases."
+        + "Can be specified multiple times.",
     )
 
 

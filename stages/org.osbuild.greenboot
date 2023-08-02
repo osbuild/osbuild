@@ -35,9 +35,7 @@ def main(tree, options):
     greenboot_conf = options.get("config", {})
     changes = greenboot_conf.copy()
     config_file = f"{tree}/etc/greenboot/greenboot.conf"
-    key_to_conf = {
-        "GREENBOOT_MONITOR_SERVICES": "monitor_services"
-    }
+    key_to_conf = {"GREENBOOT_MONITOR_SERVICES": "monitor_services"}
 
     # For each of the configured options, find the first non-commented out instance
     # of the option and replace it (if necessary). If it does not already exist, append
@@ -48,7 +46,7 @@ def main(tree, options):
             if line.startswith("#"):
                 sys.stdout.write(line)
                 continue
-            line_list = line.split('=')
+            line_list = line.split("=")
             if len(line_list) != 2:
                 sys.stdout.write(line)
                 continue
@@ -62,21 +60,21 @@ def main(tree, options):
                 sys.stdout.write(line)
                 continue
             if key == "GREENBOOT_MONITOR_SERVICES":
-                svcs = current.strip('\"\n').split(" ")
+                svcs = current.strip('"\n').split(" ")
                 new_svcs = [ns for ns in value if ns not in svcs]
                 new_svcs.extend(svcs)
                 svcs_str = " ".join(new_svcs)
-                sys.stdout.write(f"GREENBOOT_MONITOR_SERVICES=\"{svcs_str}\"\n")
+                sys.stdout.write(f'GREENBOOT_MONITOR_SERVICES="{svcs_str}"\n')
     with open(config_file, "a", encoding="utf8") as f:
         for key, value in changes.items():
             if key == "monitor_services":
                 svcs_str = " ".join(value)
-                f.write(f"GREENBOOT_MONITOR_SERVICES=\"{svcs_str}\"\n")
+                f.write(f'GREENBOOT_MONITOR_SERVICES="{svcs_str}"\n')
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

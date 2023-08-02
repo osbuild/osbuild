@@ -53,11 +53,10 @@ def main(devices, options):
     if label:
         opts = ["-L", label]
 
-    subprocess.run(["mkfs.btrfs", "-U", uuid] + opts + [device],
-                   encoding='utf8', check=True)
+    subprocess.run(["mkfs.btrfs", "-U", uuid] + opts + [device], encoding="utf8", check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

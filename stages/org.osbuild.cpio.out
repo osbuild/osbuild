@@ -118,8 +118,10 @@ def main(inputs, output_dir, options):
         f"--format={outfmt}",
         "--null",
         *extra_args,
-        "-O", os.path.join(output_dir, filename),
-        "-D", tree,
+        "-O",
+        os.path.join(output_dir, filename),
+        "-D",
+        tree,
     ]
 
     files = "\0".join([str(f) for f in iter_files(tree, root_node == "include")])
@@ -133,7 +135,7 @@ def main(inputs, output_dir, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"], args["options"])
     sys.exit(r)

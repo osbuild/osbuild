@@ -31,7 +31,6 @@ class MockStore:
 
 
 class TestDescriptions(unittest.TestCase):
-
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_stage_run(self):
         index = osbuild.meta.Index(os.curdir)
@@ -66,14 +65,10 @@ class TestDescriptions(unittest.TestCase):
         build = manifest.add_pipeline("build", None, None)
         build.add_stage(info, {"option": 1})
 
-        tree = manifest.add_pipeline("tree",
-                                     "org.osbuild.linux",
-                                     build.id)
+        tree = manifest.add_pipeline("tree", "org.osbuild.linux", build.id)
         tree.add_stage(info, {"option": 2})
 
-        assembler = manifest.add_pipeline("assembler",
-                                          "org.osbuild.inux",
-                                          build.id)
+        assembler = manifest.add_pipeline("assembler", "org.osbuild.inux", build.id)
         assembler.add_stage(info, {"option": 3})
 
         self.assertEqual(len(manifest.pipelines), 3)
@@ -137,9 +132,7 @@ class TestDescriptions(unittest.TestCase):
 
         # a pipeline simulating some intermediate artefact
         # that other pipeline need as dependency
-        dep = manifest.add_pipeline("dep",
-                                    runner,
-                                    build.id)
+        dep = manifest.add_pipeline("dep", runner, build.id)
 
         dep.add_stage(noop, {"option": 2})
 
@@ -147,25 +140,19 @@ class TestDescriptions(unittest.TestCase):
         # assembler artefact and thus should normally
         # not be built unless explicitly requested
         # has an input that depends on `dep`
-        ul = manifest.add_pipeline("unlinked",
-                                   runner,
-                                   build.id)
+        ul = manifest.add_pipeline("unlinked", runner, build.id)
 
         stage = ul.add_stage(noop, {"option": 3})
         ip = stage.add_input("dep", noip, "org.osbuild.pipeline")
         ip.add_reference(dep.id)
 
         # the main os root file system
-        rootfs = manifest.add_pipeline("rootfs",
-                                       runner,
-                                       build.id)
+        rootfs = manifest.add_pipeline("rootfs", runner, build.id)
         stage = rootfs.add_stage(noop, {"option": 4})
 
         # the main raw image artefact, depending on "dep" and
         # "rootfs"
-        image = manifest.add_pipeline("image",
-                                      runner,
-                                      build.id)
+        image = manifest.add_pipeline("image", runner, build.id)
 
         stage = image.add_stage(noop, {"option": 5})
         ip = stage.add_input("dep", noip, "org.osbuild.pipeline")
@@ -178,9 +165,7 @@ class TestDescriptions(unittest.TestCase):
         ip.add_reference(rootfs.id)
 
         # some compression of the image, like a qcow2
-        qcow2 = manifest.add_pipeline("qcow2",
-                                      runner,
-                                      build.id)
+        qcow2 = manifest.add_pipeline("qcow2", runner, build.id)
         stage = qcow2.add_stage(noop, {"option": 7})
         ip = stage.add_input("image", noip, "org.osbuild.pipeline")
         ip.add_reference(image.id)

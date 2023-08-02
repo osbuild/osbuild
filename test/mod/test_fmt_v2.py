@@ -15,42 +15,24 @@ BASIC_PIPELINE = {
     "sources": {
         "org.osbuild.curl": {
             "items": {
-                "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4":
-                "https://internet/curl-7.69.1-1.fc32.x86_64.rpm",
+                "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4": "https://internet/curl-7.69.1-1.fc32.x86_64.rpm",
             }
         },
         "org.osbuild.ostree": {
             "items": {
                 "439911411ce7868a7b058c2a660e421991eb2df10e2bdce1fa559bd4390105d1": {
-                    "remote": {
-                        "url": "file:///repo",
-                        "gpgkeys": ["data"]
-                    }
+                    "remote": {"url": "file:///repo", "gpgkeys": ["data"]}
                 }
             }
-        }
+        },
     },
     "pipelines": [
         {
             "name": "build",
             "runner": "org.osbuild.linux",
-            "stages": [
-                {
-                    "type": "org.osbuild.noop",
-                    "options": {"zero": 0}
-                }
-            ]
+            "stages": [{"type": "org.osbuild.noop", "options": {"zero": 0}}],
         },
-        {
-            "name": "tree",
-            "build": "name:build",
-            "stages": [
-                {
-                    "type": "org.osbuild.noop",
-                    "options": {"one": 1}
-                }
-            ]
-        },
+        {"name": "tree", "build": "name:build", "stages": [{"type": "org.osbuild.noop", "options": {"one": 1}}]},
         {
             "name": "assembler",
             "build": "name:build",
@@ -62,24 +44,12 @@ BASIC_PIPELINE = {
                         "tree": {
                             "type": "org.osbuild.tree",
                             "origin": "org.osbuild.pipeline",
-                            "references": {
-                                "name:tree": {}
-                            }
+                            "references": {"name:tree": {}},
                         }
                     },
                     "devices": {
-                        "root": {
-                            "type": "org.osbuild.loopback",
-                            "options": {
-                                "filename": "empty.img"
-                            }
-                        },
-                        "boot": {
-                            "type": "org.osbuild.loopback",
-                            "options": {
-                                "filename": "empty.img"
-                            }
-                        },
+                        "root": {"type": "org.osbuild.loopback", "options": {"filename": "empty.img"}},
+                        "boot": {"type": "org.osbuild.loopback", "options": {"filename": "empty.img"}},
                     },
                     "mounts": [
                         {
@@ -93,12 +63,12 @@ BASIC_PIPELINE = {
                             "type": "org.osbuild.noop",
                             "source": "boot",
                             "target": "/boot",
-                        }
-                    ]
+                        },
+                    ],
                 }
-            ]
-        }
-    ]
+            ],
+        },
+    ],
 }
 
 BAD_SHA = "sha256:15a654d32efaa75b5df3e2481939d0393fe1746696cc858ca094ccf8b76073cd"
@@ -122,15 +92,13 @@ BAD_REF_PIPELINE = {
                         "packages": {
                             "type": "org.osbuild.files",
                             "origin": "org.osbuild.source",
-                            "references": {
-                                BAD_SHA: {}
-                            }
+                            "references": {BAD_SHA: {}},
                         }
-                    }
+                    },
                 }
-            ]
+            ],
         }
-    ]
+    ],
 }
 
 
@@ -139,10 +107,8 @@ INPUT_REFERENCES = {
     "sources": {
         "org.osbuild.curl": {
             "items": {
-                "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4":
-                "https://internet/curl-7.69.1-1.fc32.x86_64.rpm",
-                "sha256:184a0c274d4efa84a2f6d0a128aae87e2fa231fe9067b4a4dc8f886fa6f1dc18":
-                "https://internet/kernel-5.11.12-300.fc34.x86_64.rpm"
+                "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4": "https://internet/curl-7.69.1-1.fc32.x86_64.rpm",
+                "sha256:184a0c274d4efa84a2f6d0a128aae87e2fa231fe9067b4a4dc8f886fa6f1dc18": "https://internet/kernel-5.11.12-300.fc34.x86_64.rpm",
             }
         },
     },
@@ -158,14 +124,14 @@ INPUT_REFERENCES = {
                             "origin": "org.osbuild.source",
                             "references": [
                                 "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
-                                "sha256:184a0c274d4efa84a2f6d0a128aae87e2fa231fe9067b4a4dc8f886fa6f1dc18"
-                            ]
+                                "sha256:184a0c274d4efa84a2f6d0a128aae87e2fa231fe9067b4a4dc8f886fa6f1dc18",
+                            ],
                         }
-                    }
+                    },
                 }
             ],
         },
-    ]
+    ],
 }
 
 
@@ -255,13 +221,13 @@ class TestFormatV2(unittest.TestCase):
         with self.assertRaises(ValueError) as ex:
             fmt.load(desc, self.index)
 
-        self.assertTrue(str(ex.exception).find(BAD_SHA) > -1,
-                        "The unknown source reference is not included in the exception")
+        self.assertTrue(
+            str(ex.exception).find(BAD_SHA) > -1, "The unknown source reference is not included in the exception"
+        )
 
     def test_mounts(self):
         BASE = {
             "version": "2",
-
             "pipelines": [
                 {
                     "name": "test",
@@ -270,19 +236,12 @@ class TestFormatV2(unittest.TestCase):
                         {
                             "type": "org.osbuild.noop",
                             "options": {"zero": 0},
-                            "devices": {
-                                "root": {
-                                    "type": "org.osbuild.loopback",
-                                    "options": {
-                                        "filename": "empty.img"
-                                    }
-                                }
-                            },
-                            "mounts": []
+                            "devices": {"root": {"type": "org.osbuild.loopback", "options": {"filename": "empty.img"}}},
+                            "mounts": [],
                         }
-                    ]
+                    ],
                 }
-            ]
+            ],
         }
 
         # verify the device
@@ -290,12 +249,16 @@ class TestFormatV2(unittest.TestCase):
         stage = pipeline["pipelines"][0]["stages"][0]
         mounts = stage["mounts"]
 
-        mounts.extend([{
-            "name": "root",
-            "type": "org.osbuild.noop",
-            "source": "root",
-            "target": "/",
-        }])
+        mounts.extend(
+            [
+                {
+                    "name": "root",
+                    "type": "org.osbuild.noop",
+                    "source": "root",
+                    "target": "/",
+                }
+            ]
+        )
 
         manifest, _ = self.load_manifest(pipeline)
         self.assertIsNotNone(manifest)
@@ -312,17 +275,22 @@ class TestFormatV2(unittest.TestCase):
         stage = pipeline["pipelines"][0]["stages"][0]
         mounts = stage["mounts"]
 
-        mounts.extend([{
-            "name": "root",
-            "type": "org.osbuild.noop",
-            "source": "root",
-            "target": "/",
-        }, {
-            "name": "root",
-            "type": "org.osbuild.noop",
-            "source": "root",
-            "target": "/",
-        }])
+        mounts.extend(
+            [
+                {
+                    "name": "root",
+                    "type": "org.osbuild.noop",
+                    "source": "root",
+                    "target": "/",
+                },
+                {
+                    "name": "root",
+                    "type": "org.osbuild.noop",
+                    "source": "root",
+                    "target": "/",
+                },
+            ]
+        )
 
         with self.assertRaises(ValueError):
             self.load_manifest(pipeline)
@@ -332,12 +300,16 @@ class TestFormatV2(unittest.TestCase):
         stage = pipeline["pipelines"][0]["stages"][0]
         mounts = stage["mounts"]
 
-        mounts.extend([{
-            "name": "boot",
-            "type": "org.osbuild.noop",
-            "source": "boot",
-            "target": "/boot",
-        }])
+        mounts.extend(
+            [
+                {
+                    "name": "boot",
+                    "type": "org.osbuild.noop",
+                    "source": "boot",
+                    "target": "/boot",
+                }
+            ]
+        )
 
         with self.assertRaises(ValueError):
             self.load_manifest(pipeline)
@@ -415,7 +387,7 @@ class TestFormatV2(unittest.TestCase):
 
         refs = [
             "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
-            "sha256:184a0c274d4efa84a2f6d0a128aae87e2fa231fe9067b4a4dc8f886fa6f1dc18"
+            "sha256:184a0c274d4efa84a2f6d0a128aae87e2fa231fe9067b4a4dc8f886fa6f1dc18",
         ]
 
         keys = list(packages.refs.keys())
@@ -433,14 +405,10 @@ class TestFormatV2(unittest.TestCase):
         refs = inputs["references"]
 
         # check references as maps
-        inputs["references"] = {
-            k: {} for k in refs
-        }
+        inputs["references"] = {k: {} for k in refs}
 
         self.check_input_references(desc)
 
         # check references passed as array of objects
-        inputs["references"] = [
-            {"id": k, "options": {}} for k in refs
-        ]
+        inputs["references"] = [{"id": k, "options": {}} for k in refs]
         self.check_input_references(desc)

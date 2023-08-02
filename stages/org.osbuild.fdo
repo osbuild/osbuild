@@ -48,7 +48,7 @@ def main(inputs, tree):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"])
     sys.exit(r)

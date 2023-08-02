@@ -53,13 +53,12 @@ def main(inputs, output, options):
 
     with open(target, "w", encoding="utf8") as f:
         cmd = ["gunzip", "--stdout", source]
-        subprocess.run(cmd, stdout=f,
-                       check=True)
+        subprocess.run(cmd, stdout=f, check=True)
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"], args["options"])
     sys.exit(r)

@@ -163,7 +163,7 @@ SCHEMA_2 = r"""
 MEDIA_TYPES = {
     "layer": "application/vnd.oci.image.layer.v1.tar",
     "manifest": "application/vnd.oci.image.manifest.v1+json",
-    "config": "application/vnd.oci.image.config.v1+json"
+    "config": "application/vnd.oci.image.config.v1+json",
 }
 
 
@@ -176,10 +176,7 @@ XATTRS_WANT = r"^(user.|security\.ima|security\.capability)"
 
 
 def sha256sum(path: str) -> str:
-    ret = subprocess.run(["sha256sum", path],
-                         stdout=subprocess.PIPE,
-                         encoding="utf8",
-                         check=True)
+    ret = subprocess.run(["sha256sum", path], stdout=subprocess.PIPE, encoding="utf8", check=True)
 
     return ret.stdout.strip().split(" ")[0]
 
@@ -189,11 +186,7 @@ def blobs_add_file(blobs: str, path: str, mtype: str):
     size = os.stat(path).st_size
 
     os.rename(path, os.path.join(blobs, digest))
-    info = {
-        "digest": "sha256:" + digest,
-        "size": size,
-        "mediaType": MEDIA_TYPES[mtype]
-    }
+    info = {"digest": "sha256:" + digest, "size": size, "mediaType": MEDIA_TYPES[mtype]}
 
     print(f"blobs: +{mtype} ({size}, {digest})")
     return info
@@ -223,25 +216,22 @@ def blobs_add_layer(blobs: str, tree: str):
         # Enforce standard format
         "--format=posix",
         # Drop atime and ctime for better reproduceability
-        "--pax-option", "delete=atime,delete=ctime",
-        "-cf", layer_file,
-        "-C", tree,
+        "--pax-option",
+        "delete=atime,delete=ctime",
+        "-cf",
+        layer_file,
+        "-C",
+        tree,
     ] + os.listdir(tree)
 
     print("creating layer")
-    subprocess.run(command,
-                   stdout=subprocess.DEVNULL,
-                   check=True)
+    subprocess.run(command, stdout=subprocess.DEVNULL, check=True)
 
     digest = "sha256:" + sha256sum(layer_file)
 
     print("compressing layer")
     suffix = ".compressed"
-    subprocess.run([compression,
-                    "-S", suffix,
-                    layer_file],
-                   stdout=subprocess.DEVNULL,
-                   check=True)
+    subprocess.run([compression, "-S", suffix, layer_file], stdout=subprocess.DEVNULL, check=True)
 
     layer_file += suffix
 
@@ -255,10 +245,7 @@ def config_from_options(options):
     command = options.get("Cmd", ["sh"])
     env = options.get("Env", ["PATH=" + DEFAULT_PATH])
 
-    config = {
-        "Env": env,
-        "Cmd": command
-    }
+    config = {"Env": env, "Cmd": command}
 
     for name in ["Entrypoint", "User", "Labels", "StopSignal", "WorkingDir"]:
         item = options.get(name)
@@ -284,27 +271,17 @@ def create_oci_dir(inputs, output_dir, options, create_time):
         "architecture": architecture,
         "os": "linux",
         "config": config_from_options(options.get("config", {})),
-        "rootfs": {
-            "type": "layers",
-            "diff_ids": []
-        },
-        "history": []
+        "rootfs": {"type": "layers", "diff_ids": []},
+        "history": [],
     }
 
-    manifest = {
-        "schemaVersion": 2,
-        "config": None,
-        "layers": []
-    }
+    manifest = {"schemaVersion": 2, "config": None, "layers": []}
 
     annotations = options.get("annotations", {})
     if annotations:
         manifest["annotations"] = annotations
 
-    index = {
-        "schemaVersion": 2,
-        "manifests": []
-    }
+    index = {"schemaVersion": 2, "manifests": []}
 
     blobs = os.path.join(output_dir, "blobs", "sha256")
     os.makedirs(blobs)
@@ -316,10 +293,7 @@ def create_oci_dir(inputs, output_dir, options, create_time):
 
         manifest["layers"].append(info)
         config["rootfs"]["diff_ids"] = [digest]
-        config["history"].append({
-            "created": created,
-            "created_by": f"/bin/sh -c #(nop) osbuild input '{ip}'"
-        })
+        config["history"].append({"created": created, "created_by": f"/bin/sh -c #(nop) osbuild input '{ip}'"})
 
     # write config
     info = blobs_add_json(blobs, config, "config")
@@ -367,18 +341,18 @@ def main(inputs, output_dir, options, meta):
             "--mode=go=rX,u+rw,a-s",
             "--format=posix",
             f"--mtime=@{int(create_time.timestamp())}",
-            "--pax-option", "delete=atime,delete=ctime",
-            "-cf", os.path.join(output_dir, filename),
+            "--pax-option",
+            "delete=atime,delete=ctime",
+            "-cf",
+            os.path.join(output_dir, filename),
             f"--directory={workdir}",
         ] + os.listdir(workdir)
 
         print("creating final archive")
-        subprocess.run(command,
-                       stdout=subprocess.DEVNULL,
-                       check=True)
+        subprocess.run(command, stdout=subprocess.DEVNULL, check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"], args["options"], args["meta"])
     sys.exit(r)

@@ -186,17 +186,13 @@ def make_rootfs(tree, image, size, workdir, loop_client):
     os.makedirs(root)
 
     with loop_client.device(image, 0, size) as dev:
-        subprocess.run(["mkfs.ext4",
-                        "-L", "Anaconda",
-                        "-b", "4096",
-                        "-m", "0",
-                        dev],
-                       input="y", encoding='utf8', check=True)
+        subprocess.run(
+            ["mkfs.ext4", "-L", "Anaconda", "-b", "4096", "-m", "0", dev], input="y", encoding="utf8", check=True
+        )
 
         with mount(dev, root):
             print("copying tree")
-            subprocess.run(["cp", "-a", f"{tree}/.", root],
-                           check=True)
+            subprocess.run(["cp", "-a", f"{tree}/.", root], check=True)
             print("done")
 
 
@@ -213,12 +209,11 @@ def make_efi(efi, info, root, loop_client):
         targets = [
             (f"shim{arch}.efi", f"BOOT{arch}.EFI".upper()),
             (f"mm{arch}.efi", f"mm{arch}.efi"),
-            (f"gcd{arch}.efi", f"grub{arch}.efi")
+            (f"gcd{arch}.efi", f"grub{arch}.efi"),
         ]
 
         for src, dst in targets:
-            shutil.copy2(os.path.join("/boot/efi/EFI/", vendor, src),
-                         os.path.join(efidir, dst))
+            shutil.copy2(os.path.join("/boot/efi/EFI/", vendor, src), os.path.join(efidir, dst))
 
     # the font
     fontdir = os.path.join(efidir, "fonts")
@@ -238,15 +233,18 @@ def make_efi(efi, info, root, loop_client):
     config = os.path.join(efidir, "grub.cfg")
     shutil.copy2(os.path.join(configdir, "grub2-efi.cfg"), config)
 
-    replace(config, [
-        ("@VERSION@", version),
-        ("@PRODUCT@", name),
-        ("@KERNELNAME@", "vmlinuz"),
-        ("@KERNELPATH@", os.path.join(kdir, "vmlinuz")),
-        ("@INITRDPATH@", os.path.join(kdir, "initrd.img")),
-        ("@ISOLABEL@", isolabel),
-        ("@ROOT@", cmdline)
-    ])
+    replace(
+        config,
+        [
+            ("@VERSION@", version),
+            ("@PRODUCT@", name),
+            ("@KERNELNAME@", "vmlinuz"),
+            ("@KERNELPATH@", os.path.join(kdir, "vmlinuz")),
+            ("@INITRDPATH@", os.path.join(kdir, "initrd.img")),
+            ("@ISOLABEL@", isolabel),
+            ("@ROOT@", cmdline),
+        ],
+    )
 
     if "IA32" in arches:
         shutil.copy2(config, os.path.join(efidir, "BOOT.cfg"))
@@ -273,10 +271,7 @@ def make_efi(efi, info, root, loop_client):
     os.makedirs(root)
 
     with loop_client.device(image, 0, size) as dev:
-        subprocess.run(["mkfs.fat",
-                        "-n", "ANACONDA",
-                        dev],
-                       input="y", encoding='utf8', check=True)
+        subprocess.run(["mkfs.fat", "-n", "ANACONDA", dev], input="y", encoding="utf8", check=True)
 
         with mount(dev, root):
             target = os.path.join(root, "EFI", "BOOT")
@@ -296,11 +291,13 @@ def make_isolinux(cfg, root, info, tree):
     isolinux = os.path.join(root, "isolinux")
     os.makedirs(isolinux)
 
-    isolinuxfiles = [("isolinux.bin", 0o755),
-                     ("ldlinux.c32", 0o755),
-                     ("libcom32.c32", 0o755),
-                     ("libutil.c32", 0o755),
-                     ("vesamenu.c32", 0o755)]
+    isolinuxfiles = [
+        ("isolinux.bin", 0o755),
+        ("ldlinux.c32", 0o755),
+        ("libcom32.c32", 0o755),
+        ("libutil.c32", 0o755),
+        ("vesamenu.c32", 0o755),
+    ]
     for target, mode in isolinuxfiles:
         src = os.path.join("/usr/share/syslinux/", target)
         dst = os.path.join(isolinux, target)
@@ -316,21 +313,15 @@ def make_isolinux(cfg, root, info, tree):
         dst = os.path.join(isolinux, target)
         install(src, dst)
 
-        replace(dst, [
-            ("@VERSION@", version),
-            ("@PRODUCT@", name),
-            ("@ROOT@", cmdline)
-        ])
+        replace(dst, [("@VERSION@", version), ("@PRODUCT@", name), ("@ROOT@", cmdline)])
 
     src = os.path.join(tree, "usr/share/anaconda/boot/syslinux-splash.png")
     dst = os.path.join(isolinux, "splash.png")
     install(src, dst)
 
     # link the kernel
-    os.link(os.path.join(kerneldir, "vmlinuz"),
-            os.path.join(isolinux, "vmlinuz"))
-    os.link(os.path.join(kerneldir, "initrd.img"),
-            os.path.join(isolinux, "initrd.img"))
+    os.link(os.path.join(kerneldir, "vmlinuz"), os.path.join(isolinux, "vmlinuz"))
+    os.link(os.path.join(kerneldir, "initrd.img"), os.path.join(isolinux, "initrd.img"))
 
 
 # pylint: disable=too-many-statements
@@ -378,7 +369,7 @@ def main(inputs, root, options, workdir, loop_client):
         "configdir": configdir,
         "kerneldir": pxedir,
         "imgdir": imgdir,
-        "cmdline": cmdline
+        "cmdline": cmdline,
     }
 
     # install the kernel
@@ -388,11 +379,9 @@ def main(inputs, root, options, workdir, loop_client):
     bootdir = os.path.join(kernel_tree, "boot")
 
     os.makedirs(kerneldir)
-    install(os.path.join(bootdir, f"vmlinuz-{kernel}"),
-            os.path.join(kerneldir, "vmlinuz"))
+    install(os.path.join(bootdir, f"vmlinuz-{kernel}"), os.path.join(kerneldir, "vmlinuz"))
 
-    install(os.path.join(bootdir, f"initramfs-{kernel}.img"),
-            os.path.join(kerneldir, "initrd.img"))
+    install(os.path.join(bootdir, f"initramfs-{kernel}.img"), os.path.join(kerneldir, "initrd.img"))
 
     # iso linux boot
     if isolinux.get("enabled"):
@@ -408,7 +397,7 @@ def main(inputs, root, options, workdir, loop_client):
     liveos = os.path.join(liveos_work, "LiveOS")
     os.makedirs(liveos)
 
-    rootfs_size = rootfs.get("size", 3072) * 1024*1024
+    rootfs_size = rootfs.get("size", 3072) * 1024 * 1024
     compression = rootfs.get("compression", {})
 
     rootfs = os.path.join(liveos, "rootfs.img")
@@ -427,13 +416,11 @@ def main(inputs, root, options, workdir, loop_client):
     subprocess.run(cmd, check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     _output_dir = args["tree"]
     with tempfile.TemporaryDirectory(dir=_output_dir) as _workdir:
-        ret = main(args["inputs"],
-                   _output_dir,
-                   args["options"],
-                   _workdir,
-                   remoteloop.LoopClient("/run/osbuild/api/remoteloop"))
+        ret = main(
+            args["inputs"], _output_dir, args["options"], _workdir, remoteloop.LoopClient("/run/osbuild/api/remoteloop")
+        )
     sys.exit(ret)

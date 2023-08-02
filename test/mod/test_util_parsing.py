@@ -27,7 +27,6 @@ def test_parse_size():
         ("123 mb", False, 0),
         ("123 PB", False, 0),
         ("123 PiB", False, 0),
-
     ]
 
     for s, success, num in cases:

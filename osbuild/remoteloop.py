@@ -5,10 +5,7 @@ import os
 from . import api, loop
 from .util import jsoncomm
 
-__all__ = [
-    "LoopClient",
-    "LoopServer"
-]
+__all__ = ["LoopClient", "LoopServer"]
 
 
 class LoopServer(api.BaseAPI):

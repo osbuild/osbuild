@@ -45,7 +45,6 @@ SCHEMA_2 = """
 
 
 class BtrfsMount(mounts.FileSystemMountService):
-
     def translate_options(self, options: Dict):
         return ["-t", "btrfs"] + super().translate_options(options)
 
@@ -55,5 +54,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

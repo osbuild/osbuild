@@ -47,9 +47,7 @@ def main(tree, options):
     data = ["# This file was created by osbuild"]
 
     if search:
-        data += [
-            "search " + " ".join(search)
-        ]
+        data += ["search " + " ".join(search)]
 
     for ns in nameserver:
         data += ["nameserver " + str(ns)]
@@ -61,7 +59,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

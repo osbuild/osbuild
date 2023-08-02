@@ -68,7 +68,7 @@ def main(tree, options):
         if not os.path.isfile(cfgfile):
             continue
 
-        with open(cfgfile, 'r', encoding="utf8") as f:
+        with open(cfgfile, "r", encoding="utf8") as f:
             cfg = selinux.parse_config(f)
         se_policy = selinux.config_get_policy(cfg)
 
@@ -89,8 +89,7 @@ def main(tree, options):
     selinux.setfiles(spec, stateroot, "/var")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["options"])
     sys.exit(r)

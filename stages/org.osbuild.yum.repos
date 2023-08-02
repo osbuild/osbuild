@@ -132,16 +132,7 @@ SCHEMA = r"""
 # various tools (COPR, RHSM) tend to order some options in a specific way,
 # therefore if we just iterated over the dictionary items, the order would
 # be different than how are repository configurations usually structured.
-SPECIFIC_ORDER_OPTIONS = [
-    "name",
-    "baseurl",
-    "metalink",
-    "mirrorlist",
-    "enabled",
-    "gpgcheck",
-    "repo_gpgcheck",
-    "gpgkey"
-]
+SPECIFIC_ORDER_OPTIONS = ["name", "baseurl", "metalink", "mirrorlist", "enabled", "gpgcheck", "repo_gpgcheck", "gpgkey"]
 
 
 def option_value_to_str(value):
@@ -190,7 +181,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

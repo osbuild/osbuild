@@ -42,7 +42,7 @@ CoffHeader = namedtuple(
         "NumberOfSymbols",
         "SizeOfOptionalHeader",
         "Characteristics",
-    ]
+    ],
 )
 
 
@@ -60,7 +60,7 @@ SectionHeader = namedtuple(
         "NumberOfRelocations",
         "NumberOfLinenumbers",
         "Characteristics",
-    ]
+    ],
 )
 
 
@@ -118,7 +118,7 @@ OptionalHeader = namedtuple(
         "SizeOfHeapCommit",
         "LoaderFlags",
         "NumberOfRvaAndSizes",
-    ]
+    ],
 )
 
 
@@ -133,9 +133,9 @@ def read_coff_header(f: BinaryIO) -> CoffHeader:
     # file header in the following format."
     # Our `CoffHeader` embeds the signature inside the CoffHeader.
 
-    f.seek(0x3c, io.SEEK_SET)
+    f.seek(0x3C, io.SEEK_SET)
     buf = f.read(struct.calcsize("I"))
-    (s, ) = struct.unpack_from("I", buf)
+    (s,) = struct.unpack_from("I", buf)
     f.seek(int(s), io.SEEK_SET)
 
     buf = f.read(struct.calcsize(CoffFormat))

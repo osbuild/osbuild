@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import typing
+
 # pylint doesn't understand the string-annotation below
 from typing import Any, List  # pylint: disable=unused-import
 
@@ -99,8 +100,7 @@ class Treefile:
     def as_tmp_file(self):
         name = None
         try:
-            fd, name = tempfile.mkstemp(suffix=".json",
-                                        text=True)
+            fd, name = tempfile.mkstemp(suffix=".json", text=True)
 
             with os.fdopen(fd, "w+", encoding="utf8") as f:
                 self.dump(f)
@@ -119,11 +119,13 @@ def rev_parse(repo: PathLike, ref: str) -> str:
     if isinstance(repo, bytes):
         repo = repo.decode("utf8")
 
-    r = subprocess.run(["ostree", "rev-parse", ref, f"--repo={repo}"],
-                       encoding="utf8",
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.STDOUT,
-                       check=False)
+    r = subprocess.run(
+        ["ostree", "rev-parse", ref, f"--repo={repo}"],
+        encoding="utf8",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
 
     msg = r.stdout.strip()
     if r.returncode != 0:
@@ -140,11 +142,13 @@ def show(repo: PathLike, checksum: str) -> str:
     if isinstance(repo, bytes):
         repo = repo.decode("utf8")
 
-    r = subprocess.run(["ostree", "show", f"--repo={repo}", checksum],
-                       encoding="utf8",
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.STDOUT,
-                       check=False)
+    r = subprocess.run(
+        ["ostree", "show", f"--repo={repo}", checksum],
+        encoding="utf8",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
 
     msg = r.stdout.strip()
     if r.returncode != 0:
@@ -212,7 +216,7 @@ class PasswdLike:
     @staticmethod
     def _passwd_lines_to_dict(lines):
         """Take a list of passwd lines and produce a "name": "line" dictionary"""
-        return {line.split(':')[0]: line for line in lines}
+        return {line.split(":")[0]: line for line in lines}
 
 
 class SubIdsDB:
@@ -223,7 +227,7 @@ class SubIdsDB:
     """
 
     def __init__(self) -> None:
-        self.db: 'collections.OrderedDict[str, Any]' = collections.OrderedDict()
+        self.db: "collections.OrderedDict[str, Any]" = collections.OrderedDict()
 
     def read(self, fp) -> int:
         idx = 0
@@ -241,10 +245,7 @@ class SubIdsDB:
 
     def dumps(self) -> str:
         """Dump the database to a string"""
-        data = "\n".join([
-            f"{name}:{uid}:{count}\n"
-            for name, (uid, count) in self.db.items()
-        ])
+        data = "\n".join([f"{name}:{uid}:{count}\n" for name, (uid, count) in self.db.items()])
 
         return data
 

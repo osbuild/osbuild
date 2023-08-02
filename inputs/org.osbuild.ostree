@@ -85,13 +85,9 @@ SCHEMA = """
 
 
 def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    args = list(args) + [f"--{k}={v}" for k, v in kwargs.items()]
     print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf-8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
+    subprocess.run(["ostree"] + args, encoding="utf-8", stdout=sys.stderr, input=_input, check=True)
 
 
 def export(checksums, cache, output):
@@ -105,28 +101,20 @@ def export(checksums, cache, output):
         # Transfer the commit: remote → cache
         print(f"exporting {commit}", file=sys.stderr)
 
-        ostree("pull-local", repo_cache, commit,
-               repo=repo_out)
+        ostree("pull-local", repo_cache, commit, repo=repo_out)
 
         ref = options.get("ref")
         if ref:
-            ostree("refs", "--create", ref, commit,
-                   repo=repo_out)
+            ostree("refs", "--create", ref, commit, repo=repo_out)
 
         refs[commit] = options
 
-    reply = {
-        "path": repo_out,
-        "data": {
-            "refs": refs
-        }
-    }
+    reply = {"path": repo_out, "data": {"refs": refs}}
 
     return reply
 
 
 class OSTreeInput(inputs.InputService):
-
     def map(self, store, origin, refs, target, _options):
 
         if origin == "org.osbuild.pipeline":
@@ -148,5 +136,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

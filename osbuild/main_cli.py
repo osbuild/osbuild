@@ -33,7 +33,7 @@ def show_validation(result, name):
     if name == "-":
         name = "<stdin>"
 
-    print(f"{vt.bold}{name}{vt.reset} ", end='')
+    print(f"{vt.bold}{name}{vt.reset} ", end="")
 
     if result:
         print(f"is {vt.bold}{vt.green}valid{vt.reset}")
@@ -57,37 +57,75 @@ def export(name_or_id, output_directory, store, manifest):
 
 
 def parse_arguments(sys_argv):
-    parser = argparse.ArgumentParser(prog="osbuild",
-                                     description="Build operating system images")
+    parser = argparse.ArgumentParser(prog="osbuild", description="Build operating system images")
 
-    parser.add_argument("manifest_path", metavar="MANIFEST",
-                        help="json file containing the manifest that should be built, or a '-' to read from stdin")
-    parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
-                        default=".osbuild",
-                        help="directory where intermediary os trees are stored")
-    parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath, default="/usr/lib/osbuild",
-                        help="directory containing stages, assemblers, and the osbuild library")
-    parser.add_argument("--cache-max-size", metavar="SIZE", type=parse_size, default=None,
-                        help="maximum size of the cache (bytes) or 'unlimited' for no restriction")
-    parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
-                        help="stage to commit to the object store during build (can be passed multiple times)")
-    parser.add_argument("--export", metavar="ID", action="append", type=str, default=[],
-                        help="object to export, can be passed multiple times")
-    parser.add_argument("--json", action="store_true",
-                        help="output results in JSON format")
-    parser.add_argument("--output-directory", metavar="DIRECTORY", type=os.path.abspath,
-                        help="directory where result objects are stored")
-    parser.add_argument("--inspect", action="store_true",
-                        help="return the manifest in JSON format including all the ids")
-    parser.add_argument("--monitor", metavar="NAME", default=None,
-                        help="name of the monitor to be used")
-    parser.add_argument("--monitor-fd", metavar="FD", type=int, default=sys.stdout.fileno(),
-                        help="file descriptor to be used for the monitor")
-    parser.add_argument("--stage-timeout", type=int, default=None,
-                        help="set the maximal time (in seconds) each stage is allowed to run")
-    parser.add_argument("--version", action="version",
-                        help="return the version of osbuild",
-                        version="%(prog)s " + osbuild.__version__)
+    parser.add_argument(
+        "manifest_path",
+        metavar="MANIFEST",
+        help="json file containing the manifest that should be built, or a '-' to read from stdin",
+    )
+    parser.add_argument(
+        "--store",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        default=".osbuild",
+        help="directory where intermediary os trees are stored",
+    )
+    parser.add_argument(
+        "-l",
+        "--libdir",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        default="/usr/lib/osbuild",
+        help="directory containing stages, assemblers, and the osbuild library",
+    )
+    parser.add_argument(
+        "--cache-max-size",
+        metavar="SIZE",
+        type=parse_size,
+        default=None,
+        help="maximum size of the cache (bytes) or 'unlimited' for no restriction",
+    )
+    parser.add_argument(
+        "--checkpoint",
+        metavar="ID",
+        action="append",
+        type=str,
+        default=None,
+        help="stage to commit to the object store during build (can be passed multiple times)",
+    )
+    parser.add_argument(
+        "--export",
+        metavar="ID",
+        action="append",
+        type=str,
+        default=[],
+        help="object to export, can be passed multiple times",
+    )
+    parser.add_argument("--json", action="store_true", help="output results in JSON format")
+    parser.add_argument(
+        "--output-directory",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        help="directory where result objects are stored",
+    )
+    parser.add_argument(
+        "--inspect", action="store_true", help="return the manifest in JSON format including all the ids"
+    )
+    parser.add_argument("--monitor", metavar="NAME", default=None, help="name of the monitor to be used")
+    parser.add_argument(
+        "--monitor-fd",
+        metavar="FD",
+        type=int,
+        default=sys.stdout.fileno(),
+        help="file descriptor to be used for the monitor",
+    )
+    parser.add_argument(
+        "--stage-timeout", type=int, default=None, help="set the maximal time (in seconds) each stage is allowed to run"
+    )
+    parser.add_argument(
+        "--version", action="version", help="return the version of osbuild", version="%(prog)s " + osbuild.__version__
+    )
 
     return parser.parse_args(sys_argv[1:])
 
@@ -162,13 +200,7 @@ def osbuild_cli():
 
             manifest.download(object_store, monitor, args.libdir)
 
-            r = manifest.build(
-                object_store,
-                pipelines,
-                monitor,
-                args.libdir,
-                stage_timeout=stage_timeout
-            )
+            r = manifest.build(object_store, pipelines, monitor, args.libdir, stage_timeout=stage_timeout)
 
             if r["success"] and exports:
                 for pid in exports:

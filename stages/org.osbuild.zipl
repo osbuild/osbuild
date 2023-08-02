@@ -24,11 +24,7 @@ SCHEMA = """
 
 def main(tree, options):
     timeout = options.get("timeout", 0)
-    config = ["[defaultboot]",
-              "defaultauto",
-              "prompt=1",
-              f"timeout={timeout}",
-              "target=/boot"]
+    config = ["[defaultboot]", "defaultauto", "prompt=1", f"timeout={timeout}", "target=/boot"]
 
     new_zipl_conf = "\n".join(config) + "\n"
 
@@ -39,7 +35,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

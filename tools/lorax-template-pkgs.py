@@ -100,20 +100,21 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--basearch", help="Set the `basearch` variable", default="x86_64")
     parser.add_argument("--product", help="Set the `product` variable", default="fedora")
-    parser.add_argument("--dnf-cache", metavar="PATH", type=os.path.abspath, default=None,
-                        help="Path to DNF cache-directory to use")
-    parser.add_argument("--repo-dir", metavar="PATH", type=os.path.abspath,
-                        default="/etc/yum.repos.d",
-                        help="Path to DNF repositories directory")
-    parser.add_argument("--os-version", metavar="PATH", default=None,
-                        help="OS version to use for dnf")
+    parser.add_argument(
+        "--dnf-cache", metavar="PATH", type=os.path.abspath, default=None, help="Path to DNF cache-directory to use"
+    )
+    parser.add_argument(
+        "--repo-dir",
+        metavar="PATH",
+        type=os.path.abspath,
+        default="/etc/yum.repos.d",
+        help="Path to DNF repositories directory",
+    )
+    parser.add_argument("--os-version", metavar="PATH", default=None, help="OS version to use for dnf")
     parser.add_argument("FILE", help="The template to process")
     args = parser.parse_args()
 
-    variables = {
-        "basearch": args.basearch,
-        "product": args.product
-    }
+    variables = {"basearch": args.basearch, "product": args.product}
 
     txt = render_template(args.FILE, variables)
 
@@ -127,11 +128,7 @@ def main():
     with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
         persistdir = os.path.join(tmp, "dnf-persist")
         cachedir = args.dnf_cache or os.path.join(tmp, "dnf-cache")
-        dirs = {
-            "persistdir": persistdir,
-            "cachedir": cachedir,
-            "repodir": args.repo_dir
-        }
+        dirs = {"persistdir": persistdir, "cachedir": cachedir, "repodir": args.repo_dir}
 
         solver = DepSolver(args.basearch, os_version, dirs)
         solver.reset()

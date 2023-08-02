@@ -334,7 +334,7 @@ def copy_modules(tree, platform):
     os.makedirs(target, exist_ok=True)
     for dirent in os.scandir(source):
         (_, ext) = os.path.splitext(dirent.name)
-        if ext not in ('.mod', '.lst'):
+        if ext not in (".mod", ".lst"):
             continue
         if dirent.name == "fdt.lst":
             continue
@@ -349,11 +349,10 @@ def copy_font(tree):
 
 def copy_efi_data(tree, vendor):
     """Copy the EFI binaries & data into /boot/efi"""
-    for d in ['BOOT', vendor]:
+    for d in ["BOOT", vendor]:
         source = f"/boot/efi/EFI/{d}"
         target = f"{tree}/boot/efi/EFI/{d}/"
-        shutil.copytree(source, target,
-                        symlinks=False)
+        shutil.copytree(source, target, symlinks=False)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -393,12 +392,7 @@ class GrubConfig:
         if not config:
             return {}
 
-        val = (
-            "\n" +
-            terminal +
-            " " +
-            " ".join(config)
-        )
+        val = "\n" + terminal + " " + " ".join(config)
         return {terminal: val}
 
     def write(self, tree):
@@ -406,10 +400,7 @@ class GrubConfig:
         path = os.path.join(tree, self.path)
 
         fs_type, fs_id = fs_spec_decode(self.grubfs)
-        type2opt = {
-            "UUID": "--fs-uuid",
-            "LABEL": "--label"
-        }
+        type2opt = {"UUID": "--fs-uuid", "LABEL": "--label"}
 
         ignition = ""
         if self.ignition:
@@ -444,13 +435,10 @@ class GrubConfig:
 
     def write_redirect(self, tree, path):
         """Write a grub config pointing to the other cfg"""
-        print("hybrid boot or unified grub config enabled. "
-              "Writing alias grub config")
+        print("hybrid boot or unified grub config enabled. " "Writing alias grub config")
 
         # configuration options for the template
-        config = {
-            "root": self.grub_home
-        }
+        config = {"root": self.grub_home}
 
         tplt = string.Template(GRUB_REDIRECT_TEMPLATE)
         data = tplt.safe_substitute(config)
@@ -461,11 +449,7 @@ class GrubConfig:
     def defaults(self):
         # NB: The "GRUB_CMDLINE_LINUX" variable contains the kernel command
         # line but without the `root=` part, thus we just use `kernel_opts`.
-        data = (
-            f'GRUB_CMDLINE_LINUX="{self.kernel_opts}"\n'
-            f"GRUB_TIMEOUT={self.timeout}\n"
-            "GRUB_ENABLE_BLSCFG=true\n"
-        )
+        data = f'GRUB_CMDLINE_LINUX="{self.kernel_opts}"\n' f"GRUB_TIMEOUT={self.timeout}\n" "GRUB_ENABLE_BLSCFG=true\n"
 
         if self.serial:
             data += f'GRUB_SERIAL_COMMAND="{self.serial}"\n'
@@ -479,7 +463,7 @@ class GrubConfig:
             data += f'GRUB_TERMINAL_OUTPUT="{val}"\n'
 
         if self.default_entry is not None:
-            data += f'GRUB_DEFAULT={self.default_entry}\n'
+            data += f"GRUB_DEFAULT={self.default_entry}\n"
 
         return data
 
@@ -557,7 +541,7 @@ def main(tree, options):
         # The 'grubenv' file is, according to the documentation,
         # a 'preallocated 1024-byte file'. The empty space is
         # needs to be filled with '#' as padding
-        data += '#' * (1024 - len(data))
+        data += "#" * (1024 - len(data))
         assert len(data) == 1024
 
         print(data)
@@ -578,7 +562,7 @@ def main(tree, options):
 
         # EFI binaries and accompanying data can be installed from
         # the build root instead of using an rpm package
-        if uefi.get('install', False):
+        if uefi.get("install", False):
             copy_efi_data(tree, vendor)
 
         grubcfg = f"boot/efi/EFI/{vendor}/grub.cfg"
@@ -597,7 +581,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

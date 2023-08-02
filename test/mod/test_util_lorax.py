@@ -27,7 +27,6 @@ replace @NAME@ ${name} *.txt
 
 
 class TestUtilLorax(test.TestBase):
-
     def assertExists(self, root, *paths):
         for path in paths:
             target = os.path.join(root, path.lstrip("/"))
@@ -51,10 +50,7 @@ class TestUtilLorax(test.TestBase):
                 f.write(BASIC_TEMPLATE)
 
             # parse the template and render it
-            args = {
-                "tree": tree,
-                "name": "osbuild-42"
-            }
+            args = {"tree": tree, "name": "osbuild-42"}
 
             tmpl = lorax.render_template(template, args)
             self.assertIsNotNone(tmpl)

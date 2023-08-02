@@ -32,21 +32,20 @@ def test_selinux_config():
 
     f = io.StringIO(example_good)
     cfg = selinux.parse_config(f)
-    assert 'SELINUX' in cfg
-    assert 'SELINUXTYPE' in cfg
-    assert cfg['SELINUX'] == 'enforcing'
-    assert cfg['SELINUXTYPE'] == 'targeted'
+    assert "SELINUX" in cfg
+    assert "SELINUXTYPE" in cfg
+    assert cfg["SELINUX"] == "enforcing"
+    assert cfg["SELINUXTYPE"] == "targeted"
 
     policy = selinux.config_get_policy(cfg)
-    assert policy == 'targeted'
+    assert policy == "targeted"
 
 
 def test_setfilecon():
     with mock.patch("os.setxattr") as setxattr:
 
         selinux.setfilecon("/path", "context")
-        setxattr.assert_called_once_with("/path", selinux.XATTR_NAME_SELINUX,
-                                         b"context", follow_symlinks=True)
+        setxattr.assert_called_once_with("/path", selinux.XATTR_NAME_SELINUX, b"context", follow_symlinks=True)
 
     with mock.patch("os.getxattr") as getxattr:
         with mock.patch("os.setxattr") as setxattr:

@@ -53,10 +53,7 @@ class TunedProfilesDB:
         available_profiles = set()
 
         # Directories, from which TuneD loads profile definitions
-        profile_directories = [
-            "/usr/lib/tuned",
-            "/etc/tuned"
-        ]
+        profile_directories = ["/usr/lib/tuned", "/etc/tuned"]
         profile_config_file = "tuned.conf"
 
         for path in profile_directories:
@@ -99,7 +96,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

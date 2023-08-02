@@ -25,13 +25,7 @@ class Source:
         source = self.info.name
         cache = os.path.join(store.store, "sources")
 
-        args = {
-            "options": self.options,
-            "cache": cache,
-            "output": None,
-            "checksums": [],
-            "libdir": os.fspath(libdir)
-        }
+        args = {"options": self.options, "cache": cache, "output": None, "checksums": [], "libdir": os.fspath(libdir)}
 
         client = mgr.start(f"source/{source}", self.info.path)
 
@@ -68,7 +62,7 @@ class SourceService(host.Service):
         """Performs the actual fetch of an element described by its checksum and its descriptor"""
 
     def exists(self, checksum, _desc) -> bool:
-        """Returns True if the item to download is in cache. """
+        """Returns True if the item to download is in cache."""
         return os.path.isfile(f"{self.cache}/{checksum}")
 
     # pylint: disable=[no-self-use]

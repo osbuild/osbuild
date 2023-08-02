@@ -46,9 +46,14 @@ def main(tree, options):
     features = options.get("features", [])
 
     cmd = [
-        "/usr/sbin/chroot", tree,
+        "/usr/sbin/chroot",
+        tree,
         # force authselect to overwrite existing files without making a backup
-        "/usr/bin/authselect", "select", "--force", "--nobackup", profile
+        "/usr/bin/authselect",
+        "select",
+        "--force",
+        "--nobackup",
+        profile,
     ]
     cmd.extend(features)
 
@@ -57,7 +62,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

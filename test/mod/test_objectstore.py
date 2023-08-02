@@ -38,7 +38,7 @@ def store_fixture():
 
 
 def test_basic(object_store):
-    object_store.maximum_size = 1024*1024*1024
+    object_store.maximum_size = 1024 * 1024 * 1024
 
     # No objects or references should be in the store
     assert len(os.listdir(object_store.objects)) == 0
@@ -85,7 +85,7 @@ def test_basic(object_store):
 
 def test_cleanup(tmpdir):
     with objectstore.ObjectStore(tmpdir) as object_store:
-        object_store.maximum_size = 1024*1024*1024
+        object_store.maximum_size = 1024 * 1024 * 1024
 
         stage = os.path.join(object_store, "stage")
         tree = object_store.new("a")
@@ -130,15 +130,9 @@ def test_metadata(tmpdir):
         with md.read("a") as f:
             assert f.read() == "{}"
 
-    data = {
-        "boolean": True,
-        "number": 42,
-        "string": "yes, please"
-    }
+    data = {"boolean": True, "number": 42, "string": "yes, please"}
 
-    extra = {
-        "extra": "data"
-    }
+    extra = {"extra": "data"}
 
     with tempfile.TemporaryDirectory() as tmp:
         md = objectstore.Object.Metadata(tmp)
@@ -156,7 +150,7 @@ def test_metadata(tmpdir):
 
     # use tmpdir fixture from here on
     with objectstore.ObjectStore(tmpdir) as store:
-        store.maximum_size = 1024*1024*1024
+        store.maximum_size = 1024 * 1024 * 1024
         obj = store.new("a")
         p = Path(obj, "A")
         p.touch()
@@ -251,6 +245,7 @@ def test_source_epoch(object_store):
 
     assert after != before
     assert after == tree.source_epoch
+
 
 # pylint: disable=too-many-statements
 

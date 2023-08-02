@@ -137,10 +137,12 @@ def main(devices, options):
     command = [
         "cryptsetup",
         "-q",  # batch mode
-        "--uuid", device_uuid,
+        "--uuid",
+        device_uuid,
         "luksFormat",
-        "--type", "luks2",
-        "--force-password"
+        "--type",
+        "luks2",
+        "--force-password",
     ]
 
     if cipher:
@@ -156,10 +158,7 @@ def main(devices, options):
         command += ["--integrity", integrity]
 
     # password base key derivation function parameters
-    command += [
-        "--pbkdf", pbkdf["method"],
-        "--pbkdf-force-iterations", str(pbkdf["iterations"])
-    ]
+    command += ["--pbkdf", pbkdf["method"], "--pbkdf-force-iterations", str(pbkdf["iterations"])]
 
     memory = pbkdf.get("memory", 32)
     if memory:
@@ -169,12 +168,10 @@ def main(devices, options):
     if parallelism:
         command += ["--pbkdf-parallel", str(parallelism)]
 
-    subprocess.run(command + [path],
-                   encoding='utf8', check=True,
-                   input=passphrase)
+    subprocess.run(command + [path], encoding="utf8", check=True, input=passphrase)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

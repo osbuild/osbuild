@@ -44,13 +44,12 @@ ExecStopPost=/usr/bin/systemctl poweroff
     with open(f"{tree}/etc/systemd/system/osbuild-test.service", "w", encoding="utf8") as f:
         f.write(unit)
 
-    os.symlink("../osbuild-test.service",
-               f"{tree}/etc/systemd/system/multi-user.target.wants/osbuild-test.service")
+    os.symlink("../osbuild-test.service", f"{tree}/etc/systemd/system/multi-user.target.wants/osbuild-test.service")
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

@@ -159,7 +159,7 @@ def main(tree, options):
     # Split to lines and remove ones starting with server, pool or peer.
     # At least one option configuring NTP servers is required, therefore
     # we do it before applying the configuration.
-    lines = chrony_conf.split('\n')
+    lines = chrony_conf.split("\n")
     delete_config_lines(lines, DELETE_TIME_SOURCE_LINE_REGEX)
 
     if timeservers:
@@ -177,7 +177,7 @@ def main(tree, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

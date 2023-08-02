@@ -285,13 +285,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             File-system path to the directory to operate on.
         """
 
-        return sum(
-            os.lstat(
-                os.path.join(path, f)
-            ).st_size for path, dirs, files in os.walk(
-                path_target
-            ) for f in files
-        )
+        return sum(os.lstat(os.path.join(path, f)).st_size for path, dirs, files in os.walk(path_target) for f in files)
 
     def __fspath__(self) -> Any:
         """Return cache path
@@ -677,8 +671,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
 
     def _is_compatible(self):
         # Internal helper to verify the cache-version is supported.
-        return self._info.version is not None and \
-            self._version_minimum <= self._info.version <= self._version_current
+        return self._info.version is not None and self._version_minimum <= self._info.version <= self._version_current
 
     def __enter__(self):
         assert not self._active

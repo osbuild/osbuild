@@ -179,10 +179,7 @@ class TestBase(unittest.TestCase):
         """
 
         try:
-            r = subprocess.run(
-                ["autopep8-3", "--version"],
-                encoding="utf8", stdout=subprocess.PIPE, check=False
-            )
+            r = subprocess.run(["autopep8-3", "--version"], encoding="utf8", stdout=subprocess.PIPE, check=False)
         except FileNotFoundError:
             return False
 
@@ -197,10 +194,7 @@ class TestBase(unittest.TestCase):
         """
 
         try:
-            r = subprocess.run(
-                ["mypy", "--version"],
-                encoding="utf-8", stdout=subprocess.PIPE, check=False
-            )
+            r = subprocess.run(["mypy", "--version"], encoding="utf-8", stdout=subprocess.PIPE, check=False)
         except FileNotFoundError:
             return False
 
@@ -215,10 +209,7 @@ class TestBase(unittest.TestCase):
         """
 
         try:
-            r = subprocess.run(
-                ["isort", "--version"],
-                encoding="utf-8", stdout=subprocess.PIPE, check=False
-            )
+            r = subprocess.run(["isort", "--version"], encoding="utf-8", stdout=subprocess.PIPE, check=False)
         except FileNotFoundError:
             return False
 
@@ -233,10 +224,7 @@ class TestBase(unittest.TestCase):
         """
 
         try:
-            r = subprocess.run(
-                ["rpm-ostree", "--version"],
-                encoding="utf8", stdout=subprocess.PIPE, check=False
-            )
+            r = subprocess.run(["rpm-ostree", "--version"], encoding="utf8", stdout=subprocess.PIPE, check=False)
         except FileNotFoundError:
             return False
 
@@ -308,11 +296,9 @@ class OSBuild(contextlib.AbstractContextManager):
             cache = tempfile.TemporaryDirectory(dir="/var/tmp")
             self._cachedir = self._exitstack.enter_context(cache)
             if self._cache_from is not None:
-                subprocess.run([
-                    "cp", "--reflink=auto", "-a",
-                    os.path.join(self._cache_from, "."),
-                    self._cachedir
-                ], check=True)
+                subprocess.run(
+                    ["cp", "--reflink=auto", "-a", os.path.join(self._cache_from, "."), self._cachedir], check=True
+                )
 
             with ObjectStore(self._cachedir) as store:
                 store.maximum_size = self.maximum_cache_size
@@ -381,10 +367,10 @@ class OSBuild(contextlib.AbstractContextManager):
             cmd_args += ["--output-directory", output_dir]
             cmd_args += ["--store", self._cachedir]
 
-            for c in (checkpoints or []):
+            for c in checkpoints or []:
                 cmd_args += ["--checkpoint", c]
 
-            for e in (exports or []):
+            for e in exports or []:
                 cmd_args += ["--export", e]
 
             cmd_args += ["-"]
@@ -492,7 +478,4 @@ class OSBuild(contextlib.AbstractContextManager):
         to_path = os.path.join(target, "sources", source)
         os.makedirs(to_path, exist_ok=True)
 
-        subprocess.run([
-            "cp", "--reflink=auto", "-a",
-            os.path.join(from_path, "."), to_path
-        ], check=True)
+        subprocess.run(["cp", "--reflink=auto", "-a", os.path.join(from_path, "."), to_path], check=True)

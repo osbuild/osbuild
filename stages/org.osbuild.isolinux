@@ -204,11 +204,13 @@ def main(tree, inputs, options):
     dst = os.path.join(isolinux, "splash.png")
     install(src, dst)
 
-    isolinuxfiles = [("isolinux.bin", 0o755),
-                     ("ldlinux.c32", 0o755),
-                     ("libcom32.c32", 0o755),
-                     ("libutil.c32", 0o755),
-                     ("vesamenu.c32", 0o755)]
+    isolinuxfiles = [
+        ("isolinux.bin", 0o755),
+        ("ldlinux.c32", 0o755),
+        ("libcom32.c32", 0o755),
+        ("libutil.c32", 0o755),
+        ("vesamenu.c32", 0o755),
+    ]
 
     for target, mode in isolinuxfiles:
         src = os.path.join(data, "usr/share/syslinux/", target)
@@ -221,24 +223,18 @@ def main(tree, inputs, options):
         install(src, dst, 0o755)
 
     tplt = string.Template(ISOLINUX_CFG_TEMPLATE)
-    data = tplt.safe_substitute({
-        "version": version,
-        "product": name,
-        "cmdline": " ".join(kopts)
-    })
+    data = tplt.safe_substitute({"version": version, "product": name, "cmdline": " ".join(kopts)})
 
     config = os.path.join(isolinux, "isolinux.cfg")
     with open(config, "w", encoding="utf8") as cfg:
         cfg.write(data)
 
     # link the kernel
-    os.link(os.path.join(kerneldir, "vmlinuz"),
-            os.path.join(isolinux, "vmlinuz"))
-    os.link(os.path.join(kerneldir, "initrd.img"),
-            os.path.join(isolinux, "initrd.img"))
+    os.link(os.path.join(kerneldir, "vmlinuz"), os.path.join(isolinux, "vmlinuz"))
+    os.link(os.path.join(kerneldir, "initrd.img"), os.path.join(isolinux, "initrd.img"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["tree"], args["inputs"], args["options"])
     sys.exit(ret)

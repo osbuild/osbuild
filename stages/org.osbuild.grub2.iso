@@ -135,12 +135,11 @@ def main(root, options):
         targets = [
             (f"shim{arch}.efi", f"BOOT{arch}.EFI".upper()),
             (f"mm{arch}.efi", f"mm{arch}.efi"),
-            (f"gcd{arch}.efi", f"grub{arch}.efi")
+            (f"gcd{arch}.efi", f"grub{arch}.efi"),
         ]
 
         for src, dst in targets:
-            shutil.copy2(os.path.join("/boot/efi/EFI/", vendor, src),
-                         os.path.join(efidir, dst))
+            shutil.copy2(os.path.join("/boot/efi/EFI/", vendor, src), os.path.join(efidir, dst))
 
     # the font
     fontdir = os.path.join(efidir, "fonts")
@@ -150,15 +149,17 @@ def main(root, options):
     print(f"kernel dir at {kdir}")
 
     tplt = string.Template(GRUB2_EFI_CFG_TEMPLATE)
-    data = tplt.safe_substitute({
-        "version": version,
-        "product": name,
-        "kernelpath": os.path.join(kdir, "vmlinuz"),
-        "initrdpath": os.path.join(kdir, "initrd.img"),
-        "isolabel": isolabel,
-        "root": " ".join(kopts),
-        "timeout": timeout
-    })
+    data = tplt.safe_substitute(
+        {
+            "version": version,
+            "product": name,
+            "kernelpath": os.path.join(kdir, "vmlinuz"),
+            "initrdpath": os.path.join(kdir, "initrd.img"),
+            "isolabel": isolabel,
+            "root": " ".join(kopts),
+            "timeout": timeout,
+        }
+    )
 
     config = os.path.join(efidir, "grub.cfg")
     with open(config, "w", encoding="utf8") as cfg:
@@ -168,7 +169,7 @@ def main(root, options):
         shutil.copy2(config, os.path.join(efidir, "BOOT.cfg"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["tree"], args["options"])
     sys.exit(ret)

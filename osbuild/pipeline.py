@@ -33,7 +33,7 @@ DEFAULT_CAPABILITIES = {
     "CAP_SYS_ADMIN",
     "CAP_SYS_CHROOT",
     "CAP_SYS_NICE",
-    "CAP_SYS_RESOURCE"
+    "CAP_SYS_RESOURCE",
 }
 
 
@@ -185,20 +185,18 @@ class Stage:
                 "mounts": mounts,
             }
 
-            meta = cm.enter_context(
-                tree.meta.write(self.id)
-            )
+            meta = cm.enter_context(tree.meta.write(self.id))
 
             ro_binds = [
                 f"{self.info.path}:/run/osbuild/bin/{self.name}",
                 f"{inputs_tmpdir}:{inputs_mapped}",
-                f"{args_path}:/run/osbuild/api/arguments"
+                f"{args_path}:/run/osbuild/api/arguments",
             ]
 
             binds = [
                 os.fspath(tree) + ":/run/osbuild/tree",
                 meta.name + ":/run/osbuild/meta",
-                f"{mounts_tmpdir}:{mounts_mapped}"
+                f"{mounts_tmpdir}:{mounts_mapped}",
             ]
 
             storeapi = objectstore.StoreServer(store)
@@ -233,12 +231,14 @@ class Stage:
             if self.source_epoch is not None:
                 extra_env["SOURCE_DATE_EPOCH"] = str(self.source_epoch)
 
-            r = build_root.run([f"/run/osbuild/bin/{self.name}"],
-                               monitor,
-                               timeout=timeout,
-                               binds=binds,
-                               readonly_binds=ro_binds,
-                               extra_env=extra_env)
+            r = build_root.run(
+                [f"/run/osbuild/bin/{self.name}"],
+                monitor,
+                timeout=timeout,
+                binds=binds,
+                readonly_binds=ro_binds,
+                extra_env=extra_env,
+            )
 
         return BuildResult(self, r.returncode, r.output, api.error)
 
@@ -282,8 +282,7 @@ class Pipeline:
         return self.stages[-1].id if self.stages else None
 
     def add_stage(self, info, options, sources_options=None):
-        stage = Stage(info, sources_options, self.build,
-                      self.id, options or {}, self.source_epoch)
+        stage = Stage(info, sources_options, self.build, self.id, options or {}, self.source_epoch)
         self.stages.append(stage)
         if self.assembler:
             self.assembler.base = stage.id
@@ -341,13 +340,7 @@ class Pipeline:
 
             monitor.stage(stage)
 
-            r = stage.run(tree,
-                          self.runner,
-                          build_tree,
-                          object_store,
-                          monitor,
-                          libdir,
-                          stage_timeout)
+            r = stage.run(tree, self.runner, build_tree, object_store, monitor, libdir, stage_timeout)
 
             monitor.result(r)
 
@@ -368,10 +361,7 @@ class Pipeline:
 
         monitor.begin(self)
 
-        results = self.build_stages(store,
-                                    monitor,
-                                    libdir,
-                                    stage_timeout)
+        results = self.build_stages(store, monitor, libdir, stage_timeout)
 
         monitor.finish(results)
 
@@ -386,11 +376,7 @@ class Manifest:
         self.sources = []
 
     def add_pipeline(
-        self,
-        name: str,
-        runner: Runner,
-        build: Optional[str] = None,
-        source_epoch: Optional[int] = None
+        self, name: str, runner: Runner, build: Optional[str] = None, source_epoch: Optional[int] = None
     ) -> Pipeline:
         pipeline = Pipeline(name, runner, build, source_epoch)
         if name in self.pipelines:

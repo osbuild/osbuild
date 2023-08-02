@@ -67,13 +67,9 @@ SCHEMA = """
 
 
 def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
+    args = list(args) + [f"--{k}={v}" for k, v in kwargs.items()]
     print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
+    subprocess.run(["ostree"] + args, encoding="utf8", stdout=sys.stderr, input=_input, check=True)
 
 
 def main(tree, options):
@@ -101,21 +97,13 @@ def main(tree, options):
         if contenturl:
             extra_args.append(f"--set=contenturl={contenturl}")
 
-        ostree("remote", "add",
-               "--if-not-exists",
-               *extra_args,
-               name, url,
-               *branches,
-               repo=target)
+        ostree("remote", "add", "--if-not-exists", *extra_args, name, url, *branches, repo=target)
 
         for key in gpgkeys:
-            ostree("remote", "gpg-import", "--stdin", name,
-                   repo=target,
-                   _input=key)
+            ostree("remote", "gpg-import", "--stdin", name, repo=target, _input=key)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["options"])
     sys.exit(r)

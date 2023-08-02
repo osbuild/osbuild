@@ -169,40 +169,33 @@ def mkfs_ext4(device, uuid, label):
     opts = []
     if label:
         opts = ["-L", label]
-    subprocess.run(["mkfs.ext4", "-U", uuid] + opts + [device],
-                   input="y", encoding='utf8', check=True)
+    subprocess.run(["mkfs.ext4", "-U", uuid] + opts + [device], input="y", encoding="utf8", check=True)
 
 
 def mkfs_xfs(device, uuid, label):
     opts = []
     if label:
         opts = ["-L", label]
-    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}"] + opts + [device],
-                   encoding='utf8', check=True)
+    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}"] + opts + [device], encoding="utf8", check=True)
 
 
 def mkfs_btrfs(device, uuid, label):
     opts = []
     if label:
         opts = ["-L", label]
-    subprocess.run(["mkfs.btrfs", "-U", uuid] + opts + [device],
-                   encoding='utf8', check=True)
+    subprocess.run(["mkfs.btrfs", "-U", uuid] + opts + [device], encoding="utf8", check=True)
 
 
 def mkfs_vfat(device, uuid, label):
-    volid = uuid.replace('-', '')
+    volid = uuid.replace("-", "")
     opts = []
     if label:
         opts = ["-n", label]
-    subprocess.run(["mkfs.vfat", "-i", volid] + opts + [device], encoding='utf8', check=True)
+    subprocess.run(["mkfs.vfat", "-i", volid] + opts + [device], encoding="utf8", check=True)
 
 
 class Filesystem:
-    def __init__(self,
-                 fstype: str,
-                 uuid: str,
-                 mountpoint: str,
-                 label: str = None):
+    def __init__(self, fstype: str, uuid: str, mountpoint: str, label: str = None):
         self.type = fstype
         self.uuid = uuid
         self.mountpoint = mountpoint
@@ -224,14 +217,16 @@ class Filesystem:
 
 
 class Partition:
-    def __init__(self,
-                 pttype: str = None,
-                 start: int = None,
-                 size: int = None,
-                 bootable: bool = False,
-                 name: str = None,
-                 uuid: str = None,
-                 filesystem: Filesystem = None):
+    def __init__(
+        self,
+        pttype: str = None,
+        start: int = None,
+        size: int = None,
+        bootable: bool = False,
+        name: str = None,
+        uuid: str = None,
+        filesystem: Filesystem = None,
+    ):
         self.type = pttype
         self.start = start
         self.size = size
@@ -279,8 +274,10 @@ class PartitionTable:
 
     def partitions_with_filesystems(self) -> List[Partition]:
         """Return partitions with filesystems sorted by hierarchy"""
+
         def mountpoint_len(p):
             return len(p.mountpoint)
+
         parts_fs = filter(lambda p: p.filesystem is not None, self.partitions)
         return sorted(parts_fs, key=mountpoint_len)
 
@@ -333,20 +330,14 @@ class PartitionTable:
                     fields += ["bootable"]
             command += "\n" + ", ".join(fields)
 
-        subprocess.run(["sfdisk", "-q", target],
-                       input=command,
-                       encoding='utf8',
-                       check=True)
+        subprocess.run(["sfdisk", "-q", target], input=command, encoding="utf8", check=True)
 
         if sync:
             self.update_from(target)
 
     def update_from(self, target):
         """Update and fill in missing information from disk"""
-        r = subprocess.run(["sfdisk", "--json", target],
-                           stdout=subprocess.PIPE,
-                           encoding='utf8',
-                           check=True)
+        r = subprocess.run(["sfdisk", "--json", target], stdout=subprocess.PIPE, encoding="utf8", check=True)
         disk_table = json.loads(r.stdout)["partitiontable"]
         disk_parts = disk_table["partitions"]
 
@@ -364,12 +355,14 @@ def filesystem_from_json(js) -> Filesystem:
 
 
 def partition_from_json(js) -> Partition:
-    p = Partition(pttype=js.get("type"),
-                  start=js.get("start"),
-                  size=js.get("size"),
-                  bootable=js.get("bootable"),
-                  name=js.get("name"),
-                  uuid=js.get("uuid"))
+    p = Partition(
+        pttype=js.get("type"),
+        start=js.get("start"),
+        size=js.get("size"),
+        bootable=js.get("bootable"),
+        name=js.get("name"),
+        uuid=js.get("uuid"),
+    )
     fs = js.get("filesystem")
     if fs:
         p.filesystem = filesystem_from_json(fs)
@@ -388,22 +381,18 @@ def partition_table_from_options(options) -> PartitionTable:
         # legacy mode, create a correct
         root_fs_uuid = options["root_fs_uuid"]
         root_fs_type = options.get("root_fs_type", "ext4")
-        partitions = [{
-            "bootable": True,
-            "type": "83",
-            "filesystem": {
-                "type": root_fs_type,
-                "uuid": root_fs_uuid,
-                "mountpoint": "/"
+        partitions = [
+            {
+                "bootable": True,
+                "type": "83",
+                "filesystem": {"type": root_fs_type, "uuid": root_fs_uuid, "mountpoint": "/"},
             }
-        }]
+        ]
     parts = [partition_from_json(p) for p in partitions]
     return PartitionTable(pttype, ptuuid, parts)
 
 
-def grub2_write_boot_image(boot_f: BinaryIO,
-                           image_f: BinaryIO,
-                           core_location: int):
+def grub2_write_boot_image(boot_f: BinaryIO, image_f: BinaryIO, core_location: int):
     """Write the boot image (grub2 stage 1) to the MBR"""
 
     # The boot.img file is 512 bytes, but we must only copy the first 440
@@ -418,13 +407,11 @@ def grub2_write_boot_image(boot_f: BinaryIO,
     # latter can find the former. To exact location is
     # taken from grub2's "boot.S":
     #  GRUB_BOOT_MACHINE_KERNEL_SECTOR 0x5c (= 92)
-    image_f.seek(0x5c)
+    image_f.seek(0x5C)
     image_f.write(struct.pack("<Q", core_location))
 
 
-def grub2_write_core_mbrgap(core_f: BinaryIO,
-                            image_f: BinaryIO,
-                            pt: PartitionTable):
+def grub2_write_core_mbrgap(core_f: BinaryIO, image_f: BinaryIO, pt: PartitionTable):
     """Write the core into the MBR gap"""
     # For historic and performance reasons the first partition
     # is aligned to a specific sector number (used to be 64,
@@ -439,9 +426,7 @@ def grub2_write_core_mbrgap(core_f: BinaryIO,
     return 1  # the location of the core image in sectors
 
 
-def grub2_write_core_prep_part(core_f: BinaryIO,
-                               image_f: BinaryIO,
-                               pt: PartitionTable):
+def grub2_write_core_prep_part(core_f: BinaryIO, image_f: BinaryIO, pt: PartitionTable):
     """Write the core to the prep partition"""
     # On ppc64le with Open Firmware a special partition called
     # 'PrEP partition' is used the store the grub2 core; the
@@ -459,9 +444,7 @@ def grub2_write_core_prep_part(core_f: BinaryIO,
     return prep_part.start
 
 
-def grub2_write_core_bios_boot(core_f: BinaryIO,
-                               image_f: BinaryIO,
-                               pt: PartitionTable):
+def grub2_write_core_bios_boot(core_f: BinaryIO, image_f: BinaryIO, pt: PartitionTable):
     """Write the core to the bios boot partition"""
     bb = pt.find_bios_boot_partition()
     if not bb:
@@ -491,10 +474,7 @@ def grub2_write_core_bios_boot(core_f: BinaryIO,
 def grub2_partition_id(pt: PartitionTable):
     """grub2 partition identifier for the partition table"""
 
-    label2grub = {
-        "dos": "msdos",
-        "gpt": "gpt"
-    }
+    label2grub = {"dos": "msdos", "gpt": "gpt"}
 
     if pt.label not in label2grub:
         raise ValueError(f"Unknown partition type: {pt.label}")
@@ -561,15 +541,24 @@ def install_grub2(image: str, pt: PartitionTable, options):
     grub_path = os.path.relpath("/boot/grub2", boot_part.mountpoint)
 
     # now created the core image
-    subprocess.run(["grub2-mkimage",
-                    "--verbose",
-                    "--directory", f"/usr/lib/grub/{platform}",
-                    "--prefix", f"(,{partid})/{grub_path}",
-                    "--format", platform,
-                    "--compression", "auto",
-                    "--output", core_path] +
-                   modules,
-                   check=True)
+    subprocess.run(
+        [
+            "grub2-mkimage",
+            "--verbose",
+            "--directory",
+            f"/usr/lib/grub/{platform}",
+            "--prefix",
+            f"(,{partid})/{grub_path}",
+            "--format",
+            platform,
+            "--compression",
+            "auto",
+            "--output",
+            core_path,
+        ]
+        + modules,
+        check=True,
+    )
 
     with open(image, "rb+") as image_f:
         # Write the newly created grub2 core to the image
@@ -597,7 +586,7 @@ def parse_blsfile(blsfile):
     params = {}
     with open(blsfile, "r", encoding="utf8") as bls:
         for line in bls:
-            key, value = line.split(' ', 1)
+            key, value = line.split(" ", 1)
             params[key] = value.strip()
     return params
 
@@ -624,17 +613,29 @@ def install_zipl(root: str, device: str, pt: PartitionTable):
     if not part_with_boot:
         raise RuntimeError("Could not find part_with_boot")
 
-    subprocess.run(["/usr/sbin/zipl",
-                    "--verbose",
-                    "--target", f"{root}/boot",
-                    "--image", kernel,
-                    "--ramdisk", initrd,
-                    "--parameters", kopts,
-                    "--targetbase", device,
-                    "--targettype", "SCSI",
-                    "--targetblocksize", "512",
-                    "--targetoffset", str(part_with_boot.start)],
-                   check=True)
+    subprocess.run(
+        [
+            "/usr/sbin/zipl",
+            "--verbose",
+            "--target",
+            f"{root}/boot",
+            "--image",
+            kernel,
+            "--ramdisk",
+            initrd,
+            "--parameters",
+            kopts,
+            "--targetbase",
+            device,
+            "--targettype",
+            "SCSI",
+            "--targetblocksize",
+            "512",
+            "--targetoffset",
+            str(part_with_boot.start),
+        ],
+        check=True,
+    )
 
 
 # pylint: disable=too-many-branches
@@ -699,12 +700,7 @@ def main(tree, output_dir, options, loop_client):
     elif fmt == "raw.xz":
         with open(f"{output_dir}/{filename}", "w", encoding="utf8") as f:
             subprocess.run(
-                ["xz", "--keep", "--stdout", "-0", image],
-                stdout=f,
-                check=True,
-                env={
-                    "XZ_OPT": "--threads 0"
-                }
+                ["xz", "--keep", "--stdout", "-0", image], stdout=f, check=True, env={"XZ_OPT": "--threads 0"}
             )
     else:
         extra_args = {
@@ -712,7 +708,7 @@ def main(tree, output_dir, options, loop_client):
             "vdi": [],
             "vmdk": ["-c"],
             "vpc": ["-o", "subformat=fixed,force_size"],
-            "vhdx": []
+            "vhdx": [],
         }
 
         compat = options.get("qcow2_compat")
@@ -728,17 +724,12 @@ def main(tree, output_dir, options, loop_client):
             print(f"qemu-img coroutines: {coroutines}")
             extra_args[fmt] += ["-m", coroutines]
 
-        subprocess.run([
-            "qemu-img",
-            "convert",
-            "-O", fmt,
-            *extra_args[fmt],
-            image,
-            f"{output_dir}/{filename}"
-        ], check=True)
+        subprocess.run(
+            ["qemu-img", "convert", "-O", fmt, *extra_args[fmt], image, f"{output_dir}/{filename}"], check=True
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     args_input = args["inputs"]["tree"]["path"]
     args_output = args["tree"]

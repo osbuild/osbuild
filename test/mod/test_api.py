@@ -50,7 +50,7 @@ class TestAPI(unittest.TestCase):
         api = APITester(socket)
         with api:
             with jsoncomm.Socket.new_client(socket) as client:
-                req = {'method': 'echo', 'data': 'Hello'}
+                req = {"method": "echo", "data": "Hello"}
                 client.send(req)
                 msg, _, _ = client.recv()
                 self.assertEqual(msg["method"], "reply")
@@ -83,7 +83,7 @@ class TestAPI(unittest.TestCase):
 
         api = osbuild.api.API(socket_address=path)
         with api:
-            p = mp.Process(target=exception, args=(path, ))
+            p = mp.Process(target=exception, args=(path,))
             p.start()
             p.join()
         self.assertEqual(p.exitcode, 2)

@@ -68,11 +68,7 @@ def main(tree, options):
     selected = config.get("selected", [])
     unselected = config.get("unselected", [])
 
-    cmd = [
-        "/usr/bin/autotailor",
-        "--output", f"{tree}/{filepath.lstrip('/')}",
-        "--new-profile-id", new_profile
-    ]
+    cmd = ["/usr/bin/autotailor", "--output", f"{tree}/{filepath.lstrip('/')}", "--new-profile-id", new_profile]
 
     for s in selected:
         cmd.extend(["--select", s])

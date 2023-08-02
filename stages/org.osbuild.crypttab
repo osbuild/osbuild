@@ -80,11 +80,10 @@ def main(tree, options):
             else:
                 raise ValueError("Need 'uuid' or 'label'")
 
-            f.write(
-                f"{name}\t{device}\t{keyfile}\t{options}\n")
+            f.write(f"{name}\t{device}\t{keyfile}\t{options}\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

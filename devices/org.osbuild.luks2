@@ -38,7 +38,6 @@ SCHEMA = """
 
 
 class CryptDeviceService(devices.DeviceService):
-
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
         self.devname: Optional[str] = None
@@ -47,15 +46,23 @@ class CryptDeviceService(devices.DeviceService):
 
     def dminfo(self, name=None):
         """Return the major, minor and open count for the device"""
-        res = subprocess.run(["dmsetup", "info", "-c",
-                              "-o", "major,minor,open",
-                              "--noheadings",
-                              "--separator", ":",
-                              name or self.devname],
-                             check=False,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT,
-                             encoding="UTF-8")
+        res = subprocess.run(
+            [
+                "dmsetup",
+                "info",
+                "-c",
+                "-o",
+                "major,minor,open",
+                "--noheadings",
+                "--separator",
+                ":",
+                name or self.devname,
+            ],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            encoding="UTF-8",
+        )
 
         if res.returncode != 0:
             data = res.stdout.strip()
@@ -88,12 +95,14 @@ class CryptDeviceService(devices.DeviceService):
         self.lock = UdevInhibitor.for_dm_name(devname)
 
         # Make sure the logical volume is activated
-        res = subprocess.run(["cryptsetup", "-q", "open", parent_dev, devname],
-                             check=False,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT,
-                             input=passphrase,
-                             encoding="UTF-8")
+        res = subprocess.run(
+            ["cryptsetup", "-q", "open", parent_dev, devname],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            input=passphrase,
+            encoding="UTF-8",
+        )
 
         if res.returncode != 0:
             data = res.stdout.strip()
@@ -113,14 +122,7 @@ class CryptDeviceService(devices.DeviceService):
         os.makedirs(os.path.join(devpath, "mapper"), exist_ok=True)
         self.ensure_device_node(fullpath, major, minor)
 
-        data = {
-            "path": subpath,
-            "name": devname,
-            "node": {
-                "major": major,
-                "minor": minor
-            }
-        }
+        data = {"path": subpath, "name": devname, "node": {"major": major, "minor": minor}}
         return data
 
     def close(self):
@@ -137,11 +139,13 @@ class CryptDeviceService(devices.DeviceService):
         self.devname = None
 
         # finally close the device
-        subprocess.run(["cryptsetup", "-q", "close", name],
-                       check=self.check,
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.STDOUT,
-                       encoding="UTF-8")
+        subprocess.run(
+            ["cryptsetup", "-q", "close", name],
+            check=self.check,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            encoding="UTF-8",
+        )
 
 
 def main():
@@ -149,6 +153,6 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     r = main()
     sys.exit(r)

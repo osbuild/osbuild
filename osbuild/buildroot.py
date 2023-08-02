@@ -105,9 +105,7 @@ class BuildRoot(contextlib.AbstractContextManager):
 
     @staticmethod
     def _mknod(path, name, mode, major, minor):
-        os.mknod(os.path.join(path, name),
-                 mode=(stat.S_IMODE(mode) | stat.S_IFCHR),
-                 device=os.makedev(major, minor))
+        os.mknod(os.path.join(path, name), mode=(stat.S_IMODE(mode) | stat.S_IFCHR), device=os.makedev(major, minor))
 
     def __enter__(self):
         self._exitstack = contextlib.ExitStack()
@@ -229,14 +227,10 @@ class BuildRoot(contextlib.AbstractContextManager):
         # would fail because the default config, created on the fly, would
         # contain a syntax error. Therefore we bind mount the config from
         # the build root, if it exists
-        mounts += ["--ro-bind-try",
-                   os.path.join(self._rootdir, "etc/mke2fs.conf"),
-                   "/etc/mke2fs.conf"]
+        mounts += ["--ro-bind-try", os.path.join(self._rootdir, "etc/mke2fs.conf"), "/etc/mke2fs.conf"]
 
         # Skopeo needs things like /etc/containers/policy.json, so take them from buildroot
-        mounts += ["--ro-bind-try",
-                   os.path.join(self._rootdir, "etc/containers"),
-                   "/etc/containers"]
+        mounts += ["--ro-bind-try", os.path.join(self._rootdir, "etc/containers"), "/etc/containers"]
 
         # We execute our own modules by bind-mounting them from the host into
         # the build-root. We have minimal requirements on the build-root, so
@@ -252,11 +246,7 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         # Setup /proc overrides
         for override in self.proc.overrides:
-            mounts += [
-                "--ro-bind",
-                os.path.join(self.proc.path, override),
-                os.path.join("/proc", override)
-            ]
+            mounts += ["--ro-bind", os.path.join(self.proc.path, override), os.path.join("/proc", override)]
 
         # Make caller-provided mounts available as well.
         for b in binds or []:
@@ -278,12 +268,13 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         cmd = [
             "bwrap",
-            "--chdir", "/",
+            "--chdir",
+            "/",
             "--die-with-parent",
             "--new-session",
             "--unshare-ipc",
             "--unshare-pid",
-            "--unshare-net"
+            "--unshare-net",
         ]
 
         cmd += self.build_capabilities_args()
@@ -304,13 +295,15 @@ class BuildRoot(contextlib.AbstractContextManager):
         if extra_env:
             env.update(extra_env)
 
-        proc = subprocess.Popen(cmd,
-                                bufsize=0,
-                                env=env,
-                                stdin=subprocess.DEVNULL,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                close_fds=True)
+        proc = subprocess.Popen(
+            cmd,
+            bufsize=0,
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            close_fds=True,
+        )
 
         data = io.StringIO()
         start = time.monotonic()

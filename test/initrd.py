@@ -10,8 +10,8 @@ def skipcpio(fd):
     pos = 0
     while True:
         os.lseek(fd, pos, os.SEEK_SET)
-        data = os.read(fd, 2*cpio_len)
-        if data == b'':
+        data = os.read(fd, 2 * cpio_len)
+        if data == b"":
             # end of file, cpio_end not found, cat it all
             pos = 0
             break
@@ -24,10 +24,10 @@ def skipcpio(fd):
     if pos == 0:
         return pos
     # skip zeros
-    n = 2*cpio_len
+    n = 2 * cpio_len
     while True:
         data = os.read(fd, n)
-        if data == b'':
+        if data == b"":
             os.lseek(fd, pos, os.SEEK_SET)
             return 0
         for i, x in enumerate(data):
@@ -70,30 +70,30 @@ class Initrd:
     def init(self):
         with self.open() as image:
             hdr = read_header(image)
-            if hdr.startswith(b'\x71\xc7') or hdr == b'070701':
+            if hdr.startswith(b"\x71\xc7") or hdr == b"070701":
                 cmd = "cpio --extract --quiet --to-stdout -- 'early_cpio'"
                 data = self.run(cmd, image)
-                self.early_cpio = data == '1'
+                self.early_cpio = data == "1"
 
             if self.early_cpio:
                 skipcpio(image)
                 hdr = read_header(image)
-            if hdr.startswith(b'\x1f\x8b'):
+            if hdr.startswith(b"\x1f\x8b"):
                 cat = "zcat --"
                 compression = "gzip"
-            elif hdr.startswith(b'BZh'):
+            elif hdr.startswith(b"BZh"):
                 cat = "bzcat --"
                 compression = "bz"
-            elif hdr.startswith(b'\x71\xc7') or hdr == b'070701':
+            elif hdr.startswith(b"\x71\xc7") or hdr == b"070701":
                 cat = "cat --"
                 compression = "ascii"
-            elif hdr.startswith(b'\x02\x21'):
+            elif hdr.startswith(b"\x02\x21"):
                 cat = "lz4 -d -c"
                 compression = "lz4"
-            elif hdr.startswith(b'\x89LZO\0'):
+            elif hdr.startswith(b"\x89LZO\0"):
                 cat = "lzop -d -c"
                 compression = "lzop"
-            elif hdr.startswith(b'\x28\xB5\x2F\xFD'):
+            elif hdr.startswith(b"\x28\xB5\x2F\xFD"):
                 cat = "zstd -d -c"
                 compression = "zstd"
             else:
@@ -107,12 +107,11 @@ class Initrd:
         cmd = f"{self._cat} | cpio -it --no-absolute-filename"
         with self.open() as image:
             data = self.run(cmd, image)
-            filelist = data.split('\n')
+            filelist = data.split("\n")
             return filelist
 
     def read_modules(self):
-        libdirs = ["lib64/dracut", "lib/dracut",
-                   "usr/lib64/dracut", "usr/lib/dracut"]
+        libdirs = ["lib64/dracut", "lib/dracut", "usr/lib64/dracut", "usr/lib/dracut"]
         paths = [f"{d}/modules.txt" for d in libdirs]
         cmd = f"{self._cat} | "
         cmd += "cpio --extract --quiet --to-stdout -- "
@@ -146,7 +145,7 @@ class Initrd:
             "early_cpio": self.early_cpio,
             "compression": self.compression,
             "kmods": self.kmods,
-            "modules": self.modules
+            "modules": self.modules,
         }
 
     @contextlib.contextmanager
@@ -164,18 +163,13 @@ class Initrd:
     @staticmethod
     def run(cmd, image):
         argv = ["/bin/sh", "-c", cmd]
-        output = subprocess.check_output(argv,
-                                         encoding=None,
-                                         stdin=image,
-                                         stderr=subprocess.DEVNULL)
-        return output.strip().decode('utf8')
+        output = subprocess.check_output(argv, encoding=None, stdin=image, stderr=subprocess.DEVNULL)
+        return output.strip().decode("utf8")
 
 
 def read_initrd(path):
     initrd = Initrd(path)
-    return {
-        initrd.name: initrd.as_dict()
-    }
+    return {initrd.name: initrd.as_dict()}
 
 
 def main():

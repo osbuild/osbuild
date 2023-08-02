@@ -41,16 +41,10 @@ def main(tree, options):
     parent = os.path.dirname(repo)
     os.makedirs(parent, exist_ok=True)
 
-    subprocess.run(["ostree",
-                    "init",
-                    "-v",
-                    f"--mode={mode}",
-                    f"--repo={repo}"],
-                   stdout=sys.stderr,
-                   check=True)
+    subprocess.run(["ostree", "init", "-v", f"--mode={mode}", f"--repo={repo}"], stdout=sys.stderr, check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     args_tree = args["tree"]
     r = main(args_tree, args["options"])

@@ -49,7 +49,7 @@ def test_parse_name():
         "ubuntu1804": {
             "distro": "ubuntu",
             "version": 1804,
-        }
+        },
     }
 
     for name, want in table.items():
@@ -65,12 +65,7 @@ def test_runner_detection(tempdir):
     os.makedirs(runners)
 
     table = {
-        "arch": {
-            "base": "",
-            "versions": [],
-            "check": {"": 0},
-            "fail": []
-        },
+        "arch": {"base": "", "versions": [], "check": {"": 0}, "fail": []},
         "fedora": {
             "base": 30,
             "versions": list(range(31, 40)),
@@ -85,14 +80,14 @@ def test_runner_detection(tempdir):
         },
         "rhel": {
             "base": 90,
-            "versions":  [91, 92, 93],
+            "versions": [91, 92, 93],
             "check": {94: 93},
         },
         "future": {
             "base": 100,
-            "versions":  [101, 102, 103],
+            "versions": [101, 102, 103],
             "check": {110: 103},
-        }
+        },
     }
 
     want_all = []
@@ -133,16 +128,7 @@ def test_runner_sorting(tempdir):
     runners = os.path.join(tempdir, "runners")
     os.makedirs(runners)
 
-    table = {
-        "A": {
-            "base": 1,
-            "versions": [2, 3]
-        },
-        "B": {
-            "base": 1,
-            "versions": [2, 3]
-        }
-    }
+    table = {"A": {"base": 1, "versions": [2, 3]}, "B": {"base": 1, "versions": [2, 3]}}
 
     for distro, info in table.items():
         base = info["base"] or 0
@@ -152,9 +138,7 @@ def test_runner_sorting(tempdir):
     meta = osbuild.meta.Index(tempdir)
     have = meta.list_runners()
 
-    names = [
-        f"{i.distro}{i.version}" for i in have
-    ]
+    names = [f"{i.distro}{i.version}" for i in have]
 
     assert names == ["A1", "A2", "A3", "B1", "B2", "B3"]
 

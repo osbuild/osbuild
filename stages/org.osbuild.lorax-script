@@ -75,13 +75,7 @@ def main(tree, options):
     version = product.get("version", "")
     product = Product(name, version)
 
-    args = {
-        "root": tree,
-        "basearch": basearch,
-        "configdir": configdir,
-        "libdir": libdir,
-        "product": product
-    }
+    args = {"root": tree, "basearch": basearch, "configdir": configdir, "libdir": libdir, "product": product}
 
     tpl = render_template(fullpath, args)
     script = Script(tpl, "/", tree)
@@ -89,8 +83,7 @@ def main(tree, options):
     script()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     stage_args = osbuild.api.arguments()
-    r = main(stage_args["tree"],
-             stage_args["options"])
+    r = main(stage_args["tree"], stage_args["options"])
     sys.exit(r)

@@ -11,9 +11,7 @@ class VT:
 
     escape_sequences: Dict[str, str] = {
         "reset": "\033[0m",
-
         "bold": "\033[1m",
-
         "red": "\033[31m",
         "green": "\033[32m",
     }

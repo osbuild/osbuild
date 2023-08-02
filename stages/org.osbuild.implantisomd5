@@ -27,19 +27,15 @@ SCHEMA = """
 def main(tree, options):
     filename = options["filename"].lstrip("/")
 
-    cmd = [
-        "implantisomd5", os.path.join(tree, filename)
-    ]
+    cmd = ["implantisomd5", os.path.join(tree, filename)]
 
     print(cmd)
-    subprocess.run(cmd,
-                   cwd=tree,
-                   check=True)
+    subprocess.run(cmd, cwd=tree, check=True)
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

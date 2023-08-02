@@ -149,10 +149,7 @@ def main(tree, options):
     # initrds may have already been created, force the recreation
     opts = ["--force", "-v", "--show-modules"]
 
-    opts += [
-        yesno("early-microcode", early_microcode),
-        yesno("reproducible", reproducible)
-    ]
+    opts += [yesno("early-microcode", early_microcode), yesno("reproducible", reproducible)]
 
     if compress:
         opts += [f"--compress={compress}"]
@@ -192,17 +189,14 @@ def main(tree, options):
     for kver in kernels:
         print(f"Building initramfs for {kver}", file=sys.stderr)
 
-        subprocess.run(["/usr/sbin/chroot", tree,
-                        "/usr/bin/dracut",
-                        "--no-hostonly",
-                        "--kver", kver]
-                       + opts,
-                       check=True)
+        subprocess.run(
+            ["/usr/sbin/chroot", tree, "/usr/bin/dracut", "--no-hostonly", "--kver", kver] + opts, check=True
+        )
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

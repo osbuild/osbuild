@@ -20,11 +20,13 @@ def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
     if options:
         args += ["-o", ",".join(options)]
 
-    r = subprocess.run(["mount"] + args + [source, target],
-                       stderr=subprocess.STDOUT,
-                       stdout=subprocess.PIPE,
-                       encoding="utf-8",
-                       check=False)
+    r = subprocess.run(
+        ["mount"] + args + [source, target],
+        stderr=subprocess.STDOUT,
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+        check=False,
+    )
 
     if r.returncode != 0:
         code = r.returncode

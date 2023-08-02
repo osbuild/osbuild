@@ -77,7 +77,7 @@ def main(tree, options):
         os.fchmod(f.fileno(), 0o755)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args.get("options", {}))
     sys.exit(r)

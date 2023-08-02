@@ -30,7 +30,7 @@ from typing import BinaryIO, ClassVar, Dict, List, Union
 
 PathLike = Union[str, bytes, os.PathLike]
 
-INITIAL_CRC = 0xf597a6cf
+INITIAL_CRC = 0xF597A6CF
 MDA_HEADER_SIZE = 512
 
 
@@ -63,10 +63,7 @@ class CStruct:
 
     def unpack(self, data):
         up = self.struct.unpack_from(data)
-        res = {
-            field.name: up[idx]
-            for idx, field in enumerate(self.fields)
-        }
+        res = {field.name: up[idx] for idx, field in enumerate(self.fields)}
         return res
 
     def read(self, fp):
@@ -81,9 +78,7 @@ class CStruct:
         return res
 
     def pack(self, data):
-        values = [
-            data[field.name] for field in self.fields
-        ]
+        values = [data[field.name] for field in self.fields]
         data = self.struct.pack(*values)
         return data
 
@@ -152,13 +147,15 @@ class Header:
 
 class LabelHeader(Header):
 
-    struct = CStruct({     # 32 bytes on disk
-        "id": "8s",        # int8_t[8] // LABELONE
-        "sector": "Q",     # uint64_t  // Sector number of this label
-        "crc": "L",        # uint32_t  // From next field to end of sector
-        "offset": "L",     # uint32_t  // Offset from start of struct to contents
-        "type": "8s"       # int8_t[8] // LVM2 00
-    })
+    struct = CStruct(
+        {  # 32 bytes on disk
+            "id": "8s",  # int8_t[8] // LABELONE
+            "sector": "Q",  # uint64_t  // Sector number of this label
+            "crc": "L",  # uint32_t  // From next field to end of sector
+            "offset": "L",  # uint32_t  // Offset from start of struct to contents
+            "type": "8s",  # int8_t[8] // LVM2 00
+        }
+    )
 
     LABELID = b"LABELONE"
 
@@ -174,7 +171,7 @@ class LabelHeader(Header):
         fp.seek(0, io.SEEK_SET)
         for _ in range(cls.LABEL_SCAN_SECTORS):
             raw = fp.read(sector_size)
-            if raw[0:len(cls.LABELID)] == cls.LABELID:
+            if raw[0 : len(cls.LABELID)] == cls.LABELID:
                 data = cls.struct.unpack(raw)
                 return LabelHeader(data)
         return None
@@ -189,10 +186,9 @@ class LabelHeader(Header):
 
 class DiskLocN(Header):
 
-    struct = CStruct({
-        "offset": "Q",  # uint64_t // Offset in bytes to start sector
-        "size": "Q"     # uint64_t // Size in bytes
-    })
+    struct = CStruct(
+        {"offset": "Q", "size": "Q"}  # uint64_t // Offset in bytes to start sector  # uint64_t // Size in bytes
+    )
 
     @property
     def offset(self):
@@ -221,10 +217,7 @@ class DiskLocN(Header):
 class PVHeader(Header):
 
     ID_LEN = 32
-    struct = CStruct({
-        "uuid": "32s",    # int8_t[ID_LEN]
-        "disk_size": "Q"  # uint64_t // size in bytes
-    })
+    struct = CStruct({"uuid": "32s", "disk_size": "Q"})  # int8_t[ID_LEN]  # uint64_t // size in bytes
     # followed by two NULL terminated list of data areas
     # and metadata areas of type `DiskLocN`
 
@@ -260,12 +253,14 @@ class PVHeader(Header):
 
 
 class RawLocN(Header):
-    struct = CStruct({
-        "offset": "Q",    # uint64_t  // Offset in bytes to start sector
-        "size": "Q",      # uint64_t  // Size in bytes
-        "checksum": "L",  # uint32_t  // Checksum of data
-        "flags": "L",     # uint32_t  // Flags
-    })
+    struct = CStruct(
+        {
+            "offset": "Q",  # uint64_t  // Offset in bytes to start sector
+            "size": "Q",  # uint64_t  // Size in bytes
+            "checksum": "L",  # uint32_t  // Checksum of data
+            "flags": "L",  # uint32_t  // Flags
+        }
+    )
 
     IGNORED = 0x00000001
 
@@ -281,13 +276,15 @@ class RawLocN(Header):
 
 
 class MDAHeader(Header):
-    struct = CStruct({
-        "checksum": "L",  # uint32_t   // Checksum of data
-        "magic": "16s",   # int8_t[16] // Allows to scan for metadata
-        "version": "L",   # uint32_t
-        "start": "Q",     # uint64_t   // Absolute start byte of itself
-        "size":  "Q"      # uint64_t   // Size of metadata area
-    })
+    struct = CStruct(
+        {
+            "checksum": "L",  # uint32_t   // Checksum of data
+            "magic": "16s",  # int8_t[16] // Allows to scan for metadata
+            "version": "L",  # uint32_t
+            "start": "Q",  # uint64_t   // Absolute start byte of itself
+            "size": "Q",  # uint64_t   // Size of metadata area
+        }
+    )
     # followed by a null termiated list of type `RawLocN`
 
     LOC_COMMITTED = 0
@@ -360,7 +357,7 @@ class MDAHeader(Header):
         raw = fr.getvalue()
 
         cs = struct.Struct("<L")
-        checksum = _calc_crc(raw[cs.size:])
+        checksum = _calc_crc(raw[cs.size :])
         self.data["checksum"] = checksum
         data = self.struct.pack(self.data)
         fr.seek(0)
@@ -419,7 +416,7 @@ class Metadata:
             r"\]": " ]",
             r'"': ' " ',
             r"[=,]": "",
-            r"\s+":  " ",
+            r"\s+": " ",
             r"\0$": "",
         }
 
@@ -429,10 +426,10 @@ class Metadata:
 
         data = data.split()
 
-        DICT_START = '{'
-        DICT_END = '}'
-        ARRAY_START = '['
-        ARRAY_END = ']'
+        DICT_START = "{"
+        DICT_END = "}"
+        ARRAY_START = "["
+        ARRAY_END = "]"
         STRING_START = '"'
         STRING_END = '"'
 
@@ -498,7 +495,6 @@ class Metadata:
 
     @staticmethod
     def encode_data(data):
-
         def encode_dict(d):
             s = ""
             for k, v in d.items():
@@ -518,9 +514,9 @@ class Metadata:
             elif isinstance(v, list):
                 s = "[" + ", ".join(encode_val(x) for x in v) + "]"
             elif isinstance(v, dict):
-                s = '{\n'
+                s = "{\n"
                 s += encode_dict(v)
-                s += '}\n'
+                s += "}\n"
             return s
 
         return encode_dict(data) + "\0"

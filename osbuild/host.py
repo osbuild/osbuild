@@ -98,7 +98,7 @@ class ServiceProtocol:
             "data": {
                 "name": name,
                 "args": arguments,
-            }
+            },
         }
         return msg
 
@@ -113,12 +113,7 @@ class ServiceProtocol:
 
     @staticmethod
     def encode_reply(reply: Any):
-        msg = {
-            "type": "reply",
-            "data": {
-                "reply": reply
-            }
-        }
+        msg = {"type": "reply", "data": {"reply": reply}}
         return msg
 
     @staticmethod
@@ -133,12 +128,7 @@ class ServiceProtocol:
 
     @staticmethod
     def encode_signal(sig: Any):
-        msg = {
-            "type": "signal",
-            "data": {
-                "reply": sig
-            }
-        }
+        msg = {"type": "signal", "data": {"reply": sig}}
         return msg
 
     @staticmethod
@@ -146,11 +136,7 @@ class ServiceProtocol:
         backtrace = "".join(traceback.format_tb(tb))
         msg = {
             "type": "exception",
-            "data": {
-                "name": value.__class__.__name__,
-                "value": str(value),
-                "backtrace": backtrace
-            }
+            "data": {"name": value.__class__.__name__, "value": str(value), "backtrace": backtrace},
         }
         return msg
 
@@ -202,10 +188,8 @@ class Service(abc.ABC):
         desc = f"osbuild {name} host service"
         parser = argparse.ArgumentParser(description=desc)
 
-        parser.add_argument("--service-fd", metavar="FD", type=int,
-                            help="service file descriptor")
-        parser.add_argument("--service-id", metavar="ID", type=str,
-                            help="service identifier")
+        parser.add_argument("--service-fd", metavar="FD", type=int, help="service file descriptor")
+        parser.add_argument("--service-id", metavar="ID", type=str, help="service identifier")
         return parser
 
     @abc.abstractmethod
@@ -335,6 +319,7 @@ class ServiceClient:
     Can be used to remotely call methods on the host services. Normally
     returned from the `ServiceManager` when starting a new host service.
     """
+
     protocol = ServiceProtocol
 
     def __init__(self, uid, proc, sock):
@@ -348,11 +333,13 @@ class ServiceClient:
         ret, _ = self.call_with_fds(method, args)
         return ret
 
-    def call_with_fds(self, method: str,
-                      args: Optional[Union[List[str], Dict[str, Any]]] = None,
-                      fds: Optional[List[int]] = None,
-                      on_signal: Optional[Callable[[Any, Optional[Iterable[int]]], None]] = None
-                      ) -> Tuple[Any, Optional[Iterable[int]]]:
+    def call_with_fds(
+        self,
+        method: str,
+        args: Optional[Union[List[str], Dict[str, Any]]] = None,
+        fds: Optional[List[int]] = None,
+        on_signal: Optional[Callable[[Any, Optional[Iterable[int]]], None]] = None,
+    ) -> Tuple[Any, Optional[Iterable[int]]]:
         """
         Remotely call a method and return the result, including file
         descriptors.
@@ -458,23 +445,21 @@ class ServiceManager:
 
         try:
             fd = theirs.fileno()
-            argv = [
-                cmd,
-                "--service-id", uid,
-                "--service-fd", str(fd)
-            ]
+            argv = [cmd, "--service-id", uid, "--service-fd", str(fd)]
 
             if extra_args:
                 argv += extra_args
 
-            proc = subprocess.Popen(argv,
-                                    env=env,
-                                    stdin=subprocess.DEVNULL,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT,
-                                    bufsize=0,
-                                    pass_fds=(fd, ),
-                                    close_fds=True)
+            proc = subprocess.Popen(
+                argv,
+                env=env,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                bufsize=0,
+                pass_fds=(fd,),
+                close_fds=True,
+            )
 
             service = ServiceClient(uid, proc, ours)
             self.services[uid] = service
@@ -483,9 +468,7 @@ class ServiceManager:
             if proc.stdout is None:
                 raise RuntimeError("No stdout.")
 
-            stdout = io.TextIOWrapper(proc.stdout,
-                                      encoding="utf-8",
-                                      line_buffering=True)
+            stdout = io.TextIOWrapper(proc.stdout, encoding="utf-8", line_buffering=True)
 
             name = os.path.basename(cmd)
 

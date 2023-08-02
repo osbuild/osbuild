@@ -21,12 +21,7 @@ from ..test import TestBase
 
 def have_lvm() -> bool:
     try:
-        r = subprocess.run(
-            ["vgs"],
-            encoding="utf8",
-            stdout=subprocess.PIPE,
-            check=False
-        )
+        r = subprocess.run(["vgs"], encoding="utf8", stdout=subprocess.PIPE, check=False)
     except FileNotFoundError:
         return False
     return r.returncode == 0
@@ -60,28 +55,14 @@ def vgcreate(path: PathLike, vg_name: str):
 
 
 def lvcreate(vg_name, name: str, size: str):
-    cmd = [
-        "lvcreate", "-an",
-        "-l", size,
-        "-n", name,
-        vg_name
-    ]
+    cmd = ["lvcreate", "-an", "-l", size, "-n", name, vg_name]
     subprocess.run(cmd, check=True)
 
 
 def list_vgs():
-    cmd = [
-        "vgs",
-        "--reportformat", "json",
-        "--readonly",
-        "-o", "+vg_all"
-    ]
+    cmd = ["vgs", "--reportformat", "json", "--readonly", "-o", "+vg_all"]
 
-    res = subprocess.run(cmd,
-                         check=False,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE,
-                         encoding="UTF-8")
+    res = subprocess.run(cmd, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="UTF-8")
 
     data = res.stdout.strip()
 
@@ -156,7 +137,7 @@ def test_rename_vg_group(tempdir):
             vg = find_vg(vgs, new_name)
             if vg:
                 break
-            time.sleep(0.250 * (i+1))
+            time.sleep(0.250 * (i + 1))
         if not vg:
             raise RuntimeError(f"Could not find vg {new_name}")
     finally:

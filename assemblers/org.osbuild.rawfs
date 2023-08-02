@@ -67,15 +67,15 @@ def mount(source, dest, *options):
 
 
 def mkfs_ext4(device, uuid):
-    subprocess.run(["mkfs.ext4", "-U", uuid, device], input="y", encoding='utf8', check=True)
+    subprocess.run(["mkfs.ext4", "-U", uuid, device], input="y", encoding="utf8", check=True)
 
 
 def mkfs_xfs(device, uuid):
-    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding='utf8', check=True)
+    subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}", device], encoding="utf8", check=True)
 
 
 def mkfs_btrfs(device, uuid):
-    subprocess.run(["mkfs.btrfs", "-U", uuid, device], encoding='utf8', check=True)
+    subprocess.run(["mkfs.btrfs", "-U", uuid, device], encoding="utf8", check=True)
 
 
 def main(tree, output_dir, options, loop_client):
@@ -105,7 +105,7 @@ def main(tree, output_dir, options, loop_client):
     subprocess.run(["mv", image, f"{output_dir}/{filename}"], check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     args_input = args["inputs"]["tree"]["path"]
     args_output = args["tree"]

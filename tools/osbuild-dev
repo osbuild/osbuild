@@ -78,9 +78,7 @@ def json_as_terminal_tree(tree: Optional[Tree], data: Any, name: str) -> Tree:
         for index, item in enumerate(data):
             json_as_terminal_tree(subtree, item, index)
     else:
-        raise ValueError(
-            f"json_as_terminal_tree does not know how to deal with {type(data)}"
-        )
+        raise ValueError(f"json_as_terminal_tree does not know how to deal with {type(data)}")
 
     return subtree
 
@@ -116,9 +114,7 @@ class Manifest:
 
         # We can't handle all source types but some we can
         if "org.osbuild.curl" in self.data["sources"]:
-            for hasj, url in self.data["sources"]["org.osbuild.curl"][
-                "items"
-            ].items():
+            for hasj, url in self.data["sources"]["org.osbuild.curl"]["items"].items():
                 sources[hasj] = url
 
         for pipeline in self.data["pipelines"]:
@@ -126,8 +122,7 @@ class Manifest:
                 if stage["type"] == "org.osbuild.rpm":
                     stage["inputs"]["packages"]["references"] = {
                         reference: sources[reference].split("/")[-1]
-                        for reference in
-                        detect_and_parse_inputs(stage["inputs"]["packages"]["references"])
+                        for reference in detect_and_parse_inputs(stage["inputs"]["packages"]["references"])
                     }
 
     def print_for_terminal(self, path: Optional[str] = None) -> None:
@@ -135,9 +130,7 @@ class Manifest:
             con.print(json_as_terminal_tree(None, self.data, self.name))
         else:
             with open(path, "w", encoding="utf8") as f:
-                rich.print(
-                    json_as_terminal_tree(None, self.data, self.name), file=f
-                )
+                rich.print(json_as_terminal_tree(None, self.data, self.name), file=f)
 
     def print_for_html(self) -> None:
         pass
@@ -167,12 +160,8 @@ class Manifest:
 def pretty_print(
     manifest_path: str,
     ignore_stage: list[str] = typer.Option([]),
-    resolve_sources: bool = typer.Option(
-        True, help="Resolve content hashes of sources to their names."
-    ),
-    skip_sources: bool = typer.Option(
-        True, help="Skips display of the sources in the manifest."
-    ),
+    resolve_sources: bool = typer.Option(True, help="Resolve content hashes of sources to their names."),
+    skip_sources: bool = typer.Option(True, help="Skips display of the sources in the manifest."),
 ) -> int:
     """Pretty print an `osbuild` manifest file."""
 
@@ -197,12 +186,8 @@ def pretty_diff(
     manifest_paths: list[str],
     simple: bool = typer.Option(False, help="Use `diff` instead of `vimdiff`"),
     ignore_stage: list[str] = typer.Option([]),
-    resolve_sources: bool = typer.Option(
-        True, help="Resolve content hashes of sources to their names."
-    ),
-    skip_sources: bool = typer.Option(
-        True, help="Skips display of the sources in the manifest."
-    ),
+    resolve_sources: bool = typer.Option(True, help="Resolve content hashes of sources to their names."),
+    skip_sources: bool = typer.Option(True, help="Skips display of the sources in the manifest."),
 ) -> int:
     """Pretty print a diff of `osbuild` manifest files."""
 

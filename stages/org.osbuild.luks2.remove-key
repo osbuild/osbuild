@@ -42,18 +42,12 @@ def main(devices, options):
     passphrase = options["passphrase"]
     path = os.path.join("/dev", device["path"])
 
-    command = [
-        "cryptsetup",
-        "-q",  # batch mode
-        "luksRemoveKey"
-    ]
+    command = ["cryptsetup", "-q", "luksRemoveKey"]  # batch mode
 
-    subprocess.run(command + [path],
-                   encoding='utf8', check=True,
-                   input=passphrase)
+    subprocess.run(command + [path], encoding="utf8", check=True, input=passphrase)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

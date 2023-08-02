@@ -194,23 +194,15 @@ def generate_package_metadata(tree, rpm_args):
     \},
     """
 
-    cmd = [
-        "rpm",
-        *rpm_args,
-        "-qa",
-        "--root", tree,
-        "--qf=" + query
-    ]
+    cmd = ["rpm", *rpm_args, "-qa", "--root", tree, "--qf=" + query]
 
-    res = subprocess.run(cmd, stdout=subprocess.PIPE,
-                         check=True, encoding="utf8")
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, check=True, encoding="utf8")
 
     raw = res.stdout.strip()
     jsdata = '{"packages": [' + raw[:-1] + "]}"
     data = json.loads(jsdata)
 
-    data["packages"] = sorted(data["packages"],
-                              key=itemgetter("name"))
+    data["packages"] = sorted(data["packages"], key=itemgetter("name"))
 
     return data
 
@@ -238,12 +230,7 @@ def remove_unowned_etc_kernel(tree, rpm_args):
     # if installed, /etc/kernel is owned by systemd-udev; but
     # in case the directory is un-owned, remove it again
 
-    res = subprocess.run(["rpm",
-                          *rpm_args,
-                          "--root", tree,
-                          "-qf", "/etc/kernel"],
-                         stdout=subprocess.PIPE,
-                         check=False)
+    res = subprocess.run(["rpm", *rpm_args, "--root", tree, "-qf", "/etc/kernel"], stdout=subprocess.PIPE, check=False)
     owner = res.stdout.strip()
 
     if res == 0 and owner:
@@ -293,24 +280,18 @@ def main(tree, inputs, options):
         with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
             keyfile.write(key)
             keyfile.flush()
-            subprocess.run([
-                "rpmkeys",
-                *rpm_args,
-                "--root", tree,
-                "--import", keyfile.name
-            ], check=True)
+            subprocess.run(["rpmkeys", *rpm_args, "--root", tree, "--import", keyfile.name], check=True)
         print("imported gpg key")
 
     for filename, data in packages.items():
         if data.get("rpm.check_gpg"):
             try:
-                subprocess.run([
-                    "rpmkeys",
-                    *rpm_args,
-                    "--root", tree,
-                    "--checksig",
-                    filename
-                ], cwd=pkgpath, stdout=subprocess.DEVNULL, check=True)
+                subprocess.run(
+                    ["rpmkeys", *rpm_args, "--root", tree, "--checksig", filename],
+                    cwd=pkgpath,
+                    stdout=subprocess.DEVNULL,
+                    check=True,
+                )
             except Exception:
                 print(f"Signature check failed on {filename}, lookup package name in manifest.")
                 raise
@@ -343,33 +324,35 @@ def main(tree, inputs, options):
         macro = "%_install_langs " + ":".join(langs)
         print(f"using '{macro}'")
         extra_args += [
-            "--define", macro,
+            "--define",
+            macro,
         ]
 
-    with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
-        manifest.writelines(c+'\n' for c in packages)
+    with tempfile.NamedTemporaryFile(prefix="manifest.", mode="w") as manifest:
+        manifest.writelines(c + "\n" for c in packages)
         manifest.flush()
-        subprocess.run([
-            "rpm",
-            "--verbose",
-            *rpm_args,
-            "--root", tree,
-            *extra_args,
-            # All digests and signatures of the rpms has been verified,
-            # default to not verifying package or header signatures when
-            # reading.
-            "--nosignature",
-            "--install", manifest.name
-        ], cwd=pkgpath, check=True)
+        subprocess.run(
+            [
+                "rpm",
+                "--verbose",
+                *rpm_args,
+                "--root",
+                tree,
+                *extra_args,
+                # All digests and signatures of the rpms has been verified,
+                # default to not verifying package or header signatures when
+                # reading.
+                "--nosignature",
+                "--install",
+                manifest.name,
+            ],
+            cwd=pkgpath,
+            check=True,
+        )
 
     for key in options.get("gpgkeys.fromtree", []):
         path = os.path.join(tree, key.lstrip("/"))
-        subprocess.run([
-            "rpmkeys",
-            *rpm_args,
-            "--root", tree,
-            "--import", path
-        ], check=True)
+        subprocess.run(["rpmkeys", *rpm_args, "--root", tree, "--import", path], check=True)
         print(f"imported gpg keys from '{key}'")
 
     # re-enabled dracut
@@ -398,7 +381,7 @@ def main(tree, inputs, options):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = api.arguments()
     r = main(args["tree"], args["inputs"], args["options"])
     sys.exit(r)

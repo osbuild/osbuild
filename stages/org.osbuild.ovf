@@ -125,8 +125,9 @@ def virtual_size(vmdk):
 
 def write_template(vmdk):
     dirname, basename = os.path.split(vmdk)
-    ovf_data = OVF_TEMPLATE.format(vmdk_size=os.stat(vmdk).st_size,
-                                   vmdk_capacity=virtual_size(vmdk), image_name=basename)
+    ovf_data = OVF_TEMPLATE.format(
+        vmdk_size=os.stat(vmdk).st_size, vmdk_capacity=virtual_size(vmdk), image_name=basename
+    )
     ovf = f"{os.path.join(dirname, os.path.splitext(basename)[0])}.ovf"
     with open(ovf, "w", encoding="utf8") as f:
         f.write(ovf_data)

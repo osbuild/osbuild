@@ -100,14 +100,13 @@ def main(tree, options):
         for option, value in opts.items():
             config.set(section, option, str(value))
 
-    with open(os.path.join(dropin_dir, dropin_filename), "x",
-              encoding="utf8") as f:
+    with open(os.path.join(dropin_dir, dropin_filename), "x", encoding="utf8") as f:
         config.write(f, space_around_delimiters=False)
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["tree"], args["options"])
     sys.exit(r)

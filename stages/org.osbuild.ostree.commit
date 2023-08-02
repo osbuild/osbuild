@@ -71,9 +71,7 @@ def main(inputs, output_dir, options, meta):
     # so for now, we copy the whole tree and let it have its
     # way
     with tempfile.TemporaryDirectory(dir=output_dir) as root:
-        subprocess.run(["cp", "--reflink=auto", "-a",
-                        f"{tree}/.", root],
-                       check=True)
+        subprocess.run(["cp", "--reflink=auto", "-a", f"{tree}/.", root], check=True)
 
         repo = os.path.join(output_dir, "repo")
 
@@ -93,15 +91,13 @@ def main(inputs, output_dir, options, meta):
 
         argv += [
             f"--add-metadata-string=rpmostree.inputhash={meta['id']}",
-            f"--write-composejson-to={output_dir}/compose.json"
+            f"--write-composejson-to={output_dir}/compose.json",
         ]
 
         with treefile.as_tmp_file() as path:
             argv += [path, root]
 
-            subprocess.run(argv,
-                           stdout=sys.stderr,
-                           check=True)
+            subprocess.run(argv, stdout=sys.stderr, check=True)
 
         with open(os.path.join(output_dir, "compose.json"), "r", encoding="utf8") as f:
             compose = json.load(f)
@@ -109,12 +105,9 @@ def main(inputs, output_dir, options, meta):
         api.metadata({"compose": compose})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = api.arguments()
 
-    r = main(args["inputs"],
-             args["tree"],
-             args["options"],
-             args["meta"])
+    r = main(args["inputs"], args["tree"], args["options"], args["meta"])
 
     sys.exit(r)

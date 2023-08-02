@@ -73,9 +73,7 @@ def main():
 
         env = quirks()
 
-        r = subprocess.run(sys.argv[1:],
-                           env=env,
-                           check=False)
+        r = subprocess.run(sys.argv[1:], env=env, check=False)
         sys.exit(r.returncode)
 
 

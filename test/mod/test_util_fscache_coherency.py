@@ -29,8 +29,10 @@ def mount_nfs(src: str, dst: str):
     r = subprocess.run(
         [
             "mount",
-            "-t", "nfs",
-            "-o", "nosharecache,vers=4",
+            "-t",
+            "nfs",
+            "-o",
+            "nosharecache,vers=4",
             src,
             dst,
         ],
@@ -72,8 +74,7 @@ def nfsmnts_fixture():
         tmpmnt = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
         os.mkdir(os.path.join(tmpmnt, "a"))
         os.mkdir(os.path.join(tmpmnt, "b"))
-        with mount_nfs("localhost:/", os.path.join(tmpmnt, "a")), \
-                mount_nfs("localhost:/", os.path.join(tmpmnt, "b")):
+        with mount_nfs("localhost:/", os.path.join(tmpmnt, "a")), mount_nfs("localhost:/", os.path.join(tmpmnt, "b")):
             with tempfile.TemporaryDirectory(dir=os.path.join(tmpmnt, "a")) as tmpdir:
                 dirname = os.path.basename(os.path.normpath(tmpdir))
                 a = os.path.join(tmpmnt, "a", dirname)
@@ -233,9 +234,7 @@ def _test_atomics_with(a: str, b: str):
             state["lock"] = state["lock"] + 1
 
         state = {"lock": 0}
-        cache._tracers = {
-            "_atomic_open:lock": lambda: _trace_lock(state)
-        }
+        cache._tracers = {"_atomic_open:lock": lambda: _trace_lock(state)}
         with open(os.path.join(a, "0_foo"), "x", encoding="utf8") as f:
             f.write("foo")
         with cache._atomic_open("0_foo", wait=True, write=False) as fd:
@@ -274,4 +273,4 @@ def test_atomics_nfs(nfsmnts):
     # NFS mounts with no shared caches. Unfortunately, this keeps
     # triggering kernel-oopses, so we disable the tests for now:
 
-    #_test_atomics_with(nfsmnts[0], nfsmnts[1])
+    # _test_atomics_with(nfsmnts[0], nfsmnts[1])

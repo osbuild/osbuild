@@ -21,7 +21,7 @@ def main(_tree, _output_dir, options):
     print("Not doing anything with these options:", json.dumps(options))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     args_input = args["inputs"]["tree"]["path"]
     args_output = args["tree"]

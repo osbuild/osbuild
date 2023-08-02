@@ -59,7 +59,6 @@ SCHEMA_2 = """
 
 
 class OSTreeDeploymentMount(mounts.MountService):
-
     def __init__(self, args):
         super().__init__(args)
 
@@ -69,9 +68,16 @@ class OSTreeDeploymentMount(mounts.MountService):
 
     @staticmethod
     def bind_mount(source, target):
-        subprocess.run([
-            "mount", "--bind", "--make-private", source, target,
-        ], check=True)
+        subprocess.run(
+            [
+                "mount",
+                "--bind",
+                "--make-private",
+                source,
+                target,
+            ],
+            check=True,
+        )
         return target
 
     def mount(self, args: Dict):
@@ -105,25 +111,28 @@ class OSTreeDeploymentMount(mounts.MountService):
         self.bind_mount(var, os.path.join(root, "var"))
         self.bind_mount(boot, os.path.join(root, "boot"))
 
-        subprocess.run([
-            "mount", "--move", root, tree,
-        ], check=True)
+        subprocess.run(
+            [
+                "mount",
+                "--move",
+                root,
+                tree,
+            ],
+            check=True,
+        )
 
         self.mountpoint = tree
         self.check = True
 
     def umount(self):
         if self.mountpoint:
-            subprocess.run(["sync", "-f", self.mountpoint],
-                           check=self.check)
+            subprocess.run(["sync", "-f", self.mountpoint], check=self.check)
 
-            subprocess.run(["umount", "-R", self.mountpoint],
-                           check=self.check)
+            subprocess.run(["umount", "-R", self.mountpoint], check=self.check)
             self.mountpoint = None
 
         if self.tree:
-            subprocess.run(["umount", "-R", self.tree],
-                           check=self.check)
+            subprocess.run(["umount", "-R", self.tree], check=self.check)
             self.tree = None
 
 
@@ -132,5 +141,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -160,9 +160,9 @@ class Script:
 
     @command
     def systemctl(self, verb, *units):
-        assert verb in ('enable', 'disable', 'mask')
+        assert verb in ("enable", "disable", "mask")
         self.mkdir("/run/systemd/system")
-        cmd = ['systemctl', '--root', self.tree, '--no-reload', verb]
+        cmd = ["systemctl", "--root", self.tree, "--no-reload", verb]
 
         for unit in units:
             with contextlib.suppress(subprocess.CalledProcessError):
@@ -171,15 +171,15 @@ class Script:
 
 
 def brace_expand(s):
-    if not ('{' in s and ',' in s and '}' in s):
+    if not ("{" in s and "," in s and "}" in s):
         return [s]
 
     result = []
-    right = s.find('}')
-    left = s[:right].rfind('{')
-    prefix, choices, suffix = s[:left], s[left+1:right], s[right+1:]
-    for choice in choices.split(','):
-        result.extend(brace_expand(prefix+choice+suffix))
+    right = s.find("}")
+    left = s[:right].rfind("{")
+    prefix, choices, suffix = s[:left], s[left + 1 : right], s[right + 1 :]
+    for choice in choices.split(","):
+        result.extend(brace_expand(prefix + choice + suffix))
 
     return result
 

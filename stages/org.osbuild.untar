@@ -54,22 +54,14 @@ def main(inputs, output, options):
     source = parse_input(inputs)
     target = os.path.join(output, prefix.lstrip("/"))
 
-    cmd = [
-        "tar",
-        "--auto-compress",
-        "-x",
-        "-f", source,
-        "-C", target
-    ]
+    cmd = ["tar", "--auto-compress", "-x", "-f", source, "-C", target]
 
-    subprocess.run(
-        cmd, check=True
-    )
+    subprocess.run(cmd, check=True)
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"], args["options"])
     sys.exit(r)

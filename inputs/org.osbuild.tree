@@ -71,7 +71,6 @@ SCHEMA = """
 
 
 class TreeInput(inputs.InputService):
-
     def map(self, store, _origin, refs, target, _options):
 
         # input verification *must* have been done via schema
@@ -94,5 +93,5 @@ def main():
     service.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

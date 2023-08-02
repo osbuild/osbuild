@@ -86,14 +86,16 @@ SCHEMA_2 = r"""
 
 
 class Partition:
-    def __init__(self,
-                 pttype: str = None,
-                 start: int = None,
-                 size: int = None,
-                 bootable: bool = False,
-                 name: str = None,
-                 uuid: str = None,
-                 attrs: int = None):
+    def __init__(
+        self,
+        pttype: str = None,
+        start: int = None,
+        size: int = None,
+        bootable: bool = False,
+        name: str = None,
+        uuid: str = None,
+        attrs: int = None,
+    ):
         self.type = pttype
         self.start = start
         self.size = size
@@ -129,7 +131,7 @@ class PartitionTable:
             command += ["-U", self.uuid]
 
         for i, part in enumerate(self.partitions):
-            idx = i+1  # partitions are 1-indexed
+            idx = i + 1  # partitions are 1-indexed
 
             # format is 'partnum:start:end'
             size = "0"
@@ -137,48 +139,37 @@ class PartitionTable:
                 size_bytes = part.size
                 size = f"+{size_bytes}"
 
-            cmd = [
-                "-n", f"{idx}:{part.start}:{size}"
-
-            ]
+            cmd = ["-n", f"{idx}:{part.start}:{size}"]
 
             if part.name:
                 part_name = f'"{part.name}"' if quote_partition_name else part.name
-                cmd += [
-                    "-c", f"{idx}:{part_name}"
-                ]
+                cmd += ["-c", f"{idx}:{part_name}"]
 
             if part.uuid:
-                cmd += [
-                    "-u", f"{idx}:{part.uuid}"
-                ]
+                cmd += ["-u", f"{idx}:{part.uuid}"]
 
             if part.type:
-                cmd += [
-                    "-t", f"{idx}:{part.type}"
-                ]
+                cmd += ["-t", f"{idx}:{part.type}"]
 
             if part.attrs:
                 for attr in sorted(part.attrs):
-                    cmd += [
-                        "-A", f"{idx}:set:{attr}"
-                    ]
+                    cmd += ["-A", f"{idx}:set:{attr}"]
 
             command += cmd
 
-        subprocess.run(command,
-                       encoding='utf8',
-                       check=True)
+        subprocess.run(command, encoding="utf8", check=True)
 
 
 def partition_from_json(js) -> Partition:
-    p = Partition(pttype=js.get("type"),
-                  start=js.get("start"),
-                  size=js.get("size"),
-                  bootable=js.get("bootable"),
-                  name=js.get("name"),
-                  uuid=js.get("uuid"),
-                  attrs=js.get("attrs"))
+    p = Partition(
+        pttype=js.get("type"),
+        start=js.get("start"),
+        size=js.get("size"),
+        bootable=js.get("bootable"),
+        name=js.get("name"),
+        uuid=js.get("uuid"),
+        attrs=js.get("attrs"),
+    )
     return p
 
 
@@ -194,12 +185,10 @@ def main(devices, options):
 
     pt.write_to(device, quote_partition_name)
 
-    subprocess.run(["sgdisk", "-p", device],
-                   encoding='utf8',
-                   check=False)
+    subprocess.run(["sgdisk", "-p", device], encoding="utf8", check=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     ret = main(args["devices"], args["options"])
     sys.exit(ret)

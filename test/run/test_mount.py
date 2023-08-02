@@ -57,27 +57,20 @@ def create_image(tmpdir):
 
     # Create an FS in the image
     mkfsopts = {
-        "devices": {
-            "device": {
-                "path": file
-            }
-        },
-        "options": {
-            "label": "TEST",
-            "volid": "7B7795E7",
-            "fat-size": 32
-        }
+        "devices": {"device": {"path": file}},
+        "options": {"label": "TEST", "volid": "7B7795E7", "fat-size": 32},
     }
 
     with make_arguments(mkfsopts):
         env = os.environ.copy()
         env["PYTHONPATH"] = os.curdir
         subprocess.run(
-            [os.path.join(os.curdir, "stages",  "org.osbuild.mkfs.fat")],
+            [os.path.join(os.curdir, "stages", "org.osbuild.mkfs.fat")],
             env=env,
             check=True,
             stdout=sys.stdout,
-            stderr=sys.stderr)
+            stderr=sys.stderr,
+        )
     return tree, size
 
 
@@ -88,34 +81,15 @@ def mount(mgr, devpath, tree, size, mountpoint, options):
     # get a Device for the loopback
     dev = devices.Device(
         "loop",
-        index.get_module_info(
-            "Device",
-            "org.osbuild.loopback"
-        ),
+        index.get_module_info("Device", "org.osbuild.loopback"),
         None,
-        {
-            "filename": "image.img",
-            "start": 0,
-            "size": size // 512  # size is in sectors / blocks
-        }
+        {"filename": "image.img", "start": 0, "size": size // 512},  # size is in sectors / blocks
     )
     # open the device and get its loopback path
-    lpath = os.path.join(
-        devpath,
-        devmgr.open(dev)["path"]
-    )
+    lpath = os.path.join(devpath, devmgr.open(dev)["path"])
     # mount the loopback
-    mounts.MountManager(
-        devmgr,
-        mountpoint
-    ).mount(
-        mounts.Mount(
-            lpath,
-            index.get_module_info("Mount", "org.osbuild.fat"),
-            dev,
-            "/",
-            options
-        )
+    mounts.MountManager(devmgr, mountpoint).mount(
+        mounts.Mount(lpath, index.get_module_info("Mount", "org.osbuild.fat"), dev, "/", options)
     )
 
 
@@ -136,13 +110,7 @@ def test_without_options(tmpdir):
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
 def test_all_options(tmpdir):
     tree, size = create_image(tmpdir)
-    options = {
-        "readonly": True,
-        "uid": 0,
-        "gid": 0,
-        "umask": "077",
-        "shortname": "winnt"
-    }
+    options = {"readonly": True, "uid": 0, "gid": 0, "umask": "077", "shortname": "winnt"}
     print(options)
 
     with tempfile.TemporaryDirectory(dir=tmpdir) as mountpoint:

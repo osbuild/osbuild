@@ -77,16 +77,11 @@ class InputManager:
             # mandatory bits
             "origin": ip.origin,
             "refs": ip.refs,
-
             "target": target,
-
             # global options
             "options": ip.options,
-
             # API endpoints
-            "api": {
-                "store": self.storeapi.socket_address
-            }
+            "api": {"store": self.storeapi.socket_address},
         }
 
         with make_args_file(store.tmp, args) as fd:
@@ -132,11 +127,7 @@ class InputService(host.Service):
             with os.fdopen(_fds.steal(0)) as f:
                 args = json.load(f)
             store = StoreClient(connect_to=args["api"]["store"])
-            r = self.map(store,
-                         args["origin"],
-                         args["refs"],
-                         args["target"],
-                         args["options"])
+            r = self.map(store, args["origin"], args["refs"], args["target"], args["options"])
             return r, None
 
         raise host.ProtocolError("Unknown method")

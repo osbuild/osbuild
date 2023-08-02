@@ -117,15 +117,11 @@ class Object:
         self.source_epoch = None  # see finalize()
 
     def _open_for_reading(self):
-        name = self._stack.enter_context(
-            self._cache.load(self.id)
-        )
+        name = self._stack.enter_context(self._cache.load(self.id))
         self._path = os.path.join(self._cache, name)
 
     def _open_for_writing(self):
-        name = self._stack.enter_context(
-            self._cache.stage()
-        )
+        name = self._stack.enter_context(self._cache.stage())
         self._path = os.path.join(self._cache, name)
         os.makedirs(os.path.join(self._path, "tree"))
 
@@ -144,9 +140,12 @@ class Object:
         self._meta = self.Metadata(wrapped, folder="meta")
 
         if self.mode == Object.Mode.WRITE:
-            self.meta.set("info", {
-                "created": int(time.time()),
-            })
+            self.meta.set(
+                "info",
+                {
+                    "created": int(time.time()),
+                },
+            )
 
         return self
 
@@ -372,9 +371,7 @@ class ObjectStore(contextlib.AbstractContextManager):
 
     def tempdir(self, prefix=None, suffix=None):
         """Return a tempfile.TemporaryDirectory within the store"""
-        return tempfile.TemporaryDirectory(dir=self.tmp,
-                                           prefix=prefix,
-                                           suffix=suffix)
+        return tempfile.TemporaryDirectory(dir=self.tmp, prefix=prefix, suffix=suffix)
 
     def get(self, object_id):
         assert self.active
@@ -496,11 +493,7 @@ class StoreServer(api.BaseAPI):
         sock.send({"path": target})
 
     def _mkdtemp(self, msg, sock):
-        args = {
-            "suffix": msg.get("suffix"),
-            "prefix": msg.get("prefix"),
-            "dir": self.tmproot.name
-        }
+        args = {"suffix": msg.get("suffix"), "prefix": msg.get("prefix"), "dir": self.tmproot.name}
 
         path = tempfile.mkdtemp(**args)
         sock.send({"path": path})
@@ -533,11 +526,7 @@ class StoreClient:
             self.client.close()
 
     def mkdtemp(self, suffix=None, prefix=None):
-        msg = {
-            "method": "mkdtemp",
-            "suffix": suffix,
-            "prefix": prefix
-        }
+        msg = {"method": "mkdtemp", "suffix": suffix, "prefix": prefix}
 
         self.client.send(msg)
         msg, _, _ = self.client.recv()
@@ -545,10 +534,7 @@ class StoreClient:
         return msg["path"]
 
     def read_tree(self, object_id: str):
-        msg = {
-            "method": "read-tree",
-            "object-id": object_id
-        }
+        msg = {"method": "read-tree", "object-id": object_id}
 
         self.client.send(msg)
         msg, _, _ = self.client.recv()
@@ -560,7 +546,7 @@ class StoreClient:
             "method": "read-tree-at",
             "object-id": object_id,
             "target": os.fspath(target),
-            "subtree": os.fspath(path)
+            "subtree": os.fspath(path),
         }
 
         self.client.send(msg)
@@ -573,10 +559,7 @@ class StoreClient:
         return msg["path"]
 
     def source(self, name: str) -> str:
-        msg = {
-            "method": "source",
-            "name": name
-        }
+        msg = {"method": "source", "name": name}
 
         self.client.send(msg)
         msg, _, _ = self.client.recv()
