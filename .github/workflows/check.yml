@@ -25,7 +25,7 @@ jobs:
           linter:
           - "ruff"
           - "pylint"
-          - "autopep8"
+          - "black"
           - "isort"
       steps:
       - name: "Clone Repository"
