@@ -302,3 +302,7 @@ bump-version:
 	sed -i "s|Release:\(\s*\)[[:digit:]]\+|Release:\11|" osbuild.spec
 	sed -i "s|version=\"$(VERSION)\"|version=\"$(NEXT_VERSION)\"|" setup.py
 	sed -i "s|__version__ = \"$(VERSION)\"|__version__ = \"$(NEXT_VERSION)\"|" osbuild/__init__.py
+
+.PHONY: format
+format:
+	black osbuild/ assemblers/* devices/* inputs/* mounts/* runners/* sources/* stages/*
