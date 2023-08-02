@@ -305,4 +305,4 @@ bump-version:
 
 .PHONY: format
 format:
-	black osbuild/ assemblers/* devices/* inputs/* mounts/* runners/* sources/* stages/*
+	black osbuild/ assemblers/* devices/* inputs/* mounts/* runners/* sources/* stages/* tools/osbuild-mpp tools/osbuild-dev tools/tree-diff tools/*.py setup.py
