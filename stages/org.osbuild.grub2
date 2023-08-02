@@ -435,7 +435,7 @@ class GrubConfig:
 
     def write_redirect(self, tree, path):
         """Write a grub config pointing to the other cfg"""
-        print("hybrid boot or unified grub config enabled. " "Writing alias grub config")
+        print("hybrid boot or unified grub config enabled. Writing alias grub config")
 
         # configuration options for the template
         config = {"root": self.grub_home}
