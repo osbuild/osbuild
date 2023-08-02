@@ -647,7 +647,7 @@ class DepSolver:
             if not result.scheme:
                 path = basedir.joinpath(baseurl)
                 return path.resolve().as_uri()
-        except:  # pylint: disable=bare-except
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
 
         return baseurl
