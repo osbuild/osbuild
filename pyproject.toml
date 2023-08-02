@@ -1,0 +1,46 @@
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint.MASTER]
+disable = [
+    "missing-docstring",
+    "too-few-public-methods",
+    "invalid-name",
+    "duplicate-code",
+    "superfluous-parens",
+    "too-many-locals",
+    "too-many-arguments",
+    "consider-using-with",
+    "consider-using-from-import",
+    "line-too-long",
+    "useless-option-value",
+    "import-error",
+]
+
+[tool.pylint.TYPECHECK]
+ignored-classes = [
+    "osbuild.loop.LoopInfo"
+]
+
+[tool.pylint.DESIGN]
+max-attributes=10
+max-statements=75
+
+[[tool.mypy.overrides]]
+module = [
+    "jsonschema",
+    "mako",
+    "mako.template",
+]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 120
+
+ignore = [
+    "E741",  # ambiguous variable names
+    "E501",  # line too long
+]
