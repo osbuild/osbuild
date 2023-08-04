@@ -18,7 +18,7 @@ import os
 import pathlib
 import sys
 
-from osbuild import inputs
+from osbuild.service import input as input_service
 
 SCHEMA = r"""
 "definitions": {
@@ -175,7 +175,7 @@ SCHEMA = r"""
 """
 
 
-class FilesInput(inputs.InputService):
+class FilesInput(input_service.InputService):
 
     @staticmethod
     def map_pipeline_ref(store, ref, data, target):

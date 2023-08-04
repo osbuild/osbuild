@@ -11,14 +11,14 @@ import os
 import sys
 import uuid
 
-from osbuild import inputs
+from osbuild.service import input as input_service
 
 SCHEMA = """
 "additionalProperties": true
 """
 
 
-class NoopInput(inputs.InputService):
+class NoopInput(input_service.InputService):
 
     def map(self, _store, _origin, refs, target, _options):
 

@@ -6,9 +6,10 @@ import os
 import tempfile
 from typing import ClassVar, Dict, Tuple
 
-from . import host
-from .objectstore import ObjectStore
-from .util.types import PathLike
+from osbuild import service
+
+from ..objectstore import ObjectStore
+from ..util.types import PathLike
 
 
 class Source:
@@ -21,7 +22,7 @@ class Source:
         self.items = items or {}
         self.options = options
 
-    def download(self, mgr: host.ServiceManager, store: ObjectStore, libdir: PathLike):
+    def download(self, mgr: service.ServiceManager, store: ObjectStore, libdir: PathLike):
         source = self.info.name
         cache = os.path.join(store.store, "sources")
 
@@ -49,7 +50,7 @@ class Source:
             yield f.fileno()
 
 
-class SourceService(host.Service):
+class SourceService(service.Service):
     """Source host service"""
 
     max_workers = 1
@@ -102,4 +103,4 @@ class SourceService(host.Service):
                 self.download(SourceService.load_items(fds))
                 return None, None
 
-        raise host.ProtocolError("Unknown method")
+        raise service.ProtocolError("Unknown method")

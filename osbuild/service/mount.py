@@ -14,8 +14,8 @@ import os
 import subprocess
 from typing import Dict, List
 
-from osbuild import host
-from osbuild.devices import DeviceManager
+from osbuild import service
+from osbuild.service import device as device_service
 
 
 class Mount:
@@ -45,13 +45,13 @@ class Mount:
 class MountManager:
     """Manager for Mounts
 
-    Uses a `host.ServiceManager` to activate `Mount` instances.
+    Uses a `service.ServiceManager` to activate `Mount` instances.
     Takes a `DeviceManager` to access devices and a directory
     called `root`, which is the root of all the specified mount
     points.
     """
 
-    def __init__(self, devices: DeviceManager, root: str) -> None:
+    def __init__(self, devices: device_service.DeviceManager, root: str) -> None:
         self.devices = devices
         self.root = root
         self.mounts: Dict[str, Dict[str, Mount]] = {}
@@ -92,7 +92,7 @@ class MountManager:
         return {"path": path}
 
 
-class MountService(host.Service):
+class MountService(service.Service):
     """Mount host service"""
 
     @abc.abstractmethod
@@ -111,7 +111,7 @@ class MountService(host.Service):
             r = self.mount(args)
             return r, None
 
-        raise host.ProtocolError("Unknown method")
+        raise service.ProtocolError("Unknown method")
 
 
 class FileSystemMountService(MountService):

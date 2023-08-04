@@ -19,7 +19,7 @@ import subprocess
 import sys
 from typing import Dict
 
-from osbuild import mounts
+from osbuild.service import mount
 from osbuild.util import ostree
 
 SCHEMA_2 = """
@@ -58,7 +58,7 @@ SCHEMA_2 = """
 """
 
 
-class OSTreeDeploymentMount(mounts.MountService):
+class OSTreeDeploymentMount(mount.MountService):
 
     def __init__(self, args):
         super().__init__(args)

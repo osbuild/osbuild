@@ -12,11 +12,11 @@ from typing import Any
 
 import pytest
 
-from osbuild import host
+from osbuild import service
 from osbuild.util.jsoncomm import FdSet
 
 
-class ServiceTest(host.Service):
+class ServiceTest(service.Service):
 
     def __init__(self, args):
         super().__init__(args)
@@ -74,13 +74,13 @@ class ServiceTest(host.Service):
                 self.register_fds(fds)
                 self.emit_signal("that should do it", fds)
         else:
-            raise host.ProtocolError("unknown method:", method)
+            raise service.ProtocolError("unknown method:", method)
 
         return ret, fds
 
 
 def test_basic():
-    with host.ServiceManager() as mgr:
+    with service.ServiceManager() as mgr:
         for i in range(3):
             client = mgr.start(str(i), __file__)
 
@@ -101,7 +101,7 @@ def test_basic():
 
 
 def test_pass_fd():
-    with host.ServiceManager() as mgr:
+    with service.ServiceManager() as mgr:
         for i in range(3):
             client = mgr.start(str(i), __file__)
 
@@ -132,23 +132,23 @@ def test_pass_fd():
 
 
 def test_pass_fd_invalid():
-    with host.ServiceManager() as mgr:
+    with service.ServiceManager() as mgr:
 
         client = mgr.start(str("test-invalid-fd"), __file__)
-        with pytest.raises(host.RemoteError):
+        with pytest.raises(service.RemoteError):
             client.call_with_fds("invalid-fd")
         client.call_with_fds("check-fds-are-closed")
 
 
 def test_exception():
-    with host.ServiceManager() as mgr:
+    with service.ServiceManager() as mgr:
         client = mgr.start("exception", __file__)
-        with pytest.raises(host.RemoteError, match=r"Remote Exception"):
+        with pytest.raises(service.RemoteError, match=r"Remote Exception"):
             client.call("exception")
 
 
 def test_signals():
-    with host.ServiceManager() as mgr:
+    with service.ServiceManager() as mgr:
         exec_callback = 0
 
         def check_value(item, _fds):
@@ -161,7 +161,7 @@ def test_signals():
 
 
 def test_signals_on_separate_fd():
-    with host.ServiceManager() as mgr:
+    with service.ServiceManager() as mgr:
 
         data = "osbuild\n"
         exec_callback = False

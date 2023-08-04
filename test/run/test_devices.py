@@ -9,14 +9,15 @@ import tempfile
 
 import pytest
 
-from osbuild import devices, host, loop, meta
+from osbuild import loop, meta, service
+from osbuild.service import device
 
 from ..test import TestBase
 
 
 @pytest.fixture(name="tmpdir")
 def tmpdir_fixture():
-    with tempfile.TemporaryDirectory(prefix="test-devices-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="test-device-") as tmp:
         yield tmp
 
 
@@ -45,10 +46,10 @@ def test_loopback_basic(tmpdir):
         "size": size // 512  # size is in sectors / blocks
     }
 
-    dev = devices.Device("loop", info, None, options)
+    dev = device.Device("loop", info, None, options)
 
-    with host.ServiceManager() as mgr:
-        devmgr = devices.DeviceManager(mgr, devpath, tree)
+    with service.ServiceManager() as mgr:
+        devmgr = device.DeviceManager(mgr, devpath, tree)
         reply = devmgr.open(dev)
         assert reply
         assert reply["path"]

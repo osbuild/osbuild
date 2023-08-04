@@ -212,7 +212,6 @@ class TestFormatV1(unittest.TestCase):
 
         self.assertIsNotNone(res)
         result = fmt.output(manifest, res)
-        print(result)
         self.assertIsNotNone(result)
         self.assertIn("success", result)
         self.assertFalse(result["success"])

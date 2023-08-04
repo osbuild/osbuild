@@ -21,7 +21,7 @@ import subprocess
 import sys
 import tempfile
 
-from osbuild import sources
+from osbuild.service.source import SourceService
 from osbuild.util import ctx
 
 SCHEMA = """
@@ -74,7 +74,7 @@ SCHEMA = """
 """
 
 
-class SkopeoSource(sources.SourceService):
+class SkopeoSource(SourceService):
 
     content_type = "org.osbuild.containers"
 

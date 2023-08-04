@@ -11,9 +11,9 @@ from collections import defaultdict
 
 import osbuild
 import osbuild.meta
+from osbuild.manifest import Runner
 from osbuild.monitor import LogMonitor
 from osbuild.objectstore import ObjectStore
-from osbuild.manifest import Runner
 
 from .. import test
 

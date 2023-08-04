@@ -23,7 +23,8 @@ import os
 import sys
 from typing import Dict
 
-from osbuild import devices, loop
+from osbuild import loop
+from osbuild.service import device as device_service
 from osbuild.util import ctx
 from osbuild.util.udev import UdevInhibitor
 
@@ -57,7 +58,7 @@ SCHEMA = """
 """
 
 
-class LoopbackService(devices.DeviceService):
+class LoopbackService(device_service.DeviceService):
 
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)

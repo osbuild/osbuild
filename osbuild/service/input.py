@@ -24,10 +24,10 @@ import os
 import tempfile
 from typing import Any, Dict, Optional, Tuple
 
-from osbuild import host
+from osbuild import service
 from osbuild.util.types import PathLike
 
-from .objectstore import ObjectStore, StoreClient, StoreServer
+from ..objectstore import ObjectStore, StoreClient, StoreServer
 
 
 class Input:
@@ -62,7 +62,7 @@ class Input:
 
 
 class InputManager:
-    def __init__(self, mgr: host.ServiceManager, storeapi: StoreServer, root: PathLike) -> None:
+    def __init__(self, mgr: service.ServiceManager, storeapi: StoreServer, root: PathLike) -> None:
         self.service_manager = mgr
         self.storeapi = storeapi
         self.root = root
@@ -114,7 +114,7 @@ def make_args_file(tmp, args):
         yield f.fileno()
 
 
-class InputService(host.Service):
+class InputService(service.Service):
     """Input host service"""
 
     @abc.abstractmethod
@@ -139,4 +139,4 @@ class InputService(host.Service):
                          args["options"])
             return r, None
 
-        raise host.ProtocolError("Unknown method")
+        raise service.ProtocolError("Unknown method")

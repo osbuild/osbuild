@@ -20,7 +20,7 @@ import sys
 import uuid
 from typing import Dict, Optional
 
-from osbuild import devices
+from osbuild.service import device as device_service
 from osbuild.util.udev import UdevInhibitor
 
 SCHEMA = """
@@ -37,7 +37,7 @@ SCHEMA = """
 """
 
 
-class CryptDeviceService(devices.DeviceService):
+class CryptDeviceService(device_service.DeviceService):
 
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)

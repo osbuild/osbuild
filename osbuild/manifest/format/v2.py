@@ -4,10 +4,10 @@ Second, and current, version of the manifest description
 """
 from typing import Any, Dict, Optional
 
-from osbuild.inputs import Input
 from osbuild.meta import Index, ModuleInfo, ValidationResult
 from osbuild.objectstore import ObjectStore
-from osbuild.sources import Source
+from osbuild.service import input as input_service
+from osbuild.service import source as source_service
 
 from .. import Manifest, Pipeline, Runner, Stage
 
@@ -48,7 +48,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         }
         return desc
 
-    def describe_input(ip: Input):
+    def describe_input(ip: input_service.Input):
         origin = ip.origin
         desc = {
             "type": ip.info.name,
@@ -68,7 +68,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         return desc
 
-    def describe_inputs(ips: Dict[str, Input]):
+    def describe_inputs(ips: Dict[str, input_service.Input]):
         desc = {
             name: describe_input(ip)
             for name, ip in ips.items()
@@ -143,7 +143,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         return desc
 
-    def describe_source(s: Source):
+    def describe_source(s: source_service.Source):
         desc = {
             "items": s.items
         }

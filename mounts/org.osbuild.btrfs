@@ -10,7 +10,7 @@ Host commands used: mount
 import sys
 from typing import Dict
 
-from osbuild import mounts
+from osbuild.service import mount
 
 SCHEMA_2 = """
 "additionalProperties": false,
@@ -44,7 +44,7 @@ SCHEMA_2 = """
 """
 
 
-class BtrfsMount(mounts.FileSystemMountService):
+class BtrfsMount(mount.FileSystemMountService):
 
     def translate_options(self, options: Dict):
         return ["-t", "btrfs"] + super().translate_options(options)

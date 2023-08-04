@@ -12,7 +12,7 @@ import subprocess
 import sys
 import uuid
 
-from osbuild import sources
+from osbuild.service.source import SourceService
 from osbuild.util.ostree import show
 from osbuild.util.rhsm import Subscriptions
 
@@ -92,7 +92,7 @@ def ostree(*args, _input=None, **kwargs):
                    check=True)
 
 
-class OSTreeSource(sources.SourceService):
+class OSTreeSource(SourceService):
 
     content_type = "org.osbuild.ostree"
 

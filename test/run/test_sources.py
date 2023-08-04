@@ -16,8 +16,7 @@ import pytest
 
 import osbuild.meta
 import osbuild.objectstore
-import osbuild.sources
-from osbuild import host
+from osbuild import service
 
 from .. import test
 
@@ -103,10 +102,10 @@ def make_test_cases():
 
 
 def check_case(source, case, store, libdir):
-    with host.ServiceManager() as mgr:
+    with service.ServiceManager() as mgr:
         expects = case["expects"]
         if expects == "error":
-            with pytest.raises(host.RemoteError):
+            with pytest.raises(service.RemoteError):
                 source.download(mgr, store, libdir)
         elif expects == "success":
             source.download(mgr, store, libdir)
@@ -134,7 +133,7 @@ def test_sources(source, case, tmpdir):
     items = desc.get("items", {})
     options = desc.get("options", {})
 
-    src = osbuild.sources.Source(info, items, options)
+    src = service.source.Source(info, items, options)
 
     with osbuild.objectstore.ObjectStore(tmpdir) as store, \
             fileServer(test.TestBase.locate_test_data()):

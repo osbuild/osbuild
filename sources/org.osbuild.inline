@@ -16,7 +16,7 @@ import contextlib
 import os
 import sys
 
-from osbuild import sources
+from osbuild.service.source import SourceService
 from osbuild.util.checksum import verify_file
 
 SCHEMA = """
@@ -52,7 +52,7 @@ SCHEMA = """
 """
 
 
-class InlineSource(sources.SourceService):
+class InlineSource(SourceService):
 
     content_type = "org.osbuild.files"
 

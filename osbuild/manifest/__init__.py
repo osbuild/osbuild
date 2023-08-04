@@ -1,9 +1,10 @@
 import collections
 from typing import Dict, Iterable, Iterator, List, Optional
 
-from .. import host
+import osbuild.service as host
+
 from ..objectstore import ObjectStore
-from ..sources import Source
+from ..service.source import Source
 from .pipeline import Pipeline
 from .runner import Runner
 from .stage import BuildResult, Stage  # noqa: these are re-exported

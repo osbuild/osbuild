@@ -4,11 +4,13 @@ import json
 import os
 from typing import Generator
 
-from .. import buildroot, host, objectstore, remoteloop
+import osbuild.service as service
+
+from .. import buildroot, objectstore, remoteloop
 from ..api import API
-from ..devices import Device, DeviceManager
-from ..inputs import Input, InputManager
-from ..mounts import Mount, MountManager
+from ..service.device import Device, DeviceManager
+from ..service.input import Input, InputManager
+from ..service.mount import Mount, MountManager
 
 DEFAULT_CAPABILITIES = {
     "CAP_AUDIT_WRITE",
@@ -183,7 +185,7 @@ class Stage:
             storeapi = objectstore.StoreServer(store)
             cm.enter_context(storeapi)
 
-            mgr = host.ServiceManager(monitor=monitor)
+            mgr = service.ServiceManager(monitor=monitor)
             cm.enter_context(mgr)
 
             ipmgr = InputManager(mgr, storeapi, inputs_tmpdir)

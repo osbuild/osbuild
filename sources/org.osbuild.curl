@@ -19,7 +19,7 @@ import sys
 import tempfile
 import urllib.parse
 
-from osbuild import sources
+from osbuild.service.source import SourceService
 from osbuild.util.checksum import verify_file
 from osbuild.util.rhsm import Subscriptions
 
@@ -85,7 +85,7 @@ SCHEMA = """
 """
 
 
-class CurlSource(sources.SourceService):
+class CurlSource(SourceService):
 
     content_type = "org.osbuild.files"
 

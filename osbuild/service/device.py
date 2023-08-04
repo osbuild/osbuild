@@ -20,7 +20,7 @@ import os
 import stat
 from typing import Any, Dict, Optional
 
-from osbuild import host
+from osbuild import service
 from osbuild.util import ctx
 
 
@@ -51,10 +51,10 @@ class Device:
 class DeviceManager:
     """Manager for Devices
 
-    Uses a `host.ServiceManager` to open `Device` instances.
+    Uses a `service.ServiceManager` to open `Device` instances.
     """
 
-    def __init__(self, mgr: host.ServiceManager, devpath: str, tree: str) -> None:
+    def __init__(self, mgr: service.ServiceManager, devpath: str, tree: str) -> None:
         self.service_manager = mgr
         self.devpath = devpath
         self.tree = tree
@@ -95,7 +95,7 @@ class DeviceManager:
         return res
 
 
-class DeviceService(host.Service):
+class DeviceService(service.Service):
     """Device host service"""
 
     @staticmethod
@@ -133,4 +133,4 @@ class DeviceService(host.Service):
             r = self.close()
             return r, None
 
-        raise host.ProtocolError("Unknown method")
+        raise service.ProtocolError("Unknown method")

@@ -10,7 +10,7 @@ import os
 import sys
 from typing import Dict
 
-from osbuild import mounts
+from osbuild.service import mount
 
 SCHEMA_2 = """
 "additionalProperties": false,
@@ -32,7 +32,7 @@ SCHEMA_2 = """
 """
 
 
-class NoOpMount(mounts.MountService):
+class NoOpMount(mount.MountService):
     mountpoint = None
 
     def mount(self, args: Dict):

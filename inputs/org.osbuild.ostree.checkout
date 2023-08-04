@@ -13,7 +13,7 @@ import os
 import subprocess
 import sys
 
-from osbuild import inputs
+from osbuild.service import input as input_service
 
 SCHEMA = """
 "additionalProperties": false,
@@ -95,7 +95,7 @@ def checkout(checksums, cache, output):
     return refs
 
 
-class OSTreeCheckoutInput(inputs.InputService):
+class OSTreeCheckoutInput(input_service.InputService):
 
     def map(self, store, origin, refs, target, _options):
 

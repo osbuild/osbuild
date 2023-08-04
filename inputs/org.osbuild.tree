@@ -10,7 +10,7 @@ string it returns an empty tree.
 
 import sys
 
-from osbuild import inputs
+from osbuild.service import input as input_service
 
 SCHEMA = """
 "additionalProperties": false,
@@ -70,7 +70,7 @@ SCHEMA = """
 """
 
 
-class TreeInput(inputs.InputService):
+class TreeInput(input_service.InputService):
 
     def map(self, store, _origin, refs, target, _options):
 

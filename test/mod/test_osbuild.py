@@ -11,9 +11,9 @@ import unittest
 
 import osbuild
 import osbuild.meta
+from osbuild.manifest import Manifest, Runner
 from osbuild.monitor import NullMonitor
 from osbuild.objectstore import ObjectStore
-from osbuild.manifest import Manifest, Runner
 
 from .. import test
 

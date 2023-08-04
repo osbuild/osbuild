@@ -14,7 +14,9 @@ from contextlib import contextmanager
 
 import pytest
 
-from osbuild import devices, host, meta, mounts
+from osbuild import meta, service
+from osbuild.service import device
+from osbuild.service import mount as mount_service
 
 from ..test import TestBase
 
@@ -84,9 +86,9 @@ def create_image(tmpdir):
 def mount(mgr, devpath, tree, size, mountpoint, options):
     index = meta.Index(os.curdir)
     # Device manager to open the loopback device
-    devmgr = devices.DeviceManager(mgr, devpath, tree)
+    devmgr = device.DeviceManager(mgr, devpath, tree)
     # get a Device for the loopback
-    dev = devices.Device(
+    dev = device.Device(
         "loop",
         index.get_module_info(
             "Device",
@@ -105,11 +107,11 @@ def mount(mgr, devpath, tree, size, mountpoint, options):
         devmgr.open(dev)["path"]
     )
     # mount the loopback
-    mounts.MountManager(
+    mount_service.MountManager(
         devmgr,
         mountpoint
     ).mount(
-        mounts.Mount(
+        mount_service.Mount(
             lpath,
             index.get_module_info("Mount", "org.osbuild.fat"),
             dev,
@@ -125,7 +127,7 @@ def test_without_options(tmpdir):
     options = {}
 
     with tempfile.TemporaryDirectory(dir=tmpdir) as mountpoint:
-        with host.ServiceManager() as mgr:
+        with service.ServiceManager() as mgr:
             with make_dev_tmpfs(tmpdir) as devpath:
                 mount(mgr, devpath, tree, size, mountpoint, options)
                 with open(os.path.join(mountpoint, "test"), "w", encoding="utf-8") as f:
@@ -146,7 +148,7 @@ def test_all_options(tmpdir):
     print(options)
 
     with tempfile.TemporaryDirectory(dir=tmpdir) as mountpoint:
-        with host.ServiceManager() as mgr:
+        with service.ServiceManager() as mgr:
             with make_dev_tmpfs(tmpdir) as devpath:
                 mount(mgr, devpath, tree, size, mountpoint, options)
 

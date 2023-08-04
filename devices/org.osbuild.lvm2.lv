@@ -35,7 +35,7 @@ import sys
 import time
 from typing import Dict, Tuple, Union
 
-from osbuild import devices
+from osbuild.service import device as device_service
 
 SCHEMA = """
 "additionalProperties": false,
@@ -49,7 +49,7 @@ SCHEMA = """
 """
 
 
-class LVService(devices.DeviceService):
+class LVService(device_service.DeviceService):
 
     def __init__(self, args):
         super().__init__(args)

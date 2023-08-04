@@ -17,7 +17,7 @@ import os
 import subprocess
 import sys
 
-from osbuild import inputs
+from osbuild.service import input as input_service
 
 SCHEMA = """
 "definitions": {
@@ -125,7 +125,7 @@ def export(checksums, cache, output):
     return reply
 
 
-class OSTreeInput(inputs.InputService):
+class OSTreeInput(input_service.InputService):
 
     def map(self, store, origin, refs, target, _options):
 
