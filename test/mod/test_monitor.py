@@ -13,7 +13,7 @@ import osbuild
 import osbuild.meta
 from osbuild.monitor import LogMonitor
 from osbuild.objectstore import ObjectStore
-from osbuild.pipeline import Runner
+from osbuild.manifest import Runner
 
 from .. import test
 
@@ -41,7 +41,7 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         self.counter["stages"] += 1
         self.stages.add(stage.id)
 
-    def result(self, result: osbuild.pipeline.BuildResult):
+    def result(self, result: osbuild.manifest.BuildResult):
         self.counter["result"] += 1
         self.results.add(result.id)
 

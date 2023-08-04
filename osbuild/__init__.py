@@ -8,7 +8,7 @@ The utility module `osbuild.util` provides access to common functionality
 independent of osbuild but used across the osbuild codebase.
 """
 
-from .pipeline import Manifest, Pipeline, Stage
+from .manifest import Manifest, Pipeline, Stage
 
 __version__ = "92"
 

@@ -67,7 +67,7 @@ class BaseMonitor(abc.ABC):
     def assembler(self, assembler: osbuild.Stage):
         """Called when an assembler is being built"""
 
-    def result(self, result: osbuild.pipeline.BuildResult):
+    def result(self, result: osbuild.manifest.BuildResult):
         """Called when a module is done with its result"""
 
     def log(self, message: str):

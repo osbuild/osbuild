@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional
 from osbuild.meta import Index, ModuleInfo, ValidationResult
 
 from ..inputs import Input
+from ..manifest import Manifest, Pipeline, Runner, Stage
 from ..objectstore import ObjectStore
-from ..pipeline import Manifest, Pipeline, Runner, Stage
 from ..sources import Source
 
 VERSION = "2"

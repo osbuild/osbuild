@@ -13,7 +13,7 @@ import osbuild
 import osbuild.meta
 from osbuild.monitor import NullMonitor
 from osbuild.objectstore import ObjectStore
-from osbuild.pipeline import Manifest, Runner
+from osbuild.manifest import Manifest, Runner
 
 from .. import test
 

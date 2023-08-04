@@ -75,7 +75,7 @@ BASIC_PIPELINE = {
 class TestFormatV1(unittest.TestCase):
 
     @staticmethod
-    def build_manifest(manifest: osbuild.pipeline.Manifest, tmpdir: str):
+    def build_manifest(manifest: osbuild.manifest.Manifest, tmpdir: str):
         """Build a manifest and return the result"""
         storedir = pathlib.Path(tmpdir, "store")
         monitor = NullMonitor(sys.stderr.fileno())
