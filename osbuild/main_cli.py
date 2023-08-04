@@ -70,7 +70,7 @@ def parse_arguments(sys_argv):
     parser.add_argument("--cache-max-size", metavar="SIZE", type=parse_size, default=None,
                         help="maximum size of the cache (bytes) or 'unlimited' for no restriction")
     parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
-                        help="stage to commit to the object store during build (can be passed multiple times)")
+                        help="stage to commit to the object store during build (can be passed multiple times), accepts globs")
     parser.add_argument("--export", metavar="ID", action="append", type=str, default=[],
                         help="object to export, can be passed multiple times")
     parser.add_argument("--json", action="store_true",
@@ -127,10 +127,9 @@ def osbuild_cli():
         return 1
 
     if args.checkpoint:
-        missed = manifest.mark_checkpoints(args.checkpoint)
-        if missed:
-            for checkpoint in missed:
-                print(f"Checkpoint {vt.bold}{checkpoint}{vt.reset} not found!")
+        marked = manifest.mark_checkpoints(args.checkpoint)
+        if not marked:
+            print("No checkpoints matched provided patterns!")
             print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
             return 1
 
