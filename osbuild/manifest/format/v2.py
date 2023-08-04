@@ -4,12 +4,12 @@ Second, and current, version of the manifest description
 """
 from typing import Any, Dict, Optional
 
+from osbuild.inputs import Input
 from osbuild.meta import Index, ModuleInfo, ValidationResult
+from osbuild.objectstore import ObjectStore
+from osbuild.sources import Source
 
-from ..inputs import Input
-from ..manifest import Manifest, Pipeline, Runner, Stage
-from ..objectstore import ObjectStore
-from ..sources import Source
+from .. import Manifest, Pipeline, Runner, Stage
 
 VERSION = "2"
 

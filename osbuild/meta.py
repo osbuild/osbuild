@@ -544,7 +544,7 @@ class Index:
     @staticmethod
     def list_formats() -> List[str]:
         """List all known formats for manifest descriptions"""
-        base = "osbuild.formats"
+        base = "osbuild.manifest.format"
         spec = importlib.util.find_spec(base)
 
         if not spec:

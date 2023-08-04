@@ -11,7 +11,7 @@ from typing import Dict
 
 import osbuild
 import osbuild.meta
-from osbuild.formats import v1 as fmt
+from osbuild.manifest.format import v1 as fmt
 from osbuild.monitor import NullMonitor
 from osbuild.objectstore import ObjectStore
 
@@ -173,7 +173,7 @@ class TestFormatV1(unittest.TestCase):
         index = osbuild.meta.Index(os.curdir)
 
         lst = index.list_formats()
-        self.assertIn("osbuild.formats.v1", lst)
+        self.assertIn("osbuild.manifest.format.v1", lst)
 
         # an empty manifest is format "1"
         info = index.detect_format_info({})

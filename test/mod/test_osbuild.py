@@ -185,7 +185,7 @@ class TestDescriptions(unittest.TestCase):
         ip = stage.add_input("image", noip, "org.osbuild.pipeline")
         ip.add_reference(image.id)
 
-        fmt = index.get_format_info("osbuild.formats.v2").module
+        fmt = index.get_format_info("osbuild.manifest.format.v2").module
         self.assertIsNotNone(fmt)
         print(json.dumps(fmt.describe(manifest), indent=2))
 

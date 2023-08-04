@@ -224,7 +224,7 @@ class TestFormatV2(unittest.TestCase):
         index = self.index
 
         lst = index.list_formats()
-        self.assertIn("osbuild.formats.v2", lst)
+        self.assertIn("osbuild.manifest.format.v2", lst)
 
         # the basic test manifest
         info = index.detect_format_info(BASIC_PIPELINE)
@@ -343,7 +343,7 @@ class TestFormatV2(unittest.TestCase):
             self.load_manifest(pipeline)
 
     def test_device_sorting(self):
-        fmt = self.index.get_format_info("osbuild.formats.v2").module
+        fmt = self.index.get_format_info("osbuild.manifest.format.v2").module
         assert fmt
 
         self_cycle = {

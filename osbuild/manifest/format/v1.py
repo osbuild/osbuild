@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from osbuild.meta import Index, ValidationResult
 
-from ..manifest import BuildResult, Manifest, Pipeline, Runner
+from .. import BuildResult, Manifest, Pipeline, Runner
 
 VERSION = "1"
 
