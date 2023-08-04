@@ -3,6 +3,7 @@ import contextlib
 import hashlib
 import json
 import os
+from fnmatch import fnmatch
 from typing import Dict, Generator, Iterable, Iterator, List, Optional
 
 from . import buildroot, host, objectstore, remoteloop
@@ -472,27 +473,30 @@ class Manifest:
 
         return results
 
-    def mark_checkpoints(self, checkpoints):
-        points = set(checkpoints)
+    def mark_checkpoints(self, patterns):
+        """Match pipeline names, stage ids, and stage names against an iterable
+        of `fnmatch`-patterns."""
+        selected = []
 
-        def mark_stage(stage):
-            c = stage.id
-            if c in points:
-                stage.checkpoint = True
-                points.remove(c)
+        def matching(haystack):
+            return any(fnmatch(haystack, p) for p in patterns)
 
-        def mark_pipeline(pl):
-            if pl.name in points and pl.stages:
-                pl.stages[-1].checkpoint = True
-                points.remove(pl.name)
+        for pipeline in self.pipelines.values():
+            # checkpoints are marked on stages, if a pipeline has no stages we
+            # can't mark it
+            if not pipeline.stages:
+                continue
 
-            for stage in pl.stages:
-                mark_stage(stage)
+            if matching(pipeline.name):
+                selected.append(pipeline.name)
+                pipeline.stages[-1].checkpoint = True
 
-        for pl in self.pipelines.values():
-            mark_pipeline(pl)
+            for stage in pipeline.stages:
+                if matching(stage.id) or matching(stage.name):
+                    selected.append(stage.id)
+                    stage.checkpoint = True
 
-        return points
+        return selected
 
     def get(self, name_or_id: str) -> Optional[Pipeline]:
         pl = self.pipelines.get(name_or_id)
