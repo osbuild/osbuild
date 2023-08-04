@@ -69,7 +69,7 @@ SCHEMA_2 = """
 """
 
 
-def ostree(*args, **kwargs):
+def rpmostree(*args, **kwargs):
     args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
     print("rpm-ostree " + " ".join(args), file=sys.stderr)
     subprocess.run(["rpm-ostree"] + args,
@@ -109,10 +109,10 @@ def main(tree, inputs, options):
     if maxlayers:
         extra_args += ["--max-layers", str(maxlayers)]
 
-    ostree("container-encapsulate", commit, container,
-           "--format-version", str(formatver),
-           "--repo", source_repo,
-           *extra_args)
+    rpmostree("container-encapsulate", commit, container,
+              "--format-version", str(formatver),
+              "--repo", source_repo,
+              *extra_args)
 
 
 if __name__ == '__main__':
