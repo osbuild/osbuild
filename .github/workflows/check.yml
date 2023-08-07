@@ -19,14 +19,6 @@ jobs:
   python_code_linters:
       name: "Python Linters"
       runs-on: ubuntu-latest
-      strategy:
-        fail-fast: false
-        matrix:
-          linter:
-          - "ruff"
-          - "pylint"
-          - "autopep8"
-          - "isort"
       steps:
       - name: "Clone Repository"
         uses: actions/checkout@v3
@@ -35,25 +27,7 @@ jobs:
         with:
           image: ghcr.io/osbuild/osbuild-ci:latest-202304251412
           run: |
-            tox -e "${{ matrix.linter }}"
-
-  python_code_types:
-    name: "Python Typing"
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        typer:
-        - "mypy"
-    steps:
-    - name: "Clone Repository"
-      uses: actions/checkout@v3
-    - name: "Run Linters"
-      uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
-      with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202304251412
-        run: |
-          tox -e "${{ matrix.typer }}"
+            make lint
 
   shell_linters:
     name: "Shell Linters"
