@@ -575,7 +575,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                         raise
 
                 return (name, lockfd)
-        except:
+        except BaseException:
             # On error, we might have already created the directory or even
             # linked the lock-file. Try unlinking both, but ignore errors if
             # they do not exist. Due to using UUIDs as names we cannot conflict
@@ -703,7 +703,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
 
             self._active = True
             return self
-        except:
+        except BaseException:
             self.__exit__(None, None, None)
             raise
 

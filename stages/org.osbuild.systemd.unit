@@ -62,7 +62,7 @@ def main(tree, options):
     cfg = options["config"]
 
     # ensure the unit name + ".d" does not exceed maximum filename length
-    if len(unit+".d") > 255:
+    if len(unit + ".d") > 255:
         raise ValueError(f"Error: the {unit} unit drop-in directory exceeds the maximum filename length.")
 
     unit_dropins_dir = f"{tree}/usr/lib/systemd/system/{unit}.d"

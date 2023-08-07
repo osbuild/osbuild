@@ -519,11 +519,11 @@ class RunnerInfo:
         while i > 0 and name[i].isdigit():
             i -= 1
 
-        vstr = name[i+1:]
+        vstr = name[i + 1:]
         if vstr:
             version = int(vstr)
 
-        return name[:i+1], version
+        return name[:i + 1], version
 
 
 class Index:

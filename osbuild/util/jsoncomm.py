@@ -216,7 +216,7 @@ class Socket(contextlib.AbstractContextManager):
             # default destination for send operations.
             if connect_to is not None:
                 sock.connect(os.fspath(connect_to))
-        except:
+        except BaseException:
             if sock is not None:
                 sock.close()
             raise
@@ -255,7 +255,7 @@ class Socket(contextlib.AbstractContextManager):
             sock.bind(os.fspath(bind_to))
             unlink = os.open(os.path.join(".", path[0]), os.O_CLOEXEC | os.O_PATH)
             sock.setblocking(False)
-        except:
+        except BaseException:
             if unlink is not None:
                 os.close(unlink)
             if sock is not None:

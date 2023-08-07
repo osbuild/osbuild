@@ -156,7 +156,7 @@ def test_rename_vg_group(tempdir):
             vg = find_vg(vgs, new_name)
             if vg:
                 break
-            time.sleep(0.250 * (i+1))
+            time.sleep(0.250 * (i + 1))
         if not vg:
             raise RuntimeError(f"Could not find vg {new_name}")
     finally:

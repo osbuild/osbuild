@@ -25,7 +25,7 @@ SCHEMA = """
 def main(tree):
     cmd = [
         "/usr/sbin/chroot", tree,
-        "/usr/sbin/authconfig", "--nostart",  "--updateall"
+        "/usr/sbin/authconfig", "--nostart", "--updateall"
     ]
 
     subprocess.run(cmd, check=True)
