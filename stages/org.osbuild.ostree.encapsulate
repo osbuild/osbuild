@@ -10,10 +10,11 @@ For more information see [1].
 import subprocess
 import sys
 
+import yaml
+
 import osbuild.api
 
 CAPABILITIES = ["CAP_MAC_ADMIN"]
-
 
 SCHEMA_2 = """
 "options": {
@@ -69,6 +70,18 @@ SCHEMA_2 = """
 """
 
 
+def rpmostree_version():
+    result = subprocess.run(["rpm-ostree", "--version"],
+                            encoding="utf-8",
+                            stdout=subprocess.PIPE,
+                            check=True)
+
+    version = yaml.safe_load(result.stdout)["rpm-ostree"]["Version"]
+    year, release = version.split(".")
+
+    return int(year), int(release)
+
+
 def rpmostree(*args, **kwargs):
     args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
     print("rpm-ostree " + " ".join(args), file=sys.stderr)
@@ -109,10 +122,20 @@ def main(tree, inputs, options):
     if maxlayers:
         extra_args += ["--max-layers", str(maxlayers)]
 
-    rpmostree("container-encapsulate", commit, container,
-              "--format-version", str(formatver),
-              "--repo", source_repo,
-              *extra_args)
+    args = []
+
+    # Use `rpm-ostree compose container-encapsulate` instead of
+    # removed `rpm-ostree container-encapsulate` when using rpm-ostree >= 2023.2
+    year, release = rpmostree_version()
+    if year >= 2024 or (year == 2023 and release >= 2):
+        args += ["compose"]
+
+    args += [
+        "container-encapsulate", commit, container, "--format-version",
+        str(formatver), "--repo", source_repo, *extra_args
+    ]
+
+    rpmostree(*args)
 
 
 if __name__ == '__main__':

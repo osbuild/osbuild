@@ -25,6 +25,7 @@ pipelines:
                 - policycoreutils
                 - python3-iniparse
                 - python3-toml
+                - python3-yaml
                 - qemu-img
                 - rpm-ostree
                 - systemd
