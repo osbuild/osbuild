@@ -249,6 +249,16 @@ test-all:
 			-v
 
 #
+# Linting the code
+#
+# Just run `make lint` and see if our linters like your code.
+#
+
+.PHONY: lint
+lint:
+	tox run-parallel -e ruff,pylint,autopep8,isort,mypy
+
+#
 # Building packages
 #
 # The following rules build osbuild packages from the current HEAD commit,
