@@ -234,12 +234,6 @@ test-run:
 			--rootdir=$(SRCDIR) \
 			-v
 
-.PHONY: test-src
-test-src:
-	@$(PYTHON3) -m pytest \
-			$(SRCDIR)/test/src \
-			--rootdir=$(SRCDIR) \
-			-v
 
 .PHONY: test-all
 test-all:
