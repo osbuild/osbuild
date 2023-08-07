@@ -590,7 +590,7 @@ LocalFileSigLevel = Optional
             pkginfo = self._pacman("-Sii", "--sysroot", self._cachedir, pkg["name"])
             pkgdata = self.parse_pkg_info(pkginfo)
             p = PkgInfo(
-                "sha256:"+pkgdata["SHA-256 Sum"],
+                "sha256:" + pkgdata["SHA-256 Sum"],
                 pkg["name"],
                 pkg["version"],
                 pkgdata["Architecture"],
@@ -644,7 +644,7 @@ class DepSolver:
             if not result.scheme:
                 path = basedir.joinpath(baseurl)
                 return path.resolve().as_uri()
-        except:  # pylint: disable=bare-except
+        except BaseException:  # pylint: disable=bare-except
             pass
 
         return baseurl

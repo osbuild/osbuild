@@ -286,7 +286,7 @@ class MDAHeader(Header):
         "magic": "16s",   # int8_t[16] // Allows to scan for metadata
         "version": "L",   # uint32_t
         "start": "Q",     # uint64_t   // Absolute start byte of itself
-        "size":  "Q"      # uint64_t   // Size of metadata area
+        "size": "Q"      # uint64_t   // Size of metadata area
     })
     # followed by a null termiated list of type `RawLocN`
 
@@ -419,7 +419,7 @@ class Metadata:
             r"\]": " ]",
             r'"': ' " ',
             r"[=,]": "",
-            r"\s+":  " ",
+            r"\s+": " ",
             r"\0$": "",
         }
 
@@ -537,7 +537,7 @@ class Disk:
 
         try:
             self._init_headers()
-        except:  # pylint: disable=broad-except
+        except BaseException:  # pylint: disable=broad-except
             self.fp.close()
             raise
 

@@ -85,12 +85,12 @@ def test_runner_detection(tempdir):
         },
         "rhel": {
             "base": 90,
-            "versions":  [91, 92, 93],
+            "versions": [91, 92, 93],
             "check": {94: 93},
         },
         "future": {
             "base": 100,
-            "versions":  [101, 102, 103],
+            "versions": [101, 102, 103],
             "check": {110: 103},
         }
     }

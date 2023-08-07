@@ -408,7 +408,7 @@ def main(inputs, root, options, workdir, loop_client):
     liveos = os.path.join(liveos_work, "LiveOS")
     os.makedirs(liveos)
 
-    rootfs_size = rootfs.get("size", 3072) * 1024*1024
+    rootfs_size = rootfs.get("size", 3072) * 1024 * 1024
     compression = rootfs.get("compression", {})
 
     rootfs = os.path.join(liveos, "rootfs.img")

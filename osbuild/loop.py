@@ -57,7 +57,7 @@ class LoopConfig(ctypes.Structure):
         ('fd', ctypes.c_uint32),
         ('block_size', ctypes.c_uint32),
         ('info', LoopInfo),
-        ('__reserved', ctypes.c_uint64*8),
+        ('__reserved', ctypes.c_uint64 * 8),
     ]
 
 
@@ -652,7 +652,7 @@ class LoopControl:
             if callable(setup):
                 try:
                     setup(lo)
-                except:
+                except BaseException:
                     lo.close()
                     raise
 

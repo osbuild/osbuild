@@ -10,7 +10,7 @@ def skipcpio(fd):
     pos = 0
     while True:
         os.lseek(fd, pos, os.SEEK_SET)
-        data = os.read(fd, 2*cpio_len)
+        data = os.read(fd, 2 * cpio_len)
         if data == b'':
             # end of file, cpio_end not found, cat it all
             pos = 0
@@ -24,7 +24,7 @@ def skipcpio(fd):
     if pos == 0:
         return pos
     # skip zeros
-    n = 2*cpio_len
+    n = 2 * cpio_len
     while True:
         data = os.read(fd, n)
         if data == b'':

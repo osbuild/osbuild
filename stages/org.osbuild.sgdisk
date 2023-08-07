@@ -129,7 +129,7 @@ class PartitionTable:
             command += ["-U", self.uuid]
 
         for i, part in enumerate(self.partitions):
-            idx = i+1  # partitions are 1-indexed
+            idx = i + 1  # partitions are 1-indexed
 
             # format is 'partnum:start:end'
             size = "0"

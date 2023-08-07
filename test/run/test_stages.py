@@ -77,7 +77,7 @@ def mapping_is_subset(subset, other):
     """
     if isinstance(subset, Mapping) and isinstance(other, Mapping):
         for key, value in subset.items():
-            if not key in other:
+            if key not in other:
                 return False
 
             other_value = other[key]

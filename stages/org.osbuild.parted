@@ -129,10 +129,10 @@ class PartitionTable:
             ]
 
             if p.bootable:
-                commands += ["set", str(i+1), "boot", "on"]
+                commands += ["set", str(i + 1), "boot", "on"]
 
             if p.type:
-                commands += ["set", str(i+1), p.type, "on"]
+                commands += ["set", str(i + 1), p.type, "on"]
 
         subprocess.run(["parted", "-a", "none", "-s",
                         target, "--"] + commands,
