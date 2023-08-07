@@ -18,7 +18,9 @@ pipelines:
       - type: org.osbuild.ostree.encapsulate
         options:
           filename: ostree-container.tar
-          max_layers: 1
+          # max_layers < 4 is currently broken (or unsupported)
+          # see https://github.com/coreos/rpm-ostree/issues/4530
+          max_layers: 4
         inputs:
           commit:
             type: org.osbuild.ostree
