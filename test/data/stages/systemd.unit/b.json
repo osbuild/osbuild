@@ -470,6 +470,19 @@
             }
           }
         }
+      },
+      {
+        "name": "org.osbuild.systemd.unit",
+        "options": {
+          "unit": "grub-boot-success.timer",
+          "dropin": "10-disable-if-greenboot.conf",
+          "unit-type": "global",
+          "config": {
+            "Unit": {
+              "ConditionPathExists": "/usr/lib/greenboot/greenboot"
+            }
+          }
+        }
       }
     ]
   },

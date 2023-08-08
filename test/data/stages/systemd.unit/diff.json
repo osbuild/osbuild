@@ -1,7 +1,9 @@
 {
   "added_files": [
     "/usr/lib/systemd/system/nm-cloud-setup.service.d",
-    "/usr/lib/systemd/system/nm-cloud-setup.service.d/10-rh-enable-for-ec2.conf"
+    "/usr/lib/systemd/system/nm-cloud-setup.service.d/10-rh-enable-for-ec2.conf",
+    "/usr/lib/systemd/user/grub-boot-success.timer.d",
+    "/usr/lib/systemd/user/grub-boot-success.timer.d/10-disable-if-greenboot.conf"
   ],
   "deleted_files": [],
   "differences": {}
