@@ -39,6 +39,17 @@ SCHEMA = r"""
     "type": "object",
     "description": "Drop-in configuration for a '.service' unit.",
     "properties": {
+      "Unit": {
+        "additionalProperties": false,
+        "type": "object",
+        "description": "'Unit' configuration section of a unit file.",
+        "properties": {
+          "ConditionPathExists": {
+            "type": "string",
+            "description": "Check for the existence of a file. If the specified absolute path name does not exist, the condition will fail."
+          }
+        }
+      },
       "Service": {
         "additionalProperties": false,
         "type": "object",
@@ -51,6 +62,12 @@ SCHEMA = r"""
         }
       }
     }
+  },
+  "unit-type": {
+    "type": "string",
+    "enum": ["system", "global"],
+    "default": "system",
+    "description": "Selects between systemd system or global unit to add dropin"
   }
 }
 """
@@ -60,12 +77,16 @@ def main(tree, options):
     unit = options["unit"]
     dropin_file = options["dropin"]
     cfg = options["config"]
+    unit_type = options.get("unit-type", "system")
 
     # ensure the unit name + ".d" does not exceed maximum filename length
     if len(unit + ".d") > 255:
         raise ValueError(f"Error: the {unit} unit drop-in directory exceeds the maximum filename length.")
 
-    unit_dropins_dir = f"{tree}/usr/lib/systemd/system/{unit}.d"
+    if unit_type == "system":
+        unit_dropins_dir = f"{tree}/usr/lib/systemd/system/{unit}.d"
+    elif unit_type == "global":
+        unit_dropins_dir = f"{tree}/usr/lib/systemd/user/{unit}.d"
     os.makedirs(unit_dropins_dir, exist_ok=True)
 
     config = configparser.ConfigParser()
