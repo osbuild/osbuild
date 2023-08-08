@@ -28,7 +28,7 @@ SCHEMA = r"""
 "properties": {
   "unit": {
     "type": "string",
-    "pattern": "^[\\w:.\\\\-]+[@]{0,1}[\\w:.\\\\-]*\\.service$"
+    "pattern": "^[\\w:.\\\\-]+[@]{0,1}[\\w:.\\\\-]*\\.(service|timer)$"
   },
   "dropin": {
     "type": "string",
