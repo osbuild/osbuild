@@ -177,9 +177,9 @@ def brace_expand(s):
     result = []
     right = s.find('}')
     left = s[:right].rfind('{')
-    prefix, choices, suffix = s[:left], s[left+1:right], s[right+1:]
+    prefix, choices, suffix = s[:left], s[left + 1:right], s[right + 1:]
     for choice in choices.split(','):
-        result.extend(brace_expand(prefix+choice+suffix))
+        result.extend(brace_expand(prefix + choice + suffix))
 
     return result
 

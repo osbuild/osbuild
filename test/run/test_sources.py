@@ -66,7 +66,7 @@ def can_setup_netns() -> bool:
     try:
         with netns():
             return True
-    except:  # pylint: disable=bare-except
+    except BaseException:  # pylint: disable=bare-except
         return False
 
 

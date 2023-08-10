@@ -347,7 +347,7 @@ def main(tree, inputs, options):
         ]
 
     with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
-        manifest.writelines(c+'\n' for c in packages)
+        manifest.writelines(c + '\n' for c in packages)
         manifest.flush()
         subprocess.run([
             "rpm",

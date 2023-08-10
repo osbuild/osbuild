@@ -69,8 +69,13 @@ def parse_arguments(sys_argv):
                         help="directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--cache-max-size", metavar="SIZE", type=parse_size, default=None,
                         help="maximum size of the cache (bytes) or 'unlimited' for no restriction")
-    parser.add_argument("--checkpoint", metavar="ID", action="append", type=str, default=None,
-                        help="stage to commit to the object store during build (can be passed multiple times), accepts globs")
+    parser.add_argument(
+        "--checkpoint",
+        metavar="ID",
+        action="append",
+        type=str,
+        default=None,
+        help="stage to commit to the object store during build (can be passed multiple times), accepts globs")
     parser.add_argument("--export", metavar="ID", action="append", type=str, default=[],
                         help="object to export, can be passed multiple times")
     parser.add_argument("--json", action="store_true",

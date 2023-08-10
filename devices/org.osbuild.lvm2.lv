@@ -127,7 +127,7 @@ class LVService(devices.DeviceService):
             if res.returncode == 5:
                 if count == 10:
                     raise RuntimeError("Could not find parent device")
-                time.sleep(1*count)
+                time.sleep(1 * count)
                 count += 1
                 continue
 
