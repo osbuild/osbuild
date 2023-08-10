@@ -1,0 +1,117 @@
+#!/usr/bin/python3
+"""check-runners compares the list of runners in .gitlab-ci.yml to the list of
+snapshots in Schutzfile and prints a list of runners without Schutzfile entries,
+and a list of Schutzfile entries not used by runners."""
+
+import json
+import sys
+import yaml
+
+
+def read_gitlab_ci(path):
+    """Read the gitlab-ci.yml file and parse it into a yaml object
+    """
+    with open(path, encoding="utf8") as f:
+        data = f.read()
+
+    # Handle all !tags (like gitlab's !reference) by just returning the raw value
+    # the result isn't used, this is just to keep it from returning an error when
+    # it hits an unknown tag.
+    yaml.SafeLoader.add_multi_constructor('', lambda a, b, c: c.value)
+    return yaml.safe_load(data)
+
+
+def all_runners(gitlab):
+    """Extract all the RUNNER entries from the gitlab yaml"""
+    runners = []
+    for k in gitlab.keys():
+        if k == "RUNNER":
+            if isinstance(gitlab[k], list):
+                runners += gitlab[k]
+            else:
+                runners.append(gitlab[k])
+        elif isinstance(gitlab[k], dict):
+            runners += all_runners(gitlab[k])
+        elif isinstance(gitlab[k], list):
+            # Lists can have dicts inside them
+            for e in gitlab[k]:
+                if isinstance(e, dict):
+                    runners += all_runners(e)
+    return runners
+
+
+def runner_distros(runners):
+    """Best guess of distro versions for the runners
+    They start with SERVICE/ so that can be ignored
+    Then have DISTRO-VERSION-EXTRA-ARCH where DISTRO might be 'centos-stream' or a single word.
+
+    This should be fairly stable, but it's possible it will fail in the future.
+    """
+    distros = []
+    for r in runners:
+        try:
+            r = r.split("/", 1)[1]
+        except IndexError:
+            print("ERROR: Cannot guess {r}")
+            continue
+        if r.startswith("centos-stream"):
+            distros.append("-".join(r.split("-")[:3]))
+        else:
+            distros.append("-".join(r.split("-")[:2]))
+    return set(distros)
+
+
+def read_Schutzfile(path):
+    """Read the Schutzfile json file and return a dict"""
+    with open(path, encoding="utf8") as f:
+        return json.load(f)
+
+
+def get_distros(path):
+    """Read the Schutzfile and return a list of the distro versions it contains"""
+    sf = read_Schutzfile(path)
+    return set(k for k in sf.keys() if k != "global")
+
+
+def unused(a, b):
+    """Find the snapshots from set a that are not in set b,
+    while also checking for centos <---> centos-stream name aliasing
+    """
+    unused_snapshots = []
+    for s in a:
+        if s in b:
+            continue
+        if s.startswith("centos-stream"):
+            # centos and centos-stream both use 'centos' as the distro name
+            # so when one shows up as missing, check the other name too
+            t = s.replace("centos-stream", "centos")
+        elif s.startswith("centos"):
+            t = s.replace("centos", "centos-stream")
+        else:
+            t = None
+        if t in b:
+            continue
+        unused_snapshots.append(s)
+
+    return sorted(unused_snapshots)
+
+
+def main():
+    gitlab = read_gitlab_ci(".gitlab-ci.yml")
+    runners = all_runners(gitlab)
+    rd = runner_distros(runners)
+    sd = get_distros("Schutzfile")
+
+    missing_snapshots = unused(rd, sd)
+    if missing_snapshots:
+        print("The following RUNNERS do not have Schutzfile entries:")
+        print("\n".join(sorted(missing_snapshots)))
+
+    unused_snapshots = unused(sd, rd)
+    if unused_snapshots:
+        print("The following Schutzbot entries are not used:")
+        print("\n".join(sorted(unused_snapshots)))
+
+
+if __name__ == '__main__':
+    sys.exit(main())
