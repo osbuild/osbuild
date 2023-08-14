@@ -302,31 +302,14 @@
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230801"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-branched-20230814"
           }
         ],
         "aarch64": [
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230801"
-          }
-        ]
-      },
-      {
-        "file": "/etc/yum.repos.d/fedora-modular.repo",
-        "x86_64": [
-          {
-            "title": "fedora-modular",
-            "name": "fedora-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-modular-20230801"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "fedora-modular",
-            "name": "fedora-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-modular-20230801"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-branched-20230814"
           }
         ]
       }
