@@ -10,6 +10,7 @@ stages:
     - cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
   after_script:
     - schutzbot/ci_details.sh > ci-details-after-run
+    - schutzbot/unregister.sh
     - schutzbot/update_github_status.sh update
   tags:
     - terraform
