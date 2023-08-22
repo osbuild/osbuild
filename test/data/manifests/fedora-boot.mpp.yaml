@@ -1,70 +1,231 @@
-mpp-vars:
-  arch: x86_64
-  release: 34
-  releasever: f$release
-  snapshot: '20210512'
-pipeline:
-  build:
-    mpp-import-pipeline:
-      path: fedora-build.mpp.yaml
+# Taken from osbuild/images 3314f4c9fc
+# Noticed the org.osbuild.test that was added.
+
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: fedora-build-v2.ipp.yaml
+      id: build
     runner:
       mpp-format-string: org.osbuild.fedora{release}
-  stages:
-    - name: org.osbuild.kernel-cmdline
-      options:
-        root_fs_uuid: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
-        kernel_opts: ro biosdevname=0 net.ifnames=0
-    - name: org.osbuild.rpm
-      options:
-        gpgkeys:
-          - "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBF1RVqsBEADWMBqYv/G1r4PwyiPQCfg5fXFGXV1FCZ32qMi9gLUTv1CX7rYy\nH4Inj93oic+lt1kQ0kQCkINOwQczOkm6XDkEekmMrHknJpFLwrTK4AS28bYF2RjL\nM+QJ/dGXDMPYsP0tkLvoxaHr9WTRq89A+AmONcUAQIMJg3JxXAAafBi2UszUUEPI\nU35MyufFt2ePd1k/6hVAO8S2VT72TxXSY7Ha4X2J0pGzbqQ6Dq3AVzogsnoIi09A\n7fYutYZPVVAEGRUqavl0th8LyuZShASZ38CdAHBMvWV4bVZghd/wDV5ev3LXUE0o\nitLAqNSeiDJ3grKWN6v0qdU0l3Ya60sugABd3xaE+ROe8kDCy3WmAaO51Q880ZA2\niXOTJFObqkBTP9j9+ZeQ+KNE8SBoiH1EybKtBU8HmygZvu8ZC1TKUyL5gwGUJt8v\nergy5Bw3Q7av520sNGD3cIWr4fBAVYwdBoZT8RcsnU1PP67NmOGFcwSFJ/LpiOMC\npZ1IBvjOC7KyKEZY2/63kjW73mB7OHOd18BHtGVkA3QAdVlcSule/z68VOAy6bih\nE6mdxP28D4INsts8w6yr4G+3aEIN8u0qRQq66Ri5mOXTyle+ONudtfGg3U9lgicg\nz6oVk17RT0jV9uL6K41sGZ1sH/6yTXQKagdAYr3w1ix2L46JgzC+/+6SSwARAQAB\ntDFGZWRvcmEgKDMyKSA8ZmVkb3JhLTMyLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQI4BBMBAgAiBQJdUVarAhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAK\nCRBsEwJtEslE0LdAD/wKdAMtfzr7O2y06/sOPnrb3D39Y2DXbB8y0iEmRdBL29Bq\n5btxwmAka7JZRJVFxPsOVqZ6KARjS0/oCBmJc0jCRANFCtM4UjVHTSsxrJfuPkel\nvrlNE9tcR6OCRpuj/PZgUa39iifF/FTUfDgh4Q91xiQoLqfBxOJzravQHoK9VzrM\nNTOu6J6l4zeGzY/ocj6DpT+5fdUO/3HgGFNiNYPC6GVzeiA3AAVR0sCyGENuqqdg\nwUxV3BIht05M5Wcdvxg1U9x5I3yjkLQw+idvX4pevTiCh9/0u+4g80cT/21Cxsdx\n7+DVHaewXbF87QQIcOAing0S5QE67r2uPVxmWy/56TKUqDoyP8SNsV62lT2jutsj\nLevNxUky011g5w3bc61UeaeKrrurFdRs+RwBVkXmtqm/i6g0ZTWZyWGO6gJd+HWA\nqY1NYiq4+cMvNLatmA2sOoCsRNmE9q6jM/ESVgaH8hSp8GcLuzt9/r4PZZGl5CvU\neldOiD221u8rzuHmLs4dsgwJJ9pgLT0cUAsOpbMPI0JpGIPQ2SG6yK7LmO6HFOxb\nAkz7IGUt0gy1MzPTyBvnB+WgD1I+IQXXsJbhP5+d+d3mOnqsd6oDM/grKBzrhoUe\noNadc9uzjqKlOrmrdIR3Bz38SSiWlde5fu6xPqJdmGZRNjXtcyJlbSPVDIloxw==\n=QWRO\n-----END PGP PUBLIC KEY BLOCK-----\n"
-        mpp-depsolve:
-          architecture: $arch
-          module-platform-id: $releasever
-          releasever: $releasever
-          repos:
-            - id: default
-              baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$releasever-$arch-fedora-$snapshot/
+  - name: os
+    build: name:build
+    stages:
+      - type: org.osbuild.kernel-cmdline
+        options:
+          root_fs_uuid: 6e4ff95f-f662-45ee-a82a-bdf44a2d0b75
+          kernel_opts: ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0
+      - type: org.osbuild.rpm
+        inputs:
           packages:
-            - '@cloud-server-environment'
-            - chrony
-            - dracut-config-generic
-            - grub2-pc
-            - kernel-core
-            - langpacks-en
-            - polkit
-            - selinux-policy-targeted
-            - systemd-udev
-    - name: org.osbuild.locale
-      options:
-        language: en_US.UTF-8
-    - name: org.osbuild.fstab
-      options:
-        filesystems:
-          - uuid: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
-            vfs_type: ext4
-            path: /
-            freq: 1
-            passno: 1
-    - name: org.osbuild.grub2
-      options:
-        root_fs_uuid: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
-        legacy: i386-pc
-        saved_entry:
-          mpp-format-string: '{''f''*32}-{rpms[''stages''][''kernel-core''].evra}'
-        write_cmdline: false
-    - name: org.osbuild.test
-      options:
-        script: /usr/bin/systemctl is-system-running --wait
-    - name: org.osbuild.selinux
-      options:
-        file_contexts: etc/selinux/targeted/contexts/files/file_contexts
-    - name: org.osbuild.fix-bls
-  assembler:
-    name: org.osbuild.qemu
-    options:
-      format: qcow2
-      filename: fedora-boot.qcow2
-      ptuuid: '0x1cd1d44b'
-      root_fs_uuid: 76a22bf4-f153-4541-b6c7-0332c0dfaeac
-      size: 3221225472
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - "@Fedora Cloud Server"
+                - chrony
+                - langpacks-en
+                - qemu-guest-agent
+                - kernel-core
+              excludes:
+                - dracut-config-rescue
+                - firewalld
+                - geolite2-city
+                - geolite2-country
+                - plymouth
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+          install_langs:
+            - en_US
+      - type: org.osbuild.fix-bls
+        options:
+          prefix: ''
+      - type: org.osbuild.locale
+        options:
+          language: en_US
+      - type: org.osbuild.hostname
+        options:
+          hostname: localhost.localdomain
+      - type: org.osbuild.timezone
+        options:
+          zone: UTC
+      - type: org.osbuild.fstab
+        options:
+          filesystems:
+            - uuid: 6e4ff95f-f662-45ee-a82a-bdf44a2d0b75
+              vfs_type: ext4
+              path: /
+              options: defaults
+            - uuid: 0194fdc2-fa2f-4cc0-81d3-ff12045b73c8
+              vfs_type: ext4
+              path: /boot
+              options: defaults
+            - uuid: 7B77-95E7
+              vfs_type: vfat
+              path: /boot/efi
+              options: defaults,uid=0,gid=0,umask=077,shortname=winnt
+              passno: 2
+      - type: org.osbuild.grub2
+        options:
+          root_fs_uuid: 6e4ff95f-f662-45ee-a82a-bdf44a2d0b75
+          boot_fs_uuid: 0194fdc2-fa2f-4cc0-81d3-ff12045b73c8
+          kernel_opts: ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0
+          legacy: i386-pc
+          uefi:
+            vendor: fedora
+            unified: true
+          saved_entry:
+            mpp-format-string: 'ffffffffffffffffffffffffffffffff-{rpms[''os''][''kernel-core''].evra}'
+          write_cmdline: false
+          config:
+            default: saved
+      - type: org.osbuild.systemd
+        options:
+          enabled_services:
+            - cloud-init.service
+            - cloud-config.service
+            - cloud-final.service
+            - cloud-init-local.service
+          default_target: multi-user.target
+      - type: org.osbuild.test
+        options:
+          script: /usr/bin/systemctl is-system-running --wait
+      - type: org.osbuild.selinux
+        options:
+          file_contexts: etc/selinux/targeted/contexts/files/file_contexts
+  - name: image
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size: '5368709120'
+      - type: org.osbuild.sfdisk
+        options:
+          label: gpt
+          uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+          partitions:
+            - bootable: true
+              size: 2048
+              start: 2048
+              type: 21686148-6449-6E6F-744E-656564454649
+              uuid: FAC7F1FB-3E8D-4137-A512-961DE09A5549
+            - size: 409600
+              start: 4096
+              type: C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+              uuid: 68B2905B-DF3E-4FB3-80FA-49D1E773AA33
+            - size: 1024000
+              start: 413696
+              type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+              uuid: CB07C243-BC44-4717-853E-28852021225B
+            - size: 9048031
+              start: 1437696
+              type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+              uuid: 6264D520-3FB9-423F-8AB8-7A0A8E3D3562
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              lock: true
+      - type: org.osbuild.mkfs.fat
+        options:
+          volid: 7B7795E7
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 4096
+              size: 409600
+              lock: true
+      - type: org.osbuild.mkfs.ext4
+        options:
+          uuid: 0194fdc2-fa2f-4cc0-81d3-ff12045b73c8
+          label: boot
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 413696
+              size: 1024000
+              lock: true
+      - type: org.osbuild.mkfs.ext4
+        options:
+          uuid: 6e4ff95f-f662-45ee-a82a-bdf44a2d0b75
+          label: root
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 1437696
+              size: 9048031
+              lock: true
+      - type: org.osbuild.copy
+        inputs:
+          root-tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:os
+        options:
+          paths:
+            - from: input://root-tree/
+              to: mount://root/
+        devices:
+          boot:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 413696
+              size: 1024000
+          boot.efi:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 4096
+              size: 409600
+          root:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 1437696
+              size: 9048031
+        mounts:
+          - name: root
+            type: org.osbuild.ext4
+            source: root
+            target: /
+          - name: boot
+            type: org.osbuild.ext4
+            source: boot
+            target: /boot
+          - name: boot.efi
+            type: org.osbuild.fat
+            source: boot.efi
+            target: /boot/efi
+      - type: org.osbuild.grub2.inst
+        options:
+          filename: disk.img
+          platform: i386-pc
+          location: 2048
+          core:
+            type: mkimage
+            partlabel: gpt
+            filesystem: ext4
+          prefix:
+            type: partition
+            partlabel: gpt
+            number: 2
+            path: /grub2
