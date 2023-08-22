@@ -213,7 +213,6 @@ $(TEST_MANIFESTS_GEN): %.json: %.mpp.yaml
 	$(SRCDIR)/tools/osbuild-mpp -I "$(SRCDIR)/test/data/manifests" "$<" "$@"
 
 $(SRCDIR)/test/data/manifests/f34-base.json: $(SRCDIR)/test/data/manifests/f34-build.json
-$(SRCDIR)/test/data/manifests/fedora-boot.json: $(SRCDIR)/test/data/manifests/f34-build.json
 $(SRCDIR)/test/data/manifests/filesystem.json: $(SRCDIR)/test/data/manifests/f34-build.json
 
 .PHONY: test-data

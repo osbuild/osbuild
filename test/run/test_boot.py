@@ -26,8 +26,8 @@ class TestBoot(test.TestBase):
 
         with self.osbuild as osb:
             with tempfile.TemporaryDirectory(dir="/var/tmp") as temp_dir:
-                osb.compile_file(manifest, output_dir=temp_dir, exports=["assembler"])
-                qcow2 = os.path.join(temp_dir, "assembler", "fedora-boot.qcow2")
+                osb.compile_file(manifest, output_dir=temp_dir, exports=["image"])
+                image = os.path.join(temp_dir, "image", "disk.img")
                 output_file = os.path.join(temp_dir, "output")
 
                 subprocess.run(["qemu-system-x86_64",
@@ -45,7 +45,7 @@ class TestBoot(test.TestBase):
                                 "-device", "virtio-serial",
                                 "-device", "virtserialport,chardev=stdio",
 
-                                qcow2],
+                                image],
                                encoding="utf8",
                                check=True)
                 with open(output_file, "r", encoding="utf8") as f:
