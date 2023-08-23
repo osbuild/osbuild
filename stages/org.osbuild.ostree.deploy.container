@@ -1,0 +1,143 @@
+#!/usr/bin/python3
+"""
+Deploy an OStree commit
+
+Create an OSTree deployment[1] for a given container image input
+"""
+
+import os
+import sys
+
+import osbuild.api
+from osbuild.util import containers, ostree
+from osbuild.util.mnt import MountGuard
+
+CAPABILITIES = ["CAP_MAC_ADMIN"]
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "required": ["osname", "target_imgref"],
+  "properties": {
+    "mounts": {
+      "description": "Mount points of the final file system",
+      "type": "array",
+      "items": {
+        "description": "Description of one mount point",
+        "type": "string"
+      }
+    },
+    "osname": {
+      "description": "Name of the stateroot to be used in the deployment",
+      "type": "string"
+    },
+    "kernel_opts": {
+      "description": "Additional kernel command line options",
+      "type": "array",
+      "items": {
+        "description": "A single kernel command line option",
+        "type": "string"
+      }
+    },
+    "target_imgref": {
+      "description": "imageref used as the source of truth for updates",
+      "type": "string",
+      "pattern": "^(ostree-remote-registry|ostree-image-signed|ostree-unverified-registry):.*$",
+      "examples": ["ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable, ostree-image-signed:quay.io/fedora/fedora-coreos:stable, ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable"]
+    },
+    "rootfs": {
+      "description": "Identifier to locate the root file system",
+      "type": "object",
+      "oneOf": [{
+        "required": ["uuid"]
+      }, {
+        "required": ["label"]
+      }],
+      "properties": {
+        "label": {
+          "description": "Identify the root file system by label",
+          "type": "string"
+        },
+        "uuid": {
+          "description": "Identify the root file system by UUID",
+          "type": "string"
+        }
+      }
+    }
+  }
+},
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["images"],
+  "properties": {
+    "images": {
+      "type": "object",
+      "description": "Container Image to deploy",
+      "additionalProperties": true
+    }
+  }
+}
+"""
+
+
+def make_fs_identifier(desc):
+    for key in ["uuid", "label"]:
+        val = desc.get(key)
+        if val:
+            return f"{key.upper()}={val}"
+    raise ValueError("unknown rootfs type")
+
+
+def ostree_container_deploy(tree, inputs, osname, target_imgref, kopts):
+    images = containers.parse_containers_input(inputs)
+    for image in images.values():
+        with containers.container_source(image) as (_, image_source):
+            extra_args = []
+            imgref = f"ostree-unverified-image:{image_source}"
+
+            extra_args.append(f'--imgref={imgref}')
+            extra_args.append(f'--stateroot={osname}')
+
+            # consider implicit signature verification type checks, but
+            # can't think of a "clean" way to do it yet other than
+            # parsing the target-imgref and separating by the ':' character
+            extra_args.append(f'--target-imgref={target_imgref}')
+
+            kargs = [f'--karg={v}' for v in kopts]
+
+            ostree.cli("container", "image", "deploy",
+                       *extra_args, sysroot=tree, *kargs)
+
+
+def main(tree, inputs, options):
+    osname = options["osname"]
+    rootfs = options.get("rootfs")
+    mounts = options.get("mounts", [])
+    kopts = options.get("kernel_opts", [])
+    target_imgref = options.get("target_imgref")
+
+    # schema should catch the case in which there are more
+    # than one input but this adds a second layer of security
+    if len(inputs) > 1:
+        raise ValueError("Only one input accepted")
+
+    if rootfs:
+        rootfs_id = make_fs_identifier(rootfs)
+        kopts += [f"root={rootfs_id}"]
+
+    with MountGuard() as mounter:
+        for mount in mounts:
+            path = mount.lstrip("/")
+            path = os.path.join(tree, path)
+            mounter.mount(path, path)
+
+        ostree_container_deploy(tree, inputs, osname, target_imgref, kopts)
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"],
+             stage_args["inputs"],
+             stage_args["options"])
+    sys.exit(r)

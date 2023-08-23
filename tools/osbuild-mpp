@@ -1546,10 +1546,12 @@ class ManifestFileV2(ManifestFile):
             embed_data(ip, mpp)
 
     def _process_container(self, stage):
-        if stage.get("type", "") != "org.osbuild.skopeo":
+        if stage.get("type", "") not in \
+            ["org.osbuild.skopeo", "org.osbuild.ostree.deploy.container"]:
             return
 
         inputs = element_enter(stage, "inputs", {})
+ 
         inputs_images = element_enter(inputs, "images", {})
 
         if inputs_images.get("type", "") != "org.osbuild.containers":
