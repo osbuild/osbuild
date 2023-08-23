@@ -30,7 +30,7 @@ jobs:
     - name: "Run"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202304251412
+        image: ghcr.io/osbuild/osbuild-ci:latest-202308241910
         run: |
           TEST_CATEGORY="${{ matrix.test }}" \
           tox -e "${{ matrix.environment }}"

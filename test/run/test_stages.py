@@ -19,6 +19,7 @@ from collections.abc import Mapping
 from typing import Callable, Dict, Optional
 
 from osbuild.util import checksum, selinux
+from .test_assemblers import mount
 
 from .. import initrd, test
 
@@ -522,7 +523,6 @@ class TestStages(test.TestBase):
             pop_size = ovf_tree_disk.attrib["{http://schemas.dmtf.org/ovf/envelope/1}populatedSize"]
             assert pop_size == str(os.stat(vmdk).st_size)
 
-
     def test_dnf4_mark(self):
         datadir = self.locate_test_data()
         testdir = os.path.join(datadir, "stages", "dnf4.mark")
@@ -554,3 +554,44 @@ class TestStages(test.TestBase):
                     assert mark == "user"
                 else:
                     assert mark == "unknown"
+
+    @unittest.skipUnless(test.TestBase.has_filesystem_support("btrfs"), "btrfs needed")
+    def test_btrfs(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "btrfs")
+
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb.compile_file(os.path.join(testdir, "manifest.json"), exports=["image"], output_dir=outdir)
+
+            image = os.path.join(outdir, "image", "disk.img")
+            assert os.path.isfile(image)
+
+            # check that it's indeed btrfs
+            r = subprocess.run(
+                [
+                    "blkid",
+                    "--output", "export",
+                    image
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf8",
+                check=True,
+            )
+
+            assert "TYPE=btrfs" in r.stdout.splitlines()
+
+            with mount(image) as partition:
+                # check subvolumes
+                r = subprocess.run(
+                    ["btrfs", "subvolume", "list", partition],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    encoding="utf8",
+                    check=True,
+                )
+
+                subvols = r.stdout.splitlines()
+                assert len(subvols) == 2
+                assert "path root" in subvols[0]
+                assert "path home" in subvols[1]
