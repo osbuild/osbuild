@@ -450,7 +450,7 @@
           "type": "org.osbuild.kernel-cmdline",
           "options": {
             "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-            "kernel_opts": "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
+            "kernel_opts": "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0 rootflags=subvol=root"
           }
         },
         {
@@ -948,7 +948,8 @@
               {
                 "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
                 "vfs_type": "btrfs",
-                "path": "/"
+                "path": "/",
+                "options": "subvol=root"
               },
               {
                 "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
@@ -962,6 +963,13 @@
                 "path": "/boot/efi",
                 "options": "defaults,uid=0,gid=0,umask=077,shortname=winnt",
                 "passno": 2
+              },
+              {
+                "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+                "vfs_type": "btrfs",
+                "path": "/home",
+                "passno": 3,
+                "options": "subvol=home"
               }
             ]
           }
@@ -1112,6 +1120,38 @@
           }
         },
         {
+          "type": "org.osbuild.btrfs.subvol",
+          "options": {
+            "subvolumes": [
+              {
+                "name": "root"
+              },
+              {
+                "name": "home"
+              }
+            ]
+          },
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 1437696,
+                "size": 9048031,
+                "lock": true
+              }
+            }
+          },
+          "mounts": [
+            {
+              "name": "volume",
+              "type": "org.osbuild.btrfs",
+              "source": "device",
+              "target": "/"
+            }
+          ]
+        },
+        {
           "type": "org.osbuild.copy",
           "inputs": {
             "root-tree": {
@@ -1161,7 +1201,19 @@
               "name": "root",
               "type": "org.osbuild.btrfs",
               "source": "root",
-              "target": "/"
+              "target": "/",
+              "options": {
+                "subvol": "root"
+              }
+            },
+            {
+              "name": "home",
+              "type": "org.osbuild.btrfs",
+              "source": "root",
+              "target": "/home",
+              "options": {
+                "subvol": "home"
+              }
             },
             {
               "name": "boot",
