@@ -1,0 +1,47 @@
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: image
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size: '500M'
+      - type: org.osbuild.mkfs.btrfs
+        options:
+          uuid: 6e4ff95f-f662-45ee-a82a-bdf44a2d0b75
+          label: root
+          metadata: dup
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 0
+              size: 1024000
+              lock: true
+      - type: org.osbuild.btrfs.subvol
+        options:
+          subvolumes:
+            - name: root
+            - name: home
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start: 0
+              size: 1024000
+              lock: true
+        mounts:
+          - name: volume
+            type: org.osbuild.btrfs
+            source: device
+            target: /
