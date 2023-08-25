@@ -72,6 +72,14 @@ SCHEMA = """
       "description": "A kernel module without the .ko extension"
     }
   },
+  "omit_drivers": {
+    "description": "Omit specific kernel modules.",
+    "type": "array",
+    "items": {
+      "type": "string",
+      "description": "A kernel module without the .ko extension."
+    }
+  },
   "force_drivers": {
     "description": "Add driver and ensure that they are tried to be loaded.",
     "type": "array",
@@ -138,6 +146,7 @@ def main(tree, options):
     omit_modules = options.get("omit_modules", [])
     drivers = options.get("drivers", [])  # kernel modules
     add_drivers = options.get("add_drivers", [])
+    omit_drivers = options.get("omit_drivers", [])
     force_drivers = options.get("force_drivers", [])
     filesystems = options.get("filesystems", [])
     include = options.get("include", [])
@@ -171,6 +180,9 @@ def main(tree, options):
 
     if add_drivers:
         opts += ["--add-drivers", " ".join(add_drivers)]
+
+    if omit_drivers:
+        opts += ["--omit-drivers", " ".join(omit_drivers)]
 
     if force_drivers:
         opts += ["--force-drivers", " ".join(force_drivers)]
