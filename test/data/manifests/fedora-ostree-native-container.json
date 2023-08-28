@@ -1039,8 +1039,7 @@
         {
           "type": "org.osbuild.ostree.encapsulate",
           "options": {
-            "filename": "ostree-container.tar",
-            "max_layers": 4
+            "filename": "ostree-container.tar"
           },
           "inputs": {
             "commit": {
