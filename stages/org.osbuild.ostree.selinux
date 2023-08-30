@@ -60,6 +60,7 @@ def main(tree, options):
     # is_selinux_enabled(2), which in our container is FALSE
     # Therefore we have to do the same dance as ostree does, at
     # least for now, and manually re-label the affected paths
+    # xref https://github.com/ostreedev/ostree/issues/2804 for a proper fix
     se_policy = None
 
     for p in ["etc/selinux", "usr/etc/selinux"]:
