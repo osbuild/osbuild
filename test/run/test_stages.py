@@ -555,10 +555,10 @@ class TestStages(test.TestBase):
                 else:
                     assert mark == "unknown"
 
-    @unittest.skipUnless(test.TestBase.has_filesystem_support("btrfs"), "btrfs needed")
-    def test_btrfs(self):
+    @contextlib.contextmanager
+    def _test_fs_stage(self, fs):
         datadir = self.locate_test_data()
-        testdir = os.path.join(datadir, "stages", "btrfs")
+        testdir = os.path.join(datadir, "stages", fs)
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
             osb.compile_file(os.path.join(testdir, "manifest.json"), exports=["image"], output_dir=outdir)
@@ -566,7 +566,7 @@ class TestStages(test.TestBase):
             image = os.path.join(outdir, "image", "disk.img")
             assert os.path.isfile(image)
 
-            # check that it's indeed btrfs
+            # check that it's indeed the expected filesystem
             r = subprocess.run(
                 [
                     "blkid",
@@ -579,19 +579,24 @@ class TestStages(test.TestBase):
                 check=True,
             )
 
-            assert "TYPE=btrfs" in r.stdout.splitlines()
+            assert f"TYPE={fs}" in r.stdout.splitlines()
 
             with mount(image) as partition:
-                # check subvolumes
-                r = subprocess.run(
-                    ["btrfs", "subvolume", "list", partition],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    encoding="utf8",
-                    check=True,
-                )
+                yield partition
 
-                subvols = r.stdout.splitlines()
-                assert len(subvols) == 2
-                assert "path root" in subvols[0]
-                assert "path home" in subvols[1]
+    @unittest.skipUnless(test.TestBase.has_filesystem_support("btrfs"), "btrfs needed")
+    def test_btrfs(self):
+        with self._test_fs_stage("btrfs") as mountpoint:
+            # check subvolumes
+            r = subprocess.run(
+                ["btrfs", "subvolume", "list", mountpoint],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf8",
+                check=True,
+            )
+
+            subvols = r.stdout.splitlines()
+            assert len(subvols) == 2
+            assert "path root" in subvols[0]
+            assert "path home" in subvols[1]
