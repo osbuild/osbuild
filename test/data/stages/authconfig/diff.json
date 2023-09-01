@@ -15,6 +15,8 @@
     "/etc/dconf/db/distro.d/20-authselect",
     "/etc/dconf/db/distro.d/locks",
     "/etc/dconf/db/distro.d/locks/20-authselect",
+    "/etc/openldap",
+    "/etc/openldap/ldap.conf",
     "/etc/sysconfig/authconfig",
     "/var/lib/authselect/dconf-db",
     "/var/lib/authselect/dconf-locks",
