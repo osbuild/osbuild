@@ -4,8 +4,8 @@
   "differences": {
     "/etc/chrony.conf": {
       "content": [
-        "sha256:9e28a49de55e57a2d104516d3ae06389899377f59004ea4caf2d768f96f60ce2",
-        "sha256:305c88088b94b6f190a3f7e740adf68c7c7f13e01132477e1dd7e90a9160cc99"
+        "sha256:48c980b52637cd7c495682040485d1597e90947753b5288c92a85835cc36dcf1",
+        "sha256:955a1628f4931e977a8893ca6d425baa3763e491c1fb0d32ee42c0d2667bae61"
       ]
     }
   }

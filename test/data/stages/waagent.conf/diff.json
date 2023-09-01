@@ -4,26 +4,8 @@
   "differences": {
     "/etc/waagent.conf": {
       "content": [
-        "sha256:a7e9101a548ba77d9fa16f35bcd158d06353e769ee650dc3c92115bb4b2be5a5",
-        "sha256:0a7d801d411a677fe53a0bd0b24d0589bb51567545deb9e2d9243f6b6924c226"
-      ]
-    },
-    "/etc/pki/ca-trust/extracted/java/cacerts": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/var/cache/ldconfig/aux-cache": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/var/lib/rpm/rpmdb.sqlite": {
-      "content": [
-        null,
-        null
+        "sha256:f0742e6d2129bb7a8fda6cf0f0b4fea513607a7519c73792b794d38482d456c1",
+        "sha256:1c3995ac671912c4b119e87b171776269cd9da1a88816f06e9568e443b661fb1"
       ]
     }
   }

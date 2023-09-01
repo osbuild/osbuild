@@ -10,9 +10,8 @@ pipelines:
   - name: tree
     build: name:build
     stages:
-      - type: org.osbuild.resolv-conf
+      - type: org.osbuild.first-boot
         options:
-          nameserver:
-            - 1.2.3.4
-          search:
-            - osbuild.org
+          commands:
+            - /usr/bin/true
+          wait_for_network: true

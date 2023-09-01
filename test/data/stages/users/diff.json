@@ -23,38 +23,38 @@
   "differences": {
     "/etc/group": {
       "content": [
-        "sha256:1e060f91805778e61011e8e37533655bbd2beecf8642d886dec7dc15fff08ce5",
-        "sha256:a1b39cd4829b1b20a02c90dca560812d122bca27d1291457a2532cb19f858724"
+        "sha256:d5c638b9377359ab9b8208688016b3e5f5d03fa6af7fe022edb9f7fc321d448c",
+        "sha256:d374a581b3d797fde2e075dd57087b086b6b3031456b417f6fe19613866bc277"
       ]
     },
     "/etc/group-": {
       "content": [
-        "sha256:8d01c533112212864cf19a2682e9114eb79cd2556f5f4842c41448721e3f28ce",
-        "sha256:211e9ffbebd048aa63cd891830813bf3507069fa8b590f2ffa47f1acdc75cb3d"
+        "sha256:8914cb8d99323b84dbb1ec5fa48b1bb51750ac2a3fb94fb259e525285f59cb5d",
+        "sha256:ebdc1ac072f0c973ca68cc01cbdf773ca380db29cbb6d910ff8eb6a86d308e69"
       ]
     },
     "/etc/gshadow": {
       "content": [
-        "sha256:98c7e7c50aefb760c7129ca5330c376a734db2e8915a2067f2da344dfd268ba1",
-        "sha256:6566be1e7c84c59520dfe59a03414e6b98d3f1dcaf282e96bcea8809fb4b3cc6"
+        "sha256:a01a1ddd6a53ba25d0780f673ed36fa0bfc826aaf4d056772b7417e193db13bc",
+        "sha256:1b1ce65598fa54066e3095e25764402d0587d976879d9d3f4e4253bebb411019"
       ]
     },
     "/etc/gshadow-": {
       "content": [
-        "sha256:679b5ba0404be2e3ab190fd5cb4ec28e232e3b85623852cb8819482658be3f69",
-        "sha256:ec4e3e906f56f65ba99b59bb792ca2a45b852f20d2fdd0cbb8521753ca4bd987"
+        "sha256:29dbb27082363c364f510e2d702e3199875770d5aae94eb57e3fb5fe8022cd62",
+        "sha256:b1ce48b1523082c9df5436edbf01a82b3f9721b48d5651e1e9bcc55aac567027"
       ]
     },
     "/etc/passwd": {
       "content": [
-        "sha256:6133398cba0020945c3bb39869a345a3ab7db70580643603f358d3b760457d98",
-        "sha256:f4e84e0e2cfc3557ae14100999a0690b8853441dc7189d9c795c6ad62d653e78"
+        "sha256:e03d18535ce9484febf6805938116f7aa0697e4245ae9fdf0f0d67b365553a8c",
+        "sha256:44858570bc79d9b27f5bc176d66e9d9a66e2753a0f3285115eca12ece784d4aa"
       ]
     },
     "/etc/passwd-": {
       "content": [
-        "sha256:c6524e99a180b82ebc685a41f3fb578d53858552f7381cae68e4d71aeb1df8d0",
-        "sha256:801c281569017c5f94db81c9de474120e70ae5b5106f9ef92927c3bdf8be2aa8"
+        "sha256:00326736a86775fea7eaec4b3ffbcac98550ee02b1c56bfc988c2f1a0b419fb2",
+        "sha256:e2e7c2085525d208ba3977b25a013f6bdd3a0d9cbfa14b00a2ee4303e812bfc9"
       ]
     },
     "/etc/shadow": {
@@ -72,19 +72,13 @@
     "/etc/subgid": {
       "content": [
         "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "sha256:43938f07025459f4181a8bb6cc533380ca94653145e6336b5dd45e941524db2d"
+        "sha256:bc9eaad9cfd52e927ca33170abc94cb12953640a5677790efc3ebb01deb1c79b"
       ]
     },
     "/etc/subuid": {
       "content": [
         "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "sha256:43938f07025459f4181a8bb6cc533380ca94653145e6336b5dd45e941524db2d"
-      ]
-    },
-    "/var/log/lastlog": {
-      "content": [
-        "sha256:72fadaa7ed6052983d03003b0b8558e677581cc6cce76b4b0ef2a76ee3dc44d7",
-        "sha256:e892652c6ec4e734ecbcb02c783a84291f67659daa0570c8663da475463f009d"
+        "sha256:bc9eaad9cfd52e927ca33170abc94cb12953640a5677790efc3ebb01deb1c79b"
       ]
     }
   }
