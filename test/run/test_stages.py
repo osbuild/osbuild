@@ -600,3 +600,15 @@ class TestStages(test.TestBase):
             assert len(subvols) == 2
             assert "path root" in subvols[0]
             assert "path home" in subvols[1]
+
+    @unittest.skipUnless(test.TestBase.has_filesystem_support("erofs"), "erofs needed")
+    def test_erofs(self):
+        with self._test_fs_stage("erofs") as mountpoint:
+            testfile = os.path.join(mountpoint, "testfile")
+            assert os.path.exists(testfile)
+            assert os.path.isfile(testfile)
+
+            with open(testfile, "r", encoding="utf8") as f:
+                testcontent = f.read()
+
+                assert testcontent == "42"

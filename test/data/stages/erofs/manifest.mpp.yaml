@@ -1,0 +1,42 @@
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: '42'
+              text: '42'
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['42']}
+              to: tree:///testfile
+  - name: image
+    build: name:build
+    stages:
+      - type: org.osbuild.erofs
+        inputs:
+          tree:
+            origin: org.osbuild.pipeline
+            references:
+              - name:tree
+            type: org.osbuild.tree
+        options:
+          # The Ubuntu kernel used in GitHub Action doesn't support mounting compressed erofs.
+          # compression:
+          #   method: lz4hc
+          #   level: 12
+          filename: disk.img
+
