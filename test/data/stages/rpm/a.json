@@ -1,10 +1,18 @@
 {
-  "sources": {},
-  "pipeline": {
-    "stages": [
-      {
-        "name": "org.osbuild.noop"
-      }
-    ]
+  "version": "2",
+  "pipelines": [
+    {
+      "name": "tree",
+      "stages": [
+        {
+          "type": "org.osbuild.noop"
+        }
+      ]
+    }
+  ],
+  "sources": {
+    "org.osbuild.curl": {
+      "items": {}
+    }
   }
 }

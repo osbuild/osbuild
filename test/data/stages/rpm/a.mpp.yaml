@@ -1,0 +1,5 @@
+version: '2'
+pipelines:
+  - name: tree
+    stages:
+      - type: org.osbuild.noop
