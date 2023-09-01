@@ -29,7 +29,7 @@ from osbuild.util.mnt import MountGuard
 CAPABILITIES = ["CAP_MAC_ADMIN"]
 
 SCHEMA = """
-"required": ["osname", "rootfs", "ref"],
+"required": ["osname", "ref"],
 "properties": {
   "mounts": {
     "description": "Mount points of the final file system",
