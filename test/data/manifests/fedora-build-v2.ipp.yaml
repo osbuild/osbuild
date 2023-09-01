@@ -20,6 +20,7 @@ pipelines:
                 - dnf
                 - dosfstools
                 - e2fsprogs
+                - erofs-utils
                 - gdisk
                 - grub2-pc
                 - policycoreutils
