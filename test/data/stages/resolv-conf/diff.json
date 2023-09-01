@@ -1,12 +1,8 @@
 {
-  "added_files": [],
+  "added_files": [
+    "/etc",
+    "/etc/resolv.conf"
+  ],
   "deleted_files": [],
-  "differences": {
-    "/etc/resolv.conf": {
-      "content": [
-        "sha256:1ee06ba09b86704fa8f95f346ac2e1aa437b0aac18a8fce02ffb25472c2b3d14",
-        "sha256:132482cb8f0255b31b1dff0e064e0e2b78ebf1128b621c30c988c2a309c8413b"
-      ]
-    }
-  }
+  "differences": {}
 }

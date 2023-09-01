@@ -7,24 +7,6 @@
         "sha256:8c6951c20f2489549e8793711818cfb0318e26fe8ced35da930a70a3cac757c8",
         "sha256:ba383e6179fd1a8a0d4851936788514584ccea3d6a0047cefff3788177c48d41"
       ]
-    },
-    "/etc/pki/ca-trust/extracted/java/cacerts": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/var/cache/ldconfig/aux-cache": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/var/lib/rpm/rpmdb.sqlite": {
-      "content": [
-        null,
-        null
-      ]
     }
   }
 }
