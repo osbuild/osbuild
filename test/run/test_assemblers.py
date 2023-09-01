@@ -102,7 +102,7 @@ def test_rawfs(osbuild, fs_type):
 def test_ostree(osbuild):
     with osbuild as osb:
         with open(os.path.join(test.TestBase.locate_test_data(),
-                  "manifests/fedora-ostree-commit.json"),
+                               "manifests/fedora-ostree-commit.json"),
                   encoding="utf8") as f:
             manifest = json.load(f)
 
@@ -294,7 +294,7 @@ def open_image(ctl, image, fmt):
 @contextlib.contextmanager
 def run_assembler(osb, name, options, output_path):
     with open(os.path.join(test.TestBase.locate_test_data(),
-              "manifests/filesystem.json"),
+                           "assemblers/manifest.json"),
               encoding="utf8") as f:
         manifest = json.load(f)
     manifest["pipeline"] = dict(
@@ -307,6 +307,6 @@ def run_assembler(osb, name, options, output_path):
     assert treeid
 
     with tempfile.TemporaryDirectory(dir="/var/tmp") as output_dir:
-        osb.compile(data, output_dir=output_dir, exports=["assembler", "tree"])
+        osb.compile(data, output_dir=output_dir, exports=["assembler", "tree"], checkpoints=["tree"])
         tree = os.path.join(output_dir, "tree")
         yield tree, os.path.join(output_dir, "assembler", output_path)
