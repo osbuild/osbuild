@@ -1,24 +1,24 @@
 {
-    "added_files": [],
-    "deleted_files": [],
-    "differences": {
-      "/etc/dnf/plugins/subscription-manager.conf": {
-        "content": [
-          "sha256:13dcb073278bbb06aa78a2a6aaeaa56d82c61166c6e635b6dbbe5f6c22222e34",
-          "sha256:cd21e33a4df0f713e4fc5360052c53ba5012bd76497878cebd9808e761725eda"
-        ]
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/dnf/plugins/subscription-manager.conf": {
+      "content": [
+        "sha256:13dcb073278bbb06aa78a2a6aaeaa56d82c61166c6e635b6dbbe5f6c22222e34",
+        "sha256:cd21e33a4df0f713e4fc5360052c53ba5012bd76497878cebd9808e761725eda"
+      ]
+    },
+    "/etc/dnf/plugins/product-id.conf": {
+      "content": [
+        "sha256:84c1c0c956a492cadbfd2cec581ef678c190e3e245f0d61665eb0f66b8b34fd6",
+        "sha256:f57b424b10afd7ef2d3e14e1fbe7871d51b5ece812d63f223d51210d822cef8f"
+          ]
       },
-      "/etc/dnf/plugins/product-id.conf": {
-        "content": [
-          "sha256:84c1c0c956a492cadbfd2cec581ef678c190e3e245f0d61665eb0f66b8b34fd6",
-          "sha256:f57b424b10afd7ef2d3e14e1fbe7871d51b5ece812d63f223d51210d822cef8f"
-        ]
-      },
-      "/etc/rhsm/rhsm.conf": {
-        "content": [
-          "sha256:c9ac59da5e6d947de46256680df90d26cc79dd164c79785925da9848e75f0eba",
-          "sha256:c83b72a6bc5659c80cc1090a4bf9e560de7f3da7855cab7b89bed1fa720c64d6"
-        ]
-      }
+    "/etc/rhsm/rhsm.conf": {
+      "content": [
+        "sha256:57e2bee5a30283ee95f3da2d5945f1d5852f1a4ed6900d22afd8f6a5ee5e5a11",
+        "sha256:aeb3eca521d423823acc5dc0e7d3409b6570e71174306871c1a861e387369933"
+      ]
     }
+  }
 }

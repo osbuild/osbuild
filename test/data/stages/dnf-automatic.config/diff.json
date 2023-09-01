@@ -4,8 +4,8 @@
   "differences": {
     "/etc/dnf/automatic.conf": {
       "content": [
-        "sha256:594866fe23069664201da14b14898d0c5c2bc39cde15ecf29fc66ad1d1f58fff",
-        "sha256:f8c4294f05042cd0bde72976393c0fe36df74127994c65a26089eb70aa4429af"
+        "sha256:e3aeeb8c1fd53694c86924cec90ebff56f5e00146d7bbdc22f8d8a1628057f35",
+        "sha256:da88f419316dde1edfc3e86949998073528b1abcaddf8fc286d1979e628320fd"
       ]
     }
   }

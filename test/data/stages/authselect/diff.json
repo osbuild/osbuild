@@ -1,36 +1,60 @@
 {
-  "added_files": [
-    "/etc/authselect/authselect.conf",
-    "/etc/authselect/dconf-db",
-    "/etc/authselect/dconf-locks",
-    "/etc/authselect/fingerprint-auth",
-    "/etc/authselect/nsswitch.conf",
-    "/etc/authselect/password-auth",
-    "/etc/authselect/postlogin",
-    "/etc/authselect/smartcard-auth",
-    "/etc/authselect/system-auth",
-    "/etc/dconf",
-    "/etc/dconf/db",
-    "/etc/dconf/db/distro.d",
-    "/etc/dconf/db/distro.d/20-authselect",
-    "/etc/dconf/db/distro.d/locks",
-    "/etc/dconf/db/distro.d/locks/20-authselect",
-    "/var/lib/authselect/dconf-db",
-    "/var/lib/authselect/dconf-locks",
-    "/var/lib/authselect/fingerprint-auth",
-    "/var/lib/authselect/nsswitch.conf",
-    "/var/lib/authselect/password-auth",
-    "/var/lib/authselect/postlogin",
-    "/var/lib/authselect/smartcard-auth",
-    "/var/lib/authselect/system-auth"
-  ],
+  "added_files": [],
   "deleted_files": [],
   "differences": {
-    "/etc/nsswitch.conf": {"mode": [33188, 41471]},
-    "/etc/pam.d/fingerprint-auth": {"mode": [33188, 41471]},
-    "/etc/pam.d/password-auth": {"mode": [33188, 41471]},
-    "/etc/pam.d/postlogin": {"mode": [33188, 41471]},
-    "/etc/pam.d/smartcard-auth": {"mode": [33188, 41471]},
-    "/etc/pam.d/system-auth": {"mode": [33188, 41471]}
+    "/etc/authselect/authselect.conf": {
+      "content": [
+        "sha256:55eee183988be83f2c7867cdb7c29bba9f8d879cf7dc915a5c6cfd7f3fc56adb",
+        "sha256:21d9b04b621411419ae5469fd0b69aa87cf0c21ed8c7033d767472d2d9d07b5e"
+      ]
+    },
+    "/etc/authselect/dconf-db": {
+      "content": [
+        "sha256:30e027f8606714959f10b408c8e102082b400f97ce1992c47f72d9b2195c33d7",
+        "sha256:bf1352ed9518c1eef044c7bd65f2be21c5696a49c7286f4c320b73112a8bd521"
+      ]
+    },
+    "/etc/authselect/dconf-locks": {
+      "content": [
+        "sha256:701be62c2f226243dff1429d49e2dd26d753c91779ffb15d9fc2e2a20797aef9",
+        "sha256:e70ae1007e243cca01c3612cd4fdd979c344ac56f5ebafa603c2aedd8f06efc7"
+      ]
+    },
+    "/etc/authselect/fingerprint-auth": {
+      "content": [
+        "sha256:7cdb83652dd6a64453a6f18d735d293ffe5b28445391c2e91600707dc990fb39",
+        "sha256:b50ad1e6792dd08d1da50d21825aa84d00ed82a0869158055fcc8c4befdd65cb"
+      ]
+    },
+    "/etc/authselect/nsswitch.conf": {
+      "content": [
+        "sha256:104c39ac2994d2614801638d80a1d6b7e34dfab6c74b6f207de5d6a33ec4142f",
+        "sha256:46e4d8b2b0dbf592f7d30f7ca6b6694523aaa00b8c706ef144077a8c0dd403cd"
+      ]
+    },
+    "/etc/authselect/password-auth": {
+      "content": [
+        "sha256:a500cb3be26e0413127f977adfb4ca012b5d40747dff5c98cdcc7f8b3ad6d7e7",
+        "sha256:35879f76d5961784506034a67ff2e78084db5b04d099406682c06edafd0d2f82"
+      ]
+    },
+    "/etc/authselect/postlogin": {
+      "content": [
+        "sha256:555cb7d6283fccba03c71f03d5902aeef5e272846405a9e7c089476082c87bf4",
+        "sha256:a1f33f1681dac8bc58333d5ecba2020b1c1b935d2876934d6e655834c87ebc81"
+      ]
+    },
+    "/etc/authselect/smartcard-auth": {
+      "content": [
+        "sha256:7cdb83652dd6a64453a6f18d735d293ffe5b28445391c2e91600707dc990fb39",
+        "sha256:b50ad1e6792dd08d1da50d21825aa84d00ed82a0869158055fcc8c4befdd65cb"
+      ]
+    },
+    "/etc/authselect/system-auth": {
+      "content": [
+        "sha256:a500cb3be26e0413127f977adfb4ca012b5d40747dff5c98cdcc7f8b3ad6d7e7",
+        "sha256:35879f76d5961784506034a67ff2e78084db5b04d099406682c06edafd0d2f82"
+      ]
+    }
   }
 }

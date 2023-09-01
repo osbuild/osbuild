@@ -1,7 +1,5 @@
-pipeline:
-  build:
-    mpp-import-pipeline:
-      path: ../manifests/f34-build.json
-    runner: org.osbuild.fedora34
-  stages:
-    - name: org.osbuild.noop
+version: '2'
+pipelines:
+  - name: tree
+    stages:
+      - type: org.osbuild.noop

@@ -25,13 +25,13 @@
     "/home/onekey/.ssh",
     "/home/onekey/.ssh/authorized_keys",
     "/home/test",
-    "/home/test/.bash_logout",
-    "/home/test/.bash_profile",
-    "/home/test/.bashrc",
     "/home/test.user_42-OSBUILD",
     "/home/test.user_42-OSBUILD/.bash_logout",
     "/home/test.user_42-OSBUILD/.bash_profile",
     "/home/test.user_42-OSBUILD/.bashrc",
+    "/home/test/.bash_logout",
+    "/home/test/.bash_profile",
+    "/home/test/.bashrc",
     "/var/spool/mail/bothy",
     "/var/spool/mail/elodie",
     "/var/spool/mail/multikey",
@@ -44,68 +44,62 @@
   "differences": {
     "/etc/group": {
       "content": [
-        "sha256:1e060f91805778e61011e8e37533655bbd2beecf8642d886dec7dc15fff08ce5",
-        "sha256:6cef4a21bf75cb54d701bc2c3c4b11d4544c04e42d6fca8015b85471a075a6bf"
+        "sha256:d5c638b9377359ab9b8208688016b3e5f5d03fa6af7fe022edb9f7fc321d448c",
+        "sha256:84079552caba6790afb0e296561c337a2385737eb7ac578c59f8efcff9848f32"
       ]
     },
     "/etc/group-": {
       "content": [
-        "sha256:8d01c533112212864cf19a2682e9114eb79cd2556f5f4842c41448721e3f28ce",
-        "sha256:a8da4daddb17e3c278f2c95c1144c3b8ac2f0b7dd7655ca556f5a9933ed97c57"
+        "sha256:8914cb8d99323b84dbb1ec5fa48b1bb51750ac2a3fb94fb259e525285f59cb5d",
+        "sha256:b45befe0fe6aa7f5c40da3fcaba457da1461f5f589fa8a4c99735d29e338123d"
       ]
     },
     "/etc/gshadow": {
       "content": [
-        "sha256:98c7e7c50aefb760c7129ca5330c376a734db2e8915a2067f2da344dfd268ba1",
-        "sha256:30968a53ffaeb3e54b13c89628af8a1a4f7434f140bf2aaa182b05d8c39191e2"
+        "sha256:a01a1ddd6a53ba25d0780f673ed36fa0bfc826aaf4d056772b7417e193db13bc",
+        "sha256:d51d76d7050cd21250580094944b0a3ff3d122de5873a4c07597dacae1eb1126"
       ]
     },
     "/etc/gshadow-": {
       "content": [
-        "sha256:679b5ba0404be2e3ab190fd5cb4ec28e232e3b85623852cb8819482658be3f69",
-        "sha256:bfdccd9aee6609ddbb196e2268802d2ab49393cc1178edb3ccf32c42e97c97f3"
+        "sha256:29dbb27082363c364f510e2d702e3199875770d5aae94eb57e3fb5fe8022cd62",
+        "sha256:061ce7d905e1eb5e0d11e1f05b1dbf9797ad121d6ba9782fca7410e58922088d"
       ]
     },
     "/etc/passwd": {
       "content": [
-        "sha256:6133398cba0020945c3bb39869a345a3ab7db70580643603f358d3b760457d98",
-        "sha256:da21e995c6e711a84de5d62e5cb824a9b3f35bae3e68fc9df057cff75d6f2cca"
+        "sha256:e03d18535ce9484febf6805938116f7aa0697e4245ae9fdf0f0d67b365553a8c",
+        "sha256:865fa8c60c66ab50edb781c586074338031c4c86f54e619f572659c93c2b1132"
       ]
     },
     "/etc/passwd-": {
       "content": [
-        "sha256:c6524e99a180b82ebc685a41f3fb578d53858552f7381cae68e4d71aeb1df8d0",
-        "sha256:86e42dcf0bce93a60ee31e799c91e9240e8582717139c41193e6f2fc72767a6a"
+        "sha256:00326736a86775fea7eaec4b3ffbcac98550ee02b1c56bfc988c2f1a0b419fb2",
+        "sha256:f470ce277174e39130642ec673df1c6ebbde35acfcbdec8b8ec01f7a9160163a"
       ]
     },
     "/etc/shadow": {
       "content": [
-        null,
-        null
+        "sha256:b47e92518ad86ee0ba8879d32fcafdbdc88c090cc52a719fdc3fbb0970df3314",
+        "sha256:4ae542f2f3f68be72bad37d970a1111a660ad8fa48102f8afc53a402e43445af"
       ]
     },
     "/etc/shadow-": {
       "content": [
-        null,
-        null
+        "sha256:26d861972ed591ecfedcfcdb7d95dc9fd25973c8cdbc713410805d8c27ff83ef",
+        "sha256:06cd676f7055ab045a85fc3188df54bb7a91b5e77ee9e80c6234444ba7688ab8"
       ]
     },
     "/etc/subgid": {
       "content": [
         "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "sha256:0d610c36124bfcb974cf6b66ef1034fafe4b37a120f1c1b37c882a7fac6e9dc9"
+        "sha256:54850a49b1fdc8e58f9d1837d6f233834a875e677962c2f6ba104fd8bc9440b4"
       ]
     },
     "/etc/subuid": {
       "content": [
         "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "sha256:0d610c36124bfcb974cf6b66ef1034fafe4b37a120f1c1b37c882a7fac6e9dc9"
-      ]
-    },
-    "/var/log/lastlog": {
-      "content": [
-        "sha256:72fadaa7ed6052983d03003b0b8558e677581cc6cce76b4b0ef2a76ee3dc44d7",
-        "sha256:8fc9a6dc0da959c573c94ffb88a002cad2eb884e85eb13a1c52a31001569a4b4"
+        "sha256:54850a49b1fdc8e58f9d1837d6f233834a875e677962c2f6ba104fd8bc9440b4"
       ]
     }
   }
