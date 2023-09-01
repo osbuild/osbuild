@@ -90,7 +90,8 @@ def check_baseurl(repo, snapshots):
     return invalid, newer
 
 
-def check_snapshot_urls(urls, snapshots, skip=["test/data/manifests", "test/data/stages"], errors_only=False):
+def check_snapshot_urls(urls, snapshots, skip=["test/data/assemblers", "test/data/manifests", "test/data/stages"],
+                        errors_only=False):
     """check the urls against the current list of snapshots
 
     Returns:
