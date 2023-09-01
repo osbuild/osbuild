@@ -277,19 +277,15 @@ class TestStages(test.TestBase):
         datadir = self.locate_test_data()
         testdir = os.path.join(datadir, "stages", "selinux")
 
-        def load_manifest(manifest_name):
-            with open(os.path.join(datadir, f"manifests/{manifest_name}"), encoding="utf8") as f:
-                manifest = json.load(f)
-                return manifest
-
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
             for t in glob.glob(f"{testdir}/test_*.json"):
-                manifest = load_manifest("f34-base.json")
+                with open(os.path.join(testdir, "manifest.json"), encoding="utf8") as f:
+                    manifest = json.load(f)
                 with open(t, encoding="utf8") as f:
                     check = json.load(f)
-                manifest["pipeline"]["stages"].append({
-                    "name": "org.osbuild.selinux",
+                manifest["pipelines"][1]["stages"].append({
+                    "type": "org.osbuild.selinux",
                     "options": check["options"]
                 })
 
