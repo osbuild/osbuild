@@ -1,17 +1,7 @@
-# authconfig (and even authselect-compat) was retired from Fedora.
-# Thus, this manifest is based on centos stream 9!
-
 version: '2'
 pipelines:
-  - mpp-import-pipelines:
-      path: ../manifests/centos-stream-9-vars.ipp.yaml
-  - mpp-import-pipeline:
-      path: ../manifests/centos-stream-9-build.ipp.yaml
-      id: build
-    runner:
-      mpp-format-string: org.osbuild.centos{release}
-  - name: tree
-    build: name:build
+  - name: build
+    source-epoch: 1659397331
     stages:
       - type: org.osbuild.rpm
         inputs:
@@ -24,10 +14,17 @@ pipelines:
               repos:
                 mpp-eval: repos
               packages:
-                - authconfig
+                - rpm
+                - selinux-policy-targeted
+                - python3
+                - systemd
         options:
           gpgkeys:
             mpp-eval: gpgkeys
           exclude:
             docs: true
-      - type: org.osbuild.authconfig
+      - type: org.osbuild.selinux
+        options:
+          file_contexts: etc/selinux/targeted/contexts/files/file_contexts
+          labels:
+            /usr/bin/cp: system_u:object_r:install_exec_t:s0
