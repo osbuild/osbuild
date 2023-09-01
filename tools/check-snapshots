@@ -12,9 +12,10 @@ from urllib.parse import urlparse
 
 import requests
 
-SNAPSHOTS_URL="https://rpmrepo.osbuild.org/v2/enumerate"
+SNAPSHOTS_URL = "https://rpmrepo.osbuild.org/v2/enumerate"
 SNAPSHOTS_TIMEOUT = 2 * 60
 SNAPSHOT_GREP = ["grep", "--color=never", "-or", r"http.*rpmrepo.osbuild.org.*-20[0-9]\+"]
+
 
 def fetch_snapshots_api(url, timeout=SNAPSHOTS_TIMEOUT):
     """Get the list of snapshots from the rpmrepo API"""
@@ -89,7 +90,8 @@ def check_baseurl(repo, snapshots):
     return invalid, newer
 
 
-def check_snapshot_urls(urls, snapshots, skip=["test/data/manifests", "test/data/stages"], errors_only=False):
+def check_snapshot_urls(urls, snapshots, skip=["test/data/assemblers", "test/data/manifests", "test/data/stages"],
+                        errors_only=False):
     """check the urls against the current list of snapshots
 
     Returns:
@@ -143,7 +145,7 @@ def check_snapshot_urls(urls, snapshots, skip=["test/data/manifests", "test/data
 
 # parse cmdline args
 def parse_args():
-    parser =argparse.ArgumentParser(description="Check snapshot urls")
+    parser = argparse.ArgumentParser(description="Check snapshot urls")
     parser.add_argument("--verbose")
     parser.add_argument("--timeout", type=int, default=SNAPSHOTS_TIMEOUT,
                         help="How long to wait for rpmrepo snapshot list")
@@ -154,6 +156,7 @@ def parse_args():
                         help="Only return errors")
     parser.add_argument("directory")
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
@@ -176,5 +179,5 @@ def main():
     return check_snapshot_urls(urls, snapshots, errors_only=args.errors_only)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     sys.exit(main())

@@ -205,6 +205,7 @@ coverity-clean-all: coverity-clean
 
 TEST_MANIFESTS_MPP = $(filter-out $(SRCDIR)/test/data/manifests/fedora-build.mpp.yaml, \
              $(wildcard $(SRCDIR)/test/data/manifests/*.mpp.yaml)) \
+             $(wildcard $(SRCDIR)/test/data/assemblers/*.mpp.yaml) \
 		     $(wildcard $(SRCDIR)/test/data/stages/*/*.mpp.yaml)
 TEST_MANIFESTS_GEN = $(TEST_MANIFESTS_MPP:%.mpp.yaml=%.json)
 
