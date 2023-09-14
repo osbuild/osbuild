@@ -63,6 +63,13 @@ SCHEMA = """
           "key": {
             "description": "SSH Public Key to add to ~/.ssh/authorized_keys",
             "type": "string"
+          },
+          "keys": {
+            "description": "Array of SSH Public Keys to add to ~/.ssh/authorized_keys",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
@@ -124,7 +131,7 @@ def usermod(root, name, gid=None, groups=None, description=None, home=None, shel
         subprocess.run(["chroot", root, "usermod", *arguments, name], check=True)
 
 
-def add_ssh_key(root, user, key):
+def add_ssh_keys(root, user, keys):
     _, _, uid, gid, _, home, _ = getpwnam(root, user)
     ssh_dir = f"{root}/{home}/.ssh"
     authorized_keys = f"{ssh_dir}/authorized_keys"
@@ -134,7 +141,7 @@ def add_ssh_key(root, user, key):
         os.chown(ssh_dir, int(uid), int(gid))
 
     with open(authorized_keys, "a", encoding="utf8") as f:
-        f.write(f"{key}\n")
+        f.write("\n".join(keys) + "\n")
 
     os.chown(authorized_keys, int(uid), int(gid))
     os.chmod(authorized_keys, 0o600)
@@ -176,9 +183,13 @@ def main(tree, options):
         else:
             useradd(tree, name, uid, gid, groups, description, home, shell, password)
 
-        key = user_options.get("key")  # Public SSH key
+        # following maintains backwards compatibility for handling a single ssh key
+        key = user_options.get("key")   # Public SSH key
+        keys = user_options.get("keys", [])  # Additional public SSH keys
         if key:
-            add_ssh_key(tree, name, key)
+            keys.append(key)
+        if keys:
+            add_ssh_keys(tree, name, keys)
 
     return 0
 
