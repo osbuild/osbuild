@@ -20,7 +20,7 @@ of the pipeline description, and more.
 
 ### Contributing
 
-Please refer to the [developer guide](https://www.osbuild.org/guides/developer-guide/developer-guide.html) to learn about our workflow, code style and more.
+Please refer to the [developer guide](https://www.osbuild.org/guides/developer-guide/index.html) to learn about our workflow, code style and more.
 
 ## Requirements
 
