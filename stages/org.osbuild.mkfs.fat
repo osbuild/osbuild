@@ -58,16 +58,15 @@ def main(devices, options):
     volid = options["volid"]
     label = options.get("label")
     fatsize = options.get("fat-size")
-    opts = []
+    opts = ["mkfs.fat", "-I", "-i", volid]
 
     if label:
-        opts = ["-n", label]
+        opts += ["-n", label]
 
     if fatsize:
-        opts = ["-F", str(fatsize)]
+        opts += ["-F", str(fatsize)]
 
-    subprocess.run(["mkfs.fat", "-I", "-i", volid] + opts + [device],
-                   encoding='utf8', check=True)
+    subprocess.run(opts + [device], encoding='utf8', check=True)
 
 
 if __name__ == '__main__':
