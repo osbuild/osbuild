@@ -46,6 +46,22 @@ SCHEMA_2 = r"""
       "description": "Label for the file system",
         "type": "integer",
         "enum": [12, 16, 32]
+    },
+    "geometry": {
+      "description": "Disk Geometry for the file system",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heads", "sectors-per-track"],
+      "properties": {
+        "heads": {
+          "description": "Number of Heads",
+          "type": "integer"
+        },
+        "sectors-per-track": {
+          "description": "Number of Sectors per Track",
+          "type": "integer"
+        }
+      }
     }
   }
 }
@@ -58,6 +74,7 @@ def main(devices, options):
     volid = options["volid"]
     label = options.get("label")
     fatsize = options.get("fat-size")
+    geometry = options.get("geometry")
     opts = ["mkfs.fat", "-I", "-i", volid]
 
     if label:
@@ -65,6 +82,9 @@ def main(devices, options):
 
     if fatsize:
         opts += ["-F", str(fatsize)]
+
+    if geometry:
+        opts += ["-g", f"{geometry['heads']}/{geometry['sectors-per-track']}"]
 
     subprocess.run(opts + [device], encoding='utf8', check=True)
 

@@ -16,7 +16,7 @@ import tempfile
 import unittest
 import xml
 from collections.abc import Mapping
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 
 from osbuild.util import checksum, selinux
 from .test_assemblers import mount
@@ -595,3 +595,49 @@ class TestStages(test.TestBase):
                 assert len(subvols) == 2
                 assert "path root" in subvols[0]
                 assert "path home" in subvols[1]
+
+    @unittest.skipUnless(test.TestBase.has_filesystem_support("fat"), "FAT needed")
+    def test_fat(self):
+        def _get_file_fields(image: str) -> List[str]:
+            r = subprocess.run(
+                [
+                    "file",
+                    "--special-files",
+                    image
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf8",
+                check=True,
+            )
+
+            return [field.strip() for field in r.stdout.split(',')]
+
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "fat")
+
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb.compile_file(os.path.join(testdir, "manifest.json"), exports=["image"], output_dir=outdir)
+
+            image = os.path.join(outdir, "image", "disk.img")
+            assert os.path.isfile(image)
+
+            # check that it's indeed FAT
+            r = subprocess.run(
+                [
+                    "blkid",
+                    "--output", "export",
+                    image
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf8",
+                check=True,
+            )
+
+            assert "TYPE=vfat" in r.stdout.splitlines()
+
+            # Check that our custom geometry was enforced
+            fields = _get_file_fields(image)
+            assert "heads 12" in fields
+            assert "sectors/track 42" in fields

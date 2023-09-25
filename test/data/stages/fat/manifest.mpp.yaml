@@ -1,0 +1,20 @@
+version: '2'
+pipelines:
+  - name: image
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size: '64M'
+      - type: org.osbuild.mkfs.fat
+        options:
+          volid: 7B7795E7
+          geometry:
+            heads: 12
+            sectors-per-track: 42
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              lock: true
