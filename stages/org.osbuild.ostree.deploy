@@ -28,53 +28,56 @@ from osbuild.util.mnt import MountGuard
 
 CAPABILITIES = ["CAP_MAC_ADMIN"]
 
-SCHEMA = """
-"required": ["osname", "ref"],
-"properties": {
-  "mounts": {
-    "description": "Mount points of the final file system",
-    "type": "array",
-    "items": {
-      "description": "Description of one mount point",
-      "type": "string"
-    }
-  },
-  "osname": {
-    "description": "Name of the stateroot to be used in the deployment",
-    "type": "string"
-  },
-  "kernel_opts": {
-    "description": "Additional kernel command line options",
-    "type": "array",
-    "items": {
-      "description": "A single kernel command line option",
-      "type": "string"
-    }
-  },
-  "ref": {
-    "description": "OStree ref to use for the deployment",
-    "type": "string"
-  },
-  "remote": {
-    "description": "optional OStree remote to use for the deployment",
-    "type": "string"
-  },
-  "rootfs": {
-    "description": "Identifier to locate the root file system",
-    "type": "object",
-    "oneOf": [{
-      "required": ["uuid"]
-    }, {
-      "required": ["label"]
-    }],
-    "properties": {
-      "label": {
-        "description": "Identify the root file system by label",
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "required": ["osname", "ref"],
+  "properties": {
+    "mounts": {
+      "description": "Mount points of the final file system",
+      "type": "array",
+      "items": {
+        "description": "Description of one mount point",
         "type": "string"
-      },
-      "uuid": {
-        "description": "Identify the root file system by UUID",
+      }
+    },
+    "osname": {
+      "description": "Name of the stateroot to be used in the deployment",
+      "type": "string"
+    },
+    "kernel_opts": {
+      "description": "Additional kernel command line options",
+      "type": "array",
+      "items": {
+        "description": "A single kernel command line option",
         "type": "string"
+      }
+    },
+    "ref": {
+      "description": "OStree ref to use for the deployment",
+      "type": "string"
+    },
+    "remote": {
+      "description": "optional OStree remote to use for the deployment",
+      "type": "string"
+    },
+    "rootfs": {
+      "description": "Identifier to locate the root file system",
+      "type": "object",
+      "oneOf": [{
+        "required": ["uuid"]
+      }, {
+        "required": ["label"]
+      }],
+      "properties": {
+        "label": {
+          "description": "Identify the root file system by label",
+          "type": "string"
+        },
+        "uuid": {
+          "description": "Identify the root file system by UUID",
+          "type": "string"
+        }
       }
     }
   }
