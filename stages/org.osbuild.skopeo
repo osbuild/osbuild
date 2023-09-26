@@ -10,7 +10,6 @@ Buildhost commands used: `skopeo`.
 import os
 import subprocess
 import sys
-import tempfile
 
 import osbuild.api
 from osbuild.util import containers
@@ -69,30 +68,9 @@ def main(inputs, output, options):
     storage_driver = destination.get("storage-driver", "overlay")
 
     for image in images.values():
-        source = image["filepath"]
-        source_data = image["data"]
-        container_format = source_data["format"]
-        image_name = source_data["name"]
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_source = os.path.join(tmpdir, "image")
-
-            if container_format == "dir" and image["manifest-list"]:
-                # copy the source container to the tmp source so we can merge the manifest into it
-                subprocess.run(["cp", "-a", "--reflink=auto", source, tmp_source], check=True)
-                containers.merge_manifest(image["manifest-list"], tmp_source)
-            else:
-                # We can't have special characters like ":" in the source names because containers/image
-                # treats them special, like e.g. /some/path:tag, so we make a symlink to the real name
-                # and pass the symlink name to skopeo to make it work with anything
-                os.symlink(source, tmp_source)
-
-            if container_format not in ("dir", "oci-archive"):
-                raise RuntimeError(f"Unknown container format {container_format}")
-
-            source = f"{container_format}:{tmp_source}"
+        with containers.container_source(image) as (image_name, image_source):
             dest = f"containers-storage:[{storage_driver}@{output}{storage_root}+/run/containers/storage]{image_name}"
-            subprocess.run(["skopeo", "copy", source, dest], check=True)
+            subprocess.run(["skopeo", "copy", image_source, dest], check=True)
 
     if storage_driver == "overlay":
         # Each time the overlay backend runs on an xfs fs it creates this file:
