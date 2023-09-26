@@ -1,6 +1,9 @@
 import json
 import os
 import subprocess
+import tempfile
+from contextlib import contextmanager
+
 
 def is_manifest_list(data):
     """Inspect a manifest determine if it's a multi-image manifest-list."""
@@ -99,3 +102,29 @@ def merge_manifest(list_manifest, destination):
 
     # copy the index manifest into the destination
     subprocess.run(["cp", "--reflink=auto", "-a", list_manifest, dest_manifest], check=True)
+
+
+@contextmanager
+def container_source(image):
+    image_filepath = image["filepath"]
+    container_format = image["data"]["format"]
+    image_name = image["data"]["name"]
+
+    if container_format not in ("dir", "oci-archive"):
+        raise RuntimeError(f"Unknown container format {container_format}")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_source = os.path.join(tmpdir, "image")
+
+        if container_format == "dir" and image["manifest-list"]:
+            # copy the source container to the tmp source so we can merge the manifest into it
+            subprocess.run(["cp", "-a", "--reflink=auto", image_filepath, tmp_source], check=True)
+            merge_manifest(image["manifest-list"], tmp_source)
+        else:
+            # We can't have special characters like ":" in the source names because containers/image
+            # treats them special, like e.g. /some/path:tag, so we make a symlink to the real name
+            # and pass the symlink name to skopeo to make it work with anything
+            os.symlink(image_filepath, tmp_source)
+
+        image_source = f"{container_format}:{tmp_source}"
+        yield image_name, image_source
