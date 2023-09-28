@@ -6,30 +6,20 @@ Creates the basic file system layout for an OSTree based system.
 """
 
 
-import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util import ostree
 
 SCHEMA = """
 "additionalProperties": false
 """
 
 
-def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
-    print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
-
-
 def main(tree):
 
-    ostree("admin", "init-fs", "--modern", tree,
-           sysroot=tree)
+    ostree.cli("admin", "init-fs", "--modern", tree,
+               sysroot=tree)
 
     return 0
 

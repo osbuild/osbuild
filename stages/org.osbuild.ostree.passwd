@@ -17,7 +17,7 @@ import os
 import sys
 
 import osbuild.api
-from osbuild.util.ostree import PasswdLike, SubIdsDB
+from osbuild.util import ostree
 
 SCHEMA_2 = """
 "options": {
@@ -41,24 +41,16 @@ SUBUID_PATH = "etc/subuid"
 SUBGID_PATH = "etc/subgid"
 
 
-def parse_input(inputs):
-    commits = inputs["commits"]
-    source_root = commits["path"]
-    data = commits["data"]
-    refs = data["refs"]
-    assert refs, "Need at least one commit"
-    assert len(refs) == 1, "Only one commit is currently supported"
-    return source_root, refs
-
-
 # pylint: disable=too-many-statements
 def main(tree, inputs, _options):
-    source_root, refs = parse_input(inputs)
+    source_root, refs = ostree.parse_input_commits(inputs["commits"])
+    assert refs, "Need at least one commit"
+    assert len(refs) == 1, "Only one commit is currently supported"
 
     os.makedirs(os.path.join(tree, "etc"), exist_ok=True)
 
-    subuids = SubIdsDB()
-    subgids = SubIdsDB()
+    subuids = ostree.SubIdsDB()
+    subgids = ostree.SubIdsDB()
 
     # Only once ref (commit) is currently supported, so this loop will run exactly once
     for commit, data in refs.items():
@@ -68,14 +60,14 @@ def main(tree, inputs, _options):
         # Merge /usr/etc/passwd with /usr/lib/passwd from the checkout and store it in the buildroot
         # "tree" directory. Entries in /usr/etc/passwd have a precedence, but the file does not
         # necessarily exist.
-        passwd = PasswdLike.from_file(os.path.join(checkout_root, "usr/etc/passwd"), allow_missing_file=True)
+        passwd = ostree.PasswdLike.from_file(os.path.join(checkout_root, "usr/etc/passwd"), allow_missing_file=True)
         passwd.merge_with_file(os.path.join(checkout_root, "usr/lib/passwd"), allow_missing_file=False)
         passwd.dump_to_file(os.path.join(tree, "etc/passwd"))
 
         # Merge /usr/etc/group with /usr/lib/group from the checkout and store it in the buildroot
         # "tree" directory. Entries in /usr/etc/group have a precedence, but the file does not
         # necessarily exist.
-        passwd = PasswdLike.from_file(os.path.join(checkout_root, "usr/etc/group"), allow_missing_file=True)
+        passwd = ostree.PasswdLike.from_file(os.path.join(checkout_root, "usr/etc/group"), allow_missing_file=True)
         passwd.merge_with_file(os.path.join(checkout_root, "usr/lib/group"), allow_missing_file=False)
         passwd.dump_to_file(os.path.join(tree, "etc/group"))
 

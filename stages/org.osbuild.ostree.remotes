@@ -5,10 +5,10 @@ Configure OSTree remotes for a repository.
 
 
 import os
-import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util import ostree
 
 SCHEMA = """
 "additionalProperties": false,
@@ -66,16 +66,6 @@ SCHEMA = """
 """
 
 
-def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
-    print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
-
-
 def main(tree, options):
     repo = options["repo"]
     remotes = options.get("remotes", [])
@@ -101,17 +91,17 @@ def main(tree, options):
         if contenturl:
             extra_args.append(f"--set=contenturl={contenturl}")
 
-        ostree("remote", "add",
-               "--if-not-exists",
-               *extra_args,
-               name, url,
-               *branches,
-               repo=target)
+        ostree.cli("remote", "add",
+                   "--if-not-exists",
+                   *extra_args,
+                   name, url,
+                   *branches,
+                   repo=target)
 
         for key in gpgkeys:
-            ostree("remote", "gpg-import", "--stdin", name,
-                   repo=target,
-                   _input=key)
+            ostree.cli("remote", "gpg-import", "--stdin", name,
+                       repo=target,
+                       _input=key)
 
 
 if __name__ == '__main__':
