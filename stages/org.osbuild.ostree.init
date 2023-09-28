@@ -10,10 +10,10 @@ See the ostree-init(1) man page for more details.
 """
 
 import os
-import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util import ostree
 
 SCHEMA = """
 "additionalProperties": false,
@@ -41,13 +41,7 @@ def main(tree, options):
     parent = os.path.dirname(repo)
     os.makedirs(parent, exist_ok=True)
 
-    subprocess.run(["ostree",
-                    "init",
-                    "-v",
-                    f"--mode={mode}",
-                    f"--repo={repo}"],
-                   stdout=sys.stderr,
-                   check=True)
+    ostree.cli("init", "-v", mode=mode, repo=repo)
 
 
 if __name__ == '__main__':

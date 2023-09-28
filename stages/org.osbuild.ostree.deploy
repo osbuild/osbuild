@@ -20,10 +20,10 @@ the sysroot and the deployments. Additional kernel options can be passed via
 """
 
 import os
-import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util import ostree
 from osbuild.util.mnt import MountGuard
 
 CAPABILITIES = ["CAP_MAC_ADMIN"]
@@ -85,16 +85,6 @@ SCHEMA_2 = """
 """
 
 
-def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
-    print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
-
-
 def make_fs_identifier(desc):
     for key in ["uuid", "label"]:
         val = desc.get(key)
@@ -129,10 +119,10 @@ def main(tree, options):
             path = os.path.join(tree, path)
             mounter.mount(path, path)
 
-        ostree("admin", "deploy", ref,
-               *kargs,
-               sysroot=tree,
-               os=osname)
+        ostree.cli("admin", "deploy", ref,
+                   *kargs,
+                   sysroot=tree,
+                   os=osname)
 
 
 if __name__ == '__main__':

@@ -8,10 +8,10 @@ name `osname`.
 [1] https://ostree.readthedocs.io/en/latest/manual/deployment/
 """
 
-import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util import ostree
 
 SCHEMA = """
 "required": ["osname"],
@@ -24,20 +24,10 @@ SCHEMA = """
 """
 
 
-def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
-    print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
-
-
 def main(tree, options):
     osname = options["osname"]
 
-    ostree("admin", "os-init", osname, sysroot=tree)
+    ostree.cli("admin", "os-init", osname, sysroot=tree)
 
     return 0
 
