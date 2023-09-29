@@ -153,6 +153,18 @@ def show(repo: PathLike, checksum: str) -> str:
     return msg
 
 
+def pull_local(source_repo: PathLike, target_repo: PathLike, remote: str, ref: str):
+    """Run ostree-pull local to copy commits around"""
+
+    extra_args = []
+    if remote:
+        extra_args.append(f'--remote={remote}')
+
+    cli("pull-local", source_repo, ref,
+        *extra_args,
+        repo=target_repo)
+
+
 def cli(*args, _input=None, **kwargs):
     """Thin wrapper for running the ostree CLI"""
     args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
