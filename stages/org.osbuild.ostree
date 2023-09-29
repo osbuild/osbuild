@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 """
+WARNING: This stage is deprecated and shouldn't be used when defining new
+         pipelines. Please use the individual ostree.* stages instead.
+
 Initialize the sysroot and pull and deploy an OStree commit
 
 Initializes a clean ostree based system root, pulls the given `commit` and
