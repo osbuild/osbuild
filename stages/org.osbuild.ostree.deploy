@@ -81,6 +81,17 @@ SCHEMA_2 = """
       }
     }
   }
+},
+"inputs": {
+  "type": "object",
+  "required": ["commits"],
+  "additionalProperties": false,
+  "properties": {
+    "commits": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
 }
 """
 
@@ -93,13 +104,21 @@ def make_fs_identifier(desc):
     raise ValueError("unknown rootfs type")
 
 
-def main(tree, options):
+def main(tree, inputs, options):
     osname = options["osname"]
     rootfs = options.get("rootfs")
     mounts = options.get("mounts", [])
     kopts = options.get("kernel_opts", [])
     ref = options["ref"]
     remote = options.get("remote")
+
+    # If provided an input then do the pull into the tree
+    if len(inputs) != 0:
+        source_repo, commits = ostree.parse_input_commits(inputs["commits"])
+        target_repo = f"{tree}/ostree/repo"
+        for commit, data in commits.items():
+            loopref = data.get("ref", commit)
+            ostree.pull_local(source_repo, target_repo, remote, loopref)
 
     if remote:
         ref = f"{remote}:{ref}"
@@ -128,5 +147,6 @@ def main(tree, options):
 if __name__ == '__main__':
     stage_args = osbuild.api.arguments()
     r = main(stage_args["tree"],
+             stage_args["inputs"],
              stage_args["options"])
     sys.exit(r)
