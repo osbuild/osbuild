@@ -40,17 +40,6 @@ pipelines:
     source-epoch: 1659397331
     stages:
       - type: org.osbuild.ostree.init-fs
-      - type: org.osbuild.ostree.pull
-        options:
-          repo: /ostree/repo
-          remote: osbuild
-        inputs:
-          commits:
-            type: org.osbuild.ostree
-            origin: org.osbuild.pipeline
-            references:
-              name:ostree-commit:
-                ref: fedora/x86_64/osbuild
       - type: org.osbuild.ostree.os-init
         options:
           osname: fedora
@@ -83,6 +72,13 @@ pipelines:
             - systemd.log_target=console
             - systemd.journald.forward_to_console=1
             - luks.uuid=aedd1eef-f24e-425e-a9f3-bb5a1c996a95
+        inputs:
+          commits:
+            type: org.osbuild.ostree
+            origin: org.osbuild.pipeline
+            references:
+              name:ostree-commit:
+                ref: fedora/x86_64/osbuild
       - type: org.osbuild.ostree.fillvar
         options:
           deployment:
