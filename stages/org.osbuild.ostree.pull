@@ -54,18 +54,11 @@ def main(tree, inputs, options):
     source_repo, commits = ostree.parse_input_commits(inputs["commits"])
     repo = options["repo"]
     remote = options.get("remote")
-    target = os.path.join(tree, repo.lstrip("/"))
+    target_repo = os.path.join(tree, repo.lstrip("/"))
 
     for commit, data in commits.items():
         ref = data.get("ref", commit)
-
-        extra_args = []
-        if remote:
-            extra_args.append(f'--remote={remote}')
-
-        ostree.cli("pull-local", source_repo, ref,
-                   *extra_args,
-                   repo=target)
+        ostree.pull_local(source_repo, target_repo, remote, ref)
 
 
 if __name__ == '__main__':
