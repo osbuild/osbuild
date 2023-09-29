@@ -14,7 +14,6 @@ in UIDs and GIDs.
 
 import contextlib
 import os
-import subprocess
 import sys
 
 import osbuild.api
@@ -40,16 +39,6 @@ SCHEMA_2 = """
 
 SUBUID_PATH = "etc/subuid"
 SUBGID_PATH = "etc/subgid"
-
-
-def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
-    print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
 
 
 def parse_input(inputs):
