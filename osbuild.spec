@@ -127,6 +127,13 @@ Requires:       python3-typer
 Contains additional tools and utilities for development of
 manifests and osbuild.
 
+%package        depsolve-dnf
+Summary:        Dependency solving support for DNF
+Requires:       %{name} = %{version}-%{release}
+
+%description    depsolve-dnf
+Contains depsolving capabilities for package managers.
+
 %prep
 %forgeautosetup -p1
 
@@ -190,6 +197,10 @@ install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
 
 # Remove `osbuild-dev` on non-fedora systems
 %{!?fedora:rm %{buildroot}%{_bindir}/osbuild-dev}
+
+# Install `osbuild-depsolve-dnf` into libexec
+mkdir -p %{buildroot}%{_libexecdir}
+install -p -m 0755 tools/osbuild-depsolve-dnf %{buildroot}%{_libexecdir}/osbuild-depsolve-dnf
 
 %check
 exit 0
@@ -261,6 +272,8 @@ fi
 %{_bindir}/osbuild-mpp
 %{?fedora:%{_bindir}/osbuild-dev}
 
+%files depsolve-dnf
+%{_libexecdir}/osbuild-depsolve-dnf
 
 %changelog
 * Mon Aug 19 2019 Miro Hrončok <mhroncok@redhat.com> - 1-3
