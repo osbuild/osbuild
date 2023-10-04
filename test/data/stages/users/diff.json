@@ -2,20 +2,41 @@
   "added_files": [
     "/etc/subgid-",
     "/etc/subuid-",
+    "/home/bothy",
+    "/home/bothy/.bash_logout",
+    "/home/bothy/.bash_profile",
+    "/home/bothy/.bashrc",
+    "/home/bothy/.ssh",
+    "/home/bothy/.ssh/authorized_keys",
     "/home/elodie",
     "/home/elodie/.bash_logout",
-    "/home/elodie/.bashrc",
     "/home/elodie/.bash_profile",
+    "/home/elodie/.bashrc",
+    "/home/multikey",
+    "/home/multikey/.bash_logout",
+    "/home/multikey/.bash_profile",
+    "/home/multikey/.bashrc",
+    "/home/multikey/.ssh",
+    "/home/multikey/.ssh/authorized_keys",
+    "/home/onekey",
+    "/home/onekey/.bash_logout",
+    "/home/onekey/.bash_profile",
+    "/home/onekey/.bashrc",
+    "/home/onekey/.ssh",
+    "/home/onekey/.ssh/authorized_keys",
     "/home/test",
     "/home/test/.bash_logout",
-    "/home/test/.bashrc",
     "/home/test/.bash_profile",
+    "/home/test/.bashrc",
     "/home/test.user_42-OSBUILD",
     "/home/test.user_42-OSBUILD/.bash_logout",
-    "/home/test.user_42-OSBUILD/.bashrc",
     "/home/test.user_42-OSBUILD/.bash_profile",
+    "/home/test.user_42-OSBUILD/.bashrc",
+    "/var/spool/mail/bothy",
     "/var/spool/mail/elodie",
+    "/var/spool/mail/multikey",
     "/var/spool/mail/nohome",
+    "/var/spool/mail/onekey",
     "/var/spool/mail/test",
     "/var/spool/mail/test.user_42-OSBUILD"
   ],
@@ -24,67 +45,67 @@
     "/etc/group": {
       "content": [
         "sha256:1e060f91805778e61011e8e37533655bbd2beecf8642d886dec7dc15fff08ce5",
-        "sha256:a1b39cd4829b1b20a02c90dca560812d122bca27d1291457a2532cb19f858724"
+        "sha256:6cef4a21bf75cb54d701bc2c3c4b11d4544c04e42d6fca8015b85471a075a6bf"
       ]
     },
     "/etc/group-": {
       "content": [
         "sha256:8d01c533112212864cf19a2682e9114eb79cd2556f5f4842c41448721e3f28ce",
-        "sha256:211e9ffbebd048aa63cd891830813bf3507069fa8b590f2ffa47f1acdc75cb3d"
+        "sha256:a8da4daddb17e3c278f2c95c1144c3b8ac2f0b7dd7655ca556f5a9933ed97c57"
       ]
     },
     "/etc/gshadow": {
       "content": [
         "sha256:98c7e7c50aefb760c7129ca5330c376a734db2e8915a2067f2da344dfd268ba1",
-        "sha256:6566be1e7c84c59520dfe59a03414e6b98d3f1dcaf282e96bcea8809fb4b3cc6"
+        "sha256:30968a53ffaeb3e54b13c89628af8a1a4f7434f140bf2aaa182b05d8c39191e2"
       ]
     },
     "/etc/gshadow-": {
       "content": [
         "sha256:679b5ba0404be2e3ab190fd5cb4ec28e232e3b85623852cb8819482658be3f69",
-        "sha256:ec4e3e906f56f65ba99b59bb792ca2a45b852f20d2fdd0cbb8521753ca4bd987"
+        "sha256:bfdccd9aee6609ddbb196e2268802d2ab49393cc1178edb3ccf32c42e97c97f3"
       ]
     },
     "/etc/passwd": {
       "content": [
         "sha256:6133398cba0020945c3bb39869a345a3ab7db70580643603f358d3b760457d98",
-        "sha256:f4e84e0e2cfc3557ae14100999a0690b8853441dc7189d9c795c6ad62d653e78"
+        "sha256:da21e995c6e711a84de5d62e5cb824a9b3f35bae3e68fc9df057cff75d6f2cca"
       ]
     },
     "/etc/passwd-": {
       "content": [
         "sha256:c6524e99a180b82ebc685a41f3fb578d53858552f7381cae68e4d71aeb1df8d0",
-        "sha256:801c281569017c5f94db81c9de474120e70ae5b5106f9ef92927c3bdf8be2aa8"
+        "sha256:86e42dcf0bce93a60ee31e799c91e9240e8582717139c41193e6f2fc72767a6a"
       ]
     },
     "/etc/shadow": {
       "content": [
-        null,
-        null
+        "sha256:61aa8fa91f7055a95b8a4a20dbaed2981fed58b7ef5e82acc5a863aa96fb660a",
+        "sha256:9ef562601c7a940f2ff402d47459d2a3987ac433edc5b31cb45fd9a571a955c2"
       ]
     },
     "/etc/shadow-": {
       "content": [
-        null,
-        null
+        "sha256:f567820b1e89fc27f089f3b2342e443f7ede4b2468e31ece83dfe7961f547c9e",
+        "sha256:39852bf1a919afcff2188b3cc28f17176f77582907f4b87ab9946f47eb9f2b41"
       ]
     },
     "/etc/subgid": {
       "content": [
         "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "sha256:43938f07025459f4181a8bb6cc533380ca94653145e6336b5dd45e941524db2d"
+        "sha256:0d610c36124bfcb974cf6b66ef1034fafe4b37a120f1c1b37c882a7fac6e9dc9"
       ]
     },
     "/etc/subuid": {
       "content": [
         "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "sha256:43938f07025459f4181a8bb6cc533380ca94653145e6336b5dd45e941524db2d"
+        "sha256:0d610c36124bfcb974cf6b66ef1034fafe4b37a120f1c1b37c882a7fac6e9dc9"
       ]
     },
     "/var/log/lastlog": {
       "content": [
         "sha256:72fadaa7ed6052983d03003b0b8558e677581cc6cce76b4b0ef2a76ee3dc44d7",
-        "sha256:e892652c6ec4e734ecbcb02c783a84291f67659daa0570c8663da475463f009d"
+        "sha256:8fc9a6dc0da959c573c94ffb88a002cad2eb884e85eb13a1c52a31001569a4b4"
       ]
     }
   }
