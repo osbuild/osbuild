@@ -6,6 +6,9 @@ The autotailor stage produces a tailoring file that the OpenSCAP scanner can use
 and remediate a system. The autotailor rules override a base profile either enabling or
 disabling (selecting or unselecting) a given rule for the profile. The autotailor command
 generates and xml diff between the user provided overrides and the base profile.
+
+Notes:
+ - requires `openscap-utils` package in the buildroot.
 """
 
 
@@ -49,6 +52,20 @@ SCHEMA = """
         "type": "array",
         "items": { "type": "string" },
         "description": "The rules to deselect from the base OpenSCAP profile"
+      },
+      "overrides": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["var", "value"],
+          "properties": {
+            "var": { "type": "string" },
+            "value": {
+              "type": [ "string", "integer" ]
+            }
+          }
+        },
+        "description": "The variables to override in the base OpenSCAP profile"
       }
     }
   }
@@ -67,6 +84,7 @@ def main(tree, options):
     # tailoring rules
     selected = config.get("selected", [])
     unselected = config.get("unselected", [])
+    overrides = config.get("overrides", [])
 
     cmd = [
         "/usr/bin/autotailor",
@@ -79,6 +97,9 @@ def main(tree, options):
 
     for u in unselected:
         cmd.extend(["--unselect", u])
+
+    for o in overrides:
+        cmd.extend(["--var-value", f"{o['var']}={o['value']}"])
 
     # first positional arguement is for the datastream
     # second positional arguement is for the base profile

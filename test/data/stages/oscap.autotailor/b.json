@@ -470,6 +470,16 @@
               "unselected": [
                 "rpm_verify_hashes",
                 "rpm_verify_permissions"
+              ],
+              "overrides": [
+                {
+                  "var": "sshd_idle_timeout_value",
+                  "value": 600
+                },
+                {
+                  "var": "var_account_disable_post_pw_expiration",
+                  "value": 100
+                }
               ]
             }
           }
