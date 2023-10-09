@@ -14,10 +14,10 @@ contain `ref` it was specified.
 
 import json
 import os
-import subprocess
 import sys
 
 from osbuild import inputs
+from osbuild.util import ostree
 
 SCHEMA = """
 "definitions": {
@@ -84,34 +84,24 @@ SCHEMA = """
 """
 
 
-def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
-    print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf-8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
-
-
 def export(checksums, cache, output):
     repo_cache = os.path.join(cache, "repo")
 
     repo_out = os.path.join(output, "repo")
-    ostree("init", mode="archive", repo=repo_out)
+    ostree.cli("init", mode="archive", repo=repo_out)
 
     refs = {}
     for commit, options in checksums.items():
         # Transfer the commit: remote → cache
         print(f"exporting {commit}", file=sys.stderr)
 
-        ostree("pull-local", repo_cache, commit,
-               repo=repo_out)
+        ostree.cli("pull-local", repo_cache, commit,
+                   repo=repo_out)
 
         ref = options.get("ref")
         if ref:
-            ostree("refs", "--create", ref, commit,
-                   repo=repo_out)
+            ostree.cli("refs", "--create", ref, commit,
+                       repo=repo_out)
 
         refs[commit] = options
 
