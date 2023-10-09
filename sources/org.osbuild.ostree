@@ -8,12 +8,11 @@ gpg keys are provided via `gpgkeys`.
 
 
 import os
-import subprocess
 import sys
 import uuid
 
 from osbuild import sources
-from osbuild.util.ostree import show
+from osbuild.util import ostree
 from osbuild.util.rhsm import Subscriptions
 
 SCHEMA = """
@@ -81,17 +80,6 @@ SCHEMA = """
 """
 
 
-def ostree(*args, _input=None, **kwargs):
-    args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
-    print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf-8",
-                   stdout=subprocess.PIPE,
-                   stderr=subprocess.STDOUT,
-                   input=_input,
-                   check=True)
-
-
 class OSTreeSource(sources.SourceService):
 
     content_type = "org.osbuild.ostree"
@@ -119,10 +107,10 @@ class OSTreeSource(sources.SourceService):
             remote_add_args.append(f"--set=tls-client-key-path={secrets['consumer_key']}")
             remote_add_args.append(f"--set=tls-client-cert-path={secrets['consumer_cert']}")
 
-        ostree("remote", "add",
-               uid, url,
-               *remote_add_args,
-               repo=self.repo)
+        ostree.cli("remote", "add",
+                   uid, url,
+                   *remote_add_args,
+                   repo=self.repo)
 
         for key in gpg:
             ostree("remote", "gpg-import", "--stdin", uid,
@@ -130,27 +118,26 @@ class OSTreeSource(sources.SourceService):
 
         # Transfer the commit: remote → cache
         print(f"pulling {commit}", file=sys.stderr)
-        ostree("pull", uid, commit, repo=self.repo)
+        ostree.cli("pull", uid, commit, repo=self.repo)
 
-        # Remove the temporary remotes again
-        ostree("remote", "delete", uid,
-               repo=self.repo)
+        # Remove the temporary remote again
+        ostree.cli("remote", "delete", uid, repo=self.repo)
 
     def setup(self, args):
         super().setup(args)
         # Prepare the cache and the output repo
         self.repo = os.path.join(self.cache, "repo")
-        ostree("init", mode="archive", repo=self.repo)
+        ostree.cli("init", mode="archive", repo=self.repo)
 
         # Make sure the cache repository uses locks to protect the metadata during
         # shared access. This is the default since `2018.5`, but lets document this
         # explicitly here.
-        ostree("config", "set", "repo.locking", "true", repo=self.repo)
+        ostree.cli("config", "set", "repo.locking", "true", repo=self.repo)
 
     # pylint: disable=[no-self-use]
     def exists(self, checksum, _desc):
         try:
-            show(self.repo, checksum)
+            ostree.show(self.repo, checksum)
         except RuntimeError:
             return False
         return True
