@@ -158,6 +158,47 @@ of the image, otherwise the "latest" tag is used. If "name" is specified
 that is used as the custom name for the container when installed.
 
 
+OSTree commit resolving:
+
+This tool consumes the `mpp-resolve-ostree-commits` option and produces
+source and inputs entries for the ostree commits.
+
+It supports version version "2" of the manifest description format.
+
+The parameters for this pre-processor, version "2", look like this:
+
+```
+...
+    {
+      "name": "org.osbuild.deploy",
+      ...
+      "inputs": {
+        "commits": {
+          "mpp-resolve-ostree-commits": {
+            "commits": [
+              {
+                 "ref": "fedora/x86_64/coreos/stable"
+                 "remote": {
+                      "url": https://kojipkgs.fedoraproject.org/ostree/repo/
+                 }
+              },
+              {
+                 "ref": "fedora/x86_64/coreos/v100"
+                 "target": "fedora/x86_64/coreos/stable"
+                 "remote": {
+                      "url": https://kojipkgs.fedoraproject.org/ostree/repo/
+                 }
+              }
+            ]
+          }
+        }
+      }
+    }
+...
+```
+
+
+
 Variable expansion and substitution:
 
 The variables can be set in the mpp-vars toplevel dict (which is removed from
@@ -324,6 +365,7 @@ import rpm
 import yaml
 
 from osbuild.util import containers
+from osbuild.util import ostree
 from osbuild.util.rhsm import Subscriptions
 
 # We need to resolve an image name to a resolved image manifest digest
@@ -1258,6 +1300,7 @@ class ManifestFile:
         self._process_depsolve(stage, pipeline_name)
         self._process_embed_files(stage)
         self._process_container(stage)
+        self._process_ostree_commits(stage)
 
     def _process_depsolve(self, _stage, _pipeline_name):
         raise NotImplementedError()
@@ -1268,6 +1311,8 @@ class ManifestFile:
     def _process_container(self, _stage):
         raise NotImplementedError()
 
+    def _process_ostree(self, _stage):
+        raise NotImplementedError()
 
 class ManifestFileV1(ManifestFile):
     def __init__(self, path, overrides, default_vars, data, searchdirs):
@@ -1355,6 +1400,9 @@ class ManifestFileV1(ManifestFile):
 
     def _process_container(self, stage):
         "Installing containers is not supported for v1 manifests"
+
+    def _process_ostree_commits(self, stage):
+        "Pre-processing ostree commits is not supported for v1 manifests"
 
 
 class ManifestFileV2(ManifestFile):
@@ -1567,6 +1615,50 @@ class ManifestFileV2(ManifestFile):
             inputs_manifests["type"] = "org.osbuild.files"
             inputs_manifests["origin"] = "org.osbuild.source"
             inputs_manifests["references"] = manifest_lists
+
+    def _process_ostree_commits(self, stage):
+        if stage.get("type", "") not in \
+            ["org.osbuild.ostree.pull", "org.osbuild.ostree.deploy"]:
+            return
+
+        inputs = element_enter(stage, "inputs", {})
+        inputs_commits = element_enter(inputs, "commits", {})
+
+        if inputs_commits.get("type", "") != "org.osbuild.ostree":
+            return
+        if inputs_commits.get("origin", "") != "org.osbuild.source":
+            return
+
+        mpp = self.get_mpp_node(inputs_commits, "resolve-ostree-commits")
+        if not mpp:
+            return
+
+        refs = element_enter(inputs_commits, "references", {})
+
+        ostree_commit_source = element_enter(self.sources, "org.osbuild.ostree", {})
+        items = element_enter(ostree_commit_source, "items", {})
+
+        for commit in element_enter(mpp, "commits", []):
+            remote = commit["remote"]
+            ref = commit["ref"]
+            # The installed target ref string to use. If not provided
+            # then just re-use source ref.
+            target = commit.get("target", ref)
+
+            with tempfile.TemporaryDirectory() as tmprepo:
+                ostree.cli("init", mode="archive", repo=tmprepo)
+                # This is a temporary repo so we'll just use a random name
+                remote_name = "tmpremote"
+                ostree.setup_remote(tmprepo, remote_name, remote)
+                ostree.cli( "pull", "--commit-metadata-only",
+                            "--mirror", remote_name, ref, repo=tmprepo)
+                checksum = ostree.rev_parse(tmprepo, ref)
+                items[checksum] = {
+                    "remote": remote
+                }
+                refs[checksum] = {
+                    "ref": target
+                }
 
 
 def main():
