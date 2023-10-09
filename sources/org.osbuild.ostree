@@ -13,7 +13,6 @@ import uuid
 
 from osbuild import sources
 from osbuild.util import ostree
-from osbuild.util.rhsm import Subscriptions
 
 SCHEMA = """
 "additionalProperties": false,
@@ -91,37 +90,17 @@ class OSTreeSource(sources.SourceService):
     def fetch_one(self, checksum, desc):
         commit = checksum
         remote = desc["remote"]
-        url = remote["url"]
-        gpg = remote.get("gpgkeys", [])
-        uid = str(uuid.uuid4())
+        # This is a temporary remote so we'll just use a random name
+        name = str(uuid.uuid4())
 
-        remote_add_args = []
-        if not gpg:
-            remote_add_args = ["--no-gpg-verify"]
-
-        if "contenturl" in remote:
-            remote_add_args.append(f"--contenturl={remote['contenturl']}")
-
-        if remote.get("secrets", {}).get("name") == "org.osbuild.rhsm.consumer":
-            secrets = Subscriptions.get_consumer_secrets()
-            remote_add_args.append(f"--set=tls-client-key-path={secrets['consumer_key']}")
-            remote_add_args.append(f"--set=tls-client-cert-path={secrets['consumer_cert']}")
-
-        ostree.cli("remote", "add",
-                   uid, url,
-                   *remote_add_args,
-                   repo=self.repo)
-
-        for key in gpg:
-            ostree("remote", "gpg-import", "--stdin", uid,
-                   repo=self.repo, _input=key)
+        ostree.setup_remote(self.repo, name, remote)
 
         # Transfer the commit: remote → cache
         print(f"pulling {commit}", file=sys.stderr)
-        ostree.cli("pull", uid, commit, repo=self.repo)
+        ostree.cli("pull", name, commit, repo=self.repo)
 
         # Remove the temporary remote again
-        ostree.cli("remote", "delete", uid, repo=self.repo)
+        ostree.cli("remote", "delete", name, repo=self.repo)
 
     def setup(self, args):
         super().setup(args)

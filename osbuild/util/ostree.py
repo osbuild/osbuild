@@ -9,6 +9,8 @@ import typing
 # pylint doesn't understand the string-annotation below
 from typing import Any, List  # pylint: disable=unused-import
 
+from osbuild.util.rhsm import Subscriptions
+
 from .types import PathLike
 
 
@@ -109,6 +111,32 @@ class Treefile:
         finally:
             if name:
                 os.unlink(name)
+
+
+def setup_remote(repo, name, remote):
+    """Configure an OSTree remote in a given repo"""
+
+    url = remote["url"]
+    gpg = remote.get("gpgkeys", [])
+
+    remote_add_args = []
+    if not gpg:
+        remote_add_args = ["--no-gpg-verify"]
+
+    if "contenturl" in remote:
+        remote_add_args.append(f"--contenturl={remote['contenturl']}")
+
+    if remote.get("secrets", {}).get("name") == "org.osbuild.rhsm.consumer":
+        secrets = Subscriptions.get_consumer_secrets()
+        remote_add_args.append(f"--set=tls-client-key-path={secrets['consumer_key']}")
+        remote_add_args.append(f"--set=tls-client-cert-path={secrets['consumer_cert']}")
+
+    cli("remote", "add", name, url,
+        *remote_add_args, repo=repo)
+
+    for key in gpg:
+        cli("remote", "gpg-import", "--stdin",
+            name, repo=repo, _input=key)
 
 
 def rev_parse(repo: PathLike, ref: str) -> str:
