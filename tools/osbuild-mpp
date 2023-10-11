@@ -1622,6 +1622,17 @@ class ManifestFileV2(ManifestFile):
             return
 
         inputs = element_enter(stage, "inputs", {})
+
+        # The ostree.deploy stage accepts both containers or
+        # ostree commits as input. If this is an ostree.deploy
+        # stage and there are no commits in the inputs then let's
+        # return early. This prevents an empty "commits" object
+        # from being created when a container image is used as
+        # an input to ostree.deploy and not an ostree commit.
+        if stage.get("type", "") == "org.osbuild.ostree.deploy":
+            if "commits" not in inputs:
+                return
+
         inputs_commits = element_enter(inputs, "commits", {})
 
         if inputs_commits.get("type", "") != "org.osbuild.ostree":
