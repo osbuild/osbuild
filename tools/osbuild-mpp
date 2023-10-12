@@ -1567,10 +1567,12 @@ class ManifestFileV2(ManifestFile):
 
         for image in element_enter(mpp, "images", []):
             source = image["source"]
-            name = image.get("name", source)
             digest = image.get("digest", None)
             tag = image.get("tag", None)
             index = image.get("index", False)
+            # If not specified by the user the default "name" we use for
+            # the installed container will be source:tag.
+            name = image.get("name", f"{source}:{tag}" if tag else source)
 
             main_manifest = ImageManifest.load(source, tag=tag, digest=digest)
 
