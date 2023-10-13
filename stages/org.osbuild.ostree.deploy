@@ -89,6 +89,7 @@ SCHEMA_2 = """
   "properties": {
     "commits": {
       "type": "object",
+      "description": "OStree commit to deploy",
       "additionalProperties": true
     }
   }
