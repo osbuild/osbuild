@@ -1621,8 +1621,6 @@ class ManifestFileV2(ManifestFile):
             ["org.osbuild.ostree.pull", "org.osbuild.ostree.deploy"]:
             return
 
-        inputs = element_enter(stage, "inputs", {})
-
         # The ostree.deploy stage accepts both containers or
         # ostree commits as input. If this is an ostree.deploy
         # stage and there are no commits in the inputs then let's
@@ -1630,8 +1628,10 @@ class ManifestFileV2(ManifestFile):
         # from being created when a container image is used as
         # an input to ostree.deploy and not an ostree commit.
         if stage.get("type", "") == "org.osbuild.ostree.deploy":
-            if "commits" not in inputs:
+            if "commits" not in stage.get("inputs", {}):
                 return
+
+        inputs = element_enter(stage, "inputs", {})
 
         inputs_commits = element_enter(inputs, "commits", {})
 
