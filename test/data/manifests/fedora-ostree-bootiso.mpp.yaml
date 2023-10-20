@@ -317,6 +317,7 @@ pipelines:
                 - hexedit
                 - sg3_utils
                 - notification-daemon
+                - gnome-kiosk
         options:
           gpgkeys:
             mpp-eval: gpgkeys
@@ -373,6 +374,9 @@ pipelines:
           path: 99-generic/runtime-postinstall.tmpl
           basearch:
             mpp-format-string: '{arch}'
+      - type: org.osbuild.selinux.config
+        options:
+          state: permissive
   - name: rootfs-image
     build: name:build
     stages:
