@@ -11,6 +11,15 @@ directories. If you want to change the mode of an existing
 directory, you need to use the `org.osbuild.chmod` stage.
 Mode is applied only to newly created directories and umask
 value is taken into account.
+
+In the initial version of this stage, there was a bug that caused
+the stage to accept relative paths. This behaviour is kept for
+backward compatibility, thus the following paths are equal:
+
+/path/to/directory
+path/to/directory
+
+However, using relative paths is strongly discouraged.
 """
 
 import os
@@ -26,14 +35,14 @@ SCHEMA_2 = r"""
     "paths": {
       "type": "array",
       "additionalItems": false,
-      "paths": {
+      "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["path"],
         "properties": {
           "path": {
             "type": "string",
-            "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+            "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
           },
           "mode": {
             "type": "number",
@@ -63,6 +72,9 @@ def main(tree, options):
         mode = item.get("mode", 0o777)
         parents = item.get("parents", False)
         exist_ok = item.get("exist_ok", False)
+
+        if not path.startswith("/"):
+            print("WARNING: relative path used, this is discouraged!")
 
         target = os.path.join(tree, path.lstrip("/"))
         if not in_tree(target, tree):

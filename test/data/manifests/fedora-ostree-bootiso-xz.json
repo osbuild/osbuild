@@ -1921,7 +1921,7 @@
           "options": {
             "paths": [
               {
-                "path": "LiveOS"
+                "path": "/LiveOS"
               }
             ]
           }

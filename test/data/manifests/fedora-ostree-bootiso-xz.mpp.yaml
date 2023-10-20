@@ -379,7 +379,7 @@ pipelines:
       - type: org.osbuild.mkdir
         options:
           paths:
-            - path: LiveOS
+            - path: /LiveOS
       - type: org.osbuild.truncate
         options:
           filename: LiveOS/rootfs.img

@@ -13,6 +13,6 @@ pipelines:
       - type: org.osbuild.mkdir
         options:
           paths:
-            - path: a
-            - path: c/d
+            - path: /a
+            - path: /c/d
               parents: true
