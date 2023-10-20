@@ -1,26 +1,28 @@
 {
   "added_directories": [
-    "/var/lib/authselect/backups"
+    "/var/lib/authselect/backups",
+    "/etc/ssh"
   ],
   "added_files": [
     "/boot/grub2/grubenv",
     "/dev/null",
     "/dev/shm",
     "/etc/authselect/custom/hardening",
-    "/etc/authselect/custom/hardening/README",
-    "/etc/authselect/custom/hardening/REQUIREMENTS",
     "/etc/authselect/custom/hardening/dconf-db",
     "/etc/authselect/custom/hardening/dconf-locks",
     "/etc/authselect/custom/hardening/fingerprint-auth",
     "/etc/authselect/custom/hardening/nsswitch.conf",
     "/etc/authselect/custom/hardening/password-auth",
     "/etc/authselect/custom/hardening/postlogin",
+    "/etc/authselect/custom/hardening/README",
+    "/etc/authselect/custom/hardening/REQUIREMENTS",
     "/etc/authselect/custom/hardening/smartcard-auth",
     "/etc/authselect/custom/hardening/system-auth",
     "/etc/chrony.conf",
     "/etc/default/grub",
     "/etc/dnf/automatic.conf",
     "/etc/fstab",
+    "/etc/ipsec.conf",
     "/etc/kernel/cmdline",
     "/etc/modprobe.d/atm.conf",
     "/etc/modprobe.d/can.conf",
@@ -31,13 +33,7 @@
     "/etc/rsyslog.d",
     "/etc/rsyslog.d/cron.conf",
     "/etc/selinux/config",
-    "/etc/ipsec.conf",
-    "/etc/ssh",
-    "/etc/ssh/sshd_config.d",
-    "/etc/ssh/sshd_config.d/00-complianceascode-hardening.conf",
-    "/etc/ssh/sshd_config.d/01-complianceascode-reinforce-os-defaults.conf",
     "/etc/systemd/system/debug-shell.service",
-    "/etc/systemd/system/systemd-coredump.service",
     "/etc/systemd/system/systemd-coredump.socket",
     "/var/tmp/oscap_eval_xccdf_results.xml",
     "/var/tmp/oscap_remediation.bash"
@@ -46,86 +42,20 @@
   "differences": {
     "/etc/authselect/authselect.conf": {
       "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/dconf-db": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/dconf-locks": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/fingerprint-auth": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/nsswitch.conf": {
-      "content": [
-        null,
-        null
+        "sha256:55eee183988be83f2c7867cdb7c29bba9f8d879cf7dc915a5c6cfd7f3fc56adb",
+        "sha256:1c3fea4c500fae2e394b6ff2613de88205a33a551f344b30fc623d8d8e346e25"
       ]
     },
     "/etc/authselect/password-auth": {
       "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/postlogin": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/smartcard-auth": {
-      "content": [
-        null,
-        null
+        "sha256:adf5dcbbd3e196b4eb80058e3d721e8c762f6f39630673767259e69da50759a5",
+        "sha256:90211c449f0f3931ab44d155cffdcff0137b0137e92f3298e4a9dbadd795eb85"
       ]
     },
     "/etc/authselect/system-auth": {
       "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/pki/tls/openssl.cnf": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/yum.repos.d/fedora-cisco-openh264.repo": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/yum.repos.d/fedora-updates-testing.repo": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/yum.repos.d/fedora-updates.repo": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/yum.repos.d/fedora.repo": {
-      "content": [
-        null,
-        null
+        "sha256:adf5dcbbd3e196b4eb80058e3d721e8c762f6f39630673767259e69da50759a5",
+        "sha256:13d524978cf9a4a8a3828ec69c9250c9011f0b64e10421cff96fcb4d259543d2"
       ]
     },
     "/etc/crypto-policies/back-ends/bind.config": {
@@ -230,6 +160,12 @@
         "sha256:858dd9c983a8e87bbb242952b737f33499c99ff5fd8b377b218da3836357c874"
       ]
     },
+    "/etc/pki/tls/openssl.cnf": {
+      "content": [
+        null,
+        null
+      ]
+    },
     "/etc/security/faillock.conf": {
       "content": [
         "sha256:5c8c902912f0bb59f86b86517f2127ea0c57c5d05b17c4aa62f5bc06c7043c78",
@@ -252,6 +188,30 @@
       "content": [
         "sha256:72f8630b657da48549b2bd9ba5e855939e4afec3d4ee60574fc5757cfc767bd6",
         "sha256:67206831694bca3b569ad27ca9b577101e45b9dc19fbfd68b1722949c862ba9d"
+      ]
+    },
+    "/etc/yum.repos.d/fedora-cisco-openh264.repo": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/yum.repos.d/fedora-updates-testing.repo": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/yum.repos.d/fedora-updates.repo": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/yum.repos.d/fedora.repo": {
+      "content": [
+        null,
+        null
       ]
     },
     "/usr/lib/issue": {

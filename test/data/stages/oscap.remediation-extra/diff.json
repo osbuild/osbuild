@@ -21,6 +21,7 @@
     "/etc/default/grub",
     "/etc/dnf/automatic.conf",
     "/etc/fstab",
+    "/etc/ipsec.conf",
     "/etc/kernel/cmdline",
     "/etc/modprobe.d/atm.conf",
     "/etc/modprobe.d/can.conf",
@@ -31,50 +32,24 @@
     "/etc/rsyslog.d",
     "/etc/rsyslog.d/cron.conf",
     "/etc/selinux/config",
-    "/etc/ipsec.conf",
     "/etc/ssh",
     "/etc/ssh/sshd_config.d",
     "/etc/ssh/sshd_config.d/00-complianceascode-hardening.conf",
     "/etc/ssh/sshd_config.d/01-complianceascode-reinforce-os-defaults.conf",
     "/etc/systemd/system/debug-shell.service",
-    "/etc/systemd/system/systemd-coredump.service",
     "/etc/systemd/system/systemd-coredump.socket",
     "/root/log.eval",
     "/root/log.eval-remediated",
     "/root/log.generate-fix",
     "/root/log.remediation",
-    "/root/report.html",
-    "/root/results_arf.xml.xz",
     "/root/oscap_eval_xccdf_results.xml.xz",
-    "/root/oscap_remediation.bash"
+    "/root/oscap_remediation.bash",
+    "/root/report.html",
+    "/root/results_arf.xml.xz"
   ],
   "deleted_files": [],
   "differences": {
     "/etc/authselect/authselect.conf": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/dconf-db": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/dconf-locks": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/fingerprint-auth": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/nsswitch.conf": {
       "content": [
         null,
         null
@@ -86,49 +61,7 @@
         null
       ]
     },
-    "/etc/authselect/postlogin": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/smartcard-auth": {
-      "content": [
-        null,
-        null
-      ]
-    },
     "/etc/authselect/system-auth": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/pki/tls/openssl.cnf": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/yum.repos.d/fedora-cisco-openh264.repo": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/yum.repos.d/fedora-updates-testing.repo": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/yum.repos.d/fedora-updates.repo": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/yum.repos.d/fedora.repo": {
       "content": [
         null,
         null
@@ -236,6 +169,12 @@
         "sha256:858dd9c983a8e87bbb242952b737f33499c99ff5fd8b377b218da3836357c874"
       ]
     },
+    "/etc/pki/tls/openssl.cnf": {
+      "content": [
+        "sha256:e7eb326b64430f55b0b458a3dce27569ec2bb8ae4dbc66a2ae9447aa0bd1db27",
+        "sha256:c6b69d7a0d99af981df392d6f2ea64b0b5d5a9c13c4cc6810d890e7909998359"
+      ]
+    },
     "/etc/security/faillock.conf": {
       "content": [
         "sha256:5c8c902912f0bb59f86b86517f2127ea0c57c5d05b17c4aa62f5bc06c7043c78",
@@ -258,6 +197,30 @@
       "content": [
         "sha256:72f8630b657da48549b2bd9ba5e855939e4afec3d4ee60574fc5757cfc767bd6",
         "sha256:67206831694bca3b569ad27ca9b577101e45b9dc19fbfd68b1722949c862ba9d"
+      ]
+    },
+    "/etc/yum.repos.d/fedora-cisco-openh264.repo": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/yum.repos.d/fedora-updates-testing.repo": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/yum.repos.d/fedora-updates.repo": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/yum.repos.d/fedora.repo": {
+      "content": [
+        null,
+        null
       ]
     },
     "/usr/lib/issue": {
