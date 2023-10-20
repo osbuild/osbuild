@@ -1,0 +1,589 @@
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: ostree-tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - fedora-release-iot
+                - glibc
+                - glibc-minimal-langpack
+                - nss-altfiles
+                - sssd-client
+                - libsss_sudo
+                - shadow-utils
+                - kernel
+                - dracut-config-generic
+                - dracut-network
+                - rpm-ostree
+                - polkit
+                - lvm2
+                - chrony
+                - zram-generator-defaults
+                - cryptsetup
+                - pinentry
+                - keyutils
+                - e2fsprogs
+                - dosfstools
+                - gnupg2
+                - basesystem
+                - python3
+                - bash
+                - xz
+                - gzip
+                - coreutils
+                - which
+                - curl
+                - firewalld
+                - iptables
+                - NetworkManager
+                - NetworkManager-wifi
+                - NetworkManager-wwan
+                - wpa_supplicant
+                - iwd
+                - dnsmasq
+                - traceroute
+                - hostname
+                - iproute
+                - iputils
+                - openssh-clients
+                - openssh-server
+                - passwd
+                - policycoreutils
+                - procps-ng
+                - rootfiles
+                - rpm
+                - selinux-policy-targeted
+                - setup
+                - shadow-utils
+                - sudo
+                - systemd
+                - util-linux
+                - vim-minimal
+                - less
+                - tar
+                - fwupd
+                - greenboot
+                - greenboot-grub2
+                - greenboot-rpm-ostree-grub2
+                - greenboot-reboot
+                - greenboot-status
+                - ignition
+                - rsync
+                - ima-evm-utils
+                - bash-completion
+                - tmux
+                - screen
+                - policycoreutils-python-utils
+                - setools-console
+                - audit
+                - rng-tools
+                - bluez
+                - bluez-libs
+                - bluez-mesh
+                - wpan-tools
+                - kernel-tools
+                - libgpiod-utils
+                - podman
+                - container-selinux
+                - skopeo
+                - criu
+                - slirp4netns
+                - clevis
+                - clevis-dracut
+                - clevis-luks
+                - attr
+                - grub2
+                - grub2-efi-x64
+                - efibootmgr
+                - shim-x64
+                - microcode_ctl
+                - iwl1000-firmware
+                - iwl100-firmware
+                - iwl105-firmware
+                - iwl135-firmware
+                - iwl2000-firmware
+                - iwl2030-firmware
+                - iwl3160-firmware
+                - iwl5000-firmware
+                - iwl5150-firmware
+                - iwl6000-firmware
+                - iwl6050-firmware
+                - iwl7260-firmware
+              excludes:
+                - dracut-config-rescue
+      - type: org.osbuild.locale
+        options:
+          language: en_US.UTF-8
+      - type: org.osbuild.systemd
+        options:
+          enabled_services:
+            - NetworkManager.service
+            - firewalld.service
+            - rngd.service
+            - sshd.service
+      - type: org.osbuild.ostree.preptree
+        options:
+          etc_group_members:
+            - wheel
+            - docker
+  - name: ostree-commit
+    build: name:build
+    stages:
+      - type: org.osbuild.ostree.init
+        options:
+          path: /repo
+      - type: org.osbuild.ostree.commit
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:ostree-tree
+        options:
+          ref:
+            mpp-format-string: '{ref}'
+          os_version:
+            mpp-format-string: '{release}'
+  - name: anaconda-tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - anaconda
+                - anaconda-widgets
+                - kexec-tools-anaconda-addon
+                - anaconda-install-env-deps
+                - dnf
+                - rpm-ostree
+                - ostree
+                - pigz
+                - kernel
+                - kernel-modules
+                - kernel-modules-extra
+                - grubby
+                - b43-openfwwf
+                - glibc-all-langpacks
+                - grub2-tools-efi
+                - efibootmgr
+                - shim-x64
+                - grub2-efi-x64-cdboot
+                - shim-ia32
+                - grub2-efi-ia32-cdboot
+                - biosdevname
+                - memtest86+
+                - syslinux
+                - grub2-tools
+                - grub2-tools-minimal
+                - grub2-tools-extra
+                - plymouth
+                - anaconda-dracut
+                - dracut-network
+                - dracut-config-generic
+                - initscripts
+                - cryptsetup
+                - rpcbind
+                - kbd
+                - kbd-misc
+                - tar
+                - xz
+                - curl
+                - bzip2
+                - systemd-sysv
+                - systemd-units
+                - rsyslog
+                - xorg-x11-drivers
+                - xorg-x11-server-Xorg
+                - xrandr
+                - xrdb
+                - xorg-x11-xauth
+                - xorg-x11-xauth
+                - dbus-x11
+                - metacity
+                - gsettings-desktop-schemas
+                - nm-connection-editor
+                - librsvg2
+                - btrfs-progs
+                - jfsutils
+                - xfsprogs
+                - gfs2-utils
+                - ntfs-3g
+                - ntfsprogs
+                - system-storage-manager
+                - device-mapper-persistent-data
+                - xfsdump
+                - udisks2
+                - udisks2-iscsi
+                - hostname
+                - libblockdev-lvm-dbus
+                - volume_key
+                - nss-tools
+                - selinux-policy-targeted
+                - audit
+                - ethtool
+                - openssh-server
+                - nfs-utils
+                - openssh-clients
+                - tigervnc-server-minimal
+                - tigervnc-server-module
+                - net-tools
+                - bridge-utils
+                - nmap-ncat
+                - pciutils
+                - usbutils
+                - ipmitool
+                - mt-st
+                - smartmontools
+                - hdparm
+                - pcmciautils
+                - libmlx4
+                - rdma-core
+                - rng-tools
+                - dmidecode
+                - aajohan-comfortaa-fonts
+                - abattis-cantarell-fonts
+                - bitmap-fangsongti-fonts
+                - dejavu-sans-fonts
+                - dejavu-sans-mono-fonts
+                - google-noto-sans-cjk-ttc-fonts
+                - google-noto-sans-gurmukhi-fonts
+                - google-noto-sans-sinhala-vf-fonts
+                - jomolhari-fonts
+                - khmeros-base-fonts
+                - lohit-assamese-fonts
+                - lohit-bengali-fonts
+                - lohit-devanagari-fonts
+                - lohit-gujarati-fonts
+                - lohit-kannada-fonts
+                - lohit-marathi-fonts
+                - lohit-odia-fonts
+                - lohit-tamil-fonts
+                - lohit-telugu-fonts
+                - madan-fonts
+                - paktype-naskh-basic-fonts
+                - sil-abyssinica-fonts
+                - sil-padauk-fonts
+                - sil-scheherazade-fonts
+                - rit-meera-new-fonts
+                - thai-scalable-waree-fonts
+                - xorg-x11-fonts-misc
+                - gdb-gdbserver
+                - libreport-plugin-bugzilla
+                - libreport-plugin-reportuploader
+                - fpaste
+                - python3-pyatspi
+                - vim-minimal
+                - strace
+                - lsof
+                - dump
+                - xz
+                - less
+                - wget
+                - rsync
+                - bind-utils
+                - ftp
+                - mtr
+                - vconfig
+                - spice-vdagent
+                - gdisk
+                - hexedit
+                - sg3_utils
+                - notification-daemon
+                - gnome-kiosk
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+          disable_dracut: true
+      - type: org.osbuild.buildstamp
+        options:
+          arch:
+            mpp-format-string: '{arch}'
+          product: Fedora-IoT
+          version:
+            mpp-format-string: '{release}'
+          variant: osbuild
+          final: true
+          bugurl: https://github.com/gicmo/ostree-osbuild-demo/issues
+      - type: org.osbuild.dracut
+        options:
+          kernel:
+            - mpp-format-string: '{rpms[''ostree-tree''][''kernel''].evra}'
+          add_modules:
+            - anaconda
+            - convertfs
+            - dmsquash-live
+            - livenet
+            - pollcdrom
+            - qemu
+            - qemu-net
+          install:
+            - /.buildstamp
+      - type: org.osbuild.locale
+        options:
+          language: en_US.UTF-8
+      - type: org.osbuild.users
+        options:
+          users:
+            root:
+              password: ''
+            install:
+              uid: 0
+              gid: 0
+              home: /root
+              shell: /usr/libexec/anaconda/run-anaconda
+              password: ''
+      - type: org.osbuild.anaconda
+        options:
+          kickstart-modules:
+            - org.fedoraproject.Anaconda.Modules.Network
+            - org.fedoraproject.Anaconda.Modules.Payloads
+            - org.fedoraproject.Anaconda.Modules.Storage
+            - org.fedoraproject.Anaconda.Modules.Users
+      - type: org.osbuild.lorax-script
+        options:
+          path: 99-generic/runtime-postinstall.tmpl
+          basearch:
+            mpp-format-string: '{arch}'
+      - type: org.osbuild.selinux.config
+        options:
+          state: permissive
+  - name: rootfs-image
+    build: name:build
+    stages:
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: LiveOS
+      - type: org.osbuild.truncate
+        options:
+          filename: LiveOS/rootfs.img
+          size: 3GB
+      - type: org.osbuild.mkfs.ext4
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: LiveOS/rootfs.img
+        options:
+          label: Anaconda
+          uuid: 383367fa-6a09-4def-8c30-507e0b3cf1f7
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:anaconda-tree
+        options:
+          paths:
+            - from: input://tree/
+              to: mount://root/
+        devices:
+          root:
+            type: org.osbuild.loopback
+            options:
+              filename: LiveOS/rootfs.img
+        mounts:
+          - name: root
+            type: org.osbuild.ext4
+            source: root
+            target: /
+  - name: efiboot-tree
+    build: name:build
+    stages:
+      - type: org.osbuild.grub2.iso
+        options:
+          product:
+            name: Fedora-IoT
+            version:
+              mpp-format-string: '{release}'
+          isolabel:
+            mpp-format-string: '{isolabel}'
+          kernel:
+            dir: /images/pxeboot
+            opts:
+              - mpp-format-string: inst.ks=hd:LABEL={isolabel}:/install.ks
+          architectures:
+            - IA32
+            - X64
+          vendor: fedora
+  - name: bootiso-tree
+    build: name:build
+    stages:
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: images
+            - path: images/pxeboot
+      - type: org.osbuild.copy
+        inputs:
+          base:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:anaconda-tree
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://base/boot/vmlinuz-{rpms['anaconda-tree']['kernel'].evra}
+              to: tree:///images/pxeboot/vmlinuz
+            - from:
+                mpp-format-string: input://base/boot/initramfs-{rpms['anaconda-tree']['kernel'].evra}.img
+              to: tree:///images/pxeboot/initrd.img
+      - type: org.osbuild.squashfs
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:rootfs-image
+        options:
+          filename: images/install.img
+          compression:
+            method: lz4
+      - type: org.osbuild.isolinux
+        inputs:
+          data:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:anaconda-tree
+        options:
+          product:
+            name: Fedora-IoT
+            version:
+              mpp-format-string: '{release}'
+          kernel:
+            dir: /images/pxeboot
+            opts:
+              - mpp-format-string: inst.ks=hd:LABEL={isolabel}:/install.ks
+      - type: org.osbuild.truncate
+        options:
+          filename: images/efiboot.img
+          size: 20MB
+      - type: org.osbuild.mkfs.fat
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: images/efiboot.img
+        options:
+          label: ANACONDA
+          volid: 7B7795E7
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:efiboot-tree
+        options:
+          paths:
+            - from: input://tree/
+              to: mount://efi/
+        devices:
+          efi:
+            type: org.osbuild.loopback
+            options:
+              filename: images/efiboot.img
+        mounts:
+          - name: efi
+            type: org.osbuild.fat
+            source: efi
+            target: /
+      - type: org.osbuild.copy
+        inputs:
+          base:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:efiboot-tree
+        options:
+          paths:
+            - from: input://base/EFI
+              to: tree:///
+      - type: org.osbuild.ostree.init
+        options:
+          path: /ostree
+      - type: org.osbuild.ostree.pull
+        options:
+          repo: /ostree
+        inputs:
+          commits:
+            type: org.osbuild.ostree
+            origin: org.osbuild.pipeline
+            references:
+              name:ostree-commit:
+                ref:
+                  mpp-format-string: '{ref}'
+      - type: org.osbuild.kickstart
+        options:
+          path: install.ks
+          ostree:
+            osname: fedora
+            url: file:///run/install/repo/ostree
+            ref:
+              mpp-format-string: '{ref}'
+            gpg: false
+          users:
+            core:
+              password: edge
+              groups:
+                - wheel
+      - type: org.osbuild.discinfo
+        options:
+          basearch:
+            mpp-format-string: '{arch}'
+          release: 202010217.n.0
+  - name: bootiso
+    build: name:build
+    stages:
+      - type: org.osbuild.xorrisofs
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:bootiso-tree
+        options:
+          filename: fedora-ostree-boot.iso
+          volid:
+            mpp-format-string: '{isolabel}'
+          boot:
+            image: isolinux/isolinux.bin
+            catalog: isolinux/boot.cat
+          efi: images/efiboot.img
+          isohybridmbr: /usr/share/syslinux/isohdpfx.bin
+      - type: org.osbuild.implantisomd5
+        options:
+          filename: fedora-ostree-boot.iso
