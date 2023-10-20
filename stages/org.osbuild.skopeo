@@ -27,11 +27,13 @@ SCHEMA_2 = r"""
       },
       "storage-path": {
         "description": "Container storage location (default /var/lib/containers/storage).",
-        "type": "string"
+        "type": "string",
+        "default": "/var/lib/containers/storage"
       },
       "storage-driver": {
         "description": "The container storage driver to use (default overlay).",
-        "type": "string"
+        "type": "string",
+        "default": "overlay"
       }
     }
   },
