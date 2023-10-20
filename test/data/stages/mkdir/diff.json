@@ -3,7 +3,8 @@
     "/a/b",
     "/b",
     "/b/c",
-    "/b/c/d"
+    "/b/c/d",
+    "/i_am_relative"
   ],
   "deleted_files": [],
   "differences": {}

@@ -450,10 +450,10 @@
           "options": {
             "paths": [
               {
-                "path": "a"
+                "path": "/a"
               },
               {
-                "path": "c/d",
+                "path": "/c/d",
                 "parents": true
               }
             ]
