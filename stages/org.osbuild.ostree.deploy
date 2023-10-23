@@ -31,7 +31,7 @@ CAPABILITIES = ["CAP_MAC_ADMIN"]
 SCHEMA_2 = """
 "options": {
   "additionalProperties": false,
-  "required": ["osname", "ref"],
+  "required": ["osname"],
   "properties": {
     "mounts": {
       "description": "Mount points of the final file system",
@@ -84,8 +84,8 @@ SCHEMA_2 = """
 },
 "inputs": {
   "type": "object",
-  "required": ["commits"],
   "additionalProperties": false,
+  "required": ["commits"],
   "properties": {
     "commits": {
       "type": "object",
@@ -105,33 +105,46 @@ def make_fs_identifier(desc):
     raise ValueError("unknown rootfs type")
 
 
+def ostree_commit_deploy(tree, inputs, osname, remote, ref, kopts):
+    if len(inputs) == 0:
+        if not ref:
+            raise ValueError("ref should be specified in options")
+    elif len(inputs) == 1:
+        if ref:
+            raise ValueError("Should not specify ref if input was specified")
+
+        # If we have an input then we need to pull_local() from the input
+        # first before we deploy.
+        source_repo, commits = ostree.parse_input_commits(inputs["commits"])
+        target_repo = f"{tree}/ostree/repo"
+        for commit, data in commits.items():
+            ref = data.get("ref", commit)
+            ostree.pull_local(source_repo, target_repo, remote, ref)
+
+    if remote:
+        ref = f"{remote}:{ref}"
+
+    kargs = [f'--karg-append={v}' for v in kopts]
+    ostree.cli("admin", "deploy", ref,
+               *kargs, sysroot=tree, os=osname)
+
+
 def main(tree, inputs, options):
     osname = options["osname"]
     rootfs = options.get("rootfs")
     mounts = options.get("mounts", [])
     kopts = options.get("kernel_opts", [])
-    ref = options["ref"]
+    ref = options.get("ref", "")
     remote = options.get("remote")
 
-    # If provided an input then do the pull into the tree
-    if len(inputs) != 0:
-        source_repo, commits = ostree.parse_input_commits(inputs["commits"])
-        target_repo = f"{tree}/ostree/repo"
-        for commit, data in commits.items():
-            loopref = data.get("ref", commit)
-            ostree.pull_local(source_repo, target_repo, remote, loopref)
-
-    if remote:
-        ref = f"{remote}:{ref}"
-
-    kargs = []
+    # schema should catch the case in which there are more
+    # than one input but this adds a second layer of security
+    if len(inputs) > 1:
+        raise ValueError("Only one input accepted")
 
     if rootfs:
         rootfs_id = make_fs_identifier(rootfs)
-        kargs += [f"--karg=root={rootfs_id}"]
-
-    for opt in kopts:
-        kargs += [f"--karg-append={opt}"]
+        kopts += [f"root={rootfs_id}"]
 
     with MountGuard() as mounter:
         for mount in mounts:
@@ -139,10 +152,7 @@ def main(tree, inputs, options):
             path = os.path.join(tree, path)
             mounter.mount(path, path)
 
-        ostree.cli("admin", "deploy", ref,
-                   *kargs,
-                   sysroot=tree,
-                   os=osname)
+        ostree_commit_deploy(tree, inputs, osname, remote, ref, kopts)
 
 
 if __name__ == '__main__':
