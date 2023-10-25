@@ -1,0 +1,157 @@
+#!/usr/bin/python3
+"""
+Create aleph version file for the deployment.
+"""
+
+
+import json
+import os
+import sys
+
+import osbuild.api
+from osbuild.util import ostree
+
+CAPABILITIES = ["CAP_MAC_ADMIN"]
+ALEPH_FILENAME = ".aleph-version.json"
+COREOS_ALEPH_FILENAME = ".coreos-aleph-version.json"
+
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": false,
+  "properties": {
+    "coreos_compat": {
+      "description": "boolean to allow for CoreOS aleph version backwards compatibility",
+      "type": "boolean"
+    },
+    "deployment": {
+      "additionalProperties": false,
+      "required": ["osname", "ref"],
+      "properties": {
+        "osname": {
+          "description": "Name of the stateroot to be used in the deployment",
+          "type": "string"
+        },
+        "ref": {
+          "description": "OStree ref to create and use for deployment",
+          "type": "string"
+        },
+        "serial": {
+          "description": "The deployment serial (usually '0')",
+          "type": "number",
+          "default": 0
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def aleph_commit(tree, imgref):
+    extra_args = []
+    extra_args.append("--print-metadata-key=version")
+
+    aleph_version = ostree.cli("show", f"--repo={tree}/ostree/repo", imgref, *extra_args).stdout.rstrip().strip('\'')
+    aleph_ref = imgref
+    # get the commit by parsing the revision of the deployment
+    aleph_ostree_commit = ostree.rev_parse(tree + "/ostree/repo", imgref)
+
+    aleph_version_data = {
+        "osbuild-version": osbuild.__version__,
+        "version": aleph_version,
+        "ref": aleph_ref,
+        "ostree-commit": aleph_ostree_commit
+    }
+
+    return aleph_version_data
+
+
+def aleph_container(tree, imgref):
+    # extract the image name from the imgref
+    imgref_list = imgref.split(':')
+    if imgref_list[0] in ["ostree-remote-registry", "ostree-remote-image"]:
+        img_name = ':'.join(imgref_list[2:])
+    elif imgref_list[0] in ["ostree-image-signed", "ostree-unverified-registry"]:
+        img_name = ':'.join(imgref_list[1:])
+    else:
+        raise ValueError(f"Image ref {imgref} has unsupported type (supported: 'ostree-remote-registry', \
+                         'ostree-remote-image', 'ostree-image-signed', or 'ostree-unverified-registry')")
+
+    img_name = img_name.removeprefix('docker://')
+
+    extra_args = []
+    extra_args.append(f"--repo={tree}/ostree/repo")
+    extra_args.append(f"registry:{img_name}")
+
+    container_data_json = ostree.cli("container", "image", "metadata", *extra_args).stdout.rstrip()
+    container_data = json.loads(container_data_json)
+
+    extra_args.append("--config")
+    container_data_config_json = ostree.cli("container", "image", "metadata", *extra_args).stdout.rstrip()
+    container_data_config = json.loads(container_data_config_json)
+
+    aleph_digest = container_data['config']['digest']
+    aleph_ref = f"docker://{imgref}"
+    aleph_version = container_data_config['config']['Labels']['org.opencontainers.image.version']
+    aleph_container_image = container_data_config['config']['Labels']
+
+    aleph_version_data = {
+        "osbuild-version": osbuild.__version__,
+        "ref": aleph_ref,
+        "version": aleph_version,
+        "container-image": {
+            "image-name": img_name,
+            "image-digest": aleph_digest,
+            "image-labels": aleph_container_image
+        }
+    }
+
+    # the 'ostree.commit' label will be optional in the future so
+    # prevent hard failing if key is not found
+    aleph_ostree_commit = container_data_config['config']['Labels'].get('ostree.commit')
+    if aleph_ostree_commit is not None:
+        aleph_version_data["ostree-commit"] = aleph_ostree_commit
+
+    return aleph_version_data
+
+
+def construct_aleph_json(tree, origin):
+    deploy_type, imgref = ostree.parse_origin(origin)
+    data = {}
+    # null deploy_type and imgref error is caught in the parse_origin() function
+    if deploy_type == "container":
+        data = aleph_container(tree, imgref)
+    elif deploy_type == "ostree_commit":
+        data = aleph_commit(tree, imgref)
+    else:
+        raise ValueError("Unknown deployment type")
+
+    return data
+
+
+def main(tree, options):
+    coreos_compat = options.get("coreos_compat", False)
+    dep = options["deployment"]
+    osname = dep["osname"]
+    ref = dep["ref"]
+    serial = dep.get("serial", 0)
+
+    origin = ostree.deployment_path(tree, osname, ref, serial) + ".origin"
+    data = construct_aleph_json(tree, origin)
+
+    # write the data out to the file
+    with open(os.path.join(tree, ALEPH_FILENAME), "w", encoding="utf8") as f:
+        json.dump(data, f, indent=4, sort_keys=True)
+        f.write("\n")
+
+    # create a symlink for backwards compatibility with CoreOS
+    if coreos_compat:
+        os.symlink(ALEPH_FILENAME, os.path.join(tree, COREOS_ALEPH_FILENAME))
+
+
+if __name__ == '__main__':
+    stage_args = osbuild.api.arguments()
+    r = main(stage_args["tree"],
+             stage_args["options"])
+    sys.exit(r)

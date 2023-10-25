@@ -512,6 +512,16 @@
           }
         },
         {
+          "type": "org.osbuild.ostree.aleph",
+          "options": {
+            "coreos_compat": true,
+            "deployment": {
+              "osname": "fedora-coreos",
+              "ref": "ostree/1/1/0"
+            }
+          }
+        },
+        {
           "type": "org.osbuild.ostree.selinux",
           "options": {
             "deployment": {

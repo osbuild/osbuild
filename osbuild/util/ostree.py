@@ -228,6 +228,34 @@ def deployment_path(root: PathLike, osname: str, ref: str, serial: int):
     return sysroot
 
 
+def parse_origin(origin: PathLike):
+    """Parse the origin file and return the deployment type and imgref
+
+    Example container case: container-image-reference=ostree-remote-image:fedora:docker://quay.io/fedora/fedora-coreos:stable
+    Example ostree commit case: refspec=fedora:fedora/x86_64/coreos/stable
+    """
+    deploy_type = ""
+    imgref = ""
+    with open(origin, "r", encoding="utf8") as f:
+        for line in f:
+            separated_line = line.split("=")
+            if separated_line[0] == "container-image-reference":
+                deploy_type = "container"
+                imgref = separated_line[1].rstrip()
+                break
+            if separated_line[0] == "refspec":
+                deploy_type = "ostree_commit"
+                imgref = separated_line[1].rstrip()
+                break
+
+    if deploy_type == "":
+        raise ValueError("Could not find 'container-image-reference' or 'refspec' in origin file")
+    if imgref == "":
+        raise ValueError("Could not find imgref in origin file")
+
+    return deploy_type, imgref
+
+
 class PasswdLike:
     """Representation of a file with structure like /etc/passwd
 
