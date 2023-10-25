@@ -78,6 +78,11 @@ pipelines:
             references:
               name:ostree-commit:
                 ref: fedora/x86_64/osbuild
+      - type: org.osbuild.ostree.aleph
+        options:
+          deployment:
+            osname: fedora
+            ref: fedora/x86_64/osbuild
       - type: org.osbuild.ostree.fillvar
         options:
           deployment:
