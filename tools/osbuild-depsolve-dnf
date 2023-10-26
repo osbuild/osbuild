@@ -65,6 +65,8 @@ class Solver():
 
         if "name" in desc:
             repo.name = desc["name"]
+
+        # at least one is required
         if "baseurl" in desc:
             repo.baseurl = desc["baseurl"]
         elif "metalink" in desc:
@@ -72,7 +74,7 @@ class Solver():
         elif "mirrorlist" in desc:
             repo.mirrorlist = desc["mirrorlist"]
         else:
-            assert False
+            raise ValueError("missing either `baseurl`, `metalink`, or `mirrorlist` in repo")
 
         if desc.get("ignoressl", False):
             repo.sslverify = False
