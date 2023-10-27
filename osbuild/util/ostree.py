@@ -57,6 +57,7 @@ class Treefile:
       - boot-location: postprocess
       - etc-group-members: postprocess
       - machineid-compat
+      - selinux-label-version: commit
 
     NB: 'ref' and 'repos' are mandatory and must be
     present, even if they are not used in the given
@@ -71,6 +72,7 @@ class Treefile:
         "etc-group-members": Param(List[str]),
         "machineid-compat": Param(bool),
         "initramfs-args": Param(List[str]),
+        "selinux-label-version": Param(int),
     }
 
     def __init__(self):

@@ -43,6 +43,11 @@ SCHEMA_2 = """
     "parent": {
       "description": "commit id of the parent commit",
       "type": "string"
+    },
+    "selinux-label-version": {
+      "description": "Set selinux label version",
+      "type": "integer",
+      "default": 0
     }
   }
 },
@@ -62,6 +67,7 @@ SCHEMA_2 = """
 
 def main(inputs, output_dir, options, meta):
     tree = inputs["tree"]["path"]
+    selinux_label_version = options.get("selinux-label-version", 0)
 
     ref = options["ref"]
     os_version = options.get("os_version", None)
@@ -79,6 +85,9 @@ def main(inputs, output_dir, options, meta):
 
         treefile = ostree.Treefile()
         treefile["ref"] = ref
+        if selinux_label_version != 0:
+            # Don't set if 0 (default), to support older rpm-ostree versions
+            treefile["selinux-label-version"] = selinux_label_version
 
         argv = ["rpm-ostree", "compose", "commit"]
         argv += [f"--repo={repo}"]
