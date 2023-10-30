@@ -17,6 +17,10 @@ srpm_build_deps: []
 actions:
   get-current-version: bash -c "git describe --tags --abbrev=0 | sed 's|v||'"
 
+# Handle only releases without a "dot" (e.g. v88.2), since "dot" releases should never be released to Fedora
+# "dot" releases are used only for "backports" to RHEL.
+upstream_tag_include: 'v\d+'
+
 jobs:
 - &copr
   job: copr_build
