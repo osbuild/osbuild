@@ -183,6 +183,18 @@ SCHEMA = r"""
         "type": "boolean"
       }
     }
+  },
+  "firewall": {
+    "type": "object",
+    "required": ["use-system-defaults"],
+    "description": "Configure firewall using the firewall kickstart command",
+    "properties": {
+      "use-system-defaults": {
+        "type": "boolean",
+        "default": false,
+        "description": "Use system defaults instead of anaconda's ones"
+      }
+    }
   }
 }
 """
@@ -305,6 +317,10 @@ def main(tree, options):
             cmd += " --no-signature-verification"
 
         config += [cmd]
+
+    firewall = options.get("firewall")
+    if firewall and firewall.get("use-system-defaults"):
+        config += ["firewall --use-system-defaults"]
 
     config += make_groups(options.get("groups", {}))
     config += make_users(options.get("users", {}))
