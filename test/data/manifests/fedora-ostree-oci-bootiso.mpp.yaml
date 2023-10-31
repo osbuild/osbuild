@@ -7,163 +7,6 @@ pipelines:
       id: build
     runner:
       mpp-format-string: org.osbuild.fedora{release}
-  - name: ostree-tree
-    build: name:build
-    stages:
-      - type: org.osbuild.rpm
-        options:
-          gpgkeys:
-            mpp-eval: gpgkeys
-        inputs:
-          packages:
-            type: org.osbuild.files
-            origin: org.osbuild.source
-            mpp-depsolve:
-              architecture: $arch
-              module-platform-id: $module_platform_id
-              repos:
-                mpp-eval: repos
-              packages:
-                - fedora-release-iot
-                - glibc
-                - glibc-minimal-langpack
-                - nss-altfiles
-                - sssd-client
-                - libsss_sudo
-                - shadow-utils
-                - kernel
-                - dracut-config-generic
-                - dracut-network
-                - rpm-ostree
-                - polkit
-                - lvm2
-                - chrony
-                - zram-generator-defaults
-                - cryptsetup
-                - pinentry
-                - keyutils
-                - e2fsprogs
-                - dosfstools
-                - gnupg2
-                - basesystem
-                - python3
-                - bash
-                - xz
-                - gzip
-                - coreutils
-                - which
-                - curl
-                - firewalld
-                - iptables
-                - NetworkManager
-                - NetworkManager-wifi
-                - NetworkManager-wwan
-                - wpa_supplicant
-                - iwd
-                - dnsmasq
-                - traceroute
-                - hostname
-                - iproute
-                - iputils
-                - openssh-clients
-                - openssh-server
-                - passwd
-                - policycoreutils
-                - procps-ng
-                - rootfiles
-                - rpm
-                - selinux-policy-targeted
-                - setup
-                - shadow-utils
-                - sudo
-                - systemd
-                - util-linux
-                - vim-minimal
-                - less
-                - tar
-                - fwupd
-                - greenboot
-                - greenboot-grub2
-                - greenboot-rpm-ostree-grub2
-                - greenboot-reboot
-                - greenboot-status
-                - ignition
-                - rsync
-                - ima-evm-utils
-                - bash-completion
-                - tmux
-                - screen
-                - policycoreutils-python-utils
-                - setools-console
-                - audit
-                - rng-tools
-                - bluez
-                - bluez-libs
-                - bluez-mesh
-                - wpan-tools
-                - kernel-tools
-                - libgpiod-utils
-                - podman
-                - container-selinux
-                - skopeo
-                - criu
-                - slirp4netns
-                - clevis
-                - clevis-dracut
-                - clevis-luks
-                - attr
-                - grub2
-                - grub2-efi-x64
-                - efibootmgr
-                - shim-x64
-                - microcode_ctl
-                - iwl1000-firmware
-                - iwl100-firmware
-                - iwl105-firmware
-                - iwl135-firmware
-                - iwl2000-firmware
-                - iwl2030-firmware
-                - iwl3160-firmware
-                - iwl5000-firmware
-                - iwl5150-firmware
-                - iwl6000-firmware
-                - iwl6050-firmware
-                - iwl7260-firmware
-              excludes:
-                - dracut-config-rescue
-      - type: org.osbuild.locale
-        options:
-          language: en_US.UTF-8
-      - type: org.osbuild.systemd
-        options:
-          enabled_services:
-            - NetworkManager.service
-            - firewalld.service
-            - rngd.service
-            - sshd.service
-      - type: org.osbuild.ostree.preptree
-        options:
-          etc_group_members:
-            - wheel
-            - docker
-  - name: ostree-commit
-    build: name:build
-    stages:
-      - type: org.osbuild.ostree.init
-        options:
-          path: /repo
-      - type: org.osbuild.ostree.commit
-        inputs:
-          tree:
-            type: org.osbuild.tree
-            origin: org.osbuild.pipeline
-            references:
-              - name:ostree-tree
-        options:
-          ref:
-            mpp-format-string: '{ref}'
-          os_version:
-            mpp-format-string: '{release}'
   - name: anaconda-tree
     build: name:build
     stages:
@@ -324,11 +167,29 @@ pipelines:
           exclude:
             docs: true
           disable_dracut: true
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: /var/osbuild
+              parents: true
+      - type: org.osbuild.skopeo
+        options:
+          destination:
+            type: oci
+            path: /var/osbuild/image
+        inputs:
+          images:
+            type: org.osbuild.containers
+            origin: org.osbuild.source
+            mpp-resolve-images:
+              images:
+                - source: registry.gitlab.com/redhat/services/products/image-builder/ci/images/silverblue
+                  tag: "38"
       - type: org.osbuild.buildstamp
         options:
           arch:
             mpp-format-string: '{arch}'
-          product: Fedora-IoT
+          product: Fedora-Silverblue
           version:
             mpp-format-string: '{release}'
           variant: osbuild
@@ -337,7 +198,7 @@ pipelines:
       - type: org.osbuild.dracut
         options:
           kernel:
-            - mpp-format-string: '{rpms[''ostree-tree''][''kernel''].evra}'
+            - mpp-format-string: '{rpms[''anaconda-tree''][''kernel''].evra}'
           add_modules:
             - anaconda
             - convertfs
@@ -348,6 +209,12 @@ pipelines:
             - qemu-net
           install:
             - /.buildstamp
+      - type: org.osbuild.kickstart
+        options:
+          path: /usr/share/anaconda/interactive-defaults.ks
+          ostreecontainer:
+            url: /var/osbuild/image
+            no-signature-verification: true
       - type: org.osbuild.locale
         options:
           language: en_US.UTF-8
@@ -387,7 +254,7 @@ pipelines:
       - type: org.osbuild.truncate
         options:
           filename: LiveOS/rootfs.img
-          size: 3GB
+          size: 8GB
       - type: org.osbuild.mkfs.ext4
         devices:
           device:
@@ -424,7 +291,7 @@ pipelines:
       - type: org.osbuild.grub2.iso
         options:
           product:
-            name: Fedora-IoT
+            name: Fedora-Silverblue
             version:
               mpp-format-string: '{release}'
           isolabel:
@@ -432,7 +299,7 @@ pipelines:
           kernel:
             dir: /images/pxeboot
             opts:
-              - mpp-format-string: inst.ks=hd:LABEL={isolabel}:/install.ks
+              - mpp-format-string: inst.stage2=hd:LABEL={isolabel}
           architectures:
             - IA32
             - X64
@@ -480,13 +347,13 @@ pipelines:
               - name:anaconda-tree
         options:
           product:
-            name: Fedora-IoT
+            name: Fedora-Silverblue
             version:
               mpp-format-string: '{release}'
           kernel:
             dir: /images/pxeboot
             opts:
-              - mpp-format-string: inst.ks=hd:LABEL={isolabel}:/install.ks
+              - mpp-format-string: inst.stage2=hd:LABEL={isolabel}
       - type: org.osbuild.truncate
         options:
           filename: images/efiboot.img
@@ -532,34 +399,6 @@ pipelines:
           paths:
             - from: input://base/EFI
               to: tree:///
-      - type: org.osbuild.ostree.init
-        options:
-          path: /ostree
-      - type: org.osbuild.ostree.pull
-        options:
-          repo: /ostree
-        inputs:
-          commits:
-            type: org.osbuild.ostree
-            origin: org.osbuild.pipeline
-            references:
-              name:ostree-commit:
-                ref:
-                  mpp-format-string: '{ref}'
-      - type: org.osbuild.kickstart
-        options:
-          path: install.ks
-          ostree:
-            osname: fedora
-            url: file:///run/install/repo/ostree
-            ref:
-              mpp-format-string: '{ref}'
-            gpg: false
-          users:
-            core:
-              password: edge
-              groups:
-                - wheel
       - type: org.osbuild.discinfo
         options:
           basearch:
