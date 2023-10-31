@@ -48,6 +48,19 @@ SCHEMA = r"""
       }
     }
   },
+  "ostreecontainer": {
+    "type": "object",
+    "required": ["url"],
+    "properties": {
+      "url": {
+        "type": "string"
+      },
+      "no-signature-verification": {
+        "type": "boolean",
+        "default": false
+      }
+    }
+  },
   "liveimg": {
     "type": "object",
     "required": ["url"],
@@ -282,6 +295,16 @@ def main(tree, options):
     if liveimg:
         url = liveimg["url"]
         config += [f"liveimg --url {url}"]
+
+    ostreecontainer = options.get("ostreecontainer")
+    if ostreecontainer:
+        url = ostreecontainer["url"]
+        cmd = f"ostreecontainer --transport oci --url={url}"
+
+        if ostreecontainer.get("no-signature-verification"):
+            cmd += " --no-signature-verification"
+
+        config += [cmd]
 
     config += make_groups(options.get("groups", {}))
     config += make_users(options.get("users", {}))
