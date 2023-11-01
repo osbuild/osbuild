@@ -92,7 +92,7 @@ def parse_mount(url: ParseResult, args: Dict):
     if name:
         root = args["mounts"].get(name, {}).get("path")
         if not root:
-            raise ValueError(f"Unknown mount '{root}'")
+            raise ValueError(f"Unknown mount '{name}'")
     else:
         root = args["paths"]["mounts"]
 
@@ -103,7 +103,7 @@ def parse_input(url: ParseResult, args: Dict):
     name = url.netloc
     root = args["inputs"].get(name, {}).get("path")
     if root is None:
-        raise ValueError(f"Unknown input '{root}'")
+        raise ValueError(f"Unknown input '{name}'")
 
     return root
 
