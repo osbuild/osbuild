@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """
-Install an container image into the container store.
+Copy a container image. The destination can be either a container store,
+or a directory compliant with 'Open Container Image Layout Specification'.
 This supports both oci archives and docker archives, and uses the containers
 input (reading from a skopeo source or a file in a pipeline).
 
@@ -15,6 +16,40 @@ import osbuild.api
 from osbuild.util import containers
 
 SCHEMA_2 = r"""
+"definitions": {
+  "destination-containers-storage": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["type"],
+    "properties": {
+      "type": {
+        "enum": ["containers-storage"]
+      },
+      "storage-path": {
+        "description": "Container storage location (default /var/lib/containers/storage).",
+        "type": "string"
+      },
+      "storage-driver": {
+        "description": "The container storage driver to use (default overlay).",
+        "type": "string"
+      }
+    }
+  },
+  "destination-oci": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["type", "path"],
+    "properties": {
+      "type": {
+        "enum": ["oci"]
+      },
+      "path": {
+        "description": "Location of a directory compliant with 'Open Container Image Layout Specification'",
+        "type": "string"
+      }
+    }
+  }
+},
 "inputs": {
   "type": "object",
   "additionalProperties": false,
@@ -36,22 +71,10 @@ SCHEMA_2 = r"""
   "required": ["destination"],
   "properties": {
     "destination": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["type"],
-      "properties": {
-        "type": {
-          "enum": ["containers-storage"]
-        },
-        "storage-path": {
-          "description": "Container storage location (default /var/lib/containers/storage).",
-          "type": "string"
-        },
-        "storage-driver": {
-          "description": "The container storage driver to use (default overlay).",
-          "type": "string"
-        }
-      }
+      "oneOf": [
+        {"$ref": "#/definitions/destination-containers-storage"},
+        {"$ref": "#/definitions/destination-oci"}
+      ]
     }
   }
 }
@@ -62,17 +85,23 @@ def main(inputs, output, options):
     images = containers.parse_containers_input(inputs)
 
     destination = options["destination"]
-    # The destination type is always containers-storage atm, so ignore "type"
-
-    storage_root = destination.get("storage-path", "/var/lib/containers/storage")
-    storage_driver = destination.get("storage-driver", "overlay")
+    dest_type = destination["type"]
 
     for image in images.values():
         with containers.container_source(image) as (image_name, image_source):
-            dest = f"containers-storage:[{storage_driver}@{output}{storage_root}+/run/containers/storage]{image_name}"
+            if dest_type == "containers-storage":
+                storage_root = destination.get("storage-path", "/var/lib/containers/storage")
+                storage_driver = destination.get("storage-driver", "overlay")
+                dest = f"containers-storage:[{storage_driver}@{output}{storage_root}+/run/containers/storage]{image_name}"
+            elif dest_type == "oci":
+                path = destination["path"]
+                dest = f"oci:{output}{path}"
+            else:
+                raise ValueError(f"Unknown destination type '{dest_type}'")
+
             subprocess.run(["skopeo", "copy", image_source, dest], check=True)
 
-    if storage_driver == "overlay":
+    if dest_type == "containers-storage" and storage_driver == "overlay":
         # Each time the overlay backend runs on an xfs fs it creates this file:
         backing_fs_block_dev = os.path.join(output, storage_root.lstrip("/"), "overlay/backingFsBlockDev")
         # It is not needed in the image as skopeo recreates it each
