@@ -45,7 +45,7 @@ from osbuild.util import ostree
 CAPABILITIES = ["CAP_MAC_ADMIN", "CAP_NET_ADMIN", "CAP_SYS_PTRACE"]
 
 
-SCHEMA = """
+SCHEMA = r"""
 "additionalProperties": false,
 "properties": {
   "etc_group_members": {
@@ -62,6 +62,103 @@ SCHEMA = """
     "description": "Create a regular directory for /tmp",
     "type": "boolean",
     "default": true
+  },
+  "filename": {
+    "type": "string",
+    "description": "Name of the dracut configuration file.",
+    "pattern": "^[\\w.-]{1,250}\\.conf$"
+  },
+  "config": {
+    "additionalProperties": false,
+    "type": "object",
+    "description": "dracut configuration.",
+    "minProperties": 1,
+    "properties": {
+      "compress": {
+        "description": "Compress the generated initramfs using the passed compression program.",
+        "type": "string"
+      },
+      "dracutmodules": {
+        "description": "Exact list of dracut modules to use.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "A dracut module, e.g. base, nfs, network ..."
+        }
+      },
+      "add_dracutmodules": {
+        "description": "Additional dracut modules to include.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "A dracut module, e.g. base, nfs, network ..."
+        }
+      },
+      "omit_dracutmodules": {
+        "description": "Dracut modules to not include.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "A dracut module, e.g. base, nfs, network ..."
+        }
+      },
+      "drivers": {
+        "description": "Kernel modules to exclusively include.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "A kernel module without the .ko extension."
+        }
+      },
+      "add_drivers": {
+        "description": "Add a specific kernel modules.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "A kernel module without the .ko extension."
+        }
+      },
+      "omit_drivers": {
+        "description": "Omit specific kernel modules.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "A kernel module without the .ko extension."
+        }
+      },
+      "force_drivers": {
+        "description": "Add driver and ensure that they are tried to be loaded.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "A kernel module without the .ko extension."
+        }
+      },
+      "filesystems": {
+        "description": "Kernel filesystem modules to exclusively include.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "A kernel module without the .ko extension."
+        }
+      },
+      "install_items": {
+        "description": "Install the specified files.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "Specify additional files to include in the initramfs."
+        }
+      },
+      "early_microcode": {
+        "description": "Combine early microcode with the initramfs.",
+        "type": "boolean"
+      },
+      "reproducible": {
+        "description": "Create reproducible images.",
+        "type": "boolean"
+      }
+    }
   }
 }
 """
@@ -109,11 +206,60 @@ def init_rootfs(root, tmp_is_dir):
     else:
         os.symlink("tmp", "sysroot/tmp", dir_fd=fd)
 
+def bool_to_string(value):
+    return "yes" if value else "no"
+
+# Writes to a given file option with the following format:
+# persistent_policy="<policy>"
+def string_option_writer(f, option, value):
+    f.write(f'{option}="{value}"\n')
+
+# Writes to a given file option with the following format:
+# add_dracutmodules+=" <dracut modules> "
+def list_option_writer(f, option, value):
+    value_str = " ".join(value)
+    f.write(f'{option}+=" {value_str} "\n')
+
+# Writes to a given file option with the following format:
+# reproducible="{yes|no}"
+def bool_option_writer(f, option, value):
+    f.write(f'{option}="{bool_to_string(value)}"\n')
 
 def main(tree, options):
     etc_group_members = options.get("etc_group_members", [])
     initramfs = options.get("initramfs-args", [])
     tmp_is_dir = options.get("tmp-is-dir", True)
+    config = options.get("config")
+    filename = options.get("filename")
+
+    config_files_dir = f"{tree}/usr/lib/dracut/dracut.conf.d"
+
+    SUPPORTED_OPTIONS = {
+        # simple string options
+        "compress": string_option_writer,
+        # list options
+        "add_dracutmodules": list_option_writer,
+        "dracutmodules": list_option_writer,
+        "omit_dracutmodules": list_option_writer,
+        "drivers": list_option_writer,
+        "add_drivers": list_option_writer,
+        "omit_drivers": list_option_writer,
+        "force_drivers": list_option_writer,
+        "filesystems": list_option_writer,
+        "install_items": list_option_writer,
+        # bool options
+        "early_microcode": bool_option_writer,
+        "reproducible": bool_option_writer
+    }
+
+    if filename:
+        with open(f"{config_files_dir}/{filename}", "w", encoding="utf8") as f:
+            for option, value in config.items():
+                try:
+                    writter_func = SUPPORTED_OPTIONS[option]
+                    writter_func(f, option, value)
+                except KeyError as e:
+                    raise ValueError(f"unsupported configuration option '{option}'") from e
 
     # rpm-ostree will either ensure that machine-id is empty
     # when machineid-compat is 'true' is or will remove it
