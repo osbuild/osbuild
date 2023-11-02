@@ -152,7 +152,7 @@ bzip2 -9 osbuild.pp
 %py3_install
 
 mkdir -p %{buildroot}%{pkgdir}/stages
-install -p -m 0755 $(find stages -type f) %{buildroot}%{pkgdir}/stages/
+install -p -m 0755 $(find stages -type f -not -name "test_*.py") %{buildroot}%{pkgdir}/stages/
 
 mkdir -p %{buildroot}%{pkgdir}/assemblers
 install -p -m 0755 $(find assemblers -type f) %{buildroot}%{pkgdir}/assemblers/
