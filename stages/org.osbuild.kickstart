@@ -119,6 +119,18 @@ SCHEMA = """
         }
       }
     }
+  },
+  "lang": {
+    "type": "string",
+    "description": "The language code (e.g. en_US.UTF-8)"
+  },
+  "keyboard": {
+    "type": "string",
+    "description": "The keyboard map (e.g. us)"
+  },
+  "timezone": {
+    "type": "string",
+    "description": "The timezone (e.g. UTC)"
   }
 }
 """
@@ -211,6 +223,16 @@ def main(tree, options):
 
     config += make_groups(options.get("groups", {}))
     config += make_users(options.get("users", {}))
+
+    lang = options.get("lang")
+    if lang:
+        config += [f"lang {lang}"]
+    keyboard = options.get("keyboard")
+    if keyboard:
+        config += [f"keyboard {keyboard}"]
+    tz = options.get("timezone")
+    if tz:
+        config += [f"timezone {tz}"]
 
     target = os.path.join(tree, path)
     base = os.path.dirname(target)
