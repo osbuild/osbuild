@@ -16,7 +16,7 @@ from typing import Dict, List
 
 import osbuild.api
 
-SCHEMA = """
+SCHEMA = r"""
 "additionalProperties": false,
 "required": ["path"],
 "properties": {
@@ -131,6 +131,45 @@ SCHEMA = """
   "timezone": {
     "type": "string",
     "description": "The timezone (e.g. UTC)"
+  },
+  "zerombr": {
+    "type": "boolean",
+    "description": "Reinitialize Partition Tables"
+  },
+  "clearpart": {
+    "description": "Removes partitions from the system, prior to creation of new partitions",
+    "type": "object",
+    "properties": {
+      "all": {
+        "description": "Erases all partitions from the system",
+        "type": "boolean"
+      },
+      "drives": {
+        "description": "Specifies which drives to clear partitions from",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9/:\\_|*-]+$"
+        }
+      },
+      "list": {
+        "description": "Specifies which partitions to clear",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9]+$"
+        }
+      },
+      "disklabel": {
+        "description": "Create a set disk label when relabeling a disk",
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]+$"
+      },
+      "linux": {
+        "description": "Erases all Linux partitions",
+        "type": "boolean"
+      }
+    }
   }
 }
 """
@@ -197,6 +236,29 @@ def make_users(users: Dict) -> List[str]:
     return res
 
 
+def make_clearpart(options: Dict) -> str:
+    clearpart = options.get("clearpart")
+    if clearpart is None:
+        return ""
+    cmd = "clearpart"
+    al = clearpart.get("all", False)
+    if al:
+        cmd += " --all"
+    drives = clearpart.get("drives", [])
+    if drives:
+        cmd += f" --drives={','.join(drives)}"
+    li = clearpart.get("list", [])
+    if li:
+        cmd += f" --list={','.join(li)}"
+    disklabel = clearpart.get("disklabel", "")
+    if disklabel:
+        cmd += f" --disklabel={disklabel}"
+    linux = clearpart.get("linux", False)
+    if linux:
+        cmd += " --linux"
+    return cmd
+
+
 def main(tree, options):
     path = options["path"].lstrip("/")
     ostree = options.get("ostree")
@@ -233,6 +295,12 @@ def main(tree, options):
     tz = options.get("timezone")
     if tz:
         config += [f"timezone {tz}"]
+    zerombr = options.get("zerombr")
+    if zerombr:
+        config += ["zerombr"]
+    clearpart = make_clearpart(options)
+    if clearpart:
+        config += [clearpart]
 
     target = os.path.join(tree, path)
     base = os.path.dirname(target)
