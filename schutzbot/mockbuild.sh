@@ -116,7 +116,7 @@ fi
 
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
-dnf_install_with_retry createrepo_c make mock python3-pip rpm-build s3cmd
+dnf_install_with_retry createrepo_c make mock python3-pip rpm-build s3cmd nosync
 
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
@@ -137,6 +137,7 @@ sudo usermod -a -G mock "$(whoami)"
 greenprint "🎁 Building RPMs with mock"
 mock -r $MOCK_CONFIG --no-bootstrap-chroot \
     --resultdir $REPO_DIR \
+    --config-opts=nosync=True \
     rpmbuild/SRPMS/*.src.rpm
 sudo chown -R $USER ${REPO_DIR}
 
