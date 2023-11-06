@@ -5,6 +5,7 @@ import subprocess
 
 import pytest
 
+import osbuild.meta
 from osbuild.testutil.imports import import_module_from_path
 
 
@@ -105,3 +106,42 @@ def test_kickstart(tmp_path, test_input, expected):
 
     # double check with pykickstart if the file looks valid
     subprocess.check_call(["ksvalidator", ks_path])
+
+
+@pytest.mark.parametrize("test_data,expected_err", [
+    # BAD pattern, ensure some obvious ways to write arbitrary
+    # kickstart files will not work
+    ({"clearpart": {"disklabel": r"\n%pre\necho p0wnd"}}, r"p0wnd' does not match"),
+    ({"clearpart": {"drives": [" --spaces-dashes-not-allowed"]}}, "' --spaces-dashes-not-allowed' does not match"),
+    ({"clearpart": {"drives": ["\n%pre not allowed"]}}, "not allowed' does not match"),
+    ({"clearpart": {"drives": ["no,comma"]}}, "no,comma' does not match"),
+    ({"clearpart": {"list": ["\n%pre not allowed"]}}, "not allowed' does not match"),
+    ({"clearpart": {"list": ["no,comma"]}}, "no,comma' does not match"),
+    ({"clearpart": {"disklabel": "\n%pre not allowed"}}, "not allowed' does not match"),
+    # GOOD pattern we want to keep working
+    ({"clearpart": {"drives": ["sd*|hd*|vda", "/dev/vdc"]}}, ""),
+    ({"clearpart": {"drives": ["disk/by-id/scsi-58095BEC5510947BE8C0360F604351918"]}}, ""),
+    ({"clearpart": {"list": ["sda2", "sda3", "sdb1"]}}, ""),
+])
+def test_schema_validation_smoke(test_data, expected_err):
+    name = "org.osbuild.kickstart"
+    root = os.path.join(os.path.dirname(__file__), "../..")
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
+    schema = osbuild.meta.Schema(mod_info.get_schema(), name)
+
+    test_input = {
+        "name": "org.osbuild.kickstart",
+        "options": {
+            "path": "some-path",
+        }
+    }
+    test_input["options"].update(test_data)
+    res = schema.validate(test_input)
+
+    if expected_err == "":
+        assert res.valid is True
+    else:
+        assert res.valid is False
+        assert len(res.errors) == 1
+        err_msgs = [e.as_dict()["message"] for e in res.errors]
+        assert expected_err in err_msgs[0]
