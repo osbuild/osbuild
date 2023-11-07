@@ -33,7 +33,7 @@ pipelines:
       id: build
     runner:
       mpp-format-string: org.osbuild.fedora{release}
-  - name: image-tree
+  - name: tree
     build: name:build
     source-epoch: 1659397331
     stages:
@@ -63,9 +63,6 @@ pipelines:
             - /boot/efi
           kernel_opts:
             - rw
-            - console=tty0
-            - console=ttyS0
-            - ignition.platform.id=qemu
             - '$ignition_firstboot'
         inputs:
           images:
@@ -93,7 +90,7 @@ pipelines:
           write_defaults: false
           greenboot: false
           ignition: true
-  - name: image
+  - name: raw-image
     build: name:build
     stages:
       - type: org.osbuild.truncate
@@ -157,7 +154,7 @@ pipelines:
             type: org.osbuild.tree
             origin: org.osbuild.pipeline
             references:
-              - name:image-tree
+              - name:tree
         options:
           paths:
             - from: input://tree/
@@ -217,7 +214,89 @@ pipelines:
             number:
               mpp-format-int: '{image.layout[''boot''].index}'
             path: /grub2
-  - name: qcow2
+  - name: raw-metal-image
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:raw-image
+        options:
+          paths:
+            - from: input://tree/disk.img
+              to: tree:///disk.img
+      - type: org.osbuild.kernel-cmdline.bls-append
+        options:
+          bootpath: mount:///
+          kernel_opts:
+            - ignition.platform.id=metal
+        devices:
+          boot:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+        mounts:
+          - name: boot
+            type: org.osbuild.ext4
+            source: boot
+            target: /
+  - name: raw-qemu-image
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:raw-image
+        options:
+          paths:
+            - from: input://tree/disk.img
+              to: tree:///disk.img
+      - type: org.osbuild.kernel-cmdline.bls-append
+        options:
+          bootpath: mount:///
+          kernel_opts:
+            - console=tty0
+            - console=ttyS0,115200n8
+            - ignition.platform.id=qemu
+        devices:
+          boot:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+        mounts:
+          - name: boot
+            type: org.osbuild.ext4
+            source: boot
+            target: /
+  - name: metal
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:raw-metal-image
+        options:
+          paths:
+            - from: input://tree/disk.img
+              to: tree:///metal.raw
+  - name: qemu
     build: name:build
     stages:
       - type: org.osbuild.qemu
@@ -226,10 +305,10 @@ pipelines:
             type: org.osbuild.files
             origin: org.osbuild.pipeline
             references:
-              name:image:
+              name:raw-qemu-image:
                 file: disk.img
         options:
-          filename: disk.qcow2
+          filename: qemu.qcow2
           format:
             type: qcow2
             compat: '1.1'
