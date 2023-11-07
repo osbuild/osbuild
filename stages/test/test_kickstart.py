@@ -53,6 +53,40 @@ from osbuild.testutil.imports import import_module_from_path
      "user --name someusr --password $1$notreally --iscrypted --shell /bin/ksh --uid 1337 --gid 1337 --groups grp1,grp2 --homedir /other/home/someusr\n" +
      'sshkey --username someusr "ssh-rsa not-really-a-real-key"'
      ),
+    ({"zerombr": "true"}, "zerombr"),
+    ({"clearpart": {}}, "clearpart"),
+    ({"clearpart": {"all": True}}, "clearpart --all"),
+    ({"clearpart": {"drives": ["hda", "hdb"]}}, "clearpart --drives=hda,hdb",),
+    ({"clearpart": {"drives": ["hda"]}}, "clearpart --drives=hda"),
+    ({"clearpart": {"list": ["sda2", "sda3"]}}, "clearpart --list=sda2,sda3"),
+    ({"clearpart": {"list": ["sda2"]}}, "clearpart --list=sda2"),
+    ({"clearpart": {"disklabel": "some-label"}},
+     "clearpart --disklabel=some-label",
+     ),
+    ({"clearpart": {"linux": True}}, "clearpart --linux"),
+    ({"clearpart": {
+        "all": True,
+        "drives": ["hda", "hdb"],
+        "list": ["sda2", "sda3"],
+        "disklabel": "some-label",
+        "linux": True,
+    },
+    },
+        "clearpart --all --drives=hda,hdb --list=sda2,sda3 --disklabel=some-label --linux"),
+    ({"lang": "en_US.UTF-8",
+              "keyboard": "us",
+              "timezone": "UTC",
+              "zerombr": True,
+              "clearpart": {
+                  "all": True,
+                  "drives": [
+                      "sd*|hd*|vda",
+                      "/dev/vdc"
+                  ]
+              }
+      },
+        "lang en_US.UTF-8\nkeyboard us\ntimezone UTC\nzerombr\nclearpart --all --drives=sd*|hd*|vda,/dev/vdc",
+     ),
 ])
 def test_kickstart(tmp_path, test_input, expected):
     ks_stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.kickstart")
