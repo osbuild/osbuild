@@ -95,8 +95,11 @@ def run_tests(args, tmpdir):
         "fedora-coreos-container": {
             "manifest": "fedora-coreos-container.json",
             "exports": {
-                "qcow2": {
-                    "artifact": "disk.qcow2"
+                "qemu": {
+                    "artifact": "qemu.qcow2"
+                },
+                "metal": {
+                    "artifact": "metal.raw"
                 }
             },
         }
