@@ -8,7 +8,13 @@ Enable, disable or mask systemd units (service, socket, path, etc.) by running
 This stage runs `systemctl enable` for all `enabled_services` items, which may
 create symlinks under `/etc/systemd/system`.
 After enabling units, it runs `systemctl disable` for all `disabled_services`
-items, which will delete _all_ symlinks to the named services.
+items, which will delete _all_ symlinks to the named services. By default
+systemd would enable/disable the services under '/etc/systemd/system' but
+systemd also allows to manage systemd user services creating symlinks under
+'/etc/systemd/user' which they would be availables for every user session.
+The 'scope' option allows to define where to enable/disable the services,
+under '/etc/systemd/system' or '/etc/systemd/user', setting the values:
+'system' or 'user-global'.
 
 The 'default_target' option allows to configure the default Systemd target.
 
@@ -50,6 +56,11 @@ SCHEMA = r"""
   "default_target": {
     "type": "string",
     "description": "The default target to boot into"
+  },
+  "scope": {
+    "type": "string",
+    "enum": ["system", "user-global"],
+    "description": "The scope where a systemd unit is enabled/disabled"
   }
 }
 """
@@ -60,12 +71,23 @@ def main(tree, options):
     disabled_services = options.get("disabled_services", [])
     masked_services = options.get("masked_services", [])
     default_target = options.get("default_target")
+    scope = options.get("scope", "system")
 
     for service in enabled_services:
-        subprocess.run(["systemctl", "--root", tree, "enable", service], check=True)
+        command = ["systemctl", "--root", tree, "enable", service]
+        if scope == "system":
+            command.insert(1, "--system")
+        elif scope == "user-global":
+            command.insert(1, "--global")
+        subprocess.run(command, check=True)
 
     for service in disabled_services:
-        subprocess.run(["systemctl", "--root", tree, "disable", service], check=True)
+        command = ["systemctl", "--root", tree, "disable", service]
+        if scope == "system":
+            command.insert(1, "--system")
+        elif scope == "user-global":
+            command.insert(1, "--global")
+        subprocess.run(command, check=True)
 
     for service in masked_services:
         subprocess.run(["systemctl", "--root", tree, "mask", service], check=True)
