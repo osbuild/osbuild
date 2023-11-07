@@ -33,5 +33,16 @@ jobs:
       with:
         image: ghcr.io/osbuild/osbuild-ci:latest-202308241910
         run: |
+          # Note that only "test.run.test_stages" runs in parallel because
+          # the other tests are not sufficiently isolated and will cause
+          # random failures. But test_stages is the long running one with
+          # almost 2h.
+          if [ "${{ matrix.test }}" = "test.run.test_stages" ]; then
+              # Using 4 workers is a bit arbitrary, "auto" is probably too
+              # aggressive.
+              export TEST_WORKERS="-n 4"
+              # Share the store between the workers speeds things up further
+              export OSBUILD_TEST_STORE=/var/tmp/osbuild-test-store
+          fi
           TEST_CATEGORY="${{ matrix.test }}" \
           tox -e "${{ matrix.environment }}"
