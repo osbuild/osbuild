@@ -107,6 +107,56 @@ TEST_INPUT = [
     ({"display_mode": "text"}, "text"),
     ({"display_mode": "graphical"}, "graphical"),
     ({"display_mode": "cmdline"}, "cmdline"),
+    # autopart
+    ({"autopart": {}}, "autopart"),
+    ({"autopart": {"type": "plain"}}, "autopart --type=plain"),
+    ({"autopart": {"fstype": "ext4"}}, "autopart --fstype=ext4"),
+    ({"autopart": {"nolvm": True}}, "autopart --nolvm"),
+    ({"autopart": {"encrypted": True}}, "autopart --encrypted"),
+    ({"autopart": {"passphrase": "secret"}}, "autopart --passphrase=secret"),
+    ({"autopart": {"escrowcert": "http://escrow"}}, "autopart --escrowcert=http://escrow"),
+    ({"autopart": {"backuppassphrase": True}}, "autopart --backuppassphrase"),
+    ({"autopart": {"cipher": "aes-xts-plain2048"}}, "autopart --cipher=aes-xts-plain2048"),
+    ({"autopart": {"luks-version": "42"}}, "autopart --luks-version=42"),
+    ({"autopart": {"pbkdf": "scrypt"}}, "autopart --pbkdf=scrypt"),
+    ({"autopart": {"pbkdf-memory": 64}}, "autopart --pbkdf-memory=64"),
+    ({"autopart": {"pbkdf-time": 128}}, "autopart --pbkdf-time=128"),
+    ({"autopart": {"pbkdf-iterations": 256}}, "autopart --pbkdf-iterations=256"),
+    ({
+        "lang": "en_US.UTF-8",
+        "keyboard": "us",
+        "timezone": "UTC",
+        "zerombr": True,
+        "clearpart": {
+            "all": True,
+            "drives": [
+                "sd*|hd*|vda",
+                "/dev/vdc"
+            ]
+        },
+        "autopart": {
+            "type": "lvm",
+            "fstype": "zfs",
+            "nolvm": True,
+            "encrypted": True,
+            "passphrase": "secret2",
+            "escrowcert": "http://some-url",
+            "backuppassphrase": True,
+            "cipher": "twofish-cbc",
+            "luks-version": "2",
+            "pbkdf": "scrypt",
+            "pbkdf-memory": 256,
+            "pbkdf-time": 512,
+            # pbkdf-iterations cannot be used together with time
+        },
+    },
+        "lang en_US.UTF-8\nkeyboard us\ntimezone UTC\nzerombr\n" +
+        "clearpart --all --drives=sd*|hd*|vda,/dev/vdc\n" +
+        "autopart --type=lvm --fstype=zfs --nolvm --encrypted" +
+        " --passphrase=secret2 --escrowcert=http://some-url" +
+        " --backuppassphrase --cipher=twofish-cbc --luks-version=2" +
+        " --pbkdf=scrypt --pbkdf-memory=256 --pbkdf-time=512"
+    ),
 ]
 
 
@@ -186,6 +236,10 @@ def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unu
         ({"reboot": "random-string"}, "'random-string' is not valid "),
         ({"reboot": {"random": "option"}}, "{'random': 'option'} is not valid "),
         ({"display_mode": "invalid-mode"}, "'invalid-mode' is not one of "),
+        # autopart
+        ({"autopart": {"type": "not-valid"}}, "'not-valid' is not one of ["),
+        # Only one of --pbkdf-{time,iterations} can be specified at the same time
+        ({"autopart": {"pbkdf-time": 1, "pbkdf-iterations": 2}}, " should not be valid under "),
     ],
 )
 def test_schema_validation_bad_apples(test_data, expected_err):

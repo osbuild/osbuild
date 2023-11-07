@@ -202,6 +202,66 @@ SCHEMA = r"""
   "display_mode": {
     "description": "Perform the Kickstart installation in the given display mode",
     "enum": ["text", "graphical", "cmdline"]
+  },
+  "autopart": {
+    "description": "Automatically creates partitions",
+    "type": "object",
+    "not": {"required": ["pbkdf-iterations", "pbkdf-time"]},
+    "properties": {
+      "type": {
+        "description": "Selects one of the predefined automatic partitioning schemes you want to use",
+        "type": "string",
+         "enum": ["lvm", "btrfs", "plain", "thinp"]
+      },
+      "fstype": {
+        "description": "Specify a supported file system (such as ext4 or xfs) to replace the default when doing automatic partitioning",
+        "type": "string"
+      },
+      "nolvm": {
+        "description": "Do not use LVM or Btrfs for automatic partitioning. This option is equal to --type=plain",
+        "type": "boolean"
+      },
+      "encrypted": {
+        "description": "Encrypts all partitions",
+        "type": "boolean"
+      },
+      "passphrase": {
+        "description": "Provides a default system-wide passphrase for all encrypted devices",
+        "type": "string"
+      },
+      "escrowcert": {
+        "description": "Stores data encryption keys of all encrypted volumes as files in /root, encrypted using the X.509 certificate from the URL specified",
+        "type": "string"
+      },
+      "backuppassphrase": {
+        "description": "Adds a randomly-generated passphrase to each encrypted volume",
+        "type": "boolean"
+      },
+      "cipher": {
+        "description": "Specifies which type of encryption will be used if the Anaconda default aes-xts-plain64 is not satisfactory",
+        "type": "string"
+      },
+      "luks-version": {
+        "description": "Specifies which version of LUKS should be used to encrypt the system",
+        "type": "string"
+      },
+      "pbkdf": {
+        "description": "Sets Password-Based Key Derivation Function (PBKDF) algorithm for the LUKS keyslot",
+        "type": "string"
+      },
+      "pbkdf-memory": {
+        "description": "Sets the memory cost for PBKDF",
+        "type": "integer"
+      },
+      "pbkdf-time": {
+        "description": "Sets the number of milliseconds to spend with PBKDF passphrase processing",
+        "type": "integer"
+      },
+      "pbkdf-iterations": {
+        "description": "Sets the number of iterations for passphrase processing directly",
+        "type": "integer"
+      }
+    }
   }
 }
 """
@@ -304,7 +364,25 @@ def make_reboot(options):
     return cmd
 
 
-def main(tree, options):
+def make_autopart(options: Dict) -> str:
+    autopart = options.get("autopart")
+    if autopart is None:
+        return ""
+    cmd = "autopart"
+    for key in ["type", "fstype", "nolvm", "encrypted", "passphrase",
+                "escrowcert", "backuppassphrase", "cipher", "luks-version",
+                "pbkdf", "pbkdf-memory", "pbkdf-time", "pbkdf-iterations"]:
+        if key not in autopart:
+            continue
+        val = autopart[key]
+        if isinstance(val, bool):
+            cmd += f" --{key}"
+        else:
+            cmd += f" --{key}={val}"
+    return cmd
+
+
+def main(tree, options):  # pylint: disable=too-many-branches
     path = options["path"].lstrip("/")
     ostree = options.get("ostree")
 
@@ -349,7 +427,9 @@ def main(tree, options):
     display_mode = options.get("display_mode")
     if display_mode:
         config += [display_mode]
-
+    autopart = make_autopart(options)
+    if autopart:
+        config += [autopart]
     reboot = make_reboot(options)
     if reboot:
         config += [reboot]
