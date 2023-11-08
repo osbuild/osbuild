@@ -1,0 +1,50 @@
+#!/usr/bin/python3
+"""
+Sets the policy applicable for the various cryptographic back-ends,
+such as SSL/TLS libraries.
+
+This stage calls `update-crypto-policies` to set the system's
+cryptographic policy.
+
+Notes:
+  - Requires 'chroot' in the buildroot.
+  - Runs the 'update-crypto-policies' script from the image in the chroot.
+"""
+
+
+import subprocess
+import sys
+
+from osbuild import api
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "description": "Sets the current policy and overwrites the config file",
+  "required": [ "policy" ],
+  "properties": {
+    "policy": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The policy to be applied."
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    policy = options["policy"]
+
+    cmd = ["/usr/sbin/chroot", tree,
+           "/usr/bin/update-crypto-policies", "--set", policy]
+
+    subprocess.run(cmd, check=True)
+
+    return 0
+
+
+if __name__ == "__main__":
+    args = api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
