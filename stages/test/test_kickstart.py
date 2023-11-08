@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os.path
+import subprocess
 
 import pytest
 
@@ -16,6 +17,42 @@ from osbuild.testutil.imports import import_module_from_path
       "timezone": "UTC",
       },
      "lang en_US.UTF-8\nkeyboard us\ntimezone UTC"),
+    ({"ostree":
+      {
+          "osname": "some-osname",
+          "url": "http://some-ostree-url.com/foo",
+          "ref": "some-ref",
+          "remote": "some-remote",
+          "gpg": True,
+      },
+      "liveimg": {
+          "url": "some-liveimg-url",
+      },
+      "groups": {
+          "somegrp": {
+              "gid": 2337,
+          },
+      },
+      "users": {
+          "someusr": {
+              "uid": 1337,
+              "gid": 1337,
+              "groups": [
+                  "grp1",
+                  "grp2",
+              ],
+              "home": "/other/home/someusr",
+              "shell": "/bin/ksh",
+              "password": "$1$notreally",
+              "key": "ssh-rsa not-really-a-real-key",
+          },
+      },
+      },
+     "ostreesetup --osname=some-osname --url=http://some-ostree-url.com/foo --ref=some-ref --remote=some-remote\n" +
+     "liveimg --url some-liveimg-url\ngroup --name somegrp --gid 2337\n" +
+     "user --name someusr --password $1$notreally --iscrypted --shell /bin/ksh --uid 1337 --gid 1337 --groups grp1,grp2 --homedir /other/home/someusr\n" +
+     'sshkey --username someusr "ssh-rsa not-really-a-real-key"'
+     ),
 ])
 def test_kickstart(tmp_path, test_input, expected):
     ks_stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.kickstart")
@@ -27,6 +64,10 @@ def test_kickstart(tmp_path, test_input, expected):
 
     ks_stage.main(tmp_path, options)
 
-    with open(os.path.join(tmp_path, ks_path), encoding="utf-8") as fp:
+    ks_path = os.path.join(tmp_path, ks_path)
+    with open(ks_path, encoding="utf-8") as fp:
         ks_content = fp.read()
     assert ks_content == expected + "\n"
+
+    # double check with pykickstart if the file looks valid
+    subprocess.check_call(["ksvalidator", ks_path])
