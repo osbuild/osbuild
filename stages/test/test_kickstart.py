@@ -55,8 +55,6 @@ from osbuild.testutil.imports import import_module_from_path
      'sshkey --username someusr "ssh-rsa not-really-a-real-key"'
      ),
     ({"zerombr": "true"}, "zerombr"),
-    # no clearpart for an empty dict (will not do anything with options anyway)
-    ({"clearpart": {}}, ""),
     ({"clearpart": {"all": True}}, "clearpart --all"),
     ({"clearpart": {"drives": ["hda", "hdb"]}}, "clearpart --drives=hda,hdb",),
     ({"clearpart": {"drives": ["hda"]}}, "clearpart --drives=hda"),
@@ -120,6 +118,7 @@ def test_kickstart(tmp_path, test_input, expected):
 @pytest.mark.parametrize("test_data,expected_err", [
     # BAD pattern, ensure some obvious ways to write arbitrary
     # kickstart files will not work
+    ({"clearpart": {}}, "{} is not valid "),
     ({"clearpart": {"disklabel": r"\n%pre\necho p0wnd"}}, r"p0wnd' does not match"),
     ({"clearpart": {"drives": [" --spaces-dashes-not-allowed"]}}, "' --spaces-dashes-not-allowed' does not match"),
     ({"clearpart": {"drives": ["\n%pre not allowed"]}}, "not allowed' does not match"),
