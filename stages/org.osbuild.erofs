@@ -87,6 +87,7 @@ def main(inputs, output_dir, options):
             method += f",{compression['level']}"
         cmd += ["-z", method]
 
+    options = options.get("options")
     if options:
         cmd += ["-E", ",".join(options)]
 
