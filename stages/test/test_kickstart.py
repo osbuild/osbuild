@@ -178,6 +178,7 @@ def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unu
         ({"clearpart": {"list": ["\n%pre not allowed"]}}, "not allowed' does not match"),
         ({"clearpart": {"list": ["no,comma"]}}, "no,comma' does not match"),
         ({"clearpart": {"disklabel": "\n%pre not allowed"}}, "not allowed' does not match"),
+        ({"clearpart": {"random": "option"}}, "is not valid "),
         # schema ensures reboot has at least one option set
         ({"reboot": {}}, "{} is not valid under any of the given schemas"),
         ({"reboot": "random-string"}, "'random-string' is not valid "),
