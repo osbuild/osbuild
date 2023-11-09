@@ -98,13 +98,15 @@ TEST_INPUT = [
         },
         "lang en_US.UTF-8\nkeyboard us\ntimezone UTC\nzerombr\nclearpart --all --drives=sd*|hd*|vda,/dev/vdc",
     ),
-    # no reboot for an empty dict
     ({"reboot": True}, "reboot"),
     ({"reboot": {"eject": False}}, "reboot"),
     ({"reboot": {"eject": True}}, "reboot --eject"),
     ({"reboot": {"kexec": False}}, "reboot"),
     ({"reboot": {"kexec": True}}, "reboot --kexec"),
     ({"reboot": {"eject": True, "kexec": True}}, "reboot --eject --kexec"),
+    ({"display_mode": "text"}, "text"),
+    ({"display_mode": "graphical"}, "graphical"),
+    ({"display_mode": "cmdline"}, "cmdline"),
 ]
 
 
@@ -183,6 +185,7 @@ def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unu
         ({"reboot": {}}, "{} is not valid under any of the given schemas"),
         ({"reboot": "random-string"}, "'random-string' is not valid "),
         ({"reboot": {"random": "option"}}, "{'random': 'option'} is not valid "),
+        ({"display_mode": "invalid-mode"}, "'invalid-mode' is not one of "),
     ],
 )
 def test_schema_validation_bad_apples(test_data, expected_err):
