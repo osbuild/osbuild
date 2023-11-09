@@ -198,6 +198,10 @@ SCHEMA = r"""
         }
       }
     }]
+  },
+  "display_mode": {
+    "description": "Perform the Kickstart installation in the given display mode",
+    "enum": ["text", "graphical", "cmdline"]
   }
 }
 """
@@ -342,6 +346,9 @@ def main(tree, options):
     clearpart = make_clearpart(options)
     if clearpart:
         config += [clearpart]
+    display_mode = options.get("display_mode")
+    if display_mode:
+        config += [display_mode]
 
     reboot = make_reboot(options)
     if reboot:
