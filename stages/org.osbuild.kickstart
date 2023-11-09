@@ -139,6 +139,13 @@ SCHEMA = r"""
   "clearpart": {
     "description": "Removes partitions from the system, prior to creation of new partitions",
     "type": "object",
+    "anyOf": [
+      {"required": ["all"]},
+      {"required": ["drives"]},
+      {"required": ["list"]},
+      {"required": ["disklabel"]},
+      {"required": ["linux"]}
+    ],
     "properties": {
       "all": {
         "description": "Erases all partitions from the system",
