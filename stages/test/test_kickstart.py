@@ -55,7 +55,8 @@ from osbuild.testutil.imports import import_module_from_path
      'sshkey --username someusr "ssh-rsa not-really-a-real-key"'
      ),
     ({"zerombr": "true"}, "zerombr"),
-    ({"clearpart": {}}, "clearpart"),
+    # no clearpart for an empty dict (will not do anything with options anyway)
+    ({"clearpart": {}}, ""),
     ({"clearpart": {"all": True}}, "clearpart --all"),
     ({"clearpart": {"drives": ["hda", "hdb"]}}, "clearpart --drives=hda,hdb",),
     ({"clearpart": {"drives": ["hda"]}}, "clearpart --drives=hda"),
@@ -88,6 +89,13 @@ from osbuild.testutil.imports import import_module_from_path
       },
         "lang en_US.UTF-8\nkeyboard us\ntimezone UTC\nzerombr\nclearpart --all --drives=sd*|hd*|vda,/dev/vdc",
      ),
+    # no reboot for an empty dict
+    ({"reboot": True}, "reboot"),
+    ({"reboot": {"eject": False}}, "reboot"),
+    ({"reboot": {"eject": True}}, "reboot --eject"),
+    ({"reboot": {"kexec": False}}, "reboot"),
+    ({"reboot": {"kexec": True}}, "reboot --kexec"),
+    ({"reboot": {"eject": True, "kexec": True}}, "reboot --eject --kexec"),
 ])
 def test_kickstart(tmp_path, test_input, expected):
     ks_stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.kickstart")
@@ -105,7 +113,8 @@ def test_kickstart(tmp_path, test_input, expected):
     assert ks_content == expected + "\n"
 
     # double check with pykickstart if the file looks valid
-    subprocess.check_call(["ksvalidator", ks_path])
+    if expected:
+        subprocess.check_call(["ksvalidator", ks_path])
 
 
 @pytest.mark.parametrize("test_data,expected_err", [
@@ -118,10 +127,16 @@ def test_kickstart(tmp_path, test_input, expected):
     ({"clearpart": {"list": ["\n%pre not allowed"]}}, "not allowed' does not match"),
     ({"clearpart": {"list": ["no,comma"]}}, "no,comma' does not match"),
     ({"clearpart": {"disklabel": "\n%pre not allowed"}}, "not allowed' does not match"),
+    # schema ensures reboot has at least one option set
+    ({"reboot": {}}, "{} is not valid under any of the given schemas"),
+    ({"reboot": "random-string"}, "'random-string' is not valid "),
+    ({"reboot": {"random": "option"}}, "{'random': 'option'} is not valid "),
     # GOOD pattern we want to keep working
     ({"clearpart": {"drives": ["sd*|hd*|vda", "/dev/vdc"]}}, ""),
     ({"clearpart": {"drives": ["disk/by-id/scsi-58095BEC5510947BE8C0360F604351918"]}}, ""),
     ({"clearpart": {"list": ["sda2", "sda3", "sdb1"]}}, ""),
+    ({"reboot": True}, ""),
+    ({"reboot": {"kexec": False}}, ""),
 ])
 def test_schema_validation_smoke(test_data, expected_err):
     name = "org.osbuild.kickstart"
@@ -139,7 +154,7 @@ def test_schema_validation_smoke(test_data, expected_err):
     res = schema.validate(test_input)
 
     if expected_err == "":
-        assert res.valid is True
+        assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
     else:
         assert res.valid is False
         assert len(res.errors) == 1

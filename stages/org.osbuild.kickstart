@@ -170,6 +170,27 @@ SCHEMA = r"""
         "type": "boolean"
       }
     }
+  },
+  "reboot": {
+    "description": "Reboot after the installation is successfully completed",
+    "oneOf": [
+    {
+      "type": "boolean"
+    }, {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [{"required": ["eject"]}, {"required": ["kexec"]}],
+      "properties": {
+        "eject": {
+          "description": "Attempt to eject the installation media before rebooting",
+          "type": "boolean"
+        },
+        "kexec": {
+          "description": "Use this option to reboot into the new system using the kexec",
+          "type": "boolean"
+        }
+      }
+    }]
   }
 }
 """
@@ -259,6 +280,19 @@ def make_clearpart(options: Dict) -> str:
     return cmd
 
 
+def make_reboot(options):
+    reboot = options.get("reboot", None)
+    if not reboot:
+        return ""
+    cmd = "reboot"
+    if isinstance(reboot, dict):
+        if reboot.get("eject"):
+            cmd += " --eject"
+        if reboot.get("kexec"):
+            cmd += " --kexec"
+    return cmd
+
+
 def main(tree, options):
     path = options["path"].lstrip("/")
     ostree = options.get("ostree")
@@ -301,6 +335,10 @@ def main(tree, options):
     clearpart = make_clearpart(options)
     if clearpart:
         config += [clearpart]
+
+    reboot = make_reboot(options)
+    if reboot:
+        config += [reboot]
 
     target = os.path.join(tree, path)
     base = os.path.dirname(target)
