@@ -5,16 +5,17 @@ against the current snapshot list"""
 import argparse
 import json
 import os
-import sys
 import subprocess
+import sys
 import time
 from urllib.parse import urlparse
 
 import requests
 
-SNAPSHOTS_URL="https://rpmrepo.osbuild.org/v2/enumerate"
+SNAPSHOTS_URL = "https://rpmrepo.osbuild.org/v2/enumerate"
 SNAPSHOTS_TIMEOUT = 2 * 60
 SNAPSHOT_GREP = ["grep", "--color=never", "-or", r"http.*rpmrepo.osbuild.org.*-20[0-9]\+"]
+
 
 def fetch_snapshots_api(url, timeout=SNAPSHOTS_TIMEOUT):
     """Get the list of snapshots from the rpmrepo API"""
@@ -22,7 +23,7 @@ def fetch_snapshots_api(url, timeout=SNAPSHOTS_TIMEOUT):
     start = time.time()
     try:
         r = requests.get(url, timeout=timeout)
-    except:
+    except BaseException:
         return None
     elapsed = time.time() - start
     if r.status_code != 200:
@@ -143,7 +144,7 @@ def check_snapshot_urls(urls, snapshots, skip=["test/data/manifests", "test/data
 
 # parse cmdline args
 def parse_args():
-    parser =argparse.ArgumentParser(description="Check snapshot urls")
+    parser = argparse.ArgumentParser(description="Check snapshot urls")
     parser.add_argument("--verbose")
     parser.add_argument("--timeout", type=int, default=SNAPSHOTS_TIMEOUT,
                         help="How long to wait for rpmrepo snapshot list")
@@ -155,6 +156,7 @@ def parse_args():
     parser.add_argument("directory")
     return parser.parse_args()
 
+
 def main():
     args = parse_args()
     urls = find_snapshot_urls(args.directory)
@@ -164,7 +166,7 @@ def main():
         try:
             with open(args.cache, encoding="utf8") as f:
                 snapshots = json.load(f)
-        except:
+        except BaseException:
             print(f"No snapshots cache found at {args.cache}")
             sys.exit(1)
     else:
@@ -176,5 +178,5 @@ def main():
     return check_snapshot_urls(urls, snapshots, errors_only=args.errors_only)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     sys.exit(main())
