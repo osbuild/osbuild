@@ -364,8 +364,7 @@ import hawkey
 import rpm
 import yaml
 
-from osbuild.util import containers
-from osbuild.util import ostree
+from osbuild.util import containers, ostree
 from osbuild.util.rhsm import Subscriptions
 
 # We need to resolve an image name to a resolved image manifest digest
@@ -1314,6 +1313,7 @@ class ManifestFile:
     def _process_ostree(self, _stage):
         raise NotImplementedError()
 
+
 class ManifestFileV1(ManifestFile):
     def __init__(self, path, overrides, default_vars, data, searchdirs):
         super().__init__(path, overrides, default_vars, data, searchdirs, 1)
@@ -1547,11 +1547,11 @@ class ManifestFileV2(ManifestFile):
 
     def _process_container(self, stage):
         if stage.get("type", "") not in \
-            ["org.osbuild.skopeo", "org.osbuild.ostree.deploy.container"]:
+                ["org.osbuild.skopeo", "org.osbuild.ostree.deploy.container"]:
             return
 
         inputs = element_enter(stage, "inputs", {})
- 
+
         inputs_images = element_enter(inputs, "images", {})
 
         if inputs_images.get("type", "") != "org.osbuild.containers":
@@ -1622,7 +1622,7 @@ class ManifestFileV2(ManifestFile):
 
     def _process_ostree_commits(self, stage):
         if stage.get("type", "") not in \
-            ["org.osbuild.ostree.pull", "org.osbuild.ostree.deploy"]:
+                ["org.osbuild.ostree.pull", "org.osbuild.ostree.deploy"]:
             return
 
         # The ostree.deploy stage accepts both containers or
@@ -1665,8 +1665,8 @@ class ManifestFileV2(ManifestFile):
                 # This is a temporary repo so we'll just use a random name
                 remote_name = "tmpremote"
                 ostree.setup_remote(tmprepo, remote_name, remote)
-                ostree.cli( "pull", "--commit-metadata-only",
-                            "--mirror", remote_name, ref, repo=tmprepo)
+                ostree.cli("pull", "--commit-metadata-only",
+                           "--mirror", remote_name, ref, repo=tmprepo)
                 checksum = ostree.rev_parse(tmprepo, ref)
                 items[checksum] = {
                     "remote": remote
