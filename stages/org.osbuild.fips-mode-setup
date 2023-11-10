@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+"""
+Enables the system FIPS mode.
+
+This stage calls `fips-mode-setup` to enable system FIPS mode.
+
+Notes:
+  - Requires 'chroot' in the buildroot.
+  - Runs the 'fips-mode-setup' script from the image in the chroot.
+"""
+
+
+import os.path
+import subprocess
+import sys
+
+from osbuild import api
+from osbuild.util.mnt import MountGuard
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "description": "Enables the system FIPS mode",
+  "properties": {
+    "boot_cfg": {
+      "type": "boolean",
+      "description": "Reconfigure the boot loader"
+    }
+  }
+}
+"""
+
+
+def main(tree, options):
+    mounts = [
+        {"path": "/dev", "bind": True, "ro": False},
+        {"path": "/sys", "bind": True, "ro": True},
+        {"path": "/proc", "bind": True, "ro": True},
+    ]
+
+    with MountGuard() as mounter:
+        for mount in mounts:
+            ro = mount["ro"]
+            bind = mount["bind"]
+            src = mount["path"]
+            dest = os.path.join(tree, src.lstrip("/"))
+            os.makedirs(dest, exist_ok=True)
+            os.chmod(dest, mount.get("mode", 0o755))
+            mounter.mount(src, dest, bind=bind, ro=ro)
+
+        os.symlink("/proc/self/fd", f"{tree}/dev/fd")
+
+        cmd = ["/usr/sbin/chroot", tree,
+               "/usr/bin/fips-mode-setup", "--enable"]
+
+        boot_cfg = options.get("boot_cfg", False)
+        if not boot_cfg:
+            cmd.append("--no-bootcfg")
+
+        subprocess.run(cmd, check=True)
+
+        os.remove(f"{tree}/dev/fd")
+
+    return 0
+
+
+if __name__ == "__main__":
+    args = api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
