@@ -158,7 +158,7 @@ def test_schema_validation_smoke(test_data, expected_err):
     schema = osbuild.meta.Schema(mod_info.get_schema(), name)
 
     test_input = {
-        "name": "org.osbuild.kickstart",
+        "name": name,
         "options": {
             "path": "some-path",
         },
