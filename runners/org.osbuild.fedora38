@@ -1,60 +1,18 @@
 #!/usr/bin/python3
 
-import os
-import shutil
 import subprocess
 import sys
 
-import osbuild.api
-
-
-def ldconfig():
-    # ld.so.conf must exist, or `ldconfig` throws a warning
-    subprocess.run(["touch", "/etc/ld.so.conf"], check=True)
-    subprocess.run(["ldconfig"], check=True)
-
-
-def sysusers():
-    try:
-        subprocess.run(["systemd-sysusers"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
-    except subprocess.CalledProcessError as error:
-        sys.stderr.write(error.stdout)
-        sys.exit(1)
-
-
-def tmpfiles():
-    # Allow systemd-tmpfiles to return non-0. Some packages want to create
-    # directories owned by users that are not set up with systemd-sysusers.
-    subprocess.run(["systemd-tmpfiles", "--create"], check=False)
-
-
-def nsswitch():
-    # the default behavior is fine, but using nss-resolve does not
-    # necessarily work in a non-booted container, so make sure that
-    # is not configured.
-    try:
-        os.remove("/etc/nsswitch.conf")
-    except FileNotFoundError:
-        pass
-
-
-def sequoia():
-    # This provides a default set of crypto-policies which is important for
-    # re-enabling SHA1 support with rpm (so we can cross-build CentOS-Stream-9
-    # images).
-    os.makedirs("/etc/crypto-policies", exist_ok=True)
-    shutil.copytree(
-        "/usr/share/crypto-policies/back-ends/DEFAULT", "/etc/crypto-policies/back-ends"
-    )
-
+from osbuild import api
+from osbuild.util import runners
 
 if __name__ == "__main__":
-    with osbuild.api.exception_handler():
-        ldconfig()
-        sysusers()
-        tmpfiles()
-        nsswitch()
-        sequoia()
+    with api.exception_handler():
+        runners.ldconfig()
+        runners.sysusers()
+        runners.tmpfiles()
+        runners.nsswitch()
+        runners.sequoia()
 
         r = subprocess.run(sys.argv[1:], check=False)
         sys.exit(r.returncode)
