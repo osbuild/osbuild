@@ -80,14 +80,14 @@
     },
     "/etc/shadow": {
       "content": [
-        "sha256:b47e92518ad86ee0ba8879d32fcafdbdc88c090cc52a719fdc3fbb0970df3314",
-        "sha256:4ae542f2f3f68be72bad37d970a1111a660ad8fa48102f8afc53a402e43445af"
+        null,
+        null
       ]
     },
     "/etc/shadow-": {
       "content": [
-        "sha256:26d861972ed591ecfedcfcdb7d95dc9fd25973c8cdbc713410805d8c27ff83ef",
-        "sha256:06cd676f7055ab045a85fc3188df54bb7a91b5e77ee9e80c6234444ba7688ab8"
+        null,
+        null
       ]
     },
     "/etc/subgid": {
