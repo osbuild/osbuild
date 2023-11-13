@@ -39,6 +39,10 @@ pipelines:
                 - geolite2-city
                 - geolite2-country
                 - plymouth
+                # excluded because not part of the official fc38 cloud image
+                # and causing boot errors
+                - lvm2
+                - lvm2-libs
         options:
           gpgkeys:
             mpp-eval: gpgkeys
