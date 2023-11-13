@@ -1,35 +1,15 @@
 #!/usr/bin/python3
 
-import os
 import subprocess
 import sys
 
-import osbuild.api
-
-
-def ldconfig():
-    # ld.so.conf must exist, or `ldconfig` throws a warning
-    with open("/etc/ld.so.conf", "w", encoding="utf8") as f:
-        # qemu-img needs `libiscsi`, which is located in /usr/lib64/iscsi
-        f.write("/usr/lib64/iscsi\n")
-        f.flush()
-    subprocess.run(["ldconfig"], check=True)
-
-
-def nsswitch():
-    # the default behavior is fine, but using nss-resolve does not
-    # necessarily work in a non-booted container, so make sure that
-    # is not configured.
-    try:
-        os.remove("/etc/nsswitch.conf")
-    except FileNotFoundError:
-        pass
-
+from osbuild import api
+from osbuild.util import runners
 
 if __name__ == "__main__":
-    with osbuild.api.exception_handler():
-        ldconfig()
-        nsswitch()
+    with api.exception_handler():
+        runners.ldconfig("/usr/lib64/iscsi")
+        runners.nsswitch()
 
         r = subprocess.run(sys.argv[1:], check=False)
         sys.exit(r.returncode)
