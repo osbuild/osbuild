@@ -125,16 +125,16 @@ produces no output:
     | # echo {} | osbuild -
     |
 
-Example 1: Build a Fedora 30 qcow2 image
+Example 1: Build a Fedora 34 qcow2 image
 ----------------------------------------
 
-To build a basic qcow2 image of Fedora 30, use:
+To build a basic qcow2 image of Fedora 34, use:
 
     |
-    | # osbuild ./samples/base-qcow2.json
+    | # osbuild ./samples/fedora-boot.json
     |
 
-The pipeline definition ``./samples/base-rpm-qcow2.json`` is provided in the
+The pipeline definition ``./samples/fedora-boot.json`` is provided in the
 upstream source repository of **osbuild**.
 
 Example 2: Run from a local checkout
@@ -143,7 +143,7 @@ Example 2: Run from a local checkout
 To run **osbuild** from a local checkout, use:
 
     |
-    | # python3 -m osbuild --libdir . samples/base-rpm-qcow2.json
+    | # python3 -m osbuild --libdir . samples/fedora-boot.json
     |
 
 This will make sure to execute the **osbuild** module from the current
