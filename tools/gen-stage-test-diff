@@ -62,10 +62,10 @@ def main():
         "--store",
         type=str,
         help="Specify the osbuild store",
-        default=1024 * 1024 * 1024,
     )
     parser.add_argument(
-        "--cache-max-size", type=int, help="Specify the osbuild max cache size"
+        "--cache-max-size", type=int, help="Specify the osbuild max cache size",
+        default=1024 * 1024 * 1024,
     )
     parser.add_argument("--libdir", type=str, help="Specify the osbuild max cache size")
     parser.add_argument("stage_test", type=str, help="Specify the stage test")
