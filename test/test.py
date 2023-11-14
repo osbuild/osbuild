@@ -374,7 +374,7 @@ class OSBuild(contextlib.AbstractContextManager):
                 output_dir_context = tempfile.TemporaryDirectory(dir="/var/tmp")
                 output_dir = cm.enter_context(output_dir_context)
 
-            cmd_args = ["python3", "-m", "osbuild"]
+            cmd_args = [sys.executable, "-m", "osbuild"]
 
             cmd_args += ["--json"]
             cmd_args += ["--libdir", "."]
