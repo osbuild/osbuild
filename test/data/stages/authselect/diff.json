@@ -10,50 +10,38 @@
     },
     "/etc/authselect/dconf-db": {
       "content": [
-        null,
-        null
+        "sha256:3143cf0884f874c12b6e12181829514ca86c65c29c3c5c106af95614e0191cea",
+        "sha256:559565d5f87ab929c50ca3773ec7b6e30522f494424ae037608fe92829959e5f"
       ]
     },
     "/etc/authselect/dconf-locks": {
       "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/fingerprint-auth": {
-      "content": [
-        null,
-        null
+        "sha256:7b0ab1525a0e52dbf02045126b351b89fd0c99aceded6862c322b83b9c1cbdee",
+        "sha256:5dc7ba629a423616341432b2eafa00b851f2a0159e1a2b1c07f160070a34923e"
       ]
     },
     "/etc/authselect/nsswitch.conf": {
       "content": [
-        null,
-        null
+        "sha256:2a942b72d330a4ab98c460c088a0dfd69caefe2d1406ae3727fdcdf83f1b2b14",
+        "sha256:a03bba2dd4c31446b3955075600bc8a35f5cdccb79c3cb87844b6a716e753c17"
       ]
     },
     "/etc/authselect/password-auth": {
       "content": [
-        null,
-        null
+        "sha256:adf5dcbbd3e196b4eb80058e3d721e8c762f6f39630673767259e69da50759a5",
+        "sha256:79fa077e26ecb548d2cd1140cec4763ffbe69141ebde732e01cd7978cc096046"
       ]
     },
     "/etc/authselect/postlogin": {
       "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/authselect/smartcard-auth": {
-      "content": [
-        null,
-        null
+        "sha256:e21b1660e588f0146bfa9895bd7b0b69fa6278f9453ea6aa393a69f196d4f818",
+        "sha256:95c038dcdb1ddf788c149c6a676901cc9708777c06ea259d9ef95789d92e38aa"
       ]
     },
     "/etc/authselect/system-auth": {
       "content": [
-        null,
-        null
+        "sha256:adf5dcbbd3e196b4eb80058e3d721e8c762f6f39630673767259e69da50759a5",
+        "sha256:79fa077e26ecb548d2cd1140cec4763ffbe69141ebde732e01cd7978cc096046"
       ]
     }
   }
