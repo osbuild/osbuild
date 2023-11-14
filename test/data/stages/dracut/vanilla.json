@@ -1,5 +1,5 @@
 {
-  "initramfs-6.4.4-200.fc38.x86_64.img": {
+  "initramfs-6.5.6-200.fc38.x86_64.img": {
     "early_cpio": false,
     "compression": "gzip",
     "kmods": [
@@ -228,6 +228,7 @@
       "hid-multitouch.ko.xz",
       "hid-nintendo.ko.xz",
       "hid-nti.ko.xz",
+      "hid-nvidia-shield.ko.xz",
       "hid-ortek.ko.xz",
       "hid-penmount.ko.xz",
       "hid-petalynx.ko.xz",
@@ -386,6 +387,7 @@
       "mvumi.ko.xz",
       "myrb.ko.xz",
       "myrs.ko.xz",
+      "nb7vpq904m.ko.xz",
       "nbd.ko.xz",
       "nd_e820.ko.xz",
       "netfs.ko.xz",
