@@ -8,7 +8,7 @@ import tempfile
 
 def run_osbuild(output_directory, store, cache_max_size, libdir, manifest):
     args = [
-        "osbuild",
+        "python3", "-m", "osbuild",
         "--export",
         "tree",
         "--output-directory",
