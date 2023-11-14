@@ -3,12 +3,13 @@ import argparse
 import contextlib
 import os
 import subprocess
+import sys
 import tempfile
 
 
 def run_osbuild(output_directory, store, cache_max_size, libdir, manifest):
     args = [
-        "python3", "-m", "osbuild",
+        sys.executable, "-m", "osbuild",
         "--export",
         "tree",
         "--output-directory",
