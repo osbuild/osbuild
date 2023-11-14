@@ -320,6 +320,8 @@ def main(tree, inputs, options):
         os.makedirs(target, exist_ok=True)
         mount(source, target, ro=False)
 
+    os.symlink("/proc/self/fd", f"{tree}/dev/fd")
+
     machine_id_created = create_machine_id_if_needed(tree)
 
     ostree_booted = None
