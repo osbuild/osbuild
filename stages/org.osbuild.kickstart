@@ -17,6 +17,75 @@ from typing import Dict, List
 import osbuild.api
 
 SCHEMA = r"""
+"definitions": {
+  "ksboolean-from-pykickstart-ref": {
+    "enum": ["yes", "on", "true", "1", 1, "off", "no", "false", "0", 0]
+  },
+  "network-options-ref": {
+    "type": "object",
+    "additionalProperties": false,
+    "description": "Configures network information for the target system and activates network devices in the installation environment",
+    "required": ["device"],
+    "properties": {
+      "activate": {
+        "description": "Activate (or reactivate) the device. When set to false prevents the device from automatically activating on boot",
+        "type": "boolean"
+      },
+      "bootproto": {
+        "description": "Boot protocol selection",
+        "enum": ["dhcp", "bootp", "ibft", "static"]
+      },
+      "device": {
+        "description": "Specifies the device to be configured",
+        "type": "string"
+      },
+      "onboot": {
+        "description": "Whether or not to enable the device at boot time",
+        "$ref": "#/definitions/ksboolean-from-pykickstart-ref"
+      },
+      "ip": {
+        "description": "IP address of the device",
+        "type": "string"
+      },
+      "ipv6": {
+        "description": "IPv6 address of the device, in the form of address[/prefix length]",
+        "type": "string"
+      },
+      "gateway": {
+        "description": "Default gateway as a single IPv4 address",
+        "type": "string"
+      },
+      "ipv6gateway": {
+        "description": "Default gateway as a single IPv6 address",
+        "type": "string"
+      },
+      "nameservers": {
+        "description": "DNS name servesr, a list of IP addresses",
+        "type": "array",
+        "minSize": 1,
+        "items": {
+          "type": "string"
+        }
+      },
+      "netmask": {
+        "description": "Network mask for the installed system",
+        "type": "string"
+      },
+      "hostname": {
+        "description": "Host name for the installed system",
+        "type": "string"
+      },
+      "essid": {
+        "description": "The network ID for wireless networks",
+        "type": "string"
+      },
+      "wpakey": {
+        "description": "The WPA encryption key for wireless networks",
+        "type": "string"
+      }
+    }
+  }
+},
 "additionalProperties": false,
 "required": ["path"],
 "properties": {
@@ -262,6 +331,13 @@ SCHEMA = r"""
         "type": "integer"
       }
     }
+  },
+  "network": {
+    "type": "array",
+    "minItems": 1,
+    "items": {
+      "$ref": "#/definitions/network-options-ref"
+    }
   }
 }
 """
@@ -382,6 +458,38 @@ def make_autopart(options: Dict) -> str:
     return cmd
 
 
+def make_network(options: Dict) -> List[str]:
+    networks = options.get("network")
+    if networks is None:
+        return []
+    res = []
+    for net in networks:
+        cmd = "network"
+        # simple string options
+        for key in [
+                "device", "bootproto", "onboot", "ip", "ipv6", "gateway",
+                "ipv6gateway", "netmask", "hostname", "essid", "wpakey",
+        ]:
+            if key not in net:
+                continue
+            val = net.get(key)
+            cmd += f" --{key}={val}"
+        # nameservers is a list
+        nameservers = net.get("nameservers")
+        if nameservers:
+            nss = " ".join([f"--nameserver={ns}" for ns in nameservers])
+            cmd += f" {nss}"
+        # activate can be true/false/unset
+        activate = net.get("activate")
+        if isinstance(activate, bool):
+            if activate:
+                cmd += " --activate"
+            else:
+                cmd += " --no-activate"
+        res += [cmd]
+    return res
+
+
 def main(tree, options):  # pylint: disable=too-many-branches
     path = options["path"].lstrip("/")
     ostree = options.get("ostree")
@@ -433,6 +541,7 @@ def main(tree, options):  # pylint: disable=too-many-branches
     reboot = make_reboot(options)
     if reboot:
         config += [reboot]
+    config += make_network(options)
 
     target = os.path.join(tree, path)
     base = os.path.dirname(target)
