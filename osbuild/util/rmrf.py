@@ -106,4 +106,5 @@ def rmtree(path: str):
         else:
             raise e
 
-    shutil.rmtree(path, onerror=on_error)
+    # "onerror" can be replaced with "onexc" once we move to python 3.12
+    shutil.rmtree(path, onerror=on_error)  # pylint: disable=deprecated-argument
