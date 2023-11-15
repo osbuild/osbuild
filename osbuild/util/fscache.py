@@ -288,7 +288,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
         return sum(
             os.lstat(
                 os.path.join(path, f)
-            ).st_size for path, dirs, files in os.walk(
+            ).st_blocks * 512 for path, dirs, files in os.walk(
                 path_target
             ) for f in files
         )
