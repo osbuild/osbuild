@@ -21,6 +21,16 @@ import osbuild
 from osbuild.util.term import fmt as vt
 
 
+def omitempty(d: dict):
+    """ Omit None and empty string ("") values from the given dict """
+    for k, v in list(d.items()):
+        if v is None or v == "":
+            del d[k]
+        elif isinstance(v, dict):
+            omitempty(v)
+    return d
+
+
 class Context:
     """Context for a single log line. Automatically calculates hash/id when read."""
 
@@ -157,13 +167,13 @@ class LogLine:
         self.progress = progress
 
     def as_dict(self):
-        return {
+        return omitempty({
             "message": self.message,
             "error": self.error,
             "context": self.context.as_dict(),
             "progress": self.progress.as_dict(),
             "timestamp": time.time(),
-        }
+        })
 
 
 class TextWriter:

@@ -223,7 +223,8 @@ def test_json_progress_monitor():
         assert logitem["message"] == "pipeline 1 message 1"
         assert logitem["context"]["origin"] == "org.osbuild"
         assert logitem["context"]["pipeline"]["name"] == "test-pipeline-first"
-        assert logitem["context"]["pipeline"]["stage"]["name"] is None
+        # empty items are omited
+        assert "name" not in logitem["context"]["pipeline"]["stage"]
 
         logitem = json.loads(log[3])
         assert logitem["message"] == "pipeline 1 message 2"
