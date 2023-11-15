@@ -157,6 +157,27 @@ TEST_INPUT = [
         " --backuppassphrase --cipher=twofish-cbc --luks-version=2" +
         " --pbkdf=scrypt --pbkdf-memory=256 --pbkdf-time=512"
     ),
+    # network is always a list
+    ({"network": [{"device": "foo", "activate": False}, {"device": "bar", "bootproto": "dhcp"}]},
+     "network --device=foo --no-activate\nnetwork --device=bar --bootproto=dhcp"),
+    ({"network": [{"device": "foo", "activate": True}]}, "network --device=foo --activate"),
+    ({"network": [{"device": "foo", "activate": False}]}, "network --device=foo --no-activate"),
+    ({"network": [{"device": "foo", "bootproto": "dhcp"}]}, "network --device=foo --bootproto=dhcp"),
+    ({"network": [{"device": "foo", "onboot": "on"}]}, "network --device=foo --onboot=on"),
+    ({"network": [{"device": "foo", "ip": "10.0.0.2"}]}, "network --device=foo --ip=10.0.0.2"),
+    ({"network": [{"device": "foo", "ip": "auto"}]}, "network --device=foo --ip=auto"),
+    ({"network": [{"device": "foo", "ipv6": "3ffe:ffff:0:1::1/128"}]},
+     "network --device=foo --ipv6=3ffe:ffff:0:1::1/128"),
+    ({"network": [{"device": "foo", "ipv6": "dhcp"}]}, "network --device=foo --ipv6=dhcp"),
+    ({"network": [{"device": "foo", "gateway": "10.0.0.1"}]}, "network --device=foo --gateway=10.0.0.1"),
+    ({"network": [{"device": "foo", "ipv6gateway": "FE80::1"}]}, "network --device=foo --ipv6gateway=FE80::1"),
+    ({"network": [{"device": "foo", "nameservers": ["1.1.1.1"]}]}, "network --device=foo --nameserver=1.1.1.1"),
+    ({"network": [{"device": "foo", "nameservers": ["1.1.1.1", "8.8.8.8"]}]},
+     "network --device=foo --nameserver=1.1.1.1 --nameserver=8.8.8.8"),
+    ({"network": [{"device": "foo", "netmask": "255.255.0.0"}]}, "network --device=foo --netmask=255.255.0.0"),
+    ({"network": [{"device": "foo", "hostname": "meep"}]}, "network --device=foo --hostname=meep"),
+    ({"network": [{"device": "foo", "essid": "wlan-123"}]}, "network --device=foo --essid=wlan-123"),
+    ({"network": [{"device": "foo", "wpakey": "secret"}]}, "network --device=foo --wpakey=secret"),
 ]
 
 
@@ -241,6 +262,11 @@ def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unu
         ({"autopart": {"type": "not-valid"}}, "'not-valid' is not one of ["),
         # Only one of --pbkdf-{time,iterations} can be specified at the same time
         ({"autopart": {"pbkdf-time": 1, "pbkdf-iterations": 2}}, " should not be valid under "),
+        # network is always a list
+        ({"network": {"device": "foo"}}, " is not of type 'array'"),
+        ({"network": [{"device": "foo", "activate": "string"}]}, " is not of type 'boolean'"),
+        ({"network": [{"device": "foo", "random": "option"}]}, "Additional properties are not allowed "),
+        ({"network": [{"device": "foo", "bootproto": "invalid"}]}, " is not one of ["),
     ],
 )
 def test_schema_validation_bad_apples(test_data, expected_err):
