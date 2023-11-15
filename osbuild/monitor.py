@@ -289,8 +289,8 @@ class LogMonitor(BaseMonitor):
         self.out.write(message)
 
 
-class JSONProgressMonitor(BaseMonitor):
-    """Monitor that prints the log output of modules wrapped in a JSON object with context and progress metadata"""
+class JSONSeqMonitor(BaseMonitor):
+    """Monitor that prints the log output of modules wrapped in json-seq objects with context and progress metadata"""
 
     def __init__(self, fd: int, manifest: osbuild.Manifest):
         super().__init__(fd)
@@ -321,6 +321,8 @@ class JSONProgressMonitor(BaseMonitor):
         if origin is not None:
             self._context.origin = origin
         line = LogLine(message=message, context=self._context, progress=self._progress)
+        # follow rfc7464 (application/json-seq)
+        self.out.write(u"\x1e")
         json.dump(line.as_dict(), self.out)
         self.out.write("\n")
         self._context.origin = oo

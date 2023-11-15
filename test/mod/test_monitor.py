@@ -13,7 +13,7 @@ from collections import defaultdict
 import osbuild
 import osbuild.meta
 from osbuild.monitor import LogMonitor
-from osbuild.monitor import JSONProgressMonitor, Context, Progress, LogLine
+from osbuild.monitor import JSONSeqMonitor, Context, Progress, LogLine
 from osbuild.objectstore import ObjectStore
 from osbuild.pipeline import Runner
 
@@ -195,7 +195,7 @@ def test_json_progress_monitor():
     manifest.add_pipeline(pl2, "", "")
 
     with tempfile.TemporaryFile() as tf:
-        mon = JSONProgressMonitor(tf.fileno(), manifest)
+        mon = JSONSeqMonitor(tf.fileno(), manifest)
         mon.log("test-message-1")
         mon.log("test-message-2", origin="test.origin.override")
         mon.begin(manifest.pipelines["test-pipeline-first"])
@@ -208,7 +208,7 @@ def test_json_progress_monitor():
         mon.log("pipeline 2 message 2")
 
         tf.seek(0)
-        log = tf.read().decode().strip().split("\n")
+        log = tf.read().decode().strip().split(u"\x1e")
 
         assert len(log) == 7
         logitem = json.loads(log[0])
