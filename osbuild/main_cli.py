@@ -90,7 +90,7 @@ def parse_arguments(sys_argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--json-mode", metavar="MODE", type=str, default="batch",
                         help=("output mode for JSON format; "
                               "'batch' (default if unspecified) mode prints all the results when the build ends "
-                              "'progress' prints status updates while building with each line being a JSON object"))
+                              "'jsonseq' prints status updates while building with each line being a JSON object"))
     parser.add_argument("--output-directory", metavar="DIRECTORY", type=os.path.abspath,
                         help="directory where result objects are stored")
     parser.add_argument("--inspect", action="store_true",
@@ -170,8 +170,8 @@ def osbuild_cli() -> int:
 
     outfd = sys.stdout.fileno()
     if args.json:
-        if args.json_mode == "progress":
-            monitor = osbuild.monitor.JSONProgressMonitor(outfd, manifest)
+        if args.json_mode == "jsonseq":
+            monitor = osbuild.monitor.JSONSeqMonitor(outfd, manifest)
             monitor.log("start", origin="org.osbuild.main")
         elif args.json_mode == "batch":
             monitor = osbuild.monitor.NullMonitor(outfd)
