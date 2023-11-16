@@ -529,25 +529,6 @@
               "ref": "ostree/1/1/0"
             }
           }
-        },
-        {
-          "type": "org.osbuild.grub2",
-          "options": {
-            "rootfs": {
-              "label": "root"
-            },
-            "bootfs": {
-              "label": "boot"
-            },
-            "uefi": {
-              "vendor": "fedora",
-              "install": true
-            },
-            "legacy": "i386-pc",
-            "write_defaults": false,
-            "greenboot": false,
-            "ignition": true
-          }
         }
       ]
     },
@@ -715,23 +696,49 @@
           ]
         },
         {
-          "type": "org.osbuild.grub2.inst",
+          "type": "org.osbuild.bootupd",
           "options": {
-            "platform": "i386-pc",
-            "filename": "disk.img",
-            "location": 2048,
-            "core": {
-              "type": "mkimage",
-              "partlabel": "gpt",
-              "filesystem": "ext4"
+            "bios": {
+              "disk": "disk"
             },
-            "prefix": {
-              "type": "partition",
-              "partlabel": "gpt",
-              "number": 2,
-              "path": "/grub2"
+            "static-configs": true,
+            "deployment": {
+              "osname": "fedora-coreos",
+              "ref": "ostree/1/1/0"
             }
-          }
+          },
+          "devices": {
+            "disk": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "partscan": true
+              }
+            }
+          },
+          "mounts": [
+            {
+              "name": "root",
+              "type": "org.osbuild.xfs",
+              "source": "disk",
+              "partition": 4,
+              "target": "/"
+            },
+            {
+              "name": "boot",
+              "type": "org.osbuild.ext4",
+              "source": "disk",
+              "partition": 3,
+              "target": "/boot"
+            },
+            {
+              "name": "efi",
+              "type": "org.osbuild.fat",
+              "source": "disk",
+              "partition": 2,
+              "target": "/boot/efi"
+            }
+          ]
         }
       ]
     },
@@ -868,6 +875,49 @@
                 "to": "mount://root/"
               }
             ]
+          },
+          "devices": {
+            "disk": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "partscan": true,
+                "sector-size": 4096
+              }
+            }
+          },
+          "mounts": [
+            {
+              "name": "root",
+              "type": "org.osbuild.xfs",
+              "source": "disk",
+              "partition": 4,
+              "target": "/"
+            },
+            {
+              "name": "boot",
+              "type": "org.osbuild.ext4",
+              "source": "disk",
+              "partition": 3,
+              "target": "/boot"
+            },
+            {
+              "name": "efi",
+              "type": "org.osbuild.fat",
+              "source": "disk",
+              "partition": 2,
+              "target": "/boot/efi"
+            }
+          ]
+        },
+        {
+          "type": "org.osbuild.bootupd",
+          "options": {
+            "static-configs": true,
+            "deployment": {
+              "osname": "fedora-coreos",
+              "ref": "ostree/1/1/0"
+            }
           },
           "devices": {
             "disk": {
