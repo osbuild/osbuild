@@ -11,6 +11,7 @@ commands are supported here.
 """
 
 import os
+import shlex
 import sys
 from typing import Dict, List
 
@@ -115,6 +116,17 @@ SCHEMA = r"""
           "key": {
             "description": "SSH Public Key to add to ~/.ssh/authorized_keys",
             "type": "string"
+          },
+          "sudo": {
+            "description": "Configure sudo for the given user",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nopasswd": {
+                "description": "Allow use of sudo without a password",
+                "type": "boolean"
+              }
+            }
           }
         }
       }
@@ -324,6 +336,15 @@ def make_users(users: Dict) -> List[str]:
         key = opts.get("key")
         if key:
             res.append(f'sshkey --username {name} "{key}"')
+
+        sudo = opts.get("sudo")
+        if sudo is not None:
+            # the schema makes this unnecessary but paranoia++
+            if shlex.quote(name) != name:
+                raise ValueError(f"invalid username '{name}': requires shell quoting")
+            nopasswd = "\\tNOPASSWD:" if sudo.get("nopasswd", False) else ""
+            # not using "echo" as it's semantic depends on the shell
+            res.append(f'%post\nprintf "{name}\\tALL=(ALL){nopasswd} ALL\\n" >> /etc/sudoers.d/{name}-ks\n%end')
 
     return res
 

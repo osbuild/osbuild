@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
 import os.path
+import pathlib
+import re
 import subprocess
+import sys
 
 import pytest
 
@@ -10,6 +13,10 @@ from osbuild.testutil import has_executable
 from osbuild.testutil.imports import import_module_from_path
 
 TEST_INPUT = [
+    ({"users": {"foo": {}}}, "user --name foo"),
+    ({"users": {"foo": {"sudo": {}}}}, 'user --name foo\n%post\nprintf "foo\\tALL=(ALL) ALL\\n" >> /etc/sudoers.d/foo-ks\n%end'),
+    ({"users": {"foo": {"sudo": {"nopasswd": True}}}},
+     'user --name foo\n%post\nprintf "foo\\tALL=(ALL)\\tNOPASSWD: ALL\\n" >> /etc/sudoers.d/foo-ks\n%end'),
     ({"lang": "en_US.UTF-8"}, "lang en_US.UTF-8"),
     ({"keyboard": "us"}, "keyboard us"),
     ({"timezone": "UTC"}, "timezone UTC"),
@@ -249,3 +256,64 @@ def test_schema_validation_bad_apples(test_data, expected_err):
     assert len(res.errors) == 1
     err_msgs = [e.as_dict()["message"] for e in res.errors]
     assert expected_err in err_msgs[0]
+
+
+@pytest.mark.parametrize("user,test_sudo_options,expected_sudoers_content", [
+    ("foo", {"sudo": {}}, b"foo\tALL=(ALL) ALL\n"),
+    ("bar", {"sudo": {"nopasswd": True}}, b"bar\tALL=(ALL)\tNOPASSWD: ALL\n"),
+])
+def test_kickstart_sudo(tmp_path, user, test_sudo_options, expected_sudoers_content):
+    ks_stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.kickstart")
+    ks_stage = import_module_from_path("ks_stage", ks_stage_path)
+
+    ks_path = "kickstart/kfs.cfg"
+    options = {
+        "path": ks_path,
+        "users": {user: {}},
+    }
+    options["users"][user].update(test_sudo_options)
+
+    ks_stage.main(tmp_path, options)
+
+    ks_path = os.path.join(tmp_path, ks_path)
+    with open(ks_path, encoding="utf-8") as fp:
+        ks_content = fp.read()
+    # extract the actual script
+    script = re.search(r"%post\n(.*?)\n%end", ks_content, re.DOTALL).group(1)
+    script = script.replace("/etc/", f"{tmp_path}/etc/")
+    fake_sudoers_d_path = pathlib.Path(f"{tmp_path}/etc/sudoers.d/{user}-ks")
+    fake_sudoers_d_path.parent.mkdir(parents=True)
+    # and run it (this is slightly dangerous)
+    subprocess.run(script, shell=True, check=True)
+    assert fake_sudoers_d_path.read_bytes() == expected_sudoers_content
+    # check that sudo is happy
+    subprocess.run(
+        ["visudo", "-cf", os.fspath(fake_sudoers_d_path)],
+        stdout=sys.stdout,
+        stderr=sys.stdout,
+        check=True,
+    )
+
+
+# note that the schema should prevent this but paranoia
+@pytest.mark.parametrize("bad_username", [
+    'foo"', 'bar;', 'baz";exit 1',
+])
+def test_kickstart_sudo_validates_sh(tmp_path, bad_username):
+    ks_stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.kickstart")
+    ks_stage = import_module_from_path("ks_stage", ks_stage_path)
+
+    ks_path = "kickstart/kfs.cfg"
+    options = {
+        "path": ks_path,
+        "users": {
+            bad_username: {
+                "sudo": {},
+            },
+        },
+    }
+
+    with pytest.raises(Exception) as e:
+        ks_stage.main(tmp_path, options)
+    assert e.type is ValueError
+    assert e.value.args[0] == f"invalid username '{bad_username}': requires shell quoting"
