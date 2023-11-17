@@ -429,6 +429,8 @@ class ModuleInfo:
         except FileNotFoundError:
             return None
 
+        # using AST here and not importlib because we can read/parse
+        # even if some python imports that the module may need are missing
         tree = ast.parse(data, name)
 
         docstring = ast.get_docstring(tree)
