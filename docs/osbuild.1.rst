@@ -125,10 +125,10 @@ produces no output:
     | # echo {} | osbuild -
     |
 
-Example 1: Build a Fedora 34 qcow2 image
-----------------------------------------
+Example 2: See pipeline IDs of a Fedora qcow2 image
+---------------------------------------------------
 
-To build a basic qcow2 image of Fedora 34, use:
+To inspect a basic qcow2 image of Fedora, use:
 
     |
     | # osbuild ./samples/fedora-boot.json
@@ -137,13 +137,31 @@ To build a basic qcow2 image of Fedora 34, use:
 The pipeline definition ``./samples/fedora-boot.json`` is provided in the
 upstream source repository of **osbuild**.
 
-Example 2: Run from a local checkout
+This will print out the pipeline IDs of the provided manifest but will
+not actually build anything because no artifact was requested. The pipeline
+IDs can then be passed to ``--export=`` to actually get the requested
+artifacts.
+
+
+Example 3: Build a Fedora qcow2 image
+-------------------------------------
+
+To build a basic qcow2 image of Fedora, use:
+
+    |
+    | # osbuild --output-dir ./out --export image ./samples/fedora-boot.json
+    |
+
+Note that the command requires to be run as root. It will create an out/image
+directory and put the generated "disk.img" there.
+
+Example 4: Run from a local checkout
 ------------------------------------
 
 To run **osbuild** from a local checkout, use:
 
     |
-    | # python3 -m osbuild --libdir . samples/fedora-boot.json
+    | # python3 -m osbuild --libdir . --output-dir ./out --export image samples/fedora-boot.json
     |
 
 This will make sure to execute the **osbuild** module from the current
