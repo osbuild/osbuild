@@ -6,6 +6,7 @@
 
 import json
 import os
+import subprocess
 import tempfile
 
 import pytest
@@ -19,25 +20,36 @@ def tmpdir_fixture():
         yield tmp
 
 
-def test_calculate_size(tmpdir):
+def test_calculate_space(tmpdir):
     #
-    # Test the `_calculate_size()` helper and verify it only includes file
+    # Test the `_calculate_space()` helper and verify it only includes file
     # content in its calculation.
     #
+    def du(path_target):
+        env = os.environ.copy()
+        env["POSIXLY_CORRECT"] = "1"
+        output = subprocess.check_output(["du", "-s", path_target], env=env, encoding="utf8")
+        return int(output.split()[0].strip())*512
 
-    os.mkdir(os.path.join(tmpdir, "dir"))
-
-    assert fscache.FsCache._calculate_size(os.path.join(tmpdir, "dir")) == 0
+    test_dir = os.path.join(tmpdir, "dir")
+    os.mkdir(test_dir)
+    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
 
     with open(os.path.join(tmpdir, "dir", "file"), "x", encoding="utf8") as f:
         pass
-
-    assert fscache.FsCache._calculate_size(os.path.join(tmpdir, "dir")) == 0
+    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
 
     with open(os.path.join(tmpdir, "dir", "file"), "w", encoding="utf8") as f:
         f.write("foobar")
+    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
 
-    assert fscache.FsCache._calculate_size(os.path.join(tmpdir, "dir")) == 6
+    os.makedirs(os.path.join(test_dir, "dir"))
+    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
+
+    with open(os.path.join(test_dir, "sparse-file"), "w") as f:
+        f.truncate(10*1024*1024)
+        f.write("I'm not an empty file")
+    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
 
 
 def test_pathlike(tmpdir):
@@ -351,7 +363,7 @@ def test_basic(tmpdir):
 
     cache = fscache.FsCache("osbuild-test-appid", tmpdir)
     with cache:
-        cache.info = cache.info._replace(maximum_size=1024)
+        cache.info = cache.info._replace(maximum_size=1024*1024)
 
         with cache.stage() as rpath:
             with open(os.path.join(tmpdir, rpath, "bar"), "x", encoding="utf8") as f:
