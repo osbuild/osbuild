@@ -207,9 +207,10 @@ class TextWriter:
 class BaseMonitor(abc.ABC):
     """Base class for all pipeline monitors"""
 
-    def __init__(self, fd: int):
+    def __init__(self, fd: int, manifest: Optional[osbuild.Manifest] = None) -> None:
         """Logging will be done to file descriptor `fd`"""
         self.out = TextWriter(fd)
+        self.manifest = manifest
 
     def begin(self, pipeline: osbuild.Pipeline):
         """Called once at the beginning of a pipeline"""
@@ -246,8 +247,8 @@ class LogMonitor(BaseMonitor):
     sequences will be used to highlight sections of the log.
     """
 
-    def __init__(self, fd: int):
-        super().__init__(fd)
+    def __init__(self, fd: int, manifest: Optional[osbuild.Manifest] = None):
+        super().__init__(fd, manifest)
         self.timer_start = 0
 
     def result(self, result):
@@ -303,7 +304,7 @@ class JSONSeqMonitor(BaseMonitor):
     """Monitor that prints the log output of modules wrapped in json-seq objects with context and progress metadata"""
 
     def __init__(self, fd: int, manifest: osbuild.Manifest):
-        super().__init__(fd)
+        super().__init__(fd, manifest)
         self._ctx_ids: Set[str] = set()
         self._progress = Progress("pipelines", len(manifest.pipelines))
         self._context = Context(origin="org.osbuild")
@@ -317,32 +318,37 @@ class JSONSeqMonitor(BaseMonitor):
         self._progress.incr()
 
     def stage(self, stage: osbuild.Stage):
-        self._context.stage(stage)
-        self._progress.incr(depth=1)
+        self._module(stage)
 
     def assembler(self, assembler):
-        self.module(assembler)
+        self._module(assembler)
 
-    def module(self, module):
-        self.stage(module)
+    def _module(self, module):
+        self._context.stage(module)
+        self._progress.incr(depth=1)
 
     def log(self, message, origin: Optional[str] = None):
         oo = self._context.origin
         if origin is not None:
             self._context.origin = origin
         line = LogLine(message=message, context=self._context, progress=self._progress)
-        # follow rfc7464 (application/json-seq)
-        self.out.write(u"\x1e")
-        json.dump(line.as_dict(), self.out)
-        self.out.write("\n")
+        self._jsonseq(line.as_dict())
+        # needs to be here as LogLine has a ref to self._context so updates
+        # before line.as_dict() will be have a different context
         self._context.origin = oo
 
+    def _jsonseq(self, data):
+        # follow rfc7464 (application/json-seq)
+        self.out.write("\x1e")
+        json.dump(data, self.out)
+        self.out.write("\n")
 
-def make(name, fd):
+
+def make(name, fd, manifest):
     module = sys.modules[__name__]
     monitor = getattr(module, name, None)
     if not monitor:
         raise ValueError(f"Unknown monitor: {name}")
     if not issubclass(monitor, BaseMonitor):
         raise ValueError(f"Invalid monitor: {name}")
-    return monitor(fd)
+    return monitor(fd, manifest)
