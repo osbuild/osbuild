@@ -272,12 +272,15 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             self._tracers[trace]()
 
     @staticmethod
-    def _calculate_size(path_target: str) -> int:
-        """Calculate total size of a directory tree
+    def _calculate_space(path_target: str) -> int:
+        """Calculate total space of a directory tree
 
         Calculate the total amount of storage required for a directory tree in
         bytes. This does not account for metadata, but only for stored file
         content.
+
+        Note that this may differ from the sum of the file sizes as it
+        takes sparse files into account.
 
         Parameters:
         -----------
@@ -285,12 +288,12 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             File-system path to the directory to operate on.
         """
 
-        return sum(
+        return os.lstat(path_target).st_blocks * 512 + sum(
             os.lstat(
                 os.path.join(path, f)
             ).st_blocks * 512 for path, dirs, files in os.walk(
                 path_target
-            ) for f in files
+            ) for f in files + dirs
         )
 
     def __fspath__(self) -> Any:
@@ -925,7 +928,7 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             # Collect metadata about the new entry.
             info: Dict[str, Any] = {}
             info["creation-boot-id"] = self._bootid
-            info["size"] = self._calculate_size(path_data)
+            info["size"] = self._calculate_space(path_data)
 
             # Update the total cache-size. If it exceeds the limits, bail out
             # but do not trigger an error. It behaves as if the entry was
