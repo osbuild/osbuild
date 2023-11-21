@@ -385,7 +385,7 @@ class Loop:
         info = self._config_info(self.get_status(), offset, sizelimit, autoclear, partscan)
         fcntl.ioctl(self.fd, self.LOOP_SET_STATUS64, info)
 
-    def configure(self, fd: int, offset=None, sizelimit=None, autoclear=None, partscan=None):
+    def configure(self, fd: int, offset=None, sizelimit=None, blocksize=0, autoclear=None, partscan=None):
         """
         Configure the loopback device
         Bind and configure in a single operation a file descriptor to the
@@ -427,6 +427,8 @@ class Loop:
         sizelimit : int, optional
             The max size in bytes to make the loopback device, or None
             to leave unchanged (default is None)
+        blocksize : int, optional
+            Set the logical blocksize of the loopback device. Default is 0.
         autoclear : bool, optional
             Whether or not to enable autoclear, or None to leave unchanged
             (default is None)
@@ -437,9 +439,7 @@ class Loop:
         #  pylint: disable=attribute-defined-outside-init
         config = LoopConfig()
         config.fd = fd
-        # Previous implementation was not configuring the block size.
-        # Keep same behavior here by setting the value to 0.
-        config.block_size = 0
+        config.block_size = int(blocksize)
         config.info = self._config_info(LoopInfo(), offset, sizelimit, autoclear, partscan)
         try:
             fcntl.ioctl(self.fd, self.LOOP_CONFIGURE, config)
