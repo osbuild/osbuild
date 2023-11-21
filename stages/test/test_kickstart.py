@@ -267,6 +267,18 @@ def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unu
         ({"network": [{"device": "foo", "activate": "string"}]}, " is not of type 'boolean'"),
         ({"network": [{"device": "foo", "random": "option"}]}, "Additional properties are not allowed "),
         ({"network": [{"device": "foo", "bootproto": "invalid"}]}, " is not one of ["),
+        ({"network": [{"device": "foo", "ip": "invalid"}]}, " does not match "),
+        ({"network": [{"device": "foo", "ip": "256.1.1.1"}]}, " does not match "),
+        ({"network": [{"device": "foo", "ip": "1.256.1.1"}]}, " does not match "),
+        ({"network": [{"device": "foo", "ip": "1.1.256.1"}]}, " does not match "),
+        ({"network": [{"device": "foo", "ip": "1.1.1.256"}]}, " does not match "),
+        # kernel will accept this (and make it 127.0.0.1) but it's
+        # technically not valid. if this becomes a problem we may need to
+        # relax (or remove) the ipv4 validation regex. Also
+        # 127.256 will be accepted and overflows into "127.0.1.0".
+        ({"network": [{"device": "foo", "ip": "127.1"}]}, " does not match "),
+        ({"network": [{"device": "foo", "gateway": "invalid"}]}, " does not match "),
+        ({"network": [{"device": "foo", "nameservers": ["invalid"]}]}, " does not match "),
     ],
 )
 def test_schema_validation_bad_apples(test_data, expected_err):
