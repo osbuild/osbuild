@@ -16,5 +16,6 @@ if __name__ == "__main__":
             runners.python_alternatives()
             env = runners.quirks()
             r = subprocess.run(sys.argv[1:], env=env, check=False)
+            runners.remove_tmpfiles()
 
         sys.exit(r.returncode)

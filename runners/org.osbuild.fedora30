@@ -14,5 +14,6 @@ if __name__ == "__main__":
             runners.tmpfiles()
             runners.nsswitch()
             r = subprocess.run(sys.argv[1:], check=False)
+            runners.remove_tmpfiles()
 
         sys.exit(r.returncode)
