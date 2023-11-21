@@ -35,7 +35,6 @@ This stage will return the following metadata via the osbuild API:
 import contextlib
 import json
 import os
-import pathlib
 import subprocess
 import sys
 import tempfile
@@ -43,6 +42,7 @@ from operator import itemgetter
 
 from osbuild import api
 from osbuild.util.mnt import mount
+from osbuild.util.runners import create_machine_id_if_needed
 
 SCHEMA = """
 "additionalProperties": false,
@@ -263,21 +263,6 @@ def parse_input(inputs):
     return path, files
 
 
-def create_machine_id_if_needed(tree):
-    """Create a machine-id with a fake machine id if it does not exist"""
-    path = f"{tree}/etc/machine-id"
-    if os.path.exists(path):
-        return False
-
-    os.makedirs(f"{tree}/etc", exist_ok=True)
-    with open(path, "w", encoding="utf8") as f:
-        # create a fake machine ID to improve reproducibility
-        f.write("ffffffffffffffffffffffffffffffff\n")
-        os.fchmod(f.fileno(), 0o400)
-
-    return True
-
-
 # pylint: disable=too-many-branches
 def main(tree, inputs, options):
     pkgpath, packages = parse_input(inputs)
@@ -322,69 +307,61 @@ def main(tree, inputs, options):
 
     os.symlink("/proc/self/fd", f"{tree}/dev/fd")
 
-    machine_id_created = create_machine_id_if_needed(tree)
+    with create_machine_id_if_needed(tree, keep_empty=True):
+        ostree_booted = None
+        if options.get("ostree_booted", False):
+            os.makedirs(f"{tree}/run", exist_ok=True)
+            ostree_booted = f"{tree}/{OSTREE_BOOTED_MARKER}"
+            with open(ostree_booted, "w", encoding="utf8") as f:
+                f.write("")
 
-    ostree_booted = None
-    if options.get("ostree_booted", False):
-        os.makedirs(f"{tree}/run", exist_ok=True)
-        ostree_booted = f"{tree}/{OSTREE_BOOTED_MARKER}"
-        with open(ostree_booted, "w", encoding="utf8") as f:
-            f.write("")
+        extra_args = []
+        if options.get("exclude", {}).get("docs"):
+            extra_args += ["--excludedocs"]
 
-    extra_args = []
-    if options.get("exclude", {}).get("docs"):
-        extra_args += ["--excludedocs"]
+        # prevent dracut from running, if enabled
+        no_dracut = options.get("disable_dracut", False)
+        if no_dracut:
+            masked_files = disable_dracut(tree)
 
-    # prevent dracut from running, if enabled
-    no_dracut = options.get("disable_dracut", False)
-    if no_dracut:
-        masked_files = disable_dracut(tree)
+        langs = options.get("install_langs")
+        if langs:
+            macro = "%_install_langs " + ":".join(langs)
+            print(f"using '{macro}'")
+            extra_args += [
+                "--define", macro,
+            ]
 
-    langs = options.get("install_langs")
-    if langs:
-        macro = "%_install_langs " + ":".join(langs)
-        print(f"using '{macro}'")
-        extra_args += [
-            "--define", macro,
-        ]
+        with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
+            manifest.writelines(c + '\n' for c in packages)
+            manifest.flush()
+            subprocess.run([
+                "rpm",
+                "--verbose",
+                *rpm_args,
+                "--root", tree,
+                *extra_args,
+                # All digests and signatures of the rpms has been verified,
+                # default to not verifying package or header signatures when
+                # reading.
+                "--nosignature",
+                "--install", manifest.name
+            ], cwd=pkgpath, check=True)
 
-    with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
-        manifest.writelines(c + '\n' for c in packages)
-        manifest.flush()
-        subprocess.run([
-            "rpm",
-            "--verbose",
-            *rpm_args,
-            "--root", tree,
-            *extra_args,
-            # All digests and signatures of the rpms has been verified,
-            # default to not verifying package or header signatures when
-            # reading.
-            "--nosignature",
-            "--install", manifest.name
-        ], cwd=pkgpath, check=True)
+        for key in options.get("gpgkeys.fromtree", []):
+            path = os.path.join(tree, key.lstrip("/"))
+            subprocess.run([
+                "rpmkeys",
+                *rpm_args,
+                "--root", tree,
+                "--import", path
+            ], check=True)
+            print(f"imported gpg keys from '{key}'")
 
-    for key in options.get("gpgkeys.fromtree", []):
-        path = os.path.join(tree, key.lstrip("/"))
-        subprocess.run([
-            "rpmkeys",
-            *rpm_args,
-            "--root", tree,
-            "--import", path
-        ], check=True)
-        print(f"imported gpg keys from '{key}'")
-
-    # re-enabled dracut
-    if no_dracut:
-        enable_dracut(masked_files)
-        remove_unowned_etc_kernel(tree, rpm_args)
-
-    # remove temporary machine ID if it was created by us
-    if machine_id_created:
-        print("deleting the fake machine id")
-        machine_id_file = pathlib.Path(f"{tree}/etc/machine-id")
-        machine_id_file.unlink()
-        machine_id_file.touch(mode=0o444)
+        # re-enabled dracut
+        if no_dracut:
+            enable_dracut(masked_files)
+            remove_unowned_etc_kernel(tree, rpm_args)
 
     if ostree_booted:
         os.unlink(ostree_booted)

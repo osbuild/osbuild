@@ -10,9 +10,10 @@ if __name__ == "__main__":
     with api.exception_handler():
         runners.ldconfig()
         runners.sysusers()
-        runners.tmpfiles()
-        runners.nsswitch()
-        runners.sequoia()
+        with runners.create_machine_id_if_needed():
+            runners.tmpfiles()
+            runners.nsswitch()
+            runners.sequoia()
+            r = subprocess.run(sys.argv[1:], check=False)
 
-        r = subprocess.run(sys.argv[1:], check=False)
         sys.exit(r.returncode)
