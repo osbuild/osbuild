@@ -45,7 +45,8 @@ SCHEMA = r"""
       },
       "ip": {
         "description": "IP address of the device",
-        "type": "string"
+        "type": "string",
+        "pattern": "^(((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}|auto)$"
       },
       "ipv6": {
         "description": "IPv6 address of the device, in the form of address[/prefix length]",
@@ -53,7 +54,8 @@ SCHEMA = r"""
       },
       "gateway": {
         "description": "Default gateway as a single IPv4 address",
-        "type": "string"
+        "type": "string",
+        "pattern": "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$"
       },
       "ipv6gateway": {
         "description": "Default gateway as a single IPv6 address",
@@ -64,7 +66,8 @@ SCHEMA = r"""
         "type": "array",
         "minSize": 1,
         "items": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$"
         }
       },
       "netmask": {
