@@ -185,6 +185,12 @@ TEST_INPUT = [
     ({"network": [{"device": "01:23:45:67:89:ab"}]}, "network --device=01:23:45:67:89:ab"),
     ({"network": [{"device": "link"}]}, "network --device=link"),
     ({"network": [{"device": "bootif"}]}, "network --device=bootif"),
+    # hostname alone can be 63 chars (see hostname(7))
+    ({"network": [{"device": "foo", "hostname": "123456789012345678901234567890123456789012345678901234567890123"}]},
+     "network --device=foo --hostname=123456789012345678901234567890123456789012345678901234567890123"),
+    # hostname can also be written as a QFDN
+    ({"network": [{"device": "foo", "hostname": "foo.bar.com"}]},
+     "network --device=foo --hostname=foo.bar.com"),
 ]
 
 
@@ -297,6 +303,20 @@ def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unu
         ({"network": [{"device": "00:XX"}]}, " does not match "),
         ({"network": [{"device": "foo/bar"}]}, " does not match "),
         ({"network": [{"device": "foo?"}]}, " does not match "),
+        # see hostname(7)
+        ({"network": [{"device": "foo",
+                       "hostname": "1234567890123456789012345678901234567890123456789012345678901234"}]}, " does not match "),
+        ({"network": [{"device": "foo", "hostname": "x$"}]}, " does not match "),
+        ({"network": [{"device": "foo", "hostname": "-invalid"}]}, " does not match "),
+        ({"network": [{"device": "foo", "hostname": "foo..bar"}]}, " does not match "),
+        # not more than 253 chars (63*3 + 62 + 3 dots = 254)
+        ({"network": [{"device": "foo",
+                       "hostname":
+                       "123456789012345678901234567890123456789012345678901234567890123" +
+                       ".123456789012345678901234567890123456789012345678901234567890123" +
+                       ".123456789012345678901234567890123456789012345678901234567890123" +
+                       ".12345678901234567890123456789012345678901234567890123456789012"
+                       }]}, " does not match "),
     ],
 )
 def test_schema_validation_bad_apples(test_data, expected_err):

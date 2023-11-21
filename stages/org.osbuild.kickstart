@@ -77,7 +77,8 @@ SCHEMA = r"""
       },
       "hostname": {
         "description": "Host name for the installed system",
-        "type": "string"
+        "type": "string",
+        "pattern": "(?=^.{1,253}$)^[a-zA-Z0-9][a-zA-Z0-9-]{0,62}((\\.[a-zA-Z0-9][a-zA-Z0-9-]{0,62})+)?$"
       },
       "essid": {
         "description": "The network ID for wireless networks",
