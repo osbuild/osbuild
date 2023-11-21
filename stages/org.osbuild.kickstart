@@ -37,7 +37,8 @@ SCHEMA = r"""
       },
       "device": {
         "description": "Specifies the device to be configured",
-        "type": "string"
+        "type": "string",
+        "pattern": "^([a-zA-Z0-9]{2,16}|(([a-fA-F0-9]{2}:){5}[a-fA-F0-9A]{2}))$"
       },
       "onboot": {
         "description": "Whether or not to enable the device at boot time",

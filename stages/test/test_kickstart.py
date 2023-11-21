@@ -178,6 +178,13 @@ TEST_INPUT = [
     ({"network": [{"device": "foo", "hostname": "meep"}]}, "network --device=foo --hostname=meep"),
     ({"network": [{"device": "foo", "essid": "wlan-123"}]}, "network --device=foo --essid=wlan-123"),
     ({"network": [{"device": "foo", "wpakey": "secret"}]}, "network --device=foo --wpakey=secret"),
+    # device= can be written in multiple forms, see
+    # https://pykickstart.readthedocs.io/en/latest/kickstart-docs.html#network
+    ({"network": [{"device": "1234567890123456"}]}, "network --device=1234567890123456"),
+    ({"network": [{"device": "em1"}]}, "network --device=em1"),
+    ({"network": [{"device": "01:23:45:67:89:ab"}]}, "network --device=01:23:45:67:89:ab"),
+    ({"network": [{"device": "link"}]}, "network --device=link"),
+    ({"network": [{"device": "bootif"}]}, "network --device=bootif"),
 ]
 
 
@@ -279,6 +286,18 @@ def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unu
         ({"network": [{"device": "foo", "ip": "127.1"}]}, " does not match "),
         ({"network": [{"device": "foo", "gateway": "invalid"}]}, " does not match "),
         ({"network": [{"device": "foo", "nameservers": ["invalid"]}]}, " does not match "),
+        # schema says at least 2 chars (this is arbitrary)
+        ({"network": [{"device": "f"}]}, " does not match "),
+        # device name can be max 16 chars (see IFNAMSIZ in the kernel source)
+        # but otherwise are very free from, see
+        # https://elixir.bootlin.com/linux/v6.6.1/source/net/core/dev.c#L1038
+        ({"network": [{"device": "12345678901234567"}]}, " does not match "),
+        # when specificed via MAC address it 17 chars (12 chars plus 5 ":")
+        # and look like a mac address
+        ({"network": [{"device": "00:01"}]}, " does not match "),
+        ({"network": [{"device": "00:XX"}]}, " does not match "),
+        ({"network": [{"device": "foo/bar"}]}, " does not match "),
+        ({"network": [{"device": "foo?"}]}, " does not match "),
     ],
 )
 def test_schema_validation_bad_apples(test_data, expected_err):
