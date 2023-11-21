@@ -4,3 +4,8 @@ ignore = [
     "E741",  # ambiguous variable names
     "E501",  # line too long
 ]
+
+extend-exclude = [
+    "*.json",
+]
+force-exclude = true
