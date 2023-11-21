@@ -20,6 +20,7 @@ import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util.mnt import mount
 
 SCHEMA = """
 "additionalProperties": false,
@@ -205,6 +206,12 @@ def main(tree, options):
         "/usr/bin/bash",
         f"{data_dir}/{REMEDIATION_SCRIPT}"
     ]
+
+    for source in ("/dev", "/proc"):
+        target = os.path.join(tree, source.lstrip("/"))
+        os.makedirs(target, exist_ok=True)
+        mount(source, target, ro=False)
+    os.symlink("/proc/self/fd", f"{tree}/dev/fd")
 
     log = None
     if verbose_log is not None:
