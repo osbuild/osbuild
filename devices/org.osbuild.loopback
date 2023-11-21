@@ -82,6 +82,7 @@ class LoopbackService(devices.DeviceService):
                                   setup=self.setup_loop,
                                   offset=offset,
                                   sizelimit=sizelimit,
+                                  blocksize=self.sector_size,
                                   partscan=False,
                                   autoclear=True)
 
