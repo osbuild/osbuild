@@ -465,6 +465,8 @@ class ModuleInfo:
 
         docstring = ast.get_docstring(tree)
         doclist = docstring.split("\n") if docstring else []
+        summary = doclist[0] if len(doclist) > 0 else ""
+        long_description = "\n".join(doclist[1:]) if len(doclist) > 0 else ""
 
         assigns = filter_type(tree.body, ast.Assign)
         values = {
@@ -485,8 +487,8 @@ class ModuleInfo:
                 "1": parse_schema(values.get("SCHEMA")),
                 "2": parse_schema(values.get("SCHEMA_2")),
             },
-            'desc': doclist[0],
-            'info': "\n".join(doclist[1:]),
+            'desc': summary,
+            'info': long_description,
             'caps': parse_caps(values.get("CAPABILITIES"))
         }
         return cls(klass, name, path, info)
@@ -616,7 +618,7 @@ class Index:
             raise ValueError(f"Unsupported nodule class: {klass}")
 
         path = os.path.join(self.path, module_path)
-        modules = filter(lambda f: os.path.isfile(f"{path}/{f}"),
+        modules = filter(lambda f: os.path.isfile(f"{path}/{f}") and not path.endswith("-meta.json"),
                          os.listdir(path))
         return list(modules)
 
