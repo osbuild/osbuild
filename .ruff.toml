@@ -25,5 +25,10 @@ ignore = [
     "PLW2901", # pylint: redefined loop variable
 ]
 
+extend-exclude = [
+    "*.json",
+]
+force-exclude = true
+
 [format]
 quote-style = "preserve"
