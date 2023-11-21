@@ -409,6 +409,42 @@ class ModuleInfo:
 
     @classmethod
     def load(cls, root, klass, name) -> Optional["ModuleInfo"]:
+        base = cls.MODULES.get(klass)
+        if not base:
+            raise ValueError(f"Unsupported type: {klass}")
+        path = os.path.join(root, base, name)
+
+        try:
+            return cls._load_from_json(path, klass, name)
+        except FileNotFoundError:
+            # should we print a deprecation warning here?
+            pass
+        return cls._load_from_py(path, klass, name)
+
+    @classmethod
+    def _load_from_json(cls, path, klass, name) -> Optional["ModuleInfo"]:
+        # ideas welcome for a better filename/suffix :)
+        meta_json_suffix = "-meta.json"
+        with open(path + meta_json_suffix, encoding="utf-8") as fp:
+            meta = json.load(fp)
+
+        long_description = meta.get("description", "no description provided")
+        if isinstance(long_description, list):
+            long_description = "\n".join(long_description)
+
+        info = {
+            "schema": {
+                "1": meta.get("schema", {}),
+                "2": meta.get("schema_2", {}),
+            },
+            "desc": meta.get("summary", "no summary provided"),
+            "info": long_description,
+            "caps": meta.get("capabilities", set()),
+        }
+        return cls(klass, name, path, info)
+
+    @classmethod
+    def _load_from_py(cls, path, klass, name) -> Optional["ModuleInfo"]:
         names = ["SCHEMA", "SCHEMA_2", "CAPABILITIES"]
 
         def filter_type(lst, target):
@@ -417,11 +453,6 @@ class ModuleInfo:
         def targets(a):
             return [t.id for t in filter_type(a.targets, ast.Name)]
 
-        base = cls.MODULES.get(klass)
-        if not base:
-            raise ValueError(f"Unsupported type: {klass}")
-
-        path = os.path.join(root, base, name)
         try:
             with open(path, encoding="utf8") as f:
                 data = f.read()

@@ -2,8 +2,7 @@
 """
 Do Nothing
 
-No-op stage. Prints a JSON dump of the options passed into this stage and
-leaves the tree untouched. Useful for testing, debugging, and wasting time.
+See "org.osbuild.noop-meta.json" for more details.
 """
 
 
@@ -11,21 +10,6 @@ import json
 import sys
 
 import osbuild.api
-
-SCHEMA_2 = """
-"options": {
-  "additionalProperties": true
-},
-"devices": {
-  "additionalProperties": true
-},
-"inputs": {
-  "additionalProperties": true
-},
-"mounts": {
-  "additionalProperties": true
-}
-"""
 
 
 def main(_tree, inputs, options):
