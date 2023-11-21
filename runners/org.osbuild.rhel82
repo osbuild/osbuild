@@ -10,12 +10,11 @@ if __name__ == "__main__":
     with api.exception_handler():
         runners.ldconfig()
         runners.sysusers()
-        runners.tmpfiles()
-        runners.nsswitch()
-        runners.python_alternatives()
-
-        env = runners.quirks()
-
-        r = subprocess.run(sys.argv[1:], env=env, check=False)
+        with runners.create_machine_id_if_needed():
+            runners.tmpfiles()
+            runners.nsswitch()
+            runners.python_alternatives()
+            env = runners.quirks()
+            r = subprocess.run(sys.argv[1:], env=env, check=False)
 
         sys.exit(r.returncode)

@@ -1,8 +1,10 @@
 import os.path
+import pathlib
 import platform
 import shutil
 import subprocess
 import sys
+from contextlib import contextmanager
 
 
 def ldconfig(*dirs):
@@ -29,6 +31,29 @@ def sysusers():
     except subprocess.CalledProcessError as error:
         sys.stderr.write(error.stdout)
         sys.exit(1)
+
+
+@contextmanager
+def create_machine_id_if_needed(tree="", keep_empty=False):
+    """Create a machine-id with a fake machine id if it does not exist.
+       The machine-id file will be delete at context exit unless specified
+       with 'keep_empty' variable. In that case an empty machine-id will
+       be kept.
+    """
+    path = pathlib.Path(f"{tree}/etc/machine-id")
+    try:
+        if not path.exists():
+            path.parent.mkdir(mode=0o755, exist_ok=True)
+            with path.open(mode="w", encoding="utf8") as f:
+                # create a fake machine ID to improve reproducibility
+                f.write("ffffffffffffffffffffffffffffffff\n")
+                path.chmod(0o444)
+        yield
+    finally:
+        path.unlink()
+        if keep_empty:
+            path.touch()
+            path.chmod(0o444)
 
 
 def tmpfiles():
