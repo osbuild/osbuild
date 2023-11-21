@@ -1,4 +1,6 @@
 import os
+import pathlib
+import textwrap
 
 import pytest
 
@@ -168,3 +170,80 @@ def test_schema():
     assert not res
     res = schema.validate([1, 2, 3])
     assert res
+
+
+def make_fake_meta_json(tmp_path, name):
+    meta_json_path = pathlib.Path(f"{tmp_path}/stages/{name}-meta.json")
+    meta_json_path.parent.mkdir(exist_ok=True)
+    meta_json_path.write_text("""
+    {
+      "summary": "some json summary",
+      "description": [
+        "long text",
+        "with newlines"
+      ],
+      "capabilities": ["CAP_MAC_ADMIN", "CAP_BIG_MAC"],
+      "schema": {
+        "properties": {
+          "json_filename": {
+            "type": "string"
+          }
+        }
+      },
+      "schema_2": {
+        "json_devices": {
+          "type": "object"
+        }
+      }
+    }
+    """.replace("\n", " "), encoding="utf-8")
+    return meta_json_path
+
+
+def make_fake_py_module(tmp_path, name):
+    py_path = pathlib.Path(f"{tmp_path}/stages/{name}")
+    py_path.parent.mkdir(exist_ok=True)
+    fake_py = '"""some py summary\nlong description\nwith newline"""'
+    fake_py += textwrap.dedent("""
+    SCHEMA = '"properties": {"py_filename":{"type": "string"}}'
+    SCHEMA_2 = '"py_devices": {"type":"object"}'
+    CAPABILITIES = ['CAP_MAC_ADMIN']
+    """)
+    py_path.write_text(fake_py, encoding="utf-8")
+
+
+def test_load_from_json(tmp_path):
+    make_fake_meta_json(tmp_path, "org.osbuild.noop")
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert modinfo.desc == "some json summary"
+    assert modinfo.info == "long text\nwith newlines"
+    assert modinfo.caps == ["CAP_MAC_ADMIN", "CAP_BIG_MAC"]
+    assert modinfo.opts == {
+        "1": {"properties": {"json_filename": {"type": "string"}}},
+        "2": {"json_devices": {"type": "object"}},
+    }
+
+
+def test_load_from_py(tmp_path):
+    make_fake_py_module(tmp_path, "org.osbuild.noop")
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert modinfo.desc == "some py summary"
+    assert modinfo.info == "long description\nwith newline"
+    assert modinfo.caps == set(["CAP_MAC_ADMIN"])
+    assert modinfo.opts == {
+        "1": {"properties": {"py_filename": {"type": "string"}}},
+        "2": {"py_devices": {"type": "object"}},
+    }
+
+
+def test_load_from_json_prefered(tmp_path):
+    make_fake_meta_json(tmp_path, "org.osbuild.noop")
+    make_fake_py_module(tmp_path, "org.osbuild.noop")
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert modinfo.desc == "some json summary"
+    assert modinfo.info == "long text\nwith newlines"
+    assert modinfo.caps == ["CAP_MAC_ADMIN", "CAP_BIG_MAC"]
+    assert modinfo.opts == {
+        "1": {"properties": {"json_filename": {"type": "string"}}},
+        "2": {"json_devices": {"type": "object"}},
+    }
