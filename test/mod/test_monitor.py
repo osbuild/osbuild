@@ -143,7 +143,7 @@ def test_context():
     assert ctx_dict["id"] == "e6305b7e8ccbc39ec88415ea955b89149faf6f51fb6c89831658068bc6850411"
     assert len(ctx_dict) == 1
 
-    ctx.origin = "org.osbuild.test-2"
+    ctx.set_origin("org.osbuild.test-2")
     ctx_dict = ctx.as_dict()
     # should be a full dict again
     assert "origin" in ctx_dict
@@ -151,7 +151,7 @@ def test_context():
     assert ctx_dict["pipeline"]["name"] == "test-pipeline"
     assert ctx_dict["pipeline"]["stage"]["name"] == "org.osbuild.noop"
 
-    ctx.origin = "org.osbuild.test"
+    ctx.set_origin("org.osbuild.test")
     ctx_dict = ctx.as_dict()
     # should only have id again (old context ID)
     assert ctx_dict["id"] == "e6305b7e8ccbc39ec88415ea955b89149faf6f51fb6c89831658068bc6850411"
@@ -260,3 +260,10 @@ def test_log_line_with_entries():
     assert isinstance(entry["context"], dict)
     assert isinstance(entry["progress"], dict)
     assert entry["timestamp"] > 0
+
+
+def test_context_id():
+    ctx = Context()
+    assert ctx.id == "00d202e4fc9d917def414d1c9f284b137287144087ec275f2d146d9d47b3c8bb"
+    ctx._origin = "foo"
+    assert ctx.id != "00d202e4fc9d917def414d1c9f284b137287144087ec275f2d146d9d47b3c8bb"
