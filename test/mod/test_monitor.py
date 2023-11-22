@@ -186,6 +186,7 @@ def test_progress():
 def test_json_progress_monitor():
     index = osbuild.meta.Index(os.curdir)
     info = index.get_module_info("Stage", "org.osbuild.noop")
+    fake_noop_stage = osbuild.pipeline.Stage(info, None, None, None, None, None)
 
     manifest = osbuild.Manifest()
     pl1 = manifest.add_pipeline("test-pipeline-first", "", "")
@@ -206,6 +207,9 @@ def test_json_progress_monitor():
         mon.stage(first_stage)
         mon.log("pipeline 1 message 2")
         mon.log("pipeline 1 finished", origin="org.osbuild")
+        mon.result(osbuild.pipeline.BuildResult(
+            fake_noop_stage, returncode=0, output="output", error=None))
+        mon.finish({"success": True, "name": "test-pipeline-first"})
         mon.begin(manifest.pipelines["test-pipeline-second"])
         mon.log("pipeline 2 starting", origin="org.osbuild")
         mon.log("pipeline 2 message 2")
@@ -213,37 +217,82 @@ def test_json_progress_monitor():
         tf.seek(0)
         log = tf.read().decode().strip().split(u"\x1e")
 
-        assert len(log) == 7
-        logitem = json.loads(log[0])
+        expected_total = 12
+        assert len(log) == expected_total
+        i = 0
+        logitem = json.loads(log[i])
         assert logitem["message"] == "test-message-1"
         assert logitem["context"]["origin"] == "org.osbuild"
+        i += 1
 
-        logitem = json.loads(log[1])
+        logitem = json.loads(log[i])
         assert logitem["message"] == "test-message-2"
         assert logitem["context"]["origin"] == "test.origin.override"
+        i += 1
 
-        logitem = json.loads(log[2])
-        assert logitem["message"] == "pipeline 1 message 1"
-        assert logitem["context"]["origin"] == "org.osbuild"
+        logitem = json.loads(log[i])
+        assert logitem["message"] == "Starting pipeline test-pipeline-first"
         assert logitem["context"]["pipeline"]["name"] == "test-pipeline-first"
         # empty items are omited
         assert "name" not in logitem["context"]["pipeline"]["stage"]
+        i += 1
 
-        logitem = json.loads(log[3])
+        logitem = json.loads(log[i])
+        assert logitem["message"] == "pipeline 1 message 1"
+        assert logitem["context"]["origin"] == "org.osbuild"
+        assert logitem["context"]["pipeline"]["name"] == "test-pipeline-first"
+        i += 1
+
+        logitem = json.loads(log[i])
+        assert logitem["message"] == "Starting module org.osbuild.noop"
+        assert logitem["context"]["origin"] == "org.osbuild.main"
+        assert logitem["context"]["pipeline"]["name"] == "test-pipeline-first"
+        assert logitem["context"]["pipeline"]["stage"]["name"] == "org.osbuild.noop"
+        id_start_module = logitem["context"]["id"]
+        i += 1
+
+        logitem = json.loads(log[i])
         assert logitem["message"] == "pipeline 1 message 2"
         assert logitem["context"]["origin"] == "org.osbuild"
         assert logitem["context"]["pipeline"]["name"] == "test-pipeline-first"
-        assert logitem["context"]["pipeline"]["stage"]["name"] == "org.osbuild.noop"
+        i += 1
 
-        logitem = json.loads(log[4])
+        logitem = json.loads(log[i])
         assert logitem["message"] == "pipeline 1 finished"
-        assert "origin" not in logitem["context"]
+        prev_ctx_id = json.loads(log[i-1])["context"]["id"]
+        assert logitem["context"]["id"] == prev_ctx_id
         assert len(logitem["context"]) == 1
+        i += 1
 
-        logitem = json.loads(log[5])
+        logitem = json.loads(log[i])
+        assert logitem["message"] == "Finished module org.osbuild.noop"
+        assert logitem["context"]["id"] == id_start_module
+        i += 1
+
+        logitem = json.loads(log[i])
+        assert logitem["message"] == "Finished pipeline test-pipeline-first"
+        assert logitem["context"]["id"] == id_start_module
+        i += 1
+
+        logitem = json.loads(log[i])
+        assert logitem["message"] == "Starting pipeline test-pipeline-second"
+        assert logitem["context"]["origin"] == "org.osbuild.main"
+        assert logitem["context"]["pipeline"]["name"] == "test-pipeline-second"
+        i += 1
+
+        logitem = json.loads(log[i])
         assert logitem["message"] == "pipeline 2 starting"
         assert logitem["context"]["origin"] == "org.osbuild"
         assert logitem["context"]["pipeline"]["name"] == "test-pipeline-second"
+        i += 1
+
+        logitem = json.loads(log[i])
+        assert logitem["message"] == "pipeline 2 message 2"
+        prev_ctx_id = json.loads(log[i-1])["context"]["id"]
+        assert logitem["context"]["id"] == prev_ctx_id
+        i += 1
+
+        assert i == expected_total
 
 
 def test_log_line_empty_is_fine():
