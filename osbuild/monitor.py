@@ -113,10 +113,9 @@ class Context:
 
 
 class Progress:
-    def __init__(self, name: str, total: int, unit: Optional[str] = None):
+    def __init__(self, name: str, total: int):
         self.name = name
         self.total = total
-        self.unit = unit
         self.done = None
         self._sub_progress: Optional[Progress] = None
 
@@ -144,7 +143,6 @@ class Progress:
             "name": self.name,
             "total": self.total,
             "done": self.done,
-            "unit": self.unit,
         }
         if self._sub_progress:
             d["progress"] = self._sub_progress.as_dict()
