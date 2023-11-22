@@ -186,6 +186,12 @@ def osbuild_cli() -> int:
                 debug_break,
                 stage_timeout=stage_timeout
             )
+            # TODO: this needs a test
+            if r["success"]:
+                monitor.log(f"manifest {args.manifest_path} finished successfully", origin="org.osbuild.main")
+            else:
+                # if we had monitor.error() we could use that here
+                monitor.log(f"manifest {args.manifest_path} failed", origin="org.osbuild.main")
 
             if r["success"] and exports:
                 for pid in exports:
