@@ -294,7 +294,7 @@ class Pipeline:
         return stage
 
     def build_stages(self, object_store, monitor, libdir, debug_break="", stage_timeout=None):
-        results = {"success": True}
+        results = {"success": True, "name": self.name}
 
         # If there are no stages, just return here
         if not self.stages:
