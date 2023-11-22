@@ -162,9 +162,10 @@ TEST_INPUT = [
 
 def schema_validate_kickstart_stage(test_data):
     name = "org.osbuild.kickstart"
+    version = "1"
     root = os.path.join(os.path.dirname(__file__), "../..")
     mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(), name)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), name)
     test_input = {
         "name": "org.osbuild.kickstart",
         "options": {
