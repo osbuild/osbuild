@@ -7,13 +7,14 @@ import json
 import os
 import sys
 import tempfile
+import time
 import unittest
 from collections import defaultdict
 
 import osbuild
 import osbuild.meta
 from osbuild.monitor import LogMonitor
-from osbuild.monitor import JSONSeqMonitor, Context, Progress, LogLine
+from osbuild.monitor import JSONSeqMonitor, Context, Progress, log_entry
 from osbuild.objectstore import ObjectStore
 from osbuild.pipeline import Runner
 
@@ -241,3 +242,21 @@ def test_json_progress_monitor():
         assert logitem["message"] == "pipeline 2 starting"
         assert logitem["context"]["origin"] == "org.osbuild"
         assert logitem["context"]["pipeline"]["name"] == "test-pipeline-second"
+
+
+def test_log_line_empty_is_fine():
+    empty = log_entry()
+    assert len(empty) == 1
+    assert empty["timestamp"] > time.time()-60
+    assert empty["timestamp"] < time.time()+60
+
+
+def test_log_line_with_entries():
+    ctx = Context("some-origin")
+    progress = Progress(name="foo", total=2)
+    entry = log_entry("some-msg", ctx, progress)
+    assert len(entry) == 4
+    assert entry["message"] == "some-msg"
+    assert isinstance(entry["context"], dict)
+    assert isinstance(entry["progress"], dict)
+    assert entry["timestamp"] > 0
