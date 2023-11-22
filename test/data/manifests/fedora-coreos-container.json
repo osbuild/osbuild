@@ -732,6 +732,188 @@
       ]
     },
     {
+      "name": "raw-4k-image",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.truncate",
+          "options": {
+            "filename": "disk.img",
+            "size": "10737418240"
+          }
+        },
+        {
+          "type": "org.osbuild.sfdisk",
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "sector-size": 4096
+              }
+            }
+          },
+          "options": {
+            "uuid": "00000000-0000-4000-a000-000000000001",
+            "label": "gpt",
+            "partitions": [
+              {
+                "start": 256,
+                "size": 256,
+                "type": "21686148-6449-6E6F-744E-656564454649",
+                "bootable": true,
+                "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+              },
+              {
+                "start": 512,
+                "size": 32512,
+                "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+                "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
+              },
+              {
+                "start": 33024,
+                "size": 98304,
+                "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+                "uuid": "61B2905B-DF3E-4FB3-80FA-49D1E773AA32"
+              },
+              {
+                "start": 131328,
+                "size": 524288,
+                "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+                "uuid": "CA7D7CCB-63ED-4C53-861C-1742536059CC"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.mkfs.fat",
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 512,
+                "size": 32512,
+                "lock": true,
+                "sector-size": 4096
+              }
+            }
+          },
+          "options": {
+            "label": "EFI-SYSTEM",
+            "volid": "7B7795E7"
+          }
+        },
+        {
+          "type": "org.osbuild.mkfs.ext4",
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 33024,
+                "size": 98304,
+                "lock": true,
+                "sector-size": 4096
+              }
+            }
+          },
+          "options": {
+            "uuid": "96d15588-3596-4b3c-adca-a2ff7279ea63",
+            "label": "boot"
+          }
+        },
+        {
+          "type": "org.osbuild.mkfs.xfs",
+          "devices": {
+            "device": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 131328,
+                "size": 524288,
+                "lock": true,
+                "sector-size": 4096
+              }
+            }
+          },
+          "options": {
+            "uuid": "910678ff-f77e-4a7d-8d53-86f2ac47a823",
+            "label": "root"
+          }
+        },
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:tree"
+              ]
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": "input://tree/",
+                "to": "mount://root/"
+              }
+            ]
+          },
+          "devices": {
+            "efi": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 512,
+                "size": 32512,
+                "sector-size": 4096
+              }
+            },
+            "boot": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 33024,
+                "size": 98304,
+                "sector-size": 4096
+              }
+            },
+            "root": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 131328,
+                "size": 524288,
+                "sector-size": 4096
+              }
+            }
+          },
+          "mounts": [
+            {
+              "name": "root",
+              "type": "org.osbuild.xfs",
+              "source": "root",
+              "target": "/"
+            },
+            {
+              "name": "boot",
+              "type": "org.osbuild.ext4",
+              "source": "boot",
+              "target": "/boot"
+            },
+            {
+              "name": "efi",
+              "type": "org.osbuild.fat",
+              "source": "efi",
+              "target": "/boot/efi"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "raw-metal-image",
       "build": "name:build",
       "stages": [
@@ -770,6 +952,60 @@
                 "filename": "disk.img",
                 "start": 264192,
                 "size": 786432
+              }
+            }
+          },
+          "mounts": [
+            {
+              "name": "boot",
+              "type": "org.osbuild.ext4",
+              "source": "boot",
+              "target": "/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "raw-metal4k-image",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:raw-4k-image"
+              ]
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": "input://tree/disk.img",
+                "to": "tree:///disk.img"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.kernel-cmdline.bls-append",
+          "options": {
+            "bootpath": "mount:///",
+            "kernel_opts": [
+              "ignition.platform.id=metal"
+            ]
+          },
+          "devices": {
+            "boot": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "start": 33024,
+                "size": 98304,
+                "sector-size": 4096
               }
             }
           },
@@ -859,6 +1095,32 @@
               {
                 "from": "input://tree/disk.img",
                 "to": "tree:///metal.raw"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "metal4k",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.copy",
+          "inputs": {
+            "tree": {
+              "type": "org.osbuild.tree",
+              "origin": "org.osbuild.pipeline",
+              "references": [
+                "name:raw-metal4k-image"
+              ]
+            }
+          },
+          "options": {
+            "paths": [
+              {
+                "from": "input://tree/disk.img",
+                "to": "tree:///metal4k.raw"
               }
             ]
           }
