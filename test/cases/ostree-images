@@ -100,6 +100,9 @@ def run_tests(args, tmpdir):
                 },
                 "metal": {
                     "artifact": "metal.raw"
+                },
+                "metal4k": {
+                    "artifact": "metal4k.raw"
                 }
             },
         }
