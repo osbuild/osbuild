@@ -32,7 +32,7 @@ def omitempty(d: dict):
 
 
 class Context:
-    """Context for a single log line. Automatically calculates hash/id when read."""
+    """Context for a single log entry. Automatically calculates hash/id when read."""
 
     def __init__(self,
                  origin: Optional[str] = None,
@@ -46,13 +46,17 @@ class Context:
         self._id = None
         self._id_history: Set[str] = set()
 
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        # reset "_id" on any write so that the hash is automatically recalculated
+        if name != "_id":
+            super().__setattr__("_id", None)
+
     @property
     def origin(self):
         return self._origin
 
-    @origin.setter
-    def origin(self, origin: str):
-        self._id = None
+    def set_origin(self, origin: str):
         self._origin = origin
 
     @property
@@ -63,8 +67,7 @@ class Context:
     def pipeline_id(self):
         return self._pipeline_id
 
-    def pipeline(self, pipeline: osbuild.Pipeline):
-        self._id = None
+    def set_pipeline(self, pipeline: osbuild.Pipeline):
         self._pipeline_name = pipeline.name
         self._pipeline_id = pipeline.id
 
@@ -76,8 +79,7 @@ class Context:
     def stage_id(self):
         return self._stage_id
 
-    def stage(self, stage: osbuild.Stage):
-        self._id = None
+    def set_stage(self, stage: osbuild.Stage):
         self._stage_name = stage.name
         self._stage_id = stage.id
 
@@ -303,7 +305,7 @@ class JSONSeqMonitor(BaseMonitor):
         pass
 
     def begin(self, pipeline: osbuild.Pipeline):
-        self._context.pipeline(pipeline)
+        self._context.set_pipeline(pipeline)
         self._progress.sub_progress(Progress("stages", len(pipeline.stages)))
         self._progress.incr()
 
@@ -314,17 +316,17 @@ class JSONSeqMonitor(BaseMonitor):
         self._module(assembler)
 
     def _module(self, module):
-        self._context.stage(module)
+        self._context.set_stage(module)
         self._progress.incr(depth=1)
 
     def log(self, message, origin: Optional[str] = None):
         oo = self._context.origin
         if origin is not None:
-            self._context.origin = origin
+            self._context.set_origin(origin)
         entry = log_entry(message=message, context=self._context, progress=self._progress)
         self._jsonseq(entry)
         # restore old origin
-        self._context.origin = oo
+        self._context.set_origin(oo)
 
     def _jsonseq(self, entry):
         # follow rfc7464 (application/json-seq)
