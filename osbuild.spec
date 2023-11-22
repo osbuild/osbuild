@@ -227,6 +227,7 @@ exit 0
 %exclude %{pkgdir}/inputs/org.osbuild.ostree*
 %exclude %{pkgdir}/sources/org.osbuild.ostree*
 %exclude %{pkgdir}/stages/org.osbuild.ostree*
+%exclude %{pkgdir}/stages/org.osbuild.experimental.ostree*
 %exclude %{pkgdir}/stages/org.osbuild.rpm-ostree
 
 %files -n       python3-%{pypi_name}
@@ -249,6 +250,7 @@ exit 0
 %{pkgdir}/inputs/org.osbuild.ostree*
 %{pkgdir}/sources/org.osbuild.ostree*
 %{pkgdir}/stages/org.osbuild.ostree*
+%{pkgdir}/stages/org.osbuild.experimental.ostree*
 %{pkgdir}/stages/org.osbuild.rpm-ostree
 
 %files selinux
