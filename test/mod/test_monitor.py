@@ -159,7 +159,7 @@ def test_context():
 
 
 def test_progress():
-    prog = Progress("test", total=12, unit="tests")
+    prog = Progress("test", total=12)
     subprog = Progress("test-sub1", total=3)
     prog.sub_progress(subprog)
     assert prog.done is None  # starts with None until the first incr()
