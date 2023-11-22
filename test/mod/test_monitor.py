@@ -160,25 +160,27 @@ def test_context():
 
 def test_progress():
     prog = Progress("test", total=12)
-    subprog = Progress("test-sub1", total=3)
-    prog.sub_progress(subprog)
-    assert prog.done is None  # starts with None until the first incr()
-    prog.incr()
-
-    prog.incr(depth=1)
+    prog.sub_progress = Progress("test-sub1", total=3)
+    # we start empty
     progdict = prog.as_dict()
     assert progdict["done"] == 0
     assert progdict["progress"]["done"] == 0
 
-    prog.incr(depth=1)
+    # incr a sub_progress only affect sub_progress
+    prog.sub_progress.incr()
     progdict = prog.as_dict()
     assert progdict["done"] == 0
     assert progdict["progress"]["done"] == 1
 
+    prog.sub_progress.incr()
+    progdict = prog.as_dict()
+    assert progdict["done"] == 0
+    assert progdict["progress"]["done"] == 2
+
     prog.incr()
     progdict = prog.as_dict()
     assert progdict["done"] == 1
-    assert progdict["progress"]["done"] is None, "sub-progress did not reset"
+    assert progdict.get("progress") == None, "sub-progress did not reset"
 
 
 def test_json_progress_monitor():

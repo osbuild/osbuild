@@ -113,30 +113,29 @@ class Context:
 
 
 class Progress:
+    """Progress represents generic progress information.
+
+    A progress can contain a sub_progress to track more
+    nested progresses. Any increment of a parent progress
+    will the reset the sub_progress to None and a new
+    sub_progress needs to be provided.
+
+    Keyword arguments:
+    name  -- user visible name for the progress
+    total -- total steps required to finish the progress
+    """
+
     def __init__(self, name: str, total: int):
         self.name = name
         self.total = total
-        self.done = None
-        self._sub_progress: Optional[Progress] = None
+        self.done = 0
+        self.sub_progress: Optional[Progress] = None
 
-    def incr(self, depth=0):
-        if depth > 0:
-            self._sub_progress.incr(depth - 1)
-        else:
-            if self.done is None:
-                self.done = 0
-            else:
-                self.done += 1
-            if self._sub_progress:
-                self._sub_progress.reset()
-
-    def reset(self):
-        self.done = None
-        if self._sub_progress:
-            self._sub_progress.reset()
-
-    def sub_progress(self, prog: "Progress"):
-        self._sub_progress = prog
+    def incr(self):
+        """Increment the "done" count"""
+        self.done += 1
+        if self.sub_progress:
+            self.sub_progress = None
 
     def as_dict(self):
         d = {
@@ -144,8 +143,8 @@ class Progress:
             "total": self.total,
             "done": self.done,
         }
-        if self._sub_progress:
-            d["progress"] = self._sub_progress.as_dict()
+        if self.sub_progress:
+            d["progress"] = self.sub_progress.as_dict()
         return d
 
 
@@ -299,23 +298,28 @@ class JSONSeqMonitor(BaseMonitor):
         self._progress = Progress("pipelines", len(manifest.pipelines))
         self._context = Context(origin="org.osbuild")
 
-    def result(self, result):
-        pass
+    # result is for modules
+    def result(self, result: osbuild.pipeline.BuildResult):
+        # TODO: check pipeline id?
+        if self._progress.sub_progress:
+            self._progress.sub_progress.incr()
 
     def begin(self, pipeline: osbuild.Pipeline):
         self._context.set_pipeline(pipeline)
-        self._progress.sub_progress(Progress("stages", len(pipeline.stages)))
+        self._progress.sub_progress = Progress("stages", len(pipeline.stages))
+
+    # finish is for pipelines
+    def finish(self, result: dict):
         self._progress.incr()
 
     def stage(self, stage: osbuild.Stage):
         self._module(stage)
 
-    def assembler(self, assembler):
+    def assembler(self, assembler: osbuild.Stage):
         self._module(assembler)
 
-    def _module(self, module):
+    def _module(self, module: osbuild.Stage):
         self._context.set_stage(module)
-        self._progress.incr(depth=1)
 
     def log(self, message, origin: Optional[str] = None):
         oo = self._context.origin
