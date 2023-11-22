@@ -7,12 +7,6 @@ import osbuild
 import osbuild.meta
 
 
-@pytest.fixture(name="tempdir")
-def tempdir_fixture():
-    with TemporaryDirectory(prefix="meta-") as tmp:
-        yield tmp
-
-
 def create_runners(path, distro: str, base: str, versions):
     """Create runner"""
     runners = []
@@ -59,9 +53,9 @@ def test_parse_name():
         assert v == want["version"]
 
 
-def test_runner_detection(tempdir):
+def test_runner_detection(tmp_path):
 
-    runners = os.path.join(tempdir, "runners")
+    runners = os.path.join(tmp_path, "runners")
     os.makedirs(runners)
 
     table = {
@@ -100,7 +94,7 @@ def test_runner_detection(tempdir):
         base = info["base"] or 0
         versions = info["versions"]
         want = create_runners(runners, distro, str(base), versions)
-        meta = osbuild.meta.Index(tempdir)
+        meta = osbuild.meta.Index(tmp_path)
         have = meta.list_runners(distro)
         assert len(want) == len(have)
         want_all += want
@@ -128,9 +122,9 @@ def test_runner_detection(tempdir):
     assert len(have) == len(want_all)
 
 
-def test_runner_sorting(tempdir):
+def test_runner_sorting(tmp_path):
 
-    runners = os.path.join(tempdir, "runners")
+    runners = os.path.join(tmp_path, "runners")
     os.makedirs(runners)
 
     table = {
@@ -149,7 +143,7 @@ def test_runner_sorting(tempdir):
         versions = info["versions"]
         create_runners(runners, distro, str(base), versions)
 
-    meta = osbuild.meta.Index(tempdir)
+    meta = osbuild.meta.Index(tmp_path)
     have = meta.list_runners()
 
     names = [
