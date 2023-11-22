@@ -149,31 +149,21 @@ class Progress:
         return d
 
 
-class LogLine:
-    """A single JSON serializable log line
-
-    Create a single log line with a given message, error message, context, and progress objects.
-    All arguments are optional. A timestamp is added to the dictionary when calling the 'as_dict()' method.
+def log_entry(message: Optional[str] = None,
+              context: Optional[Context] = None,
+              progress: Optional[Progress] = None) -> dict:
     """
-
-    def __init__(self, *,
-                 message: Optional[str] = None,
-                 error: Optional[str] = None,
-                 context: Optional[Context] = None,
-                 progress: Optional[Progress] = None):
-        self.message = message
-        self.error = error
-        self.context = context
-        self.progress = progress
-
-    def as_dict(self):
-        return omitempty({
-            "message": self.message,
-            "error": self.error,
-            "context": self.context.as_dict(),
-            "progress": self.progress.as_dict(),
-            "timestamp": time.time(),
-        })
+    Create a single log entry dict with a given message, context, and progress objects.
+    All arguments are optional. A timestamp is added to the message.
+    """
+    # we probably want to add an (optional) error message here too once the
+    # monitors support that
+    return omitempty({
+        "message": message,
+        "context": context.as_dict() if context else None,
+        "progress": progress.as_dict() if progress else None,
+        "timestamp": time.time(),
+    })
 
 
 class TextWriter:
@@ -331,16 +321,15 @@ class JSONSeqMonitor(BaseMonitor):
         oo = self._context.origin
         if origin is not None:
             self._context.origin = origin
-        line = LogLine(message=message, context=self._context, progress=self._progress)
-        self._jsonseq(line.as_dict())
-        # needs to be here as LogLine has a ref to self._context so updates
-        # before line.as_dict() will be have a different context
+        entry = log_entry(message=message, context=self._context, progress=self._progress)
+        self._jsonseq(entry)
+        # restore old origin
         self._context.origin = oo
 
-    def _jsonseq(self, data):
+    def _jsonseq(self, entry):
         # follow rfc7464 (application/json-seq)
         self.out.write("\x1e")
-        json.dump(data, self.out)
+        json.dump(entry, self.out)
         self.out.write("\n")
 
 
