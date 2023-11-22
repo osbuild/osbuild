@@ -9,6 +9,7 @@ are called on the monitor object at certain events. Consult the
 """
 
 import abc
+import copy
 import datetime
 import hashlib
 import json
@@ -51,6 +52,18 @@ class Context:
         # reset "_id" on any write so that the hash is automatically recalculated
         if name != "_id":
             super().__setattr__("_id", None)
+
+    def with_origin(self, origin: Optional[str]) -> "Context":
+        """
+        Return a Context with the given origin but otherwise identical.
+
+        Note that if the origin is empty or same it will return self.
+        """
+        if origin is None or origin == self._origin:
+            return self
+        ctx = copy.copy(self)
+        ctx.set_origin(origin)
+        return ctx
 
     @property
     def origin(self):
@@ -322,13 +335,8 @@ class JSONSeqMonitor(BaseMonitor):
         self._context.set_stage(module)
 
     def log(self, message, origin: Optional[str] = None):
-        oo = self._context.origin
-        if origin is not None:
-            self._context.set_origin(origin)
-        entry = log_entry(message=message, context=self._context, progress=self._progress)
+        entry = log_entry(message, self._context.with_origin(origin), self._progress)
         self._jsonseq(entry)
-        # restore old origin
-        self._context.set_origin(oo)
 
     def _jsonseq(self, entry):
         # follow rfc7464 (application/json-seq)
