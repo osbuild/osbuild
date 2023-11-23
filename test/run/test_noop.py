@@ -37,12 +37,6 @@ def jsondata_fixture():
     })
 
 
-@pytest.fixture(name="tmpdir", scope="module")
-def tmpdir_fixture():
-    with tempfile.TemporaryDirectory() as tmp:
-        yield tmp
-
-
 @pytest.fixture(name="osb", scope="module")
 def osbuild_fixture():
     with test.OSBuild() as osb:
@@ -69,5 +63,5 @@ def test_noop2(osb):
 
 
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
-def test_noop_v2(osb, tmpdir, jsondata):
-    osb.compile(jsondata, output_dir=tmpdir, exports=["noop"])
+def test_noop_v2(osb, tmp_path, jsondata):
+    osb.compile(jsondata, output_dir=tmp_path, exports=["noop"])

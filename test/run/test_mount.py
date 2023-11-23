@@ -19,12 +19,6 @@ from osbuild import devices, host, meta, mounts
 from ..test import TestBase
 
 
-@pytest.fixture(name="tmpdir")
-def tmpdir_fixture():
-    with tempfile.TemporaryDirectory(prefix="test-devices-") as tmp:
-        yield tmp
-
-
 @contextmanager
 def make_arguments(opts):
     os.makedirs("/run/osbuild/api")
@@ -38,17 +32,17 @@ def make_arguments(opts):
 
 
 @contextmanager
-def make_dev_tmpfs(tmpdir):
-    dev_path = os.path.join(tmpdir, "dev")
+def make_dev_tmpfs(tmp_path):
+    dev_path = os.path.join(tmp_path, "dev")
     os.makedirs(dev_path)
     subprocess.run(["mount", "-t", "tmpfs", "-o", "nosuid", "none", dev_path], check=True)
     yield dev_path
     subprocess.run(["umount", "--lazy", dev_path], check=True)
 
 
-def create_image(tmpdir):
+def create_image(tmp_path):
     # create a file to contain an image
-    tree = os.path.join(tmpdir, "tree")
+    tree = os.path.join(tmp_path, "tree")
     os.makedirs(tree)
     size = 2 * 1024 * 1024
     file = os.path.join(tree, "image.img")
@@ -120,13 +114,13 @@ def mount(mgr, devpath, tree, size, mountpoint, options):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_without_options(tmpdir):
-    tree, size = create_image(tmpdir)
+def test_without_options(tmp_path):
+    tree, size = create_image(tmp_path)
     options = {}
 
-    with tempfile.TemporaryDirectory(dir=tmpdir) as mountpoint:
+    with tempfile.TemporaryDirectory(dir=tmp_path) as mountpoint:
         with host.ServiceManager() as mgr:
-            with make_dev_tmpfs(tmpdir) as devpath:
+            with make_dev_tmpfs(tmp_path) as devpath:
                 mount(mgr, devpath, tree, size, mountpoint, options)
                 with open(os.path.join(mountpoint, "test"), "w", encoding="utf-8") as f:
                     f.write("should work")
@@ -134,8 +128,8 @@ def test_without_options(tmpdir):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_all_options(tmpdir):
-    tree, size = create_image(tmpdir)
+def test_all_options(tmp_path):
+    tree, size = create_image(tmp_path)
     options = {
         "readonly": True,
         "uid": 0,
@@ -145,9 +139,9 @@ def test_all_options(tmpdir):
     }
     print(options)
 
-    with tempfile.TemporaryDirectory(dir=tmpdir) as mountpoint:
+    with tempfile.TemporaryDirectory(dir=tmp_path) as mountpoint:
         with host.ServiceManager() as mgr:
-            with make_dev_tmpfs(tmpdir) as devpath:
+            with make_dev_tmpfs(tmp_path) as devpath:
                 mount(mgr, devpath, tree, size, mountpoint, options)
 
                 # Check FS is read only

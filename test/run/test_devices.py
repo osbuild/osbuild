@@ -14,21 +14,15 @@ from osbuild import devices, host, loop, meta
 from ..test import TestBase
 
 
-@pytest.fixture(name="tmpdir")
-def tmpdir_fixture():
-    with tempfile.TemporaryDirectory(prefix="test-devices-") as tmp:
-        yield tmp
-
-
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_loopback_basic(tmpdir):
+def test_loopback_basic(tmp_path):
     index = meta.Index(os.curdir)
     info = index.get_module_info("Device", "org.osbuild.loopback")
 
-    tree = os.path.join(tmpdir, "tree")
+    tree = os.path.join(tmp_path, "tree")
     os.makedirs(tree)
 
-    devpath = os.path.join(tmpdir, "dev")
+    devpath = os.path.join(tmp_path, "dev")
     os.makedirs(devpath)
 
     size = 1024 * 1024
@@ -37,7 +31,7 @@ def test_loopback_basic(tmpdir):
         f.truncate(size)
         sb = os.fstat(f.fileno())
 
-    testfile = os.path.join(tmpdir, "test.img")
+    testfile = os.path.join(tmp_path, "test.img")
 
     options = {
         "filename": "image.img",
