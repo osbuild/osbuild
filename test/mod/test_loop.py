@@ -253,3 +253,8 @@ def test_on_close(tempdir):
             lo.close()
 
         ctl.close()
+
+
+def test_loop_handles_error_in_init():
+    with pytest.raises(FileNotFoundError):
+        lopo = loop.Loop("non-existing")

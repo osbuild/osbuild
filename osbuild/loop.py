@@ -120,6 +120,7 @@ class Loop:
         self.devname = f"loop{minor}"
         self.minor = minor
         self.on_close = None
+        self.fd = -1
 
         with contextlib.ExitStack() as stack:
             if not dir_fd:
