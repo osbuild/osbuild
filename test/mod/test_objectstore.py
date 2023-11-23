@@ -21,12 +21,6 @@ def store_path(store: objectstore.ObjectStore, ref: str, path: str) -> bool:
     return os.path.exists(os.path.join(obj, path))
 
 
-@pytest.fixture(name="tmpdir")
-def tmpdir_fixture():
-    with tempfile.TemporaryDirectory() as tmp:
-        yield tmp
-
-
 @pytest.fixture(name="object_store")
 def store_fixture():
     with tempfile.TemporaryDirectory(
@@ -83,8 +77,8 @@ def test_basic(object_store):
     assert tree.mode == objectstore.Object.Mode.READ
 
 
-def test_cleanup(tmpdir):
-    with objectstore.ObjectStore(tmpdir) as object_store:
+def test_cleanup(tmp_path):
+    with objectstore.ObjectStore(tmp_path) as object_store:
         object_store.maximum_size = 1024 * 1024 * 1024
 
         stage = os.path.join(object_store, "stage")
@@ -94,11 +88,11 @@ def test_cleanup(tmpdir):
         p.touch()
 
     # there should be no temporary Objects dirs anymore
-    with objectstore.ObjectStore(tmpdir) as object_store:
+    with objectstore.ObjectStore(tmp_path) as object_store:
         assert object_store.get("A") is None
 
 
-def test_metadata(tmpdir):
+def test_metadata(tmp_path):
 
     # test metadata object directly first
     with tempfile.TemporaryDirectory() as tmp:
@@ -154,8 +148,8 @@ def test_metadata(tmpdir):
         md.set("a", data)
         assert md.get("a") == data
 
-    # use tmpdir fixture from here on
-    with objectstore.ObjectStore(tmpdir) as store:
+    # use tmp_path fixture from here on
+    with objectstore.ObjectStore(tmp_path) as store:
         store.maximum_size = 1024 * 1024 * 1024
         obj = store.new("a")
         p = Path(obj, "A")
@@ -170,7 +164,7 @@ def test_metadata(tmpdir):
 
         store.commit(obj, "a")
 
-    with objectstore.ObjectStore(tmpdir) as store:
+    with objectstore.ObjectStore(tmp_path) as store:
         obj = store.get("a")
 
         assert obj.meta.get("md") == data
@@ -183,8 +177,8 @@ def test_metadata(tmpdir):
 
 
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="Need root for bind mount")
-def test_host_tree(tmpdir):
-    with objectstore.ObjectStore(tmpdir) as store:
+def test_host_tree(tmp_path):
+    with objectstore.ObjectStore(tmp_path) as store:
         host = store.host_tree
 
         assert host.tree
@@ -256,10 +250,10 @@ def test_source_epoch(object_store):
 
 
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="Need root for bind mount")
-def test_store_server(tmpdir):
+def test_store_server(tmp_path):
     with contextlib.ExitStack() as stack:
 
-        store = objectstore.ObjectStore(tmpdir)
+        store = objectstore.ObjectStore(tmp_path)
         stack.enter_context(store)
 
         tmp = tempfile.TemporaryDirectory()
@@ -271,7 +265,7 @@ def test_store_server(tmpdir):
         client = objectstore.StoreClient(server.socket_address)
 
         have = client.source("org.osbuild.files")
-        want = os.path.join(tmpdir, "sources")
+        want = os.path.join(tmp_path, "sources")
         assert have.startswith(want)
 
         tmp = client.mkdtemp(suffix="suffix", prefix="prefix")
@@ -288,7 +282,7 @@ def test_store_server(tmpdir):
         p.mkdir()
         obj.finalize()
 
-        mountpoint = Path(tmpdir, "mountpoint")
+        mountpoint = Path(tmp_path, "mountpoint")
         mountpoint.mkdir()
 
         assert store.contains("42")
@@ -301,7 +295,7 @@ def test_store_server(tmpdir):
 
         # check we can mount subtrees via `read_tree_at`
 
-        filemount = Path(tmpdir, "file")
+        filemount = Path(tmp_path, "file")
         filemount.touch()
 
         path = client.read_tree_at("42", filemount, "/file.txt")
@@ -310,7 +304,7 @@ def test_store_server(tmpdir):
         txt = filepath.read_text(encoding="utf8")
         assert txt == "osbuild"
 
-        dirmount = Path(tmpdir, "dir")
+        dirmount = Path(tmp_path, "dir")
         dirmount.mkdir()
 
         path = client.read_tree_at("42", dirmount, "/directory")
@@ -321,8 +315,8 @@ def test_store_server(tmpdir):
         # mount points and sub-trees
 
         with pytest.raises(RuntimeError):
-            nonexistent = os.path.join(tmpdir, "nonexistent")
+            nonexistent = os.path.join(tmp_path, "nonexistent")
             _ = client.read_tree_at("42", nonexistent)
 
         with pytest.raises(RuntimeError):
-            _ = client.read_tree_at("42", tmpdir, "/nonexistent")
+            _ = client.read_tree_at("42", tmp_path, "/nonexistent")

@@ -114,15 +114,9 @@ def check_case(source, case, store, libdir):
             raise ValueError(f"invalid expectation: {expects}")
 
 
-@pytest.fixture(name="tmpdir")
-def tmpdir_fixture():
-    with tempfile.TemporaryDirectory() as tmp:
-        yield tmp
-
-
 @pytest.mark.skipif(not can_setup_netns(), reason="network namespace setup failed")
 @pytest.mark.parametrize("source,case", make_test_cases())
-def test_sources(source, case, tmpdir):
+def test_sources(source, case, tmp_path):
     index = osbuild.meta.Index(os.curdir)
     sources = os.path.join(test.TestBase.locate_test_data(), "sources")
 
@@ -136,7 +130,7 @@ def test_sources(source, case, tmpdir):
 
     src = osbuild.sources.Source(info, items, options)
 
-    with osbuild.objectstore.ObjectStore(tmpdir) as store, \
+    with osbuild.objectstore.ObjectStore(tmp_path) as store, \
             fileServer(test.TestBase.locate_test_data()):
         check_case(src, case_options, store, index.path)
         check_case(src, case_options, store, index.path)
