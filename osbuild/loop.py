@@ -15,6 +15,9 @@ __all__ = [
     "UnexpectedDevice"
 ]
 
+# can be mocked in tests
+DEV_PATH = "/dev"
+
 
 class UnexpectedDevice(Exception):
     def __init__(self, expected_minor, rdev, mode):
@@ -124,8 +127,14 @@ class Loop:
 
         with contextlib.ExitStack() as stack:
             if not dir_fd:
-                dir_fd = os.open("/dev", os.O_DIRECTORY)
+                dir_fd = os.open(DEV_PATH, os.O_DIRECTORY)
                 stack.callback(lambda: os.close(dir_fd))
+            # ensure the device node is availale, in containers it may
+            # not get dynamically created
+            try:
+                self.mknod(dir_fd)
+            except FileExistsError:
+                pass
             self.fd = os.open(self.devname, os.O_RDWR, dir_fd=dir_fd)
 
         info = os.stat(self.fd)
@@ -534,7 +543,7 @@ class LoopControl:
 
         with contextlib.ExitStack() as stack:
             if not dir_fd:
-                dir_fd = os.open("/dev", os.O_DIRECTORY)
+                dir_fd = os.open(DEV_PATH, os.O_DIRECTORY)
                 stack.callback(lambda: os.close(dir_fd))
 
             self.fd = os.open("loop-control", os.O_RDWR, dir_fd=dir_fd)
