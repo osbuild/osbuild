@@ -1,15 +1,36 @@
 """Mount utilities
 """
-
 import contextlib
+import ctypes
 import enum
 import subprocess
 from typing import Optional
+
+import osbuild.util.linux
 
 
 class MountPermissions(enum.Enum):
     READ_WRITE = "rw"
     READ_ONLY = "ro"
+
+
+def mount_new(source: str, target: str, bind: bool = True, ro: bool = True, private: bool = True, mode: str = "0755"):
+    libc = osbuild.util.linux.Libc.default()
+
+    options = []
+    if ro:
+        options += ["ro"]
+    if mode:
+        options += [mode]
+    kopts = ",".join(options).encode("utf-8")
+
+    flags = ctypes.c_ulong(0)
+    if bind:
+        flags = flags or libc.MS_BIND or libc.MS_REC
+    if private:
+        flags = flags or libc.MS_PRIVATE
+
+    libc.mount(source, target, b"none", flags, kopts)
 
 
 def mount(source, target, bind=True, ro=True, private=True, mode="0755"):

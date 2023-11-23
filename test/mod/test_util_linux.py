@@ -2,14 +2,17 @@
 # Tests for the `osbuild.util.linux` module.
 #
 
+import contextlib
 import ctypes
 import os
+import pathlib
 import subprocess
 import tempfile
 import time
 
 import pytest
 
+from osbuild.testutil.fs import make_fs_tree
 from osbuild.util import linux
 
 from .. import test
@@ -187,6 +190,8 @@ def test_libc():
     assert libc0.RENAME_NOREPLACE
     assert libc0.RENAME_WHITEOUT
     assert libc0.renameat2
+    assert libc0.mount
+    assert libc0.umount2
 
 
 def test_libc_renameat2_errcheck():
@@ -264,3 +269,37 @@ def test_libc_futimes_works(tmpdir):
         )))
     assert os.stat(stamp_file).st_atime == 3.3
     assert round(os.stat(stamp_file).st_mtime, 3) == round(mtime1, 3)
+
+
+def test_libc_mount_errcheck():
+    libc = linux.Libc.default()
+
+    with pytest.raises(OSError, match=r"No such file or directory"):
+        libc.mount(source=b"/not-exists", target=b"/target", fstype=b"", flags=0)
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="root only")
+def test_libc_mount_bind_mount(tmp_path):
+    libc = linux.Libc.default()
+
+    # create a /src and bind mount on /dst
+    make_fs_tree(tmp_path, {
+        "/src/src-file": "some content",
+        "/dst/": None,
+    })
+    src_file_path = pathlib.Path(f"{tmp_path}/src/src-file")
+    src_dir = os.fspath(src_file_path.parent).encode("utf-8")
+    dst_file_path = pathlib.Path(f"{tmp_path}/dst/src-file")
+    dst_dir = os.fspath(dst_file_path.parent).encode("utf-8")
+
+    # fake src exists but dst not yet as it's not yet mounted
+    assert src_file_path.exists()
+    assert not dst_file_path.exists()
+    with contextlib.ExitStack() as cm:
+        libc.mount(src_dir, dst_dir, b"none", libc.MS_BIND)
+        # cleanup (and test umount2 along the way)
+        cm.callback(libc.umount2, dst_dir, 0)
+        # now src is bind mounted to dst and we can read the content
+        assert dst_file_path.read_bytes() == b"some content"
+    # ensure libc.umount2 unmounted dst again
+    assert not dst_file_path.exists()
