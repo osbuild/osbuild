@@ -4,8 +4,6 @@
   ],
   "added_files": [
     "/boot/grub2/grubenv",
-    "/dev/null",
-    "/dev/shm",
     "/etc/authselect/custom/hardening",
     "/etc/authselect/custom/hardening/README",
     "/etc/authselect/custom/hardening/REQUIREMENTS",
@@ -45,7 +43,8 @@
     "/root/oscap_eval_xccdf_results.xml.xz",
     "/root/oscap_remediation.bash",
     "/root/report.html",
-    "/root/results_arf.xml.xz"
+    "/root/results_arf.xml.xz",
+    "/run/mount"
   ],
   "deleted_files": [],
   "differences": {
