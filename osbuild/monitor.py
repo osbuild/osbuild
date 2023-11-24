@@ -267,7 +267,8 @@ class LogMonitor(BaseMonitor):
             self.out.write(pipeline.build)
         else:
             self.out.write("<host>")
-        self.out.write(f"\n  runner: {pipeline.runner.name} ({pipeline.runner.exec})")
+        if pipeline.runner:
+            self.out.write(f"\n  runner: {pipeline.runner.name} ({pipeline.runner.exec})")
         source_epoch = pipeline.source_epoch
         if source_epoch is not None:
             timepoint = datetime.datetime.fromtimestamp(source_epoch).strftime('%c')
@@ -308,12 +309,13 @@ class JSONSeqMonitor(BaseMonitor):
     def __init__(self, fd: int, manifest: osbuild.Manifest):
         super().__init__(fd, manifest)
         self._ctx_ids: Set[str] = set()
-        self._progress = Progress("pipelines", len(manifest.pipelines))
+        self._progress = Progress("pipelines/sources", len(manifest.pipelines) + len(manifest.sources))
         self._context = Context(origin="org.osbuild")
 
     def begin(self, pipeline: osbuild.Pipeline):
         self._context.set_pipeline(pipeline)
-        self._progress.sub_progress = Progress("stages", len(pipeline.stages))
+        if pipeline.stages:
+            self._progress.sub_progress = Progress("stages", len(pipeline.stages))
         self.log(f"Starting pipeline {pipeline.name}", origin="org.osbuild.main")
 
     # finish is for pipelines
