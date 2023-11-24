@@ -1,6 +1,6 @@
-# Making tests for stages
+# Making integration tests for stages
 
-The stage tests are automatically run by the GitHub CI; in order to create a
+The stage integration tests are automatically run by the GitHub CI; in order to create a
 new test-bed for your new stage do the following:
 
 1. Create a folder with the name of your stage.
