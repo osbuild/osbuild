@@ -176,6 +176,13 @@ class CurlSource(sources.SourceService):
                 os.rename(f"{tmpdir}/{checksum}", f"{self.cache}/{checksum}")
             except FileExistsError:
                 pass
+            # Workaround the lack of structured progress reporting from
+            # stages/sources. It generates messages of the form
+            #   "message": "source/org.osbuild.curl (org.osbuild.curl): Downloaded https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/f/fonts-srpm-macros-2.0.5-11.fc38.noarch.rpm\n
+            #
+            # Without it just a long pause with no progress while curl
+            # downloads.
+            print(f"Downloaded {url}")
 
 
 def main():

@@ -412,7 +412,11 @@ class Manifest:
     def download(self, store, monitor, libdir):
         with host.ServiceManager(monitor=monitor) as mgr:
             for source in self.sources:
+                # Workaround for lack of progress from sources, this
+                # will need to be reworked later.
+                monitor.begin(source)
                 source.download(mgr, store, libdir)
+                monitor.finish({"name": source.info.name})
 
     def depsolve(self, store: ObjectStore, targets: Iterable[str]) -> List[str]:
         """Return the list of pipelines that need to be built

@@ -1,5 +1,6 @@
 import abc
 import contextlib
+import hashlib
 import json
 import os
 import tempfile
@@ -19,6 +20,10 @@ class Source:
         self.info = info
         self.items = items or {}
         self.options = options
+        # compat with pipeline
+        self.build = None
+        self.runner = None
+        self.source_epoch = None
 
     def download(self, mgr: host.ServiceManager, store: ObjectStore, libdir: PathLike):
         source = self.info.name
@@ -46,6 +51,32 @@ class Source:
             json.dump(self.items, f)
             f.seek(0)
             yield f.fileno()
+
+    # "name", "id", "stages", "results" is only here to make it looks like a
+    # pipeline for the monitor. This should be revisited at some point
+    # and maybe the monitor should get first-class support for
+    # sources?
+    #
+    # In any case, sources can be represented only poorly right now
+    # by the monitor because the source is called with download()
+    # for all items and there is no way for a stage right now to
+    # report something structured back to the host that runs the
+    # source so it just downloads all sources without any user
+    # visible progress right now
+    @property
+    def name(self):
+        return f"source {self.info.name}"
+
+    @property
+    def id(self):
+        m = hashlib.sha256()
+        m.update(json.dumps(self.info.name, sort_keys=True).encode())
+        m.update(json.dumps(self.items, sort_keys=True).encode())
+        return m.hexdigest()
+
+    @property
+    def stages(self):
+        return []
 
 
 class SourceService(host.Service):
