@@ -56,10 +56,10 @@ class BaseMonitor(abc.ABC):
         self.out = TextWriter(fd)
 
     def begin(self, pipeline: osbuild.Pipeline):
-        """Called once at the beginning of a build"""
+        """Called once at the beginning of a pipeline"""
 
-    def finish(self, result: Dict):
-        """Called at the very end of the build"""
+    def finish(self, results: Dict):
+        """Called at the very end of a pipeline"""
 
     def stage(self, stage: osbuild.Stage):
         """Called when a stage is being built"""
@@ -68,7 +68,7 @@ class BaseMonitor(abc.ABC):
         """Called when an assembler is being built"""
 
     def result(self, result: osbuild.pipeline.BuildResult):
-        """Called when a module is done with its result"""
+        """Called when a module (stage/assembler) is done with its result"""
 
     def log(self, message: str):
         """Called for all module log outputs"""
@@ -79,11 +79,11 @@ class NullMonitor(BaseMonitor):
 
 
 class LogMonitor(BaseMonitor):
-    """Monitor that follows show the log output of modules
+    """Monitor that follows the log output of modules
 
     This monitor will print a header with `name: id` followed
     by the options for each module as it is being built. The
-    full log messages of the modules will be print as soon as
+    full log messages of the modules will be printed as soon as
     they become available.
     The constructor argument `fd` is a file descriptor, where
     the log will get written to. If `fd`  is a `TTY`, escape
