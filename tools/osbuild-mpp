@@ -283,6 +283,7 @@ Example:
           "partitions": [
             {
               "id": "bios-boot",
+              "name": "BIOS-BOOT",
               "start": 2048,
               "size": 2048,
               "type": "21686148-6449-6E6F-744E-656564454649",
@@ -820,7 +821,8 @@ class Partition:
                  name: str = None,
                  uuid: str = None,
                  attrs: List[int] = None):
-        self.id = uid
+        # if no id provided, use the part-label (name) as the id
+        self.id = uid or name
         self.type = pttype
         self.start = start
         self.size = size
