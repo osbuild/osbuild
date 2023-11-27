@@ -1,5 +1,6 @@
 import collections
 import contextlib
+import glob
 import json
 import os
 import subprocess
@@ -214,8 +215,16 @@ def parse_input_commits(commits):
     return commits["path"], data["refs"]
 
 
-def deployment_path(root: PathLike, osname: str, ref: str, serial: int):
+def deployment_path(root: PathLike, osname: str = "", ref: str = "", serial: int = None):
     """Return the path to a deployment given the parameters"""
+
+    if osname == "" and ref == "" and serial is None:
+        filenames = glob.glob(os.path.join(root, 'ostree/deploy/*/deploy/*.0'), recursive=True)
+        if len(filenames) < 1:
+            raise ValueError("Could not find deployment")
+        if len(filenames) > 1:
+            raise ValueError("More than one deployment found")
+        return filenames[0]
 
     base = os.path.join(root, "ostree")
 
