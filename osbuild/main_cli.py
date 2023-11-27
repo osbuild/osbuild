@@ -10,16 +10,20 @@ import argparse
 import json
 import os
 import sys
+import typing
+from typing import List
 
 import osbuild
 import osbuild.meta
 import osbuild.monitor
+from osbuild.meta import ValidationResult
 from osbuild.objectstore import ObjectStore
+from osbuild.pipeline import Manifest
 from osbuild.util.parsing import parse_size
 from osbuild.util.term import fmt as vt
 
 
-def parse_manifest(path):
+def parse_manifest(path: str) -> dict:
     if path == "-":
         manifest = json.load(sys.stdin)
     else:
@@ -29,7 +33,7 @@ def parse_manifest(path):
     return manifest
 
 
-def show_validation(result, name):
+def show_validation(result: ValidationResult, name: str) -> None:
     if name == "-":
         name = "<stdin>"
 
@@ -47,7 +51,7 @@ def show_validation(result, name):
         print(f"  {error.message}\n")
 
 
-def export(name_or_id, output_directory, store, manifest):
+def export(name_or_id: str, output_directory: str, store: ObjectStore, manifest: Manifest) -> None:
     pipeline = manifest[name_or_id]
     obj = store.get(pipeline.id)
     dest = os.path.join(output_directory, name_or_id)
@@ -58,7 +62,8 @@ def export(name_or_id, output_directory, store, manifest):
     obj.export(dest, skip_preserve_owner=skip_preserve_owner)
 
 
-def parse_arguments(sys_argv):
+@typing.no_type_check  # see https://github.com/python/typeshed/issues/3107
+def parse_arguments(sys_argv: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="osbuild",
                                      description="Build operating system images")
 
@@ -103,7 +108,7 @@ def parse_arguments(sys_argv):
 
 
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
-def osbuild_cli():
+def osbuild_cli() -> int:
     args = parse_arguments(sys.argv)
     desc = parse_manifest(args.manifest_path)
 

@@ -248,7 +248,7 @@ test-all:
 
 .PHONY: lint
 lint:
-	tox run-parallel -e ruff,pylint,autopep8,isort,mypy
+	tox run-parallel -e ruff,pylint,autopep8,isort,mypy,mypy-strict
 
 #
 # Building packages
