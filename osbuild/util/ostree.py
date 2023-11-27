@@ -199,11 +199,11 @@ def cli(*args, _input=None, **kwargs):
     """Thin wrapper for running the ostree CLI"""
     args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
     print("ostree " + " ".join(args), file=sys.stderr)
-    subprocess.run(["ostree"] + args,
-                   encoding="utf8",
-                   stdout=sys.stderr,
-                   input=_input,
-                   check=True)
+    return subprocess.run(["ostree"] + args,
+                          encoding="utf8",
+                          stdout=subprocess.PIPE,
+                          input=_input,
+                          check=True)
 
 
 def parse_input_commits(commits):
