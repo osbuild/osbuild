@@ -1209,7 +1209,15 @@ class ManifestFile:
 
                 # pylint: disable=eval-used  # yolo this is fine!
                 # Note, we copy local_vars here to avoid eval modifying it
-                if eval(code, dict(local_vars)):
+                res = False
+                try:
+                    res = eval(code, dict(local_vars))
+                except Exception as e:
+                    print(f"In {self.path}: Failed to evaluate mpp-if of:\n  {code}")
+                    print(f"Error: {e}")
+                    sys.exit(1)
+
+                if res:
                     key = "then"
                 else:
                     key = "else"
@@ -1223,7 +1231,12 @@ class ManifestFile:
 
                 # pylint: disable=eval-used  # yolo this is fine!
                 # Note, we copy local_vars here to avoid eval modifying it
-                res = eval(code, dict(local_vars))
+                try:
+                    res = eval(code, dict(local_vars))
+                except Exception as e:
+                    print(f"In {self.path}: Failed to mpp-eval:\n  {code}")
+                    print(f"Error: {e}")
+                    sys.exit(1)
                 return res, False
 
             if "mpp-format-string" in node:
@@ -1238,7 +1251,12 @@ class ManifestFile:
 
             # pylint: disable=eval-used  # yolo this is fine!
             # Note, we copy local_vars here to avoid eval modifying it
-            res = eval(f'f\'\'\'{format_string}\'\'\'', dict(local_vars))
+            try:
+                res = eval(f'f\'\'\'{format_string}\'\'\'', dict(local_vars))
+            except Exception as e:
+                print(f"In {self.path}: Failed to format string:\n  {format_string}")
+                print(f"Error: {e}")
+                sys.exit(1)
 
             if res_type == "int":
                 res = int(res)
