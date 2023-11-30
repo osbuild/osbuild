@@ -19,6 +19,7 @@ from collections.abc import Mapping
 from typing import Callable, Dict, List, Optional
 
 from osbuild.util import checksum, selinux
+from osbuild.testutil import has_executable
 from .test_assemblers import mount
 
 from .. import initrd, test
@@ -614,3 +615,43 @@ class TestStages(test.TestBase):
             fields = _get_file_fields(image)
             assert "heads 12" in fields
             assert "sectors/track 42" in fields
+
+    @unittest.skipUnless(has_executable("dump.erofs"), "dump.erofs needed")
+    def test_erofs(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "erofs")
+
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb.compile_file(os.path.join(testdir, "manifest.json"), exports=["image"], output_dir=outdir)
+
+            image = os.path.join(outdir, "image", "disk.img")
+            assert os.path.isfile(image)
+
+            # check that it's indeed erofs
+            r = subprocess.run(
+                [
+                    "blkid",
+                    "--output", "export",
+                    image
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf8",
+                check=True,
+            )
+            assert "TYPE=erofs" in r.stdout.splitlines()
+
+            # mounting erofs in GH runners is not supported
+            # so just use userspace tools to inspect the image
+            r = subprocess.run(
+                [
+                    "dump.erofs",
+                    "--ls",
+                    "--path=/", image,
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf8",
+                check=True,
+            )
+            assert "testfile" in r.stdout
