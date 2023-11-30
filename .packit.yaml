@@ -43,6 +43,11 @@ jobs:
   branch: main
   owner: "@osbuild" # copr repo namespace
   project: osbuild  # copr repo name so you can consume the builds
+- <<: *copr
+  trigger: release
+  branch: main
+  owner: "@osbuild" # copr repo namespace
+  project: osbuild-stable  # copr repo name so you can consume the builds
 - job: propose_downstream
   trigger: release
   dist_git_branches:
