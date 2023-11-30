@@ -968,6 +968,8 @@ class PartitionTable:
 
 
 class Image:
+    DEFAULT_SECTOR_SIZE = 512
+
     def __init__(self, size, layout):
         self.size = size
         self.layout = layout
@@ -976,19 +978,27 @@ class Image:
     def from_dict(cls, js):
         size = js["size"]
         data = js["table"]
-        sector_size = js.get('sector_size', 512)
+        sector_size = js.get('sector_size', Image.DEFAULT_SECTOR_SIZE)
 
         with tempfile.TemporaryDirectory() as tmp:
             image = os.path.join(tmp, "disk.img")
             subprocess.run(["truncate", "--size", size, image], check=True)
-            cp = subprocess.run(["losetup", "--find", "--show", f"--sector-size={sector_size}", image],
-                                stdout=subprocess.PIPE, check=True)
-            loopimage = cp.stdout.rstrip()
-            try:
-                table = PartitionTable.from_dict(data)
-                table.write_to(loopimage)
-            finally:
-                subprocess.run(["losetup", "-d", loopimage])
+
+            table = PartitionTable.from_dict(data)
+
+            # Running losetup requires to be root but losetup is only necessary if the sector size
+            # is different from the default.
+            if sector_size == Image.DEFAULT_SECTOR_SIZE:
+                table.write_to(image)
+            else:
+                cp = subprocess.run(["losetup", "--find", "--show", f"--sector-size={sector_size}", image],
+                                    stdout=subprocess.PIPE, check=True)
+                loopimage = cp.stdout.rstrip()
+
+                try:
+                    table.write_to(loopimage)
+                finally:
+                    subprocess.run(["losetup", "-d", loopimage])
 
         return cls(size, table)
 
