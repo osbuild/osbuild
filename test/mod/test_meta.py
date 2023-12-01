@@ -173,9 +173,29 @@ def test_schema():
     assert res
 
 
-def make_fake_meta_json(tmp_path, name):
+def make_fake_meta_json(tmp_path, name, version):
     meta_json_path = pathlib.Path(f"{tmp_path}/stages/{name}.meta-json")
     meta_json_path.parent.mkdir(exist_ok=True)
+    if version == 1:
+        schema_part = """
+        "schema": {
+          "properties": {
+            "json_filename": {
+              "type": "string"
+            }
+          }
+        }
+        """
+    elif version == 2:
+        schema_part = """
+        "schema_2": {
+          "json_devices": {
+            "type": "object"
+          }
+        }
+        """
+    else:
+        pytest.fail(f"unexpected schema version {version}")
     meta_json_path.write_text("""
     {
       "summary": "some json summary",
@@ -184,20 +204,9 @@ def make_fake_meta_json(tmp_path, name):
         "with newlines"
       ],
       "capabilities": ["CAP_MAC_ADMIN", "CAP_BIG_MAC"],
-      "schema": {
-        "properties": {
-          "json_filename": {
-            "type": "string"
-          }
-        }
-      },
-      "schema_2": {
-        "json_devices": {
-          "type": "object"
-        }
-      }
+      %s
     }
-    """.replace("\n", " "), encoding="utf-8")
+    """.replace("\n", " ") % schema_part, encoding="utf-8")
     return meta_json_path
 
 
@@ -214,14 +223,14 @@ def make_fake_py_module(tmp_path, name):
 
 
 def test_load_from_json(tmp_path):
-    make_fake_meta_json(tmp_path, "org.osbuild.noop")
+    make_fake_meta_json(tmp_path, "org.osbuild.noop", version=1)
     modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
     assert modinfo.desc == "some json summary"
     assert modinfo.info == "long text\nwith newlines"
     assert modinfo.caps == ["CAP_MAC_ADMIN", "CAP_BIG_MAC"]
     assert modinfo.opts == {
         "1": {"properties": {"json_filename": {"type": "string"}}},
-        "2": {"json_devices": {"type": "object"}},
+        "2": {},
     }
 
 
@@ -238,13 +247,67 @@ def test_load_from_py(tmp_path):
 
 
 def test_load_from_json_prefered(tmp_path):
-    make_fake_meta_json(tmp_path, "org.osbuild.noop")
+    make_fake_meta_json(tmp_path, "org.osbuild.noop", version=2)
     make_fake_py_module(tmp_path, "org.osbuild.noop")
     modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
     assert modinfo.desc == "some json summary"
     assert modinfo.info == "long text\nwith newlines"
     assert modinfo.caps == ["CAP_MAC_ADMIN", "CAP_BIG_MAC"]
     assert modinfo.opts == {
-        "1": {"properties": {"json_filename": {"type": "string"}}},
+        "1": {},
         "2": {"json_devices": {"type": "object"}},
     }
+
+
+def test_load_from_json_validates(tmp_path):
+    meta_json_path = pathlib.Path(f"{tmp_path}/stages/org.osbuild.noop.meta-json")
+    meta_json_path.parent.mkdir(exist_ok=True)
+    # XXX: do a more direct test here that also validates the various
+    #      error conditions
+    meta_json_path.write_text("""{"not": "following schema"}""")
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert modinfo is None
+
+
+@pytest.mark.parametrize("test_input,expected_err", [
+    # happy
+    (
+        {"summary": "some", "description": ["many", "strings"], "schema": {}}, ""), (
+        {"summary": "some", "description": ["many", "strings"], "schema_2": {}}, ""), (
+        {"summary": "some", "description": ["many", "strings"], "schema_2": {}, "capabilities": []}, ""), (
+        {"summary": "some", "description": ["many", "strings"], "schema_2": {}, "capabilities": ["cap1", "cap2"]}, ""),
+    # unhappy
+    (
+        # no description
+        {"summary": "some", "schema": {}},
+        "'description' is a required property",
+    ), (
+        # no summary
+        {"description": ["yes"], "schema": {}},
+        "'summary' is a required property",
+    ), (
+        # schema{,_2} missing
+        {"summary": "some", "description": ["many", "strings"]},
+        " is not valid",
+    ),
+    (
+        # both schema{,_2}
+        {"summary": "some", "description": ["many", "strings"],
+         "schema": {}, "schema_2": {}},
+        " is valid under each ",
+    ), (
+        # capabilities of wrong type
+        {"summary": "some", "description": ["many", "strings"], "schema": {},
+         "capabilities": [1, "cap1"]},
+        " is not of type 'string'",
+    ),
+])
+def test_meta_json_validation_schema(test_input, expected_err):
+        schema = osbuild.meta.Schema(osbuild.meta.META_JSON_SCHEMA, "meta.json validator")
+        res = schema.validate(test_input)
+        errs = [e.as_dict() for e in res.errors]
+        if expected_err:
+            assert len(errs) == 1, f"unexpected error {errs}"
+            assert expected_err in errs[0]["message"]
+        else:
+            assert not errs

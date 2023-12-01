@@ -276,6 +276,54 @@ class Schema:
         return self.check().valid
 
 
+META_JSON_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "propertyNames": {
+        "not": {
+            "const": "description",
+        },
+    },
+    "required": ["summary", "description"],
+    "oneOf": [
+        {
+            "required": [
+                "schema"
+            ]
+        },
+        {
+            "required": [
+                "schema_2"
+            ]
+        },
+    ],
+    "properties": {
+        "summary": {
+            "type": "string",
+        },
+        "description": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "string",
+            },
+        },
+        "capabilities": {
+            "type": "array",
+            "items": {
+                "type": "string",
+            },
+        },
+        "schema": {
+            "type": "object",
+        },
+        "schema_2": {
+            "type": "object",
+        }
+    }
+}
+
+
 class ModuleInfo:
     """Meta information about a stage
 
@@ -418,7 +466,6 @@ class ModuleInfo:
         try:
             return cls._load_from_json(path, klass, name)
         except FileNotFoundError:
-            # should we print a deprecation warning here?
             pass
         return cls._load_from_py(path, klass, name)
 
@@ -428,6 +475,12 @@ class ModuleInfo:
         meta_json_suffix = ".meta-json"
         with open(path + meta_json_suffix, encoding="utf-8") as fp:
             meta = json.load(fp)
+
+        schema = Schema(META_JSON_SCHEMA, "meta.json validator")
+        res = schema.validate(meta)
+        if not res.valid:
+            # XXX: should we raise an exception instead?
+            return None
 
         long_description = meta.get("description", "no description provided")
         if isinstance(long_description, list):
