@@ -173,7 +173,7 @@ def test_schema():
 
 
 def make_fake_meta_json(tmp_path, name):
-    meta_json_path = pathlib.Path(f"{tmp_path}/stages/{name}-meta.json")
+    meta_json_path = pathlib.Path(f"{tmp_path}/stages/{name}.meta.json")
     meta_json_path.parent.mkdir(exist_ok=True)
     meta_json_path.write_text("""
     {

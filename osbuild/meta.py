@@ -423,8 +423,7 @@ class ModuleInfo:
 
     @classmethod
     def _load_from_json(cls, path, klass, name) -> Optional["ModuleInfo"]:
-        # ideas welcome for a better filename/suffix :)
-        meta_json_suffix = "-meta.json"
+        meta_json_suffix = ".meta.json"
         with open(path + meta_json_suffix, encoding="utf-8") as fp:
             meta = json.load(fp)
 
@@ -618,7 +617,7 @@ class Index:
             raise ValueError(f"Unsupported nodule class: {klass}")
 
         path = os.path.join(self.path, module_path)
-        modules = filter(lambda f: os.path.isfile(f"{path}/{f}") and not path.endswith("-meta.json"),
+        modules = filter(lambda f: os.path.isfile(f"{path}/{f}") and not path.endswith(".meta.json"),
                          os.listdir(path))
         return list(modules)
 
