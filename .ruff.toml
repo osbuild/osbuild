@@ -6,6 +6,6 @@ ignore = [
 ]
 
 extend-exclude = [
-    "*.json",
+    "*.meta-json",
 ]
 force-exclude = true

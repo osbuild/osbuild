@@ -2,7 +2,7 @@
 """
 Do Nothing
 
-See "org.osbuild.noop-meta.json" for more details.
+See "org.osbuild.noop.meta-json" for more details.
 """
 
 
