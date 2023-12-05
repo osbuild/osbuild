@@ -49,6 +49,15 @@ Testing requires additional software:
 
  * `pytest`
 
+## Build
+
+Osbuild is a python script so it is not compiled.
+To verify changes made to the code use included makefile rules:
+
+ * `make lint` to run linter on top of the code
+ * `make test-all` to run base set of tests
+ * `sudo make test-run` to run extended set of tests (takes long time)
+
 ## Installation
 
 Installing `osbuild` requires to not only install the `osbuild` module, but also
