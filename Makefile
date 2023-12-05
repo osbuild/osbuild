@@ -85,6 +85,8 @@ help:
 	@echo "    help:               Print this usage information."
 	@echo "    man:                Generate all man-pages"
 	@echo
+	@echo "    lint:               Check the code with linter"
+	@echo
 	@echo "    coverity-download:  Force a new download of the coverity tool"
 	@echo "    coverity-check:     Run the coverity test suite"
 	@echo "    coverity-submit:    Run coverity and submit the results"
@@ -93,7 +95,6 @@ help:
 	@echo "    test-data:          Generate test data"
 	@echo "    test-module:        Run all module unit-tests"
 	@echo "    test-run:           Run all osbuild pipeline tests"
-	@echo "    test-src:           Run all osbuild source tests"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
