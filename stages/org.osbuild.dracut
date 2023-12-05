@@ -12,10 +12,12 @@ page and schema for this stage.
 NB: needs chroot for now as well as `strip` for stripping the initrfams.
 """
 
+import os
 import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util.mnt import MountGuard
 
 SCHEMA = """
 "required": ["kernel"],
@@ -201,15 +203,35 @@ def main(tree, options):
 
     opts += extra
 
-    for kver in kernels:
-        print(f"Building initramfs for {kver}", file=sys.stderr)
+    mounts = [
+        {"path": "/dev", "bind": True, "ro": False, "mode": 0o755},
+        {"path": "/proc", "bind": True, "ro": True, "mode": 0o555},
+        {"path": "/sys", "bind": True, "ro": True, "mode": 0o555},
+    ]
+    with MountGuard() as mounter:
+        for mount in mounts:
+            ro = mount["ro"]
+            bind = mount["bind"]
+            src = mount["path"]
+            mode = mount["mode"]
+            dest = os.path.join(tree, src.lstrip("/"))
+            os.makedirs(dest, exist_ok=True)
+            os.chmod(dest, mount.get("mode", mode))
+            mounter.mount(src, dest, bind=bind, ro=ro)
 
-        subprocess.run(["/usr/sbin/chroot", tree,
-                        "/usr/bin/dracut",
-                        "--no-hostonly",
-                        "--kver", kver]
-                       + opts,
-                       check=True)
+        os.symlink("/proc/self/fd", f"{tree}/dev/fd")
+
+        for kver in kernels:
+            print(f"Building initramfs for {kver}", file=sys.stderr)
+
+            subprocess.run(["/usr/sbin/chroot", tree,
+                            "/usr/bin/dracut",
+                            "--no-hostonly",
+                            "--kver", kver]
+                           + opts,
+                           check=True)
+
+        os.unlink(f"{tree}/dev/fd")
 
     return 0
 
