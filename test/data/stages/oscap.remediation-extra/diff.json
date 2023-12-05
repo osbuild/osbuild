@@ -4,6 +4,7 @@
   ],
   "added_files": [
     "/boot/grub2/grubenv",
+    "/dev/urandom",
     "/etc/authselect/custom/hardening",
     "/etc/authselect/custom/hardening/README",
     "/etc/authselect/custom/hardening/REQUIREMENTS",

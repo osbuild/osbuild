@@ -157,6 +157,10 @@ def main(tree, options):
     cmd.extend(["--results", f"{data_dir}/{xccdf_results}"])
     cmd.append(datastream)
 
+    urandom_path = f"{tree}/dev/urandom"
+    if not os.path.exists(urandom_path):
+        os.mknod(urandom_path, 0o666, os.makedev(1, 9))
+
     print("OpenSCAP (evaluate): ", repr(cmd))
     # we need to
     # 1) inform the scanner that the system is offline (OSCAP_PROBE_ROOT="")

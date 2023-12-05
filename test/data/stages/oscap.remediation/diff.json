@@ -5,6 +5,7 @@
   ],
   "added_files": [
     "/boot/grub2/grubenv",
+    "/dev/urandom",
     "/etc/authselect/custom/hardening",
     "/etc/authselect/custom/hardening/dconf-db",
     "/etc/authselect/custom/hardening/dconf-locks",
