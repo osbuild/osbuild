@@ -92,7 +92,11 @@ SCHEMA = r"""
   }
 },
 "additionalProperties": false,
-"required": ["path"],
+"anyOf": [
+    {"required": ["path", "ostree"], "not": {"required": ["ostreecontainer"]}},
+    {"required": ["path", "ostreecontainer"], "not": {"required": ["ostree"]}},
+    {"required": ["path"], "not": {"required": ["ostree", "ostreecontainer"]}}
+],
 "properties": {
   "path": {
     "type": "string",
