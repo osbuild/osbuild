@@ -54,6 +54,12 @@ SCHEMA = """
               "tls-verify": {
                 "type": "boolean",
                 "description": "Require https (default true)."
+              },
+              "containers-transport": {
+                "type": "string",
+                "enum": ["docker", "containers-storage" ],
+                "description": "The containers transport from which to copy the container",
+                "default": "docker"
               }
             }
           }
@@ -73,6 +79,9 @@ SCHEMA = """
 }]
 """
 
+DOCKER_TRANSPORT = "docker"
+CONTAINERS_STORAGE_TRANSPORT = "containers-storage"
+
 
 class SkopeoSource(sources.SourceService):
 
@@ -80,19 +89,28 @@ class SkopeoSource(sources.SourceService):
 
     dir_name = "image"
 
+    def get_source(self, transport, reference):
+        if transport == DOCKER_TRANSPORT:
+            return f"docker://{reference}"
+        if transport == CONTAINERS_STORAGE_TRANSPORT:
+            return f"containers-storage:{reference}"
+        raise RuntimeError("Unrecognized containers transport")
+
     def fetch_one(self, checksum, desc):
         image_id = checksum
         image = desc["image"]
         imagename = image["name"]
         digest = image["digest"]
         tls_verify = image.get("tls-verify", True)
+        transport = image.get("containers-transport", DOCKER_TRANSPORT)
 
         with tempfile.TemporaryDirectory(prefix="tmp-download-", dir=self.cache) as tmpdir:
             archive_dir = os.path.join(tmpdir, "container-archive")
             os.makedirs(archive_dir)
             os.chmod(archive_dir, 0o755)
 
-            source = f"docker://{imagename}@{digest}"
+            reference = f"{imagename}@{digest}"
+            source = self.get_source(transport, reference)
 
             # We use the dir format because it is the most powerful in terms of feature support and is the closest to a
             # direct serialisation of the registry data.

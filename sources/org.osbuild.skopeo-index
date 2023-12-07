@@ -41,6 +41,12 @@ SCHEMA = """
               "tls-verify": {
                 "type": "boolean",
                 "description": "Require https (default true)."
+              },
+              "containers-transport": {
+                "type": "string",
+                "enum": ["docker", "containers-storage" ],
+                "description": "The containers transport from which to copy the container",
+                "default": "docker"
               }
             }
           }
@@ -60,23 +66,35 @@ SCHEMA = """
 }]
 """
 
+DOCKER_TRANSPORT = "docker"
+CONTAINERS_STORAGE_TRANSPORT = "containers-storage"
+
 
 class SkopeoIndexSource(sources.SourceService):
 
     content_type = "org.osbuild.files"
+
+    def get_source(self, transport, reference):
+        if transport == DOCKER_TRANSPORT:
+            return f"docker://{reference}"
+        if transport == CONTAINERS_STORAGE_TRANSPORT:
+            return f"containers-storage:{reference}"
+        raise RuntimeError("Unrecognized containers transport")
 
     def fetch_one(self, checksum, desc):
         digest = checksum
         image = desc["image"]
         imagename = image["name"]
         tls_verify = image.get("tls-verify", True)
+        transport = image.get("containers-transport", DOCKER_TRANSPORT)
 
         with tempfile.TemporaryDirectory(prefix="tmp-download-", dir=self.cache) as tmpdir:
             archive_dir = os.path.join(tmpdir, "index")
             os.makedirs(archive_dir)
             os.chmod(archive_dir, 0o755)
 
-            source = f"docker://{imagename}@{digest}"
+            reference = f"{imagename}@{digest}"
+            source = self.get_source(transport, reference)
 
             destination = f"dir:{archive_dir}"
 
