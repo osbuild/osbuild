@@ -122,6 +122,31 @@ SCHEMA = r"""
       }
     }
   },
+  "ostreecontainer": {
+    "type": "object",
+    "required": ["url"],
+    "additionalProperties": false,
+    "properties": {
+      "stateroot": {
+        "type": "string"
+      },
+      "url": {
+        "type": "string"
+      },
+      "transport": {
+        "type": "string",
+        "enum": ["registry", "oci", "oci-archive"],
+        "description": "Use the given transport, Anaconda's default is 'registry'"
+      },
+      "remote": {
+        "type": "string"
+      },
+      "signatureverification": {
+        "type": "boolean",
+        "default": true
+      }
+    }
+  },
   "liveimg": {
     "type": "object",
     "required": ["url"],
@@ -511,6 +536,24 @@ def main(tree, options):  # pylint: disable=too-many-branches
             cmd += " --remote=" + remote
         if not ostree.get("gpg", True):
             cmd += " --nogpg"
+
+        config += [cmd]
+
+    ostreecontainer = options.get("ostreecontainer")
+
+    if ostreecontainer:
+        url = ostreecontainer["url"]
+
+        cmd = f"ostreecontainer --url={url}"
+
+        for name in ["stateroot", "transport", "remote"]:
+            value = ostreecontainer.get(name)
+            if value:
+                cmd += f" --{name}={value}"
+
+        signature_verification = ostreecontainer.get("signatureverification", True)
+        if not signature_verification:
+            cmd += " --no-signature-verification"
 
         config += [cmd]
 

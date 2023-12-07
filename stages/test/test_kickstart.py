@@ -191,6 +191,27 @@ TEST_INPUT = [
     # hostname can also be written as a QFDN
     ({"network": [{"device": "foo", "hostname": "foo.bar.com"}]},
      "network --device=foo --hostname=foo.bar.com"),
+    # ostreecontainer
+    (
+        {
+            "ostreecontainer": {
+                "stateroot": "some-osname",
+                "url": "http://some-ostree-url.com/foo",
+                "transport": "registry",
+                "remote": "some-remote",
+                "signatureverification": False,
+            },
+        },
+        "ostreecontainer --url=http://some-ostree-url.com/foo --stateroot=some-osname --transport=registry --remote=some-remote --no-signature-verification",
+    ),
+    (
+        {
+            "ostreecontainer": {
+                "url": "http://some-ostree-url.com/foo",
+            },
+        },
+        "ostreecontainer --url=http://some-ostree-url.com/foo",
+    ),
 ]
 
 
@@ -318,6 +339,9 @@ def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unu
                        ".123456789012345678901234567890123456789012345678901234567890123" +
                        ".12345678901234567890123456789012345678901234567890123456789012"
                        }]}, " does not match "),
+        # ostreecontainer
+        ({"ostreecontainer": {"url": "http://some-ostree-url.com/foo",
+         "transport": "not-valid"}}, "'not-valid' is not one of ["),
     ],
 )
 def test_schema_validation_bad_apples(test_data, expected_err):
