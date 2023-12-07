@@ -342,6 +342,23 @@ def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unu
         # ostreecontainer
         ({"ostreecontainer": {"url": "http://some-ostree-url.com/foo",
          "transport": "not-valid"}}, "'not-valid' is not one of ["),
+        # not both ostreecontainer and ostree
+        (
+            {
+                "ostreecontainer": {
+                    "url": "http://some-ostree-url.com/foo",
+                },
+                "ostree": {
+                    "osname": "some-osname",
+                    "url": "http://some-ostree-url.com/foo",
+                    "ref": "some-ref",
+                    "remote": "some-remote",
+                    "gpg": True,
+                },
+            },
+            "is not valid under any of the given schemas",
+        ),
+
     ],
 )
 def test_schema_validation_bad_apples(test_data, expected_err):
