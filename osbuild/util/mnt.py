@@ -57,7 +57,16 @@ class MountGuard(contextlib.AbstractContextManager):
         if options:
             args += ["-o", ",".join(options)]
 
-        subprocess.run(["mount"] + args + [source, target], check=True)
+        r = subprocess.run(["mount"] + args + [source, target],
+                           stderr=subprocess.STDOUT,
+                           stdout=subprocess.PIPE,
+                           encoding="utf-8",
+                           check=False)
+        if r.returncode != 0:
+            code = r.returncode
+            msg = r.stdout.strip()
+            raise RuntimeError(f"{msg} (code: {code})")
+
         self.mounts += [{"source": source, "target": target}]
 
     def umount(self):
