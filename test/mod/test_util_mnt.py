@@ -38,7 +38,7 @@ def test_util_mnt_mount_defaults(mock_run, mock_completed_process):
     assert mock_run.call_args == call(
         ["mount", "--rbind", "--make-rprivate", "-o", "ro,0755", "src", "dst"],
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding="utf-8",
-        check=False)
+        check=True)
 
 
 @patch("subprocess.run")
@@ -61,7 +61,7 @@ def test_util_mnt_mount_guard_defaults(mock_run, mock_completed_process):
     assert mock_run.call_args_list == [
         call(["mount", "--make-private", "-o", "bind,0755", "src", "dst"],
              stderr=subprocess.STDOUT, stdout=subprocess.PIPE, encoding="utf-8",
-             check=False),
+             check=True),
         call(["sync", "-f", "dst"], check=True),
         call(["umount", "dst"], check=True),
     ]

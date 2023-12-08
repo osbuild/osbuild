@@ -6,16 +6,16 @@ import subprocess
 
 
 def _run_mount(source, target, args):
-    r = subprocess.run(["mount"] + args + [source, target],
+    try:
+        subprocess.run(["mount"] + args + [source, target],
                        stderr=subprocess.STDOUT,
                        stdout=subprocess.PIPE,
                        encoding="utf-8",
-                       check=False)
-
-    if r.returncode != 0:
-        code = r.returncode
-        msg = r.stdout.strip()
-        raise RuntimeError(f"{msg} (code: {code})")
+                       check=True)
+    except subprocess.CalledProcessError as e:
+        code = e.returncode
+        msg = e.stdout.strip()
+        raise RuntimeError(f"{msg} (code: {code})") from e
 
 
 def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
