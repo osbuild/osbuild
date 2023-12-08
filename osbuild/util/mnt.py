@@ -32,12 +32,17 @@ def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
         raise RuntimeError(f"{msg} (code: {code})")
 
 
-def umount(target, lazy=False):
+def umount(target, lazy=False, recursive=True):
     args = []
+    if recursive:
+        args += ["-R"]
     if lazy:
         args += ["--lazy"]
+    # The sync should in theory not be needed but in rare
+    # cases `target is busy` error has been spotted.
+    # Calling  `sync` does not hurt so we keep it for now.
     subprocess.run(["sync", "-f", target], check=True)
-    subprocess.run(["umount", "-R"] + args + [target], check=True)
+    subprocess.run(["umount"] + args + [target], check=True)
 
 
 class MountGuard(contextlib.AbstractContextManager):
@@ -70,15 +75,9 @@ class MountGuard(contextlib.AbstractContextManager):
         self.mounts += [{"source": source, "target": target}]
 
     def umount(self):
-
         while self.mounts:
             mnt = self.mounts.pop()  # FILO: get the last mount
-            target = mnt["target"]
-            # The sync should in theory not be needed but in rare
-            # cases `target is busy` error has been spotted.
-            # Calling  `sync` does not hurt so we keep it for now.
-            subprocess.run(["sync", "-f", target], check=True)
-            subprocess.run(["umount", target], check=True)
+            umount(mnt["target"], recursive=False)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.umount()
