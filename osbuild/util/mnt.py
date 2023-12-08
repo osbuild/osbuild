@@ -5,6 +5,19 @@ import contextlib
 import subprocess
 
 
+def _run_mount(source, target, args):
+    r = subprocess.run(["mount"] + args + [source, target],
+                       stderr=subprocess.STDOUT,
+                       stdout=subprocess.PIPE,
+                       encoding="utf-8",
+                       check=False)
+
+    if r.returncode != 0:
+        code = r.returncode
+        msg = r.stdout.strip()
+        raise RuntimeError(f"{msg} (code: {code})")
+
+
 def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
     options = []
     if ro:
@@ -19,17 +32,7 @@ def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
         args += ["--make-rprivate"]
     if options:
         args += ["-o", ",".join(options)]
-
-    r = subprocess.run(["mount"] + args + [source, target],
-                       stderr=subprocess.STDOUT,
-                       stdout=subprocess.PIPE,
-                       encoding="utf-8",
-                       check=False)
-
-    if r.returncode != 0:
-        code = r.returncode
-        msg = r.stdout.strip()
-        raise RuntimeError(f"{msg} (code: {code})")
+    _run_mount(source, target, args)
 
 
 def umount(target, lazy=False, recursive=True):
@@ -61,17 +64,7 @@ class MountGuard(contextlib.AbstractContextManager):
         args = ["--make-private"]
         if options:
             args += ["-o", ",".join(options)]
-
-        r = subprocess.run(["mount"] + args + [source, target],
-                           stderr=subprocess.STDOUT,
-                           stdout=subprocess.PIPE,
-                           encoding="utf-8",
-                           check=False)
-        if r.returncode != 0:
-            code = r.returncode
-            msg = r.stdout.strip()
-            raise RuntimeError(f"{msg} (code: {code})")
-
+        _run_mount(source, target, args)
         self.mounts += [{"source": source, "target": target}]
 
     def umount(self):
