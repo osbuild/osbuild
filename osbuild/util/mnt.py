@@ -18,7 +18,7 @@ def _run_mount(source, target, args):
         raise RuntimeError(f"{msg} (code: {code})") from e
 
 
-def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
+def mount(source, target, rbind=True, ro=True, rprivate=True, mode="0755"):
     options = []
     if ro:
         options += ["ro"]
@@ -26,9 +26,9 @@ def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
         options += [mode]
 
     args = []
-    if bind:
+    if rbind:
         args += ["--rbind"]
-    if private:
+    if rprivate:
         args += ["--make-rprivate"]
     if options:
         args += ["-o", ",".join(options)]
