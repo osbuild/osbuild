@@ -1602,7 +1602,7 @@ class ManifestFileV2(ManifestFile):
 
     def _process_container(self, stage):
         if stage.get("type", "") not in \
-                ["org.osbuild.skopeo", "org.osbuild.ostree.deploy.container"]:
+                ["org.osbuild.skopeo", "org.osbuild.ostree.deploy.container", "org.osbuild.container-deploy"]:
             return
 
         inputs = element_enter(stage, "inputs", {})
