@@ -1,0 +1,71 @@
+#!/usr/bin/python3
+"""
+Deploy a container.
+
+Buildhost commands used: podman
+"""
+import contextlib
+import subprocess
+import sys
+import tempfile
+
+import osbuild.api
+from osbuild.util import containers
+
+SCHEMA_2 = r"""
+"inputs": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["images"],
+  "properties": {
+    "images": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+},
+"options": {
+  "additionalProperties": false
+}
+"""
+
+
+@contextlib.contextmanager
+def mount_container(store, image):
+    try:
+        result = subprocess.run(
+            ["podman", "--imagestore", store, "image", "mount", image],
+            capture_output=True,
+            encoding="utf-8",
+            check=True,
+        )
+
+        yield result.stdout.strip()
+
+    finally:
+        subprocess.run(
+            ["podman", "--imagestore", store, "image", "umount", image],
+            check=True,
+        )
+
+
+def main(inputs, output):
+    images = containers.parse_containers_input(inputs)
+    assert len(images) == 1
+    image = list(images.values())[0]
+
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+        with containers.container_source(image) as (_, source):
+            subprocess.run(
+                ["skopeo", "copy", source, f"containers-storage:[overlay@{tmp}]image"],
+                check=True,
+            )
+
+        with mount_container(tmp, "image") as img:
+            subprocess.run(["cp", "-a", f"{img}/.", f"{output}/"], check=True)
+
+
+if __name__ == "__main__":
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"])
+    sys.exit(r)
