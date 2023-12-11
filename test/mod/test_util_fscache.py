@@ -397,3 +397,38 @@ def test_size_discard(tmpdir):
         with pytest.raises(fscache.FsCache.MissError):
             with cache.load("foo") as rpath:
                 pass
+
+
+def test_cache_full_behavior(tmp_path):
+    cache = fscache.FsCache("osbuild-cache-evict", tmp_path)
+    with cache:
+        # use big sizes to mask the effect of dirs using 4k of space too
+        cache.info = cache.info._replace(maximum_size=192 * 1024)
+        # add one object to the store, we are below the limit
+        with cache.store("o1") as rpath:
+            rpath_f1 = os.path.join(tmp_path, rpath, "f1")
+            with open(rpath_f1, "wb") as fp:
+                fp.write(b'a'*64*1024)
+        assert cache._calculate_space(tmp_path) > 64 * 1024
+        assert cache._calculate_space(tmp_path) < 128 * 1024
+        with cache.load("o1") as o:
+            assert o != ""
+        # and one more
+        with cache.store("o2") as rpath:
+            rpath_f2 = os.path.join(tmp_path, rpath, "f2")
+            with open(rpath_f2, "wb") as fp:
+                fp.write(b'b'*64*1024)
+        assert cache._calculate_space(tmp_path) > 128 * 1024
+        assert cache._calculate_space(tmp_path) < 192 * 1024
+        with cache.load("o2") as o:
+            assert o != ""
+        # adding a third one will (silently) fail
+        with cache.store("o3") as rpath:
+            rpath_f3 = os.path.join(tmp_path, rpath, "f3")
+            with open(rpath_f3, "wb") as fp:
+                fp.write(b'b'*128*1024)
+        assert cache._calculate_space(tmp_path) > 128 * 1024
+        assert cache._calculate_space(tmp_path) < 192 * 1024
+        with pytest.raises(fscache.FsCache.MissError):
+            with cache.load("o3") as o:
+                pass
