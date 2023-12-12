@@ -161,13 +161,20 @@ class FileSystemMountService(MountService):
         os.makedirs(mountpoint, exist_ok=True)
         self.mountpoint = mountpoint
 
-        subprocess.run(
-            ["mount"] +
-            options + [
-                "--source", source,
-                "--target", mountpoint
-            ],
-            check=True)
+        try:
+            subprocess.run(
+                ["mount"] +
+                options + [
+                    "--source", source,
+                    "--target", mountpoint
+                ],
+                stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE,
+                check=True)
+        except subprocess.CalledProcessError as e:
+            code = e.returncode
+            msg = e.stdout.strip()
+            raise RuntimeError(f"{msg} (code: {code})") from e
 
         self.check = True
         return mountpoint
