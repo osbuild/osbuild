@@ -831,6 +831,7 @@ class Partition:
         self.uuid = uuid
         self.attrs = attrs
         self.index = None
+        self.partnum = None
 
     @property
     def start_in_bytes(self):
@@ -936,6 +937,7 @@ class PartitionTable:
         assert len(disk_parts) == len(self.partitions)
         for i, part in enumerate(self.partitions):
             part.index = i
+            part.partnum = i + 1
             part.start = disk_parts[i]["start"]
             part.size = disk_parts[i]["size"]
             part.type = disk_parts[i].get("type")
