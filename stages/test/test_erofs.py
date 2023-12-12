@@ -7,19 +7,8 @@ from unittest import mock
 import pytest
 
 import osbuild.meta
-from osbuild.testutil import has_executable
+from osbuild.testutil import has_executable, make_fake_input_tree
 from osbuild.testutil.imports import import_module_from_path
-
-
-def make_fake_input_tree(tmpdir, fake_content: dict) -> str:
-    basedir = os.path.join(tmpdir, "tree")
-    for path, content in fake_content.items():
-        dirp, name = os.path.split(os.path.join(basedir, path.lstrip("/")))
-        os.makedirs(dirp, exist_ok=True)
-        with open(os.path.join(dirp, name), "w", encoding="utf-8") as fp:
-            fp.write(content)
-    return basedir
-
 
 TEST_INPUT = [
     ({}, []),
