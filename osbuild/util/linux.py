@@ -422,6 +422,14 @@ def fcntl_flock(fd: int, lock_type: int, wait: bool = False):
     fcntl.fcntl(fd, lock_cmd, arg_flock64)
 
 
+class c_timespec(ctypes.Structure):
+    _fields_ = [('tv_sec', ctypes.c_long), ('tv_nsec', ctypes.c_long)]
+
+
+class c_timespec_times2(ctypes.Structure):
+    _fields_ = [('atime', c_timespec), ('mtime', c_timespec)]
+
+
 class Libc:
     """Safe Access to libc
 
@@ -433,6 +441,10 @@ class Libc:
     RENAME_EXCHANGE = ctypes.c_uint(2)
     RENAME_NOREPLACE = ctypes.c_uint(1)
     RENAME_WHITEOUT = ctypes.c_uint(4)
+
+    # see /usr/include/x86_64-linux-gnu/bits/stat.h
+    UTIME_NOW = ctypes.c_long(((1 << 30) - 1))
+    UTIME_OMIT = ctypes.c_long(((1 << 30) - 2))
 
     _lock = threading.Lock()
     _inst = None
@@ -462,6 +474,22 @@ class Libc:
         setattr(proto, "errcheck", self._errcheck_errno)
         setattr(proto, "__name__", "renameat2")
         self.renameat2 = proto
+        # prototype: futimens
+        proto = ctypes.CFUNCTYPE(
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.POINTER(c_timespec_times2),
+            use_errno=True,
+        )(
+            ("futimens", self._lib),
+            (
+                (1, "fd"),
+                (1, "timespec"),
+            ),
+        )
+        setattr(proto, "errcheck", self._errcheck_errno)
+        setattr(proto, "__name__", "futimens")
+        self.futimens = proto
 
     @staticmethod
     def make() -> "Libc":
