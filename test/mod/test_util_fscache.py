@@ -498,3 +498,25 @@ def test_cache_full_behavior(tmp_path):
         with pytest.raises(fscache.FsCache.MissError):
             with cache.load("o3") as o:
                 pass
+
+
+@pytest.mark.skipif(not has_precise_fs_timestamps(), reason="need precise fs timestamps")
+def test_cache_last_used_objs(tmpdir):
+    cache = fscache.FsCache("osbuild-cache-id", tmpdir)
+    with cache:
+        # use big sizes to mask the effect of dirs using 4k of space too
+        cache.info = cache.info._replace(maximum_size=256 * 1024)
+        # add objs to the store
+        for obj in ["o3", "o2", "o1"]:
+            with cache.store(obj):
+                pass
+            with cache.load(obj):
+                pass
+            sleep_for_fs()
+        sorted_objs = cache._last_used_objs()
+        assert [e[0] for e in sorted_objs] == ["o3", "o2", "o1"]
+        # access o2
+        with cache.load("o2"):
+            pass
+        sorted_objs = cache._last_used_objs()
+        assert [e[0] for e in sorted_objs] == ["o3", "o1", "o2"]
