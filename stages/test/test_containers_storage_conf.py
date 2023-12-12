@@ -3,7 +3,11 @@
 import os.path
 
 import pytest
-import pytoml
+
+try:
+    import toml
+except ModuleNotFoundError:
+    import pytoml as toml
 
 import osbuild.meta
 from osbuild.testutil import assert_dict_has
@@ -45,8 +49,8 @@ def test_containers_storage_conf_integration(tmp_path, test_filename, test_stora
     assert os.path.exists(confpath)
 
     conf = None
-    with open(confpath, 'rb') as f:
-        conf = pytoml.load(f)
+    with open(confpath, 'r', encoding="utf-8") as f:
+        conf = toml.load(f)
 
     assert conf is not None
 
