@@ -730,7 +730,7 @@
             "prefix": {
               "type": "partition",
               "partlabel": "gpt",
-              "number": 2,
+              "number": 3,
               "path": "/grub2"
             }
           }

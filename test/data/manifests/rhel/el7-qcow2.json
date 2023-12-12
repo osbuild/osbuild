@@ -922,7 +922,7 @@
             "prefix": {
               "type": "partition",
               "partlabel": "gpt",
-              "number": 1,
+              "number": 2,
               "path": "/grub2"
             }
           }

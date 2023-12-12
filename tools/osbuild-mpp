@@ -935,7 +935,7 @@ class PartitionTable:
 
         assert len(disk_parts) == len(self.partitions)
         for i, part in enumerate(self.partitions):
-            part.index = i
+            part.index = i + 1
             part.start = disk_parts[i]["start"]
             part.size = disk_parts[i]["size"]
             part.type = disk_parts[i].get("type")

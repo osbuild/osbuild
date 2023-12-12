@@ -90,7 +90,7 @@ SCHEMA = r"""
         "enum": ["gpt", "dos"]
       },
       "number": {
-        "description": "The partition number, starting at zero",
+        "description": "The partition number, starting at one",
         "type": "number"
       },
       "path": {
@@ -252,7 +252,6 @@ def prefix_partition(options: Dict):
     pt_label = options["partlabel"]
     path = options["path"]
 
-    number += 1
     path = path.lstrip("/")
 
     label = grub2_partition_id(pt_label)
