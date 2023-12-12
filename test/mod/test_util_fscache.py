@@ -4,10 +4,14 @@
 
 # pylint: disable=protected-access
 
+import contextlib
 import json
 import os
+import pathlib
 import subprocess
+import sys
 import tempfile
+import time
 
 import pytest
 
@@ -18,6 +22,22 @@ from osbuild.util import fscache
 def tmpdir_fixture():
     with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
         yield tmp
+
+
+def sleep_for_fs():
+    """Sleep a tiny amount of time for atime/mtime updates to show up in fs"""
+    time.sleep(0.05)
+
+
+def has_precise_fs_timestamps():
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmpdir:
+        stamp_path = pathlib.Path(tmpdir) / "stamp"
+        stamp_path.write_bytes(b"m1")
+        mtime1 = stamp_path.stat().st_mtime
+        sleep_for_fs()
+        stamp_path.write_bytes(b"m2")
+        mtime2 = stamp_path.stat().st_mtime
+        return mtime2 > mtime1
 
 
 def test_calculate_space(tmpdir):
@@ -398,6 +418,51 @@ def test_size_discard(tmpdir):
             with cache.load("foo") as rpath:
                 pass
 
+def test_cache_last_used_noent(tmpdir):
+    cache = fscache.FsCache("osbuild-test-appid", tmpdir)
+    with pytest.raises(fscache.FsCache.MissError):
+        cache._last_used("non-existant-entry")
+
+
+@pytest.mark.skipif(not has_precise_fs_timestamps(), reason="need precise fs timestamps")
+def test_cache_load_updates_last_used(tmpdir):
+    cache = fscache.FsCache("osbuild-test-appid", tmpdir)
+    with cache:
+        cache.info = cache.info._replace(maximum_size=1024*1024)
+        with cache.store("foo") as rpath:
+            pass
+        with cache.load("foo") as rpath:
+            pass
+        load_time1 = cache._last_used("foo")
+        # would be nice to have a helper for this in cache
+        obj_lock_path = os.path.join(
+            cache._dirname_objects, "foo", cache._filename_object_lock)
+        mtime1 = os.stat(cache._path(obj_lock_path)).st_mtime
+        assert load_time1 > 0
+        sleep_for_fs()
+        with cache.load("foo") as rpath:
+            pass
+        # load time is updated
+        load_time2 = cache._last_used("foo")
+        assert load_time2 > load_time1
+        # mtime is unchanged
+        mtime2 = os.stat(cache._path(obj_lock_path)).st_mtime
+        assert mtime1 == mtime2
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_cache_load_updates_last_used_on_noatime(tmp_path):
+    mnt_path = tmp_path / "mnt"
+    mnt_path.mkdir()
+    with contextlib.ExitStack() as cm:
+        subprocess.check_call(
+            ["mount", "-t", "tmpfs", "-o", "noatime", "none", os.fspath(mnt_path)],
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+        cm.callback(subprocess.check_call, ["umount", os.fspath(mnt_path)], stdout=sys.stdout, stderr=sys.stderr)
+        test_cache_load_updates_last_used(mnt_path)
+
 
 def test_cache_full_behavior(tmp_path):
     cache = fscache.FsCache("osbuild-cache-evict", tmp_path)
@@ -422,7 +487,7 @@ def test_cache_full_behavior(tmp_path):
         assert cache._calculate_space(tmp_path) < 192 * 1024
         with cache.load("o2") as o:
             assert o != ""
-        # adding a third one will (silently) fail
+        # adding a third one will (silently) fail because the cache is full
         with cache.store("o3") as rpath:
             rpath_f3 = os.path.join(tmp_path, rpath, "f3")
             with open(rpath_f3, "wb") as fp:

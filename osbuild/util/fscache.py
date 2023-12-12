@@ -9,6 +9,7 @@ the cache under a given limit.
 # pylint: disable=too-many-lines
 
 import contextlib
+import ctypes
 import errno
 import json
 import os
@@ -1016,14 +1017,12 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             # Use an ExitStack so we can catch exceptions raised by the
             # `__enter__()` call on the context-manager. We want to catch
             # `OSError` exceptions and convert them to cache-misses.
+            obj_lock_path = os.path.join(
+                self._dirname_objects, name, self._filename_object_lock)
             try:
-                es.enter_context(
+                lock_fd = es.enter_context(
                     self._atomic_open(
-                        os.path.join(
-                            self._dirname_objects,
-                            name,
-                            self._filename_object_lock,
-                        ),
+                        obj_lock_path,
                         write=False,
                         wait=False,
                     )
@@ -1033,11 +1032,32 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                     raise self.MissError() from None
                 raise e
 
+            libc = linux.Libc.default()
+            libc.futimens(lock_fd, ctypes.byref(linux.c_timespec_times2(
+                atime=linux.c_timespec(tv_sec=0, tv_nsec=libc.UTIME_NOW),
+                mtime=linux.c_timespec(tv_sec=0, tv_nsec=libc.UTIME_OMIT),
+            )))
+
             yield os.path.join(
                 self._dirname_objects,
                 name,
                 self._dirname_data,
             )
+
+    def _last_used(self, name: str) -> float:
+        """Return the last time the given object was last used.
+
+        Note that the resolution is only as good as what the filesystem "atime"
+        gives us.
+        """
+        obj_lock_path = os.path.join(
+            self._dirname_objects, name, self._filename_object_lock)
+        try:
+            return os.stat(self._path(obj_lock_path)).st_atime
+        except OSError as e:
+            if e.errno in [errno.EAGAIN, errno.ENOENT, errno.ENOTDIR]:
+                raise self.MissError() from None
+            raise e
 
     @property
     def info(self) -> FsCacheInfo:
