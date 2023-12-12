@@ -15,7 +15,7 @@ import json
 import os
 import subprocess
 import uuid
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 from osbuild.util import ctx, linux, rmrf
 
@@ -99,6 +99,17 @@ class FsCacheInfo(NamedTuple):
         if self.version is not None:
             data["version"] = self.version
         return data
+
+
+class FsCacheObjectInfo(NamedTuple):
+    """ File System Cache object information
+
+    This type represents information about a single cache object. The
+    last_used information is only guaranteed to be valid while the cache
+    is locked.
+    """
+    name: str
+    last_used: float
 
 
 class FsCache(contextlib.AbstractContextManager, os.PathLike):
@@ -1058,6 +1069,22 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             if e.errno in [errno.EAGAIN, errno.ENOENT, errno.ENOTDIR]:
                 raise self.MissError() from None
             raise e
+
+    def _last_used_objs(self) -> List[FsCacheObjectInfo]:
+        """Return a list of FsCacheObjectInfo with name, last_used
+           information sorted by last_used time.
+
+        Note that this function will be racy when used without a lock and
+        the caller needs to handle this.
+        """
+        objs = []
+        for name in os.listdir(self._path(self._dirname_objects)):
+            try:
+                last_used = self._last_used(name)
+            except (OSError, FsCache.MissError):
+                continue
+            objs.append(FsCacheObjectInfo(name=name, last_used=last_used))
+        return sorted(objs, key=lambda obj: obj.last_used)
 
     @property
     def info(self) -> FsCacheInfo:
