@@ -58,7 +58,18 @@ class MountManager:
 
     def mount(self, mount: Mount) -> Dict:
 
+        # Get the absolute path to the source device inside the
+        # temporary filesystem (i.e. /run/osbuild/osbuild-dev-xyz/loop0)
+        # and also the relative path to the source device inside
+        # that filesystem (i.e. loop0). If the device also exists on the
+        # host in `/dev` (like /dev/loop0), we'll use that path for the
+        # mount because some tools (like grub2-install) consult mountinfo
+        # to try to canonicalize paths for mounts and inside the bwrap env
+        # the device will be under `/dev`. https://github.com/osbuild/osbuild/issues/1492
         source = self.devices.device_abspath(mount.device)
+        relpath = self.devices.device_relpath(mount.device)
+        if relpath and os.path.exists(os.path.join('/dev', relpath)):
+            source = os.path.join('/dev', relpath)
 
         root = os.fspath(self.root)
 
