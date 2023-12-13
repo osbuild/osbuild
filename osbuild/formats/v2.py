@@ -286,6 +286,7 @@ def load_mount(description: Dict, index: Index, stage: Stage):
         raise ValueError(f"Duplicated mount '{name}'")
 
     source = description.get("source")
+    partition = description.get("partition")
     target = description.get("target")
 
     options = description.get("options", {})
@@ -296,7 +297,7 @@ def load_mount(description: Dict, index: Index, stage: Stage):
         if not device:
             raise ValueError(f"Unknown device '{source}' for mount '{name}'")
 
-    stage.add_mount(name, info, device, target, options)
+    stage.add_mount(name, info, device, partition, target, options)
 
 
 def load_stage(description: Dict, index: Index, pipeline: Pipeline, manifest: Manifest, source_refs):

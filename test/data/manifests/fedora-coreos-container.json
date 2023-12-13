@@ -682,28 +682,11 @@
             ]
           },
           "devices": {
-            "efi": {
+            "disk": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start": 4096,
-                "size": 260096
-              }
-            },
-            "boot": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": 264192,
-                "size": 786432
-              }
-            },
-            "root": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": 1050624,
-                "size": 4194304
+                "partscan": true
               }
             }
           },
@@ -711,19 +694,22 @@
             {
               "name": "root",
               "type": "org.osbuild.xfs",
-              "source": "root",
+              "source": "disk",
+              "partition": 4,
               "target": "/"
             },
             {
               "name": "boot",
               "type": "org.osbuild.ext4",
-              "source": "boot",
+              "source": "disk",
+              "partition": 3,
               "target": "/boot"
             },
             {
               "name": "efi",
               "type": "org.osbuild.fat",
-              "source": "efi",
+              "source": "disk",
+              "partition": 2,
               "target": "/boot/efi"
             }
           ]
@@ -884,30 +870,11 @@
             ]
           },
           "devices": {
-            "efi": {
+            "disk": {
               "type": "org.osbuild.loopback",
               "options": {
                 "filename": "disk.img",
-                "start": 512,
-                "size": 32512,
-                "sector-size": 4096
-              }
-            },
-            "boot": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": 33024,
-                "size": 98304,
-                "sector-size": 4096
-              }
-            },
-            "root": {
-              "type": "org.osbuild.loopback",
-              "options": {
-                "filename": "disk.img",
-                "start": 131328,
-                "size": 524288,
+                "partscan": true,
                 "sector-size": 4096
               }
             }
@@ -916,19 +883,22 @@
             {
               "name": "root",
               "type": "org.osbuild.xfs",
-              "source": "root",
+              "source": "disk",
+              "partition": 4,
               "target": "/"
             },
             {
               "name": "boot",
               "type": "org.osbuild.ext4",
-              "source": "boot",
+              "source": "disk",
+              "partition": 3,
               "target": "/boot"
             },
             {
               "name": "efi",
               "type": "org.osbuild.fat",
-              "source": "efi",
+              "source": "disk",
+              "partition": 2,
               "target": "/boot/efi"
             }
           ]
