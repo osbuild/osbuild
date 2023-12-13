@@ -520,3 +520,39 @@ def test_cache_last_used_objs(tmpdir):
             pass
         sorted_objs = cache._last_used_objs()
         assert [e[0] for e in sorted_objs] == ["o3", "o1", "o2"]
+
+
+@pytest.mark.skipif(not has_precise_fs_timestamps(), reason="need precise fs timestamps")
+def test_cache_remove_lru(tmpdir):
+    cache = fscache.FsCache("osbuild-cache-id", tmpdir)
+    with cache:
+        cache.info = cache.info._replace(maximum_size=-1)
+        # add objs to the store
+        for obj in ["o3", "o2", "o1"]:
+            with cache.store(obj):
+                pass
+            with cache.load(obj):
+                pass
+            sleep_for_fs()
+        # precondition check: we have least used o3,o2,o1
+        sorted_objs = cache._last_used_objs()
+        assert [e[0] for e in sorted_objs] == ["o3", "o2", "o1"]
+        # removed least recently used (o3), now o2 is least recently used
+        cache._remove_lru(1)
+        sorted_objs = cache._last_used_objs()
+        assert [e[0] for e in sorted_objs] == ["o2", "o1"]
+        # now load o2 (previously least recently used)
+        with cache.load("o2"):
+            pass
+        sleep_for_fs()
+        # and ensure that removing the lru removes "o1" now and keeps "o2"
+        cache._remove_lru(1)
+        sorted_objs = cache._last_used_objs()
+        assert [e[0] for e in sorted_objs] == ["o2"]
+        # removing last obj
+        cache._remove_lru(1)
+        sorted_objs = cache._last_used_objs()
+        assert sorted_objs == []
+        # and keep removing is fine
+        cache._remove_lru(1)
+        assert sorted_objs == []
