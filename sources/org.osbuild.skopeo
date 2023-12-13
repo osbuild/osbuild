@@ -60,6 +60,10 @@ SCHEMA = """
                 "enum": ["docker", "containers-storage" ],
                 "description": "The containers transport from which to copy the container",
                 "default": "docker"
+              },
+              "storage-location": {
+                "type": "string",
+                "description": "The location of the local containers storage"
               }
             }
           }
@@ -103,13 +107,19 @@ class SkopeoSource(sources.SourceService):
         digest = image["digest"]
         tls_verify = image.get("tls-verify", True)
         transport = image.get("containers-transport", DOCKER_TRANSPORT)
+        location = image.get("storage-location", "")
 
         with tempfile.TemporaryDirectory(prefix="tmp-download-", dir=self.cache) as tmpdir:
             archive_dir = os.path.join(tmpdir, "container-archive")
             os.makedirs(archive_dir)
             os.chmod(archive_dir, 0o755)
 
-            reference = f"{imagename}@{digest}"
+            # Skopeo will read the default storage path from the
+            # /etc/containers/storage.conf unless storage-location
+            # is provided. See:
+            # https://github.com/containers/storage/blob/acbb93bb802702bc171b9987a47a9b713c280d38/types/options.go#L53
+            specifier = location if location == "" else f"[overlay@{location}]"
+            reference = f"{specifier}{imagename}@{digest}"
             source = self.get_source(transport, reference)
 
             # We use the dir format because it is the most powerful in terms of feature support and is the closest to a
