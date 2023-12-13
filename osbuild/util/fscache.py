@@ -683,8 +683,11 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             self._info_maximum_size = -1
         elif isinstance(info.maximum_size, int):
             self._info_maximum_size = info.maximum_size
-        else:
+        elif info.maximum_size is None:
             self._info_maximum_size = 0
+        else:
+            raise ValueError(
+                f"maximum-size can only be set to 'unlimited' or an integer value, got {type(info.maximum_size)}")
 
     def _is_active(self):
         # Internal helper to verify we are in an active context-manager.
@@ -942,19 +945,27 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
             info["creation-boot-id"] = self._bootid
             info["size"] = self._calculate_space(path_data)
 
-            # Update the total cache-size. If it exceeds the limits, bail out
-            # but do not trigger an error. It behaves as if the entry was
-            # committed and immediately deleted by racing cache management. No
-            # need to tell the caller about it (if that is ever needed, we can
-            # provide for it).
+            # Exit early if it never is going to fit
+            if self._info_maximum_size > -1 and info["size"] > self._info_maximum_size:
+                return
+
+            # Update the total cache-size. If it exceeds the limits, remove
+            # least recently used objects until there is enough space.
             #
             # Note that if we crash after updating the total cache size, but
             # before committing the object information, the total cache size
-            # will be out of sync. However, it is never overcommitted, so we
-            # will never violate any cache invariants. The cache-size will be
-            # re-synchronized by any full cache-management operation.
+            # will be out of sync.
+            #
+            # However, it is never overcommitted, so we will never
+            # violate any cache invariants. Future code needs to resync
+            # the cache (e.g. on open with some simple journal strategy).
             if not self._update_cache_size(info["size"]):
-                return
+                # try to free space
+                self._remove_lru(info["size"])
+                # and see if the update can happen now
+                if not self._update_cache_size(info["size"]):
+                    # stil could not free enough space
+                    return
 
             try:
                 # Commit the object-information, thus marking it as fully
@@ -1146,7 +1157,6 @@ class FsCache(contextlib.AbstractContextManager, os.PathLike):
                         break
             except BlockingIOError:
                 continue
-
         # return True if at least the required size got freed
         return freed_so_far > required_size
 
