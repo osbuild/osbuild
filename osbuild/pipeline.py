@@ -111,8 +111,8 @@ class Stage:
         self.devices[name] = dev
         return dev
 
-    def add_mount(self, name, info, device, target, options):
-        mount = Mount(name, info, device, target, options)
+    def add_mount(self, name, info, device, partition, target, options):
+        mount = Mount(name, info, device, partition, target, options)
         self.mounts[name] = mount
         return mount
 

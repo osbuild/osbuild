@@ -107,6 +107,7 @@ def mount(mgr, devpath, tree, size, mountpoint, options):
             lpath,
             index.get_module_info("Mount", "org.osbuild.fat"),
             dev,
+            None,
             "/",
             options
         )

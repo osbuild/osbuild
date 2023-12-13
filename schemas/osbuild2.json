@@ -82,6 +82,9 @@
         "target": {
           "type": "string"
         },
+        "partition": {
+          "type": "number"
+        },
         "options": {
           "type": "object",
           "additionalProperties": true

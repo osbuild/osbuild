@@ -21,6 +21,9 @@ SCHEMA_2 = """
   "source": {
     "type": "string"
   },
+  "partition": {
+    "type": "number"
+  },
   "target": {
     "type": "string"
   },

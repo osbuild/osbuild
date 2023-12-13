@@ -21,6 +21,10 @@ SCHEMA_2 = """
   "source": {
     "type": "string"
   },
+  "partition": {
+    "description": "If the source device has partitions, the partition number, starting at one",
+    "type": "number"
+  },
   "target": {
     "type": "string"
   },
