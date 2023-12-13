@@ -465,38 +465,55 @@ def test_cache_load_updates_last_used_on_noatime(tmp_path):
         test_cache_load_updates_last_used(mnt_path)
 
 
+@pytest.mark.skipif(not has_precise_fs_timestamps(), reason="need precise fs timestamps")
 def test_cache_full_behavior(tmp_path):
+    def _cache_size_from_file():
+        with open(cache._path(cache._filename_cache_size), encoding="utf8") as fp:
+            return json.load(fp)
+
     cache = fscache.FsCache("osbuild-cache-evict", tmp_path)
     with cache:
-        # use big sizes to mask the effect of dirs using 4k of space too
-        cache.info = cache.info._replace(maximum_size=192 * 1024)
-        # add one object to the store, we are below the limit
-        with cache.store("o1") as rpath:
-            rpath_f1 = os.path.join(tmp_path, rpath, "f1")
-            with open(rpath_f1, "wb") as fp:
-                fp.write(b'a' * 64 * 1024)
-        assert cache._calculate_space(tmp_path) > 64 * 1024
-        assert cache._calculate_space(tmp_path) < 128 * 1024
-        with cache.load("o1") as o:
-            assert o != ""
-        # and one more
-        with cache.store("o2") as rpath:
-            rpath_f2 = os.path.join(tmp_path, rpath, "f2")
-            with open(rpath_f2, "wb") as fp:
-                fp.write(b'b' * 64 * 1024)
-        assert cache._calculate_space(tmp_path) > 128 * 1024
-        assert cache._calculate_space(tmp_path) < 192 * 1024
-        with cache.load("o2") as o:
-            assert o != ""
-        # adding a third one will (silently) fail because the cache is full
-        with cache.store("o3") as rpath:
-            rpath_f3 = os.path.join(tmp_path, rpath, "f3")
-            with open(rpath_f3, "wb") as fp:
-                fp.write(b'b' * 128 * 1024)
-        assert cache._calculate_space(tmp_path) > 128 * 1024
-        assert cache._calculate_space(tmp_path) < 192 * 1024
-        with pytest.raises(fscache.FsCache.MissError):
-            with cache.load("o3") as o:
+        # use big sizes to mask the effect of {dirs,cache.info} using
+        # 4k of space too
+        obj_size = 128 * 1024
+        # cache is big enough to hold 4 objects (add buffer)
+        max_cache_size = (4 * obj_size) + int(0.5 * obj_size)
+        cache.info = cache.info._replace(maximum_size=max_cache_size)
+        # add 4 object to the store, we are below the limit
+        for i in range(1, 5):
+            with cache.store(f"o{i}") as rpath:
+                rpath = os.path.join(tmp_path, rpath, f"f{i}")
+                with open(rpath, "wb") as fp:
+                    fp.write(b'a' * obj_size)
+            # info file is updated
+            assert _cache_size_from_file() >= i * obj_size
+            assert _cache_size_from_file() < (i + 1) * obj_size
+            # disk is updated
+            assert cache._calculate_space(tmp_path) >= i * obj_size
+            assert cache._calculate_space(tmp_path) < (i + 1) * obj_size
+            with cache.load(f"o{i}") as o:
+                assert o != ""
+            sleep_for_fs()
+        # adding one more
+        with cache.store("o-full") as rpath:
+            rpath = os.path.join(tmp_path, rpath, "f-full")
+            with open(rpath, "wb") as fp:
+                fp.write(b'b' * obj_size)
+        # cache file is updated, it will free twice the size of the
+        # requested obj
+        assert _cache_size_from_file() >= 2 * obj_size
+        assert _cache_size_from_file() < max_cache_size
+        # disk is updated
+        assert cache._calculate_space(tmp_path) >= 3 * obj_size
+        assert cache._calculate_space(tmp_path) < max_cache_size
+        # o1,o2 is least recently used and got removed
+        for obj in ["o1", "o2"]:
+            with pytest.raises(fscache.FsCache.MissError):
+                with cache.load(obj) as o:
+                    pass
+        # and o-full made it in
+        for obj in ["o3", "o4", "o-full"]:
+            with cache.load(obj) as o:
                 pass
 
 
@@ -556,3 +573,16 @@ def test_cache_remove_lru(tmpdir):
         # and keep removing is fine
         cache._remove_lru(1)
         assert sorted_objs == []
+
+
+def test_cache_obj_too_big(tmp_path):
+    cache = fscache.FsCache("osbuild-cache-evict", tmp_path)
+    with cache:
+        max_cache_size = 16 * 1024
+        cache.info = cache.info._replace(maximum_size=max_cache_size)
+        with cache.store("o1") as rpath:
+            with open(os.path.join(tmp_path, rpath, "f1"), "wb") as fp:
+                fp.write(b'a' * 2 * max_cache_size)
+        with pytest.raises(fscache.FsCache.MissError):
+            with cache.load("o1"):
+                pass
