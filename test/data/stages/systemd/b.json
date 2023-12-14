@@ -649,6 +649,9 @@
             "masked_services": [
               "ldconfig"
             ],
+            "masked_generators": [
+              "systemd-sysv-generator"
+            ],
             "disabled_services": [
               "sshd"
             ]

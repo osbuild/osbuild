@@ -24,6 +24,7 @@ the following subset of options:
     - 'Environment' option
 """
 
+import os
 import subprocess
 import sys
 
@@ -47,6 +48,11 @@ SCHEMA = r"""
     "items": { "type": "string" },
     "description": "Array of systemd unit names to be masked"
   },
+  "masked_generators": {
+    "type": "array",
+    "items": { "type": "string" },
+    "description": "Array of systemd generators to be masked"
+  },
   "default_target": {
     "type": "string",
     "description": "The default target to boot into"
@@ -59,6 +65,7 @@ def main(tree, options):
     enabled_services = options.get("enabled_services", [])
     disabled_services = options.get("disabled_services", [])
     masked_services = options.get("masked_services", [])
+    masked_generators = options.get("masked_generators", [])
     default_target = options.get("default_target")
 
     for service in enabled_services:
@@ -69,6 +76,14 @@ def main(tree, options):
 
     for service in masked_services:
         subprocess.run(["systemctl", "--root", tree, "mask", service], check=True)
+
+    if masked_generators:
+        # systemctl can't mask generators, so manually create the mask
+        generator_dir = f"{tree}/etc/systemd/system-generators"
+        os.makedirs(generator_dir, exist_ok=True)
+        for generator in masked_generators:
+            target = os.path.join(generator_dir, generator)
+            os.symlink("/dev/null", target)
 
     if default_target:
         subprocess.run(["systemctl", "--root", tree, "set-default", default_target], check=True)

@@ -1,7 +1,9 @@
 {
   "added_files": [
     "/etc/systemd/system/ldconfig.service",
-    "/etc/systemd/system/multi-user.target.wants/nftables.service"
+    "/etc/systemd/system/multi-user.target.wants/nftables.service",
+    "/etc/systemd/system-generators",
+    "/etc/systemd/system-generators/systemd-sysv-generator"
   ],
   "deleted_files": [
     "/etc/systemd/system/multi-user.target.wants/sshd.service"
