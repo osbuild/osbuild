@@ -18,7 +18,11 @@ import sys
 import osbuild.api
 
 SCHEMA = """
-"required": ["kernel"],
+"oneOf": [{
+  "required": ["kernel"]
+}, {
+  "required": ["regenerate_all"]
+}],
 "properties": {
   "kernel": {
     "description": "List of target kernel versions",
@@ -27,6 +31,11 @@ SCHEMA = """
        "type": "string",
        "description": "A kernel version"
     }
+  },
+  "regenerate_all": {
+    "description": "Regenerate initramfs for all kernels.",
+    "type": "boolean",
+    "default": false
   },
   "compress": {
     "description": "Compress the initramfs, passed via `--compress`",
@@ -139,7 +148,8 @@ def yesno(name: str, value: bool) -> str:
 
 # pylint: disable=too-many-branches
 def main(tree, options):
-    kernels = options["kernel"]
+    regenerate_all = options.get("regenerate_all", False)
+    kernels = options.get("kernel", [])
     compress = options.get("compress")
     modules = options.get("modules", [])  # dracut modules
     add_modules = options.get("add_modules", [])
@@ -201,15 +211,27 @@ def main(tree, options):
 
     opts += extra
 
-    for kver in kernels:
-        print(f"Building initramfs for {kver}", file=sys.stderr)
+    if regenerate_all:
+        print("Building initramfs for all", file=sys.stderr)
 
         subprocess.run(["/usr/sbin/chroot", tree,
                         "/usr/bin/dracut",
                         "--no-hostonly",
-                        "--kver", kver]
-                       + opts,
-                       check=True)
+                        "--regenerate-all"]
+                        + opts,
+                        check=True)
+
+
+    else:
+        for kver in kernels:
+            print(f"Building initramfs for {kver}", file=sys.stderr)
+
+            subprocess.run(["/usr/sbin/chroot", tree,
+                            "/usr/bin/dracut",
+                            "--no-hostonly",
+                            "--kver", kver]
+                           + opts,
+                           check=True)
 
     return 0
 
