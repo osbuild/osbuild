@@ -19,6 +19,7 @@ with a file, you need to set the `remove_destination` option to
 symlinks to directories.
 """
 
+import glob
 import os
 import subprocess
 import sys
@@ -137,7 +138,10 @@ def main(args, options):
     items = options["paths"]
 
     for path in items:
-        src = parse_location(path["from"], args)
+        configured_src = parse_location(path["from"], args)
+        expanded_src = glob.glob(configured_src)
+        assert len(expanded_src) == 1
+        src = expanded_src[0]
         dst = parse_location(path["to"], args)
         remove_destination = path.get("remove_destination", False)
 
