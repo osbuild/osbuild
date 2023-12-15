@@ -160,6 +160,15 @@ SCHEMA = r"""
       }
     }
   },
+  "rootpw": {
+    "type": "object",
+    "required": ["lock"],
+    "properties": {
+      "lock": {
+        "type": "boolean"
+      }
+    }
+  },
   "groups": {
     "type": "object",
     "additionalProperties": false,
@@ -565,6 +574,10 @@ def main(tree, options):  # pylint: disable=too-many-branches
     if liveimg:
         url = liveimg["url"]
         config += [f"liveimg --url {url}"]
+
+    rootpw = options.get("rootpw")
+    if rootpw and rootpw.get("lock"):
+        config += ["rootpw --lock"]
 
     config += make_groups(options.get("groups", {}))
     config += make_users(options.get("users", {}))
