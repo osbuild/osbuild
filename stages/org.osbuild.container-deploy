@@ -54,14 +54,13 @@ def main(inputs, output):
     assert len(images) == 1
     image = list(images.values())[0]
 
-    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp_storage:
         with containers.container_source(image) as (_, source):
             subprocess.run(
-                ["skopeo", "copy", source, f"containers-storage:[overlay@{tmp}]image"],
+                ["skopeo", "copy", source, f"containers-storage:[overlay@{tmp_storage}]image"],
                 check=True,
             )
-
-        with mount_container(tmp, "image") as img:
+        with mount_container(tmp_storage, "image") as img:
             subprocess.run(["cp", "-a", f"{img}/.", f"{output}/"], check=True)
 
 
