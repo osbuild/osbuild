@@ -16,7 +16,7 @@
     },
     "/usr/lib/os-release": {
       "content": [
-        "sha256:d38ce6163200bfdfa564bc5f9d4a59fb82ae83dc235de835fe97eaafb46de7a2",
+        "sha256:125ed26603dabd0f76eb0e8bc44e90fd60940640ec5dbf4ea100c443d6eb15cf",
         "sha256:0e55092af0746630c98d1b2e0d960617c33f8ea7b55739fd18cb7cd5342a28ca"
       ]
     },

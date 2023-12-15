@@ -1,6 +1,7 @@
 {
   "added_files": [
-    "/etc/hostname"
+    "/etc/hostname",
+    "/etc/kernel"
   ],
   "deleted_files": [],
   "differences": {}
