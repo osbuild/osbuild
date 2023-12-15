@@ -1,5 +1,5 @@
 {
-  "initramfs-6.5.6-200.fc38.x86_64.img": {
+  "initramfs-6.6.4-200.fc39.x86_64.img": {
     "early_cpio": false,
     "compression": "gzip",
     "kmods": [
@@ -159,6 +159,7 @@
       "fusb302.ko.xz",
       "fuse.ko.xz",
       "ghash-clmulni-intel.ko.xz",
+      "governor_simpleondemand.ko.xz",
       "gpio-sbu-mux.ko.xz",
       "gpio_keys.ko.xz",
       "gpio_keys_polled.ko.xz",
@@ -198,6 +199,7 @@
       "hid-gembird.ko.xz",
       "hid-gfrm.ko.xz",
       "hid-glorious.ko.xz",
+      "hid-google-stadiaff.ko.xz",
       "hid-gt683r.ko.xz",
       "hid-gyration.ko.xz",
       "hid-holtek-kbd.ko.xz",
@@ -434,6 +436,7 @@
       "nls_koi8-r.ko.xz",
       "nls_koi8-ru.ko.xz",
       "nls_koi8-u.ko.xz",
+      "nls_ucs2_utils.ko.xz",
       "nls_utf8.ko.xz",
       "ntfs3.ko.xz",
       "null_blk.ko.xz",
@@ -442,7 +445,6 @@
       "nvme-core.ko.xz",
       "nvme-fabrics.ko.xz",
       "nvme-fc.ko.xz",
-      "nvme.ko.xz",
       "nvme.ko.xz",
       "nvmet-fc.ko.xz",
       "nvmet.ko.xz",
@@ -499,6 +501,7 @@
       "pinctrl-broxton.ko.xz",
       "pinctrl-cannonlake.ko.xz",
       "pinctrl-cedarfork.ko.xz",
+      "pinctrl-cs42l43.ko.xz",
       "pinctrl-cy8c95x0.ko.xz",
       "pinctrl-denverton.ko.xz",
       "pinctrl-elkhartlake.ko.xz",
@@ -650,6 +653,7 @@
       "ucsi_stm32g0.ko.xz",
       "udf.ko.xz",
       "udp_tunnel.ko.xz",
+      "ufshcd-core.ko.xz",
       "uhid.ko.xz",
       "uio.ko.xz",
       "ums-alauda.ko.xz",
@@ -719,17 +723,17 @@
       "nvdimm",
       "qemu",
       "lunmask",
-      "memstrack",
       "resume",
       "rootfs-block",
       "terminfo",
       "udev-rules",
+      "virtiofs",
       "dracut-systemd",
       "usrmount",
       "base",
       "fs-lib",
-      "shutdown",
-      "virtiofs"
+      "memstrack",
+      "shutdown"
     ]
   }
 }

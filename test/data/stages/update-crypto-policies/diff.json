@@ -1,5 +1,7 @@
 {
-  "added_files": ["/dev/null"],
+  "added_files": [
+    "/dev/null"
+  ],
   "deleted_files": [],
   "differences": {
     "/etc/crypto-policies/back-ends/bind.config": {
@@ -53,7 +55,8 @@
     "/etc/crypto-policies/back-ends/openssh.config": {
       "symlink": [
         "/usr/share/crypto-policies/DEFAULT/openssh.txt",
-        "/usr/share/crypto-policies/FIPS/openssh.txt"]
+        "/usr/share/crypto-policies/FIPS/openssh.txt"
+      ]
     },
     "/etc/crypto-policies/back-ends/opensshserver.config": {
       "symlink": [
@@ -65,6 +68,12 @@
       "symlink": [
         "/usr/share/crypto-policies/DEFAULT/openssl.txt",
         "/usr/share/crypto-policies/FIPS/openssl.txt"
+      ]
+    },
+    "/etc/crypto-policies/back-ends/openssl_fips.config": {
+      "symlink": [
+        "/usr/share/crypto-policies/DEFAULT/openssl_fips.txt",
+        "/usr/share/crypto-policies/FIPS/openssl_fips.txt"
       ]
     },
     "/etc/crypto-policies/back-ends/opensslcnf.config": {
@@ -93,11 +102,11 @@
     },
     "/etc/crypto-policies/state/CURRENT.pol": {
       "content": [
-        "sha256:34459f8b102d05d1df56885c4a103e68ae6353f88ef41386402edf97c56eb505",
-        "sha256:3433137c54925eb3618bc7a34e33dfbc2d8fedad947256b91aa7ba7ac49eea51"
+        "sha256:5af38a3ead1e8288c94d4c5edc92a8cd43841f5e3f3bfd38603b9f2c39539b6b",
+        "sha256:209dce3608e0d22d715c3f009cffd7bd2b7d10739abf91564d2189171275db91"
       ]
     },
-   "/etc/crypto-policies/state/current": {
+    "/etc/crypto-policies/state/current": {
       "content": [
         "sha256:ecae097fb02a733ac98c03d7527fd923d5c9607c6a02feb5f0d388375f3e70dc",
         "sha256:858dd9c983a8e87bbb242952b737f33499c99ff5fd8b377b218da3836357c874"
