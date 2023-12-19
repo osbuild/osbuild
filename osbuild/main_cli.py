@@ -52,8 +52,10 @@ def export(name_or_id, output_directory, store, manifest):
     obj = store.get(pipeline.id)
     dest = os.path.join(output_directory, name_or_id)
 
+    skip_preserve_owner = \
+        os.getenv("OSBUILD_EXPORT_FORCE_NO_PRESERVE_OWNER") == "1"
     os.makedirs(dest, exist_ok=True)
-    obj.export(dest)
+    obj.export(dest, skip_preserve_owner=skip_preserve_owner)
 
 
 def parse_arguments(sys_argv):
