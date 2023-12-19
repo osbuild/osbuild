@@ -2,12 +2,13 @@
 """
 Deploy a container.
 
-Buildhost commands used: podman
+Buildhost commands used: podman skopeo
 """
 import contextlib
+import random
+import string
 import subprocess
 import sys
-import tempfile
 
 import osbuild.api
 from osbuild.util import containers
@@ -31,20 +32,19 @@ SCHEMA_2 = r"""
 
 
 @contextlib.contextmanager
-def mount_container(store, image):
+def mount_container(image_tag):
     try:
         result = subprocess.run(
-            ["podman", "--imagestore", store, "image", "mount", image],
+            ["podman", "image", "mount", image_tag],
             capture_output=True,
             encoding="utf-8",
             check=True,
         )
-
         yield result.stdout.strip()
 
     finally:
         subprocess.run(
-            ["podman", "--imagestore", store, "image", "umount", image],
+            ["podman", "image", "umount", image_tag],
             check=True,
         )
 
@@ -54,13 +54,20 @@ def main(inputs, output):
     assert len(images) == 1
     image = list(images.values())[0]
 
-    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp_storage:
+    # We cannot use a tmpdir as storage here because of
+    # https://github.com/containers/storage/issues/1779 so instead
+    # just pick a random suffix. This runs inside bwrap which gives a
+    # tmp /var so it does not really matter much.
+    image_tag = "tmp-container-deploy-" + "".join(random.choices(string.digits, k=14))
+    with contextlib.ExitStack() as cm:
+        cm.callback(subprocess.run, ["podman", "rmi", image_tag], check=True)
         with containers.container_source(image) as (_, source):
             subprocess.run(
-                ["skopeo", "copy", source, f"containers-storage:[overlay@{tmp_storage}]image"],
+                ["skopeo", "copy", source,
+                 f"containers-storage:{image_tag}"],
                 check=True,
             )
-        with mount_container(tmp_storage, "image") as img:
+        with mount_container(image_tag) as img:
             subprocess.run(["cp", "-a", f"{img}/.", f"{output}/"], check=True)
 
 
