@@ -244,18 +244,20 @@ class Object:
         if self.mode != want:
             raise ValueError(f"Wrong object mode: {self.mode}, want {want}")
 
-    def export(self, to_directory: PathLike):
+    def export(self, to_directory: PathLike, skip_preserve_owner=False):
         """Copy object into an external directory"""
-        subprocess.run(
-            [
-                "cp",
-                "--reflink=auto",
-                "-a",
-                os.fspath(self.tree) + "/.",
-                os.fspath(to_directory),
-            ],
-            check=True,
-        )
+        cp_cmd = [
+            "cp",
+            "--reflink=auto",
+            "-a",
+        ]
+        if skip_preserve_owner:
+            cp_cmd += ["--no-preserve=ownership"]
+        cp_cmd += [
+            os.fspath(self.tree) + "/.",
+            os.fspath(to_directory),
+        ]
+        subprocess.run(cp_cmd, check=True)
 
     def __fspath__(self):
         return self.tree
