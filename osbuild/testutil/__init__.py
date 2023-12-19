@@ -2,6 +2,7 @@
 Test related utilities
 """
 import os
+import pathlib
 import shutil
 
 
@@ -16,7 +17,7 @@ def assert_dict_has(v, keys, expected_value):
     assert v == expected_value
 
 
-def make_fake_tree(basedir, fake_content: dict):
+def make_fake_tree(basedir: pathlib.Path, fake_content: dict):
     """Create a directory tree of files with content.
 
     Call it with:
@@ -31,7 +32,7 @@ def make_fake_tree(basedir, fake_content: dict):
             fp.write(content)
 
 
-def make_fake_input_tree(tmpdir, fake_content: dict) -> str:
+def make_fake_input_tree(tmpdir: pathlib.Path, fake_content: dict) -> str:
     """
     Wrapper around make_fake_tree for "input trees"
     """
