@@ -320,3 +320,32 @@ def test_store_server(tmp_path):
 
         with pytest.raises(RuntimeError):
             _ = client.read_tree_at("42", tmp_path, "/nonexistent")
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_object_export_preserves_ownership_by_default(tmp_path, object_store):
+    tree = object_store.new("a")
+    p = Path(tree, "A")
+    p.touch()
+    os.chown(os.fspath(p), 1000, 1000)
+    tree.export(tmp_path)
+
+    expected_exported_path = Path(tmp_path, "A")
+    assert expected_exported_path.exists()
+    assert expected_exported_path.stat().st_uid == 1000
+    assert expected_exported_path.stat().st_gid == 1000
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_object_export_preserves_override(tmp_path, object_store):
+    tree = object_store.new("a")
+    p = Path(tree, "A")
+    p.touch()
+    os.chown(os.fspath(p), 1000, 1000)
+    tree.export(tmp_path, skip_preserve_owner=True)
+
+    expected_exported_path = Path(tmp_path, "A")
+    assert expected_exported_path.exists()
+    assert expected_exported_path.stat().st_uid == 0
+    assert expected_exported_path.stat().st_gid == 0
+
