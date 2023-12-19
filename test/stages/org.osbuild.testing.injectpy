@@ -1,0 +1,27 @@
+#!/usr/bin/python3
+"""
+Inject arbitrary python code.
+
+ONLY USE FOR TESTING
+"""
+
+import sys
+
+import osbuild.api
+
+SCHEMA_2 = """
+"options": {
+  "additionalProperties": true
+}
+"""
+
+
+def main(tree, options):  # pylint: disable=unused-argument
+    script = "\n".join(options.get("code", []))
+    exec(script)  # pylint: disable=exec-used
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args.get("options", {}))
+    sys.exit(r)

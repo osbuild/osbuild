@@ -347,7 +347,7 @@ class OSBuild(contextlib.AbstractContextManager):
             print(log)
         print("-- END ---------------------------------")
 
-    def compile(self, data_stdin, output_dir=None, checkpoints=None, check=False, exports=None):
+    def compile(self, data_stdin, output_dir=None, checkpoints=None, check=False, exports=None, libdir="."):
         """Compile an Artifact
 
         This takes a manifest as `data_stdin`, executes the pipeline, and
@@ -377,7 +377,7 @@ class OSBuild(contextlib.AbstractContextManager):
             cmd_args = [sys.executable, "-m", "osbuild"]
 
             cmd_args += ["--json"]
-            cmd_args += ["--libdir", "."]
+            cmd_args += ["--libdir", libdir]
             cmd_args += ["--output-directory", output_dir]
             cmd_args += ["--store", self._cachedir]
 
