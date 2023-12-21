@@ -21,10 +21,11 @@ import stat
 from typing import Any, Dict, Optional
 
 from osbuild import host
+from osbuild.mixins import MixinImmutableID
 from osbuild.util import ctx
 
 
-class Device:
+class Device(MixinImmutableID):
     """
     A single device with its corresponding options
     """

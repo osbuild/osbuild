@@ -48,7 +48,6 @@ class Input:
         self.id = self.calc_id()
 
     def calc_id(self):
-
         # NB: The input `name` is not included here on purpose since it
         # is either prescribed by the stage itself and thus not actual
         # parameter or arbitrary and chosen by the manifest generator
