@@ -1,6 +1,6 @@
 name: Generate
 
-on: [pull_request, push]
+on: [pull_request, push, merge_group]
 
 jobs:
   generate_documentation:
