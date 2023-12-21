@@ -80,6 +80,13 @@ BASIC_PIPELINE = {
                                 "filename": "empty.img"
                             }
                         },
+                        "var": {
+                            "type": "org.osbuild.loopback",
+                            "options": {
+                                "filename": "empty.img",
+                                "partscan": True,
+                            },
+                        },
                     },
                     "mounts": [
                         {
@@ -93,6 +100,13 @@ BASIC_PIPELINE = {
                             "type": "org.osbuild.noop",
                             "source": "boot",
                             "target": "/boot",
+                        },
+                        {
+                            "name": "var",
+                            "type": "org.osbuild.noop",
+                            "source": "var",
+                            "target": "/var",
+                            "partition": 1,
                         }
                     ]
                 }
