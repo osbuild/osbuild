@@ -16,9 +16,10 @@ from typing import Dict, List
 
 from osbuild import host
 from osbuild.devices import DeviceManager
+from osbuild.mixins import MixinImmutableID
 
 
-class Mount:
+class Mount(MixinImmutableID):
     """
     A single mount with its corresponding options
     """
