@@ -24,7 +24,7 @@ def test_mount_guard_failure_msg(tmp_path):
 
 # This needs a proper refactor so that FileSystemMountService just uses
 # a common mount helper.
-class TestFileSystemMountService(FileSystemMountService):
+class FakeFileSystemMountService(FileSystemMountService):
     def __init__(self, args=None):
         # override __init__ to make it testable
         pass
@@ -34,7 +34,7 @@ class TestFileSystemMountService(FileSystemMountService):
 
 @pytest.mark.skipif(os.getuid() != 0, reason="root only")
 def test_osbuild_mount_failure_msg(tmp_path):
-    mnt_service = TestFileSystemMountService()
+    mnt_service = FakeFileSystemMountService()
     # yes, we have a third way of mounting things
     with pytest.raises(RuntimeError) as e:
         args = {
