@@ -84,9 +84,10 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
         if mnt.device:
             desc["source"] = mnt.device.name
-
         if mnt.options:
             desc["options"] = mnt.options
+        if mnt.partition:
+            desc["partition"] = mnt.partition
         return desc
 
     def describe_mounts(mounts: Dict):
