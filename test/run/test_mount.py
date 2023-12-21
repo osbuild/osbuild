@@ -197,7 +197,6 @@ def test_mount_with_partition(tmp_path):
     loopback_mod_info = index.get_module_info("Device", "org.osbuild.loopback")
     ext4_mod_info = index.get_module_info("Mount", "org.osbuild.ext4")
 
-    mnt_path = tmp_path / "mnt"
     with host.ServiceManager() as mgr:
         with make_dev_tmpfs(tmp_path) as devpath:
             devmgr = devices.DeviceManager(mgr, devpath, tree)
@@ -208,17 +207,24 @@ def test_mount_with_partition(tmp_path):
             dev = devices.Device("loop", loopback_mod_info, None, opts)
             device_node_path = os.path.join(devpath, devmgr.open(dev)["path"])
 
-            mntmgr = mounts.MountManager(devmgr, mnt_path)
+            mnt_base = tmp_path / "mntbase"
+            mntmgr = mounts.MountManager(devmgr, mnt_base)
             opts = {}
-            mount = mounts.Mount(
-                name=device_node_path, info=ext4_mod_info, device=dev,
-                partition=1, target="/", options=opts)
-            mntmgr.mount(mount)
-            # check that the mount actually happend
+            # mount both partitions
+            for i in range(1,3):
+                mount = mounts.Mount(
+                    name=f"name-{i}", info=ext4_mod_info, device=dev,
+                    partition=i, target=f"/mnt-{i}", options=opts)
+                mntmgr.mount(mount)
+
+            # check that the both mounts actually happend
             output = subprocess.check_output(
-                ["lsblk", "-i", "-n", "-o", "MOUNTPOINTS", device_node_path],
+                ["lsblk", "--json", device_node_path],
                 encoding="utf8",
-            )
-            lsblk_reported_mnt_path = pathlib.Path(output.strip())
-            assert mnt_path == lsblk_reported_mnt_path
+            ).strip()
+            lsblk_info = json.loads(output)
+            assert len(lsblk_info["blockdevices"][0]["children"]) == 2
+            chld = lsblk_info["blockdevices"][0]["children"]
+            assert chld[0]["mountpoints"] == [f"{mnt_base}/mnt-1"]
+            assert chld[1]["mountpoints"] == [f"{mnt_base}/mnt-2"]
 
