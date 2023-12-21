@@ -37,6 +37,8 @@ class Mount:
         m.update(json.dumps(self.info.name, sort_keys=True).encode())
         if self.device:
             m.update(json.dumps(self.device.id, sort_keys=True).encode())
+        if self.partition:
+            m.update(json.dumps(self.partition, sort_keys=True).encode())
         if self.target:
             m.update(json.dumps(self.target, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
