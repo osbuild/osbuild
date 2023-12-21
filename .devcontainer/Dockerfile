@@ -14,6 +14,7 @@ RUN dnf install -y \
     lsof \
     make \
     packit \
+    parted \
     qemu-img \
     qemu-system-x86 \
     osbuild \
