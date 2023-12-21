@@ -7,6 +7,7 @@
 import errno
 import json
 import os
+import pathlib
 import subprocess
 import sys
 import tempfile
@@ -15,6 +16,7 @@ from contextlib import contextmanager
 import pytest
 
 from osbuild import devices, host, meta, mounts
+from osbuild import testutil
 
 from ..test import TestBase
 
@@ -165,3 +167,58 @@ def test_all_options(tmp_path):
                         assert "winnt" in strline
                         shortname_tested = True
                 assert shortname_tested
+
+
+def create_image_with_partitions(tmp_path):
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    img = tree / "disk.img"
+    with img.open("w") as fp:
+        fp.truncate(20*1024*1024)
+    for cmd in [
+        ["parted", "--script", img, "mklabel", "msdos"],
+        ["parted", "--script", img, "mkpart", "primary", "ext4", "1MiB", "10Mib"],
+        ["parted", "--script", img, "mkpart", "primary", "ext4", "10MiB", "19Mib"],
+        ["mkfs.ext4", "-E", f"offset={1*1024*1024}", img, "9M"],
+        ["mkfs.ext4", "-E", f"offset={10*1024*1024}", img, "9M"],
+    ]:
+        subprocess.check_call(cmd)
+    return tree, img.name
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+@pytest.mark.skipif(not testutil.has_executable("parted"), reason="no parted executable")
+def test_mount_with_partition(tmp_path):
+    tree, img_name = create_image_with_partitions(tmp_path)
+
+    # need root of the sourcecode to find the stages/mounts etc
+    src_root = pathlib.Path(__file__).parent.parent.parent
+    index = meta.Index(src_root)
+    loopback_mod_info = index.get_module_info("Device", "org.osbuild.loopback")
+    ext4_mod_info = index.get_module_info("Mount", "org.osbuild.ext4")
+
+    mnt_path = tmp_path / "mnt"
+    with host.ServiceManager() as mgr:
+        with make_dev_tmpfs(tmp_path) as devpath:
+            devmgr = devices.DeviceManager(mgr, devpath, tree)
+            opts = {
+                "filename": img_name,
+                "partscan": True,
+            }
+            dev = devices.Device("loop", loopback_mod_info, None, opts)
+            device_node_path = os.path.join(devpath, devmgr.open(dev)["path"])
+
+            mntmgr = mounts.MountManager(devmgr, mnt_path)
+            opts = {}
+            mount = mounts.Mount(
+                name=device_node_path, info=ext4_mod_info, device=dev,
+                partition=1, target="/", options=opts)
+            mntmgr.mount(mount)
+            # check that the mount actually happend
+            output = subprocess.check_output(
+                ["lsblk", "-i", "-n", "-o", "MOUNTPOINTS", device_node_path],
+                encoding="utf8",
+            )
+            lsblk_reported_mnt_path = pathlib.Path(output.strip())
+            assert mnt_path == lsblk_reported_mnt_path
+
