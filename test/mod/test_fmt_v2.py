@@ -356,6 +356,48 @@ class TestFormatV2(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.load_manifest(pipeline)
 
+    def test_mounts_with_partition(self):
+        BASE = {
+            "version": "2",
+            "pipelines": [
+                {
+                    "name": "test",
+                    "runner": "org.osbuild.linux",
+                    "stages": [
+                        {
+                            "type": "org.osbuild.noop",
+                            "options": {"zero": 0},
+                            "devices": {
+                                "root": {
+                                    "type": "org.osbuild.loopback",
+                                    "options": {
+                                        "filename": "empty.img",
+                                        "partscan": True,
+                                    }
+                                }
+                            },
+                            "mounts": [
+                                {
+                                    "name": "root",
+                                    "type": "org.osbuild.noop",
+                                    "source": "root",
+                                    "target": "/",
+                                    "partition": 1,
+                                },
+                            ],
+                        }
+                    ]
+                }
+            ]
+        }
+
+        # verify the device
+        pipeline = copy.deepcopy(BASE)
+        manifest, _ = self.load_manifest(pipeline)
+        root_mnt = manifest["test"].stages[0].mounts["root"]
+        self.assertEqual(root_mnt.device.name, "root")
+        self.assertEqual(root_mnt.partition, 1)
+
     def test_device_sorting(self):
         fmt = self.index.get_format_info("osbuild.formats.v2").module
         assert fmt
