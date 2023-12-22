@@ -112,7 +112,7 @@ pipelines:
             mpp-resolve-images:
               images:
                 - source: registry.gitlab.com/redhat/services/products/image-builder/ci/images/fedora-coreos
-                  tag: stable
+                  tag: testing
       - type: org.osbuild.ostree.aleph
         options:
           coreos_compat: true
