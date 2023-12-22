@@ -223,9 +223,6 @@ pipelines:
           bios:
             disk: disk
           static-configs: true
-          deployment:
-            osname: fedora-coreos
-            ref: ostree/1/1/0
         devices:
           disk:
             type: org.osbuild.loopback
@@ -358,9 +355,6 @@ pipelines:
       - type: org.osbuild.bootupd
         options:
           static-configs: true
-          deployment:
-            osname: fedora-coreos
-            ref: ostree/1/1/0
         devices:
           disk:
             type: org.osbuild.loopback

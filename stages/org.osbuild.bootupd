@@ -27,25 +27,6 @@ SCHEMA_2 = r"""
 "options": {
 "additionalProperties": true,
 "properties": {
-  "deployment": {
-    "additionalProperties": false,
-    "required": ["osname", "ref"],
-    "properties": {
-      "osname": {
-        "description": "Name of the stateroot to be used in the deployment",
-        "type": "string"
-      },
-      "ref": {
-        "description": "OStree ref to create and use for deployment",
-        "type": "string"
-      },
-      "serial": {
-        "description": "The deployment serial (usually '0')",
-        "type": "number",
-        "default": 0
-      }
-    }
-  },
   "static-configs": {
     "description": "Install the grub configs defined for Fedora CoreOS",
     "type": "boolean"
@@ -66,7 +47,6 @@ SCHEMA_2 = r"""
 
 
 def main(args, options):
-    deployment = options.get("deployment", None)
     static_configs = options.get("static-configs", False)
     bios = options.get("bios", {})
     disk = bios.get("disk", "")
@@ -77,12 +57,9 @@ def main(args, options):
     # Get the deployment root. For non-OSTree this is simply
     # the root location of the mount points. For OSTree systems
     # we'll call ostree.deployment_path() helper to find it for us.
-    root = mounts
-    if deployment:
-        osname = deployment["osname"]
-        ref = deployment["ref"]
-        serial = deployment.get("serial", 0)
-        root = ostree.deployment_path(mounts, osname, ref, serial)
+    deployment = mounts
+    if os.path.isdir(os.path.join(mounts, "ostree")):
+        deployment = ostree.deployment_path(mounts)
 
     bootupd_args = []
     if disk:
@@ -103,17 +80,17 @@ def main(args, options):
     for mnt in submounts:
         subprocess.run(['mount', '--rbind',
                        os.path.join("/", mnt),
-                       os.path.join(root, mnt)],
+                       os.path.join(deployment, mnt)],
                        check=True)
     try:
-        cmd = ['chroot', root, '/usr/bin/bootupctl', 'backend', 'install']
+        cmd = ['chroot', deployment, '/usr/bin/bootupctl', 'backend', 'install']
         cmd.extend(bootupd_args)
         cmd.append(mounts)
         subprocess.run(cmd, check=True)
     finally:
         for mnt in submounts:
             subprocess.run(['umount', '--recursive',
-                           os.path.join(root, mnt)],
+                           os.path.join(deployment, mnt)],
                            check=False)
 
     return 0
