@@ -504,8 +504,8 @@
               "type": "org.osbuild.containers",
               "origin": "org.osbuild.source",
               "references": {
-                "sha256:3bdf633fb6c027a01688aecf1d3f33bbecf8975b138c1861cb89ae20f3e3e7db": {
-                  "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/images/fedora-coreos:stable"
+                "sha256:66d1012cb68ea1ec0c38a830499feadb2c9e015162a5acb818f65afb6f25d0e5": {
+                  "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/images/fedora-coreos:testing"
                 }
               }
             }
@@ -1612,10 +1612,10 @@
     },
     "org.osbuild.skopeo": {
       "items": {
-        "sha256:3bdf633fb6c027a01688aecf1d3f33bbecf8975b138c1861cb89ae20f3e3e7db": {
+        "sha256:66d1012cb68ea1ec0c38a830499feadb2c9e015162a5acb818f65afb6f25d0e5": {
           "image": {
             "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/images/fedora-coreos",
-            "digest": "sha256:f0ebfc8bb813e45225a93e76780c44439fac11a24ba8fb83001ec96a61ebbb12"
+            "digest": "sha256:2ba8999ef74d45f39c601c20783d61a1c632636eb3e8ead9c020e29bfbbae8bf"
           }
         }
       }
