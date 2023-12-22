@@ -38,7 +38,7 @@ def test_clamp_mtime(tempdir):
 
     def ensure_mtime(target, dfd):
         stat = os.stat(target, dir_fd=dfd, follow_symlinks=False)
-        assert stat.st_mtime <= timepoint
+        assert stat.st_mtime <= timepoint, f"failed for {target} ({dfd})"
 
     for _, dirs, files, dfd in os.fwalk(tree):
         ensure_mtime(".", dfd)
