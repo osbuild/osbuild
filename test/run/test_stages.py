@@ -4,7 +4,6 @@
 
 import contextlib
 import difflib
-import functools
 import glob
 import json
 import os

@@ -1,5 +1,4 @@
 import os
-import subprocess
 
 import pytest
 
@@ -25,7 +24,7 @@ def test_mount_guard_failure_msg(tmp_path):
 # This needs a proper refactor so that FileSystemMountService just uses
 # a common mount helper.
 class FakeFileSystemMountService(FileSystemMountService):
-    def __init__(self, args=None):
+    def __init__(self, args=None):  # pylint: disable=super-init-not-called
         # override __init__ to make it testable
         pass
     def translate_options(self, options):
@@ -45,4 +44,3 @@ def test_osbuild_mount_failure_msg(tmp_path):
         }
         mnt_service.mount(args)
     assert "special device /dev/invalid-src does not exist" in str(e.value)
-

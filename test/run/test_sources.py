@@ -9,7 +9,6 @@ import json
 import os
 import socketserver
 import subprocess
-import tempfile
 import threading
 
 import pytest
@@ -66,7 +65,7 @@ def can_setup_netns() -> bool:
     try:
         with netns():
             return True
-    except BaseException:  # pylint: disable=bare-except
+    except BaseException:  # pylint: disable=broad-exception-caught
         return False
 
 

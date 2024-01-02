@@ -33,7 +33,7 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
     def begin(self, pipeline: osbuild.Pipeline):
         self.counter["begin"] += 1
 
-    def finish(self, result):
+    def finish(self, results):
         self.counter["finish"] += 1
         self.output = self.logger.getvalue()
 

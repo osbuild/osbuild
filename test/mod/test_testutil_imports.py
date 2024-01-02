@@ -1,10 +1,6 @@
 #
 # Tests for the 'osbuild.util.testutil' module.
 #
-import os.path
-import tempfile
-
-import pytest
 
 from osbuild.testutil.imports import import_module_from_path
 

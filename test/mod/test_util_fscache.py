@@ -66,9 +66,9 @@ def test_calculate_space(tmpdir):
     os.makedirs(os.path.join(test_dir, "dir"))
     assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
 
-    with open(os.path.join(test_dir, "sparse-file"), "w") as f:
+    with open(os.path.join(test_dir, "sparse-file"), "wb") as f:
         f.truncate(10*1024*1024)
-        f.write("I'm not an empty file")
+        f.write(b"I'm not an empty file")
     assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
 
 
@@ -429,9 +429,9 @@ def test_cache_load_updates_last_used(tmpdir):
     cache = fscache.FsCache("osbuild-test-appid", tmpdir)
     with cache:
         cache.info = cache.info._replace(maximum_size=1024*1024)
-        with cache.store("foo") as rpath:
+        with cache.store("foo"):
             pass
-        with cache.load("foo") as rpath:
+        with cache.load("foo"):
             pass
         load_time1 = cache._last_used("foo")
         # would be nice to have a helper for this in cache
@@ -440,7 +440,7 @@ def test_cache_load_updates_last_used(tmpdir):
         mtime1 = os.stat(cache._path(obj_lock_path)).st_mtime
         assert load_time1 > 0
         sleep_for_fs()
-        with cache.load("foo") as rpath:
+        with cache.load("foo"):
             pass
         # load time is updated
         load_time2 = cache._last_used("foo")

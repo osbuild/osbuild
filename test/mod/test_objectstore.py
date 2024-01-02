@@ -348,4 +348,3 @@ def test_object_export_preserves_override(tmp_path, object_store):
     assert expected_exported_path.exists()
     assert expected_exported_path.stat().st_uid == 0
     assert expected_exported_path.stat().st_gid == 0
-
