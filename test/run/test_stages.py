@@ -26,11 +26,14 @@ from .. import initrd, test
 
 
 def have_sfdisk_with_json():
-    r = subprocess.run(["sfdisk", "--version"],
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE,
-                       encoding="utf8",
-                       check=False)
+    try:
+        r = subprocess.run(["sfdisk", "--version"],
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           encoding="utf8",
+                           check=False)
+    except FileNotFoundError:
+        return False
 
     if r.returncode != 0:
         return False
