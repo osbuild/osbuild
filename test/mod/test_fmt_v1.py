@@ -185,7 +185,7 @@ class TestFormatV1(unittest.TestCase):
         self.assertEqual(info.version, "1")
         self.assertEqual(info.module, fmt)
 
-    #pylint: disable=too-many-statements
+    # pylint: disable=too-many-statements
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_format_output(self):
         """Test that output formatting is as expected"""

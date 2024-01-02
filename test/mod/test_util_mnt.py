@@ -27,6 +27,7 @@ class FakeFileSystemMountService(FileSystemMountService):
     def __init__(self, args=None):  # pylint: disable=super-init-not-called
         # override __init__ to make it testable
         pass
+
     def translate_options(self, options):
         return options
 
