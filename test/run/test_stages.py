@@ -176,7 +176,7 @@ class TestStages(test.TestBase):
             raise_assertion('length of differences different')
 
         for (file1, differences1), (file2, differences2) in \
-            zip(tree_diff1['differences'].items(), tree_diff2['differences'].items()):
+                zip(tree_diff1['differences'].items(), tree_diff2['differences'].items()):
 
             if file1 != file2:
                 raise_assertion(f"filename different: {file1}, {file2}")
@@ -185,18 +185,18 @@ class TestStages(test.TestBase):
                 raise_assertion("length of file differences different")
 
             for (difference1_kind, difference1_values), (difference2_kind, difference2_values) in \
-                zip(differences1.items(), differences2.items()):
+                    zip(differences1.items(), differences2.items()):
                 if difference1_kind != difference2_kind:
                     raise_assertion(f"different difference kinds: {difference1_kind}, {difference2_kind}")
 
                 if difference1_values[0] is not None \
-                    and difference2_values[0] is not None \
-                    and difference1_values[0] != difference2_values[0]:
+                        and difference2_values[0] is not None \
+                        and difference1_values[0] != difference2_values[0]:
                     raise_assertion(f"before values are different: {difference1_values[0]}, {difference2_values[0]}")
 
                 if difference1_values[1] is not None \
-                    and difference2_values[1] is not None \
-                    and difference1_values[1] != difference2_values[1]:
+                        and difference2_values[1] is not None \
+                        and difference1_values[1] != difference2_values[1]:
                     raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
 
     @classmethod

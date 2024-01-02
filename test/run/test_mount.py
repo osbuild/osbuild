@@ -173,7 +173,7 @@ def create_image_with_partitions(tmp_path):
     tree.mkdir()
     img = tree / "disk.img"
     with img.open("w") as fp:
-        fp.truncate(20*1024*1024)
+        fp.truncate(20 * 1024 * 1024)
     for cmd in [
         ["parted", "--script", img, "mklabel", "msdos"],
         ["parted", "--script", img, "mkpart", "primary", "ext4", "1MiB", "10Mib"],
@@ -210,7 +210,7 @@ def test_mount_with_partition(tmp_path):
             mntmgr = mounts.MountManager(devmgr, mnt_base)
             opts = {}
             # mount both partitions
-            for i in range(1,3):
+            for i in range(1, 3):
                 mount_opts = mounts.Mount(
                     name=f"name-{i}", info=ext4_mod_info, device=dev,
                     partition=i, target=f"/mnt-{i}", options=opts)

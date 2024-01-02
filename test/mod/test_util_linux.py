@@ -257,7 +257,7 @@ def test_libc_futimes_works(tmpdir):
     mtime1 = os.stat(stamp_file).st_mtime
     with open(stamp_file, "wb") as fp:
         libc.futimens(fp.fileno(), ctypes.byref(linux.c_timespec_times2(
-            atime=linux.c_timespec(tv_sec=3, tv_nsec=300*1000*1000),
+            atime=linux.c_timespec(tv_sec=3, tv_nsec=300 * 1000 * 1000),
             mtime=linux.c_timespec(tv_sec=0, tv_nsec=libc.UTIME_OMIT),
         )))
     assert os.stat(stamp_file).st_atime == 3.3

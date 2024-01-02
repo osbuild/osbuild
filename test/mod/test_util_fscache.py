@@ -49,7 +49,7 @@ def test_calculate_space(tmpdir):
         env = os.environ.copy()
         env["POSIXLY_CORRECT"] = "1"
         output = subprocess.check_output(["du", "-s", path_target], env=env, encoding="utf8")
-        return int(output.split()[0].strip())*512
+        return int(output.split()[0].strip()) * 512
 
     test_dir = os.path.join(tmpdir, "dir")
     os.mkdir(test_dir)
@@ -67,7 +67,7 @@ def test_calculate_space(tmpdir):
     assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
 
     with open(os.path.join(test_dir, "sparse-file"), "wb") as f:
-        f.truncate(10*1024*1024)
+        f.truncate(10 * 1024 * 1024)
         f.write(b"I'm not an empty file")
     assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
 
@@ -383,7 +383,7 @@ def test_basic(tmpdir):
 
     cache = fscache.FsCache("osbuild-test-appid", tmpdir)
     with cache:
-        cache.info = cache.info._replace(maximum_size=1024*1024)
+        cache.info = cache.info._replace(maximum_size=1024 * 1024)
 
         with cache.stage() as rpath:
             with open(os.path.join(tmpdir, rpath, "bar"), "x", encoding="utf8") as f:
@@ -418,6 +418,7 @@ def test_size_discard(tmpdir):
             with cache.load("foo") as rpath:
                 pass
 
+
 def test_cache_last_used_noent(tmpdir):
     cache = fscache.FsCache("osbuild-test-appid", tmpdir)
     with pytest.raises(fscache.FsCache.MissError):
@@ -428,7 +429,7 @@ def test_cache_last_used_noent(tmpdir):
 def test_cache_load_updates_last_used(tmpdir):
     cache = fscache.FsCache("osbuild-test-appid", tmpdir)
     with cache:
-        cache.info = cache.info._replace(maximum_size=1024*1024)
+        cache.info = cache.info._replace(maximum_size=1024 * 1024)
         with cache.store("foo"):
             pass
         with cache.load("foo"):
@@ -473,7 +474,7 @@ def test_cache_full_behavior(tmp_path):
         with cache.store("o1") as rpath:
             rpath_f1 = os.path.join(tmp_path, rpath, "f1")
             with open(rpath_f1, "wb") as fp:
-                fp.write(b'a'*64*1024)
+                fp.write(b'a' * 64 * 1024)
         assert cache._calculate_space(tmp_path) > 64 * 1024
         assert cache._calculate_space(tmp_path) < 128 * 1024
         with cache.load("o1") as o:
@@ -482,7 +483,7 @@ def test_cache_full_behavior(tmp_path):
         with cache.store("o2") as rpath:
             rpath_f2 = os.path.join(tmp_path, rpath, "f2")
             with open(rpath_f2, "wb") as fp:
-                fp.write(b'b'*64*1024)
+                fp.write(b'b' * 64 * 1024)
         assert cache._calculate_space(tmp_path) > 128 * 1024
         assert cache._calculate_space(tmp_path) < 192 * 1024
         with cache.load("o2") as o:
@@ -491,7 +492,7 @@ def test_cache_full_behavior(tmp_path):
         with cache.store("o3") as rpath:
             rpath_f3 = os.path.join(tmp_path, rpath, "f3")
             with open(rpath_f3, "wb") as fp:
-                fp.write(b'b'*128*1024)
+                fp.write(b'b' * 128 * 1024)
         assert cache._calculate_space(tmp_path) > 128 * 1024
         assert cache._calculate_space(tmp_path) < 192 * 1024
         with pytest.raises(fscache.FsCache.MissError):

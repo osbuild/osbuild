@@ -159,7 +159,7 @@ class TestPasswdLike(unittest.TestCase):
             with open(os.path.join(tmpdir, "result"), "r", encoding="utf8") as f:
                 self.assertEqual(sorted(f.readlines()), sorted(result_file_lines))
 
-    #pylint: disable=no-self-use
+    # pylint: disable=no-self-use
     def test_subids_cfg(self):
         with tempfile.TemporaryDirectory() as tmpdir:
 
