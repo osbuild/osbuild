@@ -212,10 +212,10 @@ def test_mount_with_partition(tmp_path):
             opts = {}
             # mount both partitions
             for i in range(1,3):
-                mount = mounts.Mount(
+                mount_opts = mounts.Mount(
                     name=f"name-{i}", info=ext4_mod_info, device=dev,
                     partition=i, target=f"/mnt-{i}", options=opts)
-                mntmgr.mount(mount)
+                mntmgr.mount(mount_opts)
 
             # check that the both mounts actually happend
             output = subprocess.check_output(
@@ -227,4 +227,3 @@ def test_mount_with_partition(tmp_path):
             chld = lsblk_info["blockdevices"][0]["children"]
             assert chld[0]["mountpoints"] == [f"{mnt_base}/mnt-1"]
             assert chld[1]["mountpoints"] == [f"{mnt_base}/mnt-2"]
-

@@ -1,7 +1,5 @@
 from unittest.mock import Mock
 
-import pytest
-
 from osbuild.mounts import Mount
 from osbuild.meta import ModuleInfo
 

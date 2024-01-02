@@ -258,16 +258,16 @@ def test_on_close(tempdir):
 
 
 @patch("os.open", side_effect=FileNotFoundError)
-def test_loop_handles_error_in_init(mocked_open):
+def test_loop_handles_error_in_init(mocked_open):  # pylint: disable=unused-argument
     with pytest.raises(FileNotFoundError):
-        lopo = loop.Loop(999)
+        loop.Loop(999)
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="root only")
 def test_loop_create_mknod():
     # tmpdir must be /var/tmp because /tmp is usually mounted with "nodev"
     with TemporaryDirectory(dir="/var/tmp") as tmpdir:
-        with patch.object(loop, "DEV_PATH", new=tmpdir) as mocked_dev_path:
+        with patch.object(loop, "DEV_PATH", new=tmpdir):
             lopo = loop.Loop(1337)
             assert lopo.devname == "loop1337"
             assert pathlib.Path(f"{tmpdir}/loop1337").is_block_device()

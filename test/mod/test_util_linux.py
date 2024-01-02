@@ -252,10 +252,10 @@ def test_libc_futimens_errcheck():
 def test_libc_futimes_works(tmpdir):
     libc = linux.Libc.default()
     stamp_file = os.path.join(tmpdir, "foo")
-    with open(stamp_file, "w") as fp:
-        fp.write("meep")
+    with open(stamp_file, "wb") as fp:
+        fp.write(b"meep")
     mtime1 = os.stat(stamp_file).st_mtime
-    with open(stamp_file, "w") as fp:
+    with open(stamp_file, "wb") as fp:
         libc.futimens(fp.fileno(), ctypes.byref(linux.c_timespec_times2(
             atime=linux.c_timespec(tv_sec=3, tv_nsec=300*1000*1000),
             mtime=linux.c_timespec(tv_sec=0, tv_nsec=libc.UTIME_OMIT),
