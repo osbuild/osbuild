@@ -15,8 +15,7 @@ from contextlib import contextmanager
 
 import pytest
 
-from osbuild import devices, host, meta, mounts
-from osbuild import testutil
+from osbuild import devices, host, meta, mounts, testutil
 
 from ..test import TestBase
 

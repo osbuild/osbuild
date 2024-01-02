@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
-from osbuild.mounts import Mount
 from osbuild.meta import ModuleInfo
+from osbuild.mounts import Mount
 
 
 def test_mount_calc_id_is_stable():

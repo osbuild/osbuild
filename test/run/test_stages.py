@@ -17,11 +17,11 @@ import xml
 from collections.abc import Mapping
 from typing import Callable, Dict, List, Optional
 
-from osbuild.util import checksum, selinux
 from osbuild.testutil import has_executable
-from .test_assemblers import mount
+from osbuild.util import checksum, selinux
 
 from .. import initrd, test
+from .test_assemblers import mount
 
 
 def have_sfdisk_with_json():

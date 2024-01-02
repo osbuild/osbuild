@@ -3,7 +3,7 @@ import os
 import pytest
 
 from osbuild.mounts import FileSystemMountService
-from osbuild.util.mnt import mount, MountGuard
+from osbuild.util.mnt import MountGuard, mount
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="root only")
