@@ -4,7 +4,6 @@
 
 from osbuild.testutil.imports import import_module_from_path
 
-
 canary = "import-went-okay"
 
 
