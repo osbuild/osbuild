@@ -130,6 +130,7 @@ manifests and osbuild.
 %package        depsolve-dnf
 Summary:        Dependency solving support for DNF
 Requires:       %{name} = %{version}-%{release}
+Obsoletes:      osbuild-composer-dnf-json > 98
 
 %description    depsolve-dnf
 Contains depsolving capabilities for package managers.
