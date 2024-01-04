@@ -56,8 +56,8 @@ def test_schema_validation_selinux_file_context_required():
     assert "'file_contexts' is a required property" in err_msgs[0]
 
 
-@patch("subprocess.run")
-def test_selinux_file_contexts(mocked_run, tmp_path):
+@patch("osbuild.util.selinux.setfiles")
+def test_selinux_file_contexts(mocked_setfiles, tmp_path):
     stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.selinux")
     stage = import_module_from_path("stage", stage_path)
 
@@ -66,17 +66,15 @@ def test_selinux_file_contexts(mocked_run, tmp_path):
     }
     stage.main(tmp_path, options)
 
-    assert len(mocked_run.call_args_list) == 1
-    assert mocked_run.call_args_list == [
-        call(
-            ["setfiles", "-F", "-r", os.fspath(tmp_path),
-             f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path)], check=True),
+    assert len(mocked_setfiles.call_args_list) == 1
+    assert mocked_setfiles.call_args_list == [
+        call(f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "")
     ]
 
 
 @patch("osbuild.util.selinux.setfilecon")
-@patch("subprocess.run")
-def test_selinux_labels(mocked_run, mocked_setfilecon, tmp_path):
+@patch("osbuild.util.selinux.setfiles")
+def test_selinux_labels(mocked_setfiles, mocked_setfilecon, tmp_path):
     stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.selinux")
     stage = import_module_from_path("stage", stage_path)
 
@@ -92,15 +90,15 @@ def test_selinux_labels(mocked_run, mocked_setfilecon, tmp_path):
     }
     stage.main(tmp_path, options)
 
-    assert len(mocked_run.call_args_list) == 1
+    assert len(mocked_setfiles.call_args_list) == 1
     assert len(mocked_setfilecon.call_args_list) == 1
     assert mocked_setfilecon.call_args_list == [
         call(f"{tmp_path}/tree/usr/bin/bootc", "system_u:object_r:install_exec_t:s0"),
     ]
 
 
-@patch("subprocess.run")
-def test_selinux_force_autorelabel(mocked_run, tmp_path):  # pylint: disable=unused-argument
+@patch("osbuild.util.selinux.setfiles")
+def test_selinux_force_autorelabel(mocked_setfiles, tmp_path):  # pylint: disable=unused-argument
     stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.selinux")
     stage = import_module_from_path("stage", stage_path)
 
