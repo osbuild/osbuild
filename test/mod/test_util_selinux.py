@@ -4,6 +4,7 @@
 
 import errno
 import io
+import os
 from unittest import mock
 
 from osbuild.util import selinux
@@ -58,3 +59,18 @@ def test_setfilecon():
             setxattr.side_effect = raise_error
 
             selinux.setfilecon("path", "context")
+
+
+@mock.patch("subprocess.run")
+def test_selinux_setfiles(mocked_run, tmp_path):
+    selinux.setfiles("/etc/selinux/thing", os.fspath(tmp_path), "/", "/boot")
+
+    assert len(mocked_run.call_args_list) == 2
+    assert mocked_run.call_args_list == [
+        mock.call(
+            ["setfiles", "-F", "-r", os.fspath(tmp_path),
+             "/etc/selinux/thing", os.fspath(tmp_path) + "/"], check=True),
+        mock.call(
+            ["setfiles", "-F", "-r", os.fspath(tmp_path),
+             "/etc/selinux/thing", os.fspath(tmp_path) + "/boot"], check=True),
+    ]
