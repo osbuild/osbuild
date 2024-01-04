@@ -22,7 +22,6 @@ may not match the tree's policy.
 
 import os
 import pathlib
-import subprocess
 import sys
 
 import osbuild.api
@@ -57,10 +56,9 @@ SCHEMA = """
 
 def main(tree, options):
     file_contexts = os.path.join(f"{tree}", options["file_contexts"])
+    selinux.setfiles(file_contexts, os.fspath(tree), "")
+
     labels = options.get("labels", {})
-
-    subprocess.run(["setfiles", "-F", "-r", f"{tree}", f"{file_contexts}", f"{tree}"], check=True)
-
     for path, label in labels.items():
         fullpath = os.path.join(tree, path.lstrip("/"))
         selinux.setfilecon(fullpath, label)
