@@ -152,6 +152,11 @@ SCHEMA = """
          "examples": ["fedora"],
          "pattern": "^(.+)$"
       },
+      "efi_src_dir": {
+        "type": "string",
+         "description": "The source path to use for the EFI/ binaries when installing is set to True",
+         "default": "/boot/efi/EFI"
+      },
       "install": {
         "description": "Install EFI binaries and data from the build root",
         "type": "boolean",
@@ -347,10 +352,10 @@ def copy_font(tree):
     shutil.copy2("/usr/share/grub/unicode.pf2", f"{tree}/boot/grub2/fonts/")
 
 
-def copy_efi_data(tree, vendor):
+def copy_efi_data(tree, efi_src_dir, vendor):
     """Copy the EFI binaries & data into /boot/efi"""
     for d in ['BOOT', vendor]:
-        source = f"/boot/efi/EFI/{d}"
+        source = f"{efi_src_dir}/{d}"
         target = f"{tree}/boot/efi/EFI/{d}/"
         shutil.copytree(source, target,
                         symlinks=False)
@@ -573,13 +578,14 @@ def main(tree, options):
         # - grub.cfg: needs to be generated, either the canonical one
         #     or a shim one that redirects to the canonical one in
         #     /boot/grub2 in case of hybrid boot (see above)
+        efi_src_dir = uefi.get("efi_src_dir", "/boot/efi/EFI")
         vendor = uefi["vendor"]
         unified = uefi.get("unified", False)
 
         # EFI binaries and accompanying data can be installed from
         # the build root instead of using an rpm package
         if uefi.get('install', False):
-            copy_efi_data(tree, vendor)
+            copy_efi_data(tree, efi_src_dir, vendor)
 
         grubcfg = f"boot/efi/EFI/{vendor}/grub.cfg"
         if hybrid or unified:
