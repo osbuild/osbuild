@@ -1,0 +1,500 @@
+#!/usr/bin/python3
+# pylint: disable=invalid-name
+
+"""
+A JSON-based interface for depsolving using DNF.
+
+Reads a request through stdin and prints the result to stdout.
+In case of error, a structured error is printed to stdout as well.
+"""
+import json
+import os
+import sys
+import tempfile
+from datetime import datetime
+
+import libdnf5 as dnf5
+from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
+from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
+from libdnf5.common import QueryCmp_EQ as EQ
+from libdnf5.common import QueryCmp_GLOB as GLOB
+
+
+# XXX - Temporarily lifted from dnf.rpm module
+def _invert(dct):
+    return {v: k for k in dct for v in dct[k]}
+
+
+_BASEARCH_MAP = _invert({
+    'aarch64': ('aarch64',),
+    'alpha': ('alpha', 'alphaev4', 'alphaev45', 'alphaev5', 'alphaev56',
+              'alphaev6', 'alphaev67', 'alphaev68', 'alphaev7', 'alphapca56'),
+    'arm': ('armv5tejl', 'armv5tel', 'armv5tl', 'armv6l', 'armv7l', 'armv8l'),
+    'armhfp': ('armv6hl', 'armv7hl', 'armv7hnl', 'armv8hl'),
+    'i386': ('i386', 'athlon', 'geode', 'i386', 'i486', 'i586', 'i686'),
+    'ia64': ('ia64',),
+    'mips': ('mips',),
+    'mipsel': ('mipsel',),
+    'mips64': ('mips64',),
+    'mips64el': ('mips64el',),
+    'loongarch64': ('loongarch64',),
+    'noarch': ('noarch',),
+    'ppc': ('ppc',),
+    'ppc64': ('ppc64', 'ppc64iseries', 'ppc64p7', 'ppc64pseries'),
+    'ppc64le': ('ppc64le',),
+    'riscv32': ('riscv32',),
+    'riscv64': ('riscv64',),
+    'riscv128': ('riscv128',),
+    's390': ('s390',),
+    's390x': ('s390x',),
+    'sh3': ('sh3',),
+    'sh4': ('sh4', 'sh4a'),
+    'sparc': ('sparc', 'sparc64', 'sparc64v', 'sparcv8', 'sparcv9',
+              'sparcv9v'),
+    'x86_64': ('x86_64', 'amd64', 'ia32e'),
+})
+
+
+def remote_location(package, schemes=("http", "ftp", "file", "https")):
+    """Return the remote url where a package rpm may be downloaded from
+
+    This wraps the get_remote_location() function, returning the first
+    result or if it cannot find a suitable url it raises a RuntimeError
+    """
+    urls = package.get_remote_locations(schemes)
+    if not urls or len(urls) == 0:
+        raise RuntimeError(f"Cannot determine remote location for {package.get_nevra()}")
+
+    return urls[0]
+
+
+class TransactionError(Exception):
+    pass
+
+
+class RepoError(Exception):
+    pass
+
+
+class Solver():
+    """Solver implements package related actions
+
+    These include depsolving a package set, searching for packages, and dumping a list
+    of all available packages.
+    """
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, repos, module_platform_id, persistdir, cachedir, arch, exclude_pkgs=None):
+        if not exclude_pkgs:
+            exclude_pkgs = []
+
+        # substitutions to use with the repo urls
+        self.substitutions = {
+            "arch": arch,
+            "basearch": _BASEARCH_MAP[arch]
+        }
+        self.base = dnf5.base.Base()
+        self.base.get_vars().set("arch", arch)
+
+        # Enable fastestmirror to ensure we choose the fastest mirrors for
+        # downloading metadata (when depsolving) and downloading packages.
+        conf = self.base.get_config()
+        conf.fastestmirror = True
+
+        # Weak dependencies are installed for the 1st transaction
+        # This is set to False for any subsequent ones in depsolve()
+        conf.install_weak_deps = True
+
+        # We use the same cachedir for multiple architectures. Unfortunately,
+        # this is something that doesn't work well in certain situations
+        # with zchunk:
+        # Imagine that we already have cache for arch1. Then, we use dnf-json
+        # to depsolve for arch2. If ZChunk is enabled and available (that's
+        # the case for Fedora), dnf will try to download only differences
+        # between arch1 and arch2 metadata. But, as these are completely
+        # different, dnf must basically redownload everything.
+        # For downloding deltas, zchunk uses HTTP range requests. Unfortunately,
+        # if the mirror doesn't support multi range requests, then zchunk will
+        # download one small segment per a request. Because we need to update
+        # the whole metadata (10s of MB), this can be extremely slow in some cases.
+        # I think that we can come up with a better fix but let's just disable
+        # zchunk for now. As we are already downloading a lot of data when
+        # building images, I don't care if we download even more.
+        conf.zchunk = False
+
+        # Set the rest of the dnf configuration.
+        conf.module_platform_id = module_platform_id
+        conf.config_file_path = "/dev/null"
+        conf.persistdir = persistdir
+        conf.cachedir = cachedir
+
+        # Load the file lists, so dependency on paths will work
+        conf.optional_metadata_types = ['comps', 'filelists']
+
+        # Cannot modify .conf() values after this
+        self.base.setup()
+
+        try:
+            # NOTE: With libdnf5 packages are excluded in the repo setup
+            for repo in repos:
+                self._dnfrepo(repo, exclude_pkgs)
+
+            self.base.get_repo_sack().update_and_load_enabled_repos(load_system=False)
+        except RuntimeError as e:
+            raise RepoError(e)
+
+    # pylint: disable=too-many-branches
+    def _dnfrepo(self, desc, exclude_pkgs=None):
+        """Makes a dnf.repo.Repo out of a JSON repository description"""
+        if not exclude_pkgs:
+            exclude_pkgs = []
+
+        sack = self.base.get_repo_sack()
+
+        repo = sack.create_repo(desc["id"])
+        conf = repo.get_config()
+
+        if "name" in desc:
+            conf.name = desc["name"]
+
+        # At least one is required
+        if "baseurl" in desc:
+            conf.baseurl = desc["baseurl"]
+        elif "metalink" in desc:
+            conf.metalink = desc["metalink"]
+        elif "mirrorlist" in desc:
+            conf.mirrorlist = desc["mirrorlist"]
+        else:
+            raise ValueError("missing either `baseurl`, `metalink`, or `mirrorlist` in repo")
+
+        if desc.get("ignoressl", False):
+            conf.sslverify = False
+        if "sslcacert" in desc:
+            conf.sslcacert = desc["sslcacert"]
+        if "sslclientkey" in desc:
+            conf.sslclientkey = desc["sslclientkey"]
+        if "sslclientcert" in desc:
+            conf.sslclientcert = desc["sslclientcert"]
+
+        if "check_gpg" in desc:
+            conf.gpgcheck = desc["check_gpg"]
+        if "check_repogpg" in desc:
+            conf.repo_gpgcheck = desc["check_repogpg"]
+        if "gpgkey" in desc:
+            conf.gpgkey = [desc["gpgkey"]]
+        if "gpgkeys" in desc:
+            # gpgkeys can contain a full key, or it can be a URL
+            # dnf expects urls, so write the key to a temporary location and add the file://
+            # path to conf.gpgkey
+            keydir = os.path.join(self.base.get_config().persistdir, "gpgkeys")
+            if not os.path.exists(keydir):
+                os.makedirs(keydir, mode=0o700, exist_ok=True)
+
+            for key in desc["gpgkeys"]:
+                if key.startswith("-----BEGIN PGP PUBLIC KEY BLOCK-----"):
+                    # Not using with because it needs to be a valid file for the duration. It
+                    # is inside the temporary persistdir so will be cleaned up on exit.
+                    # pylint: disable=consider-using-with
+                    keyfile = tempfile.NamedTemporaryFile(dir=keydir, delete=False)
+                    keyfile.write(key.encode("utf-8"))
+                    conf.gpgkey += (f"file://{keyfile.name}",)
+                    keyfile.close()
+                else:
+                    conf.gpgkey += (key,)
+
+        # In dnf, the default metadata expiration time is 48 hours. However,
+        # some repositories never expire the metadata, and others expire it much
+        # sooner than that. We therefore allow this to be configured. If nothing
+        # is provided we error on the side of checking if we should invalidate
+        # the cache. If cache invalidation is not necessary, the overhead of
+        # checking is in the hundreds of milliseconds. In order to avoid this
+        # overhead accumulating for API calls that consist of several dnf calls,
+        # we set the expiration to a short time period, rather than 0.
+        conf.metadata_expire = desc.get("metadata_expire", "20s")
+
+        # This needs to be set on each repo
+        repo.set_substitutions(self.substitutions)
+
+        # Set the packages to exclude
+        conf.excludepkgs = exclude_pkgs
+
+        return repo
+
+    @staticmethod
+    def _timestamp_to_rfc3339(timestamp):
+        return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    def dump(self):
+        """dump returns a list of all available packages"""
+        packages = []
+        q = dnf5.rpm.PackageQuery(self.base)
+        q.filter_available()
+        for package in list(q):
+            packages.append({
+                "name": package.get_name(),
+                "summary": package.get_summary(),
+                "description": package.get_description(),
+                "url": package.get_url(),
+                "repo_id": package.get_repo_id(),
+                "epoch": int(package.get_epoch()),
+                "version": package.get_version(),
+                "release": package.get_release(),
+                "arch": package.get_arch(),
+                "buildtime": self._timestamp_to_rfc3339(package.get_build_time()),
+                "license": package.get_license()
+            })
+        return packages
+
+    def search(self, args):
+        """ Perform a search on the available packages
+
+        args contains a "search" dict with parameters to use for searching.
+        "packages" list of package name globs to search for
+        "latest" is a boolean that will return only the latest NEVRA instead
+        of all matching builds in the metadata.
+
+        eg.
+
+            "search": {
+                "latest": false,
+                "packages": ["tmux", "vim*", "*ssh*"]
+            },
+        """
+        pkg_globs = args.get("packages", [])
+
+        packages = []
+
+        # NOTE: Build query one piece at a time, don't pass all to filterm at the same
+        # time.
+        for name in pkg_globs:
+            q = dnf5.rpm.PackageQuery(self.base)
+            q.filter_available()
+
+            # If the package name glob has * in it, use glob.
+            # If it has *name* use substr
+            # If it has neither use exact match
+            if "*" in name:
+                if name[0] != "*" or name[-1] != "*":
+                    q.filter_name([name], GLOB)
+                else:
+                    q.filter_name([name.replace("*", "")], CONTAINS)
+            else:
+                q.filter_name([name], EQ)
+
+            if args.get("latest", False):
+                q.filter_latest_evr()
+
+            for package in list(q):
+                packages.append({
+                    "name": package.get_name(),
+                    "summary": package.get_summary(),
+                    "description": package.get_description(),
+                    "url": package.get_url(),
+                    "repo_id": package.get_repo_id(),
+                    "epoch": int(package.get_epoch()),
+                    "version": package.get_version(),
+                    "release": package.get_release(),
+                    "arch": package.get_arch(),
+                    "buildtime": self._timestamp_to_rfc3339(package.get_build_time()),
+                    "license": package.get_license()
+                })
+        return packages
+
+    def depsolve(self, transactions):
+        """depsolve returns a list of the dependencies for the set of transactions
+        """
+        last_transaction = []
+
+        for transaction in transactions:
+            goal = dnf5.base.Goal(self.base)
+            goal.reset()
+            sack = self.base.get_rpm_package_sack()
+            sack.clear_user_excludes()
+
+            # weak deps are selected per-transaction
+            self.base.get_config().install_weak_deps = transaction.get("install_weak_deps", False)
+
+            # set the packages from the last transaction as installed
+            for installed_pkg in last_transaction:
+                goal.add_rpm_install(installed_pkg)
+
+            # Support group/environment names as well as ids
+            settings = dnf5.base.GoalJobSettings()
+            settings.group_with_name = True
+
+            # Packages are added individually, excludes are handled in the repo setup
+            for pkg in transaction.get("package-specs"):
+                goal.add_install(pkg, settings)
+            transaction = goal.resolve()
+            if transaction.get_problems() != NO_PROBLEM:
+                raise TransactionError("\n".join(transaction.get_resolve_logs_as_strings()))
+
+            # store the current transaction result
+            last_transaction.clear()
+            for tsi in transaction.get_transaction_packages():
+                # Only add packages being installed, upgraded, downgraded, or reinstalled
+                if not dnf5.base.transaction.transaction_item_action_is_inbound(tsi.get_action()):
+                    continue
+                last_transaction.append(tsi.get_package())
+
+        # Something went wrong, but no error was generated by goal.resolve()
+        if len(transactions) > 0 and len(last_transaction) == 0:
+            raise TransactionError("Empty transaction results")
+
+        dependencies = []
+        for package in last_transaction:
+            dependencies.append({
+                "name": package.get_name(),
+                "epoch": int(package.get_epoch()),
+                "version": package.get_version(),
+                "release": package.get_release(),
+                "arch": package.get_arch(),
+                "repo_id": package.get_repo_id(),
+                "path": package.get_location(),
+                "remote_location": remote_location(package),
+                "checksum": (
+                    f"{package.get_checksum().get_type_str()}:"
+                    f"{package.get_checksum().get_checksum()}"
+                )
+            })
+
+        return sorted(dependencies, key=lambda x: x["path"])
+
+
+def setup_cachedir(request):
+    arch = request["arch"]
+    # If dnf-json is run as a service, we don't want users to be able to set the cache
+    cache_dir = os.environ.get("OVERWRITE_CACHE_DIR", "")
+    if cache_dir:
+        cache_dir = os.path.join(cache_dir, arch)
+    else:
+        cache_dir = request.get("cachedir", "")
+
+    if not cache_dir:
+        return "", {"kind": "Error", "reason": "No cache dir set"}
+
+    return cache_dir, None
+
+
+def solve(request, cache_dir):
+    command = request["command"]
+    arch = request["arch"]
+    module_platform_id = request["module_platform_id"]
+    arguments = request["arguments"]
+
+    # Gather up all the exclude packages
+    exclude_pkgs = []
+    transactions = arguments.get("transactions")
+    if transactions:
+        for t in transactions:
+            if t.get("exclude-specs") is None:
+                continue
+            exclude_pkgs += t.get("exclude-specs")
+
+    with tempfile.TemporaryDirectory() as persistdir:
+        try:
+            solver = Solver(
+                arguments["repos"],
+                module_platform_id,
+                persistdir,
+                cache_dir,
+                arch,
+                exclude_pkgs
+            )
+            if command == "dump":
+                result = solver.dump()
+            elif command == "depsolve":
+                result = solver.depsolve(transactions)
+            elif command == "search":
+                result = solver.search(arguments.get("search", {}))
+        except TransactionError as e:
+            printe("error depsolve")
+            return None, {
+                "kind": "DepsolveError",
+                "reason": f"There was a problem with depsolving: {e}"
+            }
+        except RepoError as e:
+            printe("error repository setup")
+            return None, {
+                "kind": "RepoError",
+                "reason": f"There was a problem reading a repository: {e}"
+            }
+        except Exception as e:
+            import traceback
+            printe("error traceback")
+            return None, {
+                "kind": type(e).__name__,
+                "reason": str(e),
+                "traceback": traceback.format_exc()
+            }
+    return result, None
+
+
+def printe(*msg):
+    print(*msg, file=sys.stderr)
+
+
+def fail(err):
+    printe(f"{err['kind']}: {err['reason']}")
+    print(json.dumps(err))
+    sys.exit(1)
+
+
+def respond(result):
+    print(json.dumps(result))
+
+
+def validate_request(request):
+    command = request.get("command")
+    valid_cmds = ("depsolve", "dump", "search")
+    if command not in valid_cmds:
+        return {
+            "kind": "InvalidRequest",
+            "reason": f"invalid command '{command}': must be one of {', '.join(valid_cmds)}"
+        }
+
+    if not request.get("arch"):
+        return {
+            "kind": "InvalidRequest",
+            "reason": "no 'arch' specified"
+        }
+
+    if not request.get("module_platform_id"):
+        return {
+            "kind": "InvalidRequest",
+            "reason": "no 'module_platform_id' specified"
+        }
+    arguments = request.get("arguments")
+    if not arguments:
+        return {
+            "kind": "InvalidRequest",
+            "reason": "empty 'arguments'"
+        }
+
+    if not arguments.get("repos"):
+        return {
+            "kind": "InvalidRequest",
+            "reason": "no 'repos' specified"
+        }
+
+    return None
+
+
+def main():
+    request = json.load(sys.stdin)
+    err = validate_request(request)
+    if err:
+        fail(err)
+
+    cachedir, err = setup_cachedir(request)
+    if err:
+        fail(err)
+    result, err = solve(request, cachedir)
+    if err:
+        fail(err)
+    else:
+        respond(result)
+
+
+if __name__ == "__main__":
+    main()
