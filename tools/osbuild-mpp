@@ -1545,6 +1545,7 @@ class ManifestFileV2(ManifestFile):
                 return self.checksum
 
         def embed_data(ip, mpp):
+            self._process_format(mpp)
             uid = mpp["id"]
             path = mpp.get("path")
             url = mpp.get("url")
