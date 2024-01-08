@@ -5,6 +5,7 @@ import os.path
 import random
 import string
 import subprocess
+from unittest.mock import call, patch
 
 import pytest
 
@@ -68,7 +69,10 @@ def test_container_deploy_integration(tmp_path):
     }
     output_dir = tmp_path / "output"
 
-    stage.main(inputs, output_dir)
+    with patch("os.makedirs", wraps=os.makedirs) as mocked_makedirs:
+        stage.main(inputs, output_dir)
 
     assert output_dir.exists()
     assert (output_dir / "file1").read_bytes() == b"file1 from final layer"
+
+    assert mocked_makedirs.call_args_list == [call("/var/tmp", mode=0o1777, exist_ok=True)]

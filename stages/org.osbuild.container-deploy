@@ -5,6 +5,7 @@ Deploy a container.
 Buildhost commands used: podman skopeo
 """
 import contextlib
+import os
 import random
 import string
 import subprocess
@@ -54,6 +55,8 @@ def main(inputs, output):
     assert len(images) == 1
     image = list(images.values())[0]
 
+    # skopeo needs /var/tmp but the bwrap env is minimal and may not have it
+    os.makedirs("/var/tmp", mode=0o1777, exist_ok=True)
     # We cannot use a tmpdir as storage here because of
     # https://github.com/containers/storage/issues/1779 so instead
     # just pick a random suffix. This runs inside bwrap which gives a
