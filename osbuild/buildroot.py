@@ -70,7 +70,7 @@ class ProcOverrides:
         self.overrides.add("cmdline")
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,too-many-branches
 class BuildRoot(contextlib.AbstractContextManager):
     """Build Root
 
@@ -177,7 +177,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self._exitstack:
             self._exitstack.enter_context(api)
 
-    def run(self, argv, monitor, timeout=None, binds=None, readonly_binds=None, extra_env=None):
+    def run(self, argv, monitor, timeout=None, binds=None, readonly_binds=None, extra_env=None, debug_shell=False):
         """Runs a command in the buildroot.
 
         Takes the command and arguments, as well as bind mounts to mirror
@@ -289,6 +289,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         cmd += self.build_capabilities_args()
 
         cmd += mounts
+        debug_shell_cmd = cmd + ["--", "/bin/bash"]  # used for debugging if requested
         cmd += ["--", runner]
         cmd += argv
 
@@ -303,6 +304,11 @@ class BuildRoot(contextlib.AbstractContextManager):
         }
         if extra_env:
             env.update(extra_env)
+
+        # If the user requested it then break into a shell here
+        # for debugging.
+        if debug_shell:
+            subprocess.run(debug_shell_cmd, check=True)
 
         proc = subprocess.Popen(cmd,
                                 bufsize=0,

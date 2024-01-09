@@ -95,6 +95,9 @@ def parse_arguments(sys_argv):
     parser.add_argument("--version", action="version",
                         help="return the version of osbuild",
                         version="%(prog)s " + osbuild.__version__)
+    # nargs='?' const='*' means `--break` is equivalent to `--break=*`
+    parser.add_argument("--break", dest='debug_break', type=str, nargs='?', const='*',
+                        help="open debug shell when executing stage. Accepts stage name or id or * (for all)")
 
     return parser.parse_args(sys_argv[1:])
 
@@ -163,6 +166,7 @@ def osbuild_cli():
                 object_store.maximum_size = args.cache_max_size
 
             stage_timeout = args.stage_timeout
+            debug_break = args.debug_break
 
             pipelines = manifest.depsolve(object_store, exports)
 
@@ -173,6 +177,7 @@ def osbuild_cli():
                 pipelines,
                 monitor,
                 args.libdir,
+                debug_break,
                 stage_timeout=stage_timeout
             )
 

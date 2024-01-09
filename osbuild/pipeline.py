@@ -142,7 +142,7 @@ class Stage:
         with open(location, "w", encoding="utf-8") as fp:
             json.dump(args, fp)
 
-    def run(self, tree, runner, build_tree, store, monitor, libdir, timeout=None):
+    def run(self, tree, runner, build_tree, store, monitor, libdir, debug_break="", timeout=None):
         with contextlib.ExitStack() as cm:
 
             build_root = buildroot.BuildRoot(build_tree, runner.path, libdir, store.tmp)
@@ -234,12 +234,15 @@ class Stage:
             if self.source_epoch is not None:
                 extra_env["SOURCE_DATE_EPOCH"] = str(self.source_epoch)
 
+            debug_shell = debug_break in ('*', self.name, self.id)
+
             r = build_root.run([f"/run/osbuild/bin/{self.name}"],
                                monitor,
                                timeout=timeout,
                                binds=binds,
                                readonly_binds=ro_binds,
-                               extra_env=extra_env)
+                               extra_env=extra_env,
+                               debug_shell=debug_shell)
 
         return BuildResult(self, r.returncode, r.output, api.error)
 
@@ -290,7 +293,7 @@ class Pipeline:
             self.assembler.base = stage.id
         return stage
 
-    def build_stages(self, object_store, monitor, libdir, stage_timeout=None):
+    def build_stages(self, object_store, monitor, libdir, debug_break="", stage_timeout=None):
         results = {"success": True}
 
         # If there are no stages, just return here
@@ -348,6 +351,7 @@ class Pipeline:
                           object_store,
                           monitor,
                           libdir,
+                          debug_break,
                           stage_timeout)
 
             monitor.result(r)
@@ -365,13 +369,14 @@ class Pipeline:
 
         return results
 
-    def run(self, store, monitor, libdir, stage_timeout=None):
+    def run(self, store, monitor, libdir, debug_break="", stage_timeout=None):
 
         monitor.begin(self)
 
         results = self.build_stages(store,
                                     monitor,
                                     libdir,
+                                    debug_break,
                                     stage_timeout)
 
         monitor.finish(results)
@@ -461,11 +466,11 @@ class Manifest:
 
         return list(map(lambda x: x.name, reversed(build.values())))
 
-    def build(self, store, pipelines, monitor, libdir, stage_timeout=None):
+    def build(self, store, pipelines, monitor, libdir, debug_break="", stage_timeout=None):
         results = {"success": True}
 
         for pl in map(self.get, pipelines):
-            res = pl.run(store, monitor, libdir, stage_timeout)
+            res = pl.run(store, monitor, libdir, debug_break, stage_timeout)
             results[pl.id] = res
             if not res["success"]:
                 results["success"] = False
