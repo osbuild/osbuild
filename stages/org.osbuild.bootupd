@@ -76,7 +76,7 @@ def bind_mounts(sources, dest_root):
     try:
         yield
     finally:
-        for src in sources:
+        for src in reversed(sources):
             dst = os.path.join(dest_root, src.lstrip("/"))
             subprocess.run(["umount", "--recursive", dst], check=False)
 
