@@ -57,6 +57,8 @@ is not listed here, **osbuild** will deny startup and exit with an error.
 --monitor-fd=NUM                file-descriptor to be used for the monitor
 --stage-timeout                 set the maximal time (in seconds) each stage is
                                 allowed to run
+--break, --break=ID             open debug shell when executing stages; accepts
+                                stage name or id (from --inspect) or * (for all)
 
 NB: If neither ``--output-directory`` nor ``--checkpoint`` is specified, no
 attempt to build the manifest will be made.
