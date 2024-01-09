@@ -9,6 +9,7 @@ and GRUB for BIOS firmware on x86_64.
 The project is deployed in Fedora CoreOS and derivatives
 """
 
+import contextlib
 import os
 import subprocess
 import sys
@@ -67,6 +68,19 @@ SCHEMA_2 = r"""
 """
 
 
+@contextlib.contextmanager
+def bind_mounts(sources, dest_root):
+    for src in sources:
+        dst = os.path.join(dest_root, src.lstrip("/"))
+        subprocess.run(["mount", "--rbind", src, dst], check=True)
+    try:
+        yield
+    finally:
+        for src in sources:
+            dst = os.path.join(dest_root, src.lstrip("/"))
+            subprocess.run(["umount", "--recursive", dst], check=False)
+
+
 def main(args, options):
     deployment = options.get("deployment", None)
     static_configs = options.get("static-configs", False)
@@ -101,22 +115,11 @@ def main(args, options):
     # want to make sure the version used matches the target and not
     # risk any inconsistencies with the build root). Let's set up
     # and chroot to run the bootupctl command from the target.
-    submounts = ['dev', 'proc', 'sys', 'run', 'var', 'tmp']
-    for mnt in submounts:
-        subprocess.run(['mount', '--rbind',
-                       os.path.join("/", mnt),
-                       os.path.join(root, mnt)],
-                       check=True)
-    try:
+    with bind_mounts(['/dev', '/proc', '/sys', '/run', '/var', '/tmp'], root):
         cmd = ['chroot', root, '/usr/bin/bootupctl', 'backend', 'install']
         cmd.extend(bootupd_args)
         cmd.append(mounts)
         subprocess.run(cmd, check=True)
-    finally:
-        for mnt in submounts:
-            subprocess.run(['umount', '--recursive',
-                           os.path.join(root, mnt)],
-                           check=False)
 
     return 0
 
