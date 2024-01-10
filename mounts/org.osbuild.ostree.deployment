@@ -32,6 +32,12 @@ SCHEMA_2 = """
     "type": "object",
     "required": ["deployment"],
     "properties": {
+      "source": {
+        "type": "string",
+        "pattern": "^(mount|tree)$",
+        "default": "tree",
+        "description": "The source of the OSTree filesystem tree. If 'mount', there should be a preceding mount defined that's mounted at /."
+      },
       "deployment": {
         "type": "object",
         "additionalProperties": false,
@@ -91,16 +97,21 @@ class OSTreeDeploymentMount(mounts.MountService):
     def mount(self, args: Dict):
 
         tree = args["tree"]
+        mountroot = args["root"]
         options = args["options"]
 
+        source = options.get("source", "tree")
         deployment = options["deployment"]
         osname = deployment["osname"]
         ref = deployment["ref"]
         serial = deployment.get("serial", 0)
 
-        # The target path where we want the deployment to be mounted
-        # is the root of the tree.
-        target = tree
+        # The user could specify either the tree or mountroot as the
+        # place where we want the deployment to be mounted.
+        if source == "mount":
+            target = mountroot
+        else:
+            target = tree
 
         # create a private mountpoint for the target path, which is
         # needed in order to be able to move the deployment `root`
@@ -113,6 +124,7 @@ class OSTreeDeploymentMount(mounts.MountService):
         deploy_root = ostree.deployment_path(target, osname, ref, serial)
 
         print(f"Deployment root at '{os.path.relpath(deploy_root, target)}'")
+        print(f"mounting {deploy_root} -> {target}")
 
         var = os.path.join(target, "ostree", "deploy", osname, "var")
         boot = os.path.join(target, "boot")

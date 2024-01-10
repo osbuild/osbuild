@@ -181,6 +181,8 @@ class FileSystemMountService(MountService):
         os.makedirs(mountpoint, exist_ok=True)
         self.mountpoint = mountpoint
 
+        print(f"mounting {source} -> {mountpoint}")
+
         try:
             subprocess.run(
                 ["mount"] +
@@ -203,12 +205,17 @@ class FileSystemMountService(MountService):
         if not self.mountpoint:
             return
 
+        # It's possible this mountpoint has already been unmounted
+        # if a umount -R was run by another process, as is done in
+        # mounts/org.osbuild.ostree.deployment.
+        if not os.path.ismount(self.mountpoint):
+            print(f"already unmounted: {self.mountpoint}")
+            return
+
         self.sync()
 
-        print("umounting")
-
         # We ignore errors here on purpose
-        subprocess.run(["umount", self.mountpoint],
+        subprocess.run(["umount", "-v", self.mountpoint],
                        check=self.check)
         self.mountpoint = None
 
