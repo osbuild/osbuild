@@ -63,7 +63,6 @@ class OSTreeDeploymentMount(mounts.MountService):
     def __init__(self, args):
         super().__init__(args)
 
-        self.tree = None
         self.mountpoint = None
         self.check = False
 
@@ -72,7 +71,22 @@ class OSTreeDeploymentMount(mounts.MountService):
         subprocess.run([
             "mount", "--bind", "--make-private", source, target,
         ], check=True)
-        return target
+
+    def is_mounted(self):
+        # Use `mountpoint` command here to determine if the mountpoint is mounted.
+        # We would use os.path.ismount() here but that only works if a device is
+        # mounted (i.e. it doesn't use the mountinfo file in the heuristic and
+        # thus things like `mount --move` wouldn't show up). The exit codes from
+        # `mountpoint` are:
+        #
+        #  0 success; the directory is a mountpoint, or device is block device on --devno
+        #  1 failure; incorrect invocation, permissions or system error
+        #  32 failure; the directory is not a mountpoint, or device is not a block device on --devno
+        #
+        cp = subprocess.run(["mountpoint", "-q", self.mountpoint], check=False)
+        if cp.returncode not in [0, 32]:
+            cp.check_returncode()  # will raise error
+        return cp.returncode == 0
 
     def mount(self, args: Dict):
 
@@ -89,7 +103,7 @@ class OSTreeDeploymentMount(mounts.MountService):
         # is contained inside tree, since "moving a mount residing
         # under a shared mount is invalid and unsupported."
         #                                              - `mount(8)`
-        self.tree = self.bind_mount(tree, tree)
+        self.bind_mount(tree, tree)
 
         root = ostree.deployment_path(tree, osname, ref, serial)
 
@@ -116,15 +130,25 @@ class OSTreeDeploymentMount(mounts.MountService):
         if self.mountpoint:
             subprocess.run(["sync", "-f", self.mountpoint],
                            check=self.check)
-
-            subprocess.run(["umount", "-R", self.mountpoint],
+            subprocess.run(["umount", "-v", "-R", self.mountpoint],
                            check=self.check)
+
+            # Handle bug in older util-linux mount where the
+            # mountinfo/utab wouldn't have updated information
+            # when mount --move is performed, which means that
+            # umount -R wouldn't unmount all overmounted mounts
+            # on the target because it was operating on outdated
+            # information. The umount -R behavior is fixed in v2.39
+            # of util-linux most likely by [1] or [2] or both. This
+            # loop can be removed when all hosts we care about have
+            # moved to v2.39+.
+            # [1] https://github.com/karelzak/util-linux/commit/a04149fbb7c1952da1194d1514e298ff07dbc7ca
+            # [2] https://github.com/karelzak/util-linux/commit/8cf6c5075780598fe3b30e7a7753d8323d093e22
+            while self.is_mounted():
+                print(f"extra unmount {self.mountpoint}")
+                subprocess.run(["umount", "-v", self.mountpoint],
+                               check=self.check)
             self.mountpoint = None
-
-        if self.tree:
-            subprocess.run(["umount", "-R", self.tree],
-                           check=self.check)
-            self.tree = None
 
 
 def main():
