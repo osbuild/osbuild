@@ -465,7 +465,7 @@
             "repo": "/ostree/repo",
             "config": {
               "sysroot": {
-                "readonly": false,
+                "readonly": true,
                 "bootloader": "none",
                 "bls-append-except-default": "grub_users=\"\""
               }
