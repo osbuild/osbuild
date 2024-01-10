@@ -38,6 +38,14 @@ SCHEMA_2 = r"""
       "type": "string",
       "maxLength": 16
     },
+    "metadata_csum_seed": {
+      "description": "Enable metadata_csum_seed support",
+      "type": "boolean"
+    },
+    "orphan_file": {
+      "description": "Enable orphan_file support",
+      "type": "boolean"
+    },
     "verity": {
       "description": "Enable fs-verity support",
       "type": "boolean"
@@ -52,17 +60,18 @@ def main(devices, options):
 
     uuid = options["uuid"]
     label = options.get("label")
-    verity = options.get("verity")
     opts = []
 
     if label:
         opts = ["-L", label]
 
-    if verity is not None:
-        if verity:
-            opts += ["-O", "verity"]
-        else:
-            opts += ["-O", "^verity"]
+    for fsopt in ["verity", "orphan_file", "metadata_csum_seed"]:
+        val = options.get(fsopt)
+        if val is not None:
+            if val:
+                opts += ["-O", fsopt]
+            else:
+                opts += ["-O", f"^{fsopt}"]
 
     subprocess.run(["mkfs.ext4", "-U", uuid] + opts + [device],
                    encoding='utf8', check=True)
