@@ -7,6 +7,8 @@ mpp-vars:
   root_size_mb: 2048
   sector_size: 512
   four_k_sector_size: 4096
+  # The name to use for deployment stateroot
+  osname: fedora-coreos
   # Filesystem UUID and label definitions. These UUIDs
   # are looked for on boot and if found replaced with
   # a new random UUID to make each install unique.
@@ -80,7 +82,8 @@ pipelines:
       - type: org.osbuild.ostree.init-fs
       - type: org.osbuild.ostree.os-init
         options:
-          osname: fedora-coreos
+          osname:
+            mpp-format-string: '{osname}'
       - type: org.osbuild.ostree.config
         options:
           repo: /ostree/repo
@@ -97,7 +100,8 @@ pipelines:
       - type: org.osbuild.ignition
       - type: org.osbuild.ostree.deploy.container
         options:
-          osname: fedora-coreos
+          osname:
+            mpp-format-string: '{osname}'
           target_imgref: ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable
           mounts:
             - /boot
@@ -117,13 +121,15 @@ pipelines:
         options:
           coreos_compat: true
           deployment:
-            osname: fedora-coreos
             ref: ostree/1/1/0
+            osname:
+              mpp-format-string: '{osname}'
       - type: org.osbuild.ostree.selinux
         options:
           deployment:
-            osname: fedora-coreos
             ref: ostree/1/1/0
+            osname:
+              mpp-format-string: '{osname}'
   - name: raw-image
     build: name:build
     stages:
@@ -228,8 +234,9 @@ pipelines:
             device: disk
           static-configs: true
           deployment:
-            osname: fedora-coreos
             ref: ostree/1/1/0
+            osname:
+              mpp-format-string: '{osname}'
         devices:
           disk:
             type: org.osbuild.loopback
@@ -367,8 +374,9 @@ pipelines:
         options:
           static-configs: true
           deployment:
-            osname: fedora-coreos
             ref: ostree/1/1/0
+            osname:
+              mpp-format-string: '{osname}'
         devices:
           disk:
             type: org.osbuild.loopback
