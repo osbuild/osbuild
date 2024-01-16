@@ -178,8 +178,8 @@ def create_image_with_partitions(tmp_path):
         ["parted", "--script", img, "mklabel", "msdos"],
         ["parted", "--script", img, "mkpart", "primary", "ext4", "1MiB", "10Mib"],
         ["parted", "--script", img, "mkpart", "primary", "ext4", "10MiB", "19Mib"],
-        ["mkfs.ext4", "-E", f"offset={1*1024*1024}", img, "9M"],
-        ["mkfs.ext4", "-E", f"offset={10*1024*1024}", img, "9M"],
+        ["mkfs.ext4", "-F", "-E", f"offset={1*1024*1024}", img, "9M"],
+        ["mkfs.ext4", "-F", "-E", f"offset={10*1024*1024}", img, "9M"],
     ]:
         subprocess.check_call(cmd)
     return tree, img.name
