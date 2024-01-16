@@ -60,31 +60,18 @@ def main(devices, options):
 
     uuid = options["uuid"]
     label = options.get("label")
-    metadata_csum_seed = options.get("metadata_csum_seed")
-    orphan_file = options.get("orphan_file")
-    verity = options.get("verity")
     opts = []
 
     if label:
         opts = ["-L", label]
 
-    if metadata_csum_seed is not None:
-        if metadata_csum_seed:
-            opts += ["-O", "metadata_csum_seed"]
-        else:
-            opts += ["-O", "^metadata_csum_seed"]
-
-    if orphan_file is not None:
-        if orphan_file:
-            opts += ["-O", "orphan_file"]
-        else:
-            opts += ["-O", "^orphan_file"]
-
-    if verity is not None:
-        if verity:
-            opts += ["-O", "verity"]
-        else:
-            opts += ["-O", "^verity"]
+    for fsopt in ["verity", "orphan_file", "metadata_csum_seed"]:
+        val = options.get(fsopt)
+        if val is not None:
+            if val:
+                opts += ["-O", fsopt]
+            else:
+                opts += ["-O", f"^{fsopt}"]
 
     subprocess.run(["mkfs.ext4", "-U", uuid] + opts + [device],
                    encoding='utf8', check=True)
