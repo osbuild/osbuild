@@ -48,10 +48,10 @@ RPM:
           - aws/centos-stream-8-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
-          - aws/rhel-8.8-ga-x86_64
-          - aws/rhel-8.8-ga-aarch64
-          - aws/rhel-9.2-ga-x86_64
-          - aws/rhel-9.2-ga-aarch64
+          - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-8.9-ga-aarch64
+          - aws/rhel-9.3-ga-x86_64
+          - aws/rhel-9.3-ga-aarch64
       - RUNNER:
           - aws/rhel-8.10-nightly-x86_64
           - aws/rhel-8.10-nightly-aarch64
