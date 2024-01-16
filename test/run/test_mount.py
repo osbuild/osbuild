@@ -224,5 +224,10 @@ def test_mount_with_partition(tmp_path):
             lsblk_info = json.loads(output)
             assert len(lsblk_info["blockdevices"][0]["children"]) == 2
             chld = lsblk_info["blockdevices"][0]["children"]
-            assert chld[0]["mountpoints"] == [f"{mnt_base}/mnt-1"]
-            assert chld[1]["mountpoints"] == [f"{mnt_base}/mnt-2"]
+            # rhel8 lsblk only gives us a single mountpoint (no plural)
+            if "mountpoint" in chld[0]:
+                assert chld[0]["mountpoint"] == f"{mnt_base}/mnt-1"
+                assert chld[1]["mountpoint"] == f"{mnt_base}/mnt-2"
+            else:
+                assert chld[0]["mountpoints"] == [f"{mnt_base}/mnt-1"]
+                assert chld[1]["mountpoints"] == [f"{mnt_base}/mnt-2"]
