@@ -573,6 +573,7 @@ class TestStages(test.TestBase):
                 assert "path home" in subvols[1]
 
     @unittest.skipUnless(test.TestBase.has_filesystem_support("fat"), "FAT needed")
+    @unittest.skipUnless("-g GEOM" in subprocess.getoutput("mkfs.fat"), "mkfs.fat -g GEOM missing")
     def test_fat(self):
         def _get_file_fields(image: str) -> List[str]:
             r = subprocess.run(
