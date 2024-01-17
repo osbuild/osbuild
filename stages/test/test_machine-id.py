@@ -7,6 +7,7 @@ import unittest.mock
 import pytest
 
 import osbuild.meta
+from osbuild import testutil
 from osbuild.testutil.imports import import_module_from_path
 
 
@@ -72,9 +73,7 @@ def test_machine_id_schema_validation(test_data, expected_err):
     res = schema.validate(test_input)
 
     assert res.valid is False
-    assert len(res.errors) == 1
-    err_msgs = [e.as_dict()["message"] for e in res.errors]
-    assert expected_err in err_msgs[0]
+    testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
 def test_machine_id_first_boot_unknown(tmp_path):

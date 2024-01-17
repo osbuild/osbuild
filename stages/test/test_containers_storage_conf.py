@@ -11,7 +11,7 @@ except ModuleNotFoundError:
     import pytoml as toml
 
 import osbuild.meta
-from osbuild.testutil import assert_dict_has
+from osbuild import testutil
 from osbuild.testutil.imports import import_module_from_path
 
 TEST_INPUT = [
@@ -56,7 +56,7 @@ def test_containers_storage_conf_integration(tmp_path, test_filename, test_stora
     assert conf is not None
 
     for (key, value) in expected:
-        assert_dict_has(conf, key, value)
+        testutil.assert_dict_has(conf, key, value)
 
 
 @pytest.mark.parametrize(
@@ -64,7 +64,7 @@ def test_containers_storage_conf_integration(tmp_path, test_filename, test_stora
     [
         # None, note that starting from jsonschema 4.21.0 the error changes
         # so we need a regexp here
-        ({}, {}, r"does not have enough properties|should be non-empty"),
+        ({}, {}, re.compile("does not have enough properties|should be non-empty")),
         # All options
         ({
             "filename": "/etc/containers/storage.conf",
@@ -120,6 +120,4 @@ def test_schema_validation_containers_storage_conf(test_data, storage_test_data,
         assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
     else:
         assert res.valid is False
-        err_msgs = [e.as_dict()["message"] for e in res.errors]
-        assert any(re.search(expected_err, err_msg)
-                   for err_msg in err_msgs), f"{expected_err} not found in {err_msgs}"
+        testutil.assert_jsonschema_error_contains(res, expected_err)
