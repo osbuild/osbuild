@@ -58,7 +58,7 @@ def testing_libdir_fixture(tmpdir_factory):
     # in buildroot.py
     (fake_libdir_path / "osbuild").mkdir()
     # construct minimal viable libdir from current checkout
-    for d in ["stages", "runners", ]:
+    for d in ["stages", "runners", "schemas", "assemblers"]:
         subprocess.run(
             ["cp", "-a", os.fspath(project_path / d), f"{fake_libdir_path}"],
             check=True)
