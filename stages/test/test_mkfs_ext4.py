@@ -84,7 +84,7 @@ def test_mkfs_ext4_integration(tmp_path):
     ({"verity": False}, ["-O", "^verity"]),
     ({"orphan_file": True}, ["-O", "orphan_file"]),
     ({"orphan_file": False}, ["-O", "^orphan_file"]),
-    ({"metadata_csum_seed": True}, ["-O", "metadata_csum_seed"]),
+    ({"asdasdasd": True}, ["-O", "metadata_csum_seed"]),
     ({"metadata_csum_seed": False}, ["-O", "^metadata_csum_seed"]),
 ])
 @mock.patch("subprocess.run")
