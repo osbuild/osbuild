@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os.path
+import re
 
 import pytest
 
@@ -61,8 +62,9 @@ def test_containers_storage_conf_integration(tmp_path, test_filename, test_stora
 @pytest.mark.parametrize(
     "test_data,storage_test_data,expected_err",
     [
-        # None
-        ({}, {}, "does not have enough properties"),
+        # None, note that starting from jsonschema 4.21.0 the error changes
+        # so we need a regexp here
+        ({}, {}, r"does not have enough properties|should be non-empty"),
         # All options
         ({
             "filename": "/etc/containers/storage.conf",
@@ -119,4 +121,5 @@ def test_schema_validation_containers_storage_conf(test_data, storage_test_data,
     else:
         assert res.valid is False
         err_msgs = [e.as_dict()["message"] for e in res.errors]
-        assert expected_err in err_msgs[0] or expected_err in err_msgs[1]
+        assert any(re.search(expected_err, err_msg)
+                   for err_msg in err_msgs), f"{expected_err} not found in {err_msgs}"
