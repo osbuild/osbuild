@@ -7,6 +7,7 @@ from unittest.mock import call, patch
 import pytest
 
 import osbuild.meta
+from osbuild import testutil
 from osbuild.testutil.imports import import_module_from_path
 
 TEST_INPUT = [
@@ -112,6 +113,4 @@ def test_schema_validation_oscap_autotailor(fake_input, test_data, expected_err)
     res = schema_validate_stage_oscap_autotailor(fake_input, test_data)
 
     assert res.valid is False
-    err_msgs = [e.as_dict()["message"] for e in res.errors]
-    assert len(res.errors) == 1, err_msgs
-    assert expected_err in err_msgs[0]
+    testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)

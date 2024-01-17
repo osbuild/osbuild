@@ -7,6 +7,7 @@ from unittest import mock
 import pytest
 
 import osbuild.meta
+from osbuild import testutil
 from osbuild.testutil import has_executable, make_fake_input_tree
 from osbuild.testutil.imports import import_module_from_path
 
@@ -35,9 +36,7 @@ def test_schema_validation_xz(test_data, expected_err):
         assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
     else:
         assert res.valid is False
-        assert len(res.errors) == 1, [e.as_dict() for e in res.errors]
-        err_msgs = [e.as_dict()["message"] for e in res.errors]
-        assert expected_err in err_msgs[0]
+        testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
 @pytest.fixture(name="fake_input_tree")
