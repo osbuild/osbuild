@@ -237,6 +237,12 @@ class BuildRoot(contextlib.AbstractContextManager):
         mounts += ["--ro-bind-try",
                    os.path.join(self._rootdir, "etc/containers"),
                    "/etc/containers"]
+        mounts += ["--ro-bind-try",
+                   os.path.join(self._rootdir, "ostree"),
+                   "/ostree"]
+        mounts += ["--ro-bind-try",
+                   os.path.join(self._rootdir, "etc/selinux/targeted/contexts"),
+                   "/etc/selinux/targeted/contexts"]
 
         # We execute our own modules by bind-mounting them from the host into
         # the build-root. We have minimal requirements on the build-root, so
