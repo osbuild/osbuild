@@ -9,6 +9,8 @@ mpp-vars:
   four_k_sector_size: 4096
   # The name to use for deployment stateroot
   osname: fedora-coreos
+  # The container image ref to follow for updates
+  container_imgref: ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable
   # Filesystem UUID and label definitions. These UUIDs
   # are looked for on boot and if found replaced with
   # a new random UUID to make each install unique.
@@ -102,7 +104,8 @@ pipelines:
         options:
           osname:
             mpp-format-string: '{osname}'
-          target_imgref: ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable
+          target_imgref:
+            mpp-format-string: '{container_imgref}'
           mounts:
             - /boot
             - /boot/efi
