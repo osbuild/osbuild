@@ -78,11 +78,9 @@ def aleph_container(tree, imgref):
         raise ValueError(f"Image ref {imgref} has unsupported type (supported: 'ostree-remote-registry', \
                          'ostree-remote-image', 'ostree-image-signed', or 'ostree-unverified-registry')")
 
-    img_name = img_name.removeprefix('docker://')
-
     extra_args = []
     extra_args.append(f"--repo={tree}/ostree/repo")
-    extra_args.append(f"registry:{img_name}")
+    extra_args.append(img_name)
 
     container_data_json = ostree.cli("container", "image", "metadata", *extra_args).stdout.rstrip()
     container_data = json.loads(container_data_json)
