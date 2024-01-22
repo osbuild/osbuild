@@ -736,6 +736,45 @@
               "target": "/boot/efi"
             }
           ]
+        },
+        {
+          "type": "org.osbuild.chattr",
+          "options": {
+            "items": {
+              "mount://root/": {
+                "immutable": true
+              }
+            }
+          },
+          "devices": {
+            "disk": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "partscan": true
+              }
+            }
+          },
+          "mounts": [
+            {
+              "name": "root",
+              "type": "org.osbuild.xfs",
+              "source": "disk",
+              "partition": 4,
+              "target": "/"
+            },
+            {
+              "name": "ostree.deployment",
+              "type": "org.osbuild.ostree.deployment",
+              "options": {
+                "source": "mount",
+                "deployment": {
+                  "ref": "ostree/1/1/0",
+                  "osname": "fedora-coreos"
+                }
+              }
+            }
+          ]
         }
       ]
     },
@@ -943,6 +982,46 @@
               "source": "disk",
               "partition": 2,
               "target": "/boot/efi"
+            }
+          ]
+        },
+        {
+          "type": "org.osbuild.chattr",
+          "options": {
+            "items": {
+              "mount://root/": {
+                "immutable": true
+              }
+            }
+          },
+          "devices": {
+            "disk": {
+              "type": "org.osbuild.loopback",
+              "options": {
+                "filename": "disk.img",
+                "partscan": true,
+                "sector-size": 4096
+              }
+            }
+          },
+          "mounts": [
+            {
+              "name": "root",
+              "type": "org.osbuild.xfs",
+              "source": "disk",
+              "partition": 4,
+              "target": "/"
+            },
+            {
+              "name": "ostree.deployment",
+              "type": "org.osbuild.ostree.deployment",
+              "options": {
+                "source": "mount",
+                "deployment": {
+                  "ref": "ostree/1/1/0",
+                  "osname": "fedora-coreos"
+                }
+              }
             }
           ]
         }
