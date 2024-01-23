@@ -13,8 +13,8 @@ from collections import defaultdict
 
 import osbuild
 import osbuild.meta
-from osbuild.monitor import LogMonitor
-from osbuild.monitor import JSONSeqMonitor, Context, Progress, log_entry
+from osbuild.monitor import (Context, JSONSeqMonitor, LogMonitor, Progress,
+                             log_entry)
 from osbuild.objectstore import ObjectStore
 from osbuild.pipeline import Runner
 
@@ -180,9 +180,10 @@ def test_progress():
     prog.incr()
     progdict = prog.as_dict()
     assert progdict["done"] == 1
-    assert progdict.get("progress") == None, "sub-progress did not reset"
+    assert progdict.get("progress") is None, "sub-progress did not reset"
 
 
+# pylint: disable=too-many-statements
 def test_json_progress_monitor():
     index = osbuild.meta.Index(os.curdir)
     info = index.get_module_info("Stage", "org.osbuild.noop")
@@ -215,7 +216,7 @@ def test_json_progress_monitor():
         mon.log("pipeline 2 message 2")
 
         tf.seek(0)
-        log = tf.read().decode().strip().split(u"\x1e")
+        log = tf.read().decode().strip().split("\x1e")
 
         expected_total = 12
         assert len(log) == expected_total
@@ -259,7 +260,7 @@ def test_json_progress_monitor():
 
         logitem = json.loads(log[i])
         assert logitem["message"] == "pipeline 1 finished"
-        prev_ctx_id = json.loads(log[i-1])["context"]["id"]
+        prev_ctx_id = json.loads(log[i - 1])["context"]["id"]
         assert logitem["context"]["id"] == prev_ctx_id
         assert len(logitem["context"]) == 1
         i += 1
@@ -288,7 +289,7 @@ def test_json_progress_monitor():
 
         logitem = json.loads(log[i])
         assert logitem["message"] == "pipeline 2 message 2"
-        prev_ctx_id = json.loads(log[i-1])["context"]["id"]
+        prev_ctx_id = json.loads(log[i - 1])["context"]["id"]
         assert logitem["context"]["id"] == prev_ctx_id
         i += 1
 
@@ -298,8 +299,8 @@ def test_json_progress_monitor():
 def test_log_line_empty_is_fine():
     empty = log_entry()
     assert len(empty) == 1
-    assert empty["timestamp"] > time.time()-60
-    assert empty["timestamp"] < time.time()+60
+    assert empty["timestamp"] > time.time() - 60
+    assert empty["timestamp"] < time.time() + 60
 
 
 def test_log_line_with_entries():
@@ -316,5 +317,5 @@ def test_log_line_with_entries():
 def test_context_id():
     ctx = Context()
     assert ctx.id == "00d202e4fc9d917def414d1c9f284b137287144087ec275f2d146d9d47b3c8bb"
-    ctx._origin = "foo"
+    ctx._origin = "foo"  # pylint: disable=protected-access
     assert ctx.id != "00d202e4fc9d917def414d1c9f284b137287144087ec275f2d146d9d47b3c8bb"
