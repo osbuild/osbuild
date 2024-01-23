@@ -89,7 +89,7 @@ class OSTreeSource(sources.SourceService):
         super().__init__(*args, **kwargs)
         self.repo = None
 
-    def download(self, items: Dict) -> None:
+    def fetch_all(self, items: Dict) -> None:
         filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
         transformed = map(lambda i: self.transform(i[0], i[1]), filtered)  # prepare each item to be downloaded
 

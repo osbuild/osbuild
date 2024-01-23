@@ -67,8 +67,8 @@ class SourceService(host.Service):
         """Performs the actual fetch of an element described by its checksum and its descriptor"""
 
     @abc.abstractmethod
-    def download(self, items: Dict) -> None:
-        """Download all sources."""
+    def fetch_all(self, items: Dict) -> None:
+        """Fetch all sources."""
 
     def exists(self, checksum, _desc) -> bool:
         """Returns True if the item to download is in cache. """
@@ -94,7 +94,7 @@ class SourceService(host.Service):
         if method == "download":
             self.setup(args)
             with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as self.tmpdir:
-                self.download(SourceService.load_items(fds))
+                self.fetch_all(SourceService.load_items(fds))
                 return None, None
 
         raise host.ProtocolError("Unknown method")
