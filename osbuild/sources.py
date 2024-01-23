@@ -1,5 +1,4 @@
 import abc
-import concurrent.futures
 import contextlib
 import json
 import os
@@ -67,6 +66,10 @@ class SourceService(host.Service):
     def fetch_one(self, checksum, desc) -> None:
         """Performs the actual fetch of an element described by its checksum and its descriptor"""
 
+    @abc.abstractmethod
+    def download(self, items: Dict) -> None:
+        """Download all sources."""
+
     def exists(self, checksum, _desc) -> bool:
         """Returns True if the item to download is in cache. """
         return os.path.isfile(f"{self.cache}/{checksum}")
@@ -75,14 +78,6 @@ class SourceService(host.Service):
     def transform(self, checksum, desc) -> Tuple:
         """Modify the input data before downloading. By default only transforms an item object to a Tupple."""
         return checksum, desc
-
-    def download(self, items: Dict) -> None:
-        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-        transformed = map(lambda i: self.transform(i[0], i[1]), filtered)  # prepare each item to be downloaded
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*transformed)):
-                pass
 
     @staticmethod
     def load_items(fds):

@@ -6,12 +6,14 @@ The manifest is stored as a single file indexed by its content hash.
 Buildhost commands used: `skopeo`.
 """
 
+import concurrent.futures
 import errno
 import json
 import os
 import subprocess
 import sys
 import tempfile
+from typing import Dict
 
 from osbuild import sources
 from osbuild.util import containers, ctx
@@ -84,6 +86,14 @@ class SkopeoIndexSource(sources.SourceService):
         if transport == CONTAINERS_STORAGE_TRANSPORT:
             return f"containers-storage:{reference}"
         raise RuntimeError("Unrecognized containers transport")
+
+    def download(self, items: Dict) -> None:
+        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
+        transformed = map(lambda i: self.transform(i[0], i[1]), filtered)  # prepare each item to be downloaded
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            for _ in executor.map(self.fetch_one, *zip(*transformed)):
+                pass
 
     def fetch_one(self, checksum, desc):
         digest = checksum
