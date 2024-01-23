@@ -332,11 +332,11 @@ class JSONSeqMonitor(BaseMonitor):
         self.log(f"Starting module {module.name}", origin="org.osbuild.main")
 
     # result is for modules
-    def result(self, results: osbuild.pipeline.BuildResult):
+    def result(self, result: osbuild.pipeline.BuildResult):
         # TODO: check pipeline id?
         if self._progress.sub_progress:
             self._progress.sub_progress.incr()
-        self.log(f"Finished module {results.name}", origin="org.osbuild.main")
+        self.log(f"Finished module {result.name}", origin="org.osbuild.main")
 
     def log(self, message, origin: Optional[str] = None):
         entry = log_entry(message, self._context.with_origin(origin), self._progress)
