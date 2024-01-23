@@ -12,7 +12,6 @@ resource is decoded and written to the store.
 
 
 import base64
-import concurrent.futures
 import contextlib
 import os
 import sys
@@ -62,9 +61,8 @@ class InlineSource(sources.SourceService):
         filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
         transformed = map(lambda i: self.transform(i[0], i[1]), filtered)  # prepare each item to be downloaded
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*transformed)):
-                pass
+        for args in transformed:
+            self.fetch_one(*args)
 
     def fetch_one(self, checksum, desc):
         target = os.path.join(self.cache, checksum)
