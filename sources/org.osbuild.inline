@@ -12,9 +12,11 @@ resource is decoded and written to the store.
 
 
 import base64
+import concurrent.futures
 import contextlib
 import os
 import sys
+from typing import Dict
 
 from osbuild import sources
 from osbuild.util.checksum import verify_file
@@ -55,6 +57,14 @@ SCHEMA = """
 class InlineSource(sources.SourceService):
 
     content_type = "org.osbuild.files"
+
+    def download(self, items: Dict) -> None:
+        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
+        transformed = map(lambda i: self.transform(i[0], i[1]), filtered)  # prepare each item to be downloaded
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            for _ in executor.map(self.fetch_one, *zip(*transformed)):
+                pass
 
     def fetch_one(self, checksum, desc):
         target = os.path.join(self.cache, checksum)

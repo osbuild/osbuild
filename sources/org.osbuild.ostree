@@ -7,9 +7,11 @@ gpg keys are provided via `gpgkeys`.
 """
 
 
+import concurrent.futures
 import os
 import sys
 import uuid
+from typing import Dict
 
 from osbuild import sources
 from osbuild.util import ostree
@@ -86,6 +88,14 @@ class OSTreeSource(sources.SourceService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.repo = None
+
+    def download(self, items: Dict) -> None:
+        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
+        transformed = map(lambda i: self.transform(i[0], i[1]), filtered)  # prepare each item to be downloaded
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            for _ in executor.map(self.fetch_one, *zip(*transformed)):
+                pass
 
     def fetch_one(self, checksum, desc):
         commit = checksum
