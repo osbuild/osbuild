@@ -27,7 +27,17 @@ SCHEMA_2 = r"""
   }
 },
 "options": {
-  "additionalProperties": false
+  "additionalProperties": false,
+  "properties": {
+    "exclude": {
+      "type": "array",
+      "description": "Exclude paths from the deployment",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    }
+  }
 }
 """
 
@@ -50,7 +60,7 @@ def mount_container(image_tag):
         )
 
 
-def main(inputs, output):
+def main(inputs, tree, options):
     images = containers.parse_containers_input(inputs)
     assert len(images) == 1
     image = list(images.values())[0]
@@ -71,10 +81,13 @@ def main(inputs, output):
                 check=True,
             )
         with mount_container(image_tag) as img:
-            subprocess.run(["cp", "-a", f"{img}/.", f"{output}/"], check=True)
+            subprocess.run(["cp", "-a", f"{img}/.", f"{tree}/"], check=True)
+    # postprocess the tree, would be nicer to filter before already
+    for exclude in options.get("exclude", []):
+        subprocess.run(["rm", "-rf", f"{tree}/{exclude}"], check=True)
 
 
 if __name__ == "__main__":
     args = osbuild.api.arguments()
-    r = main(args["inputs"], args["tree"])
+    r = main(args["inputs"], args["tree"], args["options"])
     sys.exit(r)

@@ -68,11 +68,67 @@ def test_container_deploy_integration(tmp_path):
         },
     }
     output_dir = tmp_path / "output"
+    options = {}
 
     with patch("os.makedirs", wraps=os.makedirs) as mocked_makedirs:
-        stage.main(inputs, output_dir)
+        stage.main(inputs, output_dir, options)
 
     assert output_dir.exists()
     assert (output_dir / "file1").read_bytes() == b"file1 from final layer"
 
     assert mocked_makedirs.call_args_list == [call("/var/tmp", mode=0o1777, exist_ok=True)]
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+@pytest.mark.skipif(not has_executable("podman"), reason="no podman executable")
+def test_container_deploy_exclude(tmp_path):
+    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.container-deploy")
+    stage = import_module_from_path("stage", stage_path)
+
+    base_tag = "cont-base-" + "".join(random.choices(string.digits, k=12))
+    make_container(tmp_path, base_tag, {
+        "file1": "file1 content",
+        "file2": "file2 content",
+        "dir1/file3": "dir1/file3 content",
+        "dir2/file4": "dir2/file4 content",
+    })
+    # export for the container-deploy stage
+    fake_container_dst = tmp_path / "fake-container"
+    subprocess.check_call([
+        "podman", "save",
+        "--format=oci-archive",
+        f"--output={fake_container_dst}",
+        base_tag,
+    ])
+    # and remove from podman
+    subprocess.check_call(["podman", "rmi", base_tag])
+
+    inputs = {
+        "images": {
+            # seems to be unused with fake_container_path?
+            "path": fake_container_dst,
+            "data": {
+                "archives": {
+                    fake_container_dst: {
+                        "format": "oci-archive",
+                        "name": base_tag,
+                    },
+                },
+            },
+        },
+    }
+    options = {
+        "exclude": [
+            "file2",
+            "dir2/",
+        ],
+    }
+    output_dir = tmp_path / "output"
+
+    stage.main(inputs, output_dir, options)
+    assert output_dir.exists()
+    assert (output_dir / "file1").read_bytes() == b"file1 content"
+    assert not (output_dir / "file2").exists()
+    assert (output_dir / "dir1/file3").read_bytes() == b"dir1/file3 content"
+    assert not (output_dir / "dir2/file4").exists()
+    assert not (output_dir / "dir2").exists()
