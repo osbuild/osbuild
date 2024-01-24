@@ -186,7 +186,6 @@ def osbuild_cli() -> int:
                 debug_break,
                 stage_timeout=stage_timeout
             )
-            # TODO: this needs a test
             if r["success"]:
                 monitor.log(f"manifest {args.manifest_path} finished successfully", origin="org.osbuild.main")
             else:
@@ -197,8 +196,6 @@ def osbuild_cli() -> int:
                 for pid in exports:
                     export(pid, output_directory, object_store, manifest)
 
-            # TODO: subpress when "--monitor=JSONSeqMontior" is used
-            #       or (be explcit) have "--no-summary" or something
             if args.json:
                 r = fmt.output(manifest, r, object_store)
                 json.dump(r, sys.stdout)
