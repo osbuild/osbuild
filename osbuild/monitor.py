@@ -335,7 +335,7 @@ class JSONSeqMonitor(BaseMonitor):
 
     # result is for modules
     def result(self, result: osbuild.pipeline.BuildResult):
-        # TODO: check pipeline id?
+        # we may need to check pipeline ids here in the future
         if self._progress.sub_progress:
             self._progress.sub_progress.incr()
         self.log(f"Finished module {result.name}", origin="org.osbuild.main")
