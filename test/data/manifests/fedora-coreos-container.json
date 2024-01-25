@@ -518,8 +518,7 @@
           "options": {
             "coreos_compat": true,
             "deployment": {
-              "ref": "ostree/1/1/0",
-              "osname": "fedora-coreos"
+              "default": true
             }
           }
         },
@@ -527,8 +526,7 @@
           "type": "org.osbuild.ostree.selinux",
           "options": {
             "deployment": {
-              "ref": "ostree/1/1/0",
-              "osname": "fedora-coreos"
+              "default": true
             }
           }
         }
@@ -705,8 +703,7 @@
             },
             "static-configs": true,
             "deployment": {
-              "ref": "ostree/1/1/0",
-              "osname": "fedora-coreos"
+              "default": true
             }
           },
           "devices": {
@@ -956,8 +953,7 @@
           "options": {
             "static-configs": true,
             "deployment": {
-              "ref": "ostree/1/1/0",
-              "osname": "fedora-coreos"
+              "default": true
             }
           },
           "devices": {

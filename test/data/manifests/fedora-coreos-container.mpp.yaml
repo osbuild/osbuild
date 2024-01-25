@@ -129,15 +129,11 @@ pipelines:
         options:
           coreos_compat: true
           deployment:
-            ref: ostree/1/1/0
-            osname:
-              mpp-format-string: '{osname}'
+            default: true
       - type: org.osbuild.ostree.selinux
         options:
           deployment:
-            ref: ostree/1/1/0
-            osname:
-              mpp-format-string: '{osname}'
+            default: true
   - name: raw-image
     build: name:build
     stages:
@@ -242,9 +238,7 @@ pipelines:
             device: disk
           static-configs: true
           deployment:
-            ref: ostree/1/1/0
-            osname:
-              mpp-format-string: '{osname}'
+            default: true
         devices:
           disk:
             type: org.osbuild.loopback
@@ -408,9 +402,7 @@ pipelines:
         options:
           static-configs: true
           deployment:
-            ref: ostree/1/1/0
-            osname:
-              mpp-format-string: '{osname}'
+            default: true
         devices:
           disk:
             type: org.osbuild.loopback
