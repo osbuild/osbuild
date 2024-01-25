@@ -12,10 +12,17 @@ STAGE_NAME = "org.osbuild.bootupd"
 @pytest.mark.parametrize("test_data,expected_err", [
     # bad
     ({"deployment": "must-be-object"}, "'must-be-object' is not of type 'object'"),
-    ({"deployment": {"osname": "some-os"}}, "'ref' is a required property"),
-    ({"deployment": {"ref": "some-ref"}}, "'osname' is a required property"),
+    ({"deployment": {"osname": "some-os"}}, "{'osname': 'some-os'} is not valid under any of the given schemas"),
+    ({"deployment": {"ref": "some-ref"}}, "{'ref': 'some-ref'} is not valid under any of the given schemas"),
     ({"deployment": {"osname": "some-os", "ref": "some-ref", "serial": "must-be-number"}},
      "'must-be-number' is not of type 'number'"),
+    ({"deployment": {"default": False}}, "{'default': False} is not valid under any of the given schemas"),
+    ({"deployment": {
+        "osname": "some-os",
+        "ref": "some-ref",
+        "serial": 0,
+        "default": True}
+      }, "{'osname': 'some-os', 'ref': 'some-ref', 'serial': 0, 'default': True} is not valid under any of the given schemas"),
     ({"random": "property"}, "Additional properties are not allowed"),
     ({"bios": {}}, "'device' is a required property"),
     ({"bios": "must-be-object"}, "'must-be-object' is not of type 'object'"),
@@ -27,6 +34,17 @@ STAGE_NAME = "org.osbuild.bootupd"
             "osname": "some-os",
             "ref": "some-ref",
             "serial": 1,
+        },
+        "static-configs": True,
+        "bios":
+        {
+            "device": "/dev/sda",
+        },
+    }, ""),
+    ({
+        "deployment":
+        {
+            "default": True,
         },
         "static-configs": True,
         "bios":

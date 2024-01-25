@@ -1,13 +1,15 @@
 import collections
 import contextlib
+import glob
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
 import typing
 # pylint doesn't understand the string-annotation below
-from typing import Any, List  # pylint: disable=unused-import
+from typing import Any, Dict, List, Tuple  # pylint: disable=unused-import
 
 from osbuild.util.rhsm import Subscriptions
 
@@ -214,7 +216,43 @@ def parse_input_commits(commits):
     return commits["path"], data["refs"]
 
 
-def deployment_path(root: PathLike, osname: str, ref: str, serial: int):
+def parse_deployment_option(root: PathLike, deployment: Dict) -> Tuple[str, str, str]:
+    """Parse the deployment option and return the osname, ref, and serial
+
+    The `deployment` arg contains the following sub fields:
+    - osname: Name of the stateroot used in the deployment (ie. fedora-coreos)
+    - ref: OStree ref to used for the deployment (ie. fedora/aarch64/coreos/next)
+    - serial: The deployment serial (ie. 0)
+    - default: Boolean to determine whether the default ostree deployment should be used
+    """
+
+    default_deployment = deployment.get("default")
+    if default_deployment:
+        filenames = glob.glob(os.path.join(root, 'ostree/deploy/*/deploy/*.0'))
+        if len(filenames) < 1:
+            raise ValueError("Could not find deployment")
+        if len(filenames) > 1:
+            raise ValueError(f"More than one deployment found: {filenames}")
+
+        # We pick up the osname, commit, and serial from the filesystem
+        # here. We'll return the detected commit as the ref in this
+        # since it's a valid substitute for all subsequent uses in
+        # the code base.
+        f = re.search("/ostree/deploy/(.*)/deploy/(.*)\\.([0-9])", filenames[0])
+        if not f:
+            raise ValueError("cannot find ostree deployment in {filenames[0]}")
+        osname = f.group(1)
+        commit = f.group(2)
+        serial = f.group(3)
+        return osname, commit, serial
+
+    osname = deployment["osname"]
+    ref = deployment["ref"]
+    serial = deployment.get("serial", 0)
+    return osname, ref, serial
+
+
+def deployment_path(root: PathLike, osname: str = "", ref: str = "", serial: int = 0):
     """Return the path to a deployment given the parameters"""
 
     base = os.path.join(root, "ostree")

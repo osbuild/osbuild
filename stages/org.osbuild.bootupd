@@ -32,7 +32,26 @@ SCHEMA_2 = r"""
     "deployment": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["osname", "ref"],
+      "oneOf": [
+        {
+          "properties": {
+          "default": {"enum": [false]}
+          },
+          "required": ["osname", "ref"]
+        },
+        {
+          "properties": {
+          "default": {"enum": [true]}
+          },
+          "not": {
+            "anyOf": [
+              {"required": ["osname"]},
+              {"required": ["ref"]},
+              {"required": ["serial"]}
+            ]
+          }
+        }
+      ],
       "properties": {
         "osname": {
           "description": "Name of the stateroot to be used in the deployment",
@@ -46,6 +65,11 @@ SCHEMA_2 = r"""
           "description": "The deployment serial (usually '0')",
           "type": "number",
           "default": 0
+        },
+        "default": {
+          "description": "Find and use the default ostree deployment",
+            "type": "boolean",
+            "default": false
         }
       }
     },
@@ -101,9 +125,7 @@ def main(args, options):
     # we'll call ostree.deployment_path() helper to find it for us.
     root = mounts
     if deployment:
-        osname = deployment["osname"]
-        ref = deployment["ref"]
-        serial = deployment.get("serial", 0)
+        osname, ref, serial = ostree.parse_deployment_option(mounts, deployment)
         root = ostree.deployment_path(mounts, osname, ref, serial)
 
     bootupd_args = []

@@ -11,6 +11,7 @@ import unittest
 
 import pytest
 
+from osbuild.testutil import make_fake_tree
 from osbuild.util import ostree
 
 from .. import test
@@ -208,3 +209,41 @@ class TestPasswdLike(unittest.TestCase):
             check.read_from(file)
 
             assert subids.db == check.db
+
+
+def test_parse_default_deployment_happy(tmp_path):
+    deployment = {
+        "default": True,
+    }
+    make_fake_tree(tmp_path, {
+        "ostree/deploy/fedora-coreos/deploy/72f807.0": "",
+    })
+    osname, ref, serial = ostree.parse_deployment_option(tmp_path, deployment)
+    assert osname == "fedora-coreos"
+    assert ref == "72f807"
+    assert serial == "0"
+
+
+def test_parse_default_deployment_sad(tmp_path):
+    deployment = {
+        "default": True,
+    }
+    make_fake_tree(tmp_path, {
+        "ostree/deploy/fedora-coreos/deploy/72f807.0": "",
+        "ostree/deploy/fedora-coreos/deploy/123456.0": "",
+    })
+    with pytest.raises(ValueError) as exp:
+        ostree.parse_deployment_option(tmp_path, deployment)
+    assert "More than one deployment found: [" in str(exp.value)
+
+
+def test_parse_deployment_happy(tmp_path):
+    deployment = {
+        "osname": "fedora-coreos",
+        "ref": "some-ref",
+        "serial": "0",
+    }
+    osname, ref, serial = ostree.parse_deployment_option(tmp_path, deployment)
+    assert osname == "fedora-coreos"
+    assert ref == "some-ref"
+    assert serial == "0"

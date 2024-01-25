@@ -41,7 +41,26 @@ SCHEMA_2 = """
       "deployment": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["osname", "ref"],
+        "oneOf": [
+          {
+            "properties": {
+              "default": {"enum": [false]}
+            },
+            "required": ["osname", "ref"]
+          },
+          {
+            "properties": {
+              "default": {"enum": [true]}
+            },
+            "not": {
+              "anyOf": [
+                {"required": ["osname"]},
+                {"required": ["ref"]},
+                {"required": ["serial"]}
+              ]
+            }
+          }
+        ],
         "properties": {
           "osname": {
             "description": "Name of the stateroot to be used in the deployment",
@@ -55,6 +74,11 @@ SCHEMA_2 = """
             "description": "The deployment serial (usually '0')",
             "type": "number",
             "default": 0
+          },
+          "default": {
+            "description": "Find and use the default ostree deployment",
+            "type": "boolean",
+            "default": false
           }
         }
       }
@@ -99,12 +123,9 @@ class OSTreeDeploymentMount(mounts.MountService):
         tree = args["tree"]
         mountroot = args["root"]
         options = args["options"]
-
         source = options.get("source", "tree")
         deployment = options["deployment"]
-        osname = deployment["osname"]
-        ref = deployment["ref"]
-        serial = deployment.get("serial", 0)
+        osname, ref, serial = ostree.parse_deployment_option(tree, deployment)
 
         # The user could specify either the tree or mountroot as the
         # place where we want the deployment to be mounted.

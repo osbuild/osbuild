@@ -19,6 +19,7 @@ COREOS_ALEPH_FILENAME = ".coreos-aleph-version.json"
 SCHEMA_2 = """
 "options": {
   "additionalProperties": false,
+  "required": ["deployment"],
   "properties": {
     "coreos_compat": {
       "description": "boolean to allow for CoreOS aleph version backwards compatibility",
@@ -26,7 +27,26 @@ SCHEMA_2 = """
     },
     "deployment": {
       "additionalProperties": false,
-      "required": ["osname", "ref"],
+      "oneOf": [
+        {
+          "properties": {
+            "default": {"enum": [false]}
+          },
+          "required": ["osname", "ref"]
+        },
+        {
+          "properties": {
+            "default": {"enum": [true]}
+          },
+          "not": {
+            "anyOf": [
+              {"required": ["osname"]},
+              {"required": ["ref"]},
+              {"required": ["serial"]}
+            ]
+          }
+        }
+      ],
       "properties": {
         "osname": {
           "description": "Name of the stateroot to be used in the deployment",
@@ -40,6 +60,11 @@ SCHEMA_2 = """
           "description": "The deployment serial (usually '0')",
           "type": "number",
           "default": 0
+        },
+        "default": {
+          "description": "Find and use the default ostree deployment",
+          "type": "boolean",
+          "default": false
         }
       }
     }
@@ -131,9 +156,7 @@ def construct_aleph_json(tree, origin):
 def main(tree, options):
     coreos_compat = options.get("coreos_compat", False)
     dep = options["deployment"]
-    osname = dep["osname"]
-    ref = dep["ref"]
-    serial = dep.get("serial", 0)
+    osname, ref, serial = ostree.parse_deployment_option(tree, dep)
 
     origin = ostree.deployment_path(tree, osname, ref, serial) + ".origin"
     data = construct_aleph_json(tree, origin)
