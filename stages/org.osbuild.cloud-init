@@ -142,11 +142,33 @@ SCHEMA = r"""
 """
 
 
+# Class representing the 'datasource_list' configuration option,
+# allowing to define a custom YAML dumper for it.
+class DatasourceList(list):
+    pass
+
+
+# Dedicated YAML dumper for the `DatasourceList` class.
+# Make sure that the `DatasourceList` always uses flow style.
+# https://cloudinit.readthedocs.io/en/latest/reference/base_config_reference.html#datasource-list
+# Specifically, it says for the `datasource_list` key:
+# "This key is unique in that it uses a subset of YAML syntax.
+#  It requires that the key and its contents, a list,
+#  must share a single line - no newlines."
+def datasourcelist_presenter(dumper, data):
+    return dumper.represent_sequence("tag:yaml.org,2002:seq", data, flow_style=True)
+
+
 # Writes the passed `config` object as is into the configuration file in YAML format.
 # The validity of the `config` content is assured by the SCHEMA.
 def main(tree, options):
     filename = options.get("filename")
     config = options.get("config", {})
+
+    datasource_list = config.get("datasource_list")
+    if datasource_list:
+        config["datasource_list"] = DatasourceList(datasource_list)
+    yaml.add_representer(DatasourceList, datasourcelist_presenter)
 
     config_files_dir = f"{tree}/etc/cloud/cloud.cfg.d"
 
