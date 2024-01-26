@@ -357,6 +357,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import string
 import subprocess
 import sys
@@ -815,6 +816,7 @@ class Partition:
     def __init__(self,
                  uid: str = None,
                  pttype: str = None,
+                 partnum: int = None,
                  start: int = None,
                  size: int = None,
                  bootable: bool = False,
@@ -830,8 +832,8 @@ class Partition:
         self.name = name
         self.uuid = uuid
         self.attrs = attrs
-        self.index = None
-        self.partnum = None
+        self.index = partnum - 1 if partnum else None
+        self.partnum = partnum
 
     @property
     def start_in_bytes(self):
@@ -845,6 +847,7 @@ class Partition:
     def from_dict(cls, js):
         p = cls(uid=js.get("id"),
                 pttype=js.get("type"),
+                partnum=js.get("partnum"),
                 start=js.get("start"),
                 size=js.get("size"),
                 bootable=js.get("bootable"),
@@ -858,6 +861,8 @@ class Partition:
 
         if self.start:
             data["start"] = self.start
+        if self.partnum:
+            data["partnum"] = self.partnum
         if self.size:
             data["size"] = self.size
         if self.type:
@@ -891,6 +896,16 @@ class PartitionTable:
 
     def write_to(self, target, sync=True):
         """Write the partition table to disk"""
+        if self.label == "gpt":
+            self.sgdisk_write_to(target)
+        else:
+            self.sfdisk_write_to(target)
+
+        if sync:
+            self.update_from(target)
+
+    def sfdisk_write_to(self, target):
+        """Write the partition table to disk"""
         # generate the command for sfdisk to create the table
         command = f"label: {self.label}\nlabel-id: {self.uuid}"
         for partition in self.partitions:
@@ -922,8 +937,61 @@ class PartitionTable:
                        encoding='utf-8',
                        check=True)
 
-        if sync:
-            self.update_from(target)
+    def sgdisk_write_to(self, target):
+        """Write the partition table to disk"""
+        # generate the command for sgdisk to create the table
+
+        command = [
+            "sgdisk",
+            "-Z",  # erase the partition table
+            target,
+            "-g",  # needed for older sgdisk
+        ]
+
+        if self.uuid:
+            command += ["-U", self.uuid]
+
+        for i, part in enumerate(self.partitions):
+            idx = part.partnum if part.partnum else i + 1  # partitions are 1-indexed
+            start = part.start if part.start else 0
+
+            # format is 'partnum:start:end'
+            size = "0"
+            if part.size:
+                size_bytes = part.size
+                size = f"+{size_bytes}"
+
+            cmd = [
+                "-n", f"{idx}:{start}:{size}"
+
+            ]
+
+            if part.name:
+                cmd += [
+                    "-c", f"{idx}:{part.name}"
+                ]
+
+            if part.uuid:
+                cmd += [
+                    "-u", f"{idx}:{part.uuid}"
+                ]
+
+            if part.type:
+                cmd += [
+                    "-t", f"{idx}:{part.type}"
+                ]
+
+            if part.attrs:
+                for attr in sorted(part.attrs):
+                    cmd += [
+                        "-A", f"{idx}:set:{attr}"
+                    ]
+
+            command += cmd
+
+        subprocess.run(command,
+                       encoding='utf8',
+                       check=True)
 
     def update_from(self, target):
         """Update and fill in missing information from disk"""
@@ -936,8 +1004,9 @@ class PartitionTable:
 
         assert len(disk_parts) == len(self.partitions)
         for i, part in enumerate(self.partitions):
-            part.index = i
-            part.partnum = i + 1
+            node = re.findall(r'\d+', disk_parts[i]["node"])
+            part.partnum = int(node[-1])
+            part.index = part.partnum - 1
             part.start = disk_parts[i]["start"]
             part.size = disk_parts[i]["size"]
             part.type = disk_parts[i].get("type")
