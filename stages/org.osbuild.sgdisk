@@ -50,6 +50,10 @@ SCHEMA_2 = r"""
             "description": "The partition name",
             "type": "string"
           },
+          "partnum": {
+            "description": "The partition number",
+            "type": "integer"
+          },
           "size": {
             "description": "The size of this partition",
             "type": "integer"
@@ -88,6 +92,7 @@ SCHEMA_2 = r"""
 class Partition:
     def __init__(self,
                  pttype: str = None,
+                 partnum: int = None,
                  start: int = None,
                  size: int = None,
                  bootable: bool = False,
@@ -95,6 +100,7 @@ class Partition:
                  uuid: str = None,
                  attrs: int = None):
         self.type = pttype
+        self.partnum = partnum
         self.start = start
         self.size = size
         self.name = name
@@ -129,7 +135,7 @@ class PartitionTable:
             command += ["-U", self.uuid]
 
         for i, part in enumerate(self.partitions):
-            idx = i + 1  # partitions are 1-indexed
+            idx = part.partnum if part.partnum else i + 1  # partitions are 1-indexed
 
             # format is 'partnum:start:end'
             size = "0"
@@ -173,6 +179,7 @@ class PartitionTable:
 
 def partition_from_json(js) -> Partition:
     p = Partition(pttype=js.get("type"),
+                  partnum=js.get("partnum"),
                   start=js.get("start"),
                   size=js.get("size"),
                   bootable=js.get("bootable"),
