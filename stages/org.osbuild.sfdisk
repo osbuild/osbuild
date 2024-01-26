@@ -4,6 +4,7 @@ Partition a target using sfdisk(8)
 """
 
 import json
+import re
 import subprocess
 import sys
 from typing import Optional
@@ -50,6 +51,10 @@ SCHEMA_2 = r"""
             "description": "The partition name (GPT)",
             "type": "string"
           },
+          "partnum": {
+            "description": "The partition number",
+            "type": "integer"
+          },
           "size": {
             "description": "The size of this partition",
             "type": "integer"
@@ -88,6 +93,7 @@ SCHEMA_2 = r"""
 class Partition:
     def __init__(self,
                  pttype: str = None,
+                 partnum: int = None,
                  start: int = None,
                  size: int = None,
                  bootable: bool = False,
@@ -95,13 +101,15 @@ class Partition:
                  uuid: str = None,
                  attrs: int = None):
         self.type = pttype
+        self.partnum = partnum
         self.start = start
         self.size = size
         self.bootable = bootable
         self.name = name
         self.uuid = uuid
-        self.index = None
         self.attrs = attrs
+        self.index = partnum - 1 if partnum else None
+        self.partnum = partnum if partnum else None
 
     @property
     def start_in_bytes(self):
@@ -167,7 +175,10 @@ class PartitionTable:
                 fields += [f'{field}="{value}"']
             if partition.bootable:
                 fields += ["bootable"]
-            command += "\n" + ", ".join(fields)
+            if partition.partnum:
+                command += "\n" + f'{target}p{partition.partnum}: ' + ", ".join(fields)
+            else:
+                command += "\n" + ", ".join(fields)
 
         print(command)
 
@@ -190,7 +201,8 @@ class PartitionTable:
 
         assert len(disk_parts) == len(self.partitions)
         for i, part in enumerate(self.partitions):
-            part.index = i
+            part.partnum = int(re.findall(r'\d+$', disk_parts[i]["node"])[0])
+            part.index = part.partnum - 1
             part.start = disk_parts[i]["start"]
             part.size = disk_parts[i]["size"]
             part.type = disk_parts[i].get("type")
@@ -200,6 +212,7 @@ class PartitionTable:
 
 def partition_from_json(js) -> Partition:
     p = Partition(pttype=js.get("type"),
+                  partnum=js.get("partnum"),
                   start=js.get("start"),
                   size=js.get("size"),
                   bootable=js.get("bootable"),

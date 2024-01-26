@@ -357,6 +357,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import string
 import subprocess
 import sys
@@ -815,6 +816,7 @@ class Partition:
     def __init__(self,
                  uid: str = None,
                  pttype: str = None,
+                 partnum: int = None,
                  start: int = None,
                  size: int = None,
                  bootable: bool = False,
@@ -830,8 +832,8 @@ class Partition:
         self.name = name
         self.uuid = uuid
         self.attrs = attrs
-        self.index = None
-        self.partnum = None
+        self.index = partnum - 1 if partnum else None
+        self.partnum = partnum if partnum else None
 
     @property
     def start_in_bytes(self):
@@ -845,6 +847,7 @@ class Partition:
     def from_dict(cls, js):
         p = cls(uid=js.get("id"),
                 pttype=js.get("type"),
+                partnum=js.get("partnum"),
                 start=js.get("start"),
                 size=js.get("size"),
                 bootable=js.get("bootable"),
@@ -858,6 +861,8 @@ class Partition:
 
         if self.start:
             data["start"] = self.start
+        if self.partnum:
+            data["partnum"] = self.partnum
         if self.size:
             data["size"] = self.size
         if self.type:
@@ -915,7 +920,10 @@ class PartitionTable:
                 fields += [f'{field}="{value}"']
             if partition.bootable:
                 fields += ["bootable"]
-            command += "\n" + ", ".join(fields)
+            if partition.partnum:
+                command += "\n" + f'{target}p{partition.partnum}: ' + ", ".join(fields)
+            else:
+                command += "\n" + ", ".join(fields)
 
         subprocess.run(["sfdisk", "-q", "--no-tell-kernel", target],
                        input=command,
@@ -936,8 +944,8 @@ class PartitionTable:
 
         assert len(disk_parts) == len(self.partitions)
         for i, part in enumerate(self.partitions):
-            part.index = i
-            part.partnum = i + 1
+            part.partnum = int(re.findall(r'\d+$', disk_parts[i]["node"])[0])
+            part.index = part.partnum - 1
             part.start = disk_parts[i]["start"]
             part.size = disk_parts[i]["size"]
             part.type = disk_parts[i].get("type")

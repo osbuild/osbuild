@@ -1231,6 +1231,7 @@
             "partitions": [
               {
                 "start": 2048,
+                "partnum": 1,
                 "size": 2048,
                 "type": "21686148-6449-6E6F-744E-656564454649",
                 "bootable": true,
@@ -1238,18 +1239,21 @@
               },
               {
                 "start": 4096,
+                "partnum": 2,
                 "size": 204800,
                 "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
                 "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
               },
               {
                 "start": 208896,
+                "partnum": 3,
                 "size": 204800,
                 "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                 "uuid": "61B2905B-DF3E-4FB3-80FA-49D1E773AA32"
               },
               {
                 "start": 413696,
+                "partnum": 4,
                 "size": 20555776,
                 "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                 "uuid": "CA7D7CCB-63ED-4C53-861C-1742536059CC"
