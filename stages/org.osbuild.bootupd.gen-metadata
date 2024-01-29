@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+"""
+Transforms /usr/lib/ostree-boot into a bootupd-compatible update payload.
+
+Scrapes metadata (e.g. RPM versions) about shim/grub and puts them along with their component files in
+`/usr/lib/bootupd/updates/`.
+
+Notes:
+  - Requires 'chroot' in the buildroot.
+  - Runs the 'bootupctl' binary from the image in the chroot.
+"""
+
+import os
+import subprocess
+import sys
+
+import osbuild.api
+from osbuild.util.mnt import MountGuard
+
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false
+}
+"""
+
+
+def main(tree):
+    with MountGuard() as mounter:
+        for source in ("/dev", "/sys", "/proc"):
+            target = os.path.join(tree, source.lstrip("/"))
+            os.makedirs(target, exist_ok=True)
+            mounter.mount(source, target, ro=True)
+
+        # Using a non-default sysroot is not supported by the generate-update-metadata command, so we need to chroot
+        # into the tree and run against /
+        cmd = ['chroot', tree, '/usr/bin/bootupctl', 'backend', 'generate-update-metadata', '/']
+        subprocess.run(cmd, check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    _args = osbuild.api.arguments()
+    r = main(_args["tree"])
+    sys.exit(r)
