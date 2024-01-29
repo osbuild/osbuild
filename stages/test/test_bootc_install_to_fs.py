@@ -2,7 +2,7 @@
 
 import os.path
 from contextlib import contextmanager
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from osbuild.testutil.imports import import_module_from_path
 
@@ -38,13 +38,9 @@ def test_bootc_install_to_fs(mock_run, tmp_path):
         stage.main(inputs, mounts)
 
     assert len(mock_run.call_args_list) == 1
-    args = mock_run.call_args_list[0].args
-    assert len(args) == 1
-    assert args[0] == [
-        "bootc", "install", "to-filesystem",
-        "--source-imgref", f"oci-archive:{tmp_path}/image",
-        "--skip-fetch-check", "--generic-image",
-        "/path/to/root",
+    assert mock_run.call_args_list == [
+        call(["bootc", "install", "to-filesystem",
+              "--source-imgref", f"oci-archive:{tmp_path}/image",
+              "--skip-fetch-check", "--generic-image",
+              "/path/to/root"], check=True)
     ]
-    kwargs = mock_run.call_args_list[0].kwargs
-    assert kwargs["check"] is True
