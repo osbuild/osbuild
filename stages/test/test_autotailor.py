@@ -1,12 +1,10 @@
 #!/usr/bin/python3
 
-import os.path
 import sys
 from unittest.mock import call, patch
 
 import pytest
 
-import osbuild.meta
 from osbuild import testutil
 
 TEST_INPUT = [
@@ -53,16 +51,6 @@ def fake_input_fixture():
     }
 
 
-def schema_validate_stage_oscap_autotailor(fake_input, test_data):
-    version = "1"
-    root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), STAGE_NAME)
-    test_input = fake_input
-    test_input["options"]["config"].update(test_data)
-    return schema.validate(test_input)
-
-
 @pytest.mark.parametrize("test_overrides,expected", TEST_INPUT)
 @patch("subprocess.run")
 def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, stage_module, test_overrides, expected):
@@ -107,8 +95,10 @@ def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, stage
         }, " is not of type 'string', 'integer'"),
     ],
 )
-def test_schema_validation_oscap_autotailor(fake_input, test_data, expected_err):
-    res = schema_validate_stage_oscap_autotailor(fake_input, test_data)
+@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
+def test_schema_validation_oscap_autotailor(fake_input, stage_schema, test_data, expected_err):
+    fake_input["options"]["config"].update(test_data)
+    res = stage_schema.validate(fake_input)
 
     assert res.valid is False
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)

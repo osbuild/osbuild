@@ -5,17 +5,12 @@ from unittest.mock import call, patch
 
 import pytest
 
-import osbuild.meta
 from osbuild import testutil
 
 STAGE_NAME = "org.osbuild.selinux"
 
 
-def schema_validation_selinux(test_data, implicit_file_contexts=True):
-    root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version="1"), STAGE_NAME)
-
+def get_test_input(test_data, implicit_file_contexts=True):
     test_input = {
         "name": STAGE_NAME,
         "options": {}
@@ -24,7 +19,7 @@ def schema_validation_selinux(test_data, implicit_file_contexts=True):
         test_input["options"]["file_contexts"] = "some-context"
 
     test_input["options"].update(test_data)
-    return schema.validate(test_input)
+    return test_input
 
 
 @pytest.mark.parametrize("test_data,expected_err", [
@@ -36,8 +31,9 @@ def schema_validation_selinux(test_data, implicit_file_contexts=True):
     ({"labels": "xxx"}, "'xxx' is not of type 'object'"),
     ({"force_autorelabel": "foo"}, "'foo' is not of type 'boolean'"),
 ])
-def test_schema_validation_selinux(test_data, expected_err):
-    res = schema_validation_selinux(test_data)
+@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
+def test_schema_validation_selinux(stage_schema, test_data, expected_err):
+    res = stage_schema.validate(get_test_input(test_data))
     if expected_err == "":
         assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
     else:
@@ -45,9 +41,9 @@ def test_schema_validation_selinux(test_data, expected_err):
         testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
-def test_schema_validation_selinux_file_context_required():
-    test_data = {}
-    res = schema_validation_selinux(test_data, implicit_file_contexts=False)
+@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
+def test_schema_validation_selinux_file_context_required(stage_schema):
+    res = stage_schema.validate(get_test_input({}, implicit_file_contexts=False))
     assert res.valid is False
     expected_err = "'file_contexts' is a required property"
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
@@ -69,7 +65,7 @@ def test_selinux_file_contexts(mocked_setfiles, tmp_path, stage_module):
 @patch("osbuild.util.selinux.setfilecon")
 @patch("osbuild.util.selinux.setfiles")
 def test_selinux_labels(mocked_setfiles, mocked_setfilecon, tmp_path, stage_module):
-    osbuild.testutil.make_fake_input_tree(tmp_path, {
+    testutil.make_fake_input_tree(tmp_path, {
         "/usr/bin/bootc": "I'm only an imposter",
     })
 

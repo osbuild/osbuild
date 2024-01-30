@@ -6,7 +6,6 @@ from unittest import mock
 
 import pytest
 
-import osbuild.meta
 from osbuild import testutil
 from osbuild.testutil import has_executable, make_fake_input_tree
 
@@ -19,18 +18,14 @@ STAGE_NAME = "org.osbuild.xz"
     # good
     ({"filename": "image.xz"}, ""),
 ])
-def test_schema_validation_xz(test_data, expected_err):
-    root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), STAGE_NAME)
-
+def test_schema_validation_xz(stage_schema, test_data, expected_err):
     test_input = {
         "type": STAGE_NAME,
         "options": {
         }
     }
     test_input["options"].update(test_data)
-    res = schema.validate(test_input)
+    res = stage_schema.validate(test_input)
 
     if expected_err == "":
         assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"

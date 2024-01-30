@@ -10,7 +10,6 @@ try:
 except ModuleNotFoundError:
     import pytoml as toml
 
-import osbuild.meta
 from osbuild import testutil
 
 TEST_INPUT = [
@@ -95,12 +94,7 @@ def test_containers_storage_conf_integration(tmp_path, stage_module, test_filena
         ({}, {"options": {"pull_options": {"use_hard_links": True}}}, "is not of type 'string'"),
     ],
 )
-def test_schema_validation_containers_storage_conf(test_data, storage_test_data, expected_err):
-    version = "2"
-    root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), STAGE_NAME)
-
+def test_schema_validation_containers_storage_conf(stage_schema, test_data, storage_test_data, expected_err):
     test_input = {
         "type": STAGE_NAME,
         "options": {
@@ -113,7 +107,7 @@ def test_schema_validation_containers_storage_conf(test_data, storage_test_data,
 
     test_input["options"].update(test_data)
     test_input["options"]["config"]["storage"].update(storage_test_data)
-    res = schema.validate(test_input)
+    res = stage_schema.validate(test_input)
 
     if expected_err == "":
         assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
