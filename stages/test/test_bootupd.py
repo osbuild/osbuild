@@ -1,11 +1,9 @@
 #!/usr/bin/python3
 
-import os.path
 from unittest.mock import call, patch
 
 import pytest
 
-import osbuild.meta
 from osbuild import testutil
 
 STAGE_NAME = "org.osbuild.bootupd"
@@ -38,18 +36,14 @@ STAGE_NAME = "org.osbuild.bootupd"
     }, "")
 
 ])
-def test_bootupd_schema_validation(test_data, expected_err):
-    root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), STAGE_NAME)
-
+def test_bootupd_schema_validation(stage_schema, test_data, expected_err):
     test_input = {
         "type": STAGE_NAME,
         "options": {
         }
     }
     test_input["options"].update(test_data)
-    res = schema.validate(test_input)
+    res = stage_schema.validate(test_input)
 
     if expected_err == "":
         assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"

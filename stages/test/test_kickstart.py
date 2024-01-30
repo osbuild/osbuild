@@ -5,7 +5,6 @@ import subprocess
 
 import pytest
 
-import osbuild.meta
 from osbuild import testutil
 from osbuild.testutil import has_executable
 
@@ -218,25 +217,18 @@ TEST_INPUT = [
 STAGE_NAME = "org.osbuild.kickstart"
 
 
-def schema_validate_kickstart_stage(test_data):
-    version = "1"
-    root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), STAGE_NAME)
-    test_input = {
+@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
+@pytest.mark.parametrize("test_input,expected", TEST_INPUT)
+def test_kickstart_test_cases_valid(stage_schema, test_input, expected):  # pylint: disable=unused-argument
+    """ ensure all test inputs are valid """
+    test_data = {
         "name": STAGE_NAME,
         "options": {
             "path": "some-path",
         }
     }
-    test_input["options"].update(test_data)
-    return schema.validate(test_input)
-
-
-@pytest.mark.parametrize("test_input,expected", TEST_INPUT)
-def test_kickstart_test_cases_valid(test_input, expected):  # pylint: disable=unused-argument
-    """ ensure all test inputs are valid """
-    res = schema_validate_kickstart_stage(test_input)
+    test_data["options"].update(test_input)
+    res = stage_schema.validate(test_data)
     assert res.valid is True, f"input: {test_input}\nerr: {[e.as_dict() for e in res.errors]}"
 
 
@@ -270,7 +262,7 @@ def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylin
 
 
 @pytest.mark.parametrize(
-    "test_data,expected_err",
+    "test_input,expected_err",
     [
         # BAD pattern, ensure some obvious ways to write arbitrary
         # kickstart files will not work
@@ -357,8 +349,16 @@ def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylin
 
     ],
 )
-def test_schema_validation_bad_apples(test_data, expected_err):
-    res = schema_validate_kickstart_stage(test_data)
+@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
+def test_schema_validation_bad_apples(stage_schema, test_input, expected_err):
+    test_data = {
+        "name": STAGE_NAME,
+        "options": {
+            "path": "some-path",
+        }
+    }
+    test_data["options"].update(test_input)
+    res = stage_schema.validate(test_data)
 
     assert res.valid is False
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)

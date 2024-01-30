@@ -1,12 +1,10 @@
 #!/usr/bin/python3
 
 import os
-import pathlib
 import unittest.mock
 
 import pytest
 
-import osbuild.meta
 from osbuild import testutil
 
 STAGE_NAME = "org.osbuild.machine-id"
@@ -59,17 +57,14 @@ def test_machine_id_first_boot_preserve(
 @pytest.mark.parametrize("test_data,expected_err", [
     ({"first-boot": "invalid-option"}, "'invalid-option' is not one of "),
 ])
-def test_machine_id_schema_validation(test_data, expected_err):
-    root = pathlib.Path(__file__).parents[2]
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
-    schema = osbuild.meta.Schema(mod_info.get_schema(), STAGE_NAME)
-
+@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
+def test_machine_id_schema_validation(stage_schema, test_data, expected_err):
     test_input = {
         "name": STAGE_NAME,
         "options": {},
     }
     test_input["options"].update(test_data)
-    res = schema.validate(test_input)
+    res = stage_schema.validate(test_input)
 
     assert res.valid is False
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
