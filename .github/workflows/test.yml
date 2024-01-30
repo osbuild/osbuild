@@ -19,7 +19,7 @@ jobs:
         - "test.run.test_noop"
         - "test.run.test_sources"
         - "test.run.test_stages"
-        - "-k stages/test"
+        - "stages/test"
         environment:
         - "py36"
         - "py39"
