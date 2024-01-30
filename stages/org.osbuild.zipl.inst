@@ -28,6 +28,14 @@ SCHEMA_2 = r"""
     "location": {
       "type": "number"
     },
+    "kernel_opts_append": {
+      "description": "Additional kernel options to add to the discovered options",
+      "type": "array",
+      "items": {
+        "description": "A single kernel command line option",
+        "type": "string"
+      }
+    },
     "blocksize": {
       "type": "number",
       "default": 512
@@ -85,6 +93,7 @@ def find_kernel(root, kernel: str):
 def main(paths, devices, options):
     kver = options["kernel"]
     location = options["location"]
+    append_kopts = options.get("kernel_opts_append", [])
     blocksize = options.get("blocksize", 512)
 
     root = paths["mounts"]
@@ -100,7 +109,7 @@ def main(paths, devices, options):
                     "--target", f"{root}/boot",
                     "--image", kernel,
                     "--ramdisk", initrd,
-                    "--parameters", kopts,
+                    "--parameters", f"{kopts} {' '.join(append_kopts)}" if append_kopts else kopts,
                     "--targetbase", device,
                     "--targettype", "SCSI",
                     "--targetblocksize", str(blocksize),
