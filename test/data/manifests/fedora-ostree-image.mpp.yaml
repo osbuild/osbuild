@@ -143,7 +143,7 @@ pipelines:
           filename: disk.img
           size:
             mpp-format-string: '{image.size}'
-      - type: org.osbuild.sfdisk
+      - type: org.osbuild.sgdisk
         devices:
           device:
             type: org.osbuild.loopback

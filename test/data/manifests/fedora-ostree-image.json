@@ -1216,7 +1216,7 @@
           }
         },
         {
-          "type": "org.osbuild.sfdisk",
+          "type": "org.osbuild.sgdisk",
           "devices": {
             "device": {
               "type": "org.osbuild.loopback",
