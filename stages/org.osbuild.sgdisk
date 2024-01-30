@@ -35,6 +35,11 @@ SCHEMA_2 = r"""
       "type": "boolean",
       "default": true
     },
+    "label": {
+      "description": "The type of the partition table. Only 'gpt' supported.",
+      "type": "string",
+      "enum": ["gpt"]
+    },
     "partitions": {
       "description": "Partition layout ",
       "type": "array",
