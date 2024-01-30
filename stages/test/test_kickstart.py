@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os.path
+import re
 import subprocess
 
 import pytest
@@ -19,6 +20,21 @@ TEST_INPUT = [
             "timezone": "UTC",
         },
         "lang en_US.UTF-8\nkeyboard us\ntimezone UTC",
+    ),
+    ({"rootpw": {"lock": True}}, "rootpw --lock"),
+    ({"rootpw": {"plaintext": True, "password": "plaintext-password"}}, "rootpw --plaintext plaintext-password"),
+    ({"rootpw": {"iscrypted": True, "password": "encrypted-password"}}, "rootpw --iscrypted encrypted-password"),
+    (
+        {"rootpw": {"iscrypted": True, "allow_ssh": True, "password": "encrypted-password"}},
+        "rootpw --iscrypted --allow-ssh encrypted-password",
+    ),
+    (
+        {"rootpw": {"plaintext": True, "allow_ssh": True, "password": "plaintext-password"}},
+        "rootpw --plaintext --allow-ssh plaintext-password",
+    ),
+    (
+        {"rootpw": {"plaintext": True, "lock": True, "password": "plaintext-password"}},
+        "rootpw --lock --plaintext plaintext-password",
     ),
     (
         {
@@ -59,6 +75,7 @@ TEST_INPUT = [
     ),
     ({"zerombr": True}, "zerombr"),
     ({"clearpart": {"all": True}}, "clearpart --all"),
+    ({"clearpart": {"all": True, "initlabel": True}}, "clearpart --all --initlabel"),
     (
         {"clearpart": {"drives": ["sd*|hd*|vda", "/dev/vdc"]}},
         "clearpart --drives=sd*|hd*|vda,/dev/vdc",
@@ -68,6 +85,7 @@ TEST_INPUT = [
         {"clearpart": {"drives": ["disk/by-id/scsi-58095BEC5510947BE8C0360F604351918"]}},
         "clearpart --drives=disk/by-id/scsi-58095BEC5510947BE8C0360F604351918"
     ),
+    ({"clearpart": {"drives": ["hda"], "initlabel": True}}, "clearpart --drives=hda --initlabel"),
     ({"clearpart": {"list": ["sda2", "sda3"]}}, "clearpart --list=sda2,sda3"),
     ({"clearpart": {"list": ["sda2"]}}, "clearpart --list=sda2"),
     (
@@ -121,6 +139,8 @@ TEST_INPUT = [
     ({"autopart": {"pbkdf-memory": 64}}, "autopart --pbkdf-memory=64"),
     ({"autopart": {"pbkdf-time": 128}}, "autopart --pbkdf-time=128"),
     ({"autopart": {"pbkdf-iterations": 256}}, "autopart --pbkdf-iterations=256"),
+    ({"autopart": {"nohome": True}}, "autopart --nohome"),
+    ({"autopart": {"type": "plain", "fstype": "xfs", "nohome": True}}, "autopart --type=plain --fstype=xfs --nohome"),
     ({
         "lang": "en_US.UTF-8",
         "keyboard": "us",
@@ -346,7 +366,17 @@ def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylin
             },
             "is not valid under any of the given schemas",
         ),
-
+        ({"rootpw": {}}, "is not valid under any of the given schemas"),
+        ({"rootpw": {"lock": True, "allow_ssh": True}}, "is not valid under any of the given schemas"),
+        ({"rootpw": {"plaintext": True}}, "is not valid under any of the given schemas"),
+        # under py3.6 the message is "'' is too short" under other versions the message is "'' should be non-empty"
+        ({"rootpw": {"plaintext": True, "password": ""}}, re.compile("'' should be non-empty|'' is too short")),
+        ({"rootpw": {"iscrypted": True}}, "is not valid under any of the given schemas"),
+        ({"rootpw": {"password": "password"}}, "is not valid under any of the given schemas"),
+        (
+            {"rootpw": {"iscrypted": True, "plaintext": True, "password": "pass"}},
+            "is not valid under any of the given schemas"
+        ),
     ],
 )
 @pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
