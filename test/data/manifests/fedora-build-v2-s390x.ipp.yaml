@@ -1,0 +1,56 @@
+version: '2'
+pipelines:
+  - name: build
+    source-epoch: 1659397331
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - binutils
+                - btrfs-progs
+                - cryptsetup
+                - dnf
+                - dosfstools
+                - e2fsprogs
+                - erofs-utils
+                - gdisk
+                - policycoreutils
+                - python3-iniparse
+                - python3-toml
+                - python3-yaml
+                - qemu-img
+                - rpm-ostree
+                - systemd
+                - tar
+                - xfsprogs
+                - xz
+                - lvm2
+                - selinux-policy-targeted
+                - genisoimage
+                - isomd5sum
+                - xorriso
+                - skopeo
+                - lorax-templates-generic
+                - squashfs-tools
+                - s390utils-base
+                - zstd
+                - openscap-utils
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+      - type: org.osbuild.selinux
+        options:
+          file_contexts: etc/selinux/targeted/contexts/files/file_contexts
+          labels:
+            /usr/bin/cp: system_u:object_r:install_exec_t:s0
+            /usr/bin/tar: system_u:object_r:install_exec_t:s0

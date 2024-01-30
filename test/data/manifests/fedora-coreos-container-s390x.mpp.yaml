@@ -1,0 +1,456 @@
+version: '2'
+mpp-vars:
+  arch: s390x
+  disk_size_gb: 10
+  boot_size_mb: 384
+  root_size_mb: 2048
+  sector_size: 512
+  four_k_sector_size: 4096
+  # The name to use for deployment stateroot
+  osname: fedora-coreos
+  # The container image ref to follow for updates
+  container_imgref: ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable
+  # Filesystem UUID and label definitions. These UUIDs
+  # are looked for on boot and if found replaced with
+  # a new random UUID to make each install unique.
+  boot_fs_uuid: 96d15588-3596-4b3c-adca-a2ff7279ea63
+  boot_fs_label: boot
+  root_fs_uuid: 910678ff-f77e-4a7d-8d53-86f2ac47a823
+  root_fs_label: root
+mpp-define-images:
+  - id: image
+    size:
+      mpp-format-string: "{disk_size_gb * 1024 * 1024 * 1024}"
+    table:
+      uuid: 00000000-0000-4000-a000-000000000001
+      label: gpt
+      partitions:
+        - name: boot
+          type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+          partnum: 3
+          size:
+            mpp-format-int: "{boot_size_mb * 1024 * 1024 / sector_size}"
+        - name: root
+          type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+          partnum: 4
+          size:
+            mpp-format-int: "{root_size_mb * 1024 * 1024 / sector_size}"
+  - id: image4k
+    sector_size:
+        mpp-format-int: "{four_k_sector_size}"
+    size:
+      mpp-format-string: "{disk_size_gb * 1024 * 1024 * 1024}"
+    table:
+      uuid: 00000000-0000-4000-a000-000000000001
+      label: gpt
+      partitions:
+        - name: boot
+          partnum: 3
+          type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+          size:
+            mpp-format-int: "{boot_size_mb * 1024 * 1024 / four_k_sector_size}"
+        - name: root
+          partnum: 4
+          type: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+          size:
+            mpp-format-int: "{root_size_mb * 1024 * 1024 / four_k_sector_size}"
+pipelines:
+  - mpp-import-pipelines:
+      path: fedora-vars-s390x.ipp.yaml
+  - mpp-import-pipeline:
+      path: fedora-build-v2-s390x.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    source-epoch: 1659397331
+    stages:
+      - type: org.osbuild.ostree.init-fs
+      - type: org.osbuild.ostree.os-init
+        options:
+          osname:
+            mpp-format-string: '{osname}'
+      - type: org.osbuild.ostree.config
+        options:
+          repo: /ostree/repo
+          config:
+            sysroot:
+              readonly: true
+              bootloader: none
+      - type: org.osbuild.ignition
+      - type: org.osbuild.zipl
+      - type: org.osbuild.ostree.deploy.container
+        options:
+          osname:
+            mpp-format-string: '{osname}'
+          target_imgref:
+            mpp-format-string: '{container_imgref}'
+          mounts:
+            - /boot
+          kernel_opts:
+            - rw
+        inputs:
+          images:
+            type: org.osbuild.containers
+            origin: org.osbuild.source
+            mpp-resolve-images:
+              images:
+                - source: quay.io/fedora/fedora-coreos
+                  tag: testing
+      - type: org.osbuild.ostree.aleph
+        options:
+          coreos_compat: true
+          deployment:
+            ref: ostree/1/1/0
+            osname:
+              mpp-format-string: '{osname}'
+      - type: org.osbuild.ostree.config
+        options:
+          repo: /ostree/repo
+          config:
+            sysroot:
+               bootloader: zipl
+      - type: org.osbuild.ostree.selinux
+        options:
+          deployment:
+            ref: ostree/1/1/0
+            osname:
+              mpp-format-string: '{osname}'
+  - name: raw-image
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size:
+            mpp-format-string: '{image.size}'
+      - type: org.osbuild.sgdisk
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+        options:
+          mpp-format-json: '{image.layout}'
+      - type: org.osbuild.mkfs.ext4
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+              lock: true
+        options:
+          uuid:
+            mpp-format-string: '{boot_fs_uuid}'
+          label:
+            mpp-format-string: '{boot_fs_label}'
+      - type: org.osbuild.mkfs.xfs
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''root''].start}'
+              size:
+                mpp-format-int: '{image.layout[''root''].size}'
+              lock: true
+        options:
+          uuid:
+            mpp-format-string: '{root_fs_uuid}'
+          label:
+            mpp-format-string: '{root_fs_label}'
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:tree
+        options:
+          paths:
+            - from: input://tree/
+              to: mount://root/
+        devices:
+          disk:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              partscan: true
+        mounts:
+          - name: root
+            type: org.osbuild.xfs
+            source: disk
+            partition:
+              mpp-format-int: '{image.layout[''root''].partnum}'
+            target: /
+          - name: boot
+            type: org.osbuild.ext4
+            source: disk
+            partition:
+              mpp-format-int: '{image.layout[''boot''].partnum}'
+            target: /boot
+  - name: raw-4k-image
+    build: name:build
+    stages:
+      - type: org.osbuild.truncate
+        options:
+          filename: disk.img
+          size:
+            mpp-format-string: '{image4k.size}'
+      - type: org.osbuild.sgdisk
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              sector-size:
+                  mpp-format-int: "{four_k_sector_size}"
+        options:
+          mpp-format-json: '{image4k.layout}'
+      - type: org.osbuild.mkfs.ext4
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image4k.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image4k.layout[''boot''].size}'
+              lock: true
+              sector-size:
+                  mpp-format-int: "{four_k_sector_size}"
+        options:
+          uuid:
+            mpp-format-string: '{boot_fs_uuid}'
+          label:
+            mpp-format-string: '{boot_fs_label}'
+      - type: org.osbuild.mkfs.xfs
+        devices:
+          device:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image4k.layout[''root''].start}'
+              size:
+                mpp-format-int: '{image4k.layout[''root''].size}'
+              lock: true
+              sector-size:
+                  mpp-format-int: "{four_k_sector_size}"
+        options:
+          uuid:
+            mpp-format-string: '{root_fs_uuid}'
+          label:
+            mpp-format-string: '{root_fs_label}'
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:tree
+        options:
+          paths:
+            - from: input://tree/
+              to: mount://root/
+        devices:
+          disk:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              partscan: true
+              sector-size:
+                  mpp-format-int: "{four_k_sector_size}"
+        mounts:
+          - name: root
+            type: org.osbuild.xfs
+            source: disk
+            partition:
+              mpp-format-int: '{image4k.layout[''root''].partnum}'
+            target: /
+          - name: boot
+            type: org.osbuild.ext4
+            source: disk
+            partition:
+              mpp-format-int: '{image4k.layout[''boot''].partnum}'
+            target: /boot
+  - name: raw-metal-image
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:raw-image
+        options:
+          paths:
+            - from: input://tree/disk.img
+              to: tree:///disk.img
+      - type: org.osbuild.kernel-cmdline.bls-append
+        options:
+          bootpath: mount:///
+          kernel_opts:
+            - ignition.platform.id=metal
+        devices:
+          boot:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+        mounts:
+          - name: boot
+            type: org.osbuild.ext4
+            source: boot
+            target: /
+  - name: raw-metal4k-image
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:raw-4k-image
+        options:
+          paths:
+            - from: input://tree/disk.img
+              to: tree:///disk.img
+      - type: org.osbuild.kernel-cmdline.bls-append
+        options:
+          bootpath: mount:///
+          kernel_opts:
+            - ignition.platform.id=metal
+        devices:
+          boot:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image4k.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image4k.layout[''boot''].size}'
+              sector-size:
+                  mpp-format-int: "{four_k_sector_size}"
+        mounts:
+          - name: boot
+            type: org.osbuild.ext4
+            source: boot
+            target: /
+  - name: raw-qemu-image
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:raw-image
+        options:
+          paths:
+            - from: input://tree/disk.img
+              to: tree:///disk.img
+      - type: org.osbuild.kernel-cmdline.bls-append
+        options:
+          bootpath: mount:///
+          kernel_opts:
+            - console=tty0
+            - console=ttyS0,115200n8
+            - ignition.platform.id=qemu
+        devices:
+          boot:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              start:
+                mpp-format-int: '{image.layout[''boot''].start}'
+              size:
+                mpp-format-int: '{image.layout[''boot''].size}'
+        mounts:
+          - name: boot
+            type: org.osbuild.ext4
+            source: boot
+            target: /
+      - type: org.osbuild.zipl.inst
+        options:
+          kernel: "1"
+          kernel_opts_append:
+            - ignition.firstboot
+          location:
+            mpp-format-int: '{image.layout[''boot''].start}'
+        devices:
+          disk:
+            type: org.osbuild.loopback
+            options:
+              filename: disk.img
+              partscan: true
+        mounts:
+          - name: root
+            type: org.osbuild.xfs
+            source: disk
+            partition:
+              mpp-format-int: '{image4k.layout[''root''].partnum}'
+            target: /
+          - name: boot
+            type: org.osbuild.ext4
+            source: disk
+            partition:
+              mpp-format-int: '{image4k.layout[''boot''].partnum}'
+            target: /boot
+  - name: metal
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:raw-metal-image
+        options:
+          paths:
+            - from: input://tree/disk.img
+              to: tree:///metal.raw
+  - name: metal4k
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:raw-metal4k-image
+        options:
+          paths:
+            - from: input://tree/disk.img
+              to: tree:///metal4k.raw
+  - name: qemu
+    build: name:build
+    stages:
+      - type: org.osbuild.qemu
+        inputs:
+          image:
+            type: org.osbuild.files
+            origin: org.osbuild.pipeline
+            references:
+              name:raw-qemu-image:
+                file: disk.img
+        options:
+          filename: qemu.qcow2
+          format:
+            type: qcow2
+            compat: '1.1'
