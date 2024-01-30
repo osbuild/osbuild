@@ -223,6 +223,37 @@ SCHEMA = r"""
       }
     }
   },
+  "rootpw": {
+    "type": "object",
+    "anyOf":[
+      {"required": ["lock"], "not": {"required": ["allow_ssh"]}},
+      {"required": ["iscrypted", "password"], "not": {"required": ["plaintext"]}},
+      {"required": ["plaintext", "password"], "not": {"required": ["iscrypted"]}}
+    ],
+    "properties": {
+      "lock": {
+        "type": "boolean",
+        "description": "the root account is locked by default"
+      },
+      "plaintext": {
+         "type": "boolean",
+         "description": "the password argument is assumed to be in plain text"
+      },
+      "iscrypted": {
+         "type": "boolean",
+         "description": "the password argument is assumed to already be encrypted"
+      },
+      "allow_ssh": {
+         "type": "boolean",
+         "description": "This will allow remote root logins via ssh using only the password"
+      },
+      "password": {
+         "type": "string",
+         "description": "the root password",
+         "minLength": 1
+      }
+    }
+  },
   "lang": {
     "type": "string",
     "description": "The language code (e.g. en_US.UTF-8)"
@@ -252,6 +283,10 @@ SCHEMA = r"""
     "properties": {
       "all": {
         "description": "Erases all partitions from the system",
+        "type": "boolean"
+      },
+      "initlabel": {
+        "description": "Initializes a disk (or disks) by creating a default disk label for all disks",
         "type": "boolean"
       },
       "drives": {
@@ -363,6 +398,10 @@ SCHEMA = r"""
       "pbkdf-iterations": {
         "description": "Sets the number of iterations for passphrase processing directly",
         "type": "integer"
+      },
+      "nohome": {
+        "description": "Disables automatic creation of the /home partition",
+        "type": "boolean"
       }
     }
   },
@@ -438,6 +477,19 @@ def make_users(users: Dict) -> List[str]:
     return res
 
 
+def make_rootpw(rootpw: Dict) -> str:
+    arguments = []
+    for option in ["lock", "plaintext", "iscrypted", "allow_ssh", "password"]:
+        option_value = rootpw.get(option)
+        if option_value is True:
+            arguments.append(f"--{option.replace('_', '-')}")
+        elif isinstance(option_value, str) and option_value:
+            arguments.append(option_value)
+    if arguments:
+        return f"rootpw {' '.join(arguments)}"
+    return ""
+
+
 def make_clearpart(options: Dict) -> str:
     clearpart = options.get("clearpart")
     if clearpart is None:
@@ -458,6 +510,9 @@ def make_clearpart(options: Dict) -> str:
     linux = clearpart.get("linux", False)
     if linux:
         cmd += " --linux"
+    initlabel = clearpart.get("initlabel", False)
+    if initlabel:
+        cmd += " --initlabel"
     return cmd
 
 
@@ -481,7 +536,7 @@ def make_autopart(options: Dict) -> str:
     cmd = "autopart"
     for key in ["type", "fstype", "nolvm", "encrypted", "passphrase",
                 "escrowcert", "backuppassphrase", "cipher", "luks-version",
-                "pbkdf", "pbkdf-memory", "pbkdf-time", "pbkdf-iterations"]:
+                "pbkdf", "pbkdf-memory", "pbkdf-time", "pbkdf-iterations", "nohome"]:
         if key not in autopart:
             continue
         val = autopart[key]
@@ -568,6 +623,9 @@ def main(tree, options):  # pylint: disable=too-many-branches
 
     config += make_groups(options.get("groups", {}))
     config += make_users(options.get("users", {}))
+    rootpw_command = make_rootpw(options.get("rootpw", {}))
+    if rootpw_command:
+        config += [rootpw_command]
 
     lang = options.get("lang")
     if lang:
