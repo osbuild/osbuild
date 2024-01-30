@@ -19,6 +19,7 @@ jobs:
         - "test.run.test_noop"
         - "test.run.test_sources"
         - "test.run.test_stages"
+        # remove the "-k" when we move to "pytest 8.0.0"
         - "-k stages/test"
         environment:
         - "py36"
