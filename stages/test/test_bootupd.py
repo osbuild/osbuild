@@ -7,7 +7,8 @@ import pytest
 
 import osbuild.meta
 from osbuild import testutil
-from osbuild.testutil.imports import import_module_from_path
+
+STAGE_NAME = "org.osbuild.bootupd"
 
 
 @pytest.mark.parametrize("test_data,expected_err", [
@@ -38,13 +39,12 @@ from osbuild.testutil.imports import import_module_from_path
 
 ])
 def test_bootupd_schema_validation(test_data, expected_err):
-    name = "org.osbuild.bootupd"
     root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), STAGE_NAME)
 
     test_input = {
-        "type": "org.osbuild.bootupd",
+        "type": STAGE_NAME,
         "options": {
         }
     }
@@ -64,10 +64,7 @@ def test_bootupd_schema_validation(test_data, expected_err):
     ({"static-configs": True}, ["--with-static-configs"]),
 ])
 @patch("subprocess.run")
-def test_bootupd_defaults(mocked_run, test_options, expected_bootupd_opts):
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.bootupd")
-    stage = import_module_from_path("bootupd_stage", stage_path)
-
+def test_bootupd_defaults(mocked_run, stage_module, test_options, expected_bootupd_opts):
     args = {
         "paths": {
             "mounts": "/run/osbuild/mounts",
@@ -79,8 +76,8 @@ def test_bootupd_defaults(mocked_run, test_options, expected_bootupd_opts):
         },
     }
     options = test_options
-    with patch.object(stage, "bind_mounts") as mocked_bind_mounts:
-        stage.main(args, options)
+    with patch.object(stage_module, "bind_mounts") as mocked_bind_mounts:
+        stage_module.main(args, options)
 
     assert len(mocked_bind_mounts.call_args_list) == 1
     assert mocked_run.call_args_list == [call(["chroot",
@@ -93,12 +90,9 @@ def test_bootupd_defaults(mocked_run, test_options, expected_bootupd_opts):
 
 
 @patch("subprocess.run")
-def test_bootupd_bind_mounts(mocked_run):
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.bootupd")
-    stage = import_module_from_path("bootupd_stage", stage_path)
-
+def test_bootupd_bind_mounts(mocked_run, stage_module):
     dst = "/run/osbuild/mounts/"
-    with stage.bind_mounts(['/dev', '/proc', '/sys', '/run', '/var', '/tmp'], dst):
+    with stage_module.bind_mounts(['/dev', '/proc', '/sys', '/run', '/var', '/tmp'], dst):
         pass
     assert mocked_run.call_args_list == [
         call(["mount", "--rbind", "/dev", "/run/osbuild/mounts/dev"], check=True),

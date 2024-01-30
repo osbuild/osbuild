@@ -9,7 +9,8 @@ import pytest
 import osbuild.meta
 from osbuild import testutil
 from osbuild.testutil import has_executable, make_fake_input_tree
-from osbuild.testutil.imports import import_module_from_path
+
+STAGE_NAME = "org.osbuild.xz"
 
 
 @pytest.mark.parametrize("test_data,expected_err", [
@@ -19,13 +20,12 @@ from osbuild.testutil.imports import import_module_from_path
     ({"filename": "image.xz"}, ""),
 ])
 def test_schema_validation_xz(test_data, expected_err):
-    name = "org.osbuild.xz"
     root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), STAGE_NAME)
 
     test_input = {
-        "type": "org.osbuild.xz",
+        "type": STAGE_NAME,
         "options": {
         }
     }
@@ -58,14 +58,12 @@ def fake_input(tmp_path):
 
 
 @pytest.mark.skipif(not has_executable("xz"), reason="no xz executable")
-def test_xz_integration(tmp_path, fake_input_tree):  # pylint: disable=unused-argument
+def test_xz_integration(tmp_path, stage_module, fake_input_tree):  # pylint: disable=unused-argument
     inputs = fake_input_tree[1]
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.xz")
-    stage = import_module_from_path("xz_stage", stage_path)
     options = {
         "filename": "image.txt.xz",
     }
-    stage.main(inputs, tmp_path, options)
+    stage_module.main(inputs, tmp_path, options)
 
     img_path = os.path.join(tmp_path, "image.txt.xz")
     assert os.path.exists(img_path)
@@ -75,16 +73,14 @@ def test_xz_integration(tmp_path, fake_input_tree):  # pylint: disable=unused-ar
 
 
 @mock.patch("subprocess.run")
-def test_xz_cmdline(mock_run, tmp_path, fake_input_tree):
+def test_xz_cmdline(mock_run, tmp_path, stage_module, fake_input_tree):
     fake_input_path = fake_input_tree[0]
     inputs = fake_input_tree[1]
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.xz")
-    stage = import_module_from_path("xz_stage", stage_path)
     filename = "image.txt.xz"
     options = {
         "filename": filename,
     }
-    stage.main(inputs, tmp_path, options)
+    stage_module.main(inputs, tmp_path, options)
 
     expected = [
         "xz",
