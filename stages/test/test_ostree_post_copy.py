@@ -7,17 +7,17 @@ import pytest
 
 import osbuild.meta
 from osbuild import testutil
-from osbuild.testutil.imports import import_module_from_path
+
+STAGE_NAME = "org.osbuild.ostree.post-copy"
 
 
 def schema_validate_stage_ostree_post_copy(test_data):
-    name = "org.osbuild.ostree.post-copy"
     version = "2"
     root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), STAGE_NAME)
     test_input = {
-        "type": "org.osbuild.ostree.post-copy",
+        "type": STAGE_NAME,
         "options": {
             "sysroot": "/some/sysroot",
         },
@@ -27,17 +27,14 @@ def schema_validate_stage_ostree_post_copy(test_data):
 
 
 @patch("osbuild.util.ostree.cli")
-def test_ostree_post_copy_smoke(mock_ostree_cli):
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.ostree.post-copy")
-    stage = import_module_from_path("stage", stage_path)
-
+def test_ostree_post_copy_smoke(mock_ostree_cli, stage_module):
     paths = {
         "mounts": "/run/osbuild/mounts",
     }
     options = {
         "sysroot": "/some/sysroot",
     }
-    stage.main(paths, options)
+    stage_module.main(paths, options)
 
     assert mock_ostree_cli.call_args_list == [
         call("admin", "post-copy", sysroot="/run/osbuild/mounts/some/sysroot")]

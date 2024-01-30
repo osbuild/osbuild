@@ -10,7 +10,8 @@ import pytest
 import osbuild.meta
 from osbuild import testutil
 from osbuild.testutil import has_executable
-from osbuild.testutil.imports import import_module_from_path
+
+STAGE_NAME = "org.osbuild.mkfs.ext4"
 
 
 @pytest.mark.parametrize("test_data,expected_err", [
@@ -27,13 +28,12 @@ from osbuild.testutil.imports import import_module_from_path
     ({"uuid": "some-uuid"}, ""),
 ])
 def test_schema_validation_mkfs_ext4(test_data, expected_err):
-    name = "org.osbuild.mkfs.ext4"
     root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), STAGE_NAME)
 
     test_input = {
-        "type": "org.osbuild.mkfs.ext4",
+        "type": STAGE_NAME,
         "devices": {
             "device": {
                 "path": "some-path",
@@ -53,10 +53,7 @@ def test_schema_validation_mkfs_ext4(test_data, expected_err):
 
 
 @pytest.mark.skipif(not has_executable("mkfs.ext4"), reason="need mkfs.ext4")
-def test_mkfs_ext4_integration(tmp_path):
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.mkfs.ext4")
-    stage = import_module_from_path("mkfs_ext4_stage", stage_path)
-
+def test_mkfs_ext4_integration(tmp_path, stage_module):
     fake_disk_path = tmp_path / "fake.img"
     with fake_disk_path.open("w"):
         os.truncate(os.fspath(fake_disk_path), 10 * 1024 * 1024)
@@ -69,7 +66,7 @@ def test_mkfs_ext4_integration(tmp_path):
     options = {
         "uuid": fake_uuid,
     }
-    stage.main(devices, options)
+    stage_module.main(devices, options)
     assert os.path.exists(fake_disk_path)
     output = subprocess.check_output([
         "dumpe2fs", fake_disk_path], encoding="utf-8")
@@ -88,10 +85,7 @@ def test_mkfs_ext4_integration(tmp_path):
     ({"verity": True, "orphan_file": True, "metadata_csum_seed": True}, ["-O", "verity", "-O", "orphan_file", "-O", "metadata_csum_seed"]),
 ])
 @mock.patch("subprocess.run")
-def test_mkfs_ext4_cmdline(mock_run, test_input, expected):
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.mkfs.ext4")
-    stage = import_module_from_path("mkfs_ext4_stage", stage_path)
-
+def test_mkfs_ext4_cmdline(mock_run, stage_module, test_input, expected):
     fake_disk_path = "/dev/xxd1"
     devices = {
         "device": {
@@ -103,7 +97,7 @@ def test_mkfs_ext4_cmdline(mock_run, test_input, expected):
         "uuid": fake_uuid,
     }
     options.update(test_input)
-    stage.main(devices, options)
+    stage_module.main(devices, options)
 
     expected = [
         "mkfs.ext4",

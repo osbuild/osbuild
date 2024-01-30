@@ -10,7 +10,8 @@ from unittest.mock import call, patch
 import pytest
 
 from osbuild.testutil import has_executable, make_fake_tree
-from osbuild.testutil.imports import import_module_from_path
+
+STAGE_NAME = "org.osbuild.container-deploy"
 
 
 def make_container(tmp_path, tag, fake_content, base="scratch"):
@@ -32,10 +33,7 @@ def make_container(tmp_path, tag, fake_content, base="scratch"):
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
 @pytest.mark.skipif(not has_executable("podman"), reason="no podman executable")
-def test_container_deploy_integration(tmp_path):
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.container-deploy")
-    stage = import_module_from_path("stage", stage_path)
-
+def test_container_deploy_integration(tmp_path, stage_module):
     # build two containers and overlay files to test for
     # https://github.com/containers/storage/issues/1779
     base_tag = "cont-base-" + "".join(random.choices(string.digits, k=12))
@@ -71,7 +69,7 @@ def test_container_deploy_integration(tmp_path):
     options = {}
 
     with patch("os.makedirs", wraps=os.makedirs) as mocked_makedirs:
-        stage.main(inputs, output_dir, options)
+        stage_module.main(inputs, output_dir, options)
 
     assert output_dir.exists()
     assert (output_dir / "file1").read_bytes() == b"file1 from final layer"
@@ -81,10 +79,7 @@ def test_container_deploy_integration(tmp_path):
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
 @pytest.mark.skipif(not has_executable("podman"), reason="no podman executable")
-def test_container_deploy_exclude(tmp_path):
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.container-deploy")
-    stage = import_module_from_path("stage", stage_path)
-
+def test_container_deploy_exclude(tmp_path, stage_module):
     base_tag = "cont-base-" + "".join(random.choices(string.digits, k=12))
     make_container(tmp_path, base_tag, {
         "file1": "file1 content",
@@ -125,7 +120,7 @@ def test_container_deploy_exclude(tmp_path):
     }
     output_dir = tmp_path / "output"
 
-    stage.main(inputs, output_dir, options)
+    stage_module.main(inputs, output_dir, options)
     assert output_dir.exists()
     assert (output_dir / "file1").read_bytes() == b"file1 content"
     assert not (output_dir / "file2").exists()

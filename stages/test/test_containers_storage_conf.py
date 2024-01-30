@@ -12,7 +12,6 @@ except ModuleNotFoundError:
 
 import osbuild.meta
 from osbuild import testutil
-from osbuild.testutil.imports import import_module_from_path
 
 TEST_INPUT = [
     ({}, {"additionalimagestores": ["/path/to/store"]}, [("storage.options.additionalimagestores", ["/path/to/store"])]),
@@ -21,16 +20,17 @@ TEST_INPUT = [
 ]
 
 
+STAGE_NAME = "org.osbuild.containers.storage.conf"
+
+
 @pytest.mark.parametrize("test_filename", ["/etc/containers/storage.conf", "/usr/share/containers/storage.conf"])
 @pytest.mark.parametrize("test_storage,test_options,expected", TEST_INPUT)
-def test_containers_storage_conf_integration(tmp_path, test_filename, test_storage, test_options, expected):  # pylint: disable=unused-argument
+def test_containers_storage_conf_integration(tmp_path, stage_module, test_filename, test_storage, test_options, expected):  # pylint: disable=unused-argument
     treedir = os.path.join(tmp_path, "tree")
     confdir, confname = os.path.split(test_filename.lstrip("/"))
     confdir = os.path.join(treedir, confdir)
     os.makedirs(confdir, exist_ok=True)
 
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.containers.storage.conf")
-    stage = import_module_from_path("stage", stage_path)
     options = {
         "filename": test_filename,
         "config": {
@@ -44,7 +44,7 @@ def test_containers_storage_conf_integration(tmp_path, test_filename, test_stora
     options["config"]["storage"].update(test_storage)
     options["config"]["storage"]["options"].update(test_options)
 
-    stage.main(treedir, options)
+    stage_module.main(treedir, options)
 
     confpath = os.path.join(confdir, confname)
     assert os.path.exists(confpath)
@@ -96,14 +96,13 @@ def test_containers_storage_conf_integration(tmp_path, test_filename, test_stora
     ],
 )
 def test_schema_validation_containers_storage_conf(test_data, storage_test_data, expected_err):
-    name = "org.osbuild.containers.storage.conf"
     version = "2"
     root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), STAGE_NAME)
 
     test_input = {
-        "type": "org.osbuild.containers.storage.conf",
+        "type": STAGE_NAME,
         "options": {
             "config": {
                 "storage": {

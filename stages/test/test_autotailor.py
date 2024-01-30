@@ -8,7 +8,6 @@ import pytest
 
 import osbuild.meta
 from osbuild import testutil
-from osbuild.testutil.imports import import_module_from_path
 
 TEST_INPUT = [
     (
@@ -36,10 +35,13 @@ TEST_INPUT = [
 ]
 
 
+STAGE_NAME = "org.osbuild.oscap.autotailor"
+
+
 @pytest.fixture(name="fake_input")
 def fake_input_fixture():
     return {
-        "name": "org.osbuild.oscap.autotailor",
+        "name": STAGE_NAME,
         "options": {
             "filepath": "/some/filepath",
             "config": {
@@ -52,11 +54,10 @@ def fake_input_fixture():
 
 
 def schema_validate_stage_oscap_autotailor(fake_input, test_data):
-    name = "org.osbuild.oscap.autotailor"
     version = "1"
     root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), STAGE_NAME)
     test_input = fake_input
     test_input["options"]["config"].update(test_data)
     return schema.validate(test_input)
@@ -64,13 +65,10 @@ def schema_validate_stage_oscap_autotailor(fake_input, test_data):
 
 @pytest.mark.parametrize("test_overrides,expected", TEST_INPUT)
 @patch("subprocess.run")
-def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, test_overrides, expected):
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.oscap.autotailor")
-    stage = import_module_from_path("stage", stage_path)
-
+def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, stage_module, test_overrides, expected):
     options = fake_input["options"]
     options["config"]["overrides"] = test_overrides
-    stage.main("/some/sysroot", options)
+    stage_module.main("/some/sysroot", options)
 
     assert mock_subprocess_run.call_args_list == [
         call(["/usr/bin/autotailor", "--output", "/some/sysroot/some/filepath",

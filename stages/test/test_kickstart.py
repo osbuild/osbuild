@@ -8,7 +8,6 @@ import pytest
 import osbuild.meta
 from osbuild import testutil
 from osbuild.testutil import has_executable
-from osbuild.testutil.imports import import_module_from_path
 
 TEST_INPUT = [
     ({"lang": "en_US.UTF-8"}, "lang en_US.UTF-8"),
@@ -216,14 +215,16 @@ TEST_INPUT = [
 ]
 
 
+STAGE_NAME = "org.osbuild.kickstart"
+
+
 def schema_validate_kickstart_stage(test_data):
-    name = "org.osbuild.kickstart"
     version = "1"
     root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version=version), STAGE_NAME)
     test_input = {
-        "name": "org.osbuild.kickstart",
+        "name": STAGE_NAME,
         "options": {
             "path": "some-path",
         }
@@ -240,15 +241,12 @@ def test_kickstart_test_cases_valid(test_input, expected):  # pylint: disable=un
 
 
 @pytest.mark.parametrize("test_input,expected", TEST_INPUT)
-def test_kickstart_write(tmp_path, test_input, expected):
-    ks_stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.kickstart")
-    ks_stage = import_module_from_path("ks_stage", ks_stage_path)
-
+def test_kickstart_write(tmp_path, stage_module, test_input, expected):
     ks_path = "kickstart/kfs.cfg"
     options = {"path": ks_path}
     options.update(test_input)
 
-    ks_stage.main(tmp_path, options)
+    stage_module.main(tmp_path, options)
 
     ks_path = os.path.join(tmp_path, ks_path)
     with open(ks_path, encoding="utf-8") as fp:
@@ -258,15 +256,12 @@ def test_kickstart_write(tmp_path, test_input, expected):
 
 @pytest.mark.skipif(not has_executable("ksvalidator"), reason="`ksvalidator` is required")
 @pytest.mark.parametrize("test_input,expected", TEST_INPUT)
-def test_kickstart_valid(tmp_path, test_input, expected):  # pylint: disable=unused-argument
-    ks_stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.kickstart")
-    ks_stage = import_module_from_path("ks_stage", ks_stage_path)
-
+def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylint: disable=unused-argument
     ks_path = "kickstart/kfs.cfg"
     options = {"path": ks_path}
     options.update(test_input)
 
-    ks_stage.main(tmp_path, options)
+    stage_module.main(tmp_path, options)
 
     ks_path = os.path.join(tmp_path, ks_path)
 

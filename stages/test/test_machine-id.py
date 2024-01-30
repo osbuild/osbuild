@@ -8,13 +8,8 @@ import pytest
 
 import osbuild.meta
 from osbuild import testutil
-from osbuild.testutil.imports import import_module_from_path
 
-
-def stage(stage_name):
-    test_dir = pathlib.Path(__file__).parent
-    stage_path = pathlib.Path(test_dir) / f"../org.osbuild.{stage_name}"
-    return import_module_from_path("stage", os.fspath(stage_path))
+STAGE_NAME = "org.osbuild.machine-id"
 
 
 @pytest.fixture(name="machine_id_path")
@@ -25,30 +20,35 @@ def machine_id_path_fixture(tmp_path):
 
 
 @pytest.mark.parametrize("already_has_etc_machine_id", [True, False])
-def test_machine_id_first_boot_yes(tmp_path, machine_id_path, already_has_etc_machine_id):
+def test_machine_id_first_boot_yes(tmp_path, stage_module, machine_id_path, already_has_etc_machine_id):
     if already_has_etc_machine_id:
         machine_id_path.touch()
 
-    stage("machine-id").main(tmp_path, {"first-boot": "yes"})
+    stage_module.main(tmp_path, {"first-boot": "yes"})
     assert machine_id_path.read_bytes() == b"uninitialized\n"
 
 
 @pytest.mark.parametrize("already_has_etc_machine_id", [True, False])
-def test_machine_id_first_boot_no(tmp_path, machine_id_path, already_has_etc_machine_id):
+def test_machine_id_first_boot_no(tmp_path, stage_module, machine_id_path, already_has_etc_machine_id):
     if already_has_etc_machine_id:
         machine_id_path.write_bytes(b"\x01\x02\x03")
 
-    stage("machine-id").main(tmp_path, {"first-boot": "no"})
+    stage_module.main(tmp_path, {"first-boot": "no"})
     assert machine_id_path.stat().st_size == 0
 
 
 @pytest.mark.parametrize("already_has_etc_machine_id", [True, False])
 @unittest.mock.patch("builtins.print")
-def test_machine_id_first_boot_preserve(mock_print, tmp_path, machine_id_path, already_has_etc_machine_id):
+def test_machine_id_first_boot_preserve(
+        mock_print,
+        tmp_path,
+        stage_module,
+        machine_id_path,
+        already_has_etc_machine_id):
     if already_has_etc_machine_id:
         machine_id_path.write_bytes(b"\x01\x02\x03")
 
-    ret = stage("machine-id").main(tmp_path, {"first-boot": "preserve"})
+    ret = stage_module.main(tmp_path, {"first-boot": "preserve"})
     if already_has_etc_machine_id:
         assert os.stat(machine_id_path).st_size == 3
     else:
@@ -60,13 +60,12 @@ def test_machine_id_first_boot_preserve(mock_print, tmp_path, machine_id_path, a
     ({"first-boot": "invalid-option"}, "'invalid-option' is not one of "),
 ])
 def test_machine_id_schema_validation(test_data, expected_err):
-    name = "org.osbuild.machine-id"
     root = pathlib.Path(__file__).parents[2]
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(), STAGE_NAME)
 
     test_input = {
-        "name": "org.osbuild.machine-id",
+        "name": STAGE_NAME,
         "options": {},
     }
     test_input["options"].update(test_data)
@@ -76,6 +75,6 @@ def test_machine_id_schema_validation(test_data, expected_err):
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
-def test_machine_id_first_boot_unknown(tmp_path):
+def test_machine_id_first_boot_unknown(tmp_path, stage_module):
     with pytest.raises(ValueError, match=r"unexpected machine-id mode 'invalid'"):
-        stage("machine-id").main(tmp_path, {"first-boot": "invalid"})
+        stage_module.main(tmp_path, {"first-boot": "invalid"})

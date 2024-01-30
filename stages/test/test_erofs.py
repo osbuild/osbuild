@@ -9,7 +9,6 @@ import pytest
 import osbuild.meta
 from osbuild import testutil
 from osbuild.testutil import has_executable, make_fake_input_tree
-from osbuild.testutil.imports import import_module_from_path
 
 TEST_INPUT = [
     ({}, []),
@@ -20,9 +19,12 @@ TEST_INPUT = [
 ]
 
 
+STAGE_NAME = "org.osbuild.erofs"
+
+
 @pytest.mark.skipif(not has_executable("mkfs.erofs"), reason="no mkfs.erofs")
 @pytest.mark.parametrize("test_options,expected", TEST_INPUT)
-def test_erofs_integration(tmp_path, test_options, expected):  # pylint: disable=unused-argument
+def test_erofs_integration(tmp_path, stage_module, test_options, expected):  # pylint: disable=unused-argument
     fake_input_tree = make_fake_input_tree(tmp_path, {
         "/file-in-root.txt": "other content",
         "/subdir/file-in-subdir.txt": "subdir content",
@@ -32,15 +34,13 @@ def test_erofs_integration(tmp_path, test_options, expected):  # pylint: disable
             "path": fake_input_tree,
         }
     }
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.erofs")
-    stage = import_module_from_path("erofs_stage", stage_path)
     filename = "some-file.img"
     options = {
         "filename": filename,
     }
     options.update(test_options)
 
-    stage.main(inputs, tmp_path, options)
+    stage_module.main(inputs, tmp_path, options)
 
     img_path = os.path.join(tmp_path, "some-file.img")
     assert os.path.exists(img_path)
@@ -56,7 +56,7 @@ def test_erofs_integration(tmp_path, test_options, expected):  # pylint: disable
 
 @mock.patch("subprocess.run")
 @pytest.mark.parametrize("test_options,expected", TEST_INPUT)
-def test_erofs(mock_run, tmp_path, test_options, expected):
+def test_erofs(mock_run, tmp_path, stage_module, test_options, expected):
     fake_input_tree = make_fake_input_tree(tmp_path, {
         "/some-dir/some-file.txt": "content",
     })
@@ -65,15 +65,13 @@ def test_erofs(mock_run, tmp_path, test_options, expected):
             "path": fake_input_tree,
         }
     }
-    stage_path = os.path.join(os.path.dirname(__file__), "../org.osbuild.erofs")
-    stage = import_module_from_path("erofs_stage", stage_path)
     filename = "some-file.img"
     options = {
         "filename": filename,
     }
     options.update(test_options)
 
-    stage.main(inputs, tmp_path, options)
+    stage_module.main(inputs, tmp_path, options)
 
     expected = [
         "mkfs.erofs",
@@ -92,13 +90,12 @@ def test_erofs(mock_run, tmp_path, test_options, expected):
     ({"compression": {"method": "lz4"}}, ""),
 ])
 def test_schema_validation_erofs(test_data, expected_err):
-    name = "org.osbuild.erofs"
     root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), STAGE_NAME)
 
     test_input = {
-        "type": "org.osbuild.erofs",
+        "type": STAGE_NAME,
         "options": {
             "filename": "some-filename.img",
         }

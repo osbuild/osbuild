@@ -7,6 +7,8 @@ import pytest
 import osbuild.meta
 from osbuild import testutil
 
+STAGE_NAME = "org.osbuild.skopeo"
+
 
 @pytest.mark.parametrize("test_data,expected_err", [
     # bad
@@ -22,13 +24,12 @@ from osbuild import testutil
     ({"destination": {"type": "containers-storage"}}, ""),
 ])
 def test_schema_validation_skopeo(test_data, expected_err):
-    name = "org.osbuild.skopeo"
     root = os.path.join(os.path.dirname(__file__), "../..")
-    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", name)
-    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), name)
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", STAGE_NAME)
+    schema = osbuild.meta.Schema(mod_info.get_schema(version="2"), STAGE_NAME)
 
     test_input = {
-        "type": "org.osbuild.skopeo",
+        "type": STAGE_NAME,
         "options": {},
     }
     test_input["options"].update(test_data)
