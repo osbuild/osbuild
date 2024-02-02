@@ -45,9 +45,23 @@ SCHEMA_2 = r"""
         "required": ["from", "to"],
         "properties": {
           "from": {
-            "type": "string",
-            "description": "The source",
-            "pattern": "^input:\/\/[^\/]+\/"
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "The source, if an input",
+                "pattern": "^input:\/\/[^\/]+\/"
+              },
+              {
+                "type": "string",
+                "description": "The source, if a mount",
+                "pattern": "^mount:\/\/[^\/]+\/"
+              },
+              {
+                "type": "string",
+                "description": "The source, if the tree",
+                "pattern": "^tree:\/\/\/"
+              }
+            ]
           },
           "to": {
             "oneOf": [
@@ -58,7 +72,7 @@ SCHEMA_2 = r"""
               },
               {
                 "type": "string",
-                "description": "The destination, if a tree",
+                "description": "The destination, if the tree",
                 "pattern": "^tree:\/\/\/"
               }
             ]
