@@ -18,6 +18,15 @@ of the pipeline description, and more.
  * **Mailing List**: image-builder@redhat.com
  * **Changelog**: https://github.com/osbuild/osbuild/releases
 
+### Principles
+
+1. [OSBuild stages](./stages) are never broken, only deprecated. The same manifest should always produce the same output.
+2. [OSBuild stages](./stages) should be explicit whenever possible instead of e.g. relying on the state of the tree.
+3. Pipelines are independent, so the tree is expected to be empty at the beginning of each.
+4. Manifests are expected to be machine-generated, so OSBuild has no convenience functions to support manually created manifests.
+5. The build environment is confined against accidental misuse, but this should not be considered a security boundary.
+6. OSBuild may only use Python language features supported by the oldest target distribution.
+
 ### Contributing
 
 Please refer to the [developer guide](https://www.osbuild.org/guides/developer-guide/index.html) to learn about our workflow, code style and more.
