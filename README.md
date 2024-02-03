@@ -12,11 +12,11 @@ of the pipeline description, and more.
 
 ## Project
 
- * **Website**: <https://www.osbuild.org>
- * **Bug Tracker**: <https://github.com/osbuild/osbuild/issues>
+ * **Website**: https://www.osbuild.org
+ * **Bug Tracker**: https://github.com/osbuild/osbuild/issues
  * **Matrix**: #image-builder on [fedoraproject.org](https://matrix.to/#/#image-builder:fedoraproject.org)
  * **Mailing List**: image-builder@redhat.com
- * **Changelog**: <https://github.com/osbuild/osbuild/releases>
+ * **Changelog**: https://github.com/osbuild/osbuild/releases
 
 ### Contributing
 
@@ -82,7 +82,7 @@ sudo dnf install ./rpmbuild/RPMS/noarch/*.rpm
 
 ## Repository
 
- - **web**:   <https://github.com/osbuild/osbuild>
+ - **web**:   https://github.com/osbuild/osbuild
  - **https**: `https://github.com/osbuild/osbuild.git`
  - **ssh**:   `git@github.com:osbuild/osbuild.git`
 
