@@ -44,12 +44,14 @@ class MountGuard(contextlib.AbstractContextManager):
     def __init__(self):
         self.mounts = []
 
-    def mount(self, source, target, bind=True, ro=False, mode="0755"):
+    def mount(self, source, target, bind=True, ro=False, rw=False, mode="0755"):
         options = []
         if bind:
             options += ["bind"]
         if ro:
             options += ["ro"]
+        if rw:
+            options += ["rw"]
         if mode:
             options += [mode]
 
