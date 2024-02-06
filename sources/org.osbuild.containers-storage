@@ -13,7 +13,6 @@ by osbuild itself.
 Buildhost commands used: `skopeo`.
 """
 
-import concurrent.futures
 import hashlib
 import subprocess as sp
 import sys
@@ -66,11 +65,8 @@ class ContainersStorageSource(sources.SourceService):
         self.exists(checksum, desc)
 
     def fetch_all(self, items) -> None:
-        # prepare each item as a (checksum, desc) tuple (where desc=None)
-        transformed = map(lambda i: self.transform(i, None), items)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*transformed)):
-                pass
+        for checksum in items:
+            self.fetch_one(checksum, None)
 
     def exists(self, checksum, _) -> bool:
         image_id = checksum.split(":")[1]

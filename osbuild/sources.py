@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 import tempfile
-from typing import ClassVar, Dict, Tuple
+from typing import ClassVar, Dict
 
 from . import host
 from .objectstore import ObjectStore
@@ -104,11 +104,6 @@ class SourceService(host.Service):
     def exists(self, checksum, _desc) -> bool:
         """Returns True if the item to download is in cache. """
         return os.path.isfile(f"{self.cache}/{checksum}")
-
-    # pylint: disable=[no-self-use]
-    def transform(self, checksum, desc) -> Tuple:
-        """Modify the input data before downloading. By default only transforms an item object to a Tupple."""
-        return checksum, desc
 
     @staticmethod
     def load_items(fds):
