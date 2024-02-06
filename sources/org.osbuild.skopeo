@@ -104,10 +104,9 @@ class SkopeoSource(sources.SourceService):
 
     def fetch_all(self, items: Dict) -> None:
         filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-        transformed = map(lambda i: self.transform(i[0], i[1]), filtered)  # prepare each item to be downloaded
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*transformed)):
+            for _ in executor.map(self.fetch_one, *zip(*filtered)):
                 pass
 
     def fetch_one(self, checksum, desc):
