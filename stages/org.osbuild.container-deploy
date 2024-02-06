@@ -47,12 +47,16 @@ def mount_container(image_tag):
     try:
         result = subprocess.run(
             ["podman", "image", "mount", image_tag],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             encoding="utf-8",
-            check=True,
+            check=False,
         )
+        if result.returncode != 0:
+            code = result.returncode
+            msg = result.stderr.strip()
+            raise RuntimeError(f"Failed to mount image ({code}): {msg}")
         yield result.stdout.strip()
-
     finally:
         subprocess.run(
             ["podman", "image", "umount", image_tag],
