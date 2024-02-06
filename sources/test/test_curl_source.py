@@ -1,11 +1,10 @@
 #!/usr/bin/python3
 
 import hashlib
-import pathlib
+import platform
 import re
 import shutil
-import subprocess
-from unittest.mock import patch
+import textwrap
 
 import pytest
 
@@ -164,64 +163,97 @@ def test_curl_download_many_retries(tmp_path, sources_service):
         assert "curl: error downloading http://localhost:" in str(exp.value)
 
 
-class FakeCurlDownloader:
-    """FakeCurlDownloader fakes what curl does
+def test_curl_user_agent(tmp_path, sources_module):
+    config_path = tmp_path / "curl-config.txt"
+    test_sources = make_test_sources(tmp_path, 80, 2)
 
-    This is useful when mocking subprocess.run() to see that curl gets
-    the right arguments. It requires test sources where the filename
-    matches the content of the file (e.g. filename "a", content must be "a"
-    as well) so that it can generate the right hash.
-    """
-
-    def __init__(self, test_sources):
-        self._test_sources = test_sources
-
-    def faked_run(self, *args, **kwargs):
-        download_dir = pathlib.Path(kwargs["cwd"])
-        for chksum, desc in self._test_sources.items():
-            # The filename of our test files matches their content for
-            # easier testing/hashing. Alternatively we could just pass
-            # a src dir in here and copy the files from src to
-            # download_dir here but that would require that the files
-            # always exist in the source dir (which they do right now).
-            content = desc["url"].rsplit("/", 1)[1]
-            (download_dir / chksum).write_text(content, encoding="utf8")
-        return subprocess.CompletedProcess(args, 0)
+    sources_module.gen_curl_download_config(config_path, test_sources.items())
+    assert config_path.exists()
+    assert 'user-agent = "osbuild (Linux.x86_64; https://osbuild.org/)"' in config_path.read_text()
 
 
 @pytest.mark.parametrize("with_proxy", [True, False])
-@patch("subprocess.run")
-def test_curl_download_proxy(mocked_run, tmp_path, monkeypatch, sources_service, with_proxy):
+def test_curl_download_proxy(tmp_path, monkeypatch, sources_module, with_proxy):
+    config_path = tmp_path / "curl-config.txt"
     test_sources = make_test_sources(tmp_path, 80, 2)
-    fake_curl_downloader = FakeCurlDownloader(test_sources)
-    mocked_run.side_effect = fake_curl_downloader.faked_run
 
     if with_proxy:
         monkeypatch.setenv("OSBUILD_SOURCES_CURL_PROXY", "http://my-proxy")
-    sources_service.cache = tmp_path / "curl-cache"
-    sources_service.cache.mkdir()
-    sources_service.fetch_all(test_sources)
-    for call_args in mocked_run.call_args_list:
-        args, _kwargs = call_args
-        if with_proxy:
-            idx = args[0].index("--proxy")
-            assert args[0][idx:idx + 2] == ["--proxy", "http://my-proxy"]
-        else:
-            assert "--proxy" not in args[0]
+    sources_module.gen_curl_download_config(config_path, test_sources.items())
+    assert config_path.exists()
+    if with_proxy:
+        assert 'proxy = "http://my-proxy"\n' in config_path.read_text()
+    else:
+        assert "proxy" not in config_path.read_text()
 
 
-@patch("subprocess.run")
-def test_curl_user_agent(mocked_run, tmp_path, sources_service):
-    test_sources = make_test_sources(tmp_path, 80, 2,)
-    fake_curl_downloader = FakeCurlDownloader(test_sources)
-    mocked_run.side_effect = fake_curl_downloader.faked_run
+TEST_SOURCE_PAIRS_GEN_DOWNLOAD_CONFIG = [
+    (
+        # sha256("0")
+        "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+        {
+            "url": "http://example.com/file/0",
+        },
+    ), (
+        # sha256("1")
+        "sha256:6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+        {
+            "url": "http://example.com/file/1",
+            "insecure": True,
+        },
+    ), (
+        # sha256("2")
+        "sha256:d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+        {
+            "url": "http://example.com/file/2",
+            "secrets": {
+                "ssl_ca_cert": "some-ssl_ca_cert",
+            },
+        },
+    ), (
+        # sha256("3")
+        "sha256:4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce",
+        {
+            "url": "http://example.com/file/3",
+            "secrets": {
+                "ssl_client_cert": "some-ssl_client_cert",
+                "ssl_client_key": "some-ssl_client_key",
+            },
+        },
+    ),
+]
 
-    sources_service.cache = tmp_path / "curl-cache"
-    sources_service.cache.mkdir()
-    sources_service.fetch_all(test_sources)
 
-    for call_args in mocked_run.call_args_list:
-        args, _kwargs = call_args
-        idx = args[0].index("--user-agent")
-        assert "osbuild" in args[0][idx + 1]
-        assert "https://osbuild.org/" in args[0][idx + 1]
+def test_curl_gen_download_config(tmp_path, sources_module):
+    config_path = tmp_path / "curl-config.txt"
+    sources_module.gen_curl_download_config(config_path, TEST_SOURCE_PAIRS_GEN_DOWNLOAD_CONFIG)
+
+    assert config_path.exists()
+    assert config_path.read_text(encoding="utf8") == textwrap.dedent(f"""\
+    user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
+    silent
+    speed-limit = 1000
+    connect-timeout = 30
+    fail
+    location
+
+    url = "http://example.com/file/0"
+    output = "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    no-insecure
+
+    url = "http://example.com/file/1"
+    output = "sha256:6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    insecure
+
+    url = "http://example.com/file/2"
+    output = "sha256:d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"
+    cacert = "some-ssl_ca_cert"
+    no-insecure
+
+    url = "http://example.com/file/3"
+    output = "sha256:4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+    cert = "some-ssl_client_cert"
+    key = "some-ssl_client_key"
+    no-insecure
+
+    """)
