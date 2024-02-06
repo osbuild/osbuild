@@ -467,7 +467,8 @@
               "sysroot": {
                 "readonly": true,
                 "bootloader": "none",
-                "bls-append-except-default": "grub_users=\"\""
+                "bls-append-except-default": "grub_users=\"\"",
+                "bootprefix": true
               }
             }
           }

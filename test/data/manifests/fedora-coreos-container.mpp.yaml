@@ -94,6 +94,7 @@ pipelines:
               readonly: true
               bootloader: none
               bls-append-except-default: grub_users=""
+              bootprefix: true
       - type: org.osbuild.mkdir
         options:
           paths:
