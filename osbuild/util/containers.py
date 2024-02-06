@@ -4,6 +4,8 @@ import subprocess
 import tempfile
 from contextlib import contextmanager
 
+from osbuild.util.mnt import MountGuard
+
 
 def is_manifest_list(data):
     """Inspect a manifest determine if it's a multi-image manifest-list."""
@@ -68,6 +70,9 @@ def parse_containers_input(inputs):
                 del manifest_files[list_digest]
                 list_path = os.path.join(manifests["path"], list_digest)
 
+        if data["format"] == "containers-storage":
+            filepath = os.path.join(images["path"], "storage")
+
         res[checksum] = {
             "filepath": filepath,
             "manifest-list": list_path,
@@ -105,14 +110,30 @@ def merge_manifest(list_manifest, destination):
 
 
 @contextmanager
-def container_source(image):
-    image_filepath = image["filepath"]
-    container_format = image["data"]["format"]
-    image_name = image["data"]["name"]
+def containers_storage_source(image, image_filepath, container_format):
+    storage_conf = image["data"]["storage"]
+    driver = storage_conf.get("driver", "overlay")
 
-    if container_format not in ("dir", "oci-archive"):
-        raise RuntimeError(f"Unknown container format {container_format}")
+    # use `/containers/storage` for the containers-storage bind mount
+    storage_path = os.path.join(os.sep, "containers", "storage")
+    os.makedirs(storage_path, exist_ok=True)
 
+    with MountGuard() as mg:
+        # NOTE: the ostree.deploy.container needs explicit `rw` access to
+        # the containers-storage store even when bind mounted.
+        mg.mount(image_filepath, storage_path, rw=True)
+
+        image_source = f"{container_format}:[{driver}@{storage_path}+/run/containers/storage]{image_name}"
+        yield image_source
+
+        if driver == "overlay":
+            # NOTE: the overlay sub-directory isn't always released,
+            # so we need to force unmount it
+            subprocess.run(["umount", "-f", "--lazy", os.path.join(storage_path, "overlay")], check=False)
+
+
+@contextmanager
+def dir_oci_archive_source(image, image_filepath, container_format):
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_source = os.path.join(tmpdir, "image")
 
@@ -127,6 +148,26 @@ def container_source(image):
             os.symlink(image_filepath, tmp_source)
 
         image_source = f"{container_format}:{tmp_source}"
+        yield image_source
+
+
+@contextmanager
+def container_source(image):
+    image_filepath = image["filepath"]
+    container_format = image["data"]["format"]
+    image_name = image["data"]["name"]
+
+    if container_format not in ("dir", "oci-archive", "containers-storage"):
+        raise RuntimeError(f"Unknown container format {container_format}")
+
+    if container_format == "containers-storage":
+        container_source_fn = containers_storage_source
+    elif container_format in ("dir", "oci-archive"):
+        container_source_fn = dir_oci_archive_source
+    else:
+        raise RuntimeError(f"Unknown container format {container_format}")
+
+    with container_source_fn(image, image_filepath, container_format) as image_source:
         yield image_name, image_source
 
 
