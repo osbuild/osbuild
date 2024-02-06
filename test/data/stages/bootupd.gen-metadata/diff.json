@@ -1,0 +1,35 @@
+{
+  "added_files": [
+    "/usr/lib/bootupd",
+    "/usr/lib/bootupd/updates",
+    "/usr/lib/bootupd/updates/BIOS.json",
+    "/usr/lib/bootupd/updates/EFI",
+    "/usr/lib/bootupd/updates/EFI.json",
+    "/usr/lib/bootupd/updates/EFI/BOOT",
+    "/usr/lib/bootupd/updates/EFI/BOOT/BOOTX64.EFI",
+    "/usr/lib/bootupd/updates/EFI/BOOT/fbx64.efi",
+    "/usr/lib/bootupd/updates/EFI/fedora",
+    "/usr/lib/bootupd/updates/EFI/fedora/BOOTX64.CSV",
+    "/usr/lib/bootupd/updates/EFI/fedora/grubx64.efi",
+    "/usr/lib/bootupd/updates/EFI/fedora/mmx64.efi",
+    "/usr/lib/bootupd/updates/EFI/fedora/shim.efi",
+    "/usr/lib/bootupd/updates/EFI/fedora/shimx64.efi"
+  ],
+  "deleted_files": [
+    "/usr/lib/ostree-boot/efi/EFI",
+    "/usr/lib/ostree-boot/efi/EFI/BOOT",
+    "/usr/lib/ostree-boot/efi/EFI/BOOT/BOOTX64.EFI",
+    "/usr/lib/ostree-boot/efi/EFI/BOOT/fbx64.efi",
+    "/usr/lib/ostree-boot/efi/EFI/fedora",
+    "/usr/lib/ostree-boot/efi/EFI/fedora/BOOTX64.CSV",
+    "/usr/lib/ostree-boot/efi/EFI/fedora/grubx64.efi",
+    "/usr/lib/ostree-boot/efi/EFI/fedora/mmx64.efi",
+    "/usr/lib/ostree-boot/efi/EFI/fedora/shim.efi",
+    "/usr/lib/ostree-boot/efi/EFI/fedora/shimx64.efi",
+    "/usr/lib/ostree-boot/grub2",
+    "/usr/lib/ostree-boot/grub2/fonts",
+    "/usr/lib/ostree-boot/grub2/fonts/unicode.pf2",
+    "/usr/lib/ostree-boot/grub2/grubenv"
+  ],
+  "differences": {}
+}
