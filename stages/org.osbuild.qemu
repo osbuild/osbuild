@@ -31,6 +31,11 @@ SCHEMA_2 = r"""
         "type": "string",
         "enum": ["qcow2"]
       },
+      "compression": {
+        "description": "Enable/disable compression of the qcow2 image",
+        "type": "boolean",
+        "default": true
+      },
       "compat": {
         "description": "The qcow2-compatibility-version to use",
         "type": "string"
@@ -60,6 +65,11 @@ SCHEMA_2 = r"""
         "description": "The type of the format, here 'vmdk'",
         "type": "string",
         "enum": ["vmdk"]
+      },
+      "compression": {
+        "description": "Enable/disable compression of the vmdk image",
+        "type": "boolean",
+        "default": true
       },
       "subformat": {
         "description": "VMDK flat extent format",
@@ -140,8 +150,12 @@ SCHEMA_2 = r"""
 
 
 def qcow2_arguments(options):
-    argv = ["-c"]
+    argv = []
+    compression = options.get("compression", True)
     compat = options.get("compat")
+
+    if compression:
+        argv += ["-c"]
 
     if compat:
         argv += ["-o", f"compat={compat}"]
@@ -149,8 +163,13 @@ def qcow2_arguments(options):
 
 
 def vmdk_arguments(options):
-    argv = ["-c"]
+    argv = []
+    compression = options.get("compression", True)
     subformat = options.get("subformat")
+
+    if compression:
+        argv += ["-c"]
+
     if subformat:
         argv += ["-o", f"subformat={subformat}"]
     return argv

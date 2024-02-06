@@ -1267,6 +1267,7 @@
             "filename": "qemu.qcow2",
             "format": {
               "type": "qcow2",
+              "compression": false,
               "compat": "1.1"
             }
           }
