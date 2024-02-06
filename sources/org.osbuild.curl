@@ -20,12 +20,14 @@ up the download.
 
 import concurrent.futures
 import os
+import pathlib
 import platform
 import subprocess
 import sys
 import tempfile
+import textwrap
 import urllib.parse
-from typing import Dict
+from typing import Dict, List, Tuple
 
 from osbuild import sources
 from osbuild.util.checksum import verify_file
@@ -93,6 +95,52 @@ SCHEMA = """
 """
 
 
+def _quote_url(url: str) -> str:
+    purl = urllib.parse.urlparse(url)
+    path = urllib.parse.quote(purl.path)
+    quoted = purl._replace(path=path)
+    return quoted.geturl()
+
+
+def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[Tuple[str, Dict]]):
+    with open(config_path, "w", encoding="utf8") as fp:
+        # global options
+        fp.write(textwrap.dedent(f"""\
+        user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
+        silent
+        speed-limit = 1000
+        connect-timeout = 30
+        fail
+        location
+        """))
+        proxy = os.getenv("OSBUILD_SOURCES_CURL_PROXY")
+        if proxy:
+            fp.write(f'proxy = "{proxy}"\n')
+        fp.write("\n")
+        # per url options
+        for checksum, desc in chksum_desc_tuple:
+            url = _quote_url(desc.get("url"))
+            fp.write(f'url = "{url}"\n')
+            fp.write(f'output = "{checksum}"\n')
+            secrets = desc.get("secrets")
+            if secrets:
+                ssl_ca_cert = secrets.get('ssl_ca_cert')
+                if ssl_ca_cert:
+                    fp.write(f'cacert = "{ssl_ca_cert}"\n')
+                ssl_client_cert = secrets.get('ssl_client_cert')
+                if ssl_client_cert:
+                    fp.write(f'cert = "{ssl_client_cert}"\n')
+                ssl_client_key = secrets.get('ssl_client_key')
+                if ssl_client_key:
+                    fp.write(f'key = "{ssl_client_key}"\n')
+            insecure = desc.get("insecure")
+            if insecure:
+                fp.write('insecure\n')
+            else:
+                fp.write('no-insecure\n')
+            fp.write("\n")
+
+
 class CurlSource(sources.SourceService):
 
     content_type = "org.osbuild.files"
@@ -128,13 +176,6 @@ class CurlSource(sources.SourceService):
 
         return checksum, desc
 
-    @staticmethod
-    def _quote_url(url: str) -> str:
-        purl = urllib.parse.urlparse(url)
-        path = urllib.parse.quote(purl.path)
-        quoted = purl._replace(path=path)
-        return quoted.geturl()
-
     def fetch_all(self, items: Dict) -> None:
         filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
         amended = map(lambda i: self.amend_secrets(i[0], i[1]), filtered)
@@ -144,45 +185,19 @@ class CurlSource(sources.SourceService):
                 pass
 
     def fetch_one(self, checksum, desc):
-        secrets = desc.get("secrets")
-        insecure = desc.get("insecure")
-        url = self._quote_url(desc.get("url"))
-        proxy = os.getenv("OSBUILD_SOURCES_CURL_PROXY")
+        url = _quote_url(desc.get("url"))
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
         with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
             # some mirrors are sometimes broken. retry manually, because we could be
             # redirected to a different, working, one on retry.
             return_code = 0
-            arch = platform.machine()
             for _ in range(10):
-                curl_command = [
-                    "curl",
-                    "--silent",
-                    "--speed-limit", "1000",
-                    "--connect-timeout", "30",
-                    "--fail",
-                    "--location",
-                    "--user-agent", f"osbuild (Linux.{arch}; https://osbuild.org/)",
-                    "--output", checksum,
-                ]
-                if proxy:
-                    curl_command.extend(["--proxy", proxy])
-                if secrets:
-                    if secrets.get('ssl_ca_cert'):
-                        curl_command.extend(["--cacert", secrets.get('ssl_ca_cert')])
-                    if secrets.get('ssl_client_cert'):
-                        curl_command.extend(["--cert", secrets.get('ssl_client_cert')])
-                    if secrets.get('ssl_client_key'):
-                        curl_command.extend(["--key", secrets.get('ssl_client_key')])
-
-                if insecure:
-                    curl_command.append("--insecure")
-
-                # url must follow options
-                curl_command.append(url)
-
-                curl = subprocess.run(curl_command, encoding="utf-8", cwd=tmpdir, check=False)
+                curl_config_path = f"{tmpdir}/curl-config.txt"
+                gen_curl_download_config(curl_config_path, [(checksum, desc)])
+                curl = subprocess.run(
+                    ["curl", "--config", curl_config_path],
+                    encoding="utf-8", cwd=tmpdir, check=False)
                 return_code = curl.returncode
                 if return_code == 0:
                     break
