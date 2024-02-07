@@ -121,6 +121,11 @@ class Solver():
         # we set the expiration to a short time period, rather than 0.
         repo.metadata_expire = desc.get("metadata_expire", "20s")
 
+        # This option if True disables modularization filtering. Effectively
+        # disabling modularity for given repository.
+        if "module_hotfixes" in desc:
+            repo.module_hotfixes = desc["module_hotfixes"]
+
         return repo
 
     @staticmethod
