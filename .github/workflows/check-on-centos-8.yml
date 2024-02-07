@@ -1,0 +1,56 @@
+name: Run the base test set on CentOS 8
+
+on:
+  # Run this workflow when other actions are completed
+  workflow_run:
+    workflows: ["Checks"]
+    types: [completed]
+
+jobs:
+  test-on-centos:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      IMAGEBUILDER_BOT_GITLAB_SSH_KEY: ${{ secrets.IMAGEBUILDER_BOT_GITLAB_SSH_KEY }}
+    steps:
+      - name: Report status
+        uses: haya14busa/action-workflow_run-status@v1
+
+      - name: Install Dependencies
+        run: |
+          sudo apt install -y jq
+
+      - name: Clone repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - uses: octokit/request-action@v2.x
+        id: fetch_pulls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          route: GET /repos/${{ github.repository }}/pulls
+
+      - name: Checkout branch
+        run: |
+          PR_DATA=$(mktemp)
+          # use uuid as a file terminator to avoid conflicts with data content
+          cat > "$PR_DATA" <<'a21b3e7f-d5eb-44a3-8be0-c2412851d2e6'
+          ${{ steps.fetch_pulls.outputs.data }}
+          a21b3e7f-d5eb-44a3-8be0-c2412851d2e6
+
+          PR=$(jq -rc '.[] | select(.head.sha | contains("${{ github.event.workflow_run.head_sha }}")) | select(.state | contains("open"))' "$PR_DATA" | jq -r .number)
+          if [ ! -z "$PR" ]; then
+            git checkout -b PR-$PR
+          else
+            git checkout ${{ github.event.workflow_run.head_branch }}
+          fi
+
+      - name: Pull container
+        run: |
+          # Use predefined CentOS container which should already have all needed dependencies
+          docker pull quay.io/osbuild/osbuild-ci-c8s
+          wget https://gitlab.com/redhat/centos-stream/rpms/osbuild/-/blob/c9s/tests/unit-tests/run-unit-tests.sh
+          ls -lah
