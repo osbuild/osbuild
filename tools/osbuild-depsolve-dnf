@@ -201,11 +201,13 @@ class Solver():
     def depsolve(self, transactions):
         last_transaction = []
 
-        for transaction in transactions:
+        for idx, transaction in enumerate(transactions):
             self.base.reset(goal=True)
             self.base.sack.reset_excludes()
 
-            self.base.conf.install_weak_deps = transaction.get("install_weak_deps", False)
+            # don't install weak-deps for transactions after the 1st transaction
+            if idx > 0:
+                self.base.conf.install_weak_deps = False
 
             # set the packages from the last transaction as installed
             for installed_pkg in last_transaction:
