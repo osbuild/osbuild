@@ -5,10 +5,12 @@ import os.path
 import random
 import string
 import subprocess
+import textwrap
 from unittest.mock import call, patch
 
 import pytest
 
+import osbuild.testutil
 from osbuild.testutil import has_executable, make_fake_tree
 
 STAGE_NAME = "org.osbuild.container-deploy"
@@ -127,3 +129,18 @@ def test_container_deploy_exclude(tmp_path, stage_module):
     assert (output_dir / "dir1/file3").read_bytes() == b"dir1/file3 content"
     assert not (output_dir / "dir2/file4").exists()
     assert not (output_dir / "dir2").exists()
+
+
+def test_container_deploy_error(stage_module):
+    fake_podman = textwrap.dedent("""\
+    #!/bin/sh
+    echo "some msg on stdout"
+    echo "other error on stderr" >&2
+    exit 1
+    """)
+    with osbuild.testutil.mock_command("podman", fake_podman):
+        with pytest.raises(RuntimeError) as exp:
+            with stage_module.mount_container("some-image-tag"):
+                pass
+    assert "some msg on stdout" not in str(exp.value)
+    assert "other error on stderr" in str(exp.value)
