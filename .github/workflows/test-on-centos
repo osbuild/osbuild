@@ -1,0 +1,22 @@
+name: Run tests in Centos container
+on: [pull_request, push]
+
+jobs:
+  test-on-c8s:
+    runs-on: ubuntu-latest
+    container: quay.io/osbuild/osbuild-ci-c8s
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v3
+    - name: Run
+      run: uname -a
+      run: ls -al
+  test-on-c9s:
+    runs-on: ubuntu-latest
+    container: quay.io/osbuild/osbuild-ci-c9s
+    steps:
+    - name: "Clone Repository"
+      uses: actions/checkout@v3
+    - name: Run
+      run: uname -a
+      run: ls -al
