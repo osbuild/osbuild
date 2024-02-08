@@ -1,10 +1,12 @@
 """
 Test related utilities
 """
+import contextlib
 import os
 import pathlib
 import re
 import shutil
+import tempfile
 
 
 def has_executable(executable: str) -> bool:
@@ -57,3 +59,21 @@ def assert_jsonschema_error_contains(res, expected_err, expected_num_errs=None):
         def finder(s): return expected_err in s  # pylint: disable=C0321
     assert any(finder(err_msg)
                for err_msg in err_msgs), f"{expected_err} not found in {err_msgs}"
+
+
+@contextlib.contextmanager
+def mock_command(cmd_name: str, script: str):
+    """
+    mock_command creates a mocked binary with the given :cmd_name: and :script:
+    content. This is useful to e.g. mock errors from binaries.
+    """
+    original_path = os.environ["PATH"]
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmd_path = pathlib.Path(tmpdir) / cmd_name
+        cmd_path.write_text(script, encoding="utf8")
+        cmd_path.chmod(0o755)
+        os.environ["PATH"] = f"{tmpdir}:{original_path}"
+        try:
+            yield
+        finally:
+            os.environ["PATH"] = original_path
