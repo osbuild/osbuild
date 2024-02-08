@@ -1,0 +1,34 @@
+name: Run tests in Centos container
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * *'
+
+jobs:
+  tests-on-centos:
+    strategy:
+      matrix:
+        centos:
+          - version: "9"
+            pytest_exclude: 'not (TestBoot and boot)'
+          - version: "10"
+            pytest_exclude: 'not (TestBoot and boot)'
+    name: "Unittests on Centos Stream ${{ matrix.centos.version }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+      - name: "Run in container"
+        uses: addnab/docker-run-action@v3
+        with:
+          image: quay.io/osbuild/osbuild-ci-c${{ matrix.centos.version }}s
+          options: --privileged -v ${{ github.workspace }}:/osbuild --workdir /osbuild
+          run: |
+            python3 -m pytest \
+            --rootdir $(pwd) \
+            --ignore $(pwd)/test/src \
+            --unsupported-fs btrfs \
+            -k "${{ matrix.centos.pytest_exclude }}" \
+            -v \
+            $(pwd)/test/
