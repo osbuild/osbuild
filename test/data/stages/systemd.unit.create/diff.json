@@ -1,0 +1,7 @@
+{
+  "added_files": [
+    "/usr/lib/systemd/system/create-directory.service"
+  ],
+  "deleted_files": [],
+  "differences": {}
+}
