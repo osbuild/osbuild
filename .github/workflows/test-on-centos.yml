@@ -1,0 +1,42 @@
+name: Run tests in Centos container
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * *'
+
+jobs:
+  tests-on-centos:
+    strategy:
+      matrix:
+        version: ["c8s", "c9s"]
+    name: "Unittests on Centos ${{ matrix.version }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+      - name: "Run in container"
+        uses: addnab/docker-run-action@v3
+        with:
+          image: quay.io/osbuild/osbuild-ci-${{ matrix.version }}
+          options: --privileged -v ${{ github.workspace }}:/osbuild
+          run: |
+            cd /osbuild
+            if [ "${{ matrix.version }}" = "c8s" ]; then
+              # Centos8 specific test settings
+              python3 -m pytest \
+              --rootdir /osbuild \
+              --ignore /osbuild/test/src \
+              --unsupported-fs btrfs \
+              -k 'not (TestBoot and boot) and not (test_qemu[ext4-vdi] or test_qemu[xfs-vdi]) and not (TestStages and test_qemu)' \
+              -v /osbuild/test/
+            else
+              # Centos9 specific test settings
+              python3 -m pytest \
+              --rootdir /osbuild \
+              --ignore /osbuild/test/src \
+              --unsupported-fs btrfs \
+              -k 'not (TestBoot and boot)' \
+              -v /osbuild/test/
+            fi
+
