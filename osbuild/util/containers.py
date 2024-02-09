@@ -128,3 +128,20 @@ def container_source(image):
 
         image_source = f"{container_format}:{tmp_source}"
         yield image_name, image_source
+
+
+def get_host_storage(storage_conf=None):
+    """
+    Read the host storage configuration.
+    """
+    # pylint: disable=import-outside-toplevel
+    # importing this at the top level will break the buildroot
+    try:
+        import tomllib as toml
+    except ImportError:
+        import tomli as toml
+
+    if not storage_conf:
+        with open("/etc/containers/storage.conf", "rb") as conf_file:
+            storage_conf = toml.load(conf_file)
+    return storage_conf

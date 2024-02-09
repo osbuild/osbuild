@@ -39,6 +39,12 @@ Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
 Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 
+# This is required for `osbuild`, for RHEL-10 and above
+# the stdlib toml package can be used instead
+%if 0%{?rhel} < 10
+Requires:       python3-tomli
+%endif
+
 # Turn off dependency generators for runners. The reason is that runners are
 # tailored to the platform, e.g. on RHEL they are using platform-python. We
 # don't want to pick up those dependencies on other platform.
