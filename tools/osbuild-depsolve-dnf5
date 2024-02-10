@@ -305,14 +305,15 @@ class Solver():
         """
         last_transaction = []
 
-        for transaction in transactions:
+        for idx, transaction in enumerate(transactions):
             goal = dnf5.base.Goal(self.base)
             goal.reset()
             sack = self.base.get_rpm_package_sack()
             sack.clear_user_excludes()
 
-            # weak deps are selected per-transaction
-            self.base.get_config().install_weak_deps = transaction.get("install_weak_deps", False)
+            # don't install weak-deps for transactions after the 1st transaction
+            if idx > 0:
+                self.base.conf.install_weak_deps = False
 
             # set the packages from the last transaction as installed
             for installed_pkg in last_transaction:
