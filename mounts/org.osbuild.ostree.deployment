@@ -125,7 +125,6 @@ class OSTreeDeploymentMount(mounts.MountService):
         options = args["options"]
         source = options.get("source", "tree")
         deployment = options["deployment"]
-        osname, ref, serial = ostree.parse_deployment_option(tree, deployment)
 
         # The user could specify either the tree or mountroot as the
         # place where we want the deployment to be mounted.
@@ -133,6 +132,8 @@ class OSTreeDeploymentMount(mounts.MountService):
             target = mountroot
         else:
             target = tree
+
+        osname, ref, serial = ostree.parse_deployment_option(target, deployment)
 
         # create a private mountpoint for the target path, which is
         # needed in order to be able to move the deployment `root`
