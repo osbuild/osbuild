@@ -287,9 +287,7 @@ pipelines:
             options:
               source: mount
               deployment:
-                ref: ostree/1/1/0
-                osname:
-                  mpp-format-string: '{osname}'
+                default: true
   - name: raw-4k-image
     build: name:build
     stages:
@@ -455,9 +453,7 @@ pipelines:
             options:
               source: mount
               deployment:
-                ref: ostree/1/1/0
-                osname:
-                  mpp-format-string: '{osname}'
+                default: true
   - name: raw-metal-image
     build: name:build
     stages:
