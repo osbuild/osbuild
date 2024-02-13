@@ -182,7 +182,14 @@ def get_host_storage(storage_conf=None):
     except ImportError:
         import tomli as toml
 
+    config_paths = ("/etc/containers/storage.conf", "/usr/share/containers/storage.conf")
     if not storage_conf:
-        with open("/etc/containers/storage.conf", "rb") as conf_file:
-            storage_conf = toml.load(conf_file)
-    return storage_conf
+        for conf_path in config_paths:
+            try:
+                with open(conf_path, "rb") as conf_file:
+                    storage_conf = toml.load(conf_file)
+                return storage_conf
+            except FileNotFoundError:
+                pass
+
+    raise FileNotFoundError(f"could not find container storage configuration in any of {config_paths}")
