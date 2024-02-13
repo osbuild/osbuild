@@ -11,26 +11,9 @@ from unittest.mock import call, patch
 import pytest
 
 import osbuild.testutil
-from osbuild.testutil import has_executable, make_fake_tree
+from osbuild.testutil import has_executable, make_container, make_fake_tree
 
 STAGE_NAME = "org.osbuild.container-deploy"
-
-
-def make_container(tmp_path, tag, fake_content, base="scratch"):
-    fake_container_src = tmp_path / "fake-container-src"
-    make_fake_tree(fake_container_src, fake_content)
-    fake_containerfile_path = fake_container_src / "Containerfile"
-    container_file_content = f"""
-    FROM {base}
-    COPY . .
-    """
-    fake_containerfile_path.write_text(container_file_content, encoding="utf8")
-    subprocess.check_call([
-        "podman", "build",
-        "--no-cache",
-        "-f", os.fspath(fake_containerfile_path),
-        "-t", tag,
-    ])
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
