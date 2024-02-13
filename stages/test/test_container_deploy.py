@@ -11,7 +11,7 @@ from unittest.mock import call, patch
 import pytest
 
 import osbuild.testutil
-from osbuild.testutil import has_executable, make_container, make_fake_tree
+from osbuild.testutil import has_executable, make_container
 
 STAGE_NAME = "org.osbuild.container-deploy"
 
@@ -22,19 +22,17 @@ def test_container_deploy_integration(tmp_path, stage_module):
     # build two containers and overlay files to test for
     # https://github.com/containers/storage/issues/1779
     base_tag = "cont-base-" + "".join(random.choices(string.digits, k=12))
-    make_container(tmp_path, base_tag, {"file1": "file1 from base"})
-    cont_tag = "cont" + "".join(random.choices(string.digits, k=12))
-    make_container(tmp_path, cont_tag, {"file1": "file1 from final layer"}, base_tag)
-    # export for the container-deploy stage
-    fake_container_dst = tmp_path / "fake-container"
-    subprocess.check_call([
-        "podman", "save",
-        "--format=oci-archive",
-        f"--output={fake_container_dst}",
-        cont_tag,
-    ])
-    # and remove from podman
-    subprocess.check_call(["podman", "rmi", cont_tag, base_tag])
+    with make_container(tmp_path, base_tag, {"file1": "file1 from base"}):
+        cont_tag = "cont" + "".join(random.choices(string.digits, k=12))
+        with make_container(tmp_path, cont_tag, {"file1": "file1 from final layer"}, base_tag):
+            # export for the container-deploy stage
+            fake_container_dst = tmp_path / "fake-container"
+            subprocess.check_call([
+                "podman", "save",
+                "--format=oci-archive",
+                f"--output={fake_container_dst}",
+                cont_tag,
+            ])
 
     inputs = {
         "images": {
@@ -66,22 +64,20 @@ def test_container_deploy_integration(tmp_path, stage_module):
 @pytest.mark.skipif(not has_executable("podman"), reason="no podman executable")
 def test_container_deploy_exclude(tmp_path, stage_module):
     base_tag = "cont-base-" + "".join(random.choices(string.digits, k=12))
-    make_container(tmp_path, base_tag, {
+    with make_container(tmp_path, base_tag, {
         "file1": "file1 content",
         "file2": "file2 content",
         "dir1/file3": "dir1/file3 content",
         "dir2/file4": "dir2/file4 content",
-    })
-    # export for the container-deploy stage
-    fake_container_dst = tmp_path / "fake-container"
-    subprocess.check_call([
-        "podman", "save",
-        "--format=oci-archive",
-        f"--output={fake_container_dst}",
-        base_tag,
-    ])
-    # and remove from podman
-    subprocess.check_call(["podman", "rmi", base_tag])
+    }):
+        # export for the container-deploy stage
+        fake_container_dst = tmp_path / "fake-container"
+        subprocess.check_call([
+            "podman", "save",
+            "--format=oci-archive",
+            f"--output={fake_container_dst}",
+            base_tag,
+        ])
 
     inputs = {
         "images": {
