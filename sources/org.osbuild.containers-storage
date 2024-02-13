@@ -50,7 +50,8 @@ class ContainersStorageSource(sources.SourceService):
         """
         Construct the full image name that references an image with a given checksum in the local storage.
         """
-        conf = containers.get_host_storage(self.storage_conf)
+        if self.storage_conf is None:
+            conf = containers.get_host_storage()
         driver = conf["storage"]["driver"]
         graphroot = conf["storage"]["graphroot"]
         runroot = conf["storage"]["runroot"]
