@@ -80,6 +80,7 @@ def mock_command(cmd_name: str, script: str):
             os.environ["PATH"] = original_path
 
 
+@contextlib.contextmanager
 def make_container(tmp_path, tag, fake_content, base="scratch"):
     fake_container_src = tmp_path / "fake-container-src"
     make_fake_tree(fake_container_src, fake_content)
@@ -95,3 +96,7 @@ def make_container(tmp_path, tag, fake_content, base="scratch"):
         "-f", os.fspath(fake_containerfile_path),
         "-t", tag,
     ])
+    try:
+        yield
+    finally:
+        subprocess.check_call(["podman", "image", "rm", tag])
