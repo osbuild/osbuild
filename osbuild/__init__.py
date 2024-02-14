@@ -10,7 +10,7 @@ independent of osbuild but used across the osbuild codebase.
 
 from .pipeline import Manifest, Pipeline, Stage
 
-__version__ = "108"
+__version__ = "109"
 
 __all__ = [
     "Manifest",
