@@ -71,12 +71,14 @@ def parse_containers_input(inputs):
                 list_path = os.path.join(manifests["path"], list_digest)
 
         if data["format"] == "containers-storage":
+            # filepath is the storage bindmount
             filepath = os.path.join(images["path"], "storage")
 
         res[checksum] = {
             "filepath": filepath,
             "manifest-list": list_path,
             "data": data,
+            "checksum": checksum,  # include the checksum in the value
         }
 
     if manifest_files:
@@ -123,7 +125,8 @@ def containers_storage_source(image, image_filepath, container_format):
         # the containers-storage store even when bind mounted.
         mg.mount(image_filepath, storage_path, rw=True)
 
-        image_source = f"{container_format}:[{driver}@{storage_path}+/run/containers/storage]{image_name}"
+        image_id = image["checksum"].split(":")[1]
+        image_source = f"{container_format}:[{driver}@{storage_path}+/run/containers/storage]{image_id}"
         yield image_source
 
         if driver == "overlay":
