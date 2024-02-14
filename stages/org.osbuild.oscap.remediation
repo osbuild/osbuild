@@ -127,6 +127,12 @@ def main(tree, options):
     data_dir = data_dir.lstrip('/')
     os.makedirs(f"{tree}/{data_dir}", exist_ok=True)
 
+    for source in ("/dev", "/proc"):
+        target = os.path.join(tree, source.lstrip("/"))
+        os.makedirs(target, exist_ok=True)
+        mount(source, target, ro=False)
+    os.symlink("/proc/self/fd", f"{tree}/dev/fd")
+
     # build common data stream-related args list
     ds_args = ["--profile", profile_id]
     if ds_id is not None:
@@ -206,12 +212,6 @@ def main(tree, options):
         "/usr/bin/bash",
         f"{data_dir}/{REMEDIATION_SCRIPT}"
     ]
-
-    for source in ("/dev", "/proc"):
-        target = os.path.join(tree, source.lstrip("/"))
-        os.makedirs(target, exist_ok=True)
-        mount(source, target, ro=False)
-    os.symlink("/proc/self/fd", f"{tree}/dev/fd")
 
     log = None
     if verbose_log is not None:
