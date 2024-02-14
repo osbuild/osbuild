@@ -120,6 +120,11 @@ SCHEMA = """
     "description": "Create reproducible images.",
     "type": "boolean"
   },
+  "initoverlayfs": {
+    "description": "Use initoverlayfs rather than initramfs, requires initoverlayfs rpm to be installed",
+    "type": "boolean",
+    "default": false
+  },
   "extra": {
     "description": "Extra arguments to directly pass to dracut",
     "type": "array",
@@ -153,6 +158,7 @@ def main(tree, options):
     install = options.get("install", [])
     early_microcode = options.get("early_microcode", False)
     reproducible = options.get("reproducible", True)
+    initoverlayfs = options.get("initoverlayfs", False)
     extra = options.get("extra", [])
 
     # initrds may have already been created, force the recreation
@@ -204,8 +210,11 @@ def main(tree, options):
     for kver in kernels:
         print(f"Building initramfs for {kver}", file=sys.stderr)
 
-        subprocess.run(["/usr/sbin/chroot", tree,
-                        "/usr/bin/dracut",
+        initfs_bin = "/usr/bin/dracut"
+        if initoverlayfs:
+            initfs_bin = "/usr/bin/initoverlayfs-install"
+
+        subprocess.run(["/usr/sbin/chroot", tree, initfs_bin,
                         "--no-hostonly",
                         "--kver", kver]
                        + opts,
