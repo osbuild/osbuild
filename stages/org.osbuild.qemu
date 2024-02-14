@@ -231,6 +231,17 @@ def main(inputs, output, options):
         cmd, check=True
     )
 
+    # Sanity check that the image is 100%
+    cmd = [
+        "qemu-img", "compare",
+        "-f", "raw",
+        "-F", fmt["type"],
+        source, target
+    ]
+    subprocess.run(
+        cmd, check=True
+    )
+
     return 0
 
 
