@@ -25,22 +25,20 @@ def test_bootc_install_to_fs(mock_run, tmp_path):
             },
         },
     }
-    mounts = {
-        "root": {
-            "path": "/path/to/root",
-        },
+    paths = {
+        "mounts": "/path/to/mounts",
     }
 
     @contextmanager
     def faked_tmp_dir():
         yield tmp_path
     with patch("tempfile.TemporaryDirectory", side_effect=faked_tmp_dir):
-        stage.main(inputs, mounts)
+        stage.main(inputs, paths)
 
     assert len(mock_run.call_args_list) == 1
     assert mock_run.call_args_list == [
         call(["bootc", "install", "to-filesystem",
               "--source-imgref", f"oci-archive:{tmp_path}/image",
               "--skip-fetch-check", "--generic-image",
-              "/path/to/root"], check=True)
+              "/path/to/mounts"], check=True)
     ]
