@@ -2,7 +2,9 @@
 """Run bootc install to-filesystem
 
 Note that this needs the disk.img in the inputs as one continous
-devices so that bootupd can install grub to the mbr.
+devices so that bootupd can install grub to the mbr. It also needs
+all relevant mount points for booting (e.g. /boot, /boot/efi) in
+mounted in the "mounts" path.
 
 Buildhost commands used: bootc
 """
@@ -40,23 +42,23 @@ SCHEMA_2 = r"""
 """
 
 
-def main(inputs, mounts):
+def main(inputs, paths):
     images = containers.parse_containers_input(inputs)
     assert len(images) == 1
     image = list(images.values())[0]
 
     with containers.container_source(image) as (_, source):
-        dst = mounts["root"]["path"]
+        dst = paths["mounts"]
         subprocess.run(
             ["bootc", "install", "to-filesystem",
              "--source-imgref", source,
              "--skip-fetch-check", "--generic-image",
              dst],
-            check=True
+            check=True,
         )
 
 
 if __name__ == "__main__":
     args = osbuild.api.arguments()
-    r = main(args["inputs"], args["mounts"])
+    r = main(args["inputs"], args["paths"])
     sys.exit(r)
