@@ -151,7 +151,7 @@ SCHEMA_2 = r"""
 
 def qcow2_arguments(options):
     argv = []
-    compression = options.get("compression", True)
+    compression = options.get("compression", False)
     compat = options.get("compat")
 
     if compression:
