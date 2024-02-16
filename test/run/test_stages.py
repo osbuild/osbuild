@@ -8,7 +8,9 @@ import glob
 import json
 import os
 import pprint
+import random
 import shutil
+import string
 import subprocess
 import tarfile
 import tempfile
@@ -17,7 +19,7 @@ import xml
 from collections.abc import Mapping
 from typing import Callable, Dict, List, Optional
 
-from osbuild.testutil import has_executable
+from osbuild.testutil import has_executable, pull_oci_archive_container
 from osbuild.util import checksum, selinux
 
 from .. import initrd, test
@@ -658,3 +660,36 @@ class TestStages(test.TestBase):
                 check=True,
             )
             assert "testfile" in r.stdout
+
+    @unittest.skipUnless(has_executable("skopeo"), "skopeo needed")
+    def test_skopeo_with_localstorage(self):
+        """
+        Pull our test container, hello.img, into a container store and build the test manifest at
+        test/data/manifests/fedora-local-storage.json which pulls that container from the host's storage.
+        """
+        test_manifest = "test/data/manifests/fedora-local-storage.json"
+        test_image = "test/data/stages/skopeo/hello.img"
+        image_name = "localhost/osbuild-skopeo-test-" + "".join(random.choices(string.digits, k=12))
+        image_id = "805e972fbc4dfa74a616dcaafe0d9e9b4c548b8909b14ffb032aa20fa23d9ad6"
+
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            # pull archive into host container storage
+            with pull_oci_archive_container(test_image, image_name):
+                # build the manifest
+                osb.compile_file(os.path.join(test_manifest), exports=["tree"], output_dir=outdir)
+
+            # check the tree - read the container storage at the expected location and find the expected image ID
+            images_storage = os.path.join(outdir, "tree/var/lib/containers/storage/vfs-images/")
+            assert os.path.exists(os.path.join(images_storage, "images.json")), "images.json not found"
+            assert os.path.exists(os.path.join(images_storage, image_id)), "image not found"
+
+            with open(os.path.join(images_storage, "images.json"), mode="r", encoding="utf-8") as images_json:
+                data = json.load(images_json)
+
+            for item in data:
+                if image_id == item["id"]:
+                    # check the destination name
+                    assert "localhost/osbuild/hello:latest" in item["names"], "image name not found in images.json"
+                    break
+            else:
+                assert False, "image ID not found in images.json"
