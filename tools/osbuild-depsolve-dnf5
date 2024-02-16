@@ -88,13 +88,12 @@ class Solver():
         if not exclude_pkgs:
             exclude_pkgs = []
 
-        # substitutions to use with the repo urls
-        self.substitutions = {
-            "arch": arch,
-            "basearch": _BASEARCH_MAP[arch]
-        }
         self.base = dnf5.base.Base()
+
+        # Base is the correct place to set substitutions, not per-repo.
+        # See https://github.com/rpm-software-management/dnf5/issues/1248
         self.base.get_vars().set("arch", arch)
+        self.base.get_vars().set("basearch", _BASEARCH_MAP[arch])
 
         # Enable fastestmirror to ensure we choose the fastest mirrors for
         # downloading metadata (when depsolving) and downloading packages.
@@ -216,9 +215,6 @@ class Solver():
         # disabling modularity for given repository.
         if "module_hotfixes" in desc:
             repo.module_hotfixes = desc["module_hotfixes"]
-
-        # This needs to be set on each repo
-        repo.set_substitutions(self.substitutions)
 
         # Set the packages to exclude
         conf.excludepkgs = exclude_pkgs
