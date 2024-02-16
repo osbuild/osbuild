@@ -669,17 +669,26 @@ class TestStages(test.TestBase):
         """
         test_manifest = "test/data/manifests/fedora-local-storage.json"
         test_image = "test/data/stages/skopeo/hello.img"
-        image_name = "localhost/osbuild-skopeo-test-" + "".join(random.choices(string.digits, k=12))
-        image_id = "805e972fbc4dfa74a616dcaafe0d9e9b4c548b8909b14ffb032aa20fa23d9ad6"
+        local_image_name = "localhost/osbuild-skopeo-test-" + "".join(random.choices(string.digits, k=12))
+
+        with open(test_manifest, mode="r", encoding="utf-8") as manifest_file:
+            manifest_data = json.load(manifest_file)
+
+        # read expected info from the manifest so we don't need to update the test if the manifest or image changes
+        source_items = list(manifest_data["sources"]["org.osbuild.containers-storage"]["items"].keys())
+        algo, image_id = source_items[0].split(":")
+        stage = manifest_data["pipelines"][1]["stages"][0]
+        driver = stage["options"]["destination"]["storage-driver"]
+        dest_image_name = stage["inputs"]["images"]["references"][f"{algo}:{image_id}"]["name"]
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
             # pull archive into host container storage
-            with pull_oci_archive_container(test_image, image_name):
+            with pull_oci_archive_container(test_image, local_image_name):
                 # build the manifest
                 osb.compile_file(os.path.join(test_manifest), exports=["tree"], output_dir=outdir)
 
             # check the tree - read the container storage at the expected location and find the expected image ID
-            images_storage = os.path.join(outdir, "tree/var/lib/containers/storage/vfs-images/")
+            images_storage = os.path.join(outdir, f"tree/var/lib/containers/storage/{driver}-images/")
             assert os.path.exists(os.path.join(images_storage, "images.json")), "images.json not found"
             assert os.path.exists(os.path.join(images_storage, image_id)), "image not found"
 
@@ -689,7 +698,7 @@ class TestStages(test.TestBase):
             for item in data:
                 if image_id == item["id"]:
                     # check the destination name
-                    assert "localhost/osbuild/hello:latest" in item["names"], "image name not found in images.json"
+                    assert dest_image_name in item["names"], "image name not found in images.json"
                     break
             else:
                 assert False, "image ID not found in images.json"
