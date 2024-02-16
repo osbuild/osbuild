@@ -100,3 +100,12 @@ def make_container(tmp_path, tag, fake_content, base="scratch"):
         yield
     finally:
         subprocess.check_call(["podman", "image", "rm", tag])
+
+
+@contextlib.contextmanager
+def pull_oci_archive_container(archive_path, image_name):
+    subprocess.check_call(["skopeo", "copy", f"oci-archive:{archive_path}", f"containers-storage:{image_name}"])
+    try:
+        yield
+    finally:
+        subprocess.check_call(["skopeo", "delete", f"containers-storage:{image_name}"])
