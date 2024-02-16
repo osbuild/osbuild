@@ -179,14 +179,14 @@
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-x86_64-rawhide-20240101"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-x86_64-branched-20240215"
           }
         ],
         "aarch64": [
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-aarch64-rawhide-20240101"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-aarch64-branched-20240215"
           }
         ]
       }
