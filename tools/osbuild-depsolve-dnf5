@@ -215,7 +215,7 @@ class Solver():
         # This option if True disables modularization filtering. Effectively
         # disabling modularity for given repository.
         if "module_hotfixes" in desc:
-            module_hotfixes = desc["module_hotfixes"]
+            repo.module_hotfixes = desc["module_hotfixes"]
 
         # This needs to be set on each repo
         repo.set_substitutions(self.substitutions)
