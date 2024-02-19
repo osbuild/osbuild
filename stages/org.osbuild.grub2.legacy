@@ -174,21 +174,37 @@ SCHEMA = """
         "description": "Additional kernel command line options",
         "type": "string"
       },
+      "disable_recovery": {
+        "type": "boolean",
+        "default": true
+      },
+      "disable_submenu": {
+        "type": "boolean",
+        "default": true
+      },
       "distributor": {
         "description": "Name of the distributor",
         "type": "string"
       },
+      "terminal": {
+        "$ref": "#/definitions/terminal"
+      },
       "terminal_input": {
-         "$ref": "#/definitions/terminal"
+        "$ref": "#/definitions/terminal"
       },
       "terminal_output": {
-         "$ref": "#/definitions/terminal"
+        "$ref": "#/definitions/terminal"
       },
       "timeout": {
         "description": "Timeout in seconds",
         "type": "integer",
         "minimum": 0,
         "default": 0
+      },
+      "timeout_style": {
+        "type": "string",
+        "enum": ["hidden", "menu", "countdown"],
+        "default": "countdown"
       },
       "serial": {
         "description": "The command to configure the serial console",
@@ -331,6 +347,7 @@ class GrubEntry:
         return entry
 
 
+# pylint: disable=too-many-instance-attributes
 class GrubConfig:
     def __init__(self, bios, rootfs, bootfs):
         self.bios = bios
@@ -338,11 +355,15 @@ class GrubConfig:
         self.bootfs = bootfs
         self.entries = []
         self.cmdline = ""
+        self.disable_recovery = True
+        self.disable_submenu = True
         self.distributor = ""
         self.serial = ""
+        self.terminal = None
         self.terminal_input = None
         self.terminal_output = None
         self.timeout = 0
+        self.timeout_style = "countdown"
 
     @property
     def grubfs(self):
@@ -432,9 +453,9 @@ class GrubConfig:
         data = (
             f"GRUB_TIMEOUT={self.timeout}\n"
             f'GRUB_CMDLINE_LINUX="{self.cmdline}"\n'
-            "GRUB_DISABLE_SUBMENU=true\n"
-            "GRUB_DISABLE_RECOVERY=true\n"
-            "GRUB_TIMEOUT_STYLE=countdown\n"
+            f"GRUB_DISABLE_SUBMENU={str(self.disable_submenu).lower()}\n"
+            f"GRUB_DISABLE_RECOVERY={str(self.disable_recovery).lower()}\n"
+            f"GRUB_TIMEOUT_STYLE={self.timeout_style}\n"
             "GRUB_DEFAULT=saved\n"
         )
 
@@ -443,6 +464,10 @@ class GrubConfig:
 
         if self.serial:
             data += f'GRUB_SERIAL_COMMAND="{self.serial}"\n'
+
+        if self.terminal:
+            val = " ".join(self.terminal)
+            data += f'GRUB_TERMINAL="{val}"\n'
 
         if self.terminal_input:
             val = " ".join(self.terminal_input)
@@ -467,11 +492,15 @@ def main(tree, options):
     cfg = options.get("config", {})
     config = GrubConfig(bios, root_fs, boot_fs)
     config.cmdline = cfg.get("cmdline", "")
+    config.disable_recovery = cfg.get("disable_recovery", True)
+    config.disable_submenu = cfg.get("disable_submenu", True)
     config.distributor = cfg.get("distributor")
     config.serial = cfg.get("serial")
+    config.terminal = cfg.get("terminal")
     config.terminal_input = cfg.get("terminal_input")
     config.terminal_output = cfg.get("terminal_output")
     config.timeout = cfg.get("timeout", 0)
+    config.timeout_style = cfg.get("timeout_style", "countdown")
     config.entries = [GrubEntry.from_json(e) for e in options["entries"]]
 
     # Create the configuration file that determines how grub.cfg is generated.
