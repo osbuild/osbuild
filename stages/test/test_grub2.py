@@ -33,9 +33,9 @@ def test_grub2_copy_efi_data(tmp_path, stage_module):
 
 
 # Test that the /etc/default/grub file is created with the correct content
-@pytest.mark.parametrize("test_data,expected_conf", [
+@pytest.mark.parametrize("test_data,kernel_opts,expected_conf", [
     # default
-    ({}, """GRUB_CMDLINE_LINUX=""
+    ({}, "", """GRUB_CMDLINE_LINUX=""
 GRUB_TIMEOUT=0
 GRUB_ENABLE_BLSCFG=true
 """),
@@ -46,7 +46,7 @@ GRUB_ENABLE_BLSCFG=true
         "terminal_input": ["console"],
         "terminal_output": ["serial"],
         "serial": "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
-    }, """GRUB_CMDLINE_LINUX=""
+    }, "", """GRUB_CMDLINE_LINUX=""
 GRUB_TIMEOUT=10
 GRUB_ENABLE_BLSCFG=true
 GRUB_SERIAL_COMMAND="serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
@@ -54,8 +54,33 @@ GRUB_TERMINAL_INPUT="console"
 GRUB_TERMINAL_OUTPUT="serial"
 GRUB_DEFAULT=0
 """),
+    # custom (Azure)
+    ({
+        "default": "saved",
+        "disable_submenu": True,
+        "disable_recovery": True,
+        "distributor": "$(sed 's, release .*$,,g' /etc/system-release)",
+        "serial": "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
+        "terminal": ["serial", "console"],
+        "terminal_output": ["console"],
+        "timeout": 10,
+        "timeout_style": "countdown",
+    },
+        "loglevel=3 crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300",
+        """GRUB_CMDLINE_LINUX="loglevel=3 crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
+GRUB_TIMEOUT=10
+GRUB_ENABLE_BLSCFG=true
+GRUB_DISABLE_RECOVERY=true
+GRUB_DISABLE_SUBMENU=true
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_SERIAL_COMMAND="serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+GRUB_TERMINAL="serial console"
+GRUB_TERMINAL_OUTPUT="console"
+GRUB_TIMEOUT_STYLE=countdown
+GRUB_DEFAULT=saved
+"""),
 ])
-def test_grub2_default_conf(tmp_path, stage_module, test_data, expected_conf):
+def test_grub2_default_conf(tmp_path, stage_module, test_data, kernel_opts, expected_conf):
     treedir = tmp_path / "tree"
     confpath = treedir / "etc/default/grub"
     confpath.parent.mkdir(parents=True, exist_ok=True)
@@ -77,6 +102,7 @@ def test_grub2_default_conf(tmp_path, stage_module, test_data, expected_conf):
     }
 
     options["config"] = test_data
+    options["kernel_opts"] = kernel_opts
     stage_module.main(treedir, options)
 
     assert os.path.exists(confpath)

@@ -202,17 +202,34 @@ SCHEMA = """
         "description": "Default boot entry",
         "type": "string"
       },
+      "disable_recovery": {
+        "type": "boolean"
+      },
+      "disable_submenu": {
+        "type": "boolean"
+      },
+      "distributor": {
+        "description": "Name of the distributor",
+        "type": "string"
+      },
+      "terminal": {
+        "$ref": "#/definitions/terminal"
+      },
       "terminal_input": {
-         "$ref": "#/definitions/terminal"
+        "$ref": "#/definitions/terminal"
       },
       "terminal_output": {
-         "$ref": "#/definitions/terminal"
+        "$ref": "#/definitions/terminal"
       },
       "timeout": {
         "description": "Timeout in seconds",
         "type": "integer",
         "minimum": 0,
         "default": 0
+      },
+      "timeout_style": {
+        "type": "string",
+        "enum": ["hidden", "menu", "countdown"]
       },
       "serial": {
         "description": "The command to configure the serial console",
@@ -371,10 +388,15 @@ class GrubConfig:
         self.ignition = False
         self.greenboot = False
         self.kernel_opts = ""
+        self.disable_recovery = None
+        self.disable_submenu = None
+        self.distributor = None
         self.serial = ""
+        self.terminal = None
         self.terminal_input = None
         self.terminal_output = None
         self.timeout = 0
+        self.timeout_style = None
 
     @property
     def grubfs(self):
@@ -472,8 +494,21 @@ class GrubConfig:
             "GRUB_ENABLE_BLSCFG=true\n"
         )
 
+        if self.disable_recovery is not None:
+            data += f"GRUB_DISABLE_RECOVERY={str(self.disable_recovery).lower()}\n"
+
+        if self.disable_submenu is not None:
+            data += f"GRUB_DISABLE_SUBMENU={str(self.disable_submenu).lower()}\n"
+
+        if self.distributor:
+            data += f'GRUB_DISTRIBUTOR="{self.distributor}"\n'
+
         if self.serial:
             data += f'GRUB_SERIAL_COMMAND="{self.serial}"\n'
+
+        if self.terminal:
+            val = " ".join(self.terminal)
+            data += f'GRUB_TERMINAL="{val}"\n'
 
         if self.terminal_input:
             val = " ".join(self.terminal_input)
@@ -482,6 +517,9 @@ class GrubConfig:
         if self.terminal_output:
             val = " ".join(self.terminal_output)
             data += f'GRUB_TERMINAL_OUTPUT="{val}"\n'
+
+        if self.timeout_style:
+            data += f'GRUB_TIMEOUT_STYLE={self.timeout_style}\n'
 
         if self.default_entry is not None:
             data += f'GRUB_DEFAULT={self.default_entry}\n'
@@ -525,10 +563,15 @@ def main(tree, options):
     config.ignition = ignition
     config.greenboot = options.get("greenboot", False)
     config.kernel_opts = kernel_opts
+    config.disable_recovery = cfg.get("disable_recovery")
+    config.disable_submenu = cfg.get("disable_submenu")
+    config.distributor = cfg.get("distributor")
     config.serial = cfg.get("serial")
+    config.terminal = cfg.get("terminal")
     config.terminal_input = cfg.get("terminal_input")
     config.terminal_output = cfg.get("terminal_output")
     config.timeout = cfg.get("timeout", 0)
+    config.timeout_style = cfg.get("timeout_style")
     config.default_entry = cfg.get("default")
 
     # Create the configuration file that determines how grub.cfg is generated.
