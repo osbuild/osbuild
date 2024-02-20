@@ -96,6 +96,12 @@ def ostree_container_deploy(tree, inputs, osname, target_imgref, kopts):
             extra_args = []
             imgref = f"ostree-unverified-image:{image_source}"
 
+            # This stage crashes when using `containers-storage` if `/var/tmp` doesn't exist,
+            # since the directory is required by `skopeo` for big files. See:
+            # https://github.com/containers/image/blob/4ad2f46269f1a1f6ad4067e418b820a1b3453615/storage/storage_src.go#L163
+            # https://github.com/containers/image/blob/2cb3c9d3c29dc1c23b45f93abeed9b3f57f6a8b4/internal/tmpdir/tmpdir.go#L18
+            os.makedirs("/var/tmp", mode=0o1777, exist_ok=True)
+
             extra_args.append(f'--imgref={imgref}')
             extra_args.append(f'--stateroot={osname}')
 
