@@ -24,6 +24,7 @@ def fetch_snapshots_api(url, timeout=SNAPSHOTS_TIMEOUT):
     try:
         r = requests.get(url, timeout=timeout)
     except BaseException as e:  # pylint: disable=broad-exception-caught
+        print(f"Problem downloading {url}: {e}")
         return None
     elapsed = time.time() - start
     if r.status_code != 200:
