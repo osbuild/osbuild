@@ -23,7 +23,7 @@ def fetch_snapshots_api(url, timeout=SNAPSHOTS_TIMEOUT):
     start = time.time()
     try:
         r = requests.get(url, timeout=timeout)
-    except BaseException:  # pylint: disable=broad-exception-caught
+    except BaseException as e:  # pylint: disable=broad-exception-caught
         return None
     elapsed = time.time() - start
     if r.status_code != 200:
@@ -168,7 +168,7 @@ def main():
         try:
             with open(args.cache, encoding="utf8") as f:
                 snapshots = json.load(f)
-        except BaseException:  # pylint: disable=broad-exception-caught
+        except FileNotFoundError:
             print(f"No snapshots cache found at {args.cache}")
             sys.exit(1)
     else:
