@@ -23,7 +23,7 @@ def fetch_snapshots_api(url, timeout=SNAPSHOTS_TIMEOUT):
     start = time.time()
     try:
         r = requests.get(url, timeout=timeout)
-    except BaseException:
+    except BaseException:  # pylint: disable=broad-exception-caught
         return None
     elapsed = time.time() - start
     if r.status_code != 200:
@@ -90,7 +90,8 @@ def check_baseurl(repo, snapshots):
     return invalid, newer
 
 
-def check_snapshot_urls(urls, snapshots, skip=["test/data/assemblers", "test/data/manifests", "test/data/stages"],
+# pylint: disable=too-many-branches
+def check_snapshot_urls(urls, snapshots, skip=("test/data/assemblers", "test/data/manifests", "test/data/stages"),
                         errors_only=False):
     """check the urls against the current list of snapshots
 
@@ -133,11 +134,11 @@ def check_snapshot_urls(urls, snapshots, skip=["test/data/assemblers", "test/dat
                     messages[f] = {"newer": [newer], "invalid": []}
 
     # Print the messages for each file
-    for f in messages:
+    for f, msgs in messages.items():
         print(f"{f}:")
-        for msg in messages[f]["invalid"]:
+        for msg in msgs["invalid"]:
             print(f"    ERROR: {msg}")
-        for msg in messages[f]["newer"]:
+        for msg in msgs["newer"]:
             print(f"    NEWER: {msg}")
 
     return ret
@@ -167,7 +168,7 @@ def main():
         try:
             with open(args.cache, encoding="utf8") as f:
                 snapshots = json.load(f)
-        except BaseException:
+        except BaseException:  # pylint: disable=broad-exception-caught
             print(f"No snapshots cache found at {args.cache}")
             sys.exit(1)
     else:
