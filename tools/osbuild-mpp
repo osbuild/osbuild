@@ -692,7 +692,7 @@ class DepSolver:
             if not result.scheme:
                 path = basedir.joinpath(baseurl)
                 return path.resolve().as_uri()
-        except BaseException:  # pylint: disable=bare-except
+        except BaseException:  # pylint: disable=broad-exception-caught
             pass
 
         return baseurl
@@ -1008,7 +1008,7 @@ class Image:
                 try:
                     table.write_to(loopimage)
                 finally:
-                    subprocess.run(["losetup", "-d", loopimage])
+                    subprocess.run(["losetup", "-d", loopimage], check=True)
 
         return cls(size, table)
 
@@ -1215,7 +1215,7 @@ class ManifestFile:
             pipeline_name = self.get_pipeline_name(parent_node)
             self._process_stage(node, pipeline_name)
 
-    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-branches,too-many-statements
     def _process_format(self, node):
         def _is_format(node):
             if not isinstance(node, dict):
@@ -1245,7 +1245,7 @@ class ManifestFile:
                 res = False
                 try:
                     res = eval(code, dict(local_vars))
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     print(f"In {self.path}: Failed to evaluate mpp-if of:\n  {code}")
                     print(f"Error: {e}")
                     sys.exit(1)
@@ -1266,7 +1266,7 @@ class ManifestFile:
                 # Note, we copy local_vars here to avoid eval modifying it
                 try:
                     res = eval(code, dict(local_vars))
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     print(f"In {self.path}: Failed to mpp-eval:\n  {code}")
                     print(f"Error: {e}")
                     sys.exit(1)
@@ -1286,7 +1286,7 @@ class ManifestFile:
             # Note, we copy local_vars here to avoid eval modifying it
             try:
                 res = eval(f'f\'\'\'{format_string}\'\'\'', dict(local_vars))
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 print(f"In {self.path}: Failed to format string:\n  {format_string}")
                 print(f"Error: {e}")
                 sys.exit(1)
@@ -1373,7 +1373,7 @@ class ManifestFile:
     def _process_container(self, _stage):
         raise NotImplementedError()
 
-    def _process_ostree(self, _stage):
+    def _process_ostree_commits(self, _stage):
         raise NotImplementedError()
 
 
@@ -1788,7 +1788,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     defaults = {
-        "arch": rpm.expandMacro("%{_arch}")
+        "arch": rpm.expandMacro("%{_arch}")  # pylint: disable=no-member
     }
 
     # Override variables from the main of imported files
