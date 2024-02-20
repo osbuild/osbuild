@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import tempfile
+import traceback
 from datetime import datetime
 
 import libdnf5 as dnf5
@@ -20,7 +21,7 @@ from libdnf5.common import QueryCmp_EQ as EQ
 from libdnf5.common import QueryCmp_GLOB as GLOB
 
 
-# XXX - Temporarily lifted from dnf.rpm module
+# XXX - Temporarily lifted from dnf.rpm module  # pylint: disable=fixme
 def _invert(dct):
     return {v: k for k in dct for v in dct[k]}
 
@@ -140,7 +141,7 @@ class Solver():
 
             self.base.get_repo_sack().update_and_load_enabled_repos(load_system=False)
         except RuntimeError as e:
-            raise RepoError(e)
+            raise RepoError(e) from e
 
     # pylint: disable=too-many-branches
     def _dnfrepo(self, desc, exclude_pkgs=None):
@@ -420,8 +421,7 @@ def solve(request, cache_dir):
                 "kind": "RepoError",
                 "reason": f"There was a problem reading a repository: {e}"
             }
-        except Exception as e:
-            import traceback
+        except Exception as e:  # pylint: disable=broad-exception-caught
             printe("error traceback")
             return None, {
                 "kind": type(e).__name__,
