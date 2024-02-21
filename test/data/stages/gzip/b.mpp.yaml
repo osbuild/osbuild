@@ -25,3 +25,4 @@ pipelines:
               sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0: {}
         options:
           filename: compressed.gz
+          level: 9
