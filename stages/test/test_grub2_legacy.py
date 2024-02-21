@@ -19,6 +19,7 @@ GRUB_DEFAULT=saved
 """),
     # custom
     ({
+        "default": "0",
         "disable_submenu": False,
         "disable_recovery": False,
         "timeout": 10,
@@ -28,7 +29,7 @@ GRUB_CMDLINE_LINUX=""
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISABLE_RECOVERY=false
 GRUB_TIMEOUT_STYLE=hidden
-GRUB_DEFAULT=saved
+GRUB_DEFAULT=0
 """),
     # custom (Azure)
     ({
