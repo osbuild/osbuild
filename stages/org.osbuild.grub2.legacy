@@ -174,6 +174,11 @@ SCHEMA = """
         "description": "Additional kernel command line options",
         "type": "string"
       },
+      "default": {
+        "description": "Default boot entry",
+        "type": "string",
+        "default": "saved"
+      },
       "disable_recovery": {
         "type": "boolean",
         "default": true
@@ -355,6 +360,7 @@ class GrubConfig:
         self.bootfs = bootfs
         self.entries = []
         self.cmdline = ""
+        self.default_entry = "saved"
         self.disable_recovery = True
         self.disable_submenu = True
         self.distributor = ""
@@ -456,7 +462,7 @@ class GrubConfig:
             f"GRUB_DISABLE_SUBMENU={str(self.disable_submenu).lower()}\n"
             f"GRUB_DISABLE_RECOVERY={str(self.disable_recovery).lower()}\n"
             f"GRUB_TIMEOUT_STYLE={self.timeout_style}\n"
-            "GRUB_DEFAULT=saved\n"
+            f"GRUB_DEFAULT={self.default_entry}\n"
         )
 
         if self.distributor:
@@ -492,6 +498,7 @@ def main(tree, options):
     cfg = options.get("config", {})
     config = GrubConfig(bios, root_fs, boot_fs)
     config.cmdline = cfg.get("cmdline", "")
+    config.default_entry = cfg.get("default", "saved")
     config.disable_recovery = cfg.get("disable_recovery", True)
     config.disable_submenu = cfg.get("disable_submenu", True)
     config.distributor = cfg.get("distributor")
