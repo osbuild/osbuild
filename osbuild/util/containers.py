@@ -132,7 +132,9 @@ def containers_storage_source(image, image_filepath, container_format):
         if driver == "overlay":
             # NOTE: the overlay sub-directory isn't always released,
             # so we need to force unmount it
-            subprocess.run(["umount", "-f", "--lazy", os.path.join(storage_path, "overlay")], check=False)
+            ret = subprocess.run(["umount", "-f", "--lazy", os.path.join(storage_path, "overlay")], check=False)
+            if ret.returncode != 0:
+                print(f"WARNING: umount of overlay dir failed with an error: {ret}")
 
 
 @contextmanager
