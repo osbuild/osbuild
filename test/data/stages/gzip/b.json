@@ -883,7 +883,8 @@
             }
           },
           "options": {
-            "filename": "compressed.gz"
+            "filename": "compressed.gz",
+            "level": 9
           }
         }
       ]
