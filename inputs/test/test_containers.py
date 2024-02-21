@@ -55,7 +55,7 @@ def test_containers_local_inputs_integration(tmp_path, inputs_module):
             }
         }
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cnt_inputs = inputs_module.ContainersInput.from_args(["--service-fd", str(sock.fileno())])
+        cnt_inputs = inputs_module.ContainersStorageInput.from_args(["--service-fd", str(sock.fileno())])
         store = FakeStoreClient(tmp_path / "fake-sources")
         # not using "tmp_path" here as it will "rm -rf" on cleanup and
         # that is dangerous as during the tests we bind mount the

@@ -84,20 +84,14 @@ SCHEMA = r"""
 """
 
 
-class ContainersInput(inputs.InputService):
+class ContainersStorageInput(inputs.InputService):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mg = MountGuard()
-        self.storage_conf = None
+        self.storage_conf = containers.get_host_storage()
 
-    def map_storage_ref(self, _source, ref, target):
-        # we only want to read the host once and only for inputs that
-        # require it. If we do this for all inputs, reading the host
-        # may cause unexpected errors.
-        if self.storage_conf is None:
-            self.storage_conf = containers.get_host_storage()
-
+    def bind_mount_local_storage(self, target):
         source = self.storage_conf["storage"]["graphroot"]
         dest = os.path.join(target, "storage")
 
@@ -105,23 +99,17 @@ class ContainersInput(inputs.InputService):
         os.makedirs(dest, exist_ok=True)
         self.mg.mount(source, dest)
 
-        return ref, "containers-storage"
-
     def map(self, store, origin, refs, target, _options):
+        self.bind_mount_local_storage(target)
+
         images = {}
-
         for ref, data in refs.items():
-            source = "org.osbuild.containers-storage"
-            ref, container_format = self.map_storage_ref(source, ref, target)
-
             images[ref] = {
-                "format": container_format,
+                "format": "containers-storage",
                 "name": data["name"]
             }
             images[ref]["name"] = data["name"]
-
-            if container_format == "containers-storage" and self.storage_conf is not None:
-                images[ref]["storage"] = self.storage_conf["storage"]
+            images[ref]["storage"] = self.storage_conf["storage"]
 
         reply = {
             "path": target,
@@ -137,7 +125,7 @@ class ContainersInput(inputs.InputService):
 
 
 def main():
-    service = ContainersInput.from_args(sys.argv[1:])
+    service = ContainersStorageInput.from_args(sys.argv[1:])
     service.main()
 
 
