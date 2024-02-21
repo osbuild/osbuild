@@ -26,3 +26,14 @@ def test_containers_storage_integration(tmp_path, sources_module):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         cnt_storage = sources_module.ContainersStorageSource.from_args(["--service-fd", str(sock.fileno())])
         assert cnt_storage.exists(checksum, None)
+
+
+@pytest.mark.skipif(not has_executable("podman"), reason="no podman executable")
+@pytest.mark.skipif(os.getuid() != 0, reason="root only")
+def test_containers_storage_integration_missing(sources_module):
+    checksum = "sha256:1234567890123456789012345678901234567890909b14ffb032aa20fa23d9ad6"
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    cnt_storage = sources_module.ContainersStorageSource.from_args(["--service-fd", str(sock.fileno())])
+    # this is not ideal, consider to just return "False" here
+    with pytest.raises(RuntimeError):
+        cnt_storage.exists(checksum, None)
