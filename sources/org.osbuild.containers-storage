@@ -4,9 +4,8 @@
 This stage differs from other sources in that the source checks to see if the
 container is available in the host's container storage. This puts a requirement
 on the user to ensure that the container is copied into local storage before
-trying to build an image. The starts by reading the host's
-`/etc/containers/storage.conf` file and then using the config to check if the
-container has been imported.
+trying to build an image. The starts by reading the host's `storage.conf`
+file and then using the config to check if the container has been imported.
 
 Unlike all other sources, this source relies on external storage not controlled
 by osbuild itself.
