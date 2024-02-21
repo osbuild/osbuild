@@ -1,0 +1,46 @@
+#!/usr/bin/python3
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+
+def main(inputs, output_dir, options):
+    tree = inputs["tree"]["path"]
+    filename = options["filename"].lstrip("/")
+    # The zip command itself uses 6 as default if no level is specified.
+    # We choose to specifiy 6 as default here to make it explicit.
+    level = options.get("level", 6)
+    include = options.get("include", [])
+
+    # Set up the zip command.
+    zip_cmd = [
+        "zip",
+        "-q",
+        "-r",
+        f"-{level}",
+        os.path.join(output_dir, filename),
+        "."
+    ]
+
+    if include:
+        # traditionally "-i" must be at the end of the commandline
+        zip_cmd += ["-i"]
+        zip_cmd += include
+
+    # Unlike the tar command, zip does not allow an option to change working dir.
+    # Therefore, we change directory within the subprocess function.
+    subprocess.run(
+        zip_cmd,
+        check=True,
+        cwd=tree
+    )
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"], args["options"])
+    sys.exit(r)
