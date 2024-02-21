@@ -30,6 +30,13 @@ SCHEMA_2 = r"""
     "filename": {
       "description": "Filename to use for the compressed file",
       "type": "string"
+    },
+    "level": {
+      "description": "Compression level",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9,
+      "default": 1
     }
   }
 }
@@ -48,13 +55,14 @@ def parse_input(inputs):
 
 def main(inputs, output, options):
     filename = options["filename"].lstrip("/")
+    level = options.get("level", 1)
 
     source = parse_input(inputs)
     target = os.path.join(output, filename)
 
     with open(target, "w", encoding="utf8") as f:
         cmd = [
-            "gzip", "--no-name", "--stdout", "-1", source
+            "gzip", "--no-name", "--stdout", f"-{level}", source
         ]
 
         subprocess.run(
