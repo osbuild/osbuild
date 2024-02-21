@@ -1,0 +1,57 @@
+version: '2'
+sources:
+  org.osbuild.inline: {}
+pipelines:
+  - mpp-import-pipelines:
+      path: ../../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: input-tree
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: '42'
+              text: '42
+
+                '
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['42']}
+              to: tree:///testfile
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['42']}
+              to: tree:///testfile2
+  - name: zip
+    build: name:build
+    stages:
+      - type: org.osbuild.zip
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:input-tree
+        options:
+          filename: zipfile.zip
+  - name: zip-with-paths
+    build: name:build
+    stages:
+      - type: org.osbuild.zip
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:input-tree
+        options:
+          filename: zipfile.zip
+          include: ['testfile']
