@@ -77,7 +77,7 @@ class ContainersStorageSource(sources.SourceService):
         image_id = checksum.split(":")[1]
         source = self.local_image_name(image_id)
         res = sp.run(["skopeo", "inspect", "--raw", "--config", source],
-                     check=False, capture_output=True, universal_newlines=True)
+                     check=False, stdout=sp.PIPE, stderr=sp.PIPE, universal_newlines=True)
 
         # fail early if the user hasn't imported the container into
         # containers-storage
