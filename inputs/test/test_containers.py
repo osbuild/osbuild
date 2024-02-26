@@ -26,17 +26,6 @@ class FakeStoreClient:
         return fake_source_path
 
 
-def rmdir_only(path):
-    """
-    Remove all empty directories from the given target, errors for
-    non-empty dirs
-    """
-    for root, dirs, _ in os.walk(path):
-        for d in dirs:
-            os.rmdir(pathlib.Path(root) / d)
-    os.rmdir(path)
-
-
 @pytest.mark.skipif(not has_executable("podman"), reason="no podman executable")
 @pytest.mark.skipif(os.getuid() != 0, reason="root only")
 def test_containers_local_inputs_integration(tmp_path, inputs_module):
@@ -69,4 +58,8 @@ def test_containers_local_inputs_integration(tmp_path, inputs_module):
             assert (target / "storage").exists()
         finally:
             cnt_inputs.unmap()
-            rmdir_only(target)
+            # cleanup manually, note that we only remove empty dirs here,
+            # because we only expect a bind mount under "$target/storage"
+            # Anything non-empty here means a umount() failed
+            os.rmdir(target / "storage")
+            os.rmdir(target)
