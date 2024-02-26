@@ -53,3 +53,36 @@ def test_process_platforms_json(tmp_path, stage_module, platform, expected_grub,
     grub_cmds, kernel_args = stage_module.process_platforms_json(fake_platforms_path, platform)
     assert grub_cmds == expected_grub
     assert kernel_args == expected_kernel
+
+
+def test_generate_console_settings_none(tmp_path, stage_module):
+    fake_console_settings_path = tmp_path / "boot/grub2/console.cfg"
+    fake_console_settings_path.parent.mkdir(parents=True)
+    console_settings = None
+
+    stage_module.generate_console_settings_file(console_settings, fake_console_settings_path)
+    # ensure we generate a template even if no settings are provided
+    assert fake_console_settings_path.read_text(encoding="utf8") == textwrap.dedent("""\
+    # Any non-default console settings will be inserted here.
+    # CONSOLE-SETTINGS-START
+
+    # CONSOLE-SETTINGS-END
+    """)
+
+
+def test_generate_console_settings_multiple(tmp_path, stage_module):
+    fake_console_settings_path = tmp_path / "boot/grub2/console.cfg"
+    fake_console_settings_path.parent.mkdir(parents=True)
+    # console settings are the grub commands from the platforms.json
+    console_settings = ["serial --speed=115200", "terminal_input serial console", "terminal_output serial console"]
+
+    stage_module.generate_console_settings_file(console_settings, fake_console_settings_path)
+    # ensure we generate a template even if no settings are provided
+    assert fake_console_settings_path.read_text(encoding="utf8") == textwrap.dedent("""\
+    # Any non-default console settings will be inserted here.
+    # CONSOLE-SETTINGS-START
+    serial --speed=115200
+    terminal_input serial console
+    terminal_output serial console
+    # CONSOLE-SETTINGS-END
+    """)
