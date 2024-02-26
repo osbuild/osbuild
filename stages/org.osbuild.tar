@@ -82,6 +82,11 @@ SCHEMA_2 = """
         "type": "string",
         "description": "If specified, the archive will only contain the specified paths, in the specified order"
       }
+    },
+    "sparse": {
+      "description": "Make archive files sparse",
+      "type": "boolean",
+      "default": false
     }
   }
 },
@@ -113,7 +118,7 @@ def main(inputs, output_dir, options):
         "XZ_OPT": "--threads 0"
     }
 
-    # SELinux context, ACLs and extended attributes
+    # SELinux context, ACLs, extended attributes, and sparse
     if options.get("acls", True):
         extra_args += ["--acls"]
 
@@ -122,6 +127,9 @@ def main(inputs, output_dir, options):
 
     if options.get("xattrs", True):
         extra_args += ["--xattrs", "--xattrs-include", "*"]
+
+    if options.get("sparse", False):
+        extra_args += ["--sparse"]
 
     # Set up the tar command.
     tar_cmd = [
