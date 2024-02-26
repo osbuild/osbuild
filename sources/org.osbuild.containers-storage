@@ -81,10 +81,16 @@ class ContainersStorageSource(sources.SourceService):
         # fail early if the user hasn't imported the container into
         # containers-storage
         if res.returncode != 0:
-            raise RuntimeError(f"Container does not exist in local containers storage: {res.stderr}")
+            # string not matching not ideal - this is ErrNotAnImage
+            # which is unchanged since 2016 (added in ee99172905 in
+            # containers/storage)
+            if "identifier is not an image" in res.stderr:
+                return False
+            raise RuntimeError(f"unknown skopeo error: {res.stderr}")
 
         # NOTE: this is a bit redundant because we're checking the content digest of the thing we retrieved via its
         # id (which is the content digest), but let's keep it in case we change to retrieving local containers by name
+        # See also https://github.com/containers/skopeo/pull/2236
         local_id = "sha256:" + hashlib.sha256(res.stdout.encode()).hexdigest()
         if local_id != checksum:
             raise RuntimeError(

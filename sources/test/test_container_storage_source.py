@@ -34,6 +34,17 @@ def test_containers_storage_integration_missing(sources_module):
     checksum = "sha256:1234567890123456789012345678901234567890909b14ffb032aa20fa23d9ad6"
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     cnt_storage = sources_module.ContainersStorageSource.from_args(["--service-fd", str(sock.fileno())])
-    # this is not ideal, consider to just return "False" here
-    with pytest.raises(RuntimeError):
+    assert not cnt_storage.exists(checksum, None)
+
+
+@pytest.mark.skipif(not has_executable("podman"), reason="no podman executable")
+@pytest.mark.skipif(os.getuid() != 0, reason="root only")
+def test_containers_storage_integration_invalid(sources_module):
+    # put an invalid reference into the source to ensure skopeo errors with
+    # a different error than image not found
+    checksum = "sha256:["
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    cnt_storage = sources_module.ContainersStorageSource.from_args(["--service-fd", str(sock.fileno())])
+    with pytest.raises(RuntimeError) as exc:
         cnt_storage.exists(checksum, None)
+    assert "unknown skopeo error:" in str(exc)
