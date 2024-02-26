@@ -70,17 +70,12 @@ def generate_console_settings_file(console_settings, file_path):
 
 
 def process_platforms_json(json_file_path, platform):
-    keys = ["grub_commands", "kernel_arguments"]
-    result = {}
-    with open(json_file_path, 'r', encoding="utf8") as file:
-        data = json.load(file)
-        if platform in data:
-            for key in keys:
-                if key in data[platform]:
-                    result[key] = data[platform][key]
-
-    return result.get("grub_commands", []),\
-        result.get("kernel_arguments", [])
+    with open(json_file_path, 'r', encoding="utf8") as fp:
+        data = json.load(fp)
+        platform = data.get(platform, {})
+        grub_cmds = platform.get("grub_commands", [])
+        kernel_args = platform.get("kernel_arguments", [])
+    return grub_cmds, kernel_args
 
 
 def main(paths, options):
