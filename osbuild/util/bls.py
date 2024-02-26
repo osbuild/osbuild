@@ -3,6 +3,7 @@ Function for appending parameters to
 Boot Loader Specification (BLS).
 """
 import glob
+import os
 from typing import List
 
 
@@ -23,12 +24,16 @@ def options_append(root_path: str, kernel_arguments: List[str]) -> None:
     if len(bls_conf_files) == 0:
         raise RuntimeError(f"no BLS configuration found in {bls_glob}")
     for entry in bls_conf_files:
-        # Read in the file and then append to the options line.
         with open(entry, encoding="utf8") as f:
             lines = f.read().splitlines()
-        with open(entry, "w", encoding="utf8") as f:
+        with open(entry + ".tmp", "w", encoding="utf8") as f:
+            found_opts_line = False
             for line in lines:
-                if line.startswith('options '):
+                if not found_opts_line and line.startswith('options '):
                     f.write(f"{line} {' '.join(kernel_arguments)}\n")
+                    found_opts_line = True
                 else:
                     f.write(f"{line}\n")
+            if not found_opts_line:
+                f.write(f"options {' '.join(kernel_arguments)}\n")
+        os.rename(entry + ".tmp", entry)
