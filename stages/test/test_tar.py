@@ -22,6 +22,7 @@ STAGE_NAME = "org.osbuild.tar"
     # good
     ({"filename": "out.tar", "root-node": "include"}, ""),
     ({"filename": "out.tar", "paths": ["file1"]}, ""),
+    ({"filename": "out.tar", "sparse": True}, ""),
     ({"filename": "out.tar"}, ""),
 ])
 def test_schema_validation_tar(stage_schema, test_data, expected_err):
