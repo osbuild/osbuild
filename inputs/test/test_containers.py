@@ -2,12 +2,12 @@
 
 import os
 import pathlib
-import socket
 import subprocess
 import tempfile
 
 import pytest
 
+from osbuild import testutil
 from osbuild.testutil import has_executable, make_container
 
 INPUTS_NAME = "org.osbuild.containers-storage"
@@ -40,8 +40,8 @@ def test_containers_local_inputs_integration(tmp_path, inputs_module):
                 }
             }
         }
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        cnt_inputs = inputs_module.ContainersStorageInput.from_args(["--service-fd", str(sock.fileno())])
+        fd = testutil.make_fake_service_fd()
+        cnt_inputs = inputs_module.ContainersStorageInput.from_args(["--service-fd", str(fd)])
         store = FakeStoreClient(tmp_path / "fake-sources")
         # not using "tmp_path" here as it will "rm -rf" on cleanup and
         # that is dangerous as during the tests we bind mount the
