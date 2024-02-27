@@ -6,6 +6,7 @@ import os
 import pathlib
 import re
 import shutil
+import socket
 import subprocess
 import tempfile
 import textwrap
@@ -155,3 +156,15 @@ def pull_oci_archive_container(archive_path, image_name):
         yield
     finally:
         subprocess.check_call(["skopeo", "delete", f"containers-storage:{image_name}"])
+
+
+def make_fake_service_fd() -> int:
+    """Create a file descriptor suitable as input for --service-fd for any
+    host.Service
+
+    Note that the service will take over the fd and take care of the
+    lifecycle so no need to close it.
+    """
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+    fd = os.dup(sock.fileno())
+    return fd

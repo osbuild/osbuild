@@ -3,17 +3,18 @@
 import contextlib
 import os
 import pathlib
-import socket
 import tempfile
 
 import pytest
+
+from osbuild import testutil
 
 SOURCES_NAME = "org.osbuild.curl"
 
 
 def test_curl_source_not_exists(sources_module):
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    curl_source = sources_module.CurlSource.from_args(["--service-fd", str(sock.fileno())])
+    fd = testutil.make_fake_service_fd()
+    curl_source = sources_module.CurlSource.from_args(["--service-fd", str(fd)])
     tmpdir = tempfile.TemporaryDirectory()
     curl_source.cache = tmpdir.name
     desc = {
@@ -24,8 +25,8 @@ def test_curl_source_not_exists(sources_module):
 
 
 def test_curl_source_exists(sources_module):
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    curl_source = sources_module.CurlSource.from_args(["--service-fd", str(sock.fileno())])
+    fd = testutil.make_fake_service_fd()
+    curl_source = sources_module.CurlSource.from_args(["--service-fd", str(fd)])
     tmpdir = tempfile.TemporaryDirectory()
     curl_source.cache = tmpdir.name
     desc = {
@@ -37,8 +38,8 @@ def test_curl_source_exists(sources_module):
 
 
 def test_curl_source_amend_secrets(sources_module):
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    curl_source = sources_module.CurlSource.from_args(["--service-fd", str(sock.fileno())])
+    fd = testutil.make_fake_service_fd()
+    curl_source = sources_module.CurlSource.from_args(["--service-fd", str(fd)])
     tmpdir = tempfile.TemporaryDirectory()
     curl_source.cache = tmpdir.name
     desc = {
@@ -65,8 +66,8 @@ def test_curl_source_amend_secrets(sources_module):
 
 
 def test_curl_source_amend_secrets_fail(sources_module):
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    curl_source = sources_module.CurlSource.from_args(["--service-fd", str(sock.fileno())])
+    fd = testutil.make_fake_service_fd()
+    curl_source = sources_module.CurlSource.from_args(["--service-fd", str(fd)])
     tmpdir = tempfile.TemporaryDirectory()
     curl_source.cache = tmpdir.name
     desc = {
