@@ -6,25 +6,15 @@ import osbuild.api
 from osbuild.util import bls
 
 
-def main(paths, tree, options):
+def main(args, options):
     kopts = options.get("kernel_opts", [])
     bootpath = options.get("bootpath", "tree:///boot")
 
-    url = urlparse(bootpath)
-    scheme = url.scheme
-    if scheme == "tree":
-        root = tree
-    elif scheme == "mount":
-        root = paths["mounts"]
-    else:
-        raise ValueError(f"Unsupported scheme '{scheme}'")
-
-    assert url.path.startswith("/")
-    bootroot = root + url.path
+    bootroot = parsing.parse_location(bootpath, args)
     bls.options_append(bootroot, kopts)
 
 
 if __name__ == '__main__':
     args = osbuild.api.arguments()
-    r = main(args["paths"], args["tree"], args["options"])
+    r = main(args, args["options"])
     sys.exit(r)

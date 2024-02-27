@@ -2,51 +2,46 @@
 import os
 import subprocess
 import sys
-from typing import Dict
-from urllib.parse import ParseResult, urlparse
 
 import osbuild.api
+from osbuild.util import parsing
 
-
-def parse_mount(url: ParseResult, args: Dict):
-    name = url.netloc
-    if name:
-        root = args["mounts"].get(name, {}).get("path")
-        if not root:
-            raise ValueError(f"Unknown mount '{name}'")
-    else:
-        root = args["paths"]["mounts"]
-
-    return root
-
-
-def parse_location(location, args):
-    url = urlparse(location)
-
-    scheme = url.scheme
-    if scheme == "tree":
-        root = args["tree"]
-    elif scheme == "mount":
-        root = parse_mount(url, args)
-    else:
-        raise ValueError(f"Unsupported scheme '{scheme}'")
-
-    assert url.path.startswith("/")
-
-    path = os.path.relpath(url.path, "/")
-    path = os.path.join(root, path)
-    path = os.path.normpath(path)
-
-    if url.path.endswith("/"):
-        path = os.path.join(path, ".")
-
-    return path
-
+SCHEMA_2 = r"""
+"options": {
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^mount:\/\/[^\/]+\/|^tree:\/\/\/": {
+          "type": "object",
+          "required": ["immutable"],
+          "properties": {
+            "immutable": {
+              "type": "boolean",
+              "description": "Make the file/directory immutable",
+              "default": true
+            }
+          }
+        }
+      }
+    }
+  }
+},
+"devices": {
+  "type": "object",
+  "additionalProperties": true
+},
+"mounts": {
+  "type": "array"
+}
+"""
 
 def main(args, options):
     for path, cmdargs in options["items"].items():
         immutable = cmdargs["immutable"]
-        dst = parse_location(path, args)
+        dst = parsing.parse_location(path, args)
         op = '+' if immutable else '-'
         subprocess.run(["chattr", f"{op}i", dst], check=True)
 
