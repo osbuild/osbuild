@@ -37,3 +37,41 @@ def test_parse_size():
         else:
             res = parsing.parse_size(s)
             assert res == num, f"{s} parsed as {res} (wanted {num})"
+
+
+def test_parse_location_mounts():
+    args = {
+        "paths": {
+            "mounts": "/run/osbuild/mounts",
+        },
+        "mounts": {
+            "root": {
+                "path": "/run/osbuild/mounts/.",
+            },
+        },
+    }
+    location = "mount://root/"
+    path = parsing.parse_location(location, args)
+    assert path == "/run/osbuild/mounts/."
+
+
+def test_parse_location_tree():
+    args = {
+        "tree": "/run/osbuild/tree",
+    }
+    location = "tree:///disk.img"
+    path = parsing.parse_location(location, args)
+    assert path == "/run/osbuild/tree/disk.img"
+
+
+def test_parse_location_inputs():
+    args = {
+        "inputs": {
+            "tree": {
+                "path": "/run/osbuild/inputs/tree",
+            },
+        },
+    }
+    location = "input://tree/"
+    path = parsing.parse_location(location, args)
+    assert path == "/run/osbuild/inputs/tree/."

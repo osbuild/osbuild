@@ -2,8 +2,7 @@
 
 import os
 import re
-
-from typing import Union, Dict
+from typing import Dict, Union
 from urllib.parse import ParseResult, urlparse
 
 
@@ -36,7 +35,7 @@ def parse_size(s: str) -> Union[int, str]:
     raise TypeError(f"invalid size value: '{s}'")
 
 
-def parse_mount(url: ParseResult, args: Dict):
+def parse_mount(url: ParseResult, args: Dict) -> os.PathLike:
     """
     Parses the mount URL to extract the root path.
 
@@ -55,7 +54,7 @@ def parse_mount(url: ParseResult, args: Dict):
     return root
 
 
-def parse_input(url: ParseResult, args: Dict):
+def parse_input(url: ParseResult, args: Dict) -> os.PathLike:
     """
     Parses the input URL to extract the root path.
 
@@ -71,7 +70,7 @@ def parse_input(url: ParseResult, args: Dict):
     return root
 
 
-def parse_location(location, args):
+def parse_location(location: str, args: Dict) -> str:
     """
     Parses the location URL to derive the corresponding file path.
 
