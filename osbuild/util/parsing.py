@@ -91,7 +91,8 @@ def parse_location(location: str, args: Dict) -> str:
     else:
         raise ValueError(f"Unsupported scheme '{scheme}'")
 
-    assert url.path.startswith("/")
+    if not url.path.startswith("/"):
+        raise ValueError(f"url.path from location must start with '/', got: {url.path}")
 
     path = os.path.relpath(url.path, "/")
     path = os.path.join(root, path)
