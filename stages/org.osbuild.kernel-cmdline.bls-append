@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 import sys
-from urllib.parse import urlparse
 
 import osbuild.api
-from osbuild.util import bls
+from osbuild.util import bls, parsing
 
 
 def main(args, options):
@@ -15,6 +14,6 @@ def main(args, options):
 
 
 if __name__ == '__main__':
-    args = osbuild.api.arguments()
-    r = main(args, args["options"])
+    _args = osbuild.api.arguments()
+    r = main(_args, _args["options"])
     sys.exit(r)

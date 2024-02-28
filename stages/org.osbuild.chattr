@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import os
 import subprocess
 import sys
 
@@ -37,6 +36,7 @@ SCHEMA_2 = r"""
   "type": "array"
 }
 """
+
 
 def main(args, options):
     for path, cmdargs in options["items"].items():
