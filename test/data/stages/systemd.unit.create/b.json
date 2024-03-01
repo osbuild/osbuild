@@ -616,6 +616,8 @@
           "type": "org.osbuild.systemd.unit.create",
           "options": {
             "filename": "create-directory.service",
+            "unit-type": "global",
+            "unit-path": "etc",
             "config": {
               "Unit": {
                 "Description": "Create directory",
