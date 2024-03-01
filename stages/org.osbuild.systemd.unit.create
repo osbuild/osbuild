@@ -7,6 +7,8 @@ This stage allows to create Systemd unit files in
 '.service' file to be added. These names are validated using the
 same rules as specified by systemd.unit(5) and they must contain the
 '.service' suffix (other types of unit files are not supported).
+'unit-type' determines if the unit file is created at global or
+system level,'unit-path' will determine the systemd unit load path.
 
 The Unit configuration can currently specify the following subset
 of options:
@@ -43,6 +45,18 @@ SCHEMA = r"""
     "filename": {
         "type": "string",
         "pattern": "^[\\w:.\\\\-]+[@]{0,1}[\\w:.\\\\-]*\\.service$"
+    },
+    "unit-type": {
+        "type": "string",
+        "enum": ["system", "global"],
+        "default": "system",
+        "description": "Selects between systemd system or global unit to add dropin"
+    },
+    "unit-path": {
+        "type": "string",
+        "enum": ["usr", "etc"],
+        "default": "usr",
+        "description": "Define the system load path"
     },
     "config": {
         "additionalProperties": false,
@@ -167,8 +181,19 @@ def main(tree, options):
                     config.set(section, str(option) + "=" + str(v))
             else:
                 config.set(section, option, str(value))
+    persistent = options.get("unit-path", "usr")
+    systemd_dir = str()
+    if persistent == "usr":
+        systemd_dir = f"{tree}/usr/lib/systemd"
+    elif persistent == "etc":
+        systemd_dir = f"{tree}/etc/systemd"
 
-    systemd_dir = f"{tree}/usr/lib/systemd/system"
+    unit_type = options.get("unit-type", "system")
+    if unit_type == "system":
+        systemd_dir += "/system"
+    elif unit_type == "global":
+        systemd_dir += "/user"
+
     with open(f"{systemd_dir}/{filename}", "w", encoding="utf8") as f:
         config.write(f, space_around_delimiters=False)
 
