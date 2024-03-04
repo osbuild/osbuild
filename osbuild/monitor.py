@@ -62,14 +62,15 @@ class Context:
         if origin is None or origin == self._origin:
             return self
         ctx = copy.copy(self)
-        ctx.set_origin(origin)
+        ctx.origin = origin
         return ctx
 
     @property
     def origin(self):
         return self._origin
 
-    def set_origin(self, origin: str):
+    @origin.setter
+    def origin(self, origin: str):
         self._origin = origin
 
     @property

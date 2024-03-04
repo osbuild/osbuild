@@ -143,7 +143,7 @@ def test_context():
     assert ctx_dict["id"] == "75bf3feab3d5662744c3ac38406ba73142aeb67666b1180bc1006f913b18f792"
     assert len(ctx_dict) == 1
 
-    ctx.set_origin("org.osbuild.test-2")
+    ctx.origin = "org.osbuild.test-2"
     ctx_dict = ctx.as_dict()
     # should be a full dict again
     assert "origin" in ctx_dict
@@ -151,7 +151,7 @@ def test_context():
     assert ctx_dict["pipeline"]["name"] == "test-pipeline"
     assert ctx_dict["pipeline"]["stage"]["name"] == "org.osbuild.noop"
 
-    ctx.set_origin("org.osbuild.test")
+    ctx.origin = "org.osbuild.test"
     ctx_dict = ctx.as_dict()
     # should only have id again (old context ID)
     assert ctx_dict["id"] == "75bf3feab3d5662744c3ac38406ba73142aeb67666b1180bc1006f913b18f792"
