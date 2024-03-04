@@ -43,71 +43,6 @@ class OSBuild:
 
 
 def run_tests(args, tmpdir):
-    tests = {
-        "fedora-ostree-tarball": {
-            "manifest": "fedora-ostree-tarball.json",
-            "exports": {
-                "tarball": {
-                    "artifact": "fedora-commit.tar"
-                }
-            }
-        },
-        "fedora-ostree-container": {
-            "manifest": "fedora-ostree-container.json",
-            "exports": {
-                "container": {
-                    "artifact": "fedora-container.tar"
-                }
-            },
-        },
-        "fedora-ostree-native-container": {
-            "manifest": "fedora-ostree-native-container.json",
-            "exports": {
-                "container": {
-                    "artifact": "container.tar"
-                }
-            },
-        },
-        "fedora-ostree-bootiso": {
-            "manifest": "fedora-ostree-bootiso.json",
-            "exports": {
-                "bootiso": {
-                    "artifact": "fedora-ostree-boot.iso"
-                }
-            },
-        },
-        "fedora-ostree-bootiso-xz": {
-            "manifest": "fedora-ostree-bootiso-xz.json",
-            "exports": {
-                "bootiso": {
-                    "artifact": "fedora-ostree-boot-xz.iso"
-                }
-            },
-        },
-        "fedora-ostree-image": {
-            "manifest": "fedora-ostree-image.json",
-            "exports": {
-                "qcow2": {
-                    "artifact": "disk.qcow2"
-                }
-            },
-        },
-        "fedora-coreos-container": {
-            "manifest": "fedora-coreos-container.json",
-            "exports": {
-                "qemu": {
-                    "artifact": "qemu.qcow2"
-                },
-                "metal": {
-                    "artifact": "metal.raw"
-                },
-                "metal4k": {
-                    "artifact": "metal4k.raw"
-                }
-            },
-        }
-    }
-
     outdir, store = args.output_directory, args.store
 
     if not outdir:
@@ -129,37 +64,20 @@ def run_tests(args, tmpdir):
         "ostree-commit"
     ]
 
-    results = []
+    print(f"Testing {BOLD}{args.manifest}{RESET}", flush=True)
 
-    for testname, test in tests.items():
-        print(f"Testing {BOLD}{testname}{RESET}", flush=True)
-        manifest = test["manifest"]
+    path = os.path.join("test", "data", "manifests", args.manifest)
 
-        start = time.monotonic()
-        result = {
-            "test": manifest
-        }
-        path = os.path.join("test", "data", "manifests", manifest)
-        exports = test["exports"]
+    success = True
+    export_names = map(lambda p: p.split("/")[0], args.export)
+    osbuild.run(path, export_names)
+    for export in args.export:
+        path = os.path.join(outdir, export)
+        if not os.path.exists(path):
+            print(f"{RED}Error{RESET}: {path} does not exist")
+            success = False
 
-        try:
-            osbuild.run(path, exports.keys())
-            for name, data in exports.items():
-                artifact = data["artifact"]
-                path = os.path.join(outdir, name, artifact)
-                assert os.path.exists(path)
-                print(f"{GREEN}success{RESET}", flush=True)
-        except Exception as e:  # pylint: disable=broad-except
-            print(f"{RED}Error{RESET}: {e}")
-            result["error"] = str(e)
-
-        duration = time.monotonic() - start
-        result["duration"] = duration
-        print(f"Test duration: {duration}", flush=True)
-
-        results.append(result)
-
-    return results
+    return success
 
 
 def main():
@@ -176,6 +94,19 @@ def main():
         type=os.path.abspath,
         default=None,
         help="directory where result objects are stored")
+    parser.add_argument(
+        "--manifest",
+        metavar="FILE",
+        type=str,
+        required=True,
+        help="manifest to build")
+    parser.add_argument(
+        "--export",
+        metavar="ID",
+        type=str,
+        nargs="+",
+        required=True,
+        help="expected export filepaths (can be passed multiple times)")
     args = parser.parse_args()
 
     print(f"Running in {os.path.realpath(os.curdir)}")
@@ -183,16 +114,9 @@ def main():
     tmpdir = "/var/osbuild/tmp"
     os.makedirs(tmpdir, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=tmpdir) as tmp:
-        results = run_tests(args, tmp)
+        success = run_tests(args, tmp)
 
-    n = len(results)
-    failed = len(list(filter(lambda x: x.get("error"), results)))
-    ok = n - failed
-
-    print("tests/ok/failed", end=": ")
-    print(f"{n}/{GREEN}{ok}{RESET}/{RED}{failed}{RESET}")
-
-    if failed:
+    if not success:
         sys.exit(1)
 
 
