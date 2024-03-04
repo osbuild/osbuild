@@ -62,6 +62,9 @@ jobs:
         with:
           image: ghcr.io/osbuild/osbuild-ci:latest-202308241910
           run: |
+            # Using 4 workers is a bit arbitrary, "auto" is probably too
+            # aggressive.
+            export TEST_WORKERS="-n 4"
             export OSBUILD_TEST_STORE=/var/tmp/osbuild-test-store
             TEST_CATEGORY="test.run.test_assemblers" \
             tox -e "py36"
