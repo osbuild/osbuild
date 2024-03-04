@@ -101,12 +101,12 @@ Manifests:
           - aws/centos-stream-9-aarch64
       - PARALLEL_EXEC: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
         RUNNER:
-          - aws/rhel-8.8-ga-x86_64
-          - aws/rhel-8.8-ga-aarch64
+          - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-8.9-ga-aarch64
           - aws/rhel-8.10-nightly-x86_64
           - aws/rhel-8.10-nightly-aarch64
-          - aws/rhel-9.2-ga-x86_64
-          - aws/rhel-9.2-ga-aarch64
+          - aws/rhel-9.3-ga-x86_64
+          - aws/rhel-9.3-ga-aarch64
           - aws/rhel-9.4-nightly-x86_64
           - aws/rhel-9.4-nightly-aarch64
         INTERNAL_NETWORK: "true"
