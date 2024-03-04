@@ -99,7 +99,8 @@ class Context:
     @property
     def id(self):
         if self._id is None:
-            self._id = hashlib.sha256(json.dumps(self._dict()).encode()).hexdigest()
+            self._id = hashlib.sha256(
+                json.dumps(self._dict(), sort_keys=True).encode()).hexdigest()
         return self._id
 
     def _dict(self):
