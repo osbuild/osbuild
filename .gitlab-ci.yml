@@ -64,10 +64,25 @@ OSTree Images:
   extends: .terraform
   script:
     - schutzbot/deploy.sh
-    - sudo test/cases/ostree-images
+    - sudo test/cases/ostree-images --manifest "$MANIFEST" --export $EXPORT
+  variables:
+    RUNNER: aws/fedora-38-x86_64
   parallel:
     matrix:
-      - RUNNER: aws/fedora-38-x86_64
+      - MANIFEST: fedora-ostree-tarball.json
+        EXPORT: tarball/fedora-commit.tar
+      - MANIFEST: fedora-ostree-container.json
+        EXPORT: container/fedora-container.tar
+      - MANIFEST: fedora-ostree-native-container.json
+        EXPORT: container/ostree-container.tar
+      - MANIFEST: fedora-ostree-bootiso.json
+        EXPORT: bootiso/fedora-ostree-boot.iso
+      - MANIFEST: fedora-ostree-bootiso-xz.json
+        EXPORT: bootiso/fedora-ostree-boot.iso
+      - MANIFEST: fedora-ostree-image.json
+        EXPORT: qcow2/disk.qcow2
+      - MANIFEST: fedora-coreos-container.json
+        EXPORT: qemu/qemu.qcow2 metal/metal.raw metal4k/metal4k.raw
 
 Manifests:
   stage: test
