@@ -20,7 +20,9 @@ MEBIBYTE = 1024 * 1024
 
 @pytest.fixture(name="osbuild")
 def osbuild_fixture():
-    yield test.OSBuild()
+    store = os.getenv("OSBUILD_TEST_STORE")
+    osb = test.OSBuild(cache_from=store)
+    yield osb
 
 
 def assertImageFile(filename, fmt, expected_size):
@@ -307,6 +309,12 @@ def run_assembler(osb, name, options, output_path):
     assert treeid
 
     with tempfile.TemporaryDirectory(dir="/var/tmp") as output_dir:
-        osb.compile(data, output_dir=output_dir, exports=["assembler", "tree"], checkpoints=["tree"])
-        tree = os.path.join(output_dir, "tree")
-        yield tree, os.path.join(output_dir, "assembler", output_path)
+        try:
+            osb.compile(data, output_dir=output_dir, exports=["assembler", "tree"], checkpoints=["tree"])
+            tree = os.path.join(output_dir, "tree")
+            yield tree, os.path.join(output_dir, "assembler", output_path)
+        finally:
+            # re-use downloaded sources
+            store = os.getenv("OSBUILD_TEST_STORE")
+            if store:
+                osb.copy_source_data(store, "org.osbuild.files")
