@@ -68,7 +68,6 @@ OSTree Images:
   parallel:
     matrix:
       - RUNNER: aws/fedora-38-x86_64
-        INTERNAL_NETWORK: "true"
 
 Manifests:
   stage: test
