@@ -11,7 +11,6 @@ jobs:
       matrix:
         test:
         - "test.mod"
-        - "test.run.test_assemblers"
         - "test.run.test_boot"
         - "test.run.test_devices"
         - "test.run.test_executable"
@@ -52,3 +51,17 @@ jobs:
           sed -i 's/overlay/vfs/g' /etc/containers/storage.conf || true  # potential overrides
           TEST_CATEGORY="${{ matrix.test }}" \
           tox -e "${{ matrix.environment }}"
+
+  v1_manifests:
+    name: "Assembler test (legacy)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Clone Repository"
+        uses: actions/checkout@v4
+      - name: "Run"
+        uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
+        with:
+          image: ghcr.io/osbuild/osbuild-ci:latest-202308241910
+          run: |
+            TEST_CATEGORY="test.run.test_assemblers" \
+            tox -e "py36"
