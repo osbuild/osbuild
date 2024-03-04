@@ -681,6 +681,25 @@ class DepSolver:
         base.conf.install_weak_deps = not ignore_weak_deps
         base.conf.arch = arch
 
+        # We use the same cachedir for multiple architectures when
+        # OSBUILD_MPP_CACHEDIR is given. Unfortunately, this is something that
+        # doesn't work well in certain situations with zchunk:
+        # Imagine that we already have cache for arch1. Then, we use dnf
+        # to depsolve for arch2. If ZChunk is enabled and available (that's
+        # the case for Fedora), dnf will try to download only differences
+        # between arch1 and arch2 metadata. But, as these are completely
+        # different, dnf must basically redownload everything.
+        # For downloding deltas, zchunk uses HTTP range requests. Unfortunately,
+        # if the mirror doesn't support multi range requests, then zchunk will
+        # download one small segment per a request. Because we need to update
+        # the whole metadata (10s of MB), this can be extremely slow in some cases.
+        # Thus, let's just disable zchunk for now.
+
+        # Note that when OSBUILD_MPP_CACHEDIR is not given, this has basically
+        # no effect, because zchunk is only used when a persistent cachedir is
+        # used.
+        self.base.conf.zchunk = False
+
         self.base = base
         self.basedir = basedir
 
