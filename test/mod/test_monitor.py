@@ -246,7 +246,7 @@ def test_json_progress_monitor():
 
         logitem = json.loads(log[i])
         assert logitem["message"] == "Starting module org.osbuild.noop"
-        assert logitem["context"]["origin"] == "org.osbuild.main"
+        assert logitem["context"]["origin"] == "osbuild.monitor"
         assert logitem["context"]["pipeline"]["name"] == "test-pipeline-first"
         assert logitem["context"]["pipeline"]["stage"]["name"] == "org.osbuild.noop"
         id_start_module = logitem["context"]["id"]
@@ -277,7 +277,7 @@ def test_json_progress_monitor():
 
         logitem = json.loads(log[i])
         assert logitem["message"] == "Starting pipeline test-pipeline-second"
-        assert logitem["context"]["origin"] == "org.osbuild.main"
+        assert logitem["context"]["origin"] == "osbuild.monitor"
         assert logitem["context"]["pipeline"]["name"] == "test-pipeline-second"
         i += 1
 

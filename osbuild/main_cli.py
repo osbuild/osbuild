@@ -164,7 +164,7 @@ def osbuild_cli() -> int:
     if not monitor_name:
         monitor_name = "NullMonitor" if args.json else "LogMonitor"
     monitor = osbuild.monitor.make(monitor_name, args.monitor_fd, manifest)
-    monitor.log(f"starting {args.manifest_path}", origin="org.osbuild.main")
+    monitor.log(f"starting {args.manifest_path}", origin="osbuild.main_cli")
 
     try:
         with ObjectStore(args.store) as object_store:
@@ -187,10 +187,10 @@ def osbuild_cli() -> int:
                 stage_timeout=stage_timeout
             )
             if r["success"]:
-                monitor.log(f"manifest {args.manifest_path} finished successfully", origin="org.osbuild.main")
+                monitor.log(f"manifest {args.manifest_path} finished successfully", origin="osbuild.main_cli")
             else:
                 # if we had monitor.error() we could use that here
-                monitor.log(f"manifest {args.manifest_path} failed", origin="org.osbuild.main")
+                monitor.log(f"manifest {args.manifest_path} failed", origin="osbuild.main_cli")
 
             if r["success"] and exports:
                 for pid in exports:

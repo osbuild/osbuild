@@ -337,7 +337,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         poller = select.poll()
         poller.register(proc.stdout.fileno(), READ_ONLY)
 
-        stage_origin = "stages/" + stage_name
+        stage_origin = os.path.join("stages", stage_name)
         while True:
             buf = self.read_with_timeout(proc, poller, start, timeout)
             if not buf:
