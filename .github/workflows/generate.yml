@@ -39,10 +39,29 @@ jobs:
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v3
+    - name: Cache metadata
+      uses: actions/cache@v4
+      with:
+        path: /var/tmp/manifest-mpp-yaml.hash
+    - name: Check if inputs changed
+      id: check-inputs
+      outputs:
+        skip: ${{ steps.check-inputs.skip }}
+      run: |
+        # FIXME: also search for "ipp.yaml"
+        find . -name "*.mpp.yaml" |sort |xargs cat| md5sum > /var/tmp/manifest-mpp-yaml.hash.new
+        if diff -u /var/tmp/manifest-mpp-yaml.hash /var/tmp/manifest-mpp-yaml.hash.new; then
+            echo "inputs have not changed"
+            echo "skip=true >> "$GITHUB_OUTPUT"
+        fi
     - name: "Regenerate Test Data"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
+      if: steps.check-inputs.output.skip != true
       with:
         image: ghcr.io/osbuild/osbuild-ci:latest-202304251412
         run: |
           make test-data
           git diff --exit-code -- ./test/data
+    - name: "Put new hash in place"
+      run: |
+        mv /var/tmp/manifest-mpp-yaml.hash.new /var/tmp/manifest-mpp-yaml.hash
