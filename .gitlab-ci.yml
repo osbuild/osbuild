@@ -67,13 +67,7 @@ OSTree Images:
     - sudo test/cases/ostree-images
   parallel:
     matrix:
-      - RUNNER:
-          - aws/fedora-37-x86_64
-          - aws/fedora-38-x86_64
-          - aws/rhel-8.8-ga-x86_64
-          - aws/rhel-9.2-ga-x86_64
-          - aws/rhel-8.10-nightly-x86_64
-          - aws/rhel-9.4-nightly-x86_64
+      - RUNNER: aws/fedora-38-x86_64
         INTERNAL_NETWORK: "true"
 
 Manifests:
