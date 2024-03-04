@@ -316,12 +316,12 @@ class JSONSeqMonitor(BaseMonitor):
         self._context.set_pipeline(pipeline)
         if pipeline.stages:
             self._progress.sub_progress = Progress("stages", len(pipeline.stages))
-        self.log(f"Starting pipeline {pipeline.name}", origin="org.osbuild.main")
+        self.log(f"Starting pipeline {pipeline.name}", origin="osbuild.monitor")
 
     # finish is for pipelines
     def finish(self, results: dict):
         self._progress.incr()
-        self.log(f"Finished pipeline {results['name']}", origin="org.osbuild.main")
+        self.log(f"Finished pipeline {results['name']}", origin="osbuild.monitor")
 
     def stage(self, stage: osbuild.Stage):
         self._module(stage)
@@ -331,14 +331,14 @@ class JSONSeqMonitor(BaseMonitor):
 
     def _module(self, module: osbuild.Stage):
         self._context.set_stage(module)
-        self.log(f"Starting module {module.name}", origin="org.osbuild.main")
+        self.log(f"Starting module {module.name}", origin="osbuild.monitor")
 
     # result is for modules
     def result(self, result: osbuild.pipeline.BuildResult):
         # we may need to check pipeline ids here in the future
         if self._progress.sub_progress:
             self._progress.sub_progress.incr()
-        self.log(f"Finished module {result.name}", origin="org.osbuild.main")
+        self.log(f"Finished module {result.name}", origin="osbuild.monitor")
 
     def log(self, message, origin: Optional[str] = None):
         entry = log_entry(message, self._context.with_origin(origin), self._progress)
