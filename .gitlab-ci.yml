@@ -76,16 +76,6 @@ OSTree Images:
           - aws/rhel-9.4-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
-SonarQube:
-  stage: test
-  extends: .terraform
-  script:
-    - schutzbot/sonarqube.sh
-  variables:
-    RUNNER: aws/centos-stream-8-x86_64
-    INTERNAL_NETWORK: "true"
-    GIT_DEPTH: 0
-
 Manifests:
   stage: test
   extends: .terraform
