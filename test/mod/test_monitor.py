@@ -128,19 +128,19 @@ def test_context():
     info = index.get_module_info("Stage", "org.osbuild.noop")
     stage = osbuild.Stage(info, {}, None, None, {}, None)
     ctx = Context("org.osbuild.test", pipeline, stage)
-    assert ctx.id == "e6305b7e8ccbc39ec88415ea955b89149faf6f51fb6c89831658068bc6850411"
+    assert ctx.id == "75bf3feab3d5662744c3ac38406ba73142aeb67666b1180bc1006f913b18f792"
 
     ctx_dict = ctx.as_dict()
     # should be a full dict
     assert "origin" in ctx_dict
-    assert ctx_dict["id"] == "e6305b7e8ccbc39ec88415ea955b89149faf6f51fb6c89831658068bc6850411"
+    assert ctx_dict["id"] == "75bf3feab3d5662744c3ac38406ba73142aeb67666b1180bc1006f913b18f792"
     assert "pipeline" in ctx_dict
     assert ctx_dict["pipeline"]["name"] == "test-pipeline"
     assert ctx_dict["pipeline"]["stage"]["name"] == "org.osbuild.noop"
 
     ctx_dict = ctx.as_dict()
     # should only have id
-    assert ctx_dict["id"] == "e6305b7e8ccbc39ec88415ea955b89149faf6f51fb6c89831658068bc6850411"
+    assert ctx_dict["id"] == "75bf3feab3d5662744c3ac38406ba73142aeb67666b1180bc1006f913b18f792"
     assert len(ctx_dict) == 1
 
     ctx.set_origin("org.osbuild.test-2")
@@ -154,7 +154,7 @@ def test_context():
     ctx.set_origin("org.osbuild.test")
     ctx_dict = ctx.as_dict()
     # should only have id again (old context ID)
-    assert ctx_dict["id"] == "e6305b7e8ccbc39ec88415ea955b89149faf6f51fb6c89831658068bc6850411"
+    assert ctx_dict["id"] == "75bf3feab3d5662744c3ac38406ba73142aeb67666b1180bc1006f913b18f792"
     assert len(ctx_dict) == 1
 
 
@@ -316,6 +316,6 @@ def test_log_line_with_entries():
 
 def test_context_id():
     ctx = Context()
-    assert ctx.id == "00d202e4fc9d917def414d1c9f284b137287144087ec275f2d146d9d47b3c8bb"
+    assert ctx.id == "20bf38c0723b15c2c9a52733c99814c298628526d8b8eabf7c378101cc9a9cf3"
     ctx._origin = "foo"  # pylint: disable=protected-access
     assert ctx.id != "00d202e4fc9d917def414d1c9f284b137287144087ec275f2d146d9d47b3c8bb"
