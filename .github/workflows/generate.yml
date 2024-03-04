@@ -36,9 +36,15 @@ jobs:
   generate_test_data:
     name: "Test Data"
     runs-on: ubuntu-latest
+    env:
+      OSBUILD_MPP_CACHEDIR: "/var/tmp/osbuild-mpp-cache"
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v3
+    - name: Cache metadata
+      uses: actions/cache@v4
+      with:
+        path: /var/tmp/osbuild-mpp-cache
     - name: "Regenerate Test Data"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
