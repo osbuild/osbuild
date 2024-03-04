@@ -252,7 +252,8 @@ def loop_create_device(ctl, fd, offset=None, sizelimit=None):
         lo = ctl.loop_for_fd(fd,
                              offset=offset,
                              sizelimit=sizelimit,
-                             autoclear=True)
+                             autoclear=True,
+                             lock=True)
         yield lo
     finally:
         if lo:
