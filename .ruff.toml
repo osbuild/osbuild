@@ -1,6 +1,29 @@
 line-length = 120
 
-lint.ignore = [
-    "E741",  # ambiguous variable names
-    "E501",  # line too long
+[lint]
+# enabled the `isort` and `pylint` additional linters, see `ruff linter` output
+# or: https://docs.astral.sh/ruff/rules/
+extend-select = ["I", "PL"]
+
+# all of these ignores and their explanatiosn can be found at: https://docs.astral.sh/ruff/rules/
+# or the relevant linter documentation
+ignore = [
+    "E741",  # pycodestyle: ambiguous variable names
+    "E501",  # pycodestyle: line too long
+
+    "PLW0603", # pylint: global statement
+
+    "PLR0911", # pylint: too many return statements
+    "PLR0912", # pylint: too many branches
+    "PLR0913", # pylint: too many arguments in function definition
+    "PLR0915", # pylint: too many statements
+
+    "PLR2004", # pylint: constant used in comparison
+    "PLR0402", # pylint: import alias
+    "PLR5501", # pylint: use elif
+
+    "PLW2901", # pylint: redefined loop variable
 ]
+
+[format]
+quote-style = "preserve"
