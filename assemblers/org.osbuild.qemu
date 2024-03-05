@@ -651,7 +651,8 @@ def main(tree, output_dir, options, loop_client):
     if fmt not in ["raw", "raw.xz", "qcow2", "vdi", "vmdk", "vpc", "vhdx"]:
         raise ValueError("`format` must be one of raw, qcow, vdi, vmdk, vpc, vhdx")
 
-    image = "/var/tmp/osbuild-image.raw"
+    tmp_image = tempfile.NamedTemporaryFile(prefix="osbuild-image-", dir="/var/tmp")
+    image = tmp_image.name
 
     # Create an empty image file
     subprocess.run(["truncate", "--size", str(size), image], check=True)
@@ -677,6 +678,7 @@ def main(tree, output_dir, options, loop_client):
         for partition in pt.partitions_with_filesystems():
             offset, size = partition.start_in_bytes, partition.size_in_bytes
             loop = cm.enter_context(loop_client.device(image, offset, size))
+            print(f"mounting {partition} to {loop}")
             # make the specified filesystem, if any
             if partition.filesystem is None:
                 continue
