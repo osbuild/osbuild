@@ -657,6 +657,7 @@ class LoopControl:
 
         while True:
             lo = Loop(self.get_unbound())
+            print(f"got unbound lo {lo} for {fd}")
 
             # if a setup callback is specified invoke it now
             if callable(setup):

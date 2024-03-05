@@ -117,6 +117,9 @@ class LoopClient:
 
         payload, _, _ = self.client.recv()
         path = os.path.join("/dev", payload["devname"])
+        # debug
+        print(f"removeloop.py::device({filename}): fd={fd} dir_fd={dir_fd}")
+        print(f" -> path {path}")
         try:
             yield path
         finally:
