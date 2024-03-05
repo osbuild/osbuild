@@ -4,8 +4,11 @@
 
 import contextlib
 import fcntl
+import multiprocessing
 import os
 import pathlib
+import random
+import tempfile
 import threading
 import time
 from tempfile import TemporaryDirectory, TemporaryFile
@@ -13,7 +16,7 @@ from unittest.mock import patch
 
 import pytest
 
-from osbuild import loop
+from osbuild import loop, remoteloop
 
 from ..test import TestBase
 
@@ -271,3 +274,31 @@ def test_loop_create_mknod():
             lopo = loop.Loop(1337)
             assert lopo.devname == "loop1337"
             assert pathlib.Path(f"{tmpdir}/loop1337").is_block_device()
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="root only")
+def test_remoteloop_racy(tmp_path):
+    procs = []
+    for _ in range(20):
+        for i in range(20):
+            p=multiprocessing.Process(target=_test_remoteloop_racy, args=(tmp_path, i))
+            p.start()
+            procs.append(p)
+        for p in procs:
+            p.join()
+
+
+def _test_remoteloop_racy(tmp_path, i):
+    # create mock backing files
+    mock_loop_file = tempfile.NamedTemporaryFile(prefix=f"fake-loop-{i}-", dir=tmp_path)
+    fake_device_content = 4096 * i.to_bytes()
+    mock_loop_file.write(fake_device_content)
+    mock_loop_file.flush()
+    fd = mock_loop_file.fileno()
+    dir_fd = os.open("/dev", os.O_DIRECTORY)
+    # mount
+    rl = remoteloop.LoopServer()
+    lo_name = rl._create_device(fd, dir_fd)
+    lo_path = pathlib.Path("/dev") / lo_name
+    assert lo_path.read_bytes() == fake_device_content
+    mock_loop_file.close()

@@ -43,6 +43,9 @@ class LoopServer(api.BaseAPI):
         self.ctl = loop.LoopControl()
 
     def _create_device(self, fd, dir_fd, offset=None, sizelimit=None):
+        # TODO: use
+        #   lo = self.ctl.loop_for_fd(fd, offset=offset, sizelimit=sizelimit, autoclear=True)
+        # here
         while True:
             # Getting an unbound loopback device and attaching a backing
             # file descriptor to it is racy, so we must use a retry loop
@@ -62,7 +65,10 @@ class LoopServer(api.BaseAPI):
                 raise e
             break
 
-        lo.mknod(dir_fd)
+        try:
+            lo.mknod(dir_fd)
+        except FileExistsError:
+            pass
         # Pin the Loop objects so they are only released when the LoopServer
         # is destroyed.
         self.devs.append(lo)
