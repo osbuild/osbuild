@@ -227,7 +227,7 @@ def pretty_diff(
 
             paths.append(path)
 
-        subprocess.run((["diff", "-u"] if simple else ["vimdiff"]) + paths)
+        subprocess.run((["diff", "-u"] if simple else ["vimdiff"]) + paths, check=True)
 
     return 0
 
