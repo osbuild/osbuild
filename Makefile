@@ -85,7 +85,8 @@ help:
 	@echo "    help:               Print this usage information."
 	@echo "    man:                Generate all man-pages"
 	@echo
-	@echo "    lint:               Check the code with linter"
+	@echo "    lint:               Check the code with linter (tox)"
+	@echo "    lint-quick:         Check the code with fast linters only (local)"
 	@echo
 	@echo "    coverity-download:  Force a new download of the coverity tool"
 	@echo "    coverity-check:     Run the coverity test suite"
@@ -243,12 +244,24 @@ test-all:
 #
 # Linting the code
 #
-# Just run `make lint` and see if our linters like your code.
+# Just run `make lint` and see if our linters like your code. Linters run in an
+# environment created by tox.
 #
 
 .PHONY: lint
 lint:
 	tox run-parallel -e ruff,pylint,autopep8,mypy,mypy-strict
+
+
+#
+# Quick-linting the code
+#
+# Just run `make lint-quick` and see if our linters like your code. Linters run locally
+# and need to be installed. See also `lint`.
+#
+.PHONY: lint-quick
+lint-quick:
+	ruff check osbuild/ assemblers/* devices/* inputs/* mounts/* runners/* sources/*.* stages/*.* inputs/test/*.py stages/test/*.py sources/test/*.py test/
 
 #
 # Building packages
