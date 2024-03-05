@@ -11,7 +11,6 @@ stages:
   after_script:
     - schutzbot/ci_details.sh > ci-details-after-run
     - schutzbot/unregister.sh
-    - schutzbot/update_github_status.sh update
   tags:
     - terraform
   artifacts:
