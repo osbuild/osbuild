@@ -164,7 +164,7 @@ def test_qemu(osbuild, fmt, fs_type):
             pytest.skip(f"The {fs_type} was explicitly marked as unsupported on this platform.")
         options = {
             "format": fmt,
-            "filename": f"image.{fmt}",
+            "filename": f"image-{fs_type}.{fmt}",
             "ptuuid": "b2c09a39-db93-44c5-846a-81e06b1dc162",
             "root_fs_uuid": "aff010e9-df95-4f81-be6b-e22317251033",
             "size": 1024 * MEBIBYTE,
@@ -173,7 +173,7 @@ def test_qemu(osbuild, fmt, fs_type):
         with run_assembler(osb,
                            "org.osbuild.qemu",
                            options,
-                           f"image.{fmt}") as (tree, image):
+                           f"image-{fs_type}.{fmt}") as (tree, image):
             if fmt == "raw.xz":
                 subprocess.run(["unxz", "--keep", "--force", image], check=True)
                 image = image[:-3]
