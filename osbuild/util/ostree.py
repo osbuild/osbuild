@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import typing
+
 # pylint doesn't understand the string-annotation below
 from typing import Any, Dict, List, Tuple  # pylint: disable=unused-import
 

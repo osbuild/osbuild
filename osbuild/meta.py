@@ -29,8 +29,7 @@ import os
 import pkgutil
 import sys
 from collections import deque
-from typing import (Any, Deque, Dict, List, Optional, Sequence, Set, Tuple,
-                    Union)
+from typing import Any, Deque, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import jsonschema
 
