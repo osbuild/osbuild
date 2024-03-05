@@ -33,4 +33,5 @@ sudo dnf install -y osbuild \
                     osbuild-lvm2 \
                     osbuild-luks2 \
                     jq \
-                    python3
+                    python3 \
+		    unzip

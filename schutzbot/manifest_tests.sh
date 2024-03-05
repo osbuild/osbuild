@@ -21,6 +21,23 @@ echo "{}" | sudo osbuild --store /var/lib/osbuild/store --cache-max-size unlimit
 
 IFS='/' read -r -a array <<< $1
 
+# poor mans cache action
+curl "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o "awscliv2.zip"
+unzip -q awscliv2.zip
+sudo ./aws/install
+
+mkdir -p /var/lib/osbuild/store
+S3_PATH="osbuild-ci-cache/${ARCH}-${DISTRO_CODE}/"
+AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
+ AWS_SECRET_ACCESS_KEY="$V2_AWS_SECRET_ACCESS_KEY" \
+  aws s3 sync "s3://${S3_PATH}/" /var/lib/osbuild/store --quiet || true
+# debug
+ls -a /var/lib/osbuild/store
+
 # run the tests from the manifest-db for this arch+distro
 echo "Running the osbuild-image-test for arch $ARCH and ditribution $DISTRO_CODE"
 sudo tools/osbuild-image-test --arch=$ARCH --distro=$DISTRO_CODE --image-info-path=tools/image-info --instance-number="${array[0]}" --total-number-of-instances="${array[1]}"
+
+# store the store
+# TOOD: trim at some point as this will grow boundlessly
+aws s3 sync /var/lib/osbuild/store "s3://${S3_PATH}" --quiet
