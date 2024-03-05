@@ -114,3 +114,13 @@ finish:
     - shell
   script:
     - schutzbot/update_github_status.sh finish
+
+fail:
+  stage: finish
+  tags:
+    - shell
+  script:
+    - schutzbot/update_github_status.sh fail
+    - exit 1  # make the pipeline fail so it doesn't look like success in gitlab
+  when:
+    on_failure
