@@ -89,10 +89,6 @@ Manifests:
   script:
     - schutzbot/deploy.sh
     - schutzbot/manifest_tests.sh ${PARALLEL_EXEC}
-  artifacts:
-    when: always
-    paths:
-      - manifest-db/generated-image-infos/
   parallel:
     matrix:
       - PARALLEL_EXEC: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
