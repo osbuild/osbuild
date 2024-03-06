@@ -21,6 +21,14 @@ def test_mount_guard_failure_msg(tmp_path):
     assert "special device /dev/invalid-src does not exist" in str(e.value)
 
 
+@pytest.mark.skipif(os.getuid() != 0, reason="root only")
+def test_mount_guard_incorrect_permissions_msg(tmp_path):
+    with pytest.raises(ValueError) as e:
+        with MountGuard() as mg:
+            mg.mount("/dev/invalid-src", tmp_path, permissions="abc")
+    assert "unknown filesystem permissions" in str(e.value)
+
+
 # This needs a proper refactor so that FileSystemMountService just uses
 # a common mount helper.
 class FakeFileSystemMountService(FileSystemMountService):

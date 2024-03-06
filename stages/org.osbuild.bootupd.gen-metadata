@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 import osbuild.api
-from osbuild.util.mnt import MountGuard
+from osbuild.util.mnt import MountGuard, MountPermissions
 
 SCHEMA_2 = r"""
 "options": {
@@ -29,7 +29,7 @@ def main(tree):
         for source in ("/dev", "/sys", "/proc"):
             target = os.path.join(tree, source.lstrip("/"))
             os.makedirs(target, exist_ok=True)
-            mounter.mount(source, target, ro=True)
+            mounter.mount(source, target, permissions=MountPermissions.READ_ONLY)
 
         # Using a non-default sysroot is not supported by the generate-update-metadata command, so we need to chroot
         # into the tree and run against /
