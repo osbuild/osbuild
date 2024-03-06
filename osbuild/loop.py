@@ -448,6 +448,8 @@ class Loop:
                 raise
             fcntl.ioctl(self.fd, self.LOOP_SET_FD, config.fd)
             fcntl.ioctl(self.fd, self.LOOP_SET_STATUS64, config.info)
+        # use direct-io by default
+        self.set_direct_io()
 
     def get_status(self) -> LoopInfo:
         """Get properties of the loopback device
