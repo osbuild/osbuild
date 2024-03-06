@@ -1,5 +1,4 @@
 import contextlib
-import errno
 import os
 
 from . import api, loop
@@ -43,25 +42,7 @@ class LoopServer(api.BaseAPI):
         self.ctl = loop.LoopControl()
 
     def _create_device(self, fd, dir_fd, offset=None, sizelimit=None):
-        while True:
-            # Getting an unbound loopback device and attaching a backing
-            # file descriptor to it is racy, so we must use a retry loop
-            lo = loop.Loop(self.ctl.get_unbound())
-            try:
-                lo.configure(fd, offset=offset, sizelimit=sizelimit, autoclear=True)
-            except BlockingIOError:
-                lo.clear_fd()
-                lo.close()
-                continue
-            except OSError as e:
-                lo.close()
-                # `configure` returns EBUSY when the pages from the previously
-                # bound file have not been fully cleared yet.
-                if e.errno == errno.EBUSY:
-                    continue
-                raise e
-            break
-
+        lo = self.ctl.loop_for_fd(fd, offset=offset, sizelimit=sizelimit, autoclear=True)
         lo.mknod(dir_fd)
         # Pin the Loop objects so they are only released when the LoopServer
         # is destroyed.
