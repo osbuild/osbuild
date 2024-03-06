@@ -2,13 +2,20 @@
 """
 
 import contextlib
+import enum
 import subprocess
+from typing import Optional
+
+
+class MountPermissions(enum.Enum):
+    READ_WRITE = "rw"
+    READ_ONLY = "ro"
 
 
 def mount(source, target, bind=True, ro=True, private=True, mode="0755"):
     options = []
     if ro:
-        options += ["ro"]
+        options += [MountPermissions.READ_ONLY.value]
     if mode:
         options += [mode]
 
@@ -44,14 +51,14 @@ class MountGuard(contextlib.AbstractContextManager):
     def __init__(self):
         self.mounts = []
 
-    def mount(self, source, target, bind=True, ro=False, rw=False, mode="0755"):
+    def mount(self, source, target, bind=True, permissions: Optional[MountPermissions] = None, mode="0755"):
         options = []
         if bind:
             options += ["bind"]
-        if ro:
-            options += ["ro"]
-        if rw:
-            options += ["rw"]
+        if permissions:
+            if permissions not in list(MountPermissions):
+                raise ValueError(f"unknown filesystem permissions: {permissions}")
+            options += [permissions.value]
         if mode:
             options += [mode]
 

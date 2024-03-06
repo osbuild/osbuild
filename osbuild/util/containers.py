@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 from contextlib import contextmanager
 
-from osbuild.util.mnt import MountGuard
+from osbuild.util.mnt import MountGuard, MountPermissions
 
 
 def is_manifest_list(data):
@@ -123,7 +123,7 @@ def containers_storage_source(image, image_filepath, container_format):
     with MountGuard() as mg:
         # NOTE: the ostree.deploy.container needs explicit `rw` access to
         # the containers-storage store even when bind mounted.
-        mg.mount(image_filepath, storage_path, rw=True)
+        mg.mount(image_filepath, storage_path, permissions=MountPermissions.READ_WRITE)
 
         image_id = image["checksum"].split(":")[1]
         image_source = f"{container_format}:[{driver}@{storage_path}+/run/containers/storage]{image_id}"
