@@ -35,8 +35,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-37-x86_64
-          - aws/fedora-37-aarch64
           - aws/fedora-38-x86_64
           - aws/fedora-38-aarch64
           - aws/fedora-39-x86_64
