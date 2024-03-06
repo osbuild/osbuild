@@ -17,7 +17,7 @@ OSBUILD_LABEL=$(matchpathcon -n /usr/bin/osbuild)
 chcon $OSBUILD_LABEL tools/image-info
 
 # set the maximum cache size to unlimited
-echo "{}" | sudo osbuild --store /var/lib/osbuild/store --cache-max-size unlimited -
+echo "{}" | sudo osbuild --store /var/lib/osbuild/store --cache-max-size 20GB -
 
 IFS='/' read -r -a array <<< $1
 
@@ -34,8 +34,6 @@ AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
 if [ -f  /tmp/osbuild-store.tgz ]; then
     (cd /var/lib/osbuild/store && sudo tar xf /tmp/osbuild-store.tgz)
 fi
-# debug
-ls -a /var/lib/osbuild/store
 
 # run the tests from the manifest-db for this arch+distro
 echo "Running the osbuild-image-test for arch $ARCH and ditribution $DISTRO_CODE"
