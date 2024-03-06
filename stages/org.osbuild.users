@@ -70,6 +70,10 @@ SCHEMA = """
             "items": {
               "type": "string"
             }
+          },
+          "expiredate": {
+            "description": "The date on which the user account will be disabled. This date is represented as a number of days since January 1st, 1970.",
+            "type": "integer"
           }
         }
       }
@@ -89,7 +93,17 @@ def getpwnam(root, name):
         return None
 
 
-def useradd(root, name, uid=None, gid=None, groups=None, description=None, home=None, shell=None, password=None):
+def useradd(
+        root,
+        name,
+        uid=None,
+        gid=None,
+        groups=None,
+        description=None,
+        home=None,
+        shell=None,
+        password=None,
+        expiredate=None):
     arguments = []
     if uid is not None:
         arguments += ["--uid", str(uid), "-o"]
@@ -108,11 +122,13 @@ def useradd(root, name, uid=None, gid=None, groups=None, description=None, home=
         arguments += ["--shell", shell]
     if password is not None:
         arguments += ["--password", password]
+    if expiredate is not None:
+        arguments += ["--expiredate", str(expiredate)]
 
     subprocess.run(["chroot", root, "useradd", *arguments, name], check=True)
 
 
-def usermod(root, name, gid=None, groups=None, description=None, home=None, shell=None, password=None):
+def usermod(root, name, gid=None, groups=None, description=None, home=None, shell=None, password=None, expiredate=None):
     arguments = []
     if gid is not None:
         arguments += ["--gid", gid]
@@ -126,6 +142,8 @@ def usermod(root, name, gid=None, groups=None, description=None, home=None, shel
         arguments += ["--shell", shell]
     if password is not None:
         arguments += ["--password", password]
+    if expiredate is not None:
+        arguments += ["--expiredate", str(expiredate)]
 
     if arguments:
         subprocess.run(["chroot", root, "usermod", *arguments, name], check=True)
@@ -168,6 +186,7 @@ def main(tree, options):
         home = user_options.get("home")
         shell = user_options.get("shell")
         password = user_options.get("password")
+        expiredate = user_options.get("expiredate")
 
         passwd = getpwnam(tree, name)
         if passwd is not None:
@@ -175,13 +194,13 @@ def main(tree, options):
             if uid is not None and passwd[2] != str(uid):
                 print(f"Error: can't set uid of existing user '{name}'")
                 return 1
-            usermod(tree, name, gid, groups, description, home, shell, password)
+            usermod(tree, name, gid, groups, description, home, shell, password, expiredate)
 
             # ensure the home directory exists, see module doc string for details
             _, _, _, _, _, home, _ = getpwnam(tree, name)
             ensure_homedir(tree, name, home)
         else:
-            useradd(tree, name, uid, gid, groups, description, home, shell, password)
+            useradd(tree, name, uid, gid, groups, description, home, shell, password, expiredate)
 
         # following maintains backwards compatibility for handling a single ssh key
         key = user_options.get("key")   # Public SSH key
