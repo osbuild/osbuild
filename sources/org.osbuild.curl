@@ -2,13 +2,19 @@
 """
 Source for downloading files from URLs.
 
-The files are indexed by their content hash. Can download files
-that require secrets. The only secret provider currently supported
-is `org.osbuild.rhsm` for downloading Red Hat content that requires
-a subscriptions.
+The files are indexed by their content hash. It can download files
+that require secrets. The secret providers currently supported are:
 
-Internally use curl to download the files; the files are cached in
-an internal cache. Multiple parallel connections are used to speed
+- `org.osbuild.rhsm` for downloading Red Hat content that requires
+  a subscriptions.
+- `org.osbuild.mtls` for downloading content that requires client
+  certificats. The paths to the key and cert should be set in the
+  environment in OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY,
+  OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT, and optionally
+  OSBUILD_SOURCES_CURL_SSL_CA_CERT.
+
+It uses curl to download the files; the files are cached in an
+internal cache. Multiple parallel connections are used to speed
 up the download.
 """
 
@@ -107,6 +113,16 @@ class CurlSource(sources.SourceService):
             if self.subscriptions is None:
                 self.subscriptions = Subscriptions.from_host_system()
             url["secrets"] = self.subscriptions.get_secrets(url.get("url"))
+        elif url.get("secrets", {}).get("name") == "org.osbuild.mtls":
+            key = os.getenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY")
+            cert = os.getenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT")
+            if not (key and cert):
+                raise RuntimeError(f"mtls secrets required but key ({key}) or cert ({cert}) not defined")
+            url["secrets"] = {
+                'ssl_ca_cert': os.getenv("OSBUILD_SOURCES_CURL_SSL_CA_CERT"),
+                'ssl_client_cert': cert,
+                'ssl_client_key': key,
+            }
 
         return checksum, url
 
