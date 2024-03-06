@@ -27,10 +27,13 @@ unzip -q awscliv2.zip
 sudo ./aws/install
 
 mkdir -p /var/lib/osbuild/store
-S3_PATH="osbuild-ci-cache/${ARCH}-${DISTRO_CODE}/"
+S3_PATH="osbuild-ci-cache/${ARCH}-${DISTRO_CODE}"
 AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
  AWS_SECRET_ACCESS_KEY="$V2_AWS_SECRET_ACCESS_KEY" \
-  aws s3 sync "s3://${S3_PATH}/" /var/lib/osbuild/store --quiet || true
+  aws s3 cp "s3://${S3_PATH}/osbuild-store.tgz" /tmp/ || true
+if [ -f  /tmp/osbuild-store.tgz ]; then
+    (cd /var/lib/osbuild/store && sudo tar xf /tmp/osbuild-store.tgz)
+fi
 # debug
 ls -a /var/lib/osbuild/store
 
@@ -39,5 +42,6 @@ echo "Running the osbuild-image-test for arch $ARCH and ditribution $DISTRO_CODE
 sudo tools/osbuild-image-test --arch=$ARCH --distro=$DISTRO_CODE --image-info-path=tools/image-info --instance-number="${array[0]}" --total-number-of-instances="${array[1]}"
 
 # store the store
-# TOOD: trim at some point as this will grow boundlessly
-aws s3 sync /var/lib/osbuild/store "s3://${S3_PATH}" --quiet
+rm -f /tmp/osbuild-store.tgz
+(cd /var/lib/osbuild/store && sudo tar czf /tmp/osbuild-store.tgz . )
+aws s3 cp /tmp/osbuild-store.tgz "s3://${S3_PATH}/"
