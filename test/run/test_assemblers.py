@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import tempfile
+from uuid import uuid4
 
 import pytest
 
@@ -87,7 +88,7 @@ def test_rawfs(osbuild, fs_type):
         pytest.skip(f"The {fs_type} was explicitly marked as unsupported on this platform.")
     options = {
         "filename": "image.raw",
-        "root_fs_uuid": "016a1cda-5182-4ab3-bf97-426b00b74eb0",
+        "root_fs_uuid": str(uuid4()),
         "size": 1024 * MEBIBYTE,
         "fs_type": fs_type,
     }
@@ -165,8 +166,8 @@ def test_qemu(osbuild, fmt, fs_type):
         options = {
             "format": fmt,
             "filename": f"image.{fmt}",
-            "ptuuid": "b2c09a39-db93-44c5-846a-81e06b1dc162",
-            "root_fs_uuid": "aff010e9-df95-4f81-be6b-e22317251033",
+            "ptuuid": str(uuid4()),
+            "root_fs_uuid": str(uuid4()),
             "size": 1024 * MEBIBYTE,
             "root_fs_type": fs_type,
         }
