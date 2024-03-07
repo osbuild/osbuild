@@ -46,9 +46,17 @@ def test_schema_validation(stage_schema, test_data, expected_err):
         testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
-def test_systemd_unit_create_simple(tmp_path, stage_module):
+@pytest.mark.parametrize("unit_type,unit_path,expected_prefix", [
+    ("system", "usr", "usr/lib/systemd/system"),
+    ("system", "etc", "etc/systemd/system"),
+    ("global", "usr", "usr/lib/systemd/user"),
+    ("global", "etc", "etc/systemd/user"),
+])
+def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expected_prefix):
     options = {
         "filename": "create-directory.service",
+        "unit-type": unit_type,
+        "unit-path": unit_path,
         "config": {
             "Unit": {
                 "Description": "Create directory",
@@ -75,7 +83,7 @@ def test_systemd_unit_create_simple(tmp_path, stage_module):
             }
         }
     }
-    expected_unit_path = tmp_path / "usr/lib/systemd/system/create-directory.service"
+    expected_unit_path = tmp_path / expected_prefix / "create-directory.service"
     # should the stage create the dir?
     expected_unit_path.parent.mkdir(parents=True)
 
