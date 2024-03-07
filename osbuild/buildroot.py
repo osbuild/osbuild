@@ -138,6 +138,12 @@ class BuildRoot(contextlib.AbstractContextManager):
 
             self.var = os.path.join(self.tmp, "var")
             os.makedirs(self.var, exist_ok=True)
+            # Ensure /var/tmp is available, see
+            #  https://github.com/osbuild/bootc-image-builder/issues/223
+            try:
+                os.symlink("/tmp", os.path.join(self.var, "tmp"))
+            except FileExistsError:
+                pass
 
             proc = os.path.join(self.tmp, "proc")
             os.makedirs(proc)

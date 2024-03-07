@@ -44,10 +44,18 @@ def test_basic(tempdir, runner):
 
         # Test we can use `.run` multiple times
         r = root.run(["/usr/bin/true"], monitor)
-        assert r.returncode == 0
+        assert r.returncode == 0, f"{r.stdout} {r.stderr}"
 
         r = root.run(["/usr/bin/false"], monitor)
         assert r.returncode != 0
+
+        # Test that fs setup looks correct
+        r = root.run(["readlink", "-f", "/var/tmp"], monitor)
+        assert r.returncode == 0
+        assert r.stdout.strip().split("\n")[-1] == "/tmp"
+        r = root.run(["stat", "-L", "--format=%a", "/var/tmp"], monitor)
+        assert r.returncode == 0
+        assert r.stdout.strip().split("\n")[-1] == "1777"
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
