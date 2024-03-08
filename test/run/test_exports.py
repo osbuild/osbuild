@@ -78,12 +78,16 @@ def test_exports_normal(osb, tmp_path, jsondata, testing_libdir):  # pylint: dis
 
 @pytest.mark.skipif(os.getuid() != 0, reason="root-only")
 def test_exports_with_force_no_preserve_owner(osb, tmp_path, jsondata, testing_libdir):
+    k = "OSBUILD_EXPORT_FORCE_NO_PRESERVE_OWNER"
     with contextlib.ExitStack() as cm:
-        k = "OSBUILD_EXPORT_FORCE_NO_PRESERVE_OWNER"
         os.environ[k] = "1"
-        cm.callback(os.unsetenv, k)
+
+        def _delenv():
+            del os.environ[k]
+        cm.callback(_delenv)
 
         osb.compile(jsondata, output_dir=tmp_path, exports=["image"], libdir=testing_libdir)
         expected_export = tmp_path / "image/foo.img"
         assert expected_export.exists()
         assert expected_export.stat().st_uid == 0
+    assert k not in os.environ
