@@ -50,11 +50,22 @@ def umount(target, lazy=False):
 class MountGuard(contextlib.AbstractContextManager):
     def __init__(self):
         self.mounts = []
+        self.remount = False
 
-    def mount(self, source, target, bind=True, permissions: Optional[MountPermissions] = None, mode="0755"):
+    def mount(
+            self,
+            source,
+            target,
+            bind=True,
+            remount=False,
+            permissions: Optional[MountPermissions] = None,
+            mode="0755"):
+        self.remount = remount
         options = []
         if bind:
             options += ["bind"]
+        if remount:
+            options += ["remount"]
         if permissions:
             if permissions not in list(MountPermissions):
                 raise ValueError(f"unknown filesystem permissions: {permissions}")
@@ -86,8 +97,9 @@ class MountGuard(contextlib.AbstractContextManager):
             # The sync should in theory not be needed but in rare
             # cases `target is busy` error has been spotted.
             # Calling  `sync` does not hurt so we keep it for now.
-            subprocess.run(["sync", "-f", target], check=True)
-            subprocess.run(["umount", target], check=True)
+            if not self.remount:
+                subprocess.run(["sync", "-f", target], check=True)
+                subprocess.run(["umount", target], check=True)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.umount()
