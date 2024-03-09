@@ -140,7 +140,10 @@ TEST_INPUT = [
     ({"autopart": {"pbkdf-time": 128}}, "autopart --pbkdf-time=128"),
     ({"autopart": {"pbkdf-iterations": 256}}, "autopart --pbkdf-iterations=256"),
     ({"autopart": {"nohome": True}}, "autopart --nohome"),
+    ({"autopart": {"noswap": True}}, "autopart --noswap"),
     ({"autopart": {"type": "plain", "fstype": "xfs", "nohome": True}}, "autopart --type=plain --fstype=xfs --nohome"),
+    ({"autopart": {"type": "plain", "fstype": "xfs", "nohome": True, "noswap": True}},
+     "autopart --type=plain --fstype=xfs --nohome --noswap"),
     ({
         "lang": "en_US.UTF-8",
         "keyboard": "us",

@@ -402,6 +402,10 @@ SCHEMA = r"""
       "nohome": {
         "description": "Disables automatic creation of the /home partition",
         "type": "boolean"
+      },
+      "noswap": {
+        "description": "Disables automatic creation of a swap partition",
+        "type": "boolean"
       }
     }
   },
@@ -536,7 +540,8 @@ def make_autopart(options: Dict) -> str:
     cmd = "autopart"
     for key in ["type", "fstype", "nolvm", "encrypted", "passphrase",
                 "escrowcert", "backuppassphrase", "cipher", "luks-version",
-                "pbkdf", "pbkdf-memory", "pbkdf-time", "pbkdf-iterations", "nohome"]:
+                "pbkdf", "pbkdf-memory", "pbkdf-time", "pbkdf-iterations", "nohome",
+                "noswap"]:
         if key not in autopart:
             continue
         val = autopart[key]
