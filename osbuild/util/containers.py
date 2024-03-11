@@ -116,10 +116,8 @@ def containers_storage_source(image, image_filepath, container_format):
     storage_conf = image["data"]["storage"]
     driver = storage_conf.get("driver", "overlay")
 
-    # use `/run/osbuild/containers/storage` for the containers-storage bind mount
-    # since this ostree-compatible and the stage that uses this will be run
-    # inside a ostree-based build-root in `bootc-image-builder`
-    storage_path = os.path.join(os.sep, "run", "osbuild", "containers", "storage")
+    # use `/containers/storage` for the containers-storage bind mount
+    storage_path = os.path.join(os.sep, "containers", "storage")
     os.makedirs(storage_path, exist_ok=True)
 
     with MountGuard() as mg:
