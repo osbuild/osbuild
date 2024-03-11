@@ -123,13 +123,9 @@ def containers_storage_source(image, image_filepath, container_format):
     os.makedirs(storage_path, exist_ok=True)
 
     with MountGuard() as mg:
-        mg.mount(image_filepath, storage_path, permissions=MountPermissions.READ_WRITE)
         # NOTE: the ostree.deploy.container needs explicit `rw` access to
-        # the containers-storage store even when bind mounted. Remounting
-        # the bind mount is a pretty dirty fix to get us up and running with
-        # containers-storage in `bootc-image-builder`. We could maybe check
-        # if we're inside a bib-continaer and only run this conidtionally.
-        mg.mount(image_filepath, storage_path, remount=True, permissions=MountPermissions.READ_WRITE)
+        # the containers-storage store even when bind mounted.
+        mg.mount(image_filepath, storage_path, permissions=MountPermissions.READ_WRITE)
 
         image_id = image["checksum"].split(":")[1]
         image_source = f"{container_format}:[{driver}@{storage_path}+/run/containers/storage]{image_id}"
