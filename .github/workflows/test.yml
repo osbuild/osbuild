@@ -6,6 +6,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  # Using 4 workers is a bit arbitrary, "auto" is probably too aggressive.
+  TEST_WORKERS: "-n 4"
+  # Share the store between the workers speeds things up further
+  OSBUILD_TEST_STORE: /var/tmp/osbuild-test-store
+
 jobs:
   test_suite:
     name: "Unittest"
@@ -35,18 +41,6 @@ jobs:
       with:
         image: ghcr.io/osbuild/osbuild-ci:latest-202308241910
         run: |
-          # Note that only "test.run.test_stages" runs in parallel because
-          # the other tests are not sufficiently isolated and will cause
-          # random failures. But test_stages is the long running one with
-          # almost 2h.
-          if [ "${{ matrix.test }}" = "test.run.test_stages" ]; then
-              # Using 4 workers is a bit arbitrary, "auto" is probably too
-              # aggressive.
-              export TEST_WORKERS="-n 4"
-              # Share the store between the workers speeds things up further
-              export OSBUILD_TEST_STORE=/var/tmp/osbuild-test-store
-          fi
-
           # Hacky replacement of container storage driver:
           # The default overlayfs doesn't work in the runner, so let's change
           # it to vfs for the local storage skopeo stage test.
@@ -66,9 +60,5 @@ jobs:
         with:
           image: ghcr.io/osbuild/osbuild-ci:latest-202308241910
           run: |
-            # Using 4 workers is a bit arbitrary, "auto" is probably too
-            # aggressive.
-            export TEST_WORKERS="-n 4"
-            export OSBUILD_TEST_STORE=/var/tmp/osbuild-test-store
             TEST_CATEGORY="test.run.test_assemblers" \
             tox -e "py36"
