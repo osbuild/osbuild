@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import textwrap
 
 
 def has_executable(executable: str) -> bool:
@@ -62,20 +63,58 @@ def assert_jsonschema_error_contains(res, expected_err, expected_num_errs=None):
                for err_msg in err_msgs), f"{expected_err} not found in {err_msgs}"
 
 
+class MockCommandCallArgs:
+    """MockCommandCallArgs provides the arguments a mocked command
+    was called with.
+
+    Use :call_args_list: to get a list of calls and each of these calls
+    will have the argv[1:] from the mocked binary.
+    """
+
+    def __init__(self, calllog_path):
+        self._calllog = pathlib.Path(calllog_path)
+
+    @property
+    def call_args_list(self):
+        call_arg_list = []
+        for acall in self._calllog.read_text(encoding="utf8").split("\n\n"):
+            if acall:
+                call_arg_list.append(acall.split("\n"))
+        return call_arg_list
+
+
 @contextlib.contextmanager
 def mock_command(cmd_name: str, script: str):
     """
     mock_command creates a mocked binary with the given :cmd_name: and :script:
-    content. This is useful to e.g. mock errors from binaries.
+    content. This is useful to e.g. mock errors from binaries or validate that
+    external binaries are called in the right way.
+
+    It returns a MockCommandCallArgs class that can be used to inspect the
+    way the binary was called.
     """
     original_path = os.environ["PATH"]
     with tempfile.TemporaryDirectory() as tmpdir:
         cmd_path = pathlib.Path(tmpdir) / cmd_name
-        cmd_path.write_text(script, encoding="utf8")
+        cmd_calllog_path = pathlib.Path(os.fspath(cmd_path) + ".calllog")
+        # This is a little bit naive right now, if args contains \n things
+        # will break. easy enough to fix by using \0 as the separator but
+        # then \n in args is kinda rare
+        fake_cmd_content = textwrap.dedent(f"""\
+        #!/bin/sh -e
+
+        for arg in "$@"; do
+           echo "$arg" >> {cmd_calllog_path}
+        done
+        # extra separator to differenciate between calls
+        echo "" >> {cmd_calllog_path}
+
+        """) + script
+        cmd_path.write_text(fake_cmd_content, encoding="utf8")
         cmd_path.chmod(0o755)
         os.environ["PATH"] = f"{tmpdir}:{original_path}"
         try:
-            yield
+            yield MockCommandCallArgs(cmd_calllog_path)
         finally:
             os.environ["PATH"] = original_path
 
