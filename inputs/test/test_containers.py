@@ -2,9 +2,7 @@
 
 import os
 import pathlib
-import random
 import socket
-import string
 import subprocess
 import tempfile
 
@@ -29,8 +27,7 @@ class FakeStoreClient:
 @pytest.mark.skipif(not has_executable("podman"), reason="no podman executable")
 @pytest.mark.skipif(os.getuid() != 0, reason="root only")
 def test_containers_local_inputs_integration(tmp_path, inputs_module):
-    base_tag = "container-" + "".join(random.choices(string.digits, k=12))
-    with make_container(tmp_path, base_tag, {"file1": "file1 content"}):
+    with make_container(tmp_path, {"file1": "file1 content"}) as base_tag:
         image_id = subprocess.check_output(
             ["podman", "inspect", "-f", "{{ .Id }}", base_tag],
             universal_newlines=True).strip()

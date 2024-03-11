@@ -81,8 +81,9 @@ def mock_command(cmd_name: str, script: str):
 
 
 @contextlib.contextmanager
-def make_container(tmp_path, tag, fake_content, base="scratch"):
+def make_container(tmp_path, fake_content, base="scratch"):
     fake_container_src = tmp_path / "fake-container-src"
+    fake_container_src.mkdir(exist_ok=True)
     make_fake_tree(fake_container_src, fake_content)
     fake_containerfile_path = fake_container_src / "Containerfile"
     container_file_content = f"""
@@ -90,16 +91,22 @@ def make_container(tmp_path, tag, fake_content, base="scratch"):
     COPY . .
     """
     fake_containerfile_path.write_text(container_file_content, encoding="utf8")
-    subprocess.check_call([
+    p = subprocess.Popen([
         "podman", "build",
         "--no-cache",
         "-f", os.fspath(fake_containerfile_path),
-        "-t", tag,
-    ])
+    ], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while True:
+        line = p.stdout.readline()
+        if line == "":
+            break
+        print(line)
+        container_id = line.strip()
+    p.wait()
     try:
-        yield
+        yield container_id
     finally:
-        subprocess.check_call(["podman", "image", "rm", tag])
+        subprocess.check_call(["podman", "image", "rm", container_id])
 
 
 @contextlib.contextmanager

@@ -2,8 +2,6 @@
 
 import os
 import os.path
-import random
-import string
 import subprocess
 import textwrap
 from unittest.mock import call, patch
@@ -21,10 +19,8 @@ STAGE_NAME = "org.osbuild.container-deploy"
 def test_container_deploy_integration(tmp_path, stage_module):
     # build two containers and overlay files to test for
     # https://github.com/containers/storage/issues/1779
-    base_tag = "cont-base-" + "".join(random.choices(string.digits, k=12))
-    with make_container(tmp_path, base_tag, {"file1": "file1 from base"}):
-        cont_tag = "cont" + "".join(random.choices(string.digits, k=12))
-        with make_container(tmp_path, cont_tag, {"file1": "file1 from final layer"}, base_tag):
+    with make_container(tmp_path, {"file1": "file1 from base"}) as base_tag:
+        with make_container(tmp_path, {"file1": "file1 from final layer"}, base_tag) as cont_tag:
             # export for the container-deploy stage
             fake_container_dst = tmp_path / "fake-container"
             subprocess.check_call([
@@ -63,13 +59,12 @@ def test_container_deploy_integration(tmp_path, stage_module):
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
 @pytest.mark.skipif(not has_executable("podman"), reason="no podman executable")
 def test_container_deploy_exclude(tmp_path, stage_module):
-    base_tag = "cont-base-" + "".join(random.choices(string.digits, k=12))
-    with make_container(tmp_path, base_tag, {
+    with make_container(tmp_path, {
         "file1": "file1 content",
         "file2": "file2 content",
         "dir1/file3": "dir1/file3 content",
         "dir2/file4": "dir2/file4 content",
-    }):
+    }) as base_tag:
         # export for the container-deploy stage
         fake_container_dst = tmp_path / "fake-container"
         subprocess.check_call([
