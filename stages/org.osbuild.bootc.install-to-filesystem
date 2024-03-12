@@ -11,6 +11,7 @@ Buildhost commands used: bootc
 
 import subprocess
 import sys
+import tempfile
 
 import osbuild.api
 from osbuild.util import containers
@@ -30,7 +31,16 @@ SCHEMA_2 = r"""
   }
 },
 "options": {
-  "additionalProperties": false
+  "additionalProperties": false,
+  "properties": {
+    "root-ssh-authorized-keys": {
+      "description": "array of SSH Public Keys to add to roots authorized_keys",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+  }
 },
 "devices": {
   "type": "object",
@@ -42,23 +52,30 @@ SCHEMA_2 = r"""
 """
 
 
-def main(inputs, paths):
+def main(options, inputs, paths):
     images = containers.parse_containers_input(inputs)
     assert len(images) == 1
     image = list(images.values())[0]
 
     with containers.container_source(image) as (_, source):
         dst = paths["mounts"]
-        subprocess.run(
-            ["bootc", "install", "to-filesystem",
-             "--source-imgref", source,
-             "--skip-fetch-check", "--generic-image",
-             dst],
-            check=True,
-        )
+        pargs = ["bootc", "install", "to-filesystem",
+                 "--source-imgref", source,
+                 "--skip-fetch-check", "--generic-image"]
+        # customize root
+        root_ssh_keys = options.get("root-ssh-authorized-keys", [])
+        if root_ssh_keys:
+            tmpf = tempfile.NamedTemporaryFile(prefix="bootc-ssh-auth-keys-")
+            for key in root_ssh_keys:
+                tmpf.write(key.encode("utf8") + b"\n")
+            tmpf.flush()
+            pargs.extend(["--root-ssh-authorized-keys", tmpf.name])
+        # add target and go
+        pargs.append(dst)
+        subprocess.run(pargs, check=True)
 
 
 if __name__ == "__main__":
     args = osbuild.api.arguments()
-    r = main(args["inputs"], args["paths"])
+    r = main(args["options"], args["inputs"], args["paths"])
     sys.exit(r)
