@@ -43,9 +43,20 @@ FAKE_INPUTS = {
 
 @pytest.mark.parametrize("options,expected_args", [
     ({}, []),
+    # root-ssh
     ({"root-ssh-authorized-keys": []}, []),
     ({"root-ssh-authorized-keys": ["ssh-key"]}, ["--root-ssh-authorized-keys", "/tmp/fake-named-tmpfile-name"]),
     ({"root-ssh-authorized-keys": ["key1", "key2"]}, ["--root-ssh-authorized-keys", "/tmp/fake-named-tmpfile-name"]),
+    # kernel args
+    ({"kernel-args": []}, []),
+    ({"kernel-args": ["console=ttyS0"]}, ["--karg", "console=ttyS0"]),
+    ({"kernel-args": ["arg1", "arg2"]}, ["--karg", "arg1", "--karg", "arg2"]),
+    # all
+    ({"root-ssh-authorized-keys": ["key1", "key2"],
+      "kernel-args": ["arg1", "arg2"]},
+     ["--root-ssh-authorized-keys", "/tmp/fake-named-tmpfile-name",
+      "--karg", "arg1", "--karg", "arg2"],
+     ),
 ])
 @patch("subprocess.run")
 def test_bootc_install_to_fs(mock_run, mocked_named_tmp, mocked_temp_dir, stage_module, options, expected_args):  # pylint: disable=unused-argument
