@@ -92,6 +92,42 @@ monitor that is used. Valid types are:
         each stage. The output is not machine-readable and is interspersed
         with the individual log messages of the stages.
         This is the default monitor if ``--json`` was **not** specified.
+``JSONSeqMonitor``
+        A json-sequence (RFC7464) based live monitor of the pipeline execution.
+	Each line contains valid json and a record-separator (0x1E) at the
+	end. The json consists of a `progress` object that contains a
+	`context` object describes the context of the progress and details
+	about the progress. Progress can be nested and a progress object
+	may contain sub-progress. In addition each progress can emit
+	`message` strings that contain detailed log information from
+	the stage. An example:
+
+	| {
+	|   "message": "Starting module org.osbuild.grub2.inst",
+	|   "context": {
+	|     "origin": "osbuild.monitor",
+	|     "pipeline": {
+	|       "name": "image",
+	|       "id": "b3e63a8ef3cd30be244ffe1749af05783014bf2c61b2e45f09bb6df0ef122ad8",
+	|       "stage": {
+	|         "name": "org.osbuild.grub2.inst",
+	|         "id": "b3e63a8ef3cd30be244ffe1749af05783014bf2c61b2e45f09bb6df0ef122ad8"
+	|       }
+	|     },
+	|     "id": "747c04fa9265e7de79ac5efae43c62375f4b6bb778cb24abd7963dc181139176"
+	|   },
+	|   "progress": {
+	|     "name": "pipelines/sources",
+	|     "total": 4,
+	|     "done": 3,
+	|     "progress": {
+	|       "name": "stages",
+	|       "total": 7,
+	|       "done": 6
+	|     }
+	|   },
+	|   "timestamp": 1710318022.3872378
+	| }
 
 Monitor output is written to the file-descriptor provided via
 ``--monitor-fd=NUM``. If none was specified, standard output is used.
