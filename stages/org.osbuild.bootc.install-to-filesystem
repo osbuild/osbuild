@@ -40,6 +40,13 @@ SCHEMA_2 = r"""
         "type": "string"
       }
     },
+    "kernel-args": {
+      "description": "array of additional kernel arguments",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
   }
 },
 "devices": {
@@ -70,6 +77,9 @@ def main(options, inputs, paths):
                 tmpf.write(key.encode("utf8") + b"\n")
             tmpf.flush()
             pargs.extend(["--root-ssh-authorized-keys", tmpf.name])
+        # customize kernel-args
+        for karg in options.get("kernel-args", []):
+            pargs.extend(["--karg", karg])
         # add target and go
         pargs.append(dst)
         subprocess.run(pargs, check=True)
