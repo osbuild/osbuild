@@ -13,8 +13,7 @@ from collections import defaultdict
 
 import osbuild
 import osbuild.meta
-from osbuild.monitor import (Context, JSONSeqMonitor, LogMonitor, Progress,
-                             log_entry)
+from osbuild.monitor import Context, JSONSeqMonitor, LogMonitor, Progress, log_entry
 from osbuild.objectstore import ObjectStore
 from osbuild.pipeline import Runner
 
