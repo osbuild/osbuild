@@ -95,6 +95,7 @@ help:
 	@echo "    test-all:           Run all tests"
 	@echo "    test-data:          Generate test data"
 	@echo "    test-module:        Run all module unit-tests"
+	@echo "    test-stage:         Run all stage unit-tests"
 	@echo "    test-run:           Run all osbuild pipeline tests"
 
 $(BUILDDIR)/:
@@ -222,6 +223,13 @@ test-data: $(TEST_MANIFESTS_GEN)
 test-module:
 	@$(PYTHON3) -m pytest \
 			$(SRCDIR)/test/mod \
+			--rootdir=$(SRCDIR) \
+			-v
+
+.PHONY: test-stage
+test-stage:
+	@$(PYTHON3) -m pytest \
+			$(SRCDIR)/stages/test \
 			--rootdir=$(SRCDIR) \
 			-v
 
