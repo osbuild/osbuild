@@ -514,7 +514,7 @@ class ModuleInfo:
             },
             "desc": meta.get("summary", "no summary provided"),
             "info": long_description,
-            "caps": meta.get("capabilities", set()),
+            "caps": set(meta.get("capabilities", [])),
         }
         return cls(klass, name, path, info)
 
