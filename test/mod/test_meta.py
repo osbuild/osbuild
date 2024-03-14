@@ -247,7 +247,7 @@ def test_load_from_json(tmp_path):
     modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
     assert modinfo.desc == "some json summary"
     assert modinfo.info == "long text\nwith newlines"
-    assert modinfo.caps == ["CAP_MAC_ADMIN", "CAP_BIG_MAC"]
+    assert modinfo.caps == set(["CAP_MAC_ADMIN", "CAP_BIG_MAC"])
     assert modinfo.opts == {
         "1": {"properties": {"json_filename": {"type": "string"}}},
         "2": {},
@@ -304,7 +304,7 @@ def test_load_from_json_prefered(tmp_path):
     modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
     assert modinfo.desc == "some json summary"
     assert modinfo.info == "long text\nwith newlines"
-    assert modinfo.caps == ["CAP_MAC_ADMIN", "CAP_BIG_MAC"]
+    assert modinfo.caps == set(["CAP_MAC_ADMIN", "CAP_BIG_MAC"])
     assert modinfo.opts == {
         "1": {},
         "2": {"json_devices": {"type": "object"}},
