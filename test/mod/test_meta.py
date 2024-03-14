@@ -317,7 +317,8 @@ def test_load_from_json_prefered(tmp_path):
         {"summary": "some", "description": ["many", "strings"], "schema": {}}, ""), (
         {"summary": "some", "description": ["many", "strings"], "schema_2": {}}, ""), (
         {"summary": "some", "description": ["many", "strings"], "schema_2": {}, "capabilities": []}, ""), (
-        {"summary": "some", "description": ["many", "strings"], "schema_2": {}, "capabilities": ["cap1", "cap2"]}, ""),
+        {"summary": "some", "description": ["many", "strings"], "schema_2": {}, "capabilities": ["cap1", "cap2"]}, ""), (
+        {"summary": "some", "description": ["many", "strings"], "schema": {}, "schema_2": {}, "capabilities": ["cap1", "cap2"]}, ""),
     # unhappy
     (
         # no description
@@ -331,12 +332,6 @@ def test_load_from_json_prefered(tmp_path):
         # schema{,_2} missing
         {"summary": "some", "description": ["many", "strings"]},
         " is not valid",
-    ),
-    (
-        # both schema{,_2}
-        {"summary": "some", "description": ["many", "strings"],
-         "schema": {}, "schema_2": {}},
-        " is valid under each ",
     ), (
         # capabilities of wrong type
         {"summary": "some", "description": ["many", "strings"], "schema": {},
