@@ -1,34 +1,8 @@
 #!/usr/bin/python3
-"""
-Configure greenboot
-
-Update configuration of greenboot in /etc/greenboot/greenbot.conf.
-"""
-
 import fileinput
 import sys
 
 import osbuild.api
-
-SCHEMA = """
-"additionalProperties": false,
-"required": ["config"],
-"properties": {
-  "config": {
-    "additionalProperties": false,
-    "description": "greenboot config options",
-    "type": "object",
-    "properties": {
-      "monitor_services": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-      }
-    }
-  }
-}
-"""
 
 
 def main(tree, options):

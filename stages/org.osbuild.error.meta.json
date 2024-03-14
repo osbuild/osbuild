@@ -1,0 +1,17 @@
+{
+    "summary": "Return an error",
+    "description": [
+        "Error stage. Return the given error. Useful for testing, debugging, and",
+        "wasting time."
+    ],
+    "schema": {
+        "additionalProperties": false,
+        "properties": {
+            "returncode": {
+                "description": "What to return code to use",
+                "type": "number",
+                "default": 255
+            }
+        }
+    }
+}

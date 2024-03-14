@@ -1,45 +1,10 @@
 #!/usr/bin/python3
-"""
-Change file mode bits
-
-Change the file mode bits of one or more files or directories inside the tree.
-"""
-
 import os
 import subprocess
 import sys
 
 import osbuild.api
 from osbuild.util.path import in_tree
-
-SCHEMA_2 = r"""
-"options": {
-  "additionalProperties": false,
-  "properties": {
-    "items": {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": {
-        "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$": {
-          "type": "object",
-          "required": ["mode"],
-          "properties": {
-            "mode": {
-              "type": "string",
-              "description": "Symbolic or numeric octal mode"
-            },
-            "recursive": {
-              "type": "boolean",
-              "description": "Change modes recursively",
-              "default": false
-            }
-          }
-        }
-      }
-    }
-  }
-}
-"""
 
 
 def chmod(path: str, mode: str, recursive: bool):

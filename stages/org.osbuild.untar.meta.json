@@ -1,0 +1,34 @@
+{
+    "summary": "Extract a tarball",
+    "description": [
+        "Buildhost commands used: `tar`."
+    ],
+    "capabilities": [
+        "CAP_MAC_ADMIN"
+    ],
+    "schema_2": {
+        "inputs": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "file"
+            ],
+            "properties": {
+                "file": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "options": {
+            "additionalProperties": false,
+            "properties": {
+                "prefix": {
+                    "description": "Unpack here.",
+                    "type": "string",
+                    "default": "/"
+                }
+            }
+        }
+    }
+}

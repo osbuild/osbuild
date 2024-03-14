@@ -1,0 +1,33 @@
+{
+    "summary": "Extract a gzipped file",
+    "description": [
+        "Buildhost commands used: `gunzip`."
+    ],
+    "schema_2": {
+        "inputs": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "file"
+            ],
+            "properties": {
+                "file": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "options": {
+            "additionalProperties": false,
+            "required": [
+                "path"
+            ],
+            "properties": {
+                "path": {
+                    "description": "Unzip here.",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

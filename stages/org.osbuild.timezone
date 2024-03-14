@@ -1,31 +1,9 @@
 #!/usr/bin/python3
-"""
-Set system timezone
-
-Set the system's timezone to `zone`, which should be a valid time zone
-identifier from the tz database - like "America/New York" or "Europe/Berlin".
-
-Removes `/etc/localtime`, then runs the host's `systemd-firstboot` binary with
-the `--timezone` option, which will re-create `/etc/localtime`.
-"""
-
-
 import os
 import subprocess
 import sys
 
 import osbuild.api
-
-SCHEMA = """
-"additionalProperties": false,
-"required": ["zone"],
-"properties": {
-  "zone": {
-    "type": "string",
-    "description": "Timezone identifier (from tzdb/zoneinfo)"
-  }
-}
-"""
 
 
 def main(tree, options):

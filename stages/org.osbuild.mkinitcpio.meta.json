@@ -1,0 +1,17 @@
+{
+    "summary": "Run mkinitcpio for Arch based distributions",
+    "description": [
+        "WARNING: This stage uses chroot() to run the `mkinitcpio` binary",
+        "from inside the tree."
+    ],
+    "schema": {
+        "additionalProperties": false,
+        "properties": {
+            "preset": {
+                "type": "string",
+                "description": "mkinitcpio preset file to use",
+                "default": "linux"
+            }
+        }
+    }
+}

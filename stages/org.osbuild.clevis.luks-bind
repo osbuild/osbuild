@@ -1,48 +1,9 @@
 #!/usr/bin/python3
-"""
-Bind a LUKS device using the specified policy.
-
-Buildhost commands used: `clevis`, `clevis-luks`, `clevis-pin-*`.
-"""
-
-
 import os
 import subprocess
 import sys
 
 import osbuild.api
-
-SCHEMA_2 = r"""
-"devices": {
-  "type": "object",
-  "additionalProperties": true,
-  "required": ["device"],
-  "properties": {
-    "device": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-},
-"options": {
-  "additionalProperties": false,
-  "required": ["passphrase", "pin", "policy"],
-  "properties": {
-    "passphrase": {
-        "description": "Passphrase to unlock the container",
-        "type": "string"
-    },
-    "pin": {
-        "description": "The pin to use",
-        "type": "string"
-    },
-    "policy": {
-      "description": "Policy to use with the given pin",
-      "type": "string"
-    }
-  }
-}
-"""
 
 
 def main(devices, options):

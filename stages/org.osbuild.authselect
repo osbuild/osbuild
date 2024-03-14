@@ -1,44 +1,8 @@
 #!/usr/bin/python3
-"""
-Select system identity and authentication sources with authselect.
-
-Sets system identity and authentication sources.
-
-The stage calls `authselect select` to set authselect profile to 'profile'.
-Optionally a list of profile features to enable may be provided using 'features'
-option. The list of available profile features can be obtained by running
-`authselect list-features <profile>`.
-
-Notes:
-  - Requires 'chroot' in the buildroot.
-  - Runs the 'authselect' binary from the image in the chroot.
-"""
-
-
 import subprocess
 import sys
 
 import osbuild.api
-
-SCHEMA = """
-"additionalProperties": false,
-"required": ["profile"],
-"description": "Select system identity and authentication sources.",
-"properties": {
-  "profile": {
-    "type": "string",
-    "description": "Desired authselect profile to activate."
-  },
-  "features": {
-    "type": "array",
-    "description": "Features of the selected profile to activate.",
-    "minItems": 1,
-    "items": {
-      "type": "string"
-    }
-  }
-}
-"""
 
 
 def main(tree, options):

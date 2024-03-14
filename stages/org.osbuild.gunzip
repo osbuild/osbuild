@@ -1,39 +1,9 @@
 #!/usr/bin/python3
-"""
-Extract a gzipped file
-
-Buildhost commands used: `gunzip`.
-"""
-
 import os
 import subprocess
 import sys
 
 import osbuild.api
-
-SCHEMA_2 = r"""
-"inputs": {
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["file"],
-  "properties": {
-    "file": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-},
-"options": {
-  "additionalProperties": false,
-  "required": ["path"],
-  "properties": {
-    "path": {
-      "description": "Unzip here.",
-      "type": "string"
-    }
-  }
-}
-"""
 
 
 def parse_input(inputs):

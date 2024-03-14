@@ -1,0 +1,34 @@
+{
+    "summary": "Apply post-copy updates to an ostree repo/deployment",
+    "description": [
+        "The way osbuild works the ostree deployment is built in a chroot and",
+        "stored as a regular directory of files before finally being copied to",
+        "the physical filesystem. This means that for example, ostree fs-verity",
+        "support doesn't work, as the fs-verity setting of files is not copied.",
+        "To support fs-verity in generated images you have to run this stage",
+        "after copying the final ostree tree onto the target filesystem.",
+        "Notes:",
+        " - Ensure the target filesystem supports fs-verity. See e.g. the",
+        "   `verity` option in org.osbuild.mkfs.ext4.",
+        " - Requires ostree version 2023.8 or later in the buildroot."
+    ],
+    "schema_2": {
+        "options": {
+            "additionalProperties": false,
+            "properties": {
+                "sysroot": {
+                    "type": "string",
+                    "description": "Custom sysroot path",
+                    "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+                }
+            }
+        },
+        "devices": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "mounts": {
+            "type": "array"
+        }
+    }
+}

@@ -1,25 +1,9 @@
 #!/usr/bin/python3
-"""
-Configure authentication sources using authconfig.
-
-Applies the default settings. Backups are cleared.
-
-Notes:
-  - Requires 'chroot' in the buildroot.
-  - Runs the 'authconfig' binary from the image in the chroot.
-"""
-
-
 import shutil
 import subprocess
 import sys
 
 import osbuild.api
-
-SCHEMA = """
-"additionalProperties": false,
-"description": "Configure authentication sources."
-"""
 
 
 def main(tree):

@@ -1,24 +1,4 @@
 #!/usr/bin/python3
-"""
-Copy items
-
-Stage to copy items, that is files or trees, from inputs to mount
-points or the tree. Multiple items can be copied. The source and
-destination is an url. Supported locations ('schemes') are `tree`,
-`mount` and `input`.
-The path format follows the rsync convention that if the paths
-ends with a slash `/` the content of that directory is copied not
-the directory itself.
-
-Note that the stage by default does not remove the destination
-before copying. As a result, if the destination is an existing
-symlink to a file, then this file will be overwritten, instead of
-the symlink being replaced. If you want to replace the symlink
-with a file, you need to set the `remove_destination` option to
-`true`. This option works only for files, not directories or
-symlinks to directories.
-"""
-
 import os
 import subprocess
 import sys
@@ -26,79 +6,6 @@ from typing import Dict
 from urllib.parse import ParseResult, urlparse
 
 import osbuild.api
-
-CAPABILITIES = ["CAP_MAC_ADMIN"]
-
-
-SCHEMA_2 = r"""
-"options": {
-  "additionalProperties": false,
-  "required": ["paths"],
-  "properties": {
-    "paths": {
-      "description": "Array of items to copy",
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["from", "to"],
-        "properties": {
-          "from": {
-            "oneOf": [
-              {
-                "type": "string",
-                "description": "The source, if an input",
-                "pattern": "^input:\/\/[^\/]+\/"
-              },
-              {
-                "type": "string",
-                "description": "The source, if a mount",
-                "pattern": "^mount:\/\/[^\/]+\/"
-              },
-              {
-                "type": "string",
-                "description": "The source, if the tree",
-                "pattern": "^tree:\/\/\/"
-              }
-            ]
-          },
-          "to": {
-            "oneOf": [
-              {
-                "type": "string",
-                "description": "The destination, if a mount",
-                "pattern": "^mount:\/\/[^\/]+\/"
-              },
-              {
-                "type": "string",
-                "description": "The destination, if the tree",
-                "pattern": "^tree:\/\/\/"
-              }
-            ]
-          },
-          "remove_destination": {
-            "type": "boolean",
-            "description": "Remove the destination before copying. Works only for files, not directories.",
-            "default": false
-          }
-        }
-      }
-    }
-  }
-},
-"devices": {
-  "type": "object",
-  "additionalProperties": true
-},
-"mounts": {
-  "type": "array"
-},
-"inputs": {
-  "type": "object",
-  "additionalProperties": true
-}
-"""
 
 
 def parse_mount(url: ParseResult, args: Dict):

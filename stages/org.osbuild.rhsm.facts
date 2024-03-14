@@ -1,24 +1,9 @@
 #!/usr/bin/python3
-"""
-This stage allows storing artifact-properties of the Red Hat Subscription
-Manager (rhsm-facts) in the built image.
-"""
-
 import json
 import os
 import sys
 
 import osbuild.api
-
-SCHEMA = r"""
-"properties": {
-  "facts": {
-    "type": "object",
-    "description": "Map of Red Hat Subscription Manager facts.",
-    "additionalProperties": true
-  }
-}
-"""
 
 
 def main(tree, options):

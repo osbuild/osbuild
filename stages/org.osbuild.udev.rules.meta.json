@@ -1,0 +1,250 @@
+{
+    "summary": "Create a udev rules file",
+    "description": [
+        "The stage accepts a list of rules, each rule consisting of a list of",
+        "key-operator-value triples. Keys can be strings or objects that take",
+        "a `name` property. Some keys need an argument, which is encoded in",
+        "the key object via the `arg` property. Operators are strings. Values",
+        "are also strings; any '\"' characters are escaped with '\"'.",
+        "See udev(7) man page for more information about valid keys, their",
+        "arguments and values.",
+        "NB: not all udev constrains are enforced, i.e. the argument to keys",
+        "and the possible keys for the `OPTIONS` assignment are not checked."
+    ],
+    "schema": {
+        "definitions": {
+            "value": {
+                "type": "string"
+            },
+            "keys-match-simple": {
+                "type": "string",
+                "enum": [
+                    "ACTION",
+                    "DEVPATH",
+                    "KERNEL",
+                    "KERNELS",
+                    "NAME",
+                    "SYMLINK",
+                    "SUBSYSTEM",
+                    "SUBSYSTEMS",
+                    "DRIVER",
+                    "DRIVERS",
+                    "TAG",
+                    "TAGS",
+                    "PROGRAM",
+                    "RESULT"
+                ]
+            },
+            "keys-match-noarg": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "$ref": "#/definitions/keys-match-simple"
+                    }
+                }
+            },
+            "keys-match-arg": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "name",
+                    "arg"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "enum": [
+                            "ATTR",
+                            "ATTRS",
+                            "SYSCTL",
+                            "ENV",
+                            "CONST",
+                            "TEST"
+                        ]
+                    },
+                    "arg": {
+                        "type": "string"
+                    }
+                }
+            },
+            "keys-assign-simple": {
+                "type": "string",
+                "enum": [
+                    "NAME",
+                    "SYMLINK",
+                    "OWNER",
+                    "GROUP",
+                    "MODE",
+                    "TAG",
+                    "LABEL",
+                    "GOTO",
+                    "OPTIONS"
+                ]
+            },
+            "keys-assign-noarg": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "$ref": "#/definitions/keys-assign-simple"
+                    }
+                }
+            },
+            "keys-assign-arg": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "name",
+                    "arg"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "enum": [
+                            "SECLABEL",
+                            "ATTR",
+                            "SYSCTL",
+                            "ENV",
+                            "RUN",
+                            "IMPORT"
+                        ]
+                    },
+                    "arg": {
+                        "type": "string"
+                    }
+                }
+            },
+            "match": {
+                "required": [
+                    "op",
+                    "key",
+                    "val"
+                ],
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "op": {
+                        "type": "string",
+                        "enum": [
+                            "==",
+                            "!="
+                        ]
+                    },
+                    "val": {
+                        "$ref": "#/definitions/value"
+                    },
+                    "key": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/definitions/keys-match-simple"
+                            },
+                            {
+                                "$ref": "#/definitions/keys-match-noarg"
+                            },
+                            {
+                                "$ref": "#/definitions/keys-match-arg"
+                            }
+                        ]
+                    }
+                }
+            },
+            "assignment": {
+                "type": "object",
+                "required": [
+                    "key",
+                    "op",
+                    "val"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "key": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/definitions/keys-assign-simple"
+                            },
+                            {
+                                "$ref": "#/definitions/keys-assign-noarg"
+                            },
+                            {
+                                "$ref": "#/definitions/keys-assign-arg"
+                            }
+                        ]
+                    },
+                    "op": {
+                        "type": "string",
+                        "enum": [
+                            "=",
+                            "+=",
+                            "-=",
+                            ":="
+                        ]
+                    },
+                    "val": {
+                        "$ref": "#/definitions/value"
+                    }
+                }
+            },
+            "comment": {
+                "type": "object",
+                "required": [
+                    "comment"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "comment": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "rules",
+            "filename"
+        ],
+        "properties": {
+            "filename": {
+                "type": "string",
+                "description": "Name of the udev rules file",
+                "pattern": "^[.\\/\\w\\-_]{1,250}.rules$"
+            },
+            "rules": {
+                "additionalProperties": false,
+                "type": "array",
+                "description": "Array of udev rules",
+                "minLength": 1,
+                "items": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/comment"
+                        },
+                        {
+                            "type": "array",
+                            "minLength": 1,
+                            "items": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/definitions/match"
+                                    },
+                                    {
+                                        "$ref": "#/definitions/assignment"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

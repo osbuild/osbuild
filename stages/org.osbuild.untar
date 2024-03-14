@@ -1,42 +1,9 @@
 #!/usr/bin/python3
-"""
-Extract a tarball
-
-Buildhost commands used: `tar`.
-"""
-
 import os
 import subprocess
 import sys
 
 import osbuild.api
-
-CAPABILITIES = ["CAP_MAC_ADMIN"]
-
-
-SCHEMA_2 = r"""
-"inputs": {
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["file"],
-  "properties": {
-    "file": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-},
-"options": {
-  "additionalProperties": false,
-  "properties": {
-    "prefix": {
-      "description": "Unpack here.",
-      "type": "string",
-      "default": "/"
-    }
-  }
-}
-"""
 
 
 def parse_input(inputs):

@@ -1,0 +1,42 @@
+{
+    "summary": "Setup a CoreOS platform",
+    "description": [
+        "In CoreOS we have the concept of a platform (i.e. AWS, GCP, Metal, QEMU)",
+        "where each platform has its own provided disk image with slightly",
+        "differing settings/behavior. This stage will perform the necessary",
+        "configuration for the given platform. This configuration boils down to",
+        "a few steps:",
+        "1. Locate the source of platform specific information that is provided",
+        "   in the CoreOS filesystem tree already (the platforms.json).",
+        "2. Copy the platforms.json file into the /boot/ partition, which is",
+        "   sometimes used by coreos-installer.",
+        "3. Read the platforms.json to fetch and platform specific kernel",
+        "   arguments or grub configuration to set. These arguments/config",
+        "   are primarily console settings.",
+        "4. Apply any platform specific kernel arguments along with the",
+        "   `ignition.platform.id={platform-name}` kernel argument.",
+        "5. Create the grub console.cfg file and apply any platform",
+        "   specific grub console configuration.",
+        "This stage is highly CoreOS specific and subject to change in the",
+        "future if/when we change the way platform specific information is",
+        "defined in our broader efforts to share more defaults with OSBuild."
+    ],
+    "schema_2": {
+        "options": {
+            "additionalProperties": false,
+            "properties": {
+                "platform": {
+                    "description": "The target platform name/ID",
+                    "type": "string"
+                }
+            }
+        },
+        "devices": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "mounts": {
+            "type": "array"
+        }
+    }
+}

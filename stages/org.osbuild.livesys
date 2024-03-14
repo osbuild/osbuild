@@ -1,26 +1,9 @@
 #!/usr/bin/python3
-"""
-Configure basic aspects of the `/etc/sysconfig/livesys` file, necessary for
-live installations.
-"""
-
 import os
 import sys
 
 import osbuild.api
 
-SCHEMA_2 = """
-"options": {
-  "additionalProperties": false,
-  "required": ["livesys_session"],
-  "properties": {
-    "livesys_session": {
-      "type": "string",
-      "description": "Livesys session to use"
-    }
-  }
-}
-"""
 
 PATH = "etc/sysconfig/livesys"
 

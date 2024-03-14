@@ -1,0 +1,9 @@
+{
+    "summary": "Initialize a new root file system",
+    "description": [
+        "Creates the basic file system layout for an OSTree based system."
+    ],
+    "schema": {
+        "additionalProperties": false
+    }
+}

@@ -1,26 +1,7 @@
 #!/usr/bin/python3
-"""
-Return an error
-
-Error stage. Return the given error. Useful for testing, debugging, and
-wasting time.
-"""
-
-
 import sys
 
 import osbuild.api
-
-SCHEMA = """
-"additionalProperties": false,
-"properties": {
-  "returncode": {
-    "description": "What to return code to use",
-    "type": "number",
-    "default": 255
-  }
-}
-"""
 
 
 def main(_tree, options):

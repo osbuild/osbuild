@@ -1,0 +1,89 @@
+{
+    "summary": "Copy a container image. The destination can be either a container store,\nor a directory compliant with 'Open Container Image Layout Specification'.\nThis supports both oci archives and docker archives, and uses the containers\ninput (reading from a skopeo source or a file in a pipeline).",
+    "description": [
+        "Buildhost commands used: `skopeo`."
+    ],
+    "schema_2": {
+        "definitions": {
+            "destination-containers-storage": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "enum": [
+                            "containers-storage"
+                        ]
+                    },
+                    "storage-path": {
+                        "description": "Container storage location (default /var/lib/containers/storage).",
+                        "type": "string",
+                        "default": "/var/lib/containers/storage"
+                    },
+                    "storage-driver": {
+                        "description": "The container storage driver to use (default overlay).",
+                        "type": "string",
+                        "default": "overlay"
+                    }
+                }
+            },
+            "destination-oci": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "type",
+                    "path"
+                ],
+                "properties": {
+                    "type": {
+                        "enum": [
+                            "oci"
+                        ]
+                    },
+                    "path": {
+                        "description": "Location of a directory compliant with 'Open Container Image Layout Specification'",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "inputs": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "images"
+            ],
+            "properties": {
+                "images": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "manifest-lists": {
+                    "type": "object",
+                    "description": "Optional manifest lists to merge into images. The metadata must specify an image ID to merge to.",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "options": {
+            "additionalProperties": false,
+            "required": [
+                "destination"
+            ],
+            "properties": {
+                "destination": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/destination-containers-storage"
+                        },
+                        {
+                            "$ref": "#/definitions/destination-oci"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
