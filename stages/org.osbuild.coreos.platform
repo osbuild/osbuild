@@ -7,7 +7,6 @@ import sys
 import osbuild.api
 from osbuild.util import bls
 
-
 # Constants
 # For console.cfg see https://github.com/coreos/bootupd/pull/620
 # For platforms.json see https://github.com/coreos/coreos-assembler/pull/3709

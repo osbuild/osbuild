@@ -4,7 +4,6 @@ import sys
 
 import osbuild.api
 
-
 DELETE_TIME_SOURCE_LINE_REGEX = re.compile(r"(server|pool|peer) ")
 DELETE_LEAPSECTZ_LINE_REGEX = re.compile(r"leapsectz ")
 

@@ -6,7 +6,6 @@ import sys
 import osbuild.api
 from osbuild.util.lorax import Script, render_template
 
-
 LORAX_TEMPLATES = "/usr/share/lorax/templates.d"
 
 

@@ -6,7 +6,6 @@ import sys
 
 import osbuild.api
 
-
 # The main grub2 configuration file template. Used for UEFI and legacy
 GRUB_CFG_TEMPLATE = """
 # Created by osbuild

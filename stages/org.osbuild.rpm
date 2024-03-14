@@ -44,7 +44,6 @@ from osbuild import api
 from osbuild.util.mnt import mount
 from osbuild.util.runners import create_machine_id_if_needed
 
-
 # File to mark a system as ostree booted. Also used by certain packages
 # like e.g. authselect, to adjust its behavior during installation.
 # Controlled via the `ostree_booted` option.

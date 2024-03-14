@@ -6,7 +6,6 @@ import sys
 import osbuild.api
 from osbuild.util import ostree
 
-
 SUBUID_PATH = "etc/subuid"
 SUBGID_PATH = "etc/subgid"
 

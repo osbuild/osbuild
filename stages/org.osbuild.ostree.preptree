@@ -7,7 +7,6 @@ import tempfile
 from osbuild import api
 from osbuild.util import ostree
 
-
 # Corresponds to
 # https://github.com/coreos/rpm-ostree/blob/7b9a20b20ecd5a2ceb11ca9edf86984dc3065183/rust/src/composepost.rs#L58
 TOPLEVEL_DIRS = ["dev", "proc", "run", "sys", "sysroot", "var"]
