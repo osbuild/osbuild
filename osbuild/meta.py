@@ -318,7 +318,6 @@ META_JSON_SCHEMA = {
         },
         "description": {
             "type": "array",
-            "minItems": 1,
             "items": {
                 "type": "string",
             },
