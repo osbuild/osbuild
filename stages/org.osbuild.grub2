@@ -6,7 +6,6 @@ import sys
 
 import osbuild.api
 
-
 # The main grub2 configuration file template. Used for UEFI and legacy
 # boot. The parameters are currently:
 #   - $search: to specify the search criteria of how to locate grub's

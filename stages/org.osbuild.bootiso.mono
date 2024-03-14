@@ -10,7 +10,6 @@ import tempfile
 import osbuild.api
 import osbuild.remoteloop as remoteloop
 
-
 LORAX_TEMPLATES = "/usr/share/lorax/templates.d"
 
 

@@ -6,7 +6,6 @@ import sys
 import osbuild.api
 from osbuild.util import ostree
 
-
 ALEPH_FILENAME = ".aleph-version.json"
 COREOS_ALEPH_FILENAME = ".coreos-aleph-version.json"
 
