@@ -472,12 +472,20 @@ class ModuleInfo:
     def _load_from_json(cls, path, klass, name) -> Optional["ModuleInfo"]:
         meta_json_suffix = ".meta.json"
         with open(path + meta_json_suffix, encoding="utf-8") as fp:
-            meta = json.load(fp)
+            try:
+                meta = json.load(fp)
+            except json.decoder.JSONDecodeError as e:
+                raise SyntaxError("Invalid schema: " + str(e)) from e
 
         schema = Schema(META_JSON_SCHEMA, "meta.json validator")
         res = schema.validate(meta)
         if not res.valid:
-            # XXX: should we raise an exception instead?
+            # the python code is very leaniant with invalid schemas
+            # so just print a warning here for now to stay close to
+            # what the old code was doing
+            errs = res.as_dict()["errors"]
+            # it would be nice to have a proper logger here
+            print(f"WARNING: schema for {path} is invalid: {errs}", file=sys.stderr)
             return None
 
         long_description = meta.get("description", "no description provided")
