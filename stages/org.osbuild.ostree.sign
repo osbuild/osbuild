@@ -1,11 +1,11 @@
 #!/usr/bin/python3
-"""Sign a commit in an ostree repo
+"""
+Sign a commit in an ostree repo
 
 Given an ostree commit (referenced by a ref) in a repo and an ed25519
 secret key this adds a signature to the commit detached metadata.
 This commit can then be used to validate the commit, during ostree
 pull, during boot, or at any other time.
-
 """
 
 import os

@@ -2,7 +2,6 @@
 """
 Create a boot filesystem tree, can be consumed to create
 an efiboot.img.
-
 """
 
 import os

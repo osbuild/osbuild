@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-"""Run bootc install to-filesystem
+"""
+Run bootc install to-filesystem
 
 Note that this needs the disk.img in the inputs as one continous
 devices so that bootupd can install grub to the mbr. It also needs

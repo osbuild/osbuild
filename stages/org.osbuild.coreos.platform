@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 """
+Setup a CoreOS platform
+
 In CoreOS we have the concept of a platform (i.e. AWS, GCP, Metal, QEMU)
 where each platform has its own provided disk image with slightly
 differing settings/behavior. This stage will perform the necessary
