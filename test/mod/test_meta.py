@@ -1,5 +1,6 @@
 import os
 import pathlib
+import re
 import textwrap
 
 import pytest
@@ -172,7 +173,7 @@ def test_schema():
     assert res
 
 
-def make_fake_meta_json(tmp_path, name, version):
+def make_fake_meta_json(tmp_path, name, version, invalid=""):
     meta_json_path = pathlib.Path(f"{tmp_path}/stages/{name}.meta.json")
     meta_json_path.parent.mkdir(exist_ok=True)
     if version == 1:
@@ -195,6 +196,16 @@ def make_fake_meta_json(tmp_path, name, version):
         """
     else:
         pytest.fail(f"unexpected schema version {version}")
+
+    if invalid == "json":
+        schema_part = """
+        "xxx": {not-json}"'
+        """
+    elif invalid == "schema":
+        schema_part = """
+        "not": "following schema"
+        """
+
     meta_json_path.write_text("""
     {
       "summary": "some json summary",
@@ -209,18 +220,28 @@ def make_fake_meta_json(tmp_path, name, version):
     return meta_json_path
 
 
-def make_fake_py_module(tmp_path, name):
+def make_fake_py_module(tmp_path, name, invalid=""):
     py_path = pathlib.Path(f"{tmp_path}/stages/{name}")
     py_path.parent.mkdir(exist_ok=True)
     fake_py = '"""some py summary\nlong description\nwith newline"""'
-    fake_py += textwrap.dedent("""
-    SCHEMA = '"properties": {"py_filename":{"type": "string"}}'
-    SCHEMA_2 = '"py_devices": {"type":"object"}'
-    CAPABILITIES = ['CAP_MAC_ADMIN']
+    if invalid == "json":
+        fake_py += textwrap.dedent("""
+        SCHEMA = '"xxx": {not-json}"'
+        """)
+    elif invalid == "schema":
+        fake_py += textwrap.dedent("""
+        noT = "following schema"
+        """)
+    else:
+        fake_py += textwrap.dedent("""
+        SCHEMA = '"properties": {"py_filename":{"type": "string"}}'
+        SCHEMA_2 = '"py_devices": {"type":"object"}'
+        CAPABILITIES = ['CAP_MAC_ADMIN']
     """)
     py_path.write_text(fake_py, encoding="utf-8")
 
 
+# keep the tests consistent between loading from python and json
 def test_load_from_json(tmp_path):
     make_fake_meta_json(tmp_path, "org.osbuild.noop", version=1)
     modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
@@ -231,6 +252,20 @@ def test_load_from_json(tmp_path):
         "1": {"properties": {"json_filename": {"type": "string"}}},
         "2": {},
     }
+
+
+def test_load_from_json_invalid_json(tmp_path):
+    make_fake_meta_json(tmp_path, "org.osbuild.noop", version=2, invalid="json")
+    with pytest.raises(SyntaxError) as exc:
+        osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert str(exc.value) == "Invalid schema: Expecting property name enclosed in double quotes: line 2 column 17 (char 201)"
+
+
+def test_load_from_json_invalid_schema(tmp_path, capsys):
+    make_fake_meta_json(tmp_path, "org.osbuild.noop", version=2, invalid="schema")
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert modinfo is None
+    assert re.match(r"WARNING: schema for .* is invalid: ", capsys.readouterr().err)
 
 
 def test_load_from_py(tmp_path):
@@ -245,6 +280,24 @@ def test_load_from_py(tmp_path):
     }
 
 
+def test_load_from_py_invalid_json(tmp_path):
+    make_fake_py_module(tmp_path, "org.osbuild.noop", invalid="json")
+    with pytest.raises(SyntaxError) as exc:
+        osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert str(exc.value) == "Invalid schema: Expecting property name enclosed in double quotes (org.osbuild.noop, line 4)"
+
+
+def test_load_from_py_invalid_schema(tmp_path):
+    make_fake_py_module(tmp_path, "org.osbuild.noop", invalid="schema")
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert modinfo.desc == "some py summary"
+    assert modinfo.info == "long description\nwith newline"
+    assert modinfo.opts == {
+        "1": {},
+        "2": {},
+    }
+
+
 def test_load_from_json_prefered(tmp_path):
     make_fake_meta_json(tmp_path, "org.osbuild.noop", version=2)
     make_fake_py_module(tmp_path, "org.osbuild.noop")
@@ -256,16 +309,6 @@ def test_load_from_json_prefered(tmp_path):
         "1": {},
         "2": {"json_devices": {"type": "object"}},
     }
-
-
-def test_load_from_json_validates(tmp_path):
-    meta_json_path = pathlib.Path(f"{tmp_path}/stages/org.osbuild.noop.meta-json")
-    meta_json_path.parent.mkdir(exist_ok=True)
-    # XXX: do a more direct test here that also validates the various
-    #      error conditions
-    meta_json_path.write_text("""{"not": "following schema"}""")
-    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
-    assert modinfo is None
 
 
 @pytest.mark.parametrize("test_input,expected_err", [
