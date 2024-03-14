@@ -1,15 +1,4 @@
 #!/usr/bin/python3
-"""Generate ed25519 public/private keypair in format used by `ostree sign`.
-
-This is used with the org.osbuild.ostree.sign stage, and these can be
-used with composefs to tie an initrd and ostree commit together. See
-https://ostreedev.github.io/ostree/composefs/#signatures for details
-of how this works.
-
-Notes:
-  - Requires 'openssl' in the buildroot.
-"""
-
 import base64
 import os
 import subprocess
@@ -17,25 +6,6 @@ import sys
 import tempfile
 
 import osbuild.api
-
-SCHEMA_2 = r"""
-"options": {
-  "additionalProperties": false,
-  "required": ["publickey", "secretkey"],
-  "properties": {
-    "publickey": {
-      "description": "Path of generated public key",
-      "type": "string",
-      "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
-    },
-    "secretkey": {
-      "description": "Path of generated secret key",
-      "type": "string",
-      "pattern": "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
-    }
-  }
-}
-"""
 
 
 def openssl(*args):

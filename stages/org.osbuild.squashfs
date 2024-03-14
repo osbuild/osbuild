@@ -1,65 +1,9 @@
 #!/usr/bin/python3
-"""
-Create a squashfs named `filename`.
-
-Buildhost commands used: `mksquashfs` and any needed compression program.
-"""
-
 import os
 import subprocess
 import sys
 
 import osbuild.api
-
-SCHEMA_2 = """
-"options": {
-  "additionalProperties": false,
-  "required": ["filename"],
-  "properties": {
-    "filename": {
-      "description": "Filename for tar archive",
-      "type": "string"
-    },
-    "compression": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["method"],
-      "properties": {
-        "method": {
-          "enum": ["gzip", "lz4", "xz", "zstd"]
-        },
-        "options": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "bcj": {
-              "enum": [
-                "x86",
-                "arm",
-                "armthumb",
-                "powerpc",
-                "sparc",
-                "ia64"
-              ]
-            }
-          }
-        }
-      }
-    }
-  }
-},
-"inputs": {
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["tree"],
-  "properties": {
-    "tree": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-}
-"""
 
 
 def main(inputs, output_dir, options):

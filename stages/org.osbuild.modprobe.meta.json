@@ -1,0 +1,92 @@
+{
+    "summary": "Configure modprobe",
+    "description": [
+        "The 'config' option allows the creation of a `.conf` configuration",
+        "file for modprobe in `/usr/lib/modprobe.d` with the name `filename`.",
+        "Currently supported \"command\" objects are:",
+        "  - for 'blacklist' command",
+        "    - 'command' property value: \"blacklist\"",
+        "    - 'modulename' property value: a non-empty string with the name of a module",
+        "  - for 'install' command",
+        "    - 'command' property value: \"install\"",
+        "    - 'modulename' property value: a non-empty string with the name of a module",
+        "    - 'cmdline' property value: a non-empty string representing the command to",
+        "      run instead of inserting the specified module."
+    ],
+    "schema": {
+        "additionalProperties": false,
+        "required": [
+            "commands",
+            "filename"
+        ],
+        "properties": {
+            "filename": {
+                "type": "string",
+                "description": "Name of the modprobe configuration file.",
+                "pattern": "^[\\w.-]{1,250}\\.conf$"
+            },
+            "commands": {
+                "additionalProperties": false,
+                "type": "array",
+                "description": "Array of modprobe commands",
+                "minLength": 1,
+                "items": {
+                    "anyOf": [
+                        {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "description": "'blacklist' command",
+                            "required": [
+                                "command",
+                                "modulename"
+                            ],
+                            "properties": {
+                                "command": {
+                                    "type": "string",
+                                    "enum": [
+                                        "blacklist"
+                                    ],
+                                    "description": "modprobe command."
+                                },
+                                "modulename": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "description": "name of the module to blacklist."
+                                }
+                            }
+                        },
+                        {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "description": "'install' command",
+                            "required": [
+                                "command",
+                                "modulename",
+                                "cmdline"
+                            ],
+                            "properties": {
+                                "command": {
+                                    "type": "string",
+                                    "enum": [
+                                        "install"
+                                    ],
+                                    "description": "modprobe command."
+                                },
+                                "modulename": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "description": "name of the module to blacklis."
+                                },
+                                "cmdline": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "description": "command to run instead of inserting the specified module as normal."
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

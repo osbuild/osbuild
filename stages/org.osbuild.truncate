@@ -1,41 +1,9 @@
 #!/usr/bin/python3
-"""
-Create, shrink or extend a file.
-
-The file specified via `filename` is extended or shrunk to the
-new size specified via the `size` parameter. If the file exists
-and the new size is smaller, data past the new size will be
-discarded. If the file exists and the new size is bigger, it
-will be extended by filling the new area with zeros.
-If the file does not yet exist it will be created.
-NB: In general file systems will not actually reserve the full
-requested amount but instead a "sparse file" will be created.
-Therefore the actual disk usage will be different from the
-"apparent" size of the file, which is reflected by "size" (the
-apparent size) vs. "blocks" (the actual used space) fields
-shown in the `stat` call.
-"""
-
 import os
 import subprocess
 import sys
 
 import osbuild.api
-
-SCHEMA = """
-"additionalProperties": false,
-"required": ["filename", "size"],
-"properties": {
-  "filename": {
-    "description": "Image filename",
-    "type": "string"
-  },
-  "size": {
-    "description": "New desired size",
-    "type": "string"
-  }
-}
-"""
 
 
 def main(tree, options):

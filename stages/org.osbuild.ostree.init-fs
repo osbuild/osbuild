@@ -1,19 +1,8 @@
 #!/usr/bin/python3
-"""
-Initialize a new root file system
-
-Creates the basic file system layout for an OSTree based system.
-"""
-
-
 import sys
 
 import osbuild.api
 from osbuild.util import ostree
-
-SCHEMA = """
-"additionalProperties": false
-"""
 
 
 def main(tree):

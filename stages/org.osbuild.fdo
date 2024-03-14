@@ -1,36 +1,9 @@
 #!/usr/bin/python3
-"""
-FDO initial DIUN certificates
-
-FDO stage to write down the initial DIUN pub key root certificates
-to be read by the manufacturer client
-
-This will create a '/fdo_diun_root_certs.pem' with content
-specified via the `rootcerts` input.
-"""
-
 import os
 import shutil
 import sys
 
 import osbuild.api
-
-SCHEMA_2 = r"""
-"inputs": {
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["rootcerts"],
-  "properties": {
-    "rootcerts": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-},
-"options": {
-  "additionalProperties": false
-}
-"""
 
 
 def parse_input(inputs):

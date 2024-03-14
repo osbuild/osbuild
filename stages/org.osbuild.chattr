@@ -1,8 +1,4 @@
 #!/usr/bin/python3
-"""
-Runs `chattr` to set file/directory attributes.
-"""
-
 import os
 import subprocess
 import sys
@@ -10,38 +6,6 @@ from typing import Dict
 from urllib.parse import ParseResult, urlparse
 
 import osbuild.api
-
-SCHEMA_2 = r"""
-"options": {
-  "additionalProperties": false,
-  "properties": {
-    "items": {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": {
-        "^mount:\/\/[^\/]+\/|^tree:\/\/\/": {
-          "type": "object",
-          "required": ["immutable"],
-          "properties": {
-            "immutable": {
-              "type": "boolean",
-              "description": "Make the file/directory immutable",
-              "default": true
-            }
-          }
-        }
-      }
-    }
-  }
-},
-"devices": {
-  "type": "object",
-  "additionalProperties": true
-},
-"mounts": {
-  "type": "array"
-}
-"""
 
 
 def parse_mount(url: ParseResult, args: Dict):

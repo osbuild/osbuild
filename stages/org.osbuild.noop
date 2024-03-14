@@ -1,11 +1,4 @@
 #!/usr/bin/python3
-"""
-Do Nothing
-
-See "org.osbuild.noop.meta.json" for more details.
-"""
-
-
 import json
 import sys
 

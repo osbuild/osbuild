@@ -1,71 +1,8 @@
 #!/usr/bin/python3
-"""
-Construct an FAT file-system via mkfs.fat(8)
-
-Construct a FAT file-system with the given options at the device
-specified via `device`.
-
-NB: `mkfs.fat` is called via `-I` to ignore existing partitions
-on the device. This should also prevent the situation where
-the partition table information on a (loop-)device is outdated.
-
-Buildhost commands used: `mkfs.fat`.
-"""
-
 import subprocess
 import sys
 
 import osbuild.api
-
-SCHEMA_2 = r"""
-"devices": {
-  "type": "object",
-  "additionalProperties": true,
-  "required": ["device"],
-  "properties": {
-    "device": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-},
-"options": {
-  "additionalProperties": false,
-  "required": ["volid"],
-  "properties": {
-    "volid": {
-      "description": "Volume identifier",
-      "type": "string"
-    },
-    "label": {
-      "description": "Label for the file system",
-      "type": "string",
-      "maxLength": 11
-    },
-    "fat-size": {
-      "description": "Label for the file system",
-        "type": "integer",
-        "enum": [12, 16, 32]
-    },
-    "geometry": {
-      "description": "Disk Geometry for the file system",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["heads", "sectors-per-track"],
-      "properties": {
-        "heads": {
-          "description": "Number of Heads",
-          "type": "integer"
-        },
-        "sectors-per-track": {
-          "description": "Number of Sectors per Track",
-          "type": "integer"
-        }
-      }
-    }
-  }
-}
-"""
 
 
 def main(devices, options):

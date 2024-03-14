@@ -1,0 +1,88 @@
+{
+    "summary": "Deploy an OStree commit",
+    "description": [
+        "Create an OSTree deployment[1] for a given container image input"
+    ],
+    "capabilities": [
+        "CAP_MAC_ADMIN"
+    ],
+    "schema_2": {
+        "options": {
+            "additionalProperties": false,
+            "required": [
+                "osname",
+                "target_imgref"
+            ],
+            "properties": {
+                "mounts": {
+                    "description": "Mount points of the final file system",
+                    "type": "array",
+                    "items": {
+                        "description": "Description of one mount point",
+                        "type": "string"
+                    }
+                },
+                "osname": {
+                    "description": "Name of the stateroot to be used in the deployment",
+                    "type": "string"
+                },
+                "kernel_opts": {
+                    "description": "Additional kernel command line options",
+                    "type": "array",
+                    "items": {
+                        "description": "A single kernel command line option",
+                        "type": "string"
+                    }
+                },
+                "target_imgref": {
+                    "description": "imageref used as the source of truth for updates",
+                    "type": "string",
+                    "pattern": "^(ostree-remote-registry|ostree-image-signed|ostree-unverified-registry):.*$",
+                    "examples": [
+                        "ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable, ostree-image-signed:quay.io/fedora/fedora-coreos:stable, ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable"
+                    ]
+                },
+                "rootfs": {
+                    "description": "Identifier to locate the root file system",
+                    "type": "object",
+                    "oneOf": [
+                        {
+                            "required": [
+                                "uuid"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "label"
+                            ]
+                        }
+                    ],
+                    "properties": {
+                        "label": {
+                            "description": "Identify the root file system by label",
+                            "type": "string"
+                        },
+                        "uuid": {
+                            "description": "Identify the root file system by UUID",
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "inputs": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "images"
+            ],
+            "properties": {
+                "images": {
+                    "type": "object",
+                    "description": "Container Image to deploy",
+                    "additionalProperties": true
+                }
+            }
+        }
+    }
+}

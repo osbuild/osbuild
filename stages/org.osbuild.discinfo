@@ -1,30 +1,9 @@
 #!/usr/bin/python3
-"""
-Create a `.discinfo` file describing disk
-
-This will create a `.discinfo` file with the specified parameters.
-"""
-
 import os
 import sys
 import time
 
 import osbuild.api
-
-SCHEMA = """
-"additionalProperties": true,
-"required": ["basearch", "release"],
-"properties": {
-  "basearch": {
-    "description": "Build architecture.",
-    "type": "string"
-  },
-  "release": {
-    "description": "The product name.",
-    "type": "string"
-  }
-}
-"""
 
 
 def main(tree, options):

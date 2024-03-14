@@ -1,52 +1,9 @@
 #!/usr/bin/python3
-"""
-Pull OSTree commits into an existing repo
-
-This stage pulls one or more commits, provided via
-the `commits` input into an existing repository at
-a location specified via `repo`.
-
-If the returned a reference via `ref` it will use
-that to pull the commits.
-"""
-
-
 import os
 import sys
 
 import osbuild.api
 from osbuild.util import ostree
-
-CAPABILITIES = ["CAP_MAC_ADMIN"]
-
-
-SCHEMA_2 = """
-"options": {
-  "additionalProperties": false,
-  "required": ["repo"],
-  "properties": {
-    "repo": {
-      "description": "Location of the OSTree repo.",
-      "type": "string"
-    },
-    "remote": {
-      "description": "Add the 'remote' to the ref spec",
-      "type": "string"
-    }
-  }
-},
-"inputs": {
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["commits"],
-  "properties": {
-    "commits": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-}
-"""
 
 
 # pylint: disable=too-many-statements

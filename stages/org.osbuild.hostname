@@ -1,31 +1,9 @@
 #!/usr/bin/python3
-"""
-Set system hostname
-
-Sets system hostname.
-
-Deletes /etc/hostname if present, then runs `systemd-firstboot` from the
-buildhost with `--hostname={hostname}`, which checks the validity of the
-hostname and writes it to /etc/hostname.
-"""
-
-
 import os
 import subprocess
 import sys
 
 import osbuild.api
-
-SCHEMA = """
-"additionalProperties": false,
-"required": ["hostname"],
-"properties": {
-  "hostname": {
-    "type": "string",
-    "description": "hostname for the target system"
-  }
-}
-"""
 
 
 def main(tree, options):

@@ -1,0 +1,169 @@
+{
+    "summary": "Create /etc/fstab entries for filesystems",
+    "description": [
+        "Each filesystem item must have at least the fs_spec, i.e `uuid`,",
+        "`label`, `partlabel` or `device` and a `path` (mount point).",
+        "This stage replaces /etc/fstab, removing any existing entries.",
+        "NB: The ostree configuration options are experimental and might",
+        "be replaced with a different mechanism in the near future."
+    ],
+    "schema": {
+        "additionalProperties": false,
+        "required": [
+            "filesystems"
+        ],
+        "properties": {
+            "ostree": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "deployment"
+                ],
+                "properties": {
+                    "deployment": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "oneOf": [
+                            {
+                                "properties": {
+                                    "default": {
+                                        "enum": [
+                                            false
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "osname",
+                                    "ref"
+                                ]
+                            },
+                            {
+                                "properties": {
+                                    "default": {
+                                        "enum": [
+                                            true
+                                        ]
+                                    }
+                                },
+                                "not": {
+                                    "anyOf": [
+                                        {
+                                            "required": [
+                                                "osname"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "ref"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "serial"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        ],
+                        "properties": {
+                            "osname": {
+                                "description": "Name of the stateroot to be used in the deployment",
+                                "type": "string"
+                            },
+                            "ref": {
+                                "description": "OStree ref to create and use for deployment",
+                                "type": "string"
+                            },
+                            "serial": {
+                                "description": "The deployment serial (usually '0')",
+                                "type": "number",
+                                "default": 0
+                            },
+                            "default": {
+                                "description": "Find and use the default ostree deployment",
+                                "type": "boolean",
+                                "default": false
+                            }
+                        }
+                    }
+                }
+            },
+            "filesystems": {
+                "type": "array",
+                "description": "array of filesystem objects",
+                "items": {
+                    "type": "object",
+                    "oneOf": [
+                        {
+                            "required": [
+                                "device",
+                                "path"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "uuid",
+                                "path"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "label",
+                                "path"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "partlabel",
+                                "path"
+                            ]
+                        }
+                    ],
+                    "properties": {
+                        "device": {
+                            "description": "Device node",
+                            "type": "string"
+                        },
+                        "uuid": {
+                            "description": "Filesystem UUID",
+                            "type": "string"
+                        },
+                        "label": {
+                            "description": "Filesystem label",
+                            "type": "string"
+                        },
+                        "partlabel": {
+                            "description": "Partition label.",
+                            "type": "string"
+                        },
+                        "path": {
+                            "description": "Filesystem mountpoint",
+                            "type": "string"
+                        },
+                        "vfs_type": {
+                            "description": "Filesystem type",
+                            "type": "string",
+                            "default": "none"
+                        },
+                        "options": {
+                            "description": "Filesystem options (comma-separated)",
+                            "type": "string",
+                            "default": "defaults"
+                        },
+                        "freq": {
+                            "description": "dump(8) period in days",
+                            "type": "number",
+                            "default": 0
+                        },
+                        "passno": {
+                            "description": "pass number on parallel fsck(8)",
+                            "type": "number",
+                            "default": 0
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

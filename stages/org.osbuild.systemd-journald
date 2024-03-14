@@ -1,87 +1,9 @@
 #!/usr/bin/python3
-"""
-Configures systemd-journald
-
-The `config` option allows to create a systemd-journald configuration drop-in
-file in `/usr/lib/systemd/journald.conf.d` with the name `filename`.
-
-Drop-in configuration files can specify the following subset of options:
-- 'Journal' section
-  -  'Storage' option
-  -  'Compress' option
-  -  'SplitMode' option
-  -  'MaxFileSec' option
-  -  'MaxRetentionSec' option
-  -  'SyncIntervalSec' option
-  -  'Audit' option
-
-At least one option must be specified in the 'Journal' section.
-"""
-
 import configparser
 import os
 import sys
 
 import osbuild.api
-
-SCHEMA = r"""
-"additionalProperties": false,
-"required": ["filename", "config"],
-"properties": {
-    "filename": {
-        "type": "string",
-        "description": "Name of the systemd-journald drop-in file",
-        "pattern": "^[a-zA-Z0-9_\\.-]{1,250}\\.conf$"
-    },
-    "config": {
-        "additionalProperties": false,
-        "type": "object",
-        "description": "systemd-journald configuration",
-        "minProperties": 1,
-        "properties": {
-            "Journal": {
-                "additionalProperties": false,
-                "type": "object",
-                "description": "'Journal' configuration section",
-                "minProperties": 1,
-                "properties": {
-                    "Storage": {
-                        "type": "string",
-                        "description": "Controls where to store journal data.",
-                        "enum": ["volatile", "persistent", "auto", "none"]
-                    },
-                    "Compress": {
-                        "type": "string",
-                        "description": "Sets whether the data objects stored in the journal should be compressed or not. Can also take threshold values."
-                    },
-                    "SplitMode": {
-                        "type": "string",
-                        "description": "Splits journal files per user or to a single file.",
-                        "enum": ["uid", "none"]
-                    },
-                    "MaxFileSec": {
-                        "type": "string",
-                        "description": "Max time to store entries in a single file. By default seconds, may be sufixed with units to override this."
-                    },
-                    "MaxRetentionSec": {
-                        "type": "string",
-                        "description": "Maximum time to store journal entries."
-                    },
-                    "SyncIntervalSec": {
-                        "type": "string",
-                        "description": "Timeout before synchronizing journal files to disk."
-                    },
-                    "Audit": {
-                        "type": "string",
-                        "description": "Enables/Disables kernel auditing on start-up, leaves it as is if unspecified.",
-                        "enum": ["yes", "no", ""]
-                    }
-                }
-            }
-        }
-    }
-}
-"""
 
 
 def main(tree, options):

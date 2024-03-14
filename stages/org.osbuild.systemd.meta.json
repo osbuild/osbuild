@@ -1,0 +1,59 @@
+{
+    "summary": "Configure Systemd services.",
+    "description": [
+        "Enable, disable or mask systemd units (service, socket, path, etc.) by running",
+        "`systemctl` from the buildhost.",
+        "This stage runs `systemctl enable` for all `enabled_services` items, which may",
+        "create symlinks under `/etc/systemd/system`.",
+        "After enabling units, it runs `systemctl disable` for all `disabled_services`",
+        "items, which will delete _all_ symlinks to the named services.",
+        "The 'default_target' option allows to configure the default Systemd target.",
+        "The 'unit_dropins' option allows to create Systemd unit drop-in configuration",
+        "files in `/usr/lib/systemd/system/<unit_name>.d/`. Its properties are names of",
+        "'.service' files to be modified using drop-ins. These names are validated using",
+        "the same rules as specified by systemd.unit(5) and they must contain the",
+        "'.service' suffix (other types of unit files are not supported). Value of each",
+        "specified '.service' file is an object, which properties are names of drop-in",
+        "configuration '.conf' files. Drop-in configuration files can currently specify",
+        "the following subset of options:",
+        "  - 'Service' section",
+        "    - 'Environment' option"
+    ],
+    "schema": {
+        "additionalProperties": false,
+        "properties": {
+            "enabled_services": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Array of systemd unit names to be enabled"
+            },
+            "disabled_services": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Array of systemd unit names to be enabled"
+            },
+            "masked_services": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Array of systemd unit names to be masked"
+            },
+            "masked_generators": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Array of systemd generators to be masked"
+            },
+            "default_target": {
+                "type": "string",
+                "description": "The default target to boot into"
+            }
+        }
+    }
+}

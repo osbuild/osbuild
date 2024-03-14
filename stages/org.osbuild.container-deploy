@@ -1,9 +1,4 @@
 #!/usr/bin/python3
-"""
-Deploy a container.
-
-Buildhost commands used: podman skopeo
-"""
 import contextlib
 import os
 import random
@@ -13,33 +8,6 @@ import sys
 
 import osbuild.api
 from osbuild.util import containers
-
-SCHEMA_2 = r"""
-"inputs": {
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["images"],
-  "properties": {
-    "images": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-},
-"options": {
-  "additionalProperties": false,
-  "properties": {
-    "exclude": {
-      "type": "array",
-      "description": "Exclude paths from the deployment",
-      "minItems": 1,
-      "items": {
-        "type": "string"
-      }
-    }
-  }
-}
-"""
 
 
 @contextlib.contextmanager

@@ -1,76 +1,9 @@
 #!/usr/bin/python3
-"""
-Configure Systemd services via unit file dropins
-
-This stage allows to create Systemd unit drop-in configuration files in
-`/usr/lib/systemd/system/<unit_name>.d/`. The `unit` property specifies the
-'.service' file to be modified using the drop-ins. These names are validated
-using the same rules as specified by systemd.unit(5) and they must contain the
-'.service' suffix (other types of unit files are not supported).
-The `filename` must end in `.conf` and specifies the name to use for the
-drop-in file.
-
-The Drop-in configuration can currently specify the following subset
-of options:
-  - 'Service' section
-    - 'Environment' option
-"""
-
 import configparser
 import os
 import sys
 
 import osbuild.api
-
-SCHEMA = r"""
-"additionalProperties": false,
-"required": ["unit", "dropin", "config"],
-"properties": {
-  "unit": {
-    "type": "string",
-    "pattern": "^[\\w:.\\\\-]+[@]{0,1}[\\w:.\\\\-]*\\.(service|timer)$"
-  },
-  "dropin": {
-    "type": "string",
-    "pattern": "^[\\w.-]{1,250}\\.conf$"
-  },
-  "config": {
-    "additionalProperties": false,
-    "type": "object",
-    "description": "Drop-in configuration for a '.service' unit.",
-    "properties": {
-      "Unit": {
-        "additionalProperties": false,
-        "type": "object",
-        "description": "'Unit' configuration section of a unit file.",
-        "properties": {
-          "ConditionPathExists": {
-            "type": "string",
-            "description": "Check for the existence of a file. If the specified absolute path name does not exist, the condition will fail."
-          }
-        }
-      },
-      "Service": {
-        "additionalProperties": false,
-        "type": "object",
-        "description": "'Service' configuration section of a unit file.",
-        "properties": {
-          "Environment": {
-            "type": "string",
-            "description": "Sets environment variables for executed process."
-          }
-        }
-      }
-    }
-  },
-  "unit-type": {
-    "type": "string",
-    "enum": ["system", "global"],
-    "default": "system",
-    "description": "Selects between systemd system or global unit to add dropin"
-  }
-}
-"""
 
 
 def main(tree, options):

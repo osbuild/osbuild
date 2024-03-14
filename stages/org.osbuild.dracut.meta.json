@@ -1,0 +1,131 @@
+{
+    "summary": "Create (re-create) the initial RAM file-system",
+    "description": [
+        "Uses `dracut` to re-create the initial RAM filesystem, see man dracut(8).",
+        "The kernels for which the initramfs should be generated need to be provided",
+        "via `kernel` matching their name on the disk, like  \"5.6.6-300.fc32.x86_64\".",
+        "Supports most options also found in `dracut`(8). See the respective man",
+        "page and schema for this stage.",
+        "NB: needs chroot for now as well as `strip` for stripping the initrfams."
+    ],
+    "schema": {
+        "required": [
+            "kernel"
+        ],
+        "properties": {
+            "kernel": {
+                "description": "List of target kernel versions",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "A kernel version"
+                }
+            },
+            "compress": {
+                "description": "Compress the initramfs, passed via `--compress`",
+                "type": "string"
+            },
+            "modules": {
+                "description": "Exact list of dracut modules to use.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "A dracut module, e.g. base, nfs, network ..."
+                }
+            },
+            "add_modules": {
+                "description": "Additional dracut modules to include.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "A dracut module, e.g. base, nfs, network ..."
+                }
+            },
+            "omit_modules": {
+                "description": "Dracut modules to not include.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "A dracut module, e.g. base, nfs, network ..."
+                }
+            },
+            "drivers": {
+                "description": "Kernel modules to exclusively include.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "A kernel module without the .ko extension"
+                }
+            },
+            "add_drivers": {
+                "description": "Add a specific kernel modules.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "A kernel module without the .ko extension"
+                }
+            },
+            "omit_drivers": {
+                "description": "Omit specific kernel modules.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "A kernel module without the .ko extension."
+                }
+            },
+            "force_drivers": {
+                "description": "Add driver and ensure that they are tried to be loaded.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "A kernel module without the .ko extension"
+                }
+            },
+            "filesystems": {
+                "description": "Kernel filesystem modules to exclusively include.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "A kernel module without the .ko extension"
+                }
+            },
+            "include": {
+                "description": "Add custom files to the initramfs.",
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "description": "What (keys) to include where (values)"
+                }
+            },
+            "install": {
+                "description": "Install the specified files.",
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "early_microcode": {
+                "description": "Combine early microcode with the initramfs.",
+                "type": "boolean",
+                "default": false
+            },
+            "reproducible": {
+                "description": "Create reproducible images.",
+                "type": "boolean"
+            },
+            "initoverlayfs": {
+                "description": "Use initoverlayfs rather than initramfs, requires initoverlayfs rpm to be installed",
+                "type": "boolean",
+                "default": false
+            },
+            "extra": {
+                "description": "Extra arguments to directly pass to dracut",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "description": "Individual extra arguments"
+                }
+            }
+        }
+    }
+}

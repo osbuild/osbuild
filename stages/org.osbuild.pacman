@@ -1,14 +1,4 @@
 #!/usr/bin/python3
-"""
-Verify, and install pacman packages
-
-`packages` is an array of objects representing pacman packages. Each package is
-identified by its checksums. Specifically, the content hash of the package.
-
-This stage will fail if any of the packages can't be found.
-"""
-
-
 import contextlib
 import os
 import pathlib
@@ -22,26 +12,6 @@ from operator import itemgetter
 import pyalpm
 
 from osbuild import api
-
-SCHEMA_2 = """
-"options": {
-  "type": "object",
-  "additionalProperties": false,
-  "properties": {
-  }
-},
-"inputs": {
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["packages"],
-  "properties": {
-    "packages": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-}
-"""
 
 
 def generate_package_metadata(tree):

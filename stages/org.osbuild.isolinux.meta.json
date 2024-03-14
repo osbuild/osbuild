@@ -1,0 +1,62 @@
+{
+    "summary": "Create an isolinux bootloader",
+    "description": [],
+    "schema_2": {
+        "options": {
+            "additionalProperties": false,
+            "required": [
+                "product",
+                "kernel"
+            ],
+            "properties": {
+                "product": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "name",
+                        "version"
+                    ],
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "version": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "kernel": {
+                    "type": "object",
+                    "required": [
+                        "dir"
+                    ],
+                    "properties": {
+                        "dir": {
+                            "type": "string"
+                        },
+                        "opts": {
+                            "description": "Array of group names for this user",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "inputs": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "data"
+            ],
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        }
+    }
+}
