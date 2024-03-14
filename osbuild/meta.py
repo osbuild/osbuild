@@ -284,16 +284,32 @@ META_JSON_SCHEMA = {
         },
     },
     "required": ["summary", "description"],
-    "oneOf": [
+    "anyOf": [
         {
             "required": [
                 "schema"
-            ]
+            ],
+            "not": {
+                "required": [
+                    "schema_2",
+                ],
+            },
         },
         {
             "required": [
                 "schema_2"
-            ]
+            ],
+            "not": {
+                "required": [
+                    "schema",
+                ],
+            },
+        },
+        {
+            "required": [
+                "schema",
+                "schema_2",
+            ],
         },
     ],
     "properties": {
