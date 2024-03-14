@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 """
+FDO initial DIUN certificates
+
 FDO stage to write down the initial DIUN pub key root certificates
 to be read by the manufacturer client
 

@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 """
 Create an isolinux bootloader
-
 """
 
 import os

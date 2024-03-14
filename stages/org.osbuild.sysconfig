@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 """
-
 Configure sysconfig files
 
 The sysconfig directory contains a variety of system configuration files.
@@ -48,7 +47,6 @@ Network-scripts supports the params:
       - userctl(USERCTL) of type boolean
 
 This stage will overwrite existing files.
-
 """
 
 import os

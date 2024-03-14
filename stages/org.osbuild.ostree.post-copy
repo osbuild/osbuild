@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-"""Apply post-copy updates to an ostree repo/deployment
+"""
+Apply post-copy updates to an ostree repo/deployment
 
 The way osbuild works the ostree deployment is built in a chroot and
 stored as a regular directory of files before finally being copied to
