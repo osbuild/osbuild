@@ -624,6 +624,9 @@
                 "DefaultDependencies": false,
                 "ConditionPathExists": [
                   "|!/etc/myfile"
+                ],
+                "ConditionPathIsDirectory": [
+                  "|!/etc/mydir"
                 ]
               },
               "Service": {

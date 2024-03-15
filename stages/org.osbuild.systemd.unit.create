@@ -15,6 +15,7 @@ of options:
   - 'Unit' section
     - 'Description' - string
     - 'ConditionPathExists' - string
+    - 'ConditionPathIsDirectory' - string
     - 'DefaultDependencies' - bool
     - 'Requires' - [strings]
     - 'Wants' - [strings]
@@ -85,6 +86,12 @@ SCHEMA = r"""
                         }
                     },
                     "ConditionPathExists": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "ConditionPathIsDirectory": {
                         "type": "array",
                         "items": {
                             "type": "string"
