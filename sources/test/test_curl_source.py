@@ -36,7 +36,7 @@ def test_curl_source_exists(sources_module):
     assert curl_source.exists(checksum, desc)
 
 
-def test_curl_source_transform(sources_module):
+def test_curl_source_amend_secrets(sources_module):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     curl_source = sources_module.CurlSource.from_args(["--service-fd", str(sock.fileno())])
     tmpdir = tempfile.TemporaryDirectory()
@@ -58,13 +58,13 @@ def test_curl_source_transform(sources_module):
         cm.callback(cb)
         checksum = "sha256:1234567890123456789012345678901234567890909b14ffb032aa20fa23d9ad6"
         pathlib.Path(os.path.join(tmpdir.name, checksum)).touch()
-        new_desc = curl_source.transform(checksum, desc)
+        new_desc = curl_source.amend_secrets(checksum, desc)
         assert new_desc[1]["secrets"]["ssl_client_key"] == "key"
         assert new_desc[1]["secrets"]["ssl_client_cert"] == "cert"
         assert new_desc[1]["secrets"]["ssl_ca_cert"] is None
 
 
-def test_curl_source_transform_fail(sources_module):
+def test_curl_source_amend_secrets_fail(sources_module):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     curl_source = sources_module.CurlSource.from_args(["--service-fd", str(sock.fileno())])
     tmpdir = tempfile.TemporaryDirectory()
@@ -78,5 +78,5 @@ def test_curl_source_transform_fail(sources_module):
     checksum = "sha256:1234567890123456789012345678901234567890909b14ffb032aa20fa23d9ad6"
     pathlib.Path(os.path.join(tmpdir.name, checksum)).touch()
     with pytest.raises(RuntimeError) as exc:
-        curl_source.transform(checksum, desc)
+        curl_source.amend_secrets(checksum, desc)
     assert "mtls secrets required" in str(exc)
