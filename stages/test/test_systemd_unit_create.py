@@ -63,6 +63,9 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
                 "DefaultDependencies": False,
                 "ConditionPathExists": [
                     "|!/etc/myfile"
+                ],
+                "ConditionPathIsDirectory": [
+                    "|!/etc/mydir"
                 ]
             },
             "Service": {
@@ -94,6 +97,7 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
     Description=Create directory
     DefaultDependencies=False
     ConditionPathExists=|!/etc/myfile
+    ConditionPathIsDirectory=|!/etc/mydir
 
     [Service]
     Type=oneshot
