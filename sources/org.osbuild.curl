@@ -20,11 +20,13 @@ up the download.
 
 import concurrent.futures
 import os
+import pathlib
+import re
 import subprocess
 import sys
 import tempfile
 import urllib.parse
-from typing import Dict
+from typing import Dict, List
 
 from osbuild import sources
 from osbuild.util.checksum import verify_file
@@ -92,62 +94,157 @@ SCHEMA = """
 """
 
 
+def curl_has_parallel_downloads():
+    output = subprocess.check_output(["curl", "--version"], universal_newlines=True)
+    first_line = output.split("\n", maxsplit=1)[0]
+    m = re.match(r'^curl (\d+\.\d+\.\d+)', first_line)
+    if not m:
+        print(f"WARNING: cannot parse curl version from '{first_line}'")
+        return False
+    major, minor, _ = m.group(1).split(".")
+    if int(major) > 7:
+        return True
+    if int(major) == 7 and int(minor) >= 68:
+        return True
+    return False
+
+
+def _quote_url(url: str) -> str:
+    purl = urllib.parse.urlparse(url)
+    path = urllib.parse.quote(purl.path)
+    quoted = purl._replace(path=path)
+    return quoted.geturl()
+
+
+def _gen_curl_download_config(items: List[Dict], config_path: pathlib.Path):
+    """Generate a curl config file for the given items to download"""
+    with open(config_path, "w", encoding="utf8") as fp:
+        for desc in items:
+            checksum = desc["checksum"]
+            url = _quote_url(desc.get("url"))
+            fp.write(f'url = "{url}"\n')
+            fp.write(f'output = "{checksum}"\n')
+            secrets = desc.get("secrets")
+            if secrets:
+                ssl_ca_cert = secrets.get('ssl_ca_cert')
+                if ssl_ca_cert:
+                    fp.write(f'cacert = "{ssl_ca_cert}"\n')
+                ssl_client_cert = secrets.get('ssl_client_cert')
+                if ssl_client_cert:
+                    fp.write(f'cert = "{ssl_client_cert}"\n')
+                ssl_client_key = secrets.get('ssl_client_key')
+                if ssl_client_key:
+                    fp.write(f'key = "{ssl_client_key}"\n')
+
+            insecure = desc.get("insecure")
+            if insecure:
+                fp.write('insecure\n')
+            else:
+                fp.write('no-insecure\n')
+            fp.write("\n")
+
+
+def _split_items(items: List[Dict], n: int) -> List[List[Dict]]:
+    """ Split the given list of download items into maximum n partitions """
+    n = min(len(items), n)
+    per_worker_items = [[] for _ in range(n)]
+    for i, desc in enumerate(items):
+        per_worker_items[i % n].append(desc)
+    return per_worker_items
+
+
 class CurlSource(sources.SourceService):
 
     content_type = "org.osbuild.files"
 
-    max_workers = 2 * (os.cpu_count() or 1)
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.subscriptions = None
+        self._parallel_downloads = curl_has_parallel_downloads()
 
-    def transform(self, checksum, desc):
-        url = desc
-        if not isinstance(url, dict):
-            url = {"url": url}
-
+    def transform(self, checksum: str, desc: Dict) -> Dict:
+        """transform takes a checksum, desc and returns a single dict
+        with all needed data (secrets, checksum)
+        """
+        # compat?
+        if not isinstance(desc, dict):
+            desc = {"url": desc}
+        # ensure desc describes the item completely
+        desc["checksum"] = checksum
         # check if url needs rhsm secrets
-        if url.get("secrets", {}).get("name") == "org.osbuild.rhsm":
+        if desc.get("secrets", {}).get("name") == "org.osbuild.rhsm":
             # rhsm secrets only need to be retrieved once and can then be reused
             if self.subscriptions is None:
                 self.subscriptions = Subscriptions.from_host_system()
-            url["secrets"] = self.subscriptions.get_secrets(url.get("url"))
-        elif url.get("secrets", {}).get("name") == "org.osbuild.mtls":
+            desc["secrets"] = self.subscriptions.get_secrets(desc.get("url"))
+        elif desc.get("secrets", {}).get("name") == "org.osbuild.mtls":
             key = os.getenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY")
             cert = os.getenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT")
             if not (key and cert):
                 raise RuntimeError(f"mtls secrets required but key ({key}) or cert ({cert}) not defined")
-            url["secrets"] = {
+            desc["secrets"] = {
                 'ssl_ca_cert': os.getenv("OSBUILD_SOURCES_CURL_SSL_CA_CERT"),
                 'ssl_client_cert': cert,
                 'ssl_client_key': key,
             }
 
-        return checksum, url
-
-    @staticmethod
-    def _quote_url(url: str) -> str:
-        purl = urllib.parse.urlparse(url)
-        path = urllib.parse.quote(purl.path)
-        quoted = purl._replace(path=path)
-        return quoted.geturl()
+        return desc
 
     def fetch_all(self, items: Dict) -> None:
-        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-        transformed = map(lambda i: self.transform(i[0], i[1]), filtered)  # prepare each item to be downloaded
+        # discards items already in cache
+        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())
+        # prepare each item to be downloaded by adding the checksum
+        # and secrets to each download item
+        transformed = map(lambda i: self.transform(i[0], i[1]), filtered)
 
+        if self._parallel_downloads:
+            # this number is a bit arbitrary, curl seems to be doing a really
+            # good job with --parallel so a high number here seems to be
+            # unnecessary
+            max_workers = 2
+        else:
+            max_workers = 2 * (os.cpu_count() or 1)
+
+        # split the download items accross workers
+        per_worker_items = _split_items(list(transformed), max_workers)
+
+        # we could use "curl --parallel" for newer versions of curl
+        # (7.68+) instead of this threading stuff but that is not
+        # available on RHEL8 yet, once this is no longer supported
+        # just switch to --parallel here
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*transformed)):
+            for _ in executor.map(self.fetch_many, per_worker_items):
                 pass
 
-    def fetch_one(self, checksum, desc):
-        secrets = desc.get("secrets")
-        insecure = desc.get("insecure")
-        url = self._quote_url(desc.get("url"))
+    # XXX: this needs a test that validates that files get correctly
+    # removed from the "items" list once verified so we don't donwload
+    # twice and that on failure we still error in the right way
+    def _move_done_and_update_items(self, tmpdir, items):
+        for desc in items[:]:
+            checksum = desc["checksum"]
+            fpath = pathlib.Path(tmpdir) / f"{checksum}"
+            # some files may not be available yet, that is okay
+            if not fpath.exists():
+                continue
+            if not verify_file(fpath, checksum):
+                raise RuntimeError(f"checksum mismatch: {checksum} {desc['url']}")
+            # remove from todo
+            items.remove(desc)
+
+            # The checksum has been verified, move the file into place. in case we race
+            # another download of the same file, we simply ignore the error as their
+            # contents are guaranteed to be  the same.
+            try:
+                os.rename(f"{tmpdir}/{checksum}", f"{self.cache}/{checksum}")
+            except FileExistsError:
+                pass
+
+    def fetch_many(self, items: List[Dict]):
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
         with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
+            curl_config_path = f"{tmpdir}/curl-config.txt"
+            _gen_curl_download_config(items, curl_config_path)
             # some mirrors are sometimes broken. retry manually, because we could be
             # redirected to a different, working, one on retry.
             return_code = 0
@@ -159,46 +256,21 @@ class CurlSource(sources.SourceService):
                     "--connect-timeout", "30",
                     "--fail",
                     "--location",
-                    "--output", checksum,
+                    "--config", curl_config_path,
                 ]
-                if secrets:
-                    if secrets.get('ssl_ca_cert'):
-                        curl_command.extend(["--cacert", secrets.get('ssl_ca_cert')])
-                    if secrets.get('ssl_client_cert'):
-                        curl_command.extend(["--cert", secrets.get('ssl_client_cert')])
-                    if secrets.get('ssl_client_key'):
-                        curl_command.extend(["--key", secrets.get('ssl_client_key')])
-
-                if insecure:
-                    curl_command.append("--insecure")
-
-                # url must follow options
-                curl_command.append(url)
-
+                if curl_has_parallel_downloads():
+                    curl_command.append("--parallel")
                 curl = subprocess.run(curl_command, encoding="utf-8", cwd=tmpdir, check=False)
                 return_code = curl.returncode
+                # validate
+                self._move_done_and_update_items(tmpdir, items)
                 if return_code == 0:
                     break
             else:
-                raise RuntimeError(f"curl: error downloading {url}: error code {return_code}")
-
-            if not verify_file(f"{tmpdir}/{checksum}", checksum):
-                raise RuntimeError(f"checksum mismatch: {checksum} {url}")
-
-            # The checksum has been verified, move the file into place. in case we race
-            # another download of the same file, we simply ignore the error as their
-            # contents are guaranteed to be  the same.
-            try:
-                os.rename(f"{tmpdir}/{checksum}", f"{self.cache}/{checksum}")
-            except FileExistsError:
-                pass
-            # Workaround the lack of structured progress reporting from
-            # stages/sources. It generates messages of the form
-            #   "message": "source/org.osbuild.curl (org.osbuild.curl): Downloaded https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/f/fonts-srpm-macros-2.0.5-11.fc38.noarch.rpm\n
-            #
-            # Without it just a long pause with no progress while curl
-            # downloads.
-            print(f"Downloaded {url}")
+                raise RuntimeError(f'curl error: "{curl.stderr}": error code {return_code}')
+            # after the loop nothing can be left
+            if len(items) > 0:
+                raise RuntimeError(f"internal error: items {items} left to process")
 
 
 def main():
