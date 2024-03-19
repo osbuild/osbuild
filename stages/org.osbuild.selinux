@@ -38,6 +38,13 @@ SCHEMA = """
     "type": "string",
     "description": "Path to the active SELinux policy's `file_contexts`"
   },
+  "exclude_paths": {
+    "type": "array",
+    "description": "Paths to exclude when setting labels via file_contexts",
+    "items": {
+      "type": "string"
+    }
+  },
   "labels": {
     "type": "object",
     "description": "Labels to set of the specified files or folders",
@@ -56,7 +63,8 @@ SCHEMA = """
 
 def main(tree, options):
     file_contexts = os.path.join(f"{tree}", options["file_contexts"])
-    selinux.setfiles(file_contexts, os.fspath(tree), "")
+    exclude_paths = options.get("exclude_paths")
+    selinux.setfiles(file_contexts, os.fspath(tree), "", exclude_paths=exclude_paths)
 
     labels = options.get("labels", {})
     for path, label in labels.items():

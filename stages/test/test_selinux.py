@@ -26,6 +26,7 @@ def get_test_input(test_data, implicit_file_contexts=True):
     # good
     ({"labels": {"/usr/bin/cp": "system_u:object_r:install_exec_t:s0"}}, ""),
     ({"force_autorelabel": True}, ""),
+    ({"exclude_paths": ["/sysroot"]}, ""),
     # bad
     ({"file_contexts": 1234}, "1234 is not of type 'string'"),
     ({"labels": "xxx"}, "'xxx' is not of type 'object'"),
@@ -57,9 +58,23 @@ def test_selinux_file_contexts(mocked_setfiles, tmp_path, stage_module):
     stage_module.main(tmp_path, options)
 
     assert len(mocked_setfiles.call_args_list) == 1
-    assert mocked_setfiles.call_args_list == [
-        call(f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "")
-    ]
+    args, kwargs = mocked_setfiles.call_args_list[0]
+    assert args == (f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "")
+    assert kwargs == {"exclude_paths": None}
+
+
+@patch("osbuild.util.selinux.setfiles")
+def test_selinux_file_contexts_exclude(mocked_setfiles, tmp_path, stage_module):
+    options = {
+        "file_contexts": "etc/selinux/thing",
+        "exclude_paths": ["/sysroot"],
+    }
+    stage_module.main(tmp_path, options)
+
+    assert len(mocked_setfiles.call_args_list) == 1
+    args, kwargs = mocked_setfiles.call_args_list[0]
+    assert args == (f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "")
+    assert kwargs == {"exclude_paths": ["/sysroot"]}
 
 
 @patch("osbuild.util.selinux.setfilecon")
