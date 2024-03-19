@@ -3,7 +3,7 @@
 import errno
 import os
 import subprocess
-from typing import Dict, TextIO
+from typing import Dict, List, Optional, TextIO
 
 # Extended attribute name for SELinux labels
 XATTR_NAME_SELINUX = b"security.selinux"
@@ -35,7 +35,7 @@ def config_get_policy(config: Dict[str, str]):
     return config.get('SELINUXTYPE', None)
 
 
-def setfiles(spec_file: str, root: str, *paths):
+def setfiles(spec_file: str, root: str, *paths, exclude_paths: Optional[List[str]] = None) -> None:
     """Initialize the security context fields for `paths`
 
     Initialize the security context fields (extended attributes)
@@ -43,10 +43,18 @@ def setfiles(spec_file: str, root: str, *paths):
     `root` argument determines the root path of the file system
     and the entries in `path` are interpreted as relative to it.
     Uses the setfiles(8) tool to actually set the contexts.
+    Paths can be excluded via the exclude_paths argument.
     """
+    if exclude_paths is None:
+        exclude_paths = []
+    exclude_paths_args = []
+    for p in exclude_paths:
+        exclude_paths_args.extend(["-e", p])
+
     for path in paths:
         subprocess.run(["setfiles", "-F",
                         "-r", root,
+                        *exclude_paths_args,
                         spec_file,
                         f"{root}{path}"],
                        check=True)
