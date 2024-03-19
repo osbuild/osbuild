@@ -27,6 +27,13 @@
                 "type": "string",
                 "description": "Path to the active SELinux policy's `file_contexts`"
             },
+            "exclude_paths": {
+                "type": "array",
+                "description": "Paths to exclude when setting labels via file_contexts",
+                "items": {
+                    "type": "string"
+                }
+            },
             "labels": {
                 "type": "object",
                 "description": "Labels to set of the specified files or folders",

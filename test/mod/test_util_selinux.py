@@ -74,3 +74,16 @@ def test_selinux_setfiles(mocked_run, tmp_path):
             ["setfiles", "-F", "-r", os.fspath(tmp_path),
              "/etc/selinux/thing", os.fspath(tmp_path) + "/boot"], check=True),
     ]
+
+
+@mock.patch("subprocess.run")
+def test_selinux_setfiles_exclude(mocked_run, tmp_path):
+    selinux.setfiles("/etc/selinux/thing", os.fspath(tmp_path), "/", exclude_paths=["/sysroot", "/other/dir"])
+
+    assert len(mocked_run.call_args_list) == 1
+    assert mocked_run.call_args_list == [
+        mock.call(
+            ["setfiles", "-F", "-r", os.fspath(tmp_path),
+             "-e", "/sysroot", "-e", "/other/dir",
+             "/etc/selinux/thing", os.fspath(tmp_path) + "/"], check=True),
+    ]
