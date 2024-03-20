@@ -20,7 +20,7 @@ import hawkey
 class Solver():
 
     # pylint: disable=too-many-arguments
-    def __init__(self, repos, module_platform_id, persistdir, cachedir, arch):
+    def __init__(self, repos, repos_dir, module_platform_id, persistdir, cachedir, arch):
         self.base = dnf.Base()
 
         # Enable fastestmirror to ensure we choose the fastest mirrors for
@@ -54,6 +54,11 @@ class Solver():
 
         for repo in repos:
             self.base.repos.add(self._dnfrepo(repo, self.base.conf))
+
+        if repos_dir:
+            self.base.conf.reposdir = repos_dir
+            self.base.read_all_repos()
+
         self.base.fill_sack(load_system_repo=False)
 
     # pylint: disable=too-many-branches
@@ -278,7 +283,8 @@ def solve(request, cache_dir):
     with tempfile.TemporaryDirectory() as persistdir:
         try:
             solver = Solver(
-                arguments["repos"],
+                arguments.get("repos", []),
+                arguments.get("repos_dir"),
                 module_platform_id,
                 persistdir,
                 cache_dir,
@@ -362,10 +368,10 @@ def validate_request(request):
             "reason": "empty 'arguments'"
         }
 
-    if not arguments.get("repos"):
+    if not arguments.get("repos") and not arguments.get("repos_dir"):
         return {
             "kind": "InvalidRequest",
-            "reason": "no 'repos' specified"
+            "reason": "no 'repos' or 'repos_dir' specified"
         }
 
     return None
