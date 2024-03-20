@@ -253,9 +253,10 @@ class Solver():
                     continue
                 last_transaction.append(tsi.pkg)
 
-        dependencies = []
+        packages = []
+        pkg_repos = {}
         for package in last_transaction:
-            dependencies.append({
+            packages.append({
                 "name": package.name,
                 "epoch": package.epoch,
                 "version": package.version,
@@ -264,13 +265,32 @@ class Solver():
                 "repo_id": package.repoid,
                 "path": package.relativepath,
                 "remote_location": package.remote_location(),
-                "checksum": (
-                    f"{hawkey.chksum_name(package.chksum[0])}:"
-                    f"{package.chksum[1].hex()}"
-                )
+                "checksum": f"{hawkey.chksum_name(package.chksum[0])}:{package.chksum[1].hex()}",
             })
+            # collect repository objects by id to create the 'repositories' collection for the response
+            pkgrepo = package.repo
+            pkg_repos[pkgrepo.id] = pkgrepo
 
-        return dependencies
+        repositories = {}  # full repository configs for the response
+        for repo in pkg_repos.values():
+            repositories[repo.id] = {
+                "id": repo.id,
+                "name": repo.name,
+                "baseurl": list(repo.baseurl) if repo.baseurl else None,
+                "metalink": repo.metalink,
+                "mirrorlist": repo.mirrorlist,
+                "gpgcheck": repo.gpgcheck,
+                "check_repogpg": repo.repo_gpgcheck,
+                "ignoressl": not bool(repo.sslverify),
+                "sslcacert": repo.sslcacert,
+                "sslclientkey": repo.sslclientkey,
+                "sslclientcert": repo.sslclientcert,
+            }
+        response = {
+            "packages": packages,
+            "repos": repositories,
+        }
+        return response
 
 
 def setup_cachedir(request):
