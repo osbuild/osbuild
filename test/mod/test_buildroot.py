@@ -50,10 +50,9 @@ def test_basic(tempdir, runner):
         assert r.returncode != 0
 
         # Test that fs setup looks correct
-        r = root.run(["readlink", "-f", "/var/tmp"], monitor)
+        r = root.run(["test", "-d", "/var/tmp"], monitor)
         assert r.returncode == 0
-        assert r.stdout.strip().split("\n")[-1] == "/tmp"
-        r = root.run(["stat", "-L", "--format=%a", "/var/tmp"], monitor)
+        r = root.run(["stat", "--format=%a", "/var/tmp"], monitor)
         assert r.returncode == 0
         assert r.stdout.strip().split("\n")[-1] == "1777"
 

@@ -138,12 +138,6 @@ class BuildRoot(contextlib.AbstractContextManager):
 
             self.var = os.path.join(self.tmp, "var")
             os.makedirs(self.var, exist_ok=True)
-            # Ensure /var/tmp is available, see
-            #  https://github.com/osbuild/bootc-image-builder/issues/223
-            try:
-                os.symlink("/tmp", os.path.join(self.var, "tmp"))
-            except FileExistsError:
-                pass
 
             proc = os.path.join(self.tmp, "proc")
             os.makedirs(proc)
@@ -226,6 +220,10 @@ class BuildRoot(contextlib.AbstractContextManager):
         mounts += ["--tmpfs", "/run"]
         mounts += ["--tmpfs", "/tmp"]
         mounts += ["--bind", self.var, "/var"]
+
+        # Create a usable /var/tmp, see
+        #  https://github.com/osbuild/bootc-image-builder/issues/223
+        os.makedirs(os.path.join(self.var, "tmp"), 0o1777, exist_ok=True)
 
         # Setup API file-systems.
         mounts += ["--proc", "/proc"]
