@@ -45,6 +45,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: /var/tmp/osbuild-mpp-cache
+        key: no-key-needed-here
     - name: "Regenerate Test Data"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
