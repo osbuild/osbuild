@@ -249,10 +249,12 @@ class Solver():
                 "repo_id": package.repoid,
                 "path": package.relativepath,
                 "remote_location": package.remote_location(),
-                "checksum": (
-                    f"{hawkey.chksum_name(package.chksum[0])}:"
-                    f"{package.chksum[1].hex()}"
-                )
+                "checksum": f"{hawkey.chksum_name(package.chksum[0])}:{package.chksum[1].hex()}",
+                "sslverify": package.repo.sslverify,
+                "gpgcheck": package.repo.gpgcheck,
+                "sslclientkey": package.repo.sslclientkey,
+                "sslclientcert": package.repo.sslclientcert,
+                "sslcacert": package.repo.sslcacert,
             })
 
         return dependencies
