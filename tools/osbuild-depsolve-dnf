@@ -12,6 +12,7 @@ import os
 import sys
 import tempfile
 from datetime import datetime
+from typing import List
 
 import dnf
 import hawkey
@@ -204,7 +205,7 @@ class Solver():
         return packages
 
     def depsolve(self, transactions):
-        last_transaction = []
+        last_transaction: List = []
 
         for transaction in transactions:
             self.base.reset(goal=True)
