@@ -35,18 +35,19 @@ def parse_size(s: str) -> Union[int, str]:
     raise TypeError(f"invalid size value: '{s}'")
 
 
-def parse_mount(url: ParseResult, args: Dict) -> os.PathLike:
+def find_mount_root(url: ParseResult, args: Dict) -> os.PathLike:
     """
     Parses the mount URL to extract the root path.
 
     Parameters:
     - url (ParseResult): The ParseResult object obtained from urlparse.
-    - args (Dict): A dictionary containing arguments including mounts information.
+    - args (Dict):A dictionary containing arguments including mounts and
+    path information as passed by osbuild.api.arguments()
     """
     name = url.netloc
     if name:
         root = args["mounts"].get(name, {}).get("path")
-        if not root:
+        if root is None:
             raise ValueError(f"Unknown mount '{name}'")
     else:
         root = args["paths"]["mounts"]
@@ -60,7 +61,8 @@ def parse_input(url: ParseResult, args: Dict) -> os.PathLike:
 
     Parameters:
     - url (ParseResult): The ParseResult object obtained from urlparse.
-    - args (Dict): A dictionary containing arguments including mounts information.
+    - args (Dict): A dictionary containing arguments including mounts and
+    path information as passed by osbuild.api.arguments()
     """
     name = url.netloc
     root = args["inputs"].get(name, {}).get("path")
@@ -76,7 +78,8 @@ def parse_location(location: str, args: Dict) -> str:
 
     Parameters:
     - location (str): The location URL to be parsed.
-    - args (Dict): A dictionary containing arguments including tree and mount information.
+    - args (Dict): A dictionary containing arguments including mounts and
+    path information as passed by osbuild.api.arguments()
     """
 
     url = urlparse(location)
@@ -85,7 +88,7 @@ def parse_location(location: str, args: Dict) -> str:
     if scheme == "tree":
         root = args["tree"]
     elif scheme == "mount":
-        root = parse_mount(url, args)
+        root = find_mount_root(url, args)
     elif scheme == "input":
         root = parse_input(url, args)
     else:
