@@ -7,8 +7,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Using 4 workers is a bit arbitrary, "auto" is probably too aggressive.
-  TEST_WORKERS: "-n 4"
+  # setting workers to 1 just to have the same syntax in all test
+  # but to disable parallelism for the majority who have concurrency issues
+  TEST_WORKERS: "-n 1"
   # Share the store between the workers speeds things up further
   OSBUILD_TEST_STORE: /var/tmp/osbuild-test-store
 
@@ -20,19 +21,23 @@ jobs:
       fail-fast: false
       matrix:
         test:
-        - "test.mod"
-        - "test.run.test_boot"
-        - "test.run.test_devices"
-        - "test.run.test_executable"
-        - "test.run.test_mount"
-        - "test.run.test_noop"
-        - "test.run.test_sources"
-        - "test.run.test_stages"
-        - "stages/test"
+          - name: "test.mod"
+          - name: "test.run.test_boot"
+          - name: "test.run.test_devices"
+          - name: "test.run.test_executable"
+          - name: "test.run.test_mount"
+          - name: "test.run.test_noop"
+          - name: "test.run.test_sources"
+          - name: "test.run.test_stages"
+            env:
+              # this test _can_ run in parallel
+              # Using 4 workers is a bit arbitrary, "auto" is probably too aggressive.
+              TEST_WORKERS: "-n 4"
+          - name: "stages/test"
         environment:
-        - "py36"    # RH8
-        - "py39"    # RH9
-        - "py312"   # latest fedora
+          - "py36"    # RH8
+          - "py39"    # RH9
+          - "py312"   # latest fedora
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v3
@@ -46,7 +51,9 @@ jobs:
           # it to vfs for the local storage skopeo stage test.
           sed -i 's/overlay/vfs/g' /usr/share/containers/storage.conf  # default system config
           sed -i 's/overlay/vfs/g' /etc/containers/storage.conf || true  # potential overrides
-          TEST_CATEGORY="${{ matrix.test }}" \
+          TEST_CATEGORY="${{ matrix.test.name }}" \
+          TEST_WORKERS="${{ matrix.test.env.TEST_WORKERS || env.TEST_WORKERS }}" \
+          OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
           tox -e "${{ matrix.environment }}"
 
   v1_manifests:
@@ -57,8 +64,13 @@ jobs:
         uses: actions/checkout@v4
       - name: "Run"
         uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
+        env:
+          # Using 4 workers is a bit arbitrary, "auto" is probably too aggressive.
+          TEST_WORKERS: "-n 4"
         with:
           image: ghcr.io/osbuild/osbuild-ci:latest-202308241910
           run: |
             TEST_CATEGORY="test.run.test_assemblers" \
+            TEST_WORKERS="${{ env.TEST_WORKERS }}" \
+            OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
             tox -e "py36"
