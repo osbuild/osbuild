@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+
+def main(tree, paths, devices, options):
+    data_device = os.path.join(paths["devices"], devices["data_device"]["path"])
+    hash_device = os.path.join(paths["devices"], devices["hash_device"]["path"])
+
+    blocksize = options.get("blocksize", 512)
+    root_hash_file = os.path.join(tree, options["root_hash_file"])
+
+    subprocess.run(["/usr/sbin/veritysetup",
+                    "format", data_device, hash_device,
+                    "--data-block-size", f"{blocksize}",
+                    "--root-hash-file", root_hash_file],
+                   check=True)
+
+    subprocess.run(["/usr/sbin/veritysetup",
+                    "verify", data_device, hash_device,
+                    "--root-hash-file", root_hash_file],
+                   check=True)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["paths"], args["devices"], args["options"])
+    sys.exit(r)
