@@ -20,8 +20,15 @@ import hawkey
 
 class Solver():
 
-    # pylint: disable=too-many-arguments
-    def __init__(self, repos, module_platform_id, persistdir, cachedir, arch):
+    def __init__(self, request, persistdir, cache_dir):
+        arch = request["arch"]
+        releasever = request.get("releasever")
+        module_platform_id = request["module_platform_id"]
+
+        arguments = request["arguments"]
+        repos = arguments.get("repos", [])
+        root_dir = arguments.get("root_dir")
+
         self.base = dnf.Base()
 
         # Enable fastestmirror to ensure we choose the fastest mirrors for
@@ -49,12 +56,24 @@ class Solver():
         self.base.conf.module_platform_id = module_platform_id
         self.base.conf.config_file_path = "/dev/null"
         self.base.conf.persistdir = persistdir
-        self.base.conf.cachedir = cachedir
+        self.base.conf.cachedir = cache_dir
         self.base.conf.substitutions['arch'] = arch
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
+        if releasever:
+            self.base.conf.substitutions['releasever'] = releasever
 
         for repo in repos:
             self.base.repos.add(self._dnfrepo(repo, self.base.conf))
+
+        if root_dir:
+            # This sets the varsdir to ("{root_dir}/etc/yum/vars/", "{root_dir}/etc/dnf/vars/") for custom variable
+            # substitution (e.g. CentOS Stream 9's $stream variable)
+            self.base.conf.substitutions.update_from_etc(root_dir)
+
+            repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
+            self.base.conf.reposdir = repos_dir
+            self.base.read_all_repos()
+
         self.base.fill_sack(load_system_repo=False)
 
     # pylint: disable=too-many-branches
@@ -271,20 +290,12 @@ def setup_cachedir(request):
 
 def solve(request, cache_dir):
     command = request["command"]
-    arch = request["arch"]
-    module_platform_id = request["module_platform_id"]
     arguments = request["arguments"]
 
     transactions = arguments.get("transactions")
     with tempfile.TemporaryDirectory() as persistdir:
         try:
-            solver = Solver(
-                arguments["repos"],
-                module_platform_id,
-                persistdir,
-                cache_dir,
-                arch
-            )
+            solver = Solver(request, persistdir, cache_dir)
             if command == "dump":
                 result = solver.dump()
             elif command == "depsolve":
@@ -336,6 +347,7 @@ def respond(result):
     print(json.dumps(result))
 
 
+# pylint: disable=too-many-return-statements
 def validate_request(request):
     command = request.get("command")
     valid_cmds = ("depsolve", "dump", "search")
@@ -356,6 +368,7 @@ def validate_request(request):
             "kind": "InvalidRequest",
             "reason": "no 'module_platform_id' specified"
         }
+
     arguments = request.get("arguments")
     if not arguments:
         return {
@@ -363,10 +376,20 @@ def validate_request(request):
             "reason": "empty 'arguments'"
         }
 
-    if not arguments.get("repos"):
+    if not arguments.get("repos") and not arguments.get("root_dir"):
         return {
             "kind": "InvalidRequest",
-            "reason": "no 'repos' specified"
+            "reason": "no 'repos' or 'root_dir' specified"
+        }
+
+    # if root_dir is used, we also need releasever
+    # pylint: disable=fixme
+    # TODO: Make releasever mandatory in all cases.
+    # We temporarily keep it tied to root_dir for short-term backwards compatibility
+    if arguments.get("root_dir") and not request.get("releasever"):
+        return {
+            "kind": "InvalidRequest",
+            "reason": "'root_dir' requires setting 'releasever'"
         }
 
     return None
