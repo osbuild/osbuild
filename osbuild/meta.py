@@ -333,8 +333,26 @@ META_JSON_SCHEMA = {
         },
         "schema_2": {
             "type": "object",
-        }
-    }
+        },
+        "prerequisites": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "buildroot": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "executables": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
 }
 
 
