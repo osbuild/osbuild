@@ -5,38 +5,6 @@ import sys
 import osbuild.api
 from osbuild.util import parsing
 
-SCHEMA_2 = r"""
-"options": {
-  "additionalProperties": false,
-  "properties": {
-    "items": {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": {
-        "^mount:\/\/[^\/]+\/|^tree:\/\/\/": {
-          "type": "object",
-          "required": ["immutable"],
-          "properties": {
-            "immutable": {
-              "type": "boolean",
-              "description": "Make the file/directory immutable",
-              "default": true
-            }
-          }
-        }
-      }
-    }
-  }
-},
-"devices": {
-  "type": "object",
-  "additionalProperties": true
-},
-"mounts": {
-  "type": "array"
-}
-"""
-
 
 def main(args, options):
     for path, cmdargs in options["items"].items():
