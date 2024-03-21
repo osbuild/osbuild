@@ -29,7 +29,12 @@ def main(tree, options, inputs):
     if provider == "libvirt":
         metadata["format"] = "qcow2"
         # virtual image size as rounded numbwr
-        data = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", target]))
+        stdout = subprocess.run(
+            ["qemu-img", "info", "--output", "json", target],
+            check=True,
+            stdout=subprocess.PIPE
+        ).stdout
+        data = json.loads(stdout)
         metadata["virtual_size"] = data['virtual-size'] // 1000 ** 3
 
     vagrantfile = """
