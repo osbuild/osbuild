@@ -1,7 +1,9 @@
+import configparser
 import json
 import os
 import socket
 import subprocess as sp
+from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -38,7 +40,7 @@ def get_rand_port():
     return s.getsockname()[1]
 
 
-@pytest.fixture(name="repo_servers")
+@pytest.fixture(name="repo_servers", scope="module")
 def repo_servers_fixture():
     procs = []
     addresses = []
@@ -77,19 +79,54 @@ test_cases = [
 ]
 
 
+def config_combos(servers):
+    """
+    Return all configurations for the provided repositories, either as config files in a directory or as repository
+    configs in the depsolve request, or a combination of both.
+    """
+    # we only have two servers, so let's just enumerate all the combinations
+    combo_idxs = [
+        ((0, 1), ()),  # all in req
+        ((0,), (1,)),    # one in req and one in dir
+        ((1,), (0,)),    # same but flipped
+        ((), (0, 1)),  # all in dir
+    ]
+    for combo in combo_idxs:
+        repo_configs = []
+        for idx in combo[0]:  # servers to be configured through request
+            server = servers[idx]
+            repo_configs.append({
+                "id": server["name"],
+                "name": server["name"],
+                "baseurl": server["address"],
+                "check_gpg": False,
+                "ignoressl": True,
+                "rhsm": False,
+            })
+        with TemporaryDirectory() as repos_dir:
+            for idx in combo[1]:  # servers to be configured through repos_dir
+                server = servers[idx]
+                parser = configparser.ConfigParser()
+                name = server["name"]
+                parser.add_section(name)
+                # Set some options in a specific order in which they tend to be
+                # written in repo files.
+                parser.set(name, "name", name)
+                parser.set(name, "baseurl", server["address"])
+                parser.set(name, "enabled", "1")
+                parser.set(name, "gpgcheck", "0")
+                parser.set(name, "sslverify", "0")
+
+                with open(f"{repos_dir}/{name}.repo", "w", encoding="utf-8") as repo_file:
+                    parser.write(repo_file, space_around_delimiters=False)
+
+            yield repo_configs, repos_dir
+
+
 @pytest.mark.parametrize("test_case", test_cases)
 def test_depsolve(repo_servers, test_case):
     pks = test_case["packages"]
 
-    repo_configs = []
-    for server in repo_servers:
-        repo_configs.append({
-            "id": server["name"],
-            "name": server["name"],
-            "baseurl": server["address"],
-            "check_gpg": False,
-            "ignoressl": True,
-            "rhsm": False,
-        })
-    res = depsolve(pks, repo_configs, test_case.get("repos_dir"))
-    assert {pkg["name"] for pkg in res} == test_case["results"]
+    for repo_configs, repos_dir in config_combos(repo_servers):
+        res = depsolve(pks, repo_configs, repos_dir)
+        assert {pkg["name"] for pkg in res} == test_case["results"]
