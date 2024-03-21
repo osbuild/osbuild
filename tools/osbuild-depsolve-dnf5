@@ -86,7 +86,7 @@ class Solver():
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, repos, module_platform_id, persistdir, cachedir, arch, exclude_pkgs=None):
+    def __init__(self, repos, repos_dir, module_platform_id, persistdir, cachedir, arch, exclude_pkgs=None):
         if not exclude_pkgs:
             exclude_pkgs = []
 
@@ -140,6 +140,8 @@ class Solver():
             for repo in repos:
                 self._dnfrepo(repo, exclude_pkgs)
 
+            if repos_dir:
+                self.base.get_repo_sack().create_repos_from_dir(repos_dir)
             self.base.get_repo_sack().update_and_load_enabled_repos(load_system=False)
         except RuntimeError as e:
             raise RepoError(e) from e
@@ -397,7 +399,8 @@ def solve(request, cache_dir):
     with tempfile.TemporaryDirectory() as persistdir:
         try:
             solver = Solver(
-                arguments["repos"],
+                arguments.get("repos", []),
+                arguments.get("repos_dir"),
                 module_platform_id,
                 persistdir,
                 cache_dir,
@@ -473,10 +476,10 @@ def validate_request(request):
             "reason": "empty 'arguments'"
         }
 
-    if not arguments.get("repos"):
+    if not arguments.get("repos") and not arguments.get("repos_dir"):
         return {
             "kind": "InvalidRequest",
-            "reason": "no 'repos' specified"
+            "reason": "no 'repos' or 'repos_dir' specified"
         }
 
     return None
