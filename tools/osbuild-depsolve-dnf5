@@ -86,7 +86,21 @@ class Solver():
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, repos, module_platform_id, persistdir, cachedir, arch, exclude_pkgs=None):
+    def __init__(self, request, persistdir, cachedir):
+        arch = request["arch"]
+        releasever = request.get("releasever")
+        module_platform_id = request["module_platform_id"]
+
+        arguments = request["arguments"]
+        repos = arguments.get("repos", [])
+        root_dir = arguments.get("root_dir")
+
+        # Gather up all the exclude packages from all the transactions
+        exclude_pkgs = []
+        transactions = arguments.get("transactions", [])
+        for t in transactions:
+            exclude_pkgs.extend(t.get("exclude-specs", []))
+
         if not exclude_pkgs:
             exclude_pkgs = []
 
@@ -96,6 +110,8 @@ class Solver():
         # See https://github.com/rpm-software-management/dnf5/issues/1248
         self.base.get_vars().set("arch", arch)
         self.base.get_vars().set("basearch", _BASEARCH_MAP[arch])
+        if releasever:
+            self.base.get_vars().set('releasever', releasever)
 
         # Enable fastestmirror to ensure we choose the fastest mirrors for
         # downloading metadata (when depsolving) and downloading packages.
@@ -132,15 +148,27 @@ class Solver():
         # Load the file lists, so dependency on paths will work
         conf.optional_metadata_types = ['comps', 'filelists']
 
-        # Cannot modify .conf() values after this
-        self.base.setup()
-
         try:
             # NOTE: With libdnf5 packages are excluded in the repo setup
             for repo in repos:
                 self._dnfrepo(repo, exclude_pkgs)
 
+            if root_dir:
+                # This sets the varsdir to ("{root_dir}/usr/share/dnf5/vars.d/", "{root_dir}/etc/dnf/vars/") for custom
+                # variable substitution (e.g. CentOS Stream 9's $stream variable)
+                conf.installroot = root_dir
+                conf.varsdir = (os.path.join(root_dir, "etc/dnf/vars"), os.path.join(root_dir, "usr/share/dnf5/vars.d"))
+
+            # Cannot modify .conf() values after this
+            # base.setup() should be called before loading repositories otherwise substitutions might not work.
+            self.base.setup()
+
+            if root_dir:
+                repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
+                self.base.get_repo_sack().create_repos_from_dir(repos_dir)
+
             self.base.get_repo_sack().update_and_load_enabled_repos(load_system=False)
+
         except RuntimeError as e:
             raise RepoError(e) from e
 
@@ -346,6 +374,7 @@ class Solver():
 
         dependencies = []
         for package in last_transaction:
+            pkg_repo_cfg = package.get_repo().get_config()
             dependencies.append({
                 "name": package.get_name(),
                 "epoch": int(package.get_epoch()),
@@ -355,10 +384,12 @@ class Solver():
                 "repo_id": package.get_repo_id(),
                 "path": package.get_location(),
                 "remote_location": remote_location(package),
-                "checksum": (
-                    f"{package.get_checksum().get_type_str()}:"
-                    f"{package.get_checksum().get_checksum()}"
-                )
+                "checksum": f"{package.get_checksum().get_type_str()}:{package.get_checksum().get_checksum()}",
+                "sslverify": pkg_repo_cfg.get_sslverify_option().get_value(),
+                "gpgcheck": pkg_repo_cfg.get_gpgcheck_option().get_value(),
+                "sslclientkey": pkg_repo_cfg.get_sslclientkey_option().get_value(),
+                "sslclientcert": pkg_repo_cfg.get_sslclientcert_option().get_value(),
+                "sslcacert": pkg_repo_cfg.get_sslcacert_option().get_value(),
             })
 
         return sorted(dependencies, key=lambda x: x["path"])
@@ -381,33 +412,14 @@ def setup_cachedir(request):
 
 def solve(request, cache_dir):
     command = request["command"]
-    arch = request["arch"]
-    module_platform_id = request["module_platform_id"]
     arguments = request["arguments"]
-
-    # Gather up all the exclude packages
-    exclude_pkgs = []
-    transactions = arguments.get("transactions")
-    if transactions:
-        for t in transactions:
-            if t.get("exclude-specs") is None:
-                continue
-            exclude_pkgs += t.get("exclude-specs")
-
     with tempfile.TemporaryDirectory() as persistdir:
         try:
-            solver = Solver(
-                arguments["repos"],
-                module_platform_id,
-                persistdir,
-                cache_dir,
-                arch,
-                exclude_pkgs
-            )
+            solver = Solver(request, persistdir, cache_dir)
             if command == "dump":
                 result = solver.dump()
             elif command == "depsolve":
-                result = solver.depsolve(transactions)
+                result = solver.depsolve(arguments.get("transactions"))
             elif command == "search":
                 result = solver.search(arguments.get("search", {}))
         except TransactionError as e:
@@ -446,6 +458,7 @@ def respond(result):
     print(json.dumps(result))
 
 
+# pylint: disable=too-many-return-statements
 def validate_request(request):
     command = request.get("command")
     valid_cmds = ("depsolve", "dump", "search")
@@ -466,6 +479,7 @@ def validate_request(request):
             "kind": "InvalidRequest",
             "reason": "no 'module_platform_id' specified"
         }
+
     arguments = request.get("arguments")
     if not arguments:
         return {
@@ -473,10 +487,20 @@ def validate_request(request):
             "reason": "empty 'arguments'"
         }
 
-    if not arguments.get("repos"):
+    if not arguments.get("repos") and not arguments.get("root_dir"):
         return {
             "kind": "InvalidRequest",
-            "reason": "no 'repos' specified"
+            "reason": "no 'repos' or 'root_dir' specified"
+        }
+
+    # if root_dir is used, we also need releasever
+    # pylint: disable=fixme
+    # TODO: Make releasever mandatory in all cases.
+    # We temporarily keep it tied to root_dir for short-term backwards compatibility
+    if arguments.get("root_dir") and not request.get("releasever"):
+        return {
+            "kind": "InvalidRequest",
+            "reason": "'root_dir' requires setting 'releasever'"
         }
 
     return None
