@@ -13,6 +13,7 @@ import sys
 import tempfile
 import traceback
 from datetime import datetime
+from typing import List
 
 import libdnf5 as dnf5
 from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
@@ -305,7 +306,7 @@ class Solver():
     def depsolve(self, transactions):
         """depsolve returns a list of the dependencies for the set of transactions
         """
-        last_transaction = []
+        last_transaction: List = []
 
         for transaction in transactions:
             goal = dnf5.base.Goal(self.base)
