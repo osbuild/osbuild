@@ -75,7 +75,79 @@ test_cases = [
             "setup",
             "tzdata",
         }
-    }
+    },
+    {
+        # "nothing" is the only package in the custom repo and has no dependencies
+        "packages": ["nothing"],
+        "results": {
+            "nothing",
+        }
+    },
+    {
+        "packages": ["filesystem", "nothing"],
+        "results": {
+            "basesystem",
+            "bash",
+            "centos-gpg-keys",
+            "centos-stream-release",
+            "centos-stream-repos",
+            "filesystem",
+            "glibc",
+            "glibc-common",
+            "glibc-minimal-langpack",
+            "libgcc",
+            "ncurses-base",
+            "ncurses-libs",
+            "setup",
+            "tzdata",
+            "nothing"
+        }
+    },
+    {
+        "packages": ["tmux", "nothing"],
+        "results": {
+            "alternatives",
+            "basesystem",
+            "bash",
+            "ca-certificates",
+            "centos-gpg-keys",
+            "centos-stream-release",
+            "centos-stream-repos",
+            "coreutils",
+            "coreutils-common",
+            "crypto-policies",
+            "filesystem",
+            "glibc",
+            "glibc-common",
+            "glibc-minimal-langpack",
+            "gmp",
+            "grep",
+            "libacl",
+            "libattr",
+            "libcap",
+            "libevent",
+            "libffi",
+            "libgcc",
+            "libselinux",
+            "libsepol",
+            "libsigsegv",
+            "libtasn1",
+            "ncurses-base",
+            "ncurses-libs",
+            "openssl-libs",
+            "p11-kit",
+            "p11-kit-trust",
+            "pcre",
+            "pcre2",
+            "pcre2-syntax",
+            "sed",
+            "setup",
+            "tmux",
+            "tzdata",
+            "zlib",
+            "nothing",
+        }
+    },
 ]
 
 
