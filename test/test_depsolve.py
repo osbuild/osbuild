@@ -1,4 +1,5 @@
 import configparser
+import importlib
 import json
 import os
 import socket
@@ -13,7 +14,11 @@ REPO_PATHS = [
 ]
 
 
-def depsolve(pkgs, repos, repos_dir, cache_dir):
+def has_dnf5():
+    return bool(importlib.util.find_spec("libdnf5"))
+
+
+def depsolve(pkgs, repos, repos_dir, cache_dir, command):
     req = {
         "command": "depsolve",
         "arch": "x86_64",
@@ -27,7 +32,7 @@ def depsolve(pkgs, repos, repos_dir, cache_dir):
             ]
         }
     }
-    p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req).encode(), check=True, capture_output=True)
+    p = sp.run([command], input=json.dumps(req).encode(), check=True, capture_output=True)
     if p.stderr:
         print(p.stderr.decode())
 
@@ -205,5 +210,15 @@ def test_depsolve(repo_servers, test_case, cache_dir):
     pks = test_case["packages"]
 
     for repo_configs, repos_dir in config_combos(repo_servers):
-        res = depsolve(pks, repo_configs, repos_dir, cache_dir)
+        res = depsolve(pks, repo_configs, repos_dir, cache_dir, "./tools/osbuild-depsolve-dnf")
+        assert {pkg["name"] for pkg in res} == test_case["results"]
+
+
+@pytest.mark.skipif(not has_dnf5(), reason="libdnf5 not available")
+@pytest.mark.parametrize("test_case", test_cases)
+def test_depsolve_dnf5(repo_servers, test_case, cache_dir):
+    pks = test_case["packages"]
+
+    for repo_configs, repos_dir in config_combos(repo_servers):
+        res = depsolve(pks, repo_configs, repos_dir, cache_dir, "./tools/osbuild-depsolve-dnf5")
         assert {pkg["name"] for pkg in res} == test_case["results"]
