@@ -348,6 +348,7 @@ class Solver():
 
         dependencies = []
         for package in last_transaction:
+            pkg_repo_cfg = package.get_repo().get_config()
             dependencies.append({
                 "name": package.get_name(),
                 "epoch": int(package.get_epoch()),
@@ -357,10 +358,12 @@ class Solver():
                 "repo_id": package.get_repo_id(),
                 "path": package.get_location(),
                 "remote_location": remote_location(package),
-                "checksum": (
-                    f"{package.get_checksum().get_type_str()}:"
-                    f"{package.get_checksum().get_checksum()}"
-                )
+                "checksum": f"{package.get_checksum().get_type_str()}:{package.get_checksum().get_checksum()}",
+                "sslverify": pkg_repo_cfg.get_sslverify_option().get_value(),
+                "gpgcheck": pkg_repo_cfg.get_gpgcheck_option().get_value(),
+                "sslclientkey": pkg_repo_cfg.get_sslclientkey_option().get_value(),
+                "sslclientcert": pkg_repo_cfg.get_sslclientcert_option().get_value(),
+                "sslcacert": pkg_repo_cfg.get_sslcacert_option().get_value(),
             })
 
         return sorted(dependencies, key=lambda x: x["path"])
