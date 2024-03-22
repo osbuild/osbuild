@@ -24,6 +24,8 @@
     "    - 'ExecStartPre' - [string]",
     "    - 'ExecStopPost' - [string]",
     "    - 'ExecStart' - [string]",
+    "    - 'Environment' - [object]",
+    "    - 'EnvironmentFile' - [string]",
     "  - 'Install' section",
     "    - 'WantedBy' - [string]",
     "    - 'RequiredBy' - [string]"
@@ -139,6 +141,31 @@
               },
               "ExecStart": {
                 "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "Environment": {
+                "type": "array",
+                "description": "Sets environment variables for executed process.",
+                "items": {
+                  "type": "object",
+                  "description": "Sets environment variables for executed process.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z_][A-Za-z0-9_]*"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "EnvironmentFile": {
+                "type": "array",
+                "description": "Path to file that contains environment variables to set for the process.",
                 "items": {
                   "type": "string"
                 }
