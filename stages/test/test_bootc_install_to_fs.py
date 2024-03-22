@@ -2,7 +2,7 @@
 
 import tempfile
 from contextlib import contextmanager
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -80,13 +80,15 @@ def test_bootc_install_to_fs(mock_run, mocked_named_tmp, mocked_temp_dir, stage_
     stage_module.main(options, inputs, paths)
 
     assert len(mock_run.call_args_list) == 1
-    assert mock_run.call_args_list == [
-        call(["bootc", "install", "to-filesystem",
-              "--source-imgref", f"oci-archive:{mocked_temp_dir}/image",
-              "--skip-fetch-check", "--generic-image",
-              ] + expected_args + ["/path/to/mounts"],
-             check=True)
-    ]
+    args, kwargs = mock_run.call_args_list[0]
+    assert args == (
+        ["bootc", "install", "to-filesystem",
+         "--source-imgref", f"oci-archive:{mocked_temp_dir}/image",
+         "--skip-fetch-check", "--generic-image",
+         ] + expected_args + ["/path/to/mounts"],
+    )
+    assert kwargs["check"] is True
+    assert kwargs["env"]["BOOTC_SKIP_SELINUX_HOST_CHECK"] == "true"
 
 
 @patch("subprocess.run")
