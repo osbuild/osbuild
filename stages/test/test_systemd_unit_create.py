@@ -74,6 +74,20 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
                 "ExecStart": [
                     "mkdir -p /etc/mydir",
                     "touch /etc/myfile"
+                ],
+                "Environment": [
+                    {
+                        "key": "DEBUG",
+                        "value": "1",
+                    },
+                    {
+                        "key": "TRACE",
+                        "value": "1",
+                    },
+                ],
+                "EnvironmentFile": [
+                    "/etc/example.env",
+                    "/etc/second.env",
                 ]
             },
             "Install": {
@@ -104,6 +118,10 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
     RemainAfterExit=True
     ExecStart=mkdir -p /etc/mydir
     ExecStart=touch /etc/myfile
+    Environment="DEBUG=1"
+    Environment="TRACE=1"
+    EnvironmentFile=/etc/example.env
+    EnvironmentFile=/etc/second.env
 
     [Install]
     WantedBy=local-fs.target
