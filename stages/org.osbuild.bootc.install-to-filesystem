@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import os
 import subprocess
 import sys
 import tempfile
@@ -11,6 +12,17 @@ def main(options, inputs, paths):
     images = containers.parse_containers_input(inputs)
     assert len(images) == 1
     image = list(images.values())[0]
+
+    env = os.environ.copy()
+    # By default "bootc" will refuse to work on a non-selinux system if
+    # the bootc container requires selinux. This is a sensible approach
+    # in general but for us it's tricky because we want to be able to
+    # generate images when running on developer machines or CI machines
+    # that may not necessarily have selinux. So make bootc more relaxed.
+    #
+    # Can be dropped once https://github.com/containers/bootc/pull/420
+    # is available in all our downstreams.
+    env["BOOTC_SKIP_SELINUX_HOST_CHECK"] = "true"
 
     with containers.container_source(image) as (_, source):
         dst = paths["mounts"]
@@ -30,7 +42,7 @@ def main(options, inputs, paths):
             pargs.extend(["--karg", karg])
         # add target and go
         pargs.append(dst)
-        subprocess.run(pargs, check=True)
+        subprocess.run(pargs, env=env, check=True)
 
 
 if __name__ == "__main__":
