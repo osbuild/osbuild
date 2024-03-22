@@ -2,10 +2,28 @@
   "added_files": [],
   "deleted_files": [],
   "differences": {
+    "/etc/pki/ca-trust/extracted/java/cacerts": {
+      "content": [
+        null,
+        null
+      ]
+    },
     "/etc/systemd/user/create-directory.service": {
       "content": [
         "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "sha256:b6ea3cdc2ca7cd0a3c623869003cc4c68c17ccaa8eacacb17af34c3df05f89d4"
+        "sha256:69aa663d58cc063ea2d7659ac06354335c26e69e8fdb0036f952b082a70b5642"
+      ]
+    },
+    "/usr/lib/sysimage/rpm/rpmdb.sqlite": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/var/cache/ldconfig/aux-cache": {
+      "content": [
+        null,
+        null
       ]
     }
   }

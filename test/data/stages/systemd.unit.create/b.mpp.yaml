@@ -49,6 +49,11 @@ pipelines:
               ExecStart:
                 - mkdir -p /etc/mydir
                 - touch /etc/myfile
+              Environment:
+                - key: "DEBUG"
+                  value: "1"
+              EnvironmentFile:
+                - "/etc/example.env"
             Install:
               WantedBy:
                 - local-fs.target
