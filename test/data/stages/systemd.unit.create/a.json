@@ -611,6 +611,13 @@
               "docs": true
             }
           }
+        },
+        {
+          "type": "org.osbuild.truncate",
+          "options": {
+            "filename": "/etc/systemd/user/create-directory.service",
+            "size": "0"
+          }
         }
       ]
     }
