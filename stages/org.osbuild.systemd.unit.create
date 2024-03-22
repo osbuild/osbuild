@@ -23,6 +23,9 @@ def main(tree, options):
         for option, value in opts.items():
             if isinstance(value, list):
                 for v in value:
+                    if option == "Environment":
+                        # Option value becomes "KEY=VALUE" (quoted)
+                        v = '"' + v["key"] + "=" + str(v["value"]) + '"'
                     config.set(section, str(option) + "=" + str(v))
             else:
                 config.set(section, option, str(value))
