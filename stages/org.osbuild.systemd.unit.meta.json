@@ -51,8 +51,28 @@
             "description": "'Service' configuration section of a unit file.",
             "properties": {
               "Environment": {
-                "type": "string",
-                "description": "Sets environment variables for executed process."
+                "description": "Sets environment variables for executed process.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z_][A-Za-z0-9_]*"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                ]
               }
             }
           }
