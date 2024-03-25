@@ -1,43 +1,52 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "$id": "https://osbuild.org/schemas/osbuild2.json",
-
   "title": "OSBuild Manifest",
   "description": "OSBuild manifest describing a pipeline and all parameters",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version"],
+  "required": [
+    "version"
+  ],
   "properties": {
-    "pipelines": { "$ref": "#/definitions/pipelines" },
-    "sources": { "$ref": "#/definitions/sources" },
+    "pipelines": {
+      "$ref": "#/definitions/pipelines"
+    },
+    "sources": {
+      "$ref": "#/definitions/sources"
+    },
     "version": {
-      "enum": ["2"]
+      "enum": [
+        "2"
+      ]
     }
   },
-
   "definitions": {
-
     "devices": {
       "title": "Collection of devices for a stage",
       "additionalProperties": {
         "$ref": "#/definitions/device"
       }
     },
-
     "device": {
       "title": "Device for a stage",
       "additionalProperties": false,
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": { "type": "string" },
-        "parent": { "type": "string" },
+        "type": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
         "options": {
           "type": "object",
           "additionalProperties": true
         }
       }
     },
-
     "inputs": {
       "title": "Collection of inputs for a stage",
       "additionalProperties": false,
@@ -47,35 +56,54 @@
         }
       }
     },
-
     "input": {
       "title": "Single input for a stage",
       "additionalProperties": false,
-      "required": ["type", "origin", "references"],
+      "required": [
+        "type",
+        "origin",
+        "references"
+      ],
       "properties": {
-        "type": { "type": "string" },
-        "origin": { "enum": ["org.osbuild.source", "org.osbuild.pipeline"] },
-        "references": { "$ref": "#/definitions/reference" },
+        "type": {
+          "type": "string"
+        },
+        "origin": {
+          "enum": [
+            "org.osbuild.source",
+            "org.osbuild.pipeline"
+          ]
+        },
+        "references": {
+          "$ref": "#/definitions/reference"
+        },
         "options": {
           "type": "object",
           "additionalProperties": true
         }
       }
     },
-
     "mounts": {
       "title": "Collection of mount points for a stage",
       "type": "array",
-      "items": { "$ref": "#/definitions/mount"}
+      "items": {
+        "$ref": "#/definitions/mount"
+      }
     },
-
     "mount": {
       "title": "Mount point for a stage",
       "additionalProperties": false,
-      "required": ["name", "type"],
+      "required": [
+        "name",
+        "type"
+      ],
       "properties": {
-        "name": { "type": "string" },
-        "type": { "type": "string" },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
         "source": {
           "type": "string"
         },
@@ -91,44 +119,61 @@
         }
       }
     },
-
     "pipelines": {
       "title": "Collection of pipelines to execute",
       "description": "Array of pipelines to execute one after another",
       "type": "array",
-      "items": { "$ref": "#/definitions/pipeline" }
+      "items": {
+        "$ref": "#/definitions/pipeline"
+      }
     },
-
     "pipeline": {
       "title": "Pipeline Description",
       "description": "Full description of a pipeline to execute",
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "name": { "type:": "string" },
-        "build": { "type": "string" },
-        "runner": { "type": "string" },
-        "source-epoch": { "type": "integer" },
-        "stages": { "$ref": "#/definitions/stages" }
+        "name": {
+          "type:": "string"
+        },
+        "build": {
+          "type": "string"
+        },
+        "runner": {
+          "type": "string"
+        },
+        "source-epoch": {
+          "type": "integer"
+        },
+        "stages": {
+          "$ref": "#/definitions/stages"
+        }
       }
     },
-
     "reference": {
-      "oneOf":[
+      "oneOf": [
         {
           "type": "array",
-          "items": { "type": "string" }
-        }, {
+          "items": {
+            "type": "string"
+          }
+        },
+        {
           "type": "object",
           "additionalProperties": true
-        }, {
+        },
+        {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["id"],
+            "required": [
+              "id"
+            ],
             "additionalProperties": false,
             "properties": {
-              "id": { "type": "string" },
+              "id": {
+                "type": "string"
+              },
               "options": {
                 "type": "object",
                 "additionalProperties": true
@@ -138,50 +183,64 @@
         }
       ]
     },
-
     "source": {
       "title": "External Source",
       "description": "External source to be passed to the pipeline",
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "items": { "$ref": "#/definitions/reference" },
+        "items": {
+          "$ref": "#/definitions/reference"
+        },
         "options": {
           "type": "object",
           "additionalProperties": true
         }
       },
-      "required": ["items"]
+      "required": [
+        "items"
+      ]
     },
-
     "sources": {
       "title": "Collection of External Sources",
       "description": "Collection of external sources to be passed to the pipeline",
       "type": "object",
-      "additionalProperties": { "$ref": "#/definitions/source" }
+      "additionalProperties": {
+        "$ref": "#/definitions/source"
+      }
     },
-
     "stage": {
       "title": "Pipeline Stage",
       "description": "Single stage of a pipeline executing one step",
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "type": { "type": "string" },
-        "devices": { "$ref": "#/definitions/devices" },
-        "inputs": {"$ref": "#/definitions/inputs" },
-        "mounts": {"$ref": "#/definitions/mounts" },
+        "type": {
+          "type": "string"
+        },
+        "devices": {
+          "$ref": "#/definitions/devices"
+        },
+        "inputs": {
+          "$ref": "#/definitions/inputs"
+        },
+        "mounts": {
+          "$ref": "#/definitions/mounts"
+        },
         "options": {
           "type": "object",
           "additionalProperties": true
         }
       },
-      "required": [ "type" ]
+      "required": [
+        "type"
+      ]
     },
-
     "stages": {
       "type": "array",
-      "items": { "$ref": "#/definitions/stage" }
+      "items": {
+        "$ref": "#/definitions/stage"
+      }
     }
   }
 }
