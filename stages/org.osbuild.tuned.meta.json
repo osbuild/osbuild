@@ -1,27 +1,27 @@
 {
-    "summary": "Sets active TuneD profile.",
-    "description": [
-        "The stage calls sets active TuneD profile to 'profiles' as if one called",
-        "'tuned-adm profile <profile>'. In the most usual case, only one active profile",
-        "is set. However in case multiple profiles are provided, then TuneD tries to",
-        "merge all profiles into active configuration. In case of conflicting values,",
-        "the value from the latest profile is used."
+  "summary": "Sets active TuneD profile.",
+  "description": [
+    "The stage calls sets active TuneD profile to 'profiles' as if one called",
+    "'tuned-adm profile <profile>'. In the most usual case, only one active profile",
+    "is set. However in case multiple profiles are provided, then TuneD tries to",
+    "merge all profiles into active configuration. In case of conflicting values,",
+    "the value from the latest profile is used."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "profiles"
     ],
-    "schema": {
-        "additionalProperties": false,
-        "required": [
-            "profiles"
-        ],
-        "description": "Manually set TuneD profile.",
-        "properties": {
-            "profiles": {
-                "type": "array",
-                "description": "TuneD profile to activate. If multiple profiles are provided, TuneD will try to merge them.",
-                "minItems": 1,
-                "items": {
-                    "type": "string"
-                }
-            }
+    "description": "Manually set TuneD profile.",
+    "properties": {
+      "profiles": {
+        "type": "array",
+        "description": "TuneD profile to activate. If multiple profiles are provided, TuneD will try to merge them.",
+        "minItems": 1,
+        "items": {
+          "type": "string"
         }
+      }
     }
+  }
 }

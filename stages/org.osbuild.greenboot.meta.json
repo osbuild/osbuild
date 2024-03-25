@@ -1,27 +1,27 @@
 {
-    "summary": "Configure greenboot",
-    "description": [
-        "Update configuration of greenboot in /etc/greenboot/greenbot.conf."
+  "summary": "Configure greenboot",
+  "description": [
+    "Update configuration of greenboot in /etc/greenboot/greenbot.conf."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "config"
     ],
-    "schema": {
+    "properties": {
+      "config": {
         "additionalProperties": false,
-        "required": [
-            "config"
-        ],
+        "description": "greenboot config options",
+        "type": "object",
         "properties": {
-            "config": {
-                "additionalProperties": false,
-                "description": "greenboot config options",
-                "type": "object",
-                "properties": {
-                    "monitor_services": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                }
+          "monitor_services": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
+          }
         }
+      }
     }
+  }
 }

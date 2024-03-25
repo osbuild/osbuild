@@ -1,38 +1,38 @@
 {
-    "summary": "Mark packages in the DNF state database.",
-    "description": [],
-    "schema_2": {
-        "options": {
+  "summary": "Mark packages in the DNF state database.",
+  "description": [],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "properties": {
+        "packages": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Packages and their marks.",
+          "items": {
+            "type": "object",
             "additionalProperties": false,
+            "required": [
+              "name",
+              "mark"
+            ],
             "properties": {
-                "packages": {
-                    "type": "array",
-                    "minItems": 1,
-                    "description": "Packages and their marks.",
-                    "items": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "required": [
-                            "name",
-                            "mark"
-                        ],
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "description": "Package name."
-                            },
-                            "mark": {
-                                "type": "string",
-                                "enum": [
-                                    "install",
-                                    "group"
-                                ],
-                                "description": "Package mark."
-                            }
-                        }
-                    }
-                }
+              "name": {
+                "type": "string",
+                "description": "Package name."
+              },
+              "mark": {
+                "type": "string",
+                "enum": [
+                  "install",
+                  "group"
+                ],
+                "description": "Package mark."
+              }
             }
+          }
         }
+      }
     }
+  }
 }

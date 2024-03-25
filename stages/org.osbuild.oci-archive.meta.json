@@ -1,148 +1,148 @@
 {
-    "summary": "Assemble an OCI image archive",
-    "description": [
-        "Assemble an Open Container Initiative[1] image[2] archive, i.e. a",
-        "tarball whose contents is in the OCI image layout.",
-        "The content of the container will consist of the base layer provided",
-        "via the `base` layer. On top of that further inputs provided via the",
-        "`layer.X` inputs that are sorted in ascending order.",
-        "Currently the only required options are `filename` and `architecture`.",
-        "The execution parameters for the image, which then should form the base",
-        "for the container, can be given via `config`. They have the same format",
-        "as the `config` option for the \"OCI Image Configuration\" (see [2]),",
-        "except those that map to the \"Go type map[string]struct{}\", which are",
-        "represented as array of strings.",
-        "Manifest annotations can be included via the `annotation` options. Any",
-        "`key`, `value` pair is allowed, with the exception of the pre-defined",
-        "`org.osbuild` and `org.opencontainer` namespaces.",
-        "Specific annotations can be used to indicate that a container contains",
-        "an OSTree commit via the following:",
-        "  - `org.osbuild.layer`: The layer containing the OSTree repository",
-        "  - `org.osbuild.repo`: Path inside the container to the repository",
-        "  - `org.osbuild.ref`: OSTree reference of the commit inside the repo",
-        "The `org.osbuild.layer` value can either bey a index (starting at 0),",
-        "or a digest in the form of <algorithm>:<checksum>.",
-        "The final resulting tarball, aka a \"oci-archive\", can be imported via",
-        "podman[3] with `podman pull oci-archive:<archive>`.",
-        "[1] https://www.opencontainers.org/",
-        "[2] https://github.com/opencontainers/image-spec/",
-        "[3] https://podman.io/"
-    ],
-    "schema_2": {
-        "options": {
-            "additionalProperties": false,
-            "required": [
-                "architecture",
-                "filename"
-            ],
-            "properties": {
-                "architecture": {
-                    "description": "The CPU architecture of the image",
-                    "type": "string"
-                },
-                "filename": {
-                    "description": "Resulting image filename",
-                    "type": "string"
-                },
-                "config": {
-                    "description": "The execution parameters",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "Cmd": {
-                            "type": "array",
-                            "default": [
-                                "sh"
-                            ],
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "Entrypoint": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "Env": {
-                            "type": "array",
-                            "default": [
-                                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-                            ],
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "ExposedPorts": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "User": {
-                            "type": "string"
-                        },
-                        "Labels": {
-                            "type": "object",
-                            "additionalProperties": true
-                        },
-                        "StopSiganl": {
-                            "type": "string"
-                        },
-                        "Volumes": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "WorkingDir": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "annotations": {
-                    "type": "object",
-                    "properties": {
-                        "org.osbuild.ostree.layer": {
-                            "description": "The layer that contains the OSTree repository",
-                            "type": "string"
-                        },
-                        "org.osbuild.ostree.repo": {
-                            "description": "Path to the OSTree repository inside the layer",
-                            "type": "string"
-                        },
-                        "org.osbuild.ostree.ref": {
-                            "description": "Reference of the OSTree commit in the repository",
-                            "type": "string"
-                        }
-                    },
-                    "additionalProperties": false,
-                    "patternProperties": {
-                        "^(?!org.osbuild|org.opencontainer).+": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
+  "summary": "Assemble an OCI image archive",
+  "description": [
+    "Assemble an Open Container Initiative[1] image[2] archive, i.e. a",
+    "tarball whose contents is in the OCI image layout.",
+    "The content of the container will consist of the base layer provided",
+    "via the `base` layer. On top of that further inputs provided via the",
+    "`layer.X` inputs that are sorted in ascending order.",
+    "Currently the only required options are `filename` and `architecture`.",
+    "The execution parameters for the image, which then should form the base",
+    "for the container, can be given via `config`. They have the same format",
+    "as the `config` option for the \"OCI Image Configuration\" (see [2]),",
+    "except those that map to the \"Go type map[string]struct{}\", which are",
+    "represented as array of strings.",
+    "Manifest annotations can be included via the `annotation` options. Any",
+    "`key`, `value` pair is allowed, with the exception of the pre-defined",
+    "`org.osbuild` and `org.opencontainer` namespaces.",
+    "Specific annotations can be used to indicate that a container contains",
+    "an OSTree commit via the following:",
+    "  - `org.osbuild.layer`: The layer containing the OSTree repository",
+    "  - `org.osbuild.repo`: Path inside the container to the repository",
+    "  - `org.osbuild.ref`: OSTree reference of the commit inside the repo",
+    "The `org.osbuild.layer` value can either bey a index (starting at 0),",
+    "or a digest in the form of <algorithm>:<checksum>.",
+    "The final resulting tarball, aka a \"oci-archive\", can be imported via",
+    "podman[3] with `podman pull oci-archive:<archive>`.",
+    "[1] https://www.opencontainers.org/",
+    "[2] https://github.com/opencontainers/image-spec/",
+    "[3] https://podman.io/"
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "architecture",
+        "filename"
+      ],
+      "properties": {
+        "architecture": {
+          "description": "The CPU architecture of the image",
+          "type": "string"
         },
-        "inputs": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "base"
-            ],
-            "properties": {
-                "base": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
+        "filename": {
+          "description": "Resulting image filename",
+          "type": "string"
+        },
+        "config": {
+          "description": "The execution parameters",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "Cmd": {
+              "type": "array",
+              "default": [
+                "sh"
+              ],
+              "items": {
+                "type": "string"
+              }
             },
-            "patternProperties": {
-                "layer\\.[1-9]\\d*": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
+            "Entrypoint": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "Env": {
+              "type": "array",
+              "default": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "ExposedPorts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "User": {
+              "type": "string"
+            },
+            "Labels": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "StopSiganl": {
+              "type": "string"
+            },
+            "Volumes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "WorkingDir": {
+              "type": "string"
             }
+          }
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {
+            "org.osbuild.ostree.layer": {
+              "description": "The layer that contains the OSTree repository",
+              "type": "string"
+            },
+            "org.osbuild.ostree.repo": {
+              "description": "Path to the OSTree repository inside the layer",
+              "type": "string"
+            },
+            "org.osbuild.ostree.ref": {
+              "description": "Reference of the OSTree commit in the repository",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(?!org.osbuild|org.opencontainer).+": {
+              "type": "string"
+            }
+          }
         }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base"
+      ],
+      "properties": {
+        "base": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "patternProperties": {
+        "layer\\.[1-9]\\d*": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
     }
+  }
 }

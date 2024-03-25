@@ -1,51 +1,51 @@
 {
-    "summary": "Set image's default keymap for vconsole and X11 keyboard.",
-    "description": [
-        "The 'keymap' option sets the default console keyboard layout for vconsole.",
-        "Its value is a keymap, such as 'us' or 'de-latin1'.",
-        "Removes any existing /etc/vconsole.conf, then runs `systemd-firstboot` with the",
-        "`--keymap` option, which sets KEYMAP in /etc/vconsole.conf. If `font` is given",
-        "will additionally set the FONT attribute.",
-        "The 'x11-keymap' option configures the X11 keyboard settings. The value of",
-        "the option is a dictionary with keys representing settings which can be",
-        "configured. Currently, only the 'layouts' setting can be configured. Its value",
-        "is a list of strings, representing the specific layouts, which should",
-        "be configured for the X11 keyboard.",
-        "Valid keymaps are generally found in /lib/kbd/keymaps."
+  "summary": "Set image's default keymap for vconsole and X11 keyboard.",
+  "description": [
+    "The 'keymap' option sets the default console keyboard layout for vconsole.",
+    "Its value is a keymap, such as 'us' or 'de-latin1'.",
+    "Removes any existing /etc/vconsole.conf, then runs `systemd-firstboot` with the",
+    "`--keymap` option, which sets KEYMAP in /etc/vconsole.conf. If `font` is given",
+    "will additionally set the FONT attribute.",
+    "The 'x11-keymap' option configures the X11 keyboard settings. The value of",
+    "the option is a dictionary with keys representing settings which can be",
+    "configured. Currently, only the 'layouts' setting can be configured. Its value",
+    "is a list of strings, representing the specific layouts, which should",
+    "be configured for the X11 keyboard.",
+    "Valid keymaps are generally found in /lib/kbd/keymaps."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "keymap"
     ],
-    "schema": {
+    "properties": {
+      "keymap": {
+        "type": "string",
+        "description": "Name of keymap to use for vconsole."
+      },
+      "x11-keymap": {
         "additionalProperties": false,
+        "type": "object",
+        "description": "Configure X11 keyboard.",
         "required": [
-            "keymap"
+          "layouts"
         ],
         "properties": {
-            "keymap": {
-                "type": "string",
-                "description": "Name of keymap to use for vconsole."
-            },
-            "x11-keymap": {
-                "additionalProperties": false,
-                "type": "object",
-                "description": "Configure X11 keyboard.",
-                "required": [
-                    "layouts"
-                ],
-                "properties": {
-                    "layouts": {
-                        "type": "array",
-                        "description": "List of keyboard mappings to configure.",
-                        "minItems": 1,
-                        "items": {
-                            "type": "string",
-                            "minLength": 2
-                        }
-                    }
-                }
-            },
-            "font": {
-                "type": "string",
-                "description": "Configures the console font."
+          "layouts": {
+            "type": "array",
+            "description": "List of keyboard mappings to configure.",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 2
             }
+          }
         }
+      },
+      "font": {
+        "type": "string",
+        "description": "Configures the console font."
+      }
     }
+  }
 }

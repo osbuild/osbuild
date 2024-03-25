@@ -1,47 +1,47 @@
 {
-    "summary": "Run a lorax template script on the tree",
-    "description": [
-        "This stage can be use to run a lorax template script on the tree.",
-        "The location that is specified in `path` will be interpreted to be",
-        "relative to `/usr/share/lorax/templates.d` on the build root.",
-        "The use case for this stage is primarily to run the post install",
-        "scripts to create bootable isos, provided by Lorax. Depending on",
-        "the script, `basearch`, `product` or both have to be specified.",
-        "The stage uses the `osbuild.utils.lorax` helpers internally, so all",
-        "operations supported by the helpers are supported by this stage.",
-        "NB: This is only a subset of the Lorax ones, i.e. it is missing the",
-        "commands to create disks and images."
+  "summary": "Run a lorax template script on the tree",
+  "description": [
+    "This stage can be use to run a lorax template script on the tree.",
+    "The location that is specified in `path` will be interpreted to be",
+    "relative to `/usr/share/lorax/templates.d` on the build root.",
+    "The use case for this stage is primarily to run the post install",
+    "scripts to create bootable isos, provided by Lorax. Depending on",
+    "the script, `basearch`, `product` or both have to be specified.",
+    "The stage uses the `osbuild.utils.lorax` helpers internally, so all",
+    "operations supported by the helpers are supported by this stage.",
+    "NB: This is only a subset of the Lorax ones, i.e. it is missing the",
+    "commands to create disks and images."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "path"
     ],
-    "schema": {
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "basearch": {
+        "type": "string",
+        "default": "x86_64",
+        "description": "The basic architecture param to supply to the template"
+      },
+      "product": {
+        "type": "object",
         "additionalProperties": false,
-        "required": [
-            "path"
-        ],
         "properties": {
-            "path": {
-                "type": "string"
-            },
-            "basearch": {
-                "type": "string",
-                "default": "x86_64",
-                "description": "The basic architecture param to supply to the template"
-            },
-            "product": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "version": {
-                        "type": "string"
-                    }
-                },
-                "libdir": {
-                    "type": "string",
-                    "default": "lib64"
-                }
-            }
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "libdir": {
+          "type": "string",
+          "default": "lib64"
         }
+      }
     }
+  }
 }

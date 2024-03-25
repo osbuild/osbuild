@@ -1,72 +1,72 @@
 {
-    "summary": "Create LVM2 physical volumes, volume groups and logical volumes",
-    "description": [
-        "For the logical volumes `name` and `size` need to be provided.",
-        "NB: The name of the volume group is chosen at random and should",
-        "be changed via the `org.osbuild.lvm2.metadata` stage after the",
-        "image has been completely assembled."
-    ],
-    "schema_2": {
-        "devices": {
-            "type": "object",
-            "additionalProperties": true,
-            "required": [
-                "device"
-            ],
-            "properties": {
-                "device": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            }
-        },
-        "options": {
-            "additionalProperties": true,
-            "required": [
-                "volumes"
-            ],
-            "properties": {
-                "volumes": {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "description": "Logical volume",
-                        "type": "object",
-                        "required": [
-                            "name"
-                        ],
-                        "oneOf": [
-                            {
-                                "required": [
-                                    "size"
-                                ]
-                            },
-                            {
-                                "required": [
-                                    "extents"
-                                ]
-                            }
-                        ],
-                        "properties": {
-                            "name": {
-                                "description": "The logical volume name",
-                                "type": "string",
-                                "pattern": "[a-zA-Z09+_.][a-zA-Z0-9+_.-]*"
-                            },
-                            "extents": {
-                                "description": "The logical extents of the volume",
-                                "type": "string",
-                                "pattern": "[1-9][0-9]*(%(VG|PVS|FREE|ORIGIN))?"
-                            },
-                            "size": {
-                                "description": "The size of the logical volume",
-                                "type": "string",
-                                "pattern": "[1-9][0-9]*[bBsSkKmMgGtTpPeE]?"
-                            }
-                        }
-                    }
-                }
-            }
+  "summary": "Create LVM2 physical volumes, volume groups and logical volumes",
+  "description": [
+    "For the logical volumes `name` and `size` need to be provided.",
+    "NB: The name of the volume group is chosen at random and should",
+    "be changed via the `org.osbuild.lvm2.metadata` stage after the",
+    "image has been completely assembled."
+  ],
+  "schema_2": {
+    "devices": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "device"
+      ],
+      "properties": {
+        "device": {
+          "type": "object",
+          "additionalProperties": true
         }
+      }
+    },
+    "options": {
+      "additionalProperties": true,
+      "required": [
+        "volumes"
+      ],
+      "properties": {
+        "volumes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "description": "Logical volume",
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "oneOf": [
+              {
+                "required": [
+                  "size"
+                ]
+              },
+              {
+                "required": [
+                  "extents"
+                ]
+              }
+            ],
+            "properties": {
+              "name": {
+                "description": "The logical volume name",
+                "type": "string",
+                "pattern": "[a-zA-Z09+_.][a-zA-Z0-9+_.-]*"
+              },
+              "extents": {
+                "description": "The logical extents of the volume",
+                "type": "string",
+                "pattern": "[1-9][0-9]*(%(VG|PVS|FREE|ORIGIN))?"
+              },
+              "size": {
+                "description": "The size of the logical volume",
+                "type": "string",
+                "pattern": "[1-9][0-9]*[bBsSkKmMgGtTpPeE]?"
+              }
+            }
+          }
+        }
+      }
     }
+  }
 }

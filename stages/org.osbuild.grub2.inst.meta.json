@@ -1,151 +1,151 @@
 {
-    "summary": "Install the grub2 boot loader for non-UEFI systems or hybrid boot",
-    "description": [
-        "This stage can be used to generate a grub2 core image and install",
-        "it to the correct location to enable booting of non-UEFI systems,",
-        "i.e. x86 legacy and PPC64LE (Open Firmware).",
-        "On x86, the core image can be installed into the MBR gap or to a",
-        "dedicated BIOS boot partition when the partition label is GTP. On",
-        "ppc64le with Open Firmware a dedicated 'PrEP partition' is used.",
-        "x86 / MBR gap:",
-        "    For historic and performance reasons the first partition",
-        "    is aligned to a specific sector number (used to be 64,",
-        "    now it is 2048), which leaves a gap between it and the MBR,",
-        "    where the core image can be embedded in",
-        "x86 / BIOS boot:",
-        "    A dedicated partition with a specific GUID[1] is used.",
-        "ppc64le / Open Firmware:",
-        "    A dedicated partition with a specified GUID[2] is used.",
-        "    On ppc64le with Open Firmware a special partition called",
-        "    'PrEP partition' is used the store the grub2 core; the",
-        "    firmware looks for this partition and directly loads and",
-        "    executes the core form it.",
-        "On x86, a \"boot image\", aka grub stage 1, is installed into the",
-        "master boot record (MBR) of the partition (even in the case the",
-        "partition layout is GPT). It main purpose is to load the second",
-        "stage (core image). Therefore the location of the core image is",
-        "patched into the boot image.",
-        "On ppc64le, the firmware itself directly loads the complete core",
-        "image and transfers control to it.",
-        "[1] 21686148-6449-6E6F-744E-656564454649",
-        "[2] 9E1A2D38-C612-4316-AA26-8B49521E5A8B"
-    ],
-    "schema": {
-        "definitions": {
-            "core-mkimage": {
-                "type": "object",
-                "description": "Generate the core image via grub-mkimage",
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "partlabel",
-                    "filesystem"
-                ],
-                "properties": {
-                    "type": {
-                        "enum": [
-                            "mkimage"
-                        ]
-                    },
-                    "partlabel": {
-                        "type": "string",
-                        "enum": [
-                            "gpt",
-                            "dos"
-                        ]
-                    },
-                    "filesystem": {
-                        "type": "string",
-                        "enum": [
-                            "ext4",
-                            "xfs",
-                            "btrfs"
-                        ]
-                    },
-                    "binary": {
-                        "description": "grub-mkimage binary name",
-                        "type": "string",
-                        "default": "grub2-mkimage"
-                    }
-                }
-            },
-            "prefix-partition": {
-                "type": "object",
-                "description": "Grub2 config on a specific partition, e.g. (,gpt3)/boot",
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "partlabel",
-                    "number",
-                    "path"
-                ],
-                "properties": {
-                    "type": {
-                        "enum": [
-                            "partition"
-                        ]
-                    },
-                    "partlabel": {
-                        "type": "string",
-                        "enum": [
-                            "gpt",
-                            "dos"
-                        ]
-                    },
-                    "number": {
-                        "description": "The partition number, starting at zero",
-                        "type": "number"
-                    },
-                    "path": {
-                        "description": "location of grub config inside the partition",
-                        "type": "string",
-                        "pattern": "/.*"
-                    }
-                }
-            }
-        },
+  "summary": "Install the grub2 boot loader for non-UEFI systems or hybrid boot",
+  "description": [
+    "This stage can be used to generate a grub2 core image and install",
+    "it to the correct location to enable booting of non-UEFI systems,",
+    "i.e. x86 legacy and PPC64LE (Open Firmware).",
+    "On x86, the core image can be installed into the MBR gap or to a",
+    "dedicated BIOS boot partition when the partition label is GTP. On",
+    "ppc64le with Open Firmware a dedicated 'PrEP partition' is used.",
+    "x86 / MBR gap:",
+    "    For historic and performance reasons the first partition",
+    "    is aligned to a specific sector number (used to be 64,",
+    "    now it is 2048), which leaves a gap between it and the MBR,",
+    "    where the core image can be embedded in",
+    "x86 / BIOS boot:",
+    "    A dedicated partition with a specific GUID[1] is used.",
+    "ppc64le / Open Firmware:",
+    "    A dedicated partition with a specified GUID[2] is used.",
+    "    On ppc64le with Open Firmware a special partition called",
+    "    'PrEP partition' is used the store the grub2 core; the",
+    "    firmware looks for this partition and directly loads and",
+    "    executes the core form it.",
+    "On x86, a \"boot image\", aka grub stage 1, is installed into the",
+    "master boot record (MBR) of the partition (even in the case the",
+    "partition layout is GPT). It main purpose is to load the second",
+    "stage (core image). Therefore the location of the core image is",
+    "patched into the boot image.",
+    "On ppc64le, the firmware itself directly loads the complete core",
+    "image and transfers control to it.",
+    "[1] 21686148-6449-6E6F-744E-656564454649",
+    "[2] 9E1A2D38-C612-4316-AA26-8B49521E5A8B"
+  ],
+  "schema": {
+    "definitions": {
+      "core-mkimage": {
+        "type": "object",
+        "description": "Generate the core image via grub-mkimage",
         "additionalProperties": false,
         "required": [
-            "filename",
-            "platform",
-            "location",
-            "core",
-            "prefix"
+          "type",
+          "partlabel",
+          "filesystem"
         ],
         "properties": {
-            "filename": {
-                "type": "string",
-                "description": "filename of the disk image"
-            },
-            "platform": {
-                "type": "string",
-                "description": "Platform of the target system"
-            },
-            "location": {
-                "type": "integer",
-                "description": "Location of the stage 2 (in sectors)"
-            },
-            "core": {
-                "description": "How to obtain the GRUB core image",
-                "oneOf": [
-                    {
-                        "$ref": "#/definitions/core-mkimage"
-                    }
-                ]
-            },
-            "prefix": {
-                "description": "location of grub config",
-                "oneOf": [
-                    {
-                        "$ref": "#/definitions/prefix-partition"
-                    }
-                ]
-            },
-            "sector-size": {
-                "type": "number",
-                "description": "Sector size (in bytes)",
-                "default": 512
-            }
+          "type": {
+            "enum": [
+              "mkimage"
+            ]
+          },
+          "partlabel": {
+            "type": "string",
+            "enum": [
+              "gpt",
+              "dos"
+            ]
+          },
+          "filesystem": {
+            "type": "string",
+            "enum": [
+              "ext4",
+              "xfs",
+              "btrfs"
+            ]
+          },
+          "binary": {
+            "description": "grub-mkimage binary name",
+            "type": "string",
+            "default": "grub2-mkimage"
+          }
         }
+      },
+      "prefix-partition": {
+        "type": "object",
+        "description": "Grub2 config on a specific partition, e.g. (,gpt3)/boot",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "partlabel",
+          "number",
+          "path"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "partition"
+            ]
+          },
+          "partlabel": {
+            "type": "string",
+            "enum": [
+              "gpt",
+              "dos"
+            ]
+          },
+          "number": {
+            "description": "The partition number, starting at zero",
+            "type": "number"
+          },
+          "path": {
+            "description": "location of grub config inside the partition",
+            "type": "string",
+            "pattern": "/.*"
+          }
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "filename",
+      "platform",
+      "location",
+      "core",
+      "prefix"
+    ],
+    "properties": {
+      "filename": {
+        "type": "string",
+        "description": "filename of the disk image"
+      },
+      "platform": {
+        "type": "string",
+        "description": "Platform of the target system"
+      },
+      "location": {
+        "type": "integer",
+        "description": "Location of the stage 2 (in sectors)"
+      },
+      "core": {
+        "description": "How to obtain the GRUB core image",
+        "oneOf": [
+          {
+            "$ref": "#/definitions/core-mkimage"
+          }
+        ]
+      },
+      "prefix": {
+        "description": "location of grub config",
+        "oneOf": [
+          {
+            "$ref": "#/definitions/prefix-partition"
+          }
+        ]
+      },
+      "sector-size": {
+        "type": "number",
+        "description": "Sector size (in bytes)",
+        "default": 512
+      }
     }
+  }
 }

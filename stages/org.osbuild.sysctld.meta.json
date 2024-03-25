@@ -1,82 +1,82 @@
 {
-    "summary": "Configure kernel parameters at boot via sysctl.d.",
-    "description": [
-        "This stage creates a sysctl.d configuration file with the given name in",
-        "/usr/lib/sysctl.d. Provided list of parameters is written as separate lines",
-        "into the configuration file. At least one parameter must be specified.",
-        "The syntax of the sysctl.d file is simply:",
-        "<token> = <value>",
-        "If a line begins with a single \"-\", any attempts to set the value that fail",
-        "will be ignored. (from sysct.conf(5) man page)",
-        "The <token> can be a glob pattern.",
-        "A key may be explicitly excluded from being set by any matching glob patterns",
-        "by specifying the key name prefixed with a \"-\" character and not followed",
-        "by \"=\". (from sysctl.d(5) man page)"
-    ],
-    "schema": {
-        "definitions": {
-            "parameter": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                    "key",
-                    "value"
-                ],
-                "description": "Kernel parameter to set.",
-                "properties": {
-                    "key": {
-                        "type": "string",
-                        "description": "Kernel parameter name."
-                    },
-                    "value": {
-                        "type": "string",
-                        "description": "Kernel parameter value."
-                    }
-                }
-            },
-            "parameter-excluded": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                    "key"
-                ],
-                "description": "Parameter to exclude from being set by a matching glob",
-                "properties": {
-                    "key": {
-                        "type": "string",
-                        "pattern": "^-.+$",
-                        "description": "Key to exclude from being set by a matching glob"
-                    }
-                }
-            }
-        },
+  "summary": "Configure kernel parameters at boot via sysctl.d.",
+  "description": [
+    "This stage creates a sysctl.d configuration file with the given name in",
+    "/usr/lib/sysctl.d. Provided list of parameters is written as separate lines",
+    "into the configuration file. At least one parameter must be specified.",
+    "The syntax of the sysctl.d file is simply:",
+    "<token> = <value>",
+    "If a line begins with a single \"-\", any attempts to set the value that fail",
+    "will be ignored. (from sysct.conf(5) man page)",
+    "The <token> can be a glob pattern.",
+    "A key may be explicitly excluded from being set by any matching glob patterns",
+    "by specifying the key name prefixed with a \"-\" character and not followed",
+    "by \"=\". (from sysctl.d(5) man page)"
+  ],
+  "schema": {
+    "definitions": {
+      "parameter": {
+        "type": "object",
         "additionalProperties": false,
         "required": [
-            "filename",
-            "config"
+          "key",
+          "value"
         ],
+        "description": "Kernel parameter to set.",
         "properties": {
-            "filename": {
-                "type": "string",
-                "description": "Name of the sysctl.d configuration file to create.",
-                "pattern": "^[\\w.-]{1,250}\\.conf$"
-            },
-            "config": {
-                "additionalProperties": false,
-                "type": "array",
-                "description": "List of kernel parameters to write into the configuration file.",
-                "minItems": 1,
-                "items": {
-                    "anyOf": [
-                        {
-                            "$ref": "#/definitions/parameter"
-                        },
-                        {
-                            "$ref": "#/definitions/parameter-excluded"
-                        }
-                    ]
-                }
-            }
+          "key": {
+            "type": "string",
+            "description": "Kernel parameter name."
+          },
+          "value": {
+            "type": "string",
+            "description": "Kernel parameter value."
+          }
         }
+      },
+      "parameter-excluded": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key"
+        ],
+        "description": "Parameter to exclude from being set by a matching glob",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^-.+$",
+            "description": "Key to exclude from being set by a matching glob"
+          }
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "filename",
+      "config"
+    ],
+    "properties": {
+      "filename": {
+        "type": "string",
+        "description": "Name of the sysctl.d configuration file to create.",
+        "pattern": "^[\\w.-]{1,250}\\.conf$"
+      },
+      "config": {
+        "additionalProperties": false,
+        "type": "array",
+        "description": "List of kernel parameters to write into the configuration file.",
+        "minItems": 1,
+        "items": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/parameter"
+            },
+            {
+              "$ref": "#/definitions/parameter-excluded"
+            }
+          ]
+        }
+      }
     }
+  }
 }

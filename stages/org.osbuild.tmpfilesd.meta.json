@@ -1,75 +1,75 @@
 {
-    "summary": "Create tmpfiles.d configuration.",
-    "description": [
-        "This stage creates a tmpfiles.d configuration file with the given name in",
-        "/usr/lib/tmpfiles.d. Provided list of configuration directives is written",
-        "as separate lines into the configuration file. At least one configuration",
-        "directive must be specified."
-    ],
-    "schema": {
-        "definitions": {
-            "configuration": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                    "type",
-                    "path"
-                ],
-                "description": "tmpfiles.d configuration directive representing one line in the configuration.",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "description": "The file system path type.",
-                        "pattern": "^([fwpLcbaA]\\+?|[dDevqQCxXrRzZtThH]){1}((!?-?)|(-?!?)){0,1}$"
-                    },
-                    "path": {
-                        "type": "string",
-                        "description": "Absolute file system path."
-                    },
-                    "mode": {
-                        "type": "string",
-                        "description": "The file access mode when creating the file or directory.",
-                        "pattern": "^~?[0-7]{4}$"
-                    },
-                    "user": {
-                        "type": "string",
-                        "description": "The user to use for the file or directory."
-                    },
-                    "group": {
-                        "type": "string",
-                        "description": "The group to use for the file or directory."
-                    },
-                    "age": {
-                        "type": "string",
-                        "description": "Date field used to decide what files to delete when cleaning."
-                    },
-                    "argument": {
-                        "type": "string",
-                        "description": "Argument with its meaning being specific to the path type."
-                    }
-                }
-            }
-        },
+  "summary": "Create tmpfiles.d configuration.",
+  "description": [
+    "This stage creates a tmpfiles.d configuration file with the given name in",
+    "/usr/lib/tmpfiles.d. Provided list of configuration directives is written",
+    "as separate lines into the configuration file. At least one configuration",
+    "directive must be specified."
+  ],
+  "schema": {
+    "definitions": {
+      "configuration": {
+        "type": "object",
         "additionalProperties": false,
         "required": [
-            "filename",
-            "config"
+          "type",
+          "path"
         ],
+        "description": "tmpfiles.d configuration directive representing one line in the configuration.",
         "properties": {
-            "filename": {
-                "type": "string",
-                "description": "Name of the tmpfiles.d configuration file to create.",
-                "pattern": "^[\\w.-]{1,250}\\.conf$"
-            },
-            "config": {
-                "additionalProperties": false,
-                "type": "array",
-                "description": "List of configuration directives written into the configuration file.",
-                "minItems": 1,
-                "items": {
-                    "$ref": "#/definitions/configuration"
-                }
-            }
+          "type": {
+            "type": "string",
+            "description": "The file system path type.",
+            "pattern": "^([fwpLcbaA]\\+?|[dDevqQCxXrRzZtThH]){1}((!?-?)|(-?!?)){0,1}$"
+          },
+          "path": {
+            "type": "string",
+            "description": "Absolute file system path."
+          },
+          "mode": {
+            "type": "string",
+            "description": "The file access mode when creating the file or directory.",
+            "pattern": "^~?[0-7]{4}$"
+          },
+          "user": {
+            "type": "string",
+            "description": "The user to use for the file or directory."
+          },
+          "group": {
+            "type": "string",
+            "description": "The group to use for the file or directory."
+          },
+          "age": {
+            "type": "string",
+            "description": "Date field used to decide what files to delete when cleaning."
+          },
+          "argument": {
+            "type": "string",
+            "description": "Argument with its meaning being specific to the path type."
+          }
         }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "filename",
+      "config"
+    ],
+    "properties": {
+      "filename": {
+        "type": "string",
+        "description": "Name of the tmpfiles.d configuration file to create.",
+        "pattern": "^[\\w.-]{1,250}\\.conf$"
+      },
+      "config": {
+        "additionalProperties": false,
+        "type": "array",
+        "description": "List of configuration directives written into the configuration file.",
+        "minItems": 1,
+        "items": {
+          "$ref": "#/definitions/configuration"
+        }
+      }
     }
+  }
 }

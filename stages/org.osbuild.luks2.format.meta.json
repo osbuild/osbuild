@@ -1,135 +1,135 @@
 {
-    "summary": "Create an LUKS2 container via `cryptsetup`.",
-    "description": [
-        "This stage formats the given `device` to be a Linux Unified Key Setup,",
-        "LUKS version 2, container and set the key to be `passphrase`. The uuid",
-        "of the container must be specified via the coressponding option.",
-        "Use the corresponding `org.osbuild.luks2` device to open the container",
-        "during build.",
-        "Buildhost commands used: `cryptsetup`."
-    ],
-    "schema_2": {
-        "definitions": {
-            "pbkdf2": {
-                "description": "pbkdf2 PBKDF parameters",
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                    "method",
-                    "iterations"
-                ],
-                "properties": {
-                    "method": {
-                        "enum": [
-                            "pbkdf2"
-                        ]
-                    },
-                    "iterations": {
-                        "description": "Iterations cost",
-                        "type": "integer",
-                        "minimum": 1000,
-                        "maximum": 4294967295
-                    }
-                }
-            },
-            "argon2i_d": {
-                "description": "argon2i and argon2id PBKDF parameters",
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                    "method",
-                    "iterations"
-                ],
-                "properties": {
-                    "method": {
-                        "enum": [
-                            "argon2i",
-                            "argon2id"
-                        ]
-                    },
-                    "memory": {
-                        "description": "Memory cost in kilobytes",
-                        "type": "integer",
-                        "minimum": 32,
-                        "maximum": 4194304
-                    },
-                    "iterations": {
-                        "description": "Iterations cost",
-                        "type": "integer",
-                        "minimum": 4,
-                        "maximum": 4294967295
-                    },
-                    "parallelism": {
-                        "description": "Parallel cost",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 4
-                    }
-                }
-            }
-        },
-        "devices": {
-            "type": "object",
-            "additionalProperties": true,
-            "required": [
-                "device"
-            ],
-            "properties": {
-                "device": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            }
-        },
-        "options": {
-            "additionalProperties": false,
-            "required": [
-                "passphrase",
-                "uuid",
-                "pbkdf"
-            ],
-            "properties": {
-                "passphrase": {
-                    "description": "Passphrase to use",
-                    "type": "string"
-                },
-                "uuid": {
-                    "description": "UUID for the LUKS device to use",
-                    "type": "string"
-                },
-                "cipher": {
-                    "description": "Cipher to use",
-                    "type": "string"
-                },
-                "pbkdf": {
-                    "description": "Password-Based Key Derivation Function parameters",
-                    "oneOf": [
-                        {
-                            "$ref": "#/definitions/pbkdf2"
-                        },
-                        {
-                            "$ref": "#/definitions/argon2i_d"
-                        }
-                    ]
-                },
-                "label": {
-                    "description": "Label to use",
-                    "type": "string"
-                },
-                "subsystem": {
-                    "description": "Additional label",
-                    "type": "string"
-                },
-                "sector-size": {
-                    "description": "Sector size to use",
-                    "type": "integer"
-                },
-                "integrity": {
-                    "enum": [
-                        "hmac-sha256"
-                    ]
-                }
-            }
+  "summary": "Create an LUKS2 container via `cryptsetup`.",
+  "description": [
+    "This stage formats the given `device` to be a Linux Unified Key Setup,",
+    "LUKS version 2, container and set the key to be `passphrase`. The uuid",
+    "of the container must be specified via the coressponding option.",
+    "Use the corresponding `org.osbuild.luks2` device to open the container",
+    "during build.",
+    "Buildhost commands used: `cryptsetup`."
+  ],
+  "schema_2": {
+    "definitions": {
+      "pbkdf2": {
+        "description": "pbkdf2 PBKDF parameters",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "method",
+          "iterations"
+        ],
+        "properties": {
+          "method": {
+            "enum": [
+              "pbkdf2"
+            ]
+          },
+          "iterations": {
+            "description": "Iterations cost",
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 4294967295
+          }
         }
+      },
+      "argon2i_d": {
+        "description": "argon2i and argon2id PBKDF parameters",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "method",
+          "iterations"
+        ],
+        "properties": {
+          "method": {
+            "enum": [
+              "argon2i",
+              "argon2id"
+            ]
+          },
+          "memory": {
+            "description": "Memory cost in kilobytes",
+            "type": "integer",
+            "minimum": 32,
+            "maximum": 4194304
+          },
+          "iterations": {
+            "description": "Iterations cost",
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 4294967295
+          },
+          "parallelism": {
+            "description": "Parallel cost",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          }
+        }
+      }
+    },
+    "devices": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "device"
+      ],
+      "properties": {
+        "device": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "passphrase",
+        "uuid",
+        "pbkdf"
+      ],
+      "properties": {
+        "passphrase": {
+          "description": "Passphrase to use",
+          "type": "string"
+        },
+        "uuid": {
+          "description": "UUID for the LUKS device to use",
+          "type": "string"
+        },
+        "cipher": {
+          "description": "Cipher to use",
+          "type": "string"
+        },
+        "pbkdf": {
+          "description": "Password-Based Key Derivation Function parameters",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/pbkdf2"
+            },
+            {
+              "$ref": "#/definitions/argon2i_d"
+            }
+          ]
+        },
+        "label": {
+          "description": "Label to use",
+          "type": "string"
+        },
+        "subsystem": {
+          "description": "Additional label",
+          "type": "string"
+        },
+        "sector-size": {
+          "description": "Sector size to use",
+          "type": "integer"
+        },
+        "integrity": {
+          "enum": [
+            "hmac-sha256"
+          ]
+        }
+      }
     }
+  }
 }

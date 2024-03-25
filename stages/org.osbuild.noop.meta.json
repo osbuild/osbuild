@@ -1,21 +1,21 @@
 {
-    "summary": "Do Nothing",
-    "description": [
-        "No-op stage. Prints a JSON dump of the options passed into this stage and",
-        "leaves the tree untouched. Useful for testing, debugging, and wasting time."
-    ],
-    "schema_2": {
-        "options": {
-            "additionalProperties": true
-        },
-        "devices": {
-            "additionalProperties": true
-        },
-        "inputs": {
-            "additionalProperties": true
-        },
-        "mounts": {
-            "additionalProperties": true
-        }
+  "summary": "Do Nothing",
+  "description": [
+    "No-op stage. Prints a JSON dump of the options passed into this stage and",
+    "leaves the tree untouched. Useful for testing, debugging, and wasting time."
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": true
+    },
+    "devices": {
+      "additionalProperties": true
+    },
+    "inputs": {
+      "additionalProperties": true
+    },
+    "mounts": {
+      "additionalProperties": true
     }
+  }
 }
