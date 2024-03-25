@@ -1,4 +1,3 @@
-import inspect
 import os
 import pathlib
 from types import ModuleType
@@ -28,14 +27,7 @@ def inputs_service(inputs_module) -> ModuleType:
     """inputs_service is a fixture that imports a inputs module by its name
     defined in INPUTS_NAME in the test module and returns a InputService
     """
-    service_cls = None
-    for memb in inspect.getmembers(
-            inputs_module,
-            predicate=lambda obj: inspect.isclass(obj) and issubclass(
-                obj, inputs.InputService)):
-        if service_cls:
-            raise ValueError(f"already have {service_cls}, also found {memb}")
-        service_cls = memb[1]
+    service_cls = testutil.find_one_subclass_in_module(inputs_module, inputs.InputService)
     fd = testutil.make_fake_service_fd()
     srv_obj = service_cls.from_args(["--service-fd", str(fd)])
     return srv_obj
