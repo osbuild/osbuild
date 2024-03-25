@@ -73,3 +73,20 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Check for valid snapshot urls
         run: ./tools/check-snapshots --errors-only .
+
+  json-fmt:
+    name: "🔍 Check JSON files for formatting consistency"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install utils
+        run: |
+          sudo apt update
+          sudo apt install -y jq moreutils
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Reformat all json files
+        run: find -iname "*.json" -print -exec sh -c 'jq --indent 2 . {} | sponge {}' \;
+      - name: Check diff
+        run: git diff --exit-code
