@@ -1,5 +1,7 @@
 {
-  "added_files": ["/etc/kernel/cmdline"],
+  "added_files": [
+    "/etc/kernel/cmdline"
+  ],
   "deleted_files": [],
   "differences": {}
 }

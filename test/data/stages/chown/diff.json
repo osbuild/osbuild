@@ -2,11 +2,49 @@
   "added_files": [],
   "deleted_files": [],
   "differences": {
-    "/testfile1": {"uid": [0, 2000]},
-    "/testfile2": {"gid": [0, 3000]},
-    "/testfile3": {"uid": [0, 2000], "gid": [0, 3000]},
-    "/testfile4": {"uid": [0, 2000]},
-    "/testfile5": {"gid": [0, 3000]},
-    "/testfile6": {"uid": [0, 2000], "gid": [0, 3000]}
+    "/testfile1": {
+      "uid": [
+        0,
+        2000
+      ]
+    },
+    "/testfile2": {
+      "gid": [
+        0,
+        3000
+      ]
+    },
+    "/testfile3": {
+      "uid": [
+        0,
+        2000
+      ],
+      "gid": [
+        0,
+        3000
+      ]
+    },
+    "/testfile4": {
+      "uid": [
+        0,
+        2000
+      ]
+    },
+    "/testfile5": {
+      "gid": [
+        0,
+        3000
+      ]
+    },
+    "/testfile6": {
+      "uid": [
+        0,
+        2000
+      ],
+      "gid": [
+        0,
+        3000
+      ]
+    }
   }
 }

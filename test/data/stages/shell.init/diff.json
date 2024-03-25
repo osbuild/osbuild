@@ -1,5 +1,8 @@
 {
-  "added_files": ["/etc/profile.d/test_env", "/etc/profile.d/test_env.2"],
+  "added_files": [
+    "/etc/profile.d/test_env",
+    "/etc/profile.d/test_env.2"
+  ],
   "deleted_files": [],
   "differences": {}
 }
