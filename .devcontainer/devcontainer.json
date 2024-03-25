@@ -2,7 +2,7 @@
   "name": "osbuild",
   "build": {
     "dockerfile": "Dockerfile",
-    "context": "..",
+    "context": ".."
   },
   "mounts": [
     "source=osbuild-share,target=/root/.local/share,type=volume"
