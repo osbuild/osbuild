@@ -1,20 +1,20 @@
 {
-    "summary": "Set up an early root shell on a certain tty",
-    "description": [
-        "Creates a systemd unit file at /etc/systemd/system/osbuild-debug-shell.service",
-        "which starts an early-boot root shell on the given `tty`.",
-        "Also symlinks the service file into /etc/systemd/system/sysinit.target.wants/."
+  "summary": "Set up an early root shell on a certain tty",
+  "description": [
+    "Creates a systemd unit file at /etc/systemd/system/osbuild-debug-shell.service",
+    "which starts an early-boot root shell on the given `tty`.",
+    "Also symlinks the service file into /etc/systemd/system/sysinit.target.wants/."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "tty"
     ],
-    "schema": {
-        "additionalProperties": false,
-        "required": [
-            "tty"
-        ],
-        "properties": {
-            "tty": {
-                "type": "string",
-                "description": "Absolute path of the tty device to start a root shell on."
-            }
-        }
+    "properties": {
+      "tty": {
+        "type": "string",
+        "description": "Absolute path of the tty device to start a root shell on."
+      }
     }
+  }
 }

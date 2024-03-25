@@ -1,47 +1,47 @@
 {
-    "summary": "Configure libpwquality.",
-    "description": [
-        "The tree must already include /etc/security/pwquality.conf, and it is",
-        "modified in place. Every attempt is made to preserve the structure of",
-        "the file, though comments are completely ignored."
+  "summary": "Configure libpwquality.",
+  "description": [
+    "The tree must already include /etc/security/pwquality.conf, and it is",
+    "modified in place. Every attempt is made to preserve the structure of",
+    "the file, though comments are completely ignored."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "config"
     ],
-    "schema": {
+    "properties": {
+      "config": {
         "additionalProperties": false,
-        "required": [
-            "config"
-        ],
+        "description": "libpwquality config options",
+        "type": "object",
         "properties": {
-            "config": {
-                "additionalProperties": false,
-                "description": "libpwquality config options",
-                "type": "object",
-                "properties": {
-                    "minlen": {
-                        "description": "Minimum acceptable size for the new password (plus one if credits are not disabled which is the default).",
-                        "type": "integer"
-                    },
-                    "dcredit": {
-                        "description": "The maximum credit for having digits in the new password. If less than 0 it is the minimum number of digits in the new password.",
-                        "type": "integer"
-                    },
-                    "ucredit": {
-                        "description": "The maximum credit for having uppercase characters in the new password. If less than 0 it is the minimum number of uppercase characters in the new password.",
-                        "type": "integer"
-                    },
-                    "lcredit": {
-                        "description": "The maximum credit for having lowercase characters in the new password. If less than 0 it is the minimum number of lowercase characters in the new password.",
-                        "type": "integer"
-                    },
-                    "ocredit": {
-                        "description": "The maximum credit for having other characters in the new password. If less than 0 it is the minimum number of other characters in the new password.",
-                        "type": "integer"
-                    },
-                    "minclass": {
-                        "description": "The minimum number of required classes of characters for the new password (digits, uppercase, lowercase, others).",
-                        "type": "integer"
-                    }
-                }
-            }
+          "minlen": {
+            "description": "Minimum acceptable size for the new password (plus one if credits are not disabled which is the default).",
+            "type": "integer"
+          },
+          "dcredit": {
+            "description": "The maximum credit for having digits in the new password. If less than 0 it is the minimum number of digits in the new password.",
+            "type": "integer"
+          },
+          "ucredit": {
+            "description": "The maximum credit for having uppercase characters in the new password. If less than 0 it is the minimum number of uppercase characters in the new password.",
+            "type": "integer"
+          },
+          "lcredit": {
+            "description": "The maximum credit for having lowercase characters in the new password. If less than 0 it is the minimum number of lowercase characters in the new password.",
+            "type": "integer"
+          },
+          "ocredit": {
+            "description": "The maximum credit for having other characters in the new password. If less than 0 it is the minimum number of other characters in the new password.",
+            "type": "integer"
+          },
+          "minclass": {
+            "description": "The minimum number of required classes of characters for the new password (digits, uppercase, lowercase, others).",
+            "type": "integer"
+          }
         }
+      }
     }
+  }
 }

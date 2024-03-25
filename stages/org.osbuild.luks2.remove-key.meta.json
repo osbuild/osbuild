@@ -1,33 +1,33 @@
 {
-    "summary": "Removes the supplied passphrase from the LUKS device.",
-    "description": [
-        "Buildhost commands used: `cryptsetup`."
-    ],
-    "schema_2": {
-        "devices": {
-            "type": "object",
-            "additionalProperties": true,
-            "required": [
-                "device"
-            ],
-            "properties": {
-                "device": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            }
-        },
-        "options": {
-            "additionalProperties": false,
-            "required": [
-                "passphrase"
-            ],
-            "properties": {
-                "passphrase": {
-                    "description": "Passphrase to remove",
-                    "type": "string"
-                }
-            }
+  "summary": "Removes the supplied passphrase from the LUKS device.",
+  "description": [
+    "Buildhost commands used: `cryptsetup`."
+  ],
+  "schema_2": {
+    "devices": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "device"
+      ],
+      "properties": {
+        "device": {
+          "type": "object",
+          "additionalProperties": true
         }
+      }
+    },
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "passphrase"
+      ],
+      "properties": {
+        "passphrase": {
+          "description": "Passphrase to remove",
+          "type": "string"
+        }
+      }
     }
+  }
 }

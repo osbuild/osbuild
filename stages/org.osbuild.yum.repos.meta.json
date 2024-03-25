@@ -1,126 +1,126 @@
 {
-    "summary": "Create YUM / DNF repo file in /etc/yum.repos.d",
-    "description": [
-        "All repo-specific options, except the 'type' option, are supported. The 'type'",
-        "repo options is not supported, since it accepts only a single value, therefore",
-        "the ability to set it adds no value.",
-        "Only a subset of options which can be used in both, a repo or [main] section",
-        "configuration, is supported, specifically:",
-        "  - gpgcheck",
-        "  - repo_gpgcheck"
-    ],
-    "schema": {
-        "definitions": {
-            "repo": {
-                "type": "object",
-                "additionalProperties": false,
-                "oneOf": [
-                    {
-                        "required": [
-                            "id",
-                            "baseurl"
-                        ]
-                    },
-                    {
-                        "required": [
-                            "id",
-                            "metalink"
-                        ]
-                    },
-                    {
-                        "required": [
-                            "id",
-                            "mirrorlist"
-                        ]
-                    }
-                ],
-                "description": "YUM / DNF repo definition.",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Repository ID.",
-                        "pattern": "^[\\w.\\-:]+$"
-                    },
-                    "baseurl": {
-                        "type": "array",
-                        "description": "List of URLs for the repository.",
-                        "minItems": 1,
-                        "items": {
-                            "type": "string",
-                            "minLength": 1
-                        }
-                    },
-                    "cost": {
-                        "type": "integer",
-                        "description": "The  relative  cost of accessing this repository, defaulting to 1000."
-                    },
-                    "enabled": {
-                        "type": "boolean",
-                        "description": "Include this repository as a package source."
-                    },
-                    "gpgkey": {
-                        "type": "array",
-                        "description": "URLs of a GPG key files that can be used for signing metadata and packages of this repository.",
-                        "minItems": 1,
-                        "items": {
-                            "type": "string",
-                            "minLength": 1
-                        }
-                    },
-                    "metalink": {
-                        "type": "string",
-                        "description": "URL of a metalink for the repository.",
-                        "minLength": 1
-                    },
-                    "mirrorlist": {
-                        "type": "string",
-                        "description": "URL of a mirrorlist for the repository.",
-                        "minLength": 1
-                    },
-                    "module_hotfixes": {
-                        "type": "boolean",
-                        "description": "Set this to True to disable module RPM filtering and make all RPMs from the repository available."
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "A human-readable name of the repository. Defaults to the ID of the repository.",
-                        "minLength": 1
-                    },
-                    "priority": {
-                        "type": "integer",
-                        "description": "The priority value of this repository."
-                    },
-                    "gpgcheck": {
-                        "type": "boolean",
-                        "description": "Whether to perform GPG signature check on packages found in this repository."
-                    },
-                    "repo_gpgcheck": {
-                        "type": "boolean",
-                        "description": "Whether to perform GPG signature check on this repository's metadata."
-                    },
-                    "sslverify": {
-                        "type": "boolean",
-                        "description": "Whether to verify SSL certificates on SSL connections."
-                    }
-                }
-            }
-        },
+  "summary": "Create YUM / DNF repo file in /etc/yum.repos.d",
+  "description": [
+    "All repo-specific options, except the 'type' option, are supported. The 'type'",
+    "repo options is not supported, since it accepts only a single value, therefore",
+    "the ability to set it adds no value.",
+    "Only a subset of options which can be used in both, a repo or [main] section",
+    "configuration, is supported, specifically:",
+    "  - gpgcheck",
+    "  - repo_gpgcheck"
+  ],
+  "schema": {
+    "definitions": {
+      "repo": {
+        "type": "object",
         "additionalProperties": false,
-        "description": "YUM / DNF repo file configuration.",
+        "oneOf": [
+          {
+            "required": [
+              "id",
+              "baseurl"
+            ]
+          },
+          {
+            "required": [
+              "id",
+              "metalink"
+            ]
+          },
+          {
+            "required": [
+              "id",
+              "mirrorlist"
+            ]
+          }
+        ],
+        "description": "YUM / DNF repo definition.",
         "properties": {
-            "filename": {
-                "type": "string",
-                "pattern": "^[\\w.-]{1,250}\\.repo$",
-                "description": "Repo file name."
-            },
-            "repos": {
-                "type": "array",
-                "description": "YUM / DNF repo definitions.",
-                "minItems": 1,
-                "items": {
-                    "$ref": "#/definitions/repo"
-                }
+          "id": {
+            "type": "string",
+            "description": "Repository ID.",
+            "pattern": "^[\\w.\\-:]+$"
+          },
+          "baseurl": {
+            "type": "array",
+            "description": "List of URLs for the repository.",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
             }
+          },
+          "cost": {
+            "type": "integer",
+            "description": "The  relative  cost of accessing this repository, defaulting to 1000."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Include this repository as a package source."
+          },
+          "gpgkey": {
+            "type": "array",
+            "description": "URLs of a GPG key files that can be used for signing metadata and packages of this repository.",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "metalink": {
+            "type": "string",
+            "description": "URL of a metalink for the repository.",
+            "minLength": 1
+          },
+          "mirrorlist": {
+            "type": "string",
+            "description": "URL of a mirrorlist for the repository.",
+            "minLength": 1
+          },
+          "module_hotfixes": {
+            "type": "boolean",
+            "description": "Set this to True to disable module RPM filtering and make all RPMs from the repository available."
+          },
+          "name": {
+            "type": "string",
+            "description": "A human-readable name of the repository. Defaults to the ID of the repository.",
+            "minLength": 1
+          },
+          "priority": {
+            "type": "integer",
+            "description": "The priority value of this repository."
+          },
+          "gpgcheck": {
+            "type": "boolean",
+            "description": "Whether to perform GPG signature check on packages found in this repository."
+          },
+          "repo_gpgcheck": {
+            "type": "boolean",
+            "description": "Whether to perform GPG signature check on this repository's metadata."
+          },
+          "sslverify": {
+            "type": "boolean",
+            "description": "Whether to verify SSL certificates on SSL connections."
+          }
         }
+      }
+    },
+    "additionalProperties": false,
+    "description": "YUM / DNF repo file configuration.",
+    "properties": {
+      "filename": {
+        "type": "string",
+        "pattern": "^[\\w.-]{1,250}\\.repo$",
+        "description": "Repo file name."
+      },
+      "repos": {
+        "type": "array",
+        "description": "YUM / DNF repo definitions.",
+        "minItems": 1,
+        "items": {
+          "$ref": "#/definitions/repo"
+        }
+      }
     }
+  }
 }

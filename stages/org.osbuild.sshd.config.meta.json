@@ -1,50 +1,50 @@
 {
-    "summary": "Configure the SSH daemon.",
-    "description": [
-        "The tree must already include /etc/ssh/sshd_config, and it is modified",
-        "in place. Every attempt is made to preserve the structure of the file,",
-        "though comments are completely ignored."
+  "summary": "Configure the SSH daemon.",
+  "description": [
+    "The tree must already include /etc/ssh/sshd_config, and it is modified",
+    "in place. Every attempt is made to preserve the structure of the file,",
+    "though comments are completely ignored."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "config"
     ],
-    "schema": {
+    "properties": {
+      "config": {
         "additionalProperties": false,
-        "required": [
-            "config"
-        ],
+        "description": "SSHD config options",
+        "type": "object",
         "properties": {
-            "config": {
-                "additionalProperties": false,
-                "description": "SSHD config options",
-                "type": "object",
-                "properties": {
-                    "PasswordAuthentication": {
-                        "description": "Enable or disable password authentication.",
-                        "type": "boolean"
-                    },
-                    "ChallengeResponseAuthentication": {
-                        "description": "Enable or disable challenge/response authentication.",
-                        "type": "boolean"
-                    },
-                    "ClientAliveInterval": {
-                        "description": "Number of seconds between keep-alive pings. 0 disables it.",
-                        "type": "integer"
-                    },
-                    "PermitRootLogin": {
-                        "description": "Specifies whether root can log in using ssh.",
-                        "oneOf": [
-                            {
-                                "enum": [
-                                    "prohibit-password",
-                                    "forced-commands-only"
-                                ],
-                                "type": "string"
-                            },
-                            {
-                                "type": "boolean"
-                            }
-                        ]
-                    }
-                }
-            }
+          "PasswordAuthentication": {
+            "description": "Enable or disable password authentication.",
+            "type": "boolean"
+          },
+          "ChallengeResponseAuthentication": {
+            "description": "Enable or disable challenge/response authentication.",
+            "type": "boolean"
+          },
+          "ClientAliveInterval": {
+            "description": "Number of seconds between keep-alive pings. 0 disables it.",
+            "type": "integer"
+          },
+          "PermitRootLogin": {
+            "description": "Specifies whether root can log in using ssh.",
+            "oneOf": [
+              {
+                "enum": [
+                  "prohibit-password",
+                  "forced-commands-only"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
         }
+      }
     }
+  }
 }

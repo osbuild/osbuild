@@ -1,100 +1,100 @@
 {
-    "summary": "Execute oscap remediation",
-    "description": [
-        "The OpenSCAP scanner can be run on the image tree and the remediation can be carried",
-        "out during build time. The stage takes the OpenSCAP config as input and then runs the",
-        "the utility in chroot to scan and remediate [1] the tree during image at build time.",
-        "The stage generates an html report and xml results file both saved to the `data_dir`",
-        "directory. It defaults to `/root` if not configured.",
-        "[1] https://github.com/OpenSCAP/openscap/blob/maint-1.3/docs/manual/manual.adoc#remediating-system",
-        "Buildhost commands used: `chroot`, `xz`."
+  "summary": "Execute oscap remediation",
+  "description": [
+    "The OpenSCAP scanner can be run on the image tree and the remediation can be carried",
+    "out during build time. The stage takes the OpenSCAP config as input and then runs the",
+    "the utility in chroot to scan and remediate [1] the tree during image at build time.",
+    "The stage generates an html report and xml results file both saved to the `data_dir`",
+    "directory. It defaults to `/root` if not configured.",
+    "[1] https://github.com/OpenSCAP/openscap/blob/maint-1.3/docs/manual/manual.adoc#remediating-system",
+    "Buildhost commands used: `chroot`, `xz`."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "config"
     ],
-    "schema": {
+    "properties": {
+      "data_dir": {
+        "type": "string",
+        "default": "/root",
+        "description": "Path to directory where OpenSCAP reports and results should be saved"
+      },
+      "config": {
         "additionalProperties": false,
         "required": [
-            "config"
+          "profile_id",
+          "datastream"
         ],
+        "type": "object",
+        "description": "OpenSCAP configuration variables",
         "properties": {
-            "data_dir": {
-                "type": "string",
-                "default": "/root",
-                "description": "Path to directory where OpenSCAP reports and results should be saved"
-            },
-            "config": {
-                "additionalProperties": false,
-                "required": [
-                    "profile_id",
-                    "datastream"
-                ],
-                "type": "object",
-                "description": "OpenSCAP configuration variables",
-                "properties": {
-                    "profile_id": {
-                        "type": "string",
-                        "description": "The SCAP (XCCDF) profile id"
-                    },
-                    "datastream": {
-                        "type": "string",
-                        "description": "The path to the data stream file"
-                    },
-                    "datastream_id": {
-                        "type": "string",
-                        "description": "The data stream id"
-                    },
-                    "xccdf_id": {
-                        "type": "string",
-                        "description": "The XCCDF id"
-                    },
-                    "benchmark_id": {
-                        "type": "string",
-                        "description": "The benchmark id"
-                    },
-                    "tailoring": {
-                        "type": "string",
-                        "description": "The path to the custom tailoring file"
-                    },
-                    "tailoring_id": {
-                        "type": "string",
-                        "description": "The tailoring id"
-                    },
-                    "arf_results": {
-                        "type": "string",
-                        "description": "Filename for storing the ARF results file"
-                    },
-                    "xml_results": {
-                        "type": "string",
-                        "description": "Filename for storing the ARF results file (synonym for arf_results)"
-                    },
-                    "xccdf_results": {
-                        "type": "string",
-                        "default": "oscap_eval_xccdf_results.xml",
-                        "description": "Filename for storing the XCCDF results file"
-                    },
-                    "html_report": {
-                        "type": "string",
-                        "description": "Filename for saving the final HTML report"
-                    },
-                    "verbose_log": {
-                        "type": "string",
-                        "description": "Filename for verbose error messages"
-                    },
-                    "verbose_level": {
-                        "type": "string",
-                        "enum": [
-                            "DEVEL",
-                            "INFO",
-                            "WARNING",
-                            "ERROR"
-                        ],
-                        "description": "The verbosity level for the log messages"
-                    },
-                    "compress_results": {
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Compress ARF and XCCDF results file(s) with xz"
-                    }
-                }
-            }
+          "profile_id": {
+            "type": "string",
+            "description": "The SCAP (XCCDF) profile id"
+          },
+          "datastream": {
+            "type": "string",
+            "description": "The path to the data stream file"
+          },
+          "datastream_id": {
+            "type": "string",
+            "description": "The data stream id"
+          },
+          "xccdf_id": {
+            "type": "string",
+            "description": "The XCCDF id"
+          },
+          "benchmark_id": {
+            "type": "string",
+            "description": "The benchmark id"
+          },
+          "tailoring": {
+            "type": "string",
+            "description": "The path to the custom tailoring file"
+          },
+          "tailoring_id": {
+            "type": "string",
+            "description": "The tailoring id"
+          },
+          "arf_results": {
+            "type": "string",
+            "description": "Filename for storing the ARF results file"
+          },
+          "xml_results": {
+            "type": "string",
+            "description": "Filename for storing the ARF results file (synonym for arf_results)"
+          },
+          "xccdf_results": {
+            "type": "string",
+            "default": "oscap_eval_xccdf_results.xml",
+            "description": "Filename for storing the XCCDF results file"
+          },
+          "html_report": {
+            "type": "string",
+            "description": "Filename for saving the final HTML report"
+          },
+          "verbose_log": {
+            "type": "string",
+            "description": "Filename for verbose error messages"
+          },
+          "verbose_level": {
+            "type": "string",
+            "enum": [
+              "DEVEL",
+              "INFO",
+              "WARNING",
+              "ERROR"
+            ],
+            "description": "The verbosity level for the log messages"
+          },
+          "compress_results": {
+            "type": "boolean",
+            "default": false,
+            "description": "Compress ARF and XCCDF results file(s) with xz"
+          }
         }
+      }
     }
+  }
 }
