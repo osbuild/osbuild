@@ -22,7 +22,9 @@ def main(tree, options):
         unit_dropins_dir = f"{tree}/usr/lib/systemd/user/{unit}.d"
     os.makedirs(unit_dropins_dir, exist_ok=True)
 
-    config = configparser.ConfigParser()
+    # We trick configparser into letting us write multiple instances of the same option by writing them as keys with no
+    # value, so we enable allow_no_value
+    config = configparser.ConfigParser(allow_no_value=True)
     # prevent conversion of the option name to lowercase
     config.optionxform = lambda option: option
 
@@ -30,7 +32,15 @@ def main(tree, options):
         if not config.has_section(section):
             config.add_section(section)
         for option, value in opts.items():
-            config.set(section, option, str(value))
+            if isinstance(value, list):
+                for v in value:
+                    if option == "Environment":
+                        # Environment arrays are objects
+                        # Option value becomes "KEY=VALUE" (quoted)
+                        v = '"' + v["key"] + "=" + str(v["value"]) + '"'
+                    config.set(section, str(option) + "=" + str(v))
+            else:
+                config.set(section, option, str(value))
 
     with open(f"{unit_dropins_dir}/{dropin_file}", "w", encoding="utf8") as f:
         config.write(f, space_around_delimiters=False)
