@@ -1,4 +1,3 @@
-import inspect
 import os
 import pathlib
 from types import ModuleType
@@ -28,14 +27,7 @@ def sources_service(sources_module) -> ModuleType:
     """sources_service is a fixture that imports a sources module by its name
     defined in SOURCES_NAME in the test module and returns a SourcesService
     """
-    service_cls = None
-    for memb in inspect.getmembers(
-            sources_module,
-            predicate=lambda obj: inspect.isclass(obj) and issubclass(
-                obj, sources.SourceService)):
-        if service_cls:
-            raise ValueError(f"already have {service_cls}, also found {memb}")
-        service_cls = memb[1]
+    service_cls = testutil.find_one_subclass_in_module(sources_module, sources.SourceService)
     fd = testutil.make_fake_service_fd()
-    services_obj = service_cls.from_args(["--service-fd", str(fd)])
-    return services_obj
+    srv_obj = service_cls.from_args(["--service-fd", str(fd)])
+    return srv_obj
