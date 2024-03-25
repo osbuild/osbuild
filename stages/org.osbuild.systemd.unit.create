@@ -13,6 +13,9 @@ def main(tree, options):
         raise ValueError(f"Error: the {filename} service exceeds the maximum filename length.")
 
     cfg = options["config"]
+
+    # We trick configparser into letting us write multiple instances of the same option by writing them as keys with no
+    # value, so we enable allow_no_value
     config = configparser.ConfigParser(allow_no_value=True)
     # prevent conversion of the option name to lowercase
     config.optionxform = lambda option: option
