@@ -1,5 +1,9 @@
 {
-  "added_files": ["/etc/.pwd.lock", "/etc/group-", "/etc/gshadow-"],
+  "added_files": [
+    "/etc/.pwd.lock",
+    "/etc/group-",
+    "/etc/gshadow-"
+  ],
   "deleted_files": [],
   "differences": {
     "/etc/group": {

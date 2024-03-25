@@ -1,5 +1,7 @@
 {
-  "added_files": [ "/etc/zipl.conf" ],
+  "added_files": [
+    "/etc/zipl.conf"
+  ],
   "deleted_files": [],
   "differences": {}
 }

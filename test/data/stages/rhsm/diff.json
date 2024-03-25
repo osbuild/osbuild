@@ -12,8 +12,8 @@
       "content": [
         "sha256:84c1c0c956a492cadbfd2cec581ef678c190e3e245f0d61665eb0f66b8b34fd6",
         "sha256:f57b424b10afd7ef2d3e14e1fbe7871d51b5ece812d63f223d51210d822cef8f"
-          ]
-      },
+      ]
+    },
     "/etc/rhsm/rhsm.conf": {
       "content": [
         "sha256:57e2bee5a30283ee95f3da2d5945f1d5852f1a4ed6900d22afd8f6a5ee5e5a11",

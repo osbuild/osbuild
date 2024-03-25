@@ -1,6 +1,6 @@
 {
   "expects": "success",
   "org.osbuild.curl": {
-      "items": {}
+    "items": {}
   }
 }

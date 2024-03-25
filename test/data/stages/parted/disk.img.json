@@ -1,15 +1,39 @@
 {
-   "partitiontable": {
-      "label":"gpt",
-      "unit":"sectors",
-      "firstlba":34,
-      "lastlba":20971486,
-      "sectorsize":512,
-      "partitions": [
-         {"node":"disk.img1", "start":2048, "size":1024000, "type":"C12A7328-F81F-11D2-BA4B-00A0C93EC93B", "name":"EFI System Partition"},
-         {"node":"disk.img2", "start":1026048, "size":1024000, "type":"0FC63DAF-8483-4772-8E79-3D69D8477DE4", "name":"boot"},
-         {"node":"disk.img3", "start":2050048, "size":4096, "type":"21686148-6449-6E6F-744E-656564454649", "name":"BIOS boot"},
-         {"node":"disk.img4", "start":2054144, "size":18917343, "type":"E6D6D379-F507-44C2-A23C-238F2A3DF928", "name":"LVM"}
-      ]
-   }
+  "partitiontable": {
+    "label": "gpt",
+    "unit": "sectors",
+    "firstlba": 34,
+    "lastlba": 20971486,
+    "sectorsize": 512,
+    "partitions": [
+      {
+        "node": "disk.img1",
+        "start": 2048,
+        "size": 1024000,
+        "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+        "name": "EFI System Partition"
+      },
+      {
+        "node": "disk.img2",
+        "start": 1026048,
+        "size": 1024000,
+        "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+        "name": "boot"
+      },
+      {
+        "node": "disk.img3",
+        "start": 2050048,
+        "size": 4096,
+        "type": "21686148-6449-6E6F-744E-656564454649",
+        "name": "BIOS boot"
+      },
+      {
+        "node": "disk.img4",
+        "start": 2054144,
+        "size": 18917343,
+        "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
+        "name": "LVM"
+      }
+    ]
+  }
 }

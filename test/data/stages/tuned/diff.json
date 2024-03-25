@@ -3,12 +3,16 @@
   "deleted_files": [],
   "differences": {
     "/etc/tuned/active_profile": {
-      "content": ["sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                  "sha256:2ca746dd0d43746fcb08fc6b215f98d7d8c1a95dceb4495608962df2697f621e"]
+      "content": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:2ca746dd0d43746fcb08fc6b215f98d7d8c1a95dceb4495608962df2697f621e"
+      ]
     },
     "/etc/tuned/profile_mode": {
-      "content": ["sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                  "sha256:cd60ed2fa8c947cb05cb57b23884dea9390e4b6aec0add666e69bf842fc68da0"]
+      "content": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:cd60ed2fa8c947cb05cb57b23884dea9390e4b6aec0add666e69bf842fc68da0"
+      ]
     }
   }
 }
