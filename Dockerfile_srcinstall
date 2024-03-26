@@ -1,0 +1,14 @@
+FROM fedora:39
+
+RUN mkdir /rpms
+
+RUN dnf install -y bubblewrap skopeo lvm2 rpm-ostree cryptsetup selinux-policy-targeted qemu-img e2fsprogs \
+                    python3-pyyaml python3-typer python3-attrs python3-tomli \
+                    policycoreutils-python-utils python3-rich python3-jsonschema
+
+# uses the "devel" versions
+COPY rpmbuild/RPMS/*.rpm /rpms/
+
+RUN rpm -i /rpms/*.rpm
+
+CMD /usr/bin/osbuild --version

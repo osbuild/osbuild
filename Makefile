@@ -50,6 +50,28 @@ SHELL = /bin/bash
 VERSION := $(shell (cd "$(SRCDIR)" && python3 setup.py --version))
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
 
+# List of all files which trigger a rebuild of the
+# development targets and container
+
+# Directories to search
+SRC_DEPS_DIRS := assemblers devices inputs mounts osbuild runners sources stages tools
+
+# Function to search for Python files in a directory
+define find_python_files
+$(shell find $(1) -type f -exec file {} \; | grep "Python script" | grep -Eo "^[^:]+")
+endef
+
+# All files to check for rebuild!
+SRC_DEPS := $(shell find . -name "*.py") \
+       $(foreach dir,$(SRC_DEPS_DIRS),$(call find_python_files,$(dir)))
+
+# either "docker" or "sudo podman"
+# podman needs to build as root as it also needs to run as root afterwards
+CONTAINER_EXECUTABLE ?= sudo podman
+DOCKER_IMAGE := osbuild_devel
+DOCKERFILE := Dockerfile_srcinstall
+
+
 #
 # Generic Targets
 #
@@ -84,6 +106,12 @@ help:
 	@echo
 	@echo "    help:               Print this usage information."
 	@echo "    man:                Generate all man-pages"
+	@echo
+	@echo "    rpm:                Generate the rpm to install osbuild"
+	@echo "    srpm:               Generate the source rpms"
+	@echo "    rpm-devel:          Generate development rpms without checking consistency"
+	@echo "    container:          Generate a development container with osbuild"
+	@echo "                        from the current sources"
 	@echo
 	@echo "    lint:               Check the code with linter (tox)"
 	@echo "    lint-quick:         Check the code with fast linters only (local)"
@@ -289,14 +317,29 @@ git-diff-check:
 
 RPM_SPECFILE=rpmbuild/SPECS/osbuild-$(COMMIT).spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-$(COMMIT).tar.gz
+RPM_SPECFILE_DEVEL=rpmbuild/SPECS/osbuild-SRC.spec
+RPM_TARBALL_DEVEL=rpmbuild/SOURCES/osbuild-SRC.tar.gz
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
 	(echo "%global commit $(COMMIT)"; git show HEAD:osbuild.spec) > $(RPM_SPECFILE)
 
+$(RPM_SPECFILE_DEVEL): osbuild.spec
+	mkdir -p $(CURDIR)/rpmbuild/SPECS
+	echo "%global commit SRC" > $@
+	echo "%define _rpmfilename %%{NAME}.rpm" >> $@
+	echo "%global source_date_epoch_from_changelog 1" >> $@
+	echo "%global clamp_mtime_to_source_date_epoch 1" >> $@
+	cat $< >> $@
+
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
 	git archive --prefix=osbuild-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+
+$(RPM_TARBALL_DEVEL): $(SRC_DEPS)
+	mkdir -p $(CURDIR)/rpmbuild/SOURCES
+	# using "--dereference" to workaround that "--transform" break symbolic links without it
+	git ls-files -z | xargs -0 tar -czvf $@ --dereference --transform="s|^|osbuild-SRC/|"
 
 .PHONY: srpm
 srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
@@ -304,11 +347,28 @@ srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
 
-.PHONY: rpm
-rpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
+RPM_DEVEL_FILES := osbuild.rpm \
+                   osbuild-depsolve-dnf.rpm \
+                   osbuild-luks2.rpm \
+                   osbuild-ostree.rpm \
+                   osbuild-selinux.rpm \
+                   osbuild-tools.rpm \
+                   python3-osbuild.rpm
+
+RPM_DEVEL := $(addprefix rpmbuild/RPMS/,$(RPM_DEVEL_FILES))
+
+.PHONY: rpm-devel
+rpm-devel: $(RPM_DEVEL)
+
+$(RPM_DEVEL): $(RPM_SPECFILE_DEVEL) $(RPM_TARBALL_DEVEL) $(SRC_DEPS)
+	export SOURCE_DATE_EPOCH=$(shell stat -c %Y $(RPM_SPECFILE_DEVEL))
 	rpmbuild -bb \
-		--define "_topdir $(CURDIR)/rpmbuild" \
-		$(RPM_SPECFILE)
+    		--define "_topdir $(CURDIR)/rpmbuild" \
+    		$(RPM_SPECFILE_DEVEL)
+
+.PHONY: rpm
+rpm: git-diff-check rpm-devel
+	@echo "RPM built"
 
 #
 # Releasing
@@ -326,3 +386,15 @@ bump-version:
 .PHONY: format
 format:
 	autopep8 --in-place --max-line-length 120 -a -a -a -j0 -r .
+
+clean:
+	rm -rf rpmbuild
+	rm -f container_built.info
+
+container_built.info: $(DOCKERFILE) $(RPM_DEVEL)
+	$(CONTAINER_EXECUTABLE) build -t $(DOCKER_IMAGE) -f $(DOCKERFILE) .
+	echo "Container last built on" > $@
+	date >> $@
+
+.PHONY: container
+container: container_built.info

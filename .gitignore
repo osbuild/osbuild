@@ -23,3 +23,6 @@ venv
 .venv
 
 /.tox
+
+pkg
+container_built.info
