@@ -560,11 +560,17 @@ class EmbeddedFile:
 
 
 class PkgInfo:
-    def __init__(self, checksum, name, evr, arch):
+    def __init__(self, checksum, name, evr, arch, license_tag=None,
+                 summary=None, sourcerpm=None, buildtime=None, vendor=None):
         self.checksum = checksum
         self.name = name
         self.evr = evr
         self.arch = arch
+        self.license_tag = license_tag
+        self.summary = summary
+        self.sourcerpm = sourcerpm
+        self.buildtime = buildtime
+        self.vendor = vendor
         self.url = None
         self.secrets = None
 
@@ -575,7 +581,8 @@ class PkgInfo:
 
         checksum = f"{checksum_type}:{checksum_hex}"
 
-        return cls(checksum, pkg.name, pkg.evr, pkg.arch)
+        return cls(checksum, pkg.name, pkg.evr, pkg.arch, pkg.license,
+                   pkg.summary, pkg.sourcerpm, pkg.buildtime, pkg.vendor)
 
     @property
     def evra(self):
@@ -642,6 +649,11 @@ LocalFileSigLevel = Optional
                 pkg["name"],
                 pkg["version"],
                 pkgdata["Architecture"],
+                pkgdata.get("Licenses"),
+                pkgdata.get("Description"),
+                pkgdata.get("sourcerpm"),
+                pkgdata.get("Build Date "),
+                pkgdata.get("vendor"),
             )
             p.url = pkg["url"]
             packages.append(p)
