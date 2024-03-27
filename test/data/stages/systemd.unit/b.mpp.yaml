@@ -45,3 +45,14 @@ pipelines:
           config:
             Unit:
               ConditionPathExists: /usr/lib/greenboot/greenboot
+      - type: org.osbuild.systemd.unit
+        options:
+          unit: boltd.service
+          dropin: 30-boltd-debug.conf
+          config:
+            Service:
+              Environment:
+                - key: "G_MESSAGES_DEBUG"
+                  value: "all"
+                - key: "G_MESSAGES_TRACE"
+                  value: "none"
