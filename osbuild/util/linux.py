@@ -446,6 +446,11 @@ class Libc:
     UTIME_NOW = ctypes.c_long(((1 << 30) - 1))
     UTIME_OMIT = ctypes.c_long(((1 << 30) - 2))
 
+    # from <linux/mount.h>
+    MS_BIND = ctypes.c_ulong(4096)
+    MS_PRIVATE = ctypes.c_ulong((1 << 18))
+    MS_REC = ctypes.c_ulong(16384)
+
     _lock = threading.Lock()
     _inst = None
 
@@ -490,6 +495,44 @@ class Libc:
         setattr(proto, "errcheck", self._errcheck_errno)
         setattr(proto, "__name__", "futimens")
         self.futimens = proto
+        # prototype: mount
+        proto_mount = ctypes.CFUNCTYPE(
+            ctypes.c_int,  # restype (return type)
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_ulong,
+            ctypes.c_char_p,
+            use_errno=True,
+        )(
+            ("mount", self._lib),
+            (
+                (1, "source"),
+                (1, "target"),
+                (1, "fstype"),
+                (1, "flags"),
+                (1, "options", None),
+            ),
+        )
+        setattr(proto_mount, "errcheck", self._errcheck_errno)
+        setattr(proto_mount, "__name__", "mount")
+        self.mount = proto_mount
+        # prototype: umount2
+        proto_umount2 = ctypes.CFUNCTYPE(
+            ctypes.c_int,  # restype (return type)
+            ctypes.c_char_p,
+            ctypes.c_int,
+            use_errno=True,
+        )(
+            ("umount2", self._lib),
+            (
+                (1, "target"),
+                (1, "flags"),
+            ),
+        )
+        setattr(proto_mount, "errcheck", self._errcheck_errno)
+        setattr(proto_mount, "__name__", "umount2")
+        self.umount2 = proto_umount2
 
     @staticmethod
     def make() -> "Libc":
