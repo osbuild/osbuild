@@ -116,20 +116,14 @@ def containers_storage_source(image, image_filepath, container_format):
     storage_conf = image["data"]["storage"]
     driver = storage_conf.get("driver", "overlay")
 
-    # use `/run/osbuild/containers/storage` for the containers-storage bind mount
-    # since this ostree-compatible and the stage that uses this will be run
-    # inside a ostree-based build-root in `bootc-image-builder`
-    storage_path = os.path.join(os.sep, "run", "osbuild", "containers", "storage")
+    # use `/containers/storage` for the containers-storage bind mount
+    storage_path = os.path.join(os.sep, "containers", "storage")
     os.makedirs(storage_path, exist_ok=True)
 
     with MountGuard() as mg:
-        mg.mount(image_filepath, storage_path, permissions=MountPermissions.READ_WRITE)
         # NOTE: the ostree.deploy.container needs explicit `rw` access to
-        # the containers-storage store even when bind mounted. Remounting
-        # the bind mount is a pretty dirty fix to get us up and running with
-        # containers-storage in `bootc-image-builder`. We could maybe check
-        # if we're inside a bib-continaer and only run this conidtionally.
-        mg.mount(image_filepath, storage_path, remount=True, permissions=MountPermissions.READ_WRITE)
+        # the containers-storage store even when bind mounted.
+        mg.mount(image_filepath, storage_path, permissions=MountPermissions.READ_WRITE)
 
         image_id = image["checksum"].split(":")[1]
         image_source = f"{container_format}:[{driver}@{storage_path}+/run/containers/storage]{image_id}"
