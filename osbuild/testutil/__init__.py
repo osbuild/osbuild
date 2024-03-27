@@ -2,13 +2,17 @@
 Test related utilities
 """
 import contextlib
+import inspect
 import os
 import pathlib
 import re
 import shutil
+import socket
 import subprocess
 import tempfile
 import textwrap
+from types import ModuleType
+from typing import Type
 
 
 def has_executable(executable: str) -> bool:
@@ -155,3 +159,30 @@ def pull_oci_archive_container(archive_path, image_name):
         yield
     finally:
         subprocess.check_call(["skopeo", "delete", f"containers-storage:{image_name}"])
+
+
+def make_fake_service_fd() -> int:
+    """Create a file descriptor suitable as input for --service-fd for any
+    host.Service
+
+    Note that the service will take over the fd and take care of the
+    lifecycle so no need to close it.
+    """
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+    fd = os.dup(sock.fileno())
+    return fd
+
+
+def find_one_subclass_in_module(module: ModuleType, subclass: Type) -> object:
+    """Find the class in the given module that is a subclass of the given input
+
+    If multiple classes are found an error is raised.
+    """
+    cls = None
+    for name, memb in inspect.getmembers(
+            module,
+            predicate=lambda obj: inspect.isclass(obj) and issubclass(obj, subclass)):
+        if cls:
+            raise ValueError(f"already have {cls}, also found {name}:{memb}")
+        cls = memb
+    return cls
