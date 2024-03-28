@@ -13,6 +13,7 @@ import sys
 import tempfile
 import traceback
 from datetime import datetime
+from typing import List
 
 import libdnf5 as dnf5
 from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
@@ -85,7 +86,7 @@ class Solver():
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, repos, module_platform_id, persistdir, cachedir, arch, exclude_pkgs=None):
+    def __init__(self, repos, repos_dir, module_platform_id, persistdir, cachedir, arch, exclude_pkgs=None):
         if not exclude_pkgs:
             exclude_pkgs = []
 
@@ -139,6 +140,8 @@ class Solver():
             for repo in repos:
                 self._dnfrepo(repo, exclude_pkgs)
 
+            if repos_dir:
+                self.base.get_repo_sack().create_repos_from_dir(repos_dir)
             self.base.get_repo_sack().update_and_load_enabled_repos(load_system=False)
         except RuntimeError as e:
             raise RepoError(e) from e
@@ -305,7 +308,7 @@ class Solver():
     def depsolve(self, transactions):
         """depsolve returns a list of the dependencies for the set of transactions
         """
-        last_transaction = []
+        last_transaction: List = []
 
         for transaction in transactions:
             goal = dnf5.base.Goal(self.base)
@@ -345,6 +348,7 @@ class Solver():
 
         dependencies = []
         for package in last_transaction:
+            pkg_repo_cfg = package.get_repo().get_config()
             dependencies.append({
                 "name": package.get_name(),
                 "epoch": int(package.get_epoch()),
@@ -354,10 +358,12 @@ class Solver():
                 "repo_id": package.get_repo_id(),
                 "path": package.get_location(),
                 "remote_location": remote_location(package),
-                "checksum": (
-                    f"{package.get_checksum().get_type_str()}:"
-                    f"{package.get_checksum().get_checksum()}"
-                )
+                "checksum": f"{package.get_checksum().get_type_str()}:{package.get_checksum().get_checksum()}",
+                "sslverify": pkg_repo_cfg.get_sslverify_option().get_value(),
+                "gpgcheck": pkg_repo_cfg.get_gpgcheck_option().get_value(),
+                "sslclientkey": pkg_repo_cfg.get_sslclientkey_option().get_value(),
+                "sslclientcert": pkg_repo_cfg.get_sslclientcert_option().get_value(),
+                "sslcacert": pkg_repo_cfg.get_sslcacert_option().get_value(),
             })
 
         return sorted(dependencies, key=lambda x: x["path"])
@@ -396,7 +402,8 @@ def solve(request, cache_dir):
     with tempfile.TemporaryDirectory() as persistdir:
         try:
             solver = Solver(
-                arguments["repos"],
+                arguments.get("repos", []),
+                arguments.get("repos_dir"),
                 module_platform_id,
                 persistdir,
                 cache_dir,
@@ -472,10 +479,10 @@ def validate_request(request):
             "reason": "empty 'arguments'"
         }
 
-    if not arguments.get("repos"):
+    if not arguments.get("repos") and not arguments.get("repos_dir"):
         return {
             "kind": "InvalidRequest",
-            "reason": "no 'repos' specified"
+            "reason": "no 'repos' or 'repos_dir' specified"
         }
 
     return None
