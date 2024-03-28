@@ -344,6 +344,7 @@ def respond(result):
     print(json.dumps(result))
 
 
+# pylint: disable=too-many-return-statements
 def validate_request(request):
     command = request.get("command")
     valid_cmds = ("depsolve", "dump", "search")
@@ -364,6 +365,7 @@ def validate_request(request):
             "kind": "InvalidRequest",
             "reason": "no 'module_platform_id' specified"
         }
+
     arguments = request.get("arguments")
     if not arguments:
         return {
@@ -371,10 +373,20 @@ def validate_request(request):
             "reason": "empty 'arguments'"
         }
 
-    if not arguments.get("repos") and not arguments.get("repos_dir"):
+    if not arguments.get("repos") and not arguments.get("root_dir"):
         return {
             "kind": "InvalidRequest",
-            "reason": "no 'repos' or 'repos_dir' specified"
+            "reason": "no 'repos' or 'root_dir' specified"
+        }
+
+    # if root_dir is used, we also need releasever
+    # pylint: disable=fixme
+    # TODO: Make releasever mandatory in all cases.
+    # We temporarily keep it tied to root_dir for short-term backwards compatibility
+    if arguments.get("root_dir") and not request.get("releasever"):
+        return {
+            "kind": "InvalidRequest",
+            "reason": "'root_dir' requires setting 'releasever'"
         }
 
     return None
