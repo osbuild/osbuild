@@ -18,14 +18,15 @@ def has_dnf5():
     return bool(importlib.util.find_spec("libdnf5"))
 
 
-def depsolve(pkgs, repos, repos_dir, cache_dir, command):
+def depsolve(pkgs, repos, root_dir, cache_dir, command):
     req = {
         "command": "depsolve",
         "arch": "x86_64",
         "module_platform_id": "platform:el9",
+        "releasever": "9",
         "cachedir": cache_dir,
         "arguments": {
-            "repos_dir": repos_dir,
+            "root_dir": root_dir,
             "repos": repos,
             "transactions": [
                 {"package-specs": pkgs},
@@ -180,8 +181,10 @@ def config_combos(servers):
                 "ignoressl": True,
                 "rhsm": False,
             })
-        with TemporaryDirectory() as repos_dir:
-            for idx in combo[1]:  # servers to be configured through repos_dir
+        with TemporaryDirectory() as root_dir:
+            repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
+            os.makedirs(repos_dir)
+            for idx in combo[1]:  # servers to be configured through root_dir
                 server = servers[idx]
                 parser = configparser.ConfigParser()
                 name = server["name"]
@@ -197,7 +200,7 @@ def config_combos(servers):
                 with open(f"{repos_dir}/{name}.repo", "w", encoding="utf-8") as repo_file:
                     parser.write(repo_file, space_around_delimiters=False)
 
-            yield repo_configs, repos_dir
+            yield repo_configs, root_dir
 
 
 @pytest.fixture(name="cache_dir", scope="session")
@@ -209,9 +212,9 @@ def cache_dir_fixture(tmpdir_factory):
 def test_depsolve(repo_servers, test_case, cache_dir):
     pks = test_case["packages"]
 
-    for repo_configs, repos_dir in config_combos(repo_servers):
-        res = depsolve(pks, repo_configs, repos_dir, cache_dir, "./tools/osbuild-depsolve-dnf")
-        assert {pkg["name"] for pkg in res} == test_case["results"]
+    for repo_configs, root_dir in config_combos(repo_servers):
+        res = depsolve(pks, repo_configs, root_dir, cache_dir, "./tools/osbuild-depsolve-dnf")
+        assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]
 
 
 @pytest.mark.skipif(not has_dnf5(), reason="libdnf5 not available")
