@@ -20,8 +20,15 @@ import hawkey
 
 class Solver():
 
-    # pylint: disable=too-many-arguments
-    def __init__(self, repos, repos_dir, module_platform_id, persistdir, cachedir, arch):
+    def __init__(self, request, persistdir, cache_dir):
+        arch = request["arch"]
+        releasever = request.get("releasever")
+        module_platform_id = request["module_platform_id"]
+
+        arguments = request["arguments"]
+        repos = arguments.get("repos", [])
+        root_dir = arguments.get("root_dir")
+
         self.base = dnf.Base()
 
         # Enable fastestmirror to ensure we choose the fastest mirrors for
@@ -49,14 +56,17 @@ class Solver():
         self.base.conf.module_platform_id = module_platform_id
         self.base.conf.config_file_path = "/dev/null"
         self.base.conf.persistdir = persistdir
-        self.base.conf.cachedir = cachedir
+        self.base.conf.cachedir = cache_dir
         self.base.conf.substitutions['arch'] = arch
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
+        if releasever:
+            self.base.conf.substitutions['releasever'] = releasever
 
         for repo in repos:
             self.base.repos.add(self._dnfrepo(repo, self.base.conf))
 
-        if repos_dir:
+        if root_dir:
+            repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
             self.base.conf.reposdir = repos_dir
             self.base.read_all_repos()
 
@@ -278,21 +288,12 @@ def setup_cachedir(request):
 
 def solve(request, cache_dir):
     command = request["command"]
-    arch = request["arch"]
-    module_platform_id = request["module_platform_id"]
     arguments = request["arguments"]
 
     transactions = arguments.get("transactions")
     with tempfile.TemporaryDirectory() as persistdir:
         try:
-            solver = Solver(
-                arguments.get("repos", []),
-                arguments.get("repos_dir"),
-                module_platform_id,
-                persistdir,
-                cache_dir,
-                arch
-            )
+            solver = Solver(request, persistdir, cache_dir)
             if command == "dump":
                 result = solver.dump()
             elif command == "depsolve":
