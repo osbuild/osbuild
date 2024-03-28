@@ -11,6 +11,9 @@ import json
 import os
 import sys
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime
 from typing import List
 
@@ -281,6 +284,7 @@ class Solver():
                 "mirrorlist": repo.mirrorlist,
                 "gpgcheck": repo.gpgcheck,
                 "check_repogpg": repo.repo_gpgcheck,
+                "gpgkeys": read_keys(repo.gpgkey),
                 "ignoressl": not bool(repo.sslverify),
                 "sslcacert": repo.sslcacert,
                 "sslclientkey": repo.sslclientkey,
@@ -291,6 +295,32 @@ class Solver():
             "repos": repositories,
         }
         return response
+
+
+class GPGKeyReadError(Exception):
+    pass
+
+
+def read_keys(paths):
+    keys = []
+    for path in paths:
+        url = urllib.parse.urlparse(path)
+        if url.scheme == "file":
+            path = path.removeprefix("file://")
+            try:
+                with open(path, mode="r", encoding="utf-8") as keyfile:
+                    keys.append(keyfile.read())
+            except Exception as e:
+                raise GPGKeyReadError(f"error loading gpg key from {path}: {e}") from e
+        elif url.scheme in ["http", "https"]:
+            try:
+                resp = urllib.request.urlopen(urllib.request.Request(path))
+                keys.append(resp.read().decode())
+            except urllib.error.URLError as e:
+                raise GPGKeyReadError(f"error reading remote gpg key at {path}: {e}") from e
+        else:
+            raise GPGKeyReadError(f"unknown url scheme for gpg key: {url.scheme} ({path})")
+    return keys
 
 
 def setup_cachedir(request):
@@ -346,6 +376,12 @@ def solve(request, cache_dir):
             }
         except dnf.exceptions.Error as e:
             printe("error repository setup")
+            return None, {
+                "kind": type(e).__name__,
+                "reason": str(e)
+            }
+        except GPGKeyReadError as e:
+            printe("error reading gpgkey")
             return None, {
                 "kind": type(e).__name__,
                 "reason": str(e)
