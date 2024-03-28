@@ -110,6 +110,7 @@ def main(tree, options):
         shell = user_options.get("shell")
         password = user_options.get("password")
         expiredate = user_options.get("expiredate")
+        password_changed_date = user_options.get("password_changed_date")
 
         passwd = getpwnam(tree, name)
         if passwd is not None:
@@ -124,6 +125,9 @@ def main(tree, options):
             ensure_homedir(tree, name, home)
         else:
             useradd(tree, name, uid, gid, groups, description, home, shell, password, expiredate)
+
+        if password_changed_date is not None:
+            subprocess.run(["chroot", tree, "chage", "--lastday", str(password_changed_date), name], check=True)
 
         # following maintains backwards compatibility for handling a single ssh key
         key = user_options.get("key")   # Public SSH key

@@ -65,6 +65,10 @@
               "expiredate": {
                 "description": "The date on which the user account will be disabled. This date is represented as a number of days since January 1st, 1970.",
                 "type": "integer"
+              },
+              "password_changed_date": {
+                "description": "The number of days since January 1st, 1970 when the password was last changed. If set to 0 the user is forced to change their password on the next login.",
+                "type": "integer"
               }
             }
           }
