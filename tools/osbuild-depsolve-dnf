@@ -66,6 +66,10 @@ class Solver():
             self.base.repos.add(self._dnfrepo(repo, self.base.conf))
 
         if root_dir:
+            # This sets the varsdir to ("{root_dir}/etc/yum/vars/", "{root_dir}/etc/dnf/vars/") for custom variable
+            # substitution (e.g. CentOS Stream 9's $stream variable)
+            self.base.conf.substitutions.update_from_etc(root_dir)
+
             repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
             self.base.conf.reposdir = repos_dir
             self.base.read_all_repos()
