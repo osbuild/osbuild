@@ -11,6 +11,9 @@ import json
 import os
 import sys
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime
 from typing import List
 
@@ -223,7 +226,11 @@ class Solver():
                 })
         return packages
 
-    def depsolve(self, transactions):
+    def depsolve(self, arguments):
+        transactions = arguments.get("transactions", [])
+        # collect repo IDs from the request so we know whether to translate gpg key paths
+        request_repo_ids = set(repo["id"] for repo in arguments.get("repos", []))
+        root_dir = arguments.get("root_dir")
         last_transaction: List = []
 
         for transaction in transactions:
@@ -281,6 +288,7 @@ class Solver():
                 "mirrorlist": repo.mirrorlist,
                 "gpgcheck": repo.gpgcheck,
                 "check_repogpg": repo.repo_gpgcheck,
+                "gpgkeys": read_keys(repo.gpgkey, root_dir if repo.id not in request_repo_ids else None),
                 "ignoressl": not bool(repo.sslverify),
                 "sslcacert": repo.sslcacert,
                 "sslclientkey": repo.sslclientkey,
@@ -291,6 +299,40 @@ class Solver():
             "repos": repositories,
         }
         return response
+
+
+class GPGKeyReadError(Exception):
+    pass
+
+
+def modify_rootdir_path(path, root_dir):
+    if path and root_dir:
+        # if the root_dir is set, we need to translate the key path to be under this directory
+        return os.path.join(root_dir, path.lstrip("/"))
+    return path
+
+
+def read_keys(paths, root_dir=None):
+    keys = []
+    for path in paths:
+        url = urllib.parse.urlparse(path)
+        if url.scheme == "file":
+            path = path.removeprefix("file://")
+            path = modify_rootdir_path(path, root_dir)
+            try:
+                with open(path, mode="r", encoding="utf-8") as keyfile:
+                    keys.append(keyfile.read())
+            except Exception as e:
+                raise GPGKeyReadError(f"error loading gpg key from {path}: {e}") from e
+        elif url.scheme in ["http", "https"]:
+            try:
+                resp = urllib.request.urlopen(urllib.request.Request(path))
+                keys.append(resp.read().decode())
+            except urllib.error.URLError as e:
+                raise GPGKeyReadError(f"error reading remote gpg key at {path}: {e}") from e
+        else:
+            raise GPGKeyReadError(f"unknown url scheme for gpg key: {url.scheme} ({path})")
+    return keys
 
 
 def setup_cachedir(request):
@@ -312,14 +354,13 @@ def solve(request, cache_dir):
     command = request["command"]
     arguments = request["arguments"]
 
-    transactions = arguments.get("transactions")
     with tempfile.TemporaryDirectory() as persistdir:
         try:
             solver = Solver(request, persistdir, cache_dir)
             if command == "dump":
                 result = solver.dump()
             elif command == "depsolve":
-                result = solver.depsolve(transactions)
+                result = solver.depsolve(arguments)
             elif command == "search":
                 result = solver.search(arguments.get("search", {}))
 
@@ -333,7 +374,7 @@ def solve(request, cache_dir):
             printe("error depsolve")
             # collect list of packages for error
             pkgs = []
-            for t in transactions:
+            for t in arguments.get("transactions", []):
                 pkgs.extend(t["package-specs"])
             return None, {
                 "kind": "DepsolveError",
@@ -346,6 +387,12 @@ def solve(request, cache_dir):
             }
         except dnf.exceptions.Error as e:
             printe("error repository setup")
+            return None, {
+                "kind": type(e).__name__,
+                "reason": str(e)
+            }
+        except GPGKeyReadError as e:
+            printe("error reading gpgkey")
             return None, {
                 "kind": type(e).__name__,
                 "reason": str(e)
