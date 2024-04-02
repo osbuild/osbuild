@@ -2,32 +2,28 @@
 
 import contextlib
 import os
-import pathlib
-import tempfile
 
 import pytest
 
 SOURCES_NAME = "org.osbuild.curl"
 
 
-def test_curl_source_not_exists(sources_service):
-    tmpdir = tempfile.TemporaryDirectory()
-    sources_service.cache = tmpdir.name
+def test_curl_source_not_exists(tmp_path, sources_service):
     desc = {
         "url": "http://localhost:80/a",
     }
     checksum = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    sources_service.cache = tmp_path
     assert not sources_service.exists(checksum, desc)
 
 
-def test_curl_source_exists(sources_service):
-    tmpdir = tempfile.TemporaryDirectory()
-    sources_service.cache = tmpdir.name
+def test_curl_source_exists(tmp_path, sources_service):
     desc = {
         "url": "http://localhost:80/a",
     }
     checksum = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
-    pathlib.Path(os.path.join(tmpdir.name, checksum)).touch()
+    sources_service.cache = tmp_path
+    (sources_service.cache / checksum).touch()
     assert sources_service.exists(checksum, desc)
 
 
