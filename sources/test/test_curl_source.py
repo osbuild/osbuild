@@ -71,3 +71,22 @@ def test_curl_source_amend_secrets_fail(sources_service):
     with pytest.raises(RuntimeError) as exc:
         sources_service.amend_secrets(checksum, desc)
     assert "mtls secrets required" in str(exc)
+
+
+class FakeSubscriptionManager:
+    def get_secrets(self, url):
+        return f"secret-for-{url}"
+
+
+def test_curl_source_amend_secrets_subscription_mgr(sources_service):
+    desc = {
+        "url": "http://localhost:80/a",
+        "secrets": {
+            "name": "org.osbuild.rhsm",
+        },
+    }
+
+    sources_service.subscriptions = FakeSubscriptionManager()
+    checksum = "sha256:1234567890123456789012345678901234567890909b14ffb032aa20fa23d9ad6"
+    checksum, desc = sources_service.amend_secrets(checksum, desc)
+    assert desc["secrets"] == "secret-for-http://localhost:80/a"
