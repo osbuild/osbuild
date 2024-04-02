@@ -9,9 +9,6 @@
     "out of any of those by supplying the corresponding option.",
     "Buildhost commands used: `tar` and any needed compression program."
   ],
-  "capabilities": [
-    "CAP_MAC_ADMIN"
-  ],
   "schema_2": {
     "options": {
       "additionalProperties": false,
