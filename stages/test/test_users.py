@@ -54,3 +54,25 @@ def test_users_mock_bin(tmp_path, stage_module, user_opts, expected_args):
         stage_module.main(tmp_path, options)
         assert len(mocked_chroot.call_args_list) == 1
         assert mocked_chroot.call_args_list[0][2:] == expected_args + ["foo"]
+
+
+# separate test right now as it results in two binaries being called
+# (adduser,chage) which our parameter tests cannot do yet
+def test_users_with_expire_date(tmp_path, stage_module):
+    with mock_command("chroot", "") as mocked_chroot:
+        make_fake_tree(tmp_path, {
+            "/etc/passwd": "",
+        })
+
+        options = {
+            "users": {
+                "foo": {
+                    "password_changed_date": "12345",
+                },
+            }
+        }
+
+        stage_module.main(tmp_path, options)
+        assert len(mocked_chroot.call_args_list) == 2
+        assert mocked_chroot.call_args_list[0][1:] == ["useradd", "foo"]
+        assert mocked_chroot.call_args_list[1][1:] == ["chage", "--lastday", "12345", "foo"]
