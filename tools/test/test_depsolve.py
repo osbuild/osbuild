@@ -60,7 +60,7 @@ def repo_servers_fixture():
     addresses = []
     for path in REPO_PATHS:
         port = get_rand_port()  # this is racy, but should be okay
-        p = sp.Popen(["python3", "-m", "http.server", str(port)], cwd=path, stdout=sp.PIPE)
+        p = sp.Popen(["python3", "-m", "http.server", str(port)], cwd=path, stdout=sp.PIPE, stderr=sp.DEVNULL)
         procs.append(p)
         # use last path component as name
         name = os.path.basename(path.rstrip("/"))
