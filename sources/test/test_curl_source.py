@@ -130,7 +130,7 @@ def test_curl_download_many_with_retry(tmp_path, sources_service):
         sources_service.cache.mkdir()
         sources_service.fetch_all(test_sources)
         # we simulated N failures and we need to fetch K files
-        assert httpd.reqs == simulate_failures + len(test_sources)
+        assert httpd.reqs.count == simulate_failures + len(test_sources)
     # double downloads happend in the expected format
     for chksum in test_sources:
         assert (sources_service.cache / chksum).exists()
@@ -165,5 +165,5 @@ def test_curl_download_many_retries(tmp_path, sources_service):
         with pytest.raises(RuntimeError) as exp:
             sources_service.fetch_all(test_sources)
         # curl will retry 10 times
-        assert httpd.reqs == 10 * len(test_sources)
+        assert httpd.reqs.count == 10 * len(test_sources)
         assert "curl: error downloading http://localhost:" in str(exp.value)
