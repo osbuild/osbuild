@@ -95,15 +95,15 @@ test_cases = [
         }
     },
     {
-        # "nothing" is the only package in the custom repo and has no dependencies
-        "packages": ["nothing"],
+        # "pkg-with-no-deps" is the only package in the custom repo and has no dependencies
+        "packages": ["pkg-with-no-deps"],
         "results": {
-            "packages": {"nothing"},
+            "packages": {"pkg-with-no-deps"},
             "reponames": {"custom"},
         },
     },
     {
-        "packages": ["filesystem", "nothing"],
+        "packages": ["filesystem", "pkg-with-no-deps"],
         "results": {
             "packages": {
                 "basesystem",
@@ -120,7 +120,7 @@ test_cases = [
                 "ncurses-libs",
                 "setup",
                 "tzdata",
-                "nothing",
+                "pkg-with-no-deps",
             },
             "reponames": {
                 "baseos",
@@ -129,7 +129,7 @@ test_cases = [
         },
     },
     {
-        "packages": ["tmux", "nothing"],
+        "packages": ["tmux", "pkg-with-no-deps"],
         "results": {
             "packages": {
                 "alternatives",
@@ -171,7 +171,7 @@ test_cases = [
                 "tmux",
                 "tzdata",
                 "zlib",
-                "nothing",
+                "pkg-with-no-deps",
             },
             "reponames": {
                 "baseos",

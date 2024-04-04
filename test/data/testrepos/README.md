@@ -7,16 +7,16 @@ Each subdirectory contains repository metadata that is served by a server during
 
 ```bash
 rpmdir=$(mktemp -d)
-cat <<EOF > "${rpmdir}/nothing.spec"
+cat <<EOF > "${rpmdir}/pkg-with-no-deps.spec"
 #----------- spec file starts ---------------
-Name:                   nothing
+Name:                   pkg-with-no-deps
 Version:                1.0.0
 Release:                0
 BuildArch:              noarch
 Vendor:                 noone
 Summary:                Provides %{name}
 License:                BSD
-Provides:               nothing
+Provides:               pkg-with-no-deps
 
 %description
 %{summary}
@@ -24,7 +24,7 @@ Provides:               nothing
 %files
 EOF
 
-rpmbuild --quiet --define "_topdir ${rpmdir}" -bb "${rpmdir}/nothing.spec"
+rpmbuild --quiet --define "_topdir ${rpmdir}" -bb "${rpmdir}/pkg-with-no-deps.spec"
 createrepo "${rpmdir}/RPMS/noarch/"
 mkdir -p ./test/data/testrepos/custom
 cp -a "${rpmdir}/RPMS/noarch/repodata" ./test/data/testrepos/custom
