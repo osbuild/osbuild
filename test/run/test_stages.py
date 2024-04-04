@@ -16,6 +16,7 @@ import tarfile
 import tempfile
 import unittest
 import xml
+import zipfile
 from collections.abc import Mapping
 from typing import Callable, Dict, List, Optional
 
@@ -365,6 +366,30 @@ class TestStages(test.TestBase):
             # since the `root-node` option is specified
             dot_slash = list(filter(lambda x: x.startswith("./"), names))
             assert not dot_slash
+
+            # cache the downloaded data for the files source
+            osb.copy_source_data(self.store, "org.osbuild.files")
+
+    def test_zip(self):
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "zip")
+
+        testcases = {
+            "zipfile.zip": ["testfile", "testfile2"],
+            "zipfile-w-includes.zip": ["testfile"]
+        }
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            osb.compile_file(os.path.join(testdir, "zip.json"),
+                             exports=["tree"],
+                             output_dir=outdir)
+
+            for zip_filename, expected_content in testcases.items():
+                tree = os.path.join(outdir, "tree")
+                zp = os.path.join(tree, zip_filename)
+                assert os.path.exists(zp), f"cannot find expected {zp}"
+                with zipfile.ZipFile(zp) as zfp:
+                    names = zfp.namelist()
+                assert sorted(expected_content) == sorted(names)
 
             # cache the downloaded data for the files source
             osb.copy_source_data(self.store, "org.osbuild.files")

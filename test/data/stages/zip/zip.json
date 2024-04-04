@@ -898,7 +898,7 @@
       ]
     },
     {
-      "name": "zip",
+      "name": "tree",
       "build": "name:build",
       "stages": [
         {
@@ -915,13 +915,7 @@
           "options": {
             "filename": "zipfile.zip"
           }
-        }
-      ]
-    },
-    {
-      "name": "zip-with-paths",
-      "build": "name:build",
-      "stages": [
+        },
         {
           "type": "org.osbuild.zip",
           "inputs": {
@@ -934,7 +928,7 @@
             }
           },
           "options": {
-            "filename": "zipfile.zip",
+            "filename": "zipfile-w-includes.zip",
             "include": [
               "testfile"
             ]
