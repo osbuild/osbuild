@@ -30,7 +30,7 @@ pipelines:
             - from:
                 mpp-format-string: input://inlinefile/{embedded['42']}
               to: tree:///testfile2
-  - name: zip
+  - name: tree
     build: name:build
     stages:
       - type: org.osbuild.zip
@@ -42,9 +42,7 @@ pipelines:
               - name:input-tree
         options:
           filename: zipfile.zip
-  - name: zip-with-paths
-    build: name:build
-    stages:
+      # one zip with inclues
       - type: org.osbuild.zip
         inputs:
           tree:
@@ -53,5 +51,5 @@ pipelines:
             references:
               - name:input-tree
         options:
-          filename: zipfile.zip
+          filename: zipfile-w-includes.zip
           include: ['testfile']
