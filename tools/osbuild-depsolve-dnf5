@@ -2,7 +2,7 @@
 # pylint: disable=invalid-name
 
 """
-A JSON-based interface for depsolving using DNF.
+A JSON-based interface for depsolving using DNF5.
 
 Reads a request through stdin and prints the result to stdout.
 In case of error, a structured error is printed to stdout as well.
