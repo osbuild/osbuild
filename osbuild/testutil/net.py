@@ -7,6 +7,8 @@ import http.server
 import socket
 import threading
 
+from .atomic import AtomicCounter
+
 
 def _get_free_port():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -23,13 +25,13 @@ class DirHTTPServer(http.server.ThreadingHTTPServer):
     def __init__(self, *args, directory=None, simulate_failures=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.directory = directory
-        self.simulate_failures = simulate_failures
-        self.reqs = 0
+        self.simulate_failures = AtomicCounter(simulate_failures)
+        self.reqs = AtomicCounter()
 
     def finish_request(self, request, client_address):
-        self.reqs += 1  # racy on non GIL systems
-        if self.simulate_failures > 0:
-            self.simulate_failures -= 1  # racy on non GIL systems
+        self.reqs.inc()
+        if self.simulate_failures.count > 0:
+            self.simulate_failures.dec()
             SilentHTTPRequestHandler(
                 request, client_address, self, directory="does-not-exists")
             return
