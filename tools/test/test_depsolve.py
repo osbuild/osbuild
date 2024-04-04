@@ -5,6 +5,7 @@ import os
 import pathlib
 import socket
 import subprocess as sp
+import sys
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -41,9 +42,7 @@ def depsolve(pkgs, repos, root_dir, cache_dir, command):
             ]
         }
     }
-    p = sp.run([command], input=json.dumps(req).encode(), check=True, capture_output=True)
-    if p.stderr:
-        print(p.stderr.decode())
+    p = sp.run([command], input=json.dumps(req).encode(), check=True, stdout=sp.PIPE, stderr=sys.stderr)
 
     return json.loads(p.stdout.decode())
 
