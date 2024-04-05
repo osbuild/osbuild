@@ -17,34 +17,36 @@
   "capabilities": [
     "CAP_MAC_ADMIN"
   ],
-  "schema": {
-    "additionalProperties": false,
-    "required": [
-      "file_contexts"
-    ],
-    "properties": {
-      "file_contexts": {
-        "type": "string",
-        "description": "Path to the active SELinux policy's `file_contexts`"
-      },
-      "exclude_paths": {
-        "type": "array",
-        "description": "Paths to exclude when setting labels via file_contexts",
-        "items": {
-          "type": "string"
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "file_contexts"
+      ],
+      "properties": {
+        "file_contexts": {
+          "type": "string",
+          "description": "Path to the active SELinux policy's `file_contexts`"
+        },
+        "exclude_paths": {
+          "type": "array",
+          "description": "Paths to exclude when setting labels via file_contexts",
+          "items": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "type": "object",
+          "description": "Labels to set of the specified files or folders",
+          "items": {
+            "type": "object"
+          }
+        },
+        "force_autorelabel": {
+          "type": "boolean",
+          "description": "Do not use. Forces auto-relabelling on first boot.",
+          "default": false
         }
-      },
-      "labels": {
-        "type": "object",
-        "description": "Labels to set of the specified files or folders",
-        "items": {
-          "type": "object"
-        }
-      },
-      "force_autorelabel": {
-        "type": "boolean",
-        "description": "Do not use. Forces auto-relabelling on first boot.",
-        "default": false
       }
     }
   }

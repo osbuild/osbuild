@@ -12,7 +12,7 @@ STAGE_NAME = "org.osbuild.selinux"
 
 def get_test_input(test_data, implicit_file_contexts=True):
     test_input = {
-        "name": STAGE_NAME,
+        "type": STAGE_NAME,
         "options": {}
     }
     if implicit_file_contexts:
@@ -32,7 +32,6 @@ def get_test_input(test_data, implicit_file_contexts=True):
     ({"labels": "xxx"}, "'xxx' is not of type 'object'"),
     ({"force_autorelabel": "foo"}, "'foo' is not of type 'boolean'"),
 ])
-@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
 def test_schema_validation_selinux(stage_schema, test_data, expected_err):
     res = stage_schema.validate(get_test_input(test_data))
     if expected_err == "":
@@ -42,7 +41,6 @@ def test_schema_validation_selinux(stage_schema, test_data, expected_err):
         testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
-@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
 def test_schema_validation_selinux_file_context_required(stage_schema):
     res = stage_schema.validate(get_test_input({}, implicit_file_contexts=False))
     assert res.valid is False
