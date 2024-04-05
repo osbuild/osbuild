@@ -43,3 +43,39 @@ def stage_schema(request: pytest.FixtureRequest) -> osbuild.meta.Schema:
     root = caller_dir.parent.parent
     mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", stage_name)
     return osbuild.meta.Schema(mod_info.get_schema(version=schema_version), stage_name)
+
+
+@pytest.fixture
+def bootc_devices_mounts_dict() -> dict:
+    """ bootc_devices_mounts_dict returns a dict with a typical bootc
+    devices/mount dict
+    """
+    return {
+        "devices": {
+            "disk": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                    "filename": "disk.raw",
+                    "partscan": True,
+                }
+            }
+        },
+        "mounts": [
+            {
+                "name": "root",
+                "type": "org.osbuild.ext4",
+                "source": "disk",
+                "partition": 4,
+                "target": "/"
+            }, {
+                "name": "ostree.deployment",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                    "source": "mount",
+                    "deployment": {
+                        "default": True,
+                    }
+                }
+            }
+        ]
+    }
