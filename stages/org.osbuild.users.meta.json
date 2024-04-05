@@ -13,6 +13,11 @@
     "options": {
       "additionalProperties": false,
       "properties": {
+        "alt_root": {
+	  "type": "string",
+	  "pattern": "^mount://[^/]+/|^tree:///",
+	  "description": "Specify an alternative tree/mount"
+	},
         "users": {
           "additionalProperties": false,
           "type": "object",

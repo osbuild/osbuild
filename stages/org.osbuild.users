@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util import parsing
 
 
 def getpwnam(root, name):
@@ -98,8 +99,12 @@ def ensure_homedir(root, name, home):
     subprocess.run(["chroot", root, "mkhomedir_helper", name], check=True)
 
 
-def main(tree, options):
+def main(args, options):
+    tree = args["tree"]
     users = options["users"]
+    alt_root = options.get("alt_root")
+    if alt_root:
+        tree = os.path.normpath(parsing.parse_location(alt_root, args))
 
     for name, user_options in users.items():
         uid = user_options.get("uid")
@@ -137,6 +142,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = osbuild.api.arguments()
-    r = main(args["tree"], args["options"])
+    _args = osbuild.api.arguments()
+    r = main(_args, _args["options"])
     sys.exit(r)

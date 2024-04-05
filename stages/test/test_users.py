@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+import os
 from unittest.mock import patch
 
 import pytest
@@ -57,14 +57,16 @@ def test_users_happy(mocked_run, tmp_path, stage_module, user_opts, expected_arg
         "/etc/passwd": "",
     })
 
+    args = {
+        "tree": tmp_path,
+    }
     options = {
         "users": {
             "foo": {},
         }
     }
     options["users"]["foo"].update(user_opts)
-
-    stage_module.main(tmp_path, options)
+    stage_module.main(args, options)
 
     assert len(mocked_run.call_args_list) == 1
     args, kwargs = mocked_run.call_args_list[0]
@@ -72,20 +74,38 @@ def test_users_happy(mocked_run, tmp_path, stage_module, user_opts, expected_arg
     assert kwargs.get("check")
 
 
+@pytest.mark.parametrize("alt_root", ["", "mount:///"])
 @pytest.mark.parametrize("user_opts,expected_args", TEST_CASES)
-def test_users_mock_bin(tmp_path, stage_module, user_opts, expected_args):
+def test_users_mock_bin(tmp_path, alt_root, stage_module, user_opts, expected_args):
     with mock_command("chroot", "") as mocked_chroot:
-        make_fake_tree(tmp_path, {
+        tree_path = tmp_path / "tree"
+        fake_paths_mounts_dir = tmp_path / "run/osbuild/mounts"
+        if alt_root:
+            expected_work_dir = fake_paths_mounts_dir
+        else:
+            expected_work_dir = tree_path
+
+        make_fake_tree(expected_work_dir, {
             "/etc/passwd": "",
         })
 
+        args = {
+            "tree": tree_path,
+            "paths": {
+                "mounts": fake_paths_mounts_dir,
+            }
+        }
         options = {
             "users": {
                 "foo": {},
             }
         }
         options["users"]["foo"].update(user_opts)
+        if alt_root:
+            options["alt_root"] = alt_root
 
-        stage_module.main(tmp_path, options)
+        stage_module.main(args, options)
         assert len(mocked_chroot.call_args_list) == 1
+        # ensure we chroot into the right "tree"
+        assert mocked_chroot.call_args_list[0][0] == os.fspath(expected_work_dir)
         assert mocked_chroot.call_args_list[0][2:] == expected_args + ["foo"]
