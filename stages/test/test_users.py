@@ -4,9 +4,34 @@ from unittest.mock import patch
 
 import pytest
 
-from osbuild.testutil import make_fake_tree, mock_command
+from osbuild.testutil import assert_jsonschema_error_contains, make_fake_tree, mock_command
+
 
 STAGE_NAME = "org.osbuild.users"
+
+
+@pytest.mark.parametrize("test_data,expected_err", [
+    # bad
+    ({"users": {"!invalid-name": {}}}, "'!invalid-name' does not match any of the regex"),
+    ({"users": {"foo": {"home": 0}}}, "0 is not of type 'string'"),
+    # good
+    ({}, ""),
+    ({"users": {"foo": {}}}, ""),
+])
+def test_schema_validation(stage_schema, test_data, expected_err):
+    test_input = {
+        "type": STAGE_NAME,
+        "options": {},
+    }
+    test_input["options"].update(test_data)
+    res = stage_schema.validate(test_input)
+
+    if expected_err == "":
+        assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
+    else:
+        assert res.valid is False
+        assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
+
 
 TEST_CASES = [
     # user_opts,expected commandline args
