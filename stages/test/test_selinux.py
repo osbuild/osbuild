@@ -55,26 +55,45 @@ def test_schema_supports_bootc_style_mounts(stage_schema, bootc_devices_mounts_d
     assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
 
 
+@pytest.mark.parametrize("alt_root", ["", "mount:///"])
 @patch("osbuild.util.selinux.setfiles")
-def test_selinux_file_contexts(mocked_setfiles, tmp_path, stage_module):
+def test_selinux_file_contexts(mocked_setfiles, tmp_path, stage_module, alt_root):
+    tree_path = tmp_path / "tree"
+    fake_paths_mounts_dir = tmp_path / "run/osbuild/mounts"
+    if alt_root:
+        expected_work_dir = fake_paths_mounts_dir
+    else:
+        expected_work_dir = tree_path
+
+    args = {
+        "tree": tree_path,
+        "paths": {
+            "mounts": fake_paths_mounts_dir,
+        }
+    }
     options = {
         "file_contexts": "etc/selinux/thing",
     }
-    stage_module.main(tmp_path, options)
+    if alt_root:
+        options["alt_root"] = alt_root
+    stage_module.main(args, options)
 
     assert len(mocked_setfiles.call_args_list) == 1
     args, kwargs = mocked_setfiles.call_args_list[0]
-    assert args == (f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "")
+    assert args == (f"{expected_work_dir}/etc/selinux/thing", os.fspath(expected_work_dir), "")
     assert kwargs == {"exclude_paths": None}
 
 
 @patch("osbuild.util.selinux.setfiles")
 def test_selinux_file_contexts_exclude(mocked_setfiles, tmp_path, stage_module):
+    args = {
+        "tree": tmp_path,
+    }
     options = {
         "file_contexts": "etc/selinux/thing",
         "exclude_paths": ["/sysroot"],
     }
-    stage_module.main(tmp_path, options)
+    stage_module.main(args, options)
 
     assert len(mocked_setfiles.call_args_list) == 1
     args, kwargs = mocked_setfiles.call_args_list[0]
@@ -88,14 +107,16 @@ def test_selinux_labels(mocked_setfiles, mocked_setfilecon, tmp_path, stage_modu
     testutil.make_fake_input_tree(tmp_path, {
         "/usr/bin/bootc": "I'm only an imposter",
     })
-
+    args = {
+        "tree": tmp_path,
+    }
     options = {
         "file_contexts": "etc/selinux/thing",
         "labels": {
             "/tree/usr/bin/bootc": "system_u:object_r:install_exec_t:s0",
         }
     }
-    stage_module.main(tmp_path, options)
+    stage_module.main(args, options)
 
     assert len(mocked_setfiles.call_args_list) == 1
     assert len(mocked_setfilecon.call_args_list) == 1
@@ -106,11 +127,14 @@ def test_selinux_labels(mocked_setfiles, mocked_setfilecon, tmp_path, stage_modu
 
 @patch("osbuild.util.selinux.setfiles")
 def test_selinux_force_autorelabel(mocked_setfiles, tmp_path, stage_module):  # pylint: disable=unused-argument
+    args = {
+        "tree": tmp_path,
+    }
     for enable_autorelabel in [False, True]:
         options = {
             "file_contexts": "etc/selinux/thing",
             "force_autorelabel": enable_autorelabel,
         }
-        stage_module.main(tmp_path, options)
+        stage_module.main(args, options)
 
         assert (tmp_path / ".autorelabel").exists() == enable_autorelabel

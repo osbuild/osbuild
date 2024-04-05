@@ -24,6 +24,11 @@
         "file_contexts"
       ],
       "properties": {
+        "alt_root": {
+	  "type": "string",
+	  "pattern": "^mount://[^/]+/|^tree:///",
+	  "description": "Specify an alternative tree/mount"
+	},
         "file_contexts": {
           "type": "string",
           "description": "Path to the active SELinux policy's `file_contexts`"

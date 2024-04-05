@@ -5,9 +5,14 @@ import sys
 
 import osbuild.api
 from osbuild.util import selinux
+from osbuild.util import parsing
 
+def main(args, options):
+    tree = args["tree"]
+    alt_root = options.get("alt_root")
+    if alt_root:
+        tree = os.path.normpath(parsing.parse_location(alt_root, args))
 
-def main(tree, options):
     file_contexts = os.path.join(f"{tree}", options["file_contexts"])
     exclude_paths = options.get("exclude_paths")
     if exclude_paths:
@@ -25,6 +30,6 @@ def main(tree, options):
 
 
 if __name__ == '__main__':
-    args = osbuild.api.arguments()
-    r = main(args["tree"], args["options"])
+    _args = osbuild.api.arguments()
+    r = main(_args, _args["options"])
     sys.exit(r)
