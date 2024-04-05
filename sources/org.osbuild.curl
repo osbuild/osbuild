@@ -146,6 +146,7 @@ class CurlSource(sources.SourceService):
         secrets = desc.get("secrets")
         insecure = desc.get("insecure")
         url = self._quote_url(desc.get("url"))
+        proxy = os.getenv("OSBUILD_SOURCES_CURL_PROXY")
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
         with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
@@ -162,6 +163,8 @@ class CurlSource(sources.SourceService):
                     "--location",
                     "--output", checksum,
                 ]
+                if proxy:
+                    curl_command.extend(["--proxy", proxy])
                 if secrets:
                     if secrets.get('ssl_ca_cert'):
                         curl_command.extend(["--cacert", secrets.get('ssl_ca_cert')])
