@@ -4,8 +4,11 @@ from unittest.mock import patch
 
 import pytest
 
-from osbuild.testutil import assert_jsonschema_error_contains, make_fake_tree, mock_command
-
+from osbuild.testutil import (
+    assert_jsonschema_error_contains,
+    make_fake_tree,
+    mock_command,
+)
 
 STAGE_NAME = "org.osbuild.users"
 
