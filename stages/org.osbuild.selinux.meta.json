@@ -48,6 +48,13 @@
           "default": false
         }
       }
+    },
+    "devices": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "mounts": {
+      "type": "array"
     }
   }
 }
