@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 
-import contextlib
 import hashlib
-import os
 import re
 import shutil
 
@@ -32,7 +30,7 @@ def test_curl_source_exists(tmp_path, sources_service):
     assert sources_service.exists(checksum, desc)
 
 
-def test_curl_source_amend_secrets(sources_service):
+def test_curl_source_amend_secrets(monkeypatch, sources_service):
     desc = {
         "url": "http://localhost:80/a",
         "secrets": {
@@ -40,19 +38,13 @@ def test_curl_source_amend_secrets(sources_service):
         },
     }
 
-    with contextlib.ExitStack() as cm:
-        os.environ["OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY"] = "key"
-        os.environ["OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT"] = "cert"
-
-        def cb():
-            del os.environ["OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY"]
-            del os.environ["OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT"]
-        cm.callback(cb)
-        checksum = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
-        _, new_desc = sources_service.amend_secrets(checksum, desc)
-        assert new_desc["secrets"]["ssl_client_key"] == "key"
-        assert new_desc["secrets"]["ssl_client_cert"] == "cert"
-        assert new_desc["secrets"]["ssl_ca_cert"] is None
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY", "key")
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT", "cert")
+    checksum = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    _, new_desc = sources_service.amend_secrets(checksum, desc)
+    assert new_desc["secrets"]["ssl_client_key"] == "key"
+    assert new_desc["secrets"]["ssl_client_cert"] == "cert"
+    assert new_desc["secrets"]["ssl_ca_cert"] is None
 
 
 def test_curl_source_amend_secrets_fail(sources_service):
