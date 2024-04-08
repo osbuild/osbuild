@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 
 import hashlib
+import pathlib
 import re
 import shutil
+import subprocess
+from unittest.mock import patch
 
 import pytest
 
@@ -159,3 +162,49 @@ def test_curl_download_many_retries(tmp_path, sources_service):
         # curl will retry 10 times
         assert httpd.reqs.count == 10 * len(test_sources)
         assert "curl: error downloading http://localhost:" in str(exp.value)
+
+
+class FakeCurlDownloader:
+    """FakeCurlDownloader fakes what curl does
+
+    This is useful when mocking subprocess.run() to see that curl gets
+    the right arguments. It requires test sources where the filename
+    matches the content of the file (e.g. filename "a", content must be "a"
+    as well) so that it can generate the right hash.
+    """
+
+    def __init__(self, test_sources):
+        self._test_sources = test_sources
+
+    def faked_run(self, *args, **kwargs):
+        download_dir = pathlib.Path(kwargs["cwd"])
+        for chksum, desc in self._test_sources.items():
+            # The filename of our test files matches their content for
+            # easier testing/hashing. Alternatively we could just pass
+            # a src dir in here and copy the files from src to
+            # download_dir here but that would require that the files
+            # always exist in the source dir (which they do right now).
+            content = desc["url"].rsplit("/", 1)[1]
+            (download_dir / chksum).write_text(content, encoding="utf8")
+        return subprocess.CompletedProcess(args, 0)
+
+
+@pytest.mark.parametrize("with_proxy", [True, False])
+@patch("subprocess.run")
+def test_curl_download_proxy(mocked_run, tmp_path, monkeypatch, sources_service, with_proxy):
+    test_sources = make_test_sources(tmp_path, 80, 2)
+    fake_curl_downloader = FakeCurlDownloader(test_sources)
+    mocked_run.side_effect = fake_curl_downloader.faked_run
+
+    if with_proxy:
+        monkeypatch.setenv("OSBUILD_SOURCES_CURL_PROXY", "http://my-proxy")
+    sources_service.cache = tmp_path / "curl-cache"
+    sources_service.cache.mkdir()
+    sources_service.fetch_all(test_sources)
+    for call_args in mocked_run.call_args_list:
+        args, _kwargs = call_args
+        if with_proxy:
+            idx = args[0].index("--proxy")
+            assert args[0][idx:idx + 2] == ["--proxy", "http://my-proxy"]
+        else:
+            assert "--proxy" not in args[0]
