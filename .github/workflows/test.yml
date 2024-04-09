@@ -42,7 +42,7 @@ jobs:
             env_TEST_WORKERS: "-n 4"
     steps:
     - name: "Clone Repository"
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: "Run"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
