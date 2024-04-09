@@ -169,6 +169,25 @@ class Solver():
             if root_dir:
                 repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
                 self.base.get_repo_sack().create_repos_from_dir(repos_dir)
+                rq = dnf5.repo.RepoQuery(self.base)
+                rq.filter_enabled(True)
+                repo_iter = rq.begin()
+                while repo_iter != rq.end():
+                    repo = repo_iter.value()
+                    config = repo.get_config()
+                    config.sslcacert = modify_rootdir_path(
+                        get_string_option(config.get_sslcacert_option()),
+                        root_dir,
+                    )
+                    config.sslclientcert = modify_rootdir_path(
+                        get_string_option(config.get_sslclientcert_option()),
+                        root_dir,
+                    )
+                    config.sslclientkey = modify_rootdir_path(
+                        get_string_option(config.get_sslclientkey_option()),
+                        root_dir,
+                    )
+                    repo_iter.next()
 
             self.base.get_repo_sack().update_and_load_enabled_repos(load_system=False)
 
@@ -399,12 +418,6 @@ class Solver():
 
         packages = sorted(packages, key=lambda x: x["path"])
 
-        def get_string_option(option):
-            # option.get_value() causes an error if it's unset for string values, so check if it's empty first
-            if option.empty():
-                return None
-            return option.get_value()
-
         repositories = {}  # full repository configs for the response
         for repo in pkg_repos.values():
             repo_cfg = repo.get_config()
@@ -428,6 +441,13 @@ class Solver():
             "repos": repositories,
         }
         return response
+
+
+def get_string_option(option):
+    # option.get_value() causes an error if it's unset for string values, so check if it's empty first
+    if option.empty():
+        return None
+    return option.get_value()
 
 
 class GPGKeyReadError(Exception):
