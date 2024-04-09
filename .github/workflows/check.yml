@@ -10,7 +10,7 @@ jobs:
     name: "Spelling"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: codespell-project/actions-codespell@master
         with:
           ignore_words_list: msdos, pullrequest
@@ -21,7 +21,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
       - name: "Clone Repository"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: "Run Linters"
         uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
         with:
@@ -35,7 +35,7 @@ jobs:
 
     steps:
     - name: "Clone Repository"
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Check for valid snapshot urls
@@ -83,7 +83,7 @@ jobs:
           sudo apt update
           sudo apt install -y jq moreutils
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Reformat all json files
