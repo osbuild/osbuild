@@ -65,8 +65,11 @@ class Solver():
         if releasever:
             self.base.conf.substitutions['releasever'] = releasever
 
+        req_repo_ids = set()
         for repo in repos:
             self.base.repos.add(self._dnfrepo(repo, self.base.conf))
+            # collect repo IDs from the request to separate them from the ones loaded from a root_dir
+            req_repo_ids.add(repo["id"])
 
         if root_dir:
             # This sets the varsdir to ("{root_dir}/etc/yum/vars/", "{root_dir}/etc/dnf/vars/") for custom variable
@@ -76,6 +79,11 @@ class Solver():
             repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
             self.base.conf.reposdir = repos_dir
             self.base.read_all_repos()
+            for repo_id, repo_config in self.base.repos.items():
+                if repo_id not in req_repo_ids:
+                    repo_config.sslcacert = modify_rootdir_path(repo_config.sslcacert, root_dir)
+                    repo_config.sslclientcert = modify_rootdir_path(repo_config.sslclientcert, root_dir)
+                    repo_config.sslclientkey = modify_rootdir_path(repo_config.sslclientkey, root_dir)
 
         self.base.fill_sack(load_system_repo=False)
 
