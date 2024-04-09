@@ -218,8 +218,7 @@ class Solver():
         else:
             raise ValueError("missing either `baseurl`, `metalink`, or `mirrorlist` in repo")
 
-        if desc.get("ignoressl", False):
-            conf.sslverify = False
+        repo.sslverify = desc.get("sslverify", True)
         if "sslcacert" in desc:
             conf.sslcacert = desc["sslcacert"]
         if "sslclientkey" in desc:
@@ -227,10 +226,10 @@ class Solver():
         if "sslclientcert" in desc:
             conf.sslclientcert = desc["sslclientcert"]
 
-        if "check_gpg" in desc:
-            conf.gpgcheck = desc["check_gpg"]
-        if "check_repogpg" in desc:
-            conf.repo_gpgcheck = desc["check_repogpg"]
+        if "gpgcheck" in desc:
+            conf.gpgcheck = desc["gpgcheck"]
+        if "repo_gpgcheck" in desc:
+            conf.repo_gpgcheck = desc["repo_gpgcheck"]
         if "gpgkey" in desc:
             conf.gpgkey = [desc["gpgkey"]]
         if "gpgkeys" in desc:
@@ -428,7 +427,7 @@ class Solver():
                 "metalink": get_string_option(repo_cfg.get_metalink_option()),
                 "mirrorlist": get_string_option(repo_cfg.get_mirrorlist_option()),
                 "gpgcheck": repo_cfg.get_gpgcheck_option().get_value(),
-                "check_repogpg": repo_cfg.get_repo_gpgcheck_option().get_value(),
+                "repo_gpgcheck": repo_cfg.get_repo_gpgcheck_option().get_value(),
                 "gpgkeys": read_keys(repo_cfg.get_gpgkey_option().get_value(),
                                      root_dir if repo.get_id() not in request_repo_ids else None),
                 "sslverify": repo_cfg.get_sslverify_option().get_value(),
