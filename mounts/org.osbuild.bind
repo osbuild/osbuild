@@ -1,0 +1,86 @@
+#!/usr/bin/python3
+"""
+Bind mount service
+
+Can (r)bind mount mounts to the tree.
+"""
+
+import os.path
+import subprocess
+import sys
+from typing import Dict
+from urllib.parse import urlparse
+
+from osbuild import mounts
+
+SCHEMA_2 = """
+"additionalProperties": false,
+"required": ["name", "type", "target"],
+"properties": {
+  "name": { "type": "string" },
+  "type": { "type": "string" },
+  "target": {
+    "type": "string",
+    "pattern": "^tree://"
+  },
+  "options": {
+    "required": ["source"],
+    "source": {
+      "type": "string",
+      "pattern": "^mount://"
+    }
+  }
+}
+"""
+
+
+def parse_location(location, tree, mountroot: str) -> str:
+    # we cannot use "osutil.util.parsing" here because it is too
+    # tightly coupled with how arguments for stages are passed
+    url = urlparse(location)
+    path = url.netloc
+    if url.scheme == "tree":
+        return os.path.join(tree, path.rstrip("/"))
+    if url.scheme == "mount":
+        return os.path.join(mountroot, path.rstrip("/"))
+    raise ValueError(f"unsupported schema {url.scheme} for {location}")
+
+
+class BindMount(mounts.MountService):
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.mountpoint = ""
+
+    def mount(self, args: Dict):
+        tree = args["tree"]
+        mountroot = args["root"]
+        target = args["target"]
+        # we cannot use args["sources"] here because the osbuild code makes
+        # many assumptions about that it must link back to a "Device" so
+        # we follow the pattern from org.osbuild.ostree.deployment here
+        # and put it into "options"
+        options = args["options"]
+        source = parse_location(options.get("source"), tree, mountroot)
+        self.mountpoint = parse_location(target, tree, mountroot)
+        subprocess.run([
+            "mount",
+            "--rbind", source, self.mountpoint,
+        ], check=True)
+
+    def umount(self):
+        if self.mountpoint:
+            subprocess.run(["umount", "-R", "-v", self.mountpoint], check=True)
+            self.mountpoint = ""
+
+    def sync(self):
+        pass
+
+
+def main():
+    service = BindMount.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()
