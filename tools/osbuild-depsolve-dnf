@@ -107,8 +107,7 @@ class Solver():
         else:
             raise ValueError("missing either `baseurl`, `metalink`, or `mirrorlist` in repo")
 
-        if desc.get("ignoressl", False):
-            repo.sslverify = False
+        repo.sslverify = desc.get("sslverify", True)
         if "sslcacert" in desc:
             repo.sslcacert = desc["sslcacert"]
         if "sslclientkey" in desc:
@@ -116,10 +115,10 @@ class Solver():
         if "sslclientcert" in desc:
             repo.sslclientcert = desc["sslclientcert"]
 
-        if "check_gpg" in desc:
-            repo.gpgcheck = desc["check_gpg"]
-        if "check_repogpg" in desc:
-            repo.repo_gpgcheck = desc["check_repogpg"]
+        if "gpgcheck" in desc:
+            repo.gpgcheck = desc["gpgcheck"]
+        if "repo_gpgcheck" in desc:
+            repo.repo_gpgcheck = desc["repo_gpgcheck"]
         if "gpgkey" in desc:
             repo.gpgkey = [desc["gpgkey"]]
         if "gpgkeys" in desc:
@@ -295,9 +294,9 @@ class Solver():
                 "metalink": repo.metalink,
                 "mirrorlist": repo.mirrorlist,
                 "gpgcheck": repo.gpgcheck,
-                "check_repogpg": repo.repo_gpgcheck,
+                "repo_gpgcheck": repo.repo_gpgcheck,
                 "gpgkeys": read_keys(repo.gpgkey, root_dir if repo.id not in request_repo_ids else None),
-                "ignoressl": not bool(repo.sslverify),
+                "sslverify": bool(repo.sslverify),
                 "sslcacert": repo.sslcacert,
                 "sslclientkey": repo.sslclientkey,
                 "sslclientcert": repo.sslclientcert,
