@@ -93,6 +93,7 @@ class Solver():
         arch = request["arch"]
         releasever = request.get("releasever")
         module_platform_id = request["module_platform_id"]
+        proxy = request["proxy"]
 
         arguments = request["arguments"]
         repos = arguments.get("repos", [])
@@ -115,6 +116,8 @@ class Solver():
         self.base.get_vars().set("basearch", _BASEARCH_MAP[arch])
         if releasever:
             self.base.get_vars().set('releasever', releasever)
+        if proxy:
+            self.base.get_vars().set('proxy', proxy)
 
         # Enable fastestmirror to ensure we choose the fastest mirrors for
         # downloading metadata (when depsolving) and downloading packages.
