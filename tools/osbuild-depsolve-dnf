@@ -27,6 +27,7 @@ class Solver():
         arch = request["arch"]
         releasever = request.get("releasever")
         module_platform_id = request["module_platform_id"]
+        proxy = request["proxy"]
 
         arguments = request["arguments"]
         repos = arguments.get("repos", [])
@@ -64,6 +65,8 @@ class Solver():
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
         if releasever:
             self.base.conf.substitutions['releasever'] = releasever
+        if proxy:
+            self.base.conf.proxy = proxy
 
         req_repo_ids = set()
         for repo in repos:
