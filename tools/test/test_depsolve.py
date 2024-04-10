@@ -4,6 +4,7 @@ import json
 import os
 import socket
 import subprocess as sp
+import sys
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -40,7 +41,7 @@ def depsolve(pkgs, repos, root_dir, cache_dir, command):
             ]
         }
     }
-    p = sp.run([command], input=json.dumps(req).encode(), check=True, capture_output=True)
+    p = sp.run([command], input=json.dumps(req).encode(), check=True, stdout=sp.PIPE, stderr=sys.stderr)
     if p.stderr:
         print(p.stderr.decode())
 
@@ -255,6 +256,7 @@ def cache_dir_fixture(tmpdir_factory):
 def test_depsolve(repo_servers, test_case, cache_dir):
     pks = test_case["packages"]
 
+    os.environ["OSBUILD_DEPSOLVE_FORCE"] = "dnf"
     for repo_configs, root_dir in config_combos(repo_servers):
         res = depsolve(pks, repo_configs, root_dir, cache_dir, "./tools/osbuild-depsolve-dnf")
         assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
@@ -268,8 +270,9 @@ def test_depsolve(repo_servers, test_case, cache_dir):
 def test_depsolve_dnf5(repo_servers, test_case, cache_dir):
     pks = test_case["packages"]
 
+    os.environ["OSBUILD_DEPSOLVE_FORCE"] = "dnf5"
     for repo_configs, repos_dir in config_combos(repo_servers):
-        res = depsolve(pks, repo_configs, repos_dir, cache_dir, "./tools/osbuild-depsolve-dnf5")
+        res = depsolve(pks, repo_configs, repos_dir, cache_dir, "./tools/osbuild-depsolve-dnf")
         assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
         assert res["repos"].keys() == test_case["results"]["reponames"]
         for repo in res["repos"].values():
