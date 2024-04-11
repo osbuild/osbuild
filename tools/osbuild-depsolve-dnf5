@@ -570,7 +570,11 @@ def validate_request(request):
             "kind": "InvalidRequest",
             "reason": "no 'module_platform_id' specified"
         }
-
+    if not request.get("releasever"):
+        return {
+            "kind": "InvalidRequest",
+            "reason": "no 'module_platform_id' specified"
+        }
     arguments = request.get("arguments")
     if not arguments:
         return {
@@ -582,16 +586,6 @@ def validate_request(request):
         return {
             "kind": "InvalidRequest",
             "reason": "no 'repos' or 'root_dir' specified"
-        }
-
-    # if root_dir is used, we also need releasever
-    # pylint: disable=fixme
-    # TODO: Make releasever mandatory in all cases.
-    # We temporarily keep it tied to root_dir for short-term backwards compatibility
-    if arguments.get("root_dir") and not request.get("releasever"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "'root_dir' requires setting 'releasever'"
         }
 
     return None
