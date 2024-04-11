@@ -187,10 +187,10 @@ def osbuild_cli() -> int:
                 stage_timeout=stage_timeout
             )
             if r["success"]:
-                monitor.log(f"manifest {args.manifest_path} finished successfully", origin="osbuild.main_cli")
+                monitor.log(f"manifest {args.manifest_path} finished successfully\n", origin="osbuild.main_cli")
             else:
                 # if we had monitor.error() we could use that here
-                monitor.log(f"manifest {args.manifest_path} failed", origin="osbuild.main_cli")
+                monitor.log(f"manifest {args.manifest_path} failed\n", origin="osbuild.main_cli")
 
             if r["success"] and exports:
                 for pid in exports:
@@ -205,7 +205,6 @@ def osbuild_cli() -> int:
                     for name, pl in manifest.pipelines.items():
                         print(f"{name + ':': <10}\t{pl.id}")
                 else:
-                    print()
                     print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
 
             return 0 if r["success"] else 1
