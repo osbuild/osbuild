@@ -27,6 +27,10 @@ def has_dnf5():
     return bool(importlib.util.find_spec("libdnf5"))
 
 
+def has_dnf():
+    return bool(importlib.util.find_spec("dnf"))
+
+
 def depsolve(pkgs, repos, root_dir, cache_dir, command):
     req = {
         "command": "depsolve",
@@ -256,24 +260,17 @@ def cache_dir_fixture(tmpdir_factory):
 
 
 @pytest.mark.parametrize("test_case", test_cases)
-def test_depsolve(tmp_path, repo_servers, test_case, cache_dir):
-    pks = test_case["packages"]
+@pytest.mark.parametrize("dnf_cmd, detect_fn", [
+    ("./tools/osbuild-depsolve-dnf", has_dnf),
+    ("./tools/osbuild-depsolve-dnf5", has_dnf5),
+])
+def test_depsolve(tmp_path, cache_dir, repo_servers, dnf_cmd, detect_fn, test_case):
+    if not detect_fn():
+        pytest.skip(f"cannot import support for {dnf_cmd}")
 
+    pks = test_case["packages"]
     for repo_configs, root_dir in config_combos(tmp_path, repo_servers):
-        res = depsolve(pks, repo_configs, root_dir, cache_dir, "./tools/osbuild-depsolve-dnf")
-        assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-        assert res["repos"].keys() == test_case["results"]["reponames"]
-        for repo in res["repos"].values():
-            assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-
-
-@pytest.mark.skipif(not has_dnf5(), reason="libdnf5 not available")
-@pytest.mark.parametrize("test_case", test_cases)
-def test_depsolve_dnf5(tmp_path, repo_servers, test_case, cache_dir):
-    pks = test_case["packages"]
-
-    for repo_configs, repos_dir in config_combos(tmp_path, repo_servers):
-        res = depsolve(pks, repo_configs, repos_dir, cache_dir, "./tools/osbuild-depsolve-dnf5")
+        res = depsolve(pks, repo_configs, root_dir, cache_dir, dnf_cmd)
         assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
         assert res["repos"].keys() == test_case["results"]["reponames"]
         for repo in res["repos"].values():
