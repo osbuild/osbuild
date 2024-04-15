@@ -326,7 +326,7 @@ def read_keys(paths, root_dir=None):
     for path in paths:
         url = urllib.parse.urlparse(path)
         if url.scheme == "file":
-            path = path.removeprefix("file://")
+            path = url.path
             path = modify_rootdir_path(path, root_dir)
             try:
                 with open(path, mode="r", encoding="utf-8") as keyfile:
