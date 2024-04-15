@@ -410,6 +410,11 @@ class ModuleInfo:
                 schema["properties"]["mounts"] = {
                     "type": "array"
                 }
+            if "devices" not in schema["properties"]:
+                schema["properties"]["devices"] = {
+                    "type": "object",
+                    "additionalProperties": True,
+                }
             schema["required"] = [type_id]
         elif self.type in ("Device"):
             schema["additionalProperties"] = True
