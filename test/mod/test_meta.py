@@ -348,3 +348,14 @@ def test_meta_json_validation_schema(test_input, expected_err):
         assert expected_err in errs[0]["message"]
     else:
         assert not errs
+
+
+@pytest.mark.parametrize("property_key, expected_value", [
+    ("mounts", {"type": "array"}),
+    ("devices", {"type": "object", "additionalProperties": True}),
+])
+def test_get_schema_automatically_added(tmp_path, property_key, expected_value):
+    make_fake_meta_json(tmp_path, "org.osbuild.noop", version=2)
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    json_schema = modinfo.get_schema()
+    assert json_schema["properties"][property_key] == expected_value
