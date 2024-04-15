@@ -91,7 +91,9 @@
             "items": {
               "type": "string",
               "enum": [
-                "Azure"
+                "Azure",
+                "Ec2",
+                "None"
               ]
             }
           },
