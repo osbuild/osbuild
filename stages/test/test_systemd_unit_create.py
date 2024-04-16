@@ -66,7 +66,20 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
                 ],
                 "ConditionPathIsDirectory": [
                     "|!/etc/mydir"
-                ]
+                ],
+                # need to use real units otherwise the validation will fail
+                "Wants": [
+                    "basic.target",
+                    "sysinit.target",
+                ],
+                "Requires": [
+                    "paths.target",
+                    "sockets.target",
+                ],
+                "After": [
+                    "sysinit.target",
+                    "default.target",
+                ],
             },
             "Service": {
                 "Type": "oneshot",
@@ -112,6 +125,12 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
     DefaultDependencies=False
     ConditionPathExists=|!/etc/myfile
     ConditionPathIsDirectory=|!/etc/mydir
+    Wants=basic.target
+    Wants=sysinit.target
+    Requires=paths.target
+    Requires=sockets.target
+    After=sysinit.target
+    After=default.target
 
     [Service]
     Type=oneshot
