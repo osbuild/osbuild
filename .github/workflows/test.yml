@@ -54,10 +54,9 @@ jobs:
           # it to vfs for the local storage skopeo stage test.
           sed -i 's/overlay/vfs/g' /usr/share/containers/storage.conf  # default system config
           sed -i 's/overlay/vfs/g' /etc/containers/storage.conf || true  # potential overrides
-          TEST_CATEGORY="${{ matrix.test }}" \
           TEST_WORKERS="${{ matrix.env_TEST_WORKERS || env.TEST_WORKERS }}" \
           OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
-          tox -e "${{ matrix.environment }}"
+          tox -e "${{ matrix.environment }}" -- ${{ matrix.test }}
 
   v1_manifests:
     name: "Assembler test (legacy)"
@@ -73,7 +72,6 @@ jobs:
         with:
           image: ghcr.io/osbuild/osbuild-ci:latest-202308241910
           run: |
-            TEST_CATEGORY="test.run.test_assemblers" \
             TEST_WORKERS="${{ env.TEST_WORKERS }}" \
             OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
-            tox -e "py36"
+            tox -e "py36" -- test.run.test_assemblers
