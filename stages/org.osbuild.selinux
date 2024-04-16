@@ -21,7 +21,13 @@ def main(tree, options):
 
     if options.get("force_autorelabel", False):
         stamp = pathlib.Path(tree, ".autorelabel")
-        stamp.touch()
+        # Creating just empty /.autorelabel resets only the type of files.
+        # To ensure that the full context is reset, we write "-F" into the file.
+        # This mimics the behavior of `fixfiles -F boot`. The "-F" option is
+        # then passed to `selinux-autorelabel` script [0].
+        # Note that this is missing from the selinux(8) and selinux_config(5) man-pages
+        # [0] https://src.fedoraproject.org/rpms/policycoreutils/blob/rawhide/f/selinux-autorelabel#_54
+        stamp.write_text("-F", encoding="utf-8")
 
 
 if __name__ == '__main__':
