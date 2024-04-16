@@ -53,9 +53,13 @@ FAKE_INPUTS = {
     ({"kernel-args": ["arg1", "arg2"]}, ["--karg", "arg1", "--karg", "arg2"]),
     # all
     ({"root-ssh-authorized-keys": ["key1", "key2"],
-      "kernel-args": ["arg1", "arg2"]},
+      "kernel-args": ["arg1", "arg2"],
+      "target-imgref": "quay.io/img/ref",
+      },
      ["--root-ssh-authorized-keys", "/tmp/fake-named-tmpfile-name",
-      "--karg", "arg1", "--karg", "arg2"],
+      "--karg", "arg1", "--karg", "arg2",
+      "--target-imgref", "quay.io/img/ref",
+      ],
      ),
 ])
 @patch("subprocess.run")

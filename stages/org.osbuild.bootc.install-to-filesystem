@@ -40,6 +40,9 @@ def main(options, inputs, paths):
         # customize kernel-args
         for karg in options.get("kernel-args", []):
             pargs.extend(["--karg", karg])
+        target_imgref = options.get("target-imgref")
+        if target_imgref:
+            pargs.extend(["--target-imgref", target_imgref])
         # add target and go
         pargs.append(dst)
         subprocess.run(pargs, env=env, check=True)
