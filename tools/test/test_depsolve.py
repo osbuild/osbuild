@@ -1,5 +1,4 @@
 import configparser
-import importlib
 import json
 import os
 import pathlib
@@ -24,7 +23,7 @@ TEST_KEY = "-----BEGIN PGP PUBLIC KEY BLOCK-----\nTEST KEY\n"
 
 
 def has_dnf5():
-    return bool(importlib.util.find_spec("libdnf5"))
+    return sp.run(["python3", "-c", "import libdnf5"], check=False).returncode == 0
 
 
 def has_dnf():
