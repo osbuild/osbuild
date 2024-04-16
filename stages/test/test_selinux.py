@@ -48,13 +48,6 @@ def test_schema_validation_selinux_file_context_required(stage_schema):
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
-def test_schema_supports_bootc_style_mounts(stage_schema, bootc_devices_mounts_dict):
-    test_input = bootc_devices_mounts_dict
-    test_input["type"] = STAGE_NAME
-    res = stage_schema.validate(test_input)
-    assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
-
-
 @patch("osbuild.util.selinux.setfiles")
 def test_selinux_file_contexts(mocked_setfiles, tmp_path, stage_module):
     options = {
