@@ -18,6 +18,7 @@
     "    - 'DefaultDependencies' - bool",
     "    - 'Requires' - [strings]",
     "    - 'Wants' - [strings]",
+    "    - 'After' - [strings]",
     "  - 'Service' section",
     "    - 'Type' - string",
     "    - 'RemainAfterExit' - bool",
@@ -78,6 +79,12 @@
                 "type": "string"
               },
               "Wants": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "After": {
                 "type": "array",
                 "items": {
                   "type": "string"
