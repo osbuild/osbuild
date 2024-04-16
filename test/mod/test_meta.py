@@ -359,3 +359,57 @@ def test_get_schema_automatically_added(tmp_path, property_key, expected_value):
     modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
     json_schema = modinfo.get_schema()
     assert json_schema["properties"][property_key] == expected_value
+
+
+@pytest.fixture(name="bootc_devices_mounts_dict")
+def bootc_devices_mounts_dict_fixture() -> dict:
+    """ bootc_devices_mounts_dict returns a dict with a typical bootc
+    devices/mount dict
+    """
+    return {
+        "devices": {
+            "disk": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                    "filename": "disk.raw",
+                    "partscan": True,
+                }
+            }
+        },
+        "mounts": [
+            {
+                "name": "root",
+                "type": "org.osbuild.ext4",
+                "source": "disk",
+                "partition": 4,
+                "target": "/"
+            }, {
+                "name": "ostree.deployment",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                    "source": "mount",
+                    "deployment": {
+                        "default": True,
+                    }
+                }
+            }
+        ]
+    }
+
+
+@pytest.mark.parametrize("fmt_ver,name_or_type_key", [
+    (1, "name"),
+    (2, "type"),
+])
+def test_get_schema_devices_mounts_works(tmp_path, bootc_devices_mounts_dict, fmt_ver, name_or_type_key):
+    stage_name = "org.osbuild.noop"
+
+    fake_stage = bootc_devices_mounts_dict
+    fake_stage[name_or_type_key] = stage_name
+
+    make_fake_meta_json(tmp_path, stage_name, version=fmt_ver)
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", stage_name)
+    json_schema = modinfo.get_schema(version=str(fmt_ver))
+    stage_schema = osbuild.meta.Schema(json_schema, stage_name)
+    res = stage_schema.validate(fake_stage)
+    assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
