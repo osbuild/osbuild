@@ -45,8 +45,7 @@ new test-bed for your new stage do the following:
 `(a|b).mpp.yaml` files can be based on OSBuild manifest v1 and v2. v2 is
 preferred and is the version used in this guide. You can read about [Manifest
 Version
-2](https://www.osbuild.org/guides/developer-guide/osbuild.html?highlight=manifest#version-2)
-in the OSBuild Guide.
+2](https://github.com/osbuild/osbuild/blob/main/docs/osbuild-manifest.5.rst).
 
 
 Example of minimal `a.mpp.yaml`:
