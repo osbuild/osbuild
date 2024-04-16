@@ -40,6 +40,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "target-imgref": {
+          "description": "Specify the image to fetch for subsequent updates",
+          "type": "string"
         }
       }
     },
