@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-import osbuild.testutil.net
+from osbuild.testutil.net import http_serve_directory
 
 SOURCES_NAME = "org.osbuild.curl"
 
@@ -118,7 +118,7 @@ def test_curl_download_many_with_retry(tmp_path, sources_service):
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
     simulate_failures = 2
-    with osbuild.testutil.net.http_serve_directory(fake_httpd_root, simulate_failures=simulate_failures) as httpd:
+    with http_serve_directory(fake_httpd_root, simulate_failures=simulate_failures) as httpd:
         test_sources = make_test_sources(fake_httpd_root, httpd.server_port, 5)
 
         sources_service.cache = tmp_path / "curl-download-dir"
@@ -134,7 +134,7 @@ def test_curl_download_many_with_retry(tmp_path, sources_service):
 def test_curl_download_many_chksum_validate(tmp_path, sources_service):
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
-    with osbuild.testutil.net.http_serve_directory(fake_httpd_root) as httpd:
+    with http_serve_directory(fake_httpd_root) as httpd:
         test_sources = make_test_sources(fake_httpd_root, httpd.server_port, 5)
         # "break" the hash of file "1" by replacing the content to no longer
         # match the checksum
@@ -150,7 +150,7 @@ def test_curl_download_many_chksum_validate(tmp_path, sources_service):
 def test_curl_download_many_retries(tmp_path, sources_service):
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
-    with osbuild.testutil.net.http_serve_directory(fake_httpd_root) as httpd:
+    with http_serve_directory(fake_httpd_root) as httpd:
         test_sources = make_test_sources(fake_httpd_root, httpd.server_port, 5)
         # remove all the sources
         shutil.rmtree(fake_httpd_root)

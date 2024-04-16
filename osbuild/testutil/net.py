@@ -7,6 +7,20 @@ import http.server
 import socket
 import threading
 
+try:
+    from http.server import ThreadingHTTPServer
+except ImportError:
+    # This fallback is only needed on py3.6. Py3.7+ has ThreadingHTTPServer.
+    # We just import ThreadingHTTPServer here so that the import of "net.py"
+    # on py36 works, the helpers are not usable because the "directory" arg
+    # for SimpleHTTPRequestHandler is also not supported.
+    class ThreadingHTTPServer:  # type: ignore
+        def __init__(self, *args, **kwargs):  # pylint: disable=unused-argument
+            # pylint: disable=import-outside-toplevel
+            import pytest  # type: ignore
+            pytest.skip("python too old to suport ThreadingHTTPServer")
+
+
 from .atomic import AtomicCounter
 
 
@@ -21,7 +35,7 @@ class SilentHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         pass
 
 
-class DirHTTPServer(http.server.ThreadingHTTPServer):
+class DirHTTPServer(ThreadingHTTPServer):
     def __init__(self, *args, directory=None, simulate_failures=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.directory = directory
