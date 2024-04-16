@@ -114,3 +114,5 @@ def test_selinux_force_autorelabel(mocked_setfiles, tmp_path, stage_module):  # 
         stage_module.main(tmp_path, options)
 
         assert (tmp_path / ".autorelabel").exists() == enable_autorelabel
+        if enable_autorelabel:
+            assert (tmp_path / ".autorelabel").read_text() == "-F"
