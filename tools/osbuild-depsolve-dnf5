@@ -573,7 +573,7 @@ def validate_request(request):
     if not request.get("releasever"):
         return {
             "kind": "InvalidRequest",
-            "reason": "no 'module_platform_id' specified"
+            "reason": "no 'releasever' specified"
         }
     arguments = request.get("arguments")
     if not arguments:
