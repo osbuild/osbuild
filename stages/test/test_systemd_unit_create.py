@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import os
-import os.path
+import subprocess
 import textwrap
 
 import pytest
@@ -85,8 +85,8 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
                 "Type": "oneshot",
                 "RemainAfterExit": True,
                 "ExecStart": [
-                    "mkdir -p /etc/mydir",
-                    "touch /etc/myfile"
+                    "/usr/bin/mkdir -p /etc/mydir",
+                    "/usr/bin/touch /etc/myfile"
                 ],
                 "Environment": [
                     {
@@ -113,12 +113,35 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
             }
         }
     }
+
+    # create units in the tree for systemd-analyze verify
+    systemd_dir = "usr/lib/systemd/system/"
+    # if a unit file is empty, it gets detected as "masked" and fails verification
+    testutil.make_fake_tree(tmp_path, {
+        systemd_dir + "basic.target": "[Unit]\n",
+        systemd_dir + "sysinit.target": "[Unit]\n",
+        systemd_dir + "paths.target": "[Unit]\n",
+        systemd_dir + "sockets.target": "[Unit]\n",
+        "usr/bin/mkdir": "fake-mkdir",
+        "usr/bin/touch": "fake-touch",
+    })
+    for bin_name in ["mkdir", "touch"]:
+        os.chmod(tmp_path / "usr/bin" / bin_name, mode=0o755)
+
     expected_unit_path = tmp_path / expected_prefix / "create-directory.service"
-    # should the stage create the dir?
-    expected_unit_path.parent.mkdir(parents=True)
+    expected_unit_path.parent.mkdir(parents=True, exist_ok=True)
 
     stage_module.main(tmp_path, options)
     assert os.path.exists(expected_unit_path)
+    if unit_type == "system":
+        # When verifying user units, systemd expects runtime directories and more generally a booted system. Setting
+        # something up like that to verify it is more trouble than it's worth, especially since the system units are
+        # identical.
+        subprocess.run(["systemd-analyze", "verify",
+                        "--man=no",  # disable manpage checks
+                        f"--root={tmp_path}",  # verify commands and units in the root tree
+                        expected_unit_path],
+                       check=True)
     assert expected_unit_path.read_text(encoding="utf-8") == textwrap.dedent("""\
     [Unit]
     Description=Create directory
@@ -135,8 +158,8 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
     [Service]
     Type=oneshot
     RemainAfterExit=True
-    ExecStart=mkdir -p /etc/mydir
-    ExecStart=touch /etc/myfile
+    ExecStart=/usr/bin/mkdir -p /etc/mydir
+    ExecStart=/usr/bin/touch /etc/myfile
     Environment="DEBUG=1"
     Environment="TRACE=1"
     EnvironmentFile=/etc/example.env

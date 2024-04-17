@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import configparser
-import subprocess
 import sys
 
 import osbuild.api
@@ -47,8 +46,6 @@ def main(tree, options):
 
     with open(f"{systemd_dir}/{filename}", "w", encoding="utf8") as f:
         config.write(f, space_around_delimiters=False)
-
-    subprocess.run(["systemd-analyze", "verify", f"{systemd_dir}/{filename}"], check=True)
 
 
 if __name__ == '__main__':
