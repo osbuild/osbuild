@@ -243,6 +243,9 @@ def main(tree, options):  # pylint: disable=too-many-branches
     if reboot:
         config += [reboot]
     config += make_network(options)
+    kargs_append = options.get("bootloader", {}).get("append")
+    if kargs_append:
+        config += [f"bootloader --append='{kargs_append}'"]
 
     target = os.path.join(tree, path)
     base = os.path.dirname(target)

@@ -234,6 +234,7 @@ TEST_INPUT = [
         },
         "ostreecontainer --url=http://some-ostree-url.com/foo",
     ),
+    ({"bootloader": {"append": "karg1 karg2=0"}}, "bootloader --append='karg1 karg2=0'"),
 ]
 
 

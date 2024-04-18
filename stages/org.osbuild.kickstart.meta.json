@@ -542,6 +542,17 @@
         "items": {
           "$ref": "#/definitions/network-options-ref"
         }
+      },
+      "bootloader": {
+        "description": "Specifies how the boot loader should be installed",
+        "additionalProperties": false,
+        "type": "object",
+        "properties": {
+          "append": {
+            "description": "Specifies additional kernel parameters",
+            "type": "string"
+          }
+        }
       }
     }
   }
