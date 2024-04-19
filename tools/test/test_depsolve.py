@@ -42,7 +42,10 @@ def depsolve(pkgs, repos, root_dir, cache_dir, command):
             "root_dir": root_dir,
             "repos": repos,
             "transactions": [
-                {"package-specs": pkgs},
+                {
+                    "package-specs": pkgs,
+                    "exclude-specs": None
+                },
             ]
         }
     }
