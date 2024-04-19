@@ -101,9 +101,11 @@ class Solver():
 
         # Gather up all the exclude packages from all the transactions
         exclude_pkgs = []
-        transactions = arguments.get("transactions", [])
+        # Return an empty list when 'transactions' key is missing or when it is None
+        transactions = arguments.get("transactions") or []
         for t in transactions:
-            exclude_pkgs.extend(t.get("exclude-specs", []))
+            # Return an empty list when 'exclude-specs' key is missing or when it is None
+            exclude_pkgs.extend(t.get("exclude-specs") or [])
 
         if not exclude_pkgs:
             exclude_pkgs = []
@@ -358,7 +360,8 @@ class Solver():
     def depsolve(self, arguments):
         """depsolve returns a list of the dependencies for the set of transactions
         """
-        transactions = arguments.get("transactions", [])
+        # Return an empty list when 'transactions' key is missing or when it is None
+        transactions = arguments.get("transactions") or []
         # collect repo IDs from the request so we know whether to translate gpg key paths
         request_repo_ids = set(repo["id"] for repo in arguments.get("repos", []))
         root_dir = arguments.get("root_dir")
