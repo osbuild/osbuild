@@ -23,7 +23,7 @@ TEST_KEY = "-----BEGIN PGP PUBLIC KEY BLOCK-----\nTEST KEY\n"
 
 
 def has_dnf5():
-    return sp.run(["python3", "-c", "import libdnf5"], check=False).returncode == 0
+    return sp.run(["/usr/bin/python3", "-c", "import libdnf5"], check=False).returncode == 0
 
 
 def has_dnf():
