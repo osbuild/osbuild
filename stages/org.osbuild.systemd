@@ -14,13 +14,13 @@ def main(tree, options):
     default_target = options.get("default_target")
 
     for service in enabled_services:
-        subprocess.run(["systemctl", "--root", tree, "enable", service], check=True)
+        subprocess.run(["systemctl", "--root", tree, "enable", "--", service], check=True)
 
     for service in disabled_services:
-        subprocess.run(["systemctl", "--root", tree, "disable", service], check=True)
+        subprocess.run(["systemctl", "--root", tree, "disable", "--", service], check=True)
 
     for service in masked_services:
-        subprocess.run(["systemctl", "--root", tree, "mask", service], check=True)
+        subprocess.run(["systemctl", "--root", tree, "mask", "--", service], check=True)
 
     if masked_generators:
         # systemctl can't mask generators, so manually create the mask
