@@ -3,7 +3,15 @@
 Import related utilities
 """
 import importlib
+import sys
 from types import ModuleType
+
+# Cache files will split the extension, this means that all pyc cache files
+# looks like we get many clashing `org.osbuild.cpython-py311.pyc` files.
+# Moreover, the cache bytecode invalidation is based on the timestamp (which
+# is the same after git checkout) and the file size (which may be the same
+# for two different files). This means that we can't rely on the cache files.
+sys.dont_write_bytecode = True
 
 
 def import_module_from_path(fullname, path: str) -> ModuleType:
