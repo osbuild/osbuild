@@ -27,7 +27,7 @@ def has_dnf5():
 
 
 def has_dnf():
-    return bool(importlib.util.find_spec("dnf"))
+    return sp.run(["/usr/bin/python3", "-c", "import libdnf"], check=False).returncode == 0
 
 
 def depsolve(pkgs, repos, root_dir, cache_dir, command):
