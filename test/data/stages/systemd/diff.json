@@ -2,8 +2,11 @@
   "added_files": [
     "/etc/systemd/system/ldconfig.service",
     "/etc/systemd/system/multi-user.target.wants/nftables.service",
+    "/etc/systemd/system/local-fs.target.requires",
+    "/etc/systemd/system/local-fs.target.requires/-.mount",
     "/etc/systemd/system-generators",
-    "/etc/systemd/system-generators/systemd-sysv-generator"
+    "/etc/systemd/system-generators/systemd-sysv-generator",
+    "/usr/lib/systemd/system/-.mount"
   ],
   "deleted_files": [
     "/etc/systemd/system/multi-user.target.wants/sshd.service"

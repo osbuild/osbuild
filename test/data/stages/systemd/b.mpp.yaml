@@ -1,4 +1,10 @@
 version: '2'
+sources:
+  org.osbuild.inline:
+    items:
+      sha256:acc42197bb4dd5c1718a744ab9905a609f94bccd611e58e17cc8eb90ef5e601f:
+        encoding: base64
+        data: W1VuaXRdCkJlZm9yZT1sb2NhbC1mcy50YXJnZXQKQWZ0ZXI9YmxvY2tkZXZAZGV2LWRpc2stYnlceDJkdXVpZC1hZjM0MjU3ZFx4MmQzZTE0XHgyZDRhNTFceDJkYjkxZFx4MmRjNDMwYTk1NmRjYmEudGFyZ2V0CgpbTW91bnRdCldoYXQ9L2Rldi9kaXNrL2J5LXV1aWQvYWYzNDI1N2QtM2UxNC00YTUxLWI5MWQtYzQzMGE5NTZkY2JhCldoZXJlPS8KVHlwZT1leHQ0Ck9wdGlvbnM9cncsbm9hdGltZQoKW0luc3RhbGxdClJlcXVpcmVkQnk9bG9jYWwtZnMudGFyZ2V0Cg==
 pipelines:
   - mpp-import-pipelines:
       path: ../manifests/fedora-vars.ipp.yaml
@@ -29,10 +35,22 @@ pipelines:
             mpp-eval: gpgkeys
           exclude:
             docs: true
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:acc42197bb4dd5c1718a744ab9905a609f94bccd611e58e17cc8eb90ef5e601f: {}
+        options:
+          paths:
+            - from: input://inlinefile/sha256:acc42197bb4dd5c1718a744ab9905a609f94bccd611e58e17cc8eb90ef5e601f
+              to: tree:///usr/lib/systemd/system/-.mount
       - type: org.osbuild.systemd
         options:
           enabled_services:
             - nftables
+            - -.mount
           masked_services:
             - ldconfig
           masked_generators:
