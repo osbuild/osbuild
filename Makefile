@@ -306,7 +306,7 @@ srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 
 .PHONY: rpm
 rpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
-	rpmbuild -bb \
+	rpmbuild -bb $(RPMBUILD_ARGS) \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
 

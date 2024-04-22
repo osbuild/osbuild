@@ -1,6 +1,8 @@
 %global         forgeurl https://github.com/osbuild/osbuild
 %global         selinuxtype targeted
 
+%bcond_without  selinux
+
 Version:        117
 
 %forgemeta
@@ -104,6 +106,7 @@ Requires:       rpm-ostree
 Contains the necessary stages, assembler and source
 to build OSTree based images.
 
+%if %{with selinux}
 %package        selinux
 Summary:        SELinux policies
 Requires:       %{name} = %{version}-%{release}
@@ -116,6 +119,7 @@ BuildRequires:  selinux-policy-devel
 Contains the necessary SELinux policies that allows
 osbuild to use labels unknown to the host inside the
 containers it uses to build OS artifacts.
+%endif
 
 %package        tools
 Summary:        Extra tools and utilities
@@ -155,11 +159,10 @@ Contains depsolving capabilities for package managers.
 make man
 
 # SELinux
+%if %{with selinux}
 make -f /usr/share/selinux/devel/Makefile osbuild.pp
 bzip2 -9 osbuild.pp
-
-%pre selinux
-%selinux_relabel_pre -s %{selinuxtype}
+%endif
 
 %install
 %py3_install
@@ -200,9 +203,11 @@ install -p -m 0644 -t %{buildroot}%{_mandir}/man1/ docs/*.1
 install -p -m 0644 -t %{buildroot}%{_mandir}/man5/ docs/*.5
 
 # SELinux
+%if %{with selinux}
 install -D -m 0644 -t %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype} %{name}.pp.bz2
 install -D -m 0644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_selinux.8
 install -D -p -m 0644 selinux/osbuild.if %{buildroot}%{_datadir}/selinux/devel/include/distributed/%{name}.if
+%endif
 
 # Udev rules
 mkdir -p %{buildroot}%{_udevrulesdir}
@@ -271,11 +276,15 @@ exit 0
 %{pkgdir}/stages/org.osbuild.experimental.ostree*
 %{pkgdir}/stages/org.osbuild.rpm-ostree
 
+%if %{with selinux}
 %files selinux
 %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
 %{_mandir}/man8/%{name}_selinux.8.*
 %{_datadir}/selinux/devel/include/distributed/%{name}.if
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
+
+%pre selinux
+%selinux_relabel_pre -s %{selinuxtype}
 
 %post selinux
 %selinux_modules_install -s %{selinuxtype} %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
@@ -287,6 +296,7 @@ fi
 
 %posttrans selinux
 %selinux_relabel_post -s %{selinuxtype}
+%endif
 
 %files tools
 %{_bindir}/osbuild-mpp
