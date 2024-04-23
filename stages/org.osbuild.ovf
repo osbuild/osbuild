@@ -22,7 +22,7 @@ OVF_TEMPLATE = """<?xml version="1.0"?>
   <VirtualSystem ovf:id="image">
     <Info>A virtual machine</Info>
     <Name>VM</Name>
-    <OperatingSystemSection ovf:id="100" vmw:osType="other26xLinux64Guest">
+    <OperatingSystemSection ovf:id="100" vmw:osType={ostype}>
       <Info>The kind of installed guest operating system</Info>
     </OperatingSystemSection>
     <VirtualHardwareSection ovf:transport="com.vmware.guestInfo">
@@ -97,10 +97,11 @@ def virtual_size(vmdk):
     return json.loads(res.stdout)["virtual-size"]
 
 
-def write_template(vmdk):
+def write_template(vmdk, ostype):
     dirname, basename = os.path.split(vmdk)
     ovf_data = OVF_TEMPLATE.format(vmdk_size=os.stat(vmdk).st_size,
-                                   vmdk_capacity=virtual_size(vmdk), image_name=basename)
+                                   vmdk_capacity=virtual_size(vmdk), image_name=basename,
+                                   ostype=ostype)
     ovf = f"{os.path.join(dirname, os.path.splitext(basename)[0])}.ovf"
     with open(ovf, "w", encoding="utf8") as f:
         f.write(ovf_data)
@@ -116,8 +117,9 @@ def write_manifest(vmdk, ovf):
 
 
 def main(options, tree):
+    ostype = os.path.join(tree, options["ostype"])
     vmdk = os.path.join(tree, options["vmdk"])
-    ovf = write_template(vmdk)
+    ovf = write_template(vmdk, ostype)
     write_manifest(vmdk, ovf)
     return 0
 
