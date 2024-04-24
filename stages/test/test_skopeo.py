@@ -25,6 +25,7 @@ STAGE_NAME = "org.osbuild.skopeo"
     ({"destination": {"type": "oci", "path": "/foo"}}, ""),
     ({"destination": {"type": "oci-archive", "path": "/foo"}}, ""),
     ({"destination": {"type": "dir", "path": "/foo"}}, ""),
+    ({"destination": {"type": "dir", "path": "/foo"}, "remove-signatures": True}, ""),
 
     # this one might not be expected but it's valid because we don't require any
     # *inputs* and it'll be a no-op in the stage

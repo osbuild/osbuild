@@ -13,6 +13,7 @@ def main(inputs, output, options):
 
     destination = options["destination"]
     dest_type = destination["type"]
+    remove_signatures = destination.get("remove-signatures")
 
     for image in images.values():
         with containers.container_source(image) as (image_name, image_source):
@@ -27,7 +28,12 @@ def main(inputs, output, options):
             else:
                 raise ValueError(f"Unknown destination type '{dest_type}'")
 
-            subprocess.run(["skopeo", "copy", image_source, dest], check=True)
+            cmd = ["skopeo", "copy"]
+            if remove_signatures:
+                cmd.append("--remove-signatures")
+            cmd.extend([image_source, dest])
+
+            subprocess.run(cmd, check=True)
 
     if dest_type == "containers-storage" and storage_driver == "overlay":
         # Each time the overlay backend runs on an xfs fs it creates this file:
