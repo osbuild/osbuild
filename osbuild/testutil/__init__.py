@@ -5,9 +5,11 @@ import contextlib
 import inspect
 import os
 import pathlib
+import random
 import re
 import shutil
 import socket
+import string
 import subprocess
 import tempfile
 import textwrap
@@ -125,6 +127,7 @@ def mock_command(cmd_name: str, script: str):
 
 @contextlib.contextmanager
 def make_container(tmp_path, fake_content, base="scratch"):
+    fake_container_tag = "osbuild-test-" + "".join(random.choices(string.digits, k=12))
     fake_container_src = tmp_path / "fake-container-src"
     fake_container_src.mkdir(exist_ok=True)
     make_fake_tree(fake_container_src, fake_content)
@@ -134,22 +137,16 @@ def make_container(tmp_path, fake_content, base="scratch"):
     COPY . .
     """
     fake_containerfile_path.write_text(container_file_content, encoding="utf8")
-    p = subprocess.Popen([
+    subprocess.check_call([
         "podman", "build",
         "--no-cache",
+        "-t", fake_container_tag,
         "-f", os.fspath(fake_containerfile_path),
-    ], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    while True:
-        line = p.stdout.readline()
-        if line == "":
-            break
-        print(line)
-        container_id = line.strip()
-    p.wait()
+    ])
     try:
-        yield container_id
+        yield fake_container_tag
     finally:
-        subprocess.check_call(["podman", "image", "rm", container_id])
+        subprocess.check_call(["podman", "image", "rm", fake_container_tag])
 
 
 @contextlib.contextmanager
