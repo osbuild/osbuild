@@ -46,7 +46,7 @@ jobs:
               TEST_CATEGORY="not test_stages.py and not test_assemblers.py"
           fi
           OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
-          tox -e "${{ matrix.environment }}" -- $TEST_WORKERS -k "$TEST_CATEGORY"
+          tox -e "${{ matrix.environment }}" -- $TEST_WORKERS -k "$TEST_CATEGORY" --error-on-skip --ok-to-skip="no SELinux"
 
   v1_manifests:
     name: "Assembler test (legacy)"
