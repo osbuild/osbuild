@@ -225,7 +225,7 @@ def config_combos(tmp_path, servers):
                 "name": server["name"],
                 "baseurl": server["address"],
                 "check_gpg": False,
-                "ignoressl": True,
+                "sslverify": False,
                 "rhsm": False,
                 "gpgkeys": [TEST_KEY + server["name"]],
             })
@@ -277,3 +277,4 @@ def test_depsolve(tmp_path, cache_dir, repo_servers, dnf_cmd, detect_fn, test_ca
         assert res["repos"].keys() == test_case["results"]["reponames"]
         for repo in res["repos"].values():
             assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+            assert repo["sslverify"] is False
