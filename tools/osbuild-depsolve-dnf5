@@ -223,7 +223,7 @@ class Solver():
         else:
             raise ValueError("missing either `baseurl`, `metalink`, or `mirrorlist` in repo")
 
-        repo.sslverify = desc.get("sslverify", True)
+        conf.sslverify = desc.get("sslverify", True)
         if "sslcacert" in desc:
             conf.sslcacert = desc["sslcacert"]
         if "sslclientkey" in desc:
