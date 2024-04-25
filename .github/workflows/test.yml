@@ -38,6 +38,9 @@ jobs:
           # it to vfs for the local storage skopeo stage test.
           sed -i 's/overlay/vfs/g' /usr/share/containers/storage.conf  # default system config
           sed -i 's/overlay/vfs/g' /etc/containers/storage.conf || true  # potential overrides
+
+          # not running "test_selinux_ro" here as it needs a real selinux
+          TEST_SKIP="not test_selinux_ro"
           if [ "${{ matrix.test }}" == "parallel" ]; then
               # 4 is a bit arbitrary
               TEST_WORKERS="-n 4"
@@ -56,7 +59,7 @@ jobs:
               fi
           fi
           OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
-          tox -e "${{ matrix.environment }}" $TOX_ARGS -- -rs $TEST_WORKERS -k "$TEST_CATEGORY"
+          tox -e "${{ matrix.environment }}" $TOX_ARGS -- -rs $TEST_WORKERS -k "$TEST_CATEGORY" --error-on-skip -k "$TEST_SKIP"
 
   v1_manifests:
     name: "Assembler test (legacy)"
