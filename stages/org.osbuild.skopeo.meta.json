@@ -47,6 +47,44 @@
             "type": "string"
           }
         }
+      },
+      "destination-oci-archive": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "path"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "oci-archive"
+            ]
+          },
+          "path": {
+            "description": "Location of a tar archive compliant with 'Open Container Image Layout Specification'",
+            "type": "string"
+          },
+        }
+      },
+      "destination-dir": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "path"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "dir"
+            ]
+          },
+          "path": {
+            "description": "Location of a directory storing the manifest, layer tarballs and signatures as individual files. This is a non-standardized format, primarily useful for debugging or noninvasive container inspection.",
+            "type": "string"
+          }
+        }
       }
     },
     "inputs": {
@@ -80,6 +118,12 @@
             },
             {
               "$ref": "#/definitions/destination-oci"
+            },
+            {
+              "$ref": "#/definitions/destination-oci-archive"
+            },
+            {
+              "$ref": "#/definitions/destination-dir"
             }
           ]
         }
