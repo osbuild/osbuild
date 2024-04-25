@@ -3,6 +3,7 @@
 #
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -18,7 +19,10 @@ def tempdir_fixture():
 
 
 def test_clamp_mtime(tempdir):
-    start = int(time.time())
+    # This does not need to be precise, anything created within the last 1½h
+    # should be "clamped". By adding a bit of slack chrony, random
+    # RTC jumps and DST/timezone changes will not affect the test
+    clamp_start = int(time.time() - 90 * 60)
 
     tree = Path(tempdir, "tree")
     tree.mkdir()
@@ -33,12 +37,13 @@ def test_clamp_mtime(tempdir):
     link = Path(tree, "link")
     link.symlink_to(folder, target_is_directory=True)
 
-    timepoint = 1644758228
-    path.clamp_mtime(tree, start, timepoint)
+    # Some time way in the past
+    clamp_to = int(datetime(2022, 2, 13, 14, 17, 8).timestamp())
+    path.clamp_mtime(tree, clamp_start, clamp_to)
 
     def ensure_mtime(target, dfd):
         stat = os.stat(target, dir_fd=dfd, follow_symlinks=False)
-        assert stat.st_mtime <= timepoint, f"failed for {target} ({dfd})"
+        assert stat.st_mtime <= clamp_to, f"failed for {target} ({dfd})"
 
     for _, dirs, files, dfd in os.fwalk(tree):
         ensure_mtime(".", dfd)
