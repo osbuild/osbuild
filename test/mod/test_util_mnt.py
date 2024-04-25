@@ -1,4 +1,5 @@
 import os
+import re
 
 import pytest
 
@@ -10,7 +11,9 @@ from osbuild.util.mnt import MountGuard, mount
 def test_mount_failure_msg(tmp_path):
     with pytest.raises(RuntimeError) as e:
         mount("/dev/invalid-src", tmp_path)
-    assert "special device /dev/invalid-src does not exist" in str(e.value)
+    # latest util-linux mount uses fsconfig(2) instead of mount(2) so the
+    # error is different
+    assert re.search(r"special device /dev/invalid-src does not exist|Can't lookup blockdev.", str(e.value))
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="root only")
@@ -18,7 +21,9 @@ def test_mount_guard_failure_msg(tmp_path):
     with pytest.raises(RuntimeError) as e:
         with MountGuard() as mg:
             mg.mount("/dev/invalid-src", tmp_path)
-    assert "special device /dev/invalid-src does not exist" in str(e.value)
+    # latest util-linux mount uses fsconfig(2) instead of mount(2) so the
+    # error is different
+    assert re.search(r"special device /dev/invalid-src does not exist|Can't lookup blockdev.", str(e.value))
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="root only")
