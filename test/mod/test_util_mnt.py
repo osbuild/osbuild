@@ -57,4 +57,4 @@ def test_osbuild_mount_failure_msg(tmp_path):
             "options": [],
         }
         mnt_service.mount(args)
-    assert "special device /dev/invalid-src does not exist" in str(e.value)
+    assert re.search(r"special device /dev/invalid-src does not exist|Can't open blockdev.", str(e.value))
