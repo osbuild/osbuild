@@ -7,7 +7,7 @@ import tarfile
 import pytest
 
 from osbuild import testutil
-from osbuild.testutil import has_executable, make_container
+from osbuild.testutil import has_executable, make_container, make_fake_images_inputs
 
 STAGE_NAME = "org.osbuild.skopeo"
 
@@ -60,23 +60,6 @@ def make_fake_oci_archive(tmp_path):
     return fake_container_dst
 
 
-def make_skopeo_copy_inputs(fake_oci_path, name):
-    return {
-        "images": {
-            # seems to be unused with fake_container_path?
-            "path": fake_oci_path,
-            "data": {
-                "archives": {
-                    fake_oci_path: {
-                        "format": "oci-archive",
-                        "name": name,
-                    },
-                },
-            },
-        },
-    }
-
-
 def assert_manifest_file(manifest_file):
     assert manifest_file.exists()
     data = json.loads(manifest_file.read_bytes())
@@ -88,7 +71,7 @@ def assert_manifest_file(manifest_file):
 
 def _test_skopeo_copy(tmp_path, stage_module, typ, dest_name):
     fake_oci_path = make_fake_oci_archive(tmp_path)
-    inputs = make_skopeo_copy_inputs(fake_oci_path, "some-name")
+    inputs = make_fake_images_inputs(fake_oci_path, "some-name")
 
     output_dir = tmp_path / "output"
     local_path = f"/some/{dest_name}"
