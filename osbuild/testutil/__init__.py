@@ -183,3 +183,21 @@ def find_one_subclass_in_module(module: ModuleType, subclass: Type) -> object:
             raise ValueError(f"already have {cls}, also found {name}:{memb}")
         cls = memb
     return cls
+
+
+def make_fake_images_inputs(fake_oci_path, name):
+    fname = fake_oci_path.name
+    dirname = fake_oci_path.parent
+    return {
+        "images": {
+            "path": dirname,
+            "data": {
+                "archives": {
+                    fname: {
+                        "format": "oci-archive",
+                        "name": name,
+                    },
+                },
+            },
+        },
+    }

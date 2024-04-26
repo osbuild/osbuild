@@ -31,7 +31,7 @@ FAKE_INPUTS = {
         "path": "/input/images/path",
         "data": {
             "archives": {
-                "/input/images/path": {
+                "filename": {
                     "format": "oci-archive",
                     "name": "some-img-name",
                 },
@@ -69,7 +69,7 @@ def test_bootc_install_to_fs(mock_run, mocked_named_tmp, mocked_temp_dir, stage_
             "path": "/input/images/path",
             "data": {
                 "archives": {
-                    "/input/images/path": {
+                    "filename": {
                         "format": "oci-archive",
                         "name": "some-img-name",
                     },

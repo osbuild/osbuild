@@ -9,7 +9,7 @@ from unittest.mock import call, patch
 import pytest
 
 import osbuild.testutil
-from osbuild.testutil import has_executable, make_container
+from osbuild.testutil import has_executable, make_container, make_fake_images_inputs
 
 STAGE_NAME = "org.osbuild.container-deploy"
 
@@ -22,28 +22,15 @@ def test_container_deploy_integration(tmp_path, stage_module):
     with make_container(tmp_path, {"file1": "file1 from base"}) as base_tag:
         with make_container(tmp_path, {"file1": "file1 from final layer"}, base_tag) as cont_tag:
             # export for the container-deploy stage
-            fake_container_dst = tmp_path / "fake-container"
+            fake_oci_path = tmp_path / "fake-container"
             subprocess.check_call([
                 "podman", "save",
                 "--format=oci-archive",
-                f"--output={fake_container_dst}",
+                f"--output={fake_oci_path}",
                 cont_tag,
             ])
 
-    inputs = {
-        "images": {
-            # seems to be unused with fake_container_path?
-            "path": fake_container_dst,
-            "data": {
-                "archives": {
-                    fake_container_dst: {
-                        "format": "oci-archive",
-                        "name": cont_tag,
-                    },
-                },
-            },
-        },
-    }
+    inputs = make_fake_images_inputs(fake_oci_path, "some-name")
     output_dir = tmp_path / "output"
     options = {}
 
@@ -66,28 +53,15 @@ def test_container_deploy_exclude(tmp_path, stage_module):
         "dir2/file4": "dir2/file4 content",
     }) as base_tag:
         # export for the container-deploy stage
-        fake_container_dst = tmp_path / "fake-container"
+        fake_oci_path = tmp_path / "fake-container"
         subprocess.check_call([
             "podman", "save",
             "--format=oci-archive",
-            f"--output={fake_container_dst}",
+            f"--output={fake_oci_path}",
             base_tag,
         ])
 
-    inputs = {
-        "images": {
-            # seems to be unused with fake_container_path?
-            "path": fake_container_dst,
-            "data": {
-                "archives": {
-                    fake_container_dst: {
-                        "format": "oci-archive",
-                        "name": base_tag,
-                    },
-                },
-            },
-        },
-    }
+    inputs = make_fake_images_inputs(fake_oci_path, "some-name")
     options = {
         "exclude": [
             "file2",
