@@ -13,7 +13,7 @@ def main(inputs, output, options):
 
     destination = options["destination"]
     dest_type = destination["type"]
-    remove_signatures = destination.get("remove-signatures")
+    remove_signatures = options.get("remove-signatures")
 
     for image in images.values():
         with containers.container_source(image) as (image_name, image_source):
