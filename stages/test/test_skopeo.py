@@ -118,3 +118,28 @@ def test_skopeo_copy_oci(tmp_path, stage_module):
     data_digest = data["manifests"][0]["digest"].split(':')
     manifest_file = result_path / "blobs" / data_digest[0] / data_digest[1]
     assert_manifest_file(manifest_file)
+
+
+@pytest.mark.parametrize("remove_signatures", [True, False])
+def test_skopeo_copy_remove_signatures(tmp_path, stage_module, remove_signatures):
+    # We are completely faking everything here, because we mock out skopeo
+    fake_oci_path = tmp_path / "fake-container"
+    inputs = make_fake_images_inputs(fake_oci_path, "some-name")
+
+    with testutil.mock_command("skopeo", "") as args:
+        options = {
+            "destination": {
+                "type": "oci",
+                "path": "/tmp/test-output-skopeo-dir",
+            },
+            "remove-signatures": remove_signatures,
+        }
+        output_dir = tmp_path / "output"
+        stage_module.main(inputs, output_dir, options)
+
+        if remove_signatures:
+            # Check that skopeo has --remove-signatures right after the copy subcommand
+            assert args.call_args_list[0][0:2] == ["copy", "--remove-signatures"]
+        else:
+            # Check that --remove-signatures is not present in the skopeo command
+            assert "--remove-signatures" not in args.call_args_list[0]
