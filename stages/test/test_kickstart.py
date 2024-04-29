@@ -234,6 +234,12 @@ TEST_INPUT = [
         },
         "ostreecontainer --url=http://some-ostree-url.com/foo",
     ),
+    ({"ostreecontainer": {"transport": "oci", "url": "/run/install/repo/container", }, },
+     "ostreecontainer --url=/run/install/repo/container --transport=oci",),
+    ({"ostreecontainer": {"transport": "oci-archive", "url": "/run/install/repo/container.tar", }, },
+     "ostreecontainer --url=/run/install/repo/container.tar --transport=oci-archive",),
+    ({"ostreecontainer": {"transport": "dir", "url": "/run/install/repo/container", }, },
+     "ostreecontainer --url=/run/install/repo/container --transport=dir",),
     ({"bootloader": {"append": "karg1 karg2=0"}}, "bootloader --append='karg1 karg2=0'"),
 ]
 
