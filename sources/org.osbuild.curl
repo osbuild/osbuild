@@ -20,6 +20,7 @@ up the download.
 
 import concurrent.futures
 import os
+import platform
 import subprocess
 import sys
 import tempfile
@@ -153,6 +154,7 @@ class CurlSource(sources.SourceService):
             # some mirrors are sometimes broken. retry manually, because we could be
             # redirected to a different, working, one on retry.
             return_code = 0
+            arch = platform.machine()
             for _ in range(10):
                 curl_command = [
                     "curl",
@@ -161,6 +163,7 @@ class CurlSource(sources.SourceService):
                     "--connect-timeout", "30",
                     "--fail",
                     "--location",
+                    "--header", f"User-Agent: osbuild (Linux.{arch}; https://osbuild.org/)",
                     "--output", checksum,
                 ]
                 if proxy:
