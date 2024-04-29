@@ -208,3 +208,20 @@ def test_curl_download_proxy(mocked_run, tmp_path, monkeypatch, sources_service,
             assert args[0][idx:idx + 2] == ["--proxy", "http://my-proxy"]
         else:
             assert "--proxy" not in args[0]
+
+
+@patch("subprocess.run")
+def test_curl_user_agent(mocked_run, tmp_path, sources_service):
+    test_sources = make_test_sources(tmp_path, 80, 2,)
+    fake_curl_downloader = FakeCurlDownloader(test_sources)
+    mocked_run.side_effect = fake_curl_downloader.faked_run
+
+    sources_service.cache = tmp_path / "curl-cache"
+    sources_service.cache.mkdir()
+    sources_service.fetch_all(test_sources)
+
+    for call_args in mocked_run.call_args_list:
+        args, _kwargs = call_args
+        idx = args[0].index("--header")
+        assert "User-Agent: osbuild" in args[0][idx + 1]
+        assert "https://osbuild.org/" in args[0][idx + 1]
