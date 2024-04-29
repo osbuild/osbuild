@@ -20,6 +20,7 @@ up the download.
 
 import concurrent.futures
 import os
+import platform
 import subprocess
 import sys
 import tempfile
@@ -153,6 +154,7 @@ class CurlSource(sources.SourceService):
             # some mirrors are sometimes broken. retry manually, because we could be
             # redirected to a different, working, one on retry.
             return_code = 0
+            arch = platform.machine()
             for _ in range(10):
                 curl_command = [
                     "curl",
@@ -163,6 +165,14 @@ class CurlSource(sources.SourceService):
                     "--location",
                     "--output", checksum,
                 ]
+                if url.endswith(".rpm"):
+                    # Some mirrors (e.g. mirror.cpsc.ucalgary.ca) denylist the curl user agent.
+                    # Let's pretend to be libdnf when downloading RPMs, because osbuild is doing basically the same
+                    # thing as dnf.
+                    # The schema is taken from here:
+                    # https://github.com/rpm-software-management/libdnf/blob/90d2ffad964a91a7a798b81e15c16eb1e840f257/libdnf/utils/os-release.cpp#L137
+                    curl_command.extend(["--header", f"User-Agent: libdnf (OSBuild; generic; Linux.{arch})"])
+
                 if proxy:
                     curl_command.extend(["--proxy", proxy])
                 if secrets:

@@ -93,7 +93,7 @@ def test_curl_download_many_fail(sources_service):
     assert str(exp.value) == 'curl: error downloading http://localhost:9876/random-not-exists: error code 7'
 
 
-def make_test_sources(fake_httpd_root, port, n_files):
+def make_test_sources(fake_httpd_root, port, n_files, fake_rpm=False):
     """
     Create test sources for n_file. All files have the names
     0,1,2...
@@ -101,11 +101,15 @@ def make_test_sources(fake_httpd_root, port, n_files):
 
     Returns a sources dict that can be used as input for "fetch_all()" with
     the correct hash/urls.
+
+    If fake_rpm is True, the first file will have a ".rpm" extension.
     """
     fake_httpd_root.mkdir(exist_ok=True)
     sources = {}
     for i in range(n_files):
         name = f"{i}"
+        if fake_rpm and i == 0:
+            name += ".rpm"
         sources[f"sha256:{hashlib.sha256(name.encode()).hexdigest()}"] = {
             "url": f"http://localhost:{port}/{name}",
         }
@@ -208,3 +212,22 @@ def test_curl_download_proxy(mocked_run, tmp_path, monkeypatch, sources_service,
             assert args[0][idx:idx + 2] == ["--proxy", "http://my-proxy"]
         else:
             assert "--proxy" not in args[0]
+
+
+@patch("subprocess.run")
+def test_curl_user_agent(mocked_run, tmp_path, sources_service):
+    test_sources = make_test_sources(tmp_path, 80, 2, fake_rpm=True)
+    fake_curl_downloader = FakeCurlDownloader(test_sources)
+    mocked_run.side_effect = fake_curl_downloader.faked_run
+
+    sources_service.cache = tmp_path / "curl-cache"
+    sources_service.cache.mkdir()
+    sources_service.fetch_all(test_sources)
+
+    for call_args in mocked_run.call_args_list:
+        args, _kwargs = call_args
+        if args[0][-1].endswith(".rpm"):
+            idx = args[0].index("--header")
+            assert "User-Agent: libdnf" in args[0][idx + 1]
+        else:
+            assert "--header" not in args[0]
