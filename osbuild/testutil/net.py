@@ -34,6 +34,14 @@ class SilentHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *args, **kwargs):
         pass
 
+    def do_GET(self):
+        # silence errors when the other side "hangs up" unexpectedly
+        # (our tests will do that when downloading in parallel)
+        try:
+            super().do_GET()
+        except (ConnectionResetError, BrokenPipeError):
+            pass
+
 
 class DirHTTPServer(ThreadingHTTPServer):
     def __init__(self, *args, directory=None, simulate_failures=0, **kwargs):
