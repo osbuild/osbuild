@@ -22,6 +22,7 @@ import concurrent.futures
 import os
 import pathlib
 import platform
+import re
 import subprocess
 import sys
 import tempfile
@@ -93,6 +94,28 @@ SCHEMA = """
   "required": ["urls"]
 }]
 """
+
+
+def curl_has_parallel_downloads():
+    """
+    Return true if curl has all the support we needed for parallel downloading
+    (this include --write-out "%{json}" too
+    """
+    output = subprocess.check_output(["curl", "--version"], universal_newlines=True)
+    first_line = output.split("\n", maxsplit=1)[0]
+    m = re.match(r'^curl (\d+\.\d+\.\d+)', first_line)
+    if not m:
+        print(f"WARNING: cannot parse curl version from '{first_line}'")
+        return False
+    major, minor, _ = m.group(1).split(".")
+    if int(major) > 7:
+        return True
+    # --parallel got added in 7.68
+    # --write-out "%{json}" was added in 7.70
+    # --write-out "%{exitcode} is 7.75
+    if int(major) == 7 and int(minor) >= 75:
+        return True
+    return False
 
 
 def _quote_url(url: str) -> str:

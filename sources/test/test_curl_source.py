@@ -5,6 +5,7 @@ import platform
 import re
 import shutil
 import textwrap
+from unittest.mock import patch
 
 import pytest
 
@@ -257,3 +258,29 @@ def test_curl_gen_download_config(tmp_path, sources_module):
     no-insecure
 
     """)
+
+
+# fc39
+NEW_CURL_OUTPUT = """\
+curl 8.2.1 (x86_64-redhat-linux-gnu) libcurl/8.2.1 OpenSSL/3.1.1 zlib/1.2.13 libidn2/2.3.7 nghttp2/1.55.1
+Release-Date: 2023-07-26
+Protocols: file ftp ftps http https
+Features: alt-svc AsynchDNS GSS-API HSTS HTTP2 HTTPS-proxy IDN IPv6 Kerberos Largefile libz SPNEGO SSL threadsafe UnixSockets
+"""
+
+# centos-stream8
+OLD_CURL_OUTPUT = """\
+curl 7.61.1 (x86_64-redhat-linux-gnu) libcurl/7.61.1 OpenSSL/1.1.1k zlib/1.2.11 nghttp2/1.33.0
+Release-Date: 2018-09-05
+Protocols: dict file ftp ftps gopher http https imap imaps pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
+Features: AsynchDNS IPv6 Largefile GSS-API Kerberos SPNEGO NTLM NTLM_WB SSL libz TLS-SRP HTTP2 UnixSockets HTTPS-proxy
+"""
+
+
+@patch("subprocess.check_output")
+def test_curl_has_parallel_download(mocked_check_output, sources_module):
+    mocked_check_output.return_value = NEW_CURL_OUTPUT
+    assert sources_module.curl_has_parallel_downloads()
+
+    mocked_check_output.return_value = OLD_CURL_OUTPUT
+    assert not sources_module.curl_has_parallel_downloads()
