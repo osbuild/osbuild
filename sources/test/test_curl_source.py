@@ -82,14 +82,24 @@ def test_curl_source_amend_secrets_subscription_mgr(sources_service):
     assert desc["secrets"] == "secret-for-http://localhost:80/a"
 
 
-def test_curl_download_many_fail(sources_service):
+@pytest.fixture(name="curl_parallel")
+def curl_parallel_fixture(sources_module, sources_service, request):
+    use_parallel = request.param
+    if use_parallel and not sources_module.curl_has_parallel_downloads:
+        pytest.skip("system curl does not support parallel downloads")
+    sources_service._curl_has_parallel_downloads = use_parallel  # pylint: disable=protected-access
+    yield sources_service
+
+
+@pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
+def test_curl_download_many_fail(curl_parallel):
     TEST_SOURCES = {
         "sha:1111111111111111111111111111111111111111111111111111111111111111": {
             "url": "http://localhost:9876/random-not-exists",
         },
     }
     with pytest.raises(RuntimeError) as exp:
-        sources_service.fetch_all(TEST_SOURCES)
+        curl_parallel.fetch_all(TEST_SOURCES)
     assert str(exp.value) == 'curl: error downloading http://localhost:9876/random-not-exists: error code 7'
 
 
@@ -114,24 +124,26 @@ def make_test_sources(fake_httpd_root, port, n_files):
     return sources
 
 
-def test_curl_download_many_with_retry(tmp_path, sources_service):
+@pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
+def test_curl_download_many_with_retry(tmp_path, curl_parallel):
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
     simulate_failures = 2
     with http_serve_directory(fake_httpd_root, simulate_failures=simulate_failures) as httpd:
         test_sources = make_test_sources(fake_httpd_root, httpd.server_port, 5)
 
-        sources_service.cache = tmp_path / "curl-download-dir"
-        sources_service.cache.mkdir()
-        sources_service.fetch_all(test_sources)
+        curl_parallel.cache = tmp_path / "curl-download-dir"
+        curl_parallel.cache.mkdir()
+        curl_parallel.fetch_all(test_sources)
         # we simulated N failures and we need to fetch K files
         assert httpd.reqs.count == simulate_failures + len(test_sources)
     # double downloads happend in the expected format
     for chksum in test_sources:
-        assert (sources_service.cache / chksum).exists()
+        assert (curl_parallel.cache / chksum).exists()
 
 
-def test_curl_download_many_chksum_validate(tmp_path, sources_service):
+@pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
+def test_curl_download_many_chksum_validate(tmp_path, curl_parallel):
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
     with http_serve_directory(fake_httpd_root) as httpd:
@@ -140,14 +152,15 @@ def test_curl_download_many_chksum_validate(tmp_path, sources_service):
         # match the checksum
         (fake_httpd_root / "1").write_text("hash-no-longer-matches", encoding="utf8")
 
-        sources_service.cache = tmp_path / "curl-download-dir"
-        sources_service.cache.mkdir()
+        curl_parallel.cache = tmp_path / "curl-download-dir"
+        curl_parallel.cache.mkdir()
         with pytest.raises(RuntimeError) as exp:
-            sources_service.fetch_all(test_sources)
+            curl_parallel.fetch_all(test_sources)
         assert re.search(r"checksum mismatch: sha256:.* http://localhost:.*/1", str(exp.value))
 
 
-def test_curl_download_many_retries(tmp_path, sources_service):
+@pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
+def test_curl_download_many_retries(tmp_path, curl_parallel):
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
     with http_serve_directory(fake_httpd_root) as httpd:
@@ -155,10 +168,10 @@ def test_curl_download_many_retries(tmp_path, sources_service):
         # remove all the sources
         shutil.rmtree(fake_httpd_root)
 
-        sources_service.cache = tmp_path / "curl-download-dir"
-        sources_service.cache.mkdir()
+        curl_parallel.cache = tmp_path / "curl-download-dir"
+        curl_parallel.cache.mkdir()
         with pytest.raises(RuntimeError) as exp:
-            sources_service.fetch_all(test_sources)
+            curl_parallel.fetch_all(test_sources)
         # curl will retry 10 times
         assert httpd.reqs.count == 10 * len(test_sources)
         assert "curl: error downloading http://localhost:" in str(exp.value)
