@@ -137,12 +137,7 @@ manifests and osbuild.
 Summary:        Dependency solving support for DNF
 Requires:       %{name} = %{version}-%{release}
 
-# Fedora 40 and later use libdnf5, RHEL and Fedora < 40 use libdnf
-%if 0%{?fedora} >= 40
-Requires: python3-libdnf5 >= 5.1.1
-%else
 Requires: python3-libdnf
-%endif
 
 %description    depsolve-dnf
 Contains depsolving capabilities for package managers.
@@ -213,12 +208,7 @@ install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
 
 # Install `osbuild-depsolve-dnf` into libexec
 mkdir -p %{buildroot}%{_libexecdir}
-# Fedora 40 and later use dnf5-json, RHEL and Fedora < 40 use dnf-json
-%if 0%{?fedora} >= 40
-install -p -m 0755 tools/osbuild-depsolve-dnf5 %{buildroot}%{_libexecdir}/osbuild-depsolve-dnf
-%else
 install -p -m 0755 tools/osbuild-depsolve-dnf %{buildroot}%{_libexecdir}/osbuild-depsolve-dnf
-%endif
 
 %check
 exit 0
