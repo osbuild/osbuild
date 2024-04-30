@@ -251,6 +251,7 @@ class CurlSource(sources.SourceService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.subscriptions = None
+        self._curl_has_parallel_downloads = curl_has_parallel_downloads()
 
     def amend_secrets(self, checksum, desc_or_url):
         if not isinstance(desc_or_url, dict):
@@ -281,7 +282,7 @@ class CurlSource(sources.SourceService):
         filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
         amended = map(lambda i: self.amend_secrets(i[0], i[1]), filtered)
 
-        if curl_has_parallel_downloads():
+        if self._curl_has_parallel_downloads:
             self._fetch_all_new_curl(amended)
         else:
             self._fetch_all_old_curl(amended)
