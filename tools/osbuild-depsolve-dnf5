@@ -382,7 +382,7 @@ class Solver():
 
             # Support group/environment names as well as ids
             settings = dnf5.base.GoalJobSettings()
-            settings.group_with_name = True
+            settings.set_group_with_name(True)
 
             # Packages are added individually, excludes are handled in the repo setup
             for pkg in transaction.get("package-specs"):
