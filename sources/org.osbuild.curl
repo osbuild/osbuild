@@ -20,7 +20,6 @@ up the download.
 
 import concurrent.futures
 import contextlib
-import json
 import os
 import pathlib
 import platform
@@ -113,7 +112,6 @@ def curl_has_parallel_downloads():
     if int(major) > 7:
         return True
     # --parallel got added in 7.68
-    # --write-out "%{json}" was added in 7.70
     # --write-out "%{exitcode} is 7.75
     if int(major) == 7 and int(minor) >= 75:
         return True
@@ -166,14 +164,19 @@ def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[
             fp.write("\n")
 
 
-def try_parse_curl_json_line(line):
+def try_parse_curl_line(line):
     line = line.strip()
-    if line:
-        try:
-            return json.loads(line)
-        except json.decoder.JSONDecodeError:
-            print(f"WARNING: cannot decode {line}", file=sys.stderr)
-    return None
+    print(line)
+    if not line.startswith("osbuild-dl\x1c"):
+        print(f"WARNING: unexpected prefix in {line}", file=sys.stderr)
+        return None
+    _, url, filename, exitcode, errormsg = line.split("\x1c")
+    return {
+        "url": url,
+        "filename_effective": filename,
+        "exitcode": int(exitcode),
+        "errormsg": errormsg,
+    }
 
 
 def validate_and_move_to_targetdir(tmpdir, targetdir, checksum, origin):
@@ -201,8 +204,10 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
         # this adds a bunch of noise but might be nice for debug?
         # "--show-error",
         "--parallel",
-        # this will write out a json record for each finished download
-        "--write-out", "%{json}\n",
+        # this will write out a "record" for each finished download
+        # Not using %{json} here because older curl (7.76) will write
+        # {"http_connect":000} which python cannot parse
+        "--write-out", "osbuild-dl\x1c%{url}\x1c%{filename_effective}\x1c%{exitcode}\x1cerror: %{errormsg}\n",
     ]
     with contextlib.ExitStack() as cm:
         curl_p = subprocess.Popen(curl_command, encoding="utf-8", cwd=tmpdir, stdout=subprocess.PIPE)
@@ -213,7 +218,7 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
             # empty line means eof/process finished
             if line == "":
                 break
-            dl_details = try_parse_curl_json_line(line)
+            dl_details = try_parse_curl_line(line)
             if not dl_details:
                 continue
             url = dl_details['url']
