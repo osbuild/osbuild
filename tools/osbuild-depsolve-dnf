@@ -19,15 +19,9 @@ import urllib.request
 from datetime import datetime
 from typing import List
 
-# select "personality" based on argv0
-argv0 = os.path.basename(sys.argv[0]).rsplit("-", 2)[-1]
-if argv0 == "dnf":
-    import dnf
-    import hawkey
-    from dnf.exceptions import DepsolveError, MarkingError, RepoError
-    from dnf.exceptions import Error as DnfError
-    solverClassName = "SolverDNF"
-elif argv0 == "dnf5":
+# select "personality" based on env/marker-file
+if (os.environ.get("OSBUILD_DEPSOLVE_DNF5") == "1" or
+        os.path.exists("/usr/lib/osbuild/use-osbuild-depsolve-dnf5")):
     import libdnf5 as dnf5
     from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
     from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
@@ -37,6 +31,7 @@ elif argv0 == "dnf5":
     # Define here to avoid having to change the common code, those will
     # never the thrown. With a bit of thinking this can probably be done
     # more elegantly
+
     class MarkingError(Exception):
         pass
 
@@ -48,6 +43,12 @@ elif argv0 == "dnf5":
 
     class DnfError(Exception):
         pass
+else:
+    import dnf
+    import hawkey
+    from dnf.exceptions import DepsolveError, MarkingError, RepoError
+    from dnf.exceptions import Error as DnfError
+    solverClassName = "SolverDNF"
 
 
 class Solver(abc.ABC):

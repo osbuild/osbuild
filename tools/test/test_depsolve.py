@@ -262,17 +262,18 @@ def cache_dir_fixture(tmpdir_factory):
 
 
 @pytest.mark.parametrize("test_case", test_cases)
-@pytest.mark.parametrize("dnf_cmd, detect_fn", [
-    ("./tools/osbuild-depsolve-dnf", has_dnf),
-    ("./tools/osbuild-depsolve-dnf5", has_dnf5),
+@pytest.mark.parametrize("dnf_env, detect_fn", [
+    (["OSBUILD_DEPSOLVE_DNF5", "1"], has_dnf5),
+    (["OSBUILD_DEPSOLVE_DNF5", "0"], has_dnf),
 ])
-def test_depsolve(tmp_path, cache_dir, repo_servers, dnf_cmd, detect_fn, test_case):
+def test_depsolve(tmp_path, monkeypatch, cache_dir, repo_servers, dnf_env, detect_fn, test_case):
     if not detect_fn():
-        pytest.skip(f"cannot import support for {dnf_cmd}")
+        pytest.skip(f"cannot import support for {dnf_env}")
 
     pks = test_case["packages"]
     for repo_configs, root_dir in config_combos(tmp_path, repo_servers):
-        res = depsolve(pks, repo_configs, root_dir, cache_dir, dnf_cmd)
+        monkeypatch.setenv(dnf_env[0], dnf_env[1])
+        res = depsolve(pks, repo_configs, root_dir, cache_dir, "./tools/osbuild-depsolve-dnf")
         assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
         assert res["repos"].keys() == test_case["results"]["reponames"]
         for repo in res["repos"].values():
