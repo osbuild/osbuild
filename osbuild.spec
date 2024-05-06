@@ -210,6 +210,10 @@ install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
 mkdir -p %{buildroot}%{_libexecdir}
 install -p -m 0755 tools/osbuild-depsolve-dnf %{buildroot}%{_libexecdir}/osbuild-depsolve-dnf
 
+# Configure the solver for dnf
+mkdir -p %{buildroot}%{_datadir}/osbuild
+install -p -m 0644 tools/solver-dnf.json %{buildroot}%{pkgdir}/solver.json
+
 %check
 exit 0
 # We have some integration tests, but those require running a VM, so that would
@@ -284,6 +288,7 @@ fi
 
 %files depsolve-dnf
 %{_libexecdir}/osbuild-depsolve-dnf
+%{pkgdir}/solver.json
 
 %changelog
 * Mon Aug 19 2019 Miro Hrončok <mhroncok@redhat.com> - 1-3
