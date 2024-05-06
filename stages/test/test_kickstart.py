@@ -387,6 +387,9 @@ def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylin
             {"rootpw": {"iscrypted": True, "plaintext": True, "password": "pass"}},
             "is not valid under any of the given schemas"
         ),
+        # TODO: test with only \n at the end
+        ({"users": {"test": {"key": "a-ssh-key-with-wrong\nnewlines\n"}}},
+         "does not match '^[^\\\\n]*$'"),
     ],
 )
 @pytest.mark.parametrize("stage_schema", ["1"], indirect=True)

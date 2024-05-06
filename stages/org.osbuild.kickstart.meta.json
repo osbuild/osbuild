@@ -269,6 +269,7 @@
               },
               "key": {
                 "description": "SSH Public Key to add to ~/.ssh/authorized_keys",
+                "pattern": "^[^\\n]*$",
                 "type": "string"
               }
             }
