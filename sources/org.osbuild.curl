@@ -150,44 +150,51 @@ class CurlSource(sources.SourceService):
         proxy = os.getenv("OSBUILD_SOURCES_CURL_PROXY")
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
+
         with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
-            # some mirrors are sometimes broken. retry manually, because we could be
-            # redirected to a different, working, one on retry.
-            return_code = 0
             arch = platform.machine()
-            for _ in range(10):
-                curl_command = [
-                    "curl",
-                    "--silent",
-                    "--speed-limit", "1000",
-                    "--connect-timeout", "30",
-                    "--fail",
-                    "--location",
-                    "--header", f"User-Agent: osbuild (Linux.{arch}; https://osbuild.org/)",
-                    "--output", checksum,
-                ]
-                if proxy:
-                    curl_command.extend(["--proxy", proxy])
-                if secrets:
-                    if secrets.get('ssl_ca_cert'):
-                        curl_command.extend(["--cacert", secrets.get('ssl_ca_cert')])
-                    if secrets.get('ssl_client_cert'):
-                        curl_command.extend(["--cert", secrets.get('ssl_client_cert')])
-                    if secrets.get('ssl_client_key'):
-                        curl_command.extend(["--key", secrets.get('ssl_client_key')])
 
-                if insecure:
-                    curl_command.append("--insecure")
+            curl_command = [
+                "curl",
+                "--silent",
+                "--speed-limit", "1000",
+                "--connect-timeout", "30",
+                "--fail",
+                "--location",
+                "--header", f"User-Agent: osbuild (Linux.{arch}; https://osbuild.org/)",
+                "--output", checksum,
 
-                # url must follow options
-                curl_command.append(url)
+                # Retry up to 10 times, retry for all types of errors as the
+                # URL is always supposed to work. Spend a maximum of 120
+                # seconds retrying. Normally HTTP errors would not cause a
+                # retry but the above `--fail` makes sure they will be
+                # retried too.
+                "--retry", "10",
+                "--retry-all-errors",
+                "--retry-max-time", "120",
+            ]
 
-                curl = subprocess.run(curl_command, encoding="utf-8", cwd=tmpdir, check=False)
-                return_code = curl.returncode
-                if return_code == 0:
-                    break
-            else:
-                raise RuntimeError(f"curl: error downloading {url}: error code {return_code}")
+            if proxy:
+                curl_command.extend(["--proxy", proxy])
+
+            if secrets:
+                if secrets.get('ssl_ca_cert'):
+                    curl_command.extend(["--cacert", secrets.get('ssl_ca_cert')])
+                if secrets.get('ssl_client_cert'):
+                    curl_command.extend(["--cert", secrets.get('ssl_client_cert')])
+                if secrets.get('ssl_client_key'):
+                    curl_command.extend(["--key", secrets.get('ssl_client_key')])
+
+            if insecure:
+                curl_command.append("--insecure")
+
+            # url must follow options
+            curl_command.append(url)
+
+            curl = subprocess.run(curl_command, encoding="utf-8", cwd=tmpdir, check=False)
+
+            if curl.returncode != 0:
+                raise RuntimeError(f"curl: error downloading {url}: error code {curl.returncode}")
 
             if not verify_file(f"{tmpdir}/{checksum}", checksum):
                 raise RuntimeError(f"checksum mismatch: {checksum} {url}")
@@ -199,13 +206,14 @@ class CurlSource(sources.SourceService):
                 os.rename(f"{tmpdir}/{checksum}", f"{self.cache}/{checksum}")
             except FileExistsError:
                 pass
-            # Workaround the lack of structured progress reporting from
-            # stages/sources. It generates messages of the form
-            #   "message": "source/org.osbuild.curl (org.osbuild.curl): Downloaded https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/f/fonts-srpm-macros-2.0.5-11.fc38.noarch.rpm\n
-            #
-            # Without it just a long pause with no progress while curl
-            # downloads.
-            print(f"Downloaded {url}")
+
+        # Workaround the lack of structured progress reporting from
+        # stages/sources. It generates messages of the form
+        #   "message": "source/org.osbuild.curl (org.osbuild.curl): Downloaded https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/f/fonts-srpm-macros-2.0.5-11.fc38.noarch.rpm\n
+        #
+        # Without it just a long pause with no progress while curl
+        # downloads.
+        print(f"Downloaded {url}")
 
 
 def main():
