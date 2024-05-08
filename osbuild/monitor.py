@@ -317,7 +317,7 @@ class JSONSeqMonitor(BaseMonitor):
     def begin(self, pipeline: osbuild.Pipeline):
         self._context.set_pipeline(pipeline)
         if pipeline.stages:
-            self._progress.sub_progress = Progress("stages", len(pipeline.stages))
+            self._progress.sub_progress = Progress(f"pipeline: {pipeline.name}", len(pipeline.stages))
         self.log(f"Starting pipeline {pipeline.name}", origin="osbuild.monitor")
 
     # finish is for pipelines
