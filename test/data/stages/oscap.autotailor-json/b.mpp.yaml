@@ -1,0 +1,79 @@
+version: '2'
+sources:
+  org.osbuild.inline:
+    items:
+      sha256:aee34ee1a4cfc9a23c2efa7f15e45f6ca9a85957559df158d18a0418248f093a:
+        # Unencoded file contents:
+        # {
+        #   "profiles": [
+        #     {
+        #       "id": "ospp",
+        #       "base_profile_id": "ospp",
+        #       "rules": {
+        #         "partition_var_log": {
+        #           "evaluate": true,
+        #           "severity": "high"
+        #         },
+        #         "rpm_verify_hashes": {
+        #           "evaluate": false
+        #         },
+        #         "rpm_verify_permisions": {
+        #           "evaluate": false
+        #         }
+        #       },
+        #       "variables": {
+        #         "sshd_idle_timeout_value": {
+        #           "value": 600
+        #         },
+        #         "var_account_disable_post_pw_expiration": {
+        #           "value": 100
+        #         }
+        #       }
+        #     }
+        #   ]
+        # }
+        encoding: base64
+        data: |
+          ewogICJwcm9maWxlcyI6IFsKICAgIHsKICAgICAgImlkIjogIm9zcHAiLAogICAgICAiYmFzZV9w
+          cm9maWxlX2lkIjogIm9zcHAiLAogICAgICAicnVsZXMiOiB7CiAgICAgICAgInBhcnRpdGlvbl92
+          YXJfbG9nIjogewogICAgICAgICAgImV2YWx1YXRlIjogdHJ1ZSwKICAgICAgICAgICJzZXZlcml0
+          eSI6ICJoaWdoIgogICAgICAgIH0sCiAgICAgICAgInJwbV92ZXJpZnlfaGFzaGVzIjogewogICAg
+          ICAgICAgImV2YWx1YXRlIjogZmFsc2UKICAgICAgICB9LAogICAgICAgICJycG1fdmVyaWZ5X3Bl
+          cm1pc2lvbnMiOiB7CiAgICAgICAgICAiZXZhbHVhdGUiOiBmYWxzZQogICAgICAgIH0KICAgICAg
+          fSwKICAgICAgInZhcmlhYmxlcyI6IHsKICAgICAgICAic3NoZF9pZGxlX3RpbWVvdXRfdmFsdWUi
+          OiB7CiAgICAgICAgICAidmFsdWUiOiA2MDAKICAgICAgICB9LAogICAgICAgICJ2YXJfYWNjb3Vu
+          dF9kaXNhYmxlX3Bvc3RfcHdfZXhwaXJhdGlvbiI6IHsKICAgICAgICAgICJ2YWx1ZSI6IDEwMAog
+          ICAgICAgIH0KICAgICAgfQogICAgfQogIF0KfQo=
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: /usr/share/osbuild/oscap
+              parents: true
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:aee34ee1a4cfc9a23c2efa7f15e45f6ca9a85957559df158d18a0418248f093a: {}
+        options:
+          paths:
+            - from: input://inlinefile/sha256:aee34ee1a4cfc9a23c2efa7f15e45f6ca9a85957559df158d18a0418248f093a
+              to: tree:///json-tailoring.json
+      - type: org.osbuild.oscap.autotailor
+        options:
+          filepath: /usr/share/osbuild/oscap/tailoring.xml
+          config:
+            datastream: /usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml
+            tailoring_file: /json-tailoring.json
