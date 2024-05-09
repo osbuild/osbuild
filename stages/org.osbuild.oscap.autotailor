@@ -9,9 +9,27 @@ def main(tree, options):
     # required vars
     config = options["config"]
     filepath = options["filepath"]
-    profile = config["profile_id"]
     datastream = config["datastream"]
-    new_profile = config["new_profile"]
+
+    profile = config.get("profile_id")
+    new_profile = config.get("new_profile")
+    tailoring_file = config.get("tailoring_file")
+
+    # make sure either profile & new_profile are set
+    # or tailoring_filepath is set
+    if not ((profile and new_profile) or tailoring_file):
+        raise ValueError("Either profile & new profile must be set or provide filepath to json tailoring file")
+
+    if tailoring_file:
+        cmd = [
+            "/usr/bin/autotailor",
+            "--output", f"{tree}/{filepath.lstrip('/')}",
+            "--json-tailoring", f"{tree}/{tailoring_file.lstrip('/')}",
+            datastream,
+        ]
+
+        subprocess.run(cmd, encoding="utf8", stdout=sys.stderr, check=True)
+        return 0
 
     # tailoring rules
     selected = config.get("selected", [])

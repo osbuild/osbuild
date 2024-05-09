@@ -9,17 +9,27 @@
     " - requires `openscap-utils` package in the buildroot."
   ],
   "schema": {
-    "additionalProperties": false,
-    "required": [
-      "filepath",
-      "config"
-    ],
-    "properties": {
-      "filepath": {
-        "type": "string",
-        "description": "Filename and path to where the tailoring file will be saved"
+    "definitions": {
+      "json-tailoring": {
+        "additionalProperties": false,
+        "required": [
+          "datastream",
+          "tailoring_file"
+        ],
+        "type": "object",
+        "description": "OpenSCAP tailoring configuration variables",
+        "properties": {
+          "datastream": {
+            "type": "string",
+            "description": "The path to the datastream file"
+          },
+          "tailoring_file": {
+            "type": "string",
+            "description": "Path to the JSON file which contains tailoring options to be imported"
+          }
+        }
       },
-      "config": {
+      "tailoring": {
         "additionalProperties": false,
         "required": [
           "profile_id",
@@ -78,6 +88,27 @@
             "description": "The variables to override in the base OpenSCAP profile"
           }
         }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "filepath",
+      "config"
+    ],
+    "properties": {
+      "filepath": {
+        "type": "string",
+        "description": "Filename and path to where the tailoring file will be saved"
+      },
+      "config": {
+        "oneOf": [
+          {
+            "$ref": "#/definitions/json-tailoring"
+          },
+          {
+            "$ref": "#/definitions/tailoring"
+          }
+        ]
       }
     }
   }
