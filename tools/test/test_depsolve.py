@@ -23,15 +23,17 @@ CUSTOMVAR = "test"
 TEST_KEY = "-----BEGIN PGP PUBLIC KEY BLOCK-----\nTEST KEY\n"
 
 
-def has_dnf5():
-    return sp.run(["/usr/bin/python3", "-c", "import libdnf5"], check=False).returncode == 0
+def assert_dnf5():
+    if sp.run(["/usr/bin/python3", "-c", "import libdnf5"], check=False).returncode != 0:
+        raise RuntimeError("Cannot import libdnf5")
 
 
-def has_dnf():
-    return sp.run(["/usr/bin/python3", "-c", "import libdnf"], check=False).returncode == 0
+def assert_dnf():
+    if sp.run(["/usr/bin/python3", "-c", "import libdnf"], check=False).returncode != 0:
+        raise RuntimeError("Cannot import libdnf")
 
 
-def depsolve(pkgs, repos, root_dir, cache_dir, opt_metadata, command):
+def depsolve(pkgs, repos, root_dir, cache_dir, dnf_config, opt_metadata):
     req = {
         "command": "depsolve",
         "arch": ARCH,
@@ -50,9 +52,19 @@ def depsolve(pkgs, repos, root_dir, cache_dir, opt_metadata, command):
             ]
         }
     }
-    p = sp.run([command], input=json.dumps(req).encode(), check=True, stdout=sp.PIPE, stderr=sys.stderr)
 
-    return json.loads(p.stdout.decode())
+    # If there is a config file, write it to a temporary file and pass it to the depsolver
+    with TemporaryDirectory() as cfg_dir:
+        env = None
+        if dnf_config:
+            cfg_file = pathlib.Path(cfg_dir) / "solver.json"
+            cfg_file.write_text(dnf_config)
+            env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
+
+        p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
+                   check=True, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
+
+        return json.loads(p.stdout)
 
 
 def get_rand_port():
@@ -261,19 +273,22 @@ def config_combos(tmp_path, servers):
 
 
 @pytest.mark.parametrize("test_case", test_cases)
-@pytest.mark.parametrize("dnf_cmd, detect_fn", [
-    ("./tools/osbuild-depsolve-dnf", has_dnf),
-    ("./tools/osbuild-depsolve-dnf5", has_dnf5),
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    (None, assert_dnf),
+    ('{"use_dnf5": false}', assert_dnf),
+    ('{"use_dnf5": true}', assert_dnf5),
 ])
-def test_depsolve(tmp_path, repo_servers, dnf_cmd, detect_fn, test_case):
-    if not detect_fn():
-        pytest.skip(f"cannot import support for {dnf_cmd}")
+def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(e)
 
     pks = test_case["packages"]
 
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers):
         with TemporaryDirectory() as cache_dir:
-            res = depsolve(pks, repo_configs, root_dir, cache_dir, opt_metadata, dnf_cmd)
+            res = depsolve(pks, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
             assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
             assert res["repos"].keys() == test_case["results"]["reponames"]
             for repo in res["repos"].values():
