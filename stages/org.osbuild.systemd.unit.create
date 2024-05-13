@@ -13,6 +13,14 @@ def main(tree, options):
 
     cfg = options["config"]
 
+    # Filename extension must match the config:
+    #   .service requires a Service section
+    #   .mount requires a Mount section
+    if filename.endswith(".service") and "Service" not in cfg:
+        raise ValueError(f"Error: {filename} unit requires Service section")
+    if filename.endswith(".mount") and "Mount" not in cfg:
+        raise ValueError(f"Error: {filename} unit requires Mount section")
+
     # We trick configparser into letting us write multiple instances of the same option by writing them as keys with no
     # value, so we enable allow_no_value
     config = configparser.ConfigParser(allow_no_value=True)
