@@ -72,6 +72,54 @@ def test_schema_validation(stage_schema, test_data, expected_err):
         testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
+@pytest.mark.parametrize("test_data,expected_err", [
+    # good
+    (
+        {
+            "filename": "foo.service",
+            "config": {
+                "Unit": {},
+                "Service": {},
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "foo.mount",
+            "config": {
+                "Unit": {},
+                "Mount": {"What": ""},
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "foo.mount",
+            "config": {
+                "Mount": {"What": ""},
+            },
+        },
+        "",
+    ),
+    # bad
+    ({"filename": "something.service", "config": {"Unit": {}, "Mount": {}, "Install": {}}},
+     "Error: something.service unit requires Service section"),
+    ({"filename": "data-gifs-cats.mount", "config": {"Unit": {}, "Service": {}, "Install": {}}},
+     "Error: data-gifs-cats.mount unit requires Mount section"),
+])
+def test_name_config_match(tmp_path, stage_module, test_data, expected_err):
+    expected_unit_path = tmp_path / "usr/lib/systemd/system"
+    expected_unit_path.mkdir(parents=True, exist_ok=True)
+    try:
+        stage_module.main(tmp_path, test_data)
+    except ValueError as ve:
+        assert expected_err == str(ve)
+
+
 @pytest.mark.parametrize("unit_type,unit_path,expected_prefix", [
     ("system", "usr", "usr/lib/systemd/system"),
     ("system", "etc", "etc/systemd/system"),
