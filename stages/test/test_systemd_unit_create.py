@@ -21,16 +21,42 @@ STAGE_NAME = "org.osbuild.systemd.unit.create"
                 "Service": {},
                 "Install": {},
             },
-        }, ""),
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "foo.mount",
+            "config": {
+                "Unit": {},
+                "Mount": {"What": ""},
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "foo.mount",
+            "config": {
+                "Mount": {"What": ""},
+            },
+        },
+        "",
+    ),
     # bad
     ({"config": {"Unit": {}, "Service": {}, "Install": {}}}, "'filename' is a required property"),
     ({"filename": "foo.service"}, "'config' is a required property"),
     ({"filename": "foo.service", "config": {"Service": {}, "Install": {}}},
-     "'Unit' is a required property"),
+     "{'Service': {}, 'Install': {}} is not valid under any of the given schemas"),
     ({"filename": "foo.service", "config": {"Unit": {}, "Install": {}}},
-     "'Service' is a required property"),
+     "{'Unit': {}, 'Install': {}} is not valid under any of the given schemas"),
     ({"filename": "foo.service", "config": {"Unit": {}, "Service": {}}},
-     "'Install' is a required property"),
+     "{'Unit': {}, 'Service': {}} is not valid under any of the given schemas"),
+    ({"filename": "foo.service", "config": {"Service": {}, "Mount": {"What": ""}}},
+     "{'Service': {}, 'Mount': {'What': ''}} is not valid under any of the given schemas"),
+    ({"filename": "foo.service", "config": {"Unit": {}, "Service": {}, "Mount": {"What": ""}, "Install": {}}},
+     "{'Unit': {}, 'Service': {}, 'Mount': {'What': ''}, 'Install': {}} is not valid under any of the given schemas"),
 ])
 @pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
 def test_schema_validation(stage_schema, test_data, expected_err):
