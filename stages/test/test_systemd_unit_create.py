@@ -80,6 +80,9 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
                     "sysinit.target",
                     "default.target",
                 ],
+                "Before": [
+                    "multi-user.target",
+                ],
             },
             "Service": {
                 "Type": "oneshot",
@@ -154,6 +157,7 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
     Requires=sockets.target
     After=sysinit.target
     After=default.target
+    Before=multi-user.target
 
     [Service]
     Type=oneshot
