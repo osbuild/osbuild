@@ -68,6 +68,27 @@
       }
     ]
   },
+  "fedora-41": {
+    "repos": [
+      {
+        "file": "/etc/yum.repos.d/fedora.repo",
+        "x86_64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-rawhide-20240715"
+          }
+        ],
+        "aarch64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-aarch64-rawhide-20240715"
+          }
+        ]
+      }
+    ]
+  },
   "centos-stream-9": {
     "repos": [
       {
