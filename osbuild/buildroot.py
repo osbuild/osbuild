@@ -324,34 +324,62 @@ class BuildRoot(contextlib.AbstractContextManager):
                                 env=env,
                                 stdin=subprocess.DEVNULL,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
+                                stderr=subprocess.PIPE,
                                 close_fds=True)
 
-        data = io.StringIO()
-        start = time.monotonic()
+        data_stdout = io.StringIO()
+        data_stderr = io.StringIO()
         READ_ONLY = select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR
+        stdout_fd = proc.stdout.fileno()
+        stderr_fd = proc.stderr.fileno()
+
         poller = select.poll()
-        poller.register(proc.stdout.fileno(), READ_ONLY)
+        poller.register(stdout_fd, READ_ONLY)
+        poller.register(stderr_fd, READ_ONLY)
 
         stage_origin = os.path.join("stages", stage_name)
+        start = time.monotonic()
+
+        # read with timeout using poll() in a loop until all FDs are closed
         while True:
-            buf = self.read_with_timeout(proc, poller, start, timeout)
-            if not buf:
+            if timeout is not None:
+                remaining = (timeout * 1000) - (time.monotonic() - start)
+                if remaining <= 0:
+                    proc.terminate()
+                    raise TimeoutError
+            else:
+                remaining = None
+
+            events = poller.poll(remaining)
+            if not events:
+                proc.terminate()
+                raise TimeoutError
+
+            for fd, flag in events:
+                if flag & select.POLLIN:
+                    buf = os.read(fd, 32768)
+                    txt = buf.decode("utf-8")
+                    if fd == stdout_fd:
+                        data_stdout.write(txt)
+                    else:
+                        data_stderr.write(txt)
+                    monitor.log(txt, origin=stage_origin)
+                if flag & (select.POLLHUP | select.POLLERR):
+                    poller.unregister(fd)
+
+            # if the process is still running, continue polling
+            if proc.poll() is None:
+                continue
+            # if the process has exited, break if there is no more data to read
+            if not poller.poll(0):
                 break
 
-            txt = buf.decode("utf-8")
-            data.write(txt)
-            monitor.log(txt, origin=stage_origin)
+        output_stdout = data_stdout.getvalue()
+        data_stdout.close()
+        output_stderr = data_stderr.getvalue()
+        data_stderr.close()
 
-        poller.unregister(proc.stdout.fileno())
-        buf, _ = proc.communicate()
-        txt = buf.decode("utf-8")
-        monitor.log(txt, origin=stage_origin)
-        data.write(txt)
-        output = data.getvalue()
-        data.close()
-
-        return CompletedBuild(proc, output, "")
+        return CompletedBuild(proc, output_stdout, output_stderr)
 
     def build_capabilities_args(self):
         """Build the capabilities arguments for bubblewrap"""
@@ -378,27 +406,3 @@ class BuildRoot(contextlib.AbstractContextManager):
             args += ["--cap-drop", cap]
 
         return args
-
-    @classmethod
-    def read_with_timeout(cls, proc, poller, start, timeout):
-        fd = proc.stdout.fileno()
-        if timeout is None:
-            return os.read(fd, 32768)
-
-        # convert timeout to milliseconds
-        remaining = (timeout * 1000) - (time.monotonic() - start)
-        if remaining <= 0:
-            proc.terminate()
-            raise TimeoutError
-
-        buf = None
-        events = poller.poll(remaining)
-        if not events:
-            proc.terminate()
-            raise TimeoutError
-        for fd, flag in events:
-            if flag & (select.POLLIN | select.POLLPRI):
-                buf = os.read(fd, 32768)
-            if flag & (select.POLLERR | select.POLLHUP):
-                proc.terminate()
-        return buf

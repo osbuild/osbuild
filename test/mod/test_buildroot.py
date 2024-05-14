@@ -4,6 +4,7 @@
 
 import os
 import pathlib
+import re
 import sys
 from tempfile import TemporaryDirectory
 
@@ -197,6 +198,23 @@ def test_timeout(tempdir, runner):
         # test command printing to stdout and stderr
         with pytest.raises(TimeoutError):
             root.run(["watch", "-n", "0.2", "-t", "echo 'hello' | tee /dev/stderr"], monitor, timeout=2)
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_complete_build_outputs(tempdir, runner):
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
+
+    monitor = NullMonitor(sys.stderr.fileno())
+
+    with BuildRoot("/", runner, libdir, var) as root:
+        cb = root.run(["/bin/bash", "-c", "echo 'foo'; echo 'bar'; echo 'baz' >&2"], monitor, timeout=1)
+        assert cb.returncode == 0
+        assert cb.stdout == "foo\nbar\n"
+        # stderr is usually polluted with errors caused by the execution environment
+        assert "baz\n" in cb.stderr
+        assert re.match(r".*baz\n.*foo\nbar\n$", cb.output, re.DOTALL)
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
