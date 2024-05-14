@@ -30,25 +30,23 @@ class CompletedBuild:
 
     Contains the actual `process` that was executed but also has
     convenience properties to quickly access the `returncode` and
-    `output`. The latter is also provided via `stderr`, `stdout`
-    properties, making it a drop-in replacement for `CompletedProcess`.
+    `output`. The latter is a combination of `stderr` and `stdout`.
+    These are also provided as a separate properties, making it
+    a drop-in replacement for `CompletedProcess`.
     """
 
-    def __init__(self, proc: subprocess.CompletedProcess, output: str):
+    def __init__(self, proc: subprocess.CompletedProcess, stdout: str, stderr: str):
         self.process = proc
-        self.output = output
+        self.stdout = stdout
+        self.stderr = stderr
 
     @property
     def returncode(self):
         return self.process.returncode
 
     @property
-    def stdout(self):
-        return self.output
-
-    @property
-    def stderr(self):
-        return self.output
+    def output(self):
+        return self.stderr + self.stdout
 
 
 class ProcOverrides:
@@ -353,7 +351,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         output = data.getvalue()
         data.close()
 
-        return CompletedBuild(proc, output)
+        return CompletedBuild(proc, output, "")
 
     def build_capabilities_args(self):
         """Build the capabilities arguments for bubblewrap"""
