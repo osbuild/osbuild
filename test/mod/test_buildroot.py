@@ -55,7 +55,7 @@ def test_basic(tempdir, runner):
         assert r.returncode == 0
         r = root.run(["stat", "--format=%a", "/var/tmp"], monitor)
         assert r.returncode == 0
-        assert r.stdout.strip().split("\n")[-1] == "1777"
+        assert r.stdout.strip() == "1777"
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
