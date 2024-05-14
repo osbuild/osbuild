@@ -5,13 +5,10 @@ import sys
 import osbuild.api
 
 
-def main(tree, options):
-    filename = options["filename"]
+def validate(filename, cfg):
     # ensure the service name does not exceed maximum filename length
     if len(filename) > 255:
         raise ValueError(f"Error: the {filename} service exceeds the maximum filename length.")
-
-    cfg = options["config"]
 
     # Filename extension must match the config:
     #   .service requires a Service section
@@ -20,6 +17,12 @@ def main(tree, options):
         raise ValueError(f"Error: {filename} unit requires Service section")
     if filename.endswith(".mount") and "Mount" not in cfg:
         raise ValueError(f"Error: {filename} unit requires Mount section")
+
+
+def main(tree, options):
+    filename = options["filename"]
+    cfg = options["config"]
+    validate(filename, cfg)
 
     # We trick configparser into letting us write multiple instances of the same option by writing them as keys with no
     # value, so we enable allow_no_value
