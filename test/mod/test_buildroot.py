@@ -194,6 +194,10 @@ def test_timeout(tempdir, runner):
         with pytest.raises(TimeoutError):
             root.run(["/bin/sleep", "1"], monitor, timeout=0.1)
 
+        # test command printing to stdout and stderr
+        with pytest.raises(TimeoutError):
+            root.run(["watch", "-n", "0.2", "-t", "echo 'hello' | tee /dev/stderr"], monitor, timeout=2)
+
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
 def test_env_isolation(tempdir, runner):
