@@ -62,10 +62,6 @@ def tmpfiles():
     subprocess.run(["systemd-tmpfiles", "--create"], check=False)
 
 
-def remove_tmpfiles():
-    subprocess.run(["systemd-tmpfiles", "--clean", "--remove"], check=False)
-
-
 def nsswitch():
     # the default behavior is fine, but using nss-resolve does not
     # necessarily work in a non-booted container, so make sure that
@@ -94,8 +90,7 @@ def sequoia():
     # images).
     os.makedirs("/etc/crypto-policies", exist_ok=True)
     shutil.copytree(
-        "/usr/share/crypto-policies/back-ends/DEFAULT",
-        "/etc/crypto-policies/back-ends"
+        "/usr/share/crypto-policies/back-ends/DEFAULT", "/etc/crypto-policies/back-ends"
     )
 
 
