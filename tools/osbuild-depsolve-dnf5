@@ -153,8 +153,10 @@ class Solver():
         conf.persistdir = persistdir
         conf.cachedir = cachedir
 
-        # Load the file lists, so dependency on paths will work
-        conf.optional_metadata_types = ['comps', 'filelists']
+        # Include comps metadata by default
+        metadata_types = ['comps']
+        metadata_types.extend(arguments.get("optional-metadata", []))
+        conf.optional_metadata_types = metadata_types
 
         try:
             # NOTE: With libdnf5 packages are excluded in the repo setup
