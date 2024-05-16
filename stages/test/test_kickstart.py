@@ -402,3 +402,20 @@ def test_schema_validation_bad_apples(stage_schema, test_input, expected_err):
 
     assert res.valid is False
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
+
+
+@pytest.mark.skipif(not has_executable("ksvalidator"), reason="`ksvalidator` is required")
+def test_kickstart_is_validated(capfd, tmp_path, stage_module):
+    ks_path = "kickstart/kfs.cfg"
+    options = {"path": ks_path}
+    options.update({
+        "users": {
+            "root": {
+                "key": "ssh-rsa some-key-with-incorrect-newline-at-end \n",
+            },
+        },
+    })
+
+    with pytest.raises(subprocess.CalledProcessError):
+        stage_module.main(tmp_path, options)
+    assert "General error in input file:  No closing quotation" in capfd.readouterr().out

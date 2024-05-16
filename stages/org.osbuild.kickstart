@@ -1,5 +1,7 @@
 #!/usr/bin/python3
+import contextlib
 import os
+import subprocess
 import sys
 from typing import Dict, List
 
@@ -255,6 +257,9 @@ def main(tree, options):  # pylint: disable=too-many-branches
         if config:
             f.write("\n".join(config))
         f.write("\n")
+
+    with contextlib.suppress(FileNotFoundError):
+        subprocess.run(["ksvalidator", target], check=True)
 
     print(f"created kickstarted at: {path}\n")
     with open(target, "r", encoding="utf8") as f:
