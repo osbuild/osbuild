@@ -18,7 +18,7 @@ import time
 from typing import Set
 
 from osbuild.api import BaseAPI
-from osbuild.util import linux
+from osbuild.util import linux, ostree
 
 __all__ = [
     "BuildRoot",
@@ -177,6 +177,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self._exitstack:
             self._exitstack.enter_context(api)
 
+    # pylint: disable=too-many-statements
     def run(self, argv, monitor, timeout=None, binds=None, readonly_binds=None, extra_env=None, debug_shell=False):
         """Runs a command in the buildroot.
 
@@ -200,8 +201,15 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self.mount_boot:
             imports.insert(0, "boot")
 
+        # If this is an OSTree tree let's actually make the deployment
+        # path the root of the tree
+        rootdir = self._rootdir
+        if os.path.exists(os.path.join(rootdir, 'ostree')):
+            osname, ref, serial = ostree.parse_deployment_option(rootdir, {'default': True})
+            rootdir = ostree.deployment_path(rootdir, osname, ref, serial)
+
         for p in imports:
-            source = os.path.join(self._rootdir, p)
+            source = os.path.join(rootdir, p)
             if os.path.isdir(source) and not os.path.islink(source):
                 mounts += ["--ro-bind", source, os.path.join("/", p)]
 
