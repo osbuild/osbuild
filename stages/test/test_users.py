@@ -86,7 +86,52 @@ def test_users_mock_bin(tmp_path, stage_module, user_opts, expected_args):
 
 # separate test right now as it results in two binaries being called
 # (adduser,passwd) which our parameter tests cannot do yet
-def test_users_with_expire_date(tmp_path, stage_module):
+
+
+def test_users_with_password_reset_none(tmp_path, stage_module):
+    with mock_command("chroot", "") as mocked_chroot:
+        make_fake_tree(tmp_path, {
+            "/etc/passwd": "",
+        })
+
+        options = {
+            "users": {
+                "foo": {
+                },
+            }
+        }
+
+        stage_module.main(tmp_path, options)
+        assert len(mocked_chroot.call_args_list) == 1
+        assert mocked_chroot.call_args_list[0][1:] == ["useradd", "foo"]
+
+# separate test right now as it results in two binaries being called
+# (adduser,passwd) which our parameter tests cannot do yet
+
+
+def test_users_with_password_reset_false(tmp_path, stage_module):
+    with mock_command("chroot", "") as mocked_chroot:
+        make_fake_tree(tmp_path, {
+            "/etc/passwd": "",
+        })
+
+        options = {
+            "users": {
+                "foo": {
+                    "force_password_reset": False,
+                },
+            }
+        }
+
+        stage_module.main(tmp_path, options)
+        assert len(mocked_chroot.call_args_list) == 1
+        assert mocked_chroot.call_args_list[0][1:] == ["useradd", "foo"]
+
+# separate test right now as it results in two binaries being called
+# (adduser,passwd) which our parameter tests cannot do yet
+
+
+def test_users_with_password_reset_true(tmp_path, stage_module):
     with mock_command("chroot", "") as mocked_chroot:
         make_fake_tree(tmp_path, {
             "/etc/passwd": "",
