@@ -1,6 +1,5 @@
 {
   "added_files": [
-    "/etc/kernel",
     "/etc/locale.conf"
   ],
   "deleted_files": [],
