@@ -1,6 +1,5 @@
 {
   "added_files": [
-    "/etc/kernel",
     "/etc/localtime"
   ],
   "deleted_files": [],
