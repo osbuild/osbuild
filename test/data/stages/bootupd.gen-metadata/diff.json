@@ -1,6 +1,5 @@
 {
   "added_files": [
-    "/usr/lib/bootupd",
     "/usr/lib/bootupd/updates",
     "/usr/lib/bootupd/updates/BIOS.json",
     "/usr/lib/bootupd/updates/EFI",

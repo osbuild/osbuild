@@ -2,7 +2,6 @@
   "added_files": [
     "/etc/X11/xorg.conf.d",
     "/etc/X11/xorg.conf.d/00-keyboard.conf",
-    "/etc/kernel",
     "/etc/vconsole.conf"
   ],
   "deleted_files": [],
