@@ -30,7 +30,7 @@ def has_dnf():
     return sp.run(["/usr/bin/python3", "-c", "import libdnf"], check=False).returncode == 0
 
 
-def depsolve(pkgs, repos, root_dir, cache_dir, command):
+def depsolve(pkgs, repos, root_dir, cache_dir, opt_metadata, command):
     req = {
         "command": "depsolve",
         "arch": ARCH,
@@ -40,6 +40,7 @@ def depsolve(pkgs, repos, root_dir, cache_dir, command):
         "arguments": {
             "root_dir": root_dir,
             "repos": repos,
+            "optional-metadata": opt_metadata,
             "transactions": [
                 {
                     "package-specs": pkgs,
@@ -253,7 +254,9 @@ def config_combos(tmp_path, servers):
             with (repos_dir / f"{name}.repo").open("w", encoding="utf-8") as fp:
                 parser.write(fp, space_around_delimiters=False)
 
-        yield repo_configs, os.fspath(root_dir)
+        # for each combo, let's also enable or disable filelists (optional-metadata)
+        for opt_metadata in ([], ["filelists"]):
+            yield repo_configs, os.fspath(root_dir), opt_metadata
 
 
 @pytest.fixture(name="cache_dir", scope="session")
@@ -271,8 +274,8 @@ def test_depsolve(tmp_path, cache_dir, repo_servers, dnf_cmd, detect_fn, test_ca
         pytest.skip(f"cannot import support for {dnf_cmd}")
 
     pks = test_case["packages"]
-    for repo_configs, root_dir in config_combos(tmp_path, repo_servers):
-        res = depsolve(pks, repo_configs, root_dir, cache_dir, dnf_cmd)
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers):
+        res = depsolve(pks, repo_configs, root_dir, cache_dir, opt_metadata, dnf_cmd)
         assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
         assert res["repos"].keys() == test_case["results"]["reponames"]
         for repo in res["repos"].values():
