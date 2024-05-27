@@ -259,25 +259,22 @@ def config_combos(tmp_path, servers):
             yield repo_configs, os.fspath(root_dir), opt_metadata
 
 
-@pytest.fixture(name="cache_dir", scope="session")
-def cache_dir_fixture(tmpdir_factory):
-    return str(tmpdir_factory.mktemp("cache"))
-
-
 @pytest.mark.parametrize("test_case", test_cases)
 @pytest.mark.parametrize("dnf_cmd, detect_fn", [
     ("./tools/osbuild-depsolve-dnf", has_dnf),
     ("./tools/osbuild-depsolve-dnf5", has_dnf5),
 ])
-def test_depsolve(tmp_path, cache_dir, repo_servers, dnf_cmd, detect_fn, test_case):
+def test_depsolve(tmp_path, repo_servers, dnf_cmd, detect_fn, test_case):
     if not detect_fn():
         pytest.skip(f"cannot import support for {dnf_cmd}")
 
     pks = test_case["packages"]
+
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers):
-        res = depsolve(pks, repo_configs, root_dir, cache_dir, opt_metadata, dnf_cmd)
-        assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-        assert res["repos"].keys() == test_case["results"]["reponames"]
-        for repo in res["repos"].values():
-            assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-            assert repo["sslverify"] is False
+        with TemporaryDirectory() as cache_dir:
+            res = depsolve(pks, repo_configs, root_dir, cache_dir, opt_metadata, dnf_cmd)
+            assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+            assert res["repos"].keys() == test_case["results"]["reponames"]
+            for repo in res["repos"].values():
+                assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+                assert repo["sslverify"] is False
