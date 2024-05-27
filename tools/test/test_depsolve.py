@@ -5,6 +5,7 @@ import pathlib
 import socket
 import subprocess as sp
 import sys
+from glob import glob
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -278,3 +279,11 @@ def test_depsolve(tmp_path, repo_servers, dnf_cmd, detect_fn, test_case):
             for repo in res["repos"].values():
                 assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
                 assert repo["sslverify"] is False
+
+            # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
+            # *filelists*
+            n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
+            if "filelists" in opt_metadata:
+                assert n_filelist_files == len(REPO_PATHS)
+            else:
+                assert n_filelist_files == 0
