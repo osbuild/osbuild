@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 import osbuild.api
-from osbuild.util.mnt import mount
+from osbuild.util import mnt
 
 DATA_DIR = "/root"
 XCCDF_RESULTS = "oscap_eval_xccdf_results.xml"
@@ -15,7 +15,7 @@ def setup_env(tree):
     for source in ("/dev", "/proc"):
         target = os.path.join(tree, source.lstrip("/"))
         os.makedirs(target, exist_ok=True)
-        mount(source, target, ro=False)
+        mnt.mount(source, target, ro=False)
     os.symlink("/proc/self/fd", f"{tree}/dev/fd")
 
 
