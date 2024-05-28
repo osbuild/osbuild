@@ -400,13 +400,21 @@ class ImageManifest:
         return ImageManifest._arch_from_rpm.get(rpm_arch, rpm_arch)
 
     @staticmethod
-    def load(imagename, tag=None, digest=None):
-        if digest:
-            src = f"docker://{imagename}@{digest}"
-        elif tag:
-            src = f"docker://{imagename}:{tag}"
+    def load(imagename, tag=None, digest=None, transport=None):
+        if transport == "docker" or transport is None:
+            protocol = "docker://"
+        elif transport == "containers-storage":
+            protocol = "containers-storage:"
         else:
-            src = f"docker://{imagename}"
+            raise RuntimeError(
+                f"The '{transport}' transport is not supported for the container image resolution")
+
+        if digest:
+            src = f"{protocol}{imagename}@{digest}"
+        elif tag:
+            src = f"{protocol}{imagename}:{tag}"
+        else:
+            src = f"{protocol}{imagename}"
 
         res = subprocess.run(["skopeo", "inspect", "--raw", src],
                              stdout=subprocess.PIPE,
@@ -476,7 +484,7 @@ class ImageManifest:
 
         return None
 
-    def resolve_list(self, wanted_arch, wanted_os, wanted_variant):
+    def resolve_list(self, wanted_arch, wanted_os, wanted_variant, transport):
         if not self.is_manifest_list():
             return self
 
@@ -499,7 +507,7 @@ class ImageManifest:
             raise RuntimeError(
                 f"No manifest matching architecture '{wanted_arch}', os '{wanted_os}', variant '{wanted_variant}'.")
 
-        return ImageManifest.load(self.name, digest=digest)
+        return ImageManifest.load(self.name, digest=digest, transport=transport)
 
     def get_config_digest(self):
         if self.schema_version == 1:
@@ -1669,12 +1677,13 @@ class ManifestFileV2(ManifestFile):
             source = image["source"]
             digest = image.get("digest", None)
             tag = image.get("tag", None)
+            transport = image.get("containers-transport", None)
             index = image.get("index", False)
             # If not specified by the user the default "name" we use for
             # the installed container will be source:tag.
             name = image.get("name", f"{source}:{tag}" if tag else source)
 
-            main_manifest = ImageManifest.load(source, tag=tag, digest=digest)
+            main_manifest = ImageManifest.load(source, tag=tag, digest=digest, transport=transport)
 
             ostype = image.get("os", "linux")
 
@@ -1684,7 +1693,7 @@ class ManifestFileV2(ManifestFile):
 
             variant = image.get("variant", None)
 
-            resolved_manifest = main_manifest.resolve_list(oci_arch, ostype, variant)
+            resolved_manifest = main_manifest.resolve_list(oci_arch, ostype, variant, transport)
 
             image_id = resolved_manifest.get_config_digest()
 
@@ -1696,6 +1705,8 @@ class ManifestFileV2(ManifestFile):
                     "digest": resolved_manifest.digest,
                 }
             }
+            if transport:
+                items[image_id]["image"]["containers-transport"] = transport
 
             refs[image_id] = {
                 "name": name
