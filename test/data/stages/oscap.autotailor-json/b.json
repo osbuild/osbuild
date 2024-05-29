@@ -902,6 +902,7 @@
             "filepath": "/usr/share/osbuild/oscap/tailoring.xml",
             "config": {
               "datastream": "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml",
+              "new_profile": "ospp_osbuild_tailoring",
               "tailoring_file": "/json-tailoring.json"
             }
           }

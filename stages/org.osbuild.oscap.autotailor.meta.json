@@ -14,6 +14,7 @@
         "additionalProperties": false,
         "required": [
           "datastream",
+          "new_profile",
           "tailoring_file"
         ],
         "type": "object",
@@ -22,6 +23,10 @@
           "datastream": {
             "type": "string",
             "description": "The path to the datastream file"
+          },
+          "new_profile": {
+            "type": "string",
+            "description": "The name of the new customized OpenSCAP profile"
           },
           "tailoring_file": {
             "type": "string",

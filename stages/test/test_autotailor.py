@@ -59,7 +59,8 @@ def fake_json_input_fixture():
             "filepath": "/some/filepath",
             "config": {
                 "datastream": "some-datastream",
-                "tailoring_file": "/some/json/filepath",
+                "new_profile": "some-new-profile",
+                "tailoring_file": "/some/tailoring/file.json",
             }
         },
     }
@@ -128,5 +129,6 @@ def test_oscap_autotailor_json_smoke(mock_subprocess_run, fake_json_input, stage
 
     assert mock_subprocess_run.call_args_list == [
         call(["/usr/bin/autotailor", "--output", "/some/sysroot/some/filepath",
-              "--json-tailoring", "/some/sysroot/some/json/filepath", "some-datastream"],
+              "--new-profile-id", "some-new-profile",
+              "--json-tailoring", "/some/sysroot/some/tailoring/file.json", "some-datastream"],
              encoding='utf8', stdout=sys.stderr, check=True)]
