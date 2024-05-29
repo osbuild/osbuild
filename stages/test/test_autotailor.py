@@ -45,7 +45,7 @@ def fake_input_fixture():
             "config": {
                 "profile_id": "some-profile-id",
                 "datastream": "some-datastream",
-                "tailoring_profile_id": "some-new-profile",
+                "tailored_profile_id": "some-new-profile",
             }
         },
     }
@@ -91,7 +91,7 @@ def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, stage
                     "value": 50,
                 },
             ]
-        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'tailoring_profile_id': 'some-new-profile',"
+        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'tailored_profile_id': 'some-new-profile',"
             + " 'overrides': [{'no': 'var', 'value': 50}]} is not valid under any of the given schemas"),
         ({
             "overrides": [
@@ -100,7 +100,7 @@ def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, stage
                     "var": "some",
                 },
             ]
-        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'tailoring_profile_id': 'some-new-profile',"
+        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'tailored_profile_id': 'some-new-profile',"
             + " 'overrides': [{'no': 'value', 'var': 'some'}]} is not valid under any of the given schemas"),
         ({
             "overrides": [
@@ -109,7 +109,7 @@ def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, stage
                     "value": {"some": "object"},
                 },
             ]
-        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'tailoring_profile_id': 'some-new-profile',"
+        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'tailored_profile_id': 'some-new-profile',"
             + " 'overrides': [{'var': 'ssh_idle_timeout_value', 'value': {'some': 'object'}}]} is not valid under any of the given schemas"),
     ],
 )
@@ -132,3 +132,31 @@ def test_oscap_autotailor_json_smoke(mock_subprocess_run, fake_json_input, stage
               "--new-profile-id", "some-new-profile",
               "--json-tailoring", "/some/sysroot/tailoring-file.json", "some-datastream"],
              encoding='utf8', stdout=sys.stderr, check=True)]
+
+
+@pytest.mark.parametrize(
+    "test_data,expected_err",
+    [
+        ({}, "{} is not valid under any of the given schemas"),
+        ({
+            "tailored_profile_id": "some-new-profile"
+        }, "{'tailored_profile_id': 'some-new-profile'}"
+            + " is not valid under any of the given schemas"),
+        ({
+            "datastream": "some-datastream",
+            "tailored_profile_id": "some-new-profile"
+        }, "{'datastream': 'some-datastream', 'tailored_profile_id': 'some-new-profile'}"
+            + " is not valid under any of the given schemas"),
+        ({
+            "datastream": "some-datastream",
+            "tailoring_file": "/some/tailoring/file.json"
+        }, "{'datastream': 'some-datastream', 'tailoring_file': '/some/tailoring/file.json'}"
+            + " is not valid under any of the given schemas"),
+    ],
+)
+@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
+def test_schema_validation_oscap_json_autotailor(fake_json_input, stage_schema, test_data, expected_err):
+    fake_json_input["options"]["config"] = test_data
+    res = stage_schema.validate(fake_json_input)
+    assert res.valid is False
+    testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
