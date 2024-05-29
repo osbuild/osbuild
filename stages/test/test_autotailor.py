@@ -132,3 +132,31 @@ def test_oscap_autotailor_json_smoke(mock_subprocess_run, fake_json_input, stage
               "--new-profile-id", "some-new-profile",
               "--json-tailoring", "/some/sysroot/some/tailoring/file.json", "some-datastream"],
              encoding='utf8', stdout=sys.stderr, check=True)]
+
+
+@pytest.mark.parametrize(
+    "test_data,expected_err",
+    [
+        ({}, "{} is not valid under any of the given schemas"),
+        ({
+            "new_profile": "some-new-profile"
+        }, "{'new_profile': 'some-new-profile'}"
+            + " is not valid under any of the given schemas"),
+        ({
+            "datastream": "some-datastream",
+            "new_profile": "some-new-profile"
+        }, "{'datastream': 'some-datastream', 'new_profile': 'some-new-profile'}"
+            + " is not valid under any of the given schemas"),
+        ({
+            "datastream": "some-datastream",
+            "tailoring_file": "/some/tailoring/file.json"
+        }, "{'datastream': 'some-datastream', 'tailoring_file': '/some/tailoring/file.json'}"
+            + " is not valid under any of the given schemas"),
+    ],
+)
+@ pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
+def test_schema_validation_oscap_autotailor(fake_json_input, stage_schema, test_data, expected_err):
+    fake_json_input["options"]["config"] = test_data
+    res = stage_schema.validate(fake_json_input)
+    assert res.valid is False
+    testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
