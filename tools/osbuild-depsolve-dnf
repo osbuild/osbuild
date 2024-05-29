@@ -65,7 +65,9 @@ class Solver():
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
         self.base.conf.substitutions['releasever'] = releasever
 
-        self.base.conf.optional_metadata_types.extend(arguments.get("optional-metadata", []))
+        if hasattr(self.base.conf, "optional_metadata_types"):
+            # the attribute doesn't exist on older versions of dnf; ignore the option when not available
+            self.base.conf.optional_metadata_types.extend(arguments.get("optional-metadata", []))
 
         if proxy:
             self.base.conf.proxy = proxy
