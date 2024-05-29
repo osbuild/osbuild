@@ -20,15 +20,20 @@ def main(tree, options):
     if new_profile is not None:
         print("WARNING: use the `tailored_profile_id` option instead")
 
-    # make sure either profile & new_profile are set
-    # or tailoring_filepath is set
-    if not ((profile and tailored_profile_id) or tailoring_file):
-        raise ValueError("Either profile & new profile must be set or provide filepath to json tailoring file")
+    # this is needed now since we have renamed the `new_profile` option
+    # to `tailored_profile_id`
+    if not tailored_profile_id:
+        raise ValueError("The tailoring profile id option is a required field")
+
+    # make sure either profile or tailoring_file is set
+    if not (profile or tailoring_file):
+        raise ValueError("Either profile must be set or a filepath to json tailoring file must be provided")
 
     if tailoring_file:
         cmd = [
             "/usr/bin/autotailor",
             "--output", f"{tree}/{filepath.lstrip('/')}",
+            "--new-profile-id", tailored_profile_id,
             "--json-tailoring", f"{tree}/{tailoring_file.lstrip('/')}",
             datastream,
         ]
