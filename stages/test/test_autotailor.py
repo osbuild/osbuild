@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import subprocess
 import sys
 from unittest.mock import call, patch
 
@@ -160,3 +161,53 @@ def test_schema_validation_oscap_json_autotailor(fake_json_input, stage_schema, 
     res = stage_schema.validate(fake_json_input)
     assert res.valid is False
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
+
+
+JSON_TAILORING = """{
+  "profiles": [
+    {
+      "id": "some-profile-id",
+      "base_profile_id": "some-profile-id",
+      "rules": {
+        "some-rule": {
+          "evaluate": true,
+          "severity": "high"
+        }
+      },
+      "variables": {
+        "some-variable": {
+          "value": 600
+        }
+      }
+    }
+  ]
+}
+"""
+
+
+@pytest.mark.parametrize(
+    "expected_profile",
+    [
+        ("xccdf_org.ssgproject.content_profile_some-new-profile"),
+        ("xccdf_org.ssgproject.content_profile_some-other-profile")
+    ]
+)
+@pytest.mark.skipif(not testutil.has_executable("autotailor"), reason="no autotailor executable")
+def test_oscap_autotailor_json_profile_override(fake_json_input, stage_module, expected_profile, tmp_path):
+    options = fake_json_input["options"]
+    options["config"]["tailored_profile_id"] = expected_profile
+
+    results_file = tmp_path / options["filepath"]
+    tailoring_file = tmp_path / options["config"]["tailoring_file"]
+    tailoring_file.write_text(JSON_TAILORING)
+
+    stage_module.main(str(tmp_path), options)
+
+    result = subprocess.run(
+        ["oscap", "info", "--profiles", results_file],
+        stdout=subprocess.PIPE,
+        check=True,
+        text=True,
+    )
+
+    assert f"Id: {expected_profile}\n" in result.stdout
