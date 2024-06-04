@@ -43,8 +43,6 @@ RPM:
           - aws/fedora-39-aarch64
           - aws/fedora-40-x86_64
           - aws/fedora-40-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/rhel-8.9-ga-x86_64
@@ -97,8 +95,6 @@ Manifests:
         RUNNER:
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
       - PARALLEL_EXEC: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
