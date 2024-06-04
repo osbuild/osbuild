@@ -35,10 +35,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-37-x86_64
-          - aws/fedora-37-aarch64
-          - aws/fedora-38-x86_64
-          - aws/fedora-38-aarch64
           - aws/fedora-39-x86_64
           - aws/fedora-39-aarch64
           - aws/fedora-40-x86_64
@@ -65,7 +61,7 @@ OSTree Images:
     - schutzbot/deploy.sh
     - sudo test/cases/ostree-images --manifest "$MANIFEST" --export $EXPORT
   variables:
-    RUNNER: aws/fedora-38-x86_64
+    RUNNER: aws/fedora-39-x86_64
   parallel:
     matrix:
       - MANIFEST: fedora-ostree-tarball.json
@@ -93,8 +89,8 @@ Manifests:
     matrix:
       - PARALLEL_EXEC: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
         RUNNER:
-          - aws/fedora-37-x86_64
-          - aws/fedora-37-aarch64
+          - aws/fedora-39-x86_64
+          - aws/fedora-39-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
       - PARALLEL_EXEC: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
