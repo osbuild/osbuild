@@ -2,24 +2,20 @@
 
 mpp-vars:
   arch: x86_64
-  release: 38
+  release: 40
   releasever: f$release
   module_platform_id: platform:$releasever
-  snapshot: '20230413'
-  updates: '20230724'
+  snapshot: '20240514'
+  updates: '20240626'
   ref: fedora/$arch/osbuild
   isolabel: Fedora-$release-X86_64
   repos:
     - id: default
       baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$releasever-$arch-fedora-$snapshot/
-    - id: modular
-      baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$releasever-$arch-fedora-modular-$snapshot/
     - id: updates
       baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$releasever-$arch-updates-released-$updates/
-    - id: updates-modular
-      baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$releasever-$arch-updates-released-modular-$updates/
   gpgkeys:
-    - "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGIC2cYBEADJye1aE0AR17qwj6wsHWlCQlcihmqkL8s4gbOk1IevBbH4iXJx\nlu6bN+NhTcCCX6eHmaL5Pwb/bpkMmLR+/r1D2cLDK24YzvN6kJnwRQUTf2dbqYmg\nmNBgIMm+kAabBZPwUHUzyQ9CT/WJpYr1OYu8JIkdxF35nrPewnnOUUqxqbi8fXRQ\ngskSLF8UveiOjFIqmWwlPwT1UtnevAaF80UGQlkwFvqjjh4b9vKY2gHMAQwt+wg5\nHFFCSwSrnd88ZoDb3pKvDMeurYUiPzF5f2r+ziVkMuaSNckvp58uge7HvyqQPAdJ\nZRswCCxhUAo9VqkNfB4Ud25ASyalk9jOE3HB8E35gFfPXvuX1n15THXNcwMEiybk\nOmne2YwXL8ShGNr5otjqywThMrrqcl2g/pJVTcpDHTR5Hn9YRp+GHlYLjyEr+/x7\nxM19y9ca9GUiJqDbEREHcKKIhYiGmcIjjcJvei/3C/aM4pqeGFJBbVSnw3qeMxH/\n6ArAMA1sAdShCkv2YjlcF0r4uoCjXdS3xrKLz9PSCquot7RySnOE9TZ7flfJll7Z\nq+lNaSeJg7FK8VWSUb9Lit6VEYVbzWKzespDDbujrHbFpydyq8gXurk7bSR2w0te\ngsmytQqT/w1z2bydgGF6SfY9Px0wuA8GQKr48l5Bhdc6+vHHFqPKzz0PVQARAQAB\ntDFGZWRvcmEgKDM4KSA8ZmVkb3JhLTM4LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEEalG7q7o9VGe2FxIhgJqNfOsQtGQFAmIC2cYCGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQgJqNfOsQtGScyw/7BLmD4Fwi4QZY94zl\nvlJdNufZRavOemSIVVDHoCr8pQBAdrvoMypxJd5zM4ODIqFsjdYpFti+Tkeq4/4U\n25UoLPEOtU8UDt2uq7LqfdCxspaj7VyXAJIkpf7wEvLS4Jzo+YaMIlsd0dCrMXTM\nvhu4gKpBFW6C+gGlmuDyTJbyrf7ilytgVzVtIfRrT7XffylviIlZHwKm43UDjvzX\nYEl3EAFR1RjATwXMy2aJh7GCNsz+fKs+7YRKQUhpMF5un/2pyNJO+LbVGGwGZvga\nK9Kfsg/4r1ync4nDDD1dadKIHhobDeiJ9uZLoBvvVDz7Ywu7q/vv4zIPxstYBNq4\n6fLKDtYXuJCK0EV9Qy4ox67t0UGlaRGH8y5YUqOI10xH7iQej0xWlSc8w2dKhPz8\nz9XLv2OMK+PvqvflhFHhWkqEoQRqTu0TVD0fLLe4lqieJlqZcJqW0F9G/vNSSWmf\nPOLa/Nim71gL2fPjCJOIRV4K/cJSyBmu5NchG7dHD5sUtJxZ4TFSuepaBZ8cPK1x\ne26TaCBqoUWgUXWmw+P89aOpYOJYEFfT/VAm2Ywn+c1EFUmD+30wQ7aP/RUFl94z\nn0BjqsWDnCKVFHydZ0TZSpeADmXMg2VYZPcp/cQR1KjoBoDxAscis7b1XPQUg7CB\nzquq5jBVAnsNIhs7g47GWKyDUJM=\n=aCLl\n-----END PGP PUBLIC KEY BLOCK-----\n"
+    - "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGPQTCwBEADFUL0EQLzwpKHtlPkacVI156F2LnWp6K69g/6yzllidHI3b7EV\nQgQ9/Kdou6wNuOahNKa6WcEi6grEXexD7pAcu4xdRUp79XxQy5pC7Aq2/Dwf0vRL\n2y0kqof+C7iSzhHsfLoaqKKeh2njAo1KLZXYTHAWAMbXEyO/FJevaHLXe2+yYd7j\nluD58gyXgGDXXJ2lymLqs2jobjWdmGPNZGFl36RP3Dnk0FpbdH78kyIIsc2foYuF\n00rnuumwCtK3V58VOZo6IkaYk2irdyeetmJjVHwLHwJB3EaAwGy9Z2oAH3LxxFfk\nrQb0DH0Nzb3fpEziopOOqSi+6guV4RHUKAkCUMu+Mo5XwFVPUAIfNRTVqoIaEasC\nWO26lhkB87wwIvyb/TPGSeh6laHPRf0QOUOLkugdkSHoaJFWoTCcu9Y4aeDpf+ZQ\nfMVmkJNRS1tXONgz+pDk1rro/tNrkusYG18xjvSZTB0P0C4b4+jgK5l7me0NU6G3\nWw/hIng5lxWfXgE9bpxlN834v1xy5Z3v17guJu1ec/jzKzQQ4356wyegXURjYoWe\nawcnK1S+9gxivnkOk1bGLNxrEh5vB6PDcI1VQ1ECH50EHyvE1IXJDaaStdAkacv2\nqHcd15CnlBW1LYFj0CHs/sGu9FD0iSF95OVRX4gjg9Wa4f8KvtEO/f+FeQARAQAB\ntDFGZWRvcmEgKDQwKSA8ZmVkb3JhLTQwLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEEEV35rvhXhT7oRF0KBydwfqFbecwFAmPQTCwCGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQBydwfqFbecxJOw//XaoJG3zN01bVM63H\nnFmMW/EnLzKrZqH8ZNq8CP9ycoc4q8SYcMprHKG9jufzj5/FhtpYecp3kBMpSYHt\nVu46LS9NajJDwdfvUMezVbieNIQ8icTR5s5IUYFlc47eG6PRe3k0n5fOPcIb6q82\nbyrK3dQnanOcVdoGU7QO9LAAHO9hg0zgZa0MxQAlDQov3dZcr7u7qGcQmU5JzcRS\nJgfDxHxDuMjmq6Kd0/UwD00kd2ptZgRls0ntXdm9CZGtQ/Q0baJ3eRzccpd/8bxy\nRWF9MnOdmV6ojcFKYECjEzcuheUlcKQH9rLkeBSfgrIlK3L7LG8bg5ouZLdx17rQ\nXABNQGmJTaGAiEnS/48G3roMS8R7fhUljcKr6t63QQQJ2qWdPvI6EMC2xKZsLHK4\nXiUvrmJpUprvEQSKBUOf/2zuXDBshtAnoKh7h5aG+TvozL4yNG5DKpSH3MRj1E43\nKoMsP/GN/X5h+vJnvhiCWxNMPP81Op0czBAgukBm627FTnsvieJOOrzyxb1s75+W\n56gJombmhzUfzr88AYY9mFy7diTw/oldDZcfwa8rvOAGJVDlyr2hqkLoGl+5jPex\nslt3NF4caE/wP9wPMgFRkmMOr8eiRhjlWLrO6mQdBp7Qsj3kEXioP+CZ1cv/sbaK\n4DM7VidB4PLrMFQMaf0LpjpC2DM=\n=wOl2\n-----END PGP PUBLIC KEY BLOCK-----\n"
 
 pipeline:
   build:
