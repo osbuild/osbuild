@@ -145,17 +145,57 @@ def validate_request(request):
             "kind": "InvalidRequest",
             "reason": "no 'module_platform_id' specified"
         }
+
     if not request.get("releasever"):
         return {
             "kind": "InvalidRequest",
             "reason": "no 'releasever' specified"
         }
+
     arguments = request.get("arguments")
     if not arguments:
         return {
             "kind": "InvalidRequest",
             "reason": "empty 'arguments'"
         }
+
+    sbom = request["arguments"].get("sbom")
+    if sbom is not None:
+        # NB: check the DNF5 flag here, instead of in the dnf5 module,
+        # to consistently return this error message, even if there are other
+        # potential errors in the request, such as broken repository.
+        if config.get("use_dnf5", False):
+            return {
+                "kind": "InvalidRequest",
+                "reason": "SBOM support for DNF5 is not implemented"
+            }
+
+        if command != "depsolve":
+            return {
+                "kind": "InvalidRequest",
+                "reason": "SBOM is only supported with 'depsolve' command"
+            }
+        if not isinstance(sbom, dict):
+            return {
+                "kind": "InvalidRequest",
+                "reason": "invalid 'sbom' value"
+            }
+        sbom_type = sbom.get("type")
+        if sbom_type is None:
+            return {
+                "kind": "InvalidRequest",
+                "reason": "missing 'type' in 'sbom'"
+            }
+        if not isinstance(sbom_type, str):
+            return {
+                "kind": "InvalidRequest",
+                "reason": "invalid 'type' in 'sbom'"
+            }
+        if sbom_type != "spdx":
+            return {
+                "kind": "InvalidRequest",
+                "reason": "Unsupported SBOM type"
+            }
 
     if not arguments.get("repos") and not arguments.get("root_dir"):
         return {

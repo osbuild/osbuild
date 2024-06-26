@@ -11,7 +11,14 @@ from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
 from libdnf5.common import QueryCmp_EQ as EQ
 from libdnf5.common import QueryCmp_GLOB as GLOB
 
-from osbuild.solver import DepsolveError, MarkingError, RepoError, SolverBase, modify_rootdir_path, read_keys
+from osbuild.solver import (
+    DepsolveError,
+    MarkingError,
+    RepoError,
+    SolverBase,
+    modify_rootdir_path,
+    read_keys,
+)
 
 
 def remote_location(package, schemes=("http", "ftp", "file", "https")):
