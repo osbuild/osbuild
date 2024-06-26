@@ -13,6 +13,7 @@ from itertools import combinations
 from tempfile import TemporaryDirectory
 from typing import Tuple
 
+import jsonschema
 import pytest
 
 REPO_PATHS = [
@@ -38,7 +39,7 @@ def assert_dnf():
         raise RuntimeError("Cannot import libdnf")
 
 
-def depsolve(transactions, repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tuple[dict, int]:
+def depsolve(transactions, repos, root_dir, cache_dir, dnf_config, opt_metadata, with_sbom=False) -> Tuple[dict, int]:
     req = {
         "command": "depsolve",
         "arch": ARCH,
@@ -53,12 +54,15 @@ def depsolve(transactions, repos, root_dir, cache_dir, dnf_config, opt_metadata)
         }
     }
 
+    if with_sbom:
+        req["arguments"]["sbom"] = {"type": "spdx"}
+
     # If there is a config file, write it to a temporary file and pass it to the depsolver
     with TemporaryDirectory() as cfg_dir:
         env = None
         if dnf_config:
             cfg_file = pathlib.Path(cfg_dir) / "solver.json"
-            cfg_file.write_text(dnf_config)
+            json.dump(dnf_config, cfg_file.open("w"))
             env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
 
         p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
@@ -1240,13 +1244,15 @@ def config_combos(tmp_path, servers):
             yield repo_configs, os.fspath(root_dir), opt_metadata
 
 
+# pylint: disable=too-many-branches
 @pytest.mark.parametrize("test_case", depsolve_test_cases, ids=tcase_idfn)
+@pytest.mark.parametrize("with_sbom", [False, True])
 @pytest.mark.parametrize("dnf_config, detect_fn", [
-    (None, assert_dnf),
-    ('{"use_dnf5": false}', assert_dnf),
-    ('{"use_dnf5": true}', assert_dnf5),
+    ({}, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
+def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
@@ -1260,7 +1266,7 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         "error_pkg_not_in_enabled_repos",
     ]
 
-    if dnf_config == '{"use_dnf5": true}' and test_case["id"] in dnf5_broken_test_cases:
+    if dnf_config.get("use_dnf5", False) and test_case["id"] in dnf5_broken_test_cases:
         pytest.skip("This test case is known to be broken with dnf5")
 
     transactions = test_case["transactions"]
@@ -1271,7 +1277,15 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers_copy):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = depsolve(transactions, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
+            res, exit_code = depsolve(transactions, repo_configs, root_dir,
+                                      cache_dir, dnf_config, opt_metadata, with_sbom)
+
+            # NB: dnf5 implementation does not support SBOM yet
+            if dnf_config.get("use_dnf5", False) and with_sbom:
+                assert exit_code != 0
+                assert res["kind"] == "InvalidRequest"
+                assert res["reason"] == "SBOM support for DNF5 is not implemented"
+                continue
 
             if test_case.get("error", False):
                 assert exit_code != 0
@@ -1285,6 +1299,20 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
             for repo in res["repos"].values():
                 assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
                 assert repo["sslverify"] is False
+            if with_sbom:
+                assert "sbom" in res
+
+                spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
+                with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
+                    spdx_schema = json.load(f)
+                validator = jsonschema.Draft4Validator
+                validator.check_schema(spdx_schema)
+                spdx_validator = validator(spdx_schema)
+                spdx_validator.validate(res["sbom"])
+
+                assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
+            else:
+                assert "sbom" not in res
 
             # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
             # *filelists*
@@ -1294,10 +1322,7 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
             else:
                 assert n_filelist_files == 0
 
-            if dnf_config:
-                use_dnf5 = json.loads(dnf_config)["use_dnf5"]
-            else:
-                use_dnf5 = False
+            use_dnf5 = dnf_config.get("use_dnf5", False)
             if use_dnf5:
                 assert res["solver"] == "dnf5"
             else:

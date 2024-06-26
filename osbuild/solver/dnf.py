@@ -2,12 +2,14 @@ import os
 import os.path
 import tempfile
 from datetime import datetime
-from typing import List
+from typing import Dict, List
 
 import dnf
 import hawkey
 
 from osbuild.solver import DepsolveError, MarkingError, RepoError, SolverBase, modify_rootdir_path, read_keys
+from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
+from osbuild.util.sbom.spdx import bom_pkgset_to_spdx2_doc
 
 
 class DNF(SolverBase):
@@ -158,6 +160,17 @@ class DNF(SolverBase):
     def _timestamp_to_rfc3339(timestamp):
         return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
 
+    @staticmethod
+    def _sbom_for_pkgset(pkgset: List[dnf.package.Package]) -> Dict:
+        """
+        Create an SBOM document for the given package set.
+
+        For now, only SPDX v2 is supported.
+        """
+        pkgset = dnf_pkgset_to_sbom_pkgset(pkgset)
+        spdx_doc = bom_pkgset_to_spdx2_doc(pkgset)
+        return spdx_doc.to_dict()
+
     def dump(self):
         packages = []
         for package in self.base.sack.query().available():
@@ -230,7 +243,8 @@ class DNF(SolverBase):
         return packages
 
     def depsolve(self, arguments):
-        # # Return an empty list when 'transactions' key is missing or when it is None
+        want_sbom = "sbom" in arguments
+        # Return an empty list when 'transactions' key is missing or when it is None
         transactions = arguments.get("transactions") or []
         # collect repo IDs from the request so we know whether to translate gpg key paths
         request_repo_ids = set(repo["id"] for repo in arguments.get("repos", []))
@@ -310,4 +324,8 @@ class DNF(SolverBase):
             "packages": packages,
             "repos": repositories,
         }
+
+        if want_sbom:
+            response["sbom"] = self._sbom_for_pkgset(last_transaction)
+
         return response
