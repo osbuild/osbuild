@@ -8,6 +8,7 @@ import sys
 from glob import glob
 from tempfile import TemporaryDirectory
 
+import jsonschema
 import pytest
 
 REPO_PATHS = [
@@ -33,7 +34,7 @@ def assert_dnf():
         raise RuntimeError("Cannot import libdnf")
 
 
-def depsolve(pkgs, repos, root_dir, cache_dir, dnf_config, opt_metadata):
+def depsolve(pkgs, repos, root_dir, cache_dir, dnf_config, opt_metadata, with_sbom=False):
     req = {
         "command": "depsolve",
         "arch": ARCH,
@@ -53,12 +54,15 @@ def depsolve(pkgs, repos, root_dir, cache_dir, dnf_config, opt_metadata):
         }
     }
 
+    if with_sbom:
+        req["arguments"]["sbom"] = {"type": "spdx"}
+
     # If there is a config file, write it to a temporary file and pass it to the depsolver
     with TemporaryDirectory() as cfg_dir:
         env = None
         if dnf_config:
             cfg_file = pathlib.Path(cfg_dir) / "solver.json"
-            cfg_file.write_text(dnf_config)
+            json.dump(dnf_config, cfg_file.open("w"))
             env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
 
         p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
@@ -273,27 +277,45 @@ def config_combos(tmp_path, servers):
 
 
 @pytest.mark.parametrize("test_case", test_cases)
+@pytest.mark.parametrize("with_sbom", [False, True])
 @pytest.mark.parametrize("dnf_config, detect_fn", [
-    (None, assert_dnf),
-    ('{"use_dnf5": false}', assert_dnf),
-    ('{"use_dnf5": true}', assert_dnf5),
+    ({}, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
 ])
-def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
+def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
         pytest.skip(e)
 
+    if dnf_config.get("use_dnf5", False) and with_sbom:
+        pytest.skip("SBOM is not supported with dnf5")
+
     pks = test_case["packages"]
 
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers):
         with TemporaryDirectory() as cache_dir:
-            res = depsolve(pks, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
+            res = depsolve(pks, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata, with_sbom)
             assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
             assert res["repos"].keys() == test_case["results"]["reponames"]
             for repo in res["repos"].values():
                 assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
                 assert repo["sslverify"] is False
+            if with_sbom:
+                assert "sbom" in res
+
+                spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
+                with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
+                    spdx_schema = json.load(f)
+                validator = jsonschema.Draft4Validator
+                validator.check_schema(spdx_schema)
+                spdx_validator = validator(spdx_schema)
+                spdx_validator.validate(res["sbom"])
+
+                assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
+            else:
+                assert "sbom" not in res
 
             # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
             # *filelists*
