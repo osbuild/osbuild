@@ -222,6 +222,6 @@ def test_curl_user_agent(mocked_run, tmp_path, sources_service):
 
     for call_args in mocked_run.call_args_list:
         args, _kwargs = call_args
-        idx = args[0].index("--header")
-        assert "User-Agent: osbuild" in args[0][idx + 1]
+        idx = args[0].index("--user-agent")
+        assert "osbuild" in args[0][idx + 1]
         assert "https://osbuild.org/" in args[0][idx + 1]
