@@ -163,7 +163,7 @@ class CurlSource(sources.SourceService):
                     "--connect-timeout", "30",
                     "--fail",
                     "--location",
-                    "--header", f"User-Agent: osbuild (Linux.{arch}; https://osbuild.org/)",
+                    "--user-agent", f"osbuild (Linux.{arch}; https://osbuild.org/)",
                     "--output", checksum,
                 ]
                 if proxy:
