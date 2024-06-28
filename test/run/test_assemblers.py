@@ -188,11 +188,11 @@ def test_qemu(osbuild, fmt, fs_type):
                                      1,
                                      boot_partition=1)
                 if fs_type == "btrfs":
-                    l2hash = "ba0ae9a8b907ad772359a6671de8af0a72def18566e9f2faf8843071777b8d0a"
+                    l2hash = "dfea8604cdcdc2cf0dc3e816929d302f837f03c98f6bb19b366fda4ee26957f1"
                 elif fs_type == "xfs":
-                    l2hash = "9c7f4633df40fec6f31a4d595bc37a263e0a778f496fa314789e60cb9688f376"
+                    l2hash = "18d145b699e0ff4a815868f0b761b4bd6ece391885830ddb56dac557eff8b732"
                 else:
-                    l2hash = "f8272df4899991b20964a568607153ff71b5742bcbf1eeabb47145ccb554a81b"
+                    l2hash = "84792ea01e63bd60c4018d686d48b6207c56d5bc844f2791634b276ce82c9116"
                 assertGRUB2(device,
                             "b8cea7475422d35cd6f85ad099fb4f921557fd1b25db62cd2a92709ace21cf0f",
                             l2hash,
