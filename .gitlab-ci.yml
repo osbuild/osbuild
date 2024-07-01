@@ -41,15 +41,11 @@ RPM:
           - aws/fedora-40-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
-          - aws/rhel-8.9-ga-x86_64
-          - aws/rhel-8.9-ga-aarch64
-          - aws/rhel-9.3-ga-x86_64
-          - aws/rhel-9.3-ga-aarch64
+          - aws/rhel-8.10-ga-x86_64
+          - aws/rhel-8.10-ga-aarch64
+          - aws/rhel-9.4-ga-x86_64
+          - aws/rhel-9.4-ga-aarch64
       - RUNNER:
-          - aws/rhel-8.10-nightly-x86_64
-          - aws/rhel-8.10-nightly-aarch64
-          - aws/rhel-9.4-nightly-x86_64
-          - aws/rhel-9.4-nightly-aarch64
           - aws/rhel-9.5-nightly-x86_64
           - aws/rhel-9.5-nightly-aarch64
         INTERNAL_NETWORK: "true"
@@ -95,14 +91,12 @@ Manifests:
           - aws/centos-stream-9-aarch64
       - PARALLEL_EXEC: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
         RUNNER:
-          - aws/rhel-8.9-ga-x86_64
-          - aws/rhel-8.9-ga-aarch64
-          - aws/rhel-8.10-nightly-x86_64
-          - aws/rhel-8.10-nightly-aarch64
-          - aws/rhel-9.3-ga-x86_64
-          - aws/rhel-9.3-ga-aarch64
-          - aws/rhel-9.4-nightly-x86_64
-          - aws/rhel-9.4-nightly-aarch64
+          - aws/rhel-8.10-ga-x86_64
+          - aws/rhel-8.10-ga-aarch64
+          - aws/rhel-9.4-ga-x86_64
+          - aws/rhel-9.4-ga-aarch64
+          - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-9.5-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
 finish:
