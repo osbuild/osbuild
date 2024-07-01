@@ -14,14 +14,24 @@
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-branched-20231101"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-fedora-20231109"
+          },
+          {
+            "title": "fedora-updates",
+            "name": "fedora-updates",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-updates-released-20240701"
           }
         ],
         "aarch64": [
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-branched-20231101"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-fedora-20231109"
+          },
+          {
+            "title": "fedora-updates",
+            "name": "fedora-updates",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-updates-released-20240701"
           }
         ]
       }
@@ -35,14 +45,24 @@
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-x86_64-branched-20240514"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-x86_64-fedora-20240514"
+          },
+          {
+            "title": "fedora-updates",
+            "name": "fedora-updates",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-x86_64-updates-released-20240701"
           }
         ],
         "aarch64": [
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-aarch64-branched-20240514"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-aarch64-fedora-20240514"
+          },
+          {
+            "title": "fedora-updates",
+            "name": "fedora-updates",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-aarch64-updates-released-20240701"
           }
         ]
       }
