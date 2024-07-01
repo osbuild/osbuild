@@ -135,7 +135,7 @@ sudo usermod -a -G mock "$(whoami)"
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
-mock -r $MOCK_CONFIG --no-bootstrap-chroot \
+mock -r $MOCK_CONFIG \
     --resultdir $REPO_DIR \
     rpmbuild/SRPMS/*.src.rpm
 sudo chown -R $USER ${REPO_DIR}
