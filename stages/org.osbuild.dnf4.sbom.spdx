@@ -1,0 +1,52 @@
+#!/usr/bin/python3
+import json
+import sys
+import tempfile
+
+import dnf
+
+import osbuild
+from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
+from osbuild.util.sbom.spdx import bom_pkgset_to_spdx2_doc
+
+
+def get_installed_packages(tree):
+    with tempfile.TemporaryDirectory() as tempdir:
+        conf = dnf.conf.Conf()
+        conf.installroot = tree
+        conf.persistdir = f"{tempdir}{conf.persistdir}"
+        conf.cachedir = f"{tempdir}{conf.cachedir}"
+        conf.reposdir = [f"{tree}{d}" for d in conf.reposdir]
+        conf.pluginconfpath = [f"{tree}{d}" for d in conf.pluginconfpath]
+        conf.varsdir = [f"{tree}{d}" for d in conf.varsdir]
+        conf.prepend_installroot("config_file_path")
+
+        base = dnf.Base(conf)
+        base.read_all_repos()
+        base.fill_sack(load_available_repos=False)
+        return base.sack.query().installed()
+
+
+def main(inputs, tree, options):
+    config = options["config"]
+    doc_path = config["doc_path"]
+
+    tree_to_analyze = tree
+    if inputs:
+        tree_to_analyze = inputs["root-tree"]["path"]
+
+    installed = get_installed_packages(tree_to_analyze)
+    bom_pkgset = dnf_pkgset_to_sbom_pkgset(installed)
+    spdx2_doc = bom_pkgset_to_spdx2_doc(bom_pkgset)
+    spdx2_json = spdx2_doc.to_dict()
+
+    with open(f"{tree}{doc_path}", "w", encoding="utf-8") as f:
+        json.dump(spdx2_json, f)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args.get("inputs", {}), args["tree"], args["options"])
+    sys.exit(r)
