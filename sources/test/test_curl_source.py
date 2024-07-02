@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 import hashlib
-import pathlib
+import platform
 import re
 import shutil
-import subprocess
+import textwrap
 from unittest.mock import patch
 
 import pytest
@@ -82,14 +82,24 @@ def test_curl_source_amend_secrets_subscription_mgr(sources_service):
     assert desc["secrets"] == "secret-for-http://localhost:80/a"
 
 
-def test_curl_download_many_fail(sources_service):
+@pytest.fixture(name="curl_parallel")
+def curl_parallel_fixture(sources_module, sources_service, request):
+    use_parallel = request.param
+    if use_parallel and not sources_module.curl_has_parallel_downloads:
+        pytest.skip("system curl does not support parallel downloads")
+    sources_service._curl_has_parallel_downloads = use_parallel  # pylint: disable=protected-access
+    yield sources_service
+
+
+@pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
+def test_curl_download_many_fail(curl_parallel):
     TEST_SOURCES = {
         "sha:1111111111111111111111111111111111111111111111111111111111111111": {
             "url": "http://localhost:9876/random-not-exists",
         },
     }
     with pytest.raises(RuntimeError) as exp:
-        sources_service.fetch_all(TEST_SOURCES)
+        curl_parallel.fetch_all(TEST_SOURCES)
     assert str(exp.value) == 'curl: error downloading http://localhost:9876/random-not-exists: error code 7'
 
 
@@ -114,24 +124,26 @@ def make_test_sources(fake_httpd_root, port, n_files):
     return sources
 
 
-def test_curl_download_many_with_retry(tmp_path, sources_service):
+@pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
+def test_curl_download_many_with_retry(tmp_path, curl_parallel):
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
     simulate_failures = 2
     with http_serve_directory(fake_httpd_root, simulate_failures=simulate_failures) as httpd:
         test_sources = make_test_sources(fake_httpd_root, httpd.server_port, 5)
 
-        sources_service.cache = tmp_path / "curl-download-dir"
-        sources_service.cache.mkdir()
-        sources_service.fetch_all(test_sources)
+        curl_parallel.cache = tmp_path / "curl-download-dir"
+        curl_parallel.cache.mkdir()
+        curl_parallel.fetch_all(test_sources)
         # we simulated N failures and we need to fetch K files
         assert httpd.reqs.count == simulate_failures + len(test_sources)
     # double downloads happend in the expected format
     for chksum in test_sources:
-        assert (sources_service.cache / chksum).exists()
+        assert (curl_parallel.cache / chksum).exists()
 
 
-def test_curl_download_many_chksum_validate(tmp_path, sources_service):
+@pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
+def test_curl_download_many_chksum_validate(tmp_path, curl_parallel):
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
     with http_serve_directory(fake_httpd_root) as httpd:
@@ -140,14 +152,15 @@ def test_curl_download_many_chksum_validate(tmp_path, sources_service):
         # match the checksum
         (fake_httpd_root / "1").write_text("hash-no-longer-matches", encoding="utf8")
 
-        sources_service.cache = tmp_path / "curl-download-dir"
-        sources_service.cache.mkdir()
+        curl_parallel.cache = tmp_path / "curl-download-dir"
+        curl_parallel.cache.mkdir()
         with pytest.raises(RuntimeError) as exp:
-            sources_service.fetch_all(test_sources)
+            curl_parallel.fetch_all(test_sources)
         assert re.search(r"checksum mismatch: sha256:.* http://localhost:.*/1", str(exp.value))
 
 
-def test_curl_download_many_retries(tmp_path, sources_service):
+@pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
+def test_curl_download_many_retries(tmp_path, curl_parallel):
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
     with http_serve_directory(fake_httpd_root) as httpd:
@@ -155,73 +168,132 @@ def test_curl_download_many_retries(tmp_path, sources_service):
         # remove all the sources
         shutil.rmtree(fake_httpd_root)
 
-        sources_service.cache = tmp_path / "curl-download-dir"
-        sources_service.cache.mkdir()
+        curl_parallel.cache = tmp_path / "curl-download-dir"
+        curl_parallel.cache.mkdir()
         with pytest.raises(RuntimeError) as exp:
-            sources_service.fetch_all(test_sources)
+            curl_parallel.fetch_all(test_sources)
         # curl will retry 10 times
         assert httpd.reqs.count == 10 * len(test_sources)
         assert "curl: error downloading http://localhost:" in str(exp.value)
 
 
-class FakeCurlDownloader:
-    """FakeCurlDownloader fakes what curl does
+def test_curl_user_agent(tmp_path, sources_module):
+    config_path = tmp_path / "curl-config.txt"
+    test_sources = make_test_sources(tmp_path, 80, 2)
 
-    This is useful when mocking subprocess.run() to see that curl gets
-    the right arguments. It requires test sources where the filename
-    matches the content of the file (e.g. filename "a", content must be "a"
-    as well) so that it can generate the right hash.
-    """
-
-    def __init__(self, test_sources):
-        self._test_sources = test_sources
-
-    def faked_run(self, *args, **kwargs):
-        download_dir = pathlib.Path(kwargs["cwd"])
-        for chksum, desc in self._test_sources.items():
-            # The filename of our test files matches their content for
-            # easier testing/hashing. Alternatively we could just pass
-            # a src dir in here and copy the files from src to
-            # download_dir here but that would require that the files
-            # always exist in the source dir (which they do right now).
-            content = desc["url"].rsplit("/", 1)[1]
-            (download_dir / chksum).write_text(content, encoding="utf8")
-        return subprocess.CompletedProcess(args, 0)
+    sources_module.gen_curl_download_config(config_path, test_sources.items())
+    assert config_path.exists()
+    assert 'header = "User-Agent: osbuild (Linux.x86_64; https://osbuild.org/)"' in config_path.read_text()
 
 
 @pytest.mark.parametrize("with_proxy", [True, False])
-@patch("subprocess.run")
-def test_curl_download_proxy(mocked_run, tmp_path, monkeypatch, sources_service, with_proxy):
+def test_curl_download_proxy(tmp_path, monkeypatch, sources_module, with_proxy):
+    config_path = tmp_path / "curl-config.txt"
     test_sources = make_test_sources(tmp_path, 80, 2)
-    fake_curl_downloader = FakeCurlDownloader(test_sources)
-    mocked_run.side_effect = fake_curl_downloader.faked_run
 
     if with_proxy:
         monkeypatch.setenv("OSBUILD_SOURCES_CURL_PROXY", "http://my-proxy")
-    sources_service.cache = tmp_path / "curl-cache"
-    sources_service.cache.mkdir()
-    sources_service.fetch_all(test_sources)
-    for call_args in mocked_run.call_args_list:
-        args, _kwargs = call_args
-        if with_proxy:
-            idx = args[0].index("--proxy")
-            assert args[0][idx:idx + 2] == ["--proxy", "http://my-proxy"]
-        else:
-            assert "--proxy" not in args[0]
+    sources_module.gen_curl_download_config(config_path, test_sources.items())
+    assert config_path.exists()
+    if with_proxy:
+        assert 'proxy = "http://my-proxy"\n' in config_path.read_text()
+    else:
+        assert "proxy" not in config_path.read_text()
 
 
-@patch("subprocess.run")
-def test_curl_user_agent(mocked_run, tmp_path, sources_service):
-    test_sources = make_test_sources(tmp_path, 80, 2,)
-    fake_curl_downloader = FakeCurlDownloader(test_sources)
-    mocked_run.side_effect = fake_curl_downloader.faked_run
+TEST_SOURCE_PAIRS_GEN_DOWNLOAD_CONFIG = [
+    (
+        # sha256("0")
+        "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+        {
+            "url": "http://example.com/file/0",
+        },
+    ), (
+        # sha256("1")
+        "sha256:6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+        {
+            "url": "http://example.com/file/1",
+            "insecure": True,
+        },
+    ), (
+        # sha256("2")
+        "sha256:d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+        {
+            "url": "http://example.com/file/2",
+            "secrets": {
+                "ssl_ca_cert": "some-ssl_ca_cert",
+            },
+        },
+    ), (
+        # sha256("3")
+        "sha256:4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce",
+        {
+            "url": "http://example.com/file/3",
+            "secrets": {
+                "ssl_client_cert": "some-ssl_client_cert",
+                "ssl_client_key": "some-ssl_client_key",
+            },
+        },
+    ),
+]
 
-    sources_service.cache = tmp_path / "curl-cache"
-    sources_service.cache.mkdir()
-    sources_service.fetch_all(test_sources)
 
-    for call_args in mocked_run.call_args_list:
-        args, _kwargs = call_args
-        idx = args[0].index("--header")
-        assert "User-Agent: osbuild" in args[0][idx + 1]
-        assert "https://osbuild.org/" in args[0][idx + 1]
+def test_curl_gen_download_config(tmp_path, sources_module):
+    config_path = tmp_path / "curl-config.txt"
+    sources_module.gen_curl_download_config(config_path, TEST_SOURCE_PAIRS_GEN_DOWNLOAD_CONFIG)
+
+    assert config_path.exists()
+    assert config_path.read_text(encoding="utf8") == textwrap.dedent(f"""\
+    header = "User-Agent: osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
+    silent
+    speed-limit = 1000
+    connect-timeout = 30
+    fail
+    location
+
+    url = "http://example.com/file/0"
+    output = "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    no-insecure
+
+    url = "http://example.com/file/1"
+    output = "sha256:6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    insecure
+
+    url = "http://example.com/file/2"
+    output = "sha256:d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"
+    cacert = "some-ssl_ca_cert"
+    no-insecure
+
+    url = "http://example.com/file/3"
+    output = "sha256:4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+    cert = "some-ssl_client_cert"
+    key = "some-ssl_client_key"
+    no-insecure
+
+    """)
+
+
+# fc39
+NEW_CURL_OUTPUT = """\
+curl 8.2.1 (x86_64-redhat-linux-gnu) libcurl/8.2.1 OpenSSL/3.1.1 zlib/1.2.13 libidn2/2.3.7 nghttp2/1.55.1
+Release-Date: 2023-07-26
+Protocols: file ftp ftps http https
+Features: alt-svc AsynchDNS GSS-API HSTS HTTP2 HTTPS-proxy IDN IPv6 Kerberos Largefile libz SPNEGO SSL threadsafe UnixSockets
+"""
+
+# centos-stream8
+OLD_CURL_OUTPUT = """\
+curl 7.61.1 (x86_64-redhat-linux-gnu) libcurl/7.61.1 OpenSSL/1.1.1k zlib/1.2.11 nghttp2/1.33.0
+Release-Date: 2018-09-05
+Protocols: dict file ftp ftps gopher http https imap imaps pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
+Features: AsynchDNS IPv6 Largefile GSS-API Kerberos SPNEGO NTLM NTLM_WB SSL libz TLS-SRP HTTP2 UnixSockets HTTPS-proxy
+"""
+
+
+@patch("subprocess.check_output")
+def test_curl_has_parallel_download(mocked_check_output, sources_module):
+    mocked_check_output.return_value = NEW_CURL_OUTPUT
+    assert sources_module.curl_has_parallel_downloads()
+
+    mocked_check_output.return_value = OLD_CURL_OUTPUT
+    assert not sources_module.curl_has_parallel_downloads()
