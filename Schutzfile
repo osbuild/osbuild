@@ -109,6 +109,47 @@
       }
     ]
   },
+  "centos-stream-10": {
+    "repos": [
+      {
+        "file": "/etc/yum.repos.d/centos.repo",
+        "x86_64": [
+          {
+            "title": "baseos",
+            "name": "baseos",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-baseos-20240615"
+          },
+          {
+            "title": "appstream",
+            "name": "appstream",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-appstream-20240615"
+          },
+          {
+            "title": "crb",
+            "name": "crb",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-crb-20240615"
+          }
+        ],
+        "aarch64": [
+          {
+            "title": "baseos",
+            "name": "baseos",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240615"
+          },
+          {
+            "title": "appstream",
+            "name": "appstream",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240615"
+          },
+          {
+            "title": "crb",
+            "name": "crb",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-crb-20240615"
+          }
+        ]
+      }
+    ]
+  },
   "rhel-9.5": {
     "repos": [
       {
