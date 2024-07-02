@@ -1,20 +1,6 @@
-#!/usr/bin/python3
-# pylint: disable=invalid-name
-
-"""
-A JSON-based interface for depsolving using DNF5.
-
-Reads a request through stdin and prints the result to stdout.
-In case of error, a structured error is printed to stdout as well.
-"""
-import json
 import os
-import sys
+import os.path
 import tempfile
-import traceback
-import urllib.error
-import urllib.parse
-import urllib.request
 from datetime import datetime
 from typing import List
 
@@ -24,40 +10,7 @@ from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
 from libdnf5.common import QueryCmp_EQ as EQ
 from libdnf5.common import QueryCmp_GLOB as GLOB
 
-
-# XXX - Temporarily lifted from dnf.rpm module  # pylint: disable=fixme
-def _invert(dct):
-    return {v: k for k in dct for v in dct[k]}
-
-
-_BASEARCH_MAP = _invert({
-    'aarch64': ('aarch64',),
-    'alpha': ('alpha', 'alphaev4', 'alphaev45', 'alphaev5', 'alphaev56',
-              'alphaev6', 'alphaev67', 'alphaev68', 'alphaev7', 'alphapca56'),
-    'arm': ('armv5tejl', 'armv5tel', 'armv5tl', 'armv6l', 'armv7l', 'armv8l'),
-    'armhfp': ('armv6hl', 'armv7hl', 'armv7hnl', 'armv8hl'),
-    'i386': ('i386', 'athlon', 'geode', 'i386', 'i486', 'i586', 'i686'),
-    'ia64': ('ia64',),
-    'mips': ('mips',),
-    'mipsel': ('mipsel',),
-    'mips64': ('mips64',),
-    'mips64el': ('mips64el',),
-    'loongarch64': ('loongarch64',),
-    'noarch': ('noarch',),
-    'ppc': ('ppc',),
-    'ppc64': ('ppc64', 'ppc64iseries', 'ppc64p7', 'ppc64pseries'),
-    'ppc64le': ('ppc64le',),
-    'riscv32': ('riscv32',),
-    'riscv64': ('riscv64',),
-    'riscv128': ('riscv128',),
-    's390': ('s390',),
-    's390x': ('s390x',),
-    'sh3': ('sh3',),
-    'sh4': ('sh4', 'sh4a'),
-    'sparc': ('sparc', 'sparc64', 'sparc64v', 'sparcv8', 'sparcv9',
-              'sparcv9v'),
-    'x86_64': ('x86_64', 'amd64', 'ia32e'),
-})
+from osbuild.solver import DepsolveError, RepoError, SolverBase, modify_rootdir_path, read_keys
 
 
 def remote_location(package, schemes=("http", "ftp", "file", "https")):
@@ -73,15 +26,19 @@ def remote_location(package, schemes=("http", "ftp", "file", "https")):
     return urls[0]
 
 
-class TransactionError(Exception):
-    pass
+def get_string_option(option):
+    # option.get_value() causes an error if it's unset for string values, so check if it's empty first
+    if option.empty():
+        return None
+    return option.get_value()
 
 
-class RepoError(Exception):
-    pass
+# XXX - Temporarily lifted from dnf.rpm module  # pylint: disable=fixme
+def _invert(dct):
+    return {v: k for k in dct for v in dct[k]}
 
 
-class Solver():
+class DNF5(SolverBase):
     """Solver implements package related actions
 
     These include depsolving a package set, searching for packages, and dumping a list
@@ -115,7 +72,7 @@ class Solver():
         # Base is the correct place to set substitutions, not per-repo.
         # See https://github.com/rpm-software-management/dnf5/issues/1248
         self.base.get_vars().set("arch", arch)
-        self.base.get_vars().set("basearch", _BASEARCH_MAP[arch])
+        self.base.get_vars().set("basearch", self._BASEARCH_MAP[arch])
         if releasever:
             self.base.get_vars().set('releasever', releasever)
         if proxy:
@@ -197,9 +154,37 @@ class Solver():
                     repo_iter.next()
 
             self.base.get_repo_sack().update_and_load_enabled_repos(load_system=False)
-
         except RuntimeError as e:
             raise RepoError(e) from e
+
+    _BASEARCH_MAP = _invert({
+        'aarch64': ('aarch64',),
+        'alpha': ('alpha', 'alphaev4', 'alphaev45', 'alphaev5', 'alphaev56',
+                  'alphaev6', 'alphaev67', 'alphaev68', 'alphaev7', 'alphapca56'),
+        'arm': ('armv5tejl', 'armv5tel', 'armv5tl', 'armv6l', 'armv7l', 'armv8l'),
+        'armhfp': ('armv6hl', 'armv7hl', 'armv7hnl', 'armv8hl'),
+        'i386': ('i386', 'athlon', 'geode', 'i386', 'i486', 'i586', 'i686'),
+        'ia64': ('ia64',),
+        'mips': ('mips',),
+        'mipsel': ('mipsel',),
+        'mips64': ('mips64',),
+        'mips64el': ('mips64el',),
+        'loongarch64': ('loongarch64',),
+        'noarch': ('noarch',),
+        'ppc': ('ppc',),
+        'ppc64': ('ppc64', 'ppc64iseries', 'ppc64p7', 'ppc64pseries'),
+        'ppc64le': ('ppc64le',),
+        'riscv32': ('riscv32',),
+        'riscv64': ('riscv64',),
+        'riscv128': ('riscv128',),
+        's390': ('s390',),
+        's390x': ('s390x',),
+        'sh3': ('sh3',),
+        'sh4': ('sh4', 'sh4a'),
+        'sparc': ('sparc', 'sparc64', 'sparc64v', 'sparcv8', 'sparcv9',
+                  'sparcv9v'),
+        'x86_64': ('x86_64', 'amd64', 'ia32e'),
+    })
 
     # pylint: disable=too-many-branches
     def _dnfrepo(self, desc, exclude_pkgs=None):
@@ -391,7 +376,7 @@ class Solver():
                 goal.add_install(pkg, settings)
             transaction = goal.resolve()
             if transaction.get_problems() != NO_PROBLEM:
-                raise TransactionError("\n".join(transaction.get_resolve_logs_as_strings()))
+                raise DepsolveError("\n".join(transaction.get_resolve_logs_as_strings()))
 
             # store the current transaction result
             last_transaction.clear()
@@ -403,7 +388,7 @@ class Solver():
 
         # Something went wrong, but no error was generated by goal.resolve()
         if len(transactions) > 0 and len(last_transaction) == 0:
-            raise TransactionError("Empty transaction results")
+            raise DepsolveError("Empty transaction results")
 
         packages = []
         pkg_repos = {}
@@ -448,169 +433,3 @@ class Solver():
             "repos": repositories,
         }
         return response
-
-
-def get_string_option(option):
-    # option.get_value() causes an error if it's unset for string values, so check if it's empty first
-    if option.empty():
-        return None
-    return option.get_value()
-
-
-class GPGKeyReadError(Exception):
-    pass
-
-
-def modify_rootdir_path(path, root_dir):
-    if path and root_dir:
-        # if the root_dir is set, we need to translate the key path to be under this directory
-        return os.path.join(root_dir, path.lstrip("/"))
-    return path
-
-
-def read_keys(paths, root_dir=None):
-    keys = []
-    for path in paths:
-        url = urllib.parse.urlparse(path)
-        if url.scheme == "file":
-            path = url.path
-            path = modify_rootdir_path(path, root_dir)
-            try:
-                with open(path, mode="r", encoding="utf-8") as keyfile:
-                    keys.append(keyfile.read())
-            except Exception as e:
-                raise GPGKeyReadError(f"error loading gpg key from {path}: {e}") from e
-        elif url.scheme in ["http", "https"]:
-            try:
-                resp = urllib.request.urlopen(urllib.request.Request(path))
-                keys.append(resp.read().decode())
-            except urllib.error.URLError as e:
-                raise GPGKeyReadError(f"error reading remote gpg key at {path}: {e}") from e
-        else:
-            raise GPGKeyReadError(f"unknown url scheme for gpg key: {url.scheme} ({path})")
-    return keys
-
-
-def setup_cachedir(request):
-    arch = request["arch"]
-    # If dnf-json is run as a service, we don't want users to be able to set the cache
-    cache_dir = os.environ.get("OVERWRITE_CACHE_DIR", "")
-    if cache_dir:
-        cache_dir = os.path.join(cache_dir, arch)
-    else:
-        cache_dir = request.get("cachedir", "")
-
-    if not cache_dir:
-        return "", {"kind": "Error", "reason": "No cache dir set"}
-
-    return cache_dir, None
-
-
-def solve(request, cache_dir):
-    command = request["command"]
-    arguments = request["arguments"]
-    with tempfile.TemporaryDirectory() as persistdir:
-        try:
-            solver = Solver(request, persistdir, cache_dir)
-            if command == "dump":
-                result = solver.dump()
-            elif command == "depsolve":
-                result = solver.depsolve(arguments)
-            elif command == "search":
-                result = solver.search(arguments.get("search", {}))
-        except TransactionError as e:
-            printe("error depsolve")
-            return None, {
-                "kind": "DepsolveError",
-                "reason": f"There was a problem with depsolving: {e}"
-            }
-        except RepoError as e:
-            printe("error repository setup")
-            return None, {
-                "kind": "RepoError",
-                "reason": f"There was a problem reading a repository: {e}"
-            }
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            printe("error traceback")
-            return None, {
-                "kind": type(e).__name__,
-                "reason": str(e),
-                "traceback": traceback.format_exc()
-            }
-    return result, None
-
-
-def printe(*msg):
-    print(*msg, file=sys.stderr)
-
-
-def fail(err):
-    printe(f"{err['kind']}: {err['reason']}")
-    print(json.dumps(err))
-    sys.exit(1)
-
-
-def respond(result):
-    print(json.dumps(result))
-
-
-# pylint: disable=too-many-return-statements
-def validate_request(request):
-    command = request.get("command")
-    valid_cmds = ("depsolve", "dump", "search")
-    if command not in valid_cmds:
-        return {
-            "kind": "InvalidRequest",
-            "reason": f"invalid command '{command}': must be one of {', '.join(valid_cmds)}"
-        }
-
-    if not request.get("arch"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "no 'arch' specified"
-        }
-
-    if not request.get("module_platform_id"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "no 'module_platform_id' specified"
-        }
-    if not request.get("releasever"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "no 'releasever' specified"
-        }
-    arguments = request.get("arguments")
-    if not arguments:
-        return {
-            "kind": "InvalidRequest",
-            "reason": "empty 'arguments'"
-        }
-
-    if not arguments.get("repos") and not arguments.get("root_dir"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "no 'repos' or 'root_dir' specified"
-        }
-
-    return None
-
-
-def main():
-    request = json.load(sys.stdin)
-    err = validate_request(request)
-    if err:
-        fail(err)
-
-    cachedir, err = setup_cachedir(request)
-    if err:
-        fail(err)
-    result, err = solve(request, cachedir)
-    if err:
-        fail(err)
-    else:
-        respond(result)
-
-
-if __name__ == "__main__":
-    main()
