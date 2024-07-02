@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import re
+import subprocess
 import sys
 from unittest.mock import call, patch
 
@@ -59,6 +61,7 @@ def fake_json_input_fixture():
             "filepath": "tailoring-output.xml",
             "config": {
                 "datastream": "some-datastream",
+                "new_profile": "some-new-profile",
                 "tailoring_file": "tailoring-file.json",
             }
         },
@@ -128,5 +131,87 @@ def test_oscap_autotailor_json_smoke(mock_subprocess_run, fake_json_input, stage
 
     assert mock_subprocess_run.call_args_list == [
         call(["/usr/bin/autotailor", "--output", "/some/sysroot/tailoring-output.xml",
+              "--new-profile-id", "some-new-profile",
               "--json-tailoring", "/some/sysroot/tailoring-file.json", "some-datastream"],
              encoding='utf8', stdout=sys.stderr, check=True)]
+
+
+@pytest.mark.parametrize(
+    "test_data,expected_err",
+    [
+        ({}, "{} is not valid under any of the given schemas"),
+        ({
+            "new_profile": "some-new-profile"
+        }, "{'new_profile': 'some-new-profile'}"
+            + " is not valid under any of the given schemas"),
+        ({
+            "datastream": "some-datastream",
+            "new_profile": "some-new-profile"
+        }, "{'datastream': 'some-datastream', 'new_profile': 'some-new-profile'}"
+            + " is not valid under any of the given schemas"),
+        ({
+            "datastream": "some-datastream",
+            "tailoring_file": "/some/tailoring/file.json"
+        }, "{'datastream': 'some-datastream', 'tailoring_file': '/some/tailoring/file.json'}"
+            + " is not valid under any of the given schemas"),
+    ],
+)
+@pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
+def test_schema_validation_oscap_json_autotailor(fake_json_input, stage_schema, test_data, expected_err):
+    fake_json_input["options"]["config"] = test_data
+    res = stage_schema.validate(fake_json_input)
+    assert res.valid is False
+    testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
+
+
+JSON_TAILORING = """{
+  "profiles": [
+    {
+      "id": "some-profile-id",
+      "base_profile_id": "some-profile-id",
+      "rules": {
+        "some-rule": {
+          "evaluate": true,
+          "severity": "high"
+        }
+      },
+      "variables": {
+        "some-variable": {
+          "value": 600
+        }
+      }
+    }
+  ]
+}
+"""
+
+
+@pytest.mark.parametrize(
+    "expected_profile",
+    [
+        ("xccdf_org.ssgproject.content_profile_some-new-profile"),
+        ("xccdf_org.ssgproject.content_profile_some-other-profile")
+    ]
+)
+@pytest.mark.skipif(not testutil.has_executable("autotailor"), reason="no autotailor executable")
+def test_oscap_autotailor_json_profile_override(fake_json_input, stage_module, expected_profile, tmp_path):
+    options = fake_json_input["options"]
+    options["config"]["new_profile"] = expected_profile
+
+    results_file = tmp_path / options["filepath"]
+    tailoring_file = tmp_path / options["config"]["tailoring_file"]
+    tailoring_file.write_text(JSON_TAILORING)
+
+    stage_module.main(str(tmp_path), options)
+
+    result = subprocess.run(
+        ["oscap", "info", "--profiles", results_file],
+        stdout=subprocess.PIPE,
+        check=False,
+        text=True,
+    )
+
+    match = re.search(r'Id:\s*(\S+)', result.stdout)
+    assert match
+
+    assert expected_profile == match.group(1)
