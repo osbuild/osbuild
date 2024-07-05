@@ -107,11 +107,17 @@ if curl --silent --fail --head --output /dev/null "${REPO_URL}/repodata/repomd.x
 fi
 
 # Mock and s3cmd is only available in EPEL for RHEL.
-if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
+# TODO: Adjust this condition, once EPEL-10 is enabled
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} -lt 10 ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID%.*}.noarch.rpm
     dnf_install_with_retry /tmp/epel.rpm
+fi
+
+# TODO: Remove this workaround, once EPEL-10 is enabled
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+    sudo dnf copr enable -y @osbuild/centpkg "centos-stream-10-$(uname -m)"
 fi
 
 # Install requirements for building RPMs in mock.
