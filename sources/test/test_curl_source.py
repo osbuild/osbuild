@@ -160,7 +160,9 @@ def test_curl_download_many_chksum_validate(tmp_path, curl_parallel):
 
 
 @pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
-def test_curl_download_many_retries(tmp_path, curl_parallel):
+def test_curl_download_many_retries(tmp_path, monkeypatch, curl_parallel):
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_USE_PARALLEL", "1")
+
     fake_httpd_root = tmp_path / "fake-httpd-root"
 
     with http_serve_directory(fake_httpd_root) as httpd:
@@ -291,7 +293,14 @@ Features: AsynchDNS IPv6 Largefile GSS-API Kerberos SPNEGO NTLM NTLM_WB SSL libz
 
 
 @patch("subprocess.check_output")
-def test_curl_has_parallel_download(mocked_check_output, sources_module):
+def test_curl_has_parallel_download(mocked_check_output, monkeypatch, sources_module):
+    # by default, --parallel is disabled
+    mocked_check_output.return_value = NEW_CURL_OUTPUT
+    assert not sources_module.curl_has_parallel_downloads()
+
+    # unless this environemnt is set
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_USE_PARALLEL", "1")
+
     mocked_check_output.return_value = NEW_CURL_OUTPUT
     assert sources_module.curl_has_parallel_downloads()
 

@@ -102,6 +102,12 @@ def curl_has_parallel_downloads():
     Return true if curl has all the support we needed for parallel downloading
     (this include --write-out "%{json}" too
     """
+    # Re-enable this once the failures in
+    # https://github.com/osbuild/osbuild-composer/pull/4247
+    # are understood
+    if os.getenv("OSBUILD_SOURCES_CURL_USE_PARALLEL") not in ["1", "yes", "true"]:
+        return False
+
     output = subprocess.check_output(["curl", "--version"], universal_newlines=True)
     first_line = output.split("\n", maxsplit=1)[0]
     m = re.match(r'^curl (\d+\.\d+\.\d+)', first_line)
