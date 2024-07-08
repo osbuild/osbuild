@@ -103,6 +103,8 @@ def parse_arguments(sys_argv: List[str]) -> argparse.Namespace:
     # nargs='?' const='*' means `--break` is equivalent to `--break=*`
     parser.add_argument("--break", dest='debug_break', type=str, nargs='?', const='*',
                         help="open debug shell when executing stage. Accepts stage name or id or * (for all)")
+    parser.add_argument("--quiet", "-q", action="store_true",
+                        help="supress normal output")
 
     return parser.parse_args(sys_argv[1:])
 
@@ -162,7 +164,7 @@ def osbuild_cli() -> int:
 
     monitor_name = args.monitor
     if not monitor_name:
-        monitor_name = "NullMonitor" if args.json else "LogMonitor"
+        monitor_name = "NullMonitor" if (args.json or args.quiet) else "LogMonitor"
     monitor = osbuild.monitor.make(monitor_name, args.monitor_fd, manifest)
     monitor.log(f"starting {args.manifest_path}", origin="osbuild.main_cli")
 
@@ -202,7 +204,7 @@ def osbuild_cli() -> int:
                 r = fmt.output(manifest, r, object_store)
                 json.dump(r, sys.stdout)
                 sys.stdout.write("\n")
-            else:
+            elif not args.quiet:
                 if r["success"]:
                     for name, pl in manifest.pipelines.items():
                         print(f"{name + ':': <10}\t{pl.id}")
