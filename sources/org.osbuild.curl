@@ -166,7 +166,6 @@ def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[
 
 def try_parse_curl_line(line):
     line = line.strip()
-    print(line)
     if not line.startswith("osbuild-dl\x1c"):
         print(f"WARNING: unexpected prefix in {line}", file=sys.stderr)
         return None
