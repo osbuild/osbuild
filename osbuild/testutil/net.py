@@ -5,6 +5,7 @@ network related utilities
 import contextlib
 import http.server
 import socket
+import ssl
 import threading
 
 try:
@@ -61,15 +62,35 @@ class DirHTTPServer(ThreadingHTTPServer):
             request, client_address, self, directory=self.directory)
 
 
-@contextlib.contextmanager
-def http_serve_directory(rootdir, simulate_failures=0):
-    port = _get_free_port()
-    httpd = DirHTTPServer(
+def _httpd(rootdir, port, simulate_failures):
+    return DirHTTPServer(
         ("localhost", port),
         http.server.SimpleHTTPRequestHandler,
         directory=rootdir,
         simulate_failures=simulate_failures,
     )
+
+
+@contextlib.contextmanager
+def http_serve_directory(rootdir, simulate_failures=0):
+    port = _get_free_port()
+    httpd = _httpd(rootdir, port, simulate_failures)
+    threading.Thread(target=httpd.serve_forever).start()
+    try:
+        yield httpd
+    finally:
+        httpd.shutdown()
+
+
+@contextlib.contextmanager
+def https_serve_directory(rootdir, certfile, keyfile, simulate_failures=0):
+    port = _get_free_port()
+    httpd = _httpd(rootdir, port, simulate_failures)
+
+    ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ctx.load_cert_chain(certfile=certfile, keyfile=keyfile)
+    httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
+
     threading.Thread(target=httpd.serve_forever).start()
     try:
         yield httpd
