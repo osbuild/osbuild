@@ -157,6 +157,7 @@ def test_curl_download_many_chksum_validate(tmp_path, curl_parallel):
         curl_parallel.cache.mkdir()
         with pytest.raises(RuntimeError) as exp:
             curl_parallel.fetch_all(test_sources)
+        assert httpd.reqs.count == len(test_sources)
         assert re.search(r"checksum mismatch: sha256:.* http://localhost:.*/1", str(exp.value))
 
 
@@ -176,8 +177,8 @@ def test_curl_download_many_retries(tmp_path, monkeypatch, curl_parallel):
         with pytest.raises(RuntimeError) as exp:
             curl_parallel.fetch_all(test_sources)
         # curl will retry 10 times
-        assert httpd.reqs.count == 10 * len(test_sources)
         assert "curl: error downloading http://localhost:" in str(exp.value)
+        assert httpd.reqs.count == 10 * len(test_sources)
 
 
 def test_curl_user_agent(tmp_path, sources_module):
@@ -246,33 +247,57 @@ def test_curl_gen_download_config(tmp_path, sources_module):
     sources_module.gen_curl_download_config(config_path, TEST_SOURCE_PAIRS_GEN_DOWNLOAD_CONFIG)
 
     assert config_path.exists()
+    write_out_line = r'write-out = "\{\"url\": \"%{url}\"\, \"filename_effective\": \"%{filename_effective}\", \"exitcode\": %{exitcode}, \"errormsg\": \"%{errormsg}\" \}\n"'
     assert config_path.read_text(encoding="utf8") == textwrap.dedent(f"""\
+    url = "http://example.com/file/0"
+    output = "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
     user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
     silent
     speed-limit = 1000
     connect-timeout = 30
     fail
     location
-
-    url = "http://example.com/file/0"
-    output = "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    {write_out_line}
     no-insecure
+    next
 
     url = "http://example.com/file/1"
     output = "sha256:6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
+    silent
+    speed-limit = 1000
+    connect-timeout = 30
+    fail
+    location
+    {write_out_line}
     insecure
+    next
 
     url = "http://example.com/file/2"
     output = "sha256:d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"
+    user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
+    silent
+    speed-limit = 1000
+    connect-timeout = 30
+    fail
+    location
+    {write_out_line}
     cacert = "some-ssl_ca_cert"
     no-insecure
+    next
 
     url = "http://example.com/file/3"
     output = "sha256:4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce"
+    user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
+    silent
+    speed-limit = 1000
+    connect-timeout = 30
+    fail
+    location
+    {write_out_line}
     cert = "some-ssl_client_cert"
     key = "some-ssl_client_key"
     no-insecure
-
     """)
 
 

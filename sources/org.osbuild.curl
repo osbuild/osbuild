@@ -20,6 +20,7 @@ up the download.
 
 import concurrent.futures
 import contextlib
+import json
 import os
 import pathlib
 import platform
@@ -132,25 +133,31 @@ def _quote_url(url: str) -> str:
 
 
 def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[Tuple[str, Dict]]):
+    proxy = os.getenv("OSBUILD_SOURCES_CURL_PROXY")
     with open(config_path, "w", encoding="utf8") as fp:
-        # global options
-        fp.write(textwrap.dedent(f"""\
-        user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
-        silent
-        speed-limit = 1000
-        connect-timeout = 30
-        fail
-        location
-        """))
-        proxy = os.getenv("OSBUILD_SOURCES_CURL_PROXY")
-        if proxy:
-            fp.write(f'proxy = "{proxy}"\n')
-        fp.write("\n")
         # per url options
-        for checksum, desc in chksum_desc_tuple:
+        for i, (checksum, desc) in enumerate(chksum_desc_tuple):
             url = _quote_url(desc.get("url"))
             fp.write(f'url = "{url}"\n')
             fp.write(f'output = "{checksum}"\n')
+            fp.write(textwrap.dedent(f"""\
+            user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
+            silent
+            speed-limit = 1000
+            connect-timeout = 30
+            fail
+            location
+            """))
+            # this will write out a "record" for each finished download
+            # Not using %{json} here because older curl (7.76) will write
+            # {"http_connect":000} which python cannot parse
+            # XXX: only write out when in new curl mode as it would otherwise
+            # spam the output in old mode
+            fp.write(
+                r'write-out = "\{\"url\": \"%{url}\"\, \"filename_effective\": \"%{filename_effective}\", \"exitcode\": %{exitcode}, \"errormsg\": \"%{errormsg}\" \}\n"' +
+                "\n")
+            if proxy:
+                fp.write(f'proxy = "{proxy}"\n')
             secrets = desc.get("secrets")
             if secrets:
                 ssl_ca_cert = secrets.get('ssl_ca_cert')
@@ -167,22 +174,18 @@ def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[
                 fp.write('insecure\n')
             else:
                 fp.write('no-insecure\n')
-            fp.write("\n")
+            if i + 1 < len(chksum_desc_tuple):
+                fp.write("next\n\n")
 
 
 def try_parse_curl_line(line):
     line = line.strip()
-    print(line)
-    if not line.startswith("osbuild-dl\x1c"):
-        print(f"WARNING: unexpected prefix in {line}", file=sys.stderr)
+    try:
+        res = json.loads(line)
+        return res
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"WARNING: cannot json parse {line} {e}", file=sys.stderr)
         return None
-    _, url, filename, exitcode, errormsg = line.split("\x1c")
-    return {
-        "url": url,
-        "filename_effective": filename,
-        "exitcode": int(exitcode),
-        "errormsg": errormsg,
-    }
 
 
 def validate_and_move_to_targetdir(tmpdir, targetdir, checksum, origin):
@@ -210,11 +213,8 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
         # this adds a bunch of noise but might be nice for debug?
         # "--show-error",
         "--parallel",
-        # this will write out a "record" for each finished download
-        # Not using %{json} here because older curl (7.76) will write
-        # {"http_connect":000} which python cannot parse
-        "--write-out", "osbuild-dl\x1c%{url}\x1c%{filename_effective}\x1c%{exitcode}\x1cerror: %{errormsg}\n",
     ]
+
     with contextlib.ExitStack() as cm:
         curl_p = subprocess.Popen(curl_command, encoding="utf-8", cwd=tmpdir, stdout=subprocess.PIPE)
         # ensure that curl is killed even if an unexpected exit happens

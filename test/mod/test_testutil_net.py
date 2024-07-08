@@ -1,6 +1,7 @@
 import os.path
 import pathlib
 import subprocess
+import textwrap
 
 from osbuild.testutil import make_fake_tree
 from osbuild.testutil.net import http_serve_directory, https_serve_directory
@@ -71,6 +72,6 @@ def test_http_ssl_serve_directory_multi_cert(tmp_path):
             output = subprocess.check_output(
                 ["curl",
                  "--config", os.fspath(curl_config),
-                ],
+                 ],
             )
         assert output == b"file1 contentfile2 content"

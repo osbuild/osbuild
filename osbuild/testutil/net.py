@@ -4,8 +4,8 @@ network related utilities
 """
 import contextlib
 import http.server
-import ssl
 import socket
+import ssl
 import threading
 
 try:
