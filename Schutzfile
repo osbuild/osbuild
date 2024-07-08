@@ -117,34 +117,34 @@
           {
             "title": "baseos",
             "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-baseos-20240615"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-baseos-20240701"
           },
           {
             "title": "appstream",
             "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-appstream-20240615"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-appstream-20240701"
           },
           {
             "title": "crb",
             "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-crb-20240615"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-crb-20240701"
           }
         ],
         "aarch64": [
           {
             "title": "baseos",
             "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240615"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240701"
           },
           {
             "title": "appstream",
             "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240615"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240701"
           },
           {
             "title": "crb",
             "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-crb-20240615"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-crb-20240701"
           }
         ]
       }
