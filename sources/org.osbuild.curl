@@ -317,6 +317,9 @@ class CurlSource(sources.SourceService):
                 failed_urls = ",".join([itm[1]["url"] for itm in dl_pairs])
                 raise RuntimeError(f"curl: error downloading {failed_urls}: error code {return_code}")
 
+        if len(dl_pairs) > 0:
+            raise RuntimeError(f"curl: finished with return_code {return_code} but {dl_pairs} left to download")
+
     def _fetch_all_old_curl(self, amended):
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             for _ in executor.map(self.fetch_one, *zip(*amended)):

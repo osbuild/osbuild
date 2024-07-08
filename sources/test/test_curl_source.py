@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+import osbuild.testutil
 from osbuild.testutil.net import http_serve_directory
 
 SOURCES_NAME = "org.osbuild.curl"
@@ -306,3 +307,14 @@ def test_curl_has_parallel_download(mocked_check_output, monkeypatch, sources_mo
 
     mocked_check_output.return_value = OLD_CURL_OUTPUT
     assert not sources_module.curl_has_parallel_downloads()
+
+
+def test_curl_result_is_double_checked(tmp_path, sources_service):
+    test_sources = make_test_sources(tmp_path, 1234, 5)
+
+    # simulate that curl returned an exit code 0 even though not all
+    # sources got downloaded
+    with osbuild.testutil.mock_command("curl", ""):
+        with pytest.raises(RuntimeError) as exp:
+            sources_service.fetch_all(test_sources)
+        assert re.match(r"curl: finished with return_code 0 but .* left to download", str(exp.value))
