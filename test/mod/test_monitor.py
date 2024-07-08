@@ -213,11 +213,12 @@ def test_json_progress_monitor():
         mon.begin(manifest.pipelines["test-pipeline-second"])
         mon.log("pipeline 2 starting", origin="org.osbuild")
         mon.log("pipeline 2 message 2")
+        mon.overall_result({"type": "result", "success": True, "metadata": {"a": "lot"}})
 
         tf.seek(0)
         log = tf.read().decode().strip().split("\x1e")
 
-        expected_total = 12
+        expected_total = 13
         assert len(log) == expected_total
         i = 0
         logitem = json.loads(log[i])
@@ -292,6 +293,10 @@ def test_json_progress_monitor():
         assert logitem["message"] == "pipeline 2 message 2"
         prev_ctx_id = json.loads(log[i - 1])["context"]["id"]
         assert logitem["context"]["id"] == prev_ctx_id
+        i += 1
+
+        logitem = json.loads(log[i])
+        assert logitem["overall_result"] == {"type": "result", "success": True, "metadata": {"a": "lot"}}
         i += 1
 
         assert i == expected_total

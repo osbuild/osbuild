@@ -234,6 +234,9 @@ class BaseMonitor(abc.ABC):
     def log(self, message: str, origin: Optional[str] = None):
         """Called for all module log outputs"""
 
+    def overall_result(self, result: Dict):
+        """Called when the entire build is finished"""
+
 
 class NullMonitor(BaseMonitor):
     """Monitor class that does not report anything"""
@@ -344,6 +347,10 @@ class JSONSeqMonitor(BaseMonitor):
 
     def log(self, message, origin: Optional[str] = None):
         entry = log_entry(message, self._context.with_origin(origin), self._progress)
+        self._jsonseq(entry)
+
+    def overall_result(self, result: Dict):
+        entry = {"overall_result": result}
         self._jsonseq(entry)
 
     def _jsonseq(self, entry):

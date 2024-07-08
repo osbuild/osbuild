@@ -191,6 +191,8 @@ def osbuild_cli() -> int:
             else:
                 # if we had monitor.error() we could use that here
                 monitor.log(f"manifest {args.manifest_path} failed\n", origin="osbuild.main_cli")
+            # log overall result
+            monitor.overall_result(fmt.output(manifest, r, object_store))
 
             if r["success"] and exports:
                 for pid in exports:

@@ -100,7 +100,13 @@ monitor that is used. Valid types are:
 	about the progress. Progress can be nested and a progress object
 	may contain sub-progress. In addition each progress can emit
 	`message` strings that contain detailed log information from
-	the stage. An example:
+	the stage.
+
+	At the end of the build an object with the key
+	`overall_result` is emited that contains the overall result of
+	the build (in the same format as `--json`).
+
+	An example:
 
 	| {
 	|   "message": "Starting module org.osbuild.grub2.inst",
