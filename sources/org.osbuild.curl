@@ -145,7 +145,7 @@ def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[
             # this will write out a "record" for each finished download
             # Not using %{json} here because older curl (7.76) will write
             # {"http_connect":000} which python cannot parse
-            # XXX: only write out when in new curl mode as it would otherwise
+            # T0DO: only write out when in new curl mode as it would otherwise
             # spam the output in old mode
             fp.write(
                 r'write-out = "\{\"url\": \"%{url}\"\, \"filename_effective\": \"%{filename_effective}\", \"exitcode\": %{exitcode}, \"errormsg\": \"%{errormsg}\" \}\n"' +
