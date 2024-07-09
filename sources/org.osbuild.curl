@@ -213,6 +213,11 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
         curl_p = subprocess.Popen(curl_command, encoding="utf-8", cwd=tmpdir, stdout=subprocess.PIPE)
         # ensure that curl is killed even if an unexpected exit happens
         cm.callback(curl_p.kill)
+        # we need to manually keep track of download errors. curl will
+        # only report the status of the last transfert via the commandline
+        # unless "--fail-early" is used. but we do not want "--fail-early"
+        # because we want existing transfers to continue.
+        failed_exitcode = 0
         while True:
             line = curl_p.stdout.readline()
             # empty line means eof/process finished
@@ -222,10 +227,11 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
             if not dl_details:
                 continue
             url = dl_details['url']
-            # ignore individual download errors, the overall exit status will
-            # reflect them and the caller can retry
+            # keep going after individual download errors
             if dl_details["exitcode"] != 0:
                 print(f"WARNING: failed to download {url}: {dl_details['errormsg']}", file=sys.stderr)
+                # sucks a bit, use a list?
+                failed_exitcode = dl_details["exitcode"]
                 continue
             # the way downloads are setup the filename is the expected hash
             # so validate now and move into place
@@ -242,9 +248,8 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
             # Without it just a long pause with no progress while curl
             # downloads.
             print(f"Downloaded {url}")
-        # return overall download status (this will be an error if any
-        # transfer failed)
-        return curl_p.wait()
+        overall_ret_code = curl_p.wait()
+        return max(overall_ret_code, failed_exitcode)
 
 
 class CurlSource(sources.SourceService):
