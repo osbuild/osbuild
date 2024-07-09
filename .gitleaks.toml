@@ -1,0 +1,6 @@
+[allowlist]
+  description = "Ignore our test certs"
+
+  paths = [
+    '''\/test\/data\/certs\/.*\.pem$''',
+  ]
