@@ -240,9 +240,15 @@ TEST_SOURCE_PAIRS_GEN_DOWNLOAD_CONFIG = [
 ]
 
 
-def test_curl_gen_download_config(tmp_path, sources_module):
+def test_curl_gen_download_config_old_curl(tmp_path, sources_module):
     config_path = tmp_path / "curl-config.txt"
-    sources_module.gen_curl_download_config(config_path, TEST_SOURCE_PAIRS_GEN_DOWNLOAD_CONFIG)
+    sources_module.gen_curl_download_config(config_path, [(
+        # sha256("0")
+        "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+        {
+            "url": "http://example.com/file/0",
+        },
+    )])
 
     assert config_path.exists()
     assert config_path.read_text(encoding="utf8") == textwrap.dedent(f"""\
@@ -252,6 +258,28 @@ def test_curl_gen_download_config(tmp_path, sources_module):
     connect-timeout = 30
     fail
     location
+
+    url = "http://example.com/file/0"
+    output = "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+    no-insecure
+
+    """)
+
+
+def test_curl_gen_download_config_parallel(tmp_path, sources_module):
+    config_path = tmp_path / "curl-config.txt"
+    sources_module.gen_curl_download_config(config_path, TEST_SOURCE_PAIRS_GEN_DOWNLOAD_CONFIG, parallel=True)
+
+    assert config_path.exists()
+    assert config_path.read_text(encoding="utf8") == textwrap.dedent(f"""\
+    parallel
+    user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
+    silent
+    speed-limit = 1000
+    connect-timeout = 30
+    fail
+    location
+    write-out = "{sources_module.CURL_WRITE_OUT}"
 
     url = "http://example.com/file/0"
     output = "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
