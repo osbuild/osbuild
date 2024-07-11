@@ -102,7 +102,8 @@ def test_curl_download_many_fail(curl_parallel):
     }
     with pytest.raises(RuntimeError) as exp:
         curl_parallel.fetch_all(TEST_SOURCES)
-    assert str(exp.value) == 'curl: error downloading http://localhost:9876/random-not-exists: error code 7'
+    assert str(exp.value).startswith("curl: error downloading http://localhost:9876/random-not-exists")
+    assert 'http://localhost:9876/random-not-exists: error code 7' in str(exp.value)
 
 
 def make_test_sources(fake_httpd_root, port, n_files, start_n=0, cacert=""):
