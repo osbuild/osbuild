@@ -229,6 +229,7 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
         curl_p = subprocess.Popen(curl_command, encoding="utf-8", cwd=tmpdir, stdout=subprocess.PIPE)
         # ensure that curl is killed even if an unexpected exit happens
         cm.callback(curl_p.kill)
+        errors = []
         while True:
             line = curl_p.stdout.readline()
             # empty line means eof/process finished
@@ -238,10 +239,13 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
             if not dl_details:
                 continue
             url = dl_details['url']
-            # ignore individual download errors, the overall exit status will
-            # reflect them and the caller can retry
+            # Keep track of individual errors as curl will only report
+            # the last download operation success/failure via the global
+            # exit code. There is "--fail-early" but the downside of that
+            # is that abort all in progress downloads too.
             if dl_details["exitcode"] != 0:
                 print(f"WARNING: failed to download {url}: {dl_details['errormsg']}", file=sys.stderr)
+                errors.append(f'{url}: error code {dl_details["exitcode"]}')
                 continue
             # the way downloads are setup the filename is the expected hash
             # so validate now and move into place
@@ -260,7 +264,10 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
             print(f"Downloaded {url}")
         # return overall download status (this will be an error if any
         # transfer failed)
-        return curl_p.wait()
+        curl_exit_code = curl_p.wait()
+        if not errors and curl_exit_code > 0:
+            errors.append("curl exited non-zero but reported no errors")
+        return errors
 
 
 class CurlSource(sources.SourceService):
@@ -320,12 +327,12 @@ class CurlSource(sources.SourceService):
             # redirected to a different, working, one on retry.
             return_code = 0
             for _ in range(NR_RETRYS):
-                return_code = fetch_many_new_curl(tmpdir, self.cache, dl_pairs)
-                if return_code == 0:
+                errors = fetch_many_new_curl(tmpdir, self.cache, dl_pairs)
+                if not errors:
                     break
             else:
-                failed_urls = ",".join([itm[1]["url"] for itm in dl_pairs])
-                raise RuntimeError(f"curl: error downloading {failed_urls}: error code {return_code}")
+                details = ",".join(errors)
+                raise RuntimeError(f"curl: error downloading {details}")
 
         if len(dl_pairs) > 0:
             raise RuntimeError(f"curl: finished with return_code {return_code} but {dl_pairs} left to download")
