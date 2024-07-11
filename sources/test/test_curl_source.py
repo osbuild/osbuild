@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import hashlib
+import pathlib
 import platform
 import re
 import shutil
@@ -10,7 +11,7 @@ from unittest.mock import patch
 import pytest
 
 import osbuild.testutil
-from osbuild.testutil.net import http_serve_directory
+from osbuild.testutil.net import http_serve_directory, https_serve_directory
 
 SOURCES_NAME = "org.osbuild.curl"
 
@@ -104,7 +105,7 @@ def test_curl_download_many_fail(curl_parallel):
     assert str(exp.value) == 'curl: error downloading http://localhost:9876/random-not-exists: error code 7'
 
 
-def make_test_sources(fake_httpd_root, port, n_files):
+def make_test_sources(fake_httpd_root, port, n_files, start_n=0, cacert=""):
     """
     Create test sources for n_file. All files have the names
     0,1,2...
@@ -113,13 +114,20 @@ def make_test_sources(fake_httpd_root, port, n_files):
     Returns a sources dict that can be used as input for "fetch_all()" with
     the correct hash/urls.
     """
+    proto = "https" if cacert else "http"
+
     fake_httpd_root.mkdir(exist_ok=True)
     sources = {}
-    for i in range(n_files):
+    for i in range(start_n, start_n + n_files):
         name = f"{i}"
-        sources[f"sha256:{hashlib.sha256(name.encode()).hexdigest()}"] = {
-            "url": f"http://localhost:{port}/{name}",
+        key = f"sha256:{hashlib.sha256(name.encode()).hexdigest()}"
+        val = {
+            "url": f"{proto}://localhost:{port}/{name}",
         }
+        if cacert:
+            val["secrets"] = {}
+            val["secrets"]["ssl_ca_cert"] = cacert
+        sources[key] = val
         (fake_httpd_root / name).write_text(name, encoding="utf8")
 
     return sources
@@ -348,3 +356,32 @@ def test_curl_result_is_double_checked(tmp_path, curl_parallel):
         with pytest.raises(RuntimeError) as exp:
             curl_parallel.fetch_all(test_sources)
         assert re.match(r"curl: finished with return_code 0 but .* left to download", str(exp.value))
+
+
+@pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
+def test_curl_download_many_mixed_certs(tmp_path, monkeypatch, sources_module, curl_parallel):
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_USE_PARALLEL", "1")
+    # ensure this does not accidentaly succeeds because we retry
+    monkeypatch.setattr(sources_module, "NR_RETRYS", 1)
+
+    fake_httpd_root = tmp_path / "fake-httpd-root"
+    git_root = pathlib.Path(__file__).parent.parent.parent
+    cert1_path = git_root / "test/data/certs/cert1.pem"
+    key1_path = git_root / "test/data/certs/key1.pem"
+    cert2_path = git_root / "test/data/certs/cert2.pem"
+    key2_path = git_root / "test/data/certs/key2.pem"
+
+    with https_serve_directory(fake_httpd_root, certfile=cert1_path, keyfile=key1_path) as httpds:
+        with https_serve_directory(fake_httpd_root, certfile=cert2_path, keyfile=key2_path) as httpds2:
+            test_sources = make_test_sources(
+                fake_httpd_root, httpds.server_port, 2, start_n=10, cacert=cert1_path)
+            test_sources.update(make_test_sources(
+                fake_httpd_root, httpds2.server_port, 2, cacert=cert2_path))
+            assert len(test_sources) == 4
+
+            curl_parallel.cache = tmp_path / "curl-download-dir"
+            curl_parallel.cache.mkdir()
+            curl_parallel.fetch_all(test_sources)
+
+            assert httpds.reqs.count == 2
+            assert httpds2.reqs.count == 2

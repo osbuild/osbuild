@@ -102,6 +102,8 @@ SCHEMA = """
 # own json subset
 CURL_WRITE_OUT = r'\{\"url\": \"%{url}\"\, \"filename_effective\": \"%{filename_effective}\", \"exitcode\": %{exitcode}, \"errormsg\": \"%{errormsg}\" \}\n'
 
+NR_RETRYS = 10
+
 
 def curl_has_parallel_downloads():
     """
@@ -310,7 +312,7 @@ class CurlSource(sources.SourceService):
             # some mirrors are sometimes broken. retry manually, because we could be
             # redirected to a different, working, one on retry.
             return_code = 0
-            for _ in range(10):
+            for _ in range(NR_RETRYS):
                 return_code = fetch_many_new_curl(tmpdir, self.cache, dl_pairs)
                 if return_code == 0:
                     break
@@ -334,7 +336,7 @@ class CurlSource(sources.SourceService):
             # some mirrors are sometimes broken. retry manually, because we could be
             # redirected to a different, working, one on retry.
             return_code = 0
-            for _ in range(10):
+            for _ in range(NR_RETRYS):
                 curl_config_path = f"{tmpdir}/curl-config.txt"
                 gen_curl_download_config(curl_config_path, [(checksum, desc)])
                 curl = subprocess.run(
