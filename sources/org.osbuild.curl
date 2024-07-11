@@ -100,7 +100,7 @@ SCHEMA = """
 # We are not just using %{json} here because older curl (7.76) will
 # write {"http_connect":000} which python cannot parse so we write our
 # own json subset
-CURL_WRITE_OUT = r'\{\"url\": \"%{url}\"\, \"filename_effective\": \"%{filename_effective}\", \"exitcode\": %{exitcode}, \"errormsg\": \"%{errormsg}\" \}\n'
+CURL_WRITE_OUT_FMT = r'\{\"url\": \"%{url}\"\, \"filename_effective\": \"%{filename_effective}\", \"exitcode\": %{exitcode}, \"errormsg\": \"%{errormsg}\" \}\n'
 
 NR_RETRYS = 10
 
@@ -141,31 +141,37 @@ def _quote_url(url: str) -> str:
 
 def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[Tuple[str, Dict]], parallel=False):
     with open(config_path, "w", encoding="utf8") as fp:
-        # global options
-        if parallel:
-            fp.write("parallel\n")
-        fp.write(textwrap.dedent(f"""\
+        # Because we use --next which resets the parser state we need to set
+        # these options for each url.
+        per_url_opts = textwrap.dedent(f"""\
         user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
         silent
         speed-limit = 1000
         connect-timeout = 30
         fail
         location
-        """))
+        """)
         if parallel:
-            fp.write(textwrap.dedent(f"""\
-            write-out = "{CURL_WRITE_OUT}"
-            """))
-
+            per_url_opts += textwrap.dedent(f"""\
+            write-out = "{CURL_WRITE_OUT_FMT}"
+            """)
         proxy = os.getenv("OSBUILD_SOURCES_CURL_PROXY")
         if proxy:
-            fp.write(f'proxy = "{proxy}"\n')
-        fp.write("\n")
-        # per url options
-        for checksum, desc in chksum_desc_tuple:
+            per_url_opts += f'proxy = "{proxy}"\n'
+        # start with the global option(s)
+        if parallel:
+            fp.write(textwrap.dedent("""\
+            # global options
+            parallel
+
+            """))
+        # then generate the per-url config
+        fp.write("# per-url options\n")
+        for i, (checksum, desc) in enumerate(chksum_desc_tuple):
             url = _quote_url(desc.get("url"))
             fp.write(f'url = "{url}"\n')
             fp.write(f'output = "{checksum}"\n')
+            fp.write(f'{per_url_opts}')
             secrets = desc.get("secrets")
             if secrets:
                 ssl_ca_cert = secrets.get('ssl_ca_cert')
@@ -182,7 +188,8 @@ def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[
                 fp.write('insecure\n')
             else:
                 fp.write('no-insecure\n')
-            fp.write("\n")
+            if i + 1 < len(chksum_desc_tuple):
+                fp.write("next\n\n")
 
 
 def try_parse_curl_line(line):
