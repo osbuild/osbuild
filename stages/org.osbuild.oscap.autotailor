@@ -14,10 +14,15 @@ def main(tree, options):
     profile = config.get("profile_id")
     new_profile = config.get("new_profile")
     tailoring_file = config.get("tailoring_file")
+    # use `new_profile` as a fallback for backwards compatibility
+    tailored_profile_id = config.get("tailored_profile_id", new_profile)
+
+    if new_profile is not None:
+        print("WARNING: use the `tailored_profile_id` option instead")
 
     # make sure either profile & new_profile are set
     # or tailoring_filepath is set
-    if not ((profile and new_profile) or tailoring_file):
+    if not ((profile and tailored_profile_id) or tailoring_file):
         raise ValueError("Either profile & new profile must be set or provide filepath to json tailoring file")
 
     if tailoring_file:
@@ -39,7 +44,7 @@ def main(tree, options):
     cmd = [
         "/usr/bin/autotailor",
         "--output", f"{tree}/{filepath.lstrip('/')}",
-        "--new-profile-id", new_profile
+        "--new-profile-id", tailored_profile_id,
     ]
 
     for s in selected:
