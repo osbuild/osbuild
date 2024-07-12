@@ -44,9 +44,17 @@ jobs:
           else
               # test_assemblers.py is run below
               TEST_CATEGORY="not test_stages.py and not test_assemblers.py"
+
+              # DNF python package can't be installed using pip in the tox environment.
+              # We need to use the version from the system to test things.
+              # Since we are running tests on Fedora, enable site packages only
+              # for Python version which is available on Fedora.
+              if [ "${{ matrix.environment }}" == "py312" ]; then
+                  TOX_ARGS="-x testenv.sitepackages=True"
+              fi
           fi
           OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
-          tox -e "${{ matrix.environment }}" -- -rs $TEST_WORKERS -k "$TEST_CATEGORY"
+          tox -e "${{ matrix.environment }}" $TOX_ARGS -- -rs $TEST_WORKERS -k "$TEST_CATEGORY"
 
   v1_manifests:
     name: "Assembler test (legacy)"
