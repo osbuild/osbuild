@@ -45,7 +45,7 @@ def fake_input_fixture():
             "config": {
                 "profile_id": "some-profile-id",
                 "datastream": "some-datastream",
-                "new_profile": "some-new-profile",
+                "tailoring_profile_id": "some-new-profile",
             }
         },
     }
@@ -90,7 +90,7 @@ def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, stage
                     "value": 50,
                 },
             ]
-        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'new_profile': 'some-new-profile',"
+        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'tailoring_profile_id': 'some-new-profile',"
             + " 'overrides': [{'no': 'var', 'value': 50}]} is not valid under any of the given schemas"),
         ({
             "overrides": [
@@ -99,7 +99,7 @@ def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, stage
                     "var": "some",
                 },
             ]
-        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'new_profile': 'some-new-profile',"
+        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'tailoring_profile_id': 'some-new-profile',"
             + " 'overrides': [{'no': 'value', 'var': 'some'}]} is not valid under any of the given schemas"),
         ({
             "overrides": [
@@ -108,7 +108,7 @@ def test_oscap_autotailor_overrides_smoke(mock_subprocess_run, fake_input, stage
                     "value": {"some": "object"},
                 },
             ]
-        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'new_profile': 'some-new-profile',"
+        }, "{'profile_id': 'some-profile-id', 'datastream': 'some-datastream', 'tailoring_profile_id': 'some-new-profile',"
             + " 'overrides': [{'var': 'ssh_idle_timeout_value', 'value': {'some': 'object'}}]} is not valid under any of the given schemas"),
     ],
 )
