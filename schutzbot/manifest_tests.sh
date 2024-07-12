@@ -9,7 +9,7 @@ MANIFEST_DB_COMMIT=$(cat Schutzfile | jq -r '.global.dependencies."manifest-db".
 MANIFEST_DB_REPO="https://github.com/osbuild/manifest-db"
 git clone "$MANIFEST_DB_REPO" manifest-db
 cd manifest-db
-git checkout "$MANIFEST_DB_COMMIT"
+git checkout --force "$MANIFEST_DB_COMMIT"
 
 # update selinux labels for the image-info tool
 OSBUILD_LABEL=$(matchpathcon -n /usr/bin/osbuild)
