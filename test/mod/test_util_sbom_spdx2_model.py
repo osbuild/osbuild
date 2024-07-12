@@ -1,5 +1,7 @@
+import json
 from datetime import datetime
 
+import jsonschema
 import pytest
 
 from osbuild.util.sbom.spdx2.model import (
@@ -467,3 +469,12 @@ def test_relationship_to_dict(test_case):
 def test_document_to_dict(test_case):
     d = Document(**test_case["instance_args"])
     assert d.to_dict() == test_case["expected"]
+
+    spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
+    with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
+        spdx_schema = json.load(f)
+
+    validator = jsonschema.Draft4Validator
+    validator.check_schema(spdx_schema)
+    spdx_validator = validator(spdx_schema)
+    spdx_validator.validate(d.to_dict())
