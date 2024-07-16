@@ -93,6 +93,8 @@ Manifests:
           - aws/fedora-39-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
+          - aws/centos-stream-10-x86_64
+          - aws/centos-stream-10-aarch64
       - PARALLEL_EXEC: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
