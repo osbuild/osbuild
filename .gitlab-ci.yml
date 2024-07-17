@@ -50,6 +50,8 @@ RPM:
       - RUNNER:
           - aws/rhel-9.5-nightly-x86_64
           - aws/rhel-9.5-nightly-aarch64
+          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.0-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
 OSTree Images:
