@@ -13,6 +13,21 @@ function template_override {
         greenprint "📋 Running on subscribed RHEL machine, no mock template override done."
         return 0
     fi
+
+    # TODO: remove this, once mock-core-configs ships a template for RHEL-10
+    # Use RHEL-9 template as the baseline for now.
+    if [[ "$ID" == rhel && ${VERSION_ID%.*} == 10 ]]; then
+        TEMPLATE=${ID}-${VERSION_ID%.*}.tpl
+        sudo cp /etc/mock/templates/rhel-9.tpl /etc/mock/templates/"$TEMPLATE"
+        # change releasever to 10
+        sudo sed -i "s/config_opts\['releasever'\] = '9'/config_opts\['releasever'\] = '10'/" /etc/mock/templates/"$TEMPLATE"
+        # disable bootstrap image for el10, as there is none yet
+        sudo sed -i "s/config_opts\['bootstrap_image_ready'\] = True/config_opts\['bootstrap_image_ready'\] = False/" /etc/mock/templates/"$TEMPLATE"
+
+        sudo cp /etc/mock/rhel-{9,10}-"$(uname -m)".cfg
+        sudo sed -i "s/rhel-9/rhel-10/" "/etc/mock/rhel-10-$(uname -m).cfg"
+    fi
+
     if [[ "$ID" == rhel ]]; then
         TEMPLATE=${ID}-${VERSION_ID%.*}.tpl
         # disable subscription for nightlies
