@@ -135,6 +135,14 @@ if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
     sudo dnf copr enable -y @osbuild/centpkg "centos-stream-10-$(uname -m)"
 fi
 
+# TODO: Remove this workaround, once https://issues.redhat.com/browse/RHEL-49567 is fixed
+# We can't workaround this in mock config due to https://github.com/rpm-software-management/mock/pull/1410
+if [[ $ID == centos && ${VERSION_ID%.*} == 10 ]]; then
+    sudo setenforce 0
+    sudo systemctl restart systemd-machined.service
+    sudo setenforce 1
+fi
+
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
 dnf_install_with_retry createrepo_c make mock python3-pip rpm-build s3cmd
