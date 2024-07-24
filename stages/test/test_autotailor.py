@@ -150,6 +150,11 @@ def test_oscap_autotailor_json_smoke(mock_subprocess_run, fake_json_input, stage
             + " is not valid under any of the given schemas"),
         ({
             "datastream": "some-datastream",
+            "profile_id": "some-profile-id",
+        }, "{'datastream': 'some-datastream', 'profile_id': 'some-profile-id'}"
+            + " is not valid under any of the given schemas"),
+        ({
+            "datastream": "some-datastream",
             "tailoring_file": "/some/tailoring/file.json"
         }, "{'datastream': 'some-datastream', 'tailoring_file': '/some/tailoring/file.json'}"
             + " is not valid under any of the given schemas"),
