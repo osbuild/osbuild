@@ -537,9 +537,12 @@ class TestStages(test.TestBase):
             assert os.path.isdir(tree)
 
             # we're going to verify that packages in the tree are marked according to
+            # Explicitly use 'dnf4' for now, because 'dnf5' contains a breaking change
+            # in the repoquery --qf output, specifically it does not add a trailing newline.
+            # We can use plan 'dnf' again once https://github.com/rpm-software-management/dnf5/issues/709 is fixed.
             r = subprocess.run(
                 [
-                    "dnf",
+                    "dnf4",
                     "--installroot", tree,
                     "repoquery", "--installed",
                     "--qf", "%{name},%{reason}"
