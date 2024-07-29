@@ -537,15 +537,12 @@ class TestStages(test.TestBase):
             assert os.path.isdir(tree)
 
             # we're going to verify that packages in the tree are marked according to
-            # Explicitly use 'dnf4' for now, because 'dnf5' contains a breaking change
-            # in the repoquery --qf output, specifically it does not add a trailing newline.
-            # We can use plan 'dnf' again once https://github.com/rpm-software-management/dnf5/issues/709 is fixed.
             r = subprocess.run(
                 [
-                    "dnf4",
+                    "dnf",
                     "--installroot", tree,
                     "repoquery", "--installed",
-                    "--qf", "%{name},%{reason}"
+                    "--qf", "%{name},%{reason}\n"
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -554,6 +551,12 @@ class TestStages(test.TestBase):
             )
 
             for line in r.stdout.splitlines():
+                # 'dnf5' contains a breaking change in the repoquery --qf output, specifically it does not add
+                # a trailing newline. For this reason, we add it explicitly in the query format above. This however
+                # means that there are empty lines in the output, if 'dnf' points to 'dnf4'.
+                # Upstream bug https://github.com/rpm-software-management/dnf5/issues/709
+                if not line:
+                    continue
                 package, mark = line.strip().split(",")
 
                 if package == "dnf":
