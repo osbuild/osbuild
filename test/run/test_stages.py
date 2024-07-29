@@ -557,7 +557,12 @@ class TestStages(test.TestBase):
                 # Upstream bug https://github.com/rpm-software-management/dnf5/issues/709
                 if not line:
                     continue
-                package, mark = line.strip().split(",")
+
+                try:
+                    package, mark = line.strip().split(",")
+                except ValueError:
+                    print(f"Failed to parse line: {line}")
+                    raise
 
                 if package == "dnf":
                     assert mark == "user"
