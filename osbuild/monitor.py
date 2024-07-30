@@ -211,10 +211,9 @@ class TextWriter:
 class BaseMonitor(abc.ABC):
     """Base class for all pipeline monitors"""
 
-    def __init__(self, fd: int, manifest: Optional[osbuild.Manifest] = None) -> None:
+    def __init__(self, fd: int, _: int = 0) -> None:
         """Logging will be done to file descriptor `fd`"""
         self.out = TextWriter(fd)
-        self.manifest = manifest
 
     def begin(self, pipeline: osbuild.Pipeline):
         """Called once at the beginning of a pipeline"""
@@ -251,8 +250,8 @@ class LogMonitor(BaseMonitor):
     sequences will be used to highlight sections of the log.
     """
 
-    def __init__(self, fd: int, manifest: Optional[osbuild.Manifest] = None):
-        super().__init__(fd, manifest)
+    def __init__(self, fd: int, total_steps: int = 0):
+        super().__init__(fd, total_steps)
         self.timer_start = 0
 
     def result(self, result):
@@ -308,10 +307,10 @@ class LogMonitor(BaseMonitor):
 class JSONSeqMonitor(BaseMonitor):
     """Monitor that prints the log output of modules wrapped in json-seq objects with context and progress metadata"""
 
-    def __init__(self, fd: int, manifest: osbuild.Manifest):
-        super().__init__(fd, manifest)
+    def __init__(self, fd: int, total_steps: int):
+        super().__init__(fd, total_steps)
         self._ctx_ids: Set[str] = set()
-        self._progress = Progress("pipelines/sources", len(manifest.pipelines) + len(manifest.sources))
+        self._progress = Progress("pipelines/sources", total_steps)
         self._context = Context(origin="org.osbuild")
 
     def begin(self, pipeline: osbuild.Pipeline):
@@ -353,11 +352,11 @@ class JSONSeqMonitor(BaseMonitor):
         self.out.write("\n")
 
 
-def make(name, fd, manifest):
+def make(name: str, fd: int, total_steps: int) -> BaseMonitor:
     module = sys.modules[__name__]
     monitor = getattr(module, name, None)
     if not monitor:
         raise ValueError(f"Unknown monitor: {name}")
     if not issubclass(monitor, BaseMonitor):
         raise ValueError(f"Invalid monitor: {name}")
-    return monitor(fd, manifest)
+    return monitor(fd, total_steps)

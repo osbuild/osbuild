@@ -163,8 +163,6 @@ def osbuild_cli() -> int:
     monitor_name = args.monitor
     if not monitor_name:
         monitor_name = "NullMonitor" if args.json else "LogMonitor"
-    monitor = osbuild.monitor.make(monitor_name, args.monitor_fd, manifest)
-    monitor.log(f"starting {args.manifest_path}", origin="osbuild.main_cli")
 
     try:
         with ObjectStore(args.store) as object_store:
@@ -175,6 +173,9 @@ def osbuild_cli() -> int:
             debug_break = args.debug_break
 
             pipelines = manifest.depsolve(object_store, exports)
+            total_steps = len(manifest.sources) + len(pipelines)
+            monitor = osbuild.monitor.make(monitor_name, args.monitor_fd, total_steps)
+            monitor.log(f"starting {args.manifest_path}", origin="osbuild.main_cli")
 
             manifest.download(object_store, monitor, args.libdir)
 
