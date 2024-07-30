@@ -199,7 +199,7 @@ def test_json_progress_monitor():
     manifest.add_pipeline(pl2, "", "")
 
     with tempfile.TemporaryFile() as tf:
-        mon = JSONSeqMonitor(tf.fileno(), manifest)
+        mon = JSONSeqMonitor(tf.fileno(), len(manifest.sources) + len(manifest.pipelines))
         mon.log("test-message-1")
         mon.log("test-message-2", origin="test.origin.override")
         mon.begin(manifest.pipelines["test-pipeline-first"])
