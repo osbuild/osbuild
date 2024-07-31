@@ -1,5 +1,5 @@
 {
-  "summary": "Create /etc/crypttab entries for encrypted block devices",
+  "summary": "Create `/etc/crypttab` entries for encrypted block devices",
   "description": [
     "See crypttab(5) for a detailed description of the format but in brief:",
     "each item in the list of `volumes` describes an encrypted block device",
