@@ -1,9 +1,9 @@
 {
-  "summary": "Create /etc/fstab entries for filesystems",
+  "summary": "Create `/etc/fstab` entries for filesystems",
   "description": [
     "Each filesystem item must have at least the fs_spec, i.e `uuid`,",
     "`label`, `partlabel` or `device` and a `path` (mount point).",
-    "This stage replaces /etc/fstab, removing any existing entries.",
+    "This stage replaces `/etc/fstab`, removing any existing entries.",
     "NB: The ostree configuration options are experimental and might",
     "be replaced with a different mechanism in the near future."
   ],
