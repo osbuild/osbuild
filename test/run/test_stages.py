@@ -565,9 +565,11 @@ class TestStages(test.TestBase):
                     raise
 
                 if package == "dnf":
-                    assert mark == "user"
+                    # dnf4 marks packages as 'user', while dnf5 marks them as 'User'
+                    assert mark in ("user", "User")
                 else:
-                    assert mark == "unknown"
+                    # dnf4 marks packages as 'unknown', while dnf5 marks them as 'External User'
+                    assert mark in ("unknown", "External User")
 
     @unittest.skipUnless(test.TestBase.has_filesystem_support("btrfs"), "btrfs needed")
     def test_btrfs(self):
