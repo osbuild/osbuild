@@ -302,3 +302,12 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
                 assert n_filelist_files == len(REPO_PATHS)
             else:
                 assert n_filelist_files == 0
+
+            if dnf_config:
+                use_dnf5 = json.loads(dnf_config)["use_dnf5"]
+            else:
+                use_dnf5 = False
+            if use_dnf5:
+                assert res["solver"] == "dnf5"
+            else:
+                assert res["solver"] == "dnf"
