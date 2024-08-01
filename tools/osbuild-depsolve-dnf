@@ -13,7 +13,7 @@ import os.path
 import sys
 import tempfile
 
-from osbuild.solver import GPGKeyReadError, MarkingError, DepsolveError, RepoError
+from osbuild.solver import GPGKeyReadError, MarkingError, DepsolveError, RepoError, InvalidRequestError
 
 # Load the solver configuration
 config = {"use_dnf5": False}
@@ -91,6 +91,12 @@ def solve(request, cache_dir):
             return None, {
                 "kind": "DepsolveError",
                 "reason": f"There was a problem depsolving {', '.join(pkgs)}: {e}"
+            }
+        except InvalidRequestError as e:
+            printe("error invalid request")
+            return None, {
+                "kind": "InvalidRequest",
+                "reason": str(e)
             }
         except Exception as e:  # pylint: disable=broad-exception-caught
             printe("error traceback")
