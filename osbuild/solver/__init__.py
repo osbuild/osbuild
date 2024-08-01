@@ -48,6 +48,10 @@ class DepsolveError(SolverException):
     pass
 
 
+class InvalidRequestError(SolverException):
+    pass
+
+
 def modify_rootdir_path(path, root_dir):
     if path and root_dir:
         # if the root_dir is set, we need to translate the key path to be under this directory
