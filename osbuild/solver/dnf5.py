@@ -429,6 +429,7 @@ class DNF5(SolverBase):
                 "sslcacert": get_string_option(repo_cfg.get_sslcacert_option()),
             }
         response = {
+            "solver": "dnf5",
             "packages": packages,
             "repos": repositories,
         }

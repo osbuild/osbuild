@@ -306,6 +306,7 @@ class DNF(SolverBase):
                 "sslclientcert": repo.sslclientcert,
             }
         response = {
+            "solver": "dnf",
             "packages": packages,
             "repos": repositories,
         }
