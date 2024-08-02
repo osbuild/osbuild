@@ -1,5 +1,5 @@
 {
-  "summary": "Transforms /usr/lib/ostree-boot into a bootupd-compatible update payload.",
+  "summary": "Transforms `/usr/lib/ostree-boot` into a bootupd-compatible update payload.",
   "description": [
     "Scrapes metadata (e.g. RPM versions) about shim/grub and puts them along with their component files in",
     "`/usr/lib/bootupd/updates/`.",
