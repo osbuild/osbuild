@@ -208,7 +208,7 @@ def test_json_progress_monitor():
         mon.log("pipeline 1 message 2")
         mon.log("pipeline 1 finished", origin="org.osbuild")
         mon.result(osbuild.pipeline.BuildResult(
-            fake_noop_stage, returncode=0, output="output", error=None))
+            fake_noop_stage, returncode=0, output="some output", error=None))
         mon.finish({"success": True, "name": "test-pipeline-first"})
         mon.begin(manifest.pipelines["test-pipeline-second"])
         mon.log("pipeline 2 starting", origin="org.osbuild")
@@ -268,6 +268,12 @@ def test_json_progress_monitor():
         logitem = json.loads(log[i])
         assert logitem["message"] == "Finished module org.osbuild.noop"
         assert logitem["context"]["id"] == id_start_module
+        assert logitem["result"] == {
+            "id": fake_noop_stage.id,
+            "name": "org.osbuild.noop",
+            "output": "some output",
+            "success": True,
+        }
         i += 1
 
         logitem = json.loads(log[i])
