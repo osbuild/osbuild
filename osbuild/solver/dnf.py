@@ -81,7 +81,7 @@ class DNF(SolverBase):
 
             self.base.fill_sack(load_system_repo=False)
         except dnf.exceptions.Error as e:
-            raise RepoError from e
+            raise RepoError(e) from e
 
     # pylint: disable=too-many-branches
     @staticmethod
@@ -255,12 +255,12 @@ class DNF(SolverBase):
                     reponame=transaction.get("repo-ids"),
                 )
             except dnf.exceptions.Error as e:
-                raise MarkingError from e
+                raise MarkingError(e) from e
 
             try:
                 self.base.resolve()
             except dnf.exceptions.Error as e:
-                raise DepsolveError from e
+                raise DepsolveError(e) from e
 
             # store the current transaction result
             last_transaction.clear()
