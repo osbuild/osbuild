@@ -34,7 +34,7 @@ def assert_dnf():
         raise RuntimeError("Cannot import libdnf")
 
 
-def depsolve(pkgs, repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tuple[dict, int]:
+def depsolve(transactions, repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tuple[dict, int]:
     req = {
         "command": "depsolve",
         "arch": ARCH,
@@ -45,12 +45,7 @@ def depsolve(pkgs, repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tupl
             "root_dir": root_dir,
             "repos": repos,
             "optional-metadata": opt_metadata,
-            "transactions": [
-                {
-                    "package-specs": pkgs,
-                    "exclude-specs": None
-                },
-            ]
+            "transactions": transactions,
         }
     }
 
@@ -92,7 +87,13 @@ def repo_servers_fixture():
 
 test_cases = [
     {
-        "packages": ["filesystem"],
+        "transactions": [
+            {
+                "package-specs": [
+                    "filesystem",
+                ],
+            },
+        ],
         "results": {
             "packages": {
                 "basesystem",
@@ -117,14 +118,27 @@ test_cases = [
     },
     {
         # "pkg-with-no-deps" is the only package in the custom repo and has no dependencies
-        "packages": ["pkg-with-no-deps"],
+        "transactions": [
+            {
+                "package-specs": [
+                    "pkg-with-no-deps",
+                ],
+            },
+        ],
         "results": {
             "packages": {"pkg-with-no-deps"},
             "reponames": {"custom"},
         },
     },
     {
-        "packages": ["filesystem", "pkg-with-no-deps"],
+        "transactions": [
+            {
+                "package-specs": [
+                    "filesystem",
+                    "pkg-with-no-deps"
+                ],
+            },
+        ],
         "results": {
             "packages": {
                 "basesystem",
@@ -150,7 +164,14 @@ test_cases = [
         },
     },
     {
-        "packages": ["tmux", "pkg-with-no-deps"],
+        "transactions": [
+            {
+                "package-specs": [
+                    "tmux",
+                    "pkg-with-no-deps",
+                ],
+            },
+        ],
         "results": {
             "packages": {
                 "alternatives",
@@ -285,11 +306,11 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     except RuntimeError as e:
         pytest.skip(e)
 
-    pks = test_case["packages"]
+    transactions = test_case["transactions"]
 
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = depsolve(pks, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
+            res, exit_code = depsolve(transactions, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
             assert exit_code == 0
             assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
             assert res["repos"].keys() == test_case["results"]["reponames"]
