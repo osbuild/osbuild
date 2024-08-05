@@ -2,6 +2,7 @@ import configparser
 import json
 import os
 import pathlib
+import re
 import socket
 import subprocess as sp
 import sys
@@ -170,6 +171,20 @@ test_cases = [
             },
         },
     },
+    # Test depsolving error due to non-existing package
+    {
+        "id": "error_non_existing_pkg",
+        "transactions": [
+            {
+                "package-specs": [
+                    "non-existing-package",
+                ],
+            },
+        ],
+        "error": True,
+        "error_kind": "MarkingErrors",
+        "error_reason_re": r".*non-existing-package.*",
+    },
 ]
 
 
@@ -260,6 +275,13 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers):
         with TemporaryDirectory() as cache_dir:
             res, exit_code = depsolve(transactions, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
+
+            if test_case.get("error", False):
+                assert exit_code != 0
+                assert res["kind"] == test_case["error_kind"]
+                assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+                continue
+
             assert exit_code == 0
             assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
             assert res["repos"].keys() == test_case["results"]["reponames"]
