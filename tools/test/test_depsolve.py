@@ -299,7 +299,7 @@ def config_combos(tmp_path, servers):
     (None, assert_dnf),
     ('{"use_dnf5": false}', assert_dnf),
     ('{"use_dnf5": true}', assert_dnf5),
-])
+], ids=["no-config", "dnf4", "dnf5"])
 def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     try:
         detect_fn()
