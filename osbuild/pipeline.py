@@ -141,7 +141,7 @@ class Stage:
         with open(location, "w", encoding="utf-8") as fp:
             json.dump(args, fp)
 
-    def run(self, tree, runner, build_tree, store, monitor, libdir, debug_break="", timeout=None):
+    def run(self, tree, runner, build_tree, store, monitor, libdir, debug_break="", timeout=None) -> BuildResult:
         with contextlib.ExitStack() as cm:
 
             build_root = buildroot.BuildRoot(build_tree, runner.path, libdir, store.tmp)
@@ -160,15 +160,15 @@ class Stage:
             inputs_tmpdir = os.path.join(tmpdir, "inputs")
             os.makedirs(inputs_tmpdir)
             inputs_mapped = "/run/osbuild/inputs"
-            inputs = {}
+            inputs: Dict[Any, Any] = {}
 
             devices_mapped = "/dev"
-            devices = {}
+            devices: Dict[Any, Any] = {}
 
             mounts_tmpdir = os.path.join(tmpdir, "mounts")
             os.makedirs(mounts_tmpdir)
             mounts_mapped = "/run/osbuild/mounts"
-            mounts = {}
+            mounts: Dict[Any, Any] = {}
 
             os.makedirs(os.path.join(tmpdir, "api"))
             args_path = os.path.join(tmpdir, "api", "arguments")
@@ -209,8 +209,8 @@ class Stage:
 
             ipmgr = InputManager(mgr, storeapi, inputs_tmpdir)
             for key, ip in self.inputs.items():
-                data = ipmgr.map(ip)
-                inputs[key] = data
+                data_inp = ipmgr.map(ip)
+                inputs[key] = data_inp
 
             devmgr = DeviceManager(mgr, build_root.dev, tree)
             for name, dev in self.devices.items():
@@ -218,8 +218,8 @@ class Stage:
 
             mntmgr = MountManager(devmgr, mounts_tmpdir)
             for key, mount in self.mounts.items():
-                data = mntmgr.mount(mount)
-                mounts[key] = data
+                data_mnt = mntmgr.mount(mount)
+                mounts[key] = data_mnt
 
             self.prepare_arguments(args, args_path)
 
@@ -473,10 +473,20 @@ class Manifest:
 
         return list(map(lambda x: x.name, reversed(build.values())))
 
-    def build(self, store, pipelines, monitor, libdir, debug_break="", stage_timeout=None):
+    def build(self, store, pipelines, monitor, libdir, debug_break="", stage_timeout=None) -> Dict[str, Any]:
+        """Build the manifest
+
+        Returns a dict of string keys that contains the overall
+        "success" and the `BuildResult` of each individual pipeline.
+
+        The overall success "success" is stored as the string "success"
+        with the bool result and the build pipelines BuildStatus is
+        stored under the pipelines ID string.
+        """
         results = {"success": True}
 
         for pl in map(self.get, pipelines):
+            assert pl is not None
             res = pl.run(store, monitor, libdir, debug_break, stage_timeout)
             results[pl.id] = res
             if not res["success"]:
