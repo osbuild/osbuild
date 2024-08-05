@@ -165,7 +165,8 @@ class Progress:
 
 def log_entry(message: Optional[str] = None,
               context: Optional[Context] = None,
-              progress: Optional[Progress] = None) -> dict:
+              progress: Optional[Progress] = None,
+              build_result: Optional[osbuild.pipeline.BuildResult] = None) -> dict:
     """
     Create a single log entry dict with a given message, context, and progress objects.
     All arguments are optional. A timestamp is added to the message.
@@ -174,6 +175,7 @@ def log_entry(message: Optional[str] = None,
     # monitors support that
     return omitempty({
         "message": message,
+        "build_result": build_result.as_dict() if build_result else None,
         "context": context.as_dict() if context else None,
         "progress": progress.as_dict() if progress else None,
         "timestamp": time.time(),
@@ -254,7 +256,7 @@ class LogMonitor(BaseMonitor):
         super().__init__(fd, total_steps)
         self.timer_start = 0
 
-    def result(self, result):
+    def result(self, result: osbuild.pipeline.BuildResult):
         duration = int(time.time() - self.timer_start)
         self.out.write(f"\n⏱  Duration: {duration}s\n")
 
@@ -339,13 +341,25 @@ class JSONSeqMonitor(BaseMonitor):
         # we may need to check pipeline ids here in the future
         if self._progress.sub_progress:
             self._progress.sub_progress.incr()
-        self.log(f"Finished module {result.name}", origin="osbuild.monitor")
+
+        self._jsonseq(log_entry(
+            f"Finished module {result.name}",
+            context=self._context.with_origin("osbuild.monitor"),
+            progress=self._progress,
+            # We should probably remove the "output" key from the result
+            # as it is redundant, each output already generates a "log()"
+            # message that is streamed to the client.
+            build_result=result,
+        ))
 
     def log(self, message, origin: Optional[str] = None):
-        entry = log_entry(message, self._context.with_origin(origin), self._progress)
-        self._jsonseq(entry)
+        self._jsonseq(log_entry(
+            message,
+            context=self._context.with_origin(origin),
+            progress=self._progress,
+        ))
 
-    def _jsonseq(self, entry):
+    def _jsonseq(self, entry: dict) -> None:
         # follow rfc7464 (application/json-seq)
         self.out.write("\x1e")
         json.dump(entry, self.out)
