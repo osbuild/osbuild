@@ -201,6 +201,26 @@ test_cases = [
         "error_kind": "DepsolveError",
         "error_reason_re": r".*package curl-minimal-.*\.el9\.x86_64.*conflicts with curl provided by curl-.*\.el9\.x86_64.*",
     },
+    # Test repository error
+    {
+        "id": "error_unreachable_repo",
+        "transactions": [
+            {
+                "package-specs": [
+                    "tmux",
+                ],
+            },
+        ],
+        "additional_servers": [
+            {
+                "name": "broken",
+                "address": "file:///non-existing-repo",
+            },
+        ],
+        "error": True,
+        "error_kind": "RepoError",
+        "error_reason_re": r"There was a problem reading a repository: Failed to download metadata.*['\"]broken['\"].*",
+    },
 ]
 
 
@@ -324,7 +344,11 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
     transactions = test_case["transactions"]
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers):
+    repo_servers_copy = repo_servers.copy()
+    if "additional_servers" in test_case:
+        repo_servers_copy.extend(test_case["additional_servers"])
+
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers_copy):
         with TemporaryDirectory() as cache_dir:
             res, exit_code = depsolve(transactions, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
 
