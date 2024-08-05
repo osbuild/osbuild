@@ -185,6 +185,21 @@ test_cases = [
         "error_kind": "MarkingErrors",
         "error_reason_re": r".*non-existing-package.*",
     },
+    # Test depsolving error due to conflicting packages
+    {
+        "id": "error_conflicting_pkgs",
+        "transactions": [
+            {
+                "package-specs": [
+                    "curl",
+                    "curl-minimal",
+                ],
+            },
+        ],
+        "error": True,
+        "error_kind": "DepsolveError",
+        "error_reason_re": r".*package curl-minimal-.*\.el9\.x86_64.*conflicts with curl provided by curl-.*\.el9\.x86_64.*",
+    },
 ]
 
 
