@@ -7,6 +7,7 @@ import socket
 import subprocess as sp
 import sys
 from glob import glob
+from itertools import combinations
 from tempfile import TemporaryDirectory
 from typing import Tuple
 
@@ -219,19 +220,55 @@ def make_dnf_scafolding(base_dir):
     return root_dir, repos_dir, keys_dir
 
 
+def gen_config_combos(items_count):
+    """
+    Generate all possible combinations of indexes of items_count items
+    into two disjoint groups.
+    """
+    indexes = list(range(items_count))
+    all_combinations = []
+
+    for combination_length in range(items_count + 1):
+        for combo_set in combinations(indexes, combination_length):
+            combo_complement_set = tuple(i for i in indexes if i not in combo_set)
+            all_combinations.append((combo_set, combo_complement_set))
+
+    return all_combinations
+
+
+@pytest.mark.parametrize("items_count,expected_combos", (
+    (0, [((), ())]),
+    (1, [
+        ((), (0,)),
+        ((0,), ()),
+    ]),
+    (2, [
+        ((), (0, 1)),
+        ((0,), (1,)),
+        ((1,), (0,)),
+        ((0, 1), ()),
+    ]),
+    (3, [
+        ((), (0, 1, 2)),
+        ((0,), (1, 2)),
+        ((1,), (0, 2)),
+        ((2,), (0, 1)),
+        ((0, 1), (2,)),
+        ((0, 2), (1,)),
+        ((1, 2), (0,)),
+        ((0, 1, 2), ())
+    ])
+))
+def test_gen_config_combos(items_count, expected_combos):
+    assert list(gen_config_combos(items_count)) == expected_combos
+
+
 def config_combos(tmp_path, servers):
     """
     Return all configurations for the provided repositories, either as config files in a directory or as repository
     configs in the depsolve request, or a combination of both.
     """
-    # we only have two servers, so let's just enumerate all the combinations
-    combo_idxs = [
-        ((0, 1), ()),  # all in req
-        ((0,), (1,)),    # one in req and one in dir
-        ((1,), (0,)),    # same but flipped
-        ((), (0, 1)),  # all in dir
-    ]
-    for combo in combo_idxs:
+    for combo in gen_config_combos(len(servers)):
         repo_configs = []
         for idx in combo[0]:  # servers to be configured through request
             server = servers[idx]
