@@ -44,14 +44,14 @@ def cleanup(*objs):
 
 
 class BuildResult:
-    def __init__(self, origin, returncode, output, error):
+    def __init__(self, origin: 'Stage', returncode: int, output: str, error: Dict[str, str]) -> None:
         self.name = origin.name
         self.id = origin.id
         self.success = returncode == 0
         self.output = output
         self.error = error
 
-    def as_dict(self):
+    def as_dict(self) -> Dict[str, Any]:
         return vars(self)
 
 
@@ -69,11 +69,11 @@ class Stage:
         self.mounts = {}
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.info.name
 
     @property
-    def id(self):
+    def id(self) -> str:
         m = hashlib.sha256()
         m.update(json.dumps(self.name, sort_keys=True).encode())
         m.update(json.dumps(self.build, sort_keys=True).encode())
@@ -82,11 +82,11 @@ class Stage:
         if self.source_epoch is not None:
             m.update(json.dumps(self.source_epoch, sort_keys=True).encode())
         if self.inputs:
-            data = {n: i.id for n, i in self.inputs.items()}
-            m.update(json.dumps(data, sort_keys=True).encode())
+            data_inp = {n: i.id for n, i in self.inputs.items()}
+            m.update(json.dumps(data_inp, sort_keys=True).encode())
         if self.mounts:
-            data = [m.id for m in self.mounts.values()]
-            m.update(json.dumps(data).encode())
+            data_mnt = [m.id for m in self.mounts.values()]
+            m.update(json.dumps(data_mnt).encode())
         return m.hexdigest()
 
     @property
