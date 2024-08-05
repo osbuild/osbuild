@@ -6,11 +6,12 @@ from typing import List
 
 import libdnf5 as dnf5
 from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
+from libdnf5.base import GoalProblem_NOT_FOUND as NOT_FOUND
 from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
 from libdnf5.common import QueryCmp_EQ as EQ
 from libdnf5.common import QueryCmp_GLOB as GLOB
 
-from osbuild.solver import DepsolveError, RepoError, SolverBase, modify_rootdir_path, read_keys
+from osbuild.solver import DepsolveError, MarkingError, RepoError, SolverBase, modify_rootdir_path, read_keys
 
 
 def remote_location(package, schemes=("http", "ftp", "file", "https")):
@@ -375,7 +376,11 @@ class DNF5(SolverBase):
             for pkg in transaction.get("package-specs"):
                 goal.add_install(pkg, settings)
             transaction = goal.resolve()
-            if transaction.get_problems() != NO_PROBLEM:
+
+            transaction_problems = transaction.get_problems()
+            if transaction_problems == NOT_FOUND:
+                raise MarkingError("\n".join(transaction.get_resolve_logs_as_strings()))
+            if transaction_problems != NO_PROBLEM:
                 raise DepsolveError("\n".join(transaction.get_resolve_logs_as_strings()))
 
             # store the current transaction result
