@@ -7,6 +7,7 @@ import subprocess as sp
 import sys
 from glob import glob
 from tempfile import TemporaryDirectory
+from typing import Tuple
 
 import pytest
 
@@ -33,11 +34,11 @@ def assert_dnf():
         raise RuntimeError("Cannot import libdnf")
 
 
-def depsolve(pkgs, repos, root_dir, cache_dir, dnf_config, opt_metadata):
+def depsolve(pkgs, repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tuple[dict, int]:
     req = {
         "command": "depsolve",
         "arch": ARCH,
-        "module_platform_id": "platform:el9",
+        "module_platform_id": f"platform:el{RELEASEVER}",
         "releasever": RELEASEVER,
         "cachedir": cache_dir,
         "arguments": {
@@ -62,9 +63,9 @@ def depsolve(pkgs, repos, root_dir, cache_dir, dnf_config, opt_metadata):
             env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
 
         p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
-                   check=True, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
+                   check=False, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
 
-        return json.loads(p.stdout)
+        return json.loads(p.stdout), p.returncode
 
 
 def get_rand_port():
@@ -288,7 +289,8 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers):
         with TemporaryDirectory() as cache_dir:
-            res = depsolve(pks, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
+            res, exit_code = depsolve(pks, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
+            assert exit_code == 0
             assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
             assert res["repos"].keys() == test_case["results"]["reponames"]
             for repo in res["repos"].values():
