@@ -370,6 +370,21 @@ class Socket(contextlib.AbstractContextManager):
 
         return (payload, fdset, msg[3])
 
+    def _sendmsg_handle_emsgsize(self, buffers, cmsg, flags):
+        """ Thin wrapper around sendmsg() that handles EMSGSIZE
+
+        Retry sendmsg() once on EMSGSIZE with increased SO_SNDBUF
+        size.
+        """
+        try:
+            return self._socket.sendmsg(buffers, cmsg, flags)
+        except OSError as exc:
+            if exc.errno == errno.EMSGSIZE:
+                bufsize = sum(len(buf) for buf in buffers)
+                self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, bufsize)
+                return self._socket.sendmsg(buffers, cmsg, flags)
+            raise exc
+
     def send(self, payload: object, *, fds: Optional[list] = None):
         """Send Message
 
@@ -404,7 +419,13 @@ class Socket(contextlib.AbstractContextManager):
         if fds:
             cmsg.append((socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds)))
 
-        n = self._socket.sendmsg([serialized], cmsg, 0)
+        try:
+            n = self._sendmsg_handle_emsgsize([serialized], cmsg, 0)
+        except OSError as exc:
+            if exc.errno == errno.EMSGSIZE:
+                raise BufferError(
+                    f"jsoncomm message size {len(serialized)} too big, consider increasing /proc/sys/net/core/wmem_max") from exc
+            raise exc
         assert n == len(serialized)
 
     def send_and_recv(self, payload: object, *, fds: Optional[list] = None):

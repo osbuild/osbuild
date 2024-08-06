@@ -3,11 +3,15 @@
 #
 
 import asyncio
+import errno
 import os
 import pathlib
+import socket
 import tempfile
 import unittest
 from concurrent import futures
+
+import pytest
 
 from osbuild.util import jsoncomm
 
@@ -152,9 +156,9 @@ class TestUtilJsonComm(unittest.TestCase):
 
         loop = asyncio.new_event_loop()
 
-        def echo(socket):
-            msg = socket.recv()
-            socket.send(msg[0])
+        def echo(sock):
+            msg = sock.recv()
+            sock.send(msg[0])
             loop.stop()
 
         self.client.send({})
@@ -216,3 +220,23 @@ class TestUtilJsonComm(unittest.TestCase):
         self.assertEqual(ping, pong)
         pong, _, _ = a.recv()
         self.assertEqual(ping, pong)
+
+    def test_send_and_recv_lots_of_data(self):
+        a, b = jsoncomm.Socket.new_pair()
+        # ensure SNDBUF is too small to test that it is increased in send()
+        a._socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 100_000)  # pylint: disable=protected-access
+        ping = {"data": "much" * 100_000}
+        a.send(ping)
+        pong, _, _ = b.send_and_recv(ping)
+        self.assertEqual(ping, pong)
+        pong, _, _ = a.recv()
+        self.assertEqual(ping, pong)
+
+    def test_send_and_recv_tons_of_data_still_errors(self):
+        a, _ = jsoncomm.Socket.new_pair()
+
+        ping = {"data": "tons" * 10_000_000}
+        with pytest.raises(BufferError) as exc:
+            a.send(ping)
+        assert str(exc.value) == "jsoncomm message size 40000012 too big, consider increasing /proc/sys/net/core/wmem_max"
+        assert exc.value.__cause__.errno == errno.EMSGSIZE
