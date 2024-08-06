@@ -10,7 +10,7 @@ from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
 from libdnf5.common import QueryCmp_EQ as EQ
 from libdnf5.common import QueryCmp_GLOB as GLOB
 
-from osbuild.solver import DepsolveError, RepoError, SolverBase, modify_rootdir_path, read_keys
+from osbuild.solver import DepsolveError, InvalidRequestError, RepoError, SolverBase, modify_rootdir_path, read_keys
 
 
 def remote_location(package, schemes=("http", "ftp", "file", "https")):
@@ -347,6 +347,10 @@ class DNF5(SolverBase):
     def depsolve(self, arguments):
         """depsolve returns a list of the dependencies for the set of transactions
         """
+        want_sbom = "sbom" in arguments
+        if want_sbom:
+            raise InvalidRequestError("SBOM support for DNF5 is not implemented")
+
         # Return an empty list when 'transactions' key is missing or when it is None
         transactions = arguments.get("transactions") or []
         # collect repo IDs from the request so we know whether to translate gpg key paths
