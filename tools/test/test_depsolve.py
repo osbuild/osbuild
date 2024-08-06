@@ -93,7 +93,7 @@ def tcase_idfn(param):
     return param['id']
 
 
-test_cases = [
+depsolve_test_cases = [
     {
         "id": "basic_1pkg_1repo",
         "transactions": [
@@ -1063,7 +1063,7 @@ def config_combos(tmp_path, servers):
             yield repo_configs, os.fspath(root_dir), opt_metadata
 
 
-@pytest.mark.parametrize("test_case", test_cases, ids=tcase_idfn)
+@pytest.mark.parametrize("test_case", depsolve_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
     ('{"use_dnf5": false}', assert_dnf),
