@@ -95,6 +95,35 @@ def dump(repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tuple[dict, in
         return json.loads(p.stdout), p.returncode
 
 
+def search(search_args, repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tuple[dict, int]:
+    req = {
+        "command": "search",
+        "arch": ARCH,
+        "module_platform_id": f"platform:el{RELEASEVER}",
+        "releasever": RELEASEVER,
+        "cachedir": cache_dir,
+        "arguments": {
+            "search": search_args,
+            "root_dir": root_dir,
+            "repos": repos,
+            "optional-metadata": opt_metadata,
+        }
+    }
+
+    # If there is a config file, write it to a temporary file and pass it to the depsolver
+    with TemporaryDirectory() as cfg_dir:
+        env = None
+        if dnf_config:
+            cfg_file = pathlib.Path(cfg_dir) / "solver.json"
+            cfg_file.write_text(dnf_config)
+            env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
+
+        p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
+                   check=False, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
+
+        return json.loads(p.stdout), p.returncode
+
+
 def get_rand_port():
     s = socket.socket()
     s.bind(("", 0))
@@ -1006,6 +1035,105 @@ dump_test_cases = [
 ]
 
 
+search_test_cases = [
+    {
+        "id": "1pkg_latest",
+        "search_args": {
+            "latest": True,
+            "packages": [
+                "zsh",
+            ],
+        },
+        "results": [
+            {
+                "name": "zsh",
+                "summary": "Powerful interactive shell",
+                "description": """The zsh shell is a command interpreter usable as an interactive login
+shell and as a shell script command processor.  Zsh resembles the ksh
+shell (the Korn shell), but includes many enhancements.  Zsh supports
+command line editing, built-in spelling correction, programmable
+command completion, shell functions (with autoloading), a history
+mechanism, and more.""",
+                "url": "http://zsh.sourceforge.net/",
+                "repo_id": "baseos",
+                "epoch": 0,
+                "version": "5.8",
+                "release": "9.el9",
+                "arch": "x86_64",
+                "buildtime": "2022-02-23T13:47:24Z",
+                "license": "MIT",
+            },
+        ],
+    },
+    {
+        "id": "1pkg_not_latest",
+        "search_args": {
+            "latest": False,
+            "packages": [
+                "zsh",
+            ],
+        },
+        "results": [
+            {
+                "name": "zsh",
+                "summary": "Powerful interactive shell",
+                "description": """The zsh shell is a command interpreter usable as an interactive login
+shell and as a shell script command processor.  Zsh resembles the ksh
+shell (the Korn shell), but includes many enhancements.  Zsh supports
+command line editing, built-in spelling correction, programmable
+command completion, shell functions (with autoloading), a history
+mechanism, and more.""",
+                "url": "http://zsh.sourceforge.net/",
+                "repo_id": "baseos",
+                "epoch": 0,
+                "version": "5.8",
+                "release": "7.el9",
+                "arch": "x86_64",
+                "buildtime": "2021-08-10T06:14:26Z",
+                "license": "MIT",
+            },
+            {
+                "name": "zsh",
+                "summary": "Powerful interactive shell",
+                "description": """The zsh shell is a command interpreter usable as an interactive login
+shell and as a shell script command processor.  Zsh resembles the ksh
+shell (the Korn shell), but includes many enhancements.  Zsh supports
+command line editing, built-in spelling correction, programmable
+command completion, shell functions (with autoloading), a history
+mechanism, and more.""",
+                "url": "http://zsh.sourceforge.net/",
+                "repo_id": "baseos",
+                "epoch": 0,
+                "version": "5.8",
+                "release": "9.el9",
+                "arch": "x86_64",
+                "buildtime": "2022-02-23T13:47:24Z",
+                "license": "MIT",
+            },
+        ],
+    },
+    # Test repository error
+    {
+        "id": "error_unreachable_repo",
+        "search_args": {
+            "latest": True,
+            "packages": [
+                "curl",
+            ]
+        },
+        "additional_servers": [
+            {
+                "name": "broken",
+                "address": "file:///non-existing-repo",
+            },
+        ],
+        "error": True,
+        "error_kind": "RepoError",
+        "error_reason_re": r"There was a problem reading a repository: Failed to download metadata.*['\"]broken['\"].*",
+    },
+]
+
+
 def make_dnf_scafolding(base_dir):
     root_dir = pathlib.Path(TemporaryDirectory(dir=base_dir).name)
 
@@ -1213,6 +1341,46 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
                     assert res_pkg["repo_id"] == "custom"
                 else:
                     assert res_pkg["repo_id"] == "baseos"
+
+            # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
+            # *filelists*
+            n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
+            if "filelists" in opt_metadata:
+                assert n_filelist_files == len(REPO_PATHS)
+            else:
+                assert n_filelist_files == 0
+
+
+@pytest.mark.parametrize("test_case", search_test_cases, ids=tcase_idfn)
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    (None, assert_dnf),
+    ('{"use_dnf5": false}', assert_dnf),
+    ('{"use_dnf5": true}', assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(e)
+
+    repo_servers_copy = repo_servers.copy()
+    if "additional_servers" in test_case:
+        repo_servers_copy.extend(test_case["additional_servers"])
+
+    search_args = test_case["search_args"]
+
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers_copy):
+        with TemporaryDirectory() as cache_dir:
+            res, exit_code = search(search_args, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
+
+            if test_case.get("error", False):
+                assert exit_code != 0
+                assert res["kind"] == test_case["error_kind"]
+                assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+                continue
+
+            assert exit_code == 0
+            assert res == test_case["results"]
 
             # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
             # *filelists*
