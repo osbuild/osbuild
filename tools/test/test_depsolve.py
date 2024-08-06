@@ -172,6 +172,34 @@ test_cases = [
             },
         },
     },
+    # Test that repositories not enabled for the transaction are not used
+    # This test should result in an error because the package is not available in the enabled repositories
+    {
+        "id": "error_pkg_not_in_enabled_repos",
+        "transactions": [
+            {
+                "package-specs": [
+                    "filesystem",
+                    "pkg-with-no-deps",
+                ],
+                "repo-ids": [
+                    "baseos",
+                ]
+            },
+            {
+                "package-specs": [
+                    "tmux",
+                ],
+                "repo-ids": [
+                    "baseos",
+                    "custom",
+                ]
+            }
+        ],
+        "error": True,
+        "error_kind": "MarkingErrors",
+        "error_reason_re": r".*pkg-with-no-deps.*",
+    },
     # Test depsolving error due to non-existing package
     {
         "id": "error_non_existing_pkg",
