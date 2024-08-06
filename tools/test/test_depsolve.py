@@ -834,6 +834,49 @@ test_cases = [
             },
         }
     },
+    # Test that a package can be excluded in one transaction and installed in another
+    # This is common scenario for custom packages specified in the Blueprint
+    {
+        "id": "install_pkg_excluded_in_another_transaction",
+        "transactions": [
+            {
+                "package-specs": [
+                    "filesystem",
+                ],
+                "exclude-specs": [
+                    "pkg-with-no-deps",
+                ],
+            },
+            {
+                "package-specs": [
+                    "pkg-with-no-deps",
+                ],
+            },
+        ],
+        "results": {
+            "packages": {
+                "basesystem",
+                "bash",
+                "centos-gpg-keys",
+                "centos-stream-release",
+                "centos-stream-repos",
+                "filesystem",
+                "glibc",
+                "glibc-common",
+                "glibc-minimal-langpack",
+                "libgcc",
+                "ncurses-base",
+                "ncurses-libs",
+                "setup",
+                "tzdata",
+                "pkg-with-no-deps",
+            },
+            "reponames": {
+                "baseos",
+                "custom",
+            },
+        },
+    },
     # Test that repositories not enabled for the transaction are not used
     # This test should result in an error because the package is not available in the enabled repositories
     {
