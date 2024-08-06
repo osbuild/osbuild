@@ -85,8 +85,13 @@ def repo_servers_fixture():
         p.kill()
 
 
+def tcase_idfn(param):
+    return param['id']
+
+
 test_cases = [
     {
+        "id": "basic_1pkg_1repo",
         "transactions": [
             {
                 "package-specs": [
@@ -116,8 +121,9 @@ test_cases = [
             },
         }
     },
+    # "pkg-with-no-deps" is the only package in the custom repo and has no dependencies
     {
-        # "pkg-with-no-deps" is the only package in the custom repo and has no dependencies
+        "id": "basic_1pkg_1repo_no_deps",
         "transactions": [
             {
                 "package-specs": [
@@ -131,6 +137,7 @@ test_cases = [
         },
     },
     {
+        "id": "basic_2pkgs_2repos",
         "transactions": [
             {
                 "package-specs": [
@@ -236,7 +243,7 @@ def config_combos(tmp_path, servers):
             yield repo_configs, os.fspath(root_dir), opt_metadata
 
 
-@pytest.mark.parametrize("test_case", test_cases)
+@pytest.mark.parametrize("test_case", test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
     ('{"use_dnf5": false}', assert_dnf),
