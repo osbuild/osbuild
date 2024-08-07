@@ -17,6 +17,17 @@ from typing import Any, Optional
 from .types import PathLike
 
 
+@contextlib.contextmanager
+def memfd(name):
+    fd = os.memfd_create(name, 0)
+    try:
+        yield fd
+    finally:
+        os.close(fd)
+
+
+ARGS_VIA_FD_MARKER = b"<args-via-fd>"
+
 class FdSet:
     """File-Descriptor Set
 
@@ -353,7 +364,14 @@ class Socket(contextlib.AbstractContextManager):
             if level == socket.SOL_SOCKET and ty == socket.SCM_RIGHTS:
                 assert len(data) % fds.itemsize == 0
                 fds.frombytes(data)
-        fdset = FdSet(rawfds=fds)
+        if msg[0] == ARGS_VIA_FD_MARKER:
+            fd_payload = fds[0]
+            fdset = FdSet(rawfds=fds[1:])
+            with os.fdopen(fd_payload) as f:
+                serialized = f.read()
+        else:
+            fdset = FdSet(rawfds=fds)
+            serialized = msg[0]
 
         # Check the returned message flags. If the message was truncated, we
         # have to discard it. This shouldn't happen, but there is no harm in
@@ -364,13 +382,31 @@ class Socket(contextlib.AbstractContextManager):
             raise BufferError
 
         try:
-            payload = json.loads(msg[0])
+            payload = json.loads(serialized)
         except json.JSONDecodeError as e:
             raise BufferError from e
 
         return (payload, fdset, msg[3])
 
-    def send(self, payload: object, *, fds: Optional[list] = None):
+    def _sendmsg_handle_emsgsize(self, serialized, fds):
+        cmsg = []
+        if fds:
+            cmsg.append((socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds)))
+        try:
+            self._socket.sendmsg([serialized], cmsg, 0)
+        except OSError as exc:
+            if exc.errno == errno.EMSGSIZE:
+                with memfd("jsoncomm/payload") as fd_payload:
+                    os.write(fd_payload, serialized)
+                    os.lseek(fd_payload, 0, 0)
+                    all_fds = [fd_payload] + fds
+                    cmsg = []
+                    cmsg.append((socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", all_fds)))
+                    self._socket.sendmsg([ARGS_VIA_FD_MARKER], cmsg, 0)
+                    return
+            raise exc
+
+    def send(self, payload: object, *, fds: Optional[list] = None) -> None:
         """Send Message
 
         Send a new message via this socket. This operation is synchronous. The
@@ -399,13 +435,11 @@ class Socket(contextlib.AbstractContextManager):
         if not self._socket:
             raise RuntimeError("Tried to send without socket.")
 
-        serialized = json.dumps(payload).encode()
-        cmsg = []
-        if fds:
-            cmsg.append((socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds)))
+        if not fds:
+            fds = []
 
-        n = self._socket.sendmsg([serialized], cmsg, 0)
-        assert n == len(serialized)
+        serialized = json.dumps(payload).encode()
+        self._sendmsg_handle_emsgsize(serialized, fds)
 
     def send_and_recv(self, payload: object, *, fds: Optional[list] = None):
         """Send a message and wait for a reply
