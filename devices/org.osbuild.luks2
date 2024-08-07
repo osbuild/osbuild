@@ -20,7 +20,7 @@ import sys
 import uuid
 from typing import Dict, Optional
 
-from osbuild import devices
+from osbuild import devices, host
 from osbuild.util.udev import UdevInhibitor
 
 SCHEMA = """
@@ -74,6 +74,7 @@ class CryptDeviceService(devices.DeviceService):
             _, _, count = self.dminfo(name)
         return count
 
+    @host.callable
     def open(self, devpath: str, parent: str, tree: str, options: Dict):
         passphrase = options.get("passphrase", "")
 
@@ -123,6 +124,7 @@ class CryptDeviceService(devices.DeviceService):
         }
         return data
 
+    @host.callable
     def close(self):
         if not self.devname:
             return

@@ -14,7 +14,7 @@ resource (the specific container) on the host.
 import os
 import sys
 
-from osbuild import inputs
+from osbuild import host, inputs
 from osbuild.util import containers
 from osbuild.util.mnt import MountGuard
 
@@ -99,7 +99,8 @@ class ContainersStorageInput(inputs.InputService):
         os.makedirs(dest, exist_ok=True)
         self.mg.mount(source, dest)
 
-    def map(self, store, origin, refs, target, _options):
+    @host.callable_with_store
+    def map(self, store, origin, refs, target, options):
         self.bind_mount_local_storage(target)
 
         images = {}

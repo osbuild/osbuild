@@ -25,7 +25,7 @@ from typing import Any, Dict, Optional, Tuple
 from osbuild import host
 from osbuild.util.types import PathLike
 
-from .objectstore import StoreClient, StoreServer
+from .objectstore import StoreServer
 
 
 class Input:
@@ -101,7 +101,7 @@ class InputManager:
         return reply
 
 
-class InputService(host.Service):
+class InputService(host.DispatchMixin, host.Service):
     """Input host service"""
 
     @abc.abstractmethod
@@ -113,15 +113,3 @@ class InputService(host.Service):
 
     def stop(self):
         self.unmap()
-
-    def dispatch(self, method: str, args, fds):
-        if method == "map":
-            store = StoreClient(connect_to=args["api"]["store"])
-            r = self.map(store,
-                         args["origin"],
-                         args["refs"],
-                         args["target"],
-                         args["options"])
-            return r, None
-
-        raise host.ProtocolError("Unknown method")

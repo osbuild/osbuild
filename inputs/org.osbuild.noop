@@ -11,7 +11,7 @@ import os
 import sys
 import uuid
 
-from osbuild import inputs
+from osbuild import host, inputs
 
 SCHEMA = """
 "additionalProperties": true
@@ -20,7 +20,8 @@ SCHEMA = """
 
 class NoopInput(inputs.InputService):
 
-    def map(self, _store, _origin, refs, target, _options):
+    @host.callable_with_store
+    def map(self, store, origin, refs, target, options):
 
         uid = str(uuid.uuid4())
         path = os.path.join(target, uid)

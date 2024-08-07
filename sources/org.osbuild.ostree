@@ -111,8 +111,8 @@ class OSTreeSource(sources.SourceService):
         # Remove the temporary remote again
         ostree.cli("remote", "delete", name, repo=self.repo)
 
-    def setup(self, args):
-        super().setup(args)
+    def setup(self, cache):
+        super().setup(cache)
         # Prepare the cache and the output repo
         self.repo = os.path.join(self.cache, "repo")
         ostree.cli("init", mode="archive", repo=self.repo)
@@ -124,6 +124,7 @@ class OSTreeSource(sources.SourceService):
 
     # pylint: disable=[no-self-use]
     def exists(self, checksum, _desc):
+
         try:
             ostree.show(self.repo, checksum)
         except RuntimeError:

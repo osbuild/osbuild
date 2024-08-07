@@ -69,7 +69,7 @@ class Source:
         return []
 
 
-class SourceService(host.Service):
+class SourceService(host.DispatchMixin, host.Service):
     """Source host service"""
 
     max_workers = 1
@@ -95,16 +95,14 @@ class SourceService(host.Service):
         """Returns True if the item to download is in cache. """
         return os.path.isfile(f"{self.cache}/{checksum}")
 
-    def setup(self, args):
-        self.cache = os.path.join(args["cache"], self.content_type)
+    def setup(self, cache):
+        self.cache = os.path.join(cache, self.content_type)
         os.makedirs(self.cache, exist_ok=True)
-        self.options = args["options"]
 
-    def dispatch(self, method: str, args, fds):
-        if method == "download":
-            self.setup(args)
-            with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as self.tmpdir:
-                self.fetch_all(args["items"])
-                return None, None
-
-        raise host.ProtocolError("Unknown method")
+    @host.callable
+    def download(self, items, options, cache, output, checksums, libdir):
+        self.setup(cache)
+        #XXX: is options used?
+        #self.options = options
+        with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as self.tmpdir:
+            self.fetch_all(items)

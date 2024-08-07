@@ -50,6 +50,7 @@ import traceback
 from collections import OrderedDict
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+from osbuild.objectstore import StoreClient
 from osbuild.util.jsoncomm import FdSet, Socket
 
 
@@ -550,3 +551,34 @@ class ServiceManager:
         self.event_loop.call_soon_threadsafe(self.event_loop.stop)
         self.thread.join()
         self.event_loop.close()
+
+
+def callable(func):
+    setattr(func, "callable_type", "normal")
+    return func
+
+
+def callable_with_store(func):
+    setattr(func, "callable_type", "with-store")
+    return func
+
+
+class DispatchMixin:
+
+    def dispatch(self, method, args, fds):
+        fn = getattr(self, method, None)
+        if fn is None:
+            raise ProtocolError(f"Unknown method {method}")
+        callable_type = getattr(fn, "callable_type", "unset")
+        if callable_type == "normal":
+            r = fn(**args)
+            # XXX: remove "None" as nothing seems to use that feature of
+            # dispatch()?
+            return r, None
+        if callable_type == "with-store":
+            store = StoreClient(connect_to=args["api"]["store"])
+            args.pop("api")
+            args["store"] = store
+            r = fn(**args)
+            return r, None
+        raise ProtocolError(f"Unknown callable type {callable_type} for {method}")

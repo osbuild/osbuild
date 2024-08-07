@@ -96,7 +96,7 @@ class DeviceManager:
         return res
 
 
-class DeviceService(host.Service):
+class DeviceService(host.DispatchMixin, host.Service):
     """Device host service"""
 
     @staticmethod
@@ -122,16 +122,3 @@ class DeviceService(host.Service):
 
     def stop(self):
         self.close()
-
-    def dispatch(self, method: str, args, _fds):
-        if method == "open":
-            r = self.open(args["dev"],
-                          args["parent"],
-                          args["tree"],
-                          args["options"])
-            return r, None
-        if method == "close":
-            r = self.close()
-            return r, None
-
-        raise host.ProtocolError("Unknown method")

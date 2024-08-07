@@ -13,7 +13,7 @@ import os
 import subprocess
 import sys
 
-from osbuild import inputs
+from osbuild import host, inputs
 
 SCHEMA = """
 "additionalProperties": false,
@@ -97,8 +97,8 @@ def checkout(checksums, cache, output):
 
 class OSTreeCheckoutInput(inputs.InputService):
 
-    def map(self, store, origin, refs, target, _options):
-
+    @host.callable_with_store
+    def map(self, store, origin, refs, target, options):
         ids = []
 
         if origin == "org.osbuild.pipeline":
@@ -118,7 +118,6 @@ class OSTreeCheckoutInput(inputs.InputService):
                 "refs": {i: {"path": i} for i in ids}
             }
         }
-
         return reply
 
 

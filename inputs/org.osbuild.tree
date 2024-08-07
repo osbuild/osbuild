@@ -10,7 +10,7 @@ string it returns an empty tree.
 
 import sys
 
-from osbuild import inputs
+from osbuild import host, inputs
 
 SCHEMA = """
 "additionalProperties": false,
@@ -72,7 +72,8 @@ SCHEMA = """
 
 class TreeInput(inputs.InputService):
 
-    def map(self, store, _origin, refs, target, _options):
+    @host.callable_with_store
+    def map(self, store, origin, refs, target, options):
 
         # input verification *must* have been done via schema
         # verification. It is expected that origin is a pipeline

@@ -20,7 +20,7 @@ root of the tree is used as the oci archive file to install.
 import os
 import sys
 
-from osbuild import inputs
+from osbuild import host, inputs
 from osbuild.util.mnt import MountGuard
 
 SCHEMA = r"""
@@ -190,7 +190,8 @@ class ContainersInput(inputs.InputService):
 
         return files[0], "oci-archive"
 
-    def map(self, store, origin, refs, target, _options):
+    @host.callable_with_store
+    def map(self, store, origin, refs, target, options):
         source = store.source("org.osbuild.containers")
         images = {}
 
