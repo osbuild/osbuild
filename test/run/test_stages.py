@@ -541,6 +541,8 @@ class TestStages(test.TestBase):
                 [
                     "dnf",
                     "--installroot", tree,
+                    # disable all plugins to prevent them from modifying the output
+                    "--disableplugin", "*",
                     "repoquery", "--installed",
                     "--qf", "%{name},%{reason}\n"
                 ],
