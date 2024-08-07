@@ -257,7 +257,7 @@ test-all:
 
 .PHONY: lint
 lint:
-	tox run-parallel -e ruff,pylint,autopep8,mypy,mypy-strict
+	tox run-parallel --parallel-no-spinner -e ruff,pylint,autopep8,mypy,mypy-strict
 
 
 #
