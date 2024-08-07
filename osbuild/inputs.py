@@ -88,10 +88,12 @@ class InputManager:
             }
         }
 
-        with make_args_file(store.tmp, args) as fd:
-            fds = [fd]
+        with make_args_and_reply_files(store.tmp, args) as (fd_args, fd_reply):
+            fds = [fd_args, fd_reply]
             client = self.service_manager.start(f"input/{ip.name}", ip.info.path)
-            reply, _ = client.call_with_fds("map", {}, fds)
+            _, _ = client.call_with_fds("map", {}, fds)
+            with os.fdopen(os.dup(fd_reply)) as f:
+                reply = json.loads(f.read())
 
         path = reply["path"]
 
@@ -106,11 +108,12 @@ class InputManager:
 
 
 @contextlib.contextmanager
-def make_args_file(tmp, args):
-    with tempfile.TemporaryFile("w+", dir=tmp, encoding="utf-8") as f:
-        json.dump(args, f)
-        f.seek(0)
-        yield f.fileno()
+def make_args_and_reply_files(tmp, args):
+    with tempfile.TemporaryFile("w+", dir=tmp, encoding="utf-8") as f_args, \
+            tempfile.TemporaryFile("w+", dir=tmp, encoding="utf-8") as f_reply:
+        json.dump(args, f_args)
+        f_args.seek(0)
+        yield f_args.fileno(), f_reply.fileno()
 
 
 class InputService(host.Service):
@@ -126,9 +129,11 @@ class InputService(host.Service):
     def stop(self):
         self.unmap()
 
-    def dispatch(self, method: str, _, _fds):
+    def dispatch(self, method: str, _, fds):
         if method == "map":
-            with os.fdopen(_fds.steal(0)) as f:
+            # map() sends fd[0] to read the arguments from and fd[1] to
+            # write the reply back. This avoids running into EMSGSIZE
+            with os.fdopen(fds.steal(0)) as f:
                 args = json.load(f)
             store = StoreClient(connect_to=args["api"]["store"])
             r = self.map(store,
@@ -136,6 +141,9 @@ class InputService(host.Service):
                          args["refs"],
                          args["target"],
                          args["options"])
-            return r, None
+            with os.fdopen(fds.steal(1), "w") as f:
+                f.write(json.dumps(r))
+                f.seek(0)
+            return "{}", None
 
         raise host.ProtocolError("Unknown method")

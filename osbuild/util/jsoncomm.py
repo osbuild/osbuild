@@ -35,7 +35,7 @@ class FdSet:
     def __init__(self, *, rawfds):
         for i in rawfds:
             if not isinstance(i, int) or i < 0:
-                raise ValueError()
+                raise ValueError(f"unexpected fd {i}")
 
         self._fds = rawfds
 
