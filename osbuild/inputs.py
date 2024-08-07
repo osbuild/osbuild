@@ -17,17 +17,15 @@ osbuild is the path. The input options are just passed to the
 """
 
 import abc
-import contextlib
 import hashlib
 import json
 import os
-import tempfile
 from typing import Any, Dict, Optional, Tuple
 
 from osbuild import host
 from osbuild.util.types import PathLike
 
-from .objectstore import ObjectStore, StoreClient, StoreServer
+from .objectstore import StoreClient, StoreServer
 
 
 class Input:
@@ -67,7 +65,7 @@ class InputManager:
         self.root = root
         self.inputs: Dict[str, Input] = {}
 
-    def map(self, ip: Input, store: ObjectStore) -> Tuple[str, Dict]:
+    def map(self, ip: Input) -> Tuple[str, Dict]:
 
         target = os.path.join(self.root, ip.name)
         os.makedirs(target)
@@ -88,12 +86,8 @@ class InputManager:
             }
         }
 
-        with make_args_and_reply_files(store.tmp, args) as (fd_args, fd_reply):
-            fds = [fd_args, fd_reply]
-            client = self.service_manager.start(f"input/{ip.name}", ip.info.path)
-            _, _ = client.call_with_fds("map", {}, fds)
-            with os.fdopen(os.dup(fd_reply)) as f:
-                reply = json.loads(f.read())
+        client = self.service_manager.start(f"input/{ip.name}", ip.info.path)
+        reply = client.call("map", args)
 
         path = reply["path"]
 
@@ -105,15 +99,6 @@ class InputManager:
         self.inputs[ip.name] = reply
 
         return reply
-
-
-@contextlib.contextmanager
-def make_args_and_reply_files(tmp, args):
-    with tempfile.TemporaryFile("w+", dir=tmp, encoding="utf-8") as f_args, \
-            tempfile.TemporaryFile("w+", dir=tmp, encoding="utf-8") as f_reply:
-        json.dump(args, f_args)
-        f_args.seek(0)
-        yield f_args.fileno(), f_reply.fileno()
 
 
 class InputService(host.Service):
@@ -129,21 +114,14 @@ class InputService(host.Service):
     def stop(self):
         self.unmap()
 
-    def dispatch(self, method: str, _, fds):
+    def dispatch(self, method: str, args, fds):
         if method == "map":
-            # map() sends fd[0] to read the arguments from and fd[1] to
-            # write the reply back. This avoids running into EMSGSIZE
-            with os.fdopen(fds.steal(0)) as f:
-                args = json.load(f)
             store = StoreClient(connect_to=args["api"]["store"])
             r = self.map(store,
                          args["origin"],
                          args["refs"],
                          args["target"],
                          args["options"])
-            with os.fdopen(fds.steal(1), "w") as f:
-                f.write(json.dumps(r))
-                f.seek(0)
-            return "{}", None
+            return r, None
 
         raise host.ProtocolError("Unknown method")
