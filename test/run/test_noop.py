@@ -3,8 +3,11 @@
 #
 
 import json
+import os
 
 import pytest
+
+import osbuild.main_cli
 
 from .. import test
 
@@ -64,3 +67,20 @@ def test_noop2(osb):
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 def test_noop_v2(osb, tmp_path, jsondata):
     osb.compile(jsondata, output_dir=tmp_path, exports=["noop"])
+
+
+def test_noop_cli(monkeypatch, capfd, tmp_path, jsondata):
+    fake_manifest = tmp_path / "manifest.json"
+    fake_manifest.write_text(jsondata)
+
+    monkeypatch.setattr("sys.argv", [
+        "arg0",
+        "--libdir=.", os.fspath(fake_manifest),
+        f"--store={tmp_path}",
+        "--quiet",
+    ])
+    ret_code = osbuild.main_cli.osbuild_cli()
+    assert ret_code == 0
+
+    captured = capfd.readouterr()
+    assert captured.out == ""
