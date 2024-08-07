@@ -2,13 +2,17 @@
 # Tests for the 'osbuild.util.jsoncomm' module.
 #
 
+# pylint: disable=protected-access
+
 import asyncio
 import errno
+import json
 import os
 import pathlib
 import tempfile
 import unittest
 from concurrent import futures
+from unittest.mock import patch
 
 import pytest
 
@@ -220,11 +224,39 @@ class TestUtilJsonComm(unittest.TestCase):
         pong, _, _ = a.recv()
         self.assertEqual(ping, pong)
 
-    def test_send_and_recv_tons_of_data_still_errors(self):
+    def test_sendmsg_errors_with_size_on_EMSGSIZE(self):
         a, _ = jsoncomm.Socket.new_pair()
 
-        ping = {"data": "1" * 1_000_000}
+        serialized = json.dumps({"data": "1" * 1_000_000}).encode()
         with pytest.raises(BufferError) as exc:
-            a.send(ping)
+            a._send_via_sendmsg(serialized, [])
         assert str(exc.value) == "jsoncomm message size 1000012 is too big"
         assert exc.value.__cause__.errno == errno.EMSGSIZE
+
+    def test_send_and_recv_tons_of_data_is_fine(self):
+        a, b = jsoncomm.Socket.new_pair()
+
+        ping = {"data": "tons" * 1_000_000}
+        a.send(ping)
+        pong, _, _ = b.send_and_recv(ping)
+        self.assertEqual(ping, pong)
+        pong, _, _ = a.recv()
+        self.assertEqual(ping, pong)
+
+    def test_send_small_data_via_sendmsg(self):
+        a, _ = jsoncomm.Socket.new_pair()
+        with patch.object(a, "_send_via_fd") as mock_send_via_fd, \
+                patch.object(a, "_send_via_sendmsg") as mock_send_via_sendmsg:
+            ping = {"data": "little"}
+            a.send(ping)
+        assert mock_send_via_fd.call_count == 0
+        assert mock_send_via_sendmsg.call_count == 1
+
+    def test_send_huge_data_via_fd(self):
+        a, _ = jsoncomm.Socket.new_pair()
+        with patch.object(a, "_send_via_fd") as mock_send_via_fd, \
+                patch.object(a, "_send_via_sendmsg") as mock_send_via_sendmsg:
+            ping = {"data": "tons" * 1_000_000}
+            a.send(ping)
+        assert mock_send_via_fd.call_count == 1
+        assert mock_send_via_sendmsg.call_count == 0
