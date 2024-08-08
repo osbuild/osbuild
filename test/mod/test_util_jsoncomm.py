@@ -216,3 +216,11 @@ class TestUtilJsonComm(unittest.TestCase):
         self.assertEqual(ping, pong)
         pong, _, _ = a.recv()
         self.assertEqual(ping, pong)
+
+    def test_send_and_recv_tons_of_data_is_fine(self):
+        a, b = jsoncomm.Socket.new_pair()
+
+        ping = {"data": "tons" * 10_000_000}
+        a.send(ping)
+        pong, _, _ = b.send_and_recv(ping)
+        self.assertEqual(ping, pong)
