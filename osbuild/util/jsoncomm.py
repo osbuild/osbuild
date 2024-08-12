@@ -404,7 +404,13 @@ class Socket(contextlib.AbstractContextManager):
         if fds:
             cmsg.append((socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds)))
 
-        n = self._socket.sendmsg([serialized], cmsg, 0)
+        try:
+            n = self._socket.sendmsg([serialized], cmsg, 0)
+        except OSError as exc:
+            if exc.errno == errno.EMSGSIZE:
+                raise BufferError(
+                    f"jsoncomm message size {len(serialized)} is too big") from exc
+            raise exc
         assert n == len(serialized)
 
     def send_and_recv(self, payload: object, *, fds: Optional[list] = None):
