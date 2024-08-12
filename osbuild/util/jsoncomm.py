@@ -13,12 +13,20 @@ import os
 import socket
 from typing import Any, List, Optional
 
+from .linux import Libc
 from .types import PathLike
 
 
 @contextlib.contextmanager
 def memfd(name):
-    fd = os.memfd_create(name, 0)
+    if hasattr(os, "memfd_create"):
+        fd = os.memfd_create(name)
+    else:
+        # we can remove this "if/else" once we are at python3.8+
+        # and just use "os.memfd_create()"
+        libc = Libc.default()
+        fd = libc.memfd_create(name)
+
     try:
         yield fd
     finally:
