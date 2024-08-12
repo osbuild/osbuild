@@ -490,6 +490,29 @@ class Libc:
         setattr(proto, "errcheck", self._errcheck_errno)
         setattr(proto, "__name__", "futimens")
         self.futimens = proto
+        # prototype: _memfd_create() (takes a byte type name)
+        # (can be removed once we move to python3.8)
+        proto = ctypes.CFUNCTYPE(
+            ctypes.c_int,  # restype (return type)
+            ctypes.c_char_p,
+            ctypes.c_uint,
+            use_errno=True,
+        )(
+            ("memfd_create", self._lib),
+            (
+                (1, "name"),
+                (1, "flags", 0),
+            ),
+        )
+        setattr(proto, "errcheck", self._errcheck_errno)
+        setattr(proto, "__name__", "memfd_create")
+        self._memfd_create = proto
+
+    # (can be removed once we move to python3.8)
+    def memfd_create(self, name: str, flags: int = 0) -> int:
+        """ create an anonymous file """
+        char_p_name = name.encode()
+        return self._memfd_create(char_p_name, flags)
 
     @staticmethod
     def make() -> "Libc":
