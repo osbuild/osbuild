@@ -1,0 +1,26 @@
+{
+  "summary": "Build a CoreOS live ISO",
+  "description": [
+    "TODO"
+  ],
+  "schema_2": {
+    "inputs": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "options": {
+      "additionalProperties": false,
+      "properties": {
+        "filename": {
+          "type": "string"
+        },
+        "efiboot_img_filename": {
+          "type": "string"
+        },
+        "squashfs_compression": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
