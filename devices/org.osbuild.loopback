@@ -58,6 +58,10 @@ SCHEMA = """
   "lock": {
     "type": "boolean",
     "description": "Lock the device after opening it"
+  },
+  "read-only": {
+    "type": "boolean",
+    "description": "Set up the device as read-only"
   }
 }
 """
@@ -77,7 +81,7 @@ class LoopbackService(devices.DeviceService):
         lock = UdevInhibitor.for_device(lo.LOOP_MAJOR, lo.minor)
         lo.on_close = lambda _l: lock.release()
 
-    def make_loop(self, fd: int, offset, sizelimit, lock, partscan):
+    def make_loop(self, fd: int, offset, sizelimit, lock, partscan, read_only):
         if not sizelimit:
             sizelimit = os.fstat(fd).st_size - offset
         else:
@@ -89,6 +93,7 @@ class LoopbackService(devices.DeviceService):
                                   sizelimit=sizelimit,
                                   blocksize=self.sector_size,
                                   partscan=partscan,
+                                  read_only=read_only,
                                   autoclear=True)
 
         return lo
@@ -100,12 +105,13 @@ class LoopbackService(devices.DeviceService):
         size = options.get("size")
         lock = options.get("lock", False)
         partscan = options.get("partscan", False)
+        read_only = options.get("read-only", False)
 
         path = os.path.join(tree, filename.lstrip("/"))
 
         self.fd = os.open(path, os.O_RDWR | os.O_CLOEXEC)
         try:
-            self.lo = self.make_loop(self.fd, start, size, lock, partscan)
+            self.lo = self.make_loop(self.fd, start, size, lock, partscan, read_only)
         except Exception as error:  # pylint: disable: broad-except
             self.close()
             raise error from None

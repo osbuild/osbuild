@@ -317,7 +317,7 @@ class Loop:
         # it is bound, check if it is bound by `fd`
         return loop_info.is_bound_to(file_info)
 
-    def _config_info(self, info, offset, sizelimit, autoclear, partscan):
+    def _config_info(self, info, offset, sizelimit, autoclear, partscan, read_only):
         #  pylint: disable=attribute-defined-outside-init
         if offset:
             info.lo_offset = offset
@@ -333,9 +333,14 @@ class Loop:
                 info.lo_flags |= self.LO_FLAGS_PARTSCAN
             else:
                 info.lo_flags &= ~self.LO_FLAGS_PARTSCAN
+        if read_only is not None:
+            if read_only:
+                info.lo_flags |= self.LO_FLAGS_READ_ONLY
+            else:
+                info.lo_flags &= ~self.LO_FLAGS_READ_ONLY
         return info
 
-    def set_status(self, offset=None, sizelimit=None, autoclear=None, partscan=None):
+    def set_status(self, offset=None, sizelimit=None, autoclear=None, partscan=None, read_only=None):
         """Set properties of the loopback device
 
         The loopback device must be bound, and the properties will be
@@ -371,12 +376,16 @@ class Loop:
         partscan : bool, optional
             Whether or not to enable partition scanning, or None to leave
             unchanged (default is None)
+        read_only : bool, optional
+            Whether or not to setup the loopback device as read-only (default
+            is None).
         """
 
-        info = self._config_info(self.get_status(), offset, sizelimit, autoclear, partscan)
+        info = self._config_info(self.get_status(), offset, sizelimit, autoclear, partscan, read_only)
         fcntl.ioctl(self.fd, self.LOOP_SET_STATUS64, info)
 
-    def configure(self, fd: int, offset=None, sizelimit=None, blocksize=0, autoclear=None, partscan=None):
+    def configure(self, fd: int, offset=None, sizelimit=None, blocksize=0, autoclear=None, partscan=None,
+                  read_only=None):
         """
         Configure the loopback device
         Bind and configure in a single operation a file descriptor to the
@@ -426,12 +435,15 @@ class Loop:
         partscan : bool, optional
             Whether or not to enable partition scanning, or None to leave
             unchanged (default is None)
+        read_only : bool, optional
+            Whether or not to setup the loopback device as read-only (default
+            is None).
         """
         #  pylint: disable=attribute-defined-outside-init
         config = LoopConfig()
         config.fd = fd
         config.block_size = int(blocksize)
-        config.info = self._config_info(LoopInfo(), offset, sizelimit, autoclear, partscan)
+        config.info = self._config_info(LoopInfo(), offset, sizelimit, autoclear, partscan, read_only)
         try:
             fcntl.ioctl(self.fd, self.LOOP_CONFIGURE, config)
         except OSError as e:
