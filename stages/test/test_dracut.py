@@ -20,7 +20,7 @@ def test_dracut_with_initoverlayfs(mocked_run, tmp_path, stage_module, with_init
         "initoverlayfs": with_initoverlayfs,
     }
 
-    stage_module.main(tmp_path, options)
+    stage_module.main(str(tmp_path), options)
 
     assert len(mocked_run.call_args_list) == 1
     args, kwargs = mocked_run.call_args_list[0]
