@@ -18,7 +18,7 @@ import os
 import pathlib
 import sys
 
-from osbuild import inputs
+from osbuild import host, inputs
 
 SCHEMA = r"""
 "definitions": {
@@ -196,7 +196,8 @@ class FilesInput(inputs.InputService):
         data = data.get("metadata", {})
         return ref, data
 
-    def map(self, store, origin, refs, target, _options):
+    @host.callable_with_store
+    def map(self, store, origin, refs, target, options):
 
         source = store.source("org.osbuild.files")
         files = {}

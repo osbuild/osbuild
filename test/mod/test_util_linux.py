@@ -187,6 +187,7 @@ def test_libc():
     assert libc0.RENAME_NOREPLACE
     assert libc0.RENAME_WHITEOUT
     assert libc0.renameat2
+    assert libc0.memfd_create
 
 
 def test_libc_renameat2_errcheck():
@@ -224,6 +225,23 @@ def test_libc_renameat2_exchange(tmpdir):
         assert f.read() == "bar"
     with open(f"{tmpdir}/bar", "r", encoding="utf8") as f:
         assert f.read() == "foo"
+
+
+def test_libc_memfd_create_errcheck():
+    libc = linux.Libc.default()
+    with pytest.raises(OSError) as exc:
+        libc.memfd_create("foo", -1)
+    assert "Invalid argument" in str(exc.value)
+
+
+def test_libc_memfd_create():
+    libc = linux.Libc.default()
+    fd = libc.memfd_create("foo", 0)
+    os.write(fd, b"file content")
+    fd2 = os.dup(fd)
+    os.close(fd)
+    os.lseek(fd2, 0, 0)
+    assert os.read(fd2, 4096) == b"file content"
 
 
 def test_proc_boot_id():

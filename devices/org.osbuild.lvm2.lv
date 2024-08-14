@@ -35,7 +35,7 @@ import sys
 import time
 from typing import Dict, Tuple, Union
 
-from osbuild import devices
+from osbuild import devices, host
 
 SCHEMA = """
 "additionalProperties": false,
@@ -171,6 +171,7 @@ class LVService(devices.DeviceService):
 
         return major, minor
 
+    @host.callable
     def open(self, devpath: str, parent: str, tree: str, options: Dict):
         lv = options["volume"]
 
@@ -212,6 +213,7 @@ class LVService(devices.DeviceService):
         }
         return data
 
+    @host.callable
     def close(self):
         if self.fullname:
             self.lv_set_active(self.fullname, False)

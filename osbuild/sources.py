@@ -1,5 +1,4 @@
 import abc
-import contextlib
 import hashlib
 import json
 import os
@@ -30,6 +29,7 @@ class Source:
         cache = os.path.join(store.store, "sources")
 
         args = {
+            "items": self.items,
             "options": self.options,
             "cache": cache,
             "output": None,
@@ -38,19 +38,9 @@ class Source:
         }
 
         client = mgr.start(f"source/{source}", self.info.path)
-
-        with self.make_items_file(store.tmp) as fd:
-            fds = [fd]
-            reply = client.call_with_fds("download", args, fds)
+        reply = client.call("download", args)
 
         return reply
-
-    @contextlib.contextmanager
-    def make_items_file(self, tmp):
-        with tempfile.TemporaryFile("w+", dir=tmp, encoding="utf-8") as f:
-            json.dump(self.items, f)
-            f.seek(0)
-            yield f.fileno()
 
     # "name", "id", "stages", "results" is only here to make it looks like a
     # pipeline for the monitor. This should be revisited at some point
@@ -79,7 +69,7 @@ class Source:
         return []
 
 
-class SourceService(host.Service):
+class SourceService(host.DispatchMixin, host.Service):
     """Source host service"""
 
     max_workers = 1
@@ -105,22 +95,14 @@ class SourceService(host.Service):
         """Returns True if the item to download is in cache. """
         return os.path.isfile(f"{self.cache}/{checksum}")
 
-    @staticmethod
-    def load_items(fds):
-        with os.fdopen(fds.steal(0)) as f:
-            items = json.load(f)
-        return items
-
-    def setup(self, args):
-        self.cache = os.path.join(args["cache"], self.content_type)
+    def setup(self, cache):
+        self.cache = os.path.join(cache, self.content_type)
         os.makedirs(self.cache, exist_ok=True)
-        self.options = args["options"]
 
-    def dispatch(self, method: str, args, fds):
-        if method == "download":
-            self.setup(args)
-            with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as self.tmpdir:
-                self.fetch_all(SourceService.load_items(fds))
-                return None, None
-
-        raise host.ProtocolError("Unknown method")
+    @host.callable
+    def download(self, items, options, cache, output, checksums, libdir):
+        self.setup(cache)
+        #XXX: is options used?
+        #self.options = options
+        with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as self.tmpdir:
+            self.fetch_all(items)

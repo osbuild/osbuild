@@ -8,10 +8,9 @@ Can (r)bind mount mounts to the tree.
 import os.path
 import subprocess
 import sys
-from typing import Dict
 from urllib.parse import urlparse
 
-from osbuild import mounts
+from osbuild import host, mounts
 
 SCHEMA_2 = """
 "additionalProperties": false,
@@ -52,17 +51,14 @@ class BindMount(mounts.MountService):
         super().__init__(args)
         self.mountpoint = ""
 
-    def mount(self, args: Dict):
-        tree = args["tree"]
-        mountroot = args["root"]
-        target = args["target"]
-        # we cannot use args["sources"] here because the osbuild code makes
+    @host.callable
+    def mount(self, source, target, root, tree, options):
+        # we cannot use "sources" here because the osbuild code makes
         # many assumptions about that it must link back to a "Device" so
         # we follow the pattern from org.osbuild.ostree.deployment here
         # and put it into "options"
-        options = args["options"]
-        source = parse_location(options.get("source"), tree, mountroot)
-        self.mountpoint = parse_location(target, tree, mountroot)
+        source = parse_location(options.get("source"), tree, root)
+        self.mountpoint = parse_location(target, tree, root)
         subprocess.run([
             "mount",
             "--rbind", source, self.mountpoint,

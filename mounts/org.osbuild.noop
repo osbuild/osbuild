@@ -8,9 +8,8 @@ Useful for testing.
 
 import os
 import sys
-from typing import Dict
 
-from osbuild import mounts
+from osbuild import host, mounts
 
 SCHEMA_2 = """
 "additionalProperties": false,
@@ -38,10 +37,8 @@ SCHEMA_2 = """
 class NoOpMount(mounts.MountService):
     mountpoint = None
 
-    def mount(self, args: Dict):
-        root = args["root"]
-        target = args["target"]
-
+    @host.callable
+    def mount(self, source, target, root, tree, options):
         mountpoint = os.path.join(root, target.lstrip("/"))
 
         os.makedirs(mountpoint, exist_ok=True)

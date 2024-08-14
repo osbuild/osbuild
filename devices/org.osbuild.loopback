@@ -25,7 +25,7 @@ import stat
 import sys
 from typing import Dict
 
-from osbuild import devices, loop
+from osbuild import devices, host, loop
 from osbuild.util import ctx
 from osbuild.util.udev import UdevInhibitor
 
@@ -93,7 +93,9 @@ class LoopbackService(devices.DeviceService):
 
         return lo
 
-    def open(self, devpath: str, parent: str, tree: str, options: Dict):
+    @host.callable
+    def open(self, dev: str, parent: str, tree: str, options: Dict):
+        devpath = dev
         filename = options["filename"]
         self.sector_size = options.get("sector-size", 512)
         start = options.get("start", 0) * self.sector_size
@@ -140,6 +142,7 @@ class LoopbackService(devices.DeviceService):
 
         return res
 
+    @host.callable
     def close(self):
         # Calling `close` is valid on closed
         # `LoopControl` and `Loop` objects

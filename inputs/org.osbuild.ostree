@@ -16,7 +16,7 @@ import json
 import os
 import sys
 
-from osbuild import inputs
+from osbuild import host, inputs
 from osbuild.util import ostree
 
 SCHEMA = """
@@ -117,7 +117,8 @@ def export(checksums, cache, output):
 
 class OSTreeInput(inputs.InputService):
 
-    def map(self, store, origin, refs, target, _options):
+    @host.callable_with_store
+    def map(self, store, origin, refs, target, options):
 
         if origin == "org.osbuild.pipeline":
             for ref, options in refs.items():
