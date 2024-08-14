@@ -9,6 +9,7 @@ import json
 import os
 import pprint
 import random
+import re
 import shutil
 import string
 import subprocess
@@ -261,10 +262,21 @@ class TestStages(test.TestBase):
 
         with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
 
-            osb.compile_file(f"{base}/template.json",
-                             checkpoints=["tree"],
-                             exports=["tree"],
-                             output_dir=outdir)
+            output = osb.compile_file(f"{base}/template.json",
+                                      checkpoints=["tree"],
+                                      exports=["tree"],
+                                      output_dir=outdir)
+
+            # check that there are no complains about the runtime environment
+            tree_stages_log = output["log"]["tree"]
+            dracut_stages = [stage for stage in tree_stages_log if stage["type"] == "org.osbuild.dracut"]
+            assert len(dracut_stages) == 1
+            dracut_stage_log = dracut_stages[0]["output"]
+            proc_warnings_re = re.compile(r'.*\/proc\/ is not mounted\. This is not a supported mode of operation\..*')
+            assert proc_warnings_re.search(dracut_stage_log, re.DOTALL) is None
+            dev_warnings_re = re.compile(r'.*\/dev\/fd\/63: No such file or directory.*')
+            assert dev_warnings_re.search(dracut_stage_log, re.DOTALL) is None
+
             tree = os.path.join(outdir, "tree")
 
             for name, want in refs.items():
