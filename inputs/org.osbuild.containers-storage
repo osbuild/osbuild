@@ -15,7 +15,7 @@ import os
 import sys
 
 from osbuild import inputs
-from osbuild.util import containers
+from osbuild.util import host
 from osbuild.util.mnt import MountGuard
 
 SCHEMA = r"""
@@ -89,7 +89,7 @@ class ContainersStorageInput(inputs.InputService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mg = MountGuard()
-        self.storage_conf = containers.get_host_storage()
+        self.storage_conf = host.get_container_storage()
 
     def bind_mount_local_storage(self, target):
         source = self.storage_conf["storage"]["graphroot"]

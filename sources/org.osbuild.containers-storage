@@ -18,7 +18,7 @@ import subprocess as sp
 import sys
 
 from osbuild import sources
-from osbuild.util import containers
+from osbuild.util import host
 
 SCHEMA = """
 "additionalProperties": false,
@@ -49,7 +49,7 @@ class ContainersStorageSource(sources.SourceService):
         Construct the full image name that references an image with a given checksum in the local storage.
         """
         if self.storage_conf is None:
-            conf = containers.get_host_storage()
+            conf = host.get_container_storage()
         driver = conf["storage"]["driver"]
         graphroot = conf["storage"]["graphroot"]
         runroot = conf["storage"]["runroot"]
