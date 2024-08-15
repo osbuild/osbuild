@@ -51,12 +51,23 @@ def load_from_file(path):
         return toml.load(tomlfile)
 
 
-def dump_to_file(data, path, pre=None):
+def dump_to_file(data, path, header=""):
     if tomlw is None:
         raise RuntimeError("no toml module available with write support")
 
     with open(path, wmode) as tomlfile:
-        if pre:
-            tomlfile.write(pre)
+        if header:
+            _write_comment(tomlfile, header)
 
         tomlw.dump(data, tomlfile)
+
+
+def _write_comment(f, comment: list):
+    if not comment:
+        return
+
+    data = "\n".join(map(lambda c: f"# {c}", comment)) + "\n\n"
+    if "b" in f.mode:
+        f.write(data.encode())
+    else:
+        f.write(data)
