@@ -1250,7 +1250,7 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
-        pytest.skip(e)
+        pytest.skip(str(e))
 
     # pylint: disable=fixme
     # TODO: remove this once dnf5 implementation is fixed
@@ -1314,7 +1314,7 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
-        pytest.skip(e)
+        pytest.skip(str(e))
 
     repo_servers_copy = repo_servers.copy()
     if "additional_servers" in test_case:
@@ -1361,7 +1361,7 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
-        pytest.skip(e)
+        pytest.skip(str(e))
 
     repo_servers_copy = repo_servers.copy()
     if "additional_servers" in test_case:
