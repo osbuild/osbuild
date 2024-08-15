@@ -4,22 +4,24 @@ Utility functions for reading and writing toml files.
 Handles module imports for all supported versions (in a build root or on a host).
 """
 import importlib
+from types import ModuleType
+from typing import Optional
 
 # Different modules require different file mode (text vs binary)
 toml_modules = {
-    "tomllib": "rb",  # stdlib since 3.11 (read-only)
-    "tomli": "rb",  # EL9+
-    "toml": "r",  # older unmaintained lib, needed for backwards compatibility with existing EL9 and Fedora manifests
-    "pytoml": "r",  # deprecated, needed for backwards compatibility (EL8 manifests)
+    "tomllib": {"mode": "rb"},  # stdlib since 3.11 (read-only)
+    "tomli": {"mode": "rb"},  # EL9+
+    "toml": {"mode": "r", "encoding": "utf-8"},  # older unmaintained lib, needed for backwards compatibility
+    "pytoml": {"mode": "r", "encoding": "utf-8"},  # deprecated, needed for backwards compatibility (EL8 manifests)
 }
 
 
-toml = None
-rmode: str = None
-for module, mode in toml_modules.items():
+_toml: Optional[ModuleType] = None
+_rargs: dict = {}
+for module, args in toml_modules.items():
     try:
-        toml = importlib.import_module(module)
-        rmode = mode
+        _toml = importlib.import_module(module)
+        _rargs = args
         break
     except ModuleNotFoundError:
         pass
@@ -28,18 +30,18 @@ else:
 
 # Different modules require different file mode (text vs binary)
 tomlw_modules = {
-    "tomli_w": "wb",  # EL9+
-    "toml": "w",  # older unmaintained lib, needed for backwards compatibility with existing EL9 and Fedora manifests
-    "pytoml": "w",  # deprecated, needed for backwards compatibility (EL8 manifests)
+    "tomli_w": {"mode": "wb"},  # EL9+
+    "toml": {"mode": "w", "encoding": "utf-8"},  # older unmaintained lib, needed for backwards compatibility
+    "pytoml": {"mode": "w", "encoding": "utf-8"},  # deprecated, needed for backwards compatibility (EL8 manifests)
 }
 
 
-tomlw = None
-wmode: str = None
-for module, mode in tomlw_modules.items():
+_tomlw: Optional[ModuleType] = None
+_wargs: dict = {}
+for module, args in tomlw_modules.items():
     try:
-        tomlw = importlib.import_module(module)
-        wmode = mode
+        _tomlw = importlib.import_module(module)
+        _wargs = args
         break
     except ModuleNotFoundError:
         # allow importing without write support
@@ -47,19 +49,22 @@ for module, mode in tomlw_modules.items():
 
 
 def load_from_file(path):
-    with open(path, rmode) as tomlfile:
-        return toml.load(tomlfile)
+    if _toml is None:
+        raise RuntimeError("no toml module available")
+
+    with open(path, **_rargs) as tomlfile:
+        return _toml.load(tomlfile)
 
 
 def dump_to_file(data, path, header=""):
-    if tomlw is None:
+    if _tomlw is None:
         raise RuntimeError("no toml module available with write support")
 
-    with open(path, wmode) as tomlfile:
+    with open(path, **_wargs) as tomlfile:
         if header:
             _write_comment(tomlfile, header)
 
-        tomlw.dump(data, tomlfile)
+        _tomlw.dump(data, tomlfile)
 
 
 def _write_comment(f, comment: list):
