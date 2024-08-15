@@ -180,21 +180,3 @@ def container_source(image):
 
     with container_source_fn(image, image_filepath, container_format) as image_source:
         yield image_name, image_source
-
-
-def get_host_storage():
-    """
-    Read the host storage configuration.
-    """
-    # pylint: disable=import-outside-toplevel
-    # importing this at the top level will break the buildroot
-    from osbuild.util import toml
-
-    config_paths = ("/etc/containers/storage.conf", "/usr/share/containers/storage.conf")
-    for conf_path in config_paths:
-        try:
-            return toml.load_from_file(conf_path)
-        except FileNotFoundError:
-            pass
-
-    raise FileNotFoundError(f"could not find container storage configuration in any of {config_paths}")
