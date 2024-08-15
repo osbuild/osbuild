@@ -8,7 +8,6 @@ from typing import ClassVar, Dict
 
 from . import host
 from .objectstore import ObjectStore
-from .util.types import PathLike
 
 
 class Source:
@@ -25,7 +24,7 @@ class Source:
         self.runner = None
         self.source_epoch = None
 
-    def download(self, mgr: host.ServiceManager, store: ObjectStore, libdir: PathLike):
+    def download(self, mgr: host.ServiceManager, store: ObjectStore):
         source = self.info.name
         cache = os.path.join(store.store, "sources")
 
@@ -34,7 +33,6 @@ class Source:
             "cache": cache,
             "output": None,
             "checksums": [],
-            "libdir": os.fspath(libdir)
         }
 
         client = mgr.start(f"source/{source}", self.info.path)
