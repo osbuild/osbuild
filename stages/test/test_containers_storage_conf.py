@@ -5,12 +5,8 @@ import re
 
 import pytest
 
-try:
-    import toml
-except ModuleNotFoundError:
-    import pytoml as toml
-
 from osbuild import testutil
+from osbuild.util import toml
 
 TEST_INPUT = [
     ({}, {"additionalimagestores": ["/path/to/store"]}, [("storage.options.additionalimagestores", ["/path/to/store"])]),
@@ -49,8 +45,7 @@ def test_containers_storage_conf_integration(tmp_path, stage_module, test_filena
     assert os.path.exists(confpath)
 
     conf = None
-    with open(confpath, 'r', encoding="utf-8") as f:
-        conf = toml.load(f)
+    conf = toml.load_from_file(confpath)
 
     assert conf is not None
 
