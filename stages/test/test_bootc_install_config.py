@@ -4,6 +4,7 @@ import re
 import pytest
 
 from osbuild import testutil
+from osbuild.util import toml
 
 STAGE_NAME = "org.osbuild.bootc.install.config"
 
@@ -24,7 +25,15 @@ STAGE_NAME = "org.osbuild.bootc.install.config"
                     }
                 }
             },
-            '[install.filesystem.root]\ntype = "xfs"\n',
+            {
+                "install": {
+                    "filesystem": {
+                        "root": {
+                            "type": "xfs"
+                        }
+                    }
+                }
+            },
         ),
         (
             {
@@ -39,7 +48,11 @@ STAGE_NAME = "org.osbuild.bootc.install.config"
                     }
                 }
             },
-            '[install]\nkargs = [ "ro", "biosdevname=0", "net.ifnames=0",]\n',
+            {
+                "install": {
+                    "kargs": ["ro", "biosdevname=0", "net.ifnames=0"],
+                }
+            },
         ),
         (
             {
@@ -52,14 +65,20 @@ STAGE_NAME = "org.osbuild.bootc.install.config"
                     }
                 },
             },
-            '[install]\nblock = [ "tmp2-luks",]\n',
+            {
+                "install": {
+                    "block": ["tmp2-luks"]
+                }
+            }
         )
     ]
 )
 def test_bootc_install_config(tmp_path, stage_module, options, expected_config):
     stage_module.main(tmp_path, options)
-    with open(os.path.join(tmp_path, "usr/lib/bootc/install", options["filename"]), encoding="utf-8") as config_file:
-        assert config_file.read() == expected_config
+    # different toml libraries write out arrays in different ways (one line vs many), so we need to parse the result
+    # to compare
+    config_data = toml.load_from_file(os.path.join(tmp_path, "usr/lib/bootc/install", options["filename"]))
+    assert config_data == expected_config
 
 
 @pytest.mark.parametrize(
