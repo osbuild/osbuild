@@ -33,7 +33,8 @@ from typing import Any, Deque, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import jsonschema
 
-from .util import osrelease
+from osbuild.util import osrelease
+from osbuild.util.libdir import Libdir
 
 FAILED_TITLE = "JSON Schema validation failed"
 FAILED_TYPEURI = "https://osbuild.org/validation-error"
@@ -647,8 +648,8 @@ class Index:
     osbuild modules as well as JSON schemata.
     """
 
-    def __init__(self, path: str):
-        self.path = os.path.abspath(path)
+    def __init__(self, libdir: str):
+        self.libdir = Libdir(libdir)
         self._module_info: Dict[Tuple[str, Any], Any] = {}
         self._format_info: Dict[Tuple[str, Any], Any] = {}
         self._schemata: Dict[Tuple[str, Any, str], Schema] = {}
@@ -697,17 +698,23 @@ class Index:
         if not module_path:
             raise ValueError(f"Unsupported nodule class: {klass}")
 
-        path = os.path.join(self.path, module_path)
-        modules = filter(lambda f: os.path.isfile(f"{path}/{f}") and not path.endswith(".meta.json"),
-                         os.listdir(path))
+        modules = []
+        for path in self.libdir.dirs:
+            path = os.path.join(path, module_path)
+            modules += [
+                f for f in os.listdir(path)
+                if os.path.isfile(f"{path}/{f}") and not path.endswith(".meta.json")
+            ]
         return list(modules)
 
     def get_module_info(self, klass, name) -> Optional[ModuleInfo]:
         """Obtain `ModuleInfo` for a given stage or assembler"""
 
         if (klass, name) not in self._module_info:
-
-            info = ModuleInfo.load(self.path, klass, name)
+            for path in self.libdir.dirs:
+                info = ModuleInfo.load(path, klass, name)
+                if info:
+                    break
             self._module_info[(klass, name)] = info
 
         return self._module_info[(klass, name)]
@@ -728,10 +735,12 @@ class Index:
             return cached_schema
 
         if klass == "Manifest":
-            path = f"{self.path}/schemas/osbuild{version}.json"
-            with contextlib.suppress(FileNotFoundError):
-                with open(path, "r", encoding="utf8") as f:
-                    schema = json.load(f)
+            for dirp in self.libdir.dirs:
+                path = f"{dirp}/schemas/osbuild{version}.json"
+                with contextlib.suppress(FileNotFoundError):
+                    with open(path, "r", encoding="utf8") as f:
+                        schema = json.load(f)
+                        break
         elif klass in ModuleInfo.MODULES:
             info = self.get_module_info(klass, name)
             if info:
@@ -752,11 +761,16 @@ class Index:
         will be returned.
         """
         if not self._runners:
-            path = os.path.join(self.path, "runners")
-            names = filter(lambda f: os.path.isfile(f"{path}/{f}"),
-                           os.listdir(path))
-            paths = map(lambda n: os.path.join(path, n), names)
-            mapped = map(RunnerInfo.from_path, paths)
+            mapped = []
+            for dirp in self.libdir.dirs:
+                path = os.path.join(dirp, "runners")
+                try:
+                    names = [f for f in os.listdir(path)
+                             if os.path.isfile(f"{path}/{f}")]
+                except FileNotFoundError:
+                    continue
+                paths = [os.path.join(path, n) for n in names]
+                mapped += [RunnerInfo.from_path(p) for p in paths]
             self._runners = sorted(mapped, key=lambda r: (r.distro, r.version))
 
         runners = self._runners[:]

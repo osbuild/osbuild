@@ -72,8 +72,13 @@ def parse_arguments(sys_argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--store", metavar="DIRECTORY", type=os.path.abspath,
                         default=".osbuild",
                         help="directory where intermediary os trees are stored")
-    parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath, default="/usr/lib/osbuild",
-                        help="directory containing stages, assemblers, and the osbuild library")
+    parser.add_argument(
+        "-l",
+        "--libdir",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        action="append",
+        help="search path containing stages, assemblers, and the osbuild library (can contain ':' or can be given multiple times)")
     parser.add_argument("--cache-max-size", metavar="SIZE", type=parse_size, default=None,
                         help="maximum size of the cache (bytes) or 'unlimited' for no restriction")
     parser.add_argument(
@@ -114,7 +119,11 @@ def osbuild_cli() -> int:
     args = parse_arguments(sys.argv)
     desc = parse_manifest(args.manifest_path)
 
-    index = osbuild.meta.Index(args.libdir)
+    if args.libdir is None:
+        libdir = "/usr/lib/osbuild"
+    else:
+        libdir = ":".join(args.libdir)
+    index = osbuild.meta.Index(libdir)
 
     # detect the format from the manifest description
     info = index.detect_format_info(desc)
@@ -186,7 +195,7 @@ def osbuild_cli() -> int:
                 object_store,
                 pipelines,
                 monitor,
-                args.libdir,
+                libdir,
                 debug_break,
                 stage_timeout=stage_timeout
             )
