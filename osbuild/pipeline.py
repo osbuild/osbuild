@@ -409,13 +409,13 @@ class Manifest:
         self.sources.append(source)
         return source
 
-    def download(self, store, monitor, libdir):
+    def download(self, store, monitor):
         with host.ServiceManager(monitor=monitor) as mgr:
             for source in self.sources:
                 # Workaround for lack of progress from sources, this
                 # will need to be reworked later.
                 monitor.begin(source)
-                source.download(mgr, store, libdir)
+                source.download(mgr, store)
                 monitor.finish({"name": source.info.name})
 
     def depsolve(self, store: ObjectStore, targets: Iterable[str]) -> List[str]:

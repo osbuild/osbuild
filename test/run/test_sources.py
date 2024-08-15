@@ -101,14 +101,14 @@ def make_test_cases():
                 yield source, case
 
 
-def check_case(source, case, store, libdir):
+def check_case(source, case_options, store):
     with host.ServiceManager() as mgr:
-        expects = case["expects"]
+        expects = case_options["expects"]
         if expects == "error":
             with pytest.raises(host.RemoteError):
-                source.download(mgr, store, libdir)
+                source.download(mgr, store)
         elif expects == "success":
-            source.download(mgr, store, libdir)
+            source.download(mgr, store)
         else:
             raise ValueError(f"invalid expectation: {expects}")
 
@@ -131,5 +131,5 @@ def test_sources(source, case, tmp_path):
 
     with osbuild.objectstore.ObjectStore(tmp_path) as store, \
             fileServer(test.TestBase.locate_test_data()):
-        check_case(src, case_options, store, index.path)
-        check_case(src, case_options, store, index.path)
+        check_case(src, case_options, store)
+        check_case(src, case_options, store)

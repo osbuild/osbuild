@@ -177,7 +177,7 @@ def osbuild_cli() -> int:
             monitor = osbuild.monitor.make(monitor_name, args.monitor_fd, total_steps)
             monitor.log(f"starting {args.manifest_path}", origin="osbuild.main_cli")
 
-            manifest.download(object_store, monitor, args.libdir)
+            manifest.download(object_store, monitor)
 
             r = manifest.build(
                 object_store,
