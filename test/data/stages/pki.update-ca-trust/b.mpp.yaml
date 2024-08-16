@@ -1,0 +1,73 @@
+---
+version: '2'
+sources:
+  org.osbuild.inline:
+    items:
+      sha256:4c4e8c734e4ee3a117ca8f9363ba7b706d02bfc8f297c00b02ce02babddef51c:
+        encoding: base64
+        data: >
+          LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzekNDQXB1Z0F3SUJBZ0lVSjRsSytKZmRK
+          Q05nY0VWeFpEaW5KZktLYlFzd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2FERUxNQWtHQTFVRUJoTUNW
+          Vk14RnpBVkJnTlZCQWdNRGs1dmNuUm9JRU5oY205c2FXNWhNUkF3RGdZRApWUVFIREFkU1lXeGxh
+          V2RvTVJBd0RnWURWUVFLREFkU1pXUWdTR0YwTVJ3d0dnWURWUVFEREJOVVpYTjBJRU5CCklHWnZj
+          aUJ2YzJKMWFXeGtNQ0FYRFRJME1Ea3dNekV6TWpreU1Gb1lEekl5T1Rnd05qRTRNVE15T1RJd1dq
+          Qm8KTVFzd0NRWURWUVFHRXdKVlV6RVhNQlVHQTFVRUNBd09UbTl5ZEdnZ1EyRnliMnhwYm1FeEVE
+          QU9CZ05WQkFjTQpCMUpoYkdWcFoyZ3hFREFPQmdOVkJBb01CMUpsWkNCSVlYUXhIREFhQmdOVkJB
+          TU1FMVJsYzNRZ1EwRWdabTl5CklHOXpZblZwYkdRd2dnRWlNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0
+          SUJEd0F3Z2dFS0FvSUJBUURlQTdPY1dUclYKZ3N0b0JzVWFlSkttOG5lbGc3TGMwV05YSDZ5T1RM
+          c3I0dGQ0eUhzMFlPdkZHd2dTZitmZlYzUkFHMW1ncW5NRwpNZ2tEMit6KzdRaEhiSEhzM3kwZDB6
+          ZmhBMmJnMEtWdmZDV2s3Zk5SUEhZMFVPZVBwWGsyNDVCZnczRDBWVHBsCkY3bmVQazFJN1pZMDlz
+          blBXVWViMnJqS1h6WWpLanpNMGgyNyt5a1Y4STgrRmJkeVBrL3BSOHdoeURxdEhMVWEKWGZGeTJU
+          RmxvRFNZTWtIS1ZkMzhCbkwwYmo5MXg1RitLc1prTjRIemZiWXd4TGJDUWZPU2d5N3E2VFdjZTlr
+          cQpMbzZ0eWE5dnV2cFdGbTFkeWU3TCtCb2RBUUFxL2RJL0pNZUNmeVRiMGVGYit0eXpmcjVhVklv
+          cXFETitwOWZ0CmN3NE9lZnBIYmh0TkFnTUJBQUdqVXpCUk1CMEdBMVVkRGdRV0JCUlYyQTlZbXVz
+          ZWtQenU1WWYwOGNWMG9QTDEKd2pBZkJnTlZIU01FR0RBV2dCUlYyQTlZbXVzZWtQenU1WWYwOGNW
+          MG9QTDF3akFQQmdOVkhSTUJBZjhFQlRBRApBUUgvTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFD
+          Z1FaMlhmaitOeGFLQlpnbjJLTnhTME1UYmh6SFJ6NlJuCnFKcytoOE9VejJDcm1hZjZOK1JIbG1E
+          UlpYVXJEalNIcHhWVDJMeEZ5N29mUnJMWUllekZEVVlmYjkyMFZra1YKU1ZjeGgxWURGUk9KYWxm
+          TW9FNndkeVIvTG5LNE1KWlM5ZlVwZUNKSmMvQTBKKzlGSzlDd2N5VXJIZ0o4WGJKaApNS1l5UStj
+          ZjZPN3d6dXR1QnBNeVJxU0tTK2hWTTdCUVRtU0Z2djFlQUpsbzZrbEdBbW1LaVltQUV2Y1FhZEgx
+          CmRqcnVqc0EzQ241dlgyTCsweXVpTEI1L3pveHF4NWNFeTk3VHVLVVlCOE9xTU11akFYTnpGNEwz
+          SEpEVU5iYTIKQWhFa0Zvek1Yd1lYNzNUR2JHWjBtYXdQUzVEM3YzdFlURW1KRmY2U25WQ21VVzFm
+          czU3ZwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - systemd
+                - dogtag-pki-base
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:4c4e8c734e4ee3a117ca8f9363ba7b706d02bfc8f297c00b02ce02babddef51c: {}
+        options:
+          paths:
+            - from: input://inlinefile/sha256:4c4e8c734e4ee3a117ca8f9363ba7b706d02bfc8f297c00b02ce02babddef51c
+              to: tree:///etc/pki/ca-trust/source/anchors
+      - type: org.osbuild.pki.update-ca-trust

@@ -1,0 +1,11 @@
+#!/usr/bin/python3
+import sys
+
+import osbuild.api
+from osbuild.util.chroot import Chroot
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    with Chroot(args["tree"]) as chroot:
+        ret = chroot.run(["/usr/bin/update-ca-trust", "extract"])
+        sys.exit(ret.returncode)

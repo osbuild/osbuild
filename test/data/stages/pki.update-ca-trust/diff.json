@@ -1,0 +1,47 @@
+{
+  "added_files": [
+    "/etc/pki/ca-trust/extracted/pem/directory-hash/7cf11c08.0",
+    "/etc/pki/ca-trust/extracted/pem/directory-hash/Test_CA_for_osbuild.pem",
+    "/etc/pki/ca-trust/extracted/pem/directory-hash/a521c9ed.0",
+    "/etc/pki/ca-trust/source/anchors/sha256:4c4e8c734e4ee3a117ca8f9363ba7b706d02bfc8f297c00b02ce02babddef51c"
+  ],
+  "deleted_files": [],
+  "differences": {
+    "/etc/pki/ca-trust/extracted/edk2/cacerts.bin": {
+      "content": [
+        "sha256:1fc7201640e13d1261decb498479b6fa748ebf8a72121c3f59464c493aea72a9",
+        "sha256:13fe6d3e78cfa0c9b31d9c7836a09c45ae1c9c8b847fb69a43b95555de9cf535"
+      ]
+    },
+    "/etc/pki/ca-trust/extracted/java/cacerts": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt": {
+      "content": [
+        "sha256:830ae1c02ea63c5fa2198b50fb33d55011a391b0c7ace14a29f8d83daf30128f",
+        "sha256:306cf348061be12d41ce03f0c861bd64568f2416149ac51928a60b02ddeb3317"
+      ]
+    },
+    "/etc/pki/ca-trust/extracted/pem/email-ca-bundle.pem": {
+      "content": [
+        "sha256:fbf592932627ddb0c244dd2441f6a56231cfacb892c1163d4f372d1b949b5807",
+        "sha256:077b9d7020b4303a72ef8530481faa461fc926608094a17475474b8c9dcef5fa"
+      ]
+    },
+    "/etc/pki/ca-trust/extracted/pem/objsign-ca-bundle.pem": {
+      "content": [
+        "sha256:67ea06a3b7d7d39345b36161d947a15c378fb5faab80db372fa1bc4c4e346e14",
+        "sha256:4a11fade0941e6b6c483b7522296629e454e676851baf9e1b60e486a35c26209"
+      ]
+    },
+    "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem": {
+      "content": [
+        "sha256:a0a9885edfce047620854ee7bb4214dfc2a19d666b7fc2c9def6f439c69e7739",
+        "sha256:ea196b22fd7609a20c51fd091c51b268a64579dd1dab29b16163262ba861db0f"
+      ]
+    }
+  }
+}
