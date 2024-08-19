@@ -1,17 +1,23 @@
 #!/usr/bin/python3
+import os
 import subprocess
 import sys
 
 from osbuild import api
+from osbuild.util.mnt import MountGuard, MountPermissions
 
 
 def main(tree, options):
     policy = options["policy"]
 
-    cmd = ["/usr/sbin/chroot", tree,
-           "/usr/bin/update-crypto-policies", "--set", policy]
+    with MountGuard() as mg:
+        source = "/proc/self/mountinfo"
+        target = os.path.join(tree, source.lstrip("/"))
+        mg.mount(source, target, permissions=MountPermissions.READ_ONLY)
+        cmd = ["/usr/sbin/chroot", tree,
+               "/usr/bin/update-crypto-policies", "--set", policy]
 
-    subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True)
 
     return 0
 
