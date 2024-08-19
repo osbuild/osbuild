@@ -147,6 +147,10 @@ fi
 greenprint "📦 Installing mock requirements"
 dnf_install_with_retry createrepo_c make mock python3-pip rpm-build s3cmd
 
+if [[ "$ID" == "fedora" ]]; then
+    sudo dnf -y update fedora-gpg-keys
+fi
+
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
 greenprint "📦 SHA: ${COMMIT}"
