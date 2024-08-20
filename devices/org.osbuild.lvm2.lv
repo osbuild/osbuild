@@ -67,6 +67,15 @@ def get_parent_path(parent: str, options: Dict) -> str:
     return parent_path
 
 
+def escaped_lv_mapper_name(vg, lv: str) -> str:
+    """
+    Return the name of the mapper device under /dev/mapper/ for the given vg, lv
+    """
+    # see also lvm2:libdm/libdm-string.c:dm_build_dm_name() at
+    # https://github.com/lvmteam/lvm2/blob/v2_03_26/libdm/libdm-string.c#L325
+    return f'{vg.replace("-", "--")}-{lv.replace("-", "--")}'
+
+
 class LVService(devices.DeviceService):
 
     def __init__(self, args):
@@ -215,6 +224,11 @@ class LVService(devices.DeviceService):
 
         os.makedirs(os.path.join(devpath, vg), exist_ok=True)  # type: ignore
         self.ensure_device_node(fullpath, major, minor)
+        # also create the device under the mapper dir as this is what
+        # findmnt will need to get the uuid of the filesystem
+        os.makedirs(os.path.join(devpath, "mapper"), exist_ok=True)
+        mapper_path = os.path.join(devpath, "mapper", escaped_lv_mapper_name(vg, lv))
+        self.ensure_device_node(mapper_path, major, minor)
 
         data = {
             "path": devname,
