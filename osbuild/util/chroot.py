@@ -2,7 +2,7 @@ import os
 import subprocess
 
 
-class ChrootProcDevSys:
+class Chroot:
     """
     Sets up mounts for the virtual filesystems inside a root tree, preparing it for running commands using chroot. This
     should be used whenever a stage needs to run a command against the root tree but doesn't support a --root option or
@@ -43,3 +43,8 @@ class ChrootProcDevSys:
                 failed_umounts.append(d)
         if failed_umounts:
             print(f"Error unmounting paths from chroot: {failed_umounts}")
+
+    def run(self, cmd, **kwargs):
+        cmd = ["/usr/sbin/chroot", self.root] + cmd
+        # pylint: disable=subprocess-run-check
+        subprocess.run(cmd, **kwargs)  # noqa: PLW1510

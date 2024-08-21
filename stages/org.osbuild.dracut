@@ -1,9 +1,8 @@
 #!/usr/bin/python3
-import subprocess
 import sys
 
 import osbuild.api
-from osbuild.util.chroot import ChrootProcDevSys
+from osbuild.util.chroot import Chroot
 
 
 def yesno(name: str, value: bool) -> str:
@@ -83,12 +82,8 @@ def main(tree, options):
         if initoverlayfs:
             initfs_bin = "/usr/bin/initoverlayfs-install"
 
-        with ChrootProcDevSys(tree):
-            subprocess.run(["/usr/sbin/chroot", tree, initfs_bin,
-                            "--no-hostonly",
-                            "--kver", kver]
-                           + opts,
-                           check=True)
+        with Chroot(tree) as chroot:
+            chroot.run([initfs_bin, "--no-hostonly", "--kver", kver] + opts, check=True)
 
     return 0
 
