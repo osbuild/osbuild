@@ -1,7 +1,5 @@
 {
-  "added_files": [
-    "/dev/null"
-  ],
+  "added_files": [],
   "deleted_files": [],
   "differences": {
     "/etc/crypto-policies/back-ends/bind.config": {
