@@ -3,13 +3,13 @@ import subprocess
 import sys
 
 from osbuild import api
-from osbuild.util.chroot import Chroot
+from osbuild.util.chroot import ChrootProcDevSys
 
 
 def main(tree, options):
     policy = options["policy"]
 
-    with Chroot(tree):
+    with ChrootProcDevSys(tree):
         # update-crypto-polciies uses /proc/self/mountinfo to find and verify that fips paths have been mounted to their
         # expected locations by searching for the following path suffixes:
         #   /crypto-policies/default-fips-config
