@@ -37,5 +37,9 @@ class ChrootProcDevSys:
         return self
 
     def __exit__(self, exc_type, exc_value, tracebk):
+        failed_umounts = []
         for d in ["/proc", "/dev", "/sys"]:
-            subprocess.check_call(["/usr/bin/umount", self.root + d])
+            if subprocess.run(["/usr/bin/umount", "--lazy", self.root + d], check=False).returncode != 0:
+                failed_umounts.append(d)
+        if failed_umounts:
+            print(f"Error unmounting paths from chroot: {failed_umounts}")
