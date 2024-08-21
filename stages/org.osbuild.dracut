@@ -1,44 +1,14 @@
 #!/usr/bin/python3
-import os
 import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util.chroot import Chroot
 
 
 def yesno(name: str, value: bool) -> str:
     prefix = "" if value else "no-"
     return f"--{prefix}{name}"
-
-
-class DracutMounts:
-    """
-    Setup the mounts inside a chroot root directory, which will be used
-    for running dracut inside it. Cleanup mounts when done.
-    This mounts /proc, /dev, and /sys.
-    """
-
-    def __init__(self, root: str):
-        self.root = root
-
-    def __enter__(self):
-        for d in ["/proc", "/dev", "/sys"]:
-            if not os.path.exists(self.root + d):
-                print(f"Making missing dracut chroot directory: {d}")
-                os.makedirs(self.root + d)
-
-        subprocess.check_call(["/usr/bin/mount", "-t", "proc", "-o",
-                               "nosuid,noexec,nodev", "proc", f"{self.root}/proc"])
-        subprocess.check_call(["/usr/bin/mount", "-t", "devtmpfs", "-o",
-                               "mode=0755,noexec,nosuid,strictatime", "devtmpfs", f"{self.root}/dev"])
-        subprocess.check_call(["/usr/bin/mount", "-t", "sysfs", "-o",
-                               "nosuid,noexec,nodev", "sysfs", f"{self.root}/sys"])
-
-        return self
-
-    def __exit__(self, exc_type, exc_value, tracebk):
-        for d in ["/proc", "/dev", "/sys"]:
-            subprocess.check_call(["/usr/bin/umount", self.root + d])
 
 
 # pylint: disable=too-many-branches
@@ -113,7 +83,7 @@ def main(tree, options):
         if initoverlayfs:
             initfs_bin = "/usr/bin/initoverlayfs-install"
 
-        with DracutMounts(tree):
+        with Chroot(tree):
             subprocess.run(["/usr/sbin/chroot", tree, initfs_bin,
                             "--no-hostonly",
                             "--kver", kver]
