@@ -22,7 +22,10 @@ def test_dracut_with_initoverlayfs(mocked_run, tmp_path, stage_module, with_init
 
     stage_module.main(str(tmp_path), options)
 
-    assert len(mocked_run.call_args_list) == 1
+    # subprocess.run() gets called 4 times:
+    # - once for the 'dracut' or 'initoverlayfs-install' call
+    # - three times for the 'umount' calls to unmount /proc, /dev, and /sys
+    assert len(mocked_run.call_args_list) == 4
     args, kwargs = mocked_run.call_args_list[0]
     assert kwargs.get("check") is True
     run_argv = args[0]
