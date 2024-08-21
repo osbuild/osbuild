@@ -2,7 +2,7 @@ import os
 import subprocess
 
 
-class Chroot:
+class ChrootProcDevSys:
     """
     Sets up mounts for the virtual filesystems inside a root tree, preparing it for running commands using chroot. This
     should be used whenever a stage needs to run a command against the root tree but doesn't support a --root option or
