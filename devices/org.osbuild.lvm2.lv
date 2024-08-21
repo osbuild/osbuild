@@ -44,6 +44,11 @@ SCHEMA = """
   "volume": {
     "type": "string",
     "description": "Logical volume to active"
+  },
+  "detectpv": {
+    "type": "boolean",
+    "default": false,
+    "description": "Detect the PV for the LV automatically on the given device"
   }
 }
 """
@@ -105,6 +110,21 @@ class LVService(devices.DeviceService):
             msg = f"Failed to set LV device ({fullname}) status: {data}"
             raise RuntimeError(msg)
 
+    def auto_detect_volume_group(self, device, lv_name: str) -> str:
+        lvs_output = subprocess.check_output(["lvs", "--reportformat=json"])
+        for lv in json.loads(lvs_output)["report"][0]["lv"]:
+            if lv["lv_name"] == lv_name:
+                vg_name = lv["vg_name"]
+                # cross check that is comes from the expected device
+                pvs_output = subprocess.check_output(["pvs", "--reportformat=json"])
+                for pv in json.loads(pvs_output)["report"][0]["pv"]:
+                    if pv["vg_name"] == vg_name:
+                        if not pv["pv_name"].startswith(device):
+                            print(f"WARNING: ignoring {pv['pv_name']} because it is not on {device}", file=sys.stderr)
+                        else:
+                            return vg_name
+        raise RuntimeError(f"cannot find {lv_name} on {device}")
+
     def volume_group_for_device(self, device: str) -> Union[int, str]:
         # Find the volume group that belongs to the device specified via `parent`
         vg_name = None
@@ -126,7 +146,7 @@ class LVService(devices.DeviceService):
 
             if res.returncode == 5:
                 if count == 10:
-                    raise RuntimeError("Could not find parent device")
+                    raise RuntimeError(f"Could not find parent device")
                 time.sleep(1 * count)
                 count += 1
                 continue
@@ -173,6 +193,7 @@ class LVService(devices.DeviceService):
 
     def open(self, devpath: str, parent: str, tree: str, options: Dict):
         lv = options["volume"]
+        detectpv = options.get("detectpv", False)
 
         assert not parent.startswith("/")
         parent_path = os.path.join("/dev", parent)
@@ -182,7 +203,18 @@ class LVService(devices.DeviceService):
 
         # Find the volume group that belongs to the device specified
         # via `parent`
-        vg = self.volume_group_for_device(parent_path)
+        #
+        # In theory "detectpv" could be the default - but that would
+        # change how old manifests work which is risky so only use it
+        # for on newer manifests for now
+        if detectpv:
+            # "new" way to detct vg_name: device can be the full disk/loop that
+            # contains the PV
+            vg = self.auto_detect_volume_group(parent_path, lv)
+        else:
+            # "old" style of detecting the vg_name, needs the pv partition
+            # in parent_path
+            vg = self.volume_group_for_device(parent_path)
 
         # Activate the logical volume
         self.fullname = f"{vg}/{lv}"
