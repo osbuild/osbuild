@@ -1069,7 +1069,7 @@ class ManifestFile:
                 prob = ""
                 if hasattr(err, 'problem_mark'):
                     mark = err.problem_mark
-                    prob = f": {err.problem} at line {mark.line+1} (col {mark.column+1})"
+                    prob = f": {err.problem} at line {mark.line + 1} (col {mark.column + 1})"
                 print(f"Invalid yaml in \"{path}\"{prob}")
                 sys.exit(1)
         else:

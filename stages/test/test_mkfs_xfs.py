@@ -71,9 +71,9 @@ def test_mkfs_xfs_integration(tmp_path, stage_module):
     output = subprocess.check_output([
         "xfs_admin", "-l", "-u", fake_disk_path], encoding="utf-8")
     assert f'UUID = {fake_uuid}' in output, \
-           f'expected UUID not found in: {output}'
+        f'expected UUID not found in: {output}'
     assert f'label = "{fake_label}"' in output, \
-           f'expected label not found in: {output}'
+        f'expected label not found in: {output}'
 
 
 @pytest.mark.parametrize("test_input, expected", [
