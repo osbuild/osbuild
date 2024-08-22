@@ -1,9 +1,6 @@
 name: Run tests in Centos container
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 1 * * *'
+on: [pull_request, push]
 
 jobs:
   tests-on-centos:
@@ -13,7 +10,7 @@ jobs:
           - version: "9"
             pytest_exclude: 'not (TestBoot and boot)'
           - version: "10"
-            pytest_exclude: 'not (TestBoot and boot)'
+            pytest_exclude: 'not (TestBoot and boot and test_write_read)'
     name: "Unittests on Centos Stream ${{ matrix.centos.version }}"
     runs-on: ubuntu-latest
     steps:
