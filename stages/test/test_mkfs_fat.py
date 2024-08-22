@@ -74,11 +74,11 @@ def test_mkfs_fat_integration(tmp_path, stage_module):
     output = subprocess.check_output([
         "file", "-s", fake_disk_path], encoding="utf-8")
     assert f'serial number 0x{fake_volid}' in output, \
-           f'expected serial number (volid) not found in: {output}'
+        f'expected serial number (volid) not found in: {output}'
     assert f'label: "{fake_label}    "' in output, \
-           f'expected label not found in: {output}'
+        f'expected label not found in: {output}'
     assert f'FAT ({fat_size} bit)' in output, \
-           f'expected FAT size not found in: {output}'
+        f'expected FAT size not found in: {output}'
 
 
 @pytest.mark.parametrize("test_input, expected", [
