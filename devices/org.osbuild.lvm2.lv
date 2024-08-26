@@ -53,6 +53,20 @@ SCHEMA = """
 """
 
 
+def get_parent_path(parent: str, options: Dict) -> str:
+    """ get_parent_path returns the full path to the block device for parent
+
+    Note that the options can influence the behavior via the vg partition
+    number option.
+    """
+    assert not parent.startswith("/")
+    parent_path = os.path.join("/dev", parent)
+    part = options.get("vg_partnum")
+    if part:
+        parent_path += f"p{part}"
+    return parent_path
+
+
 class LVService(devices.DeviceService):
 
     def __init__(self, args):
@@ -175,20 +189,16 @@ class LVService(devices.DeviceService):
 
         return major, minor
 
-    def open(self, devpath: str, parent: str, tree: str, options: Dict):
+    def open(self, devpath: str, parent: str, tree: str, options: Dict) -> Dict:
         lv = options["volume"]
 
-        assert not parent.startswith("/")
-        parent_path = os.path.join("/dev", parent)
+        parent_path = get_parent_path(parent, options)
 
         # Add the device to a lvm devices file on supported systems
         self.manage_devices_file(parent_path)
 
         # Find the volume group that belongs to the device specified
         # via `parent`
-        part = options.get("vg_partnum")
-        if part:
-            parent_path += f"p{part}"
         vg = self.volume_group_for_device(parent_path)
 
         # Activate the logical volume
