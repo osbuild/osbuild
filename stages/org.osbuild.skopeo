@@ -20,7 +20,7 @@ def main(inputs, output, options):
             if dest_type == "containers-storage":
                 storage_root = destination.get("storage-path", "/var/lib/containers/storage")
                 storage_driver = destination.get("storage-driver", "overlay")
-                dest = f"containers-storage:[{storage_driver}@{output}{storage_root}+/run/containers/storage]{image_name}"
+                dest = f"containers-storage:[{storage_driver}@{output}{storage_root}+/run/containers/storage]{image_name}"  # noqa
             elif dest_type in ("oci", "oci-archive", "dir"):
                 path = destination["path"]
                 dest = f"{dest_type}:{output}{path}"
