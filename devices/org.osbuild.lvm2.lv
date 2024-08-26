@@ -44,6 +44,10 @@ SCHEMA = """
   "volume": {
     "type": "string",
     "description": "Logical volume to active"
+  },
+  "vg_partnum": {
+    "type": "number",
+    "description": "Partition number on the parent device where the LV's volume group is located"
   }
 }
 """
@@ -182,6 +186,9 @@ class LVService(devices.DeviceService):
 
         # Find the volume group that belongs to the device specified
         # via `parent`
+        part = options.get("vg_partnum")
+        if part:
+            parent_path += f"p{part}"
         vg = self.volume_group_for_device(parent_path)
 
         # Activate the logical volume
