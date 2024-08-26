@@ -6,5 +6,6 @@ Generated via:
 ```
 $ openssl req -new -newkey rsa:2048  -nodes -x509  \
    -subj "/C=DE/ST=Berlin/L=Berlin/O=Org/CN=localhost"   \
+   -days 36500 \
    -keyout "key1.pem" -out "cert1.pem"
 ```
