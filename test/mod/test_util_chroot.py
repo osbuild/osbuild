@@ -17,18 +17,19 @@ class RunReturn:
         return 0
 
 
-@patch("subprocess.check_call")
 @patch("subprocess.run", return_value=RunReturn())
-def test_chroot_context(mocked_run, mocked_check_call):
+def test_chroot_context(mocked_run):
 
     with Chroot("") as chroot:  # the path doesn't matter since nothing is actually running
         chroot.run(["/bin/true"])
 
-    assert mocked_run.call_count == 4  # the chroot.run() call + 3 umount calls
-    assert mocked_run.call_args_list[0].args[0][0] == "/usr/sbin/chroot"
-    for call_run in mocked_run.call_args_list[1:]:
-        assert call_run.args[0][0] == "/usr/bin/umount"
+    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
+    expected_cmds = ["/usr/bin/mount"] * 3 + ["/usr/sbin/chroot"] + ["/usr/bin/umount"] * 3
+    assert mocked_run.call_count == len(expected_cmds)
 
-    assert mocked_check_call.call_count == 3  # 3 mount calls
-    for check_run in mocked_check_call.call_args_list:
-        assert check_run.args[0][0] == "/usr/bin/mount"
+    cmds = []
+    for call in mocked_run.call_args_list:
+        argv = call.args[0]
+        cmds.append(argv[0])
+
+    assert cmds == expected_cmds

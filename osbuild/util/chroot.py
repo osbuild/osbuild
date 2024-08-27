@@ -21,18 +21,17 @@ class Chroot:
                 print(f"Making missing chroot directory: {d}")
                 os.makedirs(self.root + d)
 
-        subprocess.check_call(["/usr/bin/mount",
-                               "-t", "proc",
-                               "-o", "nosuid,noexec,nodev",
-                               "proc", f"{self.root}/proc"])
-        subprocess.check_call(["/usr/bin/mount",
-                               "-t", "devtmpfs",
-                               "-o", "mode=0755,noexec,nosuid,strictatime",
-                               "devtmpfs", f"{self.root}/dev"])
-        subprocess.check_call(["/usr/bin/mount",
-                               "-t", "sysfs",
-                               "-o", "nosuid,noexec,nodev",
-                               "sysfs", f"{self.root}/sys"])
+        subprocess.run(["/usr/bin/mount", "-t", "proc", "-o", "nosuid,noexec,nodev",
+                        "proc", f"{self.root}/proc"],
+                       check=True)
+
+        subprocess.run(["/usr/bin/mount", "-t", "devtmpfs", "-o", "mode=0755,noexec,nosuid,strictatime",
+                        "devtmpfs", f"{self.root}/dev"],
+                       check=True)
+
+        subprocess.run(["/usr/bin/mount", "-t", "sysfs", "-o", "nosuid,noexec,nodev",
+                        "sysfs", f"{self.root}/sys"],
+                       check=True)
 
         return self
 
