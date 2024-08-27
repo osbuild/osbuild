@@ -2,7 +2,8 @@
 # Test for util/chroot.py
 #
 
-from unittest.mock import patch
+import os
+from unittest.mock import call, patch
 
 from osbuild.util.chroot import Chroot
 
@@ -18,18 +19,24 @@ class RunReturn:
 
 
 @patch("subprocess.run", return_value=RunReturn())
-def test_chroot_context(mocked_run):
+def test_chroot_context(mocked_run, tmp_path):
 
-    with Chroot("") as chroot:  # the path doesn't matter since nothing is actually running
-        chroot.run(["/bin/true"])
+    with Chroot(os.fspath(tmp_path)) as chroot:
+        chroot.run(["/bin/true"], check=True)
+        chroot.run(["/bin/false"], check=False)
 
-    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
-    expected_cmds = ["/usr/bin/mount"] * 3 + ["/usr/sbin/chroot"] + ["/usr/bin/umount"] * 3
-    assert mocked_run.call_count == len(expected_cmds)
+    assert mocked_run.call_args_list == [
+        call(["/usr/bin/mount", "-t", "proc", "-o", "nosuid,noexec,nodev",
+              "proc", os.fspath(tmp_path / "proc")], check=True),
+        call(["/usr/bin/mount", "-t", "devtmpfs", "-o", "mode=0755,noexec,nosuid,strictatime",
+              "devtmpfs", os.fspath(tmp_path / "dev")], check=True),
+        call(["/usr/bin/mount", "-t", "sysfs", "-o", "nosuid,noexec,nodev",
+              "sysfs", os.fspath(tmp_path / "sys")], check=True),
 
-    cmds = []
-    for call in mocked_run.call_args_list:
-        argv = call.args[0]
-        cmds.append(argv[0])
+        call(["/usr/sbin/chroot", os.fspath(tmp_path), "/bin/true"], check=True),
+        call(["/usr/sbin/chroot", os.fspath(tmp_path), "/bin/false"], check=False),
 
-    assert cmds == expected_cmds
+        call(["/usr/bin/umount", "--lazy", os.fspath(tmp_path / "proc")], check=False),
+        call(["/usr/bin/umount", "--lazy", os.fspath(tmp_path / "dev")], check=False),
+        call(["/usr/bin/umount", "--lazy", os.fspath(tmp_path / "sys")], check=False),
+    ]
