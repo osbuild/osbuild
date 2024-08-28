@@ -1,0 +1,25 @@
+#!/usr/bin/python3
+import subprocess
+import sys
+
+import osbuild.api
+
+
+def main(devices, options):
+    device = devices["device"]["path"]
+
+    uuid = options["uuid"]
+    label = options.get("label")
+    opts = []
+
+    if label:
+        opts = ["--label", label]
+
+    subprocess.run(["mkswap", "--uuid", uuid] + opts + [device],
+                   encoding='utf8', check=True)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    ret = main(args["devices"], args["options"])
+    sys.exit(ret)
