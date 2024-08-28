@@ -1,0 +1,40 @@
+{
+  "summary": "Construct a swap area via mkswap(8)",
+  "description": [
+    "Construct a swap area with the given options at the device",
+    "specified via `device`.",
+    "Buildhost commands used: `mkswap`."
+  ],
+  "schema_2": {
+    "devices": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "device"
+      ],
+      "properties": {
+        "device": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "uuid"
+      ],
+      "properties": {
+        "uuid": {
+          "description": "UUID for the file system",
+          "type": "string"
+        },
+        "label": {
+          "description": "Label for the file system",
+          "type": "string",
+          "maxLength": 12
+        }
+      }
+    }
+  }
+}
