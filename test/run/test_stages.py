@@ -223,12 +223,12 @@ class TestStages(test.TestBase):
 
             out_a = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
             _ = osb.compile_file(os.path.join(test_dir, "a.json"),
-                                 checkpoints=["tree"],
+                                 checkpoints=["build", "tree"],
                                  exports=["tree"], output_dir=out_a)
 
             out_b = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
             res = osb.compile_file(os.path.join(test_dir, "b.json"),
-                                   checkpoints=["tree"],
+                                   checkpoints=["build", "tree"],
                                    exports=["tree"], output_dir=out_b)
 
             tree1 = os.path.join(out_a, "tree")
