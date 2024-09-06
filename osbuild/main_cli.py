@@ -138,8 +138,9 @@ def osbuild_cli() -> int:
     exports = set(args.export)
     unresolved = [e for e in exports if e not in manifest]
     if unresolved:
+        available = list(manifest.pipelines.keys())
         for name in unresolved:
-            print(f"Export {vt.bold}{name}{vt.reset} not found!")
+            print(f"Export {vt.bold}{name}{vt.reset} not found in {available}")
         print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
         return 1
 
