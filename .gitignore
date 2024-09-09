@@ -25,3 +25,5 @@ venv
 /.tox
 
 /test/data/certs/lib.sh
+pkg
+container_built.info
