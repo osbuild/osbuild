@@ -46,4 +46,4 @@ class Chroot:
     def run(self, cmd, **kwargs):
         cmd = ["/usr/sbin/chroot", self.root] + cmd
         # pylint: disable=subprocess-run-check
-        subprocess.run(cmd, **kwargs)  # noqa: PLW1510
+        return subprocess.run(cmd, **kwargs)  # noqa: PLW1510
