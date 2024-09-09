@@ -1,0 +1,24 @@
+FROM registry.fedoraproject.org/fedora:latest
+
+RUN dnf groupinstall -y rpm-development-tools
+
+RUN mkdir /prepare
+WORKDIR /prepare
+
+COPY osbuild.spec .
+
+RUN dnf -y builddep ./osbuild.spec
+
+RUN mkdir /app
+WORKDIR /app
+
+COPY . /app
+
+RUN cp tools/main_cli_dev.py osbuild/
+RUN git apply tools/Containerfile.dev.patch
+
+RUN make rpm.dev
+
+RUN dnf install -y ./rpmbuild/RPMS/*.rpm
+
+CMD [ "/usr/bin/osbuild", "--version" ]
