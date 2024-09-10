@@ -15,15 +15,9 @@ import pytest
 from osbuild import loop
 
 from .. import test
+from ..test import osbuild_fixture  # noqa: F401, pylint: disable=unused-import
 
 MEBIBYTE = 1024 * 1024
-
-
-@pytest.fixture(name="osbuild")
-def osbuild_fixture():
-    store = os.getenv("OSBUILD_TEST_STORE")
-    osb = test.OSBuild(cache_from=store)
-    yield osb
 
 
 def assertImageFile(filename, fmt, expected_size):
@@ -83,7 +77,7 @@ def read_partition_table(device):
 @pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 @pytest.mark.parametrize("fs_type", ["ext4", "xfs", "btrfs"])
-def test_rawfs(osbuild, fs_type):
+def test_rawfs(osb, fs_type):
     if not test.TestBase.has_filesystem_support(fs_type):
         pytest.skip(f"The {fs_type} was explicitly marked as unsupported on this platform.")
     options = {
@@ -92,7 +86,7 @@ def test_rawfs(osbuild, fs_type):
         "size": 1024 * MEBIBYTE,
         "fs_type": fs_type,
     }
-    with osbuild as osb:
+    with osb:
         with run_assembler(osb, "org.osbuild.rawfs", options, "image.raw") as (tree, image):
             assertImageFile(image, "raw", options["size"])
             assertFilesystem(image, options["root_fs_uuid"], fs_type, tree)
@@ -102,8 +96,8 @@ def test_rawfs(osbuild, fs_type):
 @pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 @pytest.mark.skipif(not test.TestBase.have_rpm_ostree(), reason="rpm-ostree missing")
-def test_ostree(osbuild):
-    with osbuild as osb:
+def test_ostree(osb):
+    with osb:
         with open(os.path.join(test.TestBase.locate_test_data(),
                                "manifests/fedora-ostree-commit.json"),
                   encoding="utf8") as f:
@@ -158,9 +152,9 @@ def test_ostree(osbuild):
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 @pytest.mark.parametrize("fmt,", ["raw", "raw.xz", "qcow2", "vmdk", "vdi"])
 @pytest.mark.parametrize("fs_type", ["ext4", "xfs", "btrfs"])
-def test_qemu(osbuild, fmt, fs_type):
+def test_qemu(osb, fmt, fs_type):
     loctl = loop.LoopControl()
-    with osbuild as osb:
+    with osb:
         if not test.TestBase.has_filesystem_support(fs_type):
             pytest.skip(f"The {fs_type} was explicitly marked as unsupported on this platform.")
         options = {
@@ -213,8 +207,8 @@ def test_qemu(osbuild, fmt, fs_type):
     [("tree.tar.gz", None, ["application/x-tar"]),
      ("tree.tar.gz", "gzip", ["application/x-gzip", "application/gzip"])]
 )
-def test_tar(osbuild, filename, compression, expected_mimetypes):
-    with osbuild as osb:
+def test_tar(osb, filename, compression, expected_mimetypes):
+    with osb:
         options = {"filename": filename}
         if compression:
             options["compression"] = compression

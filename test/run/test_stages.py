@@ -103,7 +103,7 @@ def mapping_is_subset(subset, other):
     return False
 
 
-def assertTreeDiffsEqual(tree_diff1, tree_diff2):
+def assert_tree_diffs_equal(tree_diff1, tree_diff2):
     """
     Asserts two tree diffs for equality.
 
@@ -240,7 +240,7 @@ class TestStages(test.TestBase):
             with open(os.path.join(test_dir, "diff.json"), encoding="utf8") as f:
                 expected_diff = json.load(f)
 
-            assertTreeDiffsEqual(expected_diff, actual_diff)
+            assert_tree_diffs_equal(expected_diff, actual_diff)
 
             md_path = os.path.join(test_dir, "metadata.json")
             if os.path.exists(md_path):

@@ -11,6 +11,8 @@ import sys
 import tempfile
 import unittest
 
+import pytest
+
 import osbuild.meta
 from osbuild.objectstore import ObjectStore
 from osbuild.util import linux
@@ -496,3 +498,10 @@ class OSBuild(contextlib.AbstractContextManager):
             "cp", "--reflink=auto", "-a",
             os.path.join(from_path, "."), to_path
         ], check=True)
+
+
+@pytest.fixture(name="osb", scope="module")
+def osbuild_fixture():
+    store = os.getenv("OSBUILD_TEST_STORE")
+    with OSBuild(cache_from=store) as osb:
+        yield osb
