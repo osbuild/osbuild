@@ -103,105 +103,106 @@ def mapping_is_subset(subset, other):
     return False
 
 
+def assertTreeDiffsEqual(tree_diff1, tree_diff2):
+    """
+    Asserts two tree diffs for equality.
+
+    Before assertion, the two trees are sorted, therefore order of files
+    doesn't matter.
+
+    There's a special rule for asserting differences where we don't
+    know the exact before/after value. This is useful for example if
+    the content of file is dependent on current datetime. You can use this
+    feature by putting null value in difference you don't care about.
+
+    Example:
+        "/etc/shadow": {content: ["sha256:xxx", null]}
+
+        In this case the after content of /etc/shadow doesn't matter.
+        The only thing that matters is the before content and that
+        the content modification happened.
+
+    The first tree diff can additionally contain an `added_directories`
+    array. Such an entry can be used when you care that a directory is
+    added, but you don't care about its content. This means that all
+    `added_files` in the second tree under the `added_directory` entry
+    in the first tree will be ignored. Note that tree diffs currently
+    don't distinguish between added files and added directories, so the
+    `added_directories` entry is satisfied also if there's a file added
+    with such a name.
+    """
+
+    def _sorted_tree(tree):
+        sorted_tree = json.loads(json.dumps(tree, sort_keys=True))
+        sorted_tree["added_files"] = sorted(sorted_tree["added_files"])
+        sorted_tree["deleted_files"] = sorted(sorted_tree["deleted_files"])
+
+        return sorted_tree
+
+    tree_diff1 = _sorted_tree(tree_diff1)
+    tree_diff2 = _sorted_tree(tree_diff2)
+
+    def raise_assertion(msg):
+        diff = '\n'.join(
+            difflib.ndiff(
+                pprint.pformat(tree_diff1).splitlines(),
+                pprint.pformat(tree_diff2).splitlines(),
+            )
+        )
+        raise AssertionError(f"{msg}\n\n{diff}")
+
+    def path_equal_or_is_descendant(path, potential_ancestor):
+        """
+        :return: Returns true if path == potential_ancestor or if path is inside potential_ancestor
+        """
+        return path == potential_ancestor or path.startswith(potential_ancestor + "/")
+
+    for added_dir in tree_diff1.get('added_directories', []):
+        original = tree_diff2['added_files']
+
+        filtered = [p for p in original if not path_equal_or_is_descendant(p, added_dir)]
+
+        if len(filtered) == len(original):
+            raise_assertion(f'{added_dir} was not added')
+
+        tree_diff2['added_files'] = filtered
+
+    assert tree_diff1['added_files'] == tree_diff2['added_files']
+    assert tree_diff1['deleted_files'] == tree_diff2['deleted_files']
+
+    if len(tree_diff1['differences']) != len(tree_diff2['differences']):
+        raise_assertion('length of differences different')
+
+    for (file1, differences1), (file2, differences2) in \
+            zip(tree_diff1['differences'].items(), tree_diff2['differences'].items()):
+
+        if file1 != file2:
+            raise_assertion(f"filename different: {file1}, {file2}")
+
+        if len(differences1) != len(differences2):
+            raise_assertion("length of file differences different")
+
+        for (difference1_kind, difference1_values), (difference2_kind, difference2_values) in \
+                zip(differences1.items(), differences2.items()):
+            if difference1_kind != difference2_kind:
+                raise_assertion(f"different difference kinds: {difference1_kind}, {difference2_kind}")
+
+            if difference1_values[0] is not None \
+                    and difference2_values[0] is not None \
+                    and difference1_values[0] != difference2_values[0]:
+                raise_assertion(f"before values are different: {difference1_values[0]}, {difference2_values[0]}")
+
+            if difference1_values[1] is not None \
+                    and difference2_values[1] is not None \
+                    and difference1_values[1] != difference2_values[1]:
+                raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
+
+
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
 @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
 @make_stage_tests
 class TestStages(test.TestBase):
-
-    def assertTreeDiffsEqual(self, tree_diff1, tree_diff2):
-        """
-        Asserts two tree diffs for equality.
-
-        Before assertion, the two trees are sorted, therefore order of files
-        doesn't matter.
-
-        There's a special rule for asserting differences where we don't
-        know the exact before/after value. This is useful for example if
-        the content of file is dependent on current datetime. You can use this
-        feature by putting null value in difference you don't care about.
-
-        Example:
-            "/etc/shadow": {content: ["sha256:xxx", null]}
-
-            In this case the after content of /etc/shadow doesn't matter.
-            The only thing that matters is the before content and that
-            the content modification happened.
-
-        The first tree diff can additionally contain an `added_directories`
-        array. Such an entry can be used when you care that a directory is
-        added, but you don't care about its content. This means that all
-        `added_files` in the second tree under the `added_directory` entry
-        in the first tree will be ignored. Note that tree diffs currently
-        don't distinguish between added files and added directories, so the
-        `added_directories` entry is satisfied also if there's a file added
-        with such a name.
-        """
-
-        def _sorted_tree(tree):
-            sorted_tree = json.loads(json.dumps(tree, sort_keys=True))
-            sorted_tree["added_files"] = sorted(sorted_tree["added_files"])
-            sorted_tree["deleted_files"] = sorted(sorted_tree["deleted_files"])
-
-            return sorted_tree
-
-        tree_diff1 = _sorted_tree(tree_diff1)
-        tree_diff2 = _sorted_tree(tree_diff2)
-
-        def raise_assertion(msg):
-            diff = '\n'.join(
-                difflib.ndiff(
-                    pprint.pformat(tree_diff1).splitlines(),
-                    pprint.pformat(tree_diff2).splitlines(),
-                )
-            )
-            raise AssertionError(f"{msg}\n\n{diff}")
-
-        def path_equal_or_is_descendant(path, potential_ancestor):
-            """
-            :return: Returns true if path == potential_ancestor or if path is inside potential_ancestor
-            """
-            return path == potential_ancestor or path.startswith(potential_ancestor + "/")
-
-        for added_dir in tree_diff1.get('added_directories', []):
-            original = tree_diff2['added_files']
-
-            filtered = [p for p in original if not path_equal_or_is_descendant(p, added_dir)]
-
-            if len(filtered) == len(original):
-                raise_assertion(f'{added_dir} was not added')
-
-            tree_diff2['added_files'] = filtered
-
-        self.assertEqual(tree_diff1['added_files'], tree_diff2['added_files'])
-        self.assertEqual(tree_diff1['deleted_files'], tree_diff2['deleted_files'])
-
-        if len(tree_diff1['differences']) != len(tree_diff2['differences']):
-            raise_assertion('length of differences different')
-
-        for (file1, differences1), (file2, differences2) in \
-                zip(tree_diff1['differences'].items(), tree_diff2['differences'].items()):
-
-            if file1 != file2:
-                raise_assertion(f"filename different: {file1}, {file2}")
-
-            if len(differences1) != len(differences2):
-                raise_assertion("length of file differences different")
-
-            for (difference1_kind, difference1_values), (difference2_kind, difference2_values) in \
-                    zip(differences1.items(), differences2.items()):
-                if difference1_kind != difference2_kind:
-                    raise_assertion(f"different difference kinds: {difference1_kind}, {difference2_kind}")
-
-                if difference1_values[0] is not None \
-                        and difference2_values[0] is not None \
-                        and difference1_values[0] != difference2_values[0]:
-                    raise_assertion(f"before values are different: {difference1_values[0]}, {difference2_values[0]}")
-
-                if difference1_values[1] is not None \
-                        and difference2_values[1] is not None \
-                        and difference1_values[1] != difference2_values[1]:
-                    raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
 
     @classmethod
     def setUpClass(cls):
@@ -239,7 +240,7 @@ class TestStages(test.TestBase):
             with open(os.path.join(test_dir, "diff.json"), encoding="utf8") as f:
                 expected_diff = json.load(f)
 
-            self.assertTreeDiffsEqual(expected_diff, actual_diff)
+            assertTreeDiffsEqual(expected_diff, actual_diff)
 
             md_path = os.path.join(test_dir, "metadata.json")
             if os.path.exists(md_path):
