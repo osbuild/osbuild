@@ -44,6 +44,10 @@ for module, args in _tomlw_modules.items():
         _wargs = args
         break
     except ModuleNotFoundError:
+        # Workaround for tomli_w being removed from c10s - use local copy then
+        if module == "tomli_w":
+            spec = importlib.util.spec_from_file_location('tomli_w', 'tomli_w.py')
+            _tomlw = importlib.util.module_from_spec(spec)
         # allow importing without write support
         pass
 
