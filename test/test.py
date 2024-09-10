@@ -20,6 +20,12 @@ from osbuild.util import linux
 from .conftest import unsupported_filesystems
 
 
+def tree_diff(path1, path2):
+    checkout = TestBase.locate_test_checkout()
+    output = subprocess.check_output([os.path.join(checkout, "tools/tree-diff"), path1, path2])
+    return json.loads(output)
+
+
 class TestBase(unittest.TestCase):
     """Base Class for Tests
 
@@ -262,10 +268,7 @@ class TestBase(unittest.TestCase):
         Run the `tree-diff` tool from the osbuild checkout. It produces a JSON
         output that describes the difference between 2 file-system trees.
         """
-
-        checkout = TestBase.locate_test_checkout()
-        output = subprocess.check_output([os.path.join(checkout, "tools/tree-diff"), path1, path2])
-        return json.loads(output)
+        return tree_diff(path1, path2)
 
     @staticmethod
     def has_filesystem_support(fs: str) -> bool:
@@ -298,6 +301,7 @@ class OSBuild(contextlib.AbstractContextManager):
 
     def __init__(self, *, cache_from=None):
         self._cache_from = cache_from
+        self.store = None
 
     def __enter__(self):
         self._exitstack = contextlib.ExitStack()

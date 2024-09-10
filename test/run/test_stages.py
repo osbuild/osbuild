@@ -2,7 +2,6 @@
 # Runtime tests for the individual stages.
 #
 
-import contextlib
 import difflib
 import glob
 import json
@@ -21,10 +20,13 @@ import zipfile
 from collections.abc import Mapping
 from typing import Callable, Dict, List, Optional
 
+import pytest
+
 from osbuild.testutil import has_executable, pull_oci_archive_container
 from osbuild.util import checksum, selinux
 
 from .. import initrd, test
+from ..test import osbuild_fixture, tree_diff  # noqa: F401, pylint: disable=unused-import
 from .test_assemblers import mount
 
 
@@ -62,16 +64,6 @@ def find_stage(result, stageid):
         if stage["id"] == stageid:
             return stage
     return None
-
-
-def make_stage_tests(klass):
-    path = os.path.join(test.TestBase.locate_test_data(), "stages")
-    for t in glob.glob(f"{path}/*/diff.json"):
-        test_path = os.path.dirname(t)
-        test_name = os.path.basename(test_path).replace("-", "_")
-        setattr(klass, f"test_{test_name}",
-                lambda s, path=test_path: s.run_stage_diff_test(path))
-    return klass
 
 
 def mapping_is_subset(subset, other):
@@ -198,10 +190,47 @@ def assert_tree_diffs_equal(tree_diff1, tree_diff2):
                 raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
 
 
+@pytest.mark.parametrize("test_dir", [
+    os.path.dirname(p)
+    for p in glob.glob(os.path.join(test.TestBase.locate_test_data(), "stages/*/diff*.json"))
+])
+def test_run_stage_diff(tmp_path, osb, test_dir):
+    out_a = tmp_path / "out_a"
+    _ = osb.compile_file(os.path.join(test_dir, "a.json"),
+                         checkpoints=["build", "tree"],
+                         exports=["tree"], output_dir=out_a)
+
+    out_b = tmp_path / "out_b"
+    res = osb.compile_file(os.path.join(test_dir, "b.json"),
+                           checkpoints=["build", "tree"],
+                           exports=["tree"], output_dir=out_b)
+
+    tree1 = os.path.join(out_a, "tree")
+    tree2 = os.path.join(out_b, "tree")
+
+    actual_diff = tree_diff(tree1, tree2)
+
+    with open(os.path.join(test_dir, "diff.json"), encoding="utf8") as f:
+        expected_diff = json.load(f)
+
+    assert_tree_diffs_equal(expected_diff, actual_diff)
+
+    md_path = os.path.join(test_dir, "metadata.json")
+    if os.path.exists(md_path):
+        with open(md_path, "r", encoding="utf8") as f:
+            metadata = json.load(f)
+
+        assert metadata == res["metadata"]
+
+    # cache the downloaded data for the sources by copying
+    # it to self.cache, which is going to be used to initialize
+    # the osbuild cache with.
+    osb.copy_source_data(osb.store, "org.osbuild.files")
+
+
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
 @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
-@make_stage_tests
 class TestStages(test.TestBase):
 
     @classmethod
@@ -217,42 +246,6 @@ class TestStages(test.TestBase):
 
     def setUp(self):
         self.osbuild = test.OSBuild(cache_from=self.store)
-
-    def run_stage_diff_test(self, test_dir: str):
-        with contextlib.ExitStack() as stack:
-            osb = stack.enter_context(self.osbuild)
-
-            out_a = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
-            _ = osb.compile_file(os.path.join(test_dir, "a.json"),
-                                 checkpoints=["build", "tree"],
-                                 exports=["tree"], output_dir=out_a)
-
-            out_b = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
-            res = osb.compile_file(os.path.join(test_dir, "b.json"),
-                                   checkpoints=["build", "tree"],
-                                   exports=["tree"], output_dir=out_b)
-
-            tree1 = os.path.join(out_a, "tree")
-            tree2 = os.path.join(out_b, "tree")
-
-            actual_diff = self.tree_diff(tree1, tree2)
-
-            with open(os.path.join(test_dir, "diff.json"), encoding="utf8") as f:
-                expected_diff = json.load(f)
-
-            assert_tree_diffs_equal(expected_diff, actual_diff)
-
-            md_path = os.path.join(test_dir, "metadata.json")
-            if os.path.exists(md_path):
-                with open(md_path, "r", encoding="utf8") as f:
-                    metadata = json.load(f)
-
-                self.assertEqual(metadata, res["metadata"])
-
-            # cache the downloaded data for the sources by copying
-            # it to self.cache, which is going to be used to initialize
-            # the osbuild cache with.
-            osb.copy_source_data(self.store, "org.osbuild.files")
 
     def test_dracut(self):
         datadir = self.locate_test_data()
