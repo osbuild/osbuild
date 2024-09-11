@@ -22,7 +22,8 @@ class RunReturn:
 def test_chroot_context(mocked_run, tmp_path):
 
     with Chroot(os.fspath(tmp_path)) as chroot:
-        chroot.run(["/bin/true"], check=True)
+        ret = chroot.run(["/bin/true"], check=True)
+        assert isinstance(ret, RunReturn)
         chroot.run(["/bin/false"], check=False)
 
     assert mocked_run.call_args_list == [
