@@ -234,7 +234,7 @@ def test_run_stage_diff(tmp_path, osb, test_dir):
     # cache the downloaded data for the sources by copying
     # it to self.cache, which is going to be used to initialize
     # the osbuild cache with.
-    osb.copy_source_data(osb.cache_from, "org.osbuild.files")
+    osb.copy_source_data(osb.store, "org.osbuild.files")
 
 
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")

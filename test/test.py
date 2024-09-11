@@ -302,6 +302,7 @@ class OSBuild(contextlib.AbstractContextManager):
 
     def __init__(self, *, cache_from=None):
         self._cache_from = cache_from
+        self.store = None
 
     def __enter__(self):
         self._exitstack = contextlib.ExitStack()
@@ -335,10 +336,6 @@ class OSBuild(contextlib.AbstractContextManager):
 
         self._cachedir = None
         self._exitstack = None
-
-    @property
-    def cache_from(self) -> str:
-        return self._cache_from
 
     @staticmethod
     def _print_result(code, data_stdout, data_stderr, log):
@@ -518,6 +515,7 @@ def osbuild_fixture():
         store = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
         cleanup_dir = store
     with OSBuild(cache_from=store) as osb:
+        osb.store = store
         yield osb
     if cleanup_dir:
         shutil.rmtree(cleanup_dir)
