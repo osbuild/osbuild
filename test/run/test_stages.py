@@ -6,6 +6,7 @@ import difflib
 import glob
 import json
 import os
+import pathlib
 import pprint
 import random
 import re
@@ -188,6 +189,14 @@ def assert_tree_diffs_equal(tree_diff1, tree_diff2):
                     and difference2_values[1] is not None \
                     and difference1_values[1] != difference2_values[1]:
                 raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
+
+
+# T0DO: find a nicer way
+# overriding the build-in "tmp_path" so that we get the dir under /var/tmpx
+@pytest.fixture(name="tmp_path")
+def tmp_path_fixture():
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+        yield pathlib.Path(tmp)
 
 
 @pytest.mark.parametrize("test_dir", [
