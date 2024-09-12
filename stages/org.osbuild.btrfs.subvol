@@ -13,7 +13,7 @@ def main(paths, options):
         name = vol["name"].lstrip("/")
         subvol = os.path.join(volume, name)
 
-        cmd = ["btrfs", "subvolume", "create", subvol]
+        cmd = ["btrfs", "subvolume", "create", "-p", subvol]
         subprocess.run(cmd, encoding='utf-8', check=True)
 
 
