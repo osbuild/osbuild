@@ -1,6 +1,6 @@
 FROM registry.fedoraproject.org/fedora:latest
 
-RUN dnf groupinstall -y rpm-development-tools
+RUN dnf install -y @rpm-development-tools git
 
 RUN mkdir /prepare
 WORKDIR /prepare
@@ -8,6 +8,8 @@ WORKDIR /prepare
 COPY osbuild.spec .
 
 RUN dnf -y builddep ./osbuild.spec
+
+RUN pip install pydevd_pycharm debugpy
 
 RUN mkdir /app
 WORKDIR /app
