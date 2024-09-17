@@ -28,7 +28,7 @@ def main(tree, options):
 
     # We trick configparser into letting us write multiple instances of the same option by writing them as keys with no
     # value, so we enable allow_no_value
-    config = configparser.ConfigParser(allow_no_value=True)
+    config = configparser.ConfigParser(allow_no_value=True, interpolation=None)
     # prevent conversion of the option name to lowercase
     config.optionxform = lambda option: option
 
