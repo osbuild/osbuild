@@ -1,0 +1,61 @@
+#!/usr/bin/python3
+import configparser
+import sys
+
+import osbuild.api
+
+
+def validate(filename, cfg):
+    # ensure the service name does not exceed maximum filename length
+    if len(filename) > 255:
+        raise ValueError(f"Error: the {filename} unit exceeds the maximum filename length.")
+
+    # Filename extension must match the config:
+    #   .service requires a Service section
+    #   .mount requires a Mount section
+    if filename.endswith(".container") and "Container" not in cfg:
+        raise ValueError(f"Error: {filename} unit requires Container section")
+    if filename.endswith(".volume") and "Volume" not in cfg:
+        raise ValueError(f"Error: {filename} unit requires Volume section")
+    if filename.endswith(".network") and "Network" not in cfg:
+        raise ValueError(f"Error: {filename} unit requires Network section")
+
+
+def main(tree, options):
+    filename = options["filename"]
+    cfg = options["config"]
+    validate(filename, cfg)
+
+    # We trick configparser into letting us write multiple instances of the same option by writing them as keys with no
+    # value, so we enable allow_no_value
+    config = configparser.ConfigParser(allow_no_value=True, interpolation=None)
+    # prevent conversion of the option name to lowercase
+    config.optionxform = lambda option: option
+
+    for section, opts in cfg.items():
+        if not config.has_section(section):
+            config.add_section(section)
+        for option, value in opts.items():
+            if isinstance(value, list):
+                for v in value:
+                    if option == "Environment":
+                        # Option value becomes "KEY=VALUE" (quoted)
+                        v = '"' + v["key"] + "=" + str(v["value"]) + '"'
+                    config.set(section, str(option) + "=" + str(v))
+            else:
+                config.set(section, option, str(value))
+    persistent = options.get("unit-path", "usr")
+    systemd_dir = str()
+    if persistent == "usr":
+        systemd_dir = f"{tree}/usr/share/containers/systemd"
+    elif persistent == "etc":
+        systemd_dir = f"{tree}/etc/containers/systemd"
+
+    with open(f"{systemd_dir}/{filename}", "w", encoding="utf8") as f:
+        config.write(f, space_around_delimiters=False)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
