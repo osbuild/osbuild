@@ -90,9 +90,17 @@
               "Install"
             ],
             "not": {
-              "required": [
-                "Mount",
-                "Socket"
+              "anyOf": [
+                {
+                  "required": [
+                    "Mount"
+                  ]
+                },
+                {
+                  "required": [
+                    "Socket"
+                  ]
+                }
               ]
             }
           },
@@ -101,9 +109,17 @@
               "Socket"
             ],
             "not": {
-              "required": [
-                "Mount",
-                "Service"
+              "anyOf": [
+                {
+                  "required": [
+                    "Mount"
+                  ]
+                },
+                {
+                  "required": [
+                    "Service"
+                  ]
+                }
               ]
             }
           },
@@ -112,9 +128,17 @@
               "Mount"
             ],
             "not": {
-              "required": [
-                "Service",
-                "Socket"
+              "anyOf": [
+                {
+                  "required": [
+                    "Service"
+                  ]
+                },
+                {
+                  "required": [
+                    "Socket"
+                  ]
+                }
               ]
             }
           }
