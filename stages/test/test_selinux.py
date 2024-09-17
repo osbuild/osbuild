@@ -10,13 +10,15 @@ from osbuild import testutil
 STAGE_NAME = "org.osbuild.selinux"
 
 
-def get_test_input(test_data, implicit_file_contexts=True):
+def get_test_input(test_data, file_contexts=False, labels=False):
     test_input = {
         "type": STAGE_NAME,
         "options": {}
     }
-    if implicit_file_contexts:
+    if file_contexts:
         test_input["options"]["file_contexts"] = "some-context"
+    if labels:
+        test_input["options"]["labels"] = {"/path/to/file": "label_to_apply"}
 
     test_input["options"].update(test_data)
     return test_input
@@ -33,7 +35,7 @@ def get_test_input(test_data, implicit_file_contexts=True):
     ({"force_autorelabel": "foo"}, "'foo' is not of type 'boolean'"),
 ])
 def test_schema_validation_selinux(stage_schema, test_data, expected_err):
-    res = stage_schema.validate(get_test_input(test_data))
+    res = stage_schema.validate(get_test_input(test_data, file_contexts=True, labels=False))
     if expected_err == "":
         assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
     else:
@@ -41,11 +43,15 @@ def test_schema_validation_selinux(stage_schema, test_data, expected_err):
         testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
-def test_schema_validation_selinux_file_context_required(stage_schema):
-    res = stage_schema.validate(get_test_input({}, implicit_file_contexts=False))
+def test_schema_validation_selinux_required_options(stage_schema):
+    res = stage_schema.validate(get_test_input({}, file_contexts=False, labels=False))
     assert res.valid is False
-    expected_err = "'file_contexts' is a required property"
+    expected_err = "{} is not valid under any of the given schemas"
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
+    res = stage_schema.validate(get_test_input({}, file_contexts=True, labels=False))
+    assert res.valid is True
+    res = stage_schema.validate(get_test_input({}, file_contexts=False, labels=True))
+    assert res.valid is True
 
 
 @patch("osbuild.util.selinux.setfiles")
