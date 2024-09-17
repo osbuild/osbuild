@@ -8,11 +8,14 @@ from osbuild.util import selinux
 
 
 def main(tree, options):
-    file_contexts = os.path.join(f"{tree}", options["file_contexts"])
+    file_contexts = options.get("file_contexts")
     exclude_paths = options.get("exclude_paths")
-    if exclude_paths:
-        exclude_paths = [os.path.join(tree, p.lstrip("/")) for p in exclude_paths]
-    selinux.setfiles(file_contexts, os.fspath(tree), "", exclude_paths=exclude_paths)
+
+    if file_contexts:
+        file_contexts = os.path.join(f"{tree}", options["file_contexts"])
+        if exclude_paths:
+            exclude_paths = [os.path.join(tree, p.lstrip("/")) for p in exclude_paths]
+        selinux.setfiles(file_contexts, os.fspath(tree), "", exclude_paths=exclude_paths)
 
     labels = options.get("labels", {})
     for path, label in labels.items():
