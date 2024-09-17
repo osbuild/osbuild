@@ -37,7 +37,7 @@
     "    - 'ListenStream' - string",
     "    - 'ListenDatagram' - string",
     "    - 'ListenSequentialPacket' - string",
-    "    - 'ListenFifo' - string",
+    "    - 'ListenFIFO' - string",
     "    - 'SocketUser' - string",
     "    - 'SocketGroup' - string",
     "    - 'SocketMode' - string",
