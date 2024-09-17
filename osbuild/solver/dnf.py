@@ -243,7 +243,6 @@ class DNF(SolverBase):
         return packages
 
     def depsolve(self, arguments):
-        want_sbom = "sbom" in arguments
         # Return an empty list when 'transactions' key is missing or when it is None
         transactions = arguments.get("transactions") or []
         # collect repo IDs from the request so we know whether to translate gpg key paths
@@ -325,7 +324,7 @@ class DNF(SolverBase):
             "repos": repositories,
         }
 
-        if want_sbom:
+        if "sbom" in arguments:
             response["sbom"] = self._sbom_for_pkgset(last_transaction)
 
         return response
