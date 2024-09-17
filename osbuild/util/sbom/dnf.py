@@ -24,6 +24,20 @@ def bom_chksum_algorithm_from_hawkey(chksum_type: int) -> sbom_model.ChecksumAlg
     raise ValueError(f"Unknown Hawkey checksum type: {chksum_type}")
 
 
+def _hawkey_reldep_to_rpmdependency(reldep: hawkey.Reldep) -> sbom_model.RPMDependency:
+    """
+    Convert a hawkey.Reldep to an SBOM RPM dependency.
+    """
+    try:
+        return sbom_model.RPMDependency(reldep.name, reldep.relation, reldep.version)
+    except AttributeError:
+        # '_hawkey.Reldep' object has no attribute 'name' in the version shipped on RHEL-8
+        dep_parts = str(reldep).split()
+        while len(dep_parts) < 3:
+            dep_parts.append("")
+        return sbom_model.RPMDependency(dep_parts[0], dep_parts[1], dep_parts[2])
+
+
 # pylint: disable=too-many-branches
 def dnf_pkgset_to_sbom_pkgset(dnf_pkgset: List[dnf.package.Package]) -> List[sbom_model.BasePackage]:
     """
@@ -72,10 +86,10 @@ def dnf_pkgset_to_sbom_pkgset(dnf_pkgset: List[dnf.package.Package]) -> List[sbo
                 repo_url = dnf_pkg.repo.mirrorlist
             pkg.repository_url = repo_url
 
-        pkg.rpm_provides = [sbom_model.RPMDependency(r.name, r.relation, r.version) for r in dnf_pkg.provides]
-        pkg.rpm_requires = [sbom_model.RPMDependency(r.name, r.relation, r.version) for r in dnf_pkg.requires]
-        pkg.rpm_recommends = [sbom_model.RPMDependency(r.name, r.relation, r.version) for r in dnf_pkg.recommends]
-        pkg.rpm_suggests = [sbom_model.RPMDependency(r.name, r.relation, r.version) for r in dnf_pkg.suggests]
+        pkg.rpm_provides = [_hawkey_reldep_to_rpmdependency(r) for r in dnf_pkg.provides]
+        pkg.rpm_requires = [_hawkey_reldep_to_rpmdependency(r) for r in dnf_pkg.requires]
+        pkg.rpm_recommends = [_hawkey_reldep_to_rpmdependency(r) for r in dnf_pkg.recommends]
+        pkg.rpm_suggests = [_hawkey_reldep_to_rpmdependency(r) for r in dnf_pkg.suggests]
 
         # The dnf_pkgset is not sorted by package dependencies. We need to determine relationships in two steps:
         # 1. Collect all packages that provide a certain capability
