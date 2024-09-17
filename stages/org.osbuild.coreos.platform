@@ -52,8 +52,10 @@ def main(paths, options):
     json_grub_args, json_kargs = None, None
     if os.path.exists(platforms_source_path):
         os.makedirs(os.path.dirname(platforms_dest_path), mode=0o755, exist_ok=True)
-        # Copy platforms.json to the boot partition
-        shutil.copy2(platforms_source_path, platforms_dest_path)
+        # Copy platforms.json to the boot partition. Use shutil.copy here and not
+        # shutil.copy2 because we don't want the selinux labels from the source
+        # to be copied over, but rather the defaults for the destination.
+        shutil.copy(platforms_source_path, platforms_dest_path)
         json_grub_args, json_kargs = process_platforms_json(platforms_dest_path, platform)
     if json_kargs:
         kernel_arguments.extend(json_kargs)
