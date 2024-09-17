@@ -1,2 +1,2 @@
-jsonschema
+fastjsonschema
 pytest

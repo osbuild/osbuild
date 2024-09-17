@@ -14,7 +14,7 @@ setuptools.setup(
     ],
     license='Apache-2.0',
     install_requires=[
-        "jsonschema",
+        "fastjsonschema",
     ],
     entry_points={
         "console_scripts": [
