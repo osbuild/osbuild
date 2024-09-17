@@ -33,6 +33,10 @@ def main(inputs, output_dir, options):
     if options.get("sparse", False):
         extra_args += ["--sparse"]
 
+    transform = options.get("transform")
+    if transform:
+        extra_args += ["--transform", transform]
+
     # Set up the tar command.
     tar_cmd = [
         "tar",
