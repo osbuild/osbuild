@@ -30,7 +30,7 @@ jobs:
     - name: "Run"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202404252004
+        image: ghcr.io/osbuild/osbuild-ci:latest-202409171558
         run: |
           # Hacky replacement of container storage driver:
           # The default overlayfs doesn't work in the runner, so let's change
@@ -49,7 +49,8 @@ jobs:
               # We need to use the version from the system to test things.
               # Since we are running tests on Fedora, enable site packages only
               # for Python version which is available on Fedora.
-              if [ "${{ matrix.environment }}" == "py312" ]; then
+              # See also: https://github.com/osbuild/containers/pull/79
+              if [ "${{ matrix.environment }}" == "$(cat /osb/libdnf-python-version)" ]; then
                   TOX_ARGS="-x testenv.sitepackages=True"
               fi
           fi
@@ -68,7 +69,7 @@ jobs:
           # Using 4 workers is a bit arbitrary, "auto" is probably too aggressive.
           TEST_WORKERS: "-n 4"
         with:
-          image: ghcr.io/osbuild/osbuild-ci:latest-202404252004
+          image: ghcr.io/osbuild/osbuild-ci:latest-202409171558
           run: |
             OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
             tox -e "py36" -- ${{ env.TEST_WORKERS }} test.run.test_assemblers
