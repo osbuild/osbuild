@@ -35,8 +35,8 @@ def assert_dnf5():
 
 
 def assert_dnf():
-    if sp.run(["/usr/bin/python3", "-c", "import libdnf"], check=False).returncode != 0:
-        raise RuntimeError("Cannot import libdnf")
+    if sp.run(["/usr/bin/python3", "-c", "import dnf"], check=False).returncode != 0:
+        raise RuntimeError("Cannot import dnf")
 
 
 def depsolve(transactions, repos, root_dir, cache_dir, dnf_config, opt_metadata, with_sbom=False) -> Tuple[dict, int]:

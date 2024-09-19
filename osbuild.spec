@@ -137,11 +137,11 @@ manifests and osbuild.
 Summary:        Dependency solving support for DNF
 Requires:       %{name} = %{version}-%{release}
 
-# Fedora 41 and later use libdnf5, RHEL and Fedora < 41 use libdnf
+# Fedora 41 and later use libdnf5, RHEL and Fedora < 41 use dnf
 %if 0%{?fedora} >= 41
 Requires: python3-libdnf5 >= 5.2.1
 %else
-Requires: python3-libdnf
+Requires: python3-dnf
 %endif
 
 # osbuild 125 added a new "solver" field and osbuild-composer only
