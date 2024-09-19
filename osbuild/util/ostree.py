@@ -135,6 +135,27 @@ def setup_remote(repo, name, remote):
         secrets = Subscriptions.get_consumer_secrets()
         remote_add_args.append(f"--set=tls-client-key-path={secrets['consumer_key']}")
         remote_add_args.append(f"--set=tls-client-cert-path={secrets['consumer_cert']}")
+    elif remote.get("secrets", {}).get("name") == "org.osbuild.mtls":
+        tlsca = os.getenv("OSBUILD_SOURCES_OSTREE_SSL_CA_CERT")
+        if tlsca:
+            remote_add_args.append(f"--set=tls-ca-path={tlsca}")
+
+        tlscert = os.getenv("OSBUILD_SOURCES_OSTREE_SSL_CLIENT_CERT")
+        if tlscert:
+            remote_add_args.append(f"--set=tls-client-cert-path={tlscert}")
+
+        tlskey = os.getenv("OSBUILD_SOURCES_OSTREE_SSL_CLIENT_KEY")
+        if tlskey:
+            remote_add_args.append(f"--set=tls-client-key-path={tlskey}")
+
+        proxy = os.getenv("OSBUILD_SOURCES_OSTREE_PROXY")
+        if proxy:
+            remote_add_args.append(f"--set=proxy={proxy}")
+
+        # Insecure mode is meant for development only
+        insecure = os.getenv("OSBUILD_SOURCES_OSTREE_INSECURE")
+        if insecure and insecure.lower() in ["true", "yes", "1"]:
+            remote_add_args.append("--set=tls-permissive=true")
 
     cli("remote", "add", name, url,
         *remote_add_args, repo=repo)
