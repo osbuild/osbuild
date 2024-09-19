@@ -3,7 +3,22 @@
 
 Uses ostree to pull specific commits from (remote) repositories
 at the provided `url`. Can verify the commit, if one or more
-gpg keys are provided via `gpgkeys`.
+gpg keys are provided via `gpgkeys`. The secret providers currently
+supported are:
+
+- `org.osbuild.mtls` for downloading content that requires client
+  certificate. The paths to the key and cert should be set in the
+  environment in OSBUILD_SOURCES_OSTREE_SSL_CLIENT_KEY,
+  OSBUILD_SOURCES_OSTREE_SSL_CLIENT_CERT, and optionally
+  OSBUILD_SOURCES_OSTREE_SSL_CA_CERT.
+
+- `org.osbuild.rhsm.consumer` for downloading content using RHSM
+  entitlement certificate. Secret fields `consumer_cert` and
+  `consumer_key` must be set.
+
+To skip TLS verification, set OSBUILD_SOURCES_OSTREE_INSECURE environment
+variable to "true". To set a HTTP(S) proxy, set OSBUILD_SOURCES_OSTREE_PROXY
+environment variable to the proxy URL.
 """
 
 
