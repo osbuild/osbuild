@@ -62,20 +62,23 @@ class DirHTTPServer(ThreadingHTTPServer):
             request, client_address, self, directory=self.directory)
 
 
-def _httpd(rootdir, port, simulate_failures):
-    return DirHTTPServer(
+def _httpd(rootdir, simulate_failures, ctx=None):
+    port = _get_free_port()
+    httpd = DirHTTPServer(
         ("localhost", port),
         http.server.SimpleHTTPRequestHandler,
         directory=rootdir,
         simulate_failures=simulate_failures,
     )
+    if ctx:
+        httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
+    threading.Thread(target=httpd.serve_forever).start()
+    return httpd
 
 
 @contextlib.contextmanager
 def http_serve_directory(rootdir, simulate_failures=0):
-    port = _get_free_port()
-    httpd = _httpd(rootdir, port, simulate_failures)
-    threading.Thread(target=httpd.serve_forever).start()
+    httpd = _httpd(rootdir, simulate_failures)
     try:
         yield httpd
     finally:
@@ -84,14 +87,21 @@ def http_serve_directory(rootdir, simulate_failures=0):
 
 @contextlib.contextmanager
 def https_serve_directory(rootdir, certfile, keyfile, simulate_failures=0):
-    port = _get_free_port()
-    httpd = _httpd(rootdir, port, simulate_failures)
-
     ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     ctx.load_cert_chain(certfile=certfile, keyfile=keyfile)
-    httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
+    httpd = _httpd(rootdir, simulate_failures, ctx)
+    try:
+        yield httpd
+    finally:
+        httpd.shutdown()
 
-    threading.Thread(target=httpd.serve_forever).start()
+
+@contextlib.contextmanager
+def https_serve_directory_mtls(rootdir, ca_cert, server_cert, server_key, simulate_failures=0):
+    ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cafile=ca_cert)
+    ctx.load_cert_chain(certfile=server_cert, keyfile=server_key)
+    ctx.verify_mode = ssl.CERT_REQUIRED
+    httpd = _httpd(rootdir, simulate_failures, ctx)
     try:
         yield httpd
     finally:

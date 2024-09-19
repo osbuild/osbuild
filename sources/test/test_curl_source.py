@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 
 import osbuild.testutil
-from osbuild.testutil.net import http_serve_directory, https_serve_directory
+from osbuild.testutil.net import http_serve_directory, https_serve_directory, https_serve_directory_mtls
 
 SOURCES_NAME = "org.osbuild.curl"
 
@@ -106,7 +106,7 @@ def test_curl_download_many_fail(curl_parallel):
     assert 'http://localhost:9876/random-not-exists: error code 7' in str(exp.value)
 
 
-def make_test_sources(fake_httpd_root, port, n_files, start_n=0, cacert=""):
+def make_test_sources(fake_httpd_root, port, n_files, start_n=0, cacert="", secret_name=""):
     """
     Create test sources for n_file. All files have the names
     0,1,2...
@@ -127,6 +127,8 @@ def make_test_sources(fake_httpd_root, port, n_files, start_n=0, cacert=""):
         }
         if cacert:
             val["secrets"] = {}
+            if secret_name != "":
+                val["secrets"]["name"] = secret_name
             val["secrets"]["ssl_ca_cert"] = cacert
         sources[key] = val
         (fake_httpd_root / name).write_text(name, encoding="utf8")
@@ -401,3 +403,33 @@ def test_curl_download_many_mixed_certs(tmp_path, monkeypatch, sources_module, c
 
             assert httpds.reqs.count == 2
             assert httpds2.reqs.count == 2
+
+
+def test_curl_download_mtls(tmp_path, monkeypatch, sources_service):
+    fake_httpd_root = tmp_path / "fake-httpd-root"
+    cert_dir = pathlib.Path(__file__).parent.parent.parent / "test/data/certs"
+    cacert = cert_dir / "test-ca.crt"
+    assert cacert.exists()
+    servercert = cert_dir / "localhost-server.crt"
+    assert servercert.exists()
+    serverkey = cert_dir / "localhost-server.key"
+    assert serverkey.exists()
+    clientcert = cert_dir / "client1-client.crt"
+    assert clientcert.exists()
+    clientkey = cert_dir / "client1-client.key"
+    assert clientkey.exists()
+
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_SSL_CA_CERT", cacert.as_posix())
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT", clientcert.as_posix())
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY", clientkey.as_posix())
+
+    with https_serve_directory_mtls(fake_httpd_root, ca_cert=cacert,
+                                    server_cert=servercert, server_key=serverkey) as httpds:
+        test_sources = make_test_sources(
+            fake_httpd_root, httpds.server_port, 1, cacert=cacert, secret_name="org.osbuild.mtls")
+
+        sources_service.cache = tmp_path / "curl-download-dir"
+        sources_service.cache.mkdir()
+        sources_service.fetch_all(test_sources)
+
+        assert httpds.reqs.count == 1
