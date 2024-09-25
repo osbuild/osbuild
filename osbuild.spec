@@ -27,7 +27,6 @@ Requires:       bash
 Requires:       bubblewrap
 Requires:       coreutils
 Requires:       curl
-Requires:       dnf
 Requires:       e2fsprogs
 Requires:       glibc
 Requires:       policycoreutils
