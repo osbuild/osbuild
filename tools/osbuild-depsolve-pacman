@@ -136,7 +136,7 @@ def validate_request(request):
     if sbom is not None:
         return {
             "kind": "InvalidRequest",
-            "reason": "SBOM support for DNF5 is not implemented"
+            "reason": "SBOM support for Pacman is not available"
         }
 
     if not arguments.get("repos"):
