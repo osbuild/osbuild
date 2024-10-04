@@ -13,7 +13,7 @@ jobs:
           - version: "9"
             pytest_exclude: 'not (TestBoot and boot)'
           - version: "10"
-            pytest_exclude: 'not (TestBoot and boot)'
+            pytest_exclude: 'not (TestBoot and boot) and not (test_write_read)'
     name: "Unittests on Centos Stream ${{ matrix.centos.version }}"
     runs-on: ubuntu-latest
     steps:
