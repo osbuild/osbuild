@@ -19,6 +19,9 @@
       "enum": [
         "2"
       ]
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata"
     }
   },
   "definitions": {
@@ -80,6 +83,31 @@
         "options": {
           "type": "object",
           "additionalProperties": true
+        }
+      }
+    },
+    "metadata": {
+      "title": "Metadata information for a manifest",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "generators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     },
