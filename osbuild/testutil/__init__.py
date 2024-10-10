@@ -107,7 +107,7 @@ def mock_command(cmd_name: str, script: str):
         # will break. easy enough to fix by using \0 as the separator but
         # then \n in args is kinda rare
         fake_cmd_content = textwrap.dedent(f"""\
-        #!/bin/sh -e
+        #!/bin/bash -e
 
         for arg in "$@"; do
            echo "$arg" >> {cmd_calllog_path}
