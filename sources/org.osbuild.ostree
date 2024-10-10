@@ -3,7 +3,18 @@
 
 Uses ostree to pull specific commits from (remote) repositories
 at the provided `url`. Can verify the commit, if one or more
-gpg keys are provided via `gpgkeys`.
+gpg keys are provided via `gpgkeys`. The secret providers currently
+supported are:
+
+- `org.osbuild.mtls` for downloading content that requires client
+  certificats. The paths to the key and cert should be set in the
+  environment in OSBUILD_SOURCES_OSTREE_SSL_CLIENT_KEY,
+  OSBUILD_SOURCES_OSTREE_SSL_CLIENT_CERT, and optionally
+  OSBUILD_SOURCES_OSTREE_SSL_CA_CERT.
+
+To skip TLS verification, set OSBUILD_SOURCES_OSTREE_INSECURE environment
+variable to "true". To set a HTTP(S) proxy, set OSBUILD_SOURCES_OSTREE_PROXY
+environment variable to the proxy URL.
 """
 
 
@@ -121,6 +132,30 @@ class OSTreeSource(sources.SourceService):
         # shared access. This is the default since `2018.5`, but lets document this
         # explicitly here.
         ostree.cli("config", "set", "repo.locking", "true", repo=self.repo)
+
+        # MTLS configuration
+        if "secrets" in self.parameters and self.parameters["secrets"]["name"] == "org.osbuild.mtls":
+          tlsca = os.getenv("OSBUILD_SOURCES_OSTREE_SSL_CA_CERT")
+          if tlsca:
+            ostree.cli("config", "set", self.repo + ".tls-ca", tlsca, repo=self.repo)
+
+          tlscert = os.getenv("OSBUILD_SOURCES_OSTREE_SSL_CLIENT_CERT")
+          if tlscert:
+            ostree.cli("config", "set", self.repo + ".tls-client-cert", tlscert, repo=self.repo)
+
+          tlskey = os.getenv("OSBUILD_SOURCES_OSTREE_SSL_CLIENT_KEY")
+          if tlskey:
+            ostree.cli("config", "set", self.repo + ".tls-client-key", tlskey, repo=self.repo)
+
+        # Insecure mode for development against HTTPS repos
+        insecure = os.getenv("OSBUILD_SOURCES_OSTREE_INSECURE")
+        if insecure and insecure.lower() in ["true", "1"]:
+          ostree.cli("config", "set", self.repo + ".tls-permissive", "true", repo=self.repo)
+
+        # HTTP(S) proxy configuration
+        proxy = os.getenv("OSBUILD_SOURCES_OSTREE_PROXY")
+        if proxy:
+          ostree.cli("config", "set", self.repo + ".proxy", proxy, repo=self.repo)
 
     # pylint: disable=[no-self-use]
     def exists(self, checksum, _desc):
