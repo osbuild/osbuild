@@ -50,6 +50,27 @@ SHELL = /bin/bash
 VERSION := $(shell (cd "$(SRCDIR)" && python3 setup.py --version))
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
 
+# List of all files which trigger a rebuild of the
+# development targets and container
+
+# Directories to search
+SRC_DEPS_DIRS := assemblers devices inputs mounts osbuild runners sources stages tools
+
+# Function to search for Python files in a directory
+define find_python_files
+$(shell find $(1) -type f -exec file {} \; | grep "Python script" | grep -Eo "^[^:]+")
+endef
+
+# All files to check for rebuild!
+SRC_DEPS := $(shell find . -name "*.py") \
+       $(foreach dir,$(SRC_DEPS_DIRS),$(call find_python_files,$(dir))) \
+       $(shell find schemas -name "*.json")
+
+CONTAINER_EXECUTABLE ?= podman
+CONTAINER_IMAGE := osbuild_dev
+CONTAINERFILE := tools/Containerfile.dev
+
+
 #
 # Generic Targets
 #
@@ -84,6 +105,13 @@ help:
 	@echo
 	@echo "    help:               Print this usage information."
 	@echo "    man:                Generate all man-pages"
+	@echo
+	@echo "    rpm:                Generate the rpm to install osbuild"
+	@echo "    srpm:               Generate the source rpms"
+	@echo "    rpm.dev:            Generate development rpms that include uncommited changes"
+	@echo "    container.dev:      Generate a development container with osbuild"
+	@echo "                        from the current sources"
+	@echo "    clean:              Remove all build artifacts"
 	@echo
 	@echo "    lint:               Check the code with linter (tox)"
 	@echo "    lint-quick:         Check the code with fast linters only (local)"
@@ -289,14 +317,33 @@ git-diff-check:
 
 RPM_SPECFILE=rpmbuild/SPECS/osbuild-$(COMMIT).spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-$(COMMIT).tar.gz
+RPM_SPECFILE_DEV=rpmbuild/SPECS/osbuild-SRC.spec
+RPM_TARBALL_DEV=rpmbuild/SOURCES/osbuild-SRC.tar.gz
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
 	(echo "%global commit $(COMMIT)"; git show HEAD:osbuild.spec) > $(RPM_SPECFILE)
 
+# building rpm for development with a constant name
+# to avoid any semblance to a "release rpm"
+$(RPM_SPECFILE_DEV): osbuild.spec
+	mkdir -p $(CURDIR)/rpmbuild/SPECS
+	echo "%global commit SRC" > $@
+	echo "%define _rpmfilename %%{NAME}.rpm" >> $@
+	echo "%global source_date_epoch_from_changelog 1" >> $@
+	echo "%global clamp_mtime_to_source_date_epoch 1" >> $@
+	cat $< >> $@
+
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
 	git archive --prefix=osbuild-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+
+$(RPM_TARBALL_DEV): $(SRC_DEPS)
+	mkdir -p $(CURDIR)/rpmbuild/SOURCES
+	# using "--dereference" to workaround that "--transform" break symbolic links without it
+	# "cat" is merging all files tracked by git and those not tracked by git, while respecting .gitignore
+	# during development we potentially have untracked files that could be needed for compilation
+	cat <(git ls-files -z) <(git ls-files -z --others --exclude-standard) | xargs -0 tar -czf $@ --dereference --transform="s|^|osbuild-SRC/|"
 
 .PHONY: srpm
 srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
@@ -309,6 +356,26 @@ rpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
+
+
+RPM_DEV_FILES := osbuild.rpm \
+                 osbuild-depsolve-dnf.rpm \
+                 osbuild-luks2.rpm \
+                 osbuild-ostree.rpm \
+                 osbuild-selinux.rpm \
+                 osbuild-tools.rpm \
+                 python3-osbuild.rpm
+
+RPM_DEV := $(addprefix rpmbuild/RPMS/,$(RPM_DEV_FILES))
+
+.PHONY: rpm.dev
+rpm.dev: $(RPM_DEV)
+
+$(RPM_DEV): $(RPM_SPECFILE_DEV) $(RPM_TARBALL_DEV) $(SRC_DEPS)
+	export SOURCE_DATE_EPOCH=$(shell stat -c %Y $(RPM_SPECFILE_DEV))
+	rpmbuild -bb \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		$(RPM_SPECFILE_DEV)
 
 #
 # Releasing
@@ -326,3 +393,15 @@ bump-version:
 .PHONY: format
 format:
 	autopep8 --in-place --max-line-length 120 -a -a -a -j0 -r .
+
+clean:
+	rm -rf rpmbuild
+	rm -f container_built.info
+
+container_built.info: $(CONTAINERFILE) osbuild.spec $(SRC_DEPS)
+	$(CONTAINER_EXECUTABLE) build -t $(CONTAINER_IMAGE) -f $(CONTAINERFILE) .
+	echo "Container last built on" > $@
+	date >> $@
+
+.PHONY: container.dev
+container.dev: container_built.info
