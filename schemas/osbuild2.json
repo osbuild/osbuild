@@ -19,6 +19,9 @@
       "enum": [
         "2"
       ]
+    },
+    "meta": {
+      "$ref": "#/definitions/meta"
     }
   },
   "definitions": {
@@ -82,6 +85,11 @@
           "additionalProperties": true
         }
       }
+    },
+    "meta": {
+      "title": "Arbitrary meta information for a manifest",
+      "type": "object",
+      "additionalProperties": true
     },
     "mounts": {
       "title": "Collection of mount points for a stage",
