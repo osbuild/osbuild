@@ -18,6 +18,12 @@
           "description": "The vmdk image filename present in the root of the tree",
           "type": "string",
           "pattern": "[a-zA-Z0-9+_.-]+.vmdk"
+        },
+        "ostype": {
+          "description": "The kind of installed guest operating system",
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_]+$",
+          "default": "other26xLinux64Guest"
         }
       }
     }
