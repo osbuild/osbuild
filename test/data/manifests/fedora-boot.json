@@ -1,5 +1,13 @@
 {
   "version": "2",
+  "metadata": {
+    "generators": [
+      {
+        "name": "osbuild-mpp",
+        "version": "unknown"
+      }
+    ]
+  },
   "pipelines": [
     {
       "runner": "org.osbuild.fedora39",
