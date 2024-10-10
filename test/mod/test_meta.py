@@ -323,20 +323,20 @@ def test_load_from_json_prefered(tmp_path):
     (
         # no description
         {"summary": "some", "schema": {}},
-        "'description' is a required property",
+        "data must contain ['description'] properties",
     ), (
         # no summary
         {"description": ["yes"], "schema": {}},
-        "'summary' is a required property",
+        "data must contain ['summary'] properties",        
     ), (
         # schema{,_2} missing
         {"summary": "some", "description": ["many", "strings"]},
-        " is not valid",
+        "data cannot be validated by any definition"
     ), (
         # capabilities of wrong type
         {"summary": "some", "description": ["many", "strings"], "schema": {},
          "capabilities": [1, "cap1"]},
-        " is not of type 'string'",
+        " must be string"
     ),
 ])
 def test_meta_json_validation_schema(test_input, expected_err):
