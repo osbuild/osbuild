@@ -7,7 +7,7 @@ import subprocess
 
 import pytest
 
-from .. import test
+from ..test import osbuild_fixture  # noqa: F401, pylint: disable=unused-import
 
 
 @pytest.fixture(name="jsondata", scope="module")
@@ -40,12 +40,6 @@ def jsondata_fixture():
             }
         ]
     })
-
-
-@pytest.fixture(name="osb", scope="module")
-def osbuild_fixture():
-    with test.OSBuild() as osb:
-        yield osb
 
 
 @pytest.fixture(name="testing_libdir", scope="module")

@@ -10,6 +10,7 @@ import pytest
 import osbuild.main_cli
 
 from .. import test
+from ..test import osbuild_fixture  # noqa: F401, pylint: disable=unused-import
 
 
 @pytest.fixture(name="jsondata", scope="module")
@@ -38,11 +39,6 @@ def jsondata_fixture():
         ]
     })
 
-
-@pytest.fixture(name="osb", scope="module")
-def osbuild_fixture():
-    with test.OSBuild() as osb:
-        yield osb
 
 #
 # Run a noop Pipeline. Run twice to verify the cache does not affect

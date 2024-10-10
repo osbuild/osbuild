@@ -6,16 +6,25 @@ import contextlib
 import errno
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+
+import pytest
 
 import osbuild.meta
 from osbuild.objectstore import ObjectStore
 from osbuild.util import linux
 
 from .conftest import unsupported_filesystems
+
+
+def tree_diff(path1, path2):
+    checkout = TestBase.locate_test_checkout()
+    output = subprocess.check_output([os.path.join(checkout, "tools/tree-diff"), path1, path2])
+    return json.loads(output)
 
 
 class TestBase(unittest.TestCase):
@@ -260,10 +269,7 @@ class TestBase(unittest.TestCase):
         Run the `tree-diff` tool from the osbuild checkout. It produces a JSON
         output that describes the difference between 2 file-system trees.
         """
-
-        checkout = TestBase.locate_test_checkout()
-        output = subprocess.check_output([os.path.join(checkout, "tools/tree-diff"), path1, path2])
-        return json.loads(output)
+        return tree_diff(path1, path2)
 
     @staticmethod
     def has_filesystem_support(fs: str) -> bool:
@@ -296,6 +302,7 @@ class OSBuild(contextlib.AbstractContextManager):
 
     def __init__(self, *, cache_from=None):
         self._cache_from = cache_from
+        self.store = None
 
     def __enter__(self):
         self._exitstack = contextlib.ExitStack()
@@ -496,3 +503,19 @@ class OSBuild(contextlib.AbstractContextManager):
             "cp", "--reflink=auto", "-a",
             os.path.join(from_path, "."), to_path
         ], check=True)
+
+
+@pytest.fixture(name="osb", scope="module")
+def osbuild_fixture():
+    cleanup_dir = None
+    store = os.getenv("OSBUILD_TEST_STORE")
+    if not store:
+        # we cannot use tmp_path_factory here as there is no easy way
+        # to put it under /var/tmp
+        store = tempfile.mkdtemp(prefix="osbuild-test-", dir="/var/tmp")
+        cleanup_dir = store
+    with OSBuild(cache_from=store) as osb:
+        osb.store = store
+        yield osb
+    if cleanup_dir:
+        shutil.rmtree(cleanup_dir)
