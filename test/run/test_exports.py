@@ -2,8 +2,6 @@ import contextlib
 import json
 import os
 import pathlib
-import shutil
-import subprocess
 
 import pytest
 
@@ -48,24 +46,10 @@ def osbuild_fixture():
         yield osb
 
 
-@pytest.fixture(name="testing_libdir", scope="module")
-def testing_libdir_fixture(tmpdir_factory):
+@pytest.fixture(name="testing_libdir")
+def testing_libdir_fixture():
     tests_path = pathlib.Path(__file__).parent.parent
-    project_path = tests_path.parent
-    testing_libdir_path = tests_path / "stages"
-    fake_libdir_path = tmpdir_factory.mktemp("fake-libdir")
-    # there must be an empty "osbild" dir for a "os.listdir(self._libdir)"
-    # in buildroot.py
-    (fake_libdir_path / "osbuild").mkdir()
-    # construct minimal viable libdir from current checkout
-    for d in ["stages", "runners", "schemas", "assemblers"]:
-        subprocess.run(
-            ["cp", "-a", os.fspath(project_path / d), f"{fake_libdir_path}"],
-            check=True)
-    # now inject testing stages
-    for p in testing_libdir_path.glob("org.osbuild.testing.*"):
-        shutil.copy2(p, fake_libdir_path / "stages")
-    yield fake_libdir_path
+    yield f".:{tests_path}"
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="root-only")

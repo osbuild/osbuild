@@ -19,6 +19,7 @@ from typing import Set
 
 from osbuild.api import BaseAPI
 from osbuild.util import linux
+from osbuild.util.libdir import Libdir
 
 __all__ = [
     "BuildRoot",
@@ -88,12 +89,12 @@ class BuildRoot(contextlib.AbstractContextManager):
     are retained.
     """
 
-    def __init__(self, root, runner, libdir, var, *, rundir="/run/osbuild"):
+    def __init__(self, root, runner, libdir_str, var, *, rundir="/run/osbuild"):
         self._exitstack = None
         self._rootdir = root
         self._rundir = rundir
         self._vardir = var
-        self._libdir = libdir
+        self._libdir = Libdir(libdir_str)
         self._runner = runner
         self._apis = []
         self.dev = None
@@ -255,11 +256,18 @@ class BuildRoot(contextlib.AbstractContextManager):
         # In case `libdir` contains the python module, it must be self-contained
         # and we provide nothing else. Otherwise, we additionally look for
         # the installed `osbuild` module and bind-mount it as well.
-        mounts += ["--ro-bind", f"{self._libdir}", "/run/osbuild/lib"]
-        if not os.listdir(os.path.join(self._libdir, "osbuild")):
+        for host_dir, target_dir in zip(self._libdir.dirs, self._libdir.buildroot_dirs):
+            mounts += ["--ro-bind", host_dir, target_dir]
+
+        def _find_osbuild_dir():
+            for host_libdir in self._libdir.dirs:
+                if os.path.isdir(os.path.join(host_libdir, "osbuild")):
+                    return True
+            return False
+        if not _find_osbuild_dir():
             modorigin = importlib.util.find_spec("osbuild").origin
             modpath = os.path.dirname(modorigin)
-            mounts += ["--ro-bind", f"{modpath}", "/run/osbuild/lib/osbuild"]
+            mounts += ["--ro-bind", f"{modpath}", f"{self._libdir.buildroot_dirs[0]}/osbuild"]
 
         # Setup /proc overrides
         for override in self.proc.overrides:
@@ -309,7 +317,7 @@ class BuildRoot(contextlib.AbstractContextManager):
             "container": "bwrap-osbuild",
             "LC_CTYPE": "C.UTF-8",
             "PATH": "/usr/sbin:/usr/bin",
-            "PYTHONPATH": "/run/osbuild/lib",
+            "PYTHONPATH": self._libdir.buildroot_libdir,
             "PYTHONUNBUFFERED": "1",
             "TERM": os.getenv("TERM", "dumb"),
         }
