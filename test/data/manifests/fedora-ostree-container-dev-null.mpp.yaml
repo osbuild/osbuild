@@ -1,0 +1,113 @@
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  # The input-tree pipeline will contain the container archive from the inline
+  # source to we can use it with the skopeo stage in the os pipeline
+  - name: input-tree
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-embed:
+              id: container-with-devnull.tar
+              path: container-with-devnull.tar
+        options:
+          paths:
+            - from:
+                mpp-format-string: input://inlinefile/{embedded['container-with-devnull.tar']}
+              to: tree:///container-with-devnull.tar
+  - name: os
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - basesystem
+                - container-selinux
+                - coreutils
+                - dracut-config-generic
+                - glibc
+                - kernel
+                - policycoreutils
+                - policycoreutils-python-utils
+                - rpm
+                - rpm-ostree
+                - selinux-policy-targeted
+                - setools-console
+              excludes:
+                - dracut-config-rescue
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+          disable_dracut: true
+      # Copy the container archive from the input-tree pipeline into the
+      # container storage
+      - type: org.osbuild.skopeo
+        inputs:
+          images:
+            type: org.osbuild.containers
+            origin: org.osbuild.pipeline
+            references:
+              name:input-tree:
+                name: localhost/container-with-devnull
+        options:
+          destination:
+            type: containers-storage
+            storage-path: /usr/share/containers/storage
+      - type: org.osbuild.selinux
+        options:
+          file_contexts: etc/selinux/targeted/contexts/files/file_contexts
+      - type: org.osbuild.ostree.preptree
+        options:
+          etc_group_members:
+            - wheel
+            - docker
+  - name: ostree-commit
+    build: name:build
+    stages:
+      - type: org.osbuild.ostree.init
+        options:
+          path: /repo
+      - type: org.osbuild.ostree.commit
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:os
+        options:
+          ref:
+            mpp-format-string: '{ref}'
+          os_version:
+            mpp-format-string: '{release}'
+  - name: commit-archive
+    build: name:build
+    stages:
+      - type: org.osbuild.tar
+        inputs:
+          tree:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:ostree-commit
+        options:
+          filename: ostree-commit.tar
