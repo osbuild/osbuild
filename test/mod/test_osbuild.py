@@ -272,9 +272,14 @@ class TestDescriptions(unittest.TestCase):
             modules += [(klass, module) for module in mods]
 
         self.assertTrue(modules)
+        assert "org.osbuild.noop" in [m[1] for m in modules]
 
         for module in modules:
             klass, name = module
+            assert isinstance(name, str)
+            assert not name.endswith(".meta.json")
+            assert os.path.dirname(name) == ""
+
             try:
                 info = osbuild.meta.ModuleInfo.load(os.curdir, klass, name)
                 schema = osbuild.meta.Schema(info.get_schema(version), name)
