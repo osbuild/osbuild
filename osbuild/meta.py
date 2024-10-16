@@ -26,6 +26,7 @@ import copy
 import importlib.util
 import json
 import os
+import pathlib
 import pkgutil
 import sys
 from collections import deque
@@ -607,15 +608,14 @@ class RunnerInfo:
     specific distribution and version.
     """
 
-    def __init__(self, distro: str, version: int, path: str) -> None:
+    def __init__(self, distro: str, version: int, path: pathlib.Path) -> None:
         self.distro = distro
         self.version = version
         self.path = path
 
     @classmethod
-    def from_path(cls, path: str):
-        name = os.path.basename(path)
-        distro, version = cls.parse_name(name)
+    def from_path(cls, path: pathlib.Path):
+        distro, version = cls.parse_name(path.name)
         return cls(distro, version, path)
 
     @staticmethod
@@ -648,7 +648,7 @@ class Index:
     """
 
     def __init__(self, path: str):
-        self.path = os.path.abspath(path)
+        self.path = pathlib.Path(path).absolute()
         self._module_info: Dict[Tuple[str, Any], Any] = {}
         self._format_info: Dict[Tuple[str, Any], Any] = {}
         self._schemata: Dict[Tuple[str, Any, str], Schema] = {}
@@ -697,10 +697,10 @@ class Index:
         if not module_path:
             raise ValueError(f"Unsupported nodule class: {klass}")
 
-        path = os.path.join(self.path, module_path)
-        modules = filter(lambda f: os.path.isfile(f"{path}/{f}") and not path.endswith(".meta.json"),
-                         os.listdir(path))
-        return list(modules)
+        path = self.path / module_path
+        modules = [f.name for f in path.iterdir()
+                   if f.is_file() and not f.name.endswith(".meta.json")]
+        return modules
 
     def get_module_info(self, klass, name) -> Optional[ModuleInfo]:
         """Obtain `ModuleInfo` for a given stage or assembler"""
@@ -728,9 +728,9 @@ class Index:
             return cached_schema
 
         if klass == "Manifest":
-            path = f"{self.path}/schemas/osbuild{version}.json"
+            path = self.path / f"schemas/osbuild{version}.json"
             with contextlib.suppress(FileNotFoundError):
-                with open(path, "r", encoding="utf8") as f:
+                with path.open("r", encoding="utf8") as f:
                     schema = json.load(f)
         elif klass in ModuleInfo.MODULES:
             info = self.get_module_info(klass, name)
@@ -752,12 +752,12 @@ class Index:
         will be returned.
         """
         if not self._runners:
-            path = os.path.join(self.path, "runners")
-            names = filter(lambda f: os.path.isfile(f"{path}/{f}"),
-                           os.listdir(path))
-            paths = map(lambda n: os.path.join(path, n), names)
-            mapped = map(RunnerInfo.from_path, paths)
-            self._runners = sorted(mapped, key=lambda r: (r.distro, r.version))
+            path = self.path / "runners"
+            paths = (p for p in path.iterdir()
+                     if p.is_file())
+            runners = [RunnerInfo.from_path(p)
+                       for p in paths]
+            self._runners = sorted(runners, key=lambda r: (r.distro, r.version))
 
         runners = self._runners[:]
         if distro:
