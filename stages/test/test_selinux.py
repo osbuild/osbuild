@@ -3,7 +3,7 @@
 import os.path
 from unittest.mock import call, patch
 
-import pytest
+import pytest  # type: ignore
 
 from osbuild import testutil
 
@@ -29,7 +29,10 @@ def get_test_input(test_data, file_contexts=False, labels=False):
     ({"labels": {"/usr/bin/cp": "system_u:object_r:install_exec_t:s0"}}, ""),
     ({"force_autorelabel": True}, ""),
     ({"exclude_paths": ["/sysroot"]}, ""),
+    ({"target": "mount://disk/boot/efi"}, ""),
+    ({"target": "tree:///boot/efi"}, ""),
     # bad
+    ({"target": "/boot/efi"}, "'/boot/efi' does not match '^mount://[^/]+/|^tree:///'"),
     ({"file_contexts": 1234}, "1234 is not of type 'string'"),
     ({"labels": "xxx"}, "'xxx' is not of type 'object'"),
     ({"force_autorelabel": "foo"}, "'foo' is not of type 'boolean'"),
@@ -59,11 +62,41 @@ def test_selinux_file_contexts(mocked_setfiles, tmp_path, stage_module):
     options = {
         "file_contexts": "etc/selinux/thing",
     }
-    stage_module.main(tmp_path, options)
+    args = {
+        "tree": f"{tmp_path}",
+        "options": options
+    }
+    stage_module.main(args)
 
     assert len(mocked_setfiles.call_args_list) == 1
     args, kwargs = mocked_setfiles.call_args_list[0]
-    assert args == (f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "")
+    assert args == (f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "/")
+    assert kwargs == {"exclude_paths": None}
+
+
+@patch("osbuild.util.selinux.setfiles")
+def test_selinux_file_contexts_mounts(mocked_setfiles, tmp_path, stage_module):
+    tree = tmp_path / "tree"
+    mounts = tmp_path / "mounts"
+
+    args = {
+        "tree": f"{tree}",
+        "options": {
+            "file_contexts": "etc/selinux/thing",
+            "target": "mount://root/"
+        },
+        "paths": {
+            "mounts": mounts,
+        },
+        "mounts": {
+            "root": {"path": mounts}
+        }
+    }
+    stage_module.main(args)
+
+    assert len(mocked_setfiles.call_args_list) == 1
+    args, kwargs = mocked_setfiles.call_args_list[0]
+    assert args == (f"{tree}/etc/selinux/thing", f"{mounts}", "/")
     assert kwargs == {"exclude_paths": None}
 
 
@@ -73,33 +106,73 @@ def test_selinux_file_contexts_exclude(mocked_setfiles, tmp_path, stage_module):
         "file_contexts": "etc/selinux/thing",
         "exclude_paths": ["/sysroot"],
     }
-    stage_module.main(tmp_path, options)
+    args = {
+        "tree": f"{tmp_path}",
+        "options": options
+    }
+    stage_module.main(args)
 
     assert len(mocked_setfiles.call_args_list) == 1
     args, kwargs = mocked_setfiles.call_args_list[0]
-    assert args == (f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "")
+    assert args == (f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "/")
     assert kwargs == {"exclude_paths": [f"{tmp_path}/sysroot"]}
 
 
 @patch("osbuild.util.selinux.setfilecon")
 @patch("osbuild.util.selinux.setfiles")
 def test_selinux_labels(mocked_setfiles, mocked_setfilecon, tmp_path, stage_module):
+    tree = tmp_path / "tree"
     testutil.make_fake_input_tree(tmp_path, {
-        "/usr/bin/bootc": "I'm only an imposter",
+        "/usr/bin/echo": "I'm only an imposter",
+        "/sbin/sulogin": "I'm only an imposter",
     })
 
     options = {
         "file_contexts": "etc/selinux/thing",
         "labels": {
-            "/tree/usr/bin/bootc": "system_u:object_r:install_exec_t:s0",
+            "tree:///usr/bin/echo": "system_u:object_r:bin_t:s0",
+            "/sbin/sulogin": "system_u:object_r:sulogin_exec_t:s0",
         }
     }
-    stage_module.main(tmp_path, options)
+    args = {
+        "tree": tree,
+        "options": options
+    }
+    stage_module.main(args)
 
     assert len(mocked_setfiles.call_args_list) == 1
+    assert len(mocked_setfilecon.call_args_list) == 2
+    assert mocked_setfilecon.call_args_list == [
+        call(f"{tree}/usr/bin/echo", "system_u:object_r:bin_t:s0"),
+        call(f"{tree}/sbin/sulogin", "system_u:object_r:sulogin_exec_t:s0"),
+    ]
+
+
+@patch("osbuild.util.selinux.setfilecon")
+def test_selinux_labels_mount(mocked_setfilecon, tmp_path, stage_module):
+    tree = tmp_path / "tree"
+    mounts = tmp_path / "mounts"
+
+    testutil.make_fake_tree(mounts, {"/sbin/su": "I'm only an imposter"})
+    args = {
+        "tree": tree,
+        "options": {
+            "labels": {
+                "mount://root/sbin/su": "system_u:object_r:su_exec_t:s0",
+            }
+        },
+        "paths": {
+            "mounts": mounts,
+        },
+        "mounts": {
+            "root": {"path": mounts}
+        }
+    }
+    stage_module.main(args)
+
     assert len(mocked_setfilecon.call_args_list) == 1
     assert mocked_setfilecon.call_args_list == [
-        call(f"{tmp_path}/tree/usr/bin/bootc", "system_u:object_r:install_exec_t:s0"),
+        call(f"{mounts}/sbin/su", "system_u:object_r:su_exec_t:s0"),
     ]
 
 
@@ -110,7 +183,11 @@ def test_selinux_force_autorelabel(mocked_setfiles, tmp_path, stage_module):  # 
             "file_contexts": "etc/selinux/thing",
             "force_autorelabel": enable_autorelabel,
         }
-        stage_module.main(tmp_path, options)
+        args = {
+            "tree": f"{tmp_path}",
+            "options": options
+        }
+        stage_module.main(args)
 
         assert (tmp_path / ".autorelabel").exists() == enable_autorelabel
         if enable_autorelabel:
