@@ -33,6 +33,12 @@
         }
       ],
       "properties": {
+        "target": {
+          "type": "string",
+          "description": "Target path in the tree or on a mount",
+          "pattern": "^mount://[^/]+/|^tree:///",
+          "default": "tree:///"
+        },
         "file_contexts": {
           "type": "string",
           "description": "Path to the active SELinux policy's `file_contexts`"
@@ -53,7 +59,7 @@
         },
         "force_autorelabel": {
           "type": "boolean",
-          "description": "Do not use. Forces auto-relabelling on first boot.",
+          "description": "Do not use. Forces auto-relabelling on first boot. Affects target's root or tree:/// by default",
           "default": false
         }
       }
