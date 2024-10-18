@@ -48,11 +48,22 @@ def test_parse_location_mounts():
             "root": {
                 "path": "/run/osbuild/mounts/.",
             },
+            "boot": {
+                "path": "/run/osbuild/mounts/boot"
+            }
         },
     }
     location = "mount://root/"
+    root, path = parsing.parse_location_into_parts(location, args)
+    assert [root, path] == ["/run/osbuild/mounts/.", "/"]
     path = parsing.parse_location(location, args)
     assert path == "/run/osbuild/mounts/."
+
+    location = "mount://boot/efi/EFI/Linux"
+    root, path = parsing.parse_location_into_parts(location, args)
+    assert [root, path] == ["/run/osbuild/mounts/boot", "/efi/EFI/Linux"]
+    path = parsing.parse_location(location, args)
+    assert path == "/run/osbuild/mounts/boot/efi/EFI/Linux"
 
 
 def test_parse_location_tree():
@@ -60,6 +71,8 @@ def test_parse_location_tree():
         "tree": "/run/osbuild/tree",
     }
     location = "tree:///disk.img"
+    root, path = parsing.parse_location_into_parts(location, args)
+    assert [root, path] == ["/run/osbuild/tree", "/disk.img"]
     path = parsing.parse_location(location, args)
     assert path == "/run/osbuild/tree/disk.img"
 
@@ -73,5 +86,7 @@ def test_parse_location_inputs():
         },
     }
     location = "input://tree/"
+    root, path = parsing.parse_location_into_parts(location, args)
+    assert [root, path] == ["/run/osbuild/inputs/tree", "/"]
     path = parsing.parse_location(location, args)
     assert path == "/run/osbuild/inputs/tree/."

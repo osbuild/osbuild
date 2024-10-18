@@ -2,7 +2,7 @@
 
 import os
 import re
-from typing import Dict, Union
+from typing import Dict, Tuple, Union
 from urllib.parse import ParseResult, urlparse
 
 
@@ -72,9 +72,9 @@ def parse_input(url: ParseResult, args: Dict) -> os.PathLike:
     return root
 
 
-def parse_location(location: str, args: Dict) -> str:
+def parse_location_into_parts(location: str, args: Dict) -> Tuple[str, str]:
     """
-    Parses the location URL to derive the corresponding file path.
+    Parses the location URL to derive the corresponding root and url path.
 
     Parameters:
     - location (str): The location URL to be parsed.
@@ -97,11 +97,24 @@ def parse_location(location: str, args: Dict) -> str:
     if not url.path.startswith("/"):
         raise ValueError(f"url.path from location must start with '/', got: {url.path}")
 
-    path = os.path.relpath(url.path, "/")
+    return root, url.path
+
+
+def parse_location(location: str, args: Dict) -> str:
+    """
+    Parses the location URL to derive the corresponding file path.
+
+    Parameters:
+    - location (str): The location URL to be parsed.
+    - args (Dict): A dictionary containing arguments including mounts and
+    path information as passed by osbuild.api.arguments()
+    """
+
+    root, urlpath = parse_location_into_parts(location, args)
+    path = os.path.relpath(urlpath, "/")
     path = os.path.join(root, path)
     path = os.path.normpath(path)
-
-    if url.path.endswith("/"):
+    if urlpath.endswith("/"):
         path = os.path.join(path, ".")
 
     return path
