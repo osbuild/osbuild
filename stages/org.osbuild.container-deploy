@@ -36,6 +36,7 @@ def main(inputs, tree, options):
     images = containers.parse_containers_input(inputs)
     assert len(images) == 1
     image = list(images.values())[0]
+    remove_signatures = options.get("remove-signatures")
 
     # skopeo needs /var/tmp but the bwrap env is minimal and may not have it
     os.makedirs("/var/tmp", mode=0o1777, exist_ok=True)
@@ -47,11 +48,11 @@ def main(inputs, tree, options):
     with contextlib.ExitStack() as cm:
         cm.callback(subprocess.run, ["podman", "rmi", image_tag], check=True)
         with containers.container_source(image) as (_, source):
-            subprocess.run(
-                ["skopeo", "copy", source,
-                 f"containers-storage:{image_tag}"],
-                check=True,
-            )
+            cmd = ["skopeo", "copy"]
+            if remove_signatures:
+                cmd.append("--remove-signatures")
+            cmd.extend([source, f"containers-storage:{image_tag}"])
+            subprocess.run(cmd, check=True)
         with mount_container(image_tag) as img:
             subprocess.run(["cp", "-a", f"{img}/.", f"{tree}/"], check=True)
     # postprocess the tree, would be nicer to filter before already
