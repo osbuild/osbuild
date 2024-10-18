@@ -1,8 +1,8 @@
 {
   "summary": "Set SELinux file contexts",
   "description": [
-    "Sets correct SELinux labels for every file in the tree, according to the",
-    "SELinux policy installed inside the tree.",
+    "Sets correct SELinux labels for every file in the tree or on mount, according to",
+    "the SELinux policy.",
     "Uses the host's `setfiles` program and the tree's `file_contexts`, usually",
     "    /etc/selinux/<SELINUXTYPE>/contexts/files/file_contexts",
     "where <SELINUXTYPE> is the value set in /etc/selinux/config (usually \"targeted\"",
@@ -40,8 +40,8 @@
           "default": "tree:///"
         },
         "file_contexts": {
-          "type": "string",
-          "description": "Path to the active SELinux policy's `file_contexts`"
+          "description": "Path to the active SELinux policy's `file_contexts`. Supports `tree://`, `mount://`, and `input://` schemes. Plain paths imply `tree://`.",
+          "type": "string"
         },
         "exclude_paths": {
           "type": "array",
@@ -70,6 +70,10 @@
     },
     "mounts": {
       "type": "array"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": true
     }
   }
 }

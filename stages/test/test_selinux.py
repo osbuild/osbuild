@@ -31,6 +31,7 @@ def get_test_input(test_data, file_contexts=False, labels=False):
     ({"exclude_paths": ["/sysroot"]}, ""),
     ({"target": "mount://disk/boot/efi"}, ""),
     ({"target": "tree:///boot/efi"}, ""),
+    ({"file_contexts": "path/to/file_contexts"}, ""),
     # bad
     ({"target": "/boot/efi"}, "'/boot/efi' does not match '^mount://[^/]+/|^tree:///'"),
     ({"file_contexts": 1234}, "1234 is not of type 'string'"),
@@ -58,19 +59,38 @@ def test_schema_validation_selinux_required_options(stage_schema):
 
 
 @patch("osbuild.util.selinux.setfiles")
-def test_selinux_file_contexts(mocked_setfiles, tmp_path, stage_module):
-    options = {
-        "file_contexts": "etc/selinux/thing",
-    }
+def test_selinux_file_contexts_schemeless_relpath(mocked_setfiles, tmp_path, stage_module):
+    tree = tmp_path / "tree"
+
     args = {
-        "tree": f"{tmp_path}",
-        "options": options
+        "tree": tree,
+        "options": {
+            "file_contexts": "etc/selinux/thing",
+        }
     }
     stage_module.main(args)
 
     assert len(mocked_setfiles.call_args_list) == 1
     args, kwargs = mocked_setfiles.call_args_list[0]
-    assert args == (f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "/")
+    assert args == (f"{tree}/etc/selinux/thing", os.fspath(tree), "/")
+    assert kwargs == {"exclude_paths": None}
+
+
+@patch("osbuild.util.selinux.setfiles")
+def test_selinux_file_contexts_schemeless_abspath(mocked_setfiles, tmp_path, stage_module):
+    tree = tmp_path / "tree"
+
+    args = {
+        "tree": tree,
+        "options": {
+            "file_contexts": "/etc/selinux/thing",
+        }
+    }
+    stage_module.main(args)
+
+    assert len(mocked_setfiles.call_args_list) == 1
+    args, kwargs = mocked_setfiles.call_args_list[0]
+    assert args == (f"{tree}/etc/selinux/thing", os.fspath(tree), "/")
     assert kwargs == {"exclude_paths": None}
 
 
@@ -78,44 +98,48 @@ def test_selinux_file_contexts(mocked_setfiles, tmp_path, stage_module):
 def test_selinux_file_contexts_mounts(mocked_setfiles, tmp_path, stage_module):
     tree = tmp_path / "tree"
     mounts = tmp_path / "mounts"
+    root = mounts / "."
 
     args = {
-        "tree": f"{tree}",
+        "tree": tree,
         "options": {
-            "file_contexts": "etc/selinux/thing",
+            "file_contexts": "mount://root/etc/selinux/file_contexts",
             "target": "mount://root/"
         },
         "paths": {
             "mounts": mounts,
         },
         "mounts": {
-            "root": {"path": mounts}
+            "root": {
+                "path": root
+            }
         }
     }
     stage_module.main(args)
 
     assert len(mocked_setfiles.call_args_list) == 1
     args, kwargs = mocked_setfiles.call_args_list[0]
-    assert args == (f"{tree}/etc/selinux/thing", f"{mounts}", "/")
+    assert args == (f"{mounts}/etc/selinux/file_contexts", f"{mounts}", "/")
     assert kwargs == {"exclude_paths": None}
 
 
 @patch("osbuild.util.selinux.setfiles")
 def test_selinux_file_contexts_exclude(mocked_setfiles, tmp_path, stage_module):
-    options = {
-        "file_contexts": "etc/selinux/thing",
-        "exclude_paths": ["/sysroot"],
-    }
+    tree = tmp_path / "tree"
+
     args = {
-        "tree": f"{tmp_path}",
-        "options": options
+        "tree": tree,
+        "options": {
+            "file_contexts": "etc/selinux/thing",
+            "exclude_paths": ["/sysroot"],
+        }
     }
     stage_module.main(args)
 
     assert len(mocked_setfiles.call_args_list) == 1
     args, kwargs = mocked_setfiles.call_args_list[0]
-    assert args == (f"{tmp_path}/etc/selinux/thing", os.fspath(tmp_path), "/")
-    assert kwargs == {"exclude_paths": [f"{tmp_path}/sysroot"]}
+    assert args == (f"{tree}/etc/selinux/thing", os.fspath(tree), "/")
+    assert kwargs == {"exclude_paths": [f"{tree}/sysroot"]}
 
 
 @patch("osbuild.util.selinux.setfilecon")
