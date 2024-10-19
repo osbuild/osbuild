@@ -391,7 +391,7 @@ def load(description: Dict, index: Index) -> Manifest:
     }
 
     for pipeline in pipelines:
-        if not pipeline.build:
+        if not pipeline.build or pipeline.build.startswith("org.osbuild.containers-storage:"):
             pipeline.runner = host_runner
             continue
 
