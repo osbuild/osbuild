@@ -120,6 +120,7 @@ containers it uses to build OS artifacts.
 Summary:        Extra tools and utilities
 Requires:       %{name} = %{version}-%{release}
 Requires:       python3-pyyaml
+Requires:       python3-dnf
 
 # These are required for `osbuild-dev`, only packaged for Fedora
 %if 0%{?fedora}
