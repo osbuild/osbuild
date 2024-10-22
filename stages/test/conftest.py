@@ -1,5 +1,6 @@
 import os
 import pathlib
+import subprocess
 from types import ModuleType
 
 import pytest
@@ -43,3 +44,17 @@ def stage_schema(request: pytest.FixtureRequest) -> osbuild.meta.Schema:
     root = caller_dir.parent.parent
     mod_info = osbuild.meta.ModuleInfo.load(root, "Stage", stage_name)
     return osbuild.meta.Schema(mod_info.get_schema(version=schema_version), stage_name)
+
+
+@pytest.fixture
+def tmp_path_disk_full(tmp_path, tmp_path_disk_full_size):
+    small_dir = tmp_path / "small-dir"
+    small_dir.mkdir()
+    subprocess.run(["mount",
+                    "-t", "tmpfs",
+                    "-o", f"size={tmp_path_disk_full_size}",
+                    "tmpfs",
+                    small_dir
+                    ], check=True)
+    yield small_dir
+    subprocess.run(["umount", small_dir], check=True)
