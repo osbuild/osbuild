@@ -505,7 +505,7 @@ class OSBuild(contextlib.AbstractContextManager):
         ], check=True)
 
 
-@pytest.fixture(name="osb", scope="module")
+@pytest.fixture(name="osb")
 def osbuild_fixture():
     cleanup_dir = None
     store = os.getenv("OSBUILD_TEST_STORE")
