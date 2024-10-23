@@ -505,7 +505,10 @@ class OSBuild(contextlib.AbstractContextManager):
 
 
 @pytest.fixture(name="osb")
-def osbuild_fixture():
+def osbuild_fixture(tmp_path):
     store = os.getenv("OSBUILD_TEST_STORE")
+    if not store:
+        store = tmp_path
     with OSBuild(cache_from=store) as osb:
+        osb.store = store
         yield osb
