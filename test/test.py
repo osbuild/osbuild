@@ -506,6 +506,18 @@ class OSBuild(contextlib.AbstractContextManager):
 
 @pytest.fixture(name="osb")
 def osbuild_fixture(tmp_path):
+    # XXX: this fixture needs work, maybe it needs to be split up into two
+    # the issues(s):
+    # 1. it becomes slow now for tests like "test_noop.py" because those
+    #    did not use to use "cache_from" which is expensive as it does
+    #    a copy of the entire store but "test_noop.py" does not need this
+    #    so test_noop should could use it's own.
+    #    So either a new fixutre or a parameter (or we live with the
+    #    multiple copies of this fixture)
+    # 2. the TestStages::setUpClass sets up a central store that is then
+    #    shared via "TestStages.copy_source_data()" - this speeds up
+    #    the individual stages, we need something similar, a session
+    #    shared cache which means a new store fixture(?)
     store = os.getenv("OSBUILD_TEST_STORE")
     if not store:
         store = tmp_path
