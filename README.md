@@ -68,6 +68,13 @@ To verify changes made to the code use included makefile rules:
  * `make test-all` to run base set of tests
  * `sudo make test-run` to run extended set of tests (takes long time)
 
+Also keep in mind that some tests require those prerequisites,
+otherwise they are skipped
+
+```
+dnf install -y systemd-boot-unsigned erofs-utils pykickstart
+```
+
 ## Installation
 
 Installing `osbuild` requires to not only install the `osbuild` module, but also
