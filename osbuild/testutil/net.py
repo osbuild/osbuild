@@ -96,3 +96,19 @@ def https_serve_directory(rootdir, certfile, keyfile, simulate_failures=0):
         yield httpd
     finally:
         httpd.shutdown()
+
+@contextlib.contextmanager
+def https_serve_directory_mtls(rootdir, ca_cert, server_cert, server_key, simulate_failures=0):
+    port = _get_free_port()
+    httpd = _httpd(rootdir, port, simulate_failures)
+
+    ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cafile=ca_cert)
+    ctx.load_cert_chain(certfile=server_cert, keyfile=server_key)
+    ctx.verify_mode = ssl.CERT_REQUIRED
+    httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
+
+    threading.Thread(target=httpd.serve_forever).start()
+    try:
+        yield httpd
+    finally:
+        httpd.shutdown()
