@@ -15,15 +15,9 @@ import pytest
 from osbuild import loop
 
 from .. import test
+from ..test import osbuild_fixture  # noqa: F401, pylint: disable=unused-import
 
 MEBIBYTE = 1024 * 1024
-
-
-@pytest.fixture(name="osbuild")
-def osbuild_fixture():
-    store = os.getenv("OSBUILD_TEST_STORE")
-    osb = test.OSBuild(cache_from=store)
-    yield osb
 
 
 def assertImageFile(filename, fmt, expected_size):
@@ -83,7 +77,7 @@ def read_partition_table(device):
 @pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 @pytest.mark.parametrize("fs_type", ["ext4", "xfs", "btrfs"])
-def test_rawfs(osbuild, fs_type):
+def test_rawfs(osb, fs_type):
     if not test.TestBase.has_filesystem_support(fs_type):
         pytest.skip(f"The {fs_type} was explicitly marked as unsupported on this platform.")
     options = {
@@ -92,65 +86,63 @@ def test_rawfs(osbuild, fs_type):
         "size": 1024 * MEBIBYTE,
         "fs_type": fs_type,
     }
-    with osbuild as osb:
-        with run_assembler(osb, "org.osbuild.rawfs", options, "image.raw") as (tree, image):
-            assertImageFile(image, "raw", options["size"])
-            assertFilesystem(image, options["root_fs_uuid"], fs_type, tree)
+    with run_assembler(osb, "org.osbuild.rawfs", options, "image.raw") as (tree, image):
+        assertImageFile(image, "raw", options["size"])
+        assertFilesystem(image, options["root_fs_uuid"], fs_type, tree)
 
 
 @pytest.mark.skipif(not test.TestBase.have_tree_diff(), reason="tree-diff missing")
 @pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 @pytest.mark.skipif(not test.TestBase.have_rpm_ostree(), reason="rpm-ostree missing")
-def test_ostree(osbuild):
-    with osbuild as osb:
-        with open(os.path.join(test.TestBase.locate_test_data(),
-                               "manifests/fedora-ostree-commit.json"),
-                  encoding="utf8") as f:
-            manifest = json.load(f)
+def test_ostree(osb):
+    with open(os.path.join(test.TestBase.locate_test_data(),
+                           "manifests/fedora-ostree-commit.json"),
+              encoding="utf8") as f:
+        manifest = json.load(f)
 
-        data = json.dumps(manifest)
-        with tempfile.TemporaryDirectory(dir="/var/tmp") as output_dir:
-            result = osb.compile(data, output_dir=output_dir, exports=["ostree-commit"])
-            compose_file = os.path.join(output_dir, "ostree-commit", "compose.json")
-            repo = os.path.join(output_dir, "ostree-commit", "repo")
+    data = json.dumps(manifest)
+    with tempfile.TemporaryDirectory(dir="/var/tmp") as output_dir:
+        result = osb.compile(data, output_dir=output_dir, exports=["ostree-commit"])
+        compose_file = os.path.join(output_dir, "ostree-commit", "compose.json")
+        repo = os.path.join(output_dir, "ostree-commit", "repo")
 
-            with open(compose_file, encoding="utf8") as f:
-                compose = json.load(f)
-            commit_id = compose["ostree-commit"]
-            ref = compose["ref"]
-            rpmostree_inputhash = compose["rpm-ostree-inputhash"]
-            os_version = compose["ostree-version"]
-            assert commit_id
-            assert ref
-            assert rpmostree_inputhash
-            assert os_version
-            assert "metadata" in result
-            metadata = result["metadata"]
-            commit = metadata["ostree-commit"]
-            info = commit["org.osbuild.ostree.commit"]
-            assert "compose" in info
-            assert info["compose"] == compose
+        with open(compose_file, encoding="utf8") as f:
+            compose = json.load(f)
+        commit_id = compose["ostree-commit"]
+        ref = compose["ref"]
+        rpmostree_inputhash = compose["rpm-ostree-inputhash"]
+        os_version = compose["ostree-version"]
+        assert commit_id
+        assert ref
+        assert rpmostree_inputhash
+        assert os_version
+        assert "metadata" in result
+        metadata = result["metadata"]
+        commit = metadata["ostree-commit"]
+        info = commit["org.osbuild.ostree.commit"]
+        assert "compose" in info
+        assert info["compose"] == compose
 
-            md = subprocess.check_output(
-                [
-                    "ostree",
-                    "show",
-                    "--repo", repo,
-                    "--print-metadata-key=rpmostree.inputhash",
-                    commit_id
-                ], encoding="utf8").strip()
-            assert md == f"'{rpmostree_inputhash}'"
+        md = subprocess.check_output(
+            [
+                "ostree",
+                "show",
+                "--repo", repo,
+                "--print-metadata-key=rpmostree.inputhash",
+                commit_id
+            ], encoding="utf8").strip()
+        assert md == f"'{rpmostree_inputhash}'"
 
-            md = subprocess.check_output(
-                [
-                    "ostree",
-                    "show",
-                    "--repo", repo,
-                    "--print-metadata-key=version",
-                    commit_id
-                ], encoding="utf8").strip()
-            assert md == f"'{os_version}'"
+        md = subprocess.check_output(
+            [
+                "ostree",
+                "show",
+                "--repo", repo,
+                "--print-metadata-key=version",
+                commit_id
+            ], encoding="utf8").strip()
+        assert md == f"'{os_version}'"
 
 
 @pytest.mark.skipif(not test.TestBase.have_tree_diff(), reason="tree-diff missing")
@@ -158,51 +150,50 @@ def test_ostree(osbuild):
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
 @pytest.mark.parametrize("fmt,", ["raw", "raw.xz", "qcow2", "vmdk", "vdi"])
 @pytest.mark.parametrize("fs_type", ["ext4", "xfs", "btrfs"])
-def test_qemu(osbuild, fmt, fs_type):
+def test_qemu(osb, fmt, fs_type):
     loctl = loop.LoopControl()
-    with osbuild as osb:
-        if not test.TestBase.has_filesystem_support(fs_type):
-            pytest.skip(f"The {fs_type} was explicitly marked as unsupported on this platform.")
-        options = {
-            "format": fmt,
-            "filename": f"image.{fmt}",
-            "ptuuid": str(uuid4()),
-            "root_fs_uuid": str(uuid4()),
-            "size": 1024 * MEBIBYTE,
-            "root_fs_type": fs_type,
-        }
-        with run_assembler(osb,
-                           "org.osbuild.qemu",
-                           options,
-                           f"image.{fmt}") as (tree, image):
-            if fmt == "raw.xz":
-                subprocess.run(["unxz", "--keep", "--force", image], check=True)
-                image = image[:-3]
-                fmt = "raw"
-            assertImageFile(image, fmt, options["size"])
-            with open_image(loctl, image, fmt) as (target, device):
-                ptable = read_partition_table(device)
-                assertPartitionTable(ptable,
-                                     "dos",
-                                     options["ptuuid"],
-                                     1,
-                                     boot_partition=1)
-                if fs_type == "btrfs":
-                    l2hash = "dfea8604cdcdc2cf0dc3e816929d302f837f03c98f6bb19b366fda4ee26957f1"
-                elif fs_type == "xfs":
-                    l2hash = "18d145b699e0ff4a815868f0b761b4bd6ece391885830ddb56dac557eff8b732"
-                else:
-                    l2hash = "84792ea01e63bd60c4018d686d48b6207c56d5bc844f2791634b276ce82c9116"
-                assertGRUB2(device,
-                            "b8cea7475422d35cd6f85ad099fb4f921557fd1b25db62cd2a92709ace21cf0f",
-                            l2hash,
-                            1024 * 1024)
+    if not test.TestBase.has_filesystem_support(fs_type):
+        pytest.skip(f"The {fs_type} was explicitly marked as unsupported on this platform.")
+    options = {
+        "format": fmt,
+        "filename": f"image.{fmt}",
+        "ptuuid": str(uuid4()),
+        "root_fs_uuid": str(uuid4()),
+        "size": 1024 * MEBIBYTE,
+        "root_fs_type": fs_type,
+    }
+    with run_assembler(osb,
+                       "org.osbuild.qemu",
+                       options,
+                       f"image.{fmt}") as (tree, image):
+        if fmt == "raw.xz":
+            subprocess.run(["unxz", "--keep", "--force", image], check=True)
+            image = image[:-3]
+            fmt = "raw"
+        assertImageFile(image, fmt, options["size"])
+        with open_image(loctl, image, fmt) as (target, device):
+            ptable = read_partition_table(device)
+            assertPartitionTable(ptable,
+                                 "dos",
+                                 options["ptuuid"],
+                                 1,
+                                 boot_partition=1)
+            if fs_type == "btrfs":
+                l2hash = "dfea8604cdcdc2cf0dc3e816929d302f837f03c98f6bb19b366fda4ee26957f1"
+            elif fs_type == "xfs":
+                l2hash = "18d145b699e0ff4a815868f0b761b4bd6ece391885830ddb56dac557eff8b732"
+            else:
+                l2hash = "84792ea01e63bd60c4018d686d48b6207c56d5bc844f2791634b276ce82c9116"
+            assertGRUB2(device,
+                        "b8cea7475422d35cd6f85ad099fb4f921557fd1b25db62cd2a92709ace21cf0f",
+                        l2hash,
+                        1024 * 1024)
 
-                p1 = ptable["partitions"][0]
-                ssize = ptable.get("sectorsize", 512)
-                start, size = p1["start"] * ssize, p1["size"] * ssize
-                with loop_open(loctl, target, offset=start, size=size) as dev:
-                    assertFilesystem(dev, options["root_fs_uuid"], fs_type, tree)
+            p1 = ptable["partitions"][0]
+            ssize = ptable.get("sectorsize", 512)
+            start, size = p1["start"] * ssize, p1["size"] * ssize
+            with loop_open(loctl, target, offset=start, size=size) as dev:
+                assertFilesystem(dev, options["root_fs_uuid"], fs_type, tree)
 
 
 @pytest.mark.skipif(not test.TestBase.have_tree_diff(), reason="tree-diff missing")
@@ -213,37 +204,36 @@ def test_qemu(osbuild, fmt, fs_type):
     [("tree.tar.gz", None, ["application/x-tar"]),
      ("tree.tar.gz", "gzip", ["application/x-gzip", "application/gzip"])]
 )
-def test_tar(osbuild, filename, compression, expected_mimetypes):
-    with osbuild as osb:
-        options = {"filename": filename}
+def test_tar(osb, filename, compression, expected_mimetypes):
+    options = {"filename": filename}
+    if compression:
+        options["compression"] = compression
+    with run_assembler(osb,
+                       "org.osbuild.tar",
+                       options,
+                       filename) as (tree, image):
+        output = subprocess.check_output(["file", "--mime-type", image], encoding="utf8")
+        _, mimetype = output.strip().split(": ")  # "filename: mimetype"
+        assert mimetype in expected_mimetypes
+
         if compression:
-            options["compression"] = compression
-        with run_assembler(osb,
-                           "org.osbuild.tar",
-                           options,
-                           filename) as (tree, image):
-            output = subprocess.check_output(["file", "--mime-type", image], encoding="utf8")
-            _, mimetype = output.strip().split(": ")  # "filename: mimetype"
-            assert mimetype in expected_mimetypes
+            return
 
-            if compression:
-                return
-
-            # In the non-compression case, we verify the tree's content
-            with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
-                args = [
-                    "tar",
-                    "--numeric-owner",
-                    "--selinux",
-                    "--acls",
-                    "--xattrs", "--xattrs-include", "*",
-                    "-xaf", image,
-                    "-C", tmp]
-                subprocess.check_output(args, encoding="utf8")
-                diff = test.TestBase.tree_diff(tree, tmp)
-                assert diff["added_files"] == []
-                assert diff["deleted_files"] == []
-                assert diff["differences"] == {}
+        # In the non-compression case, we verify the tree's content
+        with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
+            args = [
+                "tar",
+                "--numeric-owner",
+                "--selinux",
+                "--acls",
+                "--xattrs", "--xattrs-include", "*",
+                "-xaf", image,
+                "-C", tmp]
+            subprocess.check_output(args, encoding="utf8")
+            diff = test.TestBase.tree_diff(tree, tmp)
+            assert diff["added_files"] == []
+            assert diff["deleted_files"] == []
+            assert diff["differences"] == {}
 
 
 @contextlib.contextmanager

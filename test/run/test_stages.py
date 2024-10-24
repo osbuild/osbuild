@@ -2,7 +2,6 @@
 # Runtime tests for the individual stages.
 #
 
-import contextlib
 import difflib
 import glob
 import json
@@ -21,10 +20,13 @@ import zipfile
 from collections.abc import Mapping
 from typing import Callable, Dict, List, Optional
 
+import pytest
+
 from osbuild.testutil import has_executable, pull_oci_archive_container
 from osbuild.util import checksum, selinux
 
 from .. import initrd, test
+from ..test import osbuild_fixture, tree_diff  # noqa: F401, pylint: disable=unused-import
 from .test_assemblers import mount
 
 
@@ -64,16 +66,6 @@ def find_stage(result, stageid):
     return None
 
 
-def make_stage_tests(klass):
-    path = os.path.join(test.TestBase.locate_test_data(), "stages")
-    for t in glob.glob(f"{path}/*/diff.json"):
-        test_path = os.path.dirname(t)
-        test_name = os.path.basename(test_path).replace("-", "_")
-        setattr(klass, f"test_{test_name}",
-                lambda s, path=test_path: s.run_stage_diff_test(path))
-    return klass
-
-
 def mapping_is_subset(subset, other):
     """
     Recursively compares two Mapping objects and returns True if all values
@@ -103,105 +95,143 @@ def mapping_is_subset(subset, other):
     return False
 
 
+def assert_tree_diffs_equal(tree_diff1, tree_diff2):
+    """
+    Asserts two tree diffs for equality.
+
+    Before assertion, the two trees are sorted, therefore order of files
+    doesn't matter.
+
+    There's a special rule for asserting differences where we don't
+    know the exact before/after value. This is useful for example if
+    the content of file is dependent on current datetime. You can use this
+    feature by putting null value in difference you don't care about.
+
+    Example:
+        "/etc/shadow": {content: ["sha256:xxx", null]}
+
+        In this case the after content of /etc/shadow doesn't matter.
+        The only thing that matters is the before content and that
+        the content modification happened.
+
+    The first tree diff can additionally contain an `added_directories`
+    array. Such an entry can be used when you care that a directory is
+    added, but you don't care about its content. This means that all
+    `added_files` in the second tree under the `added_directory` entry
+    in the first tree will be ignored. Note that tree diffs currently
+    don't distinguish between added files and added directories, so the
+    `added_directories` entry is satisfied also if there's a file added
+    with such a name.
+    """
+
+    def _sorted_tree(tree):
+        sorted_tree = json.loads(json.dumps(tree, sort_keys=True))
+        sorted_tree["added_files"] = sorted(sorted_tree["added_files"])
+        sorted_tree["deleted_files"] = sorted(sorted_tree["deleted_files"])
+
+        return sorted_tree
+
+    tree_diff1 = _sorted_tree(tree_diff1)
+    tree_diff2 = _sorted_tree(tree_diff2)
+
+    def raise_assertion(msg):
+        diff = '\n'.join(
+            difflib.ndiff(
+                pprint.pformat(tree_diff1).splitlines(),
+                pprint.pformat(tree_diff2).splitlines(),
+            )
+        )
+        raise AssertionError(f"{msg}\n\n{diff}")
+
+    def path_equal_or_is_descendant(path, potential_ancestor):
+        """
+        :return: Returns true if path == potential_ancestor or if path is inside potential_ancestor
+        """
+        return path == potential_ancestor or path.startswith(potential_ancestor + "/")
+
+    for added_dir in tree_diff1.get('added_directories', []):
+        original = tree_diff2['added_files']
+
+        filtered = [p for p in original if not path_equal_or_is_descendant(p, added_dir)]
+
+        if len(filtered) == len(original):
+            raise_assertion(f'{added_dir} was not added')
+
+        tree_diff2['added_files'] = filtered
+
+    assert tree_diff1['added_files'] == tree_diff2['added_files']
+    assert tree_diff1['deleted_files'] == tree_diff2['deleted_files']
+
+    if len(tree_diff1['differences']) != len(tree_diff2['differences']):
+        raise_assertion('length of differences different')
+
+    for (file1, differences1), (file2, differences2) in \
+            zip(tree_diff1['differences'].items(), tree_diff2['differences'].items()):
+
+        if file1 != file2:
+            raise_assertion(f"filename different: {file1}, {file2}")
+
+        if len(differences1) != len(differences2):
+            raise_assertion("length of file differences different")
+
+        for (difference1_kind, difference1_values), (difference2_kind, difference2_values) in \
+                zip(differences1.items(), differences2.items()):
+            if difference1_kind != difference2_kind:
+                raise_assertion(f"different difference kinds: {difference1_kind}, {difference2_kind}")
+
+            if difference1_values[0] is not None \
+                    and difference2_values[0] is not None \
+                    and difference1_values[0] != difference2_values[0]:
+                raise_assertion(f"before values are different: {difference1_values[0]}, {difference2_values[0]}")
+
+            if difference1_values[1] is not None \
+                    and difference2_values[1] is not None \
+                    and difference1_values[1] != difference2_values[1]:
+                raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
+
+
+@pytest.mark.parametrize("test_dir", [
+    os.path.dirname(p)
+    for p in glob.glob(os.path.join(test.TestBase.locate_test_data(), "stages/*/diff*.json"))
+])
+def test_run_stage_diff(tmp_path, osb, test_dir):
+    out_a = tmp_path / "out_a"
+    _ = osb.compile_file(os.path.join(test_dir, "a.json"),
+                         checkpoints=["build", "tree"],
+                         exports=["tree"], output_dir=out_a)
+
+    out_b = tmp_path / "out_b"
+    res = osb.compile_file(os.path.join(test_dir, "b.json"),
+                           checkpoints=["build", "tree"],
+                           exports=["tree"], output_dir=out_b)
+
+    tree1 = os.path.join(out_a, "tree")
+    tree2 = os.path.join(out_b, "tree")
+
+    actual_diff = tree_diff(tree1, tree2)
+
+    with open(os.path.join(test_dir, "diff.json"), encoding="utf8") as f:
+        expected_diff = json.load(f)
+
+    assert_tree_diffs_equal(expected_diff, actual_diff)
+
+    md_path = os.path.join(test_dir, "metadata.json")
+    if os.path.exists(md_path):
+        with open(md_path, "r", encoding="utf8") as f:
+            metadata = json.load(f)
+
+        assert metadata == res["metadata"]
+
+    # cache the downloaded data for the sources by copying
+    # it to self.cache, which is going to be used to initialize
+    # the osbuild cache with.
+    osb.copy_source_data(osb.store, "org.osbuild.files")
+
+
 @unittest.skipUnless(test.TestBase.have_test_data(), "no test-data access")
 @unittest.skipUnless(test.TestBase.have_tree_diff(), "tree-diff missing")
 @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
-@make_stage_tests
 class TestStages(test.TestBase):
-
-    def assertTreeDiffsEqual(self, tree_diff1, tree_diff2):
-        """
-        Asserts two tree diffs for equality.
-
-        Before assertion, the two trees are sorted, therefore order of files
-        doesn't matter.
-
-        There's a special rule for asserting differences where we don't
-        know the exact before/after value. This is useful for example if
-        the content of file is dependent on current datetime. You can use this
-        feature by putting null value in difference you don't care about.
-
-        Example:
-            "/etc/shadow": {content: ["sha256:xxx", null]}
-
-            In this case the after content of /etc/shadow doesn't matter.
-            The only thing that matters is the before content and that
-            the content modification happened.
-
-        The first tree diff can additionally contain an `added_directories`
-        array. Such an entry can be used when you care that a directory is
-        added, but you don't care about its content. This means that all
-        `added_files` in the second tree under the `added_directory` entry
-        in the first tree will be ignored. Note that tree diffs currently
-        don't distinguish between added files and added directories, so the
-        `added_directories` entry is satisfied also if there's a file added
-        with such a name.
-        """
-
-        def _sorted_tree(tree):
-            sorted_tree = json.loads(json.dumps(tree, sort_keys=True))
-            sorted_tree["added_files"] = sorted(sorted_tree["added_files"])
-            sorted_tree["deleted_files"] = sorted(sorted_tree["deleted_files"])
-
-            return sorted_tree
-
-        tree_diff1 = _sorted_tree(tree_diff1)
-        tree_diff2 = _sorted_tree(tree_diff2)
-
-        def raise_assertion(msg):
-            diff = '\n'.join(
-                difflib.ndiff(
-                    pprint.pformat(tree_diff1).splitlines(),
-                    pprint.pformat(tree_diff2).splitlines(),
-                )
-            )
-            raise AssertionError(f"{msg}\n\n{diff}")
-
-        def path_equal_or_is_descendant(path, potential_ancestor):
-            """
-            :return: Returns true if path == potential_ancestor or if path is inside potential_ancestor
-            """
-            return path == potential_ancestor or path.startswith(potential_ancestor + "/")
-
-        for added_dir in tree_diff1.get('added_directories', []):
-            original = tree_diff2['added_files']
-
-            filtered = [p for p in original if not path_equal_or_is_descendant(p, added_dir)]
-
-            if len(filtered) == len(original):
-                raise_assertion(f'{added_dir} was not added')
-
-            tree_diff2['added_files'] = filtered
-
-        self.assertEqual(tree_diff1['added_files'], tree_diff2['added_files'])
-        self.assertEqual(tree_diff1['deleted_files'], tree_diff2['deleted_files'])
-
-        if len(tree_diff1['differences']) != len(tree_diff2['differences']):
-            raise_assertion('length of differences different')
-
-        for (file1, differences1), (file2, differences2) in \
-                zip(tree_diff1['differences'].items(), tree_diff2['differences'].items()):
-
-            if file1 != file2:
-                raise_assertion(f"filename different: {file1}, {file2}")
-
-            if len(differences1) != len(differences2):
-                raise_assertion("length of file differences different")
-
-            for (difference1_kind, difference1_values), (difference2_kind, difference2_values) in \
-                    zip(differences1.items(), differences2.items()):
-                if difference1_kind != difference2_kind:
-                    raise_assertion(f"different difference kinds: {difference1_kind}, {difference2_kind}")
-
-                if difference1_values[0] is not None \
-                        and difference2_values[0] is not None \
-                        and difference1_values[0] != difference2_values[0]:
-                    raise_assertion(f"before values are different: {difference1_values[0]}, {difference2_values[0]}")
-
-                if difference1_values[1] is not None \
-                        and difference2_values[1] is not None \
-                        and difference1_values[1] != difference2_values[1]:
-                    raise_assertion(f"after values are different: {difference1_values[1]}, {difference2_values[1]}")
 
     @classmethod
     def setUpClass(cls):
@@ -216,42 +246,6 @@ class TestStages(test.TestBase):
 
     def setUp(self):
         self.osbuild = test.OSBuild(cache_from=self.store)
-
-    def run_stage_diff_test(self, test_dir: str):
-        with contextlib.ExitStack() as stack:
-            osb = stack.enter_context(self.osbuild)
-
-            out_a = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
-            _ = osb.compile_file(os.path.join(test_dir, "a.json"),
-                                 checkpoints=["build", "tree"],
-                                 exports=["tree"], output_dir=out_a)
-
-            out_b = stack.enter_context(tempfile.TemporaryDirectory(dir="/var/tmp"))
-            res = osb.compile_file(os.path.join(test_dir, "b.json"),
-                                   checkpoints=["build", "tree"],
-                                   exports=["tree"], output_dir=out_b)
-
-            tree1 = os.path.join(out_a, "tree")
-            tree2 = os.path.join(out_b, "tree")
-
-            actual_diff = self.tree_diff(tree1, tree2)
-
-            with open(os.path.join(test_dir, "diff.json"), encoding="utf8") as f:
-                expected_diff = json.load(f)
-
-            self.assertTreeDiffsEqual(expected_diff, actual_diff)
-
-            md_path = os.path.join(test_dir, "metadata.json")
-            if os.path.exists(md_path):
-                with open(md_path, "r", encoding="utf8") as f:
-                    metadata = json.load(f)
-
-                self.assertEqual(metadata, res["metadata"])
-
-            # cache the downloaded data for the sources by copying
-            # it to self.cache, which is going to be used to initialize
-            # the osbuild cache with.
-            osb.copy_source_data(self.store, "org.osbuild.files")
 
     def test_dracut(self):
         datadir = self.locate_test_data()

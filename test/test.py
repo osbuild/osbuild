@@ -11,11 +11,19 @@ import sys
 import tempfile
 import unittest
 
+import pytest
+
 import osbuild.meta
 from osbuild.objectstore import ObjectStore
 from osbuild.util import linux
 
 from .conftest import unsupported_filesystems
+
+
+def tree_diff(path1, path2):
+    checkout = TestBase.locate_test_checkout()
+    output = subprocess.check_output([os.path.join(checkout, "tools/tree-diff"), path1, path2])
+    return json.loads(output)
 
 
 class TestBase(unittest.TestCase):
@@ -260,10 +268,7 @@ class TestBase(unittest.TestCase):
         Run the `tree-diff` tool from the osbuild checkout. It produces a JSON
         output that describes the difference between 2 file-system trees.
         """
-
-        checkout = TestBase.locate_test_checkout()
-        output = subprocess.check_output([os.path.join(checkout, "tools/tree-diff"), path1, path2])
-        return json.loads(output)
+        return tree_diff(path1, path2)
 
     @staticmethod
     def has_filesystem_support(fs: str) -> bool:
@@ -296,6 +301,7 @@ class OSBuild(contextlib.AbstractContextManager):
 
     def __init__(self, *, cache_from=None):
         self._cache_from = cache_from
+        self.store = None
 
     def __enter__(self):
         self._exitstack = contextlib.ExitStack()
@@ -496,3 +502,25 @@ class OSBuild(contextlib.AbstractContextManager):
             "cp", "--reflink=auto", "-a",
             os.path.join(from_path, "."), to_path
         ], check=True)
+
+
+@pytest.fixture(name="osb")
+def osbuild_fixture(tmp_path):
+    # XXX: this fixture needs work, maybe it needs to be split up into two
+    # the issues(s):
+    # 1. it becomes slow now for tests like "test_noop.py" because those
+    #    did not use to use "cache_from" which is expensive as it does
+    #    a copy of the entire store but "test_noop.py" does not need this
+    #    so test_noop should could use it's own.
+    #    So either a new fixutre or a parameter (or we live with the
+    #    multiple copies of this fixture)
+    # 2. the TestStages::setUpClass sets up a central store that is then
+    #    shared via "TestStages.copy_source_data()" - this speeds up
+    #    the individual stages, we need something similar, a session
+    #    shared cache which means a new store fixture(?)
+    store = os.getenv("OSBUILD_TEST_STORE")
+    if not store:
+        store = tmp_path
+    with OSBuild(cache_from=store) as osb:
+        osb.store = store
+        yield osb
