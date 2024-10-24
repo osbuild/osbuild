@@ -3,23 +3,26 @@ import os
 import sys
 
 import osbuild.api
-from osbuild.util.path import in_tree
+from osbuild.util import parsing
 
 
-def main(tree, options):
+def main(args):
+    options = args["options"]
+
     for item in options["paths"]:
         path = item["path"]
         mode = item.get("mode", 0o777)
         parents = item.get("parents", False)
         exist_ok = item.get("exist_ok", False)
 
-        if not path.startswith("/"):
-            print("WARNING: relative path used, this is discouraged!")
+        if "://" not in path:
+            if not path.startswith("/"):
+                print("WARNING: relative path used, this is discouraged!")
+                path = f"tree:///{path}"
+            else:
+                path = f"tree://{path}"
 
-        target = os.path.join(tree, path.lstrip("/"))
-        if not in_tree(target, tree):
-            raise ValueError(f"path {path} not in tree")
-
+        target = parsing.parse_location(path, args)
         if parents:
             os.makedirs(target, mode=mode, exist_ok=exist_ok)
         else:
@@ -33,5 +36,4 @@ def main(tree, options):
 
 
 if __name__ == "__main__":
-    args = osbuild.api.arguments()
-    sys.exit(main(args["tree"], args["options"]))
+    sys.exit(main(osbuild.api.arguments()))

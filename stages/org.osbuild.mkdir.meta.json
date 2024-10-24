@@ -1,5 +1,5 @@
 {
-  "summary": "Create directories within the tree.",
+  "summary": "Create directories within the tree or mount.",
   "description": [
     "Can create one or more directories, optionally also the",
     "intermediate directories. The stage can gracefully handle",
@@ -31,8 +31,23 @@
             ],
             "properties": {
               "path": {
-                "type": "string",
-                "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "Target path, if a tree",
+                    "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+                  },
+                  {
+                    "type": "string",
+                    "description": "Target path, if a mount",
+                    "pattern": "^mount://.+"
+                  },
+                  {
+                    "type": "string",
+                    "description": "Target path, if a tree",
+                    "pattern": "^tree://.+"
+                  }
+                ]
               },
               "mode": {
                 "type": "number",
