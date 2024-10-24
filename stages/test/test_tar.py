@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os.path
+import re
 import subprocess
 
 import pytest
@@ -145,3 +146,17 @@ def test_tar_transform_no_sh(tmp_path, stage_module, fake_inputs):
     with pytest.raises(subprocess.CalledProcessError) as ex:
         stage_module.main(fake_inputs, tmp_path, options)
     assert "exit status 2" in str(ex.value)
+
+
+@pytest.mark.parametrize('tmp_path_disk_full_size', [5 * 1024])
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_tar_disk_full(stage_module, fake_inputs, tmp_path_disk_full, capfd):
+    options = {
+        "filename": "out.tar",
+    }
+
+    with pytest.raises(subprocess.CalledProcessError) as ex:
+        stage_module.main(fake_inputs, tmp_path_disk_full, options)
+
+    assert ex.value.returncode == 2
+    assert re.match(r".*Wrote only \d+ of \d+ bytes.*", str(capfd.readouterr().err))
