@@ -81,6 +81,20 @@ OSTree Images:
       - MANIFEST: fedora-coreos-container.json
         EXPORT: qemu/qemu.qcow2 metal/metal.raw metal4k/metal4k.raw
 
+OSTree Images (RHEL):
+  stage: test
+  extends: .terraform
+  script:
+    - schutzbot/deploy.sh
+    - sudo test/cases/ostree-images --manifest "$MANIFEST" --export $EXPORT
+  variables:
+    RUNNER: aws/rhel-9.4-ga-x86_64
+    INTERNAL_NETWORK: "true"
+  parallel:
+    matrix:
+      - MANIFEST: rhel/9.4-ostree-container-dev-null.json
+        EXPORT: ostree-commit/edge-commit.tar
+
 Manifests:
   stage: test
   extends: .terraform
