@@ -13,7 +13,7 @@ from itertools import combinations
 from tempfile import TemporaryDirectory
 from typing import Tuple
 
-import jsonschema
+import fastjsonschema
 import pytest
 
 REPO_PATHS = [
@@ -1305,10 +1305,8 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test
                 spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
                 with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
                     spdx_schema = json.load(f)
-                validator = jsonschema.Draft4Validator
-                validator.check_schema(spdx_schema)
-                spdx_validator = validator(spdx_schema)
-                spdx_validator.validate(res["sbom"])
+                spdx_validator = fastjsonschema.compile(spdx_schema)
+                spdx_validator(res["sbom"])
 
                 assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
             else:

@@ -32,7 +32,7 @@ import sys
 from collections import deque
 from typing import Any, Deque, Dict, List, Optional, Sequence, Set, Tuple, Union
 
-import jsonschema
+import fastjsonschema
 
 from .util import osrelease
 
@@ -56,8 +56,8 @@ class ValidationError:
 
     @classmethod
     def from_exception(cls, ex):
-        err = cls(ex.message)
-        err.path = ex.absolute_path
+        err = cls(str(ex))
+        #err.path = ex.absolute_path
         return err
 
     @property
@@ -218,9 +218,11 @@ class Schema:
     """
 
     def __init__(self, schema: Optional[Dict], name: Optional[str] = None):
+        if schema:
+            schema["schema"] = "http://json-schema.org/draft-04/schema"
         self.data = schema
         self.name = name
-        self._validator: Optional[jsonschema.Draft4Validator] = None
+        self._validator: Optional[fastjsonschema.CodeGeneratorDraft04] = None
 
     def check(self) -> ValidationResult:
         """Validate the `schema` data itself"""
@@ -244,10 +246,8 @@ class Schema:
             return res
 
         try:
-            Validator = jsonschema.Draft4Validator
-            Validator.check_schema(self.data)
-            self._validator = Validator(self.data)
-        except jsonschema.exceptions.SchemaError as err:
+            self._validator = fastjsonschema.compile(self.data)
+        except fastjsonschema.JsonSchemaDefinitionException as err:
             res += ValidationError.from_exception(err)
 
         return res
@@ -267,8 +267,10 @@ class Schema:
         if not self._validator:
             raise RuntimeError("Trying to validate without validator.")
 
-        for error in self._validator.iter_errors(target):
-            res += ValidationError.from_exception(error)
+        try:
+            self._validator(target)
+        except fastjsonschema.JsonSchemaException as e:
+            res += ValidationError.from_exception(e)
 
         return res
 
@@ -279,11 +281,11 @@ class Schema:
 META_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "propertyNames": {
-        "not": {
-            "const": "description",
-        },
-    },
+    #"propertyNames": {
+    #    "not": {
+    #        "const": "description",
+    #    },
+    #},
     "required": ["summary", "description"],
     "anyOf": [
         {
