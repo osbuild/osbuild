@@ -3,6 +3,7 @@ import contextlib
 import hashlib
 import json
 import os
+import subprocess
 from fnmatch import fnmatch
 from typing import Dict, Generator, Iterable, Iterator, List, Optional
 
@@ -36,6 +37,30 @@ DEFAULT_CAPABILITIES = {
     "CAP_SYS_NICE",
     "CAP_SYS_RESOURCE"
 }
+
+
+# XXX: put into a helper, reuse-in container-deploy
+def container_mount(from_container):
+    result = subprocess.run(
+        ["podman", "image", "mount", from_container],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+        check=False,
+    )
+    if result.returncode != 0:
+        code = result.returncode
+        msg = result.stderr.strip()
+        raise RuntimeError(f"Failed to mount image ({code}): {msg}")
+    return result.stdout.strip()
+
+
+def container_umount(from_container):
+    subprocess.run(
+        ["podman", "image", "umount", from_container],
+        stdout=subprocess.DEVNULL,
+        check=True,
+    )
 
 
 def cleanup(*objs):
@@ -305,67 +330,72 @@ class Pipeline:
         if object_store.contains(self.id):
             return results
 
-        # We need a build tree for the stages below, which is either
-        # another tree that needs to be built with the build pipeline
-        # or the host file system if no build pipeline is specified
-        # NB: the very last level of nested build pipelines is always
-        # build on the host
+        with contextlib.ExitStack() as cm:
+            # We need a build tree for the stages below, which is either
+            # another tree that needs to be built with the build pipeline
+            # or the host file system if no build pipeline is specified
+            # NB: the very last level of nested build pipelines is always
+            # build on the host
 
-        if not self.build:
-            build_tree = object_store.host_tree
-        else:
-            build_tree = object_store.get(self.build)
+            if not self.build:
+                build_tree = object_store.host_tree
+            elif self.build.startswith("container:"):
+                cnt_name = self.build.removeprefix("container:")
+                build_tree = container_mount(cnt_name)
+                cm.callback(container_umount, cnt_name)
+            else:
+                build_tree = object_store.get(self.build)
 
-        if not build_tree:
-            raise AssertionError(f"build tree {self.build} not found")
+            if not build_tree:
+                raise AssertionError(f"build tree {self.build} not found")
 
-        # Not in the store yet, need to actually build it, but maybe
-        # an intermediate checkpoint exists: Find the last stage that
-        # already exists in the store and use that as the base.
-        tree = object_store.new(self.id)
-        tree.source_epoch = self.source_epoch
+            # Not in the store yet, need to actually build it, but maybe
+            # an intermediate checkpoint exists: Find the last stage that
+            # already exists in the store and use that as the base.
+            tree = object_store.new(self.id)
+            tree.source_epoch = self.source_epoch
 
-        todo = collections.deque()
-        for stage in reversed(self.stages):
-            base = object_store.get(stage.id)
-            if base:
-                tree.init(base)
-                break
-            todo.append(stage)  # append right side of the deque
+            todo = collections.deque()
+            for stage in reversed(self.stages):
+                base = object_store.get(stage.id)
+                if base:
+                    tree.init(base)
+                    break
+                todo.append(stage)  # append right side of the deque
 
-        # If two run() calls race each-other, two trees will get built
-        # and it is nondeterministic which of them will end up
-        # referenced by the `tree_id` in the content store if they are
-        # both committed. However, after the call to commit all the
-        # trees will be based on the winner.
-        results["stages"] = []
+            # If two run() calls race each-other, two trees will get built
+            # and it is nondeterministic which of them will end up
+            # referenced by the `tree_id` in the content store if they are
+            # both committed. However, after the call to commit all the
+            # trees will be based on the winner.
+            results["stages"] = []
 
-        while todo:
-            stage = todo.pop()
+            while todo:
+                stage = todo.pop()
 
-            monitor.stage(stage)
+                monitor.stage(stage)
 
-            r = stage.run(tree,
-                          self.runner,
-                          build_tree,
-                          object_store,
-                          monitor,
-                          libdir,
-                          debug_break,
-                          stage_timeout)
+                r = stage.run(tree,
+                              self.runner,
+                              build_tree,
+                              object_store,
+                              monitor,
+                              libdir,
+                              debug_break,
+                              stage_timeout)
 
-            monitor.result(r)
+                monitor.result(r)
 
-            results["stages"].append(r)
-            if not r.success:
-                cleanup(build_tree, tree)
-                results["success"] = False
-                return results
+                results["stages"].append(r)
+                if not r.success:
+                    cleanup(build_tree, tree)
+                    results["success"] = False
+                    return results
 
-            if stage.checkpoint:
-                object_store.commit(tree, stage.id)
+                if stage.checkpoint:
+                    object_store.commit(tree, stage.id)
 
-        tree.finalize()
+            tree.finalize()
 
         return results
 
@@ -453,7 +483,7 @@ class Manifest:
 
             # Add all dependencies to the stack of things to check,
             # starting with the build pipeline, if there is one
-            if pl.build:
+            if pl.build and not pl.build.startswith("container:"):
                 check.append(self.get(pl.build))
 
             # Stages depend on other pipeline via pipeline inputs.

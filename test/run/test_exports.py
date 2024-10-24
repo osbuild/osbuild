@@ -91,3 +91,36 @@ def test_exports_with_force_no_preserve_owner(osb, tmp_path, jsondata, testing_l
         assert expected_export.exists()
         assert expected_export.stat().st_uid == 0
     assert k not in os.environ
+
+
+# XXX: put into a more fitting place
+@pytest.mark.skipif(os.getuid() != 0, reason="root-only")
+def test_build_root_from_container_registry(osb, tmp_path, testing_libdir):
+    # XXX: this test uses the fact that /usr/bin/subscription-manager is
+    # avaialble as an indicator that the buildroot was constructed from
+    # the ubi9:latest container. This is not a great detection, instead
+    # we should just provide our own testing container that puts some
+    # canary data into /usr (note that /etc is not available in a buildroot)
+    cnt_ref = "registry.access.redhat.com/ubi9:latest"
+    subprocess.run(["podman", "pull", cnt_ref], check=True)
+    jsondata = json.dumps({
+        "version": "2",
+        "pipelines": [
+            {
+                "name": "image",
+                "build": f"container:{cnt_ref}",
+                "stages": [
+                    {
+                        "type": "org.osbuild.testing.injectpy",
+                        "options": {
+                            "code": [
+                                'import os.path',
+                                'assert os.path.exists("/usr/bin/subscription-manager")',
+                            ],
+                        },
+                    },
+                ]
+            }
+        ]
+    })
+    osb.compile(jsondata, output_dir=tmp_path, exports=["image"], libdir=testing_libdir)
