@@ -159,4 +159,4 @@ def test_tar_disk_full(stage_module, fake_inputs, tmp_path_disk_full, capfd):
         stage_module.main(fake_inputs, tmp_path_disk_full, options)
 
     assert ex.value.returncode == 2
-    assert re.match(r".*Wrote only \d+ of \d+ bytes.*", str(capfd.readouterr().err))
+    assert re.search(r"Wrote only \d+ of \d+ bytes", str(capfd.readouterr().err))
