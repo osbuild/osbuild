@@ -15,12 +15,9 @@ def main(args):
         parents = item.get("parents", False)
         exist_ok = item.get("exist_ok", False)
 
-        if "://" not in path:
-            if not path.startswith("/"):
-                print("WARNING: relative path used, this is discouraged!")
-                path = f"tree:///{path}"
-            else:
-                path = f"tree://{path}"
+        if "://" not in path and not path.startswith("/"):
+            print("WARNING: relative path used, this is discouraged!")
+            path = f"tree:///{path}"
 
         target = parsing.parse_location(path, args)
         if parents:

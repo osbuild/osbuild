@@ -90,3 +90,37 @@ def test_parse_location_inputs():
     assert [root, path] == ["/run/osbuild/inputs/tree", "/"]
     path = parsing.parse_location(location, args)
     assert path == "/run/osbuild/inputs/tree/."
+
+
+def test_parse_location_abspath():
+    args = {
+        "tree": "/run/osbuild/tree",
+    }
+    location = "/path/to/file"
+    root, path = parsing.parse_location_into_parts(location, args)
+    assert [root, path] == ["/run/osbuild/tree", "/path/to/file"]
+    path = parsing.parse_location(location, args)
+    assert path == "/run/osbuild/tree/path/to/file"
+
+
+def test_parse_location_badpath():
+    args = {
+        "tree": "/run/osbuild/tree",
+        "paths": {
+            "mounts": "/run/osbuild/mounts",
+        },
+        "mounts": {
+            "root": {
+                "path": "/run/osbuild/mounts/."
+            }
+        },
+    }
+    location = "file"
+    with pytest.raises(ValueError) as ex:
+        parsing.parse_location_into_parts(location, args)
+    assert "url.path from location must start with '/'" in str(ex.value)
+
+    location = "mount://disk/file"
+    with pytest.raises(ValueError) as ex:
+        parsing.parse_location_into_parts(location, args)
+    assert "Unknown mount" in str(ex.value)
