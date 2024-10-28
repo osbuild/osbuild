@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 from fnmatch import fnmatch
-from typing import Dict, Generator, Iterable, Iterator, List, Optional
+from typing import Any, Dict, Generator, Iterable, Iterator, List, Optional
 
 from . import buildroot, host, objectstore, remoteloop
 from .api import API
@@ -388,8 +388,12 @@ class Manifest:
     """Representation of a pipeline and its sources"""
 
     def __init__(self):
+        self.metadata = {}
         self.pipelines = collections.OrderedDict()
         self.sources = []
+
+    def add_metadata(self, name: str, data: Dict[str, Any]) -> None:
+        self.metadata[name] = data
 
     def add_pipeline(
         self,

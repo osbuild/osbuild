@@ -12,6 +12,14 @@ import osbuild.meta
 
 BASIC_PIPELINE = {
     "version": "2",
+    "metadata": {
+        "generators": [
+            {
+                "name": "handcrafted",
+                "version": "NaN",
+            },
+        ],
+    },
     "sources": {
         "org.osbuild.curl": {
             "items": {
