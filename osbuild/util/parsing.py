@@ -77,10 +77,14 @@ def parse_location_into_parts(location: str, args: Dict) -> Tuple[str, str]:
     Parses the location URL to derive the corresponding root and url path.
 
     Parameters:
-    - location (str): The location URL to be parsed.
+    - location (str): The location URL to be parsed. If the URL has no scheme,
+    then 'tree://' is implied
     - args (Dict): A dictionary containing arguments including mounts and
     path information as passed by osbuild.api.arguments()
     """
+
+    if "://" not in location:
+        location = f"tree://{location}"
 
     url = urlparse(location)
 
