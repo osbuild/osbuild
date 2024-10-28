@@ -166,6 +166,9 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
         "pipelines": pipelines
     }
 
+    if manifest.metadata:
+        description["metadata"] = manifest.metadata
+
     if sources:
         description["sources"] = sources
 
@@ -355,9 +358,14 @@ def load(description: Dict, index: Index) -> Manifest:
 
     sources = description.get("sources", {})
     pipelines = description.get("pipelines", [])
+    metadata = description.get("metadata", {})
 
     manifest = Manifest()
     source_refs = set()
+
+    # metadata
+    for key, value in metadata.items():
+        manifest.add_metadata(key, value)
 
     # load the sources
     for name, desc in sources.items():
