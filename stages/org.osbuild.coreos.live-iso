@@ -15,6 +15,7 @@ import yaml
 
 import osbuild.api
 from osbuild.util import checksum
+from osbuild.util.chroot import Chroot
 
 
 # Size of file used to embed an Ignition config within a CPIO.
@@ -218,9 +219,6 @@ def main(inputs, devices, tree, options):
 
     tmpisofile = os.path.join(tree, iso_name)
 
-    img_metal_checksum = checksum.hexdigest_file(img_metal, "sha256")
-    img_metal4k_checksum = checksum.hexdigest_file(img_metal4k, "sha256")
-
     # Find the directory under `/usr/lib/modules/<kver>` where the
     # kernel/initrd live. It will be the only entity in there.
     modules_dir = os.path.join(inputs['tree']['path'], 'usr/lib/modules')
@@ -281,22 +279,24 @@ def main(inputs, devices, tree, options):
         fh.write(features)
 
     # Add osmet files
+    os_release = parse_os_release(inputs['tree']['path'])
     fast_arg = []
+    cmd = ['coreos-installer', 'pack', 'osmet']
+    root = inputs['tree']['path']
     if squashfs_compression == 'lz4':
         fast_arg = ['--fast']
-    print('Generating osmet file for 512b metal image')
-    metal_osmet = os.path.join(tmpinitrd_rootfs, 'metal.osmet')
-    # use bwrap to make sure we use the coreos-installer from the target system
-    # XXX: passing the boot and root partitions... yuck... should pass through partition numbers instead?
-    # or just hack around lsblk not working in coreos-installer directly
-    bwrap(inputs['tree']['path'], ['coreos-installer', 'pack', 'osmet', img_metal, '--description',
-                                   os_release['PRETTY_NAME'], '--checksum', img_metal_checksum, '--output',
-                                   metal_osmet] + fast_arg)
-    print('Generating osmet file for 4k metal image')
-    metal_osmet4k = os.path.join(tmpinitrd_rootfs, 'metal4k.osmet')
-    bwrap(inputs['tree']['path'], ['coreos-installer', 'pack', 'osmet', img_metal4k, '--description',
-                                   os_release['PRETTY_NAME'], '--checksum', img_metal4k_checksum, '--output',
-                                   metal_osmet4k] + fast_arg)
+    for img in ['metal', 'metal4k']:
+        print(f'Generating osmet file for {img} image')
+        image = devices[img]['path']
+        img_checksum = checksum.hexdigest_file(image, "sha256")
+        tmp_img_osmet = os.path.join("/tmp", f'{img}.osmet')
+        extra_cmd = [image, '--description', os_release['PRETTY_NAME'], '--checksum',
+        img_checksum, '--output', tmp_img_osmet]
+        with Chroot(root) as chroot:
+            chroot.mount_bind("/tmp")
+            chroot.run(cmd + extra_cmd + fast_arg, check=True)
+            chroot.umount("/tmp")
+        shutil.move(tmp_img_osmet, os.path.join(tmpinitrd_rootfs, f'{img}.osmet'))
 
     # Generate root squashfs
     print(f'Compressing squashfs with {squashfs_compression}')
