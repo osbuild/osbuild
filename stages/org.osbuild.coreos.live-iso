@@ -298,6 +298,32 @@ def main(inputs, devices, tree, options):
             chroot.umount("/tmp")
         shutil.move(tmp_img_osmet, os.path.join(tmpinitrd_rootfs, f'{img}.osmet'))
 
+    # Immplements necessary CoreOS adjustments
+    # including creating hardlinks in the /boot/ filesystem
+    # and modifying the read-only flag in OSTree configurations
+    if devices['metal']:
+        tmp_squashfs_dir = mounts['root']['path']
+        # Where the contents of rootfs image are stored
+        # Make sure to create it, if it is not created yet.
+        tmpinitrd_rootfs = os.path.join(tree, 'initrd-rootfs')
+        os.makedirs(tmpinitrd_rootfs, exist_ok=True)
+
+        basearch = os.uname().machine
+        # Remove the sysroot=readonly flag, see https://github.com/coreos/fedora-coreos-tracker/issues/589
+        subprocess.check_call(['sed', '-i', '/readonly=true/d', f'{tmp_squashfs_dir}/ostree/repo/config'])
+        # And ensure that the kernel binary and hmac file is in the place that dracut
+        # expects it to be; xref https://issues.redhat.com/browse/OCPBUGS-15843
+        kernel_binary = glob.glob(f"{tmp_squashfs_dir}/boot/ostree/*/vmlinuz*")[0]
+        kernel_hmac = glob.glob(f"{tmp_squashfs_dir}/boot/ostree/*/.*.hmac")[0]
+        kernel_binary_basename = os.path.basename(kernel_binary)
+        kernel_hmac_basename = os.path.basename(kernel_hmac)
+
+        # Create hard links in the /boot directory
+        os.link(kernel_hmac, f"{tmp_squashfs_dir}/boot/{kernel_hmac_basename}")
+        os.link(kernel_binary, f"{tmp_squashfs_dir}/boot/{kernel_binary_basename}")
+
+        print(f"Kernel binary linked: {tmp_squashfs_dir}/boot/{kernel_binary_basename}")
+        print(f"Kernel HMAC linked: {tmp_squashfs_dir}/boot/{kernel_hmac_basename}")
     # Generate root squashfs
     print(f'Compressing squashfs with {squashfs_compression}')
     try:
