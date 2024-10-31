@@ -305,12 +305,12 @@ def main(inputs, devices, tree, options):
     # or just hack around lsblk not working in coreos-installer directly
     bwrap(inputs['tree']['path'], ['coreos-installer', 'pack', 'osmet', img_metal, '--description',
                                    os_release['PRETTY_NAME'], '--checksum', img_metal_checksum, '--output',
-                                   metal_osmet, f"{img_metal}p3", f"{img_metal}p4"] + fast_arg)
+                                   metal_osmet] + fast_arg)
     print('Generating osmet file for 4k metal image')
     metal_osmet4k = os.path.join(tmpinitrd_rootfs, 'metal4k.osmet')
     bwrap(inputs['tree']['path'], ['coreos-installer', 'pack', 'osmet', img_metal4k, '--description',
                                    os_release['PRETTY_NAME'], '--checksum', img_metal4k_checksum, '--output',
-                                   metal_osmet4k, f"{img_metal4k}p3", f"{img_metal4k}p4"] + fast_arg)
+                                   metal_osmet4k] + fast_arg)
 
     # Generate root squashfs
     print(f'Compressing squashfs with {squashfs_compression}')
