@@ -12,8 +12,9 @@ class Chroot:
     This mounts /proc, /dev, and /sys.
     """
 
-    def __init__(self, root: str):
+    def __init__(self, root: str, bind_mounts=None):
         self.root = root
+        self._bind_mounts = bind_mounts or []
 
     def __enter__(self):
         for d in ["/proc", "/dev", "/sys"]:
@@ -33,12 +34,23 @@ class Chroot:
                         "sysfs", f"{self.root}/sys"],
                        check=True)
 
+        for d in self._bind_mounts:
+            target_path = os.path.join(self.root, d.lstrip("/"))
+            if not os.path.exists(target_path):
+                print(f"Making missing chroot directory: {d}")
+                os.makedirs(target_path)
+            subprocess.run(["mount", "--rbind", d, target_path], check=True)
+
         return self
 
     def __exit__(self, exc_type, exc_value, tracebk):
         failed_umounts = []
         for d in ["/proc", "/dev", "/sys"]:
             if subprocess.run(["umount", "--lazy", self.root + d], check=False).returncode != 0:
+                failed_umounts.append(d)
+        for d in self._bind_mounts[::-1]:
+            target_path = os.path.join(self.root, d.lstrip("/"))
+            if subprocess.run(["umount", "--lazy", target_path], check=False).returncode != 0:
                 failed_umounts.append(d)
         if failed_umounts:
             print(f"Error unmounting paths from chroot: {failed_umounts}")
