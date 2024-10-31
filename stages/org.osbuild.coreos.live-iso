@@ -14,6 +14,8 @@ import tempfile
 import yaml
 
 import osbuild.api
+from osbuild.util import checksum
+
 
 # Size of file used to embed an Ignition config within a CPIO.
 IGNITION_IMG_SIZE = 256 * 1024
@@ -117,22 +119,6 @@ def make_stream_hash(src, dest):
                 outf.write(hashlib.sha256(buf).hexdigest() + '\n')
 
 
-def sha256sum_file(path):
-    """
-    Calculates the sha256 sum from a path.
-
-    :param path: The full path to the file
-    :type: path: str
-    :returns: The calculated sha256 sum
-    :type: str
-    """
-    h = hashlib.sha256()
-    with open(path, 'rb', buffering=0) as f:
-        for b in iter(lambda: f.read(128 * 1024), b''):
-            h.update(b)
-    return h.hexdigest()
-
-
 def parse_os_release(deployed_tree):
     r = dict()
     with open(os.path.join(deployed_tree, 'etc/os-release')) as f:
@@ -232,8 +218,8 @@ def main(inputs, devices, tree, options):
 
     tmpisofile = os.path.join(tree, iso_name)
 
-    img_metal_checksum = sha256sum_file(img_metal)
-    img_metal4k_checksum = sha256sum_file(img_metal4k)
+    img_metal_checksum = checksum.hexdigest_file(img_metal, "sha256")
+    img_metal4k_checksum = checksum.hexdigest_file(img_metal4k, "sha256")
 
     # Find the directory under `/usr/lib/modules/<kver>` where the
     # kernel/initrd live. It will be the only entity in there.
