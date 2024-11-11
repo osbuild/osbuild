@@ -4,12 +4,12 @@ from datetime import datetime
 import pytest
 
 testutil_dnf4 = pytest.importorskip("osbuild.testutil.dnf4")
-bom_dnf = pytest.importorskip("osbuild.util.bom.dnf")
+sbom_dnf = pytest.importorskip("osbuild.util.sbom.dnf")
 
 
 def test_dnf_pkgset_to_sbom_pkgset():
     dnf_pkgset = testutil_dnf4.depsolve_pkgset([os.path.abspath("./test/data/testrepos/baseos")], ["bash"])
-    bom_pkgset = bom_dnf.dnf_pkgset_to_sbom_pkgset(dnf_pkgset)
+    bom_pkgset = sbom_dnf.dnf_pkgset_to_sbom_pkgset(dnf_pkgset)
     assert len(bom_pkgset) == len(dnf_pkgset)
     for bom_pkg, dnf_pkg in zip(bom_pkgset, dnf_pkgset):
         assert bom_pkg.name == dnf_pkg.name
@@ -26,7 +26,7 @@ def test_dnf_pkgset_to_sbom_pkgset():
         assert bom_pkg.homepage == dnf_pkg.url
 
         assert bom_pkg.checksums == {
-            bom_dnf.bom_chksum_algorithm_from_hawkey(dnf_pkg.chksum[0]): dnf_pkg.chksum[1].hex()
+            sbom_dnf.bom_chksum_algorithm_from_hawkey(dnf_pkg.chksum[0]): dnf_pkg.chksum[1].hex()
         }
 
         assert bom_pkg.download_url == dnf_pkg.remote_location()
