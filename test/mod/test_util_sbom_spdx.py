@@ -7,7 +7,7 @@ from osbuild.util.sbom.spdx import bom_pkgset_to_spdx2_doc, create_spdx2_documen
 from osbuild.util.sbom.spdx2.model import CreatorType, ExternalPackageRefCategory, RelationshipType
 
 testutil_dnf4 = pytest.importorskip("osbuild.testutil.dnf4")
-bom_dnf = pytest.importorskip("osbuild.util.bom.dnf")
+bom_dnf = pytest.importorskip("osbuild.util.sbom.dnf")
 
 
 def test_create_spdx2_document():
