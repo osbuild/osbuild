@@ -2,7 +2,7 @@ import os
 import os.path
 import tempfile
 from datetime import datetime
-from typing import List
+from typing import Dict, List
 
 import libdnf5 as dnf5
 from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
@@ -19,6 +19,8 @@ from osbuild.solver import (
     modify_rootdir_path,
     read_keys,
 )
+from osbuild.util.sbom.dnf5 import dnf_pkgset_to_sbom_pkgset
+from osbuild.util.sbom.spdx import bom_pkgset_to_spdx2_doc
 
 
 def remote_location(package, schemes=("http", "ftp", "file", "https")):
@@ -276,6 +278,17 @@ class DNF5(SolverBase):
     def _timestamp_to_rfc3339(timestamp):
         return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
 
+    @staticmethod
+    def _sbom_for_pkgset(pkgset: List[dnf5.rpm.Package]) -> Dict:
+        """
+        Create an SBOM document for the given package set.
+
+        For now, only SPDX v2 is supported.
+        """
+        pkgset = dnf_pkgset_to_sbom_pkgset(pkgset)
+        spdx_doc = bom_pkgset_to_spdx2_doc(pkgset)
+        return spdx_doc.to_dict()
+
     def dump(self):
         """dump returns a list of all available packages"""
         packages = []
@@ -445,4 +458,8 @@ class DNF5(SolverBase):
             "packages": packages,
             "repos": repositories,
         }
+
+        if "sbom" in arguments:
+            response["sbom"] = self._sbom_for_pkgset(last_transaction)
+
         return response

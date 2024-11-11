@@ -1280,13 +1280,6 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test
             res, exit_code = depsolve(transactions, repo_configs, root_dir,
                                       cache_dir, dnf_config, opt_metadata, with_sbom)
 
-            # NB: dnf5 implementation does not support SBOM yet
-            if dnf_config.get("use_dnf5", False) and with_sbom:
-                assert exit_code != 0
-                assert res["kind"] == "InvalidRequest"
-                assert res["reason"] == "SBOM support for DNF5 is not implemented"
-                continue
-
             if test_case.get("error", False):
                 assert exit_code != 0
                 assert res["kind"] == test_case["error_kind"]
