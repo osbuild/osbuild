@@ -161,15 +161,6 @@ def validate_request(request):
 
     sbom = request["arguments"].get("sbom")
     if sbom is not None:
-        # NB: check the DNF5 flag here, instead of in the dnf5 module,
-        # to consistently return this error message, even if there are other
-        # potential errors in the request, such as broken repository.
-        if config.get("use_dnf5", False):
-            return {
-                "kind": "InvalidRequest",
-                "reason": "SBOM support for DNF5 is not implemented"
-            }
-
         if command != "depsolve":
             return {
                 "kind": "InvalidRequest",
