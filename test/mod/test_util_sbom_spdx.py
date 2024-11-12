@@ -3,7 +3,7 @@ import os
 import pytest
 
 import osbuild
-from osbuild.util.sbom.spdx import bom_pkgset_to_spdx2_doc, create_spdx2_document, spdx2_checksum_algorithm
+from osbuild.util.sbom.spdx import create_spdx2_document, sbom_pkgset_to_spdx2_doc, spdx2_checksum_algorithm
 from osbuild.util.sbom.spdx2.model import CreatorType, ExternalPackageRefCategory, RelationshipType
 
 testutil_dnf4 = pytest.importorskip("osbuild.testutil.dnf4")
@@ -39,7 +39,7 @@ def test_create_spdx2_document():
 def test_sbom_pkgset_to_spdx2_doc():
     dnf_pkgset = testutil_dnf4.depsolve_pkgset([os.path.abspath("./test/data/testrepos/baseos")], ["bash"])
     bom_pkgset = bom_dnf.dnf_pkgset_to_sbom_pkgset(dnf_pkgset)
-    doc = bom_pkgset_to_spdx2_doc(bom_pkgset)
+    doc = sbom_pkgset_to_spdx2_doc(bom_pkgset)
 
     assert len(doc.packages) == len(bom_pkgset)
     for spdx_pkg, bom_pkg in zip(doc.packages, bom_pkgset):

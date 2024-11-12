@@ -9,7 +9,7 @@ import hawkey
 
 from osbuild.solver import DepsolveError, MarkingError, RepoError, SolverBase, modify_rootdir_path, read_keys
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
-from osbuild.util.sbom.spdx import bom_pkgset_to_spdx2_doc
+from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
 
 class DNF(SolverBase):
@@ -168,7 +168,7 @@ class DNF(SolverBase):
         For now, only SPDX v2 is supported.
         """
         pkgset = dnf_pkgset_to_sbom_pkgset(pkgset)
-        spdx_doc = bom_pkgset_to_spdx2_doc(pkgset)
+        spdx_doc = sbom_pkgset_to_spdx2_doc(pkgset)
         return spdx_doc.to_dict()
 
     def dump(self):
