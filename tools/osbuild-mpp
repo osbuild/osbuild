@@ -1673,6 +1673,8 @@ class ManifestFileV2(ManifestFile):
         if not mpp:
             return
 
+        self._process_format(mpp)
+
         refs = element_enter(inputs_images, "references", {})
         manifest_lists = []
 
