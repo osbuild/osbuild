@@ -20,7 +20,7 @@ from osbuild.solver import (
     read_keys,
 )
 from osbuild.util.sbom.dnf5 import dnf_pkgset_to_sbom_pkgset
-from osbuild.util.sbom.spdx import bom_pkgset_to_spdx2_doc
+from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
 
 def remote_location(package, schemes=("http", "ftp", "file", "https")):
@@ -286,7 +286,7 @@ class DNF5(SolverBase):
         For now, only SPDX v2 is supported.
         """
         pkgset = dnf_pkgset_to_sbom_pkgset(pkgset)
-        spdx_doc = bom_pkgset_to_spdx2_doc(pkgset)
+        spdx_doc = sbom_pkgset_to_spdx2_doc(pkgset)
         return spdx_doc.to_dict()
 
     def dump(self):

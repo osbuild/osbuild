@@ -41,7 +41,7 @@ def create_spdx2_document():
     return doc
 
 
-def bom_pkgset_to_spdx2_doc(pkgset: List[sbom_model.BasePackage]) -> spdx2.Document:
+def sbom_pkgset_to_spdx2_doc(pkgset: List[sbom_model.BasePackage]) -> spdx2.Document:
     doc = create_spdx2_document()
     relationships = []
 
