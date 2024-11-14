@@ -16,9 +16,10 @@ import json
 import os
 import sys
 import time
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, Union
 
 import osbuild
+from osbuild.pipeline import BuildResult, DownloadResult
 from osbuild.util.term import fmt as vt
 
 
@@ -166,7 +167,8 @@ class Progress:
 def log_entry(message: Optional[str] = None,
               context: Optional[Context] = None,
               progress: Optional[Progress] = None,
-              build_result: Optional[osbuild.pipeline.BuildResult] = None) -> dict:
+              result: Union[BuildResult, DownloadResult, None] = None,
+              ) -> dict:
     """
     Create a single log entry dict with a given message, context, and progress objects.
     All arguments are optional. A timestamp is added to the message.
@@ -175,7 +177,7 @@ def log_entry(message: Optional[str] = None,
     # monitors support that
     return omitempty({
         "message": message,
-        "build_result": build_result.as_dict() if build_result else None,
+        "result": result.as_dict() if result else None,
         "context": context.as_dict() if context else None,
         "progress": progress.as_dict() if progress else None,
         "timestamp": time.time(),
@@ -229,7 +231,7 @@ class BaseMonitor(abc.ABC):
     def assembler(self, assembler: osbuild.Stage):
         """Called when an assembler is being built"""
 
-    def result(self, result: osbuild.pipeline.BuildResult):
+    def result(self, result: Union[BuildResult, DownloadResult]) -> None:
         """Called when a module (stage/assembler) is done with its result"""
 
     def log(self, message: str, origin: Optional[str] = None):
@@ -256,7 +258,7 @@ class LogMonitor(BaseMonitor):
         super().__init__(fd, total_steps)
         self.timer_start = 0
 
-    def result(self, result: osbuild.pipeline.BuildResult):
+    def result(self, result: Union[BuildResult, DownloadResult]) -> None:
         duration = int(time.time() - self.timer_start)
         self.out.write(f"\n⏱  Duration: {duration}s\n")
 
@@ -337,7 +339,7 @@ class JSONSeqMonitor(BaseMonitor):
         self.log(f"Starting module {module.name}", origin="osbuild.monitor")
 
     # result is for modules
-    def result(self, result: osbuild.pipeline.BuildResult):
+    def result(self, result: Union[BuildResult, DownloadResult]) -> None:
         # we may need to check pipeline ids here in the future
         if self._progress.sub_progress:
             self._progress.sub_progress.incr()
@@ -349,7 +351,7 @@ class JSONSeqMonitor(BaseMonitor):
             # We should probably remove the "output" key from the result
             # as it is redundant, each output already generates a "log()"
             # message that is streamed to the client.
-            build_result=result,
+            result=result,
         ))
 
     def log(self, message, origin: Optional[str] = None):
