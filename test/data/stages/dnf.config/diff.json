@@ -6,8 +6,8 @@
   "differences": {
     "/etc/dnf/dnf.conf": {
       "content": [
-        "sha256:59535af5e9f33197ed15a2d4ce1970d0ddf7018fb23e522f29924ca3cf3136be",
-        "sha256:3b3e48b78770b2a33fc93ea09bf314b9c2a7acb5ed74d402b857288a8c88a2af"
+        "sha256:bb898f90ae1b05d5f389be84a2c318f6482acd5fd87431f2b7a727bb731a2360",
+        "sha256:550bc0e31f83de9e848be20ff1c270c85ae937c4aea191d1b24e650ea02d1202"
       ]
     }
   }

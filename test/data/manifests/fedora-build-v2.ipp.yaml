@@ -24,7 +24,9 @@ pipelines:
                 - gdisk
                 - grub2-pc
                 - policycoreutils
+                - python3-dnf
                 - python3-iniparse
+                - python3-libdnf5
                 - python3-toml
                 - python3-yaml
                 - qemu-img

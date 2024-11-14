@@ -4,31 +4,19 @@
   "differences": {
     "/etc/authselect/authselect.conf": {
       "content": [
-        "sha256:55eee183988be83f2c7867cdb7c29bba9f8d879cf7dc915a5c6cfd7f3fc56adb",
+        "sha256:30769ce03a7df14c85a46254f196a769d2dfc1fa7c9dafcd558a04f872a480d7",
         "sha256:21d9b04b621411419ae5469fd0b69aa87cf0c21ed8c7033d767472d2d9d07b5e"
-      ]
-    },
-    "/etc/authselect/dconf-db": {
-      "content": [
-        "sha256:3143cf0884f874c12b6e12181829514ca86c65c29c3c5c106af95614e0191cea",
-        "sha256:559565d5f87ab929c50ca3773ec7b6e30522f494424ae037608fe92829959e5f"
-      ]
-    },
-    "/etc/authselect/dconf-locks": {
-      "content": [
-        "sha256:7b0ab1525a0e52dbf02045126b351b89fd0c99aceded6862c322b83b9c1cbdee",
-        "sha256:5dc7ba629a423616341432b2eafa00b851f2a0159e1a2b1c07f160070a34923e"
       ]
     },
     "/etc/authselect/nsswitch.conf": {
       "content": [
-        "sha256:2a942b72d330a4ab98c460c088a0dfd69caefe2d1406ae3727fdcdf83f1b2b14",
-        "sha256:a03bba2dd4c31446b3955075600bc8a35f5cdccb79c3cb87844b6a716e753c17"
+        "sha256:72873504fa9f732dda7ba92dee085230aa6b8fcb8a35ee02012e99e00db6901c",
+        "sha256:b937fe168a986798d2b32069e468c8a9a70368580e0aa775189fb7b3a4d1ca48"
       ]
     },
     "/etc/authselect/password-auth": {
       "content": [
-        "sha256:adf5dcbbd3e196b4eb80058e3d721e8c762f6f39630673767259e69da50759a5",
+        "sha256:2e53f704372b6c7fb69cdc4dfd6c27456d642c83feff8b1588fa1f9cb1126cd0",
         "sha256:79fa077e26ecb548d2cd1140cec4763ffbe69141ebde732e01cd7978cc096046"
       ]
     },
@@ -40,7 +28,7 @@
     },
     "/etc/authselect/system-auth": {
       "content": [
-        "sha256:adf5dcbbd3e196b4eb80058e3d721e8c762f6f39630673767259e69da50759a5",
+        "sha256:2e53f704372b6c7fb69cdc4dfd6c27456d642c83feff8b1588fa1f9cb1126cd0",
         "sha256:79fa077e26ecb548d2cd1140cec4763ffbe69141ebde732e01cd7978cc096046"
       ]
     }

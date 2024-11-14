@@ -263,7 +263,6 @@ pipelines:
                 - mt-st
                 - smartmontools
                 - hdparm
-                - pcmciautils
                 - libmlx4
                 - rdma-core
                 - rng-tools

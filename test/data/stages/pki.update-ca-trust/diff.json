@@ -9,8 +9,8 @@
   "differences": {
     "/etc/pki/ca-trust/extracted/edk2/cacerts.bin": {
       "content": [
-        "sha256:1fc7201640e13d1261decb498479b6fa748ebf8a72121c3f59464c493aea72a9",
-        "sha256:13fe6d3e78cfa0c9b31d9c7836a09c45ae1c9c8b847fb69a43b95555de9cf535"
+        "sha256:cedf82443261b6a62531c2c330d8c55f9a8c3fc70a1c2a275cdd6cc7c9b2df5b",
+        "sha256:1b4018c453176053e07b6fe9dd7d4805e211f90d47f30dfd92adc0f965e2baf2"
       ]
     },
     "/etc/pki/ca-trust/extracted/java/cacerts": {
@@ -21,26 +21,26 @@
     },
     "/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt": {
       "content": [
-        "sha256:830ae1c02ea63c5fa2198b50fb33d55011a391b0c7ace14a29f8d83daf30128f",
-        "sha256:306cf348061be12d41ce03f0c861bd64568f2416149ac51928a60b02ddeb3317"
+        "sha256:e8eac205807f3ab66bfe7cb5b87d8511aa14a7f808e977c5ad3a2699a7190841",
+        "sha256:f94c195f8a0fd22f907b691bcfe46aa88ca677779e0260377b6f52b1161da850"
       ]
     },
     "/etc/pki/ca-trust/extracted/pem/email-ca-bundle.pem": {
       "content": [
-        "sha256:fbf592932627ddb0c244dd2441f6a56231cfacb892c1163d4f372d1b949b5807",
-        "sha256:077b9d7020b4303a72ef8530481faa461fc926608094a17475474b8c9dcef5fa"
+        "sha256:09510ac229308da01c129ff1cc3a68d3f9c1b21ef07fbaba9133d45b35d9d1e5",
+        "sha256:66174f4c71366b5eb6a24cb1d1a8a88ca1fd406fb39ba12f950d47e20853310f"
       ]
     },
     "/etc/pki/ca-trust/extracted/pem/objsign-ca-bundle.pem": {
       "content": [
-        "sha256:67ea06a3b7d7d39345b36161d947a15c378fb5faab80db372fa1bc4c4e346e14",
-        "sha256:4a11fade0941e6b6c483b7522296629e454e676851baf9e1b60e486a35c26209"
+        "sha256:4d96c990d2089ccdf288c5c1fd759a58216d7257d43b929e82bbd32126307357",
+        "sha256:eea19665e49849eefd377ab1f5fc5fd615f8135816b40196701f32fbec87ea0a"
       ]
     },
     "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem": {
       "content": [
-        "sha256:a0a9885edfce047620854ee7bb4214dfc2a19d666b7fc2c9def6f439c69e7739",
-        "sha256:ea196b22fd7609a20c51fd091c51b268a64579dd1dab29b16163262ba861db0f"
+        "sha256:acd28b791f9f338d288efda11d7f192755d4e89f41f0f7c2999bb4d211779fe5",
+        "sha256:ccbf79f86fa61d1dad44ed9481a8dab6973b91a0187798e43bbb29c4be9095f2"
       ]
     }
   }
