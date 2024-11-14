@@ -10,6 +10,9 @@ import tempfile
 import time
 import unittest
 from collections import defaultdict
+from unittest.mock import Mock, patch
+
+import pytest
 
 import osbuild
 import osbuild.meta
@@ -326,3 +329,90 @@ def test_context_id():
     assert ctx.id == "20bf38c0723b15c2c9a52733c99814c298628526d8b8eabf7c378101cc9a9cf3"
     ctx._origin = "foo"  # pylint: disable=protected-access
     assert ctx.id != "00d202e4fc9d917def414d1c9f284b137287144087ec275f2d146d9d47b3c8bb"
+
+
+def test_monitor_download_happy(tmp_path):
+    store = ObjectStore(tmp_path)
+    tape = TapeMonitor()
+    happy_source = Mock()
+
+    manifest = osbuild.Manifest()
+    manifest.sources = [happy_source]
+    manifest.download(store, tape)
+    assert tape.counter["begin"] == 1
+    assert tape.counter["finish"] == 1
+    assert tape.counter["result"] == 1
+    # no stage was run as part of the download so this is nil
+    assert tape.counter["stages"] == 0
+
+
+def test_monitor_download_error(tmp_path):
+    store = ObjectStore(tmp_path)
+    tape = TapeMonitor()
+    failing_source = Mock()
+    failing_source.download.side_effect = osbuild.host.RemoteError("name", "value", "stack")
+
+    manifest = osbuild.Manifest()
+    manifest.sources = [failing_source]
+    # this is different from stage failures, those do not raise exceptions
+    with pytest.raises(osbuild.host.RemoteError):
+        manifest.download(store, tape)
+    assert tape.counter["begin"] == 1
+    assert tape.counter["result"] == 1
+    # this is different from stage failures that emit a "finish" on failure
+    # here
+    assert tape.counter["finish"] == 0
+
+
+@patch.object(osbuild.sources.Source, "download")
+def test_jsonseq_download_happy(_, tmp_path):
+    store = ObjectStore(tmp_path)
+    index = osbuild.meta.Index(os.curdir)
+    info = index.get_module_info("Source", "org.osbuild.curl")
+    happy_source = osbuild.sources.Source(info, {}, None)
+
+    manifest = osbuild.Manifest()
+    manifest.sources = [happy_source]
+    with tempfile.TemporaryFile() as tf:
+        mon = JSONSeqMonitor(tf.fileno(), 1)
+        manifest.download(store, mon)
+
+        tf.flush()
+        tf.seek(0)
+        log = []
+        for line in tf.read().decode().strip().split("\x1e"):
+            log.append(json.loads(line))
+        assert len(log) == 3
+        assert log[0]["message"] == "Starting pipeline source org.osbuild.curl"
+        assert log[1]["message"] == "Finished module source org.osbuild.curl"
+        assert log[1]["result"]["name"] == "source org.osbuild.curl"
+        assert log[1]["result"]["success"]
+        assert log[2]["message"] == "Finished pipeline org.osbuild.curl"
+
+
+@patch.object(osbuild.sources.Source, "download")
+def test_jsonseq_download_unhappy(mocked_download, tmp_path):
+    store = ObjectStore(tmp_path)
+    index = osbuild.meta.Index(os.curdir)
+    info = index.get_module_info("Source", "org.osbuild.curl")
+    failing_source = osbuild.sources.Source(info, {}, None)
+    mocked_download.side_effect = osbuild.host.RemoteError("RuntimeError", "curl: error download ...", "error stack")
+
+    manifest = osbuild.Manifest()
+    manifest.sources = [failing_source]
+    with tempfile.TemporaryFile() as tf:
+        mon = JSONSeqMonitor(tf.fileno(), 1)
+        with pytest.raises(osbuild.host.RemoteError):
+            manifest.download(store, mon)
+
+        tf.flush()
+        tf.seek(0)
+        log = []
+        for line in tf.read().decode().strip().split("\x1e"):
+            log.append(json.loads(line))
+        assert len(log) == 2
+        assert log[0]["message"] == "Starting pipeline source org.osbuild.curl"
+        assert log[1]["message"] == "Finished module source org.osbuild.curl"
+        assert log[1]["result"]["name"] == "source org.osbuild.curl"
+        assert log[1]["result"]["success"] is False
+        assert log[1]["result"]["output"] == "RuntimeError: curl: error download ...\n error stack"
