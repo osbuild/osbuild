@@ -1,30 +1,9 @@
 {
-  "added_directories": [
-    "/var/lib/authselect/backups"
-  ],
   "added_files": [
-    "/boot/grub2/grubenv",
-    "/etc/authselect/custom/hardening",
-    "/etc/authselect/custom/hardening/README",
-    "/etc/authselect/custom/hardening/REQUIREMENTS",
-    "/etc/authselect/custom/hardening/dconf-db",
-    "/etc/authselect/custom/hardening/dconf-locks",
-    "/etc/authselect/custom/hardening/fingerprint-auth",
-    "/etc/authselect/custom/hardening/nsswitch.conf",
-    "/etc/authselect/custom/hardening/password-auth",
-    "/etc/authselect/custom/hardening/postlogin",
-    "/etc/authselect/custom/hardening/smartcard-auth",
-    "/etc/authselect/custom/hardening/system-auth",
     "/etc/chrony.conf",
-    "/etc/default/grub",
     "/etc/dnf/automatic.conf",
     "/etc/fstab",
     "/etc/ipsec.conf",
-    "/etc/kernel/cmdline",
-    "/etc/modprobe.d/atm.conf",
-    "/etc/modprobe.d/can.conf",
-    "/etc/modprobe.d/firewire-core.conf",
-    "/etc/modprobe.d/tipc.conf",
     "/etc/profile.d/tmout.sh",
     "/etc/rsyslog.conf",
     "/etc/rsyslog.d",
@@ -34,8 +13,7 @@
     "/etc/ssh/sshd_config.d",
     "/etc/ssh/sshd_config.d/00-complianceascode-hardening.conf",
     "/etc/ssh/sshd_config.d/01-complianceascode-reinforce-os-defaults.conf",
-    "/etc/systemd/system/debug-shell.service",
-    "/etc/systemd/system/systemd-coredump.socket",
+    "/etc/sysctl.conf",
     "/root/log.eval",
     "/root/log.eval-remediated",
     "/root/log.generate-fix",
@@ -44,28 +22,10 @@
     "/root/oscap_remediation.bash",
     "/root/report.html",
     "/root/results_arf.xml.xz",
-    "/run/mount"
+    "/usr/lib/systemd/system/rescue.service"
   ],
   "deleted_files": [],
   "differences": {
-    "/etc/authselect/authselect.conf": {
-      "content": [
-        "sha256:55eee183988be83f2c7867cdb7c29bba9f8d879cf7dc915a5c6cfd7f3fc56adb",
-        "sha256:1c3fea4c500fae2e394b6ff2613de88205a33a551f344b30fc623d8d8e346e25"
-      ]
-    },
-    "/etc/authselect/password-auth": {
-      "content": [
-        "sha256:adf5dcbbd3e196b4eb80058e3d721e8c762f6f39630673767259e69da50759a5",
-        "sha256:90211c449f0f3931ab44d155cffdcff0137b0137e92f3298e4a9dbadd795eb85"
-      ]
-    },
-    "/etc/authselect/system-auth": {
-      "content": [
-        "sha256:adf5dcbbd3e196b4eb80058e3d721e8c762f6f39630673767259e69da50759a5",
-        "sha256:13d524978cf9a4a8a3828ec69c9250c9011f0b64e10421cff96fcb4d259543d2"
-      ]
-    },
     "/etc/crypto-policies/back-ends/bind.config": {
       "symlink": [
         "/usr/share/crypto-policies/DEFAULT/bind.txt",
@@ -82,12 +42,6 @@
       "symlink": [
         "/usr/share/crypto-policies/DEFAULT/java.txt",
         "/usr/share/crypto-policies/FIPS/java.txt"
-      ]
-    },
-    "/etc/crypto-policies/back-ends/javasystem.config": {
-      "symlink": [
-        "/usr/share/crypto-policies/DEFAULT/javasystem.txt",
-        "/usr/share/crypto-policies/FIPS/javasystem.txt"
       ]
     },
     "/etc/crypto-policies/back-ends/krb5.config": {
@@ -164,8 +118,8 @@
     },
     "/etc/crypto-policies/state/CURRENT.pol": {
       "content": [
-        "sha256:5af38a3ead1e8288c94d4c5edc92a8cd43841f5e3f3bfd38603b9f2c39539b6b",
-        "sha256:209dce3608e0d22d715c3f009cffd7bd2b7d10739abf91564d2189171275db91"
+        "sha256:346786a22907eb312957451eab288f88d9532c1dc84b0e90077fa7c84416dd7c",
+        "sha256:27f72c6245cb4218bd6b93b7d71a1ef395e77a04d145510121635fd6e11c44e6"
       ]
     },
     "/etc/crypto-policies/state/current": {
@@ -176,38 +130,14 @@
     },
     "/etc/pki/tls/openssl.cnf": {
       "content": [
-        "sha256:399ea625a69ffb6f06bc7554901f8b4eb95b88ac3d9685d4a3325057733e32d0",
-        "sha256:2435be35e481ed91c5db6cb62739ba38a11507ad0362504ee339001dcafecd22"
-      ]
-    },
-    "/etc/security/faillock.conf": {
-      "content": [
-        "sha256:5c8c902912f0bb59f86b86517f2127ea0c57c5d05b17c4aa62f5bc06c7043c78",
-        "sha256:41bd2ba3b10f12377f3f766acb790f36a38e3ef24a05093d4bf2a15624d39ece"
-      ]
-    },
-    "/etc/security/pwquality.conf": {
-      "content": [
-        "sha256:8c6951c20f2489549e8793711818cfb0318e26fe8ced35da930a70a3cac757c8",
-        "sha256:2472eda92cb43fa38e231f104e979c2c080c4c67bccf5f9e6e7788f33bb05f82"
-      ]
-    },
-    "/etc/sysctl.conf": {
-      "content": [
-        "sha256:51d16ee2e7eef12dd42e924af6b835861e8b79d11921ba0418d7d0aec7a2a93b",
-        "sha256:92aa2a3f72f18d68ed3f2bda68a2fc214689996c549fd6f56780fee0e7ea275a"
-      ]
-    },
-    "/etc/systemd/coredump.conf": {
-      "content": [
-        "sha256:72f8630b657da48549b2bd9ba5e855939e4afec3d4ee60574fc5757cfc767bd6",
-        "sha256:67206831694bca3b569ad27ca9b577101e45b9dc19fbfd68b1722949c862ba9d"
+        "sha256:bdd11b556f2332976eb2aae1b12132fc6487ce93b15bb09f684908e82d20e481",
+        "sha256:42cf19cfb9cbdabb93f0b363423b678eaa2a2b8b269ca5334d8200af5f52af34"
       ]
     },
     "/etc/yum.repos.d/fedora-cisco-openh264.repo": {
       "content": [
-        "sha256:82ea9028dc1438df46382e7bc46d11b56835ddd0cd15a39327eb00f72f2f3e00",
-        "sha256:cf323ebf3e3c1afa373688f59d7b1a8abafe9b3591217197c0dff6d46f5533d2"
+        "sha256:478f03b17741565d2fcc97178c288c0ff822e50d7a94368a812464805805a7dc",
+        "sha256:8990868093c507fc88e617b08f9cd90cc273de07c9588a3771575cc244385a5d"
       ]
     },
     "/etc/yum.repos.d/fedora-updates-testing.repo": {
@@ -232,18 +162,6 @@
       "content": [
         "sha256:9489d28fbd325690224dd76c0d7ae403177e15a0d63758cc0171327b5ba2aa85",
         "sha256:0a48f732f0a2ae7c1c1884c5a5db85eda09a6506489c137656707957f2b84686"
-      ]
-    },
-    "/usr/lib/sysctl.d/10-default-yama-scope.conf": {
-      "content": [
-        "sha256:2411b554d569a269581e12f946b5746e6eab4d0be621df030865cd7528ddca95",
-        "sha256:252f244f9ec7433c86bc21b1003de48a53bc3c35349a11789ed21a69ba0dec69"
-      ]
-    },
-    "/usr/lib/sysctl.d/50-coredump.conf": {
-      "content": [
-        "sha256:fa3e45fa358e07c53128adca1fc663e3c294a27795d7629db598c541d4ad806b",
-        "sha256:90368094e1eb7c6a3ac68e623706185531ad76edd8ebca80b394538f230910c0"
       ]
     }
   }

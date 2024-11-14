@@ -22,6 +22,7 @@ pipelines:
                 mpp-eval: repos
               packages:
                 - authselect
+                - pam
         options:
           gpgkeys:
             mpp-eval: gpgkeys

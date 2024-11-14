@@ -1,5 +1,10 @@
 {
   "added_files": [
+    "/etc/.pwd.lock",
+    "/etc/group-",
+    "/etc/gshadow-",
+    "/etc/passwd-",
+    "/etc/shadow-",
     "/etc/subgid-",
     "/etc/subuid-",
     "/home/bothy",
@@ -48,47 +53,23 @@
   "differences": {
     "/etc/group": {
       "content": [
-        "sha256:8cdb2cd79c98ea29e261109f064f91e62a468eeb3b9900aa8012b35546f760e0",
-        "sha256:55f1680e285f622397ff9b1f347ef3b452352b193bc6fce28ab88d930f12a1d3"
-      ]
-    },
-    "/etc/group-": {
-      "content": [
-        "sha256:2caf84d8504c4942269e53bd1f4ab36b966a221610553dedafa4a694d2887310",
-        "sha256:e0c130d88cf9901ff2105d2e389494ea7469879498a6e45f0043824c24bccf35"
+        "sha256:1664e398cb8dca0e1cbc46668fc906130f54c12fc84c20a8f0229bd7bdf6ac1c",
+        "sha256:161c785b7126d8aa97d47fbc17e906be6980920e33b756086bc66e7ad15e51d7"
       ]
     },
     "/etc/gshadow": {
       "content": [
-        "sha256:912f6f7a39f9d32027fda84d286c3ac044d20101cade1aed69c406d6c95182e3",
-        "sha256:0abd5709c662f826b87c0f4bb64be5c5c798acd8387f754366ba0e211fb7764e"
-      ]
-    },
-    "/etc/gshadow-": {
-      "content": [
-        "sha256:0332bb683e268ae5d04a465c909bc579c3879d775fcc3393f0221a7a5d8d7d6b",
-        "sha256:5a15ad4609cfee90978b1203bd4ccd7627ee16163106e4c24d3006c02999d01a"
+        "sha256:825bf1abf0aab3239e88a3c37dc1040297266dcf794cb3ac0ab225103d053b60",
+        "sha256:f18350de5e76e20d752d12fc1a635dce4045329f538bbdb009f3299446ba3ee0"
       ]
     },
     "/etc/passwd": {
       "content": [
-        "sha256:7039379cb97eea23aa2e9276ebc08009d670cec2c4dd5f861b881d6f48a31b0a",
-        "sha256:9c0e9394aae1b6e1c5900b92b5ef4a53cf60b1e57d3bbb2e5f899f960bf63b82"
-      ]
-    },
-    "/etc/passwd-": {
-      "content": [
-        "sha256:24117042025a62b47c58edf2a4de90032e6daac4d631f4d07894b61dc3b5ff1c",
-        "sha256:5eafb41281ddcbadd6ff4ead6b3e89afa8040c697b828b8662d0fc9c0cad7544"
+        "sha256:20f397fda486be2f4a6199cf39e7ce4e2a99abcecb571574bd1b375ea0d99228",
+        "sha256:15d468ab7c26ae9ed243a617d0f7e2efdccf41da5811eca2a24aa687b59e51d4"
       ]
     },
     "/etc/shadow": {
-      "content": [
-        null,
-        null
-      ]
-    },
-    "/etc/shadow-": {
       "content": [
         null,
         null

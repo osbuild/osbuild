@@ -578,7 +578,8 @@ class TestStages(test.TestBase):
                     print(f"Failed to parse line: {line}")
                     raise
 
-                if package == "dnf":
+                # On F41+, 'dnf' package is a virtual provide of 'dnf5' package, so 'dnf5' shows up in the output.
+                if package in ("dnf", "dnf5"):
                     # dnf4 marks packages as 'user', while dnf5 marks them as 'User'
                     assert mark in ("user", "User")
                 else:

@@ -223,6 +223,7 @@
     "/boot/grub2/i386-pc/pcidump.mod",
     "/boot/grub2/i386-pc/pgp.mod",
     "/boot/grub2/i386-pc/pkcs1_v15.mod",
+    "/boot/grub2/i386-pc/plainmount.mod",
     "/boot/grub2/i386-pc/plan9.mod",
     "/boot/grub2/i386-pc/play.mod",
     "/boot/grub2/i386-pc/png.mod",

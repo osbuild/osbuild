@@ -20,12 +20,6 @@
         "/usr/share/crypto-policies/FIPS/java.txt"
       ]
     },
-    "/etc/crypto-policies/back-ends/javasystem.config": {
-      "symlink": [
-        "/usr/share/crypto-policies/DEFAULT/javasystem.txt",
-        "/usr/share/crypto-policies/FIPS/javasystem.txt"
-      ]
-    },
     "/etc/crypto-policies/back-ends/krb5.config": {
       "symlink": [
         "/usr/share/crypto-policies/DEFAULT/krb5.txt",
@@ -100,8 +94,8 @@
     },
     "/etc/crypto-policies/state/CURRENT.pol": {
       "content": [
-        "sha256:5af38a3ead1e8288c94d4c5edc92a8cd43841f5e3f3bfd38603b9f2c39539b6b",
-        "sha256:209dce3608e0d22d715c3f009cffd7bd2b7d10739abf91564d2189171275db91"
+        "sha256:346786a22907eb312957451eab288f88d9532c1dc84b0e90077fa7c84416dd7c",
+        "sha256:27f72c6245cb4218bd6b93b7d71a1ef395e77a04d145510121635fd6e11c44e6"
       ]
     },
     "/etc/crypto-policies/state/current": {
