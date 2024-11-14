@@ -55,6 +55,17 @@ class BuildResult:
         return vars(self)
 
 
+class DownloadResult:
+    def __init__(self, name: str, source_id: str, success: bool) -> None:
+        self.name = name
+        self.id = source_id
+        self.success = success
+        self.output = ""
+
+    def as_dict(self) -> Dict[str, Any]:
+        return vars(self)
+
+
 class Stage:
     def __init__(self, info, source_options, build, base, options, source_epoch):
         self.info = info
@@ -417,8 +428,19 @@ class Manifest:
             for source in self.sources:
                 # Workaround for lack of progress from sources, this
                 # will need to be reworked later.
+                dr = DownloadResult(source.name, source.id, success=True)
                 monitor.begin(source)
-                source.download(mgr, store)
+                try:
+                    source.download(mgr, store)
+                except host.RemoteError as e:
+                    dr.success = False
+                    dr.output = str(e)
+                    monitor.result(dr)
+                    raise e
+                monitor.result(dr)
+                # ideally we would make the whole of download more symmetric
+                # to "build_stages" and return a "results" here in "finish"
+                # as well
                 monitor.finish({"name": source.info.name})
 
     def depsolve(self, store: ObjectStore, targets: Iterable[str]) -> List[str]:
