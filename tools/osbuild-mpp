@@ -1604,17 +1604,22 @@ class ManifestFileV2(ManifestFile):
             if input_count > 1:
                 raise ValueError(f"Only one of 'path', 'url' or 'text' may be specified for '{uid}'")
 
+            checksum = None
             if path:
                 f, _ = self.find_and_open_file(path, [], mode="rb", encoding=None)
                 with f:
                     data = f.read()
-                checksum = hashlib.sha256(data).hexdigest()
             elif url:
                 response = urllib.request.urlopen(url)
-                h = hashlib.file_digest(response.fp, 'sha256')
-                checksum = h.hexdigest()
+                if hasattr(hashlib, "file_digest"):
+                    h = hashlib.file_digest(response.fp, 'sha256')
+                    checksum = h.hexdigest()
+                else:
+                    data = response.fp.read()
             else:
                 data = bytes(text, "utf-8")
+
+            if not checksum:
                 checksum = hashlib.sha256(data).hexdigest()
 
             digest = "sha256:" + checksum
