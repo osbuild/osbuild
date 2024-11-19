@@ -20,6 +20,10 @@ def main(tree, options):
         unit_dropins_dir = f"{tree}/usr/lib/systemd/system/{unit}.d"
     elif unit_type == "global":
         unit_dropins_dir = f"{tree}/usr/lib/systemd/user/{unit}.d"
+    else:
+        print(f"Error: Unknown unit type: {unit_type}")
+        return 1
+
     os.makedirs(unit_dropins_dir, exist_ok=True)
 
     # We trick configparser into letting us write multiple instances of the same option by writing them as keys with no

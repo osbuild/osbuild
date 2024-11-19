@@ -79,6 +79,7 @@ class TreeInput(inputs.InputService):
         # and we have exactly one reference, i.e. a pipeline id
         pid, _ = refs.popitem()
 
+        path = None
         if pid:
             path = store.read_tree_at(pid, target)
 
