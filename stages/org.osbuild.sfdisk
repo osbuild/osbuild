@@ -53,6 +53,8 @@ class PartitionTable:
             prep_type = "41"
         elif self.label == "gpt":
             prep_type = "9E1A2D38-C612-4316-AA26-8B49521E5A8B"
+        else:
+            raise RuntimeError(f"Unknown partition table type: {self.label}")
 
         for part in self.partitions:
             if part.type.upper() == prep_type:

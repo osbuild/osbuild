@@ -206,6 +206,7 @@ def make_fake_meta_json(tmp_path, name, version, invalid=""):
         "not": "following schema"
         """
 
+    # pylint: disable=possibly-used-before-assignment
     meta_json_path.write_text("""
     {
       "summary": "some json summary",
