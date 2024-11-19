@@ -98,8 +98,7 @@ class Stage:
             if ip.origin != "org.osbuild.pipeline":
                 continue
 
-            for ref in ip.refs:
-                yield ref
+            yield from ip.refs
 
     def add_input(self, name, info, origin, options=None):
         ip = Input(name, info, origin, options or {})
