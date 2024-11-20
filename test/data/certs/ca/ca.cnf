@@ -1,0 +1,38 @@
+[ ca ]
+default_ca = ca_cnf
+
+[ ca_cnf ]
+crlnumber = ca/crlnumber
+default_crl_days = 365
+default_md = sha256
+default_startdate = 20241120211521Z
+default_enddate   = 20371120211521Z
+policy = policy_anything
+preserve = yes
+email_in_dn = no
+unique_subject = no
+database = ca/index.txt
+serial = ca/serial
+new_certs_dir = ca/
+
+[ policy_anything ]
+#countryName             = optional
+#stateOrProvinceName     = optional
+#localityName            = optional
+#organizationName        = optional
+#organizationalUnitName  = optional
+commonName              = optional
+#emailAddress            = optional
+
+[ req ]
+prompt = no
+distinguished_name = cert_req
+
+[ cert_req ]
+CN = John Smith
+
+[ v3_ext ]
+keyUsage =digitalSignature, keyEncipherment
+extendedKeyUsage =clientAuth,emailProtection
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer

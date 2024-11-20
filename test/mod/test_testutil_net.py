@@ -44,15 +44,15 @@ def test_https_serve_directory_mtls_smoke(tmp_path):
         "file1": "file1 content",
     })
     cert_dir = pathlib.Path(__file__).parent.parent / "data/certs"
-    cacert = cert_dir / "test-ca.crt"
+    cacert = cert_dir / "ca/cert.pem"
     assert cacert.exists()
-    servercert = cert_dir / "localhost-server.crt"
+    servercert = cert_dir / "server/cert.pem"
     assert servercert.exists()
-    serverkey = cert_dir / "localhost-server.key"
+    serverkey = cert_dir / "server/key.pem"
     assert serverkey.exists()
-    clientcert = cert_dir / "client1-client.crt"
+    clientcert = cert_dir / "client/cert.pem"
     assert clientcert.exists()
-    clientkey = cert_dir / "client1-client.key"
+    clientkey = cert_dir / "client/key.pem"
     assert clientkey.exists()
 
     with https_serve_directory_mtls(tmp_path, cacert, servercert, serverkey) as httpd:
