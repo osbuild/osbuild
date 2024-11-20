@@ -408,15 +408,15 @@ def test_curl_download_many_mixed_certs(tmp_path, monkeypatch, sources_module, c
 def test_curl_download_mtls(tmp_path, monkeypatch, sources_service):
     fake_httpd_root = tmp_path / "fake-httpd-root"
     cert_dir = pathlib.Path(__file__).parent.parent.parent / "test/data/certs"
-    cacert = cert_dir / "test-ca.crt"
+    cacert = cert_dir / "ca/cert.pem"
     assert cacert.exists()
-    servercert = cert_dir / "localhost-server.crt"
+    servercert = cert_dir / "server/cert.pem"
     assert servercert.exists()
-    serverkey = cert_dir / "localhost-server.key"
+    serverkey = cert_dir / "server/key.pem"
     assert serverkey.exists()
-    clientcert = cert_dir / "client1-client.crt"
+    clientcert = cert_dir / "client/cert.pem"
     assert clientcert.exists()
-    clientkey = cert_dir / "client1-client.key"
+    clientkey = cert_dir / "client/key.pem"
     assert clientkey.exists()
 
     monkeypatch.setenv("OSBUILD_SOURCES_CURL_SSL_CA_CERT", cacert.as_posix())
