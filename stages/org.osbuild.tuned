@@ -33,8 +33,14 @@ class TunedProfilesDB:
         profile_config_file = "tuned.conf"
 
         for path in profile_directories:
-            for dir_entry in os.scandir(f"{tree}{path}"):
-                if dir_entry.is_dir() and os.path.isfile(f"{tree}{path}/{dir_entry.name}/{profile_config_file}"):
+            profiles_dir = f"{tree}{path}"
+            # Since version 2.23.0, TuneD by default uses `profiles/` subdirectory.
+            # If the subdirectory exists, we look for profiles there.
+            if os.path.isdir(f"{profiles_dir}/profiles"):
+                profiles_dir = f"{profiles_dir}/profiles"
+
+            for dir_entry in os.scandir(profiles_dir):
+                if dir_entry.is_dir() and os.path.isfile(f"{profiles_dir}/{dir_entry.name}/{profile_config_file}"):
                     available_profiles.add(dir_entry.name)
 
         return available_profiles
