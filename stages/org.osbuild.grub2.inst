@@ -70,11 +70,11 @@ def write_core_image(core_f, image_f, location, sector_size):
     shutil.copyfileobj(core_f, image_f)
 
 
-def core_mkimage(platform: str, prefix: str, options: Dict,):
+def core_mkimage(platform: str, prefix: str, options: Dict):
     pt_label = options["partlabel"]
     fs_type = options["filesystem"]
 
-    os.makedirs("/var/tmp", exist_ok=True)
+    os.makedirs("/var/tmp/", exist_ok=True)
     core_path = "/var/tmp/grub2-core.img"
 
     # Create the level-2 & 3 stages of the bootloader, aka the core
@@ -88,8 +88,10 @@ def core_mkimage(platform: str, prefix: str, options: Dict,):
 
     if platform == "i386-pc":
         modules = ["biosdisk"]
+        gformat = "i386-pc"
     else:
         modules = []
+        gformat = "i386-pc"
 
     if pt_label in ["dos", "mbr"]:
         modules += ["part_msdos"]
@@ -102,6 +104,9 @@ def core_mkimage(platform: str, prefix: str, options: Dict,):
         modules += ["xfs"]
     elif fs_type == "btrfs":
         modules += ["btrfs"]
+    elif fs_type == "iso9660":
+        modules += ["iso9660"]
+        gformat = "i386-pc-eltorito"
     else:
         raise ValueError(f"unknown boot filesystem type: '{fs_type}'")
 
@@ -110,7 +115,7 @@ def core_mkimage(platform: str, prefix: str, options: Dict,):
                     "--verbose",
                     "--directory", f"/usr/lib/grub/{platform}",
                     "--prefix", prefix,
-                    "--format", platform,
+                    "--format", gformat,
                     "--compression", "auto",
                     "--output", core_path] +
                    modules,
@@ -133,18 +138,7 @@ def prefix_partition(options: Dict):
     return prefix
 
 
-def main(tree, options):
-    filename = options["filename"]
-    platform = options["platform"]
-    location = options["location"]
-    sector_size = options.get("sector-size", 512)
-
-    image = os.path.join(tree, filename.lstrip("/"))
-
-    prefix = prefix_partition(options["prefix"])
-    print(f"prefix: {prefix}")
-    core_path = core_mkimage(platform, prefix, options["core"])
-
+def patch_core(location, core_path, image, sector_size, platform):
     with open(image, "rb+") as image_f:
 
         # Write the newly created grub2 core to the image
@@ -167,6 +161,28 @@ def main(tree, options):
             # On x86, the boot image just jumps to core image
             with open(boot_path, "rb") as boot_f:
                 write_boot_image(boot_f, image_f, location)
+
+
+def main(tree, options):
+    filename = options["filename"]
+    platform = options["platform"]
+    sector_size = options.get("sector-size", 512)
+
+    image = os.path.join(tree, filename.lstrip("/"))
+
+    if "number" in options["prefix"]:
+        prefix = prefix_partition(options["prefix"])
+    else:
+        prefix = options["prefix"]["path"]
+    print(f"prefix: {prefix}")
+    core_path = core_mkimage(platform, prefix, options["core"])
+
+    location = options.get("location")
+    if location:
+        patch_core(location, core_path, image, sector_size, platform)
+    else:
+        # If location isn't set, use the image file as-is instead of with the MBR
+        shutil.copyfile(core_path, image)
 
     return 0
 
