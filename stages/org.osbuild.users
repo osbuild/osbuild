@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 import os
-import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util.chroot import Chroot
 
 
 def getpwnam(root, name):
@@ -48,7 +48,8 @@ def useradd(
     if expiredate is not None:
         arguments += ["--expiredate", str(expiredate)]
 
-    subprocess.run(["chroot", root, "useradd", *arguments, name], check=True)
+    with Chroot(root) as chroot:
+        chroot.run(["useradd", *arguments, name], check=True)
 
 
 def usermod(root, name, gid=None, groups=None, description=None, home=None, shell=None, password=None, expiredate=None):
@@ -69,7 +70,8 @@ def usermod(root, name, gid=None, groups=None, description=None, home=None, shel
         arguments += ["--expiredate", str(expiredate)]
 
     if arguments:
-        subprocess.run(["chroot", root, "usermod", *arguments, name], check=True)
+        with Chroot(root) as chroot:
+            chroot.run(["usermod", *arguments, name], check=True)
 
 
 def add_ssh_keys(root, user, keys):
@@ -95,7 +97,8 @@ def ensure_homedir(root, name, home):
     if os.path.exists(os.path.join(root, home.lstrip("/"))):
         return
 
-    subprocess.run(["chroot", root, "mkhomedir_helper", name], check=True)
+    with Chroot(root) as chroot:
+        chroot.run(["mkhomedir_helper", name], check=True)
 
 
 def main(tree, options):
@@ -127,7 +130,8 @@ def main(tree, options):
             useradd(tree, name, uid, gid, groups, description, home, shell, password, expiredate)
 
         if force_password_reset:
-            subprocess.run(["chroot", tree, "passwd", "--expire", name], check=True)
+            with Chroot(tree) as chroot:
+                chroot.run(["passwd", "--expire", name], check=True)
 
         # following maintains backwards compatibility for handling a single ssh key
         key = user_options.get("key")   # Public SSH key

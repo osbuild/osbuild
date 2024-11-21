@@ -7,7 +7,6 @@ import pytest
 from osbuild.testutil import (
     assert_jsonschema_error_contains,
     make_fake_tree,
-    mock_command,
 )
 
 STAGE_NAME = "org.osbuild.users"
@@ -57,95 +56,111 @@ def test_users_happy(mocked_run, tmp_path, stage_module, user_opts, expected_arg
     }
     options["users"]["foo"].update(user_opts)
 
-    stage_module.main(tmp_path, options)
+    stage_module.main(tmp_path.as_posix(), options)
 
-    assert len(mocked_run.call_args_list) == 1
-    args, kwargs = mocked_run.call_args_list[0]
-    assert args[0] == ["chroot", tmp_path, "useradd"] + expected_args + ["foo"]
+    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
+    assert len(mocked_run.call_args_list) == 7
+    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
+    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd"] + expected_args + ["foo"]
     assert kwargs.get("check")
 
 
+@patch("subprocess.run")
 @pytest.mark.parametrize("user_opts,expected_args", TEST_CASES)
-def test_users_mock_bin(tmp_path, stage_module, user_opts, expected_args):
-    with mock_command("chroot", "") as mocked_chroot:
-        make_fake_tree(tmp_path, {
-            "/etc/passwd": "",
-        })
+def test_users_mock_bin(mocked_run, tmp_path, stage_module, user_opts, expected_args):
+    make_fake_tree(tmp_path, {
+        "/etc/passwd": "",
+    })
 
-        options = {
-            "users": {
-                "foo": {},
-            }
+    options = {
+        "users": {
+            "foo": {},
         }
-        options["users"]["foo"].update(user_opts)
+    }
+    options["users"]["foo"].update(user_opts)
 
-        stage_module.main(tmp_path, options)
-        assert len(mocked_chroot.call_args_list) == 1
-        assert mocked_chroot.call_args_list[0][2:] == expected_args + ["foo"]
+    stage_module.main(tmp_path.as_posix(), options)
+    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
+    assert len(mocked_run.call_args_list) == 7
+    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
+    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd"] + expected_args + ["foo"]
+    assert kwargs.get("check")
 
 
 # separate test right now as it results in two binaries being called
 # (adduser,passwd) which our parameter tests cannot do yet
 
+@patch("subprocess.run")
+def test_users_with_password_reset_none(mocked_run, tmp_path, stage_module):
+    make_fake_tree(tmp_path, {
+        "/etc/passwd": "",
+    })
 
-def test_users_with_password_reset_none(tmp_path, stage_module):
-    with mock_command("chroot", "") as mocked_chroot:
-        make_fake_tree(tmp_path, {
-            "/etc/passwd": "",
-        })
-
-        options = {
-            "users": {
-                "foo": {
-                },
-            }
+    options = {
+        "users": {
+            "foo": {
+            },
         }
+    }
 
-        stage_module.main(tmp_path, options)
-        assert len(mocked_chroot.call_args_list) == 1
-        assert mocked_chroot.call_args_list[0][1:] == ["useradd", "foo"]
+    stage_module.main(tmp_path.as_posix(), options)
+    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
+    assert len(mocked_run.call_args_list) == 7
+    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
+    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd", "foo"]
+    assert kwargs.get("check")
 
 # separate test right now as it results in two binaries being called
 # (adduser,passwd) which our parameter tests cannot do yet
 
 
-def test_users_with_password_reset_false(tmp_path, stage_module):
-    with mock_command("chroot", "") as mocked_chroot:
-        make_fake_tree(tmp_path, {
-            "/etc/passwd": "",
-        })
+@patch("subprocess.run")
+def test_users_with_password_reset_false(mocked_run, tmp_path, stage_module):
+    make_fake_tree(tmp_path, {
+        "/etc/passwd": "",
+    })
 
-        options = {
-            "users": {
-                "foo": {
-                    "force_password_reset": False,
-                },
-            }
+    options = {
+        "users": {
+            "foo": {
+                "force_password_reset": False,
+            },
         }
+    }
 
-        stage_module.main(tmp_path, options)
-        assert len(mocked_chroot.call_args_list) == 1
-        assert mocked_chroot.call_args_list[0][1:] == ["useradd", "foo"]
+    stage_module.main(tmp_path.as_posix(), options)
+    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
+    assert len(mocked_run.call_args_list) == 7
+    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
+    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd", "foo"]
+    assert kwargs.get("check")
 
 # separate test right now as it results in two binaries being called
 # (adduser,passwd) which our parameter tests cannot do yet
 
 
-def test_users_with_password_reset_true(tmp_path, stage_module):
-    with mock_command("chroot", "") as mocked_chroot:
-        make_fake_tree(tmp_path, {
-            "/etc/passwd": "",
-        })
+@patch("subprocess.run")
+def test_users_with_password_reset_true(mocked_run, tmp_path, stage_module):
+    make_fake_tree(tmp_path, {
+        "/etc/passwd": "",
+    })
 
-        options = {
-            "users": {
-                "foo": {
-                    "force_password_reset": True,
-                },
-            }
+    options = {
+        "users": {
+            "foo": {
+                "force_password_reset": True,
+            },
         }
+    }
 
-        stage_module.main(tmp_path, options)
-        assert len(mocked_chroot.call_args_list) == 2
-        assert mocked_chroot.call_args_list[0][1:] == ["useradd", "foo"]
-        assert mocked_chroot.call_args_list[1][1:] == ["passwd", "--expire", "foo"]
+    stage_module.main(tmp_path.as_posix(), options)
+    # We expect 14 calls to run(): 2x (3 mount + chroot + 3 umount)
+    assert len(mocked_run.call_args_list) == 14
+
+    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
+    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd", "foo"]
+    assert kwargs.get("check")
+
+    args, kwargs = mocked_run.call_args_list[10]  # chroot is the 11th call
+    assert args[0] == ["chroot", tmp_path.as_posix(), "passwd", "--expire", "foo"]
+    assert kwargs.get("check")
