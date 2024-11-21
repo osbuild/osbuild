@@ -178,5 +178,9 @@ def container_source(image):
     else:
         raise RuntimeError(f"Unknown container format {container_format}")
 
+    # pylint: disable=contextmanager-generator-missing-cleanup
+    # thozza: As far as I can tell, the problematic use case is when the ctx manager is used inside a generator.
+    # However, this is not the case here. The ctx manager is used inside another ctx manager with the expectation
+    # that the inner ctx manager won't be cleaned up until the execution returns to this ctx manager.
     with container_source_fn(image, image_filepath, container_format) as image_source:
         yield image_name, image_source
