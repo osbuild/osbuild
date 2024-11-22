@@ -212,7 +212,7 @@ def test_oscap_autotailor_json_profile_override(fake_json_input, stage_module, e
         ["oscap", "info", "--profiles", results_file],
         stdout=subprocess.PIPE,
         check=True,
-        text=True,
+        encoding="utf-8",
     )
 
     assert f"Id: {expected_profile}\n" in result.stdout
