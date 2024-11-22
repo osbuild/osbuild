@@ -1,8 +1,8 @@
 #!/usr/bin/python3
-import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util.chroot import Chroot
 
 
 def main(tree, options):
@@ -18,14 +18,14 @@ def main(tree, options):
 
     # firewall-offline-cmd does not implement --root option so we must chroot it
     if default_zone:
-        subprocess.run(["chroot", tree, "firewall-offline-cmd", f"--set-default-zone={default_zone}"], check=True)
+        with Chroot(tree) as chroot:
+            chroot.run(["firewall-offline-cmd", f"--set-default-zone={default_zone}"], check=True)
 
     # The options below are "lokkit" compatibility options and can not be used
     # with other options.
     if ports or enabled_services or disabled_services:
-        subprocess.run(["chroot",
-                        tree,
-                        "firewall-offline-cmd"] +
+        with Chroot(tree) as chroot:
+            chroot.run(["firewall-offline-cmd"] +
                        list(map(lambda x: f"--port={x}", ports)) +
                        list(map(lambda x: f"--service={x}", enabled_services)) +
                        list(map(lambda x: f"--remove-service={x}", disabled_services)),
@@ -37,24 +37,21 @@ def main(tree, options):
         zone_name = zone_item['name']
         # check that the given zone exists, if not create it
         if zone_name != "":
-            res = subprocess.run(["chroot",
-                                  tree,
-                                  "firewall-offline-cmd",
+            with Chroot(tree) as chroot:
+                res = chroot.run(["firewall-offline-cmd",
                                   f"--info-zone={zone_name}"],
                                  check=False)
             # INVALID_ZONE error code
             if res.returncode == 112:
-                res = subprocess.run(["chroot",
-                                      tree,
-                                      "firewall-offline-cmd",
+                with Chroot(tree) as chroot:
+                    res = chroot.run(["firewall-offline-cmd",
                                       f"--new-zone={zone_name}"],
                                      check=False)
             if res.returncode != 0:
                 return 1
         if zone_item.get("sources", []):
-            subprocess.run(["chroot",
-                            tree,
-                            "firewall-offline-cmd", f"--zone={zone_name}"] +
+            with Chroot(tree) as chroot:
+                chroot.run(["firewall-offline-cmd", f"--zone={zone_name}"] +
                            list(map(lambda x: f"--add-source={x}",
                                     zone_item['sources'])),
                            check=True)
