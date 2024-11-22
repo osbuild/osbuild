@@ -1,18 +1,14 @@
 #!/usr/bin/python3
 import shutil
-import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util.chroot import Chroot
 
 
 def main(tree):
-    cmd = [
-        "/usr/sbin/chroot", tree,
-        "/usr/sbin/authconfig", "--nostart", "--updateall"
-    ]
-
-    subprocess.run(cmd, check=True)
+    with Chroot(tree) as chroot:
+        chroot.run(["/usr/sbin/authconfig", "--nostart", "--updateall"], check=True)
 
     shutil.rmtree(f"{tree}/var/lib/authselect/backups", ignore_errors=True)
 
