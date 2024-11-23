@@ -41,8 +41,23 @@ class LoopServer(api.BaseAPI):
         self.devs = []
         self.ctl = loop.LoopControl()
 
-    def _create_device(self, fd, dir_fd, offset=None, sizelimit=None):
-        lo = self.ctl.loop_for_fd(fd, offset=offset, sizelimit=sizelimit, autoclear=True)
+    def _create_device(
+            self,
+            fd,
+            dir_fd,
+            offset=None,
+            sizelimit=None,
+            lock=False,
+            partscan=False,
+            read_only=False,
+            sector_size=512):
+        lo = self.ctl.loop_for_fd(fd, lock=lock,
+                                  offset=offset,
+                                  sizelimit=sizelimit,
+                                  blocksize=sector_size,
+                                  partscan=partscan,
+                                  read_only=read_only,
+                                  autoclear=True)
         lo.mknod(dir_fd)
         # Pin the Loop objects so they are only released when the LoopServer
         # is destroyed.
@@ -54,8 +69,12 @@ class LoopServer(api.BaseAPI):
         dir_fd = fds[msg["dir_fd"]]
         offset = msg.get("offset")
         sizelimit = msg.get("sizelimit")
+        lock = msg.get("lock", False)
+        partscan = msg.get("partscan", False)
+        read_only = msg.get("read_only", False)
+        sector_size = msg.get("sector_size", 512)
 
-        devname = self._create_device(fd, dir_fd, offset, sizelimit)
+        devname = self._create_device(fd, dir_fd, offset, sizelimit, lock, partscan, read_only, sector_size)
         sock.send({"devname": devname})
 
     def _cleanup(self):
@@ -75,11 +94,20 @@ class LoopClient:
             self.client.close()
 
     @contextlib.contextmanager
-    def device(self, filename, offset=None, sizelimit=None):
+    def device(
+            self,
+            filename,
+            offset=None,
+            sizelimit=None,
+            lock=False,
+            partscan=False,
+            read_only=False,
+            sector_size=512):
         req = {}
         fds = []
 
-        fd = os.open(filename, os.O_RDWR)
+        flags = os.O_RDONLY if read_only else os.O_RDWR
+        fd = os.open(filename, flags)
         dir_fd = os.open("/dev", os.O_DIRECTORY)
 
         fds.append(fd)
@@ -91,6 +119,10 @@ class LoopClient:
             req["offset"] = offset
         if sizelimit:
             req["sizelimit"] = sizelimit
+        req["lock"] = lock
+        req["partscan"] = partscan
+        req["read_only"] = read_only
+        req["sector_size"] = sector_size
 
         self.client.send(req, fds=fds)
         os.close(dir_fd)
