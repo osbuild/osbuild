@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import pathlib
+import tempfile
 
 from osbuild.testutil.net import http_serve_directory, https_serve_directory
 from osbuild.util import ostree
@@ -16,9 +17,9 @@ def test_ostree_source_not_exists(tmp_path, sources_service):
 
 def test_ostree_source_exists(tmp_path, sources_service):
     sources_service.setup({"cache": tmp_path, "options": {}})
-    repo = tmp_path / "org.osbuild.ostree" / "repo"
-    commit = ostree.cli("commit", f"--repo={repo}", "--orphan", "/var/empty")
-    assert sources_service.exists("sha256:" + commit.stdout, None)
+    root = tmp_path / "org.osbuild.ostree" / "repo"
+    commit = make_repo(root)
+    assert sources_service.exists("sha256:" + commit, None)
 
 
 def make_test_sources(proto, port, fake_commit, **secrets):
@@ -35,8 +36,9 @@ def make_test_sources(proto, port, fake_commit, **secrets):
 
 
 def make_repo(root):
-    ostree.cli("init", f"--repo={root}")
-    return ostree.cli("commit", f"--repo={root}", "--orphan", "/var/empty").stdout.rstrip()
+    with tempfile.TemporaryDirectory() as empty_tmpdir:
+        ostree.cli("init", f"--repo={root}")
+        return ostree.cli("commit", f"--repo={root}", "--orphan", empty_tmpdir).stdout.rstrip()
 
 
 def test_ostree_pull_plain(tmp_path, sources_service):
