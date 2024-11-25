@@ -73,3 +73,19 @@ jobs:
           run: |
             OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
             tox -e "py36" -- ${{ env.TEST_WORKERS }} test.run.test_assemblers
+
+  # This smoke test runs the unit tests directly on the runner and as a
+  # normal user - it is fast (2min) and should detect obvious issues
+  # (like from pr#1942)
+  unittests_as_user_smoke:
+    name: "Smoke run: unittest as normal user on default runner"
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+    - run: sudo apt install -y tox
+    - name: "Run as user on default runner"
+      # Run with -n 16 as depsolve tests tend to be slow but fast when
+      # parallized, the runtime is around 1-2min with this setup.
+      run: |
+        tox -e py312 -- -n 16
