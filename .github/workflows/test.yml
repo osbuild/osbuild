@@ -83,8 +83,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
-    - run: sudo apt install -y tox
-    - name: "Run as user on default runner"
+      # The test_host.py:test_signals_on_separate_fd runs itself but that
+      # run will happen without the tox env so a pip/tox installed pytest
+      # will not be found, install the pytest package as a workaround
+    - run: sudo apt install -y tox python3-pytest
+    - name: "Run as user on default runer"
       # Run with -n 16 as depsolve tests tend to be slow but fast when
       # parallized, the runtime is around 1-2min with this setup.
       run: |
