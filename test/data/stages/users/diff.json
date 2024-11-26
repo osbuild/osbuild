@@ -32,6 +32,10 @@
     "/home/test/.bash_logout",
     "/home/test/.bash_profile",
     "/home/test/.bashrc",
+    "/var/roothome",
+    "/var/roothome/.bash_logout",
+    "/var/roothome/.bash_profile",
+    "/var/roothome/.bashrc",
     "/var/spool/mail/bothy",
     "/var/spool/mail/elodie",
     "/var/spool/mail/multikey",
@@ -69,13 +73,13 @@
     "/etc/passwd": {
       "content": [
         "sha256:7039379cb97eea23aa2e9276ebc08009d670cec2c4dd5f861b881d6f48a31b0a",
-        "sha256:5eafb41281ddcbadd6ff4ead6b3e89afa8040c697b828b8662d0fc9c0cad7544"
+        "sha256:9c0e9394aae1b6e1c5900b92b5ef4a53cf60b1e57d3bbb2e5f899f960bf63b82"
       ]
     },
     "/etc/passwd-": {
       "content": [
         "sha256:24117042025a62b47c58edf2a4de90032e6daac4d631f4d07894b61dc3b5ff1c",
-        "sha256:02e8a5e49bbd731b50700323f70b0a6d765e2a6e9a1892a6b3e094618f183fdf"
+        "sha256:5eafb41281ddcbadd6ff4ead6b3e89afa8040c697b828b8662d0fc9c0cad7544"
       ]
     },
     "/etc/shadow": {

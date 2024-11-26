@@ -73,3 +73,8 @@ pipelines:
               keys:
                 - ssh-ed25519 11111111111111111111111111111111111111111111111111111111111111111111 onekey
                 - ssh-ed25519 22222222222222222222222222222222222222222222222222222222222222222222 onekey
+      - type: org.osbuild.users
+        options:
+          users:
+            root:
+              home: /var/roothome
