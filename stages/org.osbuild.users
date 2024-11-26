@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+import subprocess
 import sys
 
 import osbuild.api
@@ -48,8 +49,7 @@ def useradd(
     if expiredate is not None:
         arguments += ["--expiredate", str(expiredate)]
 
-    with Chroot(root) as chroot:
-        chroot.run(["useradd", *arguments, name], check=True)
+    subprocess.run(["useradd", "--root", root, *arguments, name], check=True)
 
 
 def usermod(root, name, gid=None, groups=None, description=None, home=None, shell=None, password=None, expiredate=None):
@@ -70,8 +70,7 @@ def usermod(root, name, gid=None, groups=None, description=None, home=None, shel
         arguments += ["--expiredate", str(expiredate)]
 
     if arguments:
-        with Chroot(root) as chroot:
-            chroot.run(["usermod", *arguments, name], check=True)
+        subprocess.run(["usermod", "--root", root, *arguments, name], check=True)
 
 
 def add_ssh_keys(root, user, keys):
@@ -130,8 +129,7 @@ def main(tree, options):
             useradd(tree, name, uid, gid, groups, description, home, shell, password, expiredate)
 
         if force_password_reset:
-            with Chroot(tree) as chroot:
-                chroot.run(["passwd", "--expire", name], check=True)
+            subprocess.run(["passwd", "--root", tree, "--expire", name], check=True)
 
         # following maintains backwards compatibility for handling a single ssh key
         key = user_options.get("key")   # Public SSH key
