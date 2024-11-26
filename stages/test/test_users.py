@@ -58,10 +58,9 @@ def test_users_happy(mocked_run, tmp_path, stage_module, user_opts, expected_arg
 
     stage_module.main(tmp_path.as_posix(), options)
 
-    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
-    assert len(mocked_run.call_args_list) == 7
-    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
-    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd"] + expected_args + ["foo"]
+    assert len(mocked_run.call_args_list) == 1
+    args, kwargs = mocked_run.call_args_list[0]
+    assert args[0] == ["useradd", "--root", tmp_path.as_posix()] + expected_args + ["foo"]
     assert kwargs.get("check")
 
 
@@ -80,10 +79,10 @@ def test_users_mock_bin(mocked_run, tmp_path, stage_module, user_opts, expected_
     options["users"]["foo"].update(user_opts)
 
     stage_module.main(tmp_path.as_posix(), options)
-    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
-    assert len(mocked_run.call_args_list) == 7
-    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
-    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd"] + expected_args + ["foo"]
+
+    assert len(mocked_run.call_args_list) == 1
+    args, kwargs = mocked_run.call_args_list[0]
+    assert args[0] == ["useradd", "--root", tmp_path.as_posix()] + expected_args + ["foo"]
     assert kwargs.get("check")
 
 
@@ -104,10 +103,10 @@ def test_users_with_password_reset_none(mocked_run, tmp_path, stage_module):
     }
 
     stage_module.main(tmp_path.as_posix(), options)
-    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
-    assert len(mocked_run.call_args_list) == 7
-    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
-    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd", "foo"]
+
+    assert len(mocked_run.call_args_list) == 1
+    args, kwargs = mocked_run.call_args_list[0]
+    assert args[0] == ["useradd", "--root", tmp_path.as_posix(), "foo"]
     assert kwargs.get("check")
 
 # separate test right now as it results in two binaries being called
@@ -129,10 +128,10 @@ def test_users_with_password_reset_false(mocked_run, tmp_path, stage_module):
     }
 
     stage_module.main(tmp_path.as_posix(), options)
-    # We expect 7 calls to run(): 3 mount + chroot + 3 umount
-    assert len(mocked_run.call_args_list) == 7
-    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
-    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd", "foo"]
+
+    assert len(mocked_run.call_args_list) == 1
+    args, kwargs = mocked_run.call_args_list[0]  # chroot is the 4th call
+    assert args[0] == ["useradd", "--root", tmp_path.as_posix(), "foo"]
     assert kwargs.get("check")
 
 # separate test right now as it results in two binaries being called
@@ -154,13 +153,13 @@ def test_users_with_password_reset_true(mocked_run, tmp_path, stage_module):
     }
 
     stage_module.main(tmp_path.as_posix(), options)
-    # We expect 14 calls to run(): 2x (3 mount + chroot + 3 umount)
-    assert len(mocked_run.call_args_list) == 14
 
-    args, kwargs = mocked_run.call_args_list[3]  # chroot is the 4th call
-    assert args[0] == ["chroot", tmp_path.as_posix(), "useradd", "foo"]
+    assert len(mocked_run.call_args_list) == 2
+
+    args, kwargs = mocked_run.call_args_list[0]
+    assert args[0] == ["useradd", "--root", tmp_path.as_posix(), "foo"]
     assert kwargs.get("check")
 
-    args, kwargs = mocked_run.call_args_list[10]  # chroot is the 11th call
-    assert args[0] == ["chroot", tmp_path.as_posix(), "passwd", "--expire", "foo"]
+    args, kwargs = mocked_run.call_args_list[1]
+    assert args[0] == ["passwd", "--root", tmp_path.as_posix(), "--expire", "foo"]
     assert kwargs.get("check")
