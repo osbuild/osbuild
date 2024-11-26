@@ -699,6 +699,16 @@
               }
             }
           }
+        },
+        {
+          "type": "org.osbuild.users",
+          "options": {
+            "users": {
+              "root": {
+                "home": "/var/roothome"
+              }
+            }
+          }
         }
       ]
     }
