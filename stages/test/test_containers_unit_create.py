@@ -164,7 +164,10 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_path, expected_prefix)
                         "key": "TRACE",
                         "value": "1",
                     },
-                ]
+                ],
+                "SecurityLabelFileType": "usr_t",
+                "SecurityLabelType": "spc_t",
+                "Tmpfs": "/test.tmp",
             },
             "Install": {
                 "WantedBy": [
@@ -200,6 +203,9 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_path, expected_prefix)
     Image=img
     Environment="DEBUG=1"
     Environment="TRACE=1"
+    SecurityLabelFileType=usr_t
+    SecurityLabelType=spc_t
+    Tmpfs=/test.tmp
 
     [Install]
     WantedBy=local-fs.target
