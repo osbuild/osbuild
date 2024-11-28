@@ -271,34 +271,34 @@
           {
             "title": "RHEL-10-RPMREPO-NIGHTLY-BaseOS",
             "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-x86_64-baseos-n10.0-20241107"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-x86_64-baseos-n10.0-20241115"
           },
           {
             "title": "RHEL-10-RPMREPO-NIGHTLY-AppStream",
             "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-x86_64-appstream-n10.0-20241107"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-x86_64-appstream-n10.0-20241115"
           },
           {
             "title": "RHEL-10-RPMREPO-NIGHTLY-CRB",
             "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-x86_64-crb-n10.0-20241107"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-x86_64-crb-n10.0-20241115"
           }
         ],
         "aarch64": [
           {
             "title": "RHEL-10-RPMREPO-NIGHTLY-BaseOS",
             "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-aarch64-baseos-n10.0-20241107"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-aarch64-baseos-n10.0-20241115"
           },
           {
             "title": "RHEL-10-RPMREPO-NIGHTLY-AppStream",
             "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-aarch64-appstream-n10.0-20241107"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-aarch64-appstream-n10.0-20241115"
           },
           {
             "title": "RHEL-10-RPMREPO-NIGHTLY-CRB",
             "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-aarch64-crb-n10.0-20241107"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-aarch64-crb-n10.0-20241115"
           }
         ]
       }
