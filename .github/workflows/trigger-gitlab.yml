@@ -35,6 +35,8 @@ jobs:
           route: GET /repos/${{ github.repository }}/pulls
 
       - name: Checkout branch
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           PR_DATA=$(mktemp)
           # use uuid as a file terminator to avoid conflicts with data content
@@ -46,7 +48,7 @@ jobs:
           if [ ! -z "$PR" ]; then
             git checkout -b PR-$PR
           else
-            git checkout ${{ github.event.workflow_run.head_branch }}
+            git checkout "${BRANCH}"
           fi
 
       - name: Push to gitlab
