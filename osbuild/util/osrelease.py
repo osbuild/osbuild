@@ -35,8 +35,10 @@ def parse_files(*paths):
                     continue
                 key, value = line.split("=", 1)
                 split_value = shlex.split(value)
-                if not split_value or len(split_value) > 1:
-                    raise ValueError(f"Key '{key}' has an empty value or more than one token: {value}")
+                if not split_value:
+                    raise ValueError(f"Key '{key}' has an empty value")
+                if len(split_value) > 1:
+                    raise ValueError(f"Key '{key}' has more than one token: {value}")
                 osrelease[key] = split_value[0]
 
     return osrelease
