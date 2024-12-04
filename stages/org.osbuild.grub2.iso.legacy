@@ -1,0 +1,89 @@
+#!/usr/bin/python3
+import os
+import shutil
+import string
+import sys
+
+import osbuild.api
+
+# The main grub2 configuration file template. Used for BIOS.
+GRUB2_CFG_TEMPLATE = """
+function load_video {
+  insmod all_video
+}
+
+load_video
+set gfxpayload=keep
+insmod gzio
+insmod part_gpt
+insmod ext2
+insmod chain
+
+set timeout=${timeout}
+### END /etc/grub.d/00_header ###
+
+search --no-floppy --set=root -l '${isolabel}'
+
+### BEGIN /etc/grub.d/10_linux ###
+menuentry 'Install ${product} ${version}' --class fedora --class gnu-linux --class gnu --class os {
+	linux ${kernelpath} ${root} quiet
+	initrd ${initrdpath}
+}
+menuentry 'Test this media & install ${product} ${version}' --class fedora --class gnu-linux --class gnu --class os {
+	linux ${kernelpath} ${root} rd.live.check quiet
+	initrd ${initrdpath}
+}
+submenu 'Troubleshooting -->' {
+	menuentry 'Install ${product} ${version} in basic graphics mode' --class fedora --class gnu-linux --class gnu --class os {
+		linux ${kernelpath} ${root} nomodeset quiet
+		initrd ${initrdpath}
+	}
+	menuentry 'Rescue a ${product} system' --class fedora --class gnu-linux --class gnu --class os {
+		linux ${kernelpath} ${root} inst.rescue quiet
+		initrd ${initrdpath}
+	}
+	menuentry 'Boot first drive' --class fedora --class gnu-linux --class gnu --class os {
+		chainloader (hd0)+1
+	}
+}
+"""
+
+
+def main(root, options):
+    name = options["product"]["name"]
+    version = options["product"]["version"]
+    isolabel = options["isolabel"]
+    kdir = options["kernel"].get("dir", "/images/pxeboot")
+    kopts = options["kernel"].get("opts")
+    cfg = options.get("config", {})
+    timeout = cfg.get("timeout", 60)
+
+    grub2dir = os.path.join(root, "boot", "grub2")
+    os.makedirs(grub2dir, exist_ok=True)
+
+    # grub2 modules
+    moduledir = os.path.join(grub2dir, "i386-pc")
+    shutil.copytree("/usr/lib/grub/i386-pc", moduledir, dirs_exist_ok=True)
+
+    print(f"kernel dir at {kdir}")
+
+    tplt = string.Template(GRUB2_CFG_TEMPLATE)
+    data = tplt.safe_substitute({
+        "version": version,
+        "product": name,
+        "kernelpath": os.path.join(kdir, "vmlinuz"),
+        "initrdpath": os.path.join(kdir, "initrd.img"),
+        "isolabel": isolabel,
+        "root": " ".join(kopts),
+        "timeout": timeout
+    })
+
+    config = os.path.join(grub2dir, "grub.cfg")
+    with open(config, "w", encoding="utf8") as cfg:
+        cfg.write(data)
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    ret = main(args["tree"], args["options"])
+    sys.exit(ret)
