@@ -6,14 +6,10 @@ import sys
 
 import osbuild.api
 
-# The main grub2 configuration file template. Used for UEFI.
-# NOTE: Changes to this should also be applied to the org.osbuild.grub2.iso.legacy stage
-GRUB2_EFI_CFG_TEMPLATE = """
+# The main grub2 configuration file template. Used for BIOS.
+# NOTE: Changes to this should also be applied to the org.osbuild.grub2.iso stage
+GRUB2_CFG_TEMPLATE = """
 function load_video {
-  insmod efi_gop
-  insmod efi_uga
-  insmod video_bochs
-  insmod video_cirrus
   insmod all_video
 }
 
@@ -22,6 +18,7 @@ set gfxpayload=keep
 insmod gzio
 insmod part_gpt
 insmod ext2
+insmod chain
 
 set timeout=${timeout}
 ### END /etc/grub.d/00_header ###
@@ -46,6 +43,9 @@ submenu 'Troubleshooting -->' {
 		linux ${kernelpath} ${root} inst.rescue quiet
 		initrd ${initrdpath}
 	}
+	menuentry 'Boot first drive' --class fedora --class gnu-linux --class gnu --class os {
+		chainloader (hd0)+1
+	}
 }
 """
 
@@ -54,37 +54,21 @@ def main(root, options):
     name = options["product"]["name"]
     version = options["product"]["version"]
     isolabel = options["isolabel"]
-    architectures = options["architectures"]
-    vendor = options["vendor"]
     kdir = options["kernel"].get("dir", "/images/pxeboot")
     kopts = options["kernel"].get("opts")
     cfg = options.get("config", {})
     timeout = cfg.get("timeout", 60)
 
-    efidir = os.path.join(root, "EFI", "BOOT")
-    os.makedirs(efidir)
+    grub2dir = os.path.join(root, "boot", "grub2")
+    os.makedirs(grub2dir, exist_ok=True)
 
-    # arch related data
-    for arch in architectures:
-        arch = arch.lower()
-        targets = [
-            (f"shim{arch}.efi", f"BOOT{arch}.EFI".upper()),
-            (f"mm{arch}.efi", f"mm{arch}.efi"),
-            (f"gcd{arch}.efi", f"grub{arch}.efi")
-        ]
-
-        for src, dst in targets:
-            shutil.copy2(os.path.join("/boot/efi/EFI/", vendor, src),
-                         os.path.join(efidir, dst))
-
-    # the font
-    fontdir = os.path.join(efidir, "fonts")
-    os.makedirs(fontdir, exist_ok=True)
-    shutil.copy2("/usr/share/grub/unicode.pf2", fontdir)
+    # grub2 modules
+    moduledir = os.path.join(grub2dir, "i386-pc")
+    shutil.copytree("/usr/lib/grub/i386-pc", moduledir, dirs_exist_ok=True)
 
     print(f"kernel dir at {kdir}")
 
-    tplt = string.Template(GRUB2_EFI_CFG_TEMPLATE)
+    tplt = string.Template(GRUB2_CFG_TEMPLATE)
     data = tplt.safe_substitute({
         "version": version,
         "product": name,
@@ -95,12 +79,9 @@ def main(root, options):
         "timeout": timeout
     })
 
-    config = os.path.join(efidir, "grub.cfg")
+    config = os.path.join(grub2dir, "grub.cfg")
     with open(config, "w", encoding="utf8") as cfg:
         cfg.write(data)
-
-    if "IA32" in architectures:
-        shutil.copy2(config, os.path.join(efidir, "BOOT.cfg"))
 
 
 if __name__ == '__main__':
