@@ -59,11 +59,19 @@ pipelines:
                 - grub2-efi-ia32-cdboot
                 - zstd
                 - openscap-utils
+                - podman
         options:
           gpgkeys:
             mpp-eval: gpgkeys
           exclude:
             docs: true
+      # Remove when https://github.com/containers/common/pull/2265
+      # has merged and is in a Fedora RPM
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: /etc/containers/networks
+              mode: 493
       - type: org.osbuild.selinux
         options:
           file_contexts: etc/selinux/targeted/contexts/files/file_contexts
