@@ -59,6 +59,7 @@ pipelines:
                 - grub2-efi-ia32-cdboot
                 - zstd
                 - openscap-utils
+                - podman
         options:
           gpgkeys:
             mpp-eval: gpgkeys
@@ -70,3 +71,10 @@ pipelines:
           labels:
             /usr/bin/cp: system_u:object_r:install_exec_t:s0
             /usr/bin/tar: system_u:object_r:install_exec_t:s0
+      # Remove when https://github.com/containers/common/pull/2265
+      # has merged and is in a Fedora RPM
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: /etc/containers/networks
+              mode: 493
