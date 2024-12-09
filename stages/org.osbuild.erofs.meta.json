@@ -28,7 +28,8 @@
               "enum": [
                 "lz4",
                 "lz4hc",
-                "lzma"
+                "lzma",
+                "zstd"
               ]
             },
             "level": {
