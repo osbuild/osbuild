@@ -5,7 +5,7 @@ mpp-vars:
   release: 41
   releasever: f$release
   snapshot: '20241107'
-  updates: '20241107'
+  updates: '20241210'
   ref: fedora/$arch/osbuild
   isolabel: Fedora-$release-X86_64
   repos:
