@@ -1,4 +1,3 @@
-import itertools
 import os
 import os.path
 import tempfile
@@ -91,8 +90,8 @@ class DNF(SolverBase):
         # enable module resolving
         self.base_module = dnf.module.module_base.ModuleBase(self.base)
 
-
     # pylint: disable=too-many-branches
+
     @staticmethod
     def _dnfrepo(desc, parent_conf=None):
         """Makes a dnf.repo.Repo out of a JSON repository description"""
@@ -272,10 +271,6 @@ class DNF(SolverBase):
                 # module
                 self.base_module.enable(transaction.get("module-enable-specs", []))
 
-                # installing a module takes the specification of the module and then
-                # installs all packages belonging to it
-                self.base_module.install(transaction.get("module-install-specs", []))
-
                 self.base.install_specs(
                     transaction.get("package-specs"),
                     transaction.get("exclude-specs"),
@@ -348,15 +343,12 @@ class DNF(SolverBase):
         modules = []
 
         for transaction in transactions:
-            if transaction.get("module-install-specs") or transaction.get("module-enable-specs"):
+            if transaction.get("module-enable-specs"):
                 # we'll be checking later if any packages-from-modules are in the
                 # packages-to-install set so let's do this only once here
                 package_nevras = list(p["nevra"] for p in packages)
 
-                for module_spec in itertools.chain(
-                    transaction.get("module-install-specs", []),
-                    transaction.get("module-enable-specs", []),
-                ):
+                for module_spec in transaction.get("module-enable-specs", []):
                     # we don't particularly care about the NSVCAP here, just the module
                     # packages that were previously selected
                     module_packages, _ = self.base_module.get_modules(module_spec)
