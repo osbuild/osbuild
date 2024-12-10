@@ -392,7 +392,6 @@ class DNF(SolverBase):
                     [{module.getName()}]
                     name={module.getName()}
                     stream={module.getStream()}
-                    profiles=common
                     state=enabled
                 """),
                 "failsafe-file": module.getYaml(),
