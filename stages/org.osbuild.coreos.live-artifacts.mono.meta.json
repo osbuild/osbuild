@@ -2,7 +2,7 @@
   "summary": "Build CoreOS Live ISO and PXE kernel,initramfs,rootfs",
   "description": [
     "This stage builds the CoreOS Live ISO and PXE kernel,initramfs,rootfs",
-    "artifacts. Input to this stage are metal and metal4k raw disk images",
+    "artifacts. Inputs to this stage are metal and metal4k raw disk images",
     "that are then used to generate the Live artifacts."
   ],
   "capabilities": [
