@@ -2,7 +2,10 @@ name: "Verify PR best practices"
 
 on:
   pull_request_target:
-    branches: [ main ]
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+  issue_comment:
+    types: [created]
 
 jobs:
   pr-best-practices:
@@ -12,3 +15,4 @@ jobs:
         uses: osbuild/pr-best-practices@main
         with:
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+          jira_token: ${{ secrets.IMAGEBUILDER_BOT_JIRA_TOKEN }}
