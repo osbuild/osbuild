@@ -108,6 +108,13 @@
               }
             }
           }
+        },
+        "exports": {
+          "type": "array",
+          "title": "Default exports",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
