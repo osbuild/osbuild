@@ -225,7 +225,7 @@ def genisoargs_ppc64le(paths, kargs_json, volid):
     return ['grub2-mkrescue', '-volid', volid]
 
 
-def genisoargs_s390x(paths, kernel_img, test_fixture, volid, name_version):
+def genisoargs_s390x(paths, test_fixture, volid, name_version):
     # The initramfs gets referenced a lot in this function so let's
     # make a local variable for it for convenience.
     iso_initramfs = paths["iso/images/pxeboot/initrd.img"]
@@ -243,16 +243,10 @@ def genisoargs_s390x(paths, kernel_img, test_fixture, volid, name_version):
                     paths["iso/images/genericdvd.prm"]]:
         shutil.copy(paths["iso/zipl.prm"], prmfile)
 
-    # TODO: check if the kernel.img move can be extracted
-    # s390x's z/VM CMS files are limited to 8 char for filenames and extensions
-    # Also it is nice to keep naming convetion with Fedora/RHEL for existing users and code
-    kernel_dest = os.path.join(paths["iso/images/pxeboot"], 'kernel.img')
-    shutil.move(os.path.join(paths["iso/images/pxeboot"], kernel_img), kernel_dest)
-
     if test_fixture:
-        # truncate it to 128k so it includes the offsets to the initrd and kargs
+        # truncate kernel to 128k so it includes the offsets to the initrd and kargs
         # https://github.com/ibm-s390-linux/s390-tools/blob/032304d5034e/netboot/mk-s390image#L21-L24
-        with open(kernel_dest, 'rb+') as f:
+        with open(paths["iso/images/pxeboot/vmlinuz"], 'rb+') as f:
             f.truncate(128 * 1024)
         with open(iso_initramfs, 'rb+') as f:
             f.truncate(1024)
@@ -268,7 +262,7 @@ def genisoargs_s390x(paths, kernel_img, test_fixture, volid, name_version):
     # combine kernel, initramfs and cmdline using the mk-s390image tool
     os.truncate(iso_initramfs, initramfs_size + IGNITION_IMG_SIZE)
     subprocess.check_call(['mk-s390image',
-                           kernel_dest,
+                           paths["iso/images/pxeboot/vmlinuz"],
                            paths["iso/images/cdboot.img"],
                            '-r', iso_initramfs,
                            '-p', paths["iso/images/cdboot.prm"]])
@@ -291,7 +285,7 @@ def genisoargs_s390x(paths, kernel_img, test_fixture, volid, name_version):
             os.path.join(os.path.relpath(paths["iso/images"], paths["iso"]), 'cdboot.img')]
 
 
-def gen_live_artifacts(paths, tree, filenames, deployed_tree, loop_client, kernel_img, version, blsentry_kargs):
+def gen_live_artifacts(paths, tree, filenames, deployed_tree, loop_client, version, blsentry_kargs):
     """
     Generate the ISO image.
     Based on the Lorax templates [1].
@@ -345,12 +339,8 @@ def gen_live_artifacts(paths, tree, filenames, deployed_tree, loop_client, kerne
     elif basearch == "ppc64le":
         genisoargs = genisoargs_ppc64le(paths, kargs_json, volid)
     elif basearch == "s390x":
-        genisoargs = genisoargs_s390x(paths, kernel_img, test_fixture, volid, name_version)
+        genisoargs = genisoargs_s390x(paths, test_fixture, volid, name_version)
         update_image_offsets_s390x(paths, kargs_json, igninfo_json)
-        # This name change happened in the code extracted into genisoargs_s390x(). Now it's part of the function, so it
-        # doesn't leak into the main() scope and we need to set it here again. Splitting the genisoargs_s390x() function
-        # further, making the file rename part its own function if possible, will fix this issue.
-        kernel_img = 'kernel.img'
 
     # Drop zipl.prm as it was either unused (!s390x) or is now no longer
     # needed (s390x)
@@ -865,9 +855,6 @@ def main(workdir, tree, inputs, options, loop_client):
     paths = mk_paths(workdir)
     mk_workdirs(paths)
 
-    # convention for kernel names
-    kernel_img = 'vmlinuz'
-
     # Find the directory under `/usr/lib/modules/<kver>` where the
     # kernel/initrd live. It will be the only entity in there.
     modules_dir = ensure_glob(os.path.join(deployed_tree, 'usr/lib/modules/*'), n=1)[0]
@@ -879,7 +866,6 @@ def main(workdir, tree, inputs, options, loop_client):
                     paths["iso/images/pxeboot/initrd.img"])
     # initramfs isn't world readable by default so let's open up perms
     os.chmod(paths["iso/images/pxeboot/initrd.img"], 0o644)
-
 
     # Generate initramfs stamp file indicating that this is a live
     # initramfs.  Store the build ID in it.
@@ -930,7 +916,7 @@ def main(workdir, tree, inputs, options, loop_client):
     extend_initramfs(initramfs=paths["iso/images/pxeboot/initrd.img"], tree=paths["initrd"])
 
     filenames = options['filenames']
-    gen_live_artifacts(paths, tree, filenames, deployed_tree, loop_client, kernel_img, version, blsentry_kargs)
+    gen_live_artifacts(paths, tree, filenames, deployed_tree, loop_client, version, blsentry_kargs)
 
 
 if __name__ == "__main__":
