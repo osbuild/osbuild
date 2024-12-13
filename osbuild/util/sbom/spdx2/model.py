@@ -3,6 +3,7 @@ A base implementation of SPDX 2.3 model, as described on:
 https://spdx.github.io/spdx-spec/v2.3/
 """
 
+import hashlib
 import re
 from datetime import datetime, timezone
 from enum import Enum, auto
@@ -216,6 +217,60 @@ class Checksum():
         }
 
 
+def normalize_name_for_license_id(name: str) -> str:
+    """
+    Normalize a license name to be used within an SPDX license ID.
+
+    The function does the following things:
+    - Ensures that the returned string contains only letters, numbers, "." and/or "-".
+        All other characters are replaced with "-".
+    - Deduplicates consecutive "." and "-" characters.
+
+    See also:
+    https://spdx.github.io/spdx-spec/v2.3/other-licensing-information-detected/#1011-description:
+    """
+    normalized_name = re.sub(r"[^a-zA-Z0-9.-]", "-", name)
+    normalized_name = re.sub(r"([.-])\1+", r"\1", normalized_name)
+    return normalized_name
+
+
+def generate_license_id(extracted_text: str, name: Optional[str] = None) -> str:
+    """
+    Generate a unique SPDX license ID by hashing the extracted text using SHA-256.
+
+    If a license name is provided, include it in the license ID.
+    """
+    extracted_text_hash = hashlib.sha256(extracted_text.encode()).hexdigest()
+    if name is not None:
+        return f"LicenseRef-{normalize_name_for_license_id(name)}-{extracted_text_hash}"
+    return f"LicenseRef-{extracted_text_hash}"
+
+
+class ExtractedLicensingInfo():
+    """
+    Represents extracted licensing information for a license not on the SPDX License List.
+
+    https://spdx.github.io/spdx-spec/v2.3/other-licensing-information-detected/
+    """
+
+    def __init__(self, extracted_text: str, name: Optional[str] = None) -> None:
+        self.extracted_text = extracted_text
+        self.name = name
+        self.license_ref_id = generate_license_id(self.extracted_text, self.name)
+
+    def __str__(self):
+        return self.license_ref_id
+
+    def to_dict(self):
+        d = {
+            "licenseId": self.license_ref_id,
+            "extractedText": self.extracted_text,
+        }
+        if self.name:
+            d["name"] = self.name
+        return d
+
+
 # pylint: disable=too-many-instance-attributes
 class Package(EntityWithSpdxId):
     """Represents an SPDX package."""
@@ -230,7 +285,7 @@ class Package(EntityWithSpdxId):
         checksums: Optional[List[Checksum]] = None,
         homepage: Optional[Union[str, NoAssertionValue, NoneValue]] = None,
         source_info: Optional[str] = None,
-        license_declared: Optional[Union[str, NoAssertionValue, NoneValue]] = None,
+        license_declared: Optional[Union[str, ExtractedLicensingInfo, NoAssertionValue, NoneValue]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
         external_references: Optional[List[ExternalPackageRef]] = None,
@@ -324,15 +379,19 @@ class Document():
         creation_info: CreationInfo,
         packages: Optional[List[Package]] = None,
         relationships: Optional[List[Relationship]] = None,
+        extracted_licensing_infos: Optional[List[ExtractedLicensingInfo]] = None,
     ) -> None:
         self.creation_info = creation_info
         self.packages = packages or []
         self.relationships = relationships or []
+        self.extracted_licensing_infos = extracted_licensing_infos or []
 
     def to_dict(self):
         d = self.creation_info.to_dict()
         for package in self.packages:
             d.setdefault("packages", []).append(package.to_dict())
+        for extracted_licensing_info in self.extracted_licensing_infos:
+            d.setdefault("hasExtractedLicensingInfos", []).append(extracted_licensing_info.to_dict())
         for relationship in self.relationships:
             d.setdefault("relationships", []).append(relationship.to_dict())
         return d
