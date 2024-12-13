@@ -1,3 +1,6 @@
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-nested-blocks
+
 import itertools
 import os
 import os.path
@@ -92,7 +95,6 @@ class DNF(SolverBase):
         self.base_module = dnf.module.module_base.ModuleBase(self.base)
 
 
-    # pylint: disable=too-many-branches
     @staticmethod
     def _dnfrepo(desc, parent_conf=None):
         """Makes a dnf.repo.Repo out of a JSON repository description"""
@@ -345,7 +347,7 @@ class DNF(SolverBase):
 
         # if any modules have been requested we add sources for these so they can
         # be used by stages to enable the modules in the eventual artifact
-        modules = []
+        modules = {}
 
         for transaction in transactions:
             if transaction.get("module-install-specs") or transaction.get("module-enable-specs"):
@@ -357,9 +359,7 @@ class DNF(SolverBase):
                     transaction.get("module-install-specs", []),
                     transaction.get("module-enable-specs", []),
                 ):
-                    # we don't particularly care about the NSVCAP here, just the module
-                    # packages that were previously selected
-                    module_packages, _ = self.base_module.get_modules(module_spec)
+                    module_packages, module_nsvcap = self.base_module.get_modules(module_spec)
 
                     # we now need to do an annoying dance as multiple modules could be
                     # returned by `.get_modules`, we need to select the *same* one as
@@ -375,12 +375,16 @@ class DNF(SolverBase):
                         if any(module_nevra in package_nevras for module_nevra in module_nevras):
                             # a package from this module is being installed so we must
                             # use this module
-                            modules.append(module_package)
+                            module_ns = f"{module_nsvcap.name}:{module_nsvcap.stream}"
 
-                            # we are probably able to skip the rest of the `module_packages`
-                            # here if we want since no two modules can be enabled by the same
-                            # name
-                            break
+                            if module_ns not in modules:
+                                modules[module_ns] = (module_package, set())
+
+                            if module_nsvcap.profile:
+                                modules[module_ns][1].add(module_nsvcap.profile)
+
+                            # we are unable to skip the rest of the `module_packages`
+                            # here since different profiles might be contained
 
         # now we have the information we need about modules so we need to return *some*
         # information to who is using the depsolver so they can use that information to
@@ -394,13 +398,15 @@ class DNF(SolverBase):
         # of the modulemd for the selected modules, this is to ensure that even when a
         # repository is disabled or disappears that non-modular content can't be installed
         # see: https://dnf.readthedocs.io/en/latest/modularity.html#fail-safe-mechanisms
-        for module in modules:
+        for module_ns, (module, profiles) in modules.items():
+            profiles = ",".join(profiles) if profiles else ""
+
             response["modules"][module.getName()] = {
                 "module-file": textwrap.dedent(f"""\
                     [{module.getName()}]
                     name={module.getName()}
                     stream={module.getStream()}
-                    profiles=common
+                    profiles={profiles}
                     state=enabled
                 """),
                 "failsafe-file": module.getYaml(),
