@@ -94,7 +94,6 @@ class DNF(SolverBase):
         # enable module resolving
         self.base_module = dnf.module.module_base.ModuleBase(self.base)
 
-
     @staticmethod
     def _dnfrepo(desc, parent_conf=None):
         """Makes a dnf.repo.Repo out of a JSON repository description"""
@@ -402,14 +401,20 @@ class DNF(SolverBase):
             profiles = ",".join(profiles) if profiles else ""
 
             response["modules"][module.getName()] = {
-                "module-file": textwrap.dedent(f"""\
-                    [{module.getName()}]
-                    name={module.getName()}
-                    stream={module.getStream()}
-                    profiles={profiles}
-                    state=enabled
-                """),
-                "failsafe-file": module.getYaml(),
+                "module-file": {
+                    "data": textwrap.dedent(f"""\
+                        [{module.getName()}]
+                        name={module.getName()}
+                        stream={module.getStream()}
+                        profiles={profiles}
+                        state=enabled
+                        """),
+                    "path": f"/etc/dnf/modules.d/{module.getName()}.conf",
+                },
+                "failsafe-file": {
+                    "data": module.getYaml(),
+                    "path": f"/var/lib/dnf/modulefailsafe/{module.getName()}:{module.getStream()}",
+                },
             }
 
         return response
