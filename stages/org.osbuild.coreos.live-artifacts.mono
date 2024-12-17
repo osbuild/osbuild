@@ -477,27 +477,35 @@ def mkefiboot(paths, deployed_tree, kargs_json, volid, loop_client):
     efidir = paths["efi"]
     shutil.copytree(os.path.join(deployed_tree, 'usr/lib/bootupd/updates/EFI'), efidir)
 
-    # Find name of vendor directory
-    vendor_ids = [n for n in os.listdir(efidir) if n != "BOOT"]
-    if len(vendor_ids) != 1:
-        raise ValueError(f"did not find exactly one EFI vendor ID: {vendor_ids}")
-    vendor_id = vendor_ids[0]
+    # Find name of vendor directory for this distro. i.e. "fedora" or "redhat".
+    dirs = [n for n in os.listdir(efidir) if n != "BOOT"]
+    if len(dirs) != 1:
+        raise ValueError(f"did not find exactly one EFI vendor ID: {dirs}")
+    vendor_id = dirs[0]
 
-    # Always replace live/EFI/{vendor} to actual live/EFI/{vendor_id}
-    # https://github.com/openshift/os/issues/954
-    dfd = os.open(paths["iso"], os.O_RDONLY)
-    grubfilepath = ensure_glob('EFI/*/grub.cfg', dir_fd=dfd)
-    if len(grubfilepath) != 1:
-        raise ValueError(f'Found != 1 grub.cfg files: {grubfilepath}')
-    srcpath = os.path.dirname(grubfilepath[0])
-    if srcpath != f'EFI/{vendor_id}':
-        print(f"Renaming '{srcpath}' to 'EFI/{vendor_id}'")
-        os.rename(srcpath, f"EFI/{vendor_id}", src_dir_fd=dfd, dst_dir_fd=dfd)
+    # In the FCOS configs we have the live configs under the "EFI/fedora"
+    # directory [1], but for openshift/os we have them under "EFI/vendor"
+    # since we support RHEL/CentOS [2]. Here we will rename "EFI/vendor"
+    # if it was copied into the iso root scratch directory in
+    # copy_configs_and_init_kargs_json() with the value for this platform
+    # as was detected above. Some history on this in [3].
+    #
+    # Arguably this should be done in copy_configs_and_init_kargs_json()
+    # since it has nothing to do with creating the efiboot.img file.
+    #
+    # [1] https://github.com/coreos/fedora-coreos-config/tree/testing-devel/live/EFI/fedora
+    # [2] https://github.com/openshift/os/tree/master/live/EFI/vendor
+    # [3] https://github.com/openshift/os/issues/954
+    grubfilepath = ensure_glob(os.path.join(paths["iso"], 'EFI/*/grub.cfg'), n=1)[0]
+    srcdir = os.path.dirname(grubfilepath)
+    dstdir = os.path.join(paths["iso"], f"EFI/{vendor_id}")
+    if srcdir != dstdir:
+        print(f"Renaming '{srcdir}' to '{dstdir}'")
+        shutil.move(srcdir, dstdir)
         # And update kargs.json
         for file in kargs_json['files']:
-            if file['path'] == grubfilepath[0]:
+            if file['path'] == os.path.relpath(grubfilepath, paths["iso"]):
                 file['path'] = f'EFI/{vendor_id}/grub.cfg'
-    os.close(dfd)
 
     # Delete fallback and its CSV file.  Its purpose is to create
     # EFI boot variables, which we don't want when booting from
