@@ -308,6 +308,7 @@ fi
 %selinux_relabel_post -s %{selinuxtype}
 
 %files tools
+%{_bindir}/osbuild-image-info
 %{_bindir}/osbuild-mpp
 %{?fedora:%{_bindir}/osbuild-dev}
 
