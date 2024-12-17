@@ -149,6 +149,15 @@ def ensure_glob(pathname, n="", **kwargs):
     return ret
 
 
+def find_efi_vendor_dir_name(efidir):
+    # Find name of vendor directory for this distro. i.e. "fedora" or "redhat".
+    dirs = [n for n in os.listdir(efidir) if n != "BOOT"]
+    if len(dirs) != 1:
+        raise ValueError(f"did not find exactly one EFI vendor ID: {dirs}")
+    vendor_id = dirs[0]
+    return vendor_id
+
+
 # This creates efiboot.img, which is a FAT filesystem.
 def make_efi_bootfile(loop_client, input_tarball, output_efiboot_img):
     # Create the efiboot image file. Determine the size we should make
@@ -348,7 +357,7 @@ def gen_live_artifacts(paths, tree, filenames, deployed_tree, loop_client, versi
 
     # For x86_64 and aarch64 UEFI booting
     if basearch in ("x86_64", "aarch64"):
-        efiboot_path = mkefiboot(paths, deployed_tree, kargs_json, volid, loop_client)
+        efiboot_path = mkefiboot(paths, deployed_tree, volid, loop_client)
         genisoargs += ['-eltorito-alt-boot', '-efi-boot', efiboot_path, '-no-emul-boot']
 
     # We've done everything that might affect kargs, so filter out any files
@@ -454,7 +463,7 @@ def update_image_offsets_s390x(paths, kargs_json, igninfo_json):
     })
 
 
-def mkefiboot(paths, deployed_tree, kargs_json, volid, loop_client):
+def mkefiboot(paths, deployed_tree, volid, loop_client):
     """
     Creates an efi boot image (efiboot.img) file, required for EFI
     booting the ISO. This is a fat32 formatted filesystem that contains
@@ -476,36 +485,7 @@ def mkefiboot(paths, deployed_tree, kargs_json, volid, loop_client):
 
     efidir = paths["efi"]
     shutil.copytree(os.path.join(deployed_tree, 'usr/lib/bootupd/updates/EFI'), efidir)
-
-    # Find name of vendor directory for this distro. i.e. "fedora" or "redhat".
-    dirs = [n for n in os.listdir(efidir) if n != "BOOT"]
-    if len(dirs) != 1:
-        raise ValueError(f"did not find exactly one EFI vendor ID: {dirs}")
-    vendor_id = dirs[0]
-
-    # In the FCOS configs we have the live configs under the "EFI/fedora"
-    # directory [1], but for openshift/os we have them under "EFI/vendor"
-    # since we support RHEL/CentOS [2]. Here we will rename "EFI/vendor"
-    # if it was copied into the iso root scratch directory in
-    # copy_configs_and_init_kargs_json() with the value for this platform
-    # as was detected above. Some history on this in [3].
-    #
-    # Arguably this should be done in copy_configs_and_init_kargs_json()
-    # since it has nothing to do with creating the efiboot.img file.
-    #
-    # [1] https://github.com/coreos/fedora-coreos-config/tree/testing-devel/live/EFI/fedora
-    # [2] https://github.com/openshift/os/tree/master/live/EFI/vendor
-    # [3] https://github.com/openshift/os/issues/954
-    grubfilepath = ensure_glob(os.path.join(paths["iso"], 'EFI/*/grub.cfg'), n=1)[0]
-    srcdir = os.path.dirname(grubfilepath)
-    dstdir = os.path.join(paths["iso"], f"EFI/{vendor_id}")
-    if srcdir != dstdir:
-        print(f"Renaming '{srcdir}' to '{dstdir}'")
-        shutil.move(srcdir, dstdir)
-        # And update kargs.json
-        for file in kargs_json['files']:
-            if file['path'] == os.path.relpath(grubfilepath, paths["iso"]):
-                file['path'] = f'EFI/{vendor_id}/grub.cfg'
+    vendor_id = find_efi_vendor_dir_name(efidir)
 
     # Delete fallback and its CSV file.  Its purpose is to create
     # EFI boot variables, which we don't want when booting from
@@ -647,6 +627,7 @@ def mksquashfs_metal(paths, workdir, img_metal, loop_client):
     return blsentry_kargs
 
 
+# pylint: disable=too-many-branches
 def copy_configs_and_init_kargs_json(deployed_tree, paths, blsentry_kargs, volid):
     # Filter kernel arguments for substituting into ISO bootloader
     kargs_array = [karg for karg in blsentry_kargs
@@ -704,6 +685,29 @@ def copy_configs_and_init_kargs_json(deployed_tree, paths, blsentry_kargs, volid
                 fh.write(buf)
             shutil.copystat(srcfile, dstfile)
             print(f'{srcfile} -> {dstfile}')
+
+    # In the FCOS configs we have the live configs under the "EFI/fedora"
+    # directory [1], but for openshift/os we have them under "EFI/vendor"
+    # since we support RHEL/CentOS [2]. If this is a platform that
+    # uses EFI we will rename "EFI/vendor" with the value for this platform
+    # Some history on this in [3].
+    #
+    # [1] https://github.com/coreos/fedora-coreos-config/tree/testing-devel/live/EFI/fedora
+    # [2] https://github.com/openshift/os/tree/master/live/EFI/vendor
+    # [3] https://github.com/openshift/os/issues/954
+    efidir = os.path.join(deployed_tree, 'usr/lib/bootupd/updates/EFI')
+    if os.path.exists(efidir):
+        vendor_id = find_efi_vendor_dir_name(efidir)
+        grubfilepath = ensure_glob(os.path.join(paths["iso"], 'EFI/*/grub.cfg'), n=1)[0]
+        srcdir = os.path.dirname(grubfilepath)
+        dstdir = os.path.join(paths["iso"], f"EFI/{vendor_id}")
+        if srcdir != dstdir:
+            print(f"Renaming '{srcdir}' to '{dstdir}'")
+            shutil.move(srcdir, dstdir)
+            # And update kargs.json
+            for file in kargs_json['files']:
+                if file['path'] == os.path.relpath(grubfilepath, paths["iso"]):
+                    file['path'] = f'EFI/{vendor_id}/grub.cfg'
 
     if karg_embed_area_length > 0:
         assert (karg_embed_area_length > len(cmdline))
