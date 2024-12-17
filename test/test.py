@@ -10,6 +10,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+
+import pytest
 
 import osbuild.meta
 from osbuild.objectstore import ObjectStore
@@ -496,3 +499,40 @@ class OSBuild(contextlib.AbstractContextManager):
             "cp", "--reflink=auto", "-a",
             os.path.join(from_path, "."), to_path
         ], check=True)
+
+
+class patch_license_expression:
+    """
+    Context manager to patch the license-expression package availability.
+
+    The context manager simulates the unavailability of the license-expression package by mocking the
+    `get_spdx_licensing()` module-level function. If the package should be made available
+    and it is available on the system, the function is passed through. Otherwise, pytest.skip() is called.
+    """
+
+    PATCH_TARGET = "osbuild.util.sbom.spdx.get_spdx_licensing"
+
+    def __init__(self, make_package_available):
+        self.make_package_available = make_package_available
+        self.patcher = None
+
+    def __enter__(self):
+        get_spdx_licensing = None
+        try:
+            # pylint: disable=import-outside-toplevel
+            from license_expression import get_spdx_licensing
+        except ImportError:
+            pass
+
+        if self.make_package_available:
+            if get_spdx_licensing:
+                self.patcher = patch(self.PATCH_TARGET, new=get_spdx_licensing)
+            else:
+                pytest.skip("The license-expression package is not available.")
+        else:
+            # The package is either not available or should be made unavailable, so make sure the function var is None.
+            self.patcher = patch(self.PATCH_TARGET, new=None)
+        return self.patcher.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.patcher.stop()
