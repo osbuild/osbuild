@@ -1,10 +1,72 @@
+import os
 from datetime import datetime
-from typing import List, Union
+from typing import Dict, List, Optional, Union
 from uuid import uuid4
 
 import osbuild
 import osbuild.util.sbom.model as sbom_model
 import osbuild.util.sbom.spdx2 as spdx2
+
+try:
+    from license_expression import ExpressionError, get_spdx_licensing
+except ImportError:
+    get_spdx_licensing = None
+    ExpressionError = None
+
+
+class SpdxLicenseExpressionCreator:
+    """
+    Class for creating SPDX license expressions from license strings.
+
+    This class uses the license-expression package to parse license strings and convert them to SPDX license, if
+    possible.
+
+    The class object also keeps track of all extracted licensing information objects that were created during the
+    conversion process. The extracted licensing information objects are stored in a dictionary, where the key is the
+    license reference ID and the value is the ExtractedLicensingInfo object.
+    """
+
+    def __init__(self, license_index_location=None):
+        self._extracted_license_infos: Dict[str, spdx2.ExtractedLicensingInfo] = {}
+        self._spdx_licensing = None
+
+        if get_spdx_licensing:
+            if license_index_location:
+                self._spdx_licensing = get_spdx_licensing(license_index_location)
+            else:
+                self._spdx_licensing = get_spdx_licensing()
+        elif license_index_location:
+            raise ValueError("The license-expression package is not available. "
+                             "Specify the license index location has no effect.")
+
+    def _to_extracted_license_info(self, license_str: str) -> spdx2.ExtractedLicensingInfo:
+        eli = spdx2.ExtractedLicensingInfo(license_str)
+        return self._extracted_license_infos.setdefault(eli.license_ref_id, eli)
+
+    def ensure_license_expression(self, license_str: str) -> Union[str, spdx2.ExtractedLicensingInfo]:
+        """
+        Convert a license string to a valid SPDX license expression or wrap it in an ExtractedLicensingInfo object.
+
+        This function uses the license-expression package to parse the license string and convert it to an SPDX license
+        expression. If the license string can't be parsed and converted to an SPDX license expression, it is wrapped in an
+        ExtractedLicensingInfo object.
+
+        If the license-expression package is not available, the license string is always wrapped in an
+        ExtractedLicensingInfo object.
+        """
+        if self._spdx_licensing is None:
+            return self._to_extracted_license_info(license_str)
+
+        try:
+            return str(self._spdx_licensing.parse(license_str, validate=True, strict=True))
+        except ExpressionError:
+            return self._to_extracted_license_info(license_str)
+
+    def extracted_license_infos(self) -> List[spdx2.ExtractedLicensingInfo]:
+        """
+        Return a list of all extracted licensing information objects that were created during the conversion process.
+        """
+        return list(self._extracted_license_infos.values())
 
 
 def spdx2_checksum_algorithm(algorithm: sbom_model.ChecksumAlgorithm) -> spdx2.ChecksumAlgorithm:
@@ -41,9 +103,12 @@ def create_spdx2_document():
     return doc
 
 
-def sbom_pkgset_to_spdx2_doc(pkgset: List[sbom_model.BasePackage]) -> spdx2.Document:
+def sbom_pkgset_to_spdx2_doc(
+        pkgset: List[sbom_model.BasePackage],
+        license_index_location: Optional[os.PathLike] = None) -> spdx2.Document:
     doc = create_spdx2_document()
     relationships = []
+    license_expr_creator = SpdxLicenseExpressionCreator(license_index_location)
 
     for pkg in pkgset:
 
@@ -51,13 +116,15 @@ def sbom_pkgset_to_spdx2_doc(pkgset: List[sbom_model.BasePackage]) -> spdx2.Docu
         if pkg.download_url:
             download_location = pkg.download_url
 
+        license_declared = license_expr_creator.ensure_license_expression(pkg.license_declared)
+
         p = spdx2.Package(
             spdx_id=f"SPDXRef-{pkg.uuid()}",
             name=pkg.name,
             download_location=download_location,
             version=pkg.version,
             files_analyzed=False,
-            license_declared=pkg.license_declared,
+            license_declared=license_declared,
             external_references=[
                 spdx2.ExternalPackageRef(
                     category=spdx2.ExternalPackageRefCategory.PACKAGE_MANAGER,
@@ -119,5 +186,9 @@ def sbom_pkgset_to_spdx2_doc(pkgset: List[sbom_model.BasePackage]) -> spdx2.Docu
             )
 
     doc.relationships = relationships
+
+    extracted_license_infos = license_expr_creator.extracted_license_infos()
+    if len(extracted_license_infos) > 0:
+        doc.extracted_licensing_infos = extracted_license_infos
 
     return doc
