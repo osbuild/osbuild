@@ -299,7 +299,7 @@ def read_partition_table(device):
             # 'sfdisk' prefixes the partition id with '0x' but
             # 'blkid' does not; remove it to mimic 'blkid'
             table_id = ptable['id'][2:]
-            partuuid = "%.33s-%02x" % (table_id, i+1)
+            partuuid = "%.33s-%02x" % (table_id, i + 1)
 
         partitions.append({
             "bootable": p.get("bootable", False),
@@ -2458,7 +2458,7 @@ def volume_group_for_device(device: str) -> str:
         if res.returncode == 5:
             if count == 10:
                 raise RuntimeError("Could not find parent device")
-            time.sleep(1*count)
+            time.sleep(1 * count)
             count += 1
             continue
 
