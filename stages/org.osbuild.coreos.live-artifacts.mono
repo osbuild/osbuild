@@ -864,8 +864,6 @@ def main(workdir, tree, inputs, options, loop_client):
                     paths["iso/images/pxeboot/vmlinuz"])
     shutil.copyfile(os.path.join(modules_dir, 'initramfs.img'),
                     paths["iso/images/pxeboot/initrd.img"])
-    # initramfs isn't world readable by default so let's open up perms
-    os.chmod(paths["iso/images/pxeboot/initrd.img"], 0o644)
 
     # Generate initramfs stamp file indicating that this is a live
     # initramfs.  Store the build ID in it.
