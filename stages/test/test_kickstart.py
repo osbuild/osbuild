@@ -224,7 +224,7 @@ TEST_INPUT = [
                 "signatureverification": False,
             },
         },
-        "ostreecontainer --url=http://some-ostree-url.com/foo --stateroot=some-osname --transport=registry --remote=some-remote --no-signature-verification",
+        "ostreecontainer --url=http://some-ostree-url.com/foo --stateroot=some-osname --transport=registry --remote=some-remote",
     ),
     (
         {

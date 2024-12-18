@@ -201,10 +201,6 @@ def main(tree, options):  # pylint: disable=too-many-branches
             if value:
                 cmd += f" --{name}={value}"
 
-        signature_verification = ostreecontainer.get("signatureverification", True)
-        if not signature_verification:
-            cmd += " --no-signature-verification"
-
         config += [cmd]
 
     liveimg = options.get("liveimg")
