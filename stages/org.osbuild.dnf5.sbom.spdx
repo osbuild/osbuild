@@ -7,6 +7,7 @@ import tempfile
 import libdnf5
 
 import osbuild
+from osbuild.util import path
 from osbuild.util.sbom.dnf5 import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
@@ -17,18 +18,18 @@ def get_installed_packages(tree):
 
         conf = base.get_config()
         conf.installroot = tree
-        conf.config_file_path = f"{tree}{conf.config_file_path}"
-        conf.pluginpath = f"{tree}{conf.pluginpath}"
-        conf.pluginconfpath = f"{tree}{conf.pluginconfpath}"
-        conf.persistdir = f"{tree}{conf.persistdir}"
-        conf.transaction_history_dir = f"{tree}{conf.transaction_history_dir}"
-        conf.system_cachedir = f"{tempdir}{conf.system_cachedir}"
-        conf.varsdir = [f"{tree}{d}" for d in conf.varsdir]
-        conf.reposdir = [f"{tree}{d}" for d in conf.reposdir]
-        conf.cachedir = f"{tempdir}{conf.cachedir}"
+        conf.config_file_path = path.join_abs(tree, conf.config_file_path)
+        conf.pluginpath = path.join_abs(tree, conf.pluginpath)
+        conf.pluginconfpath = path.join_abs(tree, conf.pluginconfpath)
+        conf.persistdir = path.join_abs(tree, conf.persistdir)
+        conf.transaction_history_dir = path.join_abs(tree, conf.transaction_history_dir)
+        conf.system_cachedir = path.join_abs(tempdir, conf.system_cachedir)
+        conf.varsdir = [path.join_abs(tree, d) for d in conf.varsdir]
+        conf.reposdir = [path.join_abs(tree, d) for d in conf.reposdir]
+        conf.cachedir = path.join_abs(tempdir, conf.cachedir)
 
-        if os.path.exists(f"{tree}{conf.system_state_dir}"):
-            conf.system_state_dir = f"{tree}{conf.system_state_dir}"
+        if os.path.exists(path.join_abs(tree, conf.system_state_dir)):
+            conf.system_state_dir = path.join_abs(tree, conf.system_state_dir)
         else:
             # NB: if the directory does not exist in the tree, DNF5 would create it.
             # We need to ensure that the stage does not taint the tree with directories
