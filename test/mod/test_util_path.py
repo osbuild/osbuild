@@ -68,3 +68,41 @@ def test_in_tree():
 
     for args, expected in cases.items():
         assert path.in_tree(*args) == expected, args
+
+
+@pytest.mark.parametrize("test_case", (
+    {
+        "args": ("",),
+        "expected": "/"
+    },
+    {
+        "args": ("", "file"),
+        "expected": "/file"
+    },
+    {
+        "args": ("", "/file"),
+        "expected": "/file"
+    },
+    {
+        "args": ("/tmp", "/file"),
+        "expected": "/tmp/file"
+    },
+    {
+        "args": ("/tmp", "/foo", "/bar"),
+        "expected": "/tmp/foo/bar"
+    },
+    {
+        "args": ("/", "/foo"),
+        "expected": "/foo"
+    },
+    {
+        "args": ("/", "/foo", "/bar"),
+        "expected": "/foo/bar"
+    },
+    {
+        "args": (Path("/tmp"), "/foo", "/bar"),
+        "expected": "/tmp/foo/bar"
+    },
+))
+def test_join_abs(test_case):
+    assert path.join_abs(*test_case["args"]) == test_case["expected"]
