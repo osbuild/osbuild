@@ -2,7 +2,7 @@
 import errno
 import os
 import os.path
-from typing import Optional
+from typing import Optional, Union
 
 from .ctx import suppress_oserror
 
@@ -41,3 +41,18 @@ def in_tree(path: str, tree: str, must_exist: bool = False) -> bool:
     if path.startswith(tree):
         return not must_exist or os.path.exists(path)
     return False
+
+
+def join_abs(root: Union[str, os.PathLike], *paths: Union[str, os.PathLike]) -> str:
+    """
+    Join root and paths together, handling the case where paths are absolute paths.
+    In that case, paths are just appended to root as if they were relative paths.
+    The result is always an absolute path relative to the filesystem root '/'.
+    """
+    final_path = root
+    for path in paths:
+        if os.path.isabs(path):
+            final_path = os.path.join(final_path, os.path.relpath(path, os.sep))
+        else:
+            final_path = os.path.join(final_path, path)
+    return os.path.normpath(os.path.join(os.sep, final_path))
