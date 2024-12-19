@@ -6,6 +6,7 @@ import tempfile
 import dnf
 
 import osbuild
+from osbuild.util import path
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
@@ -14,11 +15,11 @@ def get_installed_packages(tree):
     with tempfile.TemporaryDirectory() as tempdir:
         conf = dnf.conf.Conf()
         conf.installroot = tree
-        conf.persistdir = f"{tempdir}{conf.persistdir}"
-        conf.cachedir = f"{tempdir}{conf.cachedir}"
-        conf.reposdir = [f"{tree}{d}" for d in conf.reposdir]
-        conf.pluginconfpath = [f"{tree}{d}" for d in conf.pluginconfpath]
-        conf.varsdir = [f"{tree}{d}" for d in conf.varsdir]
+        conf.persistdir = path.join_abs(tempdir, conf.persistdir)
+        conf.cachedir = path.join_abs(tempdir, conf.cachedir)
+        conf.reposdir = [path.join_abs(tree, d) for d in conf.reposdir]
+        conf.pluginconfpath = [path.join_abs(tree, d) for d in conf.pluginconfpath]
+        conf.varsdir = [path.join_abs(tree, d) for d in conf.varsdir]
         conf.prepend_installroot("config_file_path")
 
         base = dnf.Base(conf)
