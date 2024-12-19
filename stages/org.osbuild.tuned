@@ -3,6 +3,7 @@ import os
 import sys
 
 import osbuild.api
+from osbuild.util import path
 
 
 class TunedProfilesDB:
@@ -32,18 +33,18 @@ class TunedProfilesDB:
         ]
         profile_config_file = "tuned.conf"
 
-        for path in profile_directories:
-            profiles_dir = f"{tree}{path}"
+        for directory in profile_directories:
+            profiles_dir = path.join_abs(tree, directory)
             if not os.path.isdir(profiles_dir):
                 continue
 
             # Since version 2.23.0, TuneD by default uses `profiles/` subdirectory.
             # If the subdirectory exists, we look for profiles there.
-            if os.path.isdir(f"{profiles_dir}/profiles"):
-                profiles_dir = f"{profiles_dir}/profiles"
+            if os.path.isdir(path.join_abs(profiles_dir, "profiles")):
+                profiles_dir = path.join_abs(profiles_dir, "profiles")
 
             for dir_entry in os.scandir(profiles_dir):
-                if dir_entry.is_dir() and os.path.isfile(f"{profiles_dir}/{dir_entry.name}/{profile_config_file}"):
+                if dir_entry.is_dir() and os.path.isfile(path.join_abs(profiles_dir, dir_entry.name, profile_config_file)):
                     available_profiles.add(dir_entry.name)
 
         return available_profiles
@@ -71,11 +72,11 @@ def main(tree, options):
             raise ValueError(f"TuneD profile '{profile}' does not exist")
 
     # Set the active profile
-    with open(f"{tree}{active_profile_file}", "w", encoding="utf8") as f:
+    with open(path.join_abs(tree, active_profile_file), "w", encoding="utf8") as f:
         f.write(" ".join(profiles) + "\n")
 
     # Mode needs to be set to "manual" if set explicitly
-    with open(f"{tree}{profile_mode_file}", "w", encoding="utf8") as f:
+    with open(path.join_abs(tree, profile_mode_file), "w", encoding="utf8") as f:
         f.write("manual\n")
 
     return 0
