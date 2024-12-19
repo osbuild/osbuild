@@ -44,14 +44,25 @@ def cleanup(*objs):
 
 
 class BuildResult:
-    def __init__(self, origin, returncode, output, error):
+    def __init__(self, origin: 'Stage', returncode: int, output: str, error: Dict[str, str]) -> None:
         self.name = origin.name
         self.id = origin.id
         self.success = returncode == 0
         self.output = output
         self.error = error
 
-    def as_dict(self):
+    def as_dict(self) -> Dict[str, Any]:
+        return vars(self)
+
+
+class DownloadResult:
+    def __init__(self, name: str, source_id: str, success: bool) -> None:
+        self.name = name
+        self.id = source_id
+        self.success = success
+        self.output = ""
+
+    def as_dict(self) -> Dict[str, Any]:
         return vars(self)
 
 
@@ -69,11 +80,11 @@ class Stage:
         self.mounts = {}
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.info.name
 
     @property
-    def id(self):
+    def id(self) -> str:
         m = hashlib.sha256()
         m.update(json.dumps(self.name, sort_keys=True).encode())
         m.update(json.dumps(self.build, sort_keys=True).encode())
@@ -82,11 +93,11 @@ class Stage:
         if self.source_epoch is not None:
             m.update(json.dumps(self.source_epoch, sort_keys=True).encode())
         if self.inputs:
-            data = {n: i.id for n, i in self.inputs.items()}
-            m.update(json.dumps(data, sort_keys=True).encode())
+            data_inp = {n: i.id for n, i in self.inputs.items()}
+            m.update(json.dumps(data_inp, sort_keys=True).encode())
         if self.mounts:
-            data = [m.id for m in self.mounts.values()]
-            m.update(json.dumps(data).encode())
+            data_mnt = [m.id for m in self.mounts.values()]
+            m.update(json.dumps(data_mnt).encode())
         return m.hexdigest()
 
     @property
@@ -141,7 +152,7 @@ class Stage:
         with open(location, "w", encoding="utf-8") as fp:
             json.dump(args, fp)
 
-    def run(self, tree, runner, build_tree, store, monitor, libdir, debug_break="", timeout=None):
+    def run(self, tree, runner, build_tree, store, monitor, libdir, debug_break="", timeout=None) -> BuildResult:
         with contextlib.ExitStack() as cm:
 
             build_root = buildroot.BuildRoot(build_tree, runner.path, libdir, store.tmp)
@@ -160,15 +171,15 @@ class Stage:
             inputs_tmpdir = os.path.join(tmpdir, "inputs")
             os.makedirs(inputs_tmpdir)
             inputs_mapped = "/run/osbuild/inputs"
-            inputs = {}
+            inputs: Dict[Any, Any] = {}
 
             devices_mapped = "/dev"
-            devices = {}
+            devices: Dict[Any, Any] = {}
 
             mounts_tmpdir = os.path.join(tmpdir, "mounts")
             os.makedirs(mounts_tmpdir)
             mounts_mapped = "/run/osbuild/mounts"
-            mounts = {}
+            mounts: Dict[Any, Any] = {}
 
             os.makedirs(os.path.join(tmpdir, "api"))
             args_path = os.path.join(tmpdir, "api", "arguments")
@@ -209,8 +220,8 @@ class Stage:
 
             ipmgr = InputManager(mgr, storeapi, inputs_tmpdir)
             for key, ip in self.inputs.items():
-                data = ipmgr.map(ip)
-                inputs[key] = data
+                data_inp = ipmgr.map(ip)
+                inputs[key] = data_inp
 
             devmgr = DeviceManager(mgr, build_root.dev, tree)
             for name, dev in self.devices.items():
@@ -218,8 +229,8 @@ class Stage:
 
             mntmgr = MountManager(devmgr, mounts_tmpdir)
             for key, mount in self.mounts.items():
-                data = mntmgr.mount(mount)
-                mounts[key] = data
+                data_mnt = mntmgr.mount(mount)
+                mounts[key] = data_mnt
 
             self.prepare_arguments(args, args_path)
 
@@ -417,8 +428,19 @@ class Manifest:
             for source in self.sources:
                 # Workaround for lack of progress from sources, this
                 # will need to be reworked later.
+                dr = DownloadResult(source.name, source.id, success=True)
                 monitor.begin(source)
-                source.download(mgr, store)
+                try:
+                    source.download(mgr, store)
+                except host.RemoteError as e:
+                    dr.success = False
+                    dr.output = str(e)
+                    monitor.result(dr)
+                    raise e
+                monitor.result(dr)
+                # ideally we would make the whole of download more symmetric
+                # to "build_stages" and return a "results" here in "finish"
+                # as well
                 monitor.finish({"name": source.info.name})
 
     def depsolve(self, store: ObjectStore, targets: Iterable[str]) -> List[str]:
@@ -473,10 +495,20 @@ class Manifest:
 
         return list(map(lambda x: x.name, reversed(build.values())))
 
-    def build(self, store, pipelines, monitor, libdir, debug_break="", stage_timeout=None):
+    def build(self, store, pipelines, monitor, libdir, debug_break="", stage_timeout=None) -> Dict[str, Any]:
+        """Build the manifest
+
+        Returns a dict of string keys that contains the overall
+        "success" and the `BuildResult` of each individual pipeline.
+
+        The overall success "success" is stored as the string "success"
+        with the bool result and the build pipelines BuildStatus is
+        stored under the pipelines ID string.
+        """
         results = {"success": True}
 
         for pl in map(self.get, pipelines):
+            assert pl is not None
             res = pl.run(store, monitor, libdir, debug_break, stage_timeout)
             results[pl.id] = res
             if not res["success"]:
