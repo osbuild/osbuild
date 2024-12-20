@@ -34,6 +34,9 @@ class TunedProfilesDB:
 
         for path in profile_directories:
             profiles_dir = f"{tree}{path}"
+            if not os.path.isdir(profiles_dir):
+                continue
+
             # Since version 2.23.0, TuneD by default uses `profiles/` subdirectory.
             # If the subdirectory exists, we look for profiles there.
             if os.path.isdir(f"{profiles_dir}/profiles"):
