@@ -21,9 +21,13 @@ def main(inputs, output_dir, options):
             method += f",{compression['level']}"
         cmd += ["-z", method]
 
-    options = options.get("options")
-    if options:
-        cmd += ["-E", ",".join(options)]
+    erofs_options = options.get("options")
+    if erofs_options:
+        cmd += ["-E", ",".join(erofs_options)]
+
+    cluster_size = options.get("cluster-size")
+    if cluster_size:
+        cmd += ["-C", f"{cluster_size}"]
 
     subprocess.run(cmd, check=True)
 
