@@ -15,6 +15,7 @@ TEST_INPUT = [
     ({"compression": {"method": "lz4hc", "level": 9}}, ["-z", "lz4hc,9"]),
     ({"options": ["dedupe"]}, ["-E", "dedupe"]),
     ({"options": ["all-fragments", "force-inode-compact"]}, ["-E", "all-fragments,force-inode-compact"]),
+    ({"cluster-size": 131072, "options": ["dedupe"]}, ["-E", "dedupe", "-C", "131072"]),
 ]
 
 

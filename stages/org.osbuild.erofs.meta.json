@@ -38,6 +38,10 @@
             }
           }
         },
+        "cluster-size": {
+          "description": "Maximum size of the compress physical cluster in bytes",
+          "type": "number"
+        },
         "options": {
           "description": "Extended options for the filesystem, see mkfs.erofs(1)",
           "type": "array",
