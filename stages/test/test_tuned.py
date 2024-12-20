@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import re
+
 import pytest
 
 from osbuild.testutil import (
@@ -12,12 +14,12 @@ STAGE_NAME = "org.osbuild.tuned"
 
 @pytest.mark.parametrize("test_data,expected_err", [
     # bad
-    ({"profiles": {}}, "{} is not of type 'array'"),
-    ({"profiles": ""}, "'' is not of type 'array'"),
-    ({"profiles": []}, "[] is too short"),
-    ({"profiles": [0]}, "0 is not of type 'string'"),
-    ({"profiles": [""]}, "'' is too short"),
-    ({}, "'profiles' is a required property"),
+    ({"profiles": {}}, r"{} is not of type 'array'"),
+    ({"profiles": ""}, r"'' is not of type 'array'"),
+    ({"profiles": []}, r"(\[\] is too short|\[\] should be non-empty)"),
+    ({"profiles": [0]}, r"0 is not of type 'string'"),
+    ({"profiles": [""]}, r"('' is too short|'' should be non-empty)"),
+    ({}, r"'profiles' is a required property"),
     # good
     ({"profiles": ["balanced"]}, ""),
     ({"profiles": ["balanced", "sap-hana"]}, ""),
@@ -34,7 +36,7 @@ def test_schema_validation(stage_schema, test_data, expected_err):
         assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
     else:
         assert res.valid is False
-        assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
+        assert_jsonschema_error_contains(res, re.compile(expected_err), expected_num_errs=1)
 
 
 @pytest.mark.parametrize("fake_tree,available_profiles", (
