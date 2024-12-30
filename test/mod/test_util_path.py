@@ -71,6 +71,7 @@ def test_in_tree():
 
 
 @pytest.mark.parametrize("test_case", (
+    # Strings only
     {
         "args": ("",),
         "expected": "/"
@@ -99,9 +100,89 @@ def test_in_tree():
         "args": ("/", "/foo", "/bar"),
         "expected": "/foo/bar"
     },
+    # Path only
+    {
+        "args": (Path(""),),
+        "expected": "/"
+    },
+    {
+        "args": (Path(""), Path("file")),
+        "expected": "/file"
+    },
+    {
+        "args": (Path(""), Path("/file")),
+        "expected": "/file"
+    },
+    {
+        "args": (Path("/tmp"), Path("/file")),
+        "expected": "/tmp/file"
+    },
+    {
+        "args": (Path("/tmp"), Path("/foo"), Path("/bar")),
+        "expected": "/tmp/foo/bar"
+    },
+    {
+        "args": (Path("/"), Path("/foo")),
+        "expected": "/foo"
+    },
+    {
+        "args": (Path("/"), Path("/foo"), Path("/bar")),
+        "expected": "/foo/bar"
+    },
+    # Mixed strings and Path
     {
         "args": (Path("/tmp"), "/foo", "/bar"),
         "expected": "/tmp/foo/bar"
+    },
+    {
+        "args": ("/tmp", Path("/foo"), Path("/bar")),
+        "expected": "/tmp/foo/bar"
+    },
+    {
+        "args": ("/tmp", "/foo", Path("/bar")),
+        "expected": "/tmp/foo/bar"
+    },
+    # Dotted relative paths - strings
+    {
+        "args": ("/tmp", "../foo", "/bar"),
+        "expected": "/foo/bar"
+    },
+    {
+        "args": ("/tmp", "./foo", "/bar"),
+        "expected": "/tmp/foo/bar"
+    },
+    {
+        "args": ("/tmp", "..", "/bar"),
+        "expected": "/bar"
+    },
+    {
+        "args": ("..",),
+        "expected": "/"
+    },
+    {
+        "args": (".",),
+        "expected": "/"
+    },
+    # Dotted relative paths - mixed strings and Path
+    {
+        "args": ("/tmp", Path("../foo"), "/bar"),
+        "expected": "/foo/bar"
+    },
+    {
+        "args": ("/tmp", Path("./foo"), "/bar"),
+        "expected": "/tmp/foo/bar"
+    },
+    {
+        "args": ("/tmp", Path(".."), "/bar"),
+        "expected": "/bar"
+    },
+    {
+        "args": (Path(".."),),
+        "expected": "/"
+    },
+    {
+        "args": (Path("."),),
+        "expected": "/"
     },
 ))
 def test_join_abs(test_case):
