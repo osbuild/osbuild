@@ -1,5 +1,5 @@
 /usr/bin/osbuild		--	gen_context(system_u:object_r:osbuild_exec_t,s0)
-/usr/bin/osbuild-image-info	--	gen_context(system_u:object_r:osbuild_exec_t,s0)
+/usr/sbin/osbuild-image-info	--	gen_context(system_u:object_r:osbuild_exec_t,s0)
 /usr/lib/osbuild/assemblers/.*	--	gen_context(system_u:object_r:osbuild_exec_t,s0)
 /usr/lib/osbuild/stages/.*	--	gen_context(system_u:object_r:osbuild_exec_t,s0)
 /usr/lib/osbuild/sources/.*	--	gen_context(system_u:object_r:osbuild_exec_t,s0)
