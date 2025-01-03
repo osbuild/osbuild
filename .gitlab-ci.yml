@@ -80,6 +80,8 @@ OSTree Images:
         EXPORT: qcow2/disk.qcow2
       - MANIFEST: fedora-coreos-container.json
         EXPORT: qemu/qemu.qcow2 metal/metal.raw metal4k/metal4k.raw
+      - MANIFEST: fedora-ostree-container-dev-null.json
+        EXPORT: commit-archive/ostree-commit.tar
 
 Manifests:
   stage: test
