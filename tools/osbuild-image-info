@@ -366,7 +366,14 @@ def read_boot_entries(boot_dir):
     entries = []
     for conf in glob.glob(f"{boot_dir}/loader/entries/*.conf"):
         with open(conf) as f:
-            entries.append(dict(line.strip().split(" ", 1) for line in f))
+            entry = dict()
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                key, value = line.split(" ", 1)
+                entry[key] = value
+            entries.append(entry)
 
     return sorted(entries, key=lambda e: e["title"])
 
