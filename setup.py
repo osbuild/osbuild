@@ -24,6 +24,8 @@ setuptools.setup(
     scripts=[
         "tools/osbuild-mpp",
         "tools/osbuild-dev",
-        "tools/osbuild-image-info",
+    ],
+    data_files=[
+        ("/usr/sbin", ["tools/osbuild-image-info"]),
     ],
 )
