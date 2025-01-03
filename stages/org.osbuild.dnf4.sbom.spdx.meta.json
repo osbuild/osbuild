@@ -1,5 +1,5 @@
 {
-  "summary": "Generate SPDX SBOM document for the installed packages.",
+  "summary": "Generate SPDX SBOM document for the installed packages using DNF4.",
   "description": [
     "The stage generates a Software Bill of Materials (SBOM) document",
     "in SPDX v2 format for the installed RPM packages. DNF4 API is used",
