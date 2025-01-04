@@ -318,6 +318,52 @@ class HostTree:
         return self.tree
 
 
+class ContainerMountTree:
+    """Access to a container based root filesystem.
+
+    An object that provides a similar interface to
+    `objectstore.Object` and provides access to a container
+    """
+
+    def __init__(self, from_container: str) -> None:
+        self._from_container = ""
+        self._root = ""
+        self.init(from_container)
+
+    def init(self, from_container: str) -> None:
+        self._from_container = from_container
+        result = subprocess.run(
+            ["podman", "image", "mount", from_container],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            check=False,
+        )
+        if result.returncode != 0:
+            code = result.returncode
+            msg = result.stderr.strip()
+            raise RuntimeError(f"Failed to mount image ({code}): {msg}")
+        self._root = result.stdout.strip()
+
+    @property
+    def tree(self) -> str:
+        if not self._root:
+            raise AssertionError(f"ContainerMountTree for {self._from_container} not initialized")
+        return self._root
+
+    def cleanup(self):
+        if self._root:
+            subprocess.run(
+                ["podman", "image", "umount", self._from_container],
+                stdout=subprocess.DEVNULL,
+                check=True,
+            )
+            self._root = ""
+
+    def __fspath__(self) -> str:
+        return self.tree
+
+
 class ObjectStore(contextlib.AbstractContextManager):
     def __init__(self, store: PathLike):
         self.cache = FsCache("osbuild", store)
