@@ -2,6 +2,9 @@
 from unittest.mock import patch
 
 import librepo
+import pytest
+
+from osbuild import testutil
 
 SOURCES_NAME = "org.osbuild.librepo"
 
@@ -94,3 +97,57 @@ def test_librepo_secrets(mocked_download_pkgs, sources_service):
     assert download_pkgs[0].handle.sslcacert == "rhsm-ca-cert"
     # double check that get_secrets() was called
     assert sources_service.subscriptions.get_secrets_calls == ["http://example.com/mirrorlist"]
+
+
+@pytest.mark.parametrize("test_mirrors,expected_err", [
+    # bad
+    (
+        # only hashes supported for mirror_ids
+        {"bad_mirror_id": {"url": "http://example.com", "type": "mirrorlist"}},
+        "'bad_mirror_id' does not match any of the regexes: '^[0-9a-f]+$'",
+    ),
+    (
+        {"0123456789abcdef": {"type": "mirrorlist"}},
+        "'url' is a required property",
+    ),
+    (
+        {"0123456789abcdef": {"url": "http://example.com"}},
+        "'type' is a required property",
+    ),
+    (
+        {"0123456789abcdef": {"url": "http://example.com", "type": "bad_type"}},
+        "'bad_type' is not one of ['mirrorlist', 'metalink', 'baseurl']",
+    ),
+    # good
+    (
+        {}, "",
+    ),
+    (
+        {"0123": {"url": "http://example.com", "type": "mirrorlist"}}, "",
+    ),
+    (
+        {"0123": {"url": "http://example.com", "type": "metalink"}}, "",
+    ),
+    (
+        {"0123": {"url": "http://example.com", "type": "baseurl"}}, "",
+    )
+])
+def test_schema_validation(sources_schema, test_mirrors, expected_err):
+    test_input = {
+        "items": {
+            "sha256:2111111111111111111111111111111111111111111111111111111111111111": {
+                "path": "Packages/b/b",
+                "mirror": "mirror_id",
+            },
+        },
+        "options": {
+            "mirrors": test_mirrors,
+        }
+    }
+    res = sources_schema.validate(test_input)
+    if expected_err == "":
+        assert res.valid
+    else:
+        assert res.valid is False
+        testutil.assert_jsonschema_error_contains(res, expected_err)
+
