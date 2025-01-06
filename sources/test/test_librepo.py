@@ -1,7 +1,11 @@
 #!/usr/bin/python3
 from unittest.mock import patch
 
-import librepo
+try:
+    import librepo
+except ImportError:
+    import pytest
+    pytest.skip("need librepo to run this test", allow_module_level=True)
 import pytest
 
 from osbuild import testutil
