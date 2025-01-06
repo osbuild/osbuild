@@ -4,6 +4,7 @@ from types import ModuleType
 
 import pytest
 
+import osbuild.meta
 from osbuild import sources, testutil
 from osbuild.testutil.imports import import_module_from_path
 
@@ -31,3 +32,23 @@ def sources_service(sources_module) -> ModuleType:
     fd = testutil.make_fake_service_fd()
     srv_obj = service_cls.from_args(["--service-fd", str(fd)])
     return srv_obj
+
+
+@pytest.fixture
+def sources_schema(request: pytest.FixtureRequest) -> osbuild.meta.Schema:
+    """
+    source_schema is a fixture returns the schema for a sources module.
+    """
+    if hasattr(request, "param") and not isinstance(request.param, str):
+        raise ValueError(
+            "sources_schema fixture may be indirectly parametrized only with the sources schema version string")
+
+    if not hasattr(request.module, "SOURCES_NAME"):
+        raise ValueError("sources_schema fixture must be used in a test module that defines SOURCES_NAME")
+
+    sources_name = request.module.SOURCES_NAME
+    schema_version = request.param if hasattr(request, "param") else "2"
+    caller_dir = pathlib.Path(request.node.fspath).parent
+    root = caller_dir.parent.parent
+    mod_info = osbuild.meta.ModuleInfo.load(root, "Source", sources_name)
+    return osbuild.meta.Schema(mod_info.get_schema(version=schema_version), sources_name)
