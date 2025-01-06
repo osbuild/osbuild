@@ -189,22 +189,19 @@ class LibRepoSource(sources.SourceService):
             cbdata=path,
             endcb=self._endcb)
 
+    # pylint: disable=too-many-branches
     def fetch_all(self, items: Dict) -> None:
         """Use librepo to download the packages"""
         # Organize the packages by the mirror id
-        packages = dict()
-        for id, pkg in items.items():
+        packages_from_mirror = {}
+        for item_id, pkg in items.items():
             if pkg["mirror"] not in self.options["mirrors"]:
                 raise RuntimeError(f'Missing mirror: {pkg["mirror"]}')
-
-            if pkg["mirror"] not in packages:
-                packages[pkg["mirror"]] = [(pkg["path"], id)]
-            else:
-                packages[pkg["mirror"]].append((pkg["path"], id))
+            packages_from_mirror.setdefault(pkg["mirror"], []).append((pkg["path"], item_id))
 
         # Download packages from each of the mirror ids
-        for m in packages:
-            mirror = self.options["mirrors"][m]
+        for mirror_id, packages in packages_from_mirror.items():
+            mirror = self.options["mirrors"][mirror_id]
             handle = librepo.Handle()
             handle.repotype = librepo.YUMREPO
             if mirror["type"] == "metalink":
@@ -234,7 +231,7 @@ class LibRepoSource(sources.SourceService):
                 self._setup_rhsm(handle, mirror)
 
             download = []
-            for path, checksum in packages[m]:
+            for path, checksum in packages:
                 download.append(self.make_pkg_target(handle, f"{self.cache}/{checksum}", path, checksum))
 
             # Download everything from this mirror
