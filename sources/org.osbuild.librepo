@@ -189,7 +189,7 @@ class LibRepoSource(sources.SourceService):
             cbdata=path,
             endcb=self._endcb)
 
-    def download(self, items: Dict) -> None:
+    def fetch_all(self, items: Dict) -> None:
         """Use librepo to download the packages"""
         # Organize the packages by the mirror id
         packages = dict()
@@ -230,7 +230,7 @@ class LibRepoSource(sources.SourceService):
                 handle.fastestmirror = True
 
             # If this mirror has secrets, set them up on the librepo handle
-            if "secrets" in m:
+            if "secrets" in mirror:
                 self._setup_rhsm(handle, mirror)
 
             download = []
