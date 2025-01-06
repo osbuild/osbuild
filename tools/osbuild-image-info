@@ -2623,6 +2623,8 @@ def append_partitions(report, image):
             # find partition with fstab and read it
             fstab = []
             for fs in filesystems.values():
+                if fs["type"] == "swap":
+                    continue
                 dev, opts = fs["device"], fs.get("mntops")
                 with mount(dev, opts) as tree:
                     if os.path.exists(f"{tree}/etc/fstab"):
@@ -2650,6 +2652,9 @@ def append_partitions(report, image):
                     info = index.get_module_info("Mount", "org.osbuild.btrfs")
                 elif "xfs" in part_fstype:
                     info = index.get_module_info("Mount", "org.osbuild.xfs")
+                elif "swap" in part_fstype:
+                    # can't mount swap partitions
+                    continue
                 else:
                     raise RuntimeError(f"Unknown file system: {part_fstype}")
                 if not info:
