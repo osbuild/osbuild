@@ -2630,6 +2630,9 @@ def append_partitions(report, image):
                     if os.path.exists(f"{tree}/etc/fstab"):
                         fstab.extend(read_fstab(tree))
                         break
+            else:
+                raise RuntimeError("no fstab file found")
+
             # sort the fstab entries by the mountpoint
             fstab = sorted(fstab, key=operator.itemgetter(1))
 
