@@ -1,7 +1,22 @@
 #!/usr/bin/python3
 import os
+import subprocess
+
+import pytest
 
 STAGE_NAME = "org.osbuild.grub2.inst"
+
+
+# pylint: disable=inconsistent-return-statements
+def find_grub_mkimage():
+    for exe in ["grub2-mkimage", "grub-mkimage"]:
+        try:
+            subprocess.check_call([exe, "-V"])
+            return exe
+        except FileNotFoundError:
+            pass
+    pytest.skip("cannot find grub{,2}-mkimage")
+
 
 def test_grub2_partition(tmp_path, stage_module):
     treedir = tmp_path / "tree"
@@ -14,6 +29,7 @@ def test_grub2_partition(tmp_path, stage_module):
         "platform": "i386-pc",
         "location": 0,
         "core": {
+            "binary": find_grub_mkimage(),
             "type": "mkimage",
             "partlabel": "gpt",
             "filesystem": "ext4",
@@ -32,6 +48,7 @@ def test_grub2_partition(tmp_path, stage_module):
         msg = f.read(12)
         assert msg != b"Just testing"
 
+
 def test_grub2_iso9660(tmp_path, stage_module):
     treedir = tmp_path / "tree"
     os.makedirs(treedir, exist_ok=True)
@@ -40,6 +57,7 @@ def test_grub2_iso9660(tmp_path, stage_module):
         "filename": "eltorito.img",
         "platform": "i386-pc",
         "core": {
+            "binary": find_grub_mkimage(),
             "type": "mkimage",
             "partlabel": "gpt",
             "filesystem": "iso9660",
