@@ -2649,7 +2649,7 @@ def append_partitions(report, image):
                 elif "xfs" in part_fstype:
                     info = index.get_module_info("Mount", "org.osbuild.xfs")
                 else:
-                    raise RuntimeError("Unknown file system")
+                    raise RuntimeError(f"Unknown file system: {part_fstype}")
                 if not info:
                     raise RuntimeError(f"Can't find org.osbuild.{part_fstype}")
 
