@@ -2609,13 +2609,15 @@ def append_partitions(report, image):
                                 mntopts = ["norecovery"]
                             filesystems[vol["uuid"].upper()] = {
                                 "device": vol["device"],
-                                "mntops": mntopts
+                                "mntops": mntopts,
+                                "type": vol["fstype"],
                             }
                         del vol["device"]
                     part.update(lvm)
                 elif part["uuid"] and part["fstype"]:
                     filesystems[part["uuid"].upper()] = {
-                        "device": dev
+                        "device": dev,
+                        "type": part["fstype"],
                     }
 
             # find partition with fstab and read it
