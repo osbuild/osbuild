@@ -71,7 +71,7 @@ class FakeSubscriptionManager:
 
 
 @patch("librepo.download_packages")
-def test_librepo_secrets(mocked_download_pkgs, sources_service):
+def test_librepo_secrets_rhsm(mocked_download_pkgs, sources_service):
     TEST_SOURCES = {
         "sha256:1111111111111111111111111111111111111111111111111111111111111111": {
             "path": "Packages/a/a",
@@ -101,6 +101,40 @@ def test_librepo_secrets(mocked_download_pkgs, sources_service):
     assert download_pkgs[0].handle.sslcacert == "rhsm-ca-cert"
     # double check that get_secrets() was called
     assert sources_service.subscriptions.get_secrets_calls == ["http://example.com/mirrorlist"]
+
+
+@patch("librepo.download_packages")
+def test_librepo_secrets_mtls(mocked_download_pkgs, sources_service, monkeypatch):
+    TEST_SOURCES = {
+        "sha256:1111111111111111111111111111111111111111111111111111111111111111": {
+            "path": "Packages/a/a",
+            "mirror": "mirror_id",
+        }
+    }
+    sources_service.options = {
+        "mirrors": {
+            "mirror_id": {
+                "url": "http://example.com/mirrorlist",
+                "type": "mirrorlist",
+                "secrets": {
+                    "name": "org.osbuild.mtls",
+                }
+            }
+        }
+    }
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY", "mtls-client-key")
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT", "mtls-client-cert")
+    monkeypatch.setenv("OSBUILD_SOURCES_CURL_SSL_CA_CERT", "mtls-ca-cert")
+
+    sources_service.cache = "cachedir"
+    sources_service.fetch_all(TEST_SOURCES)
+    assert len(mocked_download_pkgs.call_args_list) == 1
+    # extract the list of packages to download (all_calls->call()->args->args[0])
+    download_pkgs = mocked_download_pkgs.call_args_list[0][0][0]
+    assert download_pkgs[0].checksum == "1111111111111111111111111111111111111111111111111111111111111111"
+    assert download_pkgs[0].handle.sslclientkey == "mtls-client-key"
+    assert download_pkgs[0].handle.sslclientcert == "mtls-client-cert"
+    assert download_pkgs[0].handle.sslcacert == "mtls-ca-cert"
 
 
 @pytest.mark.parametrize("test_mirrors,expected_err", [
@@ -154,4 +188,3 @@ def test_schema_validation(sources_schema, test_mirrors, expected_err):
     else:
         assert res.valid is False
         testutil.assert_jsonschema_error_contains(res, expected_err)
-
