@@ -43,8 +43,8 @@ def run_ostree(*args, _input=None, _check=True, **kwargs):
 
 def loop_open(devmgr: devices.DeviceManager, name: str, image, size, offset=0):
     """
-    Uses a DeviceManager to open the `name` at `offset`
-    Retuns a Device object and the path onto wich the image was loopback mounted
+    Uses a DeviceManager to open the `name` at `offset`.
+    Returns a Device object and the path onto which the image was loopback mounted.
     """
     info = index.get_module_info("Device", "org.osbuild.loopback")
     fname = os.path.basename(image)
@@ -388,7 +388,7 @@ def rpm_verify(tree):
     Returns: dictionary with two keys 'changed' and 'missing'.
     'changed' value is a dictionary with the keys representing modified files from
     installed RPM packages and values representing types of applied modifications.
-    'missing' value is a list of strings prepresenting missing values owned by
+    'missing' value is a list of strings representing missing values owned by
     installed RPM packages.
 
     An example return value:
@@ -1509,7 +1509,7 @@ def read_chrony_conf(tree):
 
     Returns: dictionary with the keys representing parsed directives from Chrony
     configuration. Value of each key is a list of strings containing arguments
-    provided with each occurance of the directive in the configuration.
+    provided with each occurrence of the directive in the configuration.
 
     An example return value:
     {
@@ -2066,7 +2066,7 @@ def read_udev_rules(tree):
     rules from /etc/udev/rules.d. Value of each key is a list of strings
     representing uncommented lines read from the configuration file. If
     the file is empty (e.g. because of masking udev configuration installed
-    by an RPM), an emptu list is returned as the respective value.
+    by an RPM), an empty list is returned as the respective value.
 
     An example return value:
     {
@@ -2174,7 +2174,7 @@ def read_dnf_conf(tree):
 
 def read_dnf_automatic_conf(tree):
     """
-    Read DNF Automatic configuation.
+    Read DNF Automatic configuration.
 
     Returns: dictionary as returned by '_read_inifile_to_dict()'.
 
@@ -2629,7 +2629,7 @@ def append_partitions(report, image):
             # sort the fstab entries by the mountpoint
             fstab = sorted(fstab, key=operator.itemgetter(1))
 
-            # mount all partitions to ther respective mount points
+            # mount all partitions to their respective mount points
             root_tree = ""
             mmgr = mounts.MountManager(devmgr, mountpoint)
             for n, fstab_entry in enumerate(fstab):
@@ -2685,7 +2685,7 @@ def append_partitions(report, image):
                 # The mount manager is taking care of opening the file system for us
                 # so we don't have access to the json objects that'll be used to
                 # invoke the mounter. However we're only interested at validating the
-                # options. We can extract these from the schame to validate them
+                # options. We can extract these from the schema to validate them
                 # only.
                 jsonschema.validate(options, info.get_schema()["properties"]["options"])
 
