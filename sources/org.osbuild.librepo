@@ -173,6 +173,17 @@ class LibRepoSource(sources.SourceService):
         """
         if status == librepo.TRANSFER_ERROR:
             self.errors.append(f"{data}: {msg}")
+        # Workaround the lack of structured progress reporting from
+        # stages/sources. See curl source for more details, once we
+        # have something better this block can be removed.
+        if status == librepo.TRANSFER_ERROR:
+            print(f"Error downloading {data}")
+        elif status == librepo.TRANSFER_SUCCESSFUL:
+            print(f"Downloaded {data}")
+        elif status == librepo.TRANSFER_ALREADYEXISTS:
+            print(f"Already downloaded {data}")
+        else:
+            print(f"Unknown status {status} for {data}")
 
     def make_pkg_target(self, handle, dest, path, checksum):
         """Return a librepo.PackageTarget populated with the package data
