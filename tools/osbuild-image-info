@@ -2755,7 +2755,7 @@ def append_partitions(report, image):
 
                 # Finally mount
                 mnt_kwargs = {
-                    "name": part_device,
+                    "name": part_device + part_mountpoint,
                     "info": info,
                     # retrieves the associated Device Object
                     "device": devices_map[part_device],
