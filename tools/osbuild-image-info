@@ -2604,6 +2604,26 @@ def find_root_subvol(root):
     return None
 
 
+def find_fstab_root(tree, fstype):
+    """
+    Find the root volume under tree by searching for /etc/fstab.
+
+    This function first checks if the path <tree>/etc/fstab exists and if it doesn't and the fstype is btrfs, checks all
+    subvolumes as well.
+
+    Returns None if fstab is not found.
+    """
+    if os.path.exists(f"{tree}/etc/fstab"):
+        return tree
+
+    if fstype == "btrfs":
+        root_subvol = find_root_subvol(tree)
+        if root_subvol:
+            return root_subvol
+
+    return None
+
+
 # pylint: disable=too-many-branches disable=too-many-statements
 def append_partitions(report, image):
     partitions = report["partitions"]
@@ -2660,14 +2680,10 @@ def append_partitions(report, image):
                     continue
                 dev, opts = fs["device"], fs.get("mntops")
                 with mount(dev, opts) as tree:
-                    if os.path.exists(f"{tree}/etc/fstab"):
-                        fstab.extend(read_fstab(tree))
+                    root = find_fstab_root(tree, fs["type"])
+                    if root:
+                        fstab.extend(read_fstab(root))
                         break
-                    if fs["type"] == "btrfs":
-                        root_subvol = find_root_subvol(tree)
-                        if root_subvol:
-                            fstab.extend(read_fstab(root_subvol))
-                            break
             else:
                 raise RuntimeError("no fstab file found")
 
