@@ -2571,6 +2571,39 @@ def partition_is_lvm(part: Dict) -> bool:
     return part["type"].upper() in ["E6D6D379-F507-44C2-A23C-238F2A3DF928", "8E"]
 
 
+def parse_subvol_list(output):
+    """
+    Parse the output of 'btrfs subvolume list' and return just the subvolume names/paths.
+    """
+    paths = []
+    for line in output.strip().split("\n"):
+        # subvolume names can have spaces in them, but they are the last field and they are preceded by the word
+        # path
+        parts = line.partition(" path ")
+
+        # str.partition() always returns a 3-tuple, but will return (str, "", "") if the separator is not found
+        if parts[2] == "":
+            raise RuntimeError(f"failed to parse output line from 'btrfs subvolume list': {line}")
+
+        paths.append(parts[2])
+    return paths
+
+
+def find_root_subvol(root):
+    """
+    Given a btrfs volume root, find the subvolume that contains the root OS tree.
+    """
+    subvols = subprocess_check_output(["btrfs", "subvolume", "list", root], parse_fn=parse_subvol_list)
+
+    # look through each subvol for /etc/fstab
+    for subvol in subvols:
+        path = os.path.join(root, subvol)
+        if os.path.exists(os.path.join(path, "etc/fstab")):
+            return path
+
+    return None
+
+
 # pylint: disable=too-many-branches disable=too-many-statements
 def append_partitions(report, image):
     partitions = report["partitions"]
@@ -2630,6 +2663,11 @@ def append_partitions(report, image):
                     if os.path.exists(f"{tree}/etc/fstab"):
                         fstab.extend(read_fstab(tree))
                         break
+                    if fs["type"] == "btrfs":
+                        root_subvol = find_root_subvol(tree)
+                        if root_subvol:
+                            fstab.extend(read_fstab(root_subvol))
+                            break
             else:
                 raise RuntimeError("no fstab file found")
 
