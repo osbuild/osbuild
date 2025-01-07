@@ -274,9 +274,9 @@ class DNF(SolverBase):
                 self.base_module.enable(transaction.get("module-enable-specs", []))
 
                 # installing a module takes the specification of the module and then
-                # installs all packages belonging to it
-                self.base_module.install(transaction.get("module-install-specs", []))
-
+                # installs all packages belonging to its default group, modules to
+                # install are listed directly in `package-specs` but prefixed with an
+                # `@` *and* containing a `:` this is up to the user of the depsolver
                 self.base.install_specs(
                     transaction.get("package-specs"),
                     transaction.get("exclude-specs"),
@@ -349,14 +349,19 @@ class DNF(SolverBase):
         modules = {}
 
         for transaction in transactions:
-            if transaction.get("module-install-specs") or transaction.get("module-enable-specs"):
+            # module specifications must start with an "@" and include a ":", filter them
+            # out so we can use them
+            modules_in_package_specs = [
+                p[1:] for p in transaction.get("package-specs", []) if p.startswith("@") and ":" in p]
+
+            if transaction.get("module-enable-specs") or modules_in_package_specs:
                 # we'll be checking later if any packages-from-modules are in the
                 # packages-to-install set so let's do this only once here
                 package_nevras = list(p["nevra"] for p in packages)
 
                 for module_spec in itertools.chain(
-                    transaction.get("module-install-specs", []),
                     transaction.get("module-enable-specs", []),
+                    modules_in_package_specs,
                 ):
                     module_packages, module_nsvcap = self.base_module.get_modules(module_spec)
 
