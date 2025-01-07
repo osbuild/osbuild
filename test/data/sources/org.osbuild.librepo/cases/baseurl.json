@@ -12,14 +12,14 @@
       }
     },
     "options": {
-        "mirrors": {
-          "0cde5945566ff3feb627eaa84e31223d2b8be54fb446222cded36fc5e5debcc2": {
-            "url": "http://localhost/sources/org.osbuild.librepo/data/",
-            "type": "baseurl",
-            "fastest-mirror": true,
-            "name": "baseurl"
-          }
+      "mirrors": {
+        "0cde5945566ff3feb627eaa84e31223d2b8be54fb446222cded36fc5e5debcc2": {
+          "url": "http://localhost/sources/org.osbuild.librepo/data/",
+          "type": "baseurl",
+          "fastest-mirror": true,
+          "name": "baseurl"
         }
+      }
     }
   }
 }

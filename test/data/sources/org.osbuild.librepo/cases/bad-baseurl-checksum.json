@@ -20,18 +20,18 @@
       }
     },
     "options": {
-        "mirrors": {
-          "0cde5945566ff3feb627eaa84e31223d2b8be54fb446222cded36fc5e5debcc2": {
-            "url": "http://localhost/sources/org.osbuild.librepo/data/",
-            "type": "baseurl",
-            "name": "baseurl"
-          },
-          "d68132295d14ad03bd676009c4fe8727f5040adfb91e20ac9919101d14ff4703": {
-            "url": "http://localhost/sources/org.osbuild.librepo/data/updates/",
-            "type": "baseurl",
-            "name": "updates"
-          }
+      "mirrors": {
+        "0cde5945566ff3feb627eaa84e31223d2b8be54fb446222cded36fc5e5debcc2": {
+          "url": "http://localhost/sources/org.osbuild.librepo/data/",
+          "type": "baseurl",
+          "name": "baseurl"
+        },
+        "d68132295d14ad03bd676009c4fe8727f5040adfb91e20ac9919101d14ff4703": {
+          "url": "http://localhost/sources/org.osbuild.librepo/data/updates/",
+          "type": "baseurl",
+          "name": "updates"
         }
+      }
     }
   }
 }

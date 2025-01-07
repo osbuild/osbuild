@@ -20,20 +20,20 @@
       }
     },
     "options": {
-        "mirrors": {
-          "0cde5945566ff3feb627eaa84e31223d2b8be54fb446222cded36fc5e5debcc2": {
-            "url": "http://localhost/sources/org.osbuild.librepo/data/metalink/one404.xml",
-            "type": "metalink",
-            "fastest-mirror": true,
-            "name": "metalink"
-          },
-          "d68132295d14ad03bd676009c4fe8727f5040adfb91e20ac9919101d14ff4703": {
-            "url": "http://localhost/sources/org.osbuild.librepo/data/metalink/updates.xml",
-            "type": "metalink",
-            "fastest-mirror": true,
-            "name": "metalink"
-          }
+      "mirrors": {
+        "0cde5945566ff3feb627eaa84e31223d2b8be54fb446222cded36fc5e5debcc2": {
+          "url": "http://localhost/sources/org.osbuild.librepo/data/metalink/one404.xml",
+          "type": "metalink",
+          "fastest-mirror": true,
+          "name": "metalink"
+        },
+        "d68132295d14ad03bd676009c4fe8727f5040adfb91e20ac9919101d14ff4703": {
+          "url": "http://localhost/sources/org.osbuild.librepo/data/metalink/updates.xml",
+          "type": "metalink",
+          "fastest-mirror": true,
+          "name": "metalink"
         }
+      }
     }
   }
 }
