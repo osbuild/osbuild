@@ -6,11 +6,12 @@ Download the list of rpms using a metalink or mirrorlist URL, trying new
 mirrors if there is an error. The files are written to the osbuild file cache
 using the hash as the filename.
 
-It can download files that require secrets. The only secret provider currently
-supported is `org.osbuild.rhsm` for downloading Red Hat content that requires a
-subscriptions.
+It can download files that require secrets. The support secret providers are:
+- `org.osbuild.rhsm` for downloading Red Hat content that requires a subscriptions.
+- `org.osbuild.mtls`
 """
 
+import os
 import sys
 from typing import Dict
 
@@ -118,7 +119,8 @@ class LibRepoSource(sources.SourceService):
     This will download rpms, in parallel, retrying with a new mirror on errors,
     and saving them into the store using their hash.
 
-    It support org.osbuild.rhsm secrets for downloading RHEL content.
+    It supports org.osbuild.rhsm secrets for downloading RHEL content and
+    org.osbuild.mtls
     """
     content_type = "org.osbuild.files"
 
@@ -138,10 +140,6 @@ class LibRepoSource(sources.SourceService):
 
     def _setup_rhsm(self, handle, mirror):
         """Setup the mirror's certificates if the secrets provider is org.osbuild.rhsm"""
-        # check if url needs rhsm secrets
-        if "secrets" not in mirror or mirror["secrets"].get("name") != "org.osbuild.rhsm":
-            return
-
         # rhsm secrets only need to be retrieved once and can then be reused
         if self.subscriptions is None:
             self.subscriptions = Subscriptions.from_host_system()
@@ -154,6 +152,18 @@ class LibRepoSource(sources.SourceService):
                 handle.sslclientcert = secrets.get('ssl_client_cert')
             if secrets.get('ssl_client_key'):
                 handle.sslclientkey = secrets.get('ssl_client_key')
+
+    def _setup_mtls(self, handle):
+        # this is currently using the CURL names, librepo is using
+        # curl under the hood so this is okay-ish, but maybe we should
+        # generalize the name
+        key = os.getenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY")
+        cert = os.getenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT")
+        if not (key and cert):
+            raise RuntimeError(f"mtls secrets required but key ({key}) or cert ({cert}) not defined")
+        handle.sslcacert = os.getenv("OSBUILD_SOURCES_CURL_SSL_CA_CERT")
+        handle.sslclientcert = cert
+        handle.sslclientkey = key
 
     # This gets called when done
     # data comes from cbdata
@@ -238,8 +248,11 @@ class LibRepoSource(sources.SourceService):
                 handle.fastestmirror = True
 
             # If this mirror has secrets, set them up on the librepo handle
-            if "secrets" in mirror:
+            secrets_name = mirror.get("secrets", {}).get("name")
+            if secrets_name == "org.osbuild.rhsm":
                 self._setup_rhsm(handle, mirror)
+            elif secrets_name == "org.osbuild.mtls":
+                self._setup_mtls(handle)
 
             download = []
             for path, checksum in packages:
