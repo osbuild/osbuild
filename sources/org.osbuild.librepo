@@ -22,6 +22,9 @@ from osbuild.util.rhsm import Subscriptions
 
 # NOTE: The top level schema properties are limited to items and options by the
 # v2 schema definition
+#
+# "mirror" pattern follows dnf repo_id as described in:
+# https://dnf.readthedocs.io/en/latest/conf_ref.html#description
 SCHEMA_2 = """
 "properties": {
   "items": {
@@ -57,7 +60,7 @@ SCHEMA_2 = """
         "type": "object",
         "additionalProperties": false,
         "patternProperties": {
-          "^[0-9a-f]+$": {
+          "^[0-9a-zA-Z-._:]+$": {
             "required": [
               "url",
               "type"

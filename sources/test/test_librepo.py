@@ -140,9 +140,9 @@ def test_librepo_secrets_mtls(mocked_download_pkgs, sources_service, monkeypatch
 @pytest.mark.parametrize("test_mirrors,expected_err", [
     # bad
     (
-        # only hashes supported for mirror_ids
-        {"bad_mirror_id": {"url": "http://example.com", "type": "mirrorlist"}},
-        "'bad_mirror_id' does not match any of the regexes: '^[0-9a-f]+$'",
+        # no spaces in mirror_id
+        {"bad mirror": {"url": "http://example.com", "type": "mirrorlist"}},
+        "'bad mirror' does not match any of the regexes: ",
     ),
     (
         {"0123456789abcdef": {"type": "mirrorlist"}},
@@ -168,7 +168,10 @@ def test_librepo_secrets_mtls(mocked_download_pkgs, sources_service, monkeypatch
     ),
     (
         {"0123": {"url": "http://example.com", "type": "baseurl"}}, "",
-    )
+    ),
+    (
+        {"Com_plex:id.": {"url": "http://x.com", "type": "baseurl"}}, "",
+    ),
 ])
 def test_schema_validation(sources_schema, test_mirrors, expected_err):
     test_input = {
