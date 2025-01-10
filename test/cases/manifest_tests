@@ -1,0 +1,465 @@
+#!/usr/bin/python3
+
+"""
+Test manifest building consistency using osbuild-image-info
+
+The test case downloads the image build cache (manifests, build info and artifacts) for the osbuild/images repository
+from S3. It then runs osbuild-image-info on the downloaded image artifact file and produces an image-info report.
+The test case then builds the manifest using the current version of osbuild and produces the image artifact.
+It runs osbuild-image-info on the newly built image artifact file and produces an image-info report.
+Finally, it compares the image-info reports and fails if they are different.
+"""
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from typing import Dict, List, Optional, Tuple
+
+OSBUILD_IMAGES_REPO_URL = os.environ.get("OSBUILD_IMAGES_REPO_URL", "https://github.com/osbuild/images.git")
+
+OS_RELEASE_FILE = "/etc/os-release"
+
+
+def read_osrelease() -> Dict[str, str]:
+    """Read Operating System Information from `os-release`
+
+    This creates a dictionary with information describing the running operating system. It reads the information from
+    the path array provided as `paths`.  The first available file takes precedence. It must be formatted according to
+    the rules in `os-release(5)`.
+    """
+    osrelease = {}
+
+    with open(OS_RELEASE_FILE, encoding="utf-8") as orf:
+        for line in orf:
+            line = line.strip()
+            if not line:
+                continue
+            if line[0] == "#":
+                continue
+            key, value = line.split("=", 1)
+            osrelease[key] = value.strip('"')
+
+    return osrelease
+
+
+def get_host_distro() -> str:
+    """
+    Get the host distro version based on data in the os-release file.
+    The format is <distro>-<version> (e.g. fedora-41).
+    """
+    osrelease = read_osrelease()
+    return f"{osrelease['ID']}-{osrelease['VERSION_ID']}"
+
+
+def get_host_arch() -> str:
+    """
+    Get the host architecture.
+    """
+    return os.uname().machine
+
+
+def manifest_pipeline_names(path: str) -> List[str]:
+    """
+    Read the manifest file and return a list of pipeline names
+    """
+    with open(path, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+
+    return [pipeline["name"] for pipeline in manifest["pipelines"]]
+
+
+def find_manifest_file(build_path: str) -> str:
+    """
+    Return the path to the manifest file in the build directory
+    """
+    return os.path.join(build_path, "manifest.json")
+
+
+def find_image_file(build_path: str, export_name: Optional[str] = None) -> str:
+    """
+    Find the path to the image by searching for the file under the directory named 'export_name'. If the name of the
+    export pipeline is not provided, determine it by reading the manifest to get the name of the last pipeline.
+    Raises RuntimeError if no or multiple files are found in the expected path.
+    """
+    if export_name is None:
+        manifest_file = find_manifest_file(build_path)
+        export_name = manifest_pipeline_names(manifest_file)[-1]
+    files = os.listdir(os.path.join(build_path, export_name))
+    if len(files) > 1:
+        error = "Multiple files found in build path while searching for image file"
+        error += "\n".join(files)
+        raise RuntimeError(error)
+
+    if len(files) == 0:
+        raise RuntimeError("No found in build path while searching for image file")
+
+    return os.path.join(build_path, export_name, files[0])
+
+
+def checkout_images_repo(ref, workdir: os.PathLike) -> str:
+    """
+    Checkout the 'images' repository at a specific commit and return the path to the directory
+    If the repository is already checked-out, switch to the specified commit.
+    """
+    images_path = os.path.join(workdir, "images")
+
+    if not os.path.exists(images_path):
+        print(f"Checking out '{OSBUILD_IMAGES_REPO_URL}' repository at ref '{ref}'")
+        try:
+            subprocess.check_call(
+                ["git", "clone", "--depth=1", "--no-single-branch", OSBUILD_IMAGES_REPO_URL, "images"],
+                cwd=workdir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to clone 'images' repository: {e.stdout.decode()}")
+            sys.exit(1)
+    else:
+        print(f"'images' repository is already checked-out at '{images_path}'")
+
+    subprocess.check_call(["git", "checkout", ref], cwd=images_path, stdout=subprocess.DEVNULL)
+    return images_path
+
+
+def download_image_build_artifact(images_path: os.PathLike, build_dir: os.PathLike) -> None:
+    """
+    Download the image build artifact from S3 for a specific image build.
+    """
+    cmd = ["./test/scripts/dl-one-image-build-cache", build_dir]
+    print(" ".join(cmd))
+    try:
+        subprocess.check_call(cmd, cwd=images_path, env=os.environ)
+    except subprocess.CalledProcessError as _:
+        print("⚠️ Failed to download image build cache")
+        sys.exit(1)
+
+
+def download_image_build_cache_md(
+        images_path, output_dir, distros: List[str], arch: str, configs: Optional[List[str]] = None,
+        image_types: Optional[List[str]] = None, skip_img_types: Optional[List[str]] = None) -> None:
+    """
+    Download the image build cache metadata from S3 for a specific distro / arch / configs.
+    The image artifacts is not downloaded, only the metadata.
+    """
+    cmd = [
+        "./test/scripts/dl-image-build-cache",
+        "--arch", arch,
+        "--output", output_dir,
+    ]
+    for distro in distros:
+        cmd += ["--distro", distro]
+    for config in configs or []:
+        cmd += ["--config", config]
+
+    # The image_types and skip_img_types are mutually exclusive,
+    # but this is enforced in the argument parser.
+    for imag_type in image_types or []:
+        cmd += ["--image-type", imag_type]
+    for skip_img_type in skip_img_types or []:
+        cmd += ["--skip-image-type", skip_img_type]
+
+    print(" ".join(cmd))
+    try:
+        subprocess.check_call(cmd, cwd=images_path, env=os.environ)
+    except subprocess.CalledProcessError as _:
+        print("⚠️ Failed to download image build cache")
+        sys.exit(1)
+
+
+def gen_image_info_report(image_path: str, report_path: str) -> None:
+    """
+    Run osbuild-image-info on the image file and return the parsed JSON output
+    """
+    cmd = ["sudo", "osbuild-image-info", image_path]
+    output = subprocess.check_output(cmd)
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(output.decode())
+
+
+def diff_files(file1: str, file2: str) -> str:
+    """
+    Run diff on two files and return the output
+    """
+    cmd = [
+        "diff", "-u",
+        "-I", r'"[0-9a-f]\{8\}-\([0-9a-f]\{4\}-\)\{3\}[0-9a-f]\{12\}"',  # Ignore UUIDs
+        "-I", r'"[0-9a-zA-Z]\{6\}-\([0-9a-zA-Z]\{4\}-\)\{5\}[0-9a-zA-Z]\{6\}"',  # Ignore LVM quasi-UUIDs
+        "-I", r'"volid": "[0-9a-f]\{8\}"',  # Ignore volid
+        file1, file2,
+    ]
+    print(" ".join(cmd))
+    run = subprocess.run(cmd, stdout=subprocess.PIPE, check=False)
+    return run.stdout.decode()
+
+
+class OSBuild:
+    def __init__(self, store, outdir):
+        self.store = store
+        self.outdir = outdir
+
+    def run(self, manifest, exports, checkpoints=None) -> Tuple[int, str, str]:
+        cmd = [
+            "sudo",
+            "osbuild",
+            "--cache-max-size", "unlimited",
+            "--store", os.fspath(self.store),
+            "--output-directory", os.fspath(self.outdir),
+            os.fspath(manifest)
+        ]
+
+        for checkpoint in checkpoints or []:
+            cmd += [
+                "--checkpoint", checkpoint
+            ]
+
+        for export in exports:
+            cmd += [
+                "--export", export
+            ]
+
+        print(" ".join(cmd))
+        run = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+
+        return run.returncode, run.stdout.decode(), run.stderr.decode()
+
+
+def run_manifest_behavior_test(
+        build_dir: str, results_dir: str, osbuild_store: str, rm_artifacts_after_test: bool = False) -> None:
+    """
+    This function implements the test case for a single image build cache directory which contains:
+     - the manifest.json file
+     - the image artifact file built by an older version of osbuild pinned in the images repository
+
+    The test case does the following:
+     - runs osbuild-image-info on the downloaded image artifact file and produces image-info report
+     - builds the manifest using the current version of osbuild and produces image artifact
+     - runs osbuild-image-info on the newly built image artifact file and produces image-info report
+     - compares the image-info reports
+
+    The test case fails if the image-info reports are different
+
+    The function can optionally remove the downloaded and rebuilt image artifacts after the test case
+    to save disk space.
+    """
+    manifest = find_manifest_file(build_dir)
+    manifest_pipelines = manifest_pipeline_names(manifest)
+    downloaded_image = find_image_file(build_dir)
+    downloaded_image_iminfo = os.path.join(results_dir, "downloaded_image_iminfo.json")
+    print(f"📜 Generating image info report for downloaded image '{downloaded_image}' to '{downloaded_image_iminfo}'")
+    gen_image_info_report(downloaded_image, downloaded_image_iminfo)
+
+    if rm_artifacts_after_test:
+        print("🗑️ Removing downloaded image artifact")
+        os.remove(downloaded_image)
+
+    rebuild_dir = os.path.join(build_dir, "rebuild")
+    os.makedirs(rebuild_dir, exist_ok=True)
+    osbuild = OSBuild(osbuild_store, rebuild_dir)
+    print("Rebuilding the image artifact using installed osbuild version")
+    retcode, stdout, stderr = osbuild.run(manifest, [manifest_pipelines[-1]], ["build"])
+    with open(os.path.join(rebuild_dir, "image_rebuild_osbuild.log"), "w", encoding="utf-8") as f:
+        f.write(stdout)
+        f.write(stderr)
+    if retcode != 0:
+        raise RuntimeError(f"Failed to rebuild the image artifact:\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}")
+
+    rebuilt_image = find_image_file(rebuild_dir, manifest_pipelines[-1])
+    rebuilt_image_iminfo = os.path.join(results_dir, "rebuilt_image_iminfo.json")
+    print(f"📜 Generating image info report for rebuilt image: '{rebuilt_image}' to '{rebuilt_image_iminfo}'")
+    gen_image_info_report(rebuilt_image, rebuilt_image_iminfo)
+
+    if rm_artifacts_after_test:
+        print("🗑️ Removing the dir with rebuilt image artifact")
+        # NB: use sudo to remove the dir, because the files are owned by root after osbuild run
+        subprocess.run(["sudo", "rm", "-rf", rebuild_dir], check=False)
+
+    diff = diff_files(downloaded_image_iminfo, rebuilt_image_iminfo)
+    with open(os.path.join(results_dir, "iminfo.diff"), "w", encoding="utf-8") as f:
+        f.write(diff)
+    if diff:
+        raise RuntimeError(f"Image info reports are different:\n{diff}")
+
+
+def get_argparser():
+
+    class ExtendAction(argparse.Action):
+        """
+        Custom argparse action to append multiple values to a list option
+        to prevent overwriting the list with each new value.
+
+        This may be removed when Python 3.8 is the minimum supported version.
+        """
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            items = getattr(namespace, self.dest) or []
+            items.extend(values)
+            setattr(namespace, self.dest, items)
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.register('action', 'extend', ExtendAction)
+
+    parser.add_argument(
+        "--distro",
+        metavar="DISTRO",
+        action="extend",
+        nargs="+",
+        help="Distro to test. Default is the host distro."
+    )
+    parser.add_argument(
+        "--image-type", action="extend", metavar="TYPE", nargs="+",
+        help="Image type for which the image build cache is downloaded. Can be specified multiple times. " +
+             "If not provided, all image types are downloaded. " +
+             "The option is mutually exclusive with --skip-image-type.",
+    )
+    parser.add_argument(
+        "--skip-image-type", action="extend", metavar="TYPE_GLOB", nargs="+",
+        help="Image types to skip when downloading the image build cache. Can be specified multiple times. " +
+             "This is useful for image types which can't be analyzed using osbuild-image-info.",
+    )
+    parser.add_argument(
+        "--config", action="extend", metavar="NAME_GLOB", nargs="+",
+        help="Config name globs used to filter which image build cache files are downloaded. " +
+             "Can be specified multiple times. If not provided, all configs are downloaded.",
+    )
+    parser.add_argument(
+        "--images-ref",
+        metavar="REF",
+        default="main",
+        help="Git ref to checkout in the osbuild/images repository."
+    )
+    parser.add_argument(
+        "--osb-store",
+        metavar="PATH",
+        type=os.path.abspath,
+        default=None,
+        help="Directory where intermediary os trees are stored."
+    )
+    parser.add_argument(
+        "--workdir",
+        metavar="PATH",
+        type=os.path.abspath,
+        default="./osbuild-manifest-tests-workdir",
+        help="Working directory where the images repository is checked out and the image build cache is downloaded."
+    )
+    parser.add_argument(
+        "--results-dir",
+        metavar="PATH",
+        type=os.path.abspath,
+        default="./osbuild-manifest-tests-results",
+        help="Directory where the test results are stored."
+    )
+    parser.add_argument(
+        "--chunk-size", nargs=2, metavar=("CHUNK_NUMBER", "TOTAL_CHUNKS"),
+        type=int, default=None,
+        help="Run tests only for a specific chunk of the image build cache. " +
+             "The first argument is the chunk number (starting from 1) and the second argument is the total " +
+             "number of chunks. This is useful for running the tests in parallel."
+    )
+    parser.add_argument(
+        "--rm-artifacts-after-test",
+        action="store_true",
+        default=False,
+        help="Remove the downloaded and rebuilt image artifacts after the test case. " +
+             "This is useful for saving disk space."
+    )
+    return parser
+
+
+def main():
+    parser = get_argparser()
+    args = parser.parse_args()
+
+    if not args.distro:
+        args.distro = [get_host_distro()]
+
+    chunk_number, total_chunks = None, None
+    if args.chunk_size:
+        chunk_number, total_chunks = args.chunk_size
+        if chunk_number < 1 or total_chunks < 1:
+            parser.error("Both values for '--chunk-size' must be greater than zero.")
+        if chunk_number > total_chunks:
+            parser.error("The chunk number must be less than or equal to the total number of chunks.")
+
+    if args.image_type and args.skip_image_type:
+        parser.error("Options --image-type and --skip-image-type are mutually exclusive.")
+
+    workdir = args.workdir
+    os.makedirs(workdir, exist_ok=True)
+    print(f"👷 Using working directory: {workdir}")
+    os.chdir(workdir)
+
+    osbuild_store_dir = args.osb_store or os.path.join(workdir, "osbuild-store")
+    os.makedirs(osbuild_store_dir, exist_ok=True)
+    print(f"💾 Using osbuild store directory: {osbuild_store_dir}")
+
+    # Checkout the images repository, since we will need scripts from it to download the image build cache
+    images_path = checkout_images_repo(args.images_ref, workdir)
+
+    # Create the directory where the image build cache will be downloaded
+    image_build_cache = os.path.join(workdir, "image-build-cache")
+    os.makedirs(image_build_cache, exist_ok=True)
+
+    download_image_build_cache_md(
+        images_path, image_build_cache, args.distro, get_host_arch(),
+        args.config, args.image_type, args.skip_image_type
+    )
+
+    # The test case is run for every directory in the image build cache directory
+    test_cases = sorted(os.listdir(image_build_cache))
+
+    if not test_cases:
+        print("⚠️ No image build cache directories found -> nothing to test", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"📦 Found {len(test_cases)} image build cache directories")
+    if chunk_number and total_chunks:
+        all_test_cases = test_cases
+        print(f"📦 Will run subset of tests for chunk {chunk_number} of {total_chunks}:")
+        chunk_size = len(test_cases) // total_chunks
+        chunk_size_remainder = len(test_cases) % total_chunks
+
+        # determine the chunk index range
+        start = 0
+        end = 0
+        for i in range(chunk_number):
+            current_chunk_size = chunk_size + 1 if i < chunk_size_remainder else chunk_size
+            start = end
+            end = start + current_chunk_size
+
+        test_cases = test_cases[start:end]
+        idx_range = range(start, end)
+        for i, test_case in enumerate(all_test_cases):
+            print(f"    {'🟢' if i in idx_range else '🚫'} {test_case}")
+
+    # Dictionary holding the test case name as key and a boolean indicating if the test case failed as value
+    test_cases_failed: Dict[str, bool] = {}
+    print(f"🏃 Running {len(test_cases)} test cases:\n{os.linesep.join(test_cases)}")
+    for test_case in test_cases:
+        print(f"🏃 Running test case for {test_case}")
+        test_case_build_dir = os.path.join(image_build_cache, test_case)
+        download_image_build_artifact(images_path, test_case_build_dir)
+        test_case_results_dir = os.path.join(args.results_dir, test_case)
+        os.makedirs(test_case_results_dir, exist_ok=True)
+        try:
+            run_manifest_behavior_test(
+                test_case_build_dir, test_case_results_dir, osbuild_store_dir, args.rm_artifacts_after_test)
+        # pylint: disable=broad-exception-caught
+        except Exception as e:
+            print(f"❌ {test_case} FAILED")
+            print(e)
+            test_cases_failed[test_case] = True
+        else:
+            print(f"✅ {test_case} PASSED")
+            test_cases_failed[test_case] = False
+
+    print("Test results:")
+    for test_case, failed in test_cases_failed.items():
+        print(f"    {'❌' if failed else '✅'} {test_case}")
+
+    if any(test_cases_failed.values()):
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
