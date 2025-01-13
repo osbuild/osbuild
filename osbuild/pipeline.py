@@ -52,7 +52,13 @@ class BuildResult:
         self.error = error
 
     def as_dict(self) -> Dict[str, Any]:
-        return vars(self)
+        return {
+            "name": self.name,
+            "id": self.id,
+            "success": self.success,
+            "output": self.output,
+            "error": self.error,
+        }
 
 
 class DownloadResult:
@@ -63,7 +69,12 @@ class DownloadResult:
         self.output = ""
 
     def as_dict(self) -> Dict[str, Any]:
-        return vars(self)
+        return {
+            "name": self.name,
+            "id": self.id,
+            "success": self.success,
+            "output": self.output,
+        }
 
 
 class Stage:
