@@ -518,8 +518,8 @@ class Manifest:
         """
         results = {"success": True}
 
-        for pl in map(self.get, pipelines):
-            assert pl is not None
+        for name_or_id in pipelines:
+            pl = self[name_or_id]
             res = pl.run(store, monitor, libdir, debug_break, stage_timeout)
             results[pl.id] = res
             if not res["success"]:
@@ -569,7 +569,7 @@ class Manifest:
         pl = self.get(name_or_id)
         if pl:
             return pl
-        raise KeyError(f"'{name_or_id}' not found")
+        raise KeyError(f"'{name_or_id}' not found in manifest pipelines: {list(self.pipelines.keys())}")
 
     def __iter__(self) -> Iterator[Pipeline]:
         return iter(self.pipelines.values())
