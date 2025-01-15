@@ -18,6 +18,7 @@ import pytest
 
 REPO_PATHS = [
     "./test/data/testrepos/baseos/",
+    "./test/data/testrepos/appstream/",
     "./test/data/testrepos/custom/",
 ]
 
