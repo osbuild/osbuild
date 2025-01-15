@@ -1,0 +1,2004 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE comps
+  PUBLIC '-//Red Hat, Inc.//DTD Comps info//EN'
+  'comps.dtd'>
+<comps>
+  <group>
+    <id>additional-devel</id>
+    <name>Additional Development</name>
+    <description>Additional development headers and libraries for building open-source applications.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">SDL2-devel</packagereq>
+      <packagereq type="mandatory">alsa-lib-devel</packagereq>
+      <packagereq type="mandatory">atlas-devel</packagereq>
+      <packagereq type="mandatory">audit-libs-devel</packagereq>
+      <packagereq type="mandatory">binutils-devel</packagereq>
+      <packagereq type="mandatory">boost-devel</packagereq>
+      <packagereq type="mandatory">bzip2-devel</packagereq>
+      <packagereq type="mandatory">c-ares-devel</packagereq>
+      <packagereq type="mandatory">compat-libgfortran-48</packagereq>
+      <packagereq type="mandatory">cups-devel</packagereq>
+      <packagereq type="mandatory">cyrus-sasl-devel</packagereq>
+      <packagereq type="mandatory">dbus-glib-devel</packagereq>
+      <packagereq type="mandatory">e2fsprogs-devel</packagereq>
+      <packagereq type="mandatory">elfutils-devel</packagereq>
+      <packagereq type="mandatory">elfutils-libelf-devel</packagereq>
+      <packagereq type="mandatory">evolution-data-server-devel</packagereq>
+      <packagereq type="mandatory">expat-devel</packagereq>
+      <packagereq type="mandatory">flexiblas-devel</packagereq>
+      <packagereq type="mandatory">fuse3-devel</packagereq>
+      <packagereq type="mandatory">gd-devel</packagereq>
+      <packagereq type="mandatory">gmp-devel</packagereq>
+      <packagereq type="mandatory">gnome-desktop3-devel</packagereq>
+      <packagereq type="mandatory">gnutls-devel</packagereq>
+      <packagereq type="mandatory">gpm-devel</packagereq>
+      <packagereq type="mandatory">gstreamer1-devel</packagereq>
+      <packagereq type="mandatory">gstreamer1-plugins-base-devel</packagereq>
+      <packagereq type="mandatory">gvfs-devel</packagereq>
+      <packagereq type="mandatory">hunspell-devel</packagereq>
+      <packagereq type="mandatory">iptables-devel</packagereq>
+      <packagereq type="mandatory">java-1.8.0-openjdk-devel</packagereq>
+      <packagereq type="mandatory">libXau-devel</packagereq>
+      <packagereq type="mandatory">libXaw-devel</packagereq>
+      <packagereq type="mandatory">libXinerama-devel</packagereq>
+      <packagereq type="mandatory">libXmu-devel</packagereq>
+      <packagereq type="mandatory">libXpm-devel</packagereq>
+      <packagereq type="mandatory">libXrandr-devel</packagereq>
+      <packagereq type="mandatory">libacl-devel</packagereq>
+      <packagereq type="mandatory">libaio-devel</packagereq>
+      <packagereq type="mandatory">libarchive-devel</packagereq>
+      <packagereq type="mandatory">libattr-devel</packagereq>
+      <packagereq type="mandatory">libblkid-devel</packagereq>
+      <packagereq type="mandatory">libcanberra-devel</packagereq>
+      <packagereq type="mandatory">libcap-devel</packagereq>
+      <packagereq type="mandatory">libcap-ng-devel</packagereq>
+      <packagereq type="mandatory">libcurl-devel</packagereq>
+      <packagereq type="mandatory">libdrm-devel</packagereq>
+      <packagereq type="mandatory">libffi-devel</packagereq>
+      <packagereq type="mandatory">libgcrypt-devel</packagereq>
+      <packagereq type="mandatory">libnl3-devel</packagereq>
+      <packagereq type="mandatory">libnotify-devel</packagereq>
+      <packagereq type="mandatory">libpfm-devel</packagereq>
+      <packagereq type="mandatory">libpmem-devel</packagereq>
+      <packagereq type="mandatory">libpmemblk-devel</packagereq>
+      <packagereq type="mandatory">libpmemlog-devel</packagereq>
+      <packagereq type="mandatory">libpmemobj++-devel</packagereq>
+      <packagereq type="mandatory">libpmemobj++-doc</packagereq>
+      <packagereq type="mandatory">libpmemobj-devel</packagereq>
+      <packagereq type="mandatory">libpmempool-devel</packagereq>
+      <packagereq type="mandatory">libpq-devel</packagereq>
+      <packagereq type="mandatory">librsvg2-devel</packagereq>
+      <packagereq type="mandatory">librsvg2-tools</packagereq>
+      <packagereq type="mandatory">libselinux-devel</packagereq>
+      <packagereq type="mandatory">libsoup-devel</packagereq>
+      <packagereq type="mandatory">libssh-devel</packagereq>
+      <packagereq type="mandatory">libtiff-devel</packagereq>
+      <packagereq type="mandatory">libusbx-devel</packagereq>
+      <packagereq type="mandatory">libuuid-devel</packagereq>
+      <packagereq type="mandatory">libva-devel</packagereq>
+      <packagereq type="mandatory">libxslt-devel</packagereq>
+      <packagereq type="mandatory">lksctp-tools-devel</packagereq>
+      <packagereq type="mandatory">lz4-devel</packagereq>
+      <packagereq type="mandatory">lzo-devel</packagereq>
+      <packagereq type="mandatory">motif-devel</packagereq>
+      <packagereq type="mandatory">mpfr-devel</packagereq>
+      <packagereq type="mandatory">net-snmp-devel</packagereq>
+      <packagereq type="mandatory">newt-devel</packagereq>
+      <packagereq type="mandatory">numactl-devel</packagereq>
+      <packagereq type="mandatory">openscap-devel</packagereq>
+      <packagereq type="mandatory">papi-devel</packagereq>
+      <packagereq type="mandatory">pciutils-devel</packagereq>
+      <packagereq type="mandatory">pcre-devel</packagereq>
+      <packagereq type="mandatory">pipewire-devel</packagereq>
+      <packagereq type="mandatory">pipewire-jack-audio-connection-kit-devel</packagereq>
+      <packagereq type="mandatory">polkit-devel</packagereq>
+      <packagereq type="mandatory">popt-devel</packagereq>
+      <packagereq type="mandatory">rdma-core-devel</packagereq>
+      <packagereq type="mandatory">readline-devel</packagereq>
+      <packagereq type="mandatory">sane-backends-devel</packagereq>
+      <packagereq type="mandatory">scl-utils</packagereq>
+      <packagereq type="mandatory">scl-utils-build</packagereq>
+      <packagereq type="mandatory">slang-devel</packagereq>
+      <packagereq type="mandatory">sqlite-devel</packagereq>
+      <packagereq type="mandatory">startup-notification-devel</packagereq>
+      <packagereq type="mandatory">systemd-devel</packagereq>
+      <packagereq type="mandatory">tbb-devel</packagereq>
+      <packagereq type="mandatory">tcl-devel</packagereq>
+      <packagereq type="mandatory">tk-devel</packagereq>
+      <packagereq type="mandatory">xfsprogs-devel</packagereq>
+      <packagereq type="mandatory">xorg-x11-proto-devel</packagereq>
+      <packagereq type="mandatory">xz-devel</packagereq>
+      <packagereq type="optional">flatpak</packagereq>
+      <packagereq type="optional">flatpak-builder</packagereq>
+      <packagereq type="optional">flatpak-selinux</packagereq>
+      <packagereq type="optional">flatpak-session-helper</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>anaconda-tools</id>
+    <name>Anaconda tools</name>
+    <description/>
+    <default>false</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">authselect-compat</packagereq>
+      <packagereq type="mandatory">kdump-anaconda-addon</packagereq>
+      <packagereq type="mandatory">libblockdev-plugins-all</packagereq>
+      <packagereq type="mandatory">libreport-plugin-bugzilla</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>backup-client</id>
+    <name>Backup Client</name>
+    <description>Client tools for connecting to a backup server and doing backups.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="optional">bacula-client</packagereq>
+      <packagereq type="optional">rear</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>base</id>
+    <name>Base</name>
+    <description>The standard installation of Red Hat Enterprise Linux.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">rsyslog-gnutls</packagereq>
+      <packagereq type="mandatory">rsyslog-gssapi</packagereq>
+      <packagereq type="mandatory">rsyslog-relp</packagereq>
+      <packagereq type="default">blktrace</packagereq>
+      <packagereq type="default">fprintd-pam</packagereq>
+      <packagereq type="default">libstoragemgmt</packagereq>
+      <packagereq type="default">nmap-ncat</packagereq>
+      <packagereq type="default">pinfo</packagereq>
+      <packagereq type="default">plymouth</packagereq>
+      <packagereq type="default">tcpdump</packagereq>
+      <packagereq type="default">vim-enhanced</packagereq>
+      <packagereq type="default">wget</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>base-x</id>
+    <name>base-x</name>
+    <description>Local X.org display server</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">glx-utils</packagereq>
+      <packagereq type="mandatory">mesa-dri-drivers</packagereq>
+      <packagereq type="mandatory">plymouth-system-theme</packagereq>
+      <packagereq type="mandatory">xorg-x11-drv-evdev</packagereq>
+      <packagereq type="mandatory">xorg-x11-drv-fbdev</packagereq>
+      <packagereq type="mandatory">xorg-x11-drv-libinput</packagereq>
+      <packagereq type="mandatory">xorg-x11-drv-vmware</packagereq>
+      <packagereq type="mandatory">xorg-x11-drv-wacom</packagereq>
+      <packagereq type="mandatory">xorg-x11-server-Xorg</packagereq>
+      <packagereq type="mandatory">xorg-x11-utils</packagereq>
+      <packagereq type="mandatory">xorg-x11-xauth</packagereq>
+      <packagereq type="mandatory">xorg-x11-xinit</packagereq>
+      <packagereq type="mandatory">xorg-x11-xinit-session</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>conflicts-appstream</id>
+    <name>Conflicts AppStream</name>
+    <description>This group includes packages conflicting with an everything installation from the AppStream repo</description>
+    <default>false</default>
+    <uservisible>false</uservisible>
+    <packagelist/>
+  </group>
+  <group>
+    <id>console-internet</id>
+    <name>Console Internet Tools</name>
+    <description>Console internet access tools, often used by administrators.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="optional">fetchmail</packagereq>
+      <packagereq type="optional">ftp</packagereq>
+      <packagereq type="optional">irssi</packagereq>
+      <packagereq type="optional">lftp</packagereq>
+      <packagereq type="optional">mutt</packagereq>
+      <packagereq type="optional">procmail</packagereq>
+      <packagereq type="optional">whois</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>container-management</id>
+    <name>Container Management</name>
+    <description>Tools for managing Linux containers</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">buildah</packagereq>
+      <packagereq type="mandatory">containernetworking-plugins</packagereq>
+      <packagereq type="mandatory">podman</packagereq>
+      <packagereq type="optional">python3-psutil</packagereq>
+      <packagereq type="optional">toolbox</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>core</id>
+    <name>Core</name>
+    <description>Minimal host installation</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">rsyslog</packagereq>
+      <packagereq type="default">python3-libselinux</packagereq>
+      <packagereq type="optional">initial-setup</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>debugging</id>
+    <name>Debugging Tools</name>
+    <description>Tools for debugging misbehaving applications and diagnosing performance problems.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">gdb</packagereq>
+      <packagereq type="mandatory">libreport-cli</packagereq>
+      <packagereq type="mandatory">systemtap-runtime</packagereq>
+      <packagereq type="default">crash</packagereq>
+      <packagereq type="default">crash-gcore-command</packagereq>
+      <packagereq type="default">crash-trace-command</packagereq>
+      <packagereq type="default">valgrind</packagereq>
+      <packagereq type="default">valgrind-devel</packagereq>
+      <packagereq type="optional">bpftrace</packagereq>
+      <packagereq type="optional">gdb-gdbserver</packagereq>
+      <packagereq type="optional">glibc-utils</packagereq>
+      <packagereq type="optional">systemtap-client</packagereq>
+      <packagereq type="optional">systemtap-initscript</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>desktop-debugging</id>
+    <name>Desktop Debugging and Performance Tools</name>
+    <description>GUI tools for debugging applications and performance.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">crash</packagereq>
+      <packagereq type="default">crash-gcore-command</packagereq>
+      <packagereq type="default">crash-trace-command</packagereq>
+      <packagereq type="optional">pcp-gui</packagereq>
+      <packagereq type="optional">xrestop</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>development</id>
+    <name>Development Tools</name>
+    <description>A basic development environment.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">autoconf</packagereq>
+      <packagereq type="mandatory">automake</packagereq>
+      <packagereq type="mandatory">bison</packagereq>
+      <packagereq type="mandatory">flex</packagereq>
+      <packagereq type="mandatory">gcc</packagereq>
+      <packagereq type="mandatory">gcc-c++</packagereq>
+      <packagereq type="mandatory">gdb</packagereq>
+      <packagereq type="mandatory">glibc-devel</packagereq>
+      <packagereq type="mandatory">libtool</packagereq>
+      <packagereq type="mandatory">redhat-rpm-config</packagereq>
+      <packagereq type="mandatory">rpm-build</packagereq>
+      <packagereq type="default">asciidoc</packagereq>
+      <packagereq type="default">byacc</packagereq>
+      <packagereq type="default">diffstat</packagereq>
+      <packagereq type="default">git</packagereq>
+      <packagereq type="default">intltool</packagereq>
+      <packagereq type="default">jna</packagereq>
+      <packagereq type="default">ltrace</packagereq>
+      <packagereq type="default">patchutils</packagereq>
+      <packagereq type="default">perl-Fedora-VSP</packagereq>
+      <packagereq type="default">perl-generators</packagereq>
+      <packagereq type="default">pesign</packagereq>
+      <packagereq type="default">source-highlight</packagereq>
+      <packagereq type="default">systemtap</packagereq>
+      <packagereq type="default">valgrind</packagereq>
+      <packagereq type="default">valgrind-devel</packagereq>
+      <packagereq type="optional">cmake</packagereq>
+      <packagereq type="optional">expect</packagereq>
+      <packagereq type="optional">rpmdevtools</packagereq>
+      <packagereq type="optional">rpmlint</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>dns-server</id>
+    <name>DNS Name Server</name>
+    <description>This package group allows you to run a DNS name server (BIND) on the system.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">bind-chroot</packagereq>
+      <packagereq type="optional">bind</packagereq>
+      <packagereq type="optional">unbound</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>dotnet</id>
+    <name>.NET Development</name>
+    <description>Tools to develop and/or run .NET applications</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="optional">dotnet-sdk-8.0</packagereq>
+      <packagereq type="optional">dotnet-sdk-9.0</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>emacs</id>
+    <name>Emacs</name>
+    <description>The GNU Emacs extensible, customizable, text editor.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">emacs</packagereq>
+      <packagereq type="optional">emacs-lucid</packagereq>
+      <packagereq type="optional">emacs-nox</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>file-server</id>
+    <name>File and Storage Server</name>
+    <description>CIFS, SMB, NFS, iSCSI, iSER, and iSNS network storage server.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">targetcli</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>fonts</id>
+    <name>Fonts</name>
+    <description>Fonts packages for rendering text on the desktop.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">abattis-cantarell-fonts</packagereq>
+      <packagereq type="default">google-noto-emoji-color-fonts</packagereq>
+      <packagereq type="default">google-noto-sans-cjk-ttc-fonts</packagereq>
+      <packagereq type="default">google-noto-sans-gurmukhi-fonts</packagereq>
+      <packagereq type="default">google-noto-sans-sinhala-vf-fonts</packagereq>
+      <packagereq type="default">google-noto-serif-cjk-ttc-fonts</packagereq>
+      <packagereq type="default">jomolhari-fonts</packagereq>
+      <packagereq type="default">julietaula-montserrat-fonts</packagereq>
+      <packagereq type="default">khmer-os-system-fonts</packagereq>
+      <packagereq type="default">liberation-mono-fonts</packagereq>
+      <packagereq type="default">liberation-sans-fonts</packagereq>
+      <packagereq type="default">liberation-serif-fonts</packagereq>
+      <packagereq type="default">lohit-assamese-fonts</packagereq>
+      <packagereq type="default">lohit-bengali-fonts</packagereq>
+      <packagereq type="default">lohit-devanagari-fonts</packagereq>
+      <packagereq type="default">lohit-gujarati-fonts</packagereq>
+      <packagereq type="default">lohit-kannada-fonts</packagereq>
+      <packagereq type="default">lohit-odia-fonts</packagereq>
+      <packagereq type="default">lohit-tamil-fonts</packagereq>
+      <packagereq type="default">lohit-telugu-fonts</packagereq>
+      <packagereq type="default">paktype-naskh-basic-fonts</packagereq>
+      <packagereq type="default">pt-sans-fonts</packagereq>
+      <packagereq type="default">sil-abyssinica-fonts</packagereq>
+      <packagereq type="default">sil-nuosu-fonts</packagereq>
+      <packagereq type="default">sil-padauk-fonts</packagereq>
+      <packagereq type="default">smc-meera-fonts</packagereq>
+      <packagereq type="default">stix-fonts</packagereq>
+      <packagereq type="default">thai-scalable-waree-fonts</packagereq>
+      <packagereq type="optional">fontawesome-fonts</packagereq>
+      <packagereq type="optional">google-droid-sans-fonts</packagereq>
+      <packagereq type="optional">google-droid-sans-mono-fonts</packagereq>
+      <packagereq type="optional">google-droid-serif-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-armenian-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-avestan-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-bengali-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-bengali-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-brahmi-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-carian-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-cherokee-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-coptic-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-deseret-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-devanagari-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-devanagari-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-egyptian-hieroglyphs-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-ethiopic-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-georgian-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-glagolitic-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-gujarati-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-gujarati-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-hebrew-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-imperial-aramaic-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-kaithi-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-kannada-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-kannada-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-kayah-li-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-kharoshthi-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-khmer-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-khmer-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-lao-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-lao-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-lycian-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-lydian-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-malayalam-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-malayalam-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-nko-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-old-south-arabian-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-old-turkic-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-osmanya-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-phoenician-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-shavian-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-sinhala-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-symbols-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-tamil-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-tamil-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-telugu-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-telugu-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-thaana-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-thai-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-thai-ui-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-ugaritic-fonts</packagereq>
+      <packagereq type="optional">google-noto-sans-vai-fonts</packagereq>
+      <packagereq type="optional">google-noto-serif-armenian-fonts</packagereq>
+      <packagereq type="optional">google-noto-serif-fonts</packagereq>
+      <packagereq type="optional">google-noto-serif-georgian-fonts</packagereq>
+      <packagereq type="optional">google-noto-serif-khmer-fonts</packagereq>
+      <packagereq type="optional">google-noto-serif-lao-fonts</packagereq>
+      <packagereq type="optional">google-noto-serif-thai-fonts</packagereq>
+      <packagereq type="optional">gubbi-fonts</packagereq>
+      <packagereq type="optional">kacst-art-fonts</packagereq>
+      <packagereq type="optional">kacst-book-fonts</packagereq>
+      <packagereq type="optional">kacst-decorative-fonts</packagereq>
+      <packagereq type="optional">kacst-digital-fonts</packagereq>
+      <packagereq type="optional">kacst-farsi-fonts</packagereq>
+      <packagereq type="optional">kacst-letter-fonts</packagereq>
+      <packagereq type="optional">kacst-naskh-fonts</packagereq>
+      <packagereq type="optional">kacst-office-fonts</packagereq>
+      <packagereq type="optional">kacst-one-fonts</packagereq>
+      <packagereq type="optional">kacst-pen-fonts</packagereq>
+      <packagereq type="optional">kacst-poster-fonts</packagereq>
+      <packagereq type="optional">kacst-qurn-fonts</packagereq>
+      <packagereq type="optional">kacst-screen-fonts</packagereq>
+      <packagereq type="optional">kacst-title-fonts</packagereq>
+      <packagereq type="optional">kacst-titlel-fonts</packagereq>
+      <packagereq type="optional">khmer-os-battambang-fonts</packagereq>
+      <packagereq type="optional">khmer-os-bokor-fonts</packagereq>
+      <packagereq type="optional">khmer-os-content-fonts</packagereq>
+      <packagereq type="optional">khmer-os-fasthand-fonts</packagereq>
+      <packagereq type="optional">khmer-os-freehand-fonts</packagereq>
+      <packagereq type="optional">khmer-os-handwritten-fonts</packagereq>
+      <packagereq type="optional">khmer-os-metal-chrieng-fonts</packagereq>
+      <packagereq type="optional">khmer-os-muol-fonts-all</packagereq>
+      <packagereq type="optional">khmer-os-siemreap-fonts</packagereq>
+      <packagereq type="optional">lato-fonts</packagereq>
+      <packagereq type="optional">lohit-gurmukhi-fonts</packagereq>
+      <packagereq type="optional">lohit-marathi-fonts</packagereq>
+      <packagereq type="optional">madan-fonts</packagereq>
+      <packagereq type="optional">navilu-fonts</packagereq>
+      <packagereq type="optional">open-sans-fonts</packagereq>
+      <packagereq type="optional">overpass-fonts</packagereq>
+      <packagereq type="optional">paktype-naqsh-fonts</packagereq>
+      <packagereq type="optional">paktype-tehreer-fonts</packagereq>
+      <packagereq type="optional">paratype-pt-sans-caption-fonts</packagereq>
+      <packagereq type="optional">saab-fonts</packagereq>
+      <packagereq type="optional">sil-scheherazade-fonts</packagereq>
+      <packagereq type="optional">smc-rachana-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-garuda-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-kinnari-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-loma-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-norasi-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-purisa-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-sawasdee-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-tlwgmono-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-tlwgtypewriter-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-tlwgtypist-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-tlwgtypo-fonts</packagereq>
+      <packagereq type="optional">thai-scalable-umpush-fonts</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-100dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-75dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-1-100dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-1-75dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-14-100dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-14-75dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-15-100dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-15-75dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-2-100dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-2-75dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-9-100dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ISO8859-9-75dpi</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-Type1</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-cyrillic</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-ethiopic</packagereq>
+      <packagereq type="optional">xorg-x11-fonts-misc</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>ftp-server</id>
+    <name>FTP Server</name>
+    <description>These tools allow you to run an FTP server on the system.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">vsftpd</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gnome-apps</id>
+    <name>GNOME Applications</name>
+    <description>A set of commonly used GNOME Applications.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">brasero</packagereq>
+      <packagereq type="mandatory">brasero-nautilus</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gnome-desktop</id>
+    <name>GNOME</name>
+    <description>GNOME is a highly intuitive and user-friendly desktop environment.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">PackageKit-command-not-found</packagereq>
+      <packagereq type="mandatory">PackageKit-gtk3-module</packagereq>
+      <packagereq type="mandatory">at-spi2-atk</packagereq>
+      <packagereq type="mandatory">at-spi2-core</packagereq>
+      <packagereq type="mandatory">avahi-tools</packagereq>
+      <packagereq type="mandatory">baobab</packagereq>
+      <packagereq type="mandatory">cheese</packagereq>
+      <packagereq type="mandatory">chrome-gnome-shell</packagereq>
+      <packagereq type="mandatory">dconf</packagereq>
+      <packagereq type="mandatory">eog</packagereq>
+      <packagereq type="mandatory">evince</packagereq>
+      <packagereq type="mandatory">evince-nautilus</packagereq>
+      <packagereq type="mandatory">fprintd-pam</packagereq>
+      <packagereq type="mandatory">gdm</packagereq>
+      <packagereq type="mandatory">gedit</packagereq>
+      <packagereq type="mandatory">gnome-bluetooth</packagereq>
+      <packagereq type="mandatory">gnome-calculator</packagereq>
+      <packagereq type="mandatory">gnome-characters</packagereq>
+      <packagereq type="mandatory">gnome-classic-session</packagereq>
+      <packagereq type="mandatory">gnome-color-manager</packagereq>
+      <packagereq type="mandatory">gnome-control-center</packagereq>
+      <packagereq type="mandatory">gnome-disk-utility</packagereq>
+      <packagereq type="mandatory">gnome-font-viewer</packagereq>
+      <packagereq type="mandatory">gnome-initial-setup</packagereq>
+      <packagereq type="mandatory">gnome-logs</packagereq>
+      <packagereq type="mandatory">gnome-remote-desktop</packagereq>
+      <packagereq type="mandatory">gnome-screenshot</packagereq>
+      <packagereq type="mandatory">gnome-session-wayland-session</packagereq>
+      <packagereq type="mandatory">gnome-session-xsession</packagereq>
+      <packagereq type="mandatory">gnome-settings-daemon</packagereq>
+      <packagereq type="mandatory">gnome-shell</packagereq>
+      <packagereq type="mandatory">gnome-shell-extension-background-logo</packagereq>
+      <packagereq type="mandatory">gnome-software</packagereq>
+      <packagereq type="mandatory">gnome-system-monitor</packagereq>
+      <packagereq type="mandatory">gnome-terminal</packagereq>
+      <packagereq type="mandatory">gnome-terminal-nautilus</packagereq>
+      <packagereq type="mandatory">gnome-user-docs</packagereq>
+      <packagereq type="mandatory">gvfs-fuse</packagereq>
+      <packagereq type="mandatory">gvfs-goa</packagereq>
+      <packagereq type="mandatory">gvfs-gphoto2</packagereq>
+      <packagereq type="mandatory">gvfs-mtp</packagereq>
+      <packagereq type="mandatory">gvfs-smb</packagereq>
+      <packagereq type="mandatory">libcanberra-gtk3</packagereq>
+      <packagereq type="mandatory">librsvg2</packagereq>
+      <packagereq type="mandatory">libsane-hpaio</packagereq>
+      <packagereq type="mandatory">mesa-dri-drivers</packagereq>
+      <packagereq type="mandatory">nautilus</packagereq>
+      <packagereq type="mandatory">orca</packagereq>
+      <packagereq type="mandatory">sane-backends-drivers-scanners</packagereq>
+      <packagereq type="mandatory">sushi</packagereq>
+      <packagereq type="mandatory">totem</packagereq>
+      <packagereq type="mandatory">tracker</packagereq>
+      <packagereq type="mandatory">tracker-miners</packagereq>
+      <packagereq type="mandatory">xdg-desktop-portal</packagereq>
+      <packagereq type="mandatory">xdg-desktop-portal-gnome</packagereq>
+      <packagereq type="mandatory">xdg-desktop-portal-gtk</packagereq>
+      <packagereq type="mandatory">xdg-user-dirs-gtk</packagereq>
+      <packagereq type="mandatory">yelp</packagereq>
+      <packagereq type="mandatory">yelp-tools</packagereq>
+      <packagereq type="optional">gedit-plugins</packagereq>
+      <packagereq type="optional">gnome-backgrounds</packagereq>
+      <packagereq type="optional">gnome-shell-extension-apps-menu</packagereq>
+      <packagereq type="optional">gnome-shell-extension-auto-move-windows</packagereq>
+      <packagereq type="optional">gnome-shell-extension-dash-to-dock</packagereq>
+      <packagereq type="optional">gnome-shell-extension-desktop-icons</packagereq>
+      <packagereq type="optional">gnome-shell-extension-drive-menu</packagereq>
+      <packagereq type="optional">gnome-shell-extension-launch-new-instance</packagereq>
+      <packagereq type="optional">gnome-shell-extension-native-window-placement</packagereq>
+      <packagereq type="optional">gnome-shell-extension-places-menu</packagereq>
+      <packagereq type="optional">gnome-shell-extension-screenshot-window-sizer</packagereq>
+      <packagereq type="optional">gnome-shell-extension-user-theme</packagereq>
+      <packagereq type="optional">gnome-shell-extension-window-list</packagereq>
+      <packagereq type="optional">gnome-shell-extension-windowsNavigator</packagereq>
+      <packagereq type="optional">gnome-shell-extension-workspace-indicator</packagereq>
+      <packagereq type="optional">initial-setup-gui</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>graphical-admin-tools</id>
+    <name>Graphical Administration Tools</name>
+    <description>Graphical system administration tools for managing many aspects of a system.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="optional">gnome-disk-utility</packagereq>
+      <packagereq type="optional">policycoreutils-gui</packagereq>
+      <packagereq type="optional">setroubleshoot</packagereq>
+      <packagereq type="optional">wireshark</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>graphics</id>
+    <name>Graphics Creation Tools</name>
+    <description>Software for creation and manipulation of still images.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">libsane-hpaio</packagereq>
+      <packagereq type="default">sane-backends-drivers-scanners</packagereq>
+      <packagereq type="optional">dcraw</packagereq>
+      <packagereq type="optional">netpbm-progs</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>guest-agents</id>
+    <name>Guest Agents</name>
+    <description>Agents used when running under a hypervisor.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">hyperv-daemons</packagereq>
+      <packagereq type="mandatory">open-vm-tools</packagereq>
+      <packagereq type="mandatory">qemu-guest-agent</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>guest-desktop-agents</id>
+    <name>Guest Desktop Agents</name>
+    <description>Agents used when running as a virtualized desktop.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">hyperv-daemons</packagereq>
+      <packagereq type="mandatory">open-vm-tools-desktop</packagereq>
+      <packagereq type="mandatory">qemu-guest-agent</packagereq>
+      <packagereq type="mandatory">spice-vdagent</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>hardware-monitoring</id>
+    <name>Hardware Monitoring Utilities</name>
+    <description>A set of tools to monitor server hardware.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">rasdaemon</packagereq>
+      <packagereq type="optional">lm_sensors</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>headless-management</id>
+    <name>Headless Management</name>
+    <description>Tools for managing the system without an attached graphical console.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">PackageKit</packagereq>
+      <packagereq type="mandatory">cockpit-packagekit</packagereq>
+      <packagereq type="mandatory">cockpit-podman</packagereq>
+      <packagereq type="mandatory">cockpit-storaged</packagereq>
+      <packagereq type="default">sscg</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>infiniband</id>
+    <name>Infiniband Support</name>
+    <description>Software designed for supporting clustering, grid connectivity, and low-latency, high bandwidth storage using RDMA-based InfiniBand, iWARP, RoCE, and OPA fabrics.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">infiniband-diags</packagereq>
+      <packagereq type="default">mstflint</packagereq>
+      <packagereq type="optional">libvma</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>input-methods</id>
+    <name>Input Methods</name>
+    <description>Input method packages for the input of international text.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">ibus-anthy</packagereq>
+      <packagereq type="default">ibus-hangul</packagereq>
+      <packagereq type="default">ibus-libpinyin</packagereq>
+      <packagereq type="default">ibus-libzhuyin</packagereq>
+      <packagereq type="default">ibus-m17n</packagereq>
+      <packagereq type="default">ibus-typing-booster</packagereq>
+      <packagereq type="optional">ibus-table</packagereq>
+      <packagereq type="optional">ibus-table-array30</packagereq>
+      <packagereq requires="gtk2" type="conditional">gtk2-immodule-xim</packagereq>
+      <packagereq requires="gtk3" type="conditional">gtk3-immodule-xim</packagereq>
+      <packagereq requires="gtk2" type="conditional">ibus-gtk2</packagereq>
+      <packagereq requires="gtk3" type="conditional">ibus-gtk3</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>internet-applications</id>
+    <name>Internet Applications</name>
+    <description>Email, chat, and video conferencing software.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">evolution</packagereq>
+      <packagereq type="default">evolution-ews</packagereq>
+      <packagereq type="default">evolution-help</packagereq>
+      <packagereq type="default">evolution-mapi</packagereq>
+      <packagereq type="default">hexchat</packagereq>
+      <packagereq type="optional">thunderbird</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>internet-browser</id>
+    <name>Internet Browser</name>
+    <description>The Firefox web browser</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">firefox</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>java-development</id>
+    <name>Java Development</name>
+    <description>Support for developing programs in the Java programming language.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">ant</packagereq>
+      <packagereq type="default">ant-antlr</packagereq>
+      <packagereq type="default">ant-apache-bcel</packagereq>
+      <packagereq type="default">ant-apache-bsf</packagereq>
+      <packagereq type="default">ant-apache-oro</packagereq>
+      <packagereq type="default">ant-apache-regexp</packagereq>
+      <packagereq type="default">ant-apache-resolver</packagereq>
+      <packagereq type="default">ant-apache-xalan2</packagereq>
+      <packagereq type="default">ant-commons-logging</packagereq>
+      <packagereq type="default">ant-commons-net</packagereq>
+      <packagereq type="default">ant-javamail</packagereq>
+      <packagereq type="default">ant-jdepend</packagereq>
+      <packagereq type="default">ant-jmf</packagereq>
+      <packagereq type="default">ant-jsch</packagereq>
+      <packagereq type="default">ant-junit</packagereq>
+      <packagereq type="default">ant-junit5</packagereq>
+      <packagereq type="default">ant-openjdk17</packagereq>
+      <packagereq type="default">ant-swing</packagereq>
+      <packagereq type="default">ant-testutil</packagereq>
+      <packagereq type="default">ant-xz</packagereq>
+      <packagereq type="default">java-1.8.0-openjdk-demo</packagereq>
+      <packagereq type="default">java-1.8.0-openjdk-devel</packagereq>
+      <packagereq type="default">java-1.8.0-openjdk-javadoc</packagereq>
+      <packagereq type="default">java-1.8.0-openjdk-javadoc-zip</packagereq>
+      <packagereq type="default">java-1.8.0-openjdk-src</packagereq>
+      <packagereq type="default">java-11-openjdk-demo</packagereq>
+      <packagereq type="default">java-11-openjdk-devel</packagereq>
+      <packagereq type="default">java-11-openjdk-javadoc</packagereq>
+      <packagereq type="default">java-11-openjdk-javadoc-zip</packagereq>
+      <packagereq type="default">java-11-openjdk-jmods</packagereq>
+      <packagereq type="default">java-11-openjdk-src</packagereq>
+      <packagereq type="default">java-11-openjdk-static-libs</packagereq>
+      <packagereq type="default">java-17-openjdk-demo</packagereq>
+      <packagereq type="default">java-17-openjdk-devel</packagereq>
+      <packagereq type="default">java-17-openjdk-javadoc</packagereq>
+      <packagereq type="default">java-17-openjdk-javadoc-zip</packagereq>
+      <packagereq type="default">java-17-openjdk-jmods</packagereq>
+      <packagereq type="default">java-17-openjdk-src</packagereq>
+      <packagereq type="default">java-17-openjdk-static-libs</packagereq>
+      <packagereq type="default">log4j</packagereq>
+      <packagereq type="default">log4j-jcl</packagereq>
+      <packagereq type="default">log4j-slf4j</packagereq>
+      <packagereq type="default">maven</packagereq>
+      <packagereq type="default">maven-openjdk17</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>java-platform</id>
+    <name>Java Platform</name>
+    <description>Java support for the Red Hat Enterprise Linux Server and Desktop Platforms.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">java-1.8.0-openjdk</packagereq>
+      <packagereq type="default">java-11-openjdk</packagereq>
+      <packagereq type="default">java-17-openjdk</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>legacy-x</id>
+    <name>Legacy X Window System Compatibility</name>
+    <description>Compatibility programs for migration from or working with legacy X Window System environments.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">libXmu</packagereq>
+      <packagereq type="default">libXp</packagereq>
+      <packagereq type="default">motif</packagereq>
+      <packagereq type="default">xorg-x11-fonts-ISO8859-1-100dpi</packagereq>
+      <packagereq type="default">xorg-x11-fonts-Type1</packagereq>
+      <packagereq type="default">xorg-x11-fonts-misc</packagereq>
+      <packagereq type="optional">xterm</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mail-server</id>
+    <name>Mail Server</name>
+    <description>These packages allow you to configure an IMAP or SMTP mail server.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">dovecot</packagereq>
+      <packagereq type="default">postfix</packagereq>
+      <packagereq type="default">spamassassin</packagereq>
+      <packagereq type="optional">cyrus-imapd</packagereq>
+      <packagereq type="optional">dovecot-pigeonhole</packagereq>
+      <packagereq type="optional">postfix-cdb</packagereq>
+      <packagereq type="optional">postfix-ldap</packagereq>
+      <packagereq type="optional">postfix-pcre</packagereq>
+      <packagereq type="optional">postfix-sqlite</packagereq>
+      <packagereq type="optional">sendmail</packagereq>
+      <packagereq type="optional">sendmail-cf</packagereq>
+      <packagereq type="optional">sendmail-doc</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>multimedia</id>
+    <name>Multimedia</name>
+    <description>Audio/video framework common to desktops</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">PackageKit-gstreamer-plugin</packagereq>
+      <packagereq type="mandatory">alsa-ucm</packagereq>
+      <packagereq type="mandatory">alsa-utils</packagereq>
+      <packagereq type="mandatory">gstreamer1-plugins-bad-free</packagereq>
+      <packagereq type="mandatory">gstreamer1-plugins-good</packagereq>
+      <packagereq type="mandatory">gstreamer1-plugins-ugly-free</packagereq>
+      <packagereq type="mandatory">pipewire</packagereq>
+      <packagereq type="mandatory">pipewire-alsa</packagereq>
+      <packagereq type="mandatory">pipewire-gstreamer</packagereq>
+      <packagereq type="mandatory">pipewire-jack-audio-connection-kit</packagereq>
+      <packagereq type="mandatory">pipewire-pulseaudio</packagereq>
+      <packagereq type="mandatory">pipewire-utils</packagereq>
+      <packagereq type="optional">pavucontrol</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>network-file-system-client</id>
+    <name>Network File System Client</name>
+    <description>Enables the system to attach to network storage.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">samba-client</packagereq>
+      <packagereq type="mandatory">targetcli</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>network-server</id>
+    <name>Network Servers</name>
+    <description>These packages include network-based servers such as DHCP, Kerberos and NIS.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="optional">dnsmasq</packagereq>
+      <packagereq type="optional">freeradius</packagereq>
+      <packagereq type="optional">frr</packagereq>
+      <packagereq type="optional">idn2</packagereq>
+      <packagereq type="optional">libreswan</packagereq>
+      <packagereq type="optional">radvd</packagereq>
+      <packagereq type="optional">rsyslog-gnutls</packagereq>
+      <packagereq type="optional">rsyslog-gssapi</packagereq>
+      <packagereq type="optional">rsyslog-mysql</packagereq>
+      <packagereq type="optional">rsyslog-pgsql</packagereq>
+      <packagereq type="optional">rsyslog-relp</packagereq>
+      <packagereq type="optional">tang</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>network-tools</id>
+    <name>Networking Tools</name>
+    <description>Tools for configuring and analyzing computer networks.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">tcpdump</packagereq>
+      <packagereq type="default">libreswan</packagereq>
+      <packagereq type="default">nmap-ncat</packagereq>
+      <packagereq type="default">socat</packagereq>
+      <packagereq type="optional">mrtg</packagereq>
+      <packagereq type="optional">nmap</packagereq>
+      <packagereq type="optional">nmstate</packagereq>
+      <packagereq type="optional">wireshark</packagereq>
+      <packagereq type="optional">xdp-tools</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>networkmanager-submodules</id>
+    <name>Common NetworkManager submodules</name>
+    <description>This group contains NetworkManager submodules that are commonly used, but may not be wanted in some streamlined configurations.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">dnsmasq</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>office-suite</id>
+    <name>Office Suite and Productivity</name>
+    <description>A full-purpose office suite, and other productivity tools.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">libreoffice-calc</packagereq>
+      <packagereq type="default">libreoffice-draw</packagereq>
+      <packagereq type="default">libreoffice-emailmerge</packagereq>
+      <packagereq type="default">libreoffice-graphicfilter</packagereq>
+      <packagereq type="default">libreoffice-impress</packagereq>
+      <packagereq type="default">libreoffice-math</packagereq>
+      <packagereq type="default">libreoffice-writer</packagereq>
+      <packagereq type="optional">libreoffice-base</packagereq>
+      <packagereq type="optional">libreoffice-ogltrans</packagereq>
+      <packagereq type="optional">libreoffice-pyuno</packagereq>
+      <packagereq type="optional">libreoffice-wiki-publisher</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>ostree-support</id>
+    <name>Image based rpm-ostree support</name>
+    <description>Packages mandatory for ostree support.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">nss-altfiles</packagereq>
+      <packagereq type="mandatory">ostree-grub2</packagereq>
+      <packagereq type="mandatory">rpm-ostree</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>performance</id>
+    <name>Performance Tools</name>
+    <description>Tools for diagnosing system and application-level performance problems.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">blktrace</packagereq>
+      <packagereq type="mandatory">sysstat</packagereq>
+      <packagereq type="default">grafana</packagereq>
+      <packagereq type="default">grafana-pcp</packagereq>
+      <packagereq type="default">iowatcher</packagereq>
+      <packagereq type="default">pcp</packagereq>
+      <packagereq type="default">pcp-conf</packagereq>
+      <packagereq type="default">pcp-devel</packagereq>
+      <packagereq type="default">pcp-doc</packagereq>
+      <packagereq type="default">pcp-export-pcp2elasticsearch</packagereq>
+      <packagereq type="default">pcp-export-pcp2graphite</packagereq>
+      <packagereq type="default">pcp-export-pcp2influxdb</packagereq>
+      <packagereq type="default">pcp-export-pcp2json</packagereq>
+      <packagereq type="default">pcp-export-pcp2spark</packagereq>
+      <packagereq type="default">pcp-export-pcp2xml</packagereq>
+      <packagereq type="default">pcp-export-pcp2zabbix</packagereq>
+      <packagereq type="default">pcp-export-zabbix-agent</packagereq>
+      <packagereq type="default">pcp-gui</packagereq>
+      <packagereq type="default">pcp-import-collectl2pcp</packagereq>
+      <packagereq type="default">pcp-import-ganglia2pcp</packagereq>
+      <packagereq type="default">pcp-import-iostat2pcp</packagereq>
+      <packagereq type="default">pcp-import-mrtg2pcp</packagereq>
+      <packagereq type="default">pcp-import-sar2pcp</packagereq>
+      <packagereq type="default">pcp-libs</packagereq>
+      <packagereq type="default">pcp-libs-devel</packagereq>
+      <packagereq type="default">pcp-pmda-activemq</packagereq>
+      <packagereq type="default">pcp-pmda-apache</packagereq>
+      <packagereq type="default">pcp-pmda-bash</packagereq>
+      <packagereq type="default">pcp-pmda-bcc</packagereq>
+      <packagereq type="default">pcp-pmda-bind2</packagereq>
+      <packagereq type="default">pcp-pmda-bonding</packagereq>
+      <packagereq type="default">pcp-pmda-bpf</packagereq>
+      <packagereq type="default">pcp-pmda-bpftrace</packagereq>
+      <packagereq type="default">pcp-pmda-cifs</packagereq>
+      <packagereq type="default">pcp-pmda-cisco</packagereq>
+      <packagereq type="default">pcp-pmda-dbping</packagereq>
+      <packagereq type="default">pcp-pmda-denki</packagereq>
+      <packagereq type="default">pcp-pmda-dm</packagereq>
+      <packagereq type="default">pcp-pmda-docker</packagereq>
+      <packagereq type="default">pcp-pmda-ds389</packagereq>
+      <packagereq type="default">pcp-pmda-ds389log</packagereq>
+      <packagereq type="default">pcp-pmda-elasticsearch</packagereq>
+      <packagereq type="default">pcp-pmda-gfs2</packagereq>
+      <packagereq type="default">pcp-pmda-gluster</packagereq>
+      <packagereq type="default">pcp-pmda-gpfs</packagereq>
+      <packagereq type="default">pcp-pmda-gpsd</packagereq>
+      <packagereq type="default">pcp-pmda-haproxy</packagereq>
+      <packagereq type="default">pcp-pmda-infiniband</packagereq>
+      <packagereq type="default">pcp-pmda-json</packagereq>
+      <packagereq type="default">pcp-pmda-kvm</packagereq>
+      <packagereq type="default">pcp-pmda-libvirt</packagereq>
+      <packagereq type="default">pcp-pmda-lio</packagereq>
+      <packagereq type="default">pcp-pmda-lmsensors</packagereq>
+      <packagereq type="default">pcp-pmda-logger</packagereq>
+      <packagereq type="default">pcp-pmda-lustre</packagereq>
+      <packagereq type="default">pcp-pmda-lustrecomm</packagereq>
+      <packagereq type="default">pcp-pmda-mailq</packagereq>
+      <packagereq type="default">pcp-pmda-memcache</packagereq>
+      <packagereq type="default">pcp-pmda-mic</packagereq>
+      <packagereq type="default">pcp-pmda-mongodb</packagereq>
+      <packagereq type="default">pcp-pmda-mounts</packagereq>
+      <packagereq type="default">pcp-pmda-mssql</packagereq>
+      <packagereq type="default">pcp-pmda-mysql</packagereq>
+      <packagereq type="default">pcp-pmda-named</packagereq>
+      <packagereq type="default">pcp-pmda-netcheck</packagereq>
+      <packagereq type="default">pcp-pmda-netfilter</packagereq>
+      <packagereq type="default">pcp-pmda-news</packagereq>
+      <packagereq type="default">pcp-pmda-nfsclient</packagereq>
+      <packagereq type="default">pcp-pmda-nginx</packagereq>
+      <packagereq type="default">pcp-pmda-nvidia-gpu</packagereq>
+      <packagereq type="default">pcp-pmda-openmetrics</packagereq>
+      <packagereq type="default">pcp-pmda-oracle</packagereq>
+      <packagereq type="default">pcp-pmda-pdns</packagereq>
+      <packagereq type="default">pcp-pmda-perfevent</packagereq>
+      <packagereq type="default">pcp-pmda-postfix</packagereq>
+      <packagereq type="default">pcp-pmda-redis</packagereq>
+      <packagereq type="default">pcp-pmda-roomtemp</packagereq>
+      <packagereq type="default">pcp-pmda-rsyslog</packagereq>
+      <packagereq type="default">pcp-pmda-samba</packagereq>
+      <packagereq type="default">pcp-pmda-sendmail</packagereq>
+      <packagereq type="default">pcp-pmda-shping</packagereq>
+      <packagereq type="default">pcp-pmda-slurm</packagereq>
+      <packagereq type="default">pcp-pmda-smart</packagereq>
+      <packagereq type="default">pcp-pmda-snmp</packagereq>
+      <packagereq type="default">pcp-pmda-summary</packagereq>
+      <packagereq type="default">pcp-pmda-systemd</packagereq>
+      <packagereq type="default">pcp-pmda-trace</packagereq>
+      <packagereq type="default">pcp-pmda-unbound</packagereq>
+      <packagereq type="default">pcp-pmda-weblog</packagereq>
+      <packagereq type="default">pcp-pmda-zimbra</packagereq>
+      <packagereq type="default">pcp-pmda-zswap</packagereq>
+      <packagereq type="default">pcp-selinux</packagereq>
+      <packagereq type="default">pcp-system-tools</packagereq>
+      <packagereq type="default">pcp-testsuite</packagereq>
+      <packagereq type="default">pcp-zeroconf</packagereq>
+      <packagereq type="default">perf</packagereq>
+      <packagereq type="default">perl-PCP-LogImport</packagereq>
+      <packagereq type="default">perl-PCP-LogSummary</packagereq>
+      <packagereq type="default">perl-PCP-MMV</packagereq>
+      <packagereq type="default">perl-PCP-PMDA</packagereq>
+      <packagereq type="default">powertop</packagereq>
+      <packagereq type="default">python3-pcp</packagereq>
+      <packagereq type="optional">fio</packagereq>
+      <packagereq type="optional">iperf3</packagereq>
+      <packagereq type="optional">libpfm</packagereq>
+      <packagereq type="optional">papi</packagereq>
+      <packagereq type="optional">papi-devel</packagereq>
+      <packagereq type="optional">systemtap</packagereq>
+      <packagereq type="optional">tuned-utils</packagereq>
+      <packagereq type="optional">valgrind</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>platform-devel</id>
+    <name>Platform Development</name>
+    <description>Recommended development headers and libraries for developing applications to run on Red Hat Enterprise Linux.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">atk-devel</packagereq>
+      <packagereq type="mandatory">cairo-devel</packagereq>
+      <packagereq type="mandatory">dbus-devel</packagereq>
+      <packagereq type="mandatory">desktop-file-utils</packagereq>
+      <packagereq type="mandatory">fontconfig-devel</packagereq>
+      <packagereq type="mandatory">freetype-devel</packagereq>
+      <packagereq type="mandatory">glib2-devel</packagereq>
+      <packagereq type="mandatory">glibc-devel</packagereq>
+      <packagereq type="mandatory">gtk2-devel</packagereq>
+      <packagereq type="mandatory">gtk2-devel-docs</packagereq>
+      <packagereq type="mandatory">gtk3-devel</packagereq>
+      <packagereq type="mandatory">krb5-devel</packagereq>
+      <packagereq type="mandatory">libICE-devel</packagereq>
+      <packagereq type="mandatory">libSM-devel</packagereq>
+      <packagereq type="mandatory">libX11-devel</packagereq>
+      <packagereq type="mandatory">libXScrnSaver-devel</packagereq>
+      <packagereq type="mandatory">libXext-devel</packagereq>
+      <packagereq type="mandatory">libXft-devel</packagereq>
+      <packagereq type="mandatory">libXi-devel</packagereq>
+      <packagereq type="mandatory">libXrender-devel</packagereq>
+      <packagereq type="mandatory">libXt-devel</packagereq>
+      <packagereq type="mandatory">libXtst-devel</packagereq>
+      <packagereq type="mandatory">libXv-devel</packagereq>
+      <packagereq type="mandatory">libXxf86dga-devel</packagereq>
+      <packagereq type="mandatory">libdb-devel</packagereq>
+      <packagereq type="mandatory">libjpeg-turbo-devel</packagereq>
+      <packagereq type="mandatory">libpng-devel</packagereq>
+      <packagereq type="mandatory">libstdc++-devel</packagereq>
+      <packagereq type="mandatory">libxml2-devel</packagereq>
+      <packagereq type="mandatory">libxshmfence-devel</packagereq>
+      <packagereq type="mandatory">mesa-libGL-devel</packagereq>
+      <packagereq type="mandatory">mesa-libGLU-devel</packagereq>
+      <packagereq type="mandatory">mesa-libGLw-devel</packagereq>
+      <packagereq type="mandatory">ncurses-devel</packagereq>
+      <packagereq type="mandatory">nss-devel</packagereq>
+      <packagereq type="mandatory">openldap-devel</packagereq>
+      <packagereq type="mandatory">openssl-devel</packagereq>
+      <packagereq type="mandatory">pam-devel</packagereq>
+      <packagereq type="mandatory">pango-devel</packagereq>
+      <packagereq type="mandatory">qt5-qt3d-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtbase-mysql</packagereq>
+      <packagereq type="mandatory">qt5-qtbase-odbc</packagereq>
+      <packagereq type="mandatory">qt5-qtbase-postgresql</packagereq>
+      <packagereq type="mandatory">qt5-qtconnectivity-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtdoc</packagereq>
+      <packagereq type="mandatory">qt5-qtgraphicaleffects</packagereq>
+      <packagereq type="mandatory">qt5-qtimageformats</packagereq>
+      <packagereq type="mandatory">qt5-qtlocation-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtmultimedia-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtquickcontrols</packagereq>
+      <packagereq type="mandatory">qt5-qtquickcontrols2</packagereq>
+      <packagereq type="mandatory">qt5-qtscript-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtsensors-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtserialbus</packagereq>
+      <packagereq type="mandatory">qt5-qtserialport-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtsvg-devel</packagereq>
+      <packagereq type="mandatory">qt5-qttools-devel</packagereq>
+      <packagereq type="mandatory">qt5-qttranslations</packagereq>
+      <packagereq type="mandatory">qt5-qtwayland</packagereq>
+      <packagereq type="mandatory">qt5-qtwebchannel-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtwebsockets-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtx11extras-devel</packagereq>
+      <packagereq type="mandatory">qt5-qtxmlpatterns-devel</packagereq>
+      <packagereq type="mandatory">zlib-devel</packagereq>
+      <packagereq type="optional">spirv-tools</packagereq>
+      <packagereq type="optional">spirv-tools-libs</packagereq>
+      <packagereq type="optional">vulkan-tools</packagereq>
+      <packagereq type="optional">vulkan-validation-layers</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>platform-kvm</id>
+    <name>KVM platform specific packages</name>
+    <description>Virtualization utilities and drivers for KVM</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">qemu-guest-agent</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>platform-microsoft</id>
+    <name>Hyper-v platform specific packages</name>
+    <description>Virtualization utilities and drivers for Hyper-v</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">hyperv-daemons</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>platform-vmware</id>
+    <name>VMware platform specific packages</name>
+    <description>Virtualization utilities and drivers for VMware</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">open-vm-tools</packagereq>
+      <packagereq type="optional">open-vm-tools-desktop</packagereq>
+      <packagereq type="optional">open-vm-tools-sdmp</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>print-client</id>
+    <name>Printing Client</name>
+    <description>Tools for printing to a local printer or a remote print server.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">cups</packagereq>
+      <packagereq type="mandatory">cups-pk-helper</packagereq>
+      <packagereq type="mandatory">enscript</packagereq>
+      <packagereq type="default">colord</packagereq>
+      <packagereq type="default">gutenprint</packagereq>
+      <packagereq type="default">gutenprint-cups</packagereq>
+      <packagereq type="default">gutenprint-doc</packagereq>
+      <packagereq type="default">paps</packagereq>
+      <packagereq type="default">pnm2ppa</packagereq>
+      <packagereq type="default">system-config-printer-udev</packagereq>
+      <packagereq type="optional">bluez-cups</packagereq>
+      <packagereq type="optional">hplip</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>remote-desktop-clients</id>
+    <name>Remote Desktop Clients</name>
+    <description/>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="optional">freerdp</packagereq>
+      <packagereq type="optional">tigervnc</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>remote-system-management</id>
+    <name>Remote Management for Linux</name>
+    <description>Remote management interface for Red Hat Enterprise Linux.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">net-snmp</packagereq>
+      <packagereq type="default">net-snmp-utils</packagereq>
+      <packagereq type="default">rhel-system-roles</packagereq>
+      <packagereq type="default">sblim-cmpi-base</packagereq>
+      <packagereq type="default">tog-pegasus</packagereq>
+      <packagereq type="default">wsmancli</packagereq>
+      <packagereq type="optional">openwsman-server</packagereq>
+      <packagereq type="optional">sblim-indication_helper</packagereq>
+      <packagereq type="optional">sblim-sfcb</packagereq>
+      <packagereq type="optional">sblim-wbemcli</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>rpm-development-tools</id>
+    <name>RPM Development Tools</name>
+    <description>Tools used for building RPMs, such as rpmbuild.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">redhat-rpm-config</packagereq>
+      <packagereq type="mandatory">rpm-build</packagereq>
+      <packagereq type="default">rpmdevtools</packagereq>
+      <packagereq type="optional">rpmlint</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>scientific</id>
+    <name>Scientific Support</name>
+    <description>Tools for mathematical and scientific computations, and parallel computing.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="optional">fftw</packagereq>
+      <packagereq type="optional">fftw-devel</packagereq>
+      <packagereq type="optional">fftw-static</packagereq>
+      <packagereq type="optional">lapack</packagereq>
+      <packagereq type="optional">mpich-devel</packagereq>
+      <packagereq type="optional">openmpi</packagereq>
+      <packagereq type="optional">openmpi-devel</packagereq>
+      <packagereq type="optional">python3-numpy</packagereq>
+      <packagereq type="optional">python3-scipy</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>security-tools</id>
+    <name>Security Tools</name>
+    <description>Security tools for integrity and trust verification.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="default">scap-security-guide</packagereq>
+      <packagereq type="optional">aide</packagereq>
+      <packagereq type="optional">openscap</packagereq>
+      <packagereq type="optional">openscap-engine-sce</packagereq>
+      <packagereq type="optional">openscap-utils</packagereq>
+      <packagereq type="optional">scap-security-guide-doc</packagereq>
+      <packagereq type="optional">scap-workbench</packagereq>
+      <packagereq type="optional">udica</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>smart-card</id>
+    <name>Smart Card Support</name>
+    <description>Support for using smart card authentication.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="default">esc</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>smb-server</id>
+    <name>Windows File Server</name>
+    <description>This package group allows you to share files between Linux and MS Windows(tm) systems.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">samba-client</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>standard</id>
+    <name>Standard</name>
+    <description>The standard installation of Red Hat Enterprise Linux.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">rsyslog-gnutls</packagereq>
+      <packagereq type="mandatory">rsyslog-gssapi</packagereq>
+      <packagereq type="mandatory">rsyslog-relp</packagereq>
+      <packagereq type="default">blktrace</packagereq>
+      <packagereq type="default">fprintd-pam</packagereq>
+      <packagereq type="default">libstoragemgmt</packagereq>
+      <packagereq type="default">nmap-ncat</packagereq>
+      <packagereq type="default">pinfo</packagereq>
+      <packagereq type="default">plymouth</packagereq>
+      <packagereq type="default">tcpdump</packagereq>
+      <packagereq type="default">vim-enhanced</packagereq>
+      <packagereq type="default">wget</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>system-tools</id>
+    <name>System Tools</name>
+    <description>This group is a collection of various tools for the system, such as the client for connecting to SMB shares and tools to monitor network traffic.</description>
+    <default>true</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="default">NetworkManager-libreswan</packagereq>
+      <packagereq type="default">libreswan</packagereq>
+      <packagereq type="default">nmap</packagereq>
+      <packagereq type="default">samba-client</packagereq>
+      <packagereq type="default">tigervnc</packagereq>
+      <packagereq type="optional">PackageKit-command-not-found</packagereq>
+      <packagereq type="optional">aide</packagereq>
+      <packagereq type="optional">bacula-client</packagereq>
+      <packagereq type="optional">convmv</packagereq>
+      <packagereq type="optional">createrepo_c</packagereq>
+      <packagereq type="optional">freerdp</packagereq>
+      <packagereq type="optional">gpm</packagereq>
+      <packagereq type="optional">mc</packagereq>
+      <packagereq type="optional">mrtg</packagereq>
+      <packagereq type="optional">mtx</packagereq>
+      <packagereq type="optional">net-snmp-utils</packagereq>
+      <packagereq type="optional">oddjob</packagereq>
+      <packagereq type="optional">oddjob-mkhomedir</packagereq>
+      <packagereq type="optional">pmdk-convert</packagereq>
+      <packagereq type="optional">rear</packagereq>
+      <packagereq type="optional">speech-dispatcher</packagereq>
+      <packagereq type="optional">speech-dispatcher-espeak-ng</packagereq>
+      <packagereq type="optional">sysstat</packagereq>
+      <packagereq type="optional">wireshark</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>texlive</id>
+    <name>TeX formatting system</name>
+    <description>The TeX system for editing, typesetting, previewing, and printing TeX documents.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">texlive</packagereq>
+      <packagereq type="mandatory">texlive-adjustbox</packagereq>
+      <packagereq type="mandatory">texlive-ae</packagereq>
+      <packagereq type="mandatory">texlive-algorithms</packagereq>
+      <packagereq type="mandatory">texlive-amscls</packagereq>
+      <packagereq type="mandatory">texlive-amsfonts</packagereq>
+      <packagereq type="mandatory">texlive-amsmath</packagereq>
+      <packagereq type="mandatory">texlive-anyfontsize</packagereq>
+      <packagereq type="mandatory">texlive-anysize</packagereq>
+      <packagereq type="mandatory">texlive-appendix</packagereq>
+      <packagereq type="mandatory">texlive-arabxetex</packagereq>
+      <packagereq type="mandatory">texlive-arphic</packagereq>
+      <packagereq type="mandatory">texlive-attachfile</packagereq>
+      <packagereq type="mandatory">texlive-avantgar</packagereq>
+      <packagereq type="mandatory">texlive-awesomebox</packagereq>
+      <packagereq type="mandatory">texlive-babel</packagereq>
+      <packagereq type="mandatory">texlive-babel-english</packagereq>
+      <packagereq type="mandatory">texlive-babelbib</packagereq>
+      <packagereq type="mandatory">texlive-base</packagereq>
+      <packagereq type="mandatory">texlive-beamer</packagereq>
+      <packagereq type="mandatory">texlive-bera</packagereq>
+      <packagereq type="mandatory">texlive-beton</packagereq>
+      <packagereq type="mandatory">texlive-bibtex</packagereq>
+      <packagereq type="mandatory">texlive-bibtopic</packagereq>
+      <packagereq type="mandatory">texlive-bidi</packagereq>
+      <packagereq type="mandatory">texlive-bigfoot</packagereq>
+      <packagereq type="mandatory">texlive-bookman</packagereq>
+      <packagereq type="mandatory">texlive-booktabs</packagereq>
+      <packagereq type="mandatory">texlive-breakurl</packagereq>
+      <packagereq type="mandatory">texlive-breqn</packagereq>
+      <packagereq type="mandatory">texlive-capt-of</packagereq>
+      <packagereq type="mandatory">texlive-caption</packagereq>
+      <packagereq type="mandatory">texlive-carlisle</packagereq>
+      <packagereq type="mandatory">texlive-changebar</packagereq>
+      <packagereq type="mandatory">texlive-changepage</packagereq>
+      <packagereq type="mandatory">texlive-charter</packagereq>
+      <packagereq type="mandatory">texlive-chngcntr</packagereq>
+      <packagereq type="mandatory">texlive-cite</packagereq>
+      <packagereq type="mandatory">texlive-cjk</packagereq>
+      <packagereq type="mandatory">texlive-classpack</packagereq>
+      <packagereq type="mandatory">texlive-cm</packagereq>
+      <packagereq type="mandatory">texlive-cm-lgc</packagereq>
+      <packagereq type="mandatory">texlive-cm-super</packagereq>
+      <packagereq type="mandatory">texlive-cmap</packagereq>
+      <packagereq type="mandatory">texlive-cmextra</packagereq>
+      <packagereq type="mandatory">texlive-cns</packagereq>
+      <packagereq type="mandatory">texlive-collectbox</packagereq>
+      <packagereq type="mandatory">texlive-collection-basic</packagereq>
+      <packagereq type="mandatory">texlive-collection-fontsrecommended</packagereq>
+      <packagereq type="mandatory">texlive-collection-htmlxml</packagereq>
+      <packagereq type="mandatory">texlive-collection-latex</packagereq>
+      <packagereq type="mandatory">texlive-collection-latexrecommended</packagereq>
+      <packagereq type="mandatory">texlive-collection-xetex</packagereq>
+      <packagereq type="mandatory">texlive-colortbl</packagereq>
+      <packagereq type="mandatory">texlive-courier</packagereq>
+      <packagereq type="mandatory">texlive-crop</packagereq>
+      <packagereq type="mandatory">texlive-csquotes</packagereq>
+      <packagereq type="mandatory">texlive-ctable</packagereq>
+      <packagereq type="mandatory">texlive-ctablestack</packagereq>
+      <packagereq type="mandatory">texlive-currfile</packagereq>
+      <packagereq type="mandatory">texlive-datetime</packagereq>
+      <packagereq type="mandatory">texlive-dvipdfmx</packagereq>
+      <packagereq type="mandatory">texlive-dvipng</packagereq>
+      <packagereq type="mandatory">texlive-dvips</packagereq>
+      <packagereq type="mandatory">texlive-dvisvgm</packagereq>
+      <packagereq type="mandatory">texlive-ec</packagereq>
+      <packagereq type="mandatory">texlive-eepic</packagereq>
+      <packagereq type="mandatory">texlive-enctex</packagereq>
+      <packagereq type="mandatory">texlive-enumitem</packagereq>
+      <packagereq type="mandatory">texlive-environ</packagereq>
+      <packagereq type="mandatory">texlive-epsf</packagereq>
+      <packagereq type="mandatory">texlive-epstopdf</packagereq>
+      <packagereq type="mandatory">texlive-eqparbox</packagereq>
+      <packagereq type="mandatory">texlive-eso-pic</packagereq>
+      <packagereq type="mandatory">texlive-etex</packagereq>
+      <packagereq type="mandatory">texlive-etex-pkg</packagereq>
+      <packagereq type="mandatory">texlive-etoolbox</packagereq>
+      <packagereq type="mandatory">texlive-euenc</packagereq>
+      <packagereq type="mandatory">texlive-euler</packagereq>
+      <packagereq type="mandatory">texlive-euro</packagereq>
+      <packagereq type="mandatory">texlive-eurosym</packagereq>
+      <packagereq type="mandatory">texlive-extsizes</packagereq>
+      <packagereq type="mandatory">texlive-fancybox</packagereq>
+      <packagereq type="mandatory">texlive-fancyhdr</packagereq>
+      <packagereq type="mandatory">texlive-fancyref</packagereq>
+      <packagereq type="mandatory">texlive-fancyvrb</packagereq>
+      <packagereq type="mandatory">texlive-filecontents</packagereq>
+      <packagereq type="mandatory">texlive-filehook</packagereq>
+      <packagereq type="mandatory">texlive-finstrut</packagereq>
+      <packagereq type="mandatory">texlive-fix2col</packagereq>
+      <packagereq type="mandatory">texlive-fixlatvian</packagereq>
+      <packagereq type="mandatory">texlive-float</packagereq>
+      <packagereq type="mandatory">texlive-fmtcount</packagereq>
+      <packagereq type="mandatory">texlive-fncychap</packagereq>
+      <packagereq type="mandatory">texlive-fontawesome</packagereq>
+      <packagereq type="mandatory">texlive-fontbook</packagereq>
+      <packagereq type="mandatory">texlive-fonts-tlwg</packagereq>
+      <packagereq type="mandatory">texlive-fontspec</packagereq>
+      <packagereq type="mandatory">texlive-fontware</packagereq>
+      <packagereq type="mandatory">texlive-fontwrap</packagereq>
+      <packagereq type="mandatory">texlive-footmisc</packagereq>
+      <packagereq type="mandatory">texlive-fp</packagereq>
+      <packagereq type="mandatory">texlive-fpl</packagereq>
+      <packagereq type="mandatory">texlive-framed</packagereq>
+      <packagereq type="mandatory">texlive-garuda-c90</packagereq>
+      <packagereq type="mandatory">texlive-geometry</packagereq>
+      <packagereq type="mandatory">texlive-glyphlist</packagereq>
+      <packagereq type="mandatory">texlive-graphics</packagereq>
+      <packagereq type="mandatory">texlive-graphics-cfg</packagereq>
+      <packagereq type="mandatory">texlive-graphics-def</packagereq>
+      <packagereq type="mandatory">texlive-gsftopk</packagereq>
+      <packagereq type="mandatory">texlive-helvetic</packagereq>
+      <packagereq type="mandatory">texlive-hyperref</packagereq>
+      <packagereq type="mandatory">texlive-hyph-utf8</packagereq>
+      <packagereq type="mandatory">texlive-hyphen-base</packagereq>
+      <packagereq type="mandatory">texlive-hyphenat</packagereq>
+      <packagereq type="mandatory">texlive-ifetex</packagereq>
+      <packagereq type="mandatory">texlive-ifluatex</packagereq>
+      <packagereq type="mandatory">texlive-ifmtarg</packagereq>
+      <packagereq type="mandatory">texlive-ifoddpage</packagereq>
+      <packagereq type="mandatory">texlive-iftex</packagereq>
+      <packagereq type="mandatory">texlive-ifxetex</packagereq>
+      <packagereq type="mandatory">texlive-import</packagereq>
+      <packagereq type="mandatory">texlive-index</packagereq>
+      <packagereq type="mandatory">texlive-jadetex</packagereq>
+      <packagereq type="mandatory">texlive-jknapltx</packagereq>
+      <packagereq type="mandatory">texlive-kastrup</packagereq>
+      <packagereq type="mandatory">texlive-kerkis</packagereq>
+      <packagereq type="mandatory">texlive-knuth-lib</packagereq>
+      <packagereq type="mandatory">texlive-knuth-local</packagereq>
+      <packagereq type="mandatory">texlive-koma-script</packagereq>
+      <packagereq type="mandatory">texlive-kpathsea</packagereq>
+      <packagereq type="mandatory">texlive-l3experimental</packagereq>
+      <packagereq type="mandatory">texlive-l3kernel</packagereq>
+      <packagereq type="mandatory">texlive-l3packages</packagereq>
+      <packagereq type="mandatory">texlive-lastpage</packagereq>
+      <packagereq type="mandatory">texlive-latex</packagereq>
+      <packagereq type="mandatory">texlive-latex-fonts</packagereq>
+      <packagereq type="mandatory">texlive-latex2man</packagereq>
+      <packagereq type="mandatory">texlive-latexconfig</packagereq>
+      <packagereq type="mandatory">texlive-lettrine</packagereq>
+      <packagereq type="mandatory">texlive-lib</packagereq>
+      <packagereq type="mandatory">texlive-linegoal</packagereq>
+      <packagereq type="mandatory">texlive-lineno</packagereq>
+      <packagereq type="mandatory">texlive-listings</packagereq>
+      <packagereq type="mandatory">texlive-lm</packagereq>
+      <packagereq type="mandatory">texlive-lm-math</packagereq>
+      <packagereq type="mandatory">texlive-ltabptch</packagereq>
+      <packagereq type="mandatory">texlive-ltxmisc</packagereq>
+      <packagereq type="mandatory">texlive-lua-alt-getopt</packagereq>
+      <packagereq type="mandatory">texlive-lualatex-math</packagereq>
+      <packagereq type="mandatory">texlive-lualibs</packagereq>
+      <packagereq type="mandatory">texlive-luaotfload</packagereq>
+      <packagereq type="mandatory">texlive-luatex</packagereq>
+      <packagereq type="mandatory">texlive-luatex85</packagereq>
+      <packagereq type="mandatory">texlive-luatexbase</packagereq>
+      <packagereq type="mandatory">texlive-makecmds</packagereq>
+      <packagereq type="mandatory">texlive-makeindex</packagereq>
+      <packagereq type="mandatory">texlive-manfnt-font</packagereq>
+      <packagereq type="mandatory">texlive-marginnote</packagereq>
+      <packagereq type="mandatory">texlive-marvosym</packagereq>
+      <packagereq type="mandatory">texlive-mathpazo</packagereq>
+      <packagereq type="mandatory">texlive-mathspec</packagereq>
+      <packagereq type="mandatory">texlive-mathtools</packagereq>
+      <packagereq type="mandatory">texlive-mdwtools</packagereq>
+      <packagereq type="mandatory">texlive-memoir</packagereq>
+      <packagereq type="mandatory">texlive-metafont</packagereq>
+      <packagereq type="mandatory">texlive-metalogo</packagereq>
+      <packagereq type="mandatory">texlive-metapost</packagereq>
+      <packagereq type="mandatory">texlive-mflogo</packagereq>
+      <packagereq type="mandatory">texlive-mflogo-font</packagereq>
+      <packagereq type="mandatory">texlive-mfnfss</packagereq>
+      <packagereq type="mandatory">texlive-mfware</packagereq>
+      <packagereq type="mandatory">texlive-microtype</packagereq>
+      <packagereq type="mandatory">texlive-mnsymbol</packagereq>
+      <packagereq type="mandatory">texlive-mparhack</packagereq>
+      <packagereq type="mandatory">texlive-mptopdf</packagereq>
+      <packagereq type="mandatory">texlive-ms</packagereq>
+      <packagereq type="mandatory">texlive-multido</packagereq>
+      <packagereq type="mandatory">texlive-multirow</packagereq>
+      <packagereq type="mandatory">texlive-natbib</packagereq>
+      <packagereq type="mandatory">texlive-ncctools</packagereq>
+      <packagereq type="mandatory">texlive-ncntrsbk</packagereq>
+      <packagereq type="mandatory">texlive-needspace</packagereq>
+      <packagereq type="mandatory">texlive-norasi-c90</packagereq>
+      <packagereq type="mandatory">texlive-ntgclass</packagereq>
+      <packagereq type="mandatory">texlive-oberdiek</packagereq>
+      <packagereq type="mandatory">texlive-overpic</packagereq>
+      <packagereq type="mandatory">texlive-palatino</packagereq>
+      <packagereq type="mandatory">texlive-paralist</packagereq>
+      <packagereq type="mandatory">texlive-parallel</packagereq>
+      <packagereq type="mandatory">texlive-parskip</packagereq>
+      <packagereq type="mandatory">texlive-passivetex</packagereq>
+      <packagereq type="mandatory">texlive-pdfpages</packagereq>
+      <packagereq type="mandatory">texlive-pdftex</packagereq>
+      <packagereq type="mandatory">texlive-pgf</packagereq>
+      <packagereq type="mandatory">texlive-philokalia</packagereq>
+      <packagereq type="mandatory">texlive-placeins</packagereq>
+      <packagereq type="mandatory">texlive-polyglossia</packagereq>
+      <packagereq type="mandatory">texlive-powerdot</packagereq>
+      <packagereq type="mandatory">texlive-preprint</packagereq>
+      <packagereq type="mandatory">texlive-psfrag</packagereq>
+      <packagereq type="mandatory">texlive-pslatex</packagereq>
+      <packagereq type="mandatory">texlive-psnfss</packagereq>
+      <packagereq type="mandatory">texlive-pspicture</packagereq>
+      <packagereq type="mandatory">texlive-pst-3d</packagereq>
+      <packagereq type="mandatory">texlive-pst-blur</packagereq>
+      <packagereq type="mandatory">texlive-pst-coil</packagereq>
+      <packagereq type="mandatory">texlive-pst-eps</packagereq>
+      <packagereq type="mandatory">texlive-pst-fill</packagereq>
+      <packagereq type="mandatory">texlive-pst-grad</packagereq>
+      <packagereq type="mandatory">texlive-pst-math</packagereq>
+      <packagereq type="mandatory">texlive-pst-node</packagereq>
+      <packagereq type="mandatory">texlive-pst-plot</packagereq>
+      <packagereq type="mandatory">texlive-pst-slpe</packagereq>
+      <packagereq type="mandatory">texlive-pst-text</packagereq>
+      <packagereq type="mandatory">texlive-pst-tree</packagereq>
+      <packagereq type="mandatory">texlive-pstricks</packagereq>
+      <packagereq type="mandatory">texlive-pstricks-add</packagereq>
+      <packagereq type="mandatory">texlive-ptext</packagereq>
+      <packagereq type="mandatory">texlive-pxfonts</packagereq>
+      <packagereq type="mandatory">texlive-qstest</packagereq>
+      <packagereq type="mandatory">texlive-rcs</packagereq>
+      <packagereq type="mandatory">texlive-realscripts</packagereq>
+      <packagereq type="mandatory">texlive-rsfs</packagereq>
+      <packagereq type="mandatory">texlive-sansmath</packagereq>
+      <packagereq type="mandatory">texlive-sauerj</packagereq>
+      <packagereq type="mandatory">texlive-scheme-basic</packagereq>
+      <packagereq type="mandatory">texlive-section</packagereq>
+      <packagereq type="mandatory">texlive-sectsty</packagereq>
+      <packagereq type="mandatory">texlive-seminar</packagereq>
+      <packagereq type="mandatory">texlive-sepnum</packagereq>
+      <packagereq type="mandatory">texlive-setspace</packagereq>
+      <packagereq type="mandatory">texlive-showexpl</packagereq>
+      <packagereq type="mandatory">texlive-soul</packagereq>
+      <packagereq type="mandatory">texlive-stmaryrd</packagereq>
+      <packagereq type="mandatory">texlive-subfig</packagereq>
+      <packagereq type="mandatory">texlive-subfigure</packagereq>
+      <packagereq type="mandatory">texlive-svn-prov</packagereq>
+      <packagereq type="mandatory">texlive-symbol</packagereq>
+      <packagereq type="mandatory">texlive-t2</packagereq>
+      <packagereq type="mandatory">texlive-tabu</packagereq>
+      <packagereq type="mandatory">texlive-tabulary</packagereq>
+      <packagereq type="mandatory">texlive-tetex</packagereq>
+      <packagereq type="mandatory">texlive-tex</packagereq>
+      <packagereq type="mandatory">texlive-tex-gyre</packagereq>
+      <packagereq type="mandatory">texlive-tex-gyre-math</packagereq>
+      <packagereq type="mandatory">texlive-tex-ini-files</packagereq>
+      <packagereq type="mandatory">texlive-tex4ht</packagereq>
+      <packagereq type="mandatory">texlive-texconfig</packagereq>
+      <packagereq type="mandatory">texlive-texlive-common-doc</packagereq>
+      <packagereq type="mandatory">texlive-texlive-docindex</packagereq>
+      <packagereq type="mandatory">texlive-texlive-en</packagereq>
+      <packagereq type="mandatory">texlive-texlive-msg-translations</packagereq>
+      <packagereq type="mandatory">texlive-texlive-scripts</packagereq>
+      <packagereq type="mandatory">texlive-texlive.infra</packagereq>
+      <packagereq type="mandatory">texlive-textcase</packagereq>
+      <packagereq type="mandatory">texlive-textpos</packagereq>
+      <packagereq type="mandatory">texlive-threeparttable</packagereq>
+      <packagereq type="mandatory">texlive-thumbpdf</packagereq>
+      <packagereq type="mandatory">texlive-times</packagereq>
+      <packagereq type="mandatory">texlive-tipa</packagereq>
+      <packagereq type="mandatory">texlive-titlesec</packagereq>
+      <packagereq type="mandatory">texlive-titling</packagereq>
+      <packagereq type="mandatory">texlive-tocloft</packagereq>
+      <packagereq type="mandatory">texlive-tools</packagereq>
+      <packagereq type="mandatory">texlive-trimspaces</packagereq>
+      <packagereq type="mandatory">texlive-txfonts</packagereq>
+      <packagereq type="mandatory">texlive-type1cm</packagereq>
+      <packagereq type="mandatory">texlive-typehtml</packagereq>
+      <packagereq type="mandatory">texlive-ucharclasses</packagereq>
+      <packagereq type="mandatory">texlive-ucs</packagereq>
+      <packagereq type="mandatory">texlive-uhc</packagereq>
+      <packagereq type="mandatory">texlive-ulem</packagereq>
+      <packagereq type="mandatory">texlive-underscore</packagereq>
+      <packagereq type="mandatory">texlive-unicode-data</packagereq>
+      <packagereq type="mandatory">texlive-unicode-math</packagereq>
+      <packagereq type="mandatory">texlive-unisugar</packagereq>
+      <packagereq type="mandatory">texlive-updmap-map</packagereq>
+      <packagereq type="mandatory">texlive-upquote</packagereq>
+      <packagereq type="mandatory">texlive-url</packagereq>
+      <packagereq type="mandatory">texlive-utopia</packagereq>
+      <packagereq type="mandatory">texlive-varwidth</packagereq>
+      <packagereq type="mandatory">texlive-wadalab</packagereq>
+      <packagereq type="mandatory">texlive-was</packagereq>
+      <packagereq type="mandatory">texlive-wasy</packagereq>
+      <packagereq type="mandatory">texlive-wasy2-ps</packagereq>
+      <packagereq type="mandatory">texlive-wasysym</packagereq>
+      <packagereq type="mandatory">texlive-wrapfig</packagereq>
+      <packagereq type="mandatory">texlive-xcolor</packagereq>
+      <packagereq type="mandatory">texlive-xdvi</packagereq>
+      <packagereq type="mandatory">texlive-xecjk</packagereq>
+      <packagereq type="mandatory">texlive-xecolor</packagereq>
+      <packagereq type="mandatory">texlive-xecyr</packagereq>
+      <packagereq type="mandatory">texlive-xeindex</packagereq>
+      <packagereq type="mandatory">texlive-xepersian</packagereq>
+      <packagereq type="mandatory">texlive-xesearch</packagereq>
+      <packagereq type="mandatory">texlive-xetex</packagereq>
+      <packagereq type="mandatory">texlive-xetex-itrans</packagereq>
+      <packagereq type="mandatory">texlive-xetex-pstricks</packagereq>
+      <packagereq type="mandatory">texlive-xetex-tibetan</packagereq>
+      <packagereq type="mandatory">texlive-xetexconfig</packagereq>
+      <packagereq type="mandatory">texlive-xetexfontinfo</packagereq>
+      <packagereq type="mandatory">texlive-xifthen</packagereq>
+      <packagereq type="mandatory">texlive-xkeyval</packagereq>
+      <packagereq type="mandatory">texlive-xltxtra</packagereq>
+      <packagereq type="mandatory">texlive-xmltex</packagereq>
+      <packagereq type="mandatory">texlive-xmltexconfig</packagereq>
+      <packagereq type="mandatory">texlive-xstring</packagereq>
+      <packagereq type="mandatory">texlive-xtab</packagereq>
+      <packagereq type="mandatory">texlive-xunicode</packagereq>
+      <packagereq type="mandatory">texlive-zapfchan</packagereq>
+      <packagereq type="mandatory">texlive-zapfding</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>virtualization-client</id>
+    <name>Virtualization Client</name>
+    <description>Clients for installing and managing virtualization instances.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">virt-install</packagereq>
+      <packagereq type="mandatory">virt-manager</packagereq>
+      <packagereq type="mandatory">virt-viewer</packagereq>
+      <packagereq type="default">virt-top</packagereq>
+      <packagereq type="optional">guestfs-tools</packagereq>
+      <packagereq type="optional">libguestfs-inspect-icons</packagereq>
+      <packagereq type="optional">virt-win-reg</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>virtualization-hypervisor</id>
+    <name>Virtualization Hypervisor</name>
+    <description>Smallest possible virtualization host installation.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">libvirt</packagereq>
+      <packagereq type="mandatory">qemu-kvm</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>virtualization-platform</id>
+    <name>Virtualization Platform</name>
+    <description>Provides an interface for accessing and controlling virtualized guests and containers.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">libvirt</packagereq>
+      <packagereq type="mandatory">libvirt-client</packagereq>
+      <packagereq type="mandatory">virt-who</packagereq>
+      <packagereq type="optional">fence-virtd-libvirt</packagereq>
+      <packagereq type="optional">fence-virtd-multicast</packagereq>
+      <packagereq type="optional">fence-virtd-serial</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>virtualization-tools</id>
+    <name>Virtualization Tools</name>
+    <description>Tools for offline virtual image management.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">libguestfs</packagereq>
+      <packagereq type="default">virtio-win</packagereq>
+      <packagereq type="optional">guestfs-tools</packagereq>
+      <packagereq type="optional">libguestfs-inspect-icons</packagereq>
+      <packagereq type="optional">virt-win-reg</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>web-server</id>
+    <name>Basic Web Server</name>
+    <description>These tools allow you to run a Web server on the system.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">httpd</packagereq>
+      <packagereq type="default">httpd-manual</packagereq>
+      <packagereq type="default">mod_fcgid</packagereq>
+      <packagereq type="default">mod_ssl</packagereq>
+      <packagereq type="optional">memcached</packagereq>
+      <packagereq type="optional">mod_auth_gssapi</packagereq>
+      <packagereq type="optional">mod_security</packagereq>
+      <packagereq type="optional">mod_security-mlogc</packagereq>
+      <packagereq type="optional">mod_security_crs</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>workstation-product</id>
+    <name>Workstation product core</name>
+    <description>Packages mandatory for the workstation product.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="mandatory">adwaita-qt5</packagereq>
+      <packagereq type="mandatory">alsa-sof-firmware</packagereq>
+      <packagereq type="mandatory">bind-utils</packagereq>
+      <packagereq type="mandatory">evolution</packagereq>
+      <packagereq type="mandatory">evolution-ews</packagereq>
+      <packagereq type="mandatory">evolution-help</packagereq>
+      <packagereq type="mandatory">git</packagereq>
+      <packagereq type="mandatory">google-noto-emoji-fonts</packagereq>
+      <packagereq type="mandatory">hunspell</packagereq>
+      <packagereq type="mandatory">ibus-anthy</packagereq>
+      <packagereq type="mandatory">ibus-gtk2</packagereq>
+      <packagereq type="mandatory">ibus-gtk3</packagereq>
+      <packagereq type="mandatory">ibus-hangul</packagereq>
+      <packagereq type="mandatory">ibus-libpinyin</packagereq>
+      <packagereq type="mandatory">ibus-libzhuyin</packagereq>
+      <packagereq type="mandatory">ibus-m17n</packagereq>
+      <packagereq type="mandatory">ibus-typing-booster</packagereq>
+      <packagereq type="mandatory">nmap-ncat</packagereq>
+      <packagereq type="mandatory">pinentry-gnome3</packagereq>
+      <packagereq type="mandatory">pinfo</packagereq>
+      <packagereq type="mandatory">plymouth</packagereq>
+      <packagereq type="mandatory">qgnomeplatform</packagereq>
+      <packagereq type="mandatory">qt5-qtbase</packagereq>
+      <packagereq type="mandatory">qt5-qtbase-gui</packagereq>
+      <packagereq type="mandatory">qt5-qtdeclarative</packagereq>
+      <packagereq type="mandatory">qt5-qtxmlpatterns</packagereq>
+      <packagereq type="mandatory">setroubleshoot</packagereq>
+      <packagereq type="mandatory">telnet</packagereq>
+      <packagereq type="mandatory">thermald</packagereq>
+      <packagereq type="mandatory">xorg-x11-drv-libinput</packagereq>
+    </packagelist>
+  </group>
+  <category>
+    <id>development</id>
+    <name>Development</name>
+    <description>Packages which provide functionality for developing and building applications.</description>
+    <display_order>90</display_order>
+    <grouplist>
+      <groupid>additional-devel</groupid>
+      <groupid>development</groupid>
+      <groupid>platform-devel</groupid>
+    </grouplist>
+  </category>
+  <category>
+    <id>servers</id>
+    <name>Servers</name>
+    <description>Software used for running network servers</description>
+    <display_order>20</display_order>
+    <grouplist>
+      <groupid>file-server</groupid>
+      <groupid>ftp-server</groupid>
+      <groupid>mail-server</groupid>
+      <groupid>network-server</groupid>
+      <groupid>web-server</groupid>
+    </grouplist>
+  </category>
+  <category>
+    <id>base-system</id>
+    <name>System</name>
+    <description>Core system components.</description>
+    <display_order>10</display_order>
+    <grouplist>
+      <groupid>backup-client</groupid>
+      <groupid>console-internet</groupid>
+      <groupid>debugging</groupid>
+      <groupid>hardware-monitoring</groupid>
+      <groupid>infiniband</groupid>
+      <groupid>java-platform</groupid>
+      <groupid>network-tools</groupid>
+      <groupid>performance</groupid>
+      <groupid>print-client</groupid>
+      <groupid>scientific</groupid>
+      <groupid>security-tools</groupid>
+      <groupid>smart-card</groupid>
+      <groupid>standard</groupid>
+    </grouplist>
+  </category>
+  <category>
+    <id>desktops</id>
+    <name>Desktops</name>
+    <description>Desktops and thin clients.</description>
+    <display_order>70</display_order>
+    <grouplist>
+      <groupid>base-x</groupid>
+      <groupid>desktop-debugging</groupid>
+      <groupid>fonts</groupid>
+      <groupid>gnome-desktop</groupid>
+      <groupid>input-methods</groupid>
+      <groupid>legacy-x</groupid>
+      <groupid>remote-desktop-clients</groupid>
+    </grouplist>
+  </category>
+  <category>
+    <id>apps</id>
+    <name>Applications</name>
+    <description>Applications to perform a variety of tasks</description>
+    <display_order>80</display_order>
+    <grouplist>
+      <groupid>emacs</groupid>
+      <groupid>gnome-apps</groupid>
+      <groupid>graphics</groupid>
+      <groupid>internet-applications</groupid>
+      <groupid>office-suite</groupid>
+    </grouplist>
+  </category>
+  <environment>
+    <id>graphical-server-environment</id>
+    <name>Server with GUI</name>
+    <description>An integrated, easy-to-manage server with a graphical interface.</description>
+    <display_order>1</display_order>
+    <grouplist>
+      <groupid>base-x</groupid>
+      <groupid>container-management</groupid>
+      <groupid>core</groupid>
+      <groupid>fonts</groupid>
+      <groupid>gnome-desktop</groupid>
+      <groupid>guest-desktop-agents</groupid>
+      <groupid>hardware-monitoring</groupid>
+      <groupid>hardware-support</groupid>
+      <groupid>headless-management</groupid>
+      <groupid>internet-browser</groupid>
+      <groupid>multimedia</groupid>
+      <groupid>networkmanager-submodules</groupid>
+      <groupid>print-client</groupid>
+      <groupid>server-product</groupid>
+      <groupid>standard</groupid>
+    </grouplist>
+    <optionlist>
+      <groupid>debugging</groupid>
+      <groupid>dns-server</groupid>
+      <groupid>file-server</groupid>
+      <groupid>ftp-server</groupid>
+      <groupid>guest-agents</groupid>
+      <groupid>infiniband</groupid>
+      <groupid>mail-server</groupid>
+      <groupid>network-file-system-client</groupid>
+      <groupid>network-server</groupid>
+      <groupid>performance</groupid>
+      <groupid>remote-desktop-clients</groupid>
+      <groupid>remote-system-management</groupid>
+      <groupid>smb-server</groupid>
+      <groupid>virtualization-client</groupid>
+      <groupid>virtualization-hypervisor</groupid>
+      <groupid>virtualization-tools</groupid>
+      <groupid>web-server</groupid>
+    </optionlist>
+  </environment>
+  <environment>
+    <id>server-product-environment</id>
+    <name>Server</name>
+    <description>An integrated, easy-to-manage server.</description>
+    <display_order>2</display_order>
+    <grouplist>
+      <groupid>container-management</groupid>
+      <groupid>core</groupid>
+      <groupid>hardware-support</groupid>
+      <groupid>headless-management</groupid>
+      <groupid>server-product</groupid>
+      <groupid>standard</groupid>
+    </grouplist>
+    <optionlist>
+      <groupid>debugging</groupid>
+      <groupid>dns-server</groupid>
+      <groupid>file-server</groupid>
+      <groupid>ftp-server</groupid>
+      <groupid>gnome-desktop</groupid>
+      <groupid>guest-agents</groupid>
+      <groupid>hardware-monitoring</groupid>
+      <groupid>infiniband</groupid>
+      <groupid>mail-server</groupid>
+      <groupid>network-file-system-client</groupid>
+      <groupid>network-server</groupid>
+      <groupid>performance</groupid>
+      <groupid>remote-system-management</groupid>
+      <groupid>smb-server</groupid>
+      <groupid>virtualization-hypervisor</groupid>
+      <groupid>web-server</groupid>
+    </optionlist>
+  </environment>
+  <environment>
+    <id>virtualization-host-environment</id>
+    <name>Virtualization Host</name>
+    <description>Minimal virtualization host.</description>
+    <display_order>99</display_order>
+    <grouplist>
+      <groupid>base</groupid>
+      <groupid>core</groupid>
+      <groupid>standard</groupid>
+      <groupid>virtualization-hypervisor</groupid>
+      <groupid>virtualization-tools</groupid>
+    </grouplist>
+    <optionlist>
+      <groupid>debugging</groupid>
+      <groupid>network-file-system-client</groupid>
+      <groupid>remote-system-management</groupid>
+      <groupid>virtualization-platform</groupid>
+    </optionlist>
+  </environment>
+  <environment>
+    <id>workstation-product-environment</id>
+    <name>Workstation</name>
+    <description>Workstation is a user-friendly desktop system for laptops and PCs.</description>
+    <display_order>4</display_order>
+    <grouplist>
+      <groupid>base-x</groupid>
+      <groupid>core</groupid>
+      <groupid>fonts</groupid>
+      <groupid>gnome-desktop</groupid>
+      <groupid>guest-desktop-agents</groupid>
+      <groupid>hardware-support</groupid>
+      <groupid>internet-browser</groupid>
+      <groupid>multimedia</groupid>
+      <groupid>networkmanager-submodules</groupid>
+      <groupid>print-client</groupid>
+      <groupid>standard</groupid>
+      <groupid>workstation-product</groupid>
+    </grouplist>
+    <optionlist>
+      <groupid>backup-client</groupid>
+      <groupid>gnome-apps</groupid>
+      <groupid>headless-management</groupid>
+      <groupid>internet-applications</groupid>
+      <groupid>office-suite</groupid>
+      <groupid>remote-desktop-clients</groupid>
+      <groupid>smart-card</groupid>
+    </optionlist>
+  </environment>
+</comps>
