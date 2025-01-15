@@ -247,6 +247,10 @@ depsolve_test_cases = [
         ],
         "results": {
             "packages": {
+                "NetworkManager",
+                "NetworkManager-libnm",
+                "NetworkManager-team",
+                "NetworkManager-tui",
                 "acl",
                 "alternatives",
                 "attr",
@@ -259,8 +263,8 @@ depsolve_test_cases = [
                 "binutils",
                 "binutils-gold",
                 "bzip2-libs",
-                "ca-certificates",
                 "c-ares",
+                "ca-certificates",
                 "centos-gpg-keys",
                 "centos-stream-release",
                 "centos-stream-repos",
@@ -331,7 +335,6 @@ depsolve_test_cases = [
                 "ima-evm-utils",
                 "inih",
                 "initscripts-rename-device",
-                "initscripts-service",
                 "iproute",
                 "iproute-tc",
                 "ipset",
@@ -340,8 +343,8 @@ depsolve_test_cases = [
                 "iptables-nft",
                 "iputils",
                 "irqbalance",
-                "iwl1000-firmware",
                 "iwl100-firmware",
+                "iwl1000-firmware",
                 "iwl105-firmware",
                 "iwl135-firmware",
                 "iwl2000-firmware",
@@ -389,7 +392,9 @@ depsolve_test_cases = [
                 "libdnf",
                 "libeconf",
                 "libedit",
+                "libestr",
                 "libevent",
+                "libfastjson",
                 "libfdisk",
                 "libffi",
                 "libfido2",
@@ -467,10 +472,6 @@ depsolve_test_cases = [
                 "ncurses-base",
                 "ncurses-libs",
                 "nettle",
-                "NetworkManager",
-                "NetworkManager-libnm",
-                "NetworkManager-team",
-                "NetworkManager-tui",
                 "newt",
                 "nftables",
                 "npth",
@@ -512,6 +513,7 @@ depsolve_test_cases = [
                 "python3-libcomps",
                 "python3-libdnf",
                 "python3-libs",
+                "python3-libselinux",
                 "python3-nftables",
                 "python3-pip-wheel",
                 "python3-rpm",
@@ -526,6 +528,7 @@ depsolve_test_cases = [
                 "rpm-plugin-audit",
                 "rpm-plugin-selinux",
                 "rpm-sign-libs",
+                "rsyslog",
                 "sed",
                 "selinux-policy",
                 "selinux-policy-targeted",
@@ -561,6 +564,7 @@ depsolve_test_cases = [
                 "zlib",
             },
             "reponames": {
+                "appstream",
                 "baseos",
             },
         }
@@ -591,6 +595,10 @@ depsolve_test_cases = [
         ],
         "results": {
             "packages": {
+                "NetworkManager",
+                "NetworkManager-libnm",
+                "NetworkManager-team",
+                "NetworkManager-tui",
                 "acl",
                 "alternatives",
                 "attr",
@@ -603,8 +611,8 @@ depsolve_test_cases = [
                 "binutils",
                 "binutils-gold",
                 "bzip2-libs",
-                "ca-certificates",
                 "c-ares",
+                "ca-certificates",
                 "centos-gpg-keys",
                 "centos-stream-release",
                 "centos-stream-repos",
@@ -674,7 +682,6 @@ depsolve_test_cases = [
                 "ima-evm-utils",
                 "inih",
                 "initscripts-rename-device",
-                "initscripts-service",
                 "iproute",
                 "iproute-tc",
                 "ipset",
@@ -720,7 +727,9 @@ depsolve_test_cases = [
                 "libdnf",
                 "libeconf",
                 "libedit",
+                "libestr",
                 "libevent",
+                "libfastjson",
                 "libfdisk",
                 "libffi",
                 "libfido2",
@@ -798,10 +807,6 @@ depsolve_test_cases = [
                 "ncurses-base",
                 "ncurses-libs",
                 "nettle",
-                "NetworkManager",
-                "NetworkManager-libnm",
-                "NetworkManager-team",
-                "NetworkManager-tui",
                 "newt",
                 "nftables",
                 "npth",
@@ -843,6 +848,7 @@ depsolve_test_cases = [
                 "python3-libcomps",
                 "python3-libdnf",
                 "python3-libs",
+                "python3-libselinux",
                 "python3-nftables",
                 "python3-pip-wheel",
                 "python3-rpm",
@@ -857,6 +863,7 @@ depsolve_test_cases = [
                 "rpm-plugin-audit",
                 "rpm-plugin-selinux",
                 "rpm-sign-libs",
+                "rsyslog",
                 "sed",
                 "selinux-policy",
                 "selinux-policy-targeted",
@@ -892,10 +899,74 @@ depsolve_test_cases = [
                 "zlib",
             },
             "reponames": {
+                "appstream",
                 "baseos",
             },
         }
     },
+    {
+        "id": "basic_module",
+        "transactions": [
+            {
+                "package-specs": [
+                    "@nodejs:18",
+                ],
+                "exclude-specs": [],
+            },
+        ],
+        "results": {
+            "packages": {
+                "alternatives",
+                "basesystem",
+                "bash",
+                "ca-certificates",
+                "centos-gpg-keys",
+                "centos-stream-release",
+                "centos-stream-repos",
+                "coreutils",
+                "coreutils-common",
+                "crypto-policies",
+                "filesystem",
+                "glibc",
+                "glibc-common",
+                "glibc-minimal-langpack",
+                "gmp",
+                "grep",
+                "libacl",
+                "libattr",
+                "libbrotli",
+                "libcap",
+                "libffi",
+                "libgcc",
+                "libselinux",
+                "libsepol",
+                "libsigsegv",
+                "libstdc++",
+                "libtasn1",
+                "ncurses-base",
+                "ncurses-libs",
+                "nodejs",
+                "npm",
+                "openssl",
+                "openssl-libs",
+                "p11-kit",
+                "p11-kit-trust",
+                "pcre",
+                "pcre2",
+                "pcre2-syntax",
+                "sed",
+                "setup",
+                "tzdata",
+                "zlib",
+            },
+            "reponames": {
+                "appstream",
+                "baseos",
+            },
+            "modules": {"nodejs"},
+        }
+    },
+
     # Test that a package can be excluded in one transaction and installed in another
     # This is common scenario for custom packages specified in the Blueprint
     {
@@ -1265,6 +1336,7 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test
         "basic_pkg_group_with_excludes",
         "install_pkg_excluded_in_another_transaction",
         "error_pkg_not_in_enabled_repos",
+        "basic_module",
     ]
 
     if dnf_config.get("use_dnf5", False) and test_case["id"] in dnf5_broken_test_cases:
@@ -1290,6 +1362,10 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test
             assert exit_code == 0
             assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
             assert res["repos"].keys() == test_case["results"]["reponames"]
+
+            # modules is optional here as the dnf5 depsolver never returns any modules
+            assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
+
             for repo in res["repos"].values():
                 assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
                 assert repo["sslverify"] is False
