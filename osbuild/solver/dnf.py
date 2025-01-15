@@ -1,6 +1,11 @@
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-nested-blocks
+
+import itertools
 import os
 import os.path
 import tempfile
+import textwrap
 from datetime import datetime
 from typing import Dict, List
 
@@ -54,6 +59,7 @@ class DNF(SolverBase):
         self.base.conf.substitutions['arch'] = arch
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
         self.base.conf.substitutions['releasever'] = releasever
+
         if hasattr(self.base.conf, "optional_metadata_types"):
             # the attribute doesn't exist on older versions of dnf; ignore the option when not available
             self.base.conf.optional_metadata_types.extend(arguments.get("optional-metadata", []))
@@ -85,7 +91,9 @@ class DNF(SolverBase):
         except dnf.exceptions.Error as e:
             raise RepoError(e) from e
 
-    # pylint: disable=too-many-branches
+        # enable module resolving
+        self.base_module = dnf.module.module_base.ModuleBase(self.base)
+
     @staticmethod
     def _dnfrepo(desc, parent_conf=None):
         """Makes a dnf.repo.Repo out of a JSON repository description"""
@@ -261,7 +269,14 @@ class DNF(SolverBase):
                 for installed_pkg in last_transaction:
                     self.base.package_install(installed_pkg, strict=True)
 
-                # depsolve the current transaction
+                # enabling a module means that packages can be installed from that
+                # module
+                self.base_module.enable(transaction.get("module-enable-specs", []))
+
+                # installing a module takes the specification of the module and then
+                # installs all packages belonging to its default group, modules to
+                # install are listed directly in `package-specs` but prefixed with an
+                # `@` *and* containing a `:` this is up to the user of the depsolver
                 self.base.install_specs(
                     transaction.get("package-specs"),
                     transaction.get("exclude-specs"),
@@ -288,6 +303,7 @@ class DNF(SolverBase):
         pkg_repos = {}
         for package in last_transaction:
             packages.append({
+                "nevra": f"{package.name}-{package.evr}.{package.arch}",
                 "name": package.name,
                 "epoch": package.epoch,
                 "version": package.version,
@@ -322,9 +338,88 @@ class DNF(SolverBase):
             "solver": "dnf",
             "packages": packages,
             "repos": repositories,
+            "modules": {},
         }
 
         if "sbom" in arguments:
             response["sbom"] = self._sbom_for_pkgset(last_transaction)
+
+        # if any modules have been requested we add sources for these so they can
+        # be used by stages to enable the modules in the eventual artifact
+        modules = {}
+
+        for transaction in transactions:
+            # module specifications must start with an "@" and include a ":", filter them
+            # out so we can use them
+            modules_in_package_specs = [
+                p[1:] for p in transaction.get("package-specs", []) if p.startswith("@") and ":" in p]
+
+            if transaction.get("module-enable-specs") or modules_in_package_specs:
+                # we'll be checking later if any packages-from-modules are in the
+                # packages-to-install set so let's do this only once here
+                package_nevras = list(p["nevra"] for p in packages)
+
+                for module_spec in itertools.chain(
+                    transaction.get("module-enable-specs", []),
+                    modules_in_package_specs,
+                ):
+                    module_packages, module_nsvcap = self.base_module.get_modules(module_spec)
+
+                    # we now need to do an annoying dance as multiple modules could be
+                    # returned by `.get_modules`, we need to select the *same* one as
+                    # previously selected. we do this by checking if any of the module
+                    # packages are in the packages set marked for installation.
+
+                    # this is a result of not being able to get the enabled modules
+                    # from the transaction, if that turns out to be possible then
+                    # we can get rid of these shenanigans
+                    for module_package in module_packages:
+                        module_nevras = module_package.getArtifacts()
+
+                        if any(module_nevra in package_nevras for module_nevra in module_nevras):
+                            # a package from this module is being installed so we must
+                            # use this module
+                            module_ns = f"{module_nsvcap.name}:{module_nsvcap.stream}"
+
+                            if module_ns not in modules:
+                                modules[module_ns] = (module_package, set())
+
+                            if module_nsvcap.profile:
+                                modules[module_ns][1].add(module_nsvcap.profile)
+
+                            # we are unable to skip the rest of the `module_packages`
+                            # here since different profiles might be contained
+
+        # now we have the information we need about modules so we need to return *some*
+        # information to who is using the depsolver so they can use that information to
+        # enable these modules in the artifact
+
+        # there are two files that matter for each module that is used, the caller needs
+        # to write a file to `/etc/dnf/modules.d/{module_name}.module` to enable the
+        # module for dnf
+
+        # the caller also needs to set up `/var/lib/dnf/modulefailsafe/` with the contents
+        # of the modulemd for the selected modules, this is to ensure that even when a
+        # repository is disabled or disappears that non-modular content can't be installed
+        # see: https://dnf.readthedocs.io/en/latest/modularity.html#fail-safe-mechanisms
+        for module_ns, (module, profiles) in modules.items():
+            profiles = ",".join(profiles) if profiles else ""
+
+            response["modules"][module.getName()] = {
+                "module-file": {
+                    "data": textwrap.dedent(f"""\
+                        [{module.getName()}]
+                        name={module.getName()}
+                        stream={module.getStream()}
+                        profiles={profiles}
+                        state=enabled
+                        """),
+                    "path": f"/etc/dnf/modules.d/{module.getName()}.conf",
+                },
+                "failsafe-file": {
+                    "data": module.getYaml(),
+                    "path": f"/var/lib/dnf/modulefailsafe/{module.getName()}:{module.getStream()}",
+                },
+            }
 
         return response
