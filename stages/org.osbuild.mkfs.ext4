@@ -10,10 +10,15 @@ def main(devices, options):
 
     uuid = options["uuid"]
     label = options.get("label")
+    lazy_init = options.get("lazy_init")
     opts = []
 
     if label:
         opts = ["-L", label]
+
+    if lazy_init is not None:
+        opts += ["-E", f"lazy_itable_init={int(lazy_init)}",
+                 "-E", f"lazy_journal_init={int(lazy_init)}"]
 
     for fsopt in ["verity", "orphan_file", "metadata_csum_seed"]:
         val = options.get(fsopt)

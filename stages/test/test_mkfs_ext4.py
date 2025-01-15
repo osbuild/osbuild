@@ -19,9 +19,11 @@ STAGE_NAME = "org.osbuild.mkfs.ext4"
     ({"uuid": 123}, "123 is not of type 'string'"),
     ({"uuid": "vaild", "label": "12345678901234567"}, " is too long"),
     ({"uuid": "valid", "verity": "please"}, "'please' is not of type 'boolean'"),
+    ({"uuid": "valid", "lazy_init": "lazy"}, "'lazy' is not of type 'boolean'"),
     # good
     ({"uuid": "some", "label": "1234567890123456"}, ""),
     ({"uuid": "some", "label": "label", "verity": True}, ""),
+    ({"uuid": "valid", "lazy_init": True}, ""),
     # actually "some-uuid" will not be accepted by mkfs, it has to be a valid
     # uuid but our schema is not strict enough right now
     ({"uuid": "some-uuid"}, ""),
@@ -78,6 +80,8 @@ def test_mkfs_ext4_integration(tmp_path, stage_module):
     ({"metadata_csum_seed": True}, ["-O", "metadata_csum_seed"]),
     ({"metadata_csum_seed": False}, ["-O", "^metadata_csum_seed"]),
     ({"verity": True, "orphan_file": True, "metadata_csum_seed": True}, ["-O", "verity", "-O", "orphan_file", "-O", "metadata_csum_seed"]),
+    ({"lazy_init": True}, ["-E", "lazy_itable_init=1", "-E", "lazy_journal_init=1"]),
+    ({"lazy_init": False}, ["-E", "lazy_itable_init=0", "-E", "lazy_journal_init=0"]),
 ])
 @mock.patch("subprocess.run")
 def test_mkfs_ext4_cmdline(mock_run, stage_module, test_input, expected):
