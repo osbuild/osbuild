@@ -1,4 +1,5 @@
 import os
+import subprocess
 from unittest.mock import patch
 
 import pytest
@@ -187,3 +188,39 @@ def test_empty_report_fail(tmp_path):
     with pytest.raises(SystemExit) as e, patch("sys.argv", ["osbuild-image-info", str(tmp_path)]):
         osbuild_image_info.main()
     assert e.value.code == 1
+
+
+def make_fake_iso(iso_tree, output_dir) -> str:
+    iso_path = os.path.join(output_dir, "image.iso")
+    subprocess.run(["mkisofs", "-o", iso_path, "-R", "-J", iso_tree], check=True)
+    return iso_path
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="root only")
+def test_analyse_iso_fail_mount(tmp_path):
+    # fake ISO that can't be mounted
+    image_path = tmp_path / "image.iso"
+    image_path.touch()
+
+    with pytest.raises(
+            subprocess.CalledProcessError,
+            match=fr"^Command '\['mount', '-o', 'ro,loop', PosixPath\('{image_path}'\)"):
+        osbuild_image_info.analyse_iso(image_path)
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="root only")
+def test_analyse_iso_fail_no_tarball(tmp_path):
+    # ISO that can be mounted, but doesn't contain the liveimg.tar.gz
+    iso_tree = tmp_path / "iso_tree"
+    iso_tree.mkdir()
+    # NB: The random file is added to the ISO, because in GH actions, the produced
+    # ISO was not valid and was consistently failing to be mounted.
+    random_file = iso_tree / "random_file"
+    random_file.write_text("random content")
+
+    image_path = make_fake_iso(iso_tree, tmp_path)
+
+    with pytest.raises(
+            subprocess.CalledProcessError,
+            match=r"^Command '\['tar', '--selinux', '--xattrs', '--acls', '-x', '--auto-compress', '-f', '/tmp/\w+/liveimg.tar.gz"):
+        osbuild_image_info.analyse_iso(image_path)
