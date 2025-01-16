@@ -1,0 +1,41 @@
+{
+  "summary": "Write DNF module configuration.",
+  "description": [
+    "This stage allows writing DNF module configurations. These files are",
+    "which are used by DNF to determine enabled modules."
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "description": "DNF configuration.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to write the module configuration to."
+        },
+        "conf": {
+          "additionalProperties": false,
+          "type": "object",
+          "description": "DNF module configuration values.",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "stream": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "profiles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

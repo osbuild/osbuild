@@ -1,0 +1,29 @@
+#!/usr/bin/python3
+import configparser
+import os
+import sys
+
+import osbuild.api
+
+
+def main(tree, options):
+    path = options["path"]
+    conf = options["conf"]
+
+    inip = configparser.ConfigParser()
+    inip[conf["name"]] = conf
+
+    # we need to handle enabled profiles as a string as configparser
+    # would normally write [a, b]
+    inip[conf["name"]]["profiles"] = ", ".join(conf["profiles"])
+
+    with open(os.path.join(tree, path), "w", encoding="utf-8") as file:
+        inip.write(file)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
