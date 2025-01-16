@@ -5,7 +5,6 @@ import itertools
 import os
 import os.path
 import tempfile
-import textwrap
 from datetime import datetime
 from typing import Dict, List
 
@@ -403,18 +402,15 @@ class DNF(SolverBase):
         # repository is disabled or disappears that non-modular content can't be installed
         # see: https://dnf.readthedocs.io/en/latest/modularity.html#fail-safe-mechanisms
         for module_ns, (module, profiles) in modules.items():
-            profiles = ",".join(profiles) if profiles else ""
-
             response["modules"][module.getName()] = {
                 "module-file": {
-                    "data": textwrap.dedent(f"""\
-                        [{module.getName()}]
-                        name={module.getName()}
-                        stream={module.getStream()}
-                        profiles={profiles}
-                        state=enabled
-                        """),
                     "path": f"/etc/dnf/modules.d/{module.getName()}.conf",
+                    "data": {
+                        "name": module.getName(),
+                        "stream": module.getStream(),
+                        "profiles": list(profiles),
+                        "state": "enabled",
+                    }
                 },
                 "failsafe-file": {
                     "data": module.getYaml(),
