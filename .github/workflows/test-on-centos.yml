@@ -22,7 +22,7 @@ jobs:
       - name: "Run in container"
         uses: addnab/docker-run-action@v3
         with:
-          image: quay.io/osbuild/osbuild-ci-c${{ matrix.centos.version }}s:latest-202411221033
+          image: quay.io/osbuild/osbuild-ci-c${{ matrix.centos.version }}s:latest-202501201758
           options: --privileged -v ${{ github.workspace }}:/osbuild --workdir /osbuild
           run: |
             python3 -m pytest \
