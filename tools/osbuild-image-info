@@ -2919,15 +2919,8 @@ def is_iso(path):
 
 
 def analyse_iso(path):
-    with tempfile.TemporaryDirectory(dir="/var/tmp") as tmp:
-        report = None
-        subprocess.run(["mount", "-o", "loop", path, tmp], check=True)
-        try:
-            report = analyse_tarball(os.path.join(tmp, "liveimg.tar.gz"))
-        except Exception as e:
-            print(f"{e}", file=sys.stderr)
-        subprocess.run(["umount", tmp], check=True)
-        return report
+    with mount(path, ["loop"]) as tmp:
+        return analyse_tarball(os.path.join(tmp, "liveimg.tar.gz"))
 
 
 def main():
