@@ -158,6 +158,7 @@ def tcase_idfn(param):
 depsolve_test_cases = [
     {
         "id": "basic_1pkg_1repo",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -190,6 +191,7 @@ depsolve_test_cases = [
     # "pkg-with-no-deps" is the only package in the custom repo and has no dependencies
     {
         "id": "basic_1pkg_1repo_no_deps",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -204,6 +206,7 @@ depsolve_test_cases = [
     },
     {
         "id": "basic_2pkgs_2repos",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -238,6 +241,7 @@ depsolve_test_cases = [
     },
     {
         "id": "basic_pkg_group",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -392,9 +396,7 @@ depsolve_test_cases = [
                 "libdnf",
                 "libeconf",
                 "libedit",
-                "libestr",
                 "libevent",
-                "libfastjson",
                 "libfdisk",
                 "libffi",
                 "libfido2",
@@ -513,7 +515,6 @@ depsolve_test_cases = [
                 "python3-libcomps",
                 "python3-libdnf",
                 "python3-libs",
-                "python3-libselinux",
                 "python3-nftables",
                 "python3-pip-wheel",
                 "python3-rpm",
@@ -528,7 +529,6 @@ depsolve_test_cases = [
                 "rpm-plugin-audit",
                 "rpm-plugin-selinux",
                 "rpm-sign-libs",
-                "rsyslog",
                 "sed",
                 "selinux-policy",
                 "selinux-policy-targeted",
@@ -564,13 +564,13 @@ depsolve_test_cases = [
                 "zlib",
             },
             "reponames": {
-                "appstream",
                 "baseos",
             },
         }
     },
     {
         "id": "basic_pkg_group_with_excludes",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -727,9 +727,7 @@ depsolve_test_cases = [
                 "libdnf",
                 "libeconf",
                 "libedit",
-                "libestr",
                 "libevent",
-                "libfastjson",
                 "libfdisk",
                 "libffi",
                 "libfido2",
@@ -848,7 +846,6 @@ depsolve_test_cases = [
                 "python3-libcomps",
                 "python3-libdnf",
                 "python3-libs",
-                "python3-libselinux",
                 "python3-nftables",
                 "python3-pip-wheel",
                 "python3-rpm",
@@ -863,7 +860,6 @@ depsolve_test_cases = [
                 "rpm-plugin-audit",
                 "rpm-plugin-selinux",
                 "rpm-sign-libs",
-                "rsyslog",
                 "sed",
                 "selinux-policy",
                 "selinux-policy-targeted",
@@ -899,13 +895,13 @@ depsolve_test_cases = [
                 "zlib",
             },
             "reponames": {
-                "appstream",
                 "baseos",
             },
         }
     },
     {
         "id": "basic_module",
+        "enabled_repos": ["baseos", "appstream", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -971,6 +967,7 @@ depsolve_test_cases = [
     # This is common scenario for custom packages specified in the Blueprint
     {
         "id": "install_pkg_excluded_in_another_transaction",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -1014,6 +1011,7 @@ depsolve_test_cases = [
     # This test should result in an error because the package is not available in the enabled repositories
     {
         "id": "error_pkg_not_in_enabled_repos",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -1041,6 +1039,7 @@ depsolve_test_cases = [
     # Test depsolving error due to non-existing package
     {
         "id": "error_non_existing_pkg",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -1055,6 +1054,7 @@ depsolve_test_cases = [
     # Test depsolving error due to conflicting packages
     {
         "id": "error_conflicting_pkgs",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -1070,6 +1070,7 @@ depsolve_test_cases = [
     # Test repository error
     {
         "id": "error_unreachable_repo",
+        "enabled_repos": ["baseos", "custom"],
         "transactions": [
             {
                 "package-specs": [
@@ -1093,11 +1094,13 @@ depsolve_test_cases = [
 dump_test_cases = [
     {
         "id": "basic",
-        "packages_count": 4444,
+        "enabled_repos": ["baseos", "custom"],
+        "packages_count": 4573,
     },
     # Test repository error
     {
         "id": "error_unreachable_repo",
+        "enabled_repos": ["baseos", "custom"],
         "additional_servers": [
             {
                 "name": "broken",
@@ -1114,6 +1117,7 @@ dump_test_cases = [
 search_test_cases = [
     {
         "id": "1pkg_latest",
+        "enabled_repos": ["baseos", "custom"],
         "search_args": {
             "latest": True,
             "packages": [
@@ -1143,6 +1147,7 @@ mechanism, and more.""",
     },
     {
         "id": "1pkg_not_latest",
+        "enabled_repos": ["baseos", "custom"],
         "search_args": {
             "latest": False,
             "packages": [
@@ -1191,6 +1196,7 @@ mechanism, and more.""",
     # Test repository error
     {
         "id": "error_unreachable_repo",
+        "enabled_repos": ["baseos", "custom"],
         "search_args": {
             "latest": True,
             "packages": [
@@ -1345,6 +1351,10 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test
     transactions = test_case["transactions"]
 
     repo_servers_copy = repo_servers.copy()
+
+    # filter to only include enabled repositories
+    repo_servers_copy = [r for r in repo_servers_copy if r["name"] in test_case["enabled_repos"]]
+
     if "additional_servers" in test_case:
         repo_servers_copy.extend(test_case["additional_servers"])
 
@@ -1388,7 +1398,7 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test
             # *filelists*
             n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
             if "filelists" in opt_metadata:
-                assert n_filelist_files == len(REPO_PATHS)
+                assert n_filelist_files == len(repo_servers_copy)
             else:
                 assert n_filelist_files == 0
 
@@ -1412,6 +1422,10 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         pytest.skip(str(e))
 
     repo_servers_copy = repo_servers.copy()
+
+    # filter to only include enabled repositories
+    repo_servers_copy = [r for r in repo_servers_copy if r["name"] in test_case["enabled_repos"]]
+
     if "additional_servers" in test_case:
         repo_servers_copy.extend(test_case["additional_servers"])
 
@@ -1441,7 +1455,7 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
             # *filelists*
             n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
             if "filelists" in opt_metadata:
-                assert n_filelist_files == len(REPO_PATHS)
+                assert n_filelist_files == len(repo_servers_copy)
             else:
                 assert n_filelist_files == 0
 
@@ -1459,6 +1473,10 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         pytest.skip(str(e))
 
     repo_servers_copy = repo_servers.copy()
+
+    # filter to only include enabled repositories
+    repo_servers_copy = [r for r in repo_servers_copy if r["name"] in test_case["enabled_repos"]]
+
     if "additional_servers" in test_case:
         repo_servers_copy.extend(test_case["additional_servers"])
 
@@ -1481,6 +1499,6 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
             # *filelists*
             n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
             if "filelists" in opt_metadata:
-                assert n_filelist_files == len(REPO_PATHS)
+                assert n_filelist_files == len(repo_servers_copy)
             else:
                 assert n_filelist_files == 0
