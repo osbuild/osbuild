@@ -16,7 +16,6 @@ of the pipeline description, and more.
  * **Bug Tracker**: https://github.com/osbuild/osbuild/issues
  * **Discussions**: https://github.com/orgs/osbuild/discussions
  * **Matrix**: #image-builder on [fedoraproject.org](https://matrix.to/#/#image-builder:fedoraproject.org)
- * **Mailing List**: image-builder@redhat.com
  * **Changelog**: https://github.com/osbuild/osbuild/releases
 
 ### Principles
