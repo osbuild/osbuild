@@ -71,7 +71,7 @@ def parse_arguments(sys_argv: List[str]) -> argparse.Namespace:
                         help="json file containing the manifest that should be built, or a '-' to read from stdin")
     parser.add_argument("--store", "--cache", metavar="DIRECTORY", type=os.path.abspath,
                         default=".osbuild",
-                        help="directory where intermediary os trees are stored")
+                        help="directory where sources and intermediary os trees are stored")
     parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath, default="/usr/lib/osbuild",
                         help="directory containing stages, assemblers, and the osbuild library")
     parser.add_argument("--cache-max-size", metavar="SIZE", type=parse_size, default=None,
