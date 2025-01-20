@@ -63,7 +63,7 @@ OSTree Images:
     - schutzbot/deploy.sh
     - sudo test/cases/ostree-images --manifest "$MANIFEST" --export $EXPORT
   variables:
-    RUNNER: aws/fedora-39-x86_64
+    RUNNER: aws/fedora-41-x86_64
   parallel:
     matrix:
       - MANIFEST: fedora-ostree-tarball.json
