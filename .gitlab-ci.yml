@@ -88,19 +88,58 @@ Manifests:
   extends: .terraform
   script:
     - schutzbot/deploy.sh
-    - test/cases/manifest_tests.sh ${PARALLEL_EXEC}
+    - schutzbot/manifest-tests-install-deps.sh
+    - IMAGES_REPO_REF=$(jq -r '.global.dependencies.images.ref' Schutzfile)
+    - |
+        if [[ -n "$CHUNKS_COUNT" && -n "$CHUNK" ]]; then
+            echo "Running manifest tests with $CHUNKS_COUNT chunks, chunk $CHUNK"
+            SCRIPT_EXTRA_ARGS="--chunk-size $CHUNK $CHUNKS_COUNT"
+        fi
+        if [[ -n "$UNSUPPORTED_IMG_TYPES" ]]; then
+            echo "Skipping unsupported image types: $UNSUPPORTED_IMG_TYPES"
+            SCRIPT_EXTRA_ARGS="$SCRIPT_EXTRA_ARGS --skip-image-type $UNSUPPORTED_IMG_TYPES"
+        fi
+        if [[ -n "$CONFIG" ]]; then
+            echo "Testing only the following manifest generation configs: $CONFIG"
+            SCRIPT_EXTRA_ARGS="$SCRIPT_EXTRA_ARGS --config $CONFIG"
+        fi
+        if [[ -n "$IMAGES_REPO_REF" ]]; then
+            echo "Using osbuild/images repo ref: $IMAGES_REPO_REF"
+            SCRIPT_EXTRA_ARGS="$SCRIPT_EXTRA_ARGS --images-ref $IMAGES_REPO_REF"
+        fi
+        if [[ -n "$SCRIPT_EXTRA_ARGS" ]]; then
+            echo "Running manifest tests with extra args: $SCRIPT_EXTRA_ARGS"
+        fi
+    - |
+        source /etc/os-release
+        if [[ "$ID" == "rhel" || "$ID" == "centos" ]]; then
+            export GOFLAGS="-tags=exclude_graphdriver_btrfs"
+        fi
+    - test/cases/manifest_tests --rm-artifacts-after-test $SCRIPT_EXTRA_ARGS
+  variables:
+    PYTHONUNBUFFERED: 1
+    # List of image types that are not supported by osbuild-image-info
+    UNSUPPORTED_IMG_TYPES: "ova *container live-installer wsl"
+  artifacts:
+    when: always
+    paths:
+      - ci-details-before-run
+      - ci-details-after-run
+      - ./osbuild-manifest-tests-results/
   parallel:
     matrix:
-      - PARALLEL_EXEC: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
-        RUNNER:
-          - aws/fedora-39-x86_64
-          - aws/fedora-39-aarch64
+      - RUNNER:
+          - aws/fedora-41-x86_64
+          - aws/fedora-41-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
           - aws/centos-stream-10-aarch64
-      - PARALLEL_EXEC: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
-        RUNNER:
+        # Test only the following manifest generation configs
+        CONFIG: "empty all-customizations"
+        CHUNK: [1, 2, 3, 4, 5]
+        CHUNKS_COUNT: 5
+      - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.4-ga-x86_64
@@ -110,6 +149,10 @@ Manifests:
           - aws/rhel-10.0-nightly-x86_64
           - aws/rhel-10.0-nightly-aarch64
         INTERNAL_NETWORK: "true"
+        # Test only the following manifest generation configs
+        CONFIG: "empty all-customizations"
+        CHUNK: [1, 2, 3, 4, 5]
+        CHUNKS_COUNT: 5
 
 finish:
   stage: finish
