@@ -1,8 +1,8 @@
 {
   "global": {
     "dependencies": {
-      "manifest-db": {
-        "commit": "8bf14138336dfcebe6486068b5856cae2489c632"
+      "images": {
+        "ref": "main"
       }
     }
   },
