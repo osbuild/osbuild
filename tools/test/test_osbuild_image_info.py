@@ -1,3 +1,6 @@
+import os
+from unittest.mock import patch
+
 import pytest
 
 from osbuild.testutil import make_fake_tree
@@ -173,3 +176,14 @@ def test_read_default_target_none(tmp_path):
     Test the case when when there is no default target set on the system
     """
     assert osbuild_image_info.read_default_target(tmp_path) == ""
+
+
+# root is needed, because the script will bind mount the dir as read-only
+@pytest.mark.skipif(os.getuid() != 0, reason="root only")
+def test_empty_report_fail(tmp_path):
+    """
+    Test that the main() exits with a non-zero exit code if the report is empty.
+    """
+    with pytest.raises(SystemExit) as e, patch("sys.argv", ["osbuild-image-info", str(tmp_path)]):
+        osbuild_image_info.main()
+    assert e.value.code == 1
