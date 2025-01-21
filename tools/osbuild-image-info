@@ -2950,6 +2950,10 @@ def main():
     else:
         report = analyse_image(target)
 
+    if not report:
+        print(f"Failed to analyse {target}: no information gathered in the report", file=sys.stderr)
+        sys.exit(1)
+
     json.dump(report, sys.stdout, sort_keys=True, indent=2)
 
 
