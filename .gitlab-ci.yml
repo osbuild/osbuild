@@ -140,8 +140,6 @@ Manifests:
         CHUNK: [1, 2, 3, 4, 5]
         CHUNKS_COUNT: 5
       - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.4-ga-x86_64
           - aws/rhel-9.4-ga-aarch64
           - aws/rhel-9.6-nightly-x86_64
