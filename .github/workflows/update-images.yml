@@ -1,0 +1,52 @@
+# This action updates the images ref in the Schutzfile
+---
+    name: "Update images ref"
+    
+    on:
+      workflow_dispatch:
+      schedule:
+        # Every Mon at 8:00
+        - cron: "0 8 * * 1"
+    
+    jobs:
+      update-and-push:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Apt update
+            run: sudo apt update
+    
+          - name: Check out main
+            uses: actions/checkout@v4
+            with:
+              path: osbuild
+              ref: main
+    
+          - name: Update Schutzfile
+            working-directory: ./osbuild
+            env:
+              GITHUB_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+            run: |
+              ./schutzbot/update-schutzfile-images
+    
+          - name: Open PR
+            working-directory: ./osbuild
+            env:
+              GITHUB_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+            run: |
+              if git diff --exit-code; then echo "No changes"; exit 0; fi
+              git config --unset-all http.https://github.com/.extraheader
+              git config user.name "schutzbot"
+              git config user.email "schutzbot@gmail.com"
+              branch="schutzfile-images-$(date -I)"
+              git checkout -b "${branch}"
+              git add Schutzfile
+              git commit -m "Schutzfile: Update images dependency ref to latest"
+              git push -f https://"$GITHUB_TOKEN"@github.com/schutzbot/osbuild.git
+              echo "Updating images dependency ref to current `main`" > body
+              gh pr create \
+                -t "Update images dependency ref to latest" \
+                -F "body" \
+                -r "osbuild/osbuild-reviewers" \
+                --repo "osbuild/osbuild" \
+                --base "main" \
+                --head "schutzbot:${branch}"
