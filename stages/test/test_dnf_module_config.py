@@ -10,7 +10,6 @@ STAGE_NAME = "org.osbuild.dnf.module-config"
 @pytest.mark.parametrize("test_data,expected_err", [
     # bad
     ({"conf": "must-be-object"}, "'must-be-object' is not of type 'object'"),
-    ({"path": {}}, "{} is not of type 'string'"),
     # good
     ({
         "conf":
@@ -40,13 +39,11 @@ def test_dnf_module_config_schema_validation(stage_schema, test_data, expected_e
 
 def test_dnf_module_config_writes_file(tmp_path, stage_module):
     treepath = tmp_path / "tree"
-    confpath = "etc/dnf/modules.d/module.conf"
+    confpath = "etc/dnf/modules.d/some-module.conf"
+
     fullpath = treepath / confpath
 
-    fullpath.parent.mkdir(parents=True, exist_ok=True)
-
     options = {
-        "path": confpath,
         "conf": {
             "name": "some-module",
             "stream": "some-stream",

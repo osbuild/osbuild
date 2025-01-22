@@ -9,10 +9,6 @@
       "additionalProperties": false,
       "description": "DNF configuration.",
       "properties": {
-        "path": {
-          "type": "string",
-          "description": "Path to write the module configuration to."
-        },
         "conf": {
           "additionalProperties": false,
           "type": "object",
