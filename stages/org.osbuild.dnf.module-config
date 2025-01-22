@@ -1,23 +1,26 @@
 #!/usr/bin/python3
 import configparser
-import os
+import pathlib
 import sys
 
 import osbuild.api
 
 
 def main(tree, options):
-    path = options["path"]
     conf = options["conf"]
+    name = conf["name"]
 
     inip = configparser.ConfigParser()
-    inip[conf["name"]] = conf
+    inip[name] = conf
 
     # we need to handle enabled profiles as a string as configparser
     # would normally write [a, b]
-    inip[conf["name"]]["profiles"] = ", ".join(conf["profiles"])
+    inip[name]["profiles"] = ", ".join(conf["profiles"])
 
-    with open(os.path.join(tree, path), "w", encoding="utf-8") as file:
+    path = pathlib.Path(tree) / "etc/dnf/modules.d" / f"{name}.conf"
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(path, "w", encoding="utf-8") as file:
         inip.write(file)
 
     return 0
