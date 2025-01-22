@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+import json
+import os
+import sys
+import urllib.request
+
+SCHUTZFILE = "Schutzfile"
+
+
+def images_main_commit_id():
+    token = os.environ.get("GITHUB_TOKEN")
+    req = urllib.request.Request("https://api.github.com/repos/osbuild/images/commits/main")
+    req.add_header("Accept", "application/vnd.github+json")
+    if token:
+        # this API request doesn't necessarily require a token, but let's use it if we have one
+        req.add_header("Authorization", f"Bearer {token}")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body = resp.read()
+    except urllib.error.HTTPError as http_error:
+        print(http_error)
+        sys.exit(1)
+
+    data = json.loads(body)
+    return data["sha"]
+
+
+def update_images_ref(new):
+    with open(SCHUTZFILE, encoding="utf-8") as schutzfile:
+        data = json.load(schutzfile)
+
+    data.setdefault("global", {}).setdefault("dependencies", {}).setdefault("images", {})["ref"] = new
+
+    with open(SCHUTZFILE, encoding="utf-8", mode="w") as schutzfile:
+        json.dump(data, schutzfile, indent="  ")
+
+
+def main():
+    main_id = images_main_commit_id()
+    print(f"osbuild/images main commit ID: {main_id}")
+    print("Updating Schutzfile")
+    update_images_ref(main_id)
+
+
+if __name__ == "__main__":
+    main()
