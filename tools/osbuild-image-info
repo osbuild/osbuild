@@ -602,7 +602,10 @@ def read_default_target(tree):
     An example return value:
     "multi-user.target"
     """
-    return subprocess_check_output(["systemctl", f"--root={tree}", "get-default"]).rstrip()
+    try:
+        return subprocess_check_output(["systemctl", f"--root={tree}", "get-default"]).rstrip()
+    except subprocess.CalledProcessError:
+        return ""
 
 
 def read_firewall_default_zone(tree):
