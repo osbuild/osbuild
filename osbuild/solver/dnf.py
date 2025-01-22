@@ -348,10 +348,14 @@ class DNF(SolverBase):
         modules = {}
 
         for transaction in transactions:
-            # module specifications must start with an "@" and include a ":", filter them
-            # out so we can use them
-            modules_in_package_specs = [
-                p[1:] for p in transaction.get("package-specs", []) if p.startswith("@") and ":" in p]
+            # module specifications must start with an "@", if they do we try to
+            # ask DNF for a module by that name, if it doesn't exist it isn't a
+            # module; otherwise it is and we should use it
+            modules_in_package_specs = []
+
+            for p in transaction.get("package-specs", []):
+                if p.startswith("@") and self.base_module.get_modules(p):
+                    modules_in_package_specs.append(p.lstrip("@"))
 
             if transaction.get("module-enable-specs") or modules_in_package_specs:
                 # we'll be checking later if any packages-from-modules are in the
