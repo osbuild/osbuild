@@ -155,7 +155,7 @@ Conflicts: osbuild-composer <= 115
 # This version needs to get bumped every time the osbuild-dnf-json
 # version changes in an incompatible way. Packages like osbuild-composer
 # can depend on the exact API version this way
-Provides: osbuild-dnf-json-api = 8
+Provides: osbuild-dnf-json-api = 7
 
 %description    depsolve-dnf
 Contains depsolving capabilities for package managers.
