@@ -302,7 +302,6 @@ class DNF(SolverBase):
         pkg_repos = {}
         for package in last_transaction:
             packages.append({
-                "nevra": f"{package.name}-{package.evr}.{package.arch}",
                 "name": package.name,
                 "epoch": package.epoch,
                 "version": package.version,
@@ -360,7 +359,15 @@ class DNF(SolverBase):
             if transaction.get("module-enable-specs") or modules_in_package_specs:
                 # we'll be checking later if any packages-from-modules are in the
                 # packages-to-install set so let's do this only once here
-                package_nevras = list(p["nevra"] for p in packages)
+                package_nevras = []
+
+                for package in packages:
+                    if package["epoch"] == 0:
+                        package_nevras.append(
+                            f"{package['name']}-{package['version']}-{package['release']}.{package['arch']}")
+                    else:
+                        package_nevras.append(
+                            f"{package['name']}-{package['epoch']}:{package['version']}-{package['release']}.{package['arch']}")
 
                 for module_spec in itertools.chain(
                     transaction.get("module-enable-specs", []),
