@@ -53,6 +53,7 @@ def setfiles(spec_file: str, root: str, *paths, exclude_paths: Optional[List[str
 
     for path in paths:
         subprocess.run(["setfiles", "-F",
+                        "-T0",  # enable multithread
                         "-r", root,
                         *exclude_paths_args,
                         spec_file,
