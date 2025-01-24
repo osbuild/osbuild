@@ -1502,3 +1502,84 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
                 assert n_filelist_files == len(repo_servers_copy)
             else:
                 assert n_filelist_files == 0
+
+
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    (None, assert_dnf),
+    ('{"use_dnf5": false}', assert_dnf),
+    ('{"use_dnf5": true}', assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
+    root_dir = tmp_path.as_posix()
+    cache_dir = (tmp_path / "depsolve-cache").as_posix()
+    transactions = [
+        {
+            # we pick this package to get a "modules" result
+            "package-specs": ["@nodejs:18"],
+        },
+    ]
+
+    repo_configs = []
+    for server in repo_servers:
+        repo_configs.append({
+            "id": server["name"],
+            "name": server["name"],
+            "baseurl": server["address"],
+            "gpgkeys": [TEST_KEY + server["name"]],
+        })
+    dnf_config = {}
+    opt_metadata = []
+    with_sbom = False
+
+    res, exit_code = depsolve(transactions, repo_configs, root_dir,
+                              cache_dir, dnf_config, opt_metadata, with_sbom)
+
+    assert exit_code == 0
+    # If any of  this changes, increase:
+    #   "Provides: osbuild-dnf-json-api" inosbuild.spec
+    assert list(res.keys()) == ["solver", "packages", "repos", "modules"]
+    assert isinstance(res["solver"], str)
+    assert sorted(res["packages"][0].keys()) == [
+        "arch",
+        "checksum",
+        "epoch",
+        "name",
+        "path",
+        "release",
+        "remote_location",
+        "repo_id",
+        "version",
+    ]
+    assert sorted(res["repos"]["baseos"].keys()) == [
+        "baseurl",
+        "gpgcheck",
+        "gpgkeys",
+        "id",
+        "metalink",
+        "mirrorlist",
+        "name",
+        "repo_gpgcheck",
+        "sslcacert",
+        "sslclientcert",
+        "sslclientkey",
+        "sslverify",
+    ]
+    assert sorted(res["modules"]["nodejs"]["module-file"].keys()) == [
+        "data",
+        "path",
+    ]
+    assert sorted(res["modules"]["nodejs"]["module-file"]["data"].keys()) == [
+        "name",
+        "profiles",
+        "state",
+        "stream",
+    ]
+    assert list(res["modules"]["nodejs"]["failsafe-file"].keys()) == [
+        "data",
+        "path",
+    ]
