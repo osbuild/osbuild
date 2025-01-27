@@ -41,28 +41,33 @@ def run_ostree(*args, _input=None, _check=True, **kwargs):
     return res
 
 
-def loop_open(devmgr: devices.DeviceManager, name: str, image, size, offset=0):
+class OSBuildDeviceManager(devices.DeviceManager):
     """
-    Uses a DeviceManager to open the `name` at `offset`.
-    Returns a Device object and the path onto which the image was loopback mounted.
+    Thin wrapper around the DeviceManager for opening devices
     """
-    info = index.get_module_info("Device", "org.osbuild.loopback")
-    fname = os.path.basename(image)
-    options = {
-        "filename": fname,
-        "start": offset // SECTOR_SIZE,
-        "size": size // SECTOR_SIZE
-    }
-    if not info:
-        raise RuntimeError("Can't load org.osbuild.loopback")
 
-    jsonschema.validate(options, info.get_schema())
-    dev = devices.Device(name, info, None, options)
-    reply = devmgr.open(dev)
-    return {
-        "Device": dev,
-        "path": os.path.join("/dev", reply["path"])
-    }
+    def open_loopback(self, name, image, size, offset=0) -> Dict[str, Any]:
+        """
+        Uses a DeviceManager to open the `name` at `offset`.
+        Returns a Device object and the path onto which the image was loopback mounted.
+        """
+        info = index.get_module_info("Device", "org.osbuild.loopback")
+        if not info:
+            raise RuntimeError("Can't load org.osbuild.loopback")
+
+        fname = os.path.basename(image)
+        options = {
+            "filename": fname,
+            "start": offset // SECTOR_SIZE,
+            "size": size // SECTOR_SIZE
+        }
+        jsonschema.validate(options, info.get_schema())
+        dev = devices.Device(name, info, None, options)
+        reply = self.open(dev)
+        return {
+            "Device": dev,
+            "path": os.path.join(self.devpath, reply["path"])
+        }
 
 
 @contextlib.contextmanager
@@ -2632,8 +2637,7 @@ def append_partitions(report, image):
     partitions = report["partitions"]
     with tempfile.TemporaryDirectory() as mountpoint:
         with host.ServiceManager(monitor=monitor.NullMonitor(1)) as mgr:
-
-            devmgr = devices.DeviceManager(mgr, "/dev", os.path.dirname(image))
+            devmgr = OSBuildDeviceManager(mgr, "/dev", os.path.dirname(image))
 
             # Device map associate a path onto where the device is mounted with its
             # corresponding Device object. Mount will require both the path and the
@@ -2642,8 +2646,7 @@ def append_partitions(report, image):
             filesystems = {}
             for part in partitions:
                 start, size = part["start"], part["size"]
-                ret = loop_open(
-                    devmgr,
+                ret = devmgr.open_loopback(
                     part["partuuid"],
                     image,
                     size,
@@ -2780,8 +2783,7 @@ def analyse_image(image) -> Dict[str, Any]:
     with convert_image(image, imgfmt) as target:
         size = os.stat(target).st_size
         with host.ServiceManager(monitor=monitor.NullMonitor(1)) as mgr:
-            device = loop_open(
-                devices.DeviceManager(mgr, "/dev", os.path.dirname(target)),
+            device = OSBuildDeviceManager(mgr, "/dev", os.path.dirname(target)).open_loopback(
                 os.path.basename(target),
                 target,
                 size,
