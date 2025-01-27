@@ -69,6 +69,25 @@ class OSBuildDeviceManager(devices.DeviceManager):
             "path": os.path.join(self.devpath, reply["path"])
         }
 
+    def open_lvm_lv(self, lv_name: str, parent: devices.Device):
+        """
+        Open a logical volume and return the path to the device node
+        """
+        info = index.get_module_info("Device", "org.osbuild.lvm2.lv")
+        if not info:
+            raise RuntimeError("can't find org.osbuild.lvm2.lv")
+
+        options = {
+            "volume": lv_name,
+        }
+        jsonschema.validate(options, info.get_schema())
+        dev = devices.Device(lv_name, info, parent, options)
+        reply = self.open(dev)
+        return {
+            "Device": dev,
+            "path": os.path.join(self.devpath, reply["path"])
+        }
+
 
 @contextlib.contextmanager
 def convert_image(image, fmt):
@@ -2514,14 +2533,7 @@ def lvm_lvs_for_vg(vg_name: str) -> List[str]:
     return [lv.strip() for lv in res.stdout.strip().split("\n")]
 
 
-def ensure_device_file(path: str, major: int, minor: int):
-    """Ensure the device file with the given major, minor exists"""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    if not os.path.exists(path):
-        os.mknod(path, 0o600 | stat.S_IFBLK, os.makedev(major, minor))
-
-
-def discover_lvm(dev: str, parent: devices.Device, devmgr: devices.DeviceManager):
+def discover_lvm(dev: str, parent: devices.Device, devmgr: OSBuildDeviceManager):
     # NB: activating LVM is done by the OSBuild device implementation,
     # however, the LV name must be passed to the OSBuild device implementation.
     vg_name = lvm_vg_for_device(dev)
@@ -2535,38 +2547,23 @@ def discover_lvm(dev: str, parent: devices.Device, devmgr: devices.DeviceManager
     devices_map = {}
 
     for lv_name in lv_names:
-        options = {
-            "volume": lv_name,
+        ret = devmgr.open_lvm_lv(lv_name, parent)
+        voldev = ret["path"]
+        device = ret["Device"]
+
+        # NB: add the device path to the partition info, so that it can be mounted by the caller.
+        part_info = {
+            "device": voldev,
         }
 
-        # Create an OSBuild device object for the LVM partition
-        info = index.get_module_info("Device", "org.osbuild.lvm2.lv")
-        device = devices.Device(
-            lv_name,
-            info,
-            parent,
-            options)
-        if not info:
-            raise RuntimeError("can't find org.osbuild.lvm2.lv")
-        jsonschema.validate(options, info.get_schema())
-        reply = devmgr.open(device)
-        voldev = reply["path"]  # get the path where is mounted the device
-        minor = reply["node"]["minor"]
-        major = reply["node"]["major"]
-
-        info = {
-            "device": voldev
-        }
-        ensure_device_file(voldev, int(major), int(minor))
-
-        read_partition(voldev, info)
-        volumes[lv_name] = info
+        volumes[lv_name] = read_partition(voldev, part_info)
         if lv_name.startswith("root"):
             volumes.move_to_end(lv_name, last=False)
 
         # associate the device path with the Device object, we will need it to
         # mount later on.
         devices_map[voldev] = device
+
     # get back both the device map and the result that'll go in the JSON report
     return devices_map, {
         "lvm": True,
