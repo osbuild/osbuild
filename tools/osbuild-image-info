@@ -2453,8 +2453,10 @@ def append_filesystem(report, tree, *, is_ostree=False):
         print("EFI partition", file=sys.stderr)
 
 
-def volume_group_for_device(device: str) -> str:
-    # Find the volume group that belongs to the device specified via `parent`
+def lvm_vg_for_device(device: str) -> str:
+    """
+    Find the volume group name for the specified device.
+    """
     vg_name = None
     count = 0
 
@@ -2471,7 +2473,7 @@ def volume_group_for_device(device: str) -> str:
 
         if res.returncode == 5:
             if count == 10:
-                raise RuntimeError("Could not find parent device")
+                raise RuntimeError(f"Could not find parent device: {res.stderr.strip()}")
             time.sleep(1 * count)
             count += 1
             continue
@@ -2504,7 +2506,7 @@ def lvm_lvs_for_vg(vg_name: str) -> List[str]:
     if res.returncode != 0:
         raise RuntimeError(res.stderr.strip())
 
-    return [lv.strip() for lv in res.stdout.split("\n")]
+    return [lv.strip() for lv in res.stdout.strip().split("\n")]
 
 
 def ensure_device_file(path: str, major: int, minor: int):
@@ -2515,11 +2517,9 @@ def ensure_device_file(path: str, major: int, minor: int):
 
 
 def discover_lvm(dev: str, parent: devices.Device, devmgr: devices.DeviceManager):
-    # find the volume group name for the device file
-    vg_name = volume_group_for_device(dev)
-
     # NB: activating LVM is done by the OSBuild device implementation,
     # however, the LV name must be passed to the OSBuild device implementation.
+    vg_name = lvm_vg_for_device(dev)
     lv_names = lvm_lvs_for_vg(vg_name)
 
     # NB: the order of the volumes is important, we want to mount the root
