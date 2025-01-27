@@ -19,7 +19,7 @@ import tempfile
 import time
 import xml.etree.ElementTree
 from collections import OrderedDict
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import jsonschema
 import yaml
@@ -2486,26 +2486,13 @@ def volume_group_for_device(device: str) -> str:
     return vg_name
 
 
-def ensure_device_file(path: str, major: int, minor: int):
-    """Ensure the device file with the given major, minor exists"""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    if not os.path.exists(path):
-        os.mknod(path, 0o600 | stat.S_IFBLK, os.makedev(major, minor))
-
-
-def discover_lvm(dev: str, parent: devices.Device, devmgr: devices.DeviceManager):
-    # find the volume group name for the device file
-    vg_name = volume_group_for_device(dev)
-
-    # activating LVM is done OSBuild side.
-    # However we still have to get OSBuild the name of the VG to open
-
-    # Find all logical volumes in the volume group
+def lvm_lvs_for_vg(vg_name: str) -> List[str]:
+    """
+    Get the list of logical volumes for a given volume group.
+    """
     cmd = [
         "lvdisplay", "-C", "--noheadings",
-        "-o", "lv_name,path,lv_kernel_major,lv_kernel_minor",
-        "--separator", ";",
-        vg_name
+        "-o", "lv_name", vg_name
     ]
 
     res = subprocess.run(cmd,
@@ -2517,27 +2504,40 @@ def discover_lvm(dev: str, parent: devices.Device, devmgr: devices.DeviceManager
     if res.returncode != 0:
         raise RuntimeError(res.stderr.strip())
 
-    data = res.stdout.strip()
-    parsed = list(map(lambda line: line.split(";"), data.split("\n")))
-    volumes = OrderedDict()
+    return [lv.strip() for lv in res.stdout.split("\n")]
 
+
+def ensure_device_file(path: str, major: int, minor: int):
+    """Ensure the device file with the given major, minor exists"""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if not os.path.exists(path):
+        os.mknod(path, 0o600 | stat.S_IFBLK, os.makedev(major, minor))
+
+
+def discover_lvm(dev: str, parent: devices.Device, devmgr: devices.DeviceManager):
+    # find the volume group name for the device file
+    vg_name = volume_group_for_device(dev)
+
+    # NB: activating LVM is done by the OSBuild device implementation,
+    # however, the LV name must be passed to the OSBuild device implementation.
+    lv_names = lvm_lvs_for_vg(vg_name)
+
+    # NB: the order of the volumes is important, we want to mount the root
+    # volume first, so that we can mount the other volumes on top of it.
+    volumes = OrderedDict()
     # devices_map stores for each device path onto the system the corresponding
     # OSBuild's Device object
     devices_map = {}
 
-    for vol in parsed:
-        vol = list(map(lambda v: v.strip(), vol))
-        assert len(vol) == 4
-        name, _, _, _ = vol
-
+    for lv_name in lv_names:
         options = {
-            "volume": name,
+            "volume": lv_name,
         }
 
         # Create an OSBuild device object for the LVM partition
         info = index.get_module_info("Device", "org.osbuild.lvm2.lv")
         device = devices.Device(
-            name,
+            lv_name,
             info,
             parent,
             options)
@@ -2555,9 +2555,9 @@ def discover_lvm(dev: str, parent: devices.Device, devmgr: devices.DeviceManager
         ensure_device_file(voldev, int(major), int(minor))
 
         read_partition(voldev, info)
-        volumes[name] = info
-        if name.startswith("root"):
-            volumes.move_to_end(name, last=False)
+        volumes[lv_name] = info
+        if lv_name.startswith("root"):
+            volumes.move_to_end(lv_name, last=False)
 
         # associate the device path with the Device object, we will need it to
         # mount later on.
