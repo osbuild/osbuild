@@ -59,6 +59,7 @@ def test_align_initrd(tmp_path, stage_module, test_case):
     {"treefiles": ["file_b", "file_c", "root.squashfs", "file_1"], "compress": False},
     {"treefiles": ["file_b", "file_c", "file_1"], "compress": True},
     {"treefiles": ["file_b", "file_c", "root.squashfs", "file_1"], "compress": True},
+    {"treefiles": ["file_b", "file_c", "root.erofs", "file_1"], "compress": True},
 ])
 def test_extend_initramfs(tmp_path, stage_module, test_case):
     img_path = tmp_path / "img"
@@ -88,6 +89,9 @@ def test_extend_initramfs(tmp_path, stage_module, test_case):
     if "root.squashfs" in treefiles:
         # root.squashfs must be first
         assert files_in_archive[0] == "root.squashfs"
+    if "root.erofs" in treefiles:
+        # root.erofs must be first
+        assert files_in_archive[0] == "root.erofs"
 
 
 def test_make_stream_hash(tmp_path, stage_module):
