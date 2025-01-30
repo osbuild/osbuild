@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from collections import defaultdict
@@ -416,3 +417,28 @@ def test_jsonseq_download_unhappy(mocked_download, tmp_path):
         assert log[1]["result"]["name"] == "source org.osbuild.curl"
         assert log[1]["result"]["success"] is False
         assert log[1]["result"]["output"] == "RuntimeError: curl: error download ...\n error stack"
+
+
+def test_json_progress_monitor_handles_racy_writes(tmp_path):
+    output_path = tmp_path / "jsonseq.log"
+    with output_path.open("w") as fp:
+        mon = JSONSeqMonitor(fp.fileno(), 10)
+
+        def racy_write(s):
+            for i in range(20):
+                mon.log(f"{s}: {i}")
+                time.sleep(0.0001)
+        t1 = threading.Thread(target=racy_write, args=("msg from t1",))
+        t2 = threading.Thread(target=racy_write, args=("msg from t2",))
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+    # ensure the file is valid jsonseq
+    with output_path.open() as fp:
+        for line in fp.readlines():
+            line = line.strip().strip("\1xe")
+            try:
+                json.loads(line)
+            except json.decoder.JSONDecodeError:
+                pytest.fail(f"the jsonseq stream is not valid json, got {line}")

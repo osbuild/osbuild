@@ -16,6 +16,7 @@ import json
 import os
 import sys
 import time
+from threading import Lock
 from typing import Dict, Optional, Set, Union
 
 import osbuild
@@ -234,6 +235,7 @@ class BaseMonitor(abc.ABC):
     def result(self, result: Union[BuildResult, DownloadResult]) -> None:
         """Called when a module (stage/assembler) is done with its result"""
 
+    # note that this should be re-entrant
     def log(self, message: str, origin: Optional[str] = None):
         """Called for all module log outputs"""
 
@@ -316,6 +318,7 @@ class JSONSeqMonitor(BaseMonitor):
         self._ctx_ids: Set[str] = set()
         self._progress = Progress("pipelines/sources", total_steps)
         self._context = Context(origin="org.osbuild")
+        self._jsonseq_mu = Lock()
 
     def begin(self, pipeline: osbuild.Pipeline):
         self._context.set_pipeline(pipeline)
@@ -362,10 +365,11 @@ class JSONSeqMonitor(BaseMonitor):
         ))
 
     def _jsonseq(self, entry: dict) -> None:
-        # follow rfc7464 (application/json-seq)
-        self.out.write("\x1e")
-        json.dump(entry, self.out)
-        self.out.write("\n")
+        with self._jsonseq_mu:
+            # follow rfc7464 (application/json-seq)
+            self.out.write("\x1e")
+            json.dump(entry, self.out)
+            self.out.write("\n")
 
 
 def make(name: str, fd: int, total_steps: int) -> BaseMonitor:
