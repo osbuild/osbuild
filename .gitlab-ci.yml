@@ -115,7 +115,7 @@ Manifests:
         if [[ "$ID" == "rhel" || "$ID" == "centos" ]]; then
             export GOFLAGS="-tags=exclude_graphdriver_btrfs"
         fi
-    - test/cases/manifest_tests --rm-artifacts-after-test $SCRIPT_EXTRA_ARGS
+    - test/cases/manifest_tests --rm-artifacts-after-test --workdir ./osbuild-manifest-tests-workdir $SCRIPT_EXTRA_ARGS
   variables:
     PYTHONUNBUFFERED: 1
     # List of image types that are not supported by osbuild-image-info
