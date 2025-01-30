@@ -15,6 +15,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from typing import Dict, List, Optional, Tuple
 
 OSBUILD_IMAGES_REPO_URL = os.environ.get("OSBUILD_IMAGES_REPO_URL", "https://github.com/osbuild/images.git")
@@ -339,8 +340,8 @@ def get_argparser():
         "--workdir",
         metavar="PATH",
         type=os.path.abspath,
-        default="./osbuild-manifest-tests-workdir",
-        help="Working directory where the images repository is checked out and the image build cache is downloaded."
+        help="Working directory where the images repository is checked out and the image build cache is downloaded. " +
+             "If not provided, a temporary directory will be used and deleted on exit."
     )
     parser.add_argument(
         "--results-dir",
@@ -384,74 +385,79 @@ def main():
     if args.image_type and args.skip_image_type:
         parser.error("Options --image-type and --skip-image-type are mutually exclusive.")
 
-    workdir = args.workdir
-    os.makedirs(workdir, exist_ok=True)
-    print(f"👷 Using working directory: {workdir}")
-    os.chdir(workdir)
+    try:
+        tmpdir = tempfile.TemporaryDirectory(dir='/var/tmp', prefix='osbuild-manifest-tests-workdir')
+        workdir = args.workdir or tmpdir
+        os.makedirs(workdir, exist_ok=True)
+        print(f"👷 Using working directory: {workdir}")
+        os.chdir(workdir)
 
-    osbuild_store_dir = args.osb_store or os.path.join(workdir, "osbuild-store")
-    os.makedirs(osbuild_store_dir, exist_ok=True)
-    print(f"💾 Using osbuild store directory: {osbuild_store_dir}")
+        osbuild_store_dir = args.osb_store or os.path.join(workdir, "osbuild-store")
+        os.makedirs(osbuild_store_dir, exist_ok=True)
+        print(f"💾 Using osbuild store directory: {osbuild_store_dir}")
 
-    # Checkout the images repository, since we will need scripts from it to download the image build cache
-    images_path = checkout_images_repo(args.images_ref, workdir)
+        # Checkout the images repository, since we will need scripts from it to download the image build cache
+        images_path = checkout_images_repo(args.images_ref, workdir)
 
-    # Create the directory where the image build cache will be downloaded
-    image_build_cache = os.path.join(workdir, "image-build-cache")
-    os.makedirs(image_build_cache, exist_ok=True)
+        # Create the directory where the image build cache will be downloaded
+        image_build_cache = os.path.join(workdir, "image-build-cache")
+        os.makedirs(image_build_cache, exist_ok=True)
 
-    download_image_build_cache_md(
-        images_path, image_build_cache, args.distro, get_host_arch(),
-        args.config, args.image_type, args.skip_image_type
-    )
+        download_image_build_cache_md(
+            images_path, image_build_cache, args.distro, get_host_arch(),
+            args.config, args.image_type, args.skip_image_type
+        )
 
-    # The test case is run for every directory in the image build cache directory
-    test_cases = sorted(os.listdir(image_build_cache))
+        # The test case is run for every directory in the image build cache directory
+        test_cases = sorted(os.listdir(image_build_cache))
 
-    if not test_cases:
-        print("⚠️ No image build cache directories found -> nothing to test", file=sys.stderr)
-        sys.exit(1)
+        if not test_cases:
+            print("⚠️ No image build cache directories found -> nothing to test", file=sys.stderr)
+            sys.exit(1)
 
-    print(f"📦 Found {len(test_cases)} image build cache directories")
-    if chunk_number and total_chunks:
-        all_test_cases = test_cases
-        print(f"📦 Will run subset of tests for chunk {chunk_number} of {total_chunks}:")
-        chunk_size = len(test_cases) // total_chunks
-        chunk_size_remainder = len(test_cases) % total_chunks
+        print(f"📦 Found {len(test_cases)} image build cache directories")
+        if chunk_number and total_chunks:
+            all_test_cases = test_cases
+            print(f"📦 Will run subset of tests for chunk {chunk_number} of {total_chunks}:")
+            chunk_size = len(test_cases) // total_chunks
+            chunk_size_remainder = len(test_cases) % total_chunks
 
-        # determine the chunk index range
-        start = 0
-        end = 0
-        for i in range(chunk_number):
-            current_chunk_size = chunk_size + 1 if i < chunk_size_remainder else chunk_size
-            start = end
-            end = start + current_chunk_size
+            # determine the chunk index range
+            start = 0
+            end = 0
+            for i in range(chunk_number):
+                current_chunk_size = chunk_size + 1 if i < chunk_size_remainder else chunk_size
+                start = end
+                end = start + current_chunk_size
 
-        test_cases = test_cases[start:end]
-        idx_range = range(start, end)
-        for i, test_case in enumerate(all_test_cases):
-            print(f"    {'🟢' if i in idx_range else '🚫'} {test_case}")
+            test_cases = test_cases[start:end]
+            idx_range = range(start, end)
+            for i, test_case in enumerate(all_test_cases):
+                print(f"    {'🟢' if i in idx_range else '🚫'} {test_case}")
 
-    # Dictionary holding the test case name as key and a boolean indicating if the test case failed as value
-    test_cases_failed: Dict[str, bool] = {}
-    print(f"🏃 Running {len(test_cases)} test cases:\n{os.linesep.join(test_cases)}")
-    for test_case in test_cases:
-        print(f"🏃 Running test case for {test_case}")
-        test_case_build_dir = os.path.join(image_build_cache, test_case)
-        download_image_build_artifact(images_path, test_case_build_dir)
-        test_case_results_dir = os.path.join(args.results_dir, test_case)
-        os.makedirs(test_case_results_dir, exist_ok=True)
-        try:
-            run_manifest_behavior_test(
-                test_case_build_dir, test_case_results_dir, osbuild_store_dir, args.rm_artifacts_after_test)
-        # pylint: disable=broad-exception-caught
-        except Exception as e:
-            print(f"❌ {test_case} FAILED")
-            print(e)
-            test_cases_failed[test_case] = True
-        else:
-            print(f"✅ {test_case} PASSED")
-            test_cases_failed[test_case] = False
+        # Dictionary holding the test case name as key and a boolean indicating if the test case failed as value
+        test_cases_failed: Dict[str, bool] = {}
+        print(f"🏃 Running {len(test_cases)} test cases:\n{os.linesep.join(test_cases)}")
+        for test_case in test_cases:
+            print(f"🏃 Running test case for {test_case}")
+            test_case_build_dir = os.path.join(image_build_cache, test_case)
+            download_image_build_artifact(images_path, test_case_build_dir)
+            test_case_results_dir = os.path.join(args.results_dir, test_case)
+            os.makedirs(test_case_results_dir, exist_ok=True)
+            try:
+                run_manifest_behavior_test(
+                    test_case_build_dir, test_case_results_dir, osbuild_store_dir, args.rm_artifacts_after_test)
+            # pylint: disable=broad-exception-caught
+            except Exception as e:
+                print(f"❌ {test_case} FAILED")
+                print(e)
+                test_cases_failed[test_case] = True
+            else:
+                print(f"✅ {test_case} PASSED")
+                test_cases_failed[test_case] = False
+    finally:
+        # We can't use the context manager here, because some files in it may be owned by root
+        subprocess.run(["sudo", "rm", "-rf", tmpdir.name], check=False)
 
     print("Test results:")
     for test_case, failed in test_cases_failed.items():
