@@ -1,0 +1,31 @@
+[
+  {
+    "license_key": "mit",
+    "category": "Permissive",
+    "spdx_license_key": "MIT",
+    "other_spdx_license_keys": [
+      "LicenseRef-MIT-Bootstrap",
+      "LicenseRef-MIT-Discord",
+      "LicenseRef-MIT-TC",
+      "LicenseRef-MIT-Diehl"
+    ],
+    "is_exception": false,
+    "is_deprecated": false,
+    "json": "mit.json",
+    "yaml": "mit.yml",
+    "html": "mit.html",
+    "license": "mit.LICENSE"
+  },
+  {
+    "license_key": "GPLv2",
+    "category": "Permissive",
+    "spdx_license_key": "GPLv2",
+    "other_spdx_license_keys": [],
+    "is_exception": false,
+    "is_deprecated": false,
+    "json": "GPLv2.json",
+    "yaml": "GPLv2.yml",
+    "html": "GPLv2.html",
+    "license": "GPLv2.LICENSE"
+  }
+]
