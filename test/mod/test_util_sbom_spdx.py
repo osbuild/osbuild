@@ -18,9 +18,6 @@ from osbuild.util.sbom.spdx2.model import (
 
 from ..test import patch_license_expression
 
-testutil_dnf4 = pytest.importorskip("osbuild.testutil.dnf4")
-bom_dnf = pytest.importorskip("osbuild.util.sbom.dnf")
-
 
 @pytest.mark.parametrize("licensing_available", (True, False))
 def test_spdxlicenseexpressionfactory_license_expression_availability(licensing_available):
@@ -71,6 +68,9 @@ def test_create_spdx2_document():
 
 @pytest.mark.parametrize("licensing_available", (True, False))
 def test_sbom_pkgset_to_spdx2_doc(licensing_available):
+    testutil_dnf4 = pytest.importorskip("osbuild.testutil.dnf4")
+    bom_dnf = pytest.importorskip("osbuild.util.sbom.dnf")
+
     dnf_pkgset = testutil_dnf4.depsolve_pkgset([os.path.abspath("./test/data/testrepos/baseos")], ["bash"])
     bom_pkgset = bom_dnf.dnf_pkgset_to_sbom_pkgset(dnf_pkgset)
 
