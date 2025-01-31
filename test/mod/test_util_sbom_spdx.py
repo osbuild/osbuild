@@ -18,6 +18,8 @@ from osbuild.util.sbom.spdx2.model import (
 
 from ..test import patch_license_expression
 
+CUSTOM_LICENSE_DB_LOCATION = "./test/data/spdx/custom-license-index.json"
+
 
 @pytest.mark.parametrize("licensing_available", (True, False))
 def test_spdxlicenseexpressionfactory_license_expression_availability(licensing_available):
@@ -38,6 +40,23 @@ def test_spdxlicenseexpressionfactory_license_expression_availability(licensing_
             assert str(license_expression).startswith("LicenseRef-")
             assert license_expression.extracted_text == "MIT"
             assert len(lf.extracted_license_infos()) == 1
+
+
+@pytest.mark.parametrize("licensing_available", (True, False))
+def test_spdxlicenseexpressionfactory_custom_license_index(licensing_available):
+    with patch_license_expression(licensing_available) as mocked_licensing:
+        if licensing_available:
+            assert mocked_licensing is not None
+            lf = SpdxLicenseExpressionCreator(CUSTOM_LICENSE_DB_LOCATION)
+            license_text = "GPLv2"
+            license_expression = lf.ensure_license_expression(license_text)
+            assert license_expression == license_text
+            assert len(lf.extracted_license_infos()) == 0
+        else:
+            assert mocked_licensing is None
+            with pytest.raises(ValueError, match="The license-expression package is not available. " +
+                               "Specify the license index location has no effect."):
+                lf = SpdxLicenseExpressionCreator(CUSTOM_LICENSE_DB_LOCATION)
 
 
 def test_create_spdx2_document():
@@ -67,7 +86,8 @@ def test_create_spdx2_document():
 
 
 @pytest.mark.parametrize("licensing_available", (True, False))
-def test_sbom_pkgset_to_spdx2_doc(licensing_available):
+@pytest.mark.parametrize("license_index_location", (None, CUSTOM_LICENSE_DB_LOCATION))
+def test_sbom_pkgset_to_spdx2_doc(licensing_available, license_index_location):
     testutil_dnf4 = pytest.importorskip("osbuild.testutil.dnf4")
     bom_dnf = pytest.importorskip("osbuild.util.sbom.dnf")
 
@@ -77,7 +97,17 @@ def test_sbom_pkgset_to_spdx2_doc(licensing_available):
     with patch_license_expression(licensing_available) as _:
         extracted_licensing_infos = set()
 
-        doc = sbom_pkgset_to_spdx2_doc(bom_pkgset)
+        try:
+            doc = sbom_pkgset_to_spdx2_doc(bom_pkgset, license_index_location)
+        except ValueError:
+            # ValueError can be raised only if the license-expression package is not available
+            # and a custom license index file is used.
+            if not licensing_available and license_index_location:
+                return
+        else:
+            if not licensing_available and license_index_location:
+                pytest.fail("Expected a ValueError to be raised when the license-expression package is not available.")
+
         assert len(doc.packages) == len(bom_pkgset)
         for spdx_pkg, bom_pkg in zip(doc.packages, bom_pkgset):
             assert spdx_pkg.spdx_id == f"SPDXRef-{bom_pkg.uuid()}"
@@ -91,11 +121,16 @@ def test_sbom_pkgset_to_spdx2_doc(licensing_available):
             assert spdx_pkg.source_info == bom_pkg.source_info()
             assert spdx_pkg.built_date == bom_pkg.build_date
 
-            # If the license-expression package is available, only the "MIT" license is converted
-            # as a valid SPDX license expression for our testing package set.
-            if licensing_available and bom_pkg.license_declared == "MIT":
+            # If the license-expression package is available and no custom license index file is used, only the "MIT"
+            # license is converted as a valid SPDX license expression for our testing package set. Otherwise, also the
+            # "GPLv2" license is converted as a valid SPDX license expression.
+            valid_licenses = ["MIT"]
+            if license_index_location:
+                valid_licenses.append("GPLv2")
+
+            if licensing_available and bom_pkg.license_declared in valid_licenses:
                 assert isinstance(spdx_pkg.license_declared, str)
-                assert spdx_pkg.license_declared == "MIT"
+                assert spdx_pkg.license_declared in valid_licenses
             # If the license-expression package is not available, all licenses are converted
             # to SPDX license references.
             # The same applies to all licenses that are not "MIT" if the package is available,
