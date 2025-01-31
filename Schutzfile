@@ -2,7 +2,7 @@
   "global": {
     "dependencies": {
       "images": {
-        "ref": "main"
+        "ref": "2621d49606ec58f96f356af3adbe25706da1dffd"
       }
     }
   },
