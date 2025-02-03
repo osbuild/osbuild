@@ -14,12 +14,9 @@ def images_main_commit_id():
     if token:
         # this API request doesn't necessarily require a token, but let's use it if we have one
         req.add_header("Authorization", f"Bearer {token}")
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            body = resp.read()
-    except urllib.error.HTTPError as http_error:
-        print(http_error)
-        sys.exit(1)
+
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        body = resp.read()
 
     data = json.loads(body)
     return data["sha"]
