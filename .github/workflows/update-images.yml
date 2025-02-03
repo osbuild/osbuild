@@ -42,7 +42,7 @@
               git add Schutzfile
               git commit -m "Schutzfile: Update images dependency ref to latest"
               git push -f https://"$GITHUB_TOKEN"@github.com/schutzbot/osbuild.git
-              echo "Updating images dependency ref to current `main`" > body
+              echo "Updating images dependency ref to current \`main\` > body
               gh pr create \
                 -t "Update images dependency ref to latest" \
                 -F "body" \
