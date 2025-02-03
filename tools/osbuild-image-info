@@ -2530,7 +2530,7 @@ def lvm_lvs_for_vg(vg_name: str) -> List[str]:
     if res.returncode != 0:
         raise RuntimeError(res.stderr.strip())
 
-    return [lv.strip() for lv in res.stdout.strip().split("\n")]
+    return [lv.strip() for lv in res.stdout.strip().splitlines()]
 
 
 def discover_lvm(dev: str, parent: devices.Device, devmgr: OSBuildDeviceManager):
