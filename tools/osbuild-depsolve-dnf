@@ -20,7 +20,8 @@ config = {"use_dnf5": False}
 config_path = os.environ.get("OSBUILD_SOLVER_CONFIG") or "/usr/lib/osbuild/solver.json"
 try:
     with open(config_path, encoding="utf-8") as f:
-        config = json.load(f)
+        loaded_config = json.load(f)
+        config.update(loaded_config)
 except FileNotFoundError:
     pass
 
