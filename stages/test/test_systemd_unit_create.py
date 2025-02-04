@@ -29,7 +29,7 @@ STAGE_NAME = "org.osbuild.systemd.unit.create"
             "filename": "foo.mount",
             "config": {
                 "Unit": {},
-                "Mount": {"What": ""},
+                "Mount": {"What": "", "Where": ""},
                 "Install": {},
             },
         },
@@ -39,24 +39,44 @@ STAGE_NAME = "org.osbuild.systemd.unit.create"
         {
             "filename": "foo.mount",
             "config": {
-                "Mount": {"What": ""},
+                "Mount": {"What": "", "Where": ""},
             },
         },
         "",
     ),
+
     # bad
+    # # No filename
     ({"config": {"Unit": {}, "Service": {}, "Install": {}}}, "'filename' is a required property"),
+
+    # # no config block
     ({"filename": "foo.service"}, "'config' is a required property"),
+
+    # # no Unit section in .service
     ({"filename": "foo.service", "config": {"Service": {}, "Install": {}}},
      "{'Service': {}, 'Install': {}} is not valid under any of the given schemas"),
+
+    # # no Service section in .service
     ({"filename": "foo.service", "config": {"Unit": {}, "Install": {}}},
      "{'Unit': {}, 'Install': {}} is not valid under any of the given schemas"),
+
+    # # no Install section in .service
     ({"filename": "foo.service", "config": {"Unit": {}, "Service": {}}},
      "{'Unit': {}, 'Service': {}} is not valid under any of the given schemas"),
-    ({"filename": "foo.service", "config": {"Service": {}, "Mount": {"What": ""}}},
-     "{'Service': {}, 'Mount': {'What': ''}} is not valid under any of the given schemas"),
-    ({"filename": "foo.service", "config": {"Unit": {}, "Service": {}, "Mount": {"What": ""}, "Install": {}}},
-     "{'Unit': {}, 'Service': {}, 'Mount': {'What': ''}, 'Install': {}} is not valid under any of the given schemas"),
+
+    # # .mount unit without Where
+    ({"filename": "foo.mount", "config": {"Unit": {}, "Mount": {"What": ""}, "Install": {}}},
+     "'Where' is a required property"),
+
+    # # .mount unit without What
+    ({"filename": "foo.mount", "config": {"Unit": {}, "Mount": {"Where": ""}, "Install": {}}},
+     "'What' is a required property"),
+
+    # # .service unit with Mount section
+    ({"filename": "foo.service", "config": {"Unit": {}, "Service": {},
+                                            "Mount": {"What": "", "Where": ""}, "Install": {}}},
+     "{'Unit': {}, 'Service': {}, 'Mount': {'What': '', 'Where': ''}, "
+     "'Install': {}} is not valid under any of the given schemas"),
 ])
 @pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
 def test_schema_validation(stage_schema, test_data, expected_err):
@@ -90,7 +110,7 @@ def test_schema_validation(stage_schema, test_data, expected_err):
             "filename": "foo.mount",
             "config": {
                 "Unit": {},
-                "Mount": {"What": ""},
+                "Mount": {"What": "", "Where": ""},
                 "Install": {},
             },
         },
@@ -100,7 +120,7 @@ def test_schema_validation(stage_schema, test_data, expected_err):
         {
             "filename": "foo.mount",
             "config": {
-                "Mount": {"What": ""},
+                "Mount": {"What": "", "Where": ""},
             },
         },
         "",
