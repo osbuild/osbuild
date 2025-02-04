@@ -37,9 +37,9 @@ STAGE_NAME = "org.osbuild.systemd.unit.create"
     ),
     (
         {
-            "filename": "foo.mount",
+            "filename": "foo.socket",
             "config": {
-                "Mount": {"What": "", "Where": ""},
+                "Socket": {"ListenStream": "/run/test/api.socket"},
             },
         },
         "",
@@ -118,9 +118,9 @@ def test_schema_validation(stage_schema, test_data, expected_err):
     ),
     (
         {
-            "filename": "foo.mount",
+            "filename": "foo.socket",
             "config": {
-                "Mount": {"What": "", "Where": ""},
+                "Socket": {},
             },
         },
         "",
@@ -130,6 +130,8 @@ def test_schema_validation(stage_schema, test_data, expected_err):
      "Error: something.service unit requires Service section"),
     ({"filename": "data-gifs-cats.mount", "config": {"Unit": {}, "Service": {}, "Install": {}}},
      "Error: data-gifs-cats.mount unit requires Mount section"),
+    ({"filename": "data-gifs-cats.socket", "config": {"Unit": {}, "Service": {}, "Install": {}}},
+     "Error: data-gifs-cats.socket unit requires Socket section"),
 ])
 def test_name_config_match(tmp_path, stage_module, test_data, expected_err):
     expected_unit_path = tmp_path / "usr/lib/systemd/system"
