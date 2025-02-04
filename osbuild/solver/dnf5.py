@@ -56,7 +56,7 @@ class DNF5(SolverBase):
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, request, persistdir, cachedir):
+    def __init__(self, request, persistdir, cachedir, license_index_path=None):
         arch = request["arch"]
         releasever = request.get("releasever")
         module_platform_id = request["module_platform_id"]
@@ -166,6 +166,9 @@ class DNF5(SolverBase):
             self.base.get_repo_sack().update_and_load_enabled_repos(load_system=False)
         except RuntimeError as e:
             raise RepoError(e) from e
+
+        # Custom license index file path use for SBOM generation
+        self.license_index_path = license_index_path
 
     _BASEARCH_MAP = _invert({
         'aarch64': ('aarch64',),
@@ -278,15 +281,14 @@ class DNF5(SolverBase):
     def _timestamp_to_rfc3339(timestamp):
         return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    @staticmethod
-    def _sbom_for_pkgset(pkgset: List[dnf5.rpm.Package]) -> Dict:
+    def _sbom_for_pkgset(self, pkgset: List[dnf5.rpm.Package]) -> Dict:
         """
         Create an SBOM document for the given package set.
 
         For now, only SPDX v2 is supported.
         """
         pkgset = dnf_pkgset_to_sbom_pkgset(pkgset)
-        spdx_doc = sbom_pkgset_to_spdx2_doc(pkgset)
+        spdx_doc = sbom_pkgset_to_spdx2_doc(pkgset, self.license_index_path)
         return spdx_doc.to_dict()
 
     def dump(self):
