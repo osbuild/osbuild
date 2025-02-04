@@ -59,7 +59,7 @@ def solve(request, cache_dir):
 
     with tempfile.TemporaryDirectory() as persistdir:
         try:
-            solver = Solver(request, persistdir, cache_dir)
+            solver = Solver(request, persistdir, cache_dir, config.get("license_index_path"))
             if command == "dump":
                 result = solver.dump()
             elif command == "depsolve":
