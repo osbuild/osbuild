@@ -59,3 +59,31 @@ pipelines:
                 - local-fs.target
               RequiredBy:
                 - multi-user.target
+
+      - type: org.osbuild.systemd.unit.create
+        options:
+          filename: data.mount
+          config:
+            Unit:
+              DefaultDependencies: true
+            Mount:
+              What: "/dev/sdb1"
+              Where: "/data"
+
+      - type: org.osbuild.systemd.unit.create
+        options:
+          filename: service.socket
+          config:
+            Unit:
+              DefaultDependencies: true
+            Socket:
+              ListenStream: "/run/service/api.socket"
+
+      - type: org.osbuild.systemd.unit.create
+        options:
+          filename: "dev-disk-by\x2duuid-4f581be3\x2de8c2\x2d4b44\x2d9456\x2d54df3ab92944.swap"
+          config:
+            Unit:
+              DefaultDependencies: true
+            Swap:
+              What: "/dev/disk/by-uuid/4f581be3-e8c2-4b44-9456-54df3ab92944"
