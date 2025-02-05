@@ -672,6 +672,27 @@
             "filename": "/etc/systemd/user/create-directory.service",
             "size": "0"
           }
+        },
+        {
+          "type": "org.osbuild.truncate",
+          "options": {
+            "filename": "/usr/lib/systemd/system/dev-disk-by-uuid-4f581be3-e8c2-4b44-9456-54df3ab92944.swap",
+            "size": "0"
+          }
+        },
+        {
+          "type": "org.osbuild.truncate",
+          "options": {
+            "filename": "/usr/lib/systemd/system/service.socket",
+            "size": "0"
+          }
+        },
+        {
+          "type": "org.osbuild.truncate",
+          "options": {
+            "filename": "/usr/lib/systemd/system/data.mount",
+            "size": "0"
+          }
         }
       ]
     }
