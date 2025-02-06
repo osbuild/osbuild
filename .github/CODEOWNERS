@@ -1,0 +1,14 @@
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence.
+*               @osbuild/osbuild-reviewers
+
+# SBOM
+/osbuild/util/sbom/     @thozza
+
+# Depsolving
+/osbuild/solver/        @thozza
+/tools/solver*.json     @thozza
+/tools/**/*depsolve*    @thozza
+
+# image-info tool
+/tools/**/*osbuild*image*info*  @thozza
