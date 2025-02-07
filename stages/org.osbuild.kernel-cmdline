@@ -11,7 +11,7 @@ MAX_SIZE_MAP = {
     "x86_64": 2048,
     # https://github.com/torvalds/linux/blob/master/arch/x86/include/asm/setup.h
     "i386": 2048,
-    # https://github.com/torvalds/linux/blame/master/arch/arm/include/uapi/asm/setup.h
+    # https://github.com/torvalds/linux/blob/master/arch/arm/include/uapi/asm/setup.h
     "arm": 1024,
     # https://github.com/torvalds/linux/blob/master/arch/arm64/include/uapi/asm/setup.h
     "aarch64": 2048,
