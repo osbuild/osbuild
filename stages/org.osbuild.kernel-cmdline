@@ -1,13 +1,35 @@
 #!/usr/bin/python3
 import os
+import platform
 import sys
 
 import osbuild.api
+
+# COMMAND_LINE_SIZE value per arch
+MAX_SIZE_MAP = {
+    # https://github.com/torvalds/linux/blob/master/arch/x86/include/asm/setup.h
+    "x86_64": 2048,
+    # https://github.com/torvalds/linux/blob/master/arch/x86/include/asm/setup.h
+    "i386": 2048,
+    # https://github.com/torvalds/linux/blame/master/arch/arm/include/uapi/asm/setup.h
+    "arm": 1024,
+    # https://github.com/torvalds/linux/blob/master/arch/arm64/include/uapi/asm/setup.h
+    "aarch64": 2048,
+    # https://github.com/torvalds/linux/blob/master/arch/powerpc/include/uapi/asm/setup.h
+    "powerpc": 2048,
+    # https://github.com/torvalds/linux/blob/master/arch/powerpc/include/uapi/asm/setup.h
+    "ppc64": 2048,
+    # https://github.com/torvalds/linux/blob/master/arch/riscv/include/uapi/asm/setup.h
+    "riscv": 1024,
+    # https://github.com/torvalds/linux/blob/master/arch/mips/include/uapi/asm/setup.h
+    "mips": 4096
+}
 
 
 def main(tree, options):
     root_fs_uuid = options.get("root_fs_uuid", "")
     additional = options.get("kernel_opts", "")
+    max_cmdline_size = MAX_SIZE_MAP.get(platform.machine().lower(), 4096)
 
     params = []
 
@@ -17,11 +39,16 @@ def main(tree, options):
     if additional:
         params += [additional]
 
+    params = " ".join(filter(len, params))
+    if len(params) > max_cmdline_size:
+        raise ValueError("The size of the kernel cmdline options cannot be "
+                         f"larger than {max_cmdline_size}")
+
     base = os.path.join(tree, "etc/kernel")
     os.makedirs(base, exist_ok=True)
 
     with open(f"{base}/cmdline", "w", encoding="utf8") as f:
-        f.write(" ".join(filter(len, params)))
+        f.write(params)
 
     return 0
 
