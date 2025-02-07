@@ -29,7 +29,8 @@ MAX_SIZE_MAP = {
 def main(tree, options):
     root_fs_uuid = options.get("root_fs_uuid", "")
     additional = options.get("kernel_opts", "")
-    max_cmdline_size = MAX_SIZE_MAP.get(platform.machine().lower(), 4096)
+    max_cmdline_size = options.get("kernel_cmdline_size",
+                                   MAX_SIZE_MAP.get(platform.machine().lower(), 4096))
 
     params = []
 
