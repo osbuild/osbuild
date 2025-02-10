@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+import contextlib
+import os
+import os.path
+import subprocess
 import sys
 
 import osbuild.api
@@ -8,6 +12,22 @@ from osbuild.util.chroot import Chroot
 def yesno(name: str, value: bool) -> str:
     prefix = "" if value else "no-"
     return f"--{prefix}{name}"
+
+
+@contextlib.contextmanager
+def bind_mount_logger(tree: str) -> None:
+    logger_tree_path = os.path.join(tree, "usr/bin/logger")
+    if not os.path.exists(logger_tree_path):
+        # no logger -> nothing to do
+        yield
+        return
+    # make logger a "noop"
+    true_tree_path = os.path.join(tree, "usr/bin/true")
+    subprocess.run(["mount", "--rbind", true_tree_path, logger_tree_path], check=True)
+    try:
+        yield
+    finally:
+        subprocess.run(["umount", logger_tree_path], check=False)
 
 
 # pylint: disable=too-many-branches
@@ -82,8 +102,15 @@ def main(tree, options):
         if initoverlayfs:
             initfs_bin = "/usr/bin/initoverlayfs-install"
 
-        with Chroot(tree) as chroot:
-            chroot.run([initfs_bin, "--no-hostonly", "--kver", kver] + opts, check=True)
+        # the chroot.run() call below will mount /dev with "devtmpfs", this
+        # is needed, see pr #1846 but it means we have likely have a
+        #   /dev/log -> /run/systemd/journal/dev-log
+        # symlink and dracut will try to log on it but end up writing
+        # 5k of "logger: socket /dev/log: No such file or directory"
+        # messages. See also issue #1976
+        with bind_mount_logger(tree):
+            with Chroot(tree) as chroot:
+                chroot.run([initfs_bin, "--no-hostonly", "--kver", kver] + opts, check=True)
 
     return 0
 
