@@ -224,3 +224,70 @@ def test_analyse_iso_fail_no_tarball(tmp_path):
             subprocess.CalledProcessError,
             match=r"^Command '\['tar', '--selinux', '--xattrs', '--acls', '-x', '--auto-compress', '-f', '/tmp/\w+/liveimg.tar.gz"):
         osbuild_image_info.analyse_iso(image_path)
+
+
+@pytest.mark.parametrize("subprocess_output,expected_report", [
+    pytest.param(
+        """Would relabel {tmp_path}/etc/shells from unconfined_u:object_r:etc_t:s0 to system_u:object_r:etc_t:s0
+Would relabel {tmp_path}/etc/ld.so.cache from unconfined_u:object_r:ld_so_cache_t:s0 to system_u:object_r:ld_so_cache_t:s0
+Would relabel {tmp_path}/etc/alternatives/roff.7.gz from unconfined_u:object_r:etc_t:s0 to system_u:object_r:etc_t:s0
+Would relabel {tmp_path}/var/lib/selinux/targeted/active from unconfined_u:object_r:semanage_store_t:s0 to system_u:object_r:semanage_store_t:s0
+Would relabel {tmp_path}/var/lib/alternatives/roff.7.gz from unconfined_u:object_r:rpm_var_lib_t:s0 to system_u:object_r:rpm_var_lib_t:s0
+""",
+        [
+            {
+                "filename": "/etc/alternatives/roff.7.gz",
+                "actual": "unconfined_u:object_r:etc_t:s0",
+                "expected": "system_u:object_r:etc_t:s0",
+            },
+            {
+                "filename": "/etc/ld.so.cache",
+                "actual": "unconfined_u:object_r:ld_so_cache_t:s0",
+                "expected": "system_u:object_r:ld_so_cache_t:s0",
+            },
+            {
+                "filename": "/etc/shells",
+                "actual": "unconfined_u:object_r:etc_t:s0",
+                "expected": "system_u:object_r:etc_t:s0",
+            },
+            {
+                "filename": "/var/lib/alternatives/roff.7.gz",
+                "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+                "expected": "system_u:object_r:rpm_var_lib_t:s0",
+            },
+            {
+                "filename": "/var/lib/selinux/targeted/active",
+                "actual": "unconfined_u:object_r:semanage_store_t:s0",
+                "expected": "system_u:object_r:semanage_store_t:s0",
+            },
+        ],
+        id="happy case",
+    ),
+    pytest.param(
+        "",
+        [],
+        id="empty",
+    )
+])
+def test_read_selinux_ctx_mismatch(tmp_path, subprocess_output, expected_report):
+    """
+    Test the read_selinux_ctx_mismatch function
+    """
+    policy_dir = tmp_path / "etc/selinux/targeted/policy"
+    policy_dir.mkdir(parents=True)
+    policy_file = policy_dir / "policy.33"
+    policy_file.touch()
+
+    with patch("subprocess.check_output") as subprocess_check_output:
+        subprocess_check_output.return_value = subprocess_output.format(tmp_path=tmp_path)
+        report = osbuild_image_info.read_selinux_ctx_mismatch(tmp_path.as_posix(), False)
+
+        assert subprocess_check_output.call_count == 1
+        assert subprocess_check_output.call_args[0][0] == [
+            "setfiles", "-r", tmp_path.as_posix(),
+            "-nvF",
+            "-c", os.fspath(tmp_path / "etc/selinux/targeted/policy/policy.33"),
+            os.fspath(tmp_path / "etc/selinux/targeted/contexts/files/file_contexts"),
+            tmp_path.as_posix(),
+        ]
+        assert report == expected_report
