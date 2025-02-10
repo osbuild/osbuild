@@ -1118,9 +1118,13 @@ def read_selinux_ctx_mismatch(tree, is_ostree):
         setfiles_pattern = r"Would\s+relabel\s+(?P<filename>.+)\s+from\s+(?P<actual>.+)\s+to\s+(?P<expected>.+)"
         setfiles_re = re.compile(setfiles_pattern)
 
+        # skip messages about old compiled fcontext format
+        binary_fcontext_skip = rf"{tree}/etc/selinux/targeted/contexts/files/file_contexts.*\.bin:\s+Old compiled fcontext format, skipping"
+        binary_fcontext_skip_re = re.compile(binary_fcontext_skip)
+
         for line in output.splitlines():
             line = line.strip()
-            if not line:
+            if not line or binary_fcontext_skip_re.match(line):
                 continue
             match = setfiles_re.match(line)
             # do not silently ignore changes of 'setfiles' output

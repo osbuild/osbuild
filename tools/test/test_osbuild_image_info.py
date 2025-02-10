@@ -267,6 +267,52 @@ Would relabel {tmp_path}/var/lib/alternatives/roff.7.gz from unconfined_u:object
         "",
         [],
         id="empty",
+    ),
+    pytest.param(
+        """{tmp_path}/etc/selinux/targeted/contexts/files/file_contexts.bin:  Old compiled fcontext format, skipping
+{tmp_path}/etc/selinux/targeted/contexts/files/file_contexts.homedirs.bin:  Old compiled fcontext format, skipping
+""",
+        [],
+        id="only lines to skip",
+    ),
+    pytest.param(
+        """{tmp_path}/etc/selinux/targeted/contexts/files/file_contexts.bin:  Old compiled fcontext format, skipping
+{tmp_path}/etc/selinux/targeted/contexts/files/file_contexts.homedirs.bin:  Old compiled fcontext format, skipping
+
+Would relabel {tmp_path}/etc/shells from unconfined_u:object_r:etc_t:s0 to system_u:object_r:etc_t:s0
+Would relabel {tmp_path}/etc/ld.so.cache from unconfined_u:object_r:ld_so_cache_t:s0 to system_u:object_r:ld_so_cache_t:s0
+Would relabel {tmp_path}/etc/alternatives/roff.7.gz from unconfined_u:object_r:etc_t:s0 to system_u:object_r:etc_t:s0
+Would relabel {tmp_path}/var/lib/selinux/targeted/active from unconfined_u:object_r:semanage_store_t:s0 to system_u:object_r:semanage_store_t:s0
+Would relabel {tmp_path}/var/lib/alternatives/roff.7.gz from unconfined_u:object_r:rpm_var_lib_t:s0 to system_u:object_r:rpm_var_lib_t:s0
+""",
+        [
+            {
+                "filename": "/etc/alternatives/roff.7.gz",
+                "actual": "unconfined_u:object_r:etc_t:s0",
+                "expected": "system_u:object_r:etc_t:s0",
+            },
+            {
+                "filename": "/etc/ld.so.cache",
+                "actual": "unconfined_u:object_r:ld_so_cache_t:s0",
+                "expected": "system_u:object_r:ld_so_cache_t:s0",
+            },
+            {
+                "filename": "/etc/shells",
+                "actual": "unconfined_u:object_r:etc_t:s0",
+                "expected": "system_u:object_r:etc_t:s0",
+            },
+            {
+                "filename": "/var/lib/alternatives/roff.7.gz",
+                "actual": "unconfined_u:object_r:rpm_var_lib_t:s0",
+                "expected": "system_u:object_r:rpm_var_lib_t:s0",
+            },
+            {
+                "filename": "/var/lib/selinux/targeted/active",
+                "actual": "unconfined_u:object_r:semanage_store_t:s0",
+                "expected": "system_u:object_r:semanage_store_t:s0",
+            },
+        ],
+        id="valid lines mixed with lines to skip",
     )
 ])
 def test_read_selinux_ctx_mismatch(tmp_path, subprocess_output, expected_report):
