@@ -16,11 +16,9 @@ supported are:
   entitlement certificate. Secret fields `consumer_cert` and
   `consumer_key` must be set.
 
-When one or more subpaths are specified, only those are pulled, otherwise the
-whole tree is pulled. To skip TLS verification, set
-OSBUILD_SOURCES_OSTREE_INSECURE environment variable to "true". To set a
-HTTP(S) proxy, set OSBUILD_SOURCES_OSTREE_PROXY environment variable to the
-proxy URL.
+To skip TLS verification, set OSBUILD_SOURCES_OSTREE_INSECURE environment
+variable to "true". To set a HTTP(S) proxy, set OSBUILD_SOURCES_OSTREE_PROXY
+environment variable to the proxy URL.
 """
 
 
@@ -58,13 +56,6 @@ SCHEMA = """
               "contenturl": {
                 "type": "string",
                 "description": "content URL of the repository."
-              },
-              "subpaths": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "description": "only include path(s) when fetching (fetch all when empty)"
-                }
               },
               "gpgkeys": {
                 "type": "array",
@@ -123,9 +114,6 @@ class OSTreeSource(sources.SourceService):
     def fetch_one(self, checksum, desc):
         commit = checksum
         remote = desc["remote"]
-        subpaths = remote.get("subpaths", [])
-        subpaths = [f'--subpath={p}' for p in subpaths]
-
         # This is a temporary remote so we'll just use a random name
         name = str(uuid.uuid4())
 
@@ -133,7 +121,7 @@ class OSTreeSource(sources.SourceService):
 
         # Transfer the commit: remote → cache
         print(f"pulling {commit}", file=sys.stderr)
-        ostree.cli("pull", name, commit, *subpaths, repo=self.repo)
+        ostree.cli("pull", name, commit, repo=self.repo)
 
         # Remove the temporary remote again
         ostree.cli("remote", "delete", name, repo=self.repo)

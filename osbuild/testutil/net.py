@@ -4,10 +4,8 @@ network related utilities
 """
 import contextlib
 import http.server
-import os
 import socket
 import ssl
-import sys
 import threading
 
 try:
@@ -25,12 +23,6 @@ except ImportError:
 
 
 from .atomic import AtomicCounter
-
-
-def print_dir(directory):
-    for root, _, files in os.walk(directory):
-        for fn in files:
-            print(os.path.join(root, fn))
 
 
 def _get_free_port():
@@ -55,8 +47,6 @@ class SilentHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 class DirHTTPServer(ThreadingHTTPServer):
     def __init__(self, *args, directory=None, simulate_failures=0, **kwargs):
         super().__init__(*args, **kwargs)
-        print("Serving:", file=sys.stderr)
-        print_dir(directory)
         self.directory = directory
         self.simulate_failures = AtomicCounter(simulate_failures)
         self.reqs = AtomicCounter()
