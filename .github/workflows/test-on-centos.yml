@@ -15,7 +15,7 @@ jobs:
           - version: "10"
             pytest_exclude: 'not (TestBoot and boot) and not (test_write_read)'
     name: "Unittests on Centos Stream ${{ matrix.centos.version }}"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
