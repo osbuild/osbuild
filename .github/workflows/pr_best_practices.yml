@@ -9,7 +9,7 @@ on:
 
 jobs:
   pr-best-practices:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: PR best practice check
         uses: osbuild/pr-best-practices@main

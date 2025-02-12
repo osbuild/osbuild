@@ -10,7 +10,7 @@ on:
 jobs:
   trigger-gitlab:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       IMAGEBUILDER_BOT_GITLAB_SSH_KEY: ${{ secrets.IMAGEBUILDER_BOT_GITLAB_SSH_KEY }}
     steps:
