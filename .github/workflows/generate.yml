@@ -5,7 +5,7 @@ on: [pull_request, push]
 jobs:
   generate_documentation:
     name: "Documentation"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
       image: docker.io/library/python:3.7
     steps:
@@ -35,7 +35,7 @@ jobs:
 
   generate_test_data:
     name: "Test Data"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       OSBUILD_MPP_CACHEDIR: "/var/tmp/osbuild-mpp-cache"
     steps:

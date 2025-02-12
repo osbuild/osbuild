@@ -8,7 +8,7 @@ on:
 
 jobs:
   tag-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Even or odd week
