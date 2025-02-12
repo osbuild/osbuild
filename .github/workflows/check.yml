@@ -8,7 +8,7 @@ permissions:
 jobs:
   spelling_checker:
     name: "Spelling"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: codespell-project/actions-codespell@master
@@ -18,7 +18,7 @@ jobs:
 
   python_code_linters:
       name: "Python Linters"
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-24.04
       steps:
       - name: "Clone Repository"
         uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
 
   shell_linters:
     name: "Shell Linters"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
     - name: "Clone Repository"
@@ -47,7 +47,7 @@ jobs:
 
   packit-config-lint:
     name: "📦 Packit config lint"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
       image: registry.fedoraproject.org/fedora:latest
     steps:
