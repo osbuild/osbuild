@@ -24,3 +24,22 @@ def test_cloud_init_datasource_list_single_line(tmp_path, stage_module):
     stage_module.main(treedir, options)
     assert os.path.exists(confpath)
     assert confpath.read_text() == "datasource_list: [Azure]\n"
+
+
+def test_cloud_init_network(tmp_path, stage_module):
+    treedir = tmp_path / "tree"
+    confpath = treedir / "etc/cloud/cloud.cfg.d/network.cfg"
+    confpath.parent.mkdir(parents=True, exist_ok=True)
+
+    options = {
+        "filename": confpath.name,
+        "config": {
+            "network": {
+                "config": "disabled",
+            },
+        },
+    }
+
+    stage_module.main(treedir, options)
+    assert os.path.exists(confpath)
+    assert confpath.read_text() == "network:\n  config: disabled\n"

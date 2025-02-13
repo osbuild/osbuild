@@ -93,6 +93,8 @@
               "enum": [
                 "Azure",
                 "Ec2",
+                "NoCloud",
+                "WSL",
                 "None"
               ]
             }
@@ -134,6 +136,18 @@
               "all": {
                 "description": "Redirect the output of all stages",
                 "type": "string"
+              }
+            }
+          },
+          "network": {
+            "type": "object",
+            "minProperties": 1,
+            "properties": {
+              "config": {
+                "type": "string",
+                "enum": [
+                  "disabled"
+                ]
               }
             }
           }
