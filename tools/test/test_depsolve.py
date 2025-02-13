@@ -1275,6 +1275,21 @@ def test_gen_config_combos(items_count, expected_combos):
     assert list(gen_config_combos(items_count)) == expected_combos
 
 
+def gen_repo_config(server):
+    """
+    Generate a repository configuration dictionary for the provided server.
+    """
+    return {
+        "id": server["name"],
+        "name": server["name"],
+        "baseurl": server["address"],
+        "check_gpg": False,
+        "sslverify": False,
+        "rhsm": False,
+        "gpgkeys": [TEST_KEY + server["name"]],
+    }
+
+
 def config_combos(tmp_path, servers):
     """
     Return all configurations for the provided repositories, either as config files in a directory or as repository
@@ -1284,15 +1299,8 @@ def config_combos(tmp_path, servers):
         repo_configs = []
         for idx in combo[0]:  # servers to be configured through request
             server = servers[idx]
-            repo_configs.append({
-                "id": server["name"],
-                "name": server["name"],
-                "baseurl": server["address"],
-                "check_gpg": False,
-                "sslverify": False,
-                "rhsm": False,
-                "gpgkeys": [TEST_KEY + server["name"]],
-            })
+            repo_configs.append(gen_repo_config(server))
+
         root_dir, repos_dir, keys_dir = make_dnf_scafolding(tmp_path)
         for idx in combo[1]:  # servers to be configured through root_dir
             server = servers[idx]
