@@ -341,11 +341,31 @@ class JSONSeqMonitor(BaseMonitor):
         self._context.set_stage(module)
         self.log(f"Starting module {module.name}", origin="osbuild.monitor")
 
-    # result is for modules
     def result(self, result: Union[BuildResult, DownloadResult]) -> None:
+        """ Called when the module (stage or download) is finished
+
+        This will stream a log entry that the stage finished and the result
+        is available via the json-seq monitor as well. Note that while the
+        stage output is part of the result it may be abbreviated. To get
+        an entire buildlog the consumer needs to simply log the calls to
+        "log()" which contain more detailed information as well.
+        """
         # we may need to check pipeline ids here in the future
         if self._progress.sub_progress:
             self._progress.sub_progress.incr()
+
+        # Limit the output in the json pipeline to a "reasonable"
+        # length. We ran into an issue from a combination of a stage
+        # that produce tons of output (~256 kb, see issue#1976) and
+        # the consumer that used a golang scanner with a max default
+        # buffer of 64kb before erroring.
+        #
+        # Consumers can collect the individual log lines on their own
+        # if desired via the "log()" method.
+        max_output_len = 31_000
+        if len(result.output) > max_output_len:
+            removed = len(result.output) - max_output_len
+            result.output = f"[...{removed} bytes hidden...]\n{result.output[removed:]}"
 
         self._jsonseq(log_entry(
             f"Finished module {result.name}",

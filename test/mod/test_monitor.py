@@ -19,7 +19,7 @@ import osbuild
 import osbuild.meta
 from osbuild.monitor import Context, JSONSeqMonitor, LogMonitor, Progress, log_entry
 from osbuild.objectstore import ObjectStore
-from osbuild.pipeline import Runner
+from osbuild.pipeline import BuildResult, Runner, Stage
 
 from .. import test
 
@@ -442,3 +442,21 @@ def test_json_progress_monitor_handles_racy_writes(tmp_path):
                 json.loads(line)
             except json.decoder.JSONDecodeError:
                 pytest.fail(f"the jsonseq stream is not valid json, got {line}")
+
+
+def test_json_progress_monitor_excessive_output_in_result(tmp_path):
+    index = osbuild.meta.Index(os.curdir)
+    info = index.get_module_info("Stage", "org.osbuild.noop")
+    stage = Stage(info, "source_opts", "build", "base", "options", "source_epoch")
+
+    output_path = tmp_path / "jsonseq.log"
+    output = "beginning-marker-vanishes\n" + "1" * 32_000 + "\nend-marker"
+    build_result = BuildResult(stage, 0, output, {})
+    with output_path.open("w") as fp:
+        mon = JSONSeqMonitor(fp.fileno(), 1)
+        mon.result(build_result)
+    with output_path.open() as fp:
+        line = fp.readline().strip("\x1e")
+        json_result = json.loads(line)
+    assert json_result["result"]["output"].startswith("[...1037 bytes hidden...]\n1111")
+    assert json_result["result"]["output"].endswith("1111\nend-marker")
