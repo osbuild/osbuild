@@ -1522,15 +1522,69 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
                 assert res["solver"] == "dnf"
 
 
-# pylint: disable=too-many-branches
-@pytest.mark.parametrize("test_case", depsolve_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("with_sbom", [False, True])
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve(repo_servers, dnf_config, detect_fn, with_sbom, test_case):
+def test_depsolve_sbom(repo_servers, dnf_config, detect_fn, with_sbom):
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
+    test_case = depsolve_test_case_basic_2pkgs_2repos
+    transactions = test_case["transactions"]
+    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
+    repo_configs = [gen_repo_config(server) for server in tc_repo_servers]
+
+    with TemporaryDirectory() as cache_dir:
+        res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs, with_sbom=with_sbom)
+
+        if test_case.get("error", False):
+            assert exit_code != 0
+            assert res["kind"] == test_case["error_kind"]
+            assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+            return
+
+        assert exit_code == 0
+        assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+        assert res["repos"].keys() == test_case["results"]["reponames"]
+
+        for repo in res["repos"].values():
+            assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+            assert repo["sslverify"] is False
+        if with_sbom:
+            assert "sbom" in res
+
+            spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
+            with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
+                spdx_schema = json.load(f)
+            validator = jsonschema.Draft4Validator
+            validator.check_schema(spdx_schema)
+            spdx_validator = validator(spdx_schema)
+            spdx_validator.validate(res["sbom"])
+
+            assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
+        else:
+            assert "sbom" not in res
+
+        use_dnf5 = dnf_config.get("use_dnf5", False)
+        if use_dnf5:
+            assert res["solver"] == "dnf5"
+        else:
+            assert res["solver"] == "dnf"
+
+
+# pylint: disable=too-many-branches
+@pytest.mark.parametrize("test_case", depsolve_test_cases, ids=tcase_idfn)
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    ({}, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_depsolve(repo_servers, dnf_config, detect_fn, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
@@ -1554,7 +1608,7 @@ def test_depsolve(repo_servers, dnf_config, detect_fn, with_sbom, test_case):
 
     repo_configs = [gen_repo_config(server) for server in tc_repo_servers]
     with TemporaryDirectory() as cache_dir:
-        res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs, with_sbom=with_sbom)
+        res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs)
 
         if test_case.get("error", False):
             assert exit_code != 0
@@ -1572,20 +1626,6 @@ def test_depsolve(repo_servers, dnf_config, detect_fn, with_sbom, test_case):
         for repo in res["repos"].values():
             assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
             assert repo["sslverify"] is False
-        if with_sbom:
-            assert "sbom" in res
-
-            spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
-            with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
-                spdx_schema = json.load(f)
-            validator = jsonschema.Draft4Validator
-            validator.check_schema(spdx_schema)
-            spdx_validator = validator(spdx_schema)
-            spdx_validator.validate(res["sbom"])
-
-            assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
-        else:
-            assert "sbom" not in res
 
         use_dnf5 = dnf_config.get("use_dnf5", False)
         if use_dnf5:
