@@ -182,6 +182,43 @@ def tcase_idfn(param):
     return param['id']
 
 
+depsolve_test_case_basic_2pkgs_2repos = {
+    "id": "basic_2pkgs_2repos",
+    "enabled_repos": ["baseos", "custom"],
+    "transactions": [
+        {
+            "package-specs": [
+                "filesystem",
+                "pkg-with-no-deps"
+            ],
+        },
+    ],
+    "results": {
+        "packages": {
+            "basesystem",
+            "bash",
+            "centos-gpg-keys",
+            "centos-stream-release",
+            "centos-stream-repos",
+            "filesystem",
+            "glibc",
+            "glibc-common",
+            "glibc-minimal-langpack",
+            "libgcc",
+            "ncurses-base",
+            "ncurses-libs",
+            "setup",
+            "tzdata",
+            "pkg-with-no-deps",
+        },
+        "reponames": {
+            "baseos",
+            "custom",
+        },
+    },
+}
+
+
 depsolve_test_cases = [
     {
         "id": "basic_1pkg_1repo",
@@ -229,41 +266,6 @@ depsolve_test_cases = [
         "results": {
             "packages": {"pkg-with-no-deps"},
             "reponames": {"custom"},
-        },
-    },
-    {
-        "id": "basic_2pkgs_2repos",
-        "enabled_repos": ["baseos", "custom"],
-        "transactions": [
-            {
-                "package-specs": [
-                    "filesystem",
-                    "pkg-with-no-deps"
-                ],
-            },
-        ],
-        "results": {
-            "packages": {
-                "basesystem",
-                "bash",
-                "centos-gpg-keys",
-                "centos-stream-release",
-                "centos-stream-repos",
-                "filesystem",
-                "glibc",
-                "glibc-common",
-                "glibc-minimal-langpack",
-                "libgcc",
-                "ncurses-base",
-                "ncurses-libs",
-                "setup",
-                "tzdata",
-                "pkg-with-no-deps",
-            },
-            "reponames": {
-                "baseos",
-                "custom",
-            },
         },
     },
     {
@@ -1115,7 +1117,7 @@ depsolve_test_cases = [
         "error_kind": "RepoError",
         "error_reason_re": r"There was a problem reading a repository: Failed to download metadata.*['\"]broken['\"].*",
     },
-]
+] + [depsolve_test_case_basic_2pkgs_2repos]
 
 
 dump_test_cases = [
@@ -1421,6 +1423,59 @@ def test_get_test_case_repo_servers(test_case, repo_servers, expected):
     assert get_test_case_repo_servers(test_case, repo_servers) == expected
 
 
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    ({}, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
+    """
+    Test all possible configurations of repository configurations for the depsolve function.
+    Test on a single test case which installs two packages from two repositories.
+    """
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
+    test_case = depsolve_test_case_basic_2pkgs_2repos
+    transactions = test_case["transactions"]
+    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
+
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
+        with TemporaryDirectory() as cache_dir:
+            res, exit_code = depsolve(
+                transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
+
+            if test_case.get("error", False):
+                assert exit_code != 0
+                assert res["kind"] == test_case["error_kind"]
+                assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+                continue
+
+            assert exit_code == 0
+            assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+            assert res["repos"].keys() == test_case["results"]["reponames"]
+
+            for repo in res["repos"].values():
+                assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+                assert repo["sslverify"] is False
+
+            # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
+            # *filelists*
+            n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
+            if "filelists" in opt_metadata:
+                assert n_filelist_files == len(tc_repo_servers)
+            else:
+                assert n_filelist_files == 0
+
+            use_dnf5 = dnf_config.get("use_dnf5", False)
+            if use_dnf5:
+                assert res["solver"] == "dnf5"
+            else:
+                assert res["solver"] == "dnf"
+
+
 # pylint: disable=too-many-branches
 @pytest.mark.parametrize("test_case", depsolve_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("with_sbom", [False, True])
@@ -1429,7 +1484,7 @@ def test_get_test_case_repo_servers(test_case, repo_servers, expected):
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test_case):
+def test_depsolve(repo_servers, dnf_config, detect_fn, with_sbom, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
@@ -1451,55 +1506,46 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test
 
     tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
-        with TemporaryDirectory() as cache_dir:
-            res, exit_code = depsolve(
-                transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata, with_sbom)
+    repo_configs = [gen_repo_config(server) for server in tc_repo_servers]
+    with TemporaryDirectory() as cache_dir:
+        res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs, with_sbom=with_sbom)
 
-            if test_case.get("error", False):
-                assert exit_code != 0
-                assert res["kind"] == test_case["error_kind"]
-                assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
-                continue
+        if test_case.get("error", False):
+            assert exit_code != 0
+            assert res["kind"] == test_case["error_kind"]
+            assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+            return
 
-            assert exit_code == 0
-            assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-            assert res["repos"].keys() == test_case["results"]["reponames"]
+        assert exit_code == 0
+        assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+        assert res["repos"].keys() == test_case["results"]["reponames"]
 
-            # modules is optional here as the dnf5 depsolver never returns any modules
-            assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
+        # modules is optional here as the dnf5 depsolver never returns any modules
+        assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
 
-            for repo in res["repos"].values():
-                assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-                assert repo["sslverify"] is False
-            if with_sbom:
-                assert "sbom" in res
+        for repo in res["repos"].values():
+            assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+            assert repo["sslverify"] is False
+        if with_sbom:
+            assert "sbom" in res
 
-                spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
-                with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
-                    spdx_schema = json.load(f)
-                validator = jsonschema.Draft4Validator
-                validator.check_schema(spdx_schema)
-                spdx_validator = validator(spdx_schema)
-                spdx_validator.validate(res["sbom"])
+            spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
+            with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
+                spdx_schema = json.load(f)
+            validator = jsonschema.Draft4Validator
+            validator.check_schema(spdx_schema)
+            spdx_validator = validator(spdx_schema)
+            spdx_validator.validate(res["sbom"])
 
-                assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
-            else:
-                assert "sbom" not in res
+            assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
+        else:
+            assert "sbom" not in res
 
-            # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
-            # *filelists*
-            n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
-            if "filelists" in opt_metadata:
-                assert n_filelist_files == len(tc_repo_servers)
-            else:
-                assert n_filelist_files == 0
-
-            use_dnf5 = dnf_config.get("use_dnf5", False)
-            if use_dnf5:
-                assert res["solver"] == "dnf5"
-            else:
-                assert res["solver"] == "dnf"
+        use_dnf5 = dnf_config.get("use_dnf5", False)
+        if use_dnf5:
+            assert res["solver"] == "dnf5"
+        else:
+            assert res["solver"] == "dnf"
 
 
 @pytest.mark.parametrize("test_case", dump_test_cases, ids=tcase_idfn)
