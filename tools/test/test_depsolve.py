@@ -1544,18 +1544,17 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
                 assert n_filelist_files == 0
 
 
-@pytest.mark.parametrize("dnf_config, detect_fn", [
-    (None, assert_dnf),
-    ('{"use_dnf5": false}', assert_dnf),
-    ('{"use_dnf5": true}', assert_dnf5),
-], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
+def test_depsolve_result_api(tmp_path, repo_servers):
+    """
+    Test the result of depsolve() API.
+
+    Note tha this test runs only with dnf4, as the dnf5 depsolver does not support modules.
+    """
     try:
-        detect_fn()
+        assert_dnf()
     except RuntimeError as e:
         pytest.skip(str(e))
 
-    root_dir = tmp_path.as_posix()
     cache_dir = (tmp_path / "depsolve-cache").as_posix()
     transactions = [
         {
@@ -1564,19 +1563,8 @@ def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
         },
     ]
 
-    repo_configs = []
-    for server in repo_servers:
-        repo_configs.append({
-            "id": server["name"],
-            "name": server["name"],
-            "baseurl": server["address"],
-            "gpgkeys": [TEST_KEY + server["name"]],
-        })
-    dnf_config = {}
-    opt_metadata = []
-    with_sbom = False
-
-    res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata, with_sbom)
+    repo_configs = [gen_repo_config(server) for server in repo_servers]
+    res, exit_code = depsolve(transactions, cache_dir, repos=repo_configs)
 
     assert exit_code == 0
     # If any of  this changes, increase:
