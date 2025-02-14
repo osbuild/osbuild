@@ -109,7 +109,7 @@ def dump(cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) ->
         env = None
         if dnf_config:
             cfg_file = pathlib.Path(cfg_dir) / "solver.json"
-            cfg_file.write_text(dnf_config)
+            json.dump(dnf_config, cfg_file.open("w"))
             env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
 
         p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
@@ -147,7 +147,7 @@ def search(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt_me
         env = None
         if dnf_config:
             cfg_file = pathlib.Path(cfg_dir) / "solver.json"
-            cfg_file.write_text(dnf_config)
+            json.dump(dnf_config, cfg_file.open("w"))
             env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
 
         p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
@@ -1551,8 +1551,8 @@ def test_depsolve(repo_servers, dnf_config, detect_fn, with_sbom, test_case):
 @pytest.mark.parametrize("test_case", dump_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
-    ('{"use_dnf5": false}', assert_dnf),
-    ('{"use_dnf5": true}', assert_dnf5),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
 def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     try:
@@ -1596,8 +1596,8 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 @pytest.mark.parametrize("test_case", search_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
-    ('{"use_dnf5": false}', assert_dnf),
-    ('{"use_dnf5": true}', assert_dnf5),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
 def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     try:
