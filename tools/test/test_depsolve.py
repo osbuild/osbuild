@@ -40,6 +40,23 @@ def assert_dnf():
         raise RuntimeError("Cannot import dnf")
 
 
+def is_license_expression_available():
+    """
+    Check if the license-expression package is available.
+
+    The check is not done by importing the package in the current Python environment, because it may be
+    running inside a virtual environment where the package is / is not installed. Instead, the check is done by
+    running a Python script outside the virtual environment.
+
+    For the same reason, we don't use `sys.executable` to run the script, because it may point to a different
+    Python interpreter than the one that will be used when `osbuild-depsolve-dnf` is executed.
+    """
+    cmd = ["/usr/bin/python3", "-c", "from license_expression import get_spdx_licensing as _"]
+    if sp.run(cmd, check=False).returncode != 0:
+        return False
+    return True
+
+
 def depsolve(transactions, cache_dir, dnf_config=None, repos=None, root_dir=None,
              opt_metadata=None, with_sbom=False) -> Tuple[dict, int]:
     if not repos and not root_dir:
@@ -1523,17 +1540,26 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
                 assert res["solver"] == "dnf"
 
 
+# pylint: disable=too-many-branches
+@pytest.mark.parametrize("custom_license_db", [None, "./test/data/spdx/custom-license-index.json"])
 @pytest.mark.parametrize("with_sbom", [False, True])
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom):
+def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, custom_license_db):
     try:
         detect_fn()
     except RuntimeError as e:
         pytest.skip(str(e))
+
+    if custom_license_db:
+        if not is_license_expression_available():
+            pytest.skip("license_expression python module is not available")
+
+        dnf_config = dnf_config.copy()
+        dnf_config["license_index_path"] = custom_license_db
 
     test_case = depsolve_test_case_basic_2pkgs_2repos
     transactions = test_case["transactions"]
@@ -1548,6 +1574,7 @@ def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom)
     for repo in res["repos"].values():
         assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
         assert repo["sslverify"] is False
+
     if with_sbom:
         assert "sbom" in res
 
@@ -1560,6 +1587,25 @@ def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom)
         spdx_validator.validate(res["sbom"])
 
         assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
+
+        license_expressions = [pkg["licenseDeclared"] for pkg in res["sbom"]["packages"]]
+        license_refs = [le for le in license_expressions if le.startswith("LicenseRef-")]
+        non_license_refs = [le for le in license_expressions if not le.startswith("LicenseRef-")]
+        if not is_license_expression_available():
+            # all license expressions shhould be converted to ExtractedLicensingInfo
+            assert len(license_refs) == len(license_expressions)
+            assert len(non_license_refs) == 0
+        else:
+            # some license expressions should not be converted to ExtractedLicensingInfo
+            assert len(license_refs) < len(license_expressions)
+            if custom_license_db:
+                assert len(non_license_refs) == 5
+                # "GPLv2" is not a valid SPDX license expression, but it is added in our custom license db
+                assert "GPLv2" in non_license_refs
+            else:
+                assert len(non_license_refs) == 2
+                assert "GPLv2" not in non_license_refs
+
     else:
         assert "sbom" not in res
 
