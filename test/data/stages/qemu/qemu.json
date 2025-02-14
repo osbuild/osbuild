@@ -639,6 +639,34 @@
       ]
     },
     {
+      "name": "image-compat6-adapter-type.vmdk",
+      "build": "name:build",
+      "stages": [
+        {
+          "type": "org.osbuild.qemu",
+          "inputs": {
+            "image": {
+              "type": "org.osbuild.files",
+              "origin": "org.osbuild.pipeline",
+              "references": {
+                "name:image": {
+                  "file": "image.raw"
+                }
+              }
+            }
+          },
+          "options": {
+            "filename": "image-stream.vmdk",
+            "format": {
+              "type": "vmdk",
+              "compat6": true,
+              "adapter_type": "lsilogic"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "image.vpc",
       "build": "name:build",
       "stages": [
