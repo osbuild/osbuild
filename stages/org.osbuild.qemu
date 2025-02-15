@@ -21,14 +21,24 @@ def qcow2_arguments(options):
 
 def vmdk_arguments(options):
     argv = []
+    adapter_type = options.get("adapter_type")
+    compat6 = options.get("compat6", False)
     compression = options.get("compression", True)
     subformat = options.get("subformat")
 
     if compression:
         argv += ["-c"]
 
-    if subformat:
-        argv += ["-o", f"subformat={subformat}"]
+    if compat6 or subformat or adapter_type:
+        opts = []
+        if adapter_type:
+            opts += [f"adapter_type={adapter_type}"]
+        if compat6:
+            opts += ["compat6"]
+        if subformat:
+            opts += [f"subformat={subformat}"]
+        argv += ["-o", ",".join(opts)]
+
     return argv
 
 
