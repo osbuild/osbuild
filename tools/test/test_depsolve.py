@@ -40,7 +40,11 @@ def assert_dnf():
         raise RuntimeError("Cannot import dnf")
 
 
-def depsolve(transactions, repos, root_dir, cache_dir, dnf_config, opt_metadata, with_sbom=False) -> Tuple[dict, int]:
+def depsolve(transactions, cache_dir, dnf_config=None, repos=None, root_dir=None,
+             opt_metadata=None, with_sbom=False) -> Tuple[dict, int]:
+    if not repos and not root_dir:
+        raise ValueError("At least one of 'repos' or 'root_dir' must be specified")
+
     req = {
         "command": "depsolve",
         "arch": ARCH,
@@ -48,12 +52,18 @@ def depsolve(transactions, repos, root_dir, cache_dir, dnf_config, opt_metadata,
         "releasever": RELEASEVER,
         "cachedir": cache_dir,
         "arguments": {
-            "root_dir": root_dir,
-            "repos": repos,
-            "optional-metadata": opt_metadata,
             "transactions": transactions,
         }
     }
+
+    if repos:
+        req["arguments"]["repos"] = repos
+
+    if root_dir:
+        req["arguments"]["root_dir"] = root_dir
+
+    if opt_metadata:
+        req["arguments"]["optional-metadata"] = opt_metadata
 
     if with_sbom:
         req["arguments"]["sbom"] = {"type": "spdx"}
@@ -72,26 +82,34 @@ def depsolve(transactions, repos, root_dir, cache_dir, dnf_config, opt_metadata,
         return json.loads(p.stdout), p.returncode
 
 
-def dump(repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tuple[dict, int]:
+def dump(cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
+    if not repos and not root_dir:
+        raise ValueError("At least one of 'repos' or 'root_dir' must be specified")
+
     req = {
         "command": "dump",
         "arch": ARCH,
         "module_platform_id": f"platform:el{RELEASEVER}",
         "releasever": RELEASEVER,
         "cachedir": cache_dir,
-        "arguments": {
-            "root_dir": root_dir,
-            "repos": repos,
-            "optional-metadata": opt_metadata,
-        }
+        "arguments": {}
     }
+
+    if repos:
+        req["arguments"]["repos"] = repos
+
+    if root_dir:
+        req["arguments"]["root_dir"] = root_dir
+
+    if opt_metadata:
+        req["arguments"]["optional-metadata"] = opt_metadata
 
     # If there is a config file, write it to a temporary file and pass it to the depsolver
     with TemporaryDirectory() as cfg_dir:
         env = None
         if dnf_config:
             cfg_file = pathlib.Path(cfg_dir) / "solver.json"
-            cfg_file.write_text(dnf_config)
+            json.dump(dnf_config, cfg_file.open("w"))
             env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
 
         p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
@@ -100,7 +118,10 @@ def dump(repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tuple[dict, in
         return json.loads(p.stdout), p.returncode
 
 
-def search(search_args, repos, root_dir, cache_dir, dnf_config, opt_metadata) -> Tuple[dict, int]:
+def search(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
+    if not repos and not root_dir:
+        raise ValueError("At least one of 'repos' or 'root_dir' must be specified")
+
     req = {
         "command": "search",
         "arch": ARCH,
@@ -109,18 +130,24 @@ def search(search_args, repos, root_dir, cache_dir, dnf_config, opt_metadata) ->
         "cachedir": cache_dir,
         "arguments": {
             "search": search_args,
-            "root_dir": root_dir,
-            "repos": repos,
-            "optional-metadata": opt_metadata,
         }
     }
+
+    if repos:
+        req["arguments"]["repos"] = repos
+
+    if root_dir:
+        req["arguments"]["root_dir"] = root_dir
+
+    if opt_metadata:
+        req["arguments"]["optional-metadata"] = opt_metadata
 
     # If there is a config file, write it to a temporary file and pass it to the depsolver
     with TemporaryDirectory() as cfg_dir:
         env = None
         if dnf_config:
             cfg_file = pathlib.Path(cfg_dir) / "solver.json"
-            cfg_file.write_text(dnf_config)
+            json.dump(dnf_config, cfg_file.open("w"))
             env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
 
         p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
@@ -153,6 +180,43 @@ def repo_servers_fixture():
 
 def tcase_idfn(param):
     return param['id']
+
+
+depsolve_test_case_basic_2pkgs_2repos = {
+    "id": "basic_2pkgs_2repos",
+    "enabled_repos": ["baseos", "custom"],
+    "transactions": [
+        {
+            "package-specs": [
+                "filesystem",
+                "pkg-with-no-deps"
+            ],
+        },
+    ],
+    "results": {
+        "packages": {
+            "basesystem",
+            "bash",
+            "centos-gpg-keys",
+            "centos-stream-release",
+            "centos-stream-repos",
+            "filesystem",
+            "glibc",
+            "glibc-common",
+            "glibc-minimal-langpack",
+            "libgcc",
+            "ncurses-base",
+            "ncurses-libs",
+            "setup",
+            "tzdata",
+            "pkg-with-no-deps",
+        },
+        "reponames": {
+            "baseos",
+            "custom",
+        },
+    },
+}
 
 
 depsolve_test_cases = [
@@ -202,41 +266,6 @@ depsolve_test_cases = [
         "results": {
             "packages": {"pkg-with-no-deps"},
             "reponames": {"custom"},
-        },
-    },
-    {
-        "id": "basic_2pkgs_2repos",
-        "enabled_repos": ["baseos", "custom"],
-        "transactions": [
-            {
-                "package-specs": [
-                    "filesystem",
-                    "pkg-with-no-deps"
-                ],
-            },
-        ],
-        "results": {
-            "packages": {
-                "basesystem",
-                "bash",
-                "centos-gpg-keys",
-                "centos-stream-release",
-                "centos-stream-repos",
-                "filesystem",
-                "glibc",
-                "glibc-common",
-                "glibc-minimal-langpack",
-                "libgcc",
-                "ncurses-base",
-                "ncurses-libs",
-                "setup",
-                "tzdata",
-                "pkg-with-no-deps",
-            },
-            "reponames": {
-                "baseos",
-                "custom",
-            },
         },
     },
     {
@@ -1088,7 +1117,7 @@ depsolve_test_cases = [
         "error_kind": "RepoError",
         "error_reason_re": r"There was a problem reading a repository: Failed to download metadata.*['\"]broken['\"].*",
     },
-]
+] + [depsolve_test_case_basic_2pkgs_2repos]
 
 
 dump_test_cases = [
@@ -1112,6 +1141,52 @@ dump_test_cases = [
         "error_reason_re": r"There was a problem reading a repository: Failed to download metadata.*['\"]broken['\"].*",
     },
 ]
+
+
+search_test_case_basic_2pkgs_2repos = {
+    "id": "basic_2pkgs_2repos",
+    "enabled_repos": ["baseos", "custom"],
+    "search_args": {
+        "latest": True,
+        "packages": [
+            "zsh",
+            "pkg-with-no-deps",
+        ],
+    },
+    "results": [
+        {
+            "name": "zsh",
+            "summary": "Powerful interactive shell",
+            "description": """The zsh shell is a command interpreter usable as an interactive login
+shell and as a shell script command processor.  Zsh resembles the ksh
+shell (the Korn shell), but includes many enhancements.  Zsh supports
+command line editing, built-in spelling correction, programmable
+command completion, shell functions (with autoloading), a history
+mechanism, and more.""",
+            "url": "http://zsh.sourceforge.net/",
+            "repo_id": "baseos",
+            "epoch": 0,
+            "version": "5.8",
+            "release": "9.el9",
+            "arch": "x86_64",
+            "buildtime": "2022-02-23T13:47:24Z",
+            "license": "MIT",
+        },
+        {
+            'arch': 'noarch',
+            'buildtime': '2024-04-15T18:09:19Z',
+            'description': 'Provides pkg-with-no-deps',
+            'epoch': 0,
+            'license': 'BSD',
+            'name': 'pkg-with-no-deps',
+            'release': '0',
+            'repo_id': 'custom',
+            'summary': 'Provides pkg-with-no-deps',
+            'url': None,
+            'version': '1.0.0',
+        },
+    ],
+}
 
 
 search_test_cases = [
@@ -1213,7 +1288,7 @@ mechanism, and more.""",
         "error_kind": "RepoError",
         "error_reason_re": r"There was a problem reading a repository: Failed to download metadata.*['\"]broken['\"].*",
     },
-]
+] + [search_test_case_basic_2pkgs_2repos]
 
 
 def make_dnf_scafolding(base_dir):
@@ -1275,62 +1350,241 @@ def test_gen_config_combos(items_count, expected_combos):
     assert list(gen_config_combos(items_count)) == expected_combos
 
 
+def gen_repo_config(server):
+    """
+    Generate a repository configuration dictionary for the provided server.
+    """
+    return {
+        "id": server["name"],
+        "name": server["name"],
+        "baseurl": server["address"],
+        "check_gpg": False,
+        "sslverify": False,
+        "rhsm": False,
+        "gpgkeys": [TEST_KEY + server["name"]],
+    }
+
+
 def config_combos(tmp_path, servers):
     """
     Return all configurations for the provided repositories, either as config files in a directory or as repository
     configs in the depsolve request, or a combination of both.
     """
     for combo in gen_config_combos(len(servers)):
-        repo_configs = []
-        for idx in combo[0]:  # servers to be configured through request
-            server = servers[idx]
-            repo_configs.append({
-                "id": server["name"],
-                "name": server["name"],
-                "baseurl": server["address"],
-                "check_gpg": False,
-                "sslverify": False,
-                "rhsm": False,
-                "gpgkeys": [TEST_KEY + server["name"]],
-            })
-        root_dir, repos_dir, keys_dir = make_dnf_scafolding(tmp_path)
-        for idx in combo[1]:  # servers to be configured through root_dir
-            server = servers[idx]
-            name = server["name"]
-            # Use the gpgkey to test both the key reading and the variable substitution.
-            # For this test, it doesn't need to be a real key.
-            key_url = f"file:///etc/pki/rpm-gpg/RPM-GPG-KEY-$releasever-$basearch-$customvar-{name}"
+        repo_configs = None
+        if len(combo[0]):
+            repo_configs = []
+            for idx in combo[0]:  # servers to be configured through request
+                server = servers[idx]
+                repo_configs.append(gen_repo_config(server))
 
-            key_path = keys_dir / f"RPM-GPG-KEY-{RELEASEVER}-{ARCH}-{CUSTOMVAR}-{name}"
-            key_path.write_text(TEST_KEY + name, encoding="utf8")
-            parser = configparser.ConfigParser()
-            parser.add_section(name)
-            # Set some options in a specific order in which they tend to be
-            # written in repo files.
-            parser.set(name, "name", name)
-            parser.set(name, "baseurl", server["address"])
-            parser.set(name, "enabled", "1")
-            parser.set(name, "gpgcheck", "1")
-            parser.set(name, "sslverify", "0")
-            parser.set(name, "gpgkey", key_url)
+        root_dir = None
+        if len(combo[1]):
+            root_dir, repos_dir, keys_dir = make_dnf_scafolding(tmp_path)
+            for idx in combo[1]:  # servers to be configured through root_dir
+                server = servers[idx]
+                name = server["name"]
+                # Use the gpgkey to test both the key reading and the variable substitution.
+                # For this test, it doesn't need to be a real key.
+                key_url = f"file:///etc/pki/rpm-gpg/RPM-GPG-KEY-$releasever-$basearch-$customvar-{name}"
 
-            with (repos_dir / f"{name}.repo").open("w", encoding="utf-8") as fp:
-                parser.write(fp, space_around_delimiters=False)
+                key_path = keys_dir / f"RPM-GPG-KEY-{RELEASEVER}-{ARCH}-{CUSTOMVAR}-{name}"
+                key_path.write_text(TEST_KEY + name, encoding="utf8")
+                parser = configparser.ConfigParser()
+                parser.add_section(name)
+                # Set some options in a specific order in which they tend to be
+                # written in repo files.
+                parser.set(name, "name", name)
+                parser.set(name, "baseurl", server["address"])
+                parser.set(name, "enabled", "1")
+                parser.set(name, "gpgcheck", "1")
+                parser.set(name, "sslverify", "0")
+                parser.set(name, "gpgkey", key_url)
+
+                with (repos_dir / f"{name}.repo").open("w", encoding="utf-8") as fp:
+                    parser.write(fp, space_around_delimiters=False)
+            root_dir = os.fspath(root_dir)
 
         # for each combo, let's also enable or disable filelists (optional-metadata)
         for opt_metadata in ([], ["filelists"]):
-            yield repo_configs, os.fspath(root_dir), opt_metadata
+            yield repo_configs, root_dir, opt_metadata
 
 
-# pylint: disable=too-many-branches
-@pytest.mark.parametrize("test_case", depsolve_test_cases, ids=tcase_idfn)
+def get_test_case_repo_servers(test_case, repo_servers):
+    """
+    Return a list of repository servers for the test case.
+    """
+    repo_servers_copy = repo_servers.copy()
+    # filter to only include enabled repositories
+    repo_servers_copy = [r for r in repo_servers_copy if r["name"] in test_case["enabled_repos"]]
+    repo_servers_copy.extend(test_case.get("additional_servers", []))
+    return repo_servers_copy
+
+
+@pytest.mark.parametrize("test_case,repo_servers,expected", [
+    (
+        {"enabled_repos": ["baseos", "custom"], "additional_servers": []},
+        [{"name": "baseos", "address": "file:///baseos"}, {"name": "custom", "address": "file:///custom"}],
+        [{"name": "baseos", "address": "file:///baseos"}, {"name": "custom", "address": "file:///custom"}]
+    ),
+    (
+        {"enabled_repos": ["baseos"], "additional_servers": []},
+        [{"name": "baseos", "address": "file:///baseos"}, {"name": "custom", "address": "file:///custom"}],
+        [{"name": "baseos", "address": "file:///baseos"}]
+    ),
+    (
+        {
+            "enabled_repos": ["baseos", "custom"],
+            "additional_servers": [{"name": "broken", "address": "file:///broken"}]
+        },
+        [{"name": "baseos", "address": "file:///baseos"}, {"name": "custom", "address": "file:///custom"}],
+        [
+            {"name": "baseos", "address": "file:///baseos"},
+            {"name": "custom", "address": "file:///custom"},
+            {"name": "broken", "address": "file:///broken"},
+        ]
+    ),
+    (
+        {
+            "enabled_repos": ["baseos"], "additional_servers": [{"name": "broken", "address": "file:///broken"}]
+        },
+        [{"name": "baseos", "address": "file:///baseos"}, {"name": "custom", "address": "file:///custom"}],
+        [
+            {"name": "baseos", "address": "file:///baseos"},
+            {"name": "broken", "address": "file:///broken"},
+        ]
+    ),
+    (
+        {
+            "enabled_repos": [],
+            "additional_servers": [{"name": "broken", "address": "file:///broken"}]
+        },
+        [{"name": "baseos", "address": "file:///baseos"}, {"name": "custom", "address": "file:///custom"}],
+        [
+            {"name": "broken", "address": "file:///broken"},
+        ]
+    ),
+])
+def test_get_test_case_repo_servers(test_case, repo_servers, expected):
+    assert get_test_case_repo_servers(test_case, repo_servers) == expected
+
+
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    ({}, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
+    """
+    Test all possible configurations of repository configurations for the depsolve function.
+    Test on a single test case which installs two packages from two repositories.
+    """
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
+    test_case = depsolve_test_case_basic_2pkgs_2repos
+    transactions = test_case["transactions"]
+    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
+
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
+        with TemporaryDirectory() as cache_dir:
+            res, exit_code = depsolve(
+                transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
+
+            if test_case.get("error", False):
+                assert exit_code != 0
+                assert res["kind"] == test_case["error_kind"]
+                assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+                continue
+
+            assert exit_code == 0
+            assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+            assert res["repos"].keys() == test_case["results"]["reponames"]
+
+            for repo in res["repos"].values():
+                assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+                assert repo["sslverify"] is False
+
+            # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
+            # *filelists*
+            n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
+            if "filelists" in opt_metadata:
+                assert n_filelist_files == len(tc_repo_servers)
+            else:
+                assert n_filelist_files == 0
+
+            use_dnf5 = dnf_config.get("use_dnf5", False)
+            if use_dnf5:
+                assert res["solver"] == "dnf5"
+            else:
+                assert res["solver"] == "dnf"
+
+
 @pytest.mark.parametrize("with_sbom", [False, True])
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test_case):
+def test_depsolve_sbom(repo_servers, dnf_config, detect_fn, with_sbom):
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
+    test_case = depsolve_test_case_basic_2pkgs_2repos
+    transactions = test_case["transactions"]
+    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
+    repo_configs = [gen_repo_config(server) for server in tc_repo_servers]
+
+    with TemporaryDirectory() as cache_dir:
+        res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs, with_sbom=with_sbom)
+
+        if test_case.get("error", False):
+            assert exit_code != 0
+            assert res["kind"] == test_case["error_kind"]
+            assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+            return
+
+        assert exit_code == 0
+        assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+        assert res["repos"].keys() == test_case["results"]["reponames"]
+
+        for repo in res["repos"].values():
+            assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+            assert repo["sslverify"] is False
+        if with_sbom:
+            assert "sbom" in res
+
+            spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
+            with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
+                spdx_schema = json.load(f)
+            validator = jsonschema.Draft4Validator
+            validator.check_schema(spdx_schema)
+            spdx_validator = validator(spdx_schema)
+            spdx_validator.validate(res["sbom"])
+
+            assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
+        else:
+            assert "sbom" not in res
+
+        use_dnf5 = dnf_config.get("use_dnf5", False)
+        if use_dnf5:
+            assert res["solver"] == "dnf5"
+        else:
+            assert res["solver"] == "dnf"
+
+
+# pylint: disable=too-many-branches
+@pytest.mark.parametrize("test_case", depsolve_test_cases, ids=tcase_idfn)
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    ({}, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_depsolve(repo_servers, dnf_config, detect_fn, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
@@ -1350,70 +1604,41 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, test
 
     transactions = test_case["transactions"]
 
-    repo_servers_copy = repo_servers.copy()
+    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
 
-    # filter to only include enabled repositories
-    repo_servers_copy = [r for r in repo_servers_copy if r["name"] in test_case["enabled_repos"]]
+    repo_configs = [gen_repo_config(server) for server in tc_repo_servers]
+    with TemporaryDirectory() as cache_dir:
+        res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs)
 
-    if "additional_servers" in test_case:
-        repo_servers_copy.extend(test_case["additional_servers"])
+        if test_case.get("error", False):
+            assert exit_code != 0
+            assert res["kind"] == test_case["error_kind"]
+            assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+            return
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers_copy):
-        with TemporaryDirectory() as cache_dir:
-            res, exit_code = depsolve(transactions, repo_configs, root_dir,
-                                      cache_dir, dnf_config, opt_metadata, with_sbom)
+        assert exit_code == 0
+        assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+        assert res["repos"].keys() == test_case["results"]["reponames"]
 
-            if test_case.get("error", False):
-                assert exit_code != 0
-                assert res["kind"] == test_case["error_kind"]
-                assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
-                continue
+        # modules is optional here as the dnf5 depsolver never returns any modules
+        assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
 
-            assert exit_code == 0
-            assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-            assert res["repos"].keys() == test_case["results"]["reponames"]
+        for repo in res["repos"].values():
+            assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+            assert repo["sslverify"] is False
 
-            # modules is optional here as the dnf5 depsolver never returns any modules
-            assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
-
-            for repo in res["repos"].values():
-                assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-                assert repo["sslverify"] is False
-            if with_sbom:
-                assert "sbom" in res
-
-                spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
-                with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
-                    spdx_schema = json.load(f)
-                validator = jsonschema.Draft4Validator
-                validator.check_schema(spdx_schema)
-                spdx_validator = validator(spdx_schema)
-                spdx_validator.validate(res["sbom"])
-
-                assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
-            else:
-                assert "sbom" not in res
-
-            # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
-            # *filelists*
-            n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
-            if "filelists" in opt_metadata:
-                assert n_filelist_files == len(repo_servers_copy)
-            else:
-                assert n_filelist_files == 0
-
-            use_dnf5 = dnf_config.get("use_dnf5", False)
-            if use_dnf5:
-                assert res["solver"] == "dnf5"
-            else:
-                assert res["solver"] == "dnf"
+        use_dnf5 = dnf_config.get("use_dnf5", False)
+        if use_dnf5:
+            assert res["solver"] == "dnf5"
+        else:
+            assert res["solver"] == "dnf"
 
 
 @pytest.mark.parametrize("test_case", dump_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
-    ('{"use_dnf5": false}', assert_dnf),
-    ('{"use_dnf5": true}', assert_dnf5),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
 def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     try:
@@ -1421,17 +1646,11 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     except RuntimeError as e:
         pytest.skip(str(e))
 
-    repo_servers_copy = repo_servers.copy()
+    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
 
-    # filter to only include enabled repositories
-    repo_servers_copy = [r for r in repo_servers_copy if r["name"] in test_case["enabled_repos"]]
-
-    if "additional_servers" in test_case:
-        repo_servers_copy.extend(test_case["additional_servers"])
-
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers_copy):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = dump(repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
+            res, exit_code = dump(cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             if test_case.get("error", False):
                 assert exit_code != 0
@@ -1455,36 +1674,33 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
             # *filelists*
             n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
             if "filelists" in opt_metadata:
-                assert n_filelist_files == len(repo_servers_copy)
+                assert n_filelist_files == len(tc_repo_servers)
             else:
                 assert n_filelist_files == 0
 
 
-@pytest.mark.parametrize("test_case", search_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
-    ('{"use_dnf5": false}', assert_dnf),
-    ('{"use_dnf5": true}', assert_dnf5),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
+def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
+    """
+    Test all possible configurations of repository configurations for the search function.
+    Test on a single test case which searches for two packages from two repositories.
+    """
     try:
         detect_fn()
     except RuntimeError as e:
         pytest.skip(str(e))
 
-    repo_servers_copy = repo_servers.copy()
-
-    # filter to only include enabled repositories
-    repo_servers_copy = [r for r in repo_servers_copy if r["name"] in test_case["enabled_repos"]]
-
-    if "additional_servers" in test_case:
-        repo_servers_copy.extend(test_case["additional_servers"])
-
+    test_case = search_test_case_basic_2pkgs_2repos
+    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
     search_args = test_case["search_args"]
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, repo_servers_copy):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = search(search_args, repo_configs, root_dir, cache_dir, dnf_config, opt_metadata)
+            res, exit_code = search(search_args, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             if test_case.get("error", False):
                 assert exit_code != 0
@@ -1493,29 +1709,75 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
                 continue
 
             assert exit_code == 0
-            assert res == test_case["results"]
+            for res, exp in zip(res, test_case["results"]):
+                # if the url in the package is empty, DNF4 returns None, DNF5 returns an empty string
+                exp = exp.copy()
+                exp_url = exp.pop("url")
+                res_url = res.pop("url")
+                if exp_url is None and dnf_config and dnf_config.get("use_dnf5", False):
+                    assert res_url == ""
+                else:
+                    assert res_url == exp_url
+                assert res == exp
 
             # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
             # *filelists*
             n_filelist_files = len(glob(f"{cache_dir}/*/repodata/*filelists*"))
             if "filelists" in opt_metadata:
-                assert n_filelist_files == len(repo_servers_copy)
+                assert n_filelist_files == len(tc_repo_servers)
             else:
                 assert n_filelist_files == 0
 
 
+@pytest.mark.parametrize("test_case", search_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
-    ('{"use_dnf5": false}', assert_dnf),
-    ('{"use_dnf5": true}', assert_dnf5),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
+def test_search(repo_servers, dnf_config, detect_fn, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
         pytest.skip(str(e))
 
-    root_dir = tmp_path.as_posix()
+    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
+    repo_configs = [gen_repo_config(server) for server in tc_repo_servers]
+    search_args = test_case["search_args"]
+
+    with TemporaryDirectory() as cache_dir:
+        res, exit_code = search(search_args, cache_dir, dnf_config, repo_configs)
+
+        if test_case.get("error", False):
+            assert exit_code != 0
+            assert res["kind"] == test_case["error_kind"]
+            assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+            return
+
+        assert exit_code == 0
+        for res, exp in zip(res, test_case["results"]):
+            # if the url in the package is empty, DNF4 returns None, DNF5 returns an empty string
+            exp = exp.copy()
+            exp_url = exp.pop("url")
+            res_url = res.pop("url")
+            if exp_url is None and dnf_config and dnf_config.get("use_dnf5", False):
+                assert res_url == ""
+            else:
+                assert res_url == exp_url
+            assert res == exp
+
+
+def test_depsolve_result_api(tmp_path, repo_servers):
+    """
+    Test the result of depsolve() API.
+
+    Note tha this test runs only with dnf4, as the dnf5 depsolver does not support modules.
+    """
+    try:
+        assert_dnf()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
     cache_dir = (tmp_path / "depsolve-cache").as_posix()
     transactions = [
         {
@@ -1524,20 +1786,8 @@ def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
         },
     ]
 
-    repo_configs = []
-    for server in repo_servers:
-        repo_configs.append({
-            "id": server["name"],
-            "name": server["name"],
-            "baseurl": server["address"],
-            "gpgkeys": [TEST_KEY + server["name"]],
-        })
-    dnf_config = {}
-    opt_metadata = []
-    with_sbom = False
-
-    res, exit_code = depsolve(transactions, repo_configs, root_dir,
-                              cache_dir, dnf_config, opt_metadata, with_sbom)
+    repo_configs = [gen_repo_config(server) for server in repo_servers]
+    res, exit_code = depsolve(transactions, cache_dir, repos=repo_configs)
 
     assert exit_code == 0
     # If any of  this changes, increase:
