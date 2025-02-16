@@ -14,6 +14,24 @@
         "sha256:69aa663d58cc063ea2d7659ac06354335c26e69e8fdb0036f952b082a70b5642"
       ]
     },
+    "/usr/lib/systemd/system/dev-disk-by-uuid-4f581be3-e8c2-4b44-9456-54df3ab92944.swap": {
+      "content": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:4bb9e774438a2857a3845936c551b945f2ed6edabec3f9955d8e7d6b794a5a59"
+      ]
+    },
+    "/usr/lib/systemd/system/service.socket": {
+      "content": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:2c029a69c7a57f920c99a3537c8db87b26825436e131a87106e25a69197d7eb6"
+      ]
+    },
+    "/usr/lib/systemd/system/data.mount": {
+      "content": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:2f7e14d9785faa8e9b31188473cb5f87a7bc2a37b31b4c0c533f0e3bfd9d427d"
+      ]
+    },
     "/usr/lib/sysimage/rpm/rpmdb.sqlite": {
       "content": [
         null,

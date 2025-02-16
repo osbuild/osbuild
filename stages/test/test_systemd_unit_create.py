@@ -37,9 +37,18 @@ STAGE_NAME = "org.osbuild.systemd.unit.create"
     ),
     (
         {
-            "filename": "foo.mount",
+            "filename": "foo.socket",
             "config": {
-                "Mount": {"What": "", "Where": ""},
+                "Socket": {"ListenStream":  "/run/test/api.socket"},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "foo.swap",
+            "config": {
+                "Swap": {"What":  ""},
             },
         },
         "",
@@ -76,6 +85,11 @@ STAGE_NAME = "org.osbuild.systemd.unit.create"
     ({"filename": "foo.service", "config": {"Unit": {}, "Service": {},
                                             "Mount": {"What": "", "Where": ""}, "Install": {}}},
      "{'Unit': {}, 'Service': {}, 'Mount': {'What': '', 'Where': ''}, "
+     "'Install': {}} is not valid under any of the given schemas"),
+
+    # # .swap unit with Service section
+    ({"filename": "foo.swap", "config": {"Unit": {}, "Service": {}, "Swap": {"What": ""}, "Install": {}}},
+     "{'Unit': {}, 'Service': {}, 'Swap': {'What': ''}, "
      "'Install': {}} is not valid under any of the given schemas"),
 ])
 @pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
@@ -118,9 +132,18 @@ def test_schema_validation(stage_schema, test_data, expected_err):
     ),
     (
         {
-            "filename": "foo.mount",
+            "filename": "foo.socket",
             "config": {
-                "Mount": {"What": "", "Where": ""},
+                "Socket": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "foo.swap",
+            "config": {
+                "Swap": {},
             },
         },
         "",
@@ -130,6 +153,10 @@ def test_schema_validation(stage_schema, test_data, expected_err):
      "Error: something.service unit requires Service section"),
     ({"filename": "data-gifs-cats.mount", "config": {"Unit": {}, "Service": {}, "Install": {}}},
      "Error: data-gifs-cats.mount unit requires Mount section"),
+    ({"filename": "data-gifs-cats.socket", "config": {"Unit": {}, "Service": {}, "Install": {}}},
+     "Error: data-gifs-cats.socket unit requires Socket section"),
+    ({"filename": "data-gifs-cats.swap", "config": {"Unit": {}, "Service": {}, "Install": {}}},
+     "Error: data-gifs-cats.swap unit requires Swap section"),
 ])
 def test_name_config_match(tmp_path, stage_module, test_data, expected_err):
     expected_unit_path = tmp_path / "usr/lib/systemd/system"
