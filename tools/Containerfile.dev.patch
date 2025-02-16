@@ -1,0 +1,13 @@
+diff --git a/setup.py b/setup.py
+index 180b4cc3..c3c9612b 100644
+--- a/setup.py
++++ b/setup.py
+@@ -17,7 +17,7 @@ setuptools.setup(
+     },
+     entry_points={
+         "console_scripts": [
+-            "osbuild = osbuild.main_cli:osbuild_cli"
++            "osbuild = osbuild.main_cli_dev:osbuild_dev"
+         ]
+     },
+     scripts=[
