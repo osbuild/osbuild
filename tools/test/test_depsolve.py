@@ -1500,12 +1500,6 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
             res, exit_code = depsolve(
                 transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
-            if test_case.get("error", False):
-                assert exit_code != 0
-                assert res["kind"] == test_case["error_kind"]
-                assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
-                continue
-
             assert exit_code == 0
             assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
             assert res["repos"].keys() == test_case["results"]["reponames"]
@@ -1546,12 +1540,6 @@ def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom)
     repo_configs = get_test_case_repo_configs(test_case, repo_servers)
 
     res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs, with_sbom=with_sbom)
-
-    if test_case.get("error", False):
-        assert exit_code != 0
-        assert res["kind"] == test_case["error_kind"]
-        assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
-        return
 
     assert exit_code == 0
     assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
@@ -1703,12 +1691,6 @@ def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
         with TemporaryDirectory() as cache_dir:
             res, exit_code = search(search_args, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
-
-            if test_case.get("error", False):
-                assert exit_code != 0
-                assert res["kind"] == test_case["error_kind"]
-                assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
-                continue
 
             assert exit_code == 0
             for res, exp in zip(res, test_case["results"]):
