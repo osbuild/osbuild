@@ -1535,7 +1535,7 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve_sbom(repo_servers, dnf_config, detect_fn, with_sbom):
+def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom):
     try:
         detect_fn()
     except RuntimeError as e:
@@ -1545,42 +1545,41 @@ def test_depsolve_sbom(repo_servers, dnf_config, detect_fn, with_sbom):
     transactions = test_case["transactions"]
     repo_configs = get_test_case_repo_configs(test_case, repo_servers)
 
-    with TemporaryDirectory() as cache_dir:
-        res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs, with_sbom=with_sbom)
+    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs, with_sbom=with_sbom)
 
-        if test_case.get("error", False):
-            assert exit_code != 0
-            assert res["kind"] == test_case["error_kind"]
-            assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
-            return
+    if test_case.get("error", False):
+        assert exit_code != 0
+        assert res["kind"] == test_case["error_kind"]
+        assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+        return
 
-        assert exit_code == 0
-        assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-        assert res["repos"].keys() == test_case["results"]["reponames"]
+    assert exit_code == 0
+    assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+    assert res["repos"].keys() == test_case["results"]["reponames"]
 
-        for repo in res["repos"].values():
-            assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-            assert repo["sslverify"] is False
-        if with_sbom:
-            assert "sbom" in res
+    for repo in res["repos"].values():
+        assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+        assert repo["sslverify"] is False
+    if with_sbom:
+        assert "sbom" in res
 
-            spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
-            with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
-                spdx_schema = json.load(f)
-            validator = jsonschema.Draft4Validator
-            validator.check_schema(spdx_schema)
-            spdx_validator = validator(spdx_schema)
-            spdx_validator.validate(res["sbom"])
+        spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
+        with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
+            spdx_schema = json.load(f)
+        validator = jsonschema.Draft4Validator
+        validator.check_schema(spdx_schema)
+        spdx_validator = validator(spdx_schema)
+        spdx_validator.validate(res["sbom"])
 
-            assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
-        else:
-            assert "sbom" not in res
+        assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
+    else:
+        assert "sbom" not in res
 
-        use_dnf5 = dnf_config.get("use_dnf5", False)
-        if use_dnf5:
-            assert res["solver"] == "dnf5"
-        else:
-            assert res["solver"] == "dnf"
+    use_dnf5 = dnf_config.get("use_dnf5", False)
+    if use_dnf5:
+        assert res["solver"] == "dnf5"
+    else:
+        assert res["solver"] == "dnf"
 
 
 # pylint: disable=too-many-branches
@@ -1590,7 +1589,7 @@ def test_depsolve_sbom(repo_servers, dnf_config, detect_fn, with_sbom):
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve(repo_servers, dnf_config, detect_fn, test_case):
+def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
@@ -1611,31 +1610,30 @@ def test_depsolve(repo_servers, dnf_config, detect_fn, test_case):
     transactions = test_case["transactions"]
     repo_configs = get_test_case_repo_configs(test_case, repo_servers)
 
-    with TemporaryDirectory() as cache_dir:
-        res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs)
+    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs)
 
-        if test_case.get("error", False):
-            assert exit_code != 0
-            assert res["kind"] == test_case["error_kind"]
-            assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
-            return
+    if test_case.get("error", False):
+        assert exit_code != 0
+        assert res["kind"] == test_case["error_kind"]
+        assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+        return
 
-        assert exit_code == 0
-        assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-        assert res["repos"].keys() == test_case["results"]["reponames"]
+    assert exit_code == 0
+    assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+    assert res["repos"].keys() == test_case["results"]["reponames"]
 
-        # modules is optional here as the dnf5 depsolver never returns any modules
-        assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
+    # modules is optional here as the dnf5 depsolver never returns any modules
+    assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
 
-        for repo in res["repos"].values():
-            assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-            assert repo["sslverify"] is False
+    for repo in res["repos"].values():
+        assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+        assert repo["sslverify"] is False
 
-        use_dnf5 = dnf_config.get("use_dnf5", False)
-        if use_dnf5:
-            assert res["solver"] == "dnf5"
-        else:
-            assert res["solver"] == "dnf"
+    use_dnf5 = dnf_config.get("use_dnf5", False)
+    if use_dnf5:
+        assert res["solver"] == "dnf5"
+    else:
+        assert res["solver"] == "dnf"
 
 
 @pytest.mark.parametrize("test_case", dump_test_cases, ids=tcase_idfn)
@@ -1739,7 +1737,7 @@ def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_search(repo_servers, dnf_config, detect_fn, test_case):
+def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     try:
         detect_fn()
     except RuntimeError as e:
@@ -1748,26 +1746,25 @@ def test_search(repo_servers, dnf_config, detect_fn, test_case):
     repo_configs = get_test_case_repo_configs(test_case, repo_servers)
     search_args = test_case["search_args"]
 
-    with TemporaryDirectory() as cache_dir:
-        res, exit_code = search(search_args, cache_dir, dnf_config, repo_configs)
+    res, exit_code = search(search_args, tmp_path.as_posix(), dnf_config, repo_configs)
 
-        if test_case.get("error", False):
-            assert exit_code != 0
-            assert res["kind"] == test_case["error_kind"]
-            assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
-            return
+    if test_case.get("error", False):
+        assert exit_code != 0
+        assert res["kind"] == test_case["error_kind"]
+        assert re.match(test_case["error_reason_re"], res["reason"], re.DOTALL)
+        return
 
-        assert exit_code == 0
-        for res, exp in zip(res, test_case["results"]):
-            # if the url in the package is empty, DNF4 returns None, DNF5 returns an empty string
-            exp = exp.copy()
-            exp_url = exp.pop("url")
-            res_url = res.pop("url")
-            if exp_url is None and dnf_config and dnf_config.get("use_dnf5", False):
-                assert res_url == ""
-            else:
-                assert res_url == exp_url
-            assert res == exp
+    assert exit_code == 0
+    for res, exp in zip(res, test_case["results"]):
+        # if the url in the package is empty, DNF4 returns None, DNF5 returns an empty string
+        exp = exp.copy()
+        exp_url = exp.pop("url")
+        res_url = res.pop("url")
+        if exp_url is None and dnf_config and dnf_config.get("use_dnf5", False):
+            assert res_url == ""
+        else:
+            assert res_url == exp_url
+        assert res == exp
 
 
 def test_depsolve_result_api(tmp_path, repo_servers):
