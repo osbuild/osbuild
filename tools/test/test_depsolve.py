@@ -1421,6 +1421,13 @@ def get_test_case_repo_servers(test_case, repo_servers):
     return repo_servers_copy
 
 
+def get_test_case_repo_configs(test_case, repo_servers):
+    """
+    Return a list of repository configurations for the test case.
+    """
+    return [gen_repo_config(server) for server in get_test_case_repo_servers(test_case, repo_servers)]
+
+
 @pytest.mark.parametrize("test_case,repo_servers,expected", [
     (
         {"enabled_repos": ["baseos", "custom"], "additional_servers": []},
@@ -1536,8 +1543,7 @@ def test_depsolve_sbom(repo_servers, dnf_config, detect_fn, with_sbom):
 
     test_case = depsolve_test_case_basic_2pkgs_2repos
     transactions = test_case["transactions"]
-    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
-    repo_configs = [gen_repo_config(server) for server in tc_repo_servers]
+    repo_configs = get_test_case_repo_configs(test_case, repo_servers)
 
     with TemporaryDirectory() as cache_dir:
         res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs, with_sbom=with_sbom)
@@ -1603,10 +1609,8 @@ def test_depsolve(repo_servers, dnf_config, detect_fn, test_case):
         pytest.skip("This test case is known to be broken with dnf5")
 
     transactions = test_case["transactions"]
+    repo_configs = get_test_case_repo_configs(test_case, repo_servers)
 
-    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
-
-    repo_configs = [gen_repo_config(server) for server in tc_repo_servers]
     with TemporaryDirectory() as cache_dir:
         res, exit_code = depsolve(transactions, cache_dir, dnf_config, repo_configs)
 
@@ -1741,8 +1745,7 @@ def test_search(repo_servers, dnf_config, detect_fn, test_case):
     except RuntimeError as e:
         pytest.skip(str(e))
 
-    tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
-    repo_configs = [gen_repo_config(server) for server in tc_repo_servers]
+    repo_configs = get_test_case_repo_configs(test_case, repo_servers)
     search_args = test_case["search_args"]
 
     with TemporaryDirectory() as cache_dir:
