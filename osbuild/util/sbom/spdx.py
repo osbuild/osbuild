@@ -53,7 +53,13 @@ class SpdxLicenseExpressionCreator:
 
         If the license-expression package is not available, the license string is always wrapped in an
         ExtractedLicensingInfo object.
+
+        License strings that are already SPDX license ref IDs are returned as is.
         """
+        if license_str.startswith("LicenseRef-"):
+            # The license string is already an SPDX license ref ID.
+            return license_str
+
         if self._spdx_licensing is None:
             return self._to_extracted_license_info(license_str)
 

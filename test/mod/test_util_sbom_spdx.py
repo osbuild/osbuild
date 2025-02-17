@@ -27,6 +27,9 @@ def test_spdxlicenseexpressionfactory_license_expression_availability(licensing_
         lf = SpdxLicenseExpressionCreator()
         license_expression = lf.ensure_license_expression("MIT")
 
+        license_expression2 = lf.ensure_license_expression("LicenseRef-123")
+        assert license_expression2 == "LicenseRef-123"
+
         if licensing_available:
             assert mocked_licensing is not None
             # The license string should be a SPDX license expression string.
