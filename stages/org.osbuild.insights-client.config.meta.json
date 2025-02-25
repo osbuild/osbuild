@@ -1,0 +1,31 @@
+{
+  "summary": "Configure insights-client.",
+  "description": [
+    "Configures insights-client.",
+    "Creates a new config file if one does not exist,",
+    "or modifies the existing one."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "config"
+    ],
+    "properties": {
+      "config": {
+        "additionalProperties": false,
+        "description": "insights-client config options",
+        "type": "object",
+        "properties": {
+          "proxy": {
+            "description": "URL for the proxy.",
+            "type": "string"
+          }
+        }
+      },
+      "path": {
+        "description": "path to the insights-client config file",
+        "type": "string"
+      }
+    }
+  }
+}
