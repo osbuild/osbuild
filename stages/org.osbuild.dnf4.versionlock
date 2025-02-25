@@ -1,0 +1,29 @@
+#!/usr/bin/python3
+import pathlib
+import sys
+import time
+
+import osbuild.api
+
+
+def main(tree, options):
+    add = options["add"]
+
+    tree = pathlib.Path(tree)
+    locklist = tree / "etc/dnf/plugins/versionlock.list"
+    nowstr = time.ctime()
+    with locklist.open(mode="a", encoding="utf-8") as locklist_fp:
+        for item in add:
+            # the plugin adds an empty line followed by a comment with a timestamp above each item, let's replicate the
+            # behaviour
+            locklist_fp.writelines([
+                "\n",
+                f"# Added lock on {nowstr}\n",
+                item + "\n",
+            ])
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
