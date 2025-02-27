@@ -44,9 +44,10 @@ def is_license_expression_available():
     """
     Check if the license-expression package is available.
 
-    The check is not done by importing the package in the current Python environment, because it may be
-    running inside a virtual environment where the package is / is not installed. Instead, the check is done by
-    running a Python script outside the virtual environment.
+    The check is not done by importing the package in the current Python environment, because "osbuild-depsolve-dnf"
+    is run outside of any virtualenv that that the tests may run in. It is inside "osbuild-depsolve-dnf" where
+    the import for "license_expression" happens. Therefore the check is done by running an external Python script
+    outside the potential virtualenv.
 
     For the same reason, we don't use `sys.executable` to run the script, because it may point to a different
     Python interpreter than the one that will be used when `osbuild-depsolve-dnf` is executed.
