@@ -19,6 +19,8 @@ def validate(filename, cfg):
         raise ValueError(f"Error: {filename} unit requires Mount section")
     if filename.endswith(".socket") and "Socket" not in cfg:
         raise ValueError(f"Error: {filename} unit requires Socket section")
+    if filename.endswith(".swap") and "Swap" not in cfg:
+        raise ValueError(f"Error: {filename} unit requires Swap section")
 
 
 def main(tree, options):
