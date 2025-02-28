@@ -90,3 +90,19 @@ jobs:
         run: find -iname "*.json" -print -exec sh -c 'jq --indent 2 . {} | sponge {}' \;
       - name: Check diff
         run: git diff --exit-code
+
+  # checks if the dev container can be built
+  dev_container:
+    name: "Dev container"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Install prerequisites"
+        run: |
+          sudo apt update
+          sudo apt install -y podman
+      - name: "Clone Repository"
+        uses: actions/checkout@v4
+      - name: "Create container from source"
+        run: make container.dev
+      - name: "Check if osbuild starts and returns its version"
+        run: podman run --rm -ti localhost/osbuild_dev:latest --version
