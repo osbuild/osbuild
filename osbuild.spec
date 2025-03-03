@@ -148,6 +148,13 @@ Requires: python3-libdnf5 >= 5.2.1
 Requires: python3-dnf
 %endif
 
+%if 0%{?fedora}
+# RHEL / CS does not have python3-license-expression
+# It is needed for validating license expressions in RPM packages when generating SBOMs
+# While SBOMs can be generated also without this package, it is recommended to have it.
+Recommends: python3-license-expression
+%endif
+
 # osbuild 125 added a new "solver" field and osbuild-composer only
 # supports this since 116
 Conflicts: osbuild-composer <= 115
