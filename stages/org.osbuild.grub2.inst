@@ -86,12 +86,11 @@ def core_mkimage(platform: str, prefix: str, options: Dict):
     # read the partition and its filesystem containing said modules
     # and the grub configuration [NB: efi systems work differently]
 
+    gformat = platform
     if platform == "i386-pc":
         modules = ["biosdisk"]
-        gformat = "i386-pc"
     else:
         modules = []
-        gformat = "i386-pc"
 
     if pt_label in ["dos", "mbr"]:
         modules += ["part_msdos"]
