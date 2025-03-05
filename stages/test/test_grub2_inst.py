@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import os
 import subprocess
+from unittest.mock import call, patch
 
 import pytest
 
@@ -68,3 +69,34 @@ def test_grub2_iso9660(tmp_path, stage_module):
     }
     stage_module.main(treedir, options)
     assert os.path.exists(treedir / "eltorito.img")
+
+
+@patch("subprocess.run")
+def test_grub2_partition_mocked(mocked_run, tmp_path, stage_module):
+    options = {
+        "filename": "disk.img",
+        "platform": "some-platform",
+        "location": 0,
+        "core": {
+            "type": "mkimage",
+            "partlabel": "gpt",
+            "filesystem": "ext4",
+        },
+        "prefix": {
+            "type": "partition",
+            "partlabel": "gpt",
+            "number": 0,
+            "path": "/boot/",
+        },
+    }
+    stage_module.main(tmp_path, options)
+
+    assert mocked_run.call_args_list == [
+        call(["grub2-mkimage", "--verbose",
+              "--directory", "/usr/lib/grub/some-platform",
+              "--prefix", "(,gpt1)/boot/",
+              "--format", "some-platform",
+              "--compression", "auto",
+              "--output", "/var/tmp/grub2-core.img",
+              "part_gpt", "ext2"], check=True),
+    ]
