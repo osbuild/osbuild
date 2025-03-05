@@ -89,14 +89,30 @@ def test_grub2_partition_mocked(mocked_run, tmp_path, stage_module):
             "path": "/boot/",
         },
     }
+
+    output_path = ""
+
+    def mock_side_effect(args, **_):
+        """
+        Intercept the args to subprocess.run() to leak the random output path and create the file that's expected by the
+        shutil.copy() in the stage's main().
+        """
+        nonlocal output_path
+        output_path = args[args.index("--output") + 1]
+        with open(output_path, "wb") as fake_image_file:
+            fake_image_file.write(b"I am a grub core image")
+
+    mocked_run.side_effect = mock_side_effect
+
     stage_module.main(tmp_path, options)
 
+    assert os.path.basename(output_path) == "grub2-core.img"
     assert mocked_run.call_args_list == [
         call(["grub2-mkimage", "--verbose",
               "--directory", "/usr/lib/grub/some-platform",
               "--prefix", "(,gpt1)/boot/",
               "--format", "some-platform",
               "--compression", "auto",
-              "--output", "/var/tmp/grub2-core.img",
+              "--output", output_path,
               "part_gpt", "ext2"], check=True),
     ]
