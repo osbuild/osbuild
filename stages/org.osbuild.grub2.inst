@@ -4,6 +4,7 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
 from typing import BinaryIO, Dict
 
 import osbuild.api
@@ -70,12 +71,11 @@ def write_core_image(core_f, image_f, location, sector_size):
     shutil.copyfileobj(core_f, image_f)
 
 
-def core_mkimage(platform: str, prefix: str, options: Dict):
+def core_mkimage(platform: str, prefix: str, options: Dict, core_dir: str):
     pt_label = options["partlabel"]
     fs_type = options["filesystem"]
 
-    os.makedirs("/var/tmp/", exist_ok=True)
-    core_path = "/var/tmp/grub2-core.img"
+    core_path = os.path.join(core_dir, "grub2-core.img")
 
     # Create the level-2 & 3 stages of the bootloader, aka the core
     # it consists of the kernel plus the core modules required to
@@ -174,14 +174,16 @@ def main(tree, options):
     else:
         prefix = options["prefix"]["path"]
     print(f"prefix: {prefix}")
-    core_path = core_mkimage(platform, prefix, options["core"])
 
-    location = options.get("location")
-    if location:
-        patch_core(location, core_path, image, sector_size, platform)
-    else:
-        # If location isn't set, use the image file as-is instead of with the MBR
-        shutil.copyfile(core_path, image)
+    with tempfile.TemporaryDirectory() as core_tmpdir:
+        core_path = core_mkimage(platform, prefix, options["core"], core_tmpdir)
+
+        location = options.get("location")
+        if location:
+            patch_core(location, core_path, image, sector_size, platform)
+        else:
+            # If location isn't set, use the image file as-is instead of with the MBR
+            shutil.copyfile(core_path, image)
 
     return 0
 
