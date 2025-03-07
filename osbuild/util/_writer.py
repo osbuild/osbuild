@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 ASCII_CTRL = frozenset(chr(i) for i in range(32)) | frozenset(chr(127))
 ILLEGAL_BASIC_STR_CHARS = frozenset('"\\') | ASCII_CTRL - frozenset("\t")
 BARE_KEY_CHARS = frozenset(
+    # pylint: disable-next=implicit-str-concat
     "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789" "-_"
 )
 ARRAY_TYPES = (list, tuple)
@@ -98,6 +99,7 @@ def gen_table_chunks(
 
 
 def format_literal(obj: object, ctx: Context, *, nest_level: int = 0) -> str:
+    # pylint: disable=too-many-return-statements
     if isinstance(obj, bool):
         return "true" if obj else "false"
     if isinstance(obj, (int, float, date, datetime)):
@@ -114,6 +116,7 @@ def format_literal(obj: object, ctx: Context, *, nest_level: int = 0) -> str:
         return format_inline_table(obj, ctx)
 
     # Lazy import to improve module import time
+    # pylint: disable-next=import-outside-toplevel
     from decimal import Decimal
 
     if isinstance(obj, Decimal):
