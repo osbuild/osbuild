@@ -2888,12 +2888,15 @@ def analyse_tarball(path):
 
 
 def is_compressed(path):
-    _, encoding = mimetypes.guess_type(path)
-    return encoding in ["xz", "gzip", "bzip2"]
+    mtype, encoding = mimetypes.guess_type(path)
+
+    # zst files do not return an "encoding", only a mimetype so they need to be
+    # special cased
+    return encoding in ["xz", "gzip", "bzip2"] or mtype == "application/zstd"
 
 
 def analyse_compressed(path):
-    _, encoding = mimetypes.guess_type(path)
+    mtype, encoding = mimetypes.guess_type(path)
 
     if encoding == "xz":
         command = ["unxz", "--force"]
@@ -2901,6 +2904,10 @@ def analyse_compressed(path):
         command = ["gunzip", "--force"]
     elif encoding == "bzip2":
         command = ["bunzip2", "--force"]
+    elif mtype == "application/zstd":
+        # zst files do not return an "encoding", only a mimetype so they need to be
+        # special cased
+        command = ["unzstd", "--force", "--rm"]
     else:
         raise ValueError(f"Unsupported compression: {encoding}")
 
