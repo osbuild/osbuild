@@ -68,10 +68,10 @@ def test_selinux_setfiles(mocked_run, tmp_path):
     assert len(mocked_run.call_args_list) == 2
     assert mocked_run.call_args_list == [
         mock.call(
-            ["setfiles", "-F", "-r", os.fspath(tmp_path),
+            ["setfiles", "-F", "-T0", "-r", os.fspath(tmp_path),
              "/etc/selinux/thing", os.fspath(tmp_path) + "/"], check=True),
         mock.call(
-            ["setfiles", "-F", "-r", os.fspath(tmp_path),
+            ["setfiles", "-F", "-T0", "-r", os.fspath(tmp_path),
              "/etc/selinux/thing", os.fspath(tmp_path) + "/boot"], check=True),
     ]
 
@@ -83,7 +83,7 @@ def test_selinux_setfiles_exclude(mocked_run, tmp_path):
     assert len(mocked_run.call_args_list) == 1
     assert mocked_run.call_args_list == [
         mock.call(
-            ["setfiles", "-F", "-r", os.fspath(tmp_path),
+            ["setfiles", "-F", "-T0", "-r", os.fspath(tmp_path),
              "-e", "/sysroot", "-e", "/other/dir",
              "/etc/selinux/thing", os.fspath(tmp_path) + "/"], check=True),
     ]
