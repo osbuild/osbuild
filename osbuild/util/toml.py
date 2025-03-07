@@ -30,9 +30,10 @@ else:
 
 # Different modules require different file mode (text vs binary)
 _tomlw_modules = {
-    "tomli_w": {"mode": "wb"},  # EL9+
+    "tomli_w": {"mode": "wb"},  # EL9
     "toml": {"mode": "w", "encoding": "utf-8"},  # older unmaintained lib, needed for backwards compatibility
     "pytoml": {"mode": "w", "encoding": "utf-8"},  # deprecated, needed for backwards compatibility (EL8 manifests)
+    "osbuild.util._writer": {"mode": "wb"},  # EL9+
 }
 
 
