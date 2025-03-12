@@ -112,6 +112,7 @@ def remove_unowned_etc_kernel(tree, rpm_args):
                           "--root", tree,
                           "-qf", "/etc/kernel"],
                          stdout=subprocess.PIPE,
+                         encoding="utf-8",
                          check=False)
     owner = res.stdout.strip()
 
