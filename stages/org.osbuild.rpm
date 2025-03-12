@@ -202,6 +202,14 @@ def main(tree, inputs, options):
                 "--define", macro,
             ]
 
+        env = os.environ.copy()
+        # update the environment with variables for kernel-install if any are defined
+        kernel_install_env = options.get("kernel_install_env", {})
+        if kernel_install_env:
+            boot_root = kernel_install_env.get("boot_root")
+            if boot_root:
+                env["BOOT_ROOT"] = boot_root
+
         with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
             manifest.writelines(c + '\n' for c in packages)
             manifest.flush()
@@ -216,7 +224,7 @@ def main(tree, inputs, options):
                 # reading.
                 "--nosignature",
                 "--install", manifest.name
-            ], cwd=pkgpath, check=True)
+            ], cwd=pkgpath, check=True, env=env)
 
         for key in options.get("gpgkeys.fromtree", []):
             path = os.path.join(tree, key.lstrip("/"))
