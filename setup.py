@@ -16,6 +16,12 @@ setuptools.setup(
     install_requires=[
         "jsonschema",
     ],
+    extras_require={
+        "dev": [
+            "pydevd_pycharm",
+            "debugpy",
+        ]
+    },
     entry_points={
         "console_scripts": [
             "osbuild = osbuild.main_cli:osbuild_cli"
