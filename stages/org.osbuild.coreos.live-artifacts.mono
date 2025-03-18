@@ -881,15 +881,14 @@ def main(workdir, tree, inputs, options, loop_client):
     paths = mk_paths(workdir, fstype)
     mk_workdirs(paths)
 
-    # Find the directory under `/usr/lib/modules/<kver>` where the
-    # kernel/initrd live. It will be the only entity in there.
-    modules_dir = ensure_glob(os.path.join(deployed_tree, 'usr/lib/modules/*'), n=1)[0]
+    # Find the kernel and initramfs. They should be the only ones on
+    # the system so we'll error here if more than one are found:
+    modules_dir_vmlinuz = ensure_glob(os.path.join(deployed_tree, 'usr/lib/modules/*/vmlinuz'), n=1)[0]
+    modules_dir_initramfs = ensure_glob(os.path.join(deployed_tree, 'usr/lib/modules/*/initramfs.img'), n=1)[0]
 
     # copy those files out of the ostree into the iso root dir
-    shutil.copyfile(os.path.join(modules_dir, 'vmlinuz'),
-                    paths["iso/images/pxeboot/vmlinuz"])
-    shutil.copyfile(os.path.join(modules_dir, 'initramfs.img'),
-                    paths["iso/images/pxeboot/initrd.img"])
+    shutil.copyfile(modules_dir_vmlinuz, paths["iso/images/pxeboot/vmlinuz"])
+    shutil.copyfile(modules_dir_initramfs, paths["iso/images/pxeboot/initrd.img"])
 
     # Generate initramfs stamp file indicating that this is a live
     # initramfs.  Store the build ID in it.
