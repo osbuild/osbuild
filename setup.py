@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="osbuild",
-    version="144",
+    version="145",
     description="A build system for OS images",
     packages=[
         "osbuild",
