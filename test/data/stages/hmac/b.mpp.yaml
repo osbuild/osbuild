@@ -1,0 +1,43 @@
+---
+version: '2'
+sources:
+  org.osbuild.inline:
+    items:
+      sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0:
+        encoding: base64
+        data: SGFsbG8gV2VsdAo=  # Hallo Welt
+      sha256:07305a3200629a7b8a04f77008fa1b1f719fec3b60d4fdf2683ba60cf2956381:
+        encoding: base64
+        data: SGVsbG8gYWdhaW4K  # Hello again
+
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          hello:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0: {}
+              sha256:07305a3200629a7b8a04f77008fa1b1f719fec3b60d4fdf2683ba60cf2956381: {}
+        options:
+          paths:
+            - from: input://hello/sha256:f950375066d74787f31cbd8f9f91c71819357cad243fb9d4a0d9ef4fa76709e0
+              to: tree:///greet1.txt
+            - from: input://hello/sha256:07305a3200629a7b8a04f77008fa1b1f719fec3b60d4fdf2683ba60cf2956381
+              to: tree:///greet2.txt
+      - type: org.osbuild.hmac
+        options:
+          paths:
+            - /greet1.txt
+            - /greet2.txt
+          algorithm: "sha512"
