@@ -1,0 +1,45 @@
+{
+  "summary": "Generates .hmac checksum files",
+  "description": [
+    "Generates HMAC values for given files and stores them alongside the original",
+    "for later verification.",
+    "The stage uses the <algorithm>hmac commands (e.g. sha512hmac) which use a",
+    "built-in key when none is provided. Future extensions of this stage may",
+    "add a key parameter if and when it becomes a requirement. ",
+    "In its current state, the stage can be used to replicate the generation of",
+    "kernel hmac files [1] which are used for integrity verification when booting",
+    "in FIPS mode.",
+    "Notes:",
+    "  - Requires hmac calc in the build root (libkcapi-hmaccalc)",
+    "Links:",
+    "[1] https://gitlab.com/redhat/centos-stream/rpms/kernel/-/blob/f5b2a5f2ae8040c6072382545d302a4a936cb53c/kernel.spec?page=3#L2370"
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "paths",
+        "algorithm"
+      ],
+      "properties": {
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "algorithm": {
+          "type": "string",
+          "enum": [
+            "sha1",
+            "sha224",
+            "sha256",
+            "sha384",
+            "sha512"
+          ]
+        }
+      }
+    }
+  }
+}
