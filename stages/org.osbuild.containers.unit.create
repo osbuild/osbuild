@@ -9,7 +9,7 @@ def validate(filename, cfg):
     # ensure the service name does not exceed maximum filename length
     if len(filename) > 255:
         raise ValueError(f"Error: the {filename} unit exceeds the maximum filename length.")
-    
+
     # Filename extension must match the config:
     #   .container requires a Container section
     #   .volume requires a Volume section
