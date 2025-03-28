@@ -1,0 +1,35 @@
+{
+  "summary": "Generates .hmac checksum files",
+  "description": [
+    "Generates HMAC values for given files and stores them alongside the original",
+    "for later verification."
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "paths",
+        "algorithm"
+      ],
+      "properties": {
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "algorithm": {
+          "type": "string",
+          "enum": [
+            "sha1",
+            "sha224",
+            "sha256",
+            "sha384",
+            "sha512"
+          ]
+        }
+      }
+    }
+  }
+}
