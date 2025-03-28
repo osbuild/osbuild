@@ -11,8 +11,9 @@ def validate(filename, cfg):
         raise ValueError(f"Error: the {filename} unit exceeds the maximum filename length.")
 
     # Filename extension must match the config:
-    #   .service requires a Service section
-    #   .mount requires a Mount section
+    #   .container requires a Container section
+    #   .volume requires a Volume section
+    #   .network requires a Network section
     if filename.endswith(".container") and "Container" not in cfg:
         raise ValueError(f"Error: {filename} unit requires Container section")
     if filename.endswith(".volume") and "Volume" not in cfg:
