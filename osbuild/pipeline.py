@@ -13,7 +13,7 @@ from .inputs import Input, InputManager
 from .mounts import Mount, MountManager
 from .objectstore import ObjectStore
 from .sources import Source
-from .util import osrelease
+from .util import experimentalflags, osrelease
 
 DEFAULT_CAPABILITIES = {
     "CAP_AUDIT_WRITE",
@@ -254,6 +254,8 @@ class Stage:
             extra_env = {}
             if self.source_epoch is not None:
                 extra_env["SOURCE_DATE_EPOCH"] = str(self.source_epoch)
+            if experimentalflags.get_bool("debug-qemu-user"):
+                extra_env["QEMU_LOG"] = "+unimp"
 
             debug_shell = debug_break in ('*', self.name, self.id)
 
