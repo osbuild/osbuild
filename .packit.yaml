@@ -34,14 +34,6 @@ jobs:
   - centos-stream-10-s390x
   - centos-stream-10-ppc64le
   - centos-stream-10-x86_64
-  - epel-8-aarch64
-  - epel-8-x86_64
-  - epel-9-aarch64
-  - epel-9-x86_64
-  - fedora-all-aarch64
-  - fedora-all-s390x
-  - fedora-all-ppc64le
-  - fedora-all
 - <<: *copr
   trigger: commit
   branch: main
