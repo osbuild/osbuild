@@ -1544,6 +1544,74 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
                 assert res["solver"] == "dnf"
 
 
+def set_config_dnfvars(baseurl, dnfvars):
+    for j, url in enumerate(baseurl):
+        for var, value in dnfvars.items():
+            if value in url:
+                baseurl[j] = url.replace(value, f"${var}")
+    return baseurl
+
+
+def create_dnfvars(root_dir, dnfvars):
+    vars_dir = root_dir / "etc/dnf/vars"
+    vars_dir.mkdir(parents=True)
+
+    for var, value in dnfvars.items():
+        var_path = vars_dir / var
+        var_path.write_text(value, encoding="utf8")
+
+
+@pytest.mark.parametrize("use_dnfvars", [True, False], ids=["with_dnfvars", "without_dnfvars"])
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    ({}, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnfvars):
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
+    test_case = depsolve_test_case_basic_2pkgs_2repos
+    transactions = test_case["transactions"]
+    repo_configs = get_test_case_repo_configs(test_case, repo_servers)
+    root_dir = None
+
+    for index, config in enumerate(repo_configs):
+        repo_configs[index]["baseurl"] = set_config_dnfvars(config["baseurl"], {"var": "localhost"})
+
+    if use_dnfvars:
+        create_dnfvars(tmp_path, {"var": "localhost"})
+        root_dir = str(tmp_path)
+
+    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
+
+    if not use_dnfvars:
+        assert exit_code != 0
+        assert res["kind"] == "RepoError"
+        assert re.match(
+            "There was a problem reading a repository: Failed to download metadata", res["reason"], re.DOTALL)
+        return
+
+    assert exit_code == 0
+    assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
+    assert res["repos"].keys() == test_case["results"]["reponames"]
+
+    # modules is optional here as the dnf5 depsolver never returns any modules
+    assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
+
+    for repo in res["repos"].values():
+        assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+        assert repo["sslverify"] is False
+
+    use_dnf5 = dnf_config.get("use_dnf5", False)
+    if use_dnf5:
+        assert res["solver"] == "dnf5"
+    else:
+        assert res["solver"] == "dnf"
+
+
 # pylint: disable=too-many-branches
 @pytest.mark.parametrize("custom_license_db", [None, "./test/data/spdx/custom-license-index.json"])
 @pytest.mark.parametrize("with_sbom", [False, True])
