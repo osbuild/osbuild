@@ -1312,7 +1312,7 @@ mechanism, and more.""",
 ] + [search_test_case_basic_2pkgs_2repos]
 
 
-def make_dnf_scafolding(base_dir):
+def make_dnf_scafolding(base_dir, dnfvars=None):
     root_dir = pathlib.Path(TemporaryDirectory(dir=base_dir).name)
 
     repos_dir = root_dir / "etc/yum.repos.d"
@@ -1324,6 +1324,10 @@ def make_dnf_scafolding(base_dir):
 
     vars_path = vars_dir / "customvar"
     vars_path.write_text(CUSTOMVAR, encoding="utf8")
+
+    for var, value in dnfvars.items():
+        var_dir = vars_dir / var
+        var_dir.write_text(value, encoding="utf8")
 
     return root_dir, repos_dir, keys_dir
 
@@ -1386,22 +1390,29 @@ def gen_repo_config(server):
     }
 
 
-def config_combos(tmp_path, servers):
+def config_combos(tmp_path, servers, set_dnfvars=False):
     """
     Return all configurations for the provided repositories, either as config files in a directory or as repository
     configs in the depsolve request, or a combination of both.
     """
+    dnfvars = {}
+    if set_dnfvars:
+        for server in servers:
+            dnfvars[server["name"] + "dnfvar"] = server["address"].replace("http://", '')
+
     for combo in gen_config_combos(len(servers)):
         repo_configs = None
         if len(combo[0]):
             repo_configs = []
             for idx in combo[0]:  # servers to be configured through request
-                server = servers[idx]
+                server = dict(servers[idx])
+                if server["name"] in dnfvars:
+                    server["address"] = f"http://${server['name']}dnfvar"
                 repo_configs.append(gen_repo_config(server))
 
         root_dir = None
         if len(combo[1]):
-            root_dir, repos_dir, keys_dir = make_dnf_scafolding(tmp_path)
+            root_dir, repos_dir, keys_dir = make_dnf_scafolding(tmp_path, dnfvars)
             for idx in combo[1]:  # servers to be configured through root_dir
                 server = servers[idx]
                 name = server["name"]
@@ -1498,10 +1509,13 @@ def test_get_test_case_repo_servers(test_case, repo_servers, expected):
 
 
 @pytest.mark.parametrize("dnf_config, detect_fn", [
+    ({"use_dnfvars": True}, assert_dnf),
+    ({"use_dnfvars": True, "use_dnf5": False}, assert_dnf),
+    ({"use_dnfvars": True, "use_dnf5": True}, assert_dnf5),
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
-], ids=["no-config", "dnf4", "dnf5"])
+], ids=["dnfvars-no-config", "dnfvars-dnf4", "dnfvars-dnf5", "no-config", "dnf4", "dnf5"])
 def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     """
     Test all possible configurations of repository configurations for the depsolve function.
@@ -1512,11 +1526,12 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     except RuntimeError as e:
         pytest.skip(str(e))
 
+    dnfvars = dnf_config.get("use_dnfvars", False)
     test_case = depsolve_test_case_basic_2pkgs_2repos
     transactions = test_case["transactions"]
     tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, dnfvars):
         with TemporaryDirectory() as cache_dir:
             res, exit_code = depsolve(
                 transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
@@ -1720,10 +1735,13 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
 
 @pytest.mark.parametrize("dnf_config, detect_fn", [
-    (None, assert_dnf),
+    ({"use_dnfvars": True}, assert_dnf),
+    ({"use_dnfvars": True, "use_dnf5": False}, assert_dnf),
+    ({"use_dnfvars": True, "use_dnf5": True}, assert_dnf5),
+    ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
-], ids=["no-config", "dnf4", "dnf5"])
+], ids=["dnfvars-no-config", "dnfvars-dnf4", "dnfvars-dnf5", "no-config", "dnf4", "dnf5"])
 def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     """
     Test all possible configurations of repository configurations for the search function.
@@ -1734,11 +1752,12 @@ def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     except RuntimeError as e:
         pytest.skip(str(e))
 
+    dnfvars = dnf_config.get("use_dnfvars", False)
     test_case = search_test_case_basic_2pkgs_2repos
     tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
     search_args = test_case["search_args"]
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, dnfvars):
         with TemporaryDirectory() as cache_dir:
             res, exit_code = search(search_args, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
