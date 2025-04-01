@@ -10,6 +10,8 @@ from typing import Dict, List
 
 import dnf
 import hawkey
+import libdnf
+from dnf.i18n import ucd
 
 from osbuild.solver import DepsolveError, MarkingError, RepoError, SolverBase, modify_rootdir_path, read_keys
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
@@ -59,6 +61,13 @@ class DNF(SolverBase):
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
         self.base.conf.substitutions['releasever'] = releasever
 
+        # variables substitution is only available when root_dir is provided in case of
+        # osbuild is creating a target image different from the host
+        if root_dir:
+            # This sets the varsdir to ("{root_dir}/etc/yum/vars/", "{root_dir}/etc/dnf/vars/") for custom variable
+            # substitution (e.g. CentOS Stream 9's $stream variable)
+            self.base.conf.substitutions.update_from_etc(root_dir)
+
         if hasattr(self.base.conf, "optional_metadata_types"):
             # the attribute doesn't exist on older versions of dnf; ignore the option when not available
             self.base.conf.optional_metadata_types.extend(arguments.get("optional-metadata", []))
@@ -73,10 +82,6 @@ class DNF(SolverBase):
                 req_repo_ids.add(repo["id"])
 
             if root_dir:
-                # This sets the varsdir to ("{root_dir}/etc/yum/vars/", "{root_dir}/etc/dnf/vars/") for custom variable
-                # substitution (e.g. CentOS Stream 9's $stream variable)
-                self.base.conf.substitutions.update_from_etc(root_dir)
-
                 repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
                 self.base.conf.reposdir = repos_dir
                 self.base.read_all_repos()
@@ -101,15 +106,16 @@ class DNF(SolverBase):
         """Makes a dnf.repo.Repo out of a JSON repository description"""
 
         repo = dnf.repo.Repo(desc["id"], parent_conf)
+        config = libdnf.conf.ConfigParser
 
         if "name" in desc:
             repo.name = desc["name"]
 
         # at least one is required
         if "baseurl" in desc:
-            repo.baseurl = desc["baseurl"]
+            repo.baseurl = [config.substitute(ucd(repo), parent_conf.substitutions) for repo in desc["baseurl"]]
         elif "metalink" in desc:
-            repo.metalink = desc["metalink"]
+            repo.metalink = config.substitute(ucd(desc["metalink"]), parent_conf.substitutions)
         elif "mirrorlist" in desc:
             repo.mirrorlist = desc["mirrorlist"]
         else:
