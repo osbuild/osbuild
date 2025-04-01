@@ -1378,7 +1378,7 @@ def gen_repo_config(server):
     return {
         "id": server["name"],
         "name": server["name"],
-        "baseurl": server["address"],
+        "baseurl": [server["address"]],
         "check_gpg": False,
         "sslverify": False,
         "rhsm": False,
