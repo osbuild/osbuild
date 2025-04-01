@@ -10,6 +10,8 @@ from typing import Dict, List
 
 import dnf
 import hawkey
+import libdnf
+from dnf.i18n import ucd
 
 from osbuild.solver import (
     DepsolveError,
@@ -68,6 +70,12 @@ class DNF(SolverBase):
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
         self.base.conf.substitutions['releasever'] = releasever
 
+        # variables substitution is only available when root_dir is provided
+        if root_dir:
+            # This sets the varsdir to ("{root_dir}/etc/yum/vars/", "{root_dir}/etc/dnf/vars/") for custom variable
+            # substitution (e.g. CentOS Stream 9's $stream variable)
+            self.base.conf.substitutions.update_from_etc(root_dir)
+
         if hasattr(self.base.conf, "optional_metadata_types"):
             # the attribute doesn't exist on older versions of dnf; ignore the option when not available
             self.base.conf.optional_metadata_types.extend(arguments.get("optional-metadata", []))
@@ -77,15 +85,11 @@ class DNF(SolverBase):
         try:
             req_repo_ids = set()
             for repo in repos:
-                self.base.repos.add(self._dnfrepo(repo, self.base.conf))
+                self.base.repos.add(self._dnfrepo(repo, self.base.conf, root_dir is not None))
                 # collect repo IDs from the request to separate them from the ones loaded from a root_dir
                 req_repo_ids.add(repo["id"])
 
             if root_dir:
-                # This sets the varsdir to ("{root_dir}/etc/yum/vars/", "{root_dir}/etc/dnf/vars/") for custom variable
-                # substitution (e.g. CentOS Stream 9's $stream variable)
-                self.base.conf.substitutions.update_from_etc(root_dir)
-
                 repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
                 self.base.conf.reposdir = repos_dir
                 self.base.read_all_repos()
@@ -110,21 +114,27 @@ class DNF(SolverBase):
         self.license_index_path = license_index_path
 
     @staticmethod
-    def _dnfrepo(desc, parent_conf=None):
+    def _dnfrepo(desc, parent_conf=None, subs_links=False):
         """Makes a dnf.repo.Repo out of a JSON repository description"""
 
         repo = dnf.repo.Repo(desc["id"], parent_conf)
+        config = libdnf.conf.ConfigParser
 
         if "name" in desc:
             repo.name = desc["name"]
 
+        def subs(basestr):
+            if subs_links and parent_conf:
+                return config.substitute(ucd(basestr), parent_conf.substitutions)
+            return basestr
+
         # at least one is required
         if "baseurl" in desc:
-            repo.baseurl = desc["baseurl"]
+            repo.baseurl = [subs(repo) for repo in desc["baseurl"]]
         elif "metalink" in desc:
-            repo.metalink = desc["metalink"]
+            repo.metalink = subs(desc["metalink"])
         elif "mirrorlist" in desc:
-            repo.mirrorlist = desc["mirrorlist"]
+            repo.mirrorlist = subs(desc["mirrorlist"])
         else:
             raise ValueError("missing either `baseurl`, `metalink`, or `mirrorlist` in repo")
 
