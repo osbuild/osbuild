@@ -53,6 +53,188 @@ STAGE_NAME = "org.osbuild.systemd.unit.create"
         },
         "",
     ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "inherit",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "null",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "tty",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "journal",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "kmsg",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "journal+console",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "kmsg+console",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "file:/var/log/example.log",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "append:/var/log/app.log",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "append:/root/important.txt",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "truncate:/debug.log",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "socket",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "fd:stdout",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "fd:whatever",
+                },
+                "Install": {},
+            },
+        },
+        "",
+    ),
 
     # bad
     # # No filename
@@ -91,6 +273,34 @@ STAGE_NAME = "org.osbuild.systemd.unit.create"
     ({"filename": "foo.swap", "config": {"Unit": {}, "Service": {}, "Swap": {"What": ""}, "Install": {}}},
      "{'Unit': {}, 'Service': {}, 'Swap': {'What': ''}, "
      "'Install': {}} is not valid under any of the given schemas"),
+
+    # # bad StandardOutput values
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "syslog",
+                },
+                "Install": {},
+            },
+        },
+        "'syslog' does not match",
+    ),
+    (
+        {
+            "filename": "stdout-test.service",
+            "config": {
+                "Unit": {},
+                "Service": {
+                    "StandardOutput": "file:",
+                },
+                "Install": {},
+            },
+        },
+        "'file:' does not match",
+    ),
 ])
 @pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
 def test_schema_validation(stage_schema, test_data, expected_err):
@@ -225,7 +435,8 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
                 "EnvironmentFile": [
                     "/etc/example.env",
                     "/etc/second.env",
-                ]
+                ],
+                "StandardOutput": "append:/var/log/mkdir.log",
             },
             "Install": {
                 "WantedBy": [
@@ -289,6 +500,7 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
     Environment="TRACE=1"
     EnvironmentFile=/etc/example.env
     EnvironmentFile=/etc/second.env
+    StandardOutput=append:/var/log/mkdir.log
 
     [Install]
     WantedBy=local-fs.target

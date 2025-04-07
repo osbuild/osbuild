@@ -698,7 +698,8 @@
                 ],
                 "EnvironmentFile": [
                   "/etc/example.env"
-                ]
+                ],
+                "StandardOutput": "journal+console"
               },
               "Install": {
                 "WantedBy": [
