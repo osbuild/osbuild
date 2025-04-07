@@ -54,12 +54,120 @@ def handle_leapsectz(chrony_conf_lines, timezone):
         chrony_conf_lines[:] = [f"leapsectz {timezone}"] + chrony_conf_lines
 
 
+def handle_refclocks(chrony_conf_lines, refclocks):
+    new_lines = []
+
+    for refclock in refclocks:
+        driver = refclock["driver"]
+        driver_name = driver["name"]
+        new_line = "refclock"
+        driver_options = ""
+        if driver_name == "PPS":
+            driver_options = handle_refclock_pps(driver)
+        elif driver_name == "SHM":
+            driver_options = handle_refclock_shm(driver)
+        elif driver_name == "SOCK":
+            driver_options = handle_refclock_sock(driver)
+        elif driver_name == "PHC":
+            driver_options = handle_refclock_phc(driver)
+        else:
+            # this should be caught by the schema
+            raise ValueError(f"unknown refclock driver {driver_name}")
+
+        new_line += " " + driver_options
+
+        # append general reflock options
+        refclock_options = []
+        poll = refclock.get("poll")
+        if poll is not None:
+            refclock_options.append(f"poll {poll}")
+
+        dpoll = refclock.get("dpoll")
+        if dpoll is not None:
+            refclock_options.append(f"dpoll {dpoll}")
+
+        offset = refclock.get("offset")
+        if offset is not None:
+            refclock_options.append(f"offset {offset}")
+
+        if refclock_options:
+            gen_options_str = " ".join(refclock_options)
+            new_line += " " + gen_options_str
+
+        new_lines.append(new_line)
+
+    chrony_conf_lines[:] = new_lines + chrony_conf_lines
+
+
+def handle_refclock_pps(driver):
+    device = driver["device"]
+    line = f"PPS {device}"
+
+    options = []
+    if driver.get("clear"):
+        options.append("clear")
+
+    if options:
+        options_str = ",".join(options)
+        line += f":{options_str}"
+
+    return line
+
+
+def handle_refclock_shm(driver):
+    segment = driver["segment"]
+    line = f"SHM {segment}"
+
+    options = []
+    perm = driver.get("perm")
+    if perm is not None:
+        options.append(f"perm={perm}")
+
+    if options:
+        options_str = ",".join(options)
+        line += f":{options_str}"
+
+    return line
+
+
+def handle_refclock_sock(driver):
+    path = driver["path"]
+    return f"SOCK {path}"
+
+
+def handle_refclock_phc(driver):
+    path = driver["path"]
+    line = f"PHC {path}"
+
+    options = []
+    if driver.get("nocrossts"):
+        options.append("nocrossts")
+    if driver.get("extpps"):
+        options.append("extpps")
+    pin = driver.get("pin")
+    if pin is not None:
+        options.append(f"pin={pin}")
+    channel = driver.get("channel")
+    if channel is not None:
+        options.append(f"channel={channel}")
+    if driver.get("clear"):
+        options.append("clear")
+
+    if options:
+        options_str = ",".join(options)
+        line += f":{options_str}"
+
+    return line
+
+
 def main(tree, options):
     timeservers = options.get("timeservers", [])
     servers = options.get("servers", [])
     # Empty string value will remove the option from the configuration,
     # therefore default to 'None' to distinguish these two cases.
     leapsectz = options.get("leapsectz", None)
+
+    refclocks = options.get("refclocks", [])
 
     with open(f"{tree}/etc/chrony.conf", encoding="utf8") as f:
         chrony_conf = f.read()
@@ -76,6 +184,8 @@ def main(tree, options):
         handle_servers(lines, servers)
     if leapsectz is not None:
         handle_leapsectz(lines, leapsectz)
+    if refclocks:
+        handle_refclocks(lines, refclocks)
 
     new_chrony_conf = "\n".join(lines)
 
