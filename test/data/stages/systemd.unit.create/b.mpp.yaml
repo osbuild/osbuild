@@ -54,6 +54,7 @@ pipelines:
                   value: "1"
               EnvironmentFile:
                 - "/etc/example.env"
+              StandardOutput: "journal+console"
             Install:
               WantedBy:
                 - local-fs.target
