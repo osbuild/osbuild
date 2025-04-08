@@ -32,3 +32,35 @@ pipelines:
           timeservers:
             - ntp.example.com
             - ntp2.example.com
+          refclocks:
+            - driver:
+                name: PPS
+                device: "/dev/pps42"
+                clear: true
+              poll: 1
+              dpoll: 2
+              offset: 0.3
+            - driver:
+                name: SHM
+                segment: 42
+                perm: "0660"
+              poll: 1
+              dpoll: 2
+              offset: 0.3
+            - driver:
+                name: SOCK
+                path: "/run/time/thingie.socket"
+              poll: 1
+              dpoll: 2
+              offset: 0.3
+            - driver:
+                name: PHC
+                path: "/dev/ptp11"
+                nocrossts: true
+                extpps: true
+                pin: 3
+                channel: 4
+                clear: true
+              poll: 1
+              dpoll: 2
+              offset: 0.3

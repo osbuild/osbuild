@@ -5,7 +5,7 @@
     "/etc/chrony.conf": {
       "content": [
         "sha256:204145d4e6cdbb720012175d1ad0209d5f618055d906ed651f883370cce915b0",
-        "sha256:9afbf4d52438f25af8fd74e6a9ee41c61e266505e83063ad894376b710496746"
+        "sha256:6608a8dd24405bf8dfdfdb4eba8a5a3340b1700fe09cf63111c529df0afb7ae3"
       ]
     }
   }
