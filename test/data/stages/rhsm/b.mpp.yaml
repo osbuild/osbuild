@@ -38,5 +38,6 @@ pipelines:
           subscription-manager:
             rhsm:
               manage_repos: false
+              auto_enable_yum_plugins: false
             rhsmcertd:
               auto_registration: true
