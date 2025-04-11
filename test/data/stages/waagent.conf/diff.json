@@ -5,7 +5,7 @@
     "/etc/waagent.conf": {
       "content": [
         "sha256:9908ed1eeb7f4cd29ef3f1baa4f87d1de6ad6adaa08a09d83861a4a1fb88fb3a",
-        "sha256:7551a6a82c9133811b3e1a22504250fe8ced1f3bd4b47b14fceed028316ef5f5"
+        "sha256:746a295fa3c6aa3d90295611a55401d6c4b0bff1d2bbc5fb45ec4112bee84354"
       ]
     }
   }

@@ -681,6 +681,8 @@
           "type": "org.osbuild.waagent.conf",
           "options": {
             "config": {
+              "Provisioning.UseCloudInit": true,
+              "Provisioning.Enabled": false,
               "ResourceDisk.Format": false,
               "ResourceDisk.EnableSwap": true
             }
