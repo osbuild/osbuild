@@ -1,13 +1,12 @@
 #!/usr/bin/python3
 import json
 import os
-import subprocess
 import random
+import subprocess
 import sys
 import uuid
 
 import osbuild.api
-
 
 # https://github.com/hashicorp/vagrant/blob/241810b28af77fbb008c6863ce8a180919d8b86b/website/content/docs/providers/virtualbox/boxes.mdx#raw-contents
 BOX_XML = """<?xml version="1.0"?>
@@ -135,6 +134,7 @@ BOX_XML = """<?xml version="1.0"?>
 </Envelope>
 """
 
+
 def parse_input(inputs):
     image = inputs["image"]
     files = image["data"]["files"]
@@ -178,8 +178,16 @@ end
         vagrant_content = f"config.vm.base_mac = \"{mac_address}\""
 
         data = json.loads(subprocess.check_output(["qemu-img", "info", "--output", "json", target]))
-        xml = BOX_XML.format(MAC_ADDRESS=mac_address, MACHINE_UUID=str(uuid.uuid4()),
-                             DISK_UUID=str(uuid.uuid4()), DISK_CAPACITY=data['virtual-size'] // 1000 ** 3, DISK_NAME=os.path.basename(target), OS_TYPE="ArchLinux_64")
+        xml = BOX_XML.format(
+            MAC_ADDRESS=mac_address,
+            MACHINE_UUID=str(
+                uuid.uuid4()),
+            DISK_UUID=str(
+                uuid.uuid4()),
+            DISK_CAPACITY=data['virtual-size'] //
+            1000 ** 3,
+            DISK_NAME=os.path.basename(target),
+            OS_TYPE="ArchLinux_64")
         open(f"{tree}/box.ovf", "w", encoding="utf8").write(xml)
 
     vagrantfile = f"""
