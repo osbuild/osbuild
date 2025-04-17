@@ -127,7 +127,11 @@ Requires:       python3-dnf
 %if 0%{?fedora}
 Requires:       python3-rich
 Requires:       python3-attrs
+%if 0%{?fedora} > 40
+Requires:       python3dist(typer-slim[standard])
+%else
 Requires:       python3-typer
+%endif
 %endif
 
 %description    tools
