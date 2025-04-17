@@ -247,7 +247,14 @@ def genisoargs_s390x(paths, test_fixture, volid, name_version):
     with open(os.path.join(lorax_templates, 'generic.ins'), 'r', encoding='utf8') as fp1:
         with open(os.path.join(paths["iso"], 'generic.ins'), 'w', encoding='utf8') as fp2:
             for line in fp1:
-                fp2.write(line.replace('@INITRD_LOAD_ADDRESS@', INITRD_ADDRESS))
+                # The paths to the kernel and initrd on our ISO differ slightly from those in generic.ins.
+                # https://github.com/coreos/coreos-assembler/commit/6f533ef55ee5cf2b10ad97df51eb2d190b6b2c2b
+                # Let's update the paths in the template to the correct locations.
+                line = line.replace('images/kernel.img', "images/pxeboot/vmlinuz")
+                line = line.replace('images/initrd.img', "images/pxeboot/initrd.img")
+                # Also replace the initrd address in the template with actual value.
+                line = line.replace('@INITRD_LOAD_ADDRESS@', INITRD_ADDRESS)
+                fp2.write(line)
     for prmfile in [paths["iso/images/cdboot.prm"],
                     paths["iso/images/generic.prm"],
                     paths["iso/images/genericdvd.prm"]]:
