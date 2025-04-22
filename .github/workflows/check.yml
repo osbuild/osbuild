@@ -61,7 +61,7 @@ jobs:
 
       - name: Validate Packit config
         run: |
-          packit validate-config .packit.yaml
+          packit config validate .packit.yaml
 
   snapshots:
     name: "🔍 Check for valid snapshot urls"
