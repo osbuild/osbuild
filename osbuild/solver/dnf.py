@@ -86,6 +86,7 @@ class DNF(SolverBase):
                         repo_config.sslclientcert = modify_rootdir_path(repo_config.sslclientcert, root_dir)
                         repo_config.sslclientkey = modify_rootdir_path(repo_config.sslclientkey, root_dir)
 
+            self.base.update_cache()
             self.base.fill_sack(load_system_repo=False)
         except dnf.exceptions.Error as e:
             raise RepoError(e) from e
