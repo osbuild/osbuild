@@ -59,7 +59,7 @@ class DNF5(SolverBase):
     def __init__(self, request, persistdir, cachedir, license_index_path=None):
         arch = request["arch"]
         releasever = request.get("releasever")
-        module_platform_id = request["module_platform_id"]
+        module_platform_id = request.get("module_platform_id")
         proxy = request.get("proxy")
 
         arguments = request["arguments"]
@@ -115,7 +115,8 @@ class DNF5(SolverBase):
         conf.zchunk = False
 
         # Set the rest of the dnf configuration.
-        conf.module_platform_id = module_platform_id
+        if module_platform_id:
+            conf.module_platform_id = module_platform_id
         conf.config_file_path = "/dev/null"
         conf.persistdir = persistdir
         conf.cachedir = cachedir
