@@ -66,12 +66,15 @@ def depsolve(transactions, cache_dir, dnf_config=None, repos=None, root_dir=None
     req = {
         "command": "depsolve",
         "arch": ARCH,
-        "module_platform_id": f"platform:el{RELEASEVER}",
         "releasever": RELEASEVER,
         "cachedir": cache_dir,
         "arguments": {
             "transactions": transactions,
         }
+        # Note that we are not setting "module_platform_id" here,
+        # none of our tests is using it. Once we start using it
+        # we need to add it (and maybe a "with_platform_id" as
+        # parameter on top)
     }
 
     if repos:
