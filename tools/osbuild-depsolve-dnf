@@ -141,12 +141,6 @@ def validate_request(request):
             "reason": "no 'arch' specified"
         }
 
-    if not request.get("module_platform_id"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "no 'module_platform_id' specified"
-        }
-
     if not request.get("releasever"):
         return {
             "kind": "InvalidRequest",
