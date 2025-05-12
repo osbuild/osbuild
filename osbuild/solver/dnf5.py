@@ -14,6 +14,7 @@ from libdnf5.common import QueryCmp_GLOB as GLOB
 from osbuild.solver import (
     DepsolveError,
     MarkingError,
+    NoReposError,
     RepoError,
     SolverBase,
     modify_rootdir_path,
@@ -46,6 +47,12 @@ def get_string_option(option):
 # XXX - Temporarily lifted from dnf.rpm module  # pylint: disable=fixme
 def _invert(dct):
     return {v: k for k in dct for v in dct[k]}
+
+
+def any_repos_enabled(base):
+    """Return true if any repositories are enabled"""
+    rq = dnf5.repo.RepoQuery(base)
+    return rq.begin() != rq.end()
 
 
 class DNF5(SolverBase):
@@ -167,6 +174,9 @@ class DNF5(SolverBase):
             self.base.get_repo_sack().load_repos(dnf5.repo.Repo.Type_AVAILABLE)
         except RuntimeError as e:
             raise RepoError(e) from e
+
+        if not any_repos_enabled(self.base):
+            raise NoReposError("There are no enabled repositories")
 
         # Custom license index file path use for SBOM generation
         self.license_index_path = license_index_path

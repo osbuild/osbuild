@@ -1865,3 +1865,28 @@ def test_depsolve_result_api(tmp_path, repo_servers):
         "data",
         "path",
     ]
+
+
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    ({}, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_depsolve_no_repos(tmp_path, dnf_config, detect_fn):
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
+    transactions = [
+        {
+            "package-specs": [
+                "filesystem",
+                "pkg-with-no-deps"
+            ],
+        },
+    ]
+    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, root_dir=tmp_path.as_posix())
+    assert exit_code == 1
+    assert res["kind"] == "NoReposError"
+    assert "There are no enabled repositories" in res["reason"]

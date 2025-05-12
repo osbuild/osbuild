@@ -13,7 +13,7 @@ import os.path
 import sys
 import tempfile
 
-from osbuild.solver import GPGKeyReadError, MarkingError, DepsolveError, RepoError, InvalidRequestError
+from osbuild.solver import GPGKeyReadError, MarkingError, DepsolveError, NoReposError, RepoError, InvalidRequestError
 
 # Load the solver configuration
 config = {"use_dnf5": False}
@@ -76,6 +76,11 @@ def solve(request, cache_dir):
             return None, {
                 "kind": "RepoError",
                 "reason": f"There was a problem reading a repository: {e}"
+            }
+        except NoReposError as e:
+            return None, {
+                "kind": "NoReposError",
+                "reason": f"There was a problem finding repositories: {e}"
             }
         except MarkingError as e:
             printe("error install_specs")
