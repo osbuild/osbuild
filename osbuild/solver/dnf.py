@@ -11,7 +11,15 @@ from typing import Dict, List
 import dnf
 import hawkey
 
-from osbuild.solver import DepsolveError, MarkingError, RepoError, SolverBase, modify_rootdir_path, read_keys
+from osbuild.solver import (
+    DepsolveError,
+    MarkingError,
+    NoReposError,
+    RepoError,
+    SolverBase,
+    modify_rootdir_path,
+    read_keys,
+)
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
@@ -91,6 +99,9 @@ class DNF(SolverBase):
             self.base.fill_sack(load_system_repo=False)
         except dnf.exceptions.Error as e:
             raise RepoError(e) from e
+
+        if not self.base.repos._any_enabled():
+            raise NoReposError("There are no enabled repositories")
 
         # enable module resolving
         self.base_module = dnf.module.module_base.ModuleBase(self.base)

@@ -40,6 +40,10 @@ class RepoError(SolverException):
     pass
 
 
+class NoReposError(SolverException):
+    pass
+
+
 class MarkingError(SolverException):
     pass
 
