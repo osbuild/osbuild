@@ -13,6 +13,7 @@ resource is decoded and written to the store.
 
 import base64
 import contextlib
+import lzma
 import os
 import sys
 from typing import Dict
@@ -34,7 +35,7 @@ SCHEMA = """
         "properties": {
           "encoding": {
             "description": "The specific encoding of `data`",
-            "enum": ["base64"]
+            "enum": ["base64", "lzma+base64"]
           },
           "data": {
             "description": "The ascii encoded raw data",
@@ -70,7 +71,14 @@ class InlineSource(sources.SourceService):
         if os.path.isfile(target):
             return
 
-        data = base64.b64decode(desc["data"])
+        encoding = desc["encoding"]
+        if encoding == "base64":
+            data = base64.b64decode(desc["data"])
+        elif encoding == "lzma+base64":
+            data = base64.b64decode(desc["data"])
+            data = lzma.decompress(data)
+        else:
+            raise RuntimeError(f"Unknown encoding {encoding}")
 
         # Write the bits to disk and then verify the checksum
         # This ensures that 1) the data is ok and that 2) we
