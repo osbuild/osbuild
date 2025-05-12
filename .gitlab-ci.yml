@@ -35,10 +35,10 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-40-x86_64
-          - aws/fedora-40-aarch64
           - aws/fedora-41-x86_64
           - aws/fedora-41-aarch64
+          - aws/fedora-42-x86_64
+          - aws/fedora-42-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
