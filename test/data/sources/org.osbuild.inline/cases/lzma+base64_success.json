@@ -1,0 +1,11 @@
+{
+  "expects": "success",
+  "org.osbuild.inline": {
+    "items": {
+      "sha256:1d7de2aac36c3cdfaa87985d6d69072981910600dea55420cde757b2b9dfbc84": {
+        "encoding": "lzma+base64",
+        "data": "/Td6WFoAAATm1rRGAgAhARYAAAB0L+Wj4AS7Ai1dABGIQkeKIzPDdw8z/VhnH14++zf0c4nftH2hdSKi7tWfxTSQTkA9j/SaTZ27Ra79Pz5wd/sqXNrbgxBSUxEhHjLqBFLXGoQQHuNe/whz4c/x6BxO0LiGQwPfNq+FaHyBZs9AbUfP1byOOupcRpuTBUIP5RYY2x3vr3O4f8mX8Qo8d+eeM5wJk7cJoz49QEbj55mGxHVFu4/ea8qcPSZitjweVt5MWUmgkZ2gfv9wG49U4i9xcUxo6IPZThnac6oQgsEDrKleKz9uh0uthXSzzrQ5/D+f2IMb4TggKfHd5mH8OzcExSxnjUb6hAOQci2DxrESyG8jQnj0+MH9WKMbjfnsYuQMlOsHBhjF5BkFZ1I7/MKLIfH2go25IAERCzhhZ4w2kC6UROemTHFeZFkqnpDiBIaApb19Js/L2qc8s6qAoEFLUfHvrc4tXErNTNhoTtB4TUkZZK5zp2qmaopWZibJ/73a8dDaWL1i160w87pVZEGjfVF5yXk0MTq8oHB03REj3XT8t61kmz7+7ODzwOnU1gaxhMZaUt1frA7u+FDtupuvA789WIkuW3w301Ll9ozDwhcbAnGyCItdzFM3yx9liS0ZmhsFJPAwW99LoLfcGCNhX41Y2q903agUeXiCN1fL2kjDC+QcaCqXZc7YuadTBUQBnYX8Q5q+KWR3X8kkifx/yuSXthxYVDeQLkobAROzM1sPRSWkDlFW9iNCYqrwDMi0bN0hSu7hTNImAAAAACcRAeUKgDzjAAHJBLwJAADM90dYscRn+wIAAAAABFla"
+      }
+    }
+  }
+}
