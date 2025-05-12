@@ -5,15 +5,23 @@ the org.osbuild.inline source.
 """
 
 import argparse
-import binascii
+import base64
 import hashlib
 import json
+import lzma
 import sys
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("FILE", help="The file to encode")
+    parser.add_argument(
+        "-e",
+        "--encoding",
+        choices=["base64", "lzma+base64"],
+        default="base64",
+        help="The encoding to use for the data (default: base64)"
+    )
     args = parser.parse_args()
 
     with open(args.FILE, "rb") as f:
@@ -22,13 +30,19 @@ def main():
     m = hashlib.sha256()
     m.update(raw)
     checksum = "sha256:" + m.hexdigest()
-    data = binascii.b2a_base64(raw, newline=False).decode("ascii")
+
+    if args.encoding == "lzma+base64":
+        raw = lzma.compress(raw)
+        data = base64.b64encode(raw).decode("ascii")
+    else:
+        # default to base64
+        data = base64.b64encode(raw).decode("ascii")
 
     source = {
         "org.osbuild.inline": {
             "items": {
                 checksum: {
-                    "encoding": "base64",
+                    "encoding": args.encoding,
                     "data": data
                 }
             }
