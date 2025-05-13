@@ -170,6 +170,25 @@ def make_network(options: Dict) -> List[str]:
     return res
 
 
+def make_post(post_list):
+    res = []
+    for post in post_list:
+        start = ["%post"]
+        if post.get("erroronfail"):
+            start.append("--erroronfail")
+        if post.get("nochroot"):
+            start.append("--nochroot")
+        log = post.get("log")
+        if log:
+            start.extend(["--log", f'"{log}"'])
+        interpreter = post.get("interpreter")
+        if interpreter:
+            start.extend(["--interpreter", f'"{interpreter}"'])
+
+        res.extend([" ".join(start), *post["commands"], "%end"])
+    return res
+
+
 def main(tree, options):  # pylint: disable=too-many-branches
     path = options["path"].lstrip("/")
     ostree = options.get("ostree")
@@ -242,6 +261,9 @@ def main(tree, options):  # pylint: disable=too-many-branches
     kargs_append = options.get("bootloader", {}).get("append")
     if kargs_append:
         config += [f"bootloader --append='{kargs_append}'"]
+    post = options.get("%post", [])
+    if post:
+        config += make_post(post)
 
     target = os.path.join(tree, path)
     base = os.path.dirname(target)

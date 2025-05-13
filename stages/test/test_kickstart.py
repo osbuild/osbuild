@@ -241,6 +241,47 @@ TEST_INPUT = [
     ({"ostreecontainer": {"transport": "dir", "url": "/run/install/repo/container", }, },
      "ostreecontainer --url=/run/install/repo/container --transport=dir",),
     ({"bootloader": {"append": "karg1 karg2=0"}}, "bootloader --append='karg1 karg2=0'"),
+
+    # %post
+    ({"%post": [{"commands": ["mkdir /scratch"]}]}, "%post\nmkdir /scratch\n%end"),
+    (
+        {
+            "%post": [
+                {"commands": ["mkdir /scratch"]},
+                {"commands": ["print('DONE!!!')"], "interpreter": "/usr/bin/python3"},
+            ]
+        },
+        "%post\nmkdir /scratch\n%end\n" +
+        "%post --interpreter \"/usr/bin/python3\"\nprint('DONE!!!')\n%end"
+    ),
+    (
+        {
+            "%post": [
+                {"commands": ["mkdir /scratch"]},
+                {
+                    "erroronfail": True,
+                    "nochroot": True,
+                    "interpreter": "/usr/bin/bash",
+                    "log": "/mnt/sysimage/var/log/ks-p2.log",
+                    "commands": [
+                        "echo 'Starting post2'",
+                        "if [ ! -e /mnt/sysimage/etc/resolv.conf ]; then",
+                        "  cp /etc/resolv.conf /mnt/sysimage/etc/resolv.conf",
+                        "fi",
+                    ]
+                },
+                {"commands": ["print('DONE!!!')"], "interpreter": "/usr/bin/python3"},
+            ]
+        },
+        "%post\nmkdir /scratch\n%end\n" +
+        "%post --erroronfail --nochroot --log \"/mnt/sysimage/var/log/ks-p2.log\" --interpreter \"/usr/bin/bash\"\n" +
+        "echo 'Starting post2'\n" +
+        "if [ ! -e /mnt/sysimage/etc/resolv.conf ]; then\n" +
+        "  cp /etc/resolv.conf /mnt/sysimage/etc/resolv.conf\n" +
+        "fi\n" +
+        "%end\n" +
+        "%post --interpreter \"/usr/bin/python3\"\nprint('DONE!!!')\n%end"
+    )
 ]
 
 
@@ -387,6 +428,10 @@ def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylin
             {"rootpw": {"iscrypted": True, "plaintext": True, "password": "pass"}},
             "is not valid under any of the given schemas"
         ),
+        # bad %post blocks
+        ({"%post": []}, re.compile(r"\[\] should be non-empty|\[\] is too short")),
+        ({"%post": [{}]}, "'commands' is a required property"),
+        ({"%post": [{"commands": []}]}, re.compile(r"\[\] should be non-empty|\[\] is too short")),
     ],
 )
 @pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
