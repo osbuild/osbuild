@@ -555,6 +555,43 @@
             "type": "string"
           }
         }
+      },
+      "%post": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "description": "Adds arbitrary commands to run on the system once the installation is complete.",
+          "additionalProperties": false,
+          "required": [
+            "commands"
+          ],
+          "properties": {
+            "erroronfail": {
+              "description": "Stop the installation on script failure",
+              "type": "boolean"
+            },
+            "interpreter": {
+              "description": "Allows specifying a different scripting language",
+              "type": "string"
+            },
+            "log": {
+              "description": "Log all messages from the script to the given log file",
+              "type": "string"
+            },
+            "nochroot": {
+              "description": "Run outside of the chroot environment",
+              "type": "boolean"
+            },
+            "commands": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     }
   }
