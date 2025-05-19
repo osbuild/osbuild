@@ -246,6 +246,35 @@ class TestStages(test.TestBase):
                 with open(md_path, "r", encoding="utf8") as f:
                     metadata = json.load(f)
 
+                # NB: RPM 6.0 (on F43+) no longer uses short key ids to identify imported GPG keys.
+                # This means that the gpg-pubkey pseudo-package version differs with RPM 6 vs. older RPM version.
+                # https://fedoraproject.org/wiki/Changes/RPM-6.0
+                for pipeline in metadata:
+                    self.assertIn(pipeline, res["metadata"])
+                    test_rpm_pkgs_md = metadata[pipeline]["org.osbuild.rpm"]["packages"]
+                    got_rpm_pkgs_md = res["metadata"][pipeline]["org.osbuild.rpm"]["packages"]
+
+                    # Iterate over the metadata and do a special check of the 'gpg-pubkey' package
+                    # if it is present and the version is has different length (short key id vs. full key id)
+                    for test_pkg, got_pkg in zip(test_rpm_pkgs_md, got_rpm_pkgs_md):
+                        self.assertEqual(test_pkg["name"], got_pkg["name"])
+                        if test_pkg["name"] != "gpg-pubkey":
+                            continue
+                        if len(test_pkg["version"]) == len(got_pkg["version"]):
+                            continue
+
+                        test_pkg_version = test_pkg.pop("version")
+                        got_pkg_version = got_pkg.pop("version")
+                        # Ensure that the remaining fields are equal
+                        self.assertEqual(test_pkg, got_pkg)
+                        # Check that the shorter version (the short key id) is a suffix of the longer version.
+                        # Check both ways, since we may eventually use the full key id in the test data, while
+                        # still running the test with an older RPM version (i.e. on RHEL).
+                        if len(test_pkg_version) > len(got_pkg_version):
+                            assert test_pkg_version.endswith(got_pkg_version)
+                        else:
+                            assert got_pkg_version.endswith(test_pkg_version)
+
                 self.assertEqual(metadata, res["metadata"])
 
             # cache the downloaded data for the sources by copying
