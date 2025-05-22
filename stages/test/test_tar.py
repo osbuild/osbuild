@@ -24,12 +24,18 @@ STAGE_NAME = "org.osbuild.tar"
         "filename": "foo",
         "transform": ["transform-cannot-be-passed-multiple-times"],
     }, " is not of type 'string'"),
+    ({
+        "filename": "foo",
+        "compression": "EXTREME",
+    }, "'EXTREME' is not one of"),
     # good
     ({"filename": "out.tar", "root-node": "include"}, ""),
     ({"filename": "out.tar", "paths": ["file1"]}, ""),
     ({"filename": "out.tar", "sparse": True}, ""),
     ({"filename": "out.tar"}, ""),
     ({"filename": "out.tar", "transform": "s/foo/bar"}, ""),
+    ({"filename": "out.tar", "compression": "auto"}, ""),
+    ({"filename": "out.tar", "compression": "gzip"}, ""),
 ])
 def test_schema_validation_tar(stage_schema, test_data, expected_err):
     test_input = {
@@ -160,3 +166,27 @@ def test_tar_disk_full(stage_module, fake_inputs, tmp_path_disk_full, capfd):
 
     assert ex.value.returncode == 2
     assert re.search(r"Wrote only \d+ of \d+ bytes", str(capfd.readouterr().err))
+
+
+@pytest.mark.skipif(not has_executable("tar"), reason="no tar executable")
+@pytest.mark.parametrize("filename,compression,expected", [
+    ("out.tar.gz", "auto", "gzip"),  # Auto uses the filename, which ends in .gz and should lead to gzip
+    ("out.unknown", "xz", "xz"),
+    ("out.unknown", "gzip", "gzip"),
+    ("out.unknown", "zstd", "zstandard"),
+])
+def test_tar_compress(tmp_path, stage_module, fake_inputs, filename, compression, expected):
+    options = {
+        "filename": filename,
+        "paths": [
+            "file1",
+            "file2",
+        ],
+        "compression": compression,
+    }
+    stage_module.main(fake_inputs, tmp_path, options)
+
+    tar_path = os.path.join(tmp_path, filename)
+    assert os.path.exists(tar_path)
+    output = subprocess.check_output(["file", tar_path], encoding="utf-8")
+    assert expected in output.lower()
