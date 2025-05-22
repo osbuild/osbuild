@@ -37,10 +37,19 @@ def main(inputs, output_dir, options):
     if transform:
         extra_args += ["--transform", transform]
 
+    compression = options.get("compression", "auto")
+
+    if compression == "auto":
+        extra_args += ["--auto-compress"]
+    else:
+        # Note that the enums in the schema have been chosen exactly
+        # as the long forms for the compression flag(s) that GNU tar
+        # accepts
+        extra_args += [f"--{compression}"]
+
     # Set up the tar command.
     tar_cmd = [
         "tar",
-        "--auto-compress",
         f"--format={tarfmt}",
         *extra_args,
         "-cf", os.path.join(output_dir, filename),
