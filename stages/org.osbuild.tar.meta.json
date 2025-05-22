@@ -65,6 +65,17 @@
           ],
           "default": "gnu"
         },
+        "compression": {
+          "description": "Compression to use",
+          "type": "string",
+          "enum": [
+            "auto",
+            "xz",
+            "gzip",
+            "zstd"
+          ],
+          "default": "auto"
+        },
         "acls": {
           "description": "Enable support for POSIX ACLs",
           "type": "boolean",
