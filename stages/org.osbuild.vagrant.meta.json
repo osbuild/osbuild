@@ -20,7 +20,8 @@
           "type": "string",
           "description": "type of Vagrant box",
           "enum": [
-            "libvirt"
+            "libvirt",
+            "virtualbox"
           ]
         }
       }
