@@ -110,8 +110,18 @@ def checkout_images_repo(ref, workdir: os.PathLike) -> str:
         print(f"Checking out '{OSBUILD_IMAGES_REPO_URL}' repository at ref '{ref}'")
         try:
             subprocess.check_call(
-                ["git", "clone", "--depth=1", "--no-single-branch", OSBUILD_IMAGES_REPO_URL, "images"],
+                ["git", "clone", OSBUILD_IMAGES_REPO_URL, "images"],
                 cwd=workdir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            )
+
+            subprocess.check_call(
+                ["git", "fetch", "--all"],
+                cwd=images_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            )
+
+            subprocess.check_call(
+                ["git", "checkout", ref],
+                cwd=images_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             )
         except subprocess.CalledProcessError as e:
             print(f"Failed to clone 'images' repository: {e.stdout.decode()}")
