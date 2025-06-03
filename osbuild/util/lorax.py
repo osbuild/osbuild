@@ -254,6 +254,63 @@ class Script:
         else:
             print(f"removefrom {cmd}: no files to remove!")
 
+    # pylint: disable=anomalous-backslash-in-string
+    @command
+    def removekmod(self, *globs):
+        '''
+        removekmod GLOB [GLOB...] [--allbut] KEEPGLOB [KEEPGLOB...]
+          Remove all files and directories matching the given file globs from the kernel
+          modules directory.
+
+          If '--allbut' is used, all the files from the modules will be removed *except*
+          the ones which match the file globs. There must be at least one initial GLOB
+          to search and one KEEPGLOB to keep. The KEEPGLOB is expanded to be *KEEPGLOB*
+          so that it will match anywhere in the path.
+
+          This only removes files from under /lib/modules/\\*/kernel/
+
+          Examples:
+            removekmod sound drivers/media drivers/hwmon drivers/video
+            removekmod drivers/char --allbut virtio_console hw_random
+        '''
+        cmd = " ".join(globs)
+        if "--allbut" in globs:
+            idx = globs.index("--allbut")
+            if idx == 0:
+                raise ValueError("removekmod needs at least one GLOB before --allbut")
+
+            # Apply keepglobs anywhere they appear in the path
+            keepglobs = globs[idx + 1:]
+            if len(keepglobs) == 0:
+                raise ValueError("removekmod needs at least one GLOB after --allbut")
+
+            globs = globs[:idx]
+        else:
+            # Nothing to keep
+            keepglobs = []
+
+        filelist = set()
+        for g in globs:
+            for top_dir in rglob(self.tree_path(f"/lib/modules/*/kernel/{g}")):
+                for root, _dirs, files in os.walk(top_dir):
+                    filelist.update(f"{root}/{f}" for f in files)
+
+        # Remove anything matching keepglobs from the list
+        matches = set()
+        for g in keepglobs:
+            globs_re = re.compile(fnmatch.translate(f"*{g}*"))
+            m = [f for f in filelist if globs_re.match(f)]
+            if m:
+                matches.update(m)
+            else:
+                print(f"removekmod {g}: no files matched!")
+        remove_files = filelist.difference(matches)
+
+        if remove_files:
+            list(os.unlink(f) for f in remove_files)
+        else:
+            print(f"removekmod {cmd}: no files to remove!")
+
 
 def brace_expand(s):
     if not ('{' in s and ',' in s and '}' in s):
