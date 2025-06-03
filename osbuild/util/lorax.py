@@ -216,6 +216,44 @@ class Script:
             else:
                 print(f"removepkg {p}: no files to remove!")
 
+    @command
+    def removefrom(self, pkg, *globs):
+        """
+        removefrom PKGGLOB [--allbut] FILEGLOB [FILEGLOB...]
+          Remove all files matching the given file globs from the package
+          (or packages) named.
+          If '--allbut' is used, all the files from the given package(s) will
+          be removed *except* the ones which match the file globs.
+
+          Examples:
+            removefrom usbutils /usr/bin/*
+            removefrom xfsprogs --allbut /bin/*
+        """
+        cmd = f"{pkg} {' '.join(globs)}"  # save for later logging
+        keepmatches = False
+        if globs[0] == '--allbut':
+            keepmatches = True
+            globs = globs[1:]
+        # get pkg filelist and find files that match the globs
+        filelist = self._filelist(pkg)
+        matches = set()
+        for g in globs:
+            globs_re = re.compile(fnmatch.translate(g))
+            m = [f for f in filelist if globs_re.match(f)]
+            if m:
+                matches.update(m)
+            else:
+                print(f"removefrom {pkg} {g}: no files matched!")
+        if keepmatches:
+            remove_files = filelist.difference(matches)
+        else:
+            remove_files = matches
+        # remove the files
+        if remove_files:
+            self.remove(*remove_files)
+        else:
+            print(f"removefrom {cmd}: no files to remove!")
+
 
 def brace_expand(s):
     if not ('{' in s and ',' in s and '}' in s):
