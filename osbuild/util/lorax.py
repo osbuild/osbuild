@@ -9,6 +9,7 @@ needed to run the post install and cleanup scripts.
 """
 
 import contextlib
+import fnmatch
 import glob
 import os
 import re
@@ -62,6 +63,7 @@ class Script:
         self.script = script
         self.tree = tree
         self.build = build
+        self._pkgnames = None
 
     def __call__(self):
         for i, line in enumerate(self.script):
@@ -87,6 +89,34 @@ class Script:
     def tree_path(self, target):
         dest = os.path.join(self.tree, target.lstrip("/"))
         return dest
+
+    def _all_pkgnames(self):
+        """ Get the list of all package names installed
+        On first call it runs rpm -qa and caches the results
+        """
+        if not self._pkgnames:
+            cmd = ["rpm", "-qa", "--root", self.tree, "--qf=%{name}\n"]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE,
+                                 check=True, encoding="utf8")
+            self._pkgnames = sorted(res.stdout.splitlines())
+        return self._pkgnames
+
+    def _get_pkgfiles(self, pkg):
+        """ Get a list of the files installed by a package """
+        cmd = ["rpm", "-ql", "--root", self.tree, pkg]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE,
+                             check=True, encoding="utf8")
+        return sorted(res.stdout.splitlines())
+
+    def _filelist(self, *pkg_specs):
+        """ Return the list of files in the packages matching the globs """
+        pkglist = []
+        for pkg in self._all_pkgnames():
+            if any(fnmatch.fnmatch(pkg, spec) for spec in pkg_specs):
+                pkglist.append(pkg)
+
+        # Return the files, not directories
+        return set(f for pkg in pkglist for f in self._get_pkgfiles(pkg) if not os.path.isdir(self.tree_path(f)))
 
     @command
     def append(self, filename, data):
@@ -168,6 +198,23 @@ class Script:
             with contextlib.suppress(subprocess.CalledProcessError):
                 args = cmd + [unit]
                 self.runcmd(*args)
+
+    @command
+    def removepkg(self, *pkgs):
+        """
+        removepkg PKGGLOB [PKGGLOB...]
+          Delete the named package(s).
+
+        IMPLEMENTATION NOTES:
+          RPM scriptlets (%preun/%postun) are *not* run.
+          Files are deleted, but directories are left behind.
+        """
+        for p in pkgs:
+            filepaths = [f.lstrip('/') for f in self._filelist(p)]
+            if filepaths:
+                self.remove(*filepaths)
+            else:
+                print(f"removepkg {p}: no files to remove!")
 
 
 def brace_expand(s):
