@@ -41,6 +41,20 @@
             "type": "string"
           }
         }
+      },
+      "branding": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "release": {
+            "type": "string",
+            "description": "Release package name, like fedora-release"
+          },
+          "logos": {
+            "type": "string",
+            "description": "Logo package name, like fedora-logos"
+          }
+        }
       }
     }
   }
