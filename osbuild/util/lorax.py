@@ -99,6 +99,7 @@ class Script:
             res = subprocess.run(cmd, stdout=subprocess.PIPE,
                                  check=True, encoding="utf8")
             self._pkgnames = sorted(res.stdout.splitlines())
+
         return self._pkgnames
 
     def _get_pkgfiles(self, pkg):
@@ -155,7 +156,13 @@ class Script:
 
     @command
     def remove(self, *files):
+        skiplist = ["/usr/lib/sysimage/rpm/", "/var/lib/rpm/", "/var/lib/yum", "/var/lib/dnf"]
         for g in files:
+            # XXX Workaround for templates with database removal near top of file
+            if any(g.startswith(p) for p in skiplist):
+                print(f"remove: Skipping RPM database path {g}")
+                continue
+
             for f in rglob(self.tree_path(g)):
                 if os.path.isdir(f) and not os.path.islink(f):
                     shutil.rmtree(f)
@@ -177,6 +184,11 @@ class Script:
 
     @command
     def runcmd(self, *args):
+        # XXX Workaround for removing things from /boot too soon
+        if any("/boot" in a for a in args):
+            print("runcmd: skipping operations on /boot")
+            return
+
         print("run ", " ".join(args))
         subprocess.run(args, cwd=self.tree, check=True)
 
@@ -214,7 +226,7 @@ class Script:
             if filepaths:
                 self.remove(*filepaths)
             else:
-                print("removepkg %s: no files to remove!", p)
+                print(f"removepkg {p}: no files to remove!")
 
     @command
     def removefrom(self, pkg, *globs):
@@ -243,7 +255,7 @@ class Script:
             if m:
                 matches.update(m)
             else:
-                print("removefrom %s %s: no files matched!", pkg, g)
+                print(f"removefrom {pkg} {g}: no files matched!")
         if keepmatches:
             remove_files = filelist.difference(matches)
         else:
@@ -252,7 +264,7 @@ class Script:
         if remove_files:
             self.remove(*remove_files)
         else:
-            print("removefrom %s: no files to remove!", cmd)
+            print(f"removefrom {cmd}: no files to remove!")
 
     # pylint: disable=anomalous-backslash-in-string
     @command
@@ -303,13 +315,13 @@ class Script:
             if m:
                 matches.update(m)
             else:
-                print("removekmod %s: no files matched!", g)
+                print(f"removekmod {g}: no files matched!")
         remove_files = filelist.difference(matches)
 
         if remove_files:
             list(os.unlink(f) for f in remove_files)
         else:
-            print("removekmod %s: no files to remove!", cmd)
+            print(f"removekmod {cmd}: no files to remove!")
 
 
 def brace_expand(s):
