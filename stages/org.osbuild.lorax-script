@@ -10,6 +10,7 @@ LORAX_TEMPLATES = "/usr/share/lorax/templates.d"
 
 
 Product = collections.namedtuple("Product", ["name", "version"])
+Branding = collections.namedtuple("Branding", ["release", "logos"])
 
 
 def main(tree, options):
@@ -25,18 +26,20 @@ def main(tree, options):
     name = product.get("name", "")
     version = product.get("version", "")
     product = Product(name, version)
+    branding = Branding(release=None, logos=None)
 
     args = {
         "root": tree,
         "basearch": basearch,
         "configdir": configdir,
         "libdir": libdir,
-        "product": product
+        "product": product,
+        "branding": branding
     }
 
     tpl = render_template(fullpath, args)
     script = Script(tpl, "/", tree)
-    print(f"running script: {os.path.dirname(filename)}")
+    print(f"running script: {os.path.basename(filename)}")
     script()
 
 
