@@ -193,7 +193,7 @@ class GrubConfig:
         )
         return {terminal: val}
 
-    def write(self, tree):
+    def write(self, tree, remove_unset):
         """Write the grub config to `tree` at `self.path`"""
         path = os.path.join(tree, self.path)
 
@@ -221,6 +221,14 @@ class GrubConfig:
             "search": type2opt[fs_type] + " " + fs_id,
             "features": features,
         }
+
+        if remove_unset:
+            # set all remaining config options to empty strings in case they are not set
+            config.update({
+                "serial": "",
+                "terminal_input": "",
+                "terminal_output": "",
+            })
 
         if self.serial:
             config["serial"] = "\n" + self.serial
@@ -303,6 +311,7 @@ def main(tree, options):
     write_defaults = options.get("write_defaults", True)
     ignition = options.get("ignition", False)
     saved_entry = options.get("saved_entry")
+    remove_unset = options.get("remove_unset", False)
     cfg = options.get("config", {})
 
     # backwards compatibility
@@ -402,7 +411,7 @@ def main(tree, options):
             config.path = grubcfg
 
     # Now actually write the main grub.cfg file
-    config.write(tree)
+    config.write(tree, remove_unset)
 
     if legacy:
         copy_modules(tree, legacy)
