@@ -193,7 +193,7 @@ class GrubConfig:
         )
         return {terminal: val}
 
-    def write(self, tree):
+    def write(self, tree, bugfix_remove_template_vars):
         """Write the grub config to `tree` at `self.path`"""
         path = os.path.join(tree, self.path)
 
@@ -221,6 +221,14 @@ class GrubConfig:
             "search": type2opt[fs_type] + " " + fs_id,
             "features": features,
         }
+
+        if bugfix_remove_template_vars:
+            # set all remaining config options to empty strings in case they are not set
+            config.update({
+                "serial": "",
+                "terminal_input": "",
+                "terminal_output": "",
+            })
 
         if self.serial:
             config["serial"] = "\n" + self.serial
@@ -294,6 +302,7 @@ class GrubConfig:
 
 # pylint: disable=too-many-statements,too-many-branches
 def main(tree, options):
+    compat_version = options.get("compat_version", 1)
     root_fs = options.get("rootfs")
     boot_fs = options.get("bootfs")
     kernel_opts = options.get("kernel_opts", "")
@@ -304,6 +313,10 @@ def main(tree, options):
     ignition = options.get("ignition", False)
     saved_entry = options.get("saved_entry")
     cfg = options.get("config", {})
+
+    # handle compat_version switching behaviour:
+    # Version 2+: Remove unset variables from the template. See https://issues.redhat.com/HMS-8646 for details.
+    bugfix_remove_template_vars = compat_version >= 2
 
     # backwards compatibility
     if not root_fs:
@@ -402,7 +415,7 @@ def main(tree, options):
             config.path = grubcfg
 
     # Now actually write the main grub.cfg file
-    config.write(tree)
+    config.write(tree, bugfix_remove_template_vars)
 
     if legacy:
         copy_modules(tree, legacy)
