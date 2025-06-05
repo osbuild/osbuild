@@ -16,6 +16,7 @@ TEST_INPUT = [
     ({"options": ["dedupe"]}, ["-E", "dedupe"]),
     ({"options": ["all-fragments", "force-inode-compact"]}, ["-E", "all-fragments,force-inode-compact"]),
     ({"cluster-size": 131072, "options": ["dedupe"]}, ["-E", "dedupe", "-C", "131072"]),
+    ({"exclude_paths": ["boot/", "root/"]}, ["--exclude-regex", "boot/", "--exclude-regex", "root/"])
 ]
 
 
