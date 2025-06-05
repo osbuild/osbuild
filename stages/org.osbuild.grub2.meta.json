@@ -213,6 +213,11 @@
         "type": "boolean",
         "default": false
       },
+      "remove_unset": {
+        "description": "Remove unset config values from templates",
+        "type": "boolean",
+        "default": false
+      },
       "config": {
         "description": "Configuration options for grub itself",
         "type": "object",
