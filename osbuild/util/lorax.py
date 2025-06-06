@@ -155,7 +155,14 @@ class Script:
 
     @command
     def remove(self, *files):
+        skiplist = ["/usr/lib/sysimage/rpm/", "/var/lib/rpm/", "/var/lib/yum", "/var/lib/dnf"]
         for g in files:
+            # We need the rpm database in order to remove files from packages, so skip removing
+            # it. This can be handled by skipping these paths in the squashfs/erofs stage.
+            if any(g.startswith(p) for p in skiplist):
+                print(f"remove: Skipping RPM database path {g}")
+                continue
+
             for f in rglob(self.tree_path(g)):
                 if os.path.isdir(f) and not os.path.islink(f):
                     shutil.rmtree(f)
@@ -177,6 +184,12 @@ class Script:
 
     @command
     def runcmd(self, *args):
+        # We need /boot content in order to create the iso, so skip the commands acting on
+        # boot. This can be handled by skipping these paths in the squashfs/erofs stage.
+        if any("/boot" in a for a in args):
+            print("runcmd: skipping operations on /boot")
+            return
+
         print("run ", " ".join(args))
         subprocess.run(args, cwd=self.tree, check=True)
 
