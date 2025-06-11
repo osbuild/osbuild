@@ -23,14 +23,15 @@ jobs:
         environment:
           - "py36"    # RH8
           - "py39"    # RH9
-          - "py313"   # latest fedora
+          - "py313"   # latest stable Fedora
+          - "py314"   # Fedora rawhide
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v4
     - name: "Run"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202502250751
+        image: ghcr.io/osbuild/osbuild-ci:latest-202506112350
         run: |
           # Hacky replacement of container storage driver:
           # The default overlayfs doesn't work in the runner, so let's change
@@ -69,7 +70,7 @@ jobs:
           # Using 4 workers is a bit arbitrary, "auto" is probably too aggressive.
           TEST_WORKERS: "-n 4"
         with:
-          image: ghcr.io/osbuild/osbuild-ci:latest-202502250751
+          image: ghcr.io/osbuild/osbuild-ci:latest-202506112350
           run: |
             OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
             tox -e "py36" -- ${{ env.TEST_WORKERS }} test.run.test_assemblers
