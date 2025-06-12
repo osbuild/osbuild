@@ -21,7 +21,6 @@ jobs:
           - parallel
           - normal
         environment:
-          - "py36"    # RH8
           - "py39"    # RH9
           - "py313"   # latest fedora
     steps:
