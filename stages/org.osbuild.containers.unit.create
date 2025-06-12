@@ -33,6 +33,13 @@ def main(tree, options):
     # prevent conversion of the option name to lowercase
     config.optionxform = lambda option: option
 
+    # In Python 3.14 configparser validates key contents and doesn't allow delimiters in them. Due to the hack several
+    # lines above we explicitly use some interesting behavior to write duplicate keys by including the delimiter in them.
+    # We need to disable the key validation check. Thanks to mrhoncok [1] for this workaround. In time we should probably
+    # revisit how we write unit files because configparser isn't the best for this.
+    # [1]: https://github.com/osbuild/osbuild/issues/2109#issuecomment-2964585958
+    config._validate_key_contents = lambda key: None  # pylint: disable=protected-access
+
     for section, opts in cfg.items():
         if not config.has_section(section):
             config.add_section(section)
