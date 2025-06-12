@@ -24,6 +24,19 @@ BuildRequires:  python3-docutils
 BuildRequires:  python3-setuptools
 BuildRequires:  systemd
 
+# for tests
+BuildRequires:  python3-iniparse
+BuildRequires:  python3-jsonschema
+BuildRequires:  python3-kickstart
+BuildRequires:  python3-mako
+BuildRequires:  python3-PyYAML
+BuildRequires:  python3-pytest
+%if 0%{?fedora}
+BuildRequires:  python3-license-expression
+BuildRequires:  python3-pytest-xdist
+BuildRequires:  python3-tomli-w
+%endif
+
 Requires:       bash
 Requires:       bubblewrap
 Requires:       coreutils
@@ -252,10 +265,19 @@ install -p -m 0644 tools/solver-dnf5.json %{buildroot}%{pkgdir}/solver.json
 install -p -m 0644 tools/solver-dnf.json %{buildroot}%{pkgdir}/solver.json
 %endif
 
+%if 0%{?rhel} >= 9
 %check
-exit 0
-# We have some integration tests, but those require running a VM, so that would
-# be an overkill for RPM check script.
+# skip toml-writing tests in RHEL (no such library available there)
+# skip x86_64-specific tests on other architectures
+%ifarch %x86_64
+%pytest %{?fedora:-n auto} -v %{?rhel:-m "not tomlwrite"}
+%else
+%pytest %{?fedora:-n auto} -v %{?rhel:-m "not tomlwrite"} \
+  --ignore test/mod/test_util_sbom_spdx.py \
+  --ignore test/mod/test_util_sbom_dnf.py \
+  --ignore test/mod/test_testutil_dnf4.py
+%endif
+%endif
 
 %files
 %license LICENSE
