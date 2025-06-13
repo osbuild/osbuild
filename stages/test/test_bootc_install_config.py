@@ -73,6 +73,7 @@ STAGE_NAME = "org.osbuild.bootc.install.config"
         )
     ]
 )
+@pytest.mark.tomlwrite
 def test_bootc_install_config(tmp_path, stage_module, options, expected_config):
     stage_module.main(tmp_path, options)
     # different toml libraries write out arrays in different ways (one line vs many), so we need to parse the result
