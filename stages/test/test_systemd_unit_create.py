@@ -469,6 +469,8 @@ def test_systemd_unit_create(tmp_path, stage_module, unit_type, unit_path, expec
     stage_module.main(tmp_path, options)
     assert os.path.exists(expected_unit_path)
     if unit_type == "system":
+        if os.environ.get("RPM_BUILD_ROOT"):
+            pytest.skip("systemd-analyze can't be run in the RPM build root environment")
         # When verifying user units, systemd expects runtime directories and more generally a booted system. Setting
         # something up like that to verify it is more trouble than it's worth, especially since the system units are
         # identical.
@@ -562,6 +564,8 @@ def test_systemd_unit_create_mount(tmp_path, stage_module, unit_type, unit_path,
     stage_module.main(tmp_path, options)
     assert os.path.exists(expected_unit_path)
     if unit_type == "system":
+        if os.environ.get("RPM_BUILD_ROOT"):
+            pytest.skip("systemd-analyze can't be run in the RPM build root environment")
         # When verifying user units, systemd expects runtime directories and more generally a booted system. Setting
         # something up like that to verify it is more trouble than it's worth, especially since the system units are
         # identical.
