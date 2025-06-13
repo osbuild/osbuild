@@ -1,4 +1,5 @@
 import os
+import platform
 from datetime import datetime
 
 import pytest
@@ -7,6 +8,7 @@ testutil_dnf4 = pytest.importorskip("osbuild.testutil.dnf4")
 sbom_dnf = pytest.importorskip("osbuild.util.sbom.dnf")
 
 
+@pytest.mark.skipif(platform.machine() != "x86_64", reason="Test data contain only x86_64 arched pkgs")
 def test_dnf_pkgset_to_sbom_pkgset():
     dnf_pkgset = testutil_dnf4.depsolve_pkgset([os.path.abspath("./test/data/testrepos/baseos")], ["bash"])
     bom_pkgset = sbom_dnf.dnf_pkgset_to_sbom_pkgset(dnf_pkgset)

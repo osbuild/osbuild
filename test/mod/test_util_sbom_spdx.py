@@ -1,4 +1,5 @@
 import os
+import platform
 
 import pytest
 
@@ -88,6 +89,7 @@ def test_create_spdx2_document():
     assert doc1_dict == doc2_dict
 
 
+@pytest.mark.skipif(platform.machine() != "x86_64", reason="Test data contain only x86_64 arched pkgs")
 @pytest.mark.parametrize("licensing_available", (True, False))
 @pytest.mark.parametrize("license_index_location", (None, CUSTOM_LICENSE_DB_LOCATION))
 def test_sbom_pkgset_to_spdx2_doc(licensing_available, license_index_location):

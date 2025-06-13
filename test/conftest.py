@@ -17,3 +17,6 @@ def pytest_configure(config):
     # pylint: disable=global-statement
     global unsupported_filesystems
     unsupported_filesystems = config.getoption("--unsupported-fs")
+    config.addinivalue_line(
+        "markers", "tomlwrite: mark test to run only in an environment with a TOML-writing library available"
+    )
