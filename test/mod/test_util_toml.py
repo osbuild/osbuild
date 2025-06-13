@@ -4,6 +4,8 @@
 import os
 from tempfile import TemporaryDirectory
 
+import pytest
+
 from osbuild.util import toml
 
 data_obj = {
@@ -26,6 +28,7 @@ str = "test"
 """
 
 
+@pytest.mark.tomlwrite
 def test_write_read():
     with TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "test.toml")
