@@ -80,7 +80,8 @@ class ContainersStorageSource(sources.SourceService):
             # string not matching not ideal - this is ErrNotAnImage
             # which is unchanged since 2016 (added in ee99172905 in
             # containers/storage)
-            if "identifier is not an image" in res.stderr:
+            # update: 2025, the message did change!
+            if "identifier is not an image" in res.stderr or "does not resolve to an image ID" in res.stderr:
                 return False
             raise RuntimeError(f"unknown skopeo error: {res.stderr}")
 
