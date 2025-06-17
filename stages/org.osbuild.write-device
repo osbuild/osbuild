@@ -1,0 +1,49 @@
+#!/usr/bin/python3
+"""
+Write to device
+
+"""
+
+import fcntl
+import os
+import struct
+import subprocess
+import sys
+
+import osbuild.api
+from osbuild.util import parsing
+
+
+def blksize(device_path):
+    req = 0x80081272  # BLKGETSIZE64, result is bytes as unsigned 64-bit integer (uint64)
+    buf = b' ' * 8
+    fmt = 'L'
+
+    with open(device_path, "rb") as dev:
+        buf = fcntl.ioctl(dev.fileno(), req, buf)
+    return struct.unpack(fmt, buf)[0]
+
+
+def main(args, devices, options):
+    src = parsing.parse_location(options.get("from"), args)
+    device = devices["device"]["path"]
+
+    src_size = os.path.getsize(src)
+    print(f"src: '{src}' src_size: {src_size}")
+    device_size = blksize(device)
+    print(f"device: '{device}' device_size: {device_size}")
+    if src_size > device_size:
+        raise ValueError(
+            f"File too large ({src_size / (1024 * 1024):.1f} mb) for device ({device_size / (1024 * 1024):.1f} mb)")
+
+    cmd = ["dd", f"if={src}", f"of={device}", "status=progress", "conv=fsync"]
+    print("Running {cmd}")
+    subprocess.run(cmd, check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    _args = osbuild.api.arguments()
+    r = main(_args, _args["devices"], _args["options"])
+    sys.exit(r)
