@@ -195,7 +195,7 @@ def test_curl_user_agent(tmp_path, sources_module):
 
     sources_module.gen_curl_download_config(config_path, test_sources.items())
     assert config_path.exists()
-    assert 'user-agent = "osbuild (Linux.x86_64; https://osbuild.org/)"' in config_path.read_text()
+    assert f'user-agent = "osbuild (Linux.{platform.machine()}; https://osbuild.org/)"' in config_path.read_text()
 
 
 @pytest.mark.parametrize("with_proxy", [True, False])

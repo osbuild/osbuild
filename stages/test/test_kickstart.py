@@ -352,14 +352,14 @@ def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylin
         ({"reboot": {"random": "option"}}, "{'random': 'option'} is not valid "),
         ({"display_mode": "invalid-mode"}, "'invalid-mode' is not one of "),
         # autopart
-        ({"autopart": {"type": "not-valid"}}, "'not-valid' is not one of ["),
+        ({"autopart": {"type": "not-valid"}}, r"'not-valid' is not one of \["),
         # Only one of --pbkdf-{time,iterations} can be specified at the same time
-        ({"autopart": {"pbkdf-time": 1, "pbkdf-iterations": 2}}, " should not be valid under "),
+        ({"autopart": {"pbkdf-time": 1, "pbkdf-iterations": 2}}, r"( should not be valid under| is not allowed for)"),
         # network is always a list
         ({"network": {"device": "foo"}}, " is not of type 'array'"),
         ({"network": [{"device": "foo", "activate": "string"}]}, " is not of type 'boolean'"),
         ({"network": [{"device": "foo", "random": "option"}]}, "Additional properties are not allowed "),
-        ({"network": [{"device": "foo", "bootproto": "invalid"}]}, " is not one of ["),
+        ({"network": [{"device": "foo", "bootproto": "invalid"}]}, r" is not one of \["),
         ({"network": [{"device": "foo", "ip": "invalid"}]}, " does not match "),
         ({"network": [{"device": "foo", "ip": "256.1.1.1"}]}, " does not match "),
         ({"network": [{"device": "foo", "ip": "1.256.1.1"}]}, " does not match "),
@@ -400,7 +400,7 @@ def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylin
                        }]}, " does not match "),
         # ostreecontainer
         ({"ostreecontainer": {"url": "http://some-ostree-url.com/foo",
-         "transport": "not-valid"}}, "'not-valid' is not one of ["),
+         "transport": "not-valid"}}, r"'not-valid' is not one of \["),
         # not both ostreecontainer and ostree
         (
             {
@@ -446,4 +446,4 @@ def test_schema_validation_bad_apples(stage_schema, test_input, expected_err):
     res = stage_schema.validate(test_data)
 
     assert res.valid is False
-    testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
+    testutil.assert_jsonschema_error_contains(res, re.compile(expected_err), expected_num_errs=1)

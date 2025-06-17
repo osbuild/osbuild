@@ -39,6 +39,8 @@ from .util import osrelease
 FAILED_TITLE = "JSON Schema validation failed"
 FAILED_TYPEURI = "https://osbuild.org/validation-error"
 
+IS_PY36 = sys.version_info[:2] == (3, 6)
+
 
 class ValidationError:
     """Describes a single failed validation
@@ -456,11 +458,21 @@ class ModuleInfo:
             return {}
 
         value = node.value
-        if not isinstance(value, ast.Str):
-            return {}
+
+        if IS_PY36:
+            if not isinstance(value, ast.Str):
+                return {}
+
+            # Get the internal value
+            value = value.s
+        else:
+            if not isinstance(value, ast.Constant):
+                return {}
+
+            value = value.value
 
         try:
-            return json.loads("{" + value.s + "}")
+            return json.loads("{" + value + "}")
         except json.decoder.JSONDecodeError as e:
             msg = "Invalid schema: " + e.msg
             line = e.doc.splitlines()[e.lineno - 1]
@@ -474,7 +486,10 @@ class ModuleInfo:
         if not node:
             return set()
 
-        return {e.s for e in node.value.elts}
+        if IS_PY36:
+            return {e.s for e in node.value.elts}
+
+        return {e.value for e in node.value.elts}
 
     @classmethod
     def load(cls, root, klass, name) -> Optional["ModuleInfo"]:

@@ -83,7 +83,17 @@ class TestAPI(unittest.TestCase):
 
         api = osbuild.api.API(socket_address=path)
         with api:
-            p = mp.Process(target=exception, args=(path, ))
+            # On macOS and newly non-macOS POSIX systems (since Python 3.14),
+            # the default method has been changed to forkserver.
+            # The code in this module does not work with it,
+            # hence the explicit change to 'fork'
+            # See https://github.com/python/cpython/issues/125714
+            if mp.get_start_method() == "forkserver":
+                _mp_context = mp.get_context(method="fork")
+            else:
+                _mp_context = mp.get_context()
+
+            p = _mp_context.Process(target=exception, args=(path, ))
             p.start()
             p.join()
         self.assertEqual(p.exitcode, 2)

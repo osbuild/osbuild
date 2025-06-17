@@ -10,6 +10,7 @@ def main(inputs, output_dir, options):
     source = inputs["tree"]["path"]
     filename = options["filename"].lstrip("/")
     compression = options.get("compression")
+    exclude_paths = options.get("exclude_paths")
 
     target = os.path.join(output_dir, filename)
 
@@ -21,6 +22,10 @@ def main(inputs, output_dir, options):
         cmd += ["-comp", method]
         for opt, val in opts.items():
             cmd += [f"-X{opt}", val]
+
+    if exclude_paths:
+        cmd += ["-regex", "-e"]
+        cmd.extend(exclude_paths)
 
     subprocess.run(cmd, check=True)
 

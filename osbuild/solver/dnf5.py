@@ -172,7 +172,7 @@ class DNF5(SolverBase):
                     repo_iter.next()
 
             self.base.get_repo_sack().load_repos(dnf5.repo.Repo.Type_AVAILABLE)
-        except RuntimeError as e:
+        except Exception as e:
             raise RepoError(e) from e
 
         if not any_repos_enabled(self.base):

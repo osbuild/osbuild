@@ -10,6 +10,7 @@ def main(inputs, output_dir, options):
     source = inputs["tree"]["path"]
     filename = options["filename"].lstrip("/")
     compression = options.get("compression")
+    exclude_paths = options.get("exclude_paths")
 
     target = os.path.join(output_dir, filename)
 
@@ -28,6 +29,10 @@ def main(inputs, output_dir, options):
     cluster_size = options.get("cluster-size")
     if cluster_size:
         cmd += ["-C", f"{cluster_size}"]
+
+    if exclude_paths:
+        for e in exclude_paths:
+            cmd += ["--exclude-regex", e]
 
     subprocess.run(cmd, check=True)
 

@@ -1,7 +1,7 @@
 %global         forgeurl https://github.com/osbuild/osbuild
 %global         selinuxtype targeted
 
-Version:        152
+Version:        153
 
 %forgemeta
 
@@ -40,8 +40,8 @@ Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 Requires:       python3-librepo
 
 # This is required for `osbuild`, for RHEL-10 and above
-# the stdlib toml package can be used instead
-%if 0%{?rhel} < 10
+# the stdlib tomllib module can be used instead
+%if 0%{?rhel} && 0%{?rhel} < 10
 Requires:       python3-tomli
 %endif
 
