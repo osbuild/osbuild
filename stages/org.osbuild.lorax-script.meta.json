@@ -43,5 +43,52 @@
         }
       }
     }
+  },
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "basearch": {
+          "type": "string",
+          "default": "x86_64",
+          "description": "The basic architecture param to supply to the template"
+        },
+        "product": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "libdir": {
+            "type": "string",
+            "default": "lib64"
+          }
+        }
+      }
+    },
+    "inputs": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tree"
+        ],
+        "properties": {
+          "tree": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+    }
   }
 }
