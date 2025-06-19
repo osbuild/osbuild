@@ -23,6 +23,20 @@ BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 BuildRequires:  systemd
 
+# for tests
+BuildRequires:  python3-iniparse
+BuildRequires:  python3-jsonschema
+BuildRequires:  python3-kickstart
+BuildRequires:  python3-mako
+BuildRequires:  python3-PyYAML
+BuildRequires:  python3-pytest
+%if 0%{?fedora}
+BuildRequires:  python3-license-expression
+BuildRequires:  python3-pytest-xdist
+# RHEL doesn't have any toml-writing library
+BuildRequires:  python3-tomli-w
+%endif
+
 Requires:       bash
 Requires:       bubblewrap
 Requires:       coreutils
@@ -252,9 +266,13 @@ install -p -m 0644 tools/solver-dnf.json %{buildroot}%{pkgdir}/solver.json
 %endif
 
 %check
-exit 0
-# We have some integration tests, but those require running a VM, so that would
-# be an overkill for RPM check script.
+# a couple of test_systemd_unit_create fail with: Failed to create directory '/run/systemd/': Permission denied
+# skip toml-writing tests in RHEL (no such library available there)
+%pytest %{?fedora:-n auto} -v %{?rhel:-k "not (test_bootc_install_config or test_containers_storage_conf_integration or test_write_read)"} \
+  --deselect 'stages/test/test_systemd_unit_create.py::test_systemd_unit_create[system-usr-usr/lib/systemd/system]' \
+  --deselect 'stages/test/test_systemd_unit_create.py::test_systemd_unit_create[system-etc-etc/systemd/system]' \
+  --deselect 'stages/test/test_systemd_unit_create.py::test_systemd_unit_create_mount[system-usr-usr/lib/systemd/system]' \
+  --deselect 'stages/test/test_systemd_unit_create.py::test_systemd_unit_create_mount[system-etc-etc/systemd/system]'
 
 %files
 %license LICENSE
