@@ -18,6 +18,7 @@ TEST_INPUT = [
 STAGE_NAME = "org.osbuild.containers.storage.conf"
 
 
+@pytest.mark.tomlwrite
 @pytest.mark.parametrize("test_filename", ["/etc/containers/storage.conf", "/usr/share/containers/storage.conf"])
 @pytest.mark.parametrize("test_storage,test_options,expected", TEST_INPUT)
 def test_containers_storage_conf_integration(tmp_path, stage_module, test_filename, test_storage, test_options, expected):  # pylint: disable=unused-argument
