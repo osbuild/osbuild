@@ -255,7 +255,7 @@ class Stage:
             if self.source_epoch is not None:
                 extra_env["SOURCE_DATE_EPOCH"] = str(self.source_epoch)
             if experimentalflags.get_bool("debug-qemu-user"):
-                extra_env["QEMU_LOG"] = "+unimp"
+                extra_env["QEMU_LOG"] = "unimp"
 
             debug_shell = debug_break in ('*', self.name, self.id)
 
