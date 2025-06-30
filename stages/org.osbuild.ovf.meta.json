@@ -29,6 +29,17 @@
               "default": "other26xLinux64Guest"
             }
           }
+        },
+        "virtualbox": {
+          "description": "Settings for VirtualBox specific parts of the OVF file.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "os_type": {
+              "type": "string",
+              "default": "OtherLinux_64"
+            }
+          }
         }
       }
     }
