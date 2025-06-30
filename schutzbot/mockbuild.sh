@@ -9,11 +9,7 @@ function greenprint {
 # function to override template respositores with system repositories which contain rpmrepos snapshots
 function template_override {
     sudo dnf -y install jq
-    if sudo subscription-manager status; then
-        greenprint "📋 Running on subscribed RHEL machine, no mock template override done."
-        return 0
-    fi
-
+    
     # TODO: remove this, once mock-core-configs ships a template for RHEL-10
     # Use RHEL-9 template as the baseline for now.
     if [[ "$ID" == rhel && ${VERSION_ID%.*} == 10 ]]; then
@@ -23,9 +19,16 @@ function template_override {
         sudo sed -i "s/config_opts\['releasever'\] = '9'/config_opts\['releasever'\] = '10'/" /etc/mock/templates/"$TEMPLATE"
         # disable bootstrap image for el10, as there is none yet
         sudo sed -i "s/config_opts\['bootstrap_image_ready'\] = True/config_opts\['bootstrap_image_ready'\] = False/" /etc/mock/templates/"$TEMPLATE"
+        # update hardcoded rhel9 paths to rhel10 in repository URLs
+        sudo sed -i "s/rhel9/rhel10/g" /etc/mock/templates/"$TEMPLATE"
 
         sudo cp /etc/mock/rhel-{9,10}-"$(uname -m)".cfg
         sudo sed -i "s/rhel-9/rhel-10/" "/etc/mock/rhel-10-$(uname -m).cfg"
+    fi
+    
+    if sudo subscription-manager status; then
+        greenprint "📋 Running on subscribed RHEL machine, no mock template override done."
+        return 0
     fi
 
     if [[ "$ID" == rhel ]]; then
