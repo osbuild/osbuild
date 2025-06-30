@@ -18,24 +18,25 @@ def parse_input(inputs):
 
 def main(inputs, output, options):
     filename = options["filename"].lstrip("/")
-    level = options.get("level", 1)
 
     source = parse_input(inputs)
     target = os.path.join(output, filename)
 
     with open(target, "w", encoding="utf8") as f:
-        cmd = [
-            "gzip", "--no-name", "--stdout", f"-{level}", source
-        ]
+        # -6 is the 'medium' compression level trading off speed
+        # for size
+        cmd = ["gzip", "--keep", "--stdout", "-6", source]
 
         subprocess.run(
-            cmd, stdout=f, check=True
+            cmd,
+            stdout=f,
+            check=True,
         )
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = osbuild.api.arguments()
     r = main(args["inputs"], args["tree"], args["options"])
     sys.exit(r)
