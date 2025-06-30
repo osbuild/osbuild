@@ -127,12 +127,21 @@ OVF_TEMPLATE = """<?xml version="1.0"?>
 """
 
 
-def vbox_mac_address():
+def vbox_mac_address(options):
+    # If we have an explicit mac address we use that.
+    mac_address = options.get("virtualbox", {}).get("mac_address")
+
+    if mac_address:
+        return mac_address
+
+    # Otherwise we generate one according to how VirtualBox usually does this:
     # https://github.com/mirror/vbox/blob/b9657cd5351cf17432b664009cc25bb480dc64c1/src/VBox/Main/src-server/HostImpl.cpp#L3267
     # VirtualBox-6.1.12 src/VBox/NetworkServices/Dhcpd/Config.cpp line 276
     mac_address = "080027"
+
     for _ in range(0, 3):
         mac_address += "".join(random.sample("0123456789abcdef", 2))
+
     return mac_address
 
 
@@ -158,7 +167,7 @@ def write_template(vmdk, options):
         vbox_machine_uuid=str(uuid.uuid4()),
         vbox_disk_uuid=str(uuid.uuid4()),
         vbox_os_type=options.get("virtualbox", {}).get("os_type", "OtherLinux_64"),
-        vbox_mac_address=vbox_mac_address(),
+        vbox_mac_address=vbox_mac_address(options),
         image_name=basename,
     )
 
