@@ -39,14 +39,22 @@ def test_schema_validation_ovf(stage_schema, test_data, expected_err):
 
 
 @pytest.mark.skipif(not testutil.has_executable("qemu-img"), reason="need qemu-img")
-def test_ovf_default_template(tmp_path, stage_module):
+@pytest.mark.parametrize("test_opts, expected_substrings", [
+    # Replacements
+    ({"vmware": {"os_type": "my-os-type"}}, ["my-os-type"],),
+])
+def test_ovf_default_template(tmp_path, stage_module, test_opts, expected_substrings):
     faked_vmdk_path = tmp_path / "some-image.vmdk"
     faked_vmdk_path.write_bytes(b"1234")
 
     opts = {
         "vmdk": faked_vmdk_path,
     }
+    opts.update(test_opts)
+
     stage_module.main(opts, tmp_path)
 
     expected_template_path = tmp_path / "some-image.ovf"
-    assert "other26xLinux64Guest" in expected_template_path.read_text()
+
+    for substring in expected_substrings:
+        assert substring in expected_template_path.read_text()
