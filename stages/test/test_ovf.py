@@ -43,6 +43,7 @@ def test_schema_validation_ovf(stage_schema, test_data, expected_err):
     # Replacements
     ({"vmware": {"os_type": "my-vmware-os-type"}}, ["my-vmware-os-type"],),
     ({"virtualbox": {"os_type": "my-vbox-os-type"}}, ["my-vbox-os-type"],),
+    ({"virtualbox": {"mac_address": "my-mac-address"}}, ["my-mac-address"],),
 ])
 def test_ovf_default_template(tmp_path, stage_module, test_opts, expected_substrings):
     faked_vmdk_path = tmp_path / "some-image.vmdk"
