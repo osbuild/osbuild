@@ -157,7 +157,7 @@ def write_template(vmdk, options):
         vmware_os_type=options.get("vmware", {}).get("os_type", "other26xLinux64Guest"),
         vbox_machine_uuid=str(uuid.uuid4()),
         vbox_disk_uuid=str(uuid.uuid4()),
-        vbox_os_type="ArchLinux_64",
+        vbox_os_type=options.get("virtualbox", {}).get("os_type", "OtherLinux_64"),
         vbox_mac_address=vbox_mac_address(),
         image_name=basename,
     )
@@ -187,7 +187,6 @@ def write_manifest(vmdk, ovf):
 
 def main(options, tree):
     vmdk = os.path.join(tree, options["vmdk"])
-    print(options)
     ovf = write_template(vmdk, options)
     write_manifest(vmdk, ovf)
 
