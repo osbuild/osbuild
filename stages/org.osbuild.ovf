@@ -1,20 +1,22 @@
 #!/usr/bin/python3
 import json
 import os
+import random
 import subprocess
 import sys
+import uuid
 
 import osbuild.api
 from osbuild.util import checksum
 
 OVF_TEMPLATE = """<?xml version="1.0"?>
-<Envelope xmlns="http://schemas.dmtf.org/ovf/envelope/1" xmlns:cim="http://schemas.dmtf.org/wbem/wscim/1/common" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Envelope xmlns="http://schemas.dmtf.org/ovf/envelope/1" xmlns:cim="http://schemas.dmtf.org/wbem/wscim/1/common" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vbox="http://www.virtualbox.org/ovf/machine">
   <References>
     <File ovf:href="{image_name}" ovf:id="file1" ovf:size="{vmdk_size}"/>
   </References>
   <DiskSection>
     <Info>Virtual disk information</Info>
-    <Disk ovf:capacity="{vmdk_capacity}" ovf:capacityAllocationUnits="byte" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:populatedSize="{vmdk_size}"/>
+    <Disk ovf:capacity="{vmdk_capacity}" ovf:capacityAllocationUnits="byte" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:populatedSize="{vmdk_size}" vbox:uuid="{vbox_disk_uuid}"/>
   </DiskSection>
   <NetworkSection>
     <Info>The list of logical networks</Info>
@@ -84,9 +86,54 @@ OVF_TEMPLATE = """<?xml version="1.0"?>
       <vmw:Config ovf:required="false" vmw:key="bootOptions.efiSecureBootEnabled" vmw:value="false"/>
       <vmw:Config ovf:required="false" vmw:key="firmware" vmw:value="efi"/>
     </VirtualHardwareSection>
+    <vbox:Machine ovf:required="false" version="1.16-linux" uuid="{vbox_machine_uuid}" name="packer-virtualbox-UNIX" OSType="{vbox_os_type}" snapshotFolder="Snapshots">
+      <ovf:Info>Complete VirtualBox machine configuration in VirtualBox format</ovf:Info>
+      <Hardware>
+        <CPU count="2">
+          <PAE enabled="true"/>
+          <LongMode enabled="true"/>
+          <X2APIC enabled="true"/>
+          <HardwareVirtExLargePages enabled="false"/>
+        </CPU>
+        <Memory RAMSize="1024"/>
+        <Boot>
+          <Order position="1" device="HardDisk"/>
+          <Order position="2" device="DVD"/>
+          <Order position="3" device="None"/>
+          <Order position="4" device="None"/>
+        </Boot>
+        <BIOS>
+          <IOAPIC enabled="true"/>
+          <SmbiosUuidLittleEndian enabled="true"/>
+        </BIOS>
+        <Network>
+          <Adapter slot="0" enabled="true" MACAddress="{vbox_mac_address}" type="82540EM">
+            <NAT/>
+          </Adapter>
+        </Network>
+        <AudioAdapter driver="OSS" enabledIn="false" enabledOut="false"/>
+        <Clipboard/>
+      </Hardware>
+      <StorageControllers>
+        <StorageController name="IDE Controller" type="PIIX4" PortCount="2" useHostIOCache="true" Bootable="true">
+          <AttachedDevice type="HardDisk" hotpluggable="false" port="0" device="0">
+            <Image uuid="{vbox_disk_uuid}"/>
+          </AttachedDevice>
+        </StorageController>
+      </StorageControllers>
+    </vbox:Machine>
   </VirtualSystem>
 </Envelope>
 """
+
+
+def vbox_mac_address():
+    # https://github.com/mirror/vbox/blob/b9657cd5351cf17432b664009cc25bb480dc64c1/src/VBox/Main/src-server/HostImpl.cpp#L3267
+    # VirtualBox-6.1.12 src/VBox/NetworkServices/Dhcpd/Config.cpp line 276
+    mac_address = "080027"
+    for _ in range(0, 3):
+        mac_address += "".join(random.sample("0123456789abcdef", 2))
+    return mac_address
 
 
 def virtual_size(vmdk):
@@ -107,6 +154,10 @@ def write_template(vmdk):
     ovf_data = OVF_TEMPLATE.format(
         vmdk_size=os.stat(vmdk).st_size,
         vmdk_capacity=virtual_size(vmdk),
+        vbox_machine_uuid=str(uuid.uuid4()),
+        vbox_disk_uuid=str(uuid.uuid4()),
+        vbox_os_type="ArchLinux_64",
+        vbox_mac_address=vbox_mac_address(),
         image_name=basename,
     )
 
