@@ -91,34 +91,53 @@ OVF_TEMPLATE = """<?xml version="1.0"?>
 
 def virtual_size(vmdk):
     cmd = ["qemu-img", "info", "--output=json", vmdk]
-    res = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, encoding="utf8")
+    res = subprocess.run(
+        cmd, check=True, stdout=subprocess.PIPE, encoding="utf8"
+    )
+
     if res.returncode != 0:
         raise RuntimeError("Unable to determine vmdk size")
+
     return json.loads(res.stdout)["virtual-size"]
 
 
 def write_template(vmdk):
     dirname, basename = os.path.split(vmdk)
-    ovf_data = OVF_TEMPLATE.format(vmdk_size=os.stat(vmdk).st_size,
-                                   vmdk_capacity=virtual_size(vmdk), image_name=basename)
+
+    ovf_data = OVF_TEMPLATE.format(
+        vmdk_size=os.stat(vmdk).st_size,
+        vmdk_capacity=virtual_size(vmdk),
+        image_name=basename,
+    )
+
     ovf = f"{os.path.join(dirname, os.path.splitext(basename)[0])}.ovf"
+
     with open(ovf, "w", encoding="utf8") as f:
         f.write(ovf_data)
+
     return ovf
 
 
 def write_manifest(vmdk, ovf):
     dirname, basename = os.path.split(vmdk)
+
     mf = f"{os.path.join(dirname, os.path.splitext(basename)[0])}.mf"
+
     with open(mf, "w", encoding="utf8") as f:
-        f.write(f"SHA256({os.path.basename(ovf)})= {checksum.hexdigest_file(ovf, 'sha256')}\n")
-        f.write(f"SHA256({basename})= {checksum.hexdigest_file(vmdk, 'sha256')}\n")
+        f.write(
+            f"SHA256({os.path.basename(ovf)})= {checksum.hexdigest_file(ovf, 'sha256')}\n"
+        )
+
+        f.write(
+            f"SHA256({basename})= {checksum.hexdigest_file(vmdk, 'sha256')}\n"
+        )
 
 
 def main(options, tree):
     vmdk = os.path.join(tree, options["vmdk"])
     ovf = write_template(vmdk)
     write_manifest(vmdk, ovf)
+
     return 0
 
 
