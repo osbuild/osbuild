@@ -13,8 +13,11 @@ STAGE_NAME = "org.osbuild.ovf"
     ({}, "'vmdk' is a required property"),
     ({"vmdk": 123}, "123 is not of type 'string'"),
     ({"vmdk": "imagename"}, "'imagename' does not match '[a-zA-Z0-9+_.-]+.vmdk'"),
+    ({"vmdk": "imagename.vmdk", "vmware": {"os_type": 1}}, "is not of type 'string'"),
+    ({"vmdk": "imagename.vmdk", "virtualbox": {"os_type": 1}}, "is not of type 'string'"),
     # Good API parameters
     ({"vmdk": "imagename.vmdk"}, ""),
+    ({"vmdk": "imagename.vmdk", "vmware": {"os_type": "OtherGuest"}, "virtualbox": {"os_type": "OtherGuest"}}, ""),
 ])
 # This test validates only API calls using correct and incorrect queries
 def test_schema_validation_ovf(stage_schema, test_data, expected_err):
