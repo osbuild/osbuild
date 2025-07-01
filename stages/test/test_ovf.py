@@ -65,3 +65,18 @@ def test_ovf_default_template(tmp_path, stage_module, test_opts, expected_substr
 
     for substring in expected_substrings:
         assert substring in expected_template_path.read_text()
+
+
+def test_ovf_vbox_mac_address_differs(stage_module):
+    macs = [
+        stage_module.vbox_mac_address({}),
+        stage_module.vbox_mac_address({}),
+    ]
+
+    assert macs[0] != macs[1]
+    assert all(m.startswith("080027") for m in macs)
+    assert all(len(m) == 12 for m in macs)
+
+
+def test_ovf_vbox_mac_address_options(stage_module):
+    assert stage_module.vbox_mac_address({"virtualbox": {"mac_address": "000000000000"}}) == "000000000000"
