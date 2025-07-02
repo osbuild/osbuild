@@ -1,7 +1,8 @@
 #!/usr/bin/python3
+import os
 import pathlib
 import sys
-import time
+from datetime import datetime, timezone
 
 import osbuild.api
 
@@ -11,7 +12,13 @@ def main(tree, options):
 
     tree = pathlib.Path(tree)
     locklist = tree / "etc/dnf/plugins/versionlock.list"
-    nowstr = time.ctime()
+
+    # respect SOURCE_DATE_EPOCH for the timestamp in the comment for reproducible builds
+    source_date_epoch = os.environ.get("SOURCE_DATE_EPOCH")
+    nowstr = datetime.now().ctime()
+    if source_date_epoch:
+        nowstr = datetime.fromtimestamp(int(source_date_epoch), tz=timezone.utc).ctime()
+
     with locklist.open(mode="a", encoding="utf-8") as locklist_fp:
         for item in add:
             # the plugin adds an empty line followed by a comment with a timestamp above each item, let's replicate the

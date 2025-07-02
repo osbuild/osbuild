@@ -34,6 +34,7 @@ def test_schema_validation_dnf4_versionlock(stage_schema, test_data, expected_er
     ({"add": ["proto-1:1.1", "deftero-0:2.2", "trito-3:3.3-3.fc33"]}),
 ])
 def test_locklist_dnf4_versionlock(tmp_path, stage_module, test_data):
+    os.environ["SOURCE_DATE_EPOCH"] = "1554721380"
     plugins_dir = os.path.join(tmp_path, "etc/dnf/plugins/")
     locklist_path = os.path.join(plugins_dir, "versionlock.list")
     os.makedirs(plugins_dir)
@@ -44,8 +45,5 @@ def test_locklist_dnf4_versionlock(tmp_path, stage_module, test_data):
 
     for idx, package in enumerate(test_data["add"]):
         assert locklist_data[idx * 3] == "\n"
-
-        # let's ignore the timestamp, just check that the comment was written
-        assert locklist_data[idx * 3 + 1].startswith("# Added lock on")
-
+        assert locklist_data[idx * 3 + 1] == "# Added lock on Mon Apr  8 11:03:00 2019\n"
         assert locklist_data[idx * 3 + 2] == package + "\n"
