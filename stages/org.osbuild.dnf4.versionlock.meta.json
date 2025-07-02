@@ -8,7 +8,9 @@
     "Notes:",
     " - This stage is only valid for dnf4 and will have no effect on distributions that use dnf5.",
     " - Items are written as is. This is unlike adding items by calling 'dnf versionlock add',",
-    "   which uses the dnf cache to retrieve version information for the listed packages."
+    "   which uses the dnf cache to retrieve version information for the listed packages.",
+    " - The stage respects SOURCE_DATE_EPOCH for reproducible builds, which affects the timestamps",
+    "   that are included as comments in the file."
   ],
   "schema": {
     "additionalProperties": false,
