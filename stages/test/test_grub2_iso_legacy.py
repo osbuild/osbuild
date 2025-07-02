@@ -8,6 +8,8 @@ import pytest
 STAGE_NAME = "org.osbuild.grub2.iso.legacy"
 
 expected_grub_cfg = """
+set default="1"
+
 function load_video {
   insmod all_video
 }

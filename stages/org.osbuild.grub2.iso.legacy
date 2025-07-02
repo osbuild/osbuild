@@ -9,6 +9,8 @@ import osbuild.api
 # The main grub2 configuration file template. Used for BIOS.
 # NOTE: Changes to this should also be applied to the org.osbuild.grub2.iso stage
 GRUB2_CFG_TEMPLATE = """
+set default="1"
+
 function load_video {
   insmod all_video
 }
