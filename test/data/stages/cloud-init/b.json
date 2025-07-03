@@ -717,6 +717,7 @@
           "options": {
             "filename": "00-default_user.cfg",
             "config": {
+              "ssh_pwauth": false,
               "system_info": {
                 "default_user": {
                   "name": "ec2-user"
