@@ -16,7 +16,7 @@ pipelines:
             origin: org.osbuild.source
             mpp-depsolve:
               architecture: $arch
-              module-platform-id: $releasever
+              module-platform-id: platform:$releasever
               repos:
                 - id: baseos
                   baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$distribution-$arch-baseos-$snapshot/
