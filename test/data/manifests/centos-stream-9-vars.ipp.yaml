@@ -5,7 +5,7 @@ mpp-vars:
   release: 9
   releasever: el$release
   module_platform_id: platform:$releasever
-  snapshot: '20230815'
+  snapshot: '20250626'
   ref: centos/$arch/osbuild
   isolabel: Centos-$release-X86_64
   repos:
