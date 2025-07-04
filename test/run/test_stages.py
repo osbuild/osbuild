@@ -23,6 +23,7 @@ from typing import Callable, Dict, List, Optional
 
 from osbuild.testutil import has_executable, pull_oci_archive_container
 from osbuild.util import checksum, selinux
+from osbuild.util.chroot import Chroot
 
 from .. import initrd, test
 from .test_assemblers import mount
@@ -784,3 +785,58 @@ class TestStages(test.TestBase):
                     break
             else:
                 assert False, "image ID not found in images.json"
+
+    def test_locklist_format(self):
+        """
+        This test ensures that our stage produced the same file as the dnf4 versionlock plugin.
+
+        It first builds the 'b.json' of the dnf4.versionlock stage test, which produces a file using our stage. It reads
+        the file, truncates it [1], then creates a new one using the versionlock plugin from the produced OS tree (using
+        chroot). It compares the two files, ignoring comments, to make sure they have the same content.
+
+        [1] We truncate instead of deleting the file because the plugin fails when the file doesn't exist.
+        """
+
+        datadir = self.locate_test_data()
+        testdir = os.path.join(datadir, "stages", "dnf4.versionlock")
+        stage_manifest = os.path.join(testdir, "b.json")
+
+        with self.osbuild as osb, tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+            # build the stage test manifest
+            osb.compile_file(stage_manifest, exports=["tree"], output_dir=outdir)
+
+            tree = os.path.join(outdir, "tree")
+
+            # read the versionlock.list file and truncate it
+            plugins_dir = os.path.join(tree, "etc/dnf/plugins/")
+            locklist_path = os.path.join(plugins_dir, "versionlock.list")
+            with open(locklist_path, mode="r", encoding="utf-8") as locklist_fp:
+                stage_data = locklist_fp.readlines()
+            os.truncate(locklist_path, 0)
+
+            # borrow the resolv config from the host so we can download repo metadata
+            shutil.copy("/etc/resolv.conf", os.path.join(tree, "etc/resolv.conf"))
+
+            with open(stage_manifest, mode="r", encoding="utf-8") as manifest:
+                data = json.load(manifest)
+
+            pipeline = data["pipelines"][1]
+            stage = pipeline["stages"][-1]
+
+            # make sure we got the correct stage
+            assert stage["type"] == "org.osbuild.dnf4.versionlock"
+            pkgs = stage["options"]["add"]
+
+            # create the same file using the dnf versionlock
+            with Chroot(tree) as chroot:
+                chroot.run(["dnf", "versionlock", "add", "--raw", *pkgs], check=True)
+
+            with open(locklist_path, mode="r", encoding="utf-8") as locklist_fp:
+                plugin_data = locklist_fp.readlines()
+
+        assert len(stage_data) == len(plugin_data)
+        for stage_line, plugin_line in zip(stage_data, plugin_data):
+            if stage_line.startswith("#"):
+                # ignore comments in the comparison, since it contains a timestamp which is unpredictable
+                continue
+            assert stage_line == plugin_line

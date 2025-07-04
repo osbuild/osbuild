@@ -1,0 +1,38 @@
+---
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/centos-stream-9-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/centos-stream-9-build.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.centos9
+  - name: tree
+    build: name:build
+    source-epoch: 1659397331
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - dnf
+                - python3-dnf-plugin-versionlock
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+      - type: org.osbuild.dnf4.versionlock
+        options:
+          add:
+            - "bash-0:5.1.8-9.el9.*"
+            - "tree-0:1.8.0-10.el9.*"
+            - "somepackage-42:10.3-1.el9"
