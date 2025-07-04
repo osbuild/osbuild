@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+"""
+Updates the repository snapshot date defined in the 'vars' fragments in test/data/manifests/ and regenerates all test
+manifests.
+"""
+import json
+import os
+import pathlib
+import subprocess as sp
+import sys
+from tempfile import TemporaryDirectory
+
+from ruamel.yaml import YAML
+
+
+def read_schutzfile():
+    with open("Schutzfile", mode="r", encoding="utf-8") as schutzfile:
+        return json.load(schutzfile)
+
+
+def find_snapshot_date(distro, arch, schutzfile):
+    # Each distro can have multiple lists of repositories. We assume all share the same snapshot date, so we only check
+    # the first one.
+    repos = schutzfile[distro]["repos"][0][arch]
+    first_url = repos[0]["baseurl"]
+    return first_url.split("-")[-1]
+
+
+def main():
+    if os.getuid() != 0:
+        print("This script requires root to build manifests", file=sys.stderr)
+        sys.exit(1)
+
+    vars_files = pathlib.Path("test/data/manifests/").glob("*-vars.ipp.yaml")
+
+    schutzfile = read_schutzfile()
+
+    yaml = YAML(pure=True)
+    yaml.width = 9999
+    yaml.indent(sequence=4, offset=2)
+
+    for vars_file in vars_files:
+        with vars_file.open(mode="r", encoding="utf-8") as vfp:
+            vars_data = yaml.load(vfp)
+
+        # NOTE: this relies on the filename to discover the distro, which isn't perfect because the file names can be
+        # arbitrary, but realistically we always name them based on the distro
+        distro_name, *_ = vars_file.name.split("-", 1)
+        if distro_name == "centos":
+            distro_name += "-stream"
+        distro_ver = vars_data["mpp-vars"]["release"]
+        arch = vars_data["mpp-vars"]["arch"]
+        distro = f"{distro_name}-{distro_ver}"
+        vars_date = vars_data["mpp-vars"]["snapshot"]
+
+        if distro not in schutzfile:
+            print(f"Distro {distro} for ipp.vars file {vars_file} not found in Schutzfile.", file=sys.stderr)
+            print("Failed to update ipp.vars files.", file=sys.stderr)
+            sys.exit(1)
+
+        schutzfile_date = find_snapshot_date(distro, arch, schutzfile)
+        if vars_date == schutzfile_date:
+            print(f"{vars_file}:\n  Snapshot dates match: {vars_date}")
+            continue
+
+        print(f"{vars_file}:\n  Updating snapshots from {vars_date} to {schutzfile_date}")
+        vars_data["mpp-vars"]["snapshot"] = schutzfile_date
+
+        with vars_file.open(mode="w", encoding="utf-8") as vfp:
+            yaml.dump(vars_data, vfp)
+
+    # regenerate all test manifests
+    # requires root because osbuild-mpp requires loop device creation to generate certain manifests
+    sp.check_call(["make", "test-data"])
+
+    # find modified manifests
+    difflist = sp.check_output(["git", "diff", "--name-only", "test/data/stages"],
+                               encoding="utf-8").strip().splitlines()
+    modified_paths = {os.path.dirname(diffpath) for diffpath in difflist}
+
+    # update stage test diffs (requires root)
+    with TemporaryDirectory() as tmpdir:
+        for stage_test in modified_paths:
+            newdiff = sp.check_output(["./tools/gen-stage-test-diff", "--libdir=.", f"--store={tmpdir}", stage_test],
+                                      encoding="utf-8")
+            diff_file = pathlib.Path(stage_test) / "diff.json"
+            diff_file.write_text(newdiff)
+
+
+if __name__ == "__main__":
+    main()
