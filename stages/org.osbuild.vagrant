@@ -59,6 +59,9 @@ def main(tree, options, inputs):
     if provider == "virtualbox":
         vagrant_content = VAGRANTFILE_VIRTUALBOX.format(mac_address=options["virtualbox"]["mac_address"])
 
+    for path, data in options.get("synced_folders", {}).items():
+        vagrant_content += f'    config.vm.synced_folder ".", "{path}", type: "{data["type"]}"\n'
+
     with open(f"{tree}/Vagrantfile", "w", encoding="utf8") as fp:
         fp.write(VAGRANTFILE.format(content=vagrant_content))
 
