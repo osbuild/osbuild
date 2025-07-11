@@ -3,6 +3,7 @@
 import os.path
 import re
 import subprocess
+import tarfile
 
 import pytest
 
@@ -190,3 +191,24 @@ def test_tar_compress(tmp_path, stage_module, fake_inputs, filename, compression
     assert os.path.exists(tar_path)
     output = subprocess.check_output(["file", tar_path], encoding="utf-8")
     assert expected in output.lower()
+
+
+@pytest.mark.skipif(not has_executable("tar"), reason="no tar executable")
+@pytest.mark.parametrize("numeric_owner", [True, False,])
+def test_tar_numeric_owner(tmp_path, stage_module, fake_inputs, numeric_owner):
+    options = {
+        "filename": "out.tar",
+        "numeric-owner": numeric_owner,
+    }
+    stage_module.main(fake_inputs, tmp_path, options)
+
+    tar_path = os.path.join(tmp_path, "out.tar")
+    assert os.path.exists(tar_path)
+
+    # read the tar archive directly instead of relying on parsing the human-readable verbose output
+    with tarfile.open(tar_path, mode="r") as archive:
+        for item in archive.getmembers():
+            # when enabling numeric-owner, the uname and gname fields are empty
+            info = item.get_info()
+            assert (info["uname"] == "") == numeric_owner
+            assert (info["gname"] == "") == numeric_owner
