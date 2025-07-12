@@ -93,7 +93,7 @@ Manifests:
     - |
         if [[ -n "$CHUNKS_COUNT" && -n "$CHUNK" ]]; then
             echo "Running manifest tests with $CHUNKS_COUNT chunks, chunk $CHUNK"
-            SCRIPT_EXTRA_ARGS="--chunk-size $CHUNK $CHUNKS_COUNT"
+            SCRIPT_EXTRA_ARGS="$SCRIPT_EXTRA_ARGS --chunk-size $CHUNK $CHUNKS_COUNT"
         fi
         if [[ -n "$UNSUPPORTED_IMG_TYPES" ]]; then
             echo "Skipping unsupported image types: $UNSUPPORTED_IMG_TYPES"
