@@ -113,8 +113,31 @@ Manifests:
     - |
         source /etc/os-release
         if [[ "$ID" == "rhel" || "$ID" == "centos" ]]; then
+            export IS_RHEL="true"
             export GOFLAGS="-tags=exclude_graphdriver_btrfs"
         fi
+    - |
+        if [[ -n "$GEN_MANIFESTS_IN_CONTAINER_IMG" ]]; then
+            echo "Generating manifests in container image: $GEN_MANIFESTS_IN_CONTAINER_IMG"
+            SCRIPT_EXTRA_ARGS="$SCRIPT_EXTRA_ARGS --gen-manifests-in-container-img $GEN_MANIFESTS_IN_CONTAINER_IMG"
+
+            OSBUILD_BASEURL=$(grep -oP 'baseurl\s*=\s*\K.*' /etc/yum.repos.d/osbuild.repo | head -n 1)
+            if [[ -n "$OSBUILD_BASEURL" ]]; then
+                echo "Using osbuild baseurl: $OSBUILD_BASEURL"
+
+                DNF_CMD="sudo dnf --repofrompath=osbuild-repo,$OSBUILD_BASEURL -y install go gpgme-devel osbuild-depsolve-dnf device-mapper-devel"
+                if [[ "$IS_RHEL" != "true" ]]; then
+                    DNF_CMD="$DNF_CMD btrfs-progs-devel"
+                fi
+
+                SCRIPT_EXTRA_ARGS="$SCRIPT_EXTRA_ARGS --gen-manifests-before-cmd \"$DNF_CMD\""
+            else
+                echo "ERROR: Could not determine osbuild baseurl from /etc/yum.repos.d/osbuild.repo"
+                exit 1
+            fi
+        fi
+    - |
+      echo "SCRIPT_EXTRA_ARGS: $SCRIPT_EXTRA_ARGS"
     - test/cases/manifest_tests --rm-artifacts-after-test --workdir ./osbuild-manifest-tests-workdir $SCRIPT_EXTRA_ARGS
   variables:
     PYTHONUNBUFFERED: 1
