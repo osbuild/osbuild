@@ -143,6 +143,7 @@ Manifests:
     PYTHONUNBUFFERED: 1
     # List of image types that are not supported by osbuild-image-info
     UNSUPPORTED_IMG_TYPES: "ova *container live-installer wsl"
+    OSBUILD_IMAGES_REPO_URL: "https://github.com/thozza/osbuild-images"
   artifacts:
     when: always
     paths:
@@ -176,6 +177,7 @@ Manifests:
         CONFIG: "empty all-customizations"
         CHUNK: [1, 2, 3, 4, 5]
         CHUNKS_COUNT: 5
+        GEN_MANIFESTS_IN_CONTAINER_IMG: "fedora:latest"
 
 finish:
   stage: finish

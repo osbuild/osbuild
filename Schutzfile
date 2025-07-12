@@ -2,7 +2,7 @@
   "global": {
     "dependencies": {
       "images": {
-        "ref": "b28a3b658d831a22db48b653b6d9c1286948186a"
+        "ref": "gen-manifests-in-container"
       }
     }
   },
