@@ -131,10 +131,8 @@ def make_stream_hash(src, dest):
 
 
 def get_os_name(tree):
-    file = os.path.join(tree, 'usr/share/rpm-ostree/treefile.json')
-    with open(file, encoding='utf8') as f:
-        treefile = json.load(f)
-    return treefile['metadata']['name']
+    os_release = osrelease.parse_files(os.path.join(tree, 'usr', 'lib', 'os-release'))
+    return f"{os_release['ID']}-{os_release['VARIANT_ID']}"
 
 
 def ensure_glob(pathname, n="", **kwargs):
