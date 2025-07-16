@@ -37,6 +37,9 @@ def main(inputs, output_dir, options):
     if transform:
         extra_args += ["--transform", transform]
 
+    if options.get("numeric-owner", False):
+        extra_args += ["--numeric-owner"]
+
     compression = options.get("compression", "auto")
 
     if compression == "auto":
