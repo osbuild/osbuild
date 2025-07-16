@@ -148,7 +148,8 @@ def download_image_build_artifact(images_path: os.PathLike, build_dir: os.PathLi
 
 def download_image_build_cache_md(
         images_path, output_dir, distros: List[str], arch: str, configs: Optional[List[str]] = None,
-        image_types: Optional[List[str]] = None, skip_img_types: Optional[List[str]] = None) -> None:
+        image_types: Optional[List[str]] = None, skip_img_types: Optional[List[str]] = None,
+        container_img: Optional[str] = None, before_cmd: Optional[List[str]] = None) -> None:
     """
     Download the image build cache metadata from S3 for a specific distro / arch / configs.
     The image artifacts is not downloaded, only the metadata.
@@ -169,6 +170,11 @@ def download_image_build_cache_md(
         cmd += ["--image-type", imag_type]
     for skip_img_type in skip_img_types or []:
         cmd += ["--skip-image-type", skip_img_type]
+
+    if container_img:
+        cmd += ["--gen-manifests-in-container-img", container_img]
+        for before in before_cmd or []:
+            cmd += ["--before-cmd", before]
 
     print(" ".join(cmd))
     try:
@@ -374,6 +380,20 @@ def get_argparser():
         help="Remove the downloaded and rebuilt image artifacts after the test case. " +
              "This is useful for saving disk space."
     )
+    parser.add_argument(
+        "--gen-manifests-in-container-img", type=str, metavar="IMAGE",
+        help="Container image to use for generating the manifests. " +
+             "If not provided, the script will generate the manifests on the host system. Manifests are generated " +
+             "using the 'images' checkout, to determine the image build cache and the image artifacts to test. " +
+             "The container image must have at least the Golang version required by the 'images' repository to " +
+             "build the manifests."
+    )
+    parser.add_argument(
+        "--gen-manifests-before-cmd", action="extend", metavar="CMD", nargs="+",
+        help="Command to run before generating the manifests in the container. " +
+             "Can be specified multiple times. The command is run inside the container." +
+             "This is useful for installing additional tools or dependencies in the container.",
+    )
     return parser
 
 
@@ -415,7 +435,8 @@ def main():
 
         download_image_build_cache_md(
             images_path, image_build_cache, args.distro, get_host_arch(),
-            args.config, args.image_type, args.skip_image_type
+            args.config, args.image_type, args.skip_image_type, args.gen_manifests_in_container_img,
+            args.gen_manifests_before_cmd
         )
 
         # The test case is run for every directory in the image build cache directory
