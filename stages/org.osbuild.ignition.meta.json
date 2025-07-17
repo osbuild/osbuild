@@ -22,6 +22,11 @@
         "items": {
           "type": "string"
         }
+      },
+      "target": {
+        "type": "string",
+        "description": "Location to write the 'ignition.firstboot' file.",
+        "default": "tree:///boot"
       }
     }
   }
