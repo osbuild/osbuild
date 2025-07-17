@@ -2,18 +2,17 @@
 import sys
 
 import osbuild.api
+from osbuild.util import parsing
 
 
-def main(tree, options):
-    network = options.get("network", [])
-
+def main(network, location):
     # grub, when detecting the '/boot/ignition.firstboot' file
     # will set the "ignition_firstboot" option so that ignition
     # gets triggered during that boot. Additionally, the file
     # itself will be sourced this the 'ignition_network_kcmdline'
     # that is also in the "ignition_firstboot" variable can be
     # overwritten with the contents of `network`
-    with open(f"{tree}/boot/ignition.firstboot", "w", encoding="utf8") as f:
+    with open(f"{location}/ignition.firstboot", "w", encoding="utf8") as f:
         if network:
             netstr = " ".join(network)
             f.write(f"set ignition_network_kcmdline='{netstr}'")
@@ -23,5 +22,9 @@ def main(tree, options):
 
 if __name__ == '__main__':
     args = osbuild.api.arguments()
-    r = main(args["tree"], args.get("options", {}))
+    options = args.get("options", {})
+    target = options.get("target", "tree:///boot")
+    location = parsing.parse_location(target, args)
+    network = options.get("network", [])
+    r = main(network, location)
     sys.exit(r)
