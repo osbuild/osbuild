@@ -46,6 +46,23 @@ def main(options, inputs, paths):
         stateroot = options.get("stateroot")
         if stateroot:
             pargs.extend(["--stateroot", stateroot])
+        # Passing the flag with an empty value is intentional:
+        # it triggers a supported behaviour where mountspec
+        # kernel arguments are ommited.
+        # See https://github.com/bootc-dev/bootc/pull/1451
+        if "root-mount-spec" in options:
+            root_spec = options["root-mount-spec"]
+            if root_spec == "":
+                pargs.extend(["--root-mount-spec="])
+            else:
+                pargs.extend(["--root-mount-spec", root_spec])
+        if "boot-mount-spec" in options:
+            boot_spec = options["boot-mount-spec"]
+            if boot_spec == "":
+                pargs.extend(["--boot-mount-spec="])
+            else:
+                pargs.extend(["--boot-mount-spec", boot_spec])
+
         # add target and go
         pargs.append(dst)
         subprocess.run(pargs, env=env, check=True)
