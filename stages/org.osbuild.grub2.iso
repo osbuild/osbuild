@@ -37,6 +37,7 @@ menuentry 'Test this media & install ${product} ${version}' --class fedora --cla
 	linux ${kernelpath} ${root} rd.live.check quiet
 	initrd ${initrdpath}
 }
+$fipsentry
 submenu 'Troubleshooting -->' {
 	menuentry 'Install ${product} ${version} in basic graphics mode' --class fedora --class gnu-linux --class gnu --class os {
 		linux ${kernelpath} ${root} nomodeset quiet
@@ -46,6 +47,14 @@ submenu 'Troubleshooting -->' {
 		linux ${kernelpath} ${root} inst.rescue quiet
 		initrd ${initrdpath}
 	}
+}
+"""
+
+# Optional FIPS menu entry
+FIPS_ENTRY_TEMPLATE = """
+menuentry 'Install ${product} ${version} in FIPS mode' --class fedora --class gnu-linux --class gnu --class os {
+	linux ${kernelpath} ${root} quiet fips=1
+	initrd ${initrdpath}
 }
 """
 
@@ -60,6 +69,7 @@ def main(root, options):
     kopts = options["kernel"].get("opts")
     cfg = options.get("config", {})
     timeout = cfg.get("timeout", 60)
+    fips = options.get("fips", False)
 
     efidir = os.path.join(root, "EFI", "BOOT")
     os.makedirs(efidir)
@@ -83,18 +93,25 @@ def main(root, options):
     shutil.copy2("/usr/share/grub/unicode.pf2", fontdir)
 
     print(f"kernel dir at {kdir}")
-
-    tplt = string.Template(GRUB2_EFI_CFG_TEMPLATE)
-    data = tplt.safe_substitute({
+    tplt_variables = {
         "version": version,
         "product": name,
         "kernelpath": os.path.join(kdir, "vmlinuz"),
         "initrdpath": os.path.join(kdir, "initrd.img"),
         "isolabel": isolabel,
         "root": " ".join(kopts),
-        "timeout": timeout
-    })
+        "timeout": timeout,
+        "fipsentry": ""
+    }
 
+    # Insert optional fips menu entry
+    if fips:
+        fips_tmpl = string.Template(FIPS_ENTRY_TEMPLATE)
+        fipsentry = fips_tmpl.safe_substitute(tplt_variables)
+        tplt_variables["fipsentry"] = fipsentry
+
+    tplt = string.Template(GRUB2_EFI_CFG_TEMPLATE)
+    data = tplt.safe_substitute(tplt_variables)
     config = os.path.join(efidir, "grub.cfg")
     with open(config, "w", encoding="utf8") as cfg:
         cfg.write(data)
