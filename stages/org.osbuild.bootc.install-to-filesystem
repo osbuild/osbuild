@@ -43,6 +43,9 @@ def main(options, inputs, paths):
         target_imgref = options.get("target-imgref")
         if target_imgref:
             pargs.extend(["--target-imgref", target_imgref])
+        stateroot = options.get("stateroot")
+        if stateroot:
+            pargs.extend(["--stateroot", stateroot])
         # add target and go
         pargs.append(dst)
         subprocess.run(pargs, env=env, check=True)

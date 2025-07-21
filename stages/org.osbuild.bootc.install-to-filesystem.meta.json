@@ -7,16 +7,12 @@
     "mounted in the \"mounts\" path.",
     "Buildhost commands used: bootc"
   ],
-  "capabilities": [
-    "CAP_MAC_ADMIN"
-  ],
+  "capabilities": ["CAP_MAC_ADMIN"],
   "schema_2": {
     "inputs": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "images"
-      ],
+      "required": ["images"],
       "properties": {
         "images": {
           "type": "object",
@@ -44,6 +40,10 @@
         "target-imgref": {
           "description": "Specify the image to fetch for subsequent updates",
           "type": "string"
+        },
+        "stateroot": {
+          "type": "string",
+          "description": "The stateroot name to use. If not specified, defer to bootc's default"
         }
       }
     },
