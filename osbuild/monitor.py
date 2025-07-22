@@ -258,11 +258,12 @@ class LogMonitor(BaseMonitor):
 
     def __init__(self, fd: int, total_steps: int = 0):
         super().__init__(fd, total_steps)
-        self.timer_start = 0
+        self._module_start_time: Optional[float] = None
 
     def result(self, result: Union[BuildResult, DownloadResult]) -> None:
-        duration = int(time.time() - self.timer_start)
-        self.out.write(f"\n⏱  Duration: {duration}s\n")
+        if self._module_start_time is not None:
+            duration = time.monotonic() - self._module_start_time
+            self.out.write(f"\n⏱  Duration: {duration:.2f}s\n")
 
     def begin(self, pipeline):
         self.out.term(vt.bold, clear=True)
@@ -304,7 +305,7 @@ class LogMonitor(BaseMonitor):
         json.dump(options, self.out, indent=2)
         self.out.write("\n")
 
-        self.timer_start = time.time()
+        self._module_start_time = time.monotonic()
 
     def log(self, message, origin: Optional[str] = None):
         self.out.write(message)
