@@ -58,6 +58,31 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
 
 class TestMonitor(unittest.TestCase):
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
+    def test_log_monitor_no_duration(self):
+        index = osbuild.meta.Index(os.curdir)
+
+        runner = Runner(index.detect_host_runner())
+        pipeline = osbuild.Pipeline("pipeline", runner=runner)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            storedir = os.path.join(tmpdir, "store")
+
+            logfile = os.path.join(tmpdir, "log.txt")
+
+            with open(logfile, "w", encoding="utf8") as log, ObjectStore(storedir) as store:
+                monitor = LogMonitor(log.fileno())
+                res = pipeline.run(store,
+                                   monitor,
+                                   libdir=os.path.abspath(os.curdir))
+                monitor.result(res)
+
+                with open(logfile, encoding="utf8") as f:
+                    log = f.read()
+
+            assert res
+            self.assertNotIn("Duration", log)
+
+    @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_log_monitor_vfuncs(self):
         # Checks the basic functioning of the LogMonitor
         index = osbuild.meta.Index(os.curdir)
@@ -86,6 +111,7 @@ class TestMonitor(unittest.TestCase):
             assert res
             self.assertIn(pipeline.stages[0].id, log)
             self.assertIn("isthisthereallife", log)
+            self.assertIn("Duration", log)
 
     @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
     def test_monitor_integration(self):
