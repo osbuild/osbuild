@@ -168,6 +168,7 @@ class Progress:
 def log_entry(message: Optional[str] = None,
               context: Optional[Context] = None,
               progress: Optional[Progress] = None,
+              duration: Optional[float] = None,
               result: Union[BuildResult, DownloadResult, None] = None,
               ) -> dict:
     """
@@ -182,6 +183,7 @@ def log_entry(message: Optional[str] = None,
         "context": context.as_dict() if context else None,
         "progress": progress.as_dict() if progress else None,
         "timestamp": time.time(),
+        "duration": duration,
     })
 
 
@@ -320,6 +322,7 @@ class JSONSeqMonitor(BaseMonitor):
         self._progress = Progress("pipelines/sources", total_steps)
         self._context = Context(origin="org.osbuild")
         self._jsonseq_mu = Lock()
+        self._module_start_time: Optional[float] = None
 
     def begin(self, pipeline: osbuild.Pipeline):
         self._context.set_pipeline(pipeline)
@@ -341,6 +344,7 @@ class JSONSeqMonitor(BaseMonitor):
     def _module(self, module: osbuild.Stage):
         self._context.set_stage(module)
         self.log(f"Starting module {module.name}", origin="osbuild.monitor")
+        self._module_start_time = time.monotonic()
 
     def result(self, result: Union[BuildResult, DownloadResult]) -> None:
         """ Called when the module (stage or download) is finished
@@ -368,10 +372,16 @@ class JSONSeqMonitor(BaseMonitor):
             removed = len(result.output) - max_output_len
             result.output = f"[...{removed} bytes hidden...]\n{result.output[removed:]}"
 
+        # If the module has a timestamp, we can calculate the duration.
+        duration = None
+        if self._module_start_time is not None:
+            duration = time.monotonic() - self._module_start_time
+
         self._jsonseq(log_entry(
             f"Finished module {result.name}",
             context=self._context.with_origin("osbuild.monitor"),
             progress=self._progress,
+            duration=duration,
             # We should probably remove the "output" key from the result
             # as it is redundant, each output already generates a "log()"
             # message that is streamed to the client.
