@@ -59,6 +59,23 @@ Testing requires additional software:
 
  * `pytest`
 
+## Running locally
+
+The main binary is safe to run on your development machine with:
+
+    python3 -m osbuild --libdir .
+
+To build an image:
+
+    python3 -m osbuild --libdir . ./test/data/manifests/fedora-boot.json
+
+Every osbuild run uses a cache for downloaded files (sources) and, optionally,
+checkpoints of artifacts built by stages and pipelines. By default, this is
+kept in `.osbuild` (in the current working directory). The location of this
+directory can be specified using the `--cache` option.
+
+For more information about the options and arguments, read [man pages](/docs).
+
 ## Build
 
 Osbuild is a python script so it is not compiled.
@@ -87,6 +104,7 @@ way to install it is to create the set of RPMs that contain all these components
 This can be done with the `rpm` make target, i.e:
 
 ```sh
+sudo dnf builddep osbuild.spec
 make rpm
 ```
 
