@@ -278,6 +278,7 @@ def test_json_progress_monitor():
             "output": "some output",
             "success": True,
         }
+        assert logitem["duration"] > 0
         i += 1
 
         logitem = json.loads(log[i])
