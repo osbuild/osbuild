@@ -79,6 +79,7 @@ label check
   kernel vmlinuz
   append initrd=initrd.img ${cmdline} rd.live.check quiet
 
+$fipsentry
 menu separator # insert an empty line
 
 # utilities submenu
@@ -128,6 +129,16 @@ label returntomain
 """
 
 
+# Optional FIPS menu entry
+FIPS_ENTRY_TEMPLATE = """
+label fips
+  menu label ^Install ${product} ${version} in FIPS mode
+  kernel vmlinuz
+  append initrd=initrd.img ${cmdline} quiet fips=1
+
+"""
+
+
 def install(src, dst, mode=None):
     shutil.copyfile(src, dst)
     if mode:
@@ -137,6 +148,7 @@ def install(src, dst, mode=None):
 def main(tree, inputs, options):
     name = options["product"]["name"]
     version = options["product"]["version"]
+    fips = options.get("fips", False)
 
     kdir = options["kernel"]["dir"]
     kopts = options["kernel"].get("opts", [])
@@ -169,12 +181,21 @@ def main(tree, inputs, options):
         dst = os.path.join(isolinux, "isolinux.bin")
         install(src, dst, 0o755)
 
-    tplt = string.Template(ISOLINUX_CFG_TEMPLATE)
-    data = tplt.safe_substitute({
+    tplt_variables = {
         "version": version,
         "product": name,
-        "cmdline": " ".join(kopts)
-    })
+        "cmdline": " ".join(kopts),
+        "fipsentry": ""
+    }
+
+    # Insert optional fips menu entry
+    if fips:
+        fips_tmpl = string.Template(FIPS_ENTRY_TEMPLATE)
+        fipsentry = fips_tmpl.safe_substitute(tplt_variables)
+        tplt_variables["fipsentry"] = fipsentry
+
+    tplt = string.Template(ISOLINUX_CFG_TEMPLATE)
+    data = tplt.safe_substitute(tplt_variables)
 
     config = os.path.join(isolinux, "isolinux.cfg")
     with open(config, "w", encoding="utf8") as cfg:
