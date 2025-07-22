@@ -8,7 +8,7 @@ import osbuild.api
 
 # The main grub2 configuration file template. Used for BIOS.
 # NOTE: Changes to this should also be applied to the org.osbuild.grub2.iso stage
-GRUB2_CFG_TEMPLATE = """
+GRUB2_CFG_TEMPLATE = """$defaultentry
 function load_video {
   insmod all_video
 }
@@ -58,6 +58,9 @@ menuentry 'Install ${product} ${version} in FIPS mode' --class fedora --class gn
 }
 """
 
+DEFAULT_ENTRY_TEMPLATE = """set default="${default}"
+"""
+
 
 def main(root, options):
     name = options["product"]["name"]
@@ -67,6 +70,7 @@ def main(root, options):
     kopts = options["kernel"].get("opts")
     cfg = options.get("config", {})
     timeout = cfg.get("timeout", 60)
+    default = cfg.get("default")    # None indicates not set
     fips = options.get("fips", False)
 
     grub2dir = os.path.join(root, "boot", "grub2")
@@ -85,8 +89,15 @@ def main(root, options):
         "isolabel": isolabel,
         "root": " ".join(kopts),
         "timeout": timeout,
+        "defaultentry": "",
         "fipsentry": ""
     }
+
+    # Insert default menu selection
+    if default is not None:
+        default_tmpl = string.Template(DEFAULT_ENTRY_TEMPLATE)
+        defaultentry = default_tmpl.safe_substitute({"default": default})
+        tplt_variables["defaultentry"] = defaultentry
 
     # Insert optional fips menu entry
     if fips:
