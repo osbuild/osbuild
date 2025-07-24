@@ -43,6 +43,16 @@ def main(options, inputs, paths):
         target_imgref = options.get("target-imgref")
         if target_imgref:
             pargs.extend(["--target-imgref", target_imgref])
+        stateroot = options.get("stateroot")
+        if stateroot:
+            pargs.extend(["--stateroot", stateroot])
+        root_spec = options.get("root-mount-spec")
+        if root_spec:
+            pargs.extend(["--root-mount-spec", root_spec])
+        boot_spec = options.get("boot-mount-spec")
+        if boot_spec:
+            pargs.extend(["--boot-mount-spec", boot_spec])
+
         # add target and go
         pargs.append(dst)
         subprocess.run(pargs, env=env, check=True)
