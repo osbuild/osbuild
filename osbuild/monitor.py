@@ -260,7 +260,9 @@ class LogMonitor(BaseMonitor):
 
     def __init__(self, fd: int, total_steps: int = 0):
         super().__init__(fd, total_steps)
-        self._module_ts = None
+        # XXX: Depending on the behavior you want, it might be this or the other line
+        #self._module_ts: Optional[float] = None
+        self._module_ts = time.monotonic()
 
     def result(self, result: Union[BuildResult, DownloadResult]) -> None:
         if self._module_ts is not None:
