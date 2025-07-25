@@ -58,13 +58,18 @@ menuentry 'Install Fedora-IoT 41 in FIPS mode' --class fedora --class gnu-linux 
 }
 """
 
+CONFIG_DEFAULT = """set default="1"
+"""
+
 
 @patch("shutil.copytree")
 @pytest.mark.parametrize("test_data,expected_conf", [
     # default
     ({}, CONFIG_PART_1 + CONFIG_PART_2),
     # fips menu enable
-    ({"fips": True}, CONFIG_PART_1 + CONFIG_FIPS + CONFIG_PART_2)
+    ({"fips": True}, CONFIG_PART_1 + CONFIG_FIPS + CONFIG_PART_2),
+    # default to menu entry 1
+    ({"config": {"default": 1, "timeout": 10}}, CONFIG_DEFAULT + CONFIG_PART_1 + CONFIG_PART_2)
 ])
 def test_grub2_iso_legacy_smoke(mocked_copytree, tmp_path, stage_module, test_data, expected_conf):
     treedir = tmp_path / "tree"
@@ -149,6 +154,22 @@ def test_grub2_iso_legacy_smoke(mocked_copytree, tmp_path, stage_module, test_da
                 "dir": "/path/to",
             },
             "fips": True,
+        }, "",
+    ),
+    # good + default
+    (
+        {
+            "isolabel": "an-isolabel",
+            "product": {
+                "name": "a-name",
+                "version": "a-version",
+            },
+            "kernel": {
+                "dir": "/path/to",
+            },
+            "config": {
+                "default": 1
+            }
         }, "",
     ),
 ])
