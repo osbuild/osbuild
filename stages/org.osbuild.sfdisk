@@ -100,7 +100,7 @@ class PartitionTable:
             else:
                 command += "\n" + ", ".join(fields)
 
-        print(command)
+        print(f"running sfdisk command:\n{command}")
 
         subprocess.run(["sfdisk", "-q", "--no-tell-kernel", target],
                        input=command,
