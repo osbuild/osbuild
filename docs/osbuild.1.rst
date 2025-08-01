@@ -92,6 +92,11 @@ monitor that is used. Valid types are:
         each stage. The output is not machine-readable and is interspersed
         with the individual log messages of the stages.
         This is the default monitor if ``--json`` was **not** specified.
+``PrettyMonitor``
+        A clean, visually appealing progress bar monitor using Rich library.
+        This monitor provides a less verbose interface with progress bars,
+        colored output, and minimal logging. It shows overall build progress,
+        current stage information, and timing. Requires ``python3-rich``.
 ``JSONSeqMonitor``
         A json-sequence (RFC7464) based live monitor of the pipeline execution.
 	Each line contains valid json and a record-separator (0x1E) at the
