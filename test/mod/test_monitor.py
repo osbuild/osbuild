@@ -17,7 +17,19 @@ import pytest
 
 import osbuild
 import osbuild.meta
-from osbuild.monitor import Context, JSONSeqMonitor, LogMonitor, Progress, log_entry
+from osbuild.monitor import (
+    RICH_AVAILABLE,
+    Context,
+    JSONSeqMonitor,
+    LogMonitor,
+    Progress,
+    log_entry,
+)
+
+try:
+    from osbuild.monitor import PrettyMonitor
+except ImportError:
+    PrettyMonitor = None
 from osbuild.objectstore import ObjectStore
 from osbuild.pipeline import BuildResult, Runner, Stage
 
@@ -120,6 +132,201 @@ class TestMonitor(unittest.TestCase):
         self.assertIn(pipeline.stages[0].id, tape.stages)
         self.assertIn("isthisthereallife", tape.output)
         self.assertIn("isthisjustfantasy", tape.output)
+
+    @unittest.skipUnless(RICH_AVAILABLE and PrettyMonitor, "rich not available")
+    @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
+    @patch('osbuild.monitor.Console')
+    @patch('osbuild.monitor.RichProgress')
+    def test_pretty_monitor_vfuncs(self, mock_rich_progress, mock_console):
+        # Test the basic functioning of the PrettyMonitor with mocked Rich components
+        index = osbuild.meta.Index(os.curdir)
+
+        runner = Runner(index.detect_host_runner())
+        pipeline = osbuild.Pipeline("pipeline", runner=runner)
+        info = index.get_module_info("Stage", "org.osbuild.noop")
+        pipeline.add_stage(info, {
+            "prettytestkey": "prettytestvalue"
+        })
+
+        # Mock Rich components to avoid complex terminal interactions
+        mock_progress_instance = Mock()
+        mock_rich_progress.return_value = mock_progress_instance
+        mock_console_instance = Mock()
+        mock_console.return_value = mock_console_instance
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            storedir = os.path.join(tmpdir, "store")
+
+            logfile = os.path.join(tmpdir, "log.txt")
+
+            with open(logfile, "w", encoding="utf8") as log, ObjectStore(storedir) as store:
+                monitor = PrettyMonitor(log.fileno(), 1, 1)  # 1 pipeline, 1 stage
+                res = pipeline.run(store,
+                                   monitor,
+                                   libdir=os.path.abspath(os.curdir))
+
+            assert res
+            # Verify that Rich components were initialized
+            mock_console.assert_called_once()
+            mock_rich_progress.assert_called_once()
+
+            # Verify that the progress display was started and stopped
+            mock_progress_instance.start.assert_called_once()
+            mock_progress_instance.stop.assert_called_once()
+
+            # Verify that progress was updated
+            assert mock_progress_instance.update.call_count >= 1
+
+    @unittest.skipUnless(RICH_AVAILABLE and PrettyMonitor, "rich not available")
+    @unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
+    @patch('osbuild.monitor.Console')
+    @patch('osbuild.monitor.RichProgress')
+    def test_pretty_monitor_integration(self, mock_rich_progress, mock_console):
+        # Test the PrettyMonitor integration with the pipeline system
+        index = osbuild.meta.Index(os.curdir)
+        runner = Runner(index.detect_host_runner())
+
+        pipeline = osbuild.Pipeline("test-pipeline", runner=runner)
+        noop_info = index.get_module_info("Stage", "org.osbuild.noop")
+        pipeline.add_stage(noop_info, {
+            "stage1": "test1"
+        })
+        pipeline.add_stage(noop_info, {
+            "stage2": "test2"
+        })
+
+        # Mock Rich components
+        mock_progress_instance = Mock()
+        mock_rich_progress.return_value = mock_progress_instance
+        mock_console_instance = Mock()
+        mock_console.return_value = mock_console_instance
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            storedir = os.path.join(tmpdir, "store")
+
+            with open(os.devnull, "w", encoding="utf8") as devnull, ObjectStore(storedir) as store:
+                monitor = PrettyMonitor(devnull.fileno(), 1, 2)  # 1 pipeline, 2 stages
+                res = pipeline.run(store,
+                                   monitor,
+                                   libdir=os.path.abspath(os.curdir))
+
+        assert res
+        # Verify rich components were properly used
+        mock_console.assert_called_once()
+        mock_rich_progress.assert_called_once()
+
+        # Verify progress lifecycle
+        mock_progress_instance.start.assert_called_once()
+        mock_progress_instance.stop.assert_called_once()
+
+        # Should have created overall task and updated progress for each stage
+        mock_progress_instance.add_task.assert_called_once()
+        # At least one update call for each stage plus completion
+        assert mock_progress_instance.update.call_count >= 2
+
+
+@unittest.skipUnless(RICH_AVAILABLE and PrettyMonitor, "rich not available")
+@patch('osbuild.monitor.Console')
+@patch('osbuild.monitor.RichProgress')
+def test_pretty_monitor_basic(mock_rich_progress, mock_console):
+    """Test basic PrettyMonitor functionality without full pipeline integration"""
+    # Mock Rich components
+    mock_progress_instance = Mock()
+    mock_rich_progress.return_value = mock_progress_instance
+    mock_console_instance = Mock()
+    mock_console.return_value = mock_console_instance
+
+    # Create mock pipeline and stage
+    mock_pipeline = Mock()
+    mock_pipeline.name = "test-pipeline"
+    mock_pipeline.id = "test123456789"
+    mock_pipeline.stages = [Mock(), Mock()]  # Two stages
+
+    mock_stage = Mock()
+    mock_stage.name = "org.osbuild.test"
+    mock_stage.id = "stage123"
+
+    mock_result = Mock()
+    mock_result.name = "org.osbuild.test"
+    mock_result.success = True
+    mock_result.output = "Test stage completed"
+
+    with tempfile.NamedTemporaryFile() as tmp:
+        # Test monitor initialization
+        monitor = PrettyMonitor(tmp.fileno(), 1, 2)  # 1 pipeline, 2 stages
+
+        # Test begin
+        monitor.begin(mock_pipeline)
+        mock_console.assert_called_once()
+        mock_rich_progress.assert_called_once()
+        mock_progress_instance.start.assert_called_once()
+        mock_progress_instance.add_task.assert_called_once()
+
+        # Test stage
+        monitor.stage(mock_stage)
+        assert monitor.current_stage == "org.osbuild.test"
+
+        # Test result
+        monitor.result(mock_result)
+
+        # Test finish
+        results = {"success": True, "name": "test-pipeline"}
+        monitor.finish(results)
+        mock_progress_instance.stop.assert_called_once()
+
+
+@unittest.skipIf(RICH_AVAILABLE, "rich is available")
+def test_pretty_monitor_requires_rich():
+    """Test that PrettyMonitor fails gracefully when Rich is not available"""
+    with tempfile.NamedTemporaryFile() as tmp:
+        with pytest.raises(RuntimeError, match="PrettyMonitor requires python3-rich to be installed"):
+            PrettyMonitor(tmp.fileno(), 1, 1)
+
+
+def test_pretty_monitor_error_handling():
+    """Test PrettyMonitor error message handling and display"""
+    if not RICH_AVAILABLE or not PrettyMonitor:
+        pytest.skip("Rich not available")
+
+    with patch('osbuild.monitor.Console') as mock_console, \
+            patch('osbuild.monitor.RichProgress') as mock_rich_progress:
+
+        mock_progress_instance = Mock()
+        mock_rich_progress.return_value = mock_progress_instance
+        mock_console_instance = Mock()
+        mock_console.return_value = mock_console_instance
+
+        # Test error handling
+        mock_pipeline = Mock()
+        mock_pipeline.name = "error-test"
+        mock_pipeline.id = "error123"
+        mock_pipeline.stages = [Mock()]
+
+        mock_stage = Mock()
+        mock_stage.name = "org.osbuild.failing-stage"
+
+        # Mock a failed result
+        mock_failed_result = Mock()
+        mock_failed_result.name = "org.osbuild.failing-stage"
+        mock_failed_result.success = False
+        mock_failed_result.output = "Error: Something went wrong"
+
+        with tempfile.NamedTemporaryFile() as tmp:
+            monitor = PrettyMonitor(tmp.fileno(), 1, 1)  # 1 pipeline, 1 stage
+            monitor.begin(mock_pipeline)
+            monitor.stage(mock_stage)
+            monitor.result(mock_failed_result)
+
+            # Verify error was tracked
+            assert len(monitor.failed_stages) == 1
+
+            # Log messages are now ignored (passed through), no filtering
+            monitor.log("ERROR: This is an error message")
+            monitor.log("WARNING: This is a warning")
+            monitor.log("INFO: This is just info")
+
+            # Failed stages should remain 1 (only from failed result, not from log messages)
+            assert len(monitor.failed_stages) == 1
 
 
 def test_context():
@@ -460,3 +667,137 @@ def test_json_progress_monitor_excessive_output_in_result(tmp_path):
         json_result = json.loads(line)
     assert json_result["result"]["output"].startswith("[...1037 bytes hidden...]\n1111")
     assert json_result["result"]["output"].endswith("1111\nend-marker")
+
+
+@unittest.skipUnless(RICH_AVAILABLE and PrettyMonitor, "rich not available")
+@patch('osbuild.monitor.Console')
+@patch('osbuild.monitor.RichProgress')
+def test_pretty_monitor_upfront_stage_counting(mock_rich_progress, mock_console):
+    """Test PrettyMonitor with upfront stage counting and total adjustment"""
+    # Mock Rich components
+    mock_progress_instance = Mock()
+    mock_rich_progress.return_value = mock_progress_instance
+    mock_console_instance = Mock()
+    mock_console.return_value = mock_console_instance
+
+    # Create mock pipelines and stages
+    mock_pipeline1 = Mock()
+    mock_pipeline1.name = "pipeline1"
+    mock_pipeline1.id = "pipe1_id"
+    mock_pipeline1.stages = [Mock(), Mock()]  # 2 stages
+
+    mock_pipeline2 = Mock()
+    mock_pipeline2.name = "pipeline2"
+    mock_pipeline2.id = "pipe2_id"
+    mock_pipeline2.stages = [Mock(), Mock(), Mock()]  # 3 stages
+
+    mock_stage = Mock()
+    mock_stage.name = "org.osbuild.test"
+    mock_stage.id = "stage123"
+
+    mock_success_result = Mock()
+    mock_success_result.success = True
+    mock_success_result.output = "Success"
+
+    with tempfile.NamedTemporaryFile() as tmp:
+        # Test monitor with 2 pipelines and 5 total stages (2+3)
+        monitor = PrettyMonitor(tmp.fileno(), 2, 5)
+
+        # Verify initial setup
+        assert monitor.total_steps == 2  # Number of pipelines
+        assert monitor.total_stages == 5
+        assert monitor.completed_stages == 0
+
+        # Test first pipeline
+        monitor.begin(mock_pipeline1)
+        assert monitor.current_pipeline_index == 1
+
+        # Process 2 stages for pipeline 1
+        for _ in range(2):
+            monitor.stage(mock_stage)
+            monitor.result(mock_success_result)
+
+        # Finish first pipeline
+        monitor.finish({"success": True, "name": "pipeline1"})
+        assert monitor.completed_stages == 2
+
+        # Test second pipeline
+        monitor.begin(mock_pipeline2)
+        assert monitor.current_pipeline_index == 2
+
+        # Process 3 stages for pipeline 2
+        for _ in range(3):
+            monitor.stage(mock_stage)
+            monitor.result(mock_success_result)
+
+        # Finish second pipeline
+        monitor.finish({"success": True, "name": "pipeline2"})
+        assert monitor.completed_stages == 5
+
+        # Verify Rich components were used correctly
+        mock_progress_instance.start.assert_called_once()
+        mock_progress_instance.stop.assert_called_once()
+        mock_progress_instance.add_task.assert_called_once()
+
+        # Should have 5 progress updates (one per stage)
+        assert mock_progress_instance.update.call_count >= 5
+
+
+@unittest.skipUnless(RICH_AVAILABLE and PrettyMonitor, "rich not available")
+@patch('osbuild.monitor.Console')
+@patch('osbuild.monitor.RichProgress')
+def test_pretty_monitor_failure_tracking(mock_rich_progress, mock_console):
+    """Test PrettyMonitor failure tracking and pipeline-level reporting"""
+    # Mock Rich components
+    mock_progress_instance = Mock()
+    mock_rich_progress.return_value = mock_progress_instance
+    mock_console_instance = Mock()
+    mock_console.return_value = mock_console_instance
+
+    # Create mock pipeline and stages
+    mock_pipeline = Mock()
+    mock_pipeline.name = "failing-pipeline"
+    mock_pipeline.id = "pipe_id"
+    mock_pipeline.stages = [Mock(), Mock(), Mock()]  # 3 stages
+
+    mock_stage = Mock()
+    mock_stage.name = "org.osbuild.test"
+    mock_stage.id = "stage123"
+
+    mock_success_result = Mock()
+    mock_success_result.success = True
+    mock_success_result.output = "Success"
+
+    mock_failed_result = Mock()
+    mock_failed_result.success = False
+    mock_failed_result.output = "Failed with error"
+
+    with tempfile.NamedTemporaryFile() as tmp:
+        # Test monitor with 1 pipeline and 3 stages
+        monitor = PrettyMonitor(tmp.fileno(), 1, 3)
+
+        # Start pipeline
+        monitor.begin(mock_pipeline)
+
+        # First stage succeeds
+        monitor.stage(mock_stage)
+        monitor.result(mock_success_result)
+        assert len(monitor.failed_stages) == 0
+
+        # Second stage fails
+        monitor.stage(mock_stage)
+        monitor.result(mock_failed_result)
+        assert len(monitor.failed_stages) == 1
+
+        # Third stage succeeds
+        monitor.stage(mock_stage)
+        monitor.result(mock_success_result)
+
+        # Finish pipeline with failure
+        monitor.finish({"success": False, "name": "failing-pipeline"})
+
+        # Verify failure was tracked properly
+        assert monitor.completed_stages == 3
+
+        # Should have printed failure details to console for the failed pipeline
+        assert mock_console_instance.print.call_count >= 1
