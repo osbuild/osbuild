@@ -17,11 +17,28 @@ import os
 import sys
 import time
 from threading import Lock
-from typing import Dict, Optional, Set, Union
+from typing import Dict, List, Optional, Set, Union
 
 import osbuild
 from osbuild.pipeline import BuildResult, DownloadResult
 from osbuild.util.term import fmt as vt
+
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.progress import (
+        BarColumn,
+        SpinnerColumn,
+        TextColumn,
+        TimeElapsedColumn,
+        TimeRemainingColumn,
+    )
+    from rich.progress import (
+        Progress as RichProgress,
+    )
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
 
 
 def omitempty(d: dict):
@@ -216,7 +233,7 @@ class TextWriter:
 class BaseMonitor(abc.ABC):
     """Base class for all pipeline monitors"""
 
-    def __init__(self, fd: int, _: int = 0) -> None:
+    def __init__(self, fd: int, _steps: int = 0, _stages: int = 0) -> None:
         """Logging will be done to file descriptor `fd`"""
         self.out = TextWriter(fd)
 
@@ -256,7 +273,7 @@ class LogMonitor(BaseMonitor):
     sequences will be used to highlight sections of the log.
     """
 
-    def __init__(self, fd: int, total_steps: int = 0):
+    def __init__(self, fd: int, total_steps: int = 0, _: int = 0):
         super().__init__(fd, total_steps)
         self.timer_start = 0
 
@@ -313,7 +330,7 @@ class LogMonitor(BaseMonitor):
 class JSONSeqMonitor(BaseMonitor):
     """Monitor that prints the log output of modules wrapped in json-seq objects with context and progress metadata"""
 
-    def __init__(self, fd: int, total_steps: int):
+    def __init__(self, fd: int, total_steps: int = 0, _: int = 0):
         super().__init__(fd, total_steps)
         self._ctx_ids: Set[str] = set()
         self._progress = Progress("pipelines/sources", total_steps)
@@ -392,11 +409,197 @@ class JSONSeqMonitor(BaseMonitor):
             self.out.write("\n")
 
 
-def make(name: str, fd: int, total_steps: int) -> BaseMonitor:
+class PrettyMonitor(BaseMonitor):  # pylint: disable=too-many-instance-attributes
+    """Monitor that displays a clean progress bar interface using Rich
+
+    This monitor provides a less verbose, visually appealing progress display
+    tailored for build processes. It shows overall progress, current stage
+    information, and timing with limited log output.
+    """
+
+    def __init__(self, fd: int, total_steps: int = 0, total_stages: int = 0):
+        super().__init__(fd, total_steps)
+        if not RICH_AVAILABLE:
+            raise RuntimeError("PrettyMonitor requires python3-rich to be installed")
+
+        # Setup rich console using the provided file descriptor
+        # Note: We need to duplicate the fd to avoid closing it when Console closes
+        dup_fd = os.dup(fd)
+        self.console = Console(file=os.fdopen(dup_fd, "w"), force_terminal=True)
+        self.stage_timer_start = 0
+        self.timer_start = time.time()
+
+        self.total_steps = total_steps
+        self.completed_steps = 0
+
+        self.total_stages = total_stages
+        self.completed_stages = 0
+
+        self.progress = RichProgress(
+            SpinnerColumn(style="blue"),
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            console=self.console,
+            refresh_per_second=8,
+        )
+        self.progress.start()
+
+        initial_desc = f"Building Stages: Total {self.total_stages} Stages"
+
+        self.main_task = self.progress.add_task(
+            initial_desc,
+            total=self.total_stages,
+            completed=0,
+            start_time=self.timer_start,
+        )
+
+        self.pipeline: Optional[osbuild.Pipeline] = None
+        self.current_pipeline_index = 0
+        self.current_stage: Optional[str] = None
+        self.step_start_time: float = 0
+
+        self.failed_stages: List[Dict[str, Union[str, int, None]]] = []
+
+    def begin(self, pipeline: osbuild.Pipeline):
+        self.pipeline = pipeline
+        self.step_start_time = time.time()
+        self.current_pipeline_index += 1
+        self.failed_stages.clear()
+
+        if self.total_steps > 1 and self.total_stages > 0:
+            progress_desc = (
+                f"Building {self.total_stages} Stages (Pipeline"
+                f" {self.current_pipeline_index}/{self.total_steps})"
+            )
+        elif self.total_stages > 0:
+            progress_desc = f"Building {self.total_stages} Stages"
+        else:
+            progress_desc = "Building Stages"
+
+        self.progress.update(self.main_task, description=progress_desc)
+
+    def finish(self, results: Dict):
+        self.completed_steps += 1
+
+        pipeline_duration = int(time.time() - self.step_start_time)
+        pipeline_success = results.get("success", False)
+        status_color = "green" if pipeline_success else "red"
+        status_text = (
+            "[[yellow]🗸[/yellow]] Completed" if pipeline_success else "[■] Failed"
+        )
+
+        self.console.print(
+            f"[{status_color}]{status_text}: Pipeline {results.get('name',
+                                                                                  'Unknown')} [{self.current_pipeline_index}/{self.total_steps}] ({pipeline_duration}s)[/{status_color}]"
+        )
+
+        if not pipeline_success and self.failed_stages:
+            self.console.print(
+                f"\n[bold red]Pipeline {
+                    results.get(
+                        'name',
+                        'Unknown')} failed with {
+                    len(
+                        self.failed_stages)} stage failure(s):[/bold red]"
+            )
+            for failure in self.failed_stages:
+                if failure["output"]:
+                    self.console.print(
+                        Panel(
+                            renderable=failure["output"],
+                            title=f"[bold red]Stage Failure Details - {failure['stage']}[/bold red]",
+                            border_style="red",
+                            padding=(1, 2),
+                        )
+                    )
+
+        if self.completed_steps >= self.total_steps:
+            if self.progress:
+                self.progress.update(self.main_task, completed=self.total_stages)
+                self.progress.stop()
+
+            duration = int(time.time() - self.timer_start)
+            status_color = "green" if results.get("success", False) else "red"
+            status_text = (
+                "Build Completed Successfully"
+                if results.get("success", False)
+                else "Build Failed"
+            )
+
+            completion_panel = Panel(
+                f"[bold {status_color}]{status_text}[/bold {status_color}]\n"
+                f"[dim]Stages completed: {self.completed_stages}/{self.total_stages}[/dim]\n"
+                f"[dim]Pipelines completed: {self.completed_steps}/{self.total_steps}[/dim]\n"
+                f"[dim]Total time: {duration}s[/dim]"
+                + (
+                    f"\n[dim yellow]Errors encountered: {len(self.failed_stages)}[/dim yellow]"
+                    if self.failed_stages
+                    else ""
+                ),
+                title="Build Result",
+                border_style=status_color,
+                padding=(1, 2),
+            )
+            self.console.print(completion_panel)
+
+    def stage(self, stage: osbuild.Stage):
+        self._start_module(stage)
+
+    def assembler(self, assembler: osbuild.Stage):
+        self._start_module(assembler)
+
+    def _start_module(self, module: osbuild.Stage):
+        self.current_stage = module.name
+        self.stage_timer_start = time.time()
+
+        pipeline_name = self.pipeline.name if self.pipeline else "Unknown"
+        current_stage_num = self.completed_stages + 1
+        stage_desc = f"[{current_stage_num}/{self.total_stages}] {pipeline_name}: {self.current_stage}"
+
+        self.progress.update(self.main_task, description=stage_desc)
+
+    def result(self, result: Union[BuildResult, DownloadResult]) -> None:
+        duration = int(time.time() - self.stage_timer_start)
+        if not result.success:
+            stage_info = f"[{self.completed_stages + 1}/{self.total_stages}] {self.current_stage}"
+            self.failed_stages.append(
+                {
+                    "stage": self.current_stage,
+                    "stage_info": stage_info,
+                    "duration": duration,
+                    "output": (
+                        result.output.strip()
+                        if result.output and result.output.strip()
+                        else None
+                    ),
+                }
+            )
+
+        if self.progress and self.main_task is not None:
+            self.progress.update(self.main_task, advance=1)
+            self.completed_stages += 1
+            pipeline_name = self.pipeline.name if self.pipeline else "Unknown"
+            completion_desc = f"[[yellow]🗸[/yellow]] Completed [{
+                self.completed_stages}/{
+                self.total_stages}] {pipeline_name}: {
+                self.current_stage}"
+            if not result.success:
+                completion_desc = f"[■] Failed at [{
+                    self.completed_stages}/{
+                    self.total_stages}] {pipeline_name}: {
+                    self.current_stage}"
+
+            self.progress.update(self.main_task, description=completion_desc)
+
+
+def make(name: str, fd: int, total_steps: int, total_stages: int = 0) -> BaseMonitor:
     module = sys.modules[__name__]
     monitor = getattr(module, name, None)
     if not monitor:
         raise ValueError(f"Unknown monitor: {name}")
     if not issubclass(monitor, BaseMonitor):
         raise ValueError(f"Invalid monitor: {name}")
-    return monitor(fd, total_steps)
+    return monitor(fd, total_steps, total_stages)
