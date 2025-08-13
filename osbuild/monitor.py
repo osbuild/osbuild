@@ -168,6 +168,7 @@ class Progress:
 def log_entry(message: Optional[str] = None,
               context: Optional[Context] = None,
               progress: Optional[Progress] = None,
+              duration: Optional[float] = None,
               result: Union[BuildResult, DownloadResult, None] = None,
               ) -> dict:
     """
@@ -182,6 +183,7 @@ def log_entry(message: Optional[str] = None,
         "context": context.as_dict() if context else None,
         "progress": progress.as_dict() if progress else None,
         "timestamp": time.time(),
+        "duration": duration,
     })
 
 
@@ -258,11 +260,14 @@ class LogMonitor(BaseMonitor):
 
     def __init__(self, fd: int, total_steps: int = 0):
         super().__init__(fd, total_steps)
-        self.timer_start = 0
+        # XXX: Depending on the behavior you want, it might be this or the other line
+        #self._module_ts: Optional[float] = None
+        self._module_ts = time.monotonic()
 
     def result(self, result: Union[BuildResult, DownloadResult]) -> None:
-        duration = int(time.time() - self.timer_start)
-        self.out.write(f"\n⏱  Duration: {duration}s\n")
+        if self._module_ts is not None:
+            duration = time.monotonic() - self._module_ts
+            self.out.write(f"\n⏱  Duration: {duration:.2f}s\n")
 
     def begin(self, pipeline):
         self.out.term(vt.bold, clear=True)
@@ -304,7 +309,7 @@ class LogMonitor(BaseMonitor):
         json.dump(options, self.out, indent=2)
         self.out.write("\n")
 
-        self.timer_start = time.time()
+        self._module_ts = time.monotonic()
 
     def log(self, message, origin: Optional[str] = None):
         self.out.write(message)
@@ -319,6 +324,7 @@ class JSONSeqMonitor(BaseMonitor):
         self._progress = Progress("pipelines/sources", total_steps)
         self._context = Context(origin="org.osbuild")
         self._jsonseq_mu = Lock()
+        self._module_ts = None
 
     def begin(self, pipeline: osbuild.Pipeline):
         self._context.set_pipeline(pipeline)
@@ -340,6 +346,7 @@ class JSONSeqMonitor(BaseMonitor):
     def _module(self, module: osbuild.Stage):
         self._context.set_stage(module)
         self.log(f"Starting module {module.name}", origin="osbuild.monitor")
+        self._module_ts = time.monotonic()
 
     def result(self, result: Union[BuildResult, DownloadResult]) -> None:
         """ Called when the module (stage or download) is finished
@@ -367,10 +374,16 @@ class JSONSeqMonitor(BaseMonitor):
             removed = len(result.output) - max_output_len
             result.output = f"[...{removed} bytes hidden...]\n{result.output[removed:]}"
 
+        # If the module has a timestamp, we can calculate the duration.
+        duration = None
+        if self._module_ts is not None:
+            duration = time.monotonic() - self._module_ts
+
         self._jsonseq(log_entry(
             f"Finished module {result.name}",
             context=self._context.with_origin("osbuild.monitor"),
             progress=self._progress,
+            duration=duration,
             # We should probably remove the "output" key from the result
             # as it is redundant, each output already generates a "log()"
             # message that is streamed to the client.
