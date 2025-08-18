@@ -51,14 +51,29 @@ FAKE_INPUTS = {
     ({"kernel-args": []}, []),
     ({"kernel-args": ["console=ttyS0"]}, ["--karg", "console=ttyS0"]),
     ({"kernel-args": ["arg1", "arg2"]}, ["--karg", "arg1", "--karg", "arg2"]),
+    # stateroot
+    ({"stateroot": ""}, []),
+    ({"stateroot": "default1"}, ["--stateroot", "default1"]),
+    # root-mount-spec
+    ({"root-mount-spec": ""}, ["--root-mount-spec="]),
+    ({"root-mount-spec": "subvol@root"}, ["--root-mount-spec", "subvol@root"]),
+    # boot-mount-spec
+    ({"boot-mount-spec": ""}, ["--boot-mount-spec="]),
+    ({"boot-mount-spec": "/dev/sda1"}, ["--boot-mount-spec", "/dev/sda1"]),
     # all
     ({"root-ssh-authorized-keys": ["key1", "key2"],
       "kernel-args": ["arg1", "arg2"],
       "target-imgref": "quay.io/img/ref",
+      "stateroot": "/some/stateroot",
+      "root-mount-spec": "root-mount-spec",
+      "boot-mount-spec": "boot-mount-spec",
       },
      ["--root-ssh-authorized-keys", "/tmp/fake-named-tmpfile-name",
       "--karg", "arg1", "--karg", "arg2",
       "--target-imgref", "quay.io/img/ref",
+      "--stateroot", "/some/stateroot",
+      "--root-mount-spec", "root-mount-spec",
+      "--boot-mount-spec", "boot-mount-spec",
       ],
      ),
 ])
