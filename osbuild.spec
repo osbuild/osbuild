@@ -21,6 +21,7 @@ Summary:        A build system for OS images
 BuildRequires:  make
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
+BuildRequires:  python3-setuptools
 BuildRequires:  systemd
 
 Requires:       bash
