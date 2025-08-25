@@ -22,6 +22,8 @@ from osbuild.pipeline import Manifest
 from osbuild.util.parsing import parse_size
 from osbuild.util.term import fmt as vt
 
+VALID_MONITORS = ["NullMonitor", "LogMonitor", "JSONSeqMonitor", "PrettyMonitor"]
+
 
 def parse_manifest(path: str) -> dict:
     if path == "-":
@@ -91,7 +93,7 @@ def parse_arguments(sys_argv: List[str]) -> argparse.Namespace:
                         help="directory where result objects are stored")
     parser.add_argument("--inspect", action="store_true",
                         help="return the manifest in JSON format including all the ids")
-    parser.add_argument("--monitor", metavar="NAME", default=None,
+    parser.add_argument("--monitor", metavar="NAME", default=None, choices=VALID_MONITORS,
                         help="name of the monitor to be used")
     parser.add_argument("--monitor-fd", metavar="FD", type=int, default=sys.stdout.fileno(),
                         help="file descriptor to be used for the monitor")
@@ -177,7 +179,8 @@ def osbuild_cli() -> int:
 
             pipelines = manifest.depsolve(object_store, exports)
             total_steps = len(manifest.sources) + len(pipelines)
-            monitor = osbuild.monitor.make(monitor_name, args.monitor_fd, total_steps)
+            total_stages = sum(len(pipeline.stages) for pipeline in manifest.pipelines.values())
+            monitor = osbuild.monitor.make(monitor_name, args.monitor_fd, total_steps, total_stages)
             monitor.log(f"starting {args.manifest_path}", origin="osbuild.main_cli")
 
             manifest.download(object_store, monitor)
