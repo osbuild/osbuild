@@ -12,3 +12,6 @@
 
 # image-info tool
 /tools/**/*osbuild*image*info*  @thozza
+
+# Specify code ownership for files containing 'coreos' in the filename
+*coreos* @dustymabe @jlebon @ravanelli
