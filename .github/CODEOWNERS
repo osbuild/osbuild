@@ -3,15 +3,15 @@
 *               @osbuild/osbuild-reviewers
 
 # SBOM
-/osbuild/util/sbom/     @thozza
+/osbuild/util/sbom/     @thozza @osbuild/osbuild-reviewers
 
 # Depsolving
-/osbuild/solver/        @thozza
-/tools/solver*.json     @thozza
-/tools/**/*depsolve*    @thozza
+/osbuild/solver/        @thozza @osbuild/osbuild-reviewers
+/tools/solver*.json     @thozza @osbuild/osbuild-reviewers
+/tools/**/*depsolve*    @thozza @osbuild/osbuild-reviewers
 
 # image-info tool
-/tools/**/*osbuild*image*info*  @thozza
+/tools/**/*osbuild*image*info*  @thozza @osbuild/osbuild-reviewers
 
 # Specify code ownership for files containing 'coreos' in the filename
 *coreos* @dustymabe @jlebon @ravanelli
