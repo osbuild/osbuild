@@ -28,7 +28,7 @@ This stage will return the following metadata via the osbuild API:
             with information about:
               name, version, release,
             and optionally:
-              epoch, arch, sigmd5, sigpgp, siggpg
+              epoch, arch, sigmd5, sigpgp, siggpg, rsaheader
 """
 
 
@@ -59,7 +59,8 @@ def generate_package_metadata(tree, rpm_args):
     "arch": %|ARCH?{"%{ARCH}"}:{null}|,
     "sigmd5": %|SIGMD5?{"%{SIGMD5}"}:{null}|,
     "sigpgp": %|SIGPGP?{"%{SIGPGP}"}:{null}|,
-    "siggpg": %|SIGGPG?{"%{SIGGPG}"}:{null}|
+    "siggpg": %|SIGGPG?{"%{SIGGPG}"}:{null}|,
+    "rsaheader": %|RSAHEADER?{"%{RSAHEADER}"}:{null}|
     \},
     """
 
