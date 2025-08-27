@@ -9,6 +9,7 @@ needed to run the post install and cleanup scripts.
 """
 
 import contextlib
+import fnmatch
 import glob
 import os
 import re
@@ -62,6 +63,7 @@ class Script:
         self.script = script
         self.tree = tree
         self.build = build
+        self._pkgnames = None
 
     def __call__(self):
         for i, line in enumerate(self.script):
@@ -87,6 +89,34 @@ class Script:
     def tree_path(self, target):
         dest = os.path.join(self.tree, target.lstrip("/"))
         return dest
+
+    def _all_pkgnames(self):
+        """ Get the list of all package names installed
+        On first call it runs rpm -qa and caches the results
+        """
+        if not self._pkgnames:
+            cmd = ["rpm", "-qa", "--root", self.tree, "--qf=%{name}\n"]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE,
+                                 check=True, encoding="utf8")
+            self._pkgnames = sorted(res.stdout.splitlines())
+        return self._pkgnames
+
+    def _get_pkgfiles(self, pkg):
+        """ Get a list of the files installed by a package """
+        cmd = ["rpm", "-ql", "--root", self.tree, pkg]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE,
+                             check=True, encoding="utf8")
+        return sorted(res.stdout.splitlines())
+
+    def _filelist(self, *pkg_specs):
+        """ Return the list of files in the packages matching the globs """
+        pkglist = []
+        for pkg in self._all_pkgnames():
+            if any(fnmatch.fnmatch(pkg, spec) for spec in pkg_specs):
+                pkglist.append(pkg)
+
+        # Return the files, not directories
+        return set(f for pkg in pkglist for f in self._get_pkgfiles(pkg) if not os.path.isdir(self.tree_path(f)))
 
     @command
     def append(self, filename, data):
@@ -125,7 +155,14 @@ class Script:
 
     @command
     def remove(self, *files):
+        skiplist = ["/usr/lib/sysimage/rpm/", "/var/lib/rpm/", "/var/lib/yum", "/var/lib/dnf"]
         for g in files:
+            # We need the rpm database in order to remove files from packages, so skip removing
+            # it. This can be handled by skipping these paths in the squashfs/erofs stage.
+            if any(g.startswith(p) for p in skiplist):
+                print(f"remove: Skipping RPM database path {g}")
+                continue
+
             for f in rglob(self.tree_path(g)):
                 if os.path.isdir(f) and not os.path.islink(f):
                     shutil.rmtree(f)
@@ -147,6 +184,12 @@ class Script:
 
     @command
     def runcmd(self, *args):
+        # We need /boot content in order to create the iso, so skip the commands acting on
+        # boot. This can be handled by skipping these paths in the squashfs/erofs stage.
+        if any("/boot" in a for a in args):
+            print("runcmd: skipping operations on /boot")
+            return
+
         print("run ", " ".join(args))
         subprocess.run(args, cwd=self.tree, check=True)
 
@@ -168,6 +211,118 @@ class Script:
             with contextlib.suppress(subprocess.CalledProcessError):
                 args = cmd + [unit]
                 self.runcmd(*args)
+
+    @command
+    def removepkg(self, *pkgs):
+        """
+        removepkg PKGGLOB [PKGGLOB...]
+          Delete the named package(s).
+
+        IMPLEMENTATION NOTES:
+          RPM scriptlets (%preun/%postun) are *not* run.
+          Files are deleted, but directories are left behind.
+        """
+        for p in pkgs:
+            filepaths = [f.lstrip('/') for f in self._filelist(p)]
+            if filepaths:
+                self.remove(*filepaths)
+            else:
+                print(f"removepkg {p}: no files to remove!")
+
+    @command
+    def removefrom(self, pkg, *globs):
+        """
+        removefrom PKGGLOB [--allbut] FILEGLOB [FILEGLOB...]
+          Remove all files matching the given file globs from the package
+          (or packages) named.
+          If '--allbut' is used, all the files from the given package(s) will
+          be removed *except* the ones which match the file globs.
+
+          Examples:
+            removefrom usbutils /usr/bin/*
+            removefrom xfsprogs --allbut /bin/*
+        """
+        cmd = f"{pkg} {' '.join(globs)}"  # save for later logging
+        keepmatches = False
+        if globs[0] == '--allbut':
+            keepmatches = True
+            globs = globs[1:]
+        # get pkg filelist and find files that match the globs
+        filelist = self._filelist(pkg)
+        matches = set()
+        for g in globs:
+            globs_re = re.compile(fnmatch.translate(g))
+            m = [f for f in filelist if globs_re.match(f)]
+            if m:
+                matches.update(m)
+            else:
+                print(f"removefrom {pkg} {g}: no files matched!")
+        if keepmatches:
+            remove_files = filelist.difference(matches)
+        else:
+            remove_files = matches
+        # remove the files
+        if remove_files:
+            self.remove(*remove_files)
+        else:
+            print(f"removefrom {cmd}: no files to remove!")
+
+    # pylint: disable=anomalous-backslash-in-string
+    @command
+    def removekmod(self, *globs):
+        '''
+        removekmod GLOB [GLOB...] [--allbut] KEEPGLOB [KEEPGLOB...]
+          Remove all files and directories matching the given file globs from the kernel
+          modules directory.
+
+          If '--allbut' is used, all the files from the modules will be removed *except*
+          the ones which match the file globs. There must be at least one initial GLOB
+          to search and one KEEPGLOB to keep. The KEEPGLOB is expanded to be *KEEPGLOB*
+          so that it will match anywhere in the path.
+
+          This only removes files from under /lib/modules/\\*/kernel/
+
+          Examples:
+            removekmod sound drivers/media drivers/hwmon drivers/video
+            removekmod drivers/char --allbut virtio_console hw_random
+        '''
+        cmd = " ".join(globs)
+        if "--allbut" in globs:
+            idx = globs.index("--allbut")
+            if idx == 0:
+                raise ValueError("removekmod needs at least one GLOB before --allbut")
+
+            # Apply keepglobs anywhere they appear in the path
+            keepglobs = globs[idx + 1:]
+            if len(keepglobs) == 0:
+                raise ValueError("removekmod needs at least one GLOB after --allbut")
+
+            globs = globs[:idx]
+        else:
+            # Nothing to keep
+            keepglobs = []
+
+        filelist = set()
+        for g in globs:
+            for top_dir in rglob(self.tree_path(f"/lib/modules/*/kernel/{g}")):
+                for root, _dirs, files in os.walk(top_dir):
+                    filelist.update(f"{root}/{f}" for f in files)
+
+        # Remove anything matching keepglobs from the list
+        matches = set()
+        for g in keepglobs:
+            globs_re = re.compile(fnmatch.translate(f"*{g}*"))
+            m = [f for f in filelist if globs_re.match(f)]
+            if m:
+                matches.update(m)
+            else:
+                print(f"removekmod {g}: no files matched!")
+        remove_files = filelist.difference(matches)
+
+        if remove_files:
+            list(os.unlink(f) for f in remove_files)
+        else:
+            print(f"removekmod {cmd}: no files to remove!")
 
 
 def brace_expand(s):
