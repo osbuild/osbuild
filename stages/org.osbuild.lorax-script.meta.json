@@ -26,6 +26,10 @@
         "default": "x86_64",
         "description": "The basic architecture param to supply to the template"
       },
+      "libdir": {
+        "type": "string",
+        "default": "lib64"
+      },
       "product": {
         "type": "object",
         "additionalProperties": false,
@@ -36,10 +40,6 @@
           "version": {
             "type": "string"
           }
-        },
-        "libdir": {
-          "type": "string",
-          "default": "lib64"
         }
       }
     }
