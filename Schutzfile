@@ -68,6 +68,27 @@
       }
     ]
   },
+  "fedora-43": {
+    "repos": [
+      {
+        "file": "/etc/yum.repos.d/fedora.repo",
+        "x86_64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f43/f43-x86_64-branched-20250901"
+          }
+        ],
+        "aarch64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f43/f43-aarch64-branched-20250901"
+          }
+        ]
+      }
+    ]
+  },
   "centos-stream-9": {
     "repos": [
       {
