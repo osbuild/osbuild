@@ -924,6 +924,10 @@ class PartitionTable:
         self.uuid = uuid
         self.partitions = partitions or []
 
+        # Add extended partition if needed
+        if label == "dos" and len(self.partitions) > 4 and not any(map(lambda p: p.type == "0f", self.partitions)):
+            self.partitions.insert(3, Partition(pttype="0f"))
+
     def __getitem__(self, key) -> Partition:
         if isinstance(key, int):
             return self.partitions[key]
