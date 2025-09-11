@@ -39,7 +39,11 @@ class LoopServer(api.BaseAPI):
     def __init__(self, *, socket_address=None):
         super().__init__(socket_address)
         self.devs = []
-        self.ctl = loop.LoopControl()
+        self.ctl = None
+
+    def _lazy_init(self):
+        if not self.ctl:
+            self.ctl = loop.LoopControl()
 
     def _create_device(
             self,
@@ -51,6 +55,7 @@ class LoopServer(api.BaseAPI):
             partscan=False,
             read_only=False,
             sector_size=512):
+        self._lazy_init()
         lo = self.ctl.loop_for_fd(fd, lock=lock,
                                   offset=offset,
                                   sizelimit=sizelimit,
@@ -80,7 +85,8 @@ class LoopServer(api.BaseAPI):
     def _cleanup(self):
         for lo in self.devs:
             lo.close()
-        self.ctl.close()
+        if self.ctl:
+            self.ctl.close()
 
 
 class LoopClient:
