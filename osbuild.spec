@@ -219,27 +219,6 @@ bzip2 -9 osbuild-container.pp
 %install
 %py3_install
 
-mkdir -p %{buildroot}%{pkgdir}/stages
-install -p -m 0755 $(find stages -type f -not -name "test_*.py") %{buildroot}%{pkgdir}/stages/
-
-mkdir -p %{buildroot}%{pkgdir}/assemblers
-install -p -m 0755 $(find assemblers -type f) %{buildroot}%{pkgdir}/assemblers/
-
-mkdir -p %{buildroot}%{pkgdir}/runners
-install -p -m 0755 $(find runners -type f -or -type l) %{buildroot}%{pkgdir}/runners
-
-mkdir -p %{buildroot}%{pkgdir}/sources
-install -p -m 0755 $(find sources -type f) %{buildroot}%{pkgdir}/sources
-
-mkdir -p %{buildroot}%{pkgdir}/devices
-install -p -m 0755 $(find devices -type f) %{buildroot}%{pkgdir}/devices
-
-mkdir -p %{buildroot}%{pkgdir}/inputs
-install -p -m 0755 $(find inputs -type f) %{buildroot}%{pkgdir}/inputs
-
-mkdir -p %{buildroot}%{pkgdir}/mounts
-install -p -m 0755 $(find mounts -type f) %{buildroot}%{pkgdir}/mounts
-
 # mount point for bind mounting the osbuild library
 mkdir -p %{buildroot}%{pkgdir}/osbuild
 
