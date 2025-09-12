@@ -4,6 +4,7 @@ import errno
 import fcntl
 import os
 import stat
+import subprocess
 import time
 from typing import Callable, Optional
 
@@ -496,6 +497,9 @@ class Loop:
         device node is guaranteed to already exist there, and the call
         would hence fail.
 
+        If the host device is available, then it will be bind-mounted
+        in place, otherwise a new node will be created.
+
         Parameters
         ----------
         dir_fd : int
@@ -504,10 +508,16 @@ class Loop:
             Access mode on the created device node (0o600 is default)
         """
 
-        os.mknod(self.devname,
-                 mode=(stat.S_IMODE(mode) | stat.S_IFBLK),
-                 device=os.makedev(self.LOOP_MAJOR, self.minor),
-                 dir_fd=dir_fd)
+        host_path = f"/dev/{self.devname}"
+        if os.path.exists(host_path):
+            os.mknod(self.devname, mode=(stat.S_IMODE(mode)),
+                     dir_fd=dir_fd)
+            subprocess.run(["mount", "--bind", host_path, self.devname], cwd=f"/proc/self/fd/{dir_fd}/", check=True)
+        else:
+            os.mknod(self.devname,
+                     mode=(stat.S_IMODE(mode) | stat.S_IFBLK),
+                     device=os.makedev(self.LOOP_MAJOR, self.minor),
+                     dir_fd=dir_fd)
 
 
 class LoopControl:
