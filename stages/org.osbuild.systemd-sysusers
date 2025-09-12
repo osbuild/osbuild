@@ -1,0 +1,170 @@
+#!/usr/bin/python3
+import io
+import os
+import re
+import subprocess
+import sys
+
+from dataclasses import dataclass
+
+import osbuild.api
+from osbuild.util import parsing
+
+SYSENTRY_D_DIR = "etc/sysusers.d"
+
+
+class ValidationError(ValueError):
+
+    def __init__(self, field: str, value: str, reason, *args):
+        super().__init__(*args)
+
+        self.field = field
+        self.value = value
+        self.reason = reason
+
+    def __str__(self):
+        return f"Error: sysuser entry '{self.field}={self.value}' is invalid: {self.reason}"
+
+
+SYSUSER_NAME_REGEX = r'^-$|[a-zA-Z_][a-zA-Z0-9_-]{0,30}$'
+
+
+@dataclass
+class SysusersEntry:
+
+    Type: str
+    Name: str
+    ID: str
+    GECOS: str
+    HomeDirectory: str
+    Shell: str
+
+    def validate_type(self):
+        valid_types = ["u", "u!", "g", "m", "r"]
+        if self.Type not in valid_types:
+            raise ValidationError("Type", self.Type, f"type needs to be one of: {valid_types}")
+
+    def validate_name(self):
+        if self.Type == "r" and self.Name != "-":
+            raise ValidationError("Name", self.Name, "name needs to be '-' for type 'r'")
+        if re.fullmatch(SYSUSER_NAME_REGEX, self.Name) is None:
+            raise ValidationError("Name", self.Name, f"name needs to match regex '{SYSUSER_NAME_REGEX}'")
+
+    def validate_id(self):
+        reserved_ids = [65535, 4294967295]
+
+        def check(delim: str):
+            parts = self.ID.split(delim)
+            if len(parts) > 2:
+                raise ValidationError("ID", self.ID, "invalid format")
+            for part in parts:
+                if int(part) in reserved_ids:
+                    raise ValidationError("ID", self.ID, f"id can not be {reserved_ids}")
+
+        if self.Type == "m":
+            if re.fullmatch(SYSUSER_NAME_REGEX, self.ID) is None:
+                raise ValidationError("ID", self.ID, "id should be group name for m entry")
+        elif self.Type == "r":
+            check("-")
+        else:
+            if self.ID == "-":
+                return
+            check(":")
+
+    def validate(self):
+        self.validate_type()
+        self.validate_name()
+        self.validate_id()
+
+        if self.Type != "u":
+            if self.GECOS not in ["", "-"]:
+                raise ValidationError("GECOS", self.GECOS, f"gecos only used for type 'u'")
+            if self.HomeDirectory not in ["", "-"]:
+                raise ValidationError("HomeDirectory", self.GECOS, f"home directory only used for type 'u'")
+            if self.Shell not in ["", "-"]:
+                raise ValidationError("Shell", self.GECOS, f"shell only used for type 'u'")
+
+
+class SysusersFile:
+
+    def __init__(self, entries: list[SysusersEntry] = []):
+        self.entries = entries
+
+    def validate(self):
+        for entry in self.entries:
+            entry.validate()
+
+    def write(self, desr: io.BufferedWriter):
+        for entry in self.entries:
+            quoted_gecos = f"\"{entry.GECOS}\"" if entry.GECOS else ""
+            line = f"{
+                entry.Type} {
+                entry.Name} {
+                entry.ID} {quoted_gecos} {
+                entry.HomeDirectory} {
+                    entry.Shell}".strip() + "\n"
+            desr.write(line)
+
+
+def create_paths(args, tree, paths):
+    dst_dir = f"{tree}/{SYSENTRY_D_DIR}"
+
+    for path in paths:
+        src = parsing.parse_location(path, args)
+        dst = f"{dst_dir}/{os.path.basename(src)}"
+
+        print(f"copying '{src}' -> '{dst}'")
+
+        cmd = ["cp", "-a", "--reflink=auto"]
+        subprocess.run(cmd + [src, dst], check=True)
+
+
+def create_configs(tree, config):
+    if config is None:
+        return
+
+    filename = config.get("filename", "")
+    if not filename:
+        raise ValueError("'filename' is required")
+    entries = config.get("entries", [])
+    if not entries:
+        raise ValueError("'entries' is required")
+
+    sysuser_file = SysusersFile()
+    for entry in entries:
+        sysuser_file.entries.append(SysusersEntry(
+            entry.get("type", ""),
+            entry.get("name", ""),
+            entry.get("id", "-"),
+            entry.get("gecos", ""),
+            entry.get("home", ""),
+            entry.get("shell", ""),
+        ))
+    sysuser_file.validate()
+
+    if filename and sysuser_file.entries:
+        with open(f"{tree}/{SYSENTRY_D_DIR}/{filename}", "w", encoding="utf-8") as f:
+            sysuser_file.write(f)
+        print(f"Wrote file '{SYSENTRY_D_DIR}/{filename}'")
+
+
+def main(args):
+    tree = args["tree"]
+    options = args["options"]
+
+    should_apply = options.get("apply", True)
+
+    create_paths(args, tree, options.get("paths", []))
+    create_configs(tree, options.get("config", None))
+
+    if should_apply:
+        subprocess.run(["systemd-sysusers", "--root", tree], check=True)
+        print(f"Applied systemd-sysusers")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args)
+    sys.exit(r)
