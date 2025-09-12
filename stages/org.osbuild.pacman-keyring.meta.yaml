@@ -1,0 +1,11 @@
+summary: Initialize the Arch Linux keyring for Arch based distributions
+description: |-
+  WARNING: This stage uses chroot() to run the `archlinux-keyring` binary
+  from inside the tree.
+schema:
+  additionalProperties: false
+  properties:
+    keyrings:
+      type: array
+      description: keyrings
+      default: archlinux

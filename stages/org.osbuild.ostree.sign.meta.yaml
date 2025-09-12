@@ -1,0 +1,25 @@
+summary: Sign a commit in an ostree repo
+description: |-
+  Given an ostree commit (referenced by a ref) in a repo and an ed25519
+  secret key this adds a signature to the commit detached metadata.
+  This commit can then be used to validate the commit, during ostree
+  pull, during boot, or at any other time.
+schema_2:
+  options:
+    additionalProperties: false
+    required:
+    - repo
+    - ref
+    - key
+    properties:
+      repo:
+        description: Location of the OSTree repo.
+        type: string
+      ref:
+        description: OSTree branch name or commit to sign
+        type: string
+        default: ''
+      key:
+        description: Path to the secret key
+        type: string
+        pattern: ^\/(?!\.\.)((?!\/\.\.\/).)+$

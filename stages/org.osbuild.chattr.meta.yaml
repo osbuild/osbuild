@@ -1,0 +1,24 @@
+summary: Runs `chattr` to set file/directory attributes.
+description: ''
+schema_2:
+  options:
+    additionalProperties: false
+    properties:
+      items:
+        type: object
+        additionalProperties: false
+        patternProperties:
+          ^mount://[^/]+/|^tree:///:
+            type: object
+            required:
+            - immutable
+            properties:
+              immutable:
+                type: boolean
+                description: Make the file/directory immutable
+                default: true
+  devices:
+    type: object
+    additionalProperties: true
+  mounts:
+    type: array

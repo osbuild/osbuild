@@ -1,0 +1,15 @@
+summary: Configure pacman's mirrorlist
+description: ''
+schema:
+  additionalProperties: false
+  properties:
+    filename:
+      type: string
+      default: /etc/pacman.d/mirrorlist
+    mirrors:
+      type: array
+      description: Mirror locations for pacman
+      items:
+        type: string
+        examples:
+        - https://archlinux.org/$repo/os/$arch

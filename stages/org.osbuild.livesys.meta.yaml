@@ -1,0 +1,13 @@
+summary: |-
+  Configure basic aspects of the `/etc/sysconfig/livesys` file, necessary for
+  live installations.
+description: ''
+schema_2:
+  options:
+    additionalProperties: false
+    required:
+    - livesys_session
+    properties:
+      livesys_session:
+        type: string
+        description: Livesys session to use

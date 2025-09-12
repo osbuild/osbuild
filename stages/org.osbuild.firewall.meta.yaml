@@ -1,0 +1,69 @@
+summary: Configure firewall
+description: |-
+  Configure firewalld using the `firewall-offline-cmd` from inside the target.
+  This stage adds each of the given `ports` and `enabled_services` to the default
+  firewall zone using the `--port` and `--service` options, then removes the
+  services listed in `disabled_services` with `--remove-service`.
+  Ports should be specified as "portid:protocol" or "portid-portid:protocol",
+  where "portid" is a number (or a port name from `/etc/services`, like "ssh" or
+  "echo") and "protocol" is one of "tcp", "udp", "sctp", or "dccp".
+  Enabling or disabling a service that is already enabled or disabled will not
+  cause an error.
+  Attempting to enable/disable an unknown service name will cause this stage to
+  fail. Known service names are determined by the contents of firewalld's
+  configuration directories, usually `/{lib,etc}/firewalld/services/*.xml`, and
+  may vary from release to release.
+  WARNING: this stage uses `chroot` to run `firewall-offline-cmd` inside the
+  target tree, which means it may fail unexpectedly when the buildhost and target
+  are different arches or OSes.
+schema:
+  additionalProperties: false
+  properties:
+    ports:
+      description: Ports (or port ranges) to open
+      type: array
+      items:
+        type: string
+        description: 'A port or port range: ''portid[-portid]:protocol'''
+        pattern: .:(tcp|udp|sctp|dccp)$
+    enabled_services:
+      description: Network services to allow in the default firewall zone
+      type: array
+      items:
+        type: string
+        description: Service name (from /{lib,etc}/firewalld/services/*.xml)
+    disabled_services:
+      description: Network services to remove from the default firewall zone
+      type: array
+      items:
+        type: string
+        description: Service name (from /{lib,etc}/firewalld/services/*.xml)
+    default_zone:
+      description: Set default zone for connections and interfaces where no zone has
+        been selected.
+      type: string
+    zones:
+      description: Bind a list of network sources to a zone to restrict traffic from
+        those sources based on the settings of the zone.
+      type: array
+      minItems: 1
+      items:
+        additionalProperties: false
+        type: object
+        description: configuration for each zone
+        required:
+        - name
+        - sources
+        properties:
+          name:
+            type: string
+            description: name of the zone, if left empty the sources will apply to
+              the default zone.
+            pattern: ^[a-zA-Z0-9_-]+$
+          sources:
+            type: array
+            description: list of sources for the zone
+            items:
+              additionalProperties: false
+              type: string
+              description: 'A source: <source>[/<mask>]|<MAC>|ipset:<ipset>'

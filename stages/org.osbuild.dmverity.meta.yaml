@@ -1,0 +1,28 @@
+summary: Enables dm-verity protection
+description: |-
+  Sets up dm-verity for data_device and stores hash blockes on hash_device.
+  Root hash gets written to `root_hash_file`
+schema_2:
+  options:
+    additionalProperties: false
+    required:
+    - root_hash_file
+    properties:
+      blocksize:
+        type: number
+        default: 512
+      root_hash_file:
+        type: string
+  devices:
+    type: object
+    additionalProperties: true
+    required:
+    - data_device
+    - hash_device
+    properties:
+      data_device:
+        type: object
+        additionalProperties: true
+      hash_device:
+        type: object
+        additionalProperties: true

@@ -1,0 +1,5 @@
+summary: Extract CA trust store
+description: "Extract PEM/DER CA files from /etc/pki/ca-trust/source/ by calling \n\
+  the 'update-ca-trust extract' command."
+schema:
+  additionalProperties: false

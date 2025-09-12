@@ -1,0 +1,23 @@
+summary: Configure Systemd services through presets.
+description: Enable or disable systemd services through presets.
+schema:
+  additionalProperties: false
+  properties:
+    presets:
+      type: array
+      minItems: 1
+      items:
+        type: object
+        additionalProperties: false
+        required:
+        - name
+        - state
+        properties:
+          name:
+            type: string
+          state:
+            type: string
+            enum:
+            - enable
+            - disable
+      description: Array of systemd unit names and their preset logic.

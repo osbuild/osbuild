@@ -1,0 +1,92 @@
+summary: Execute oscap autotailor
+description: |-
+  The autotailor stage produces a tailoring file that the OpenSCAP scanner can use to scan
+  and remediate a system. The autotailor rules override a base profile either enabling or
+  disabling (selecting or unselecting) a given rule for the profile. The autotailor command
+  generates and xml diff between the user provided overrides and the base profile.
+  Notes:
+   - requires `openscap-utils` package in the buildroot.
+schema:
+  definitions:
+    json-tailoring:
+      additionalProperties: false
+      required:
+      - datastream
+      - tailored_profile_id
+      - tailoring_file
+      type: object
+      description: OpenSCAP tailoring configuration variables
+      properties:
+        datastream:
+          type: string
+          description: The path to the datastream file
+        tailored_profile_id:
+          type: string
+          description: The id of the new customized (tailored) OpenSCAP profile
+        tailoring_file:
+          type: string
+          description: Path to the JSON file which contains tailoring options to be
+            imported
+    tailoring:
+      additionalProperties: false
+      oneOf:
+      - required:
+        - profile_id
+        - datastream
+        - new_profile
+      - required:
+        - profile_id
+        - datastream
+        - tailored_profile_id
+      type: object
+      description: OpenSCAP configuration variables
+      properties:
+        profile_id:
+          type: string
+          description: The base OpenSCAP profile
+        datastream:
+          type: string
+          description: The path to the datastream file
+        new_profile:
+          type: string
+          description: The id of the new customized (tailored) OpenSCAP profile
+        tailored_profile_id:
+          type: string
+          description: The id of the new customized (tailored) OpenSCAP profile
+        selected:
+          type: array
+          items:
+            type: string
+          description: The rules to select in addition to the base OpenSCAP profile
+        unselected:
+          type: array
+          items:
+            type: string
+          description: The rules to deselect from the base OpenSCAP profile
+        overrides:
+          type: array
+          items:
+            type: object
+            required:
+            - var
+            - value
+            properties:
+              var:
+                type: string
+              value:
+                type:
+                - string
+                - integer
+          description: The variables to override in the base OpenSCAP profile
+  additionalProperties: false
+  required:
+  - filepath
+  - config
+  properties:
+    filepath:
+      type: string
+      description: Filename and path to where the tailoring file will be saved
+    config:
+      oneOf:
+      - $ref: '#/definitions/json-tailoring'
+      - $ref: '#/definitions/tailoring'

@@ -1,0 +1,424 @@
+summary: Create an Anaconda kickstart file
+description: |-
+  Kickstart files are a way to program the Anaconda
+  installer.  This stage can be used to create such
+  a kickstart file at the location given by `path`.
+  Only a very limited set of available kickstart
+  commands are supported here.
+schema:
+  definitions:
+    ksboolean-from-pykickstart-ref:
+      enum:
+      - 'yes'
+      - 'on'
+      - 'true'
+      - '1'
+      - 1
+      - 'off'
+      - 'no'
+      - 'false'
+      - '0'
+      - 0
+    network-options-ref:
+      type: object
+      additionalProperties: false
+      description: Configures network information for the target system and activates
+        network devices in the installation environment
+      required:
+      - device
+      properties:
+        activate:
+          description: Activate (or reactivate) the device. When set to false prevents
+            the device from automatically activating on boot
+          type: boolean
+        bootproto:
+          description: Boot protocol selection
+          enum:
+          - dhcp
+          - bootp
+          - ibft
+          - static
+        device:
+          description: Specifies the device to be configured
+          type: string
+          pattern: ^([a-zA-Z0-9]{2,16}|(([a-fA-F0-9]{2}:){5}[a-fA-F0-9A]{2}))$
+        onboot:
+          description: Whether or not to enable the device at boot time
+          $ref: '#/definitions/ksboolean-from-pykickstart-ref'
+        ip:
+          description: IP address of the device
+          type: string
+          pattern: ^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}|auto)$
+        ipv6:
+          description: IPv6 address of the device, in the form of address[/prefix
+            length]
+          type: string
+        gateway:
+          description: Default gateway as a single IPv4 address
+          type: string
+          pattern: ^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$
+        ipv6gateway:
+          description: Default gateway as a single IPv6 address
+          type: string
+        nameservers:
+          description: DNS name servesr, a list of IP addresses
+          type: array
+          minSize: 1
+          items:
+            type: string
+            pattern: ^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$
+        netmask:
+          description: Network mask for the installed system
+          type: string
+        hostname:
+          description: Host name for the installed system
+          type: string
+          pattern: (?=^.{1,253}$)^[a-zA-Z0-9][a-zA-Z0-9-]{0,62}((\.[a-zA-Z0-9][a-zA-Z0-9-]{0,62})+)?$
+        essid:
+          description: The network ID for wireless networks
+          type: string
+        wpakey:
+          description: The WPA encryption key for wireless networks
+          type: string
+  additionalProperties: false
+  anyOf:
+  - required:
+    - path
+    - ostree
+    not:
+      required:
+      - ostreecontainer
+  - required:
+    - path
+    - ostreecontainer
+    not:
+      required:
+      - ostree
+  - required:
+    - path
+    not:
+      required:
+      - ostree
+      - ostreecontainer
+  properties:
+    path:
+      type: string
+      description: Where to place the kickstart file
+    ostree:
+      type: object
+      required:
+      - osname
+      - url
+      - ref
+      additionalProperties: false
+      properties:
+        osname:
+          type: string
+        url:
+          type: string
+        ref:
+          type: string
+        remote:
+          type: string
+          description: The remote to tie tie commit to
+        gpg:
+          type: boolean
+          default: true
+    ostreecontainer:
+      type: object
+      required:
+      - url
+      additionalProperties: false
+      properties:
+        stateroot:
+          type: string
+        url:
+          type: string
+        transport:
+          type: string
+          enum:
+          - registry
+          - oci
+          - oci-archive
+          - dir
+          description: Use the given transport, Anaconda's default is 'registry'
+        remote:
+          type: string
+        signatureverification:
+          type: boolean
+          default: true
+          description: This field is deprecated and does nothing.
+    liveimg:
+      type: object
+      required:
+      - url
+      properties:
+        url:
+          type: string
+    groups:
+      type: object
+      additionalProperties: false
+      description: Keys are group names, values are objects with group info
+      patternProperties:
+        ^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$:
+          type: object
+          properties:
+            gid:
+              type: number
+              description: GID for this group
+    users:
+      additionalProperties: false
+      type: object
+      description: Keys are usernames, values are objects giving user info.
+      patternProperties:
+        ^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$:
+          type: object
+          properties:
+            uid:
+              description: User UID
+              type: number
+            gid:
+              description: User GID
+              type: number
+            groups:
+              description: Array of group names for this user
+              type: array
+              items:
+                type: string
+            description:
+              description: User account description (or full name)
+              type: string
+            home:
+              description: Path to user's home directory
+              type: string
+            shell:
+              description: User's login shell
+              type: string
+            password:
+              description: User's encrypted password, as returned by crypt(3)
+              type: string
+            key:
+              description: SSH Public Key to add to ~/.ssh/authorized_keys
+              type: string
+    rootpw:
+      type: object
+      anyOf:
+      - required:
+        - lock
+        not:
+          required:
+          - allow_ssh
+      - required:
+        - iscrypted
+        - password
+        not:
+          required:
+          - plaintext
+      - required:
+        - plaintext
+        - password
+        not:
+          required:
+          - iscrypted
+      properties:
+        lock:
+          type: boolean
+          description: the root account is locked by default
+        plaintext:
+          type: boolean
+          description: the password argument is assumed to be in plain text
+        iscrypted:
+          type: boolean
+          description: the password argument is assumed to already be encrypted
+        allow_ssh:
+          type: boolean
+          description: This will allow remote root logins via ssh using only the password
+        password:
+          type: string
+          description: the root password
+          minLength: 1
+    lang:
+      type: string
+      description: The language code (e.g. en_US.UTF-8)
+    keyboard:
+      type: string
+      description: The keyboard map (e.g. us)
+    timezone:
+      type: string
+      description: The timezone (e.g. UTC)
+    zerombr:
+      type: boolean
+      description: Reinitialize Partition Tables
+    clearpart:
+      description: Removes partitions from the system, prior to creation of new partitions
+      type: object
+      anyOf:
+      - required:
+        - all
+      - required:
+        - drives
+      - required:
+        - list
+      - required:
+        - disklabel
+      - required:
+        - linux
+      properties:
+        all:
+          description: Erases all partitions from the system
+          type: boolean
+        initlabel:
+          description: Initializes a disk (or disks) by creating a default disk label
+            for all disks
+          type: boolean
+        drives:
+          description: Specifies which drives to clear partitions from
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Za-z0-9/:\_|*-]+$
+        list:
+          description: Specifies which partitions to clear
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Za-z0-9]+$
+        disklabel:
+          description: Create a set disk label when relabeling a disk
+          type: string
+          pattern: ^[A-Za-z0-9_-]+$
+        linux:
+          description: Erases all Linux partitions
+          type: boolean
+    reboot:
+      description: Reboot after the installation is successfully completed
+      oneOf:
+      - type: boolean
+      - type: object
+        additionalProperties: false
+        anyOf:
+        - required:
+          - eject
+        - required:
+          - kexec
+        properties:
+          eject:
+            description: Attempt to eject the installation media before rebooting
+            type: boolean
+          kexec:
+            description: Use this option to reboot into the new system using the kexec
+            type: boolean
+    display_mode:
+      description: Perform the Kickstart installation in the given display mode
+      enum:
+      - text
+      - graphical
+      - cmdline
+    autopart:
+      description: Automatically creates partitions
+      type: object
+      not:
+        required:
+        - pbkdf-iterations
+        - pbkdf-time
+      properties:
+        type:
+          description: Selects one of the predefined automatic partitioning schemes
+            you want to use
+          type: string
+          enum:
+          - lvm
+          - btrfs
+          - plain
+          - thinp
+        fstype:
+          description: Specify a supported file system (such as ext4 or xfs) to replace
+            the default when doing automatic partitioning
+          type: string
+        nolvm:
+          description: Do not use LVM or Btrfs for automatic partitioning. This option
+            is equal to --type=plain
+          type: boolean
+        encrypted:
+          description: Encrypts all partitions
+          type: boolean
+        passphrase:
+          description: Provides a default system-wide passphrase for all encrypted
+            devices
+          type: string
+        escrowcert:
+          description: Stores data encryption keys of all encrypted volumes as files
+            in /root, encrypted using the X.509 certificate from the URL specified
+          type: string
+        backuppassphrase:
+          description: Adds a randomly-generated passphrase to each encrypted volume
+          type: boolean
+        cipher:
+          description: Specifies which type of encryption will be used if the Anaconda
+            default aes-xts-plain64 is not satisfactory
+          type: string
+        luks-version:
+          description: Specifies which version of LUKS should be used to encrypt the
+            system
+          type: string
+        pbkdf:
+          description: Sets Password-Based Key Derivation Function (PBKDF) algorithm
+            for the LUKS keyslot
+          type: string
+        pbkdf-memory:
+          description: Sets the memory cost for PBKDF
+          type: integer
+        pbkdf-time:
+          description: Sets the number of milliseconds to spend with PBKDF passphrase
+            processing
+          type: integer
+        pbkdf-iterations:
+          description: Sets the number of iterations for passphrase processing directly
+          type: integer
+        nohome:
+          description: Disables automatic creation of the /home partition
+          type: boolean
+        noswap:
+          description: Disables automatic creation of a swap partition
+          type: boolean
+    network:
+      type: array
+      minItems: 1
+      items:
+        $ref: '#/definitions/network-options-ref'
+    bootloader:
+      description: Specifies how the boot loader should be installed
+      additionalProperties: false
+      type: object
+      properties:
+        append:
+          description: Specifies additional kernel parameters
+          type: string
+    '%post':
+      type: array
+      minItems: 1
+      items:
+        type: object
+        description: Adds arbitrary commands to run on the system once the installation
+          is complete.
+        additionalProperties: false
+        required:
+        - commands
+        properties:
+          erroronfail:
+            description: Stop the installation on script failure
+            type: boolean
+          interpreter:
+            description: Allows specifying a different scripting language
+            type: string
+          log:
+            description: Log all messages from the script to the given log file
+            type: string
+          nochroot:
+            description: Run outside of the chroot environment
+            type: boolean
+          commands:
+            type: array
+            minItems: 1
+            items:
+              type: string

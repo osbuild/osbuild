@@ -1,0 +1,51 @@
+summary: Partition a target using parted(8)
+description: |-
+  Use the `parted`(8) command line utility to partition the specified
+  `device`.
+  Buildhost commands used: `parted`.
+schema_2:
+  devices:
+    type: object
+    additionalProperties: true
+    required:
+    - device
+    properties:
+      device:
+        type: object
+        additionalProperties: true
+  options:
+    additionalProperties: false
+    required:
+    - label
+    properties:
+      label:
+        description: The type of the partition table
+        type: string
+        enum:
+        - gpt
+      partitions:
+        description: 'Partition layout '
+        type: array
+        required:
+        - start
+        - size
+        - name
+        items:
+          description: Description of one partition
+          type: object
+          properties:
+            bootable:
+              description: Mark the partition as bootable
+              type: boolean
+            name:
+              description: The partition name (GPT)
+              type: string
+            size:
+              description: The size of this partition
+              type: integer
+            start:
+              description: The start offset of this partition
+              type: integer
+            type:
+              description: The partition type
+              type: string

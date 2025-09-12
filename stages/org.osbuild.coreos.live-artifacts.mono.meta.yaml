@@ -1,0 +1,47 @@
+summary: Build CoreOS Live ISO and PXE kernel,initramfs,rootfs
+description: |-
+  This stage builds the CoreOS Live ISO and PXE kernel,initramfs,rootfs
+  artifacts. Inputs to this stage are metal and metal4k raw disk images
+  that are then used to generate the Live artifacts.
+capabilities:
+- CAP_MAC_ADMIN
+schema_2:
+  inputs:
+    type: object
+    additionalProperties: false
+    required:
+    - deployed-tree
+    - metal
+    - metal4k
+    properties:
+      deployed-tree:
+        type: object
+        additionalProperties: true
+      metal:
+        type: object
+        additionalProperties: true
+      metal4k:
+        type: object
+        additionalProperties: true
+  options:
+    additionalProperties: false
+    required:
+    - filenames
+    properties:
+      filenames:
+        type: object
+        additionalProperties: false
+        required:
+        - live-iso
+        - live-kernel
+        - live-initramfs
+        - live-rootfs
+        properties:
+          live-iso:
+            type: string
+          live-kernel:
+            type: string
+          live-initramfs:
+            type: string
+          live-rootfs:
+            type: string

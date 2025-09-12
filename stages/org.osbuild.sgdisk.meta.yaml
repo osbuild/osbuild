@@ -1,0 +1,67 @@
+summary: Partition a target using sgdisk(8)
+description: Only supports the creation of partitions with GPT layout.
+schema_2:
+  devices:
+    type: object
+    additionalProperties: true
+    required:
+    - device
+    properties:
+      device:
+        type: object
+        additionalProperties: true
+  options:
+    additionalProperties: false
+    required:
+    - uuid
+    properties:
+      uuid:
+        description: UUID for the disk image's partition table
+        type: string
+      quote_partition_name:
+        description: Quote partition names passed to sgdisk, so that they end up quoted
+          in the partition table. This is old behavior kept for backward compatibility.
+        type: boolean
+        default: true
+      label:
+        description: The type of the partition table. Only 'gpt' supported.
+        type: string
+        enum:
+        - gpt
+      partitions:
+        description: 'Partition layout '
+        type: array
+        items:
+          description: Description of one partition
+          type: object
+          properties:
+            bootable:
+              description: Mark the partition as bootable (dos)
+              type: boolean
+            name:
+              description: The partition name
+              type: string
+            partnum:
+              description: The partition number
+              type: integer
+            size:
+              description: The size of this partition
+              type: integer
+            start:
+              description: The start offset of this partition
+              type: integer
+            type:
+              description: The partition type (UUID or identifier)
+              type: string
+            uuid:
+              description: UUID of the partition
+              type: string
+            attrs:
+              description: Attributes of the partition
+              type: array
+              maxItems: 64
+              uniqueItems: true
+              items:
+                type: integer
+                minimum: 0
+                maximum: 63

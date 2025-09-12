@@ -1,0 +1,20 @@
+summary: Compress a file
+description: 'Buildhost commands used: `xz`.'
+schema_2:
+  inputs:
+    type: object
+    additionalProperties: false
+    required:
+    - file
+    properties:
+      file:
+        type: object
+        additionalProperties: true
+  options:
+    additionalProperties: false
+    required:
+    - filename
+    properties:
+      filename:
+        description: Filename to use for the compressed file
+        type: string

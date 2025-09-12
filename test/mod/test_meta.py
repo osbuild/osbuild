@@ -221,6 +221,43 @@ def make_fake_meta_json(tmp_path, name, version, invalid=""):
     return meta_json_path
 
 
+def make_fake_meta_yaml(tmp_path, name, version, invalid=""):
+    meta_yaml_path = pathlib.Path(f"{tmp_path}/stages/{name}.meta.yaml")
+    meta_yaml_path.parent.mkdir(exist_ok=True)
+    if version == 1:
+        schema_part = """
+schema:
+  properties:
+    yaml_filename:
+      type: string
+        """
+    elif version == 2:
+        schema_part = """
+schema_2:
+  yaml_devices:
+    type: object
+        """
+    else:
+        pytest.fail(f"unexpected schema version {version}")
+
+    if invalid == "yaml":
+        schema_part = "xxx: not-yaml"
+    elif invalid == "schema":
+        schema_part = "not: following schema"
+
+    # pylint: disable=possibly-used-before-assignment
+    meta_yaml_path.write_text(textwrap.dedent("""
+    summary: some yaml summary
+    description:
+    - long text
+    - with newlines
+    capabilities:
+    - CAP_MAC_ADMIN
+    - CAP_BIG_MAC
+    """) + schema_part, encoding="utf-8")
+    return meta_yaml_path
+
+
 def make_fake_py_module(tmp_path, name, invalid=""):
     py_path = pathlib.Path(f"{tmp_path}/stages/{name}")
     py_path.parent.mkdir(exist_ok=True)
@@ -309,6 +346,32 @@ def test_load_from_json_prefered(tmp_path):
     assert modinfo.opts == {
         "1": {},
         "2": {"json_devices": {"type": "object"}},
+    }
+
+
+def test_load_from_yaml(tmp_path):
+    make_fake_meta_yaml(tmp_path, "org.osbuild.noop", version=1)
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert modinfo.desc == "some yaml summary"
+    assert modinfo.info == "long text\nwith newlines"
+    assert modinfo.caps == set(["CAP_MAC_ADMIN", "CAP_BIG_MAC"])
+    assert modinfo.opts == {
+        "1": {"properties": {"yaml_filename": {"type": "string"}}},
+        "2": {},
+    }
+
+
+def test_load_from_yaml_prefered(tmp_path):
+    make_fake_meta_yaml(tmp_path, "org.osbuild.noop", version=2)
+    make_fake_meta_json(tmp_path, "org.osbuild.noop", version=1)
+    make_fake_py_module(tmp_path, "org.osbuild.noop")
+    modinfo = osbuild.meta.ModuleInfo.load(tmp_path, "Stage", "org.osbuild.noop")
+    assert modinfo.desc == "some yaml summary"
+    assert modinfo.info == "long text\nwith newlines"
+    assert modinfo.caps == set(["CAP_MAC_ADMIN", "CAP_BIG_MAC"])
+    assert modinfo.opts == {
+        "1": {},
+        "2": {"yaml_devices": {"type": "object"}},
     }
 
 
