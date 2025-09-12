@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+import json
+import os
+import yaml
+
+STAGES_DIR = "stages"
+
+# Use a custom Dumper to format multiline strings correctly
+class MyDumper(yaml.Dumper):
+    def represent_scalar(self, tag, value, style=None):
+        if "\n" in value:
+            style = "|"
+        return super().represent_scalar(tag, value, style)
+
+def main():
+    for filename in os.listdir(STAGES_DIR):
+        if not filename.endswith(".meta.json"):
+            continue
+
+        json_path = os.path.join(STAGES_DIR, filename)
+        yaml_path = json_path.replace(".json", ".yaml")
+
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Convert description to a multiline string if it's a list
+        if isinstance(data.get("description"), list):
+            data["description"] = "\n".join(data["description"])
+
+        with open(yaml_path, "w", encoding="utf-8") as f:
+            yaml.dump(data, f, Dumper=MyDumper, default_flow_style=False, sort_keys=False)
+
+        os.remove(json_path)
+        print(f"Converted {json_path} to {yaml_path}")
+
+if __name__ == "__main__":
+    main()
