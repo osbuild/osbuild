@@ -510,6 +510,8 @@ class Loop:
 
         host_path = f"/dev/{self.devname}"
         if os.path.exists(host_path):
+            # note that this does not set mode=stat.S_IFBLK so
+            # its just a regular file as bind mount target
             os.mknod(self.devname, mode=(stat.S_IMODE(mode)),
                      dir_fd=dir_fd)
             subprocess.run(["mount", "--bind", host_path, self.devname], cwd=f"/proc/self/fd/{dir_fd}/", check=True)
