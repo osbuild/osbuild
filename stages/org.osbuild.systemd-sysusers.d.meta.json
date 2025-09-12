@@ -1,0 +1,87 @@
+{
+  "summary": "Create system users via systemd-sysusers.",
+  "description": [
+    "This stage allows to create a systemd-sysusers configuration file. It accepts an",
+    "inline sysusers configuration, which gets saved to a .conf file in etc/sysusers.d.",
+    "The fields for each sysuser entry are validated as specified by sysusers.d(5)."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "definitions": {
+      "sysuser-config": {
+        "type": "object",
+        "description": "Configuration of system users to create a file in sysuser.d",
+        "additionalProperties": false,
+        "required": [
+          "filename",
+          "entries"
+        ],
+        "properties": {
+          "path-prefix": {
+            "type": "string",
+            "enum": [
+              "usr",
+              "etc"
+            ],
+            "default": "usr",
+            "description": "Define the target path prefix to save the created sysuser.d file to"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Name of the created sysuser.d file",
+            "pattern": "\\.conf$"
+          },
+          "entries": {
+            "type": "array",
+            "description": "Array of systemd-sysuser entries",
+            "items": {
+              "type": "object",
+              "description": "Entry in the sysuser file",
+              "required": [
+                "type",
+                "name"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "u",
+                    "u!",
+                    "g",
+                    "m",
+                    "r"
+                  ]
+                },
+                "name": {
+                  "type": "string",
+                  "pattern": "^([a-z]+(?:[-_][a-zA-Z0-9_-]{0,30})?|-)$"
+                },
+                "id": {
+                  "type": "string",
+                  "default": "-"
+                },
+                "gecos": {
+                  "type": "string"
+                },
+                "home": {
+                  "type": "string"
+                },
+                "shell": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "required": [
+      "config"
+    ],
+    "properties": {
+      "config": {
+        "$ref": "#/definitions/sysuser-config"
+      }
+    }
+  }
+}
