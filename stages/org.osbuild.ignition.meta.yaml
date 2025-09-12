@@ -1,0 +1,25 @@
+summary: Setup ignition so it will be triggered on first boot.
+description: |-
+  Create the file '/boot/ignition.firstboot' that will be used by grub,
+  if the necessary ignition support is enabled, to create a variable to
+  be used in the kernel command line ('ignition_firstboot'). Via this
+  variable, if included in the actual kernel command line, the run of
+  ignition during early boot can be controlled: if grub detects the
+  aforementioned file to be present it will set 'ignition_firstboot'
+  to "ignition.firstboot" which is the trigger for ignition to run.
+  The "ignition-firstboot-complete.service" will remove said file and
+  thus preventing ignition to be run on the next boot.
+  The `network` option can be used to overwrite the default network
+  configuration, in case that ignition is run.
+schema:
+  additionalProperties: false
+  properties:
+    network:
+      type: array
+      description: Overwrite default network connection
+      items:
+        type: string
+    target:
+      type: string
+      description: Location to write the 'ignition.firstboot' file.
+      default: tree:///boot

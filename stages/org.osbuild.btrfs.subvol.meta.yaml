@@ -1,0 +1,23 @@
+summary: Create subvolumes on a mounted btrfs partition.
+description: |-
+  See `btrfs`(8).
+  Buildhost commands used: `btrfs`.
+schema_2:
+  options:
+    additionalProperties: false
+    properties:
+      subvolumes:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required:
+          - name
+          properties:
+            name:
+              type: string
+  devices:
+    type: object
+    additionalProperties: true
+  mounts:
+    type: array

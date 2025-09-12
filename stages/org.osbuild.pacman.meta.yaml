@@ -1,0 +1,19 @@
+summary: Verify, and install pacman packages
+description: |-
+  `packages` is an array of objects representing pacman packages. Each package is
+  identified by its checksums. Specifically, the content hash of the package.
+  This stage will fail if any of the packages can't be found.
+schema_2:
+  options:
+    type: object
+    additionalProperties: false
+    properties: {}
+  inputs:
+    type: object
+    additionalProperties: false
+    required:
+    - packages
+    properties:
+      packages:
+        type: object
+        additionalProperties: true

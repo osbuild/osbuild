@@ -1,0 +1,73 @@
+summary: Configure Red Hat Subscription Management (RHSM)
+description: |-
+  The stage currently supports configuring the enablement status of
+  RHSM DNF plugins, and subset of RHSM configuration options.
+  In case the stage is configured to enable/disable specific
+  DNF plugins, it expects that the appropriate configuration files
+  exist in the filesystem tree. Non-existence of the configuration
+  files will make the stage fail.
+  In case the stage is configured to change subscription-manager configuration,
+  it expects that the /etc/rhsm/rhsm.conf file exists. Non-existence of the
+  configuration file will make the stage fail. The stage uses iniparse module
+  to change the configuration directly, because this does not require running
+  subscription-manager command in a chroot. The only benefit of running the
+  subscription-manager command would be in case of removing configuration options,
+  because it may set default values if they exist for the removed option.
+  Since the stage does not support removing configuration options, using iniparse
+  directly is considered OK. In addition, iniparse module is used also by
+  subscription-manager to modify its configuration file.
+schema:
+  definitions:
+    plugins:
+      additionalProperties: false
+      type: object
+      description: RHSM DNF plugins configuration
+      properties:
+        product-id:
+          additionalProperties: false
+          type: object
+          description: '''product-id'' DNF/YUM plugin configuration'
+          properties:
+            enabled:
+              type: boolean
+              description: enablement state of the plugin
+        subscription-manager:
+          additionalProperties: false
+          type: object
+          description: '''subscription-manager'' DNF/YUM plugin configuration'
+          properties:
+            enabled:
+              type: boolean
+              description: enablement state of the plugin
+  additionalProperties: false
+  properties:
+    dnf-plugins:
+      $ref: '#/definitions/plugins'
+    yum-plugins:
+      $ref: '#/definitions/plugins'
+    subscription-manager:
+      additionalProperties: false
+      type: object
+      description: Subscription-manager configuration
+      properties:
+        rhsm:
+          additionalProperties: false
+          type: object
+          description: RHSM configuration section
+          properties:
+            manage_repos:
+              type: boolean
+              description: Whether subscription-manager should manage DNF repos file
+            auto_enable_yum_plugins:
+              type: boolean
+              description: Whether yum/dnf plugins subscription-manager and product-id
+                should be enabled every-time subscription-manager or subscription-manager-gui
+                is executed
+        rhsmcertd:
+          additionalProperties: false
+          type: object
+          description: RHSMCERTD configuration section
+          properties:
+            auto_registration:
+              type: boolean
+              description: Automatic system registration

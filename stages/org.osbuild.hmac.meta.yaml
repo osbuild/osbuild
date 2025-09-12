@@ -1,0 +1,29 @@
+summary: Generates .hmac checksum files
+description: "Generates HMAC values for given files and stores them alongside the\
+  \ original\nfor later verification.\nThe stage uses the <algorithm>hmac commands\
+  \ (e.g. sha512hmac) which use a\nbuilt-in key when none is provided. Future extensions\
+  \ of this stage may\nadd a key parameter if and when it becomes a requirement. \n\
+  In its current state, the stage can be used to replicate the generation of\nkernel\
+  \ hmac files [1] which are used for integrity verification when booting\nin FIPS\
+  \ mode.\nNotes:\n  - Requires hmac calc in the build root (libkcapi-hmaccalc)\n\
+  Links:\n[1] https://gitlab.com/redhat/centos-stream/rpms/kernel/-/blob/f5b2a5f2ae8040c6072382545d302a4a936cb53c/kernel.spec?page=3#L2370"
+schema_2:
+  options:
+    additionalProperties: false
+    required:
+    - paths
+    - algorithm
+    properties:
+      paths:
+        type: array
+        minItems: 1
+        items:
+          type: string
+      algorithm:
+        type: string
+        enum:
+        - sha1
+        - sha224
+        - sha256
+        - sha384
+        - sha512

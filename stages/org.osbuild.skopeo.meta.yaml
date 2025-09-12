@@ -1,0 +1,98 @@
+summary: |-
+  Copy a container image. The destination can be either a container store,
+  or a directory compliant with 'Open Container Image Layout Specification'.
+  This supports both oci archives and docker archives, and uses the containers
+  input (reading from a skopeo source or a file in a pipeline).
+description: 'Buildhost commands used: `skopeo`.'
+schema_2:
+  definitions:
+    destination-containers-storage:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          enum:
+          - containers-storage
+        storage-path:
+          description: Container storage location (default /var/lib/containers/storage).
+          type: string
+          default: /var/lib/containers/storage
+        storage-driver:
+          description: The container storage driver to use (default overlay).
+          type: string
+          default: overlay
+    destination-oci:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - path
+      properties:
+        type:
+          enum:
+          - oci
+        path:
+          description: Location of a directory compliant with 'Open Container Image
+            Layout Specification'
+          type: string
+    destination-oci-archive:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - path
+      properties:
+        type:
+          enum:
+          - oci-archive
+        path:
+          description: Location of a tar archive compliant with 'Open Container Image
+            Layout Specification'
+          type: string
+    destination-dir:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - path
+      properties:
+        type:
+          enum:
+          - dir
+        path:
+          description: Location of a directory storing the manifest, layer tarballs
+            and signatures as individual files. This is a non-standardized format,
+            primarily useful for debugging or noninvasive container inspection.
+          type: string
+  inputs:
+    type: object
+    additionalProperties: false
+    required:
+    - images
+    properties:
+      images:
+        type: object
+        additionalProperties: true
+      manifest-lists:
+        type: object
+        description: Optional manifest lists to merge into images. The metadata must
+          specify an image ID to merge to.
+        additionalProperties: true
+  options:
+    additionalProperties: false
+    required:
+    - destination
+    properties:
+      destination:
+        oneOf:
+        - $ref: '#/definitions/destination-containers-storage'
+        - $ref: '#/definitions/destination-oci'
+        - $ref: '#/definitions/destination-oci-archive'
+        - $ref: '#/definitions/destination-dir'
+      remove-signatures:
+        type: boolean
+        default: false
+        description: Do not copy signatures, if any, from source-image. Necessary
+          when copying a signed image to a destination which does not support signatures.

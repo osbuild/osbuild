@@ -1,0 +1,14 @@
+summary: Create a `.discinfo` file describing disk
+description: This will create a `.discinfo` file with the specified parameters.
+schema:
+  additionalProperties: true
+  required:
+  - basearch
+  - release
+  properties:
+    basearch:
+      description: Build architecture.
+      type: string
+    release:
+      description: The product name.
+      type: string

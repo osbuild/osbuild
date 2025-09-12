@@ -1,0 +1,26 @@
+summary: Deploy a container.
+description: 'Buildhost commands used: podman skopeo'
+schema_2:
+  inputs:
+    type: object
+    additionalProperties: false
+    required:
+    - images
+    properties:
+      images:
+        type: object
+        additionalProperties: true
+  options:
+    additionalProperties: false
+    properties:
+      exclude:
+        type: array
+        description: Exclude paths from the deployment
+        minItems: 1
+        items:
+          type: string
+      remove-signatures:
+        type: boolean
+        default: false
+        description: Do not copy signatures, if any, from source-image. Necessary
+          when copying a signed image to a destination which does not support signatures.

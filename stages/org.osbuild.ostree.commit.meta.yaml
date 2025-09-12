@@ -1,0 +1,42 @@
+summary: Assemble a file system tree into a ostree commit
+description: |-
+  Needs a file system tree that is already conforming to the ostree
+  system layout[1], specified via the `tree` input and commits it
+  to a repository. The repository must have been created at `/repo`.
+  Additional metadata is stored in `/compose.json` which contains
+  the commit compose information. This is also returned via the
+  metadata API to osbuild.
+  [1] https://ostree.readthedocs.io/en/stable/manual/adapting-existing/
+capabilities:
+- CAP_MAC_ADMIN
+- CAP_NET_ADMIN
+- CAP_SYS_PTRACE
+schema_2:
+  options:
+    additionalProperties: false
+    required:
+    - ref
+    properties:
+      ref:
+        description: OStree ref to create for the commit
+        type: string
+        default: ''
+      os_version:
+        description: Set the version of the OS as commit metadata
+        type: string
+      parent:
+        description: commit id of the parent commit
+        type: string
+      selinux-label-version:
+        description: Set selinux label version
+        type: integer
+        default: 0
+  inputs:
+    type: object
+    additionalProperties: false
+    required:
+    - tree
+    properties:
+      tree:
+        type: object
+        additionalProperties: true

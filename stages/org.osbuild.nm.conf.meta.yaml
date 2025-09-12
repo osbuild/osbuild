@@ -1,0 +1,97 @@
+summary: Create NetworkManager configuration files.
+description: |-
+  This stages allows to create NetworkManager configuration files in the
+  location specified via `path` with the `settings` provided. Only a
+  subset of the all options are currently supported.
+  The stage will use `true` and `false` for boolean values and `,` as
+  list separator.
+  NetworkManger looks in the following locations for configuration files:
+      - /etc/NetworkManager/NetworkManager.conf
+      - /etc/NetworkManager/conf.d/name.conf
+      - /usr/lib/NetworkManager/conf.d/name.conf,
+   and also in the following locations that very likely should not be used:
+      - /run/NetworkManager/conf.d/name.conf
+      -/var/lib/NetworkManager/NetworkManager-intern.conf
+schema:
+  definitions:
+    device-list:
+      type: array
+      minItems: 1
+      items:
+        type: string
+    str-array:
+      type: array
+      minItems: 1
+      items:
+        type: string
+    device:
+      type: object
+      additionalProperties: false
+      properties:
+        managed:
+          type: boolean
+        wifi.scan-rand-mac-address:
+          type: boolean
+    global-dns-domain:
+      type: object
+      additionalProperties: false
+      required:
+      - servers
+      properties:
+        servers:
+          type: array
+          minItems: 1
+          items:
+            type: string
+  additionalProperties: false
+  required:
+  - path
+  - settings
+  properties:
+    path:
+      type: string
+    settings:
+      type: object
+      additionalProperties: false
+      properties:
+        main:
+          type: object
+          additionalProperties: false
+          properties:
+            no-auto-default:
+              $ref: '#/definitions/device-list'
+            plugins:
+              $ref: '#/definitions/str-array'
+        device:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - config
+            properties:
+              name:
+                type: string
+              config:
+                $ref: '#/definitions/device'
+        global-dns-domain:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - name
+            - config
+            properties:
+              name:
+                type: string
+              config:
+                $ref: '#/definitions/global-dns-domain'
+        keyfile:
+          type: object
+          additionalProperties: false
+          properties:
+            unmanaged-devices:
+              $ref: '#/definitions/device-list'
