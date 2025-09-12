@@ -28,7 +28,7 @@ def osbuild_container():
 
 
 @pytest.mark.skipif(os.getuid() == 0, reason="must run as user")
-def test_osbuild_works_with_less_privs_pr2187(tmp_path):
+def test_osbuild_rootless_container_with_less_privs_pr2187(tmp_path):
     # the container manifest does not require loopback mounts so we
     # use it for this test
     manifest_in_path = Path(__file__).parent / "../data/manifests/fedora-container.json"
@@ -66,3 +66,34 @@ def test_osbuild_works_with_less_privs_pr2187(tmp_path):
             "--output-directory", "/output",
         ])
     assert (tmp_path / "container" / "fedora-container.tar").exists()
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="must run as root")
+def test_osbuild_rootful_with_less_privs_pr2187(tmp_path):
+    manifest_path = Path(__file__).parent / "../data/manifests/fedora-boot.json"
+
+    # build container
+    with osbuild_container() as cnt_tag:
+        subprocess.check_call([
+            "podman", "run", "--rm",
+            # we need this for bind mounts
+            "--cap-add=SYS_ADMIN",
+            # bubble wrap needs this curently
+            "--cap-add=NET_ADMIN",
+            # tweak selinux
+            "--security-opt", "label=disable",
+            # pass in loop support, ideal to have loop devices in the
+            # container, but still less than all of --privileged
+            "--device", "/dev/loop-control",
+            "--device-cgroup-rule", "b 7:* rwm",
+            # volumes
+            "-v", f"{manifest_path}:/manifest.json",
+            "-v", f"{tmp_path}:/output",
+            # so that the loop-control devices are available
+            "-v", "/dev:/dev",
+            cnt_tag,
+            "/manifest.json",
+            "--export", "image",
+            "--output-directory", "/output",
+        ])
+    assert (tmp_path / "image" / "disk.img").exists()
