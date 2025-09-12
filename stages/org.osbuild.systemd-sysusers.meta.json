@@ -1,0 +1,102 @@
+{
+  "summary": "Create system users via systemd-sysusers.",
+  "description": [
+    "This stage allows to copy systemd-sysuser configuration files and create them.",
+    "It accepts a list of paths which are copied to the sysuser.d directory as well",
+    "as an inline configuration of a new sysusers configuration file. The `filename`",
+    "property .conf file to be added. The fields for each sysuser entry are validated",
+    "as specified by sysusers.d(5)."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "definitions": {
+      "sysuser-config": {
+        "type": "object",
+        "description": "Configuration of system users to create a file in sysuser.d",
+        "additionalProperties": false,
+        "required": [
+          "filename",
+          "entries"
+        ],
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "Name of the created sysuser.d file",
+            "pattern": "\\.conf$"
+          },
+          "entries": {
+            "type": "array",
+            "description": "Array of systemd-sysuser entries",
+            "items": {
+              "type": "object",
+              "description": "Entry in the sysuser file",
+              "required": [
+                "type",
+                "name"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["u", "u!", "g", "m", "r"]
+                },
+                "name": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z_][a-zA-Z0-9_-]{0,30}$"
+                },
+                "id": {
+                  "type": "string",
+                  "default": "-"
+                },
+                "gecos": {
+                  "type": "string"
+                },
+                "home": {
+                  "type": "string"
+                },
+                "shell": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }, 
+      "sysuser-file": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "The source, if an input",
+            "pattern": "^input://[^/]+/"
+          },
+          {
+            "type": "string",
+            "description": "The source, if a mount",
+            "pattern": "^mount://[^/]+/"
+          },
+          {
+            "type": "string",
+            "description": "The source, if the tree",
+            "pattern": "^tree:///"
+          }
+        ]
+      }
+    },
+    "properties": {
+      "paths": {
+        "type": "array",
+        "description": "Array of items to copy into sysuser.d",
+        "items": {
+          "$ref": "#/definitions/sysuser-file"
+        }
+      },
+      "config": {
+        "$ref": "#/definitions/sysuser-config"
+      },
+      "apply": {
+        "type": "boolean",
+        "description": "Run systemd-sysuser after creating files",
+        "default": true
+      }
+    }
+  }
+}
