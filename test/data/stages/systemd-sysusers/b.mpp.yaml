@@ -1,0 +1,69 @@
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - nftables
+                - openssh-server
+                - systemd
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+      
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: /etc/sysusers.d
+
+      - type: org.osbuild.systemd-sysusers.d
+        options:
+          config:
+            filename: new.conf
+            entries:
+              - type: u
+                name: sysuser-a
+                id: "-"
+              - type: g
+                name: sysuser-a-group
+                id: "101"
+              - type: m
+                name: sysuser-a
+                id: sysuser-a-group
+      
+      - type: org.osbuild.systemd-sysusers.d
+        options:
+          config:
+            path-prefix: etc
+            filename: new-etc.conf
+            entries:
+              - type: u
+                name: sysuser-etc
+                id: "-"
+              - type: g
+                name: sysuser-etc-group
+                id: "102"
+              - type: m
+                name: sysuser-etc
+                id: sysuser-etc-group
+      
+      - type: org.osbuild.systemd-sysusers

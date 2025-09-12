@@ -1,0 +1,10 @@
+{
+  "summary": "Run systemd-sysusers.",
+  "description": [
+    "This stage allows to apply systemd-sysusers on the current tree"
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

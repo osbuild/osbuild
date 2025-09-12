@@ -1,0 +1,58 @@
+{
+  "added_files": [
+    "/etc/sysusers.d",
+    "/etc/sysusers.d/new-etc.conf",
+    "/usr/lib/sysusers.d/new.conf"
+  ],
+  "deleted_files": [],
+  "differences": {
+    "/etc/group": {
+      "content": [
+        "sha256:fd96654ce9a3c6242d80039ed8a12f7d46b5e6e3468fe1aac2f02d2304ee322a",
+        "sha256:18f7d850a0cb1d5b8ebc402fcc9cfdbbe679b07545615f0f6ae8c40f6103bb4a"
+      ]
+    },
+    "/etc/group-": {
+      "content": [
+        "sha256:26508075764b1b6edab94b900d56c5191c5067539496f806d19bcb6aa80e87d0",
+        "sha256:fd96654ce9a3c6242d80039ed8a12f7d46b5e6e3468fe1aac2f02d2304ee322a"
+      ]
+    },
+    "/etc/gshadow": {
+      "content": [
+        "sha256:cae8f1b9d5fdcf9bbea4531d14e0335fc683bb8b4178461dd2d224b52c049064",
+        "sha256:18f7f5242716c209a9f0a766f796ecf0bfe8327a3a7f2e358e0b7fcc4b02c354"
+      ]
+    },
+    "/etc/gshadow-": {
+      "content": [
+        "sha256:4f640a73f181e9125ebb0e3aba5c0217c268acf73100f4346c8264689524ebe0",
+        "sha256:cae8f1b9d5fdcf9bbea4531d14e0335fc683bb8b4178461dd2d224b52c049064"
+      ]
+    },
+    "/etc/passwd": {
+      "content": [
+        "sha256:b1e6a8f7c7711f79c1d8c85f249566ac25499f2a795cc875e349607083641719",
+        "sha256:1eb627cf27ef6f61763941bf6ca40de5f2aeb990f68fe74a21f7c02f9ecdf853"
+      ]
+    },
+    "/etc/passwd-": {
+      "content": [
+        "sha256:8fd3c570c654a1f5ddad006df316724650d84953969aa24616687f10851b0b5b",
+        "sha256:b1e6a8f7c7711f79c1d8c85f249566ac25499f2a795cc875e349607083641719"
+      ]
+    },
+    "/etc/shadow": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/shadow-": {
+      "content": [
+        null,
+        null
+      ]
+    }
+  }
+}
