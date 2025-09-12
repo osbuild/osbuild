@@ -29,6 +29,8 @@ import os
 import pathlib
 import pkgutil
 import sys
+import yaml
+
 from collections import deque
 from typing import Any, Deque, Dict, List, Optional, Sequence, Set, Tuple, Union
 
@@ -499,20 +501,17 @@ class ModuleInfo:
         path = os.path.join(root, base, name)
 
         try:
+            return cls._load_from_yaml(path, klass, name)
+        except FileNotFoundError:
+            pass
+        try:
             return cls._load_from_json(path, klass, name)
         except FileNotFoundError:
             pass
         return cls._load_from_py(path, klass, name)
 
     @classmethod
-    def _load_from_json(cls, path, klass, name) -> Optional["ModuleInfo"]:
-        meta_json_suffix = ".meta.json"
-        with open(path + meta_json_suffix, encoding="utf-8") as fp:
-            try:
-                meta = json.load(fp)
-            except json.decoder.JSONDecodeError as e:
-                raise SyntaxError("Invalid schema: " + str(e)) from e
-
+    def _load_from_data(cls, meta, klass, name, path) -> Optional["ModuleInfo"]:
         schema = Schema(META_JSON_SCHEMA, "meta.json validator")
         res = schema.validate(meta)
         if not res.valid:
@@ -538,6 +537,26 @@ class ModuleInfo:
             "caps": set(meta.get("capabilities", [])),
         }
         return cls(klass, name, path, info)
+
+    @classmethod
+    def _load_from_yaml(cls, path, klass, name) -> Optional["ModuleInfo"]:
+        meta_yaml_suffix = ".meta.yaml"
+        with open(path + meta_yaml_suffix, encoding="utf-8") as fp:
+            try:
+                meta = yaml.safe_load(fp)
+            except yaml.YAMLError as e:
+                raise SyntaxError("Invalid schema: " + str(e)) from e
+        return cls._load_from_data(meta, klass, name, path)
+
+    @classmethod
+    def _load_from_json(cls, path, klass, name) -> Optional["ModuleInfo"]:
+        meta_json_suffix = ".meta.json"
+        with open(path + meta_json_suffix, encoding="utf-8") as fp:
+            try:
+                meta = json.load(fp)
+            except json.decoder.JSONDecodeError as e:
+                raise SyntaxError("Invalid schema: " + str(e)) from e
+        return cls._load_from_data(meta, klass, name, path)
 
     @classmethod
     def _load_from_py(cls, path, klass, name) -> Optional["ModuleInfo"]:
