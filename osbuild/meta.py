@@ -322,10 +322,15 @@ META_JSON_SCHEMA = {
             "type": "string",
         },
         "description": {
-            "type": "array",
-            "items": {
-                "type": "string",
-            },
+            "oneOf": [
+                {"type": "string"},
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                    },
+                },
+            ],
         },
         "capabilities": {
             "type": "array",
