@@ -1,0 +1,42 @@
+{
+  "summary": "Run and/or configure systemd-repart in create mode.",
+  "description": [
+    "Use repart.d drop-in files included in a tree to create a disk image with",
+    "`systemd-repart`. The tree is also available to `CopyFiles` so `systemd-repart`",
+    "can take care of putting files into partitions."
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "size"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "seed": {
+          "type": "string",
+          "default": "random"
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root-tree"
+      ],
+      "properties": {
+        "root-tree": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
