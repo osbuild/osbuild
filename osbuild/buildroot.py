@@ -11,7 +11,6 @@ import importlib.util
 import io
 import os
 import select
-import stat
 import subprocess
 import tempfile
 import time
@@ -104,10 +103,11 @@ class BuildRoot(contextlib.AbstractContextManager):
         self.caps = None
 
     @staticmethod
-    def _mknod(path, name, mode, major, minor):
-        os.mknod(os.path.join(path, name),
-                 mode=(stat.S_IMODE(mode) | stat.S_IFCHR),
-                 device=os.makedev(major, minor))
+    def _bind_dev(path, name):
+        dest = os.path.join(path, name)
+        src = os.path.join("/dev", name)
+        os.mknod(dest)
+        subprocess.run(["mount", "--bind", src, dest], check=True)
 
     def __enter__(self):
         self._exitstack = contextlib.ExitStack()
@@ -147,12 +147,12 @@ class BuildRoot(contextlib.AbstractContextManager):
             subprocess.run(["mount", "-t", "tmpfs", "-o", "nosuid", "none", self.dev], check=True)
             self._exitstack.callback(lambda: subprocess.run(["umount", "--lazy", self.dev], check=True))
 
-            self._mknod(self.dev, "full", 0o666, 1, 7)
-            self._mknod(self.dev, "null", 0o666, 1, 3)
-            self._mknod(self.dev, "random", 0o666, 1, 8)
-            self._mknod(self.dev, "urandom", 0o666, 1, 9)
-            self._mknod(self.dev, "tty", 0o666, 5, 0)
-            self._mknod(self.dev, "zero", 0o666, 1, 5)
+            self._bind_dev(self.dev, "full")
+            self._bind_dev(self.dev, "null")
+            self._bind_dev(self.dev, "random")
+            self._bind_dev(self.dev, "urandom")
+            self._bind_dev(self.dev, "tty")
+            self._bind_dev(self.dev, "zero")
 
             # Prepare all registered API endpoints
             for api in self._apis:
