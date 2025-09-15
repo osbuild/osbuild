@@ -189,6 +189,7 @@ bzip2 -9 osbuild.pp
 %install
 %py3_install
 
+# TODO: the setup.py takes care of this now
 mkdir -p %{buildroot}%{pkgdir}/stages
 install -p -m 0755 $(find stages -type f -not -name "test_*.py") %{buildroot}%{pkgdir}/stages/
 
