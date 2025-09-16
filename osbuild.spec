@@ -118,6 +118,20 @@ Contains the necessary SELinux policies that allows
 osbuild to use labels unknown to the host inside the
 containers it uses to build OS artifacts.
 
+%package        container-selinux
+Summary:        SELinux container policies
+Requires:       selinux-policy-%{selinuxtype}
+Requires:       container-selinux
+Requires(post): selinux-policy-%{selinuxtype}
+Requires(post): container-selinux
+BuildRequires:  selinux-policy-devel
+BuildRequires:  selinux-policy-devel
+%{?selinux_requires}
+
+%description    container-selinux
+Contains the necessary SELinux policies that allows
+running osbuild in a container.
+
 %package        tools
 Summary:        Extra tools and utilities
 Requires:       %{name} = %{version}-%{release}
@@ -183,6 +197,9 @@ make man
 make -f /usr/share/selinux/devel/Makefile osbuild.pp
 bzip2 -9 osbuild.pp
 
+make -f /usr/share/selinux/devel/Makefile osbuild-container.pp
+bzip2 -9 osbuild-container.pp
+
 %pre selinux
 %selinux_relabel_pre -s %{selinuxtype}
 
@@ -226,6 +243,7 @@ install -p -m 0644 -t %{buildroot}%{_mandir}/man5/ docs/*.5
 
 # SELinux
 install -D -m 0644 -t %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype} %{name}.pp.bz2
+install -D -m 0644 -t %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype} %{name}-container.pp.bz2
 install -D -m 0644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_selinux.8
 install -D -p -m 0644 selinux/osbuild.if %{buildroot}%{_datadir}/selinux/devel/include/distributed/%{name}.if
 
@@ -319,6 +337,18 @@ fi
 
 %posttrans selinux
 %selinux_relabel_post -s %{selinuxtype}
+
+%files container-selinux
+%{_datadir}/selinux/packages/%{selinuxtype}/%{name}-container.pp.bz2
+%ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}-container
+
+%post container-selinux
+%selinux_modules_install -s %{selinuxtype} %{_datadir}/selinux/packages/%{selinuxtype}/%{name}-container.pp.bz2
+
+%postun container-selinux
+if [ $1 -eq 0 ]; then
+    %selinux_modules_uninstall -s %{selinuxtype} %{name}-container
+fi
 
 %files tools
 %{_bindir}/osbuild-image-info

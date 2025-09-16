@@ -63,3 +63,18 @@ transition rule is enabled that allows `setfiles` to transition to
     # execute setfiles in the setfiles_mac domain
     # when in the osbuild_t domain
     seutil_domtrans_setfiles_mac(osbuild_t)
+
+## Running osbuild in a container
+
+When osbuild is run in a container, it cannot use the default SELinux
+container policy. Historically this has been done i using a standard
+unconfined policy (`--security-opt label=type:unconfined_t`). However,
+the normal `unconfined_t` doamin does not have `CAP_MAC_ADMIN`
+capability, nor does it have the ability to use the normal osbuild
+policy inside the container. To allow this, there is a another custom
+OSBuild SELinux policy called `osbuild-container` which has an unconfined
+domain called `osbuild_container_t` domain that has this capability.
+
+This policy can be installed separately (from the
+`osbuild-container-selinux` package) and used with the podman option
+`--security-opt label=type:osbuild_container_t`.

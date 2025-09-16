@@ -1,0 +1,63 @@
+policy_module(osbuild-container, 1.0.0)
+
+# The osbuild_container_t domain has enough permissions to run osbuild
+# in a container. This is meant to be used like:
+#   podman run --security-opt label=type:osbuild_container_t
+#
+# Other than the mac_admin capability (to allow setting unknown
+# selinux labels) this is better than using unconfined_t, as it
+# has less permissions. However, it is still a very permissive
+# domain, so use with caution.
+#
+# This is optional, as it depends on container-selinux
+
+optional_policy(`
+        # Declaration
+
+        gen_require(`
+            attribute container_domain;
+            role system_r;
+        ')
+
+        type osbuild_container_t, container_domain;
+        domain_type(osbuild_container_t)
+        role system_r types osbuild_container_t;
+
+        # Implementation
+
+        gen_require(`
+             class capability2 mac_admin;
+             type default_t;
+             type fixed_disk_device_t;
+             type kmsg_device_t;
+             type sysctl_irq_t;
+        ')
+
+        # Allow creating files with unknown selinux labels
+        # NOTE: This permission is not normally available to unconfined domains.
+        allow osbuild_container_t self:capability2 mac_admin;
+        # And allow relabeling default_t (i.e. unknown files)
+        allow osbuild_container_t default_t:file { relabelfrom relabelto };
+
+        # Allow loop device access
+        dev_rw_loop_control(osbuild_container_t)
+        allow osbuild_container_t fixed_disk_device_t:blk_file { getattr ioctl open read write lock };
+
+        # Create and use all kinds of files
+        files_unconfined(osbuild_container_t)
+
+        # Connect to stuff for downloading files
+        corenet_tcp_connect_all_ports(osbuild_container_t)
+
+        # osbuild logs to kmsg
+        dev_write_kmsg(osbuild_container_t)
+
+        # Allow covering /proc/irq
+        allow osbuild_container_t sysctl_irq_t:dir { mounton write };
+
+        # Bwrap needs this
+        allow osbuild_container_t self:netlink_route_socket nlmsg_write;
+
+        # ostree sets its selinux label
+        allow osbuild_container_t self:process setfscreate;
+')
