@@ -1,0 +1,18 @@
+#!/usr/bin/python3
+import subprocess
+import sys
+
+import osbuild.api
+
+
+def main(tree):
+    subprocess.run(["systemd-sysusers", "--root", tree], check=True)
+    print("Applied systemd-sysusers")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"])
+    sys.exit(r)

@@ -1,0 +1,75 @@
+{
+  "added_files": [
+    "/etc/sysusers.d",
+    "/etc/sysusers.d/new.conf"
+  ],
+  "deleted_files": [],
+  "differences": {
+    "/etc/group": {
+      "content": [
+        "sha256:fd96654ce9a3c6242d80039ed8a12f7d46b5e6e3468fe1aac2f02d2304ee322a",
+        "sha256:71554fa12a7398b2e565f76b7492b747a9b84362be78131dcf207df4f894eb7a"
+      ]
+    },
+    "/etc/group-": {
+      "content": [
+        "sha256:26508075764b1b6edab94b900d56c5191c5067539496f806d19bcb6aa80e87d0",
+        "sha256:fd96654ce9a3c6242d80039ed8a12f7d46b5e6e3468fe1aac2f02d2304ee322a"
+      ]
+    },
+    "/etc/gshadow": {
+      "content": [
+        "sha256:cae8f1b9d5fdcf9bbea4531d14e0335fc683bb8b4178461dd2d224b52c049064",
+        "sha256:79e28820957b86b57b66e5b723559a71e9805daeb23ee2b50c8b6daccb3ad1aa"
+      ]
+    },
+    "/etc/gshadow-": {
+      "content": [
+        "sha256:4f640a73f181e9125ebb0e3aba5c0217c268acf73100f4346c8264689524ebe0",
+        "sha256:cae8f1b9d5fdcf9bbea4531d14e0335fc683bb8b4178461dd2d224b52c049064"
+      ]
+    },
+    "/etc/passwd": {
+      "content": [
+        "sha256:b1e6a8f7c7711f79c1d8c85f249566ac25499f2a795cc875e349607083641719",
+        "sha256:cc65da7d27f0f40520bbf623d611647abd35440b7033499a6012f967fada236c"
+      ]
+    },
+    "/etc/passwd-": {
+      "content": [
+        "sha256:8fd3c570c654a1f5ddad006df316724650d84953969aa24616687f10851b0b5b",
+        "sha256:b1e6a8f7c7711f79c1d8c85f249566ac25499f2a795cc875e349607083641719"
+      ]
+    },
+    "/etc/pki/ca-trust/extracted/java/cacerts": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/shadow": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/shadow-": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/usr/lib/sysimage/rpm/rpmdb.sqlite": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/var/cache/ldconfig/aux-cache": {
+      "content": [
+        null,
+        null
+      ]
+    }
+  }
+}
