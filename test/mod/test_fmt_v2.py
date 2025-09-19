@@ -19,6 +19,9 @@ BASIC_PIPELINE = {
                 "version": "NaN",
             },
         ],
+        "exports": [
+            {"name": "os"}
+        ],
     },
     "sources": {
         "org.osbuild.curl": {
