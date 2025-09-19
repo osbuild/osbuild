@@ -91,6 +91,21 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "exports": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "generators": {
           "type": "array",
           "items": {

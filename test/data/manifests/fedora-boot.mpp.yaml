@@ -6,6 +6,8 @@ metadata:
   generators:
     - name: osbuild-mpp
       version: unknown
+  exports:
+    - name: image
 pipelines:
   - mpp-import-pipelines:
       path: fedora-vars.ipp.yaml

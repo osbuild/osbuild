@@ -6,6 +6,11 @@
         "name": "osbuild-mpp",
         "version": "unknown"
       }
+    ],
+    "exports": [
+      {
+        "name": "image"
+      }
     ]
   },
   "pipelines": [
