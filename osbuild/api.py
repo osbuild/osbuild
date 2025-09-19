@@ -75,7 +75,8 @@ class BaseAPI(abc.ABC):
             if self.event_loop:
                 self.event_loop.remove_reader(sock)
             return
-        self._message(msg, fds, sock)
+        with message_exception_handler(sock):
+            self._message(msg, fds, sock)
         fds.close()
 
     def _accept(self, server):
@@ -152,24 +153,28 @@ class API(BaseAPI):
             self._get_exception(msg)
 
 
-def exception(e, path="/run/osbuild/api/osbuild"):
-    """Send exception to osbuild"""
-    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+def exception_on_path_and_die(e, path="/run/osbuild/api/osbuild"):
+    """Send exception to osbuild path and die"""
     with jsoncomm.Socket.new_client(path) as client:
-        with io.StringIO() as out:
-            traceback.print_tb(e.__traceback__, file=out)
-            stacktrace = out.getvalue()
-        msg = {
-            "method": "exception",
-            "exception": {
-                "type": type(e).__name__,
-                "value": str(e),
-                "traceback": stacktrace
-            }
-        }
-        client.send(msg)
-
+        exception_to_client(e, client)
     sys.exit(2)
+
+
+def exception_to_client(e, client):
+    """Send exception to osbuild client socket"""
+    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+    with io.StringIO() as out:
+        traceback.print_tb(e.__traceback__, file=out)
+        stacktrace = out.getvalue()
+    msg = {
+        "method": "exception",
+        "exception": {
+            "type": type(e).__name__,
+            "value": str(e),
+            "traceback": stacktrace
+        }
+    }
+    client.send(msg)
 
 
 # pylint: disable=broad-except
@@ -178,7 +183,16 @@ def exception_handler(path="/run/osbuild/api/osbuild"):
     try:
         yield
     except Exception as e:
-        exception(e, path)
+        exception_on_path_and_die(e, path)
+
+
+# pylint: disable=broad-except
+@contextlib.contextmanager
+def message_exception_handler(client):
+    try:
+        yield
+    except Exception as e:
+        exception_to_client(e, client)
 
 
 def arguments(path="/run/osbuild/api/arguments"):

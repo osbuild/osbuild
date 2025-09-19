@@ -29,6 +29,8 @@ class APITester(osbuild.api.BaseAPI):
         if msg["method"] == "echo":
             msg["method"] = "reply"
             sock.send(msg)
+        elif msg["method"] == "error-trigger":
+            raise ValueError("simulated exception in _message() handler")
 
     def _cleanup(self):
         self.clean = True
@@ -122,3 +124,16 @@ class TestAPI(unittest.TestCase):
 
         assert metadata
         self.assertEqual(metadata, data)
+
+    def test_exception_in_api_message(self):
+        socket = os.path.join(self.tmp.name, "socket")
+        api = APITester(socket)
+        with api:
+            with jsoncomm.Socket.new_client(socket) as client:
+                req = {'method': 'error-trigger'}
+                client.send(req)
+                msg, _, _ = client.recv()
+                self.assertEqual(msg["method"], "exception")
+                self.assertEqual(msg["exception"]["type"], "ValueError")
+                self.assertEqual(msg["exception"]["value"], "simulated exception in _message() handler")
+                self.assertIn("raise ValueError", msg["exception"]["traceback"])
