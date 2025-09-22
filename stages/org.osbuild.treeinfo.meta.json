@@ -1,0 +1,151 @@
+{
+  "summary": "Create .treeinfo configuration files.",
+  "description": [
+    "Creates a .treeinfo file at the specified path with the provided configuration.",
+    "The .treeinfo file is used to store metadata about the installation tree,",
+    "such as the location of the kernel and initrd files, and other relevant information.",
+    "This stage supports treeinfo 1.0 as documented by productmd project."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "path",
+      "treeinfo"
+    ],
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The path to the treeinfo file to create."
+      },
+      "treeinfo": {
+        "type": "object",
+        "properties": {
+          "release": {
+            "description": "Information about the product release.",
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "short": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          },
+          "tree": {
+            "description": "Information about the tree itself.",
+            "type": "object",
+            "properties": {
+              "arch": {
+                "type": "string"
+              },
+              "build_timestamp": {
+                "type": "number"
+              },
+              "platforms": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "variants": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "general": {
+            "description": "General information about the tree.",
+            "type": "object",
+            "properties": {
+              "arch": {
+                "type": "string"
+              },
+              "family": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "packagedir": {
+                "type": "string"
+              },
+              "platforms": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "repository": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "number"
+              },
+              "variant": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          },
+          "checksums": {
+            "description": "File checksums. List of file paths, checksums are calculated by the stage.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "stage2": {
+            "description": "Stage 2 installer information.",
+            "type": "object",
+            "properties": {
+              "mainimage": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "patternProperties": {
+          "^images-.*$": {
+            "description": "Per-platform image sections. Keys are image types, values are paths.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "^variant-.*$": {
+            "description": "Per-variant details sections.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "packages": {
+                "type": "string"
+              },
+              "repository": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "uid": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
