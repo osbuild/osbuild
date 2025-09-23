@@ -142,15 +142,17 @@ class API(BaseAPI):
         super().__init__(socket_address)
         self.error = None
 
-    def _get_exception(self, message):
-        self.error = {
-            "type": "exception",
-            "data": message["exception"],
-        }
-
     def _message(self, msg, fds, sock):
-        if msg["method"] == 'exception':
-            self._get_exception(msg)
+        self.error = get_exception_from_msg(msg)
+
+
+def get_exception_from_msg(msg):
+    if msg.get("method") != 'exception':
+        return None
+    return {
+        "type": "exception",
+        "data": msg["exception"],
+    }
 
 
 def exception_on_path_and_die(e, path="/run/osbuild/api/osbuild"):

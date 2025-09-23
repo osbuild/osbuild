@@ -128,8 +128,11 @@ class LoopClient:
         os.close(dir_fd)
         os.close(fd)
 
-        payload, _, _ = self.client.recv()
-        path = os.path.join("/dev", payload["devname"])
+        msg, _, _ = self.client.recv()
+        err = api.get_exception_from_msg(msg)
+        if err:
+            raise RuntimeError(err)
+        path = os.path.join("/dev", msg["devname"])
         try:
             yield path
         finally:
