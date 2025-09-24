@@ -75,6 +75,7 @@ def main(root, options):
     default = cfg.get("default")    # None indicates not set
     fips = options.get("fips", False)
 
+    efi_src_dir = options.get("efi_src_dir", "/boot/efi/EFI/")
     efidir = os.path.join(root, "EFI", "BOOT")
     os.makedirs(efidir)
 
@@ -88,7 +89,7 @@ def main(root, options):
         ]
 
         for src, dst in targets:
-            shutil.copy2(os.path.join("/boot/efi/EFI/", vendor, src),
+            shutil.copy2(os.path.join(efi_src_dir, vendor, src),
                          os.path.join(efidir, dst))
 
     # the font
