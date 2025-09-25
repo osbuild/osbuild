@@ -148,10 +148,14 @@ Manifests:
           - aws/rhel-9.6-ga-aarch64
           - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.7-nightly-aarch64
+          - aws/rhel-9.8-nightly-x86_64
+          - aws/rhel-9.8-nightly-aarch64
           - aws/rhel-10.0-ga-x86_64
           - aws/rhel-10.0-ga-aarch64
           - aws/rhel-10.1-nightly-x86_64
           - aws/rhel-10.1-nightly-aarch64
+          - aws/rhel-10.2-nightly-x86_64
+          - aws/rhel-10.2-nightly-aarch64
         INTERNAL_NETWORK: "true"
         # Test only the following manifest generation configs
         CONFIG: "empty all-customizations"
