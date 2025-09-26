@@ -39,6 +39,7 @@ Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
 Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 Requires:       python3-librepo
+Requires:       python3-mako
 
 # This is required for `osbuild`, for RHEL-10 and above
 # the stdlib tomllib module can be used instead
