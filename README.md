@@ -49,6 +49,7 @@ Additionally, the built-in stages require:
  * `util-linux >= 235`
  * `skopeo`
  * `python3-librepo`
+ * `python3-mako`
 
 At build-time, the following software is required:
 
