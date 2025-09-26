@@ -62,7 +62,21 @@ CONFIG_DEFAULT = """set default="1"
 """
 
 
-def make_options(override_options):
+@patch("shutil.copy2")
+@pytest.mark.parametrize("test_data,expected_conf", [
+    # default
+    ({}, CONFIG_PART_1 + CONFIG_PART_2),
+    # fips menu enable
+    ({"fips": True}, CONFIG_PART_1 + CONFIG_FIPS + CONFIG_PART_2),
+    # default to menu entry 1
+    ({"config": {"default": 1}}, CONFIG_DEFAULT + CONFIG_PART_1 + CONFIG_PART_2)
+])
+def test_grub2_iso(mocked_copy2, tmp_path, stage_module, test_data, expected_conf):
+    treedir = tmp_path / "tree"
+    treedir.mkdir(parents=True, exist_ok=True)
+    efidir = treedir / "EFI/BOOT"
+    confpath = efidir / "grub.cfg"
+
     # from fedora-ostree-bootiso-xz.json
     options = {
         "product": {
@@ -81,26 +95,9 @@ def make_options(override_options):
         ],
         "vendor": "fedora"
     }
-    options.update(override_options)
-    return options
+    options.update(test_data)
 
-
-@patch("shutil.copy2")
-@pytest.mark.parametrize("test_data,expected_conf", [
-    # default
-    ({}, CONFIG_PART_1 + CONFIG_PART_2),
-    # fips menu enable
-    ({"fips": True}, CONFIG_PART_1 + CONFIG_FIPS + CONFIG_PART_2),
-    # default to menu entry 1
-    ({"config": {"default": 1}}, CONFIG_DEFAULT + CONFIG_PART_1 + CONFIG_PART_2)
-])
-def test_grub2_iso(mocked_copy2, tmp_path, stage_module, test_data, expected_conf):
-    treedir = tmp_path / "tree"
-    treedir.mkdir(parents=True, exist_ok=True)
-    efidir = treedir / "EFI/BOOT"
-    confpath = efidir / "grub.cfg"
-
-    stage_module.main(treedir, make_options(test_data))
+    stage_module.main(treedir, options)
 
     assert os.path.exists(confpath)
     assert confpath.read_text() == expected_conf
@@ -109,28 +106,6 @@ def test_grub2_iso(mocked_copy2, tmp_path, stage_module, test_data, expected_con
         call("/boot/efi/EFI/fedora/mmx64.efi", os.fspath(efidir / "mmx64.efi")),
         call("/boot/efi/EFI/fedora/gcdx64.efi", os.fspath(efidir / "grubx64.efi")),
         call("/usr/share/grub/unicode.pf2", os.fspath(efidir / "fonts"))
-    ]
-
-
-@patch("shutil.copy2")
-@pytest.mark.parametrize("test_data,expected_efi_path", [
-    # default
-    ({}, "/boot/efi/EFI"),
-    # uefi.efi_src_dir set
-    ({"efi_src_dir": "/usr/lib/bootupd/updates/"}, "/usr/lib/bootupd/updates"),
-])
-def test_grub2_iso_efi_src_path(mocked_copy2, tmp_path, stage_module, test_data, expected_efi_path):
-    treedir = tmp_path / "tree"
-    treedir.mkdir(parents=True, exist_ok=True)
-    efi_dst_dir = treedir / "EFI/BOOT"
-
-    stage_module.main(treedir, make_options(test_data))
-
-    assert mocked_copy2.call_args_list == [
-        call(f"{expected_efi_path}/fedora/shimx64.efi", os.fspath(efi_dst_dir / "BOOTX64.EFI")),
-        call(f"{expected_efi_path}/fedora/mmx64.efi", os.fspath(efi_dst_dir / "mmx64.efi")),
-        call(f"{expected_efi_path}/fedora/gcdx64.efi", os.fspath(efi_dst_dir / "grubx64.efi")),
-        call("/usr/share/grub/unicode.pf2", os.fspath(efi_dst_dir / "fonts"))
     ]
 
 
@@ -158,19 +133,6 @@ def test_grub2_iso_efi_src_path(mocked_copy2, tmp_path, stage_module, test_data,
             },
         }, ["'name' is a required property", "'version' is a required property"],
     ),
-    (
-        {
-            "isolabel": "an-isolabel",
-            "product": {
-                "name": "a-name",
-                "version": "a-version",
-            },
-            "kernel": {
-                "dir": "/path/to",
-            },
-            "efi_src_dir": 111,
-        }, ["111 is not of type 'string'"],
-    ),
     # good
     (
         {
@@ -182,7 +144,6 @@ def test_grub2_iso_efi_src_path(mocked_copy2, tmp_path, stage_module, test_data,
             "kernel": {
                 "dir": "/path/to",
             },
-            "efi_src_dir": "/path/to/efi",
         }, "",
     ),
     # good + fips
