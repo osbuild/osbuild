@@ -73,7 +73,7 @@ def make_options(override_options):
             "dir": "/images/pxeboot",
             "opts": [
                 "inst.stage2=hd:LABEL=Fedora-42-Everything-x86_64"
-            ]
+            ],
         },
         "isolabel": "Fedora-42-Everything-x86_64",
         "architectures": [
@@ -116,10 +116,12 @@ def test_grub2_iso(mocked_copy2, tmp_path, stage_module, test_data, expected_con
 @pytest.mark.parametrize("test_data,expected_efi_path", [
     # default
     ({}, "/boot/efi/EFI"),
-    # uefi.efi_src_dir set
-    ({"efi_src_dir": "/usr/lib/bootupd/updates/"}, "/usr/lib/bootupd/updates"),
+    # efi_src_dirs set
+    ({"efi_src_dirs": ["/usr/lib/bootupd/updates/"]}, "/usr/lib/bootupd/updates"),
+    # efi_src_dirs set, first copy wins
+    ({"efi_src_dirs": ["/usr/lib/bootupd/updates/", "/other/dir/"]}, "/usr/lib/bootupd/updates"),
 ])
-def test_grub2_iso_efi_src_path(mocked_copy2, tmp_path, stage_module, test_data, expected_efi_path):
+def test_grub2_iso_efi_src_dirs(mocked_copy2, tmp_path, stage_module, test_data, expected_efi_path):
     treedir = tmp_path / "tree"
     treedir.mkdir(parents=True, exist_ok=True)
     efi_dst_dir = treedir / "EFI/BOOT"
@@ -132,6 +134,56 @@ def test_grub2_iso_efi_src_path(mocked_copy2, tmp_path, stage_module, test_data,
         call(f"{expected_efi_path}/fedora/gcdx64.efi", os.fspath(efi_dst_dir / "grubx64.efi")),
         call("/usr/share/grub/unicode.pf2", os.fspath(efi_dst_dir / "fonts"))
     ]
+
+
+@patch("shutil.copy2")
+def test_grub2_iso_efi_src_fallback(mocked_copy2, tmp_path, stage_module):
+    # simulate the exact same failure as on a bootc system where
+    # dnf install grub2-efi-x64-cdroot was run, here shimx64.efi
+    # is *not* in /boot/efi/EFI but in /usr/lib/bootupd/updates/EFI
+    def _copy2(src, dst):
+        if src in ["/boot/efi/EFI/fedora/shimx64.efi",
+                   "/boot/efi/EFI/fedora/mmx64.efi"]:
+            raise FileNotFoundError(src, dst)
+    mocked_copy2.side_effect = _copy2
+
+    treedir = tmp_path / "tree"
+    efi_dst_dir = treedir / "EFI/BOOT"
+
+    test_data = {
+        "efi_src_dirs": ["/boot/efi/EFI/", "/usr/lib/bootupd/updates/EFI/"],
+    }
+    stage_module.main(treedir, make_options(test_data))
+
+    assert mocked_copy2.call_args_list == [
+        # /boot/efi/EFI is tried but not found
+        call("/boot/efi/EFI/fedora/shimx64.efi", f"{efi_dst_dir}/BOOTX64.EFI"),
+        # next bootupd dir is used
+        call("/usr/lib/bootupd/updates/EFI/fedora/shimx64.efi", f"{efi_dst_dir}/BOOTX64.EFI"),
+        # same for mmx64
+        call("/boot/efi/EFI/fedora/mmx64.efi", f"{efi_dst_dir}/mmx64.efi"),
+        call("/usr/lib/bootupd/updates/EFI/fedora/mmx64.efi", f"{efi_dst_dir}/mmx64.efi"),
+        # but gcdx64 is in /boot/efi/EFI
+        call("/boot/efi/EFI/fedora/gcdx64.efi", f"{efi_dst_dir}/grubx64.efi"),
+        # this one is not retried
+        call("/usr/share/grub/unicode.pf2", f"{efi_dst_dir}/fonts"),
+    ]
+
+
+@patch("shutil.copy2")
+def test_grub2_iso_efi_src_not_found(mocked_copy2, tmp_path, stage_module):
+    def _copy2(src, dst):
+        raise FileNotFoundError(src, dst)
+    mocked_copy2.side_effect = _copy2
+
+    test_data = {
+        "efi_src_dirs": ["/boot/efi/EFI/", "/usr/lib/bootupd/updates/EFI/"],
+    }
+    expected_error = "cannot find fedora/shimx64.efi in any of ['/boot/efi/EFI/', '/usr/lib/bootupd/updates/EFI/']"
+
+    with pytest.raises(ValueError) as exc:
+        stage_module.main(tmp_path, make_options(test_data))
+    assert str(exc.value) == expected_error
 
 
 @pytest.mark.parametrize("test_data,expected_err", [
@@ -168,8 +220,8 @@ def test_grub2_iso_efi_src_path(mocked_copy2, tmp_path, stage_module, test_data,
             "kernel": {
                 "dir": "/path/to",
             },
-            "efi_src_dir": 111,
-        }, ["111 is not of type 'string'"],
+            "efi_src_dirs": 111,
+        }, ["111 is not of type 'array'"],
     ),
     # good
     (
@@ -182,7 +234,7 @@ def test_grub2_iso_efi_src_path(mocked_copy2, tmp_path, stage_module, test_data,
             "kernel": {
                 "dir": "/path/to",
             },
-            "efi_src_dir": "/path/to/efi",
+            "efi_src_dirs": ["/path/to/efi"],
         }, "",
     ),
     # good + fips

@@ -44,10 +44,15 @@
             }
           }
         },
-        "efi_src_dir": {
-          "type": "string",
-          "description": "The source path to use for the EFI/ binaries",
-          "default": "/boot/efi/EFI/"
+        "efi_src_dirs": {
+          "type": "array",
+          "description": "The source dirs to look for the EFI/ binaries",
+          "items": {
+            "type": "string"
+          },
+            "default": [
+                "/boot/efi/EFI/"
+            ]
         },
         "isolabel": {
           "type": "string"
