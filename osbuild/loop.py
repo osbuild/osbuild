@@ -5,6 +5,7 @@ import fcntl
 import os
 import stat
 import subprocess
+import sys
 import time
 from typing import Callable, Optional
 
@@ -509,15 +510,24 @@ class Loop:
         """
 
         host_path = f"/dev/{self.devname}"
+        # if we have the host_path, try to bind mount it into the dir_fd as this is less privileged
+        # than mknod(), if that works just return. If it fails (e.g. because of kernel mount namespace
+        # issues) fallback to mknod to avoid regressions
         if os.path.exists(host_path):
             os.mknod(self.devname, mode=(stat.S_IMODE(mode)),
                      dir_fd=dir_fd)
-            subprocess.run(["mount", "--bind", host_path, self.devname], cwd=f"/proc/self/fd/{dir_fd}/", check=True)
-        else:
-            os.mknod(self.devname,
-                     mode=(stat.S_IMODE(mode) | stat.S_IFBLK),
-                     device=os.makedev(self.LOOP_MAJOR, self.minor),
-                     dir_fd=dir_fd)
+            try:
+                subprocess.run(["mount", "--bind", host_path, self.devname], cwd=f"/proc/self/fd/{dir_fd}/", check=True)
+                return
+            except subprocess.CalledProcessError as e:
+                print(f"WARNING: {e}: {e.stderr}", file=sys.stderr)
+                # bind mount will fail if we try it accross bind mount
+                # boundaries
+                os.unlink(self.devname, dir_fd=dir_fd)
+        os.mknod(self.devname,
+                 mode=(stat.S_IMODE(mode) | stat.S_IFBLK),
+                 device=os.makedev(self.LOOP_MAJOR, self.minor),
+                 dir_fd=dir_fd)
 
 
 class LoopControl:
