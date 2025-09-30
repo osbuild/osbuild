@@ -24,6 +24,7 @@
     "    - 'Type' - string",
     "    - 'RemainAfterExit' - bool",
     "    - 'ExecStartPre' - [string]",
+    "    - 'ExecStartPost' - [string]",
     "    - 'ExecStopPost' - [string]",
     "    - 'ExecStart' - [string]",
     "    - 'Environment' - [object]",
@@ -261,6 +262,12 @@
                 "type": "boolean"
               },
               "ExecStartPre": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "ExecStartPost": {
                 "type": "array",
                 "items": {
                   "type": "string"
