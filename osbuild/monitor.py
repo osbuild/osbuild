@@ -170,6 +170,7 @@ def log_entry(message: Optional[str] = None,
               progress: Optional[Progress] = None,
               duration: Optional[float] = None,
               result: Union[BuildResult, DownloadResult, None] = None,
+              metadata: Optional[Dict] = None,
               ) -> dict:
     """
     Create a single log entry dict with a given message, context, and progress objects.
@@ -184,6 +185,7 @@ def log_entry(message: Optional[str] = None,
         "progress": progress.as_dict() if progress else None,
         "timestamp": time.time(),
         "duration": duration,
+        "metadata": metadata if metadata else None,
     })
 
 
@@ -234,7 +236,7 @@ class BaseMonitor(abc.ABC):
     def assembler(self, assembler: osbuild.Stage):
         """Called when an assembler is being built"""
 
-    def result(self, result: Union[BuildResult, DownloadResult]) -> None:
+    def result(self, result: Union[BuildResult, DownloadResult], metadata: Optional[Dict] = None) -> None:
         """Called when a module (stage/assembler) is done with its result"""
 
     # note that this should be re-entrant
@@ -262,7 +264,7 @@ class LogMonitor(BaseMonitor):
         super().__init__(fd, total_steps)
         self._module_start_time: Optional[float] = None
 
-    def result(self, result: Union[BuildResult, DownloadResult]) -> None:
+    def result(self, result: Union[BuildResult, DownloadResult], metadata: Optional[Dict] = None) -> None:
         if self._module_start_time is not None:
             duration = time.monotonic() - self._module_start_time
             self.out.write(f"\n⏱  Duration: {duration:.2f}s\n")
@@ -346,7 +348,7 @@ class JSONSeqMonitor(BaseMonitor):
         self.log(f"Starting module {module.name}", origin="osbuild.monitor")
         self._module_start_time = time.monotonic()
 
-    def result(self, result: Union[BuildResult, DownloadResult]) -> None:
+    def result(self, result: Union[BuildResult, DownloadResult], metadata: Optional[Dict] = None) -> None:
         """ Called when the module (stage or download) is finished
 
         This will stream a log entry that the stage finished and the result
@@ -386,6 +388,7 @@ class JSONSeqMonitor(BaseMonitor):
             # as it is redundant, each output already generates a "log()"
             # message that is streamed to the client.
             result=result,
+            metadata=metadata,
         ))
 
     def log(self, message, origin: Optional[str] = None):
