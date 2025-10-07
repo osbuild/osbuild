@@ -59,6 +59,7 @@ is not listed here, **osbuild** will deny startup and exit with an error.
                                 allowed to run
 --break, --break=ID             open debug shell when executing stages; accepts
                                 stage name or id (from --inspect) or * (for all)
+--quiet, -q                     suppress normal output
 
 NB: If neither ``--output-directory`` nor ``--checkpoint`` is specified, no
 attempt to build the manifest will be made.
