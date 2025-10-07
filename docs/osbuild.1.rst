@@ -39,8 +39,8 @@ is not listed here, **osbuild** will deny startup and exit with an error.
 
 -h, --help                      print usage information and exit immediately
 --version                       print version information and exit immediately
---store=DIR                     directory where intermediary file system trees
-                                are stored
+--cache=DIR, --store=DIR        directory where intermediary sources and file
+                                system trees are stored
 -l DIR, --libdir=DIR            directory containing stages, assemblers, and
                                 the osbuild library
 --cache-max-size=SIZE           maximum size of the cache (bytes) or 'unlimited'
