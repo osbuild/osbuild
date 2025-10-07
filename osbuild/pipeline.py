@@ -377,7 +377,8 @@ class Pipeline:
                           debug_break,
                           stage_timeout)
 
-            monitor.result(r)
+            md = tree.meta.get(r.id)
+            monitor.result(r, md)
 
             results["stages"].append(r)
             if not r.success:

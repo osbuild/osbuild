@@ -11,6 +11,7 @@ import threading
 import time
 import unittest
 from collections import defaultdict
+from typing import Dict, Optional
 from unittest.mock import Mock, patch
 
 import pytest
@@ -47,7 +48,7 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         self.counter["stages"] += 1
         self.stages.add(stage.id)
 
-    def result(self, result: osbuild.pipeline.BuildResult):
+    def result(self, result: osbuild.pipeline.BuildResult, metadata: Optional[Dict] = None):
         self.counter["result"] += 1
         self.results.add(result.id)
 
@@ -238,7 +239,7 @@ def test_json_progress_monitor():
         mon.log("pipeline 1 message 2")
         mon.log("pipeline 1 finished", origin="org.osbuild")
         mon.result(osbuild.pipeline.BuildResult(
-            fake_noop_stage, returncode=0, output="some output", error=None))
+            fake_noop_stage, returncode=0, output="some output", error=None), metadata={"meta": "data"})
         mon.finish({"success": True, "name": "test-pipeline-first"})
         mon.begin(manifest.pipelines["test-pipeline-second"])
         mon.log("pipeline 2 starting", origin="org.osbuild")
@@ -304,6 +305,7 @@ def test_json_progress_monitor():
             "output": "some output",
             "success": True,
         }
+        assert logitem["metadata"] == {"meta": "data"}
         assert logitem["duration"] > 0
         i += 1
 
