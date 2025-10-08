@@ -109,7 +109,10 @@ class LoopbackService(devices.DeviceService):
 
         path = os.path.join(tree, filename.lstrip("/"))
 
-        self.fd = os.open(path, os.O_RDWR | os.O_CLOEXEC)
+        if read_only:
+            self.fd = os.open(path, os.O_RDONLY | os.O_CLOEXEC)
+        else:
+            self.fd = os.open(path, os.O_RDWR | os.O_CLOEXEC)
         try:
             self.lo = self.make_loop(self.fd, start, size, lock, partscan, read_only)
         except Exception as error:  # pylint: disable: broad-except
