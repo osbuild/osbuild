@@ -13,7 +13,10 @@ TEST_INPUT = [
     ({}, []),
     ({"compression": {"method": "lz4"}}, ["-comp", "lz4"]),
     ({"compression": {"method": "xz", "options": {"bcj": "x86"}}}, ["-comp", "xz", "-Xbcj", "x86"]),
-    ({"exclude_paths": ["boot/.*", "root/.*"]}, ["-regex", "-e", "boot/.*", "root/.*"])
+    ({"exclude_paths": ["boot/.*", "root/.*"]}, ["-regex", "-e", "boot/.*", "root/.*"]),
+    ({"source": "input://tree/"}, []),
+    ({"source": "mount:///"}, []),
+    ({"source": "mount://tree/"}, [])
 ]
 
 
@@ -32,13 +35,28 @@ def test_squashfs_integration(tmp_path, stage_module, test_options, expected):  
             "path": fake_input_tree,
         }
     }
+    mounts = {
+        "tree": {
+            "path": fake_input_tree,
+        }
+    }
+    paths = {
+        "mounts": fake_input_tree
+    }
+
     filename = "some-file.img"
     options = {
         "filename": filename,
     }
     options.update(test_options)
 
-    stage_module.main(inputs, tmp_path, options)
+    stage_module.main({
+        "inputs": inputs,
+        "tree": tmp_path,
+        "options": options,
+        "mounts": mounts,
+        "paths": paths
+    })
 
     img_path = os.path.join(tmp_path, "some-file.img")
     assert os.path.exists(img_path)
@@ -60,13 +78,28 @@ def test_squashfs(mock_run, tmp_path, stage_module, test_options, expected):
             "path": fake_input_tree,
         }
     }
+    mounts = {
+        "tree": {
+            "path": fake_input_tree,
+        }
+    }
+    paths = {
+        "mounts": fake_input_tree
+    }
+
     filename = "some-file.img"
     options = {
         "filename": filename,
     }
     options.update(test_options)
 
-    stage_module.main(inputs, tmp_path, options)
+    stage_module.main({
+        "inputs": inputs,
+        "tree": tmp_path,
+        "options": options,
+        "mounts": mounts,
+        "paths": paths
+    })
 
     expected = [
         "mksquashfs",
