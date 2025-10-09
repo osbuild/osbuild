@@ -4,10 +4,20 @@ import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util import parsing
 
 
-def main(inputs, output_dir, options):
-    source = inputs["tree"]["path"]
+def main(args):
+    inputs = args["inputs"]
+    output_dir = args["tree"]
+    options = args["options"]
+
+    # Optionally override default source
+    if "source" in options:
+        source = os.path.normpath(parsing.parse_location(options["source"], args))
+    else:
+        source = inputs["tree"]["path"]
+
     filename = options["filename"].lstrip("/")
     compression = options.get("compression")
     exclude_paths = options.get("exclude_paths")
@@ -33,6 +43,6 @@ def main(inputs, output_dir, options):
 
 
 if __name__ == '__main__':
-    args = osbuild.api.arguments()
-    r = main(args["inputs"], args["tree"], args["options"])
+    _args = osbuild.api.arguments()
+    r = main(_args)
     sys.exit(r)
