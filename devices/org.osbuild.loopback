@@ -35,7 +35,7 @@ SCHEMA = """
 "properties": {
   "filename": {
     "type": "string",
-    "description": "File to associate with the loopback device"
+    "description": "File to associate with the loopback device, optionally starts with input:// to use a different pipeline's tree"
   },
   "partscan": {
     "type": "boolean",
@@ -99,7 +99,7 @@ class LoopbackService(devices.DeviceService):
         return lo
 
     def open(self, devpath: str, parent: str, tree: str, options: Dict):
-        filename = options["filename"]
+        filename = options["filename"].removeprefix("input://")
         self.sector_size = options.get("sector-size", 512)
         start = options.get("start", 0) * self.sector_size
         size = options.get("size")

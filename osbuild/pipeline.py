@@ -234,7 +234,23 @@ class Stage:
                 data_inp = ipmgr.map(ip)
                 inputs[key] = data_inp
 
-            devmgr = DeviceManager(mgr, build_root.dev, tree)
+            # Look for loopback devices with input:// filenames
+            # if there are any, all must be using the input
+            # point the DeviceManager for this stage to the input path
+            use_input = []
+            for name, dev in self.devices.items():
+                if dev.info.name == "org.osbuild.loopback":
+                    use_input.append(dev.options["filename"].startswith("input://"))
+
+            # If input: is used once it needs to be used on all loopback filenames
+            if any(use_input) and not all(use_input):
+                raise RuntimeError("org.osbuild.loopback devices must all use input:// or none, not both")
+
+            devtree = tree
+            if use_input and all(use_input):
+                devtree = os.path.join(inputs_tmpdir, inputs["tree"]["path"])
+
+            devmgr = DeviceManager(mgr, build_root.dev, devtree)
             for name, dev in self.devices.items():
                 devices[name] = devmgr.open(dev)
 
