@@ -5,6 +5,7 @@ import json
 import os
 from fnmatch import fnmatch
 from typing import Any, Dict, Generator, Iterable, Iterator, List, Optional
+from urllib.parse import urlparse
 
 from . import buildroot, host, objectstore, remoteloop
 from .api import API
@@ -234,7 +235,29 @@ class Stage:
                 data_inp = ipmgr.map(ip)
                 inputs[key] = data_inp
 
-            devmgr = DeviceManager(mgr, build_root.dev, tree)
+            # Look for loopback devices with input://NAME/PATH filenames
+            # if there are any, all must be using the same input://NAME
+            # point the DeviceManager for this stage to the input path
+            input_name = ""
+            for name, dev in self.devices.items():
+                if dev.info.name != "org.osbuild.loopback":
+                    continue
+
+                if dev.options["filename"].startswith("input://"):
+                    url = urlparse(dev.options["filename"])
+                    if input_name and input_name != url.netloc:
+                        raise RuntimeError("stage devices must all use the same input://NAME/")
+                    if not url.netloc:
+                        raise RuntimeError("input:// must include an input name. eg. input://NAME/PATH")
+                    input_name = url.netloc
+                elif input_name:
+                    raise RuntimeError("org.osbuild.loopback devices must all use input:// or none, not both")
+
+            dm_tree = tree
+            if input_name:
+                dm_tree = os.path.join(inputs_tmpdir, inputs[input_name]["path"])
+
+            devmgr = DeviceManager(mgr, build_root.dev, dm_tree)
             for name, dev in self.devices.items():
                 devices[name] = devmgr.open(dev)
 

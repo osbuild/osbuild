@@ -24,6 +24,7 @@ import os
 import stat
 import sys
 from typing import Dict
+from urllib.parse import urlparse
 
 from osbuild import devices, loop
 from osbuild.util import ctx
@@ -35,7 +36,7 @@ SCHEMA = """
 "properties": {
   "filename": {
     "type": "string",
-    "description": "File to associate with the loopback device"
+    "description": "File to associate with the loopback device, optionally starts with input://NAME/PATH to use a different pipeline's tree"
   },
   "partscan": {
     "type": "boolean",
@@ -100,6 +101,9 @@ class LoopbackService(devices.DeviceService):
 
     def open(self, devpath: str, parent: str, tree: str, options: Dict):
         filename = options["filename"]
+        if filename.startswith("input://"):
+            url = urlparse(filename)
+            filename = url.path
         self.sector_size = options.get("sector-size", 512)
         start = options.get("start", 0) * self.sector_size
         size = options.get("size")
