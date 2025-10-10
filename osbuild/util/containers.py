@@ -1,8 +1,10 @@
 import json
 import os
+import random
+import string
 import subprocess
 import tempfile
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 
 from osbuild.util.mnt import MountGuard, MountPermissions
 
@@ -184,3 +186,41 @@ def container_source(image):
     # that the inner ctx manager won't be cleaned up until the execution returns to this ctx manager.
     with container_source_fn(image, image_filepath, container_format) as image_source:
         yield image_name, image_source
+
+
+@contextmanager
+def container_mount(image, remove_signatures=False):
+    # Helper function for doing the `podman image mount`
+    @contextmanager
+    def _mount_container(image_tag):
+        cmd = ["podman", "image", "mount", image_tag],
+        result = subprocess.run(cmd, encoding="utf-8", check=False,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode != 0:
+            code = result.returncode
+            msg = result.stderr.strip()
+            raise RuntimeError(f"Failed to mount image ({code}): {msg}")
+        try:
+            yield result.stdout.strip()
+        finally:
+            cmd = ["podman", "image", "umount", image_tag],
+            subprocess.run(cmd, check=True)
+
+    # We cannot use a tmpdir as storage here because of
+    # https://github.com/containers/storage/issues/1779 so instead
+    # just pick a random suffix. This runs inside bwrap which gives a
+    # tmp /var so it does not really matter much.
+    tmp_image_tag = "tmp-container-mount-" + "".join(random.choices(string.digits, k=14))
+    with container_source(image) as (_, source):
+        with ExitStack() as cm:
+            cm.callback(subprocess.run, ["podman", "rmi", tmp_image_tag], check=True)
+            # skopeo needs /var/tmp but the bwrap env is minimal and may not have it
+            os.makedirs("/var/tmp", mode=0o1777, exist_ok=True)
+            cmd = ["skopeo", "copy"]
+            if remove_signatures:
+                cmd.append("--remove-signatures")
+            cmd.extend([source, f"containers-storage:{tmp_image_tag}"])
+            subprocess.run(cmd, check=True)
+
+            with _mount_container(tmp_image_tag) as container_mountpoint:
+                yield container_mountpoint
