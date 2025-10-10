@@ -210,17 +210,17 @@ def container_mount(image, remove_signatures=False):
     # https://github.com/containers/storage/issues/1779 so instead
     # just pick a random suffix. This runs inside bwrap which gives a
     # tmp /var so it does not really matter much.
-    tmp_image_tag = "tmp-container-mount-" + "".join(random.choices(string.digits, k=14))
+    tmp_image_name = "tmp-container-mount-" + "".join(random.choices(string.digits, k=14))
     with container_source(image) as (_, source):
         with ExitStack() as cm:
-            cm.callback(subprocess.run, ["podman", "rmi", tmp_image_tag], check=True)
+            cm.callback(subprocess.run, ["podman", "rmi", tmp_image_name], check=True)
             # skopeo needs /var/tmp but the bwrap env is minimal and may not have it
             os.makedirs("/var/tmp", mode=0o1777, exist_ok=True)
             cmd = ["skopeo", "copy"]
             if remove_signatures:
                 cmd.append("--remove-signatures")
-            cmd.extend([source, f"containers-storage:{tmp_image_tag}"])
+            cmd.extend([source, f"containers-storage:{tmp_image_name}"])
             subprocess.run(cmd, check=True)
 
-            with _mount_container(tmp_image_tag) as container_mountpoint:
+            with _mount_container(tmp_image_name) as container_mountpoint:
                 yield container_mountpoint
