@@ -1,6 +1,6 @@
 *.tar.gz
 *.egg-info
-__pycache__
+**/__pycache__
 
 /*.rpm
 /.osbuild
