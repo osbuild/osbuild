@@ -1,35 +1,9 @@
 #!/usr/bin/python3
-import contextlib
-import os
-import random
-import string
 import subprocess
 import sys
 
 import osbuild.api
 from osbuild.util import containers
-
-
-@contextlib.contextmanager
-def mount_container(image_tag):
-    result = subprocess.run(
-        ["podman", "image", "mount", image_tag],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        encoding="utf-8",
-        check=False,
-    )
-    if result.returncode != 0:
-        code = result.returncode
-        msg = result.stderr.strip()
-        raise RuntimeError(f"Failed to mount image ({code}): {msg}")
-    try:
-        yield result.stdout.strip()
-    finally:
-        subprocess.run(
-            ["podman", "image", "umount", image_tag],
-            check=True,
-        )
 
 
 def main(inputs, tree, options):
@@ -38,23 +12,8 @@ def main(inputs, tree, options):
     image = list(images.values())[0]
     remove_signatures = options.get("remove-signatures")
 
-    # skopeo needs /var/tmp but the bwrap env is minimal and may not have it
-    os.makedirs("/var/tmp", mode=0o1777, exist_ok=True)
-    # We cannot use a tmpdir as storage here because of
-    # https://github.com/containers/storage/issues/1779 so instead
-    # just pick a random suffix. This runs inside bwrap which gives a
-    # tmp /var so it does not really matter much.
-    image_tag = "tmp-container-deploy-" + "".join(random.choices(string.digits, k=14))
-    with contextlib.ExitStack() as cm:
-        cm.callback(subprocess.run, ["podman", "rmi", image_tag], check=True)
-        with containers.container_source(image) as (_, source):
-            cmd = ["skopeo", "copy"]
-            if remove_signatures:
-                cmd.append("--remove-signatures")
-            cmd.extend([source, f"containers-storage:{image_tag}"])
-            subprocess.run(cmd, check=True)
-        with mount_container(image_tag) as img:
-            subprocess.run(["cp", "-a", f"{img}/.", f"{tree}/"], check=True)
+    with containers.container_mount(image, remove_signatures) as container_mountpoint:
+        subprocess.run(["cp", "-a", f"{container_mountpoint}/.", f"{tree}/"], check=True)
     # postprocess the tree, would be nicer to filter before already
     for exclude in options.get("exclude", []):
         subprocess.run(["rm", "-rf", f"{tree}/{exclude}"], check=True)
