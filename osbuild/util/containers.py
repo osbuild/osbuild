@@ -189,7 +189,7 @@ def container_source(image):
 
 
 @contextmanager
-def container_mount(image, remove_signatures=False):
+def container_mount(image):
     # Helper function for doing the `podman image mount`
     @contextmanager
     def _mount_container(img, imagestore=None):
@@ -225,10 +225,7 @@ def container_mount(image, remove_signatures=False):
                 cm.callback(subprocess.run, ["podman", "rmi", tmp_image_name], check=True)
                 # skopeo needs /var/tmp but the bwrap env is minimal and may not have it
                 os.makedirs("/var/tmp", mode=0o1777, exist_ok=True)
-                cmd = ["skopeo", "copy"]
-                if remove_signatures:
-                    cmd.append("--remove-signatures")
-                cmd.extend([source, f"containers-storage:{tmp_image_name}"])
+                cmd = ["skopeo", "copy", source, f"containers-storage:{tmp_image_name}"]
                 subprocess.run(cmd, check=True)
                 img = tmp_image_name
 

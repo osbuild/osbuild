@@ -10,9 +10,8 @@ def main(inputs, tree, options):
     images = containers.parse_containers_input(inputs)
     assert len(images) == 1
     image = list(images.values())[0]
-    remove_signatures = options.get("remove-signatures")
 
-    with containers.container_mount(image, remove_signatures) as container_mountpoint:
+    with containers.container_mount(image) as container_mountpoint:
         subprocess.run(["cp", "-a", f"{container_mountpoint}/.", f"{tree}/"], check=True)
     # postprocess the tree, would be nicer to filter before already
     for exclude in options.get("exclude", []):
