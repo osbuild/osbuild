@@ -1,10 +1,15 @@
 import json
 import os
+import random
+import string
 import subprocess
 import tempfile
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 
 from osbuild.util.mnt import MountGuard, MountPermissions
+
+# use `/run/osbuild/containers/storage` for the host's containers-storage bind mount
+HOST_CONTAINERS_STORAGE = os.path.join(os.sep, "run", "osbuild", "containers", "storage")
 
 
 def is_manifest_list(data):
@@ -116,10 +121,7 @@ def containers_storage_source(image, image_filepath, container_format):
     storage_conf = image["data"]["storage"]
     driver = storage_conf.get("driver", "overlay")
 
-    # use `/run/osbuild/containers/storage` for the containers-storage bind mount
-    # since this ostree-compatible and the stage that uses this will be run
-    # inside a ostree-based build-root in `bootc-image-builder`
-    storage_path = os.path.join(os.sep, "run", "osbuild", "containers", "storage")
+    storage_path = HOST_CONTAINERS_STORAGE
     os.makedirs(storage_path, exist_ok=True)
 
     with MountGuard() as mg:
@@ -184,3 +186,48 @@ def container_source(image):
     # that the inner ctx manager won't be cleaned up until the execution returns to this ctx manager.
     with container_source_fn(image, image_filepath, container_format) as image_source:
         yield image_name, image_source
+
+
+@contextmanager
+def container_mount(image):
+    # Helper function for doing the `podman image mount`
+    @contextmanager
+    def _mount_container(img, imagestore=None):
+        cmd = ["podman", f"--imagestore={imagestore}"] if imagestore else ["podman"]
+        result = subprocess.run(cmd + ["image", "mount", img], encoding="utf-8",
+                                check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode != 0:
+            code = result.returncode
+            msg = result.stderr.strip()
+            raise RuntimeError(f"Failed to mount image ({code}): {msg}")
+        try:
+            yield result.stdout.strip()
+        finally:
+            subprocess.run(cmd + ["image", "umount", img], check=True)
+
+    with container_source(image) as (_, source):
+        with ExitStack() as cm:
+            img = ""
+            imagestore = None
+            if image["data"]["format"] == 'containers-storage':
+                # In the case where we are container storage we don't need to
+                # skopeo copy. We already have access to a mounted container storage
+                # that has the image ready to use.
+                image_id = image["checksum"].split(":")[1]
+                img = image_id
+                imagestore = HOST_CONTAINERS_STORAGE
+            else:
+                # We cannot use a tmpdir as storage here because of
+                # https://github.com/containers/storage/issues/1779 so instead
+                # just pick a random suffix. This runs inside bwrap which gives a
+                # tmp /var so it does not really matter much.
+                tmp_image_name = "tmp-container-mount-" + "".join(random.choices(string.digits, k=14))
+                cm.callback(subprocess.run, ["podman", "rmi", tmp_image_name], check=True)
+                # skopeo needs /var/tmp but the bwrap env is minimal and may not have it
+                os.makedirs("/var/tmp", mode=0o1777, exist_ok=True)
+                cmd = ["skopeo", "copy", source, f"containers-storage:{tmp_image_name}"]
+                subprocess.run(cmd, check=True)
+                img = tmp_image_name
+
+            with _mount_container(img, imagestore) as container_mountpoint:
+                yield container_mountpoint
