@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from fnmatch import fnmatch
+from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, Iterator, List, Optional
 
 from . import buildroot, host, objectstore, remoteloop
@@ -59,6 +60,16 @@ class BuildResult:
             "output": self.output,
             "error": self.error,
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "BuildResult":
+        result = cls.__new__(cls)
+        result.name = data["name"]
+        result.id = data["id"]
+        result.success = data["success"]
+        result.output = data["output"]
+        result.error = data["error"]
+        return result
 
 
 class DownloadResult:
@@ -138,6 +149,59 @@ class Stage:
         mount = Mount(name, info, device, partition, target, options)
         self.mounts[name] = mount
         return mount
+
+    def to_dict(self, libdir):
+        return {
+            "info_name": self.info_name,
+            "info_path": str(Path(self.info_path).relative_to(libdir)),
+            "info_caps": list(self.info_caps),
+            "sources": self.sources,
+            "build": self.build,
+            "base": self.base,
+            "options": self.options,
+            "source_epoch": self.source_epoch,
+            "checkpoint": self.checkpoint,
+            "inputs": {name: inp.to_dict(libdir) for name, inp in self.inputs.items()},
+            "devices": {name: dev.to_dict(libdir) for name, dev in self.devices.items()},
+            "mounts": {name: mnt.to_dict(libdir) for name, mnt in self.mounts.items()},
+        }
+
+    @classmethod
+    def from_dict(cls, data, libdir):
+        class InfoStub:
+            def __init__(self, name: str, path: str, caps: set):
+                self.name = name
+                self.path = path
+                self.caps = caps
+
+        info = InfoStub(data["info_name"], Path(libdir) / data["info_path"], set(data["info_caps"]))
+        stage = cls(
+            info=info,
+            source_options=data["sources"],
+            build=data["build"],
+            base=data["base"],
+            options=data["options"],
+            source_epoch=data["source_epoch"]
+        )
+        stage.checkpoint = data["checkpoint"]
+
+        for name, inp_data in data["inputs"].items():
+            inp = Input.from_dict(inp_data, libdir)
+            stage.inputs[name] = inp
+
+        devices_by_name = {}
+        for name, dev_data in data["devices"].items():
+            parent = devices_by_name.get(dev_data["parent_name"]) if dev_data["parent_name"] else None
+            dev = Device.from_dict(dev_data, libdir, parent)
+            stage.devices[name] = dev
+            devices_by_name[name] = dev
+
+        for name, mnt_data in data["mounts"].items():
+            device = stage.devices.get(mnt_data["device_name"]) if mnt_data["device_name"] else None
+            mnt = Mount.from_dict(mnt_data, libdir, device)
+            stage.mounts[name] = mnt
+
+        return stage
 
     def prepare_arguments(self, args, location):
         args["options"] = self.options
@@ -284,6 +348,24 @@ class Runner:
     @property
     def exec(self):
         return os.path.basename(self.info_path)
+
+    def to_dict(self, libdir):
+        info_path_rel = Path(self.info_path).relative_to(libdir)
+        return {
+            "name": self.name,
+            "info_path": str(info_path_rel),
+        }
+
+    @classmethod
+    def from_dict(cls, data, libdir):
+        info_path_abs = str(Path(libdir) / data["info_path"])
+
+        class InfoStub:
+            def __init__(self, path):
+                self.path = path
+
+        info = InfoStub(info_path_abs)
+        return cls(info, data["name"])
 
 
 class Pipeline:

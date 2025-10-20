@@ -18,6 +18,7 @@ import hashlib
 import json
 import os
 import stat
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from osbuild import host
@@ -48,6 +49,31 @@ class Device(MixinImmutableID):
             m.update(json.dumps(self.parent.id, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
+
+    def to_dict(self, libdir) -> Dict:
+        return {
+            "name": self.name,
+            "info_name": self.info_name,
+            "info_path": str(Path(self.info_path).relative_to(libdir)),
+            "parent_name": self.parent.name if self.parent else None,
+            "options": self.options,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict, libdir, parent: Optional["Device"] = None) -> "Device":
+        class InfoStub:
+            def __init__(self, name: str, path: str):
+                self.name = name
+                self.path = path
+
+        info = InfoStub(data["info_name"], Path(libdir) / data["info_path"])
+        dev = cls(
+            name=data["name"],
+            info=info,
+            parent=parent,
+            options=data["options"]
+        )
+        return dev
 
 
 class DeviceManager:
