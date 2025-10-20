@@ -43,6 +43,7 @@ def main(tree, options):
     force_drivers = options.get("force_drivers", [])
     filesystems = options.get("filesystems", [])
     include = options.get("include", [])
+    remove = options.get("remove", [])
     install = options.get("install", [])
     early_microcode = options.get("early_microcode", False)
     reproducible = options.get("reproducible", True)
@@ -88,6 +89,10 @@ def main(tree, options):
         for l in include:
             for k, v in l.items():
                 opts += ["--include", k, v]
+
+    if remove:
+        for remove_path in remove:
+            opts += ["--remove", remove_path]
 
     if install:
         for i in install:
