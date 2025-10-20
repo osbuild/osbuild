@@ -26,7 +26,8 @@ class Mount(MixinImmutableID):
 
     def __init__(self, name, info, device, partition, target, options: Dict):
         self.name = name
-        self.info = info
+        self.info_name = info.name
+        self.info_path = info.path
         self.device = device
         self.partition = partition
         self.target = target
@@ -35,7 +36,7 @@ class Mount(MixinImmutableID):
 
     def calc_id(self):
         m = hashlib.sha256()
-        m.update(json.dumps(self.info.name, sort_keys=True).encode())
+        m.update(json.dumps(self.info_name, sort_keys=True).encode())
         if self.device:
             m.update(json.dumps(self.device.id, sort_keys=True).encode())
         if self.partition:
@@ -94,7 +95,7 @@ class MountManager:
 
         mgr = self.devices.service_manager
 
-        client = mgr.start(f"mount/{mount.name}", mount.info.path)
+        client = mgr.start(f"mount/{mount.name}", mount.info_path)
         path = client.call("mount", args)
 
         if not path:

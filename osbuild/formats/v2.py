@@ -33,7 +33,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
     def describe_device(dev):
         desc = {
-            "type": dev.info.name
+            "type": dev.info_name
         }
 
         if dev.options:
@@ -51,7 +51,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     def describe_input(ip: Input):
         origin = ip.origin
         desc = {
-            "type": ip.info.name,
+            "type": ip.info_name,
             "origin": origin,
         }
         if ip.options:
@@ -78,7 +78,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     def describe_mount(mnt):
         desc = {
             "name": mnt.name,
-            "type": mnt.info.name,
+            "type": mnt.info_name,
             "target": mnt.target
         }
 
@@ -99,7 +99,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
 
     def describe_stage(s: Stage):
         desc = {
-            "type": s.info.name
+            "type": s.info_name
         }
 
         if with_id:
@@ -157,7 +157,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict:
     ]
 
     sources = {
-        source.info.name: describe_source(source)
+        source.info_name: describe_source(source)
         for source in manifest.sources
     }
 

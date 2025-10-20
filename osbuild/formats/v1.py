@@ -42,7 +42,7 @@ def describe(manifest: Manifest, *, with_id=False) -> Dict[str, Any]:
         return description
 
     def get_source_name(source):
-        name = source.info.name
+        name = source.info_name
         if name == "org.osbuild.curl":
             name = "org.osbuild.files"
         return name

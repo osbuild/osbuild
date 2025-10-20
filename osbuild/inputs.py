@@ -35,7 +35,8 @@ class Input:
 
     def __init__(self, name, info, origin: str, options: Dict):
         self.name = name
-        self.info = info
+        self.info_name = info.name
+        self.info_path = info.path
         self.origin = origin
         self.refs: Dict[str, Dict[str, Any]] = {}
         self.options = options or {}
@@ -51,7 +52,7 @@ class Input:
         # parameter or arbitrary and chosen by the manifest generator
         # and thus can be changed without affecting the contents
         m = hashlib.sha256()
-        m.update(json.dumps(self.info.name, sort_keys=True).encode())
+        m.update(json.dumps(self.info_name, sort_keys=True).encode())
         m.update(json.dumps(self.origin, sort_keys=True).encode())
         m.update(json.dumps(self.refs, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
@@ -86,7 +87,7 @@ class InputManager:
             }
         }
 
-        client = self.service_manager.start(f"input/{ip.name}", ip.info.path)
+        client = self.service_manager.start(f"input/{ip.name}", ip.info_path)
         reply = client.call("map", args)
 
         path = reply["path"]

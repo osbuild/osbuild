@@ -15,7 +15,8 @@ class Source:
     """
 
     def __init__(self, info, items, options) -> None:
-        self.info = info
+        self.info_name = info.name
+        self.info_path = info.path
         self.items = items or {}
         self.options = options
         # compat with pipeline
@@ -24,7 +25,7 @@ class Source:
         self.source_epoch = None
 
     def download(self, mgr: host.ServiceManager, store: ObjectStore):
-        source = self.info.name
+        source = self.info_name
         cache = os.path.join(store.store, "sources")
 
         args = {
@@ -35,7 +36,7 @@ class Source:
             "checksums": [],
         }
 
-        client = mgr.start(f"source/{source}", self.info.path)
+        client = mgr.start(f"source/{source}", self.info_path)
         reply = client.call("download", args)
 
         return reply
@@ -53,12 +54,12 @@ class Source:
     # visible progress right now
     @property
     def name(self):
-        return f"source {self.info.name}"
+        return f"source {self.info_name}"
 
     @property
     def id(self):
         m = hashlib.sha256()
-        m.update(json.dumps(self.info.name, sort_keys=True).encode())
+        m.update(json.dumps(self.info_name, sort_keys=True).encode())
         m.update(json.dumps(self.items, sort_keys=True).encode())
         return m.hexdigest()
 
