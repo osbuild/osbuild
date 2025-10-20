@@ -7,6 +7,7 @@ from osbuild.mounts import Mount
 def test_mount_calc_id_is_stable():
     info = Mock(spec=ModuleInfo)
     info.name = "some-name"
+    info.path = "/some/path"
     device = Mock(spec=ModuleInfo)
     device.id = "some-id"
     partition = 1

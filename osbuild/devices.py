@@ -32,7 +32,8 @@ class Device(MixinImmutableID):
 
     def __init__(self, name, info, parent, options: Dict):
         self.name = name
-        self.info = info
+        self.info_name = info.name
+        self.info_path = info.path
         self.parent = parent
         self.options = options or {}
         self.id = self.calc_id()
@@ -42,7 +43,7 @@ class Device(MixinImmutableID):
         # by the stage, it is not included in the id calculation.
         m = hashlib.sha256()
 
-        m.update(json.dumps(self.info.name, sort_keys=True).encode())
+        m.update(json.dumps(self.info_name, sort_keys=True).encode())
         if self.parent:
             m.update(json.dumps(self.parent.id, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
@@ -89,7 +90,7 @@ class DeviceManager:
 
         mgr = self.service_manager
 
-        client = mgr.start(f"device/{dev.name}", dev.info.path)
+        client = mgr.start(f"device/{dev.name}", dev.info_path)
         res = client.call("open", args)
 
         self.devices[dev.name] = res

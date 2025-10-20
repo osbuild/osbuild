@@ -79,7 +79,9 @@ class DownloadResult:
 
 class Stage:
     def __init__(self, info, source_options, build, base, options, source_epoch):
-        self.info = info
+        self.info_name = info.name
+        self.info_path = info.path
+        self.info_caps = info.caps
         self.sources = source_options
         self.build = build
         self.base = base
@@ -92,7 +94,7 @@ class Stage:
 
     @property
     def name(self) -> str:
-        return self.info.name
+        return self.info_name
 
     @property
     def id(self) -> str:
@@ -174,7 +176,7 @@ class Stage:
             build_root.mount_boot = bool(self.build)
 
             # drop capabilities other than `DEFAULT_CAPABILITIES`
-            build_root.caps = DEFAULT_CAPABILITIES | self.info.caps
+            build_root.caps = DEFAULT_CAPABILITIES | self.info_caps
 
             tmpdir = store.tempdir(prefix="buildroot-tmp-")
             tmpdir = cm.enter_context(tmpdir)
@@ -212,7 +214,7 @@ class Stage:
             )
 
             ro_binds = [
-                f"{self.info.path}:/run/osbuild/bin/{self.name}",
+                f"{self.info_path}:/run/osbuild/bin/{self.name}",
                 f"{inputs_tmpdir}:{inputs_mapped}",
                 f"{args_path}:/run/osbuild/api/arguments"
             ]
@@ -272,16 +274,16 @@ class Stage:
 
 class Runner:
     def __init__(self, info, name: Optional[str] = None) -> None:
-        self.info = info  # `meta.RunnerInfo`
+        self.info_path = info.path
         self.name = name or os.path.basename(info.path)
 
     @property
     def path(self):
-        return self.info.path
+        return self.info_path
 
     @property
     def exec(self):
-        return os.path.basename(self.info.path)
+        return os.path.basename(self.info_path)
 
 
 class Pipeline:
@@ -455,7 +457,7 @@ class Manifest:
                 # ideally we would make the whole of download more symmetric
                 # to "build_stages" and return a "results" here in "finish"
                 # as well
-                monitor.finish({"name": source.info.name})
+                monitor.finish({"name": source.info_name})
 
     def depsolve(self, store: ObjectStore, targets: Iterable[str]) -> List[str]:
         """Return the list of pipelines that need to be built

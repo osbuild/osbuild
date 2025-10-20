@@ -10,6 +10,7 @@ from osbuild.mounts import Mount
 def test_mount_immutable_mixin():
     info = Mock(spec=ModuleInfo)
     info.name = "some-name"
+    info.path = "/some/path"
     device = Mock(spec=ModuleInfo)
     device.id = "some-id"
     partition = 1
@@ -24,6 +25,7 @@ def test_mount_immutable_mixin():
 def test_device_immutable_mixins():
     info = Mock(spec=ModuleInfo)
     info.name = "some-name"
+    info.path = "/some/path"
     parent = None
     opts = {"opt1": 1}
     dev = Device("name", info, parent, opts)
