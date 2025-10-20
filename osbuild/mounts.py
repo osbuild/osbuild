@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import subprocess
+from pathlib import Path
 from typing import Dict, List
 
 from osbuild import host
@@ -45,6 +46,35 @@ class Mount(MixinImmutableID):
             m.update(json.dumps(self.target, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
+
+    def to_dict(self, libdir) -> Dict:
+        return {
+            "name": self.name,
+            "info_name": self.info_name,
+            "info_path": str(Path(self.info_path).relative_to(libdir)),
+            "device_name": self.device.name if self.device else None,
+            "partition": self.partition,
+            "target": self.target,
+            "options": self.options,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict, libdir, device=None) -> "Mount":
+        class InfoStub:
+            def __init__(self, name: str, path: str):
+                self.name = name
+                self.path = path
+
+        info = InfoStub(data["info_name"], Path(libdir) / data["info_path"])
+        mnt = cls(
+            name=data["name"],
+            info=info,
+            device=device,
+            partition=data["partition"],
+            target=data["target"],
+            options=data["options"]
+        )
+        return mnt
 
 
 class MountManager:

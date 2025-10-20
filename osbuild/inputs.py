@@ -20,6 +20,7 @@ import abc
 import hashlib
 import json
 import os
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from osbuild import host
@@ -57,6 +58,34 @@ class Input:
         m.update(json.dumps(self.refs, sort_keys=True).encode())
         m.update(json.dumps(self.options, sort_keys=True).encode())
         return m.hexdigest()
+
+    def to_dict(self, libdir) -> Dict:
+        return {
+            "name": self.name,
+            "info_name": self.info_name,
+            "info_path": str(Path(self.info_path).relative_to(libdir)),
+            "origin": self.origin,
+            "refs": self.refs,
+            "options": self.options,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict, libdir) -> "Input":
+        class InfoStub:
+            def __init__(self, name: str, path: str):
+                self.name = name
+                self.path = path
+
+        info = InfoStub(data["info_name"], Path(libdir) / data["info_path"])
+        inp = cls(
+            name=data["name"],
+            info=info,
+            origin=data["origin"],
+            options=data["options"]
+        )
+        inp.refs = data["refs"]
+        inp.id = inp.calc_id()
+        return inp
 
 
 class InputManager:
