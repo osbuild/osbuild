@@ -79,7 +79,7 @@ def create_image(tmp_path):
 def mount(mgr, devpath, tree, size, mountpoint, options):
     index = meta.Index(os.curdir)
     # Device manager to open the loopback device
-    devmgr = devices.DeviceManager(mgr, devpath, tree)
+    devmgr = devices.DeviceManager(mgr, devpath, os.fspath(tree))
     # get a Device for the loopback
     dev = devices.Device(
         "loop",
@@ -198,7 +198,7 @@ def test_mount_with_partition(tmp_path):
 
     with host.ServiceManager() as mgr:
         with make_dev_tmpfs(tmp_path) as devpath:
-            devmgr = devices.DeviceManager(mgr, devpath, tree)
+            devmgr = devices.DeviceManager(mgr, devpath, os.fspath(tree))
             opts = {
                 "filename": img_name,
                 "partscan": True,
