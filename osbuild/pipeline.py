@@ -229,7 +229,17 @@ class Stage:
         with open(location, "w", encoding="utf-8") as fp:
             json.dump(args, fp)
 
-    def run(self, tree, runner, build_tree, store, monitor, libdir, debug_break="", timeout=None) -> BuildResult:
+    def run(
+            self,
+            tree_path,
+            meta_name,
+            runner,
+            build_tree,
+            store,
+            monitor,
+            libdir,
+            debug_break="",
+            timeout=None) -> BuildResult:
         with contextlib.ExitStack() as cm:
 
             build_root = buildroot.BuildRoot(build_tree, runner.path, libdir, store.tmp)
@@ -273,10 +283,6 @@ class Stage:
                 "mounts": mounts,
             }
 
-            meta = cm.enter_context(
-                tree.meta.write(self.id)
-            )
-
             ro_binds = [
                 f"{self.info_path}:/run/osbuild/bin/{self.name}",
                 f"{inputs_tmpdir}:{inputs_mapped}",
@@ -284,8 +290,8 @@ class Stage:
             ]
 
             binds = [
-                os.fspath(tree) + ":/run/osbuild/tree",
-                meta.name + ":/run/osbuild/meta",
+                tree_path + ":/run/osbuild/tree",
+                meta_name + ":/run/osbuild/meta",
                 f"{mounts_tmpdir}:{mounts_mapped}"
             ]
 
@@ -300,7 +306,7 @@ class Stage:
                 data_inp = ipmgr.map(ip)
                 inputs[key] = data_inp
 
-            devmgr = DeviceManager(mgr, build_root.dev, os.fspath(tree))
+            devmgr = DeviceManager(mgr, build_root.dev, tree_path)
             for name, dev in self.devices.items():
                 devices[name] = devmgr.open(dev)
 
@@ -447,31 +453,35 @@ class Pipeline:
         # trees will be based on the winner.
         results["stages"] = []
 
-        while todo:
-            stage = todo.pop()
+        with contextlib.ExitStack() as cm:
 
-            monitor.stage(stage)
+            while todo:
+                stage = todo.pop()
 
-            r = stage.run(tree,
-                          self.runner,
-                          build_tree,
-                          object_store,
-                          monitor,
-                          libdir,
-                          debug_break,
-                          stage_timeout)
+                monitor.stage(stage)
 
-            md = tree.meta.get(r.id)
-            monitor.result(r, md)
+                with tree.meta.write(stage.id) as meta:
+                    r = stage.run(os.fspath(tree),
+                                  meta.name,
+                                  self.runner,
+                                  build_tree,
+                                  object_store,
+                                  monitor,
+                                  libdir,
+                                  debug_break,
+                                  stage_timeout)
 
-            results["stages"].append(r)
-            if not r.success:
-                cleanup(build_tree, tree)
-                results["success"] = False
-                return results
+                md = tree.meta.get(r.id)
+                monitor.result(r, md)
 
-            if stage.checkpoint:
-                object_store.commit(tree, stage.id)
+                results["stages"].append(r)
+                if not r.success:
+                    cleanup(build_tree, tree)
+                    results["success"] = False
+                    return results
+
+                if stage.checkpoint:
+                    object_store.commit(tree, stage.id)
 
         tree.finalize()
 

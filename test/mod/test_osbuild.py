@@ -49,7 +49,8 @@ class TestDescriptions(unittest.TestCase):
 
             with ObjectStore(storedir) as store:
                 data = store.new(stage.id)
-                res = stage.run(data, runner, root, store, monitor, libdir)
+                with data.meta.write(stage.id) as meta:
+                    res = stage.run(os.fspath(data), meta.name, runner, root, store, monitor, libdir)
 
         self.assertEqual(res.success, True)
         self.assertEqual(res.id, stage.id)
