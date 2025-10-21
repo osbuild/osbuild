@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+import os
+import sys
+
+import osbuild.api
+from osbuild.util import parsing
+
+
+def main(args, options):
+    items = options["paths"]
+
+    for path in items:
+        target = path["target"]
+        link_name = parsing.parse_location(path["link_name"], args)
+        symbolic = path.get("symbolic", False)
+
+        print(f"Linking '{link_name}' -> '{target}'")
+        if symbolic:
+            print(f"Creating symbolic link: '{link_name}' -> '{target}'")
+            os.symlink(target, link_name)
+        else:
+            print(f"Creating hard link: '{link_name}' -> '{target}'")
+            os.link(target, link_name)
+
+    return 0
+
+
+if __name__ == '__main__':
+    _args = osbuild.api.arguments()
+    r = main(_args, _args["options"])
+    sys.exit(r)
