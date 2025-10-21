@@ -41,7 +41,7 @@ def test_loopback_basic(tmp_path):
     dev = devices.Device("loop", info, None, options)
 
     with host.ServiceManager() as mgr:
-        devmgr = devices.DeviceManager(mgr, devpath, tree)
+        devmgr = devices.DeviceManager(mgr, devpath, os.fspath(tree))
         reply = devmgr.open(dev)
         assert reply
         assert reply["path"]

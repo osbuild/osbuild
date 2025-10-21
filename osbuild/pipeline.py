@@ -300,7 +300,7 @@ class Stage:
                 data_inp = ipmgr.map(ip)
                 inputs[key] = data_inp
 
-            devmgr = DeviceManager(mgr, build_root.dev, tree)
+            devmgr = DeviceManager(mgr, build_root.dev, os.fspath(tree))
             for name, dev in self.devices.items():
                 devices[name] = devmgr.open(dev)
 

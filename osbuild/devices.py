@@ -82,10 +82,10 @@ class DeviceManager:
     Uses a `host.ServiceManager` to open `Device` instances.
     """
 
-    def __init__(self, mgr: host.ServiceManager, devpath: str, tree: str) -> None:
+    def __init__(self, mgr: host.ServiceManager, devpath: str, tree_path: str) -> None:
         self.service_manager = mgr
         self.devpath = devpath
-        self.tree = tree
+        self.tree = tree_path
         self.devices: Dict[str, Dict[str, Any]] = {}
 
     def device_relpath(self, dev: Optional[Device]) -> Optional[str]:
@@ -106,7 +106,7 @@ class DeviceManager:
         args = {
             # global options
             "dev": self.devpath,
-            "tree": os.fspath(self.tree),
+            "tree": self.tree,
 
             "parent": parent,
 
