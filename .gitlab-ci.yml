@@ -125,7 +125,7 @@ Manifests:
   variables:
     PYTHONUNBUFFERED: 1
     # List of image types that are not supported by osbuild-image-info
-    UNSUPPORTED_IMG_TYPES: "ova *container live-installer wsl"
+    UNSUPPORTED_IMG_TYPES: "ova *container live-installer wsl *netinst"
   artifacts:
     when: always
     paths:
