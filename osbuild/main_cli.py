@@ -85,6 +85,8 @@ def parse_arguments(sys_argv: List[str]) -> argparse.Namespace:
         help="stage to commit to the object store during build (can be passed multiple times), accepts globs")
     parser.add_argument("--export", metavar="ID", action="append", type=str, default=[],
                         help="object to export, can be passed multiple times")
+    parser.add_argument("--in-vm", metavar="ID", action="append", type=str, default=[],
+                        help="Run a pipeline in a VM")
     parser.add_argument("--json", action="store_true",
                         help="output results in JSON format")
     parser.add_argument("--output-directory", metavar="DIRECTORY", type=os.path.abspath,
@@ -163,6 +165,8 @@ def osbuild_cli() -> int:
         print("Need --output-directory for --export")
         return 1
 
+    in_vm = set(args.in_vm)
+
     monitor_name = args.monitor
     if not monitor_name:
         monitor_name = "NullMonitor" if (args.json or args.quiet) else "LogMonitor"
@@ -188,6 +192,7 @@ def osbuild_cli() -> int:
                 monitor,
                 args.libdir,
                 debug_break,
+                in_vm=in_vm,
                 stage_timeout=stage_timeout
             )
             if r["success"]:

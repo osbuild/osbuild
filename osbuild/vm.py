@@ -20,7 +20,9 @@ if PARENT_DIR not in sys.path:
 
 # These imports really have to go after the path was modified
 # pylint: disable=C0413
+from osbuild.monitor import BaseMonitor  # noqa: E402
 from osbuild.objectstore import ObjectStore  # noqa: E402
+from osbuild.pipeline import Runner, Stage  # noqa: E402
 
 # pylint: enable=C0413
 
@@ -125,7 +127,7 @@ def serve(
             raise
 
 
-def op_ping(req: Dict[str, Any], serial: SerialConnection) -> Dict[str, Any]:
+def op_ping(req: Dict[str, Any], _serial: SerialConnection) -> Dict[str, Any]:
     return {"ok": True, "echo": req.get("payload")}
 
 
@@ -167,7 +169,7 @@ def op_run(req: Dict[str, Any], serial: SerialConnection) -> Dict[str, Any]:
 
         for key, _ in sel.select(timeout=0.2):
             stream = key.fileobj
-            prefix, encoding = key.data
+            prefix, _encoding = key.data
             fileno = key.fd
 
             try:
@@ -203,9 +205,54 @@ def op_run(req: Dict[str, Any], serial: SerialConnection) -> Dict[str, Any]:
     return {"ok": True, "exit": code}
 
 
+class VMMonitor(BaseMonitor):
+    def __init__(self, conn: SerialConnection) -> None:
+        super().__init__(sys.stderr.fileno())
+        self.conn = conn
+
+    def log(self, message: str, origin: Optional[str] = None):
+        resp = {"log": message}
+        self.conn.send_response(resp)
+
+
+def op_update_store(req: Dict[str, Any], _serial: SerialConnection) -> Dict[str, Any]:
+    assert store is not None
+    store.load_floating(req["floating"])
+    return {"ok": True, "r": 0}
+
+
+def op_run_stage(req: Dict[str, Any], serial: SerialConnection) -> Dict[str, Any]:
+    assert store is not None
+    libdir_path = mounts["libdir"]
+
+    stage = Stage.from_dict(req["stage"], libdir_path)
+
+    meta_name = os.path.join(store.store, req["meta_name"])
+    runner = Runner.from_dict(req["runner"], libdir_path)
+    tree_dir = os.path.join(store.store, req["tree_dir"])
+    build_tree_id = req["build_tree"]
+    build_tree = store.get(build_tree_id)
+    debug_break = req["debug_break"]
+    stage_timeout = req["stage_timeout"]
+
+    monitor = VMMonitor(serial)
+    r = stage.run(tree_dir,
+                  meta_name,
+                  runner,
+                  build_tree,
+                  store,
+                  monitor,
+                  libdir_path,
+                  debug_break,
+                  stage_timeout)
+    return {"ok": True, "r": r.as_dict()}
+
+
 HANDLERS: Dict[str, Callable[[Dict[str, Any], SerialConnection], Dict[str, Any]]] = {
     "ping": op_ping,
     "run": op_run,
+    "run_stage": op_run_stage,
+    "update_store": op_update_store,
 }
 
 load_modules = [
