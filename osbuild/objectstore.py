@@ -5,6 +5,7 @@ import os
 import subprocess
 import tempfile
 import time
+from pathlib import Path
 from typing import Any, Optional, Set, Union
 
 from osbuild.util import jsoncomm
@@ -32,7 +33,7 @@ class PathAdapter:
 
 
 class Object:
-    class Mode(enum.Enum):
+    class Mode(enum.IntEnum):
         READ = 0
         WRITE = 1
 
@@ -128,6 +129,20 @@ class Object:
         )
         self._path = os.path.join(self._cache, name)
         os.makedirs(os.path.join(self._path, "tree"))
+
+    def to_dict(self):
+        return {
+            "mode": int(self._mode),
+            "id": self._id,
+            "path": str(Path(self._path).relative_to(self._cache)),
+        }
+
+    @classmethod
+    def from_dict(cls, data, store):
+        o = Object(store.cache, data["id"], Object.Mode(data["mode"]))
+        o._path = Path(store.cache) / data["path"]
+        o._stack = contextlib.ExitStack()
+        return o
 
     def __enter__(self):
         assert not self.active
@@ -319,7 +334,7 @@ class HostTree:
 
 
 class ObjectStore(contextlib.AbstractContextManager):
-    def __init__(self, store: PathLike):
+    def __init__(self, store: PathLike, read_only: bool = False):
         self.cache = FsCache("osbuild", store)
         self.tmp = os.path.join(store, "tmp")
         os.makedirs(self.store, exist_ok=True)
@@ -328,6 +343,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         self._objs: Set[Object] = set()
         self._host_tree: Optional[HostTree] = None
         self._stack = contextlib.ExitStack()
+        self._read_only = read_only
 
     def _get_floating(self, object_id: str) -> Optional[Object]:
         """Internal: get a non-committed object"""
@@ -408,6 +424,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         store the object in the cache.
         """
         assert self.active
+        self._ensure_writable()
 
         obj = Object(self.cache, object_id, Object.Mode.WRITE)
         self._stack.enter_context(obj)
@@ -428,6 +445,7 @@ class ObjectStore(contextlib.AbstractContextManager):
         """
 
         assert self.active
+        self._ensure_writable()
 
         # we clamp the mtime of `obj` itself so that it
         # resuming a snapshop and building with a snapshot
@@ -444,6 +462,29 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         self._stack.close()
         self._objs = set()
+
+    # export active floating objects so another store can load them,
+    # typically in a VM
+    def export_floating(self):
+        floating = []
+        for o in self._objs:
+            if o.mode == Object.Mode.READ:
+                floating.append(o.to_dict())
+        return floating
+
+    # Inject floating references from another store, used
+    # to set up the ObjectStore in the VM corresponging
+    # to the host one. Only valid for read-only stores.
+    def load_floating(self, objs):
+        if not self._read_only:
+            raise RuntimeError("ObjectStore must be read-only to use load_floating()")
+        self._objs = set()
+        for o in objs:
+            self._objs.add(Object.from_dict(o, self))
+
+    def _ensure_writable(self):
+        if self._read_only:
+            raise RuntimeError("ObjectStore is not writable")
 
     def __fspath__(self):
         return os.fspath(self.store)
