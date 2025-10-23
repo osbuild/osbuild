@@ -13,6 +13,7 @@ from .devices import Device, DeviceManager
 from .inputs import Input, InputManager
 from .mounts import Mount, MountManager
 from .objectstore import ObjectStore
+from .qemu import Qemu
 from .sources import Source
 from .util import experimentalflags, osrelease
 
@@ -88,6 +89,7 @@ class DownloadResult:
         }
 
 
+# pylint: disable=too-many-instance-attributes
 class Stage:
     def __init__(self, info, source_options, build, base, options, source_epoch):
         self.info_name = info.name
@@ -374,6 +376,7 @@ class Runner:
         return cls(info, data["name"])
 
 
+# pylint: disable=too-many-branches
 class Pipeline:
     def __init__(self, name: str, runner: Runner, build=None, source_epoch=None):
         self.name = name
@@ -406,7 +409,8 @@ class Pipeline:
             self.assembler.base = stage.id
         return stage
 
-    def build_stages(self, object_store, monitor, libdir, debug_break="", stage_timeout=None):
+    def build_stages(self, object_store, monitor, libdir,
+                     debug_break="", stage_timeout=None, in_vm=False):
         results = {"success": True, "name": self.name}
 
         # If there are no stages, just return here
@@ -454,6 +458,24 @@ class Pipeline:
         results["stages"] = []
 
         with contextlib.ExitStack() as cm:
+            qemu = None
+            tree_dir = os.path.join(tree.path, "tree")
+            if in_vm:
+                buildtree_dir = os.path.join(build_tree.path, "tree")
+
+                qemu = Qemu("4G",
+                            os.path.join(buildtree_dir, "vm/vmlinuz"),
+                            os.path.join(buildtree_dir, "vm/initramfs.img"),
+                            buildtree_dir,
+                            libdir)
+                qemu.add_virtiofs(object_store.store, "store", readonly=False)
+
+                cm.enter_context(qemu)
+
+                # Update the object store in the VM to match
+                # the active floating objects
+                qemu.monitored_request(monitor, "update_store",
+                                       floating=object_store.export_floating())
 
             while todo:
                 stage = todo.pop()
@@ -461,15 +483,26 @@ class Pipeline:
                 monitor.stage(stage)
 
                 with tree.meta.write(stage.id) as meta:
-                    r = stage.run(os.fspath(tree),
-                                  meta.name,
-                                  self.runner,
-                                  build_tree,
-                                  object_store,
-                                  monitor,
-                                  libdir,
-                                  debug_break,
-                                  stage_timeout)
+                    if qemu:
+                        resp = qemu.monitored_request(monitor, "run_stage",
+                                                      stage=stage.to_dict(libdir),
+                                                      runner=self.runner.to_dict(libdir),
+                                                      tree_dir=str(Path(tree_dir).relative_to(object_store.store)),
+                                                      meta_name=str(Path(meta.name).relative_to(object_store.store)),
+                                                      build_tree=build_tree.id,
+                                                      debug_break=debug_break,
+                                                      stage_timeout=stage_timeout)
+                        r = BuildResult.from_dict(resp)
+                    else:
+                        r = stage.run(os.fspath(tree),
+                                      meta.name,
+                                      self.runner,
+                                      build_tree,
+                                      object_store,
+                                      monitor,
+                                      libdir,
+                                      debug_break,
+                                      stage_timeout)
 
                 md = tree.meta.get(r.id)
                 monitor.result(r, md)
@@ -487,7 +520,7 @@ class Pipeline:
 
         return results
 
-    def run(self, store, monitor, libdir, debug_break="", stage_timeout=None):
+    def run(self, store, monitor, libdir, debug_break="", stage_timeout=None, in_vm=False):
 
         monitor.begin(self)
 
@@ -495,7 +528,8 @@ class Pipeline:
                                     monitor,
                                     libdir,
                                     debug_break,
-                                    stage_timeout)
+                                    stage_timeout,
+                                    in_vm)
 
         monitor.finish(results)
 
@@ -603,7 +637,8 @@ class Manifest:
 
         return list(map(lambda x: x.name, reversed(build.values())))
 
-    def build(self, store, pipelines, monitor, libdir, debug_break="", stage_timeout=None) -> Dict[str, Any]:
+    def build(self, store, pipelines, monitor, libdir,
+              debug_break="", stage_timeout=None, in_vm=None) -> Dict[str, Any]:
         """Build the manifest
 
         Returns a dict of string keys that contains the overall
@@ -617,7 +652,7 @@ class Manifest:
 
         for name_or_id in pipelines:
             pl = self[name_or_id]
-            res = pl.run(store, monitor, libdir, debug_break, stage_timeout)
+            res = pl.run(store, monitor, libdir, debug_break, stage_timeout, in_vm=in_vm and pl.name in in_vm)
             results[pl.id] = res
             if not res["success"]:
                 results["success"] = False
