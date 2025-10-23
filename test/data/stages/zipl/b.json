@@ -334,11 +334,16 @@
                 "sha256:0ac10ca45886cb3e07f1e0374fe969e8c14347ce58bff3c3dd8e34d53ccbd741": {},
                 "sha256:5dae8bfa01ae8b64d7b3e89b77855b89fc5e99c59146617dbc9f9eb8da1d83ac": {},
                 "sha256:5c1ba46f41a58d72191067a6a9b8551ca4a99e7748f2e3cfb99b83ccd84bf3af": {},
+                "sha256:81301e709a6216a50b22d7ebb9d6bb9a0932db27d97504b988f5a8ea974298e1": {},
+                "sha256:d0433fcc3e4c1cac9b8c2288a72f1db1610d51b44b7d2835e61275b9e3be0b70": {},
+                "sha256:b502cc1203813bbac395e5de0c29b8d966165f98d0faf98433ad0a1649b0ddc1": {},
                 "sha256:c85728ee94b2fc665f1fd59bdae4dbc9736069ae49b147690e1e4acd6e6e9e6c": {},
                 "sha256:0b9b12bd08ee30d2a468a3af3a4b3a678b217f1b940e0da64ebb377763341732": {},
                 "sha256:ce1116b043f93b68c067e3f719bea965050323c8301de11060e3a951fb64dec4": {},
+                "sha256:b0b6684dbdc0bf5ede0073b1a26fd3e7039e3f63c22133d4b1dbd8144ae98181": {},
                 "sha256:5eacd25ba4385619741124c22dbcbbfa25af45cbb4af8eda077067df12ff9649": {},
                 "sha256:e521cb56b504dc31be6e942a2317264240611d7f06e9a239389953de2400b681": {},
+                "sha256:1274048bc0cec0f0ac88473e6c2f3c70f69a44e1a7da60993038d03b54fe1f3a": {},
                 "sha256:2593cdd079e4599099f6a1ffca8fd2ac7a46ea0b297e53ef7a22cd10e1b74596": {},
                 "sha256:c34a359560de108a831a91a3b75f23414ea53261edc20b6195dff0eba6f24d7a": {},
                 "sha256:ee06fb8ec1fe03df1376dc048c83ba46499bcc650ba060d43162febde6c43203": {},
@@ -382,6 +387,11 @@
                 "sha256:e8ed250cd68bacfc00ba929b13cbcfe08fd14cd3c7008394c2a4318af627a161": {},
                 "sha256:de6317d44060a038e8b021450ea5e448f55a621fda83c60b526474605ff4b95a": {},
                 "sha256:3a007abdf869e2ba4d33717d178c3584ad6438ede1d727d533484a564c060cd0": {},
+                "sha256:971bc8825a80abb9d7631ca588777178a5d3baf546f995bd752e349ce9b19b5f": {},
+                "sha256:daede559807b914db2b5a1c72edf0c4c1166798c1007af5dbc6a7cffa991334e": {},
+                "sha256:7708fdb2e319057cb8c74cf4817b9370cb165c0698b44baa9b40cc6e8fe969fc": {},
+                "sha256:546b2ade58e3cd695b24d1246753ae7cf8d6ae6f4cef2ee14134518547353366": {},
+                "sha256:f98120477af09174268553de994ebf1b08bf421e3f72fed8a5f9c6b73e9ad032": {},
                 "sha256:6cadefaadd555d4dd9440a933e4cdb10e8c8c60da1a5e42c59b1ffac64a22dcb": {},
                 "sha256:832ddd33414a65c131c494b06a010b76ede23dfc5ba729094dac791f21da49c4": {},
                 "sha256:aa83e4bf1a84cc274694816f6ad704b6c5a13c91355d45daacdd0fa41d4c9f42": {},
@@ -395,11 +405,16 @@
                 "sha256:7da0c28021401cb21dc404c5a14cd8bf0e6092a1c1f3eae7e6056b41db00e322": {},
                 "sha256:236788ca0ba37b5c1168c78bd53bcf46d8a3f0be979e5b7311f15ee247d0fd69": {},
                 "sha256:a674cbe15563ef49482b203b6c883b982bfea0675dc92e19fbdc7e8049316f6c": {},
+                "sha256:7348bc0b5257421ada54ad4753d2feb1be42fa81b206416930ba372a5e60fdaf": {},
+                "sha256:8573e61fe92ebc65ea48956f5cd496388e0559388ffe04334d93eeae8fc034d2": {},
                 "sha256:98f472b08af7d17fc21d941e88a514dea7e8ce324479a4015ff8980bd672a4eb": {},
                 "sha256:e24b4e6f979c4b6645a4e7f41f9b1b8dd9f35bd9d1ede10d72a27c095bf5cdd2": {},
+                "sha256:f4f38db4871b25b37a612211b68c27f113cb3cff4ae5f3990e1f5595f0390461": {},
                 "sha256:0b10682c1c2dacbb18ba39e92e1275858e83a9a962b14a97817c5af066fec8fd": {},
                 "sha256:ca0b2e43a9e2b18fbede0e4f9ea90fafcb859d371b62b4b3bb291303e6cef8ac": {},
                 "sha256:f8358176307424485070b23a60e9d603e0aedbfe3fce829cc7cad101d2183976": {},
+                "sha256:e1d7d2f95bb48cb47723ee83e287514cbaca7a664bcc72ac74d4b3c32afab8ca": {},
+                "sha256:7b3d60526e6cb41e1605e2ad06e3ff0c51c64242a828989790b8d47eb2096246": {},
                 "sha256:da49543dad6fa2050d5a2844b2cee36251f5a62ef9c1b63eb799f2e8fc5c89c0": {},
                 "sha256:f0f8f87c78080a581e9a2c688d5720f8cb2f826a180f89be88d719f4ec767a7f": {},
                 "sha256:69a078726dd7faf4f3f5dd6f5b44accbfc5486b1f15a5d29f2aa7497e9d07724": {},
@@ -443,6 +458,7 @@
                 "sha256:13c8a0be80ea378114fc944f3bd379caa5675c6dc98b809833a8dd38280cb125": {},
                 "sha256:3693c89fdbae37370b361f6d5efb7999bce6ab7c88fd585c756d67ff2cc9abde": {},
                 "sha256:941ff1a4fd3d331f41bcc32a43fbe51b1fb1de1be96add1a46ac98f3a3f601a6": {},
+                "sha256:d8fcf2aac41f9c5b9acdb15f81cef02ae639da6d039e95defbd553dc67fe8f2f": {},
                 "sha256:f593a3407085bd522ec1d1e0005811206185e1bba1c839dd7443f3dcfd06da59": {},
                 "sha256:cce7de2a5eb2d02491767fafb4ceacf00636182511825039be7e178c5b1f9c2a": {},
                 "sha256:f645559c99b4584656e416ba60131e7a5e5264ef797c1d6af367b7bf68e0c074": {},
@@ -456,6 +472,7 @@
                 "sha256:72cf28887d12f739c59b7a171accf2d2dea91a2c0160a9d02bacf8826b33e51c": {},
                 "sha256:ac948f04f76efaaaa2644deed04f6f438e0c43036e7d9d3e47b55a757c9957d8": {},
                 "sha256:9cf1b6bb8763de7e45cca8d23ec30af223e2f8e3536d770664d29b2de3874fd0": {},
+                "sha256:e245695e60ae3466e0356192c7252d37a171dfde6cbef18a9c98de1e6c8200ad": {},
                 "sha256:bf198907f55db7d0c54ba8a8b1a0a16b94ae08c091c2d03bdaafd16cd345cd14": {},
                 "sha256:e5cfa4ed0f58eaf4579cffc64276fc4bc625098bf62412877ba0200d18f9d05d": {}
               }
@@ -479,6 +496,65 @@
                 "mode": 493
               }
             ]
+          }
+        },
+        {
+          "type": "org.osbuild.dracut",
+          "options": {
+            "kernel": [
+              "6.11.10-300.fc41.x86_64"
+            ],
+            "modules": [
+              "bash",
+              "virtiofs",
+              "fstab-sys"
+            ],
+            "filesystems": [
+              "virtiofs"
+            ],
+            "force_drivers": [
+              "virtio_console",
+              "virtio_pci"
+            ],
+            "extra": [
+              "--mount",
+              "mnt0 /mnt virtiofs ro,x-initrd.mount 0 0"
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.mkdir",
+          "options": {
+            "paths": [
+              {
+                "path": "/vm"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.copy",
+          "options": {
+            "paths": [
+              {
+                "from": "tree:///boot/initramfs-6.11.10-300.fc41.x86_64.img",
+                "to": "tree:///vm/initramfs.img"
+              },
+              {
+                "from": "tree:///boot/vmlinuz-6.11.10-300.fc41.x86_64",
+                "to": "tree:///vm/vmlinuz"
+              }
+            ]
+          }
+        },
+        {
+          "type": "org.osbuild.chmod",
+          "options": {
+            "items": {
+              "/vm/initramfs.img": {
+                "mode": "a+r"
+              }
+            }
           }
         },
         {
@@ -980,11 +1056,16 @@
         "sha256:0ac10ca45886cb3e07f1e0374fe969e8c14347ce58bff3c3dd8e34d53ccbd741": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-fedora-20241107/Packages/z/zstd-1.5.6-2.fc41.x86_64.rpm",
         "sha256:5dae8bfa01ae8b64d7b3e89b77855b89fc5e99c59146617dbc9f9eb8da1d83ac": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/a/aardvark-dns-1.13.1-1.fc41.x86_64.rpm",
         "sha256:5c1ba46f41a58d72191067a6a9b8551ca4a99e7748f2e3cfb99b83ccd84bf3af": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/a/add-determinism-0.3.6-3.fc41.x86_64.rpm",
+        "sha256:81301e709a6216a50b22d7ebb9d6bb9a0932db27d97504b988f5a8ea974298e1": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/a/amd-gpu-firmware-20241110-1.fc41.noarch.rpm",
+        "sha256:d0433fcc3e4c1cac9b8c2288a72f1db1610d51b44b7d2835e61275b9e3be0b70": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/a/amd-ucode-firmware-20241110-1.fc41.noarch.rpm",
+        "sha256:b502cc1203813bbac395e5de0c29b8d966165f98d0faf98433ad0a1649b0ddc1": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/a/atheros-firmware-20241110-1.fc41.noarch.rpm",
         "sha256:c85728ee94b2fc665f1fd59bdae4dbc9736069ae49b147690e1e4acd6e6e9e6c": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/b/binutils-2.43.1-4.fc41.x86_64.rpm",
         "sha256:0b9b12bd08ee30d2a468a3af3a4b3a678b217f1b940e0da64ebb377763341732": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/b/bootc-1.1.2-2.fc41.x86_64.rpm",
         "sha256:ce1116b043f93b68c067e3f719bea965050323c8301de11060e3a951fb64dec4": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/b/bootupd-0.2.25-1.fc41.x86_64.rpm",
+        "sha256:b0b6684dbdc0bf5ede0073b1a26fd3e7039e3f63c22133d4b1dbd8144ae98181": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/b/brcmfmac-firmware-20241110-1.fc41.noarch.rpm",
         "sha256:5eacd25ba4385619741124c22dbcbbfa25af45cbb4af8eda077067df12ff9649": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/b/btrfs-progs-6.12-1.fc41.x86_64.rpm",
         "sha256:e521cb56b504dc31be6e942a2317264240611d7f06e9a239389953de2400b681": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/b/build-reproducibility-srpm-macros-0.3.6-3.fc41.noarch.rpm",
+        "sha256:1274048bc0cec0f0ac88473e6c2f3c70f69a44e1a7da60993038d03b54fe1f3a": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/c/cirrus-audio-firmware-20241110-1.fc41.noarch.rpm",
         "sha256:2593cdd079e4599099f6a1ffca8fd2ac7a46ea0b297e53ef7a22cd10e1b74596": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/c/container-selinux-2.234.2-1.fc41.noarch.rpm",
         "sha256:c34a359560de108a831a91a3b75f23414ea53261edc20b6195dff0eba6f24d7a": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/c/containers-common-0.61.0-1.fc41.noarch.rpm",
         "sha256:ee06fb8ec1fe03df1376dc048c83ba46499bcc650ba060d43162febde6c43203": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/c/containers-common-extra-0.61.0-1.fc41.noarch.rpm",
@@ -1028,6 +1109,11 @@
         "sha256:e8ed250cd68bacfc00ba929b13cbcfe08fd14cd3c7008394c2a4318af627a161": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/g/grub2-tools-efi-2.12-15.fc41.x86_64.rpm",
         "sha256:de6317d44060a038e8b021450ea5e448f55a621fda83c60b526474605ff4b95a": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/g/grub2-tools-extra-2.12-15.fc41.x86_64.rpm",
         "sha256:3a007abdf869e2ba4d33717d178c3584ad6438ede1d727d533484a564c060cd0": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/g/grub2-tools-minimal-2.12-15.fc41.x86_64.rpm",
+        "sha256:971bc8825a80abb9d7631ca588777178a5d3baf546f995bd752e349ce9b19b5f": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/g/grubby-8.40-78.fc41.x86_64.rpm",
+        "sha256:daede559807b914db2b5a1c72edf0c4c1166798c1007af5dbc6a7cffa991334e": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/i/intel-audio-firmware-20241110-1.fc41.noarch.rpm",
+        "sha256:7708fdb2e319057cb8c74cf4817b9370cb165c0698b44baa9b40cc6e8fe969fc": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/i/intel-gpu-firmware-20241110-1.fc41.noarch.rpm",
+        "sha256:546b2ade58e3cd695b24d1246753ae7cf8d6ae6f4cef2ee14134518547353366": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/k/kernel-core-6.11.10-300.fc41.x86_64.rpm",
+        "sha256:f98120477af09174268553de994ebf1b08bf421e3f72fed8a5f9c6b73e9ad032": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/k/kernel-modules-core-6.11.10-300.fc41.x86_64.rpm",
         "sha256:6cadefaadd555d4dd9440a933e4cdb10e8c8c60da1a5e42c59b1ffac64a22dcb": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/k/krb5-libs-1.21.3-3.fc41.x86_64.rpm",
         "sha256:832ddd33414a65c131c494b06a010b76ede23dfc5ba729094dac791f21da49c4": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/l/libarchive-3.7.4-4.fc41.x86_64.rpm",
         "sha256:aa83e4bf1a84cc274694816f6ad704b6c5a13c91355d45daacdd0fa41d4c9f42": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/l/libbpf-1.4.7-1.fc41.x86_64.rpm",
@@ -1041,11 +1127,16 @@
         "sha256:7da0c28021401cb21dc404c5a14cd8bf0e6092a1c1f3eae7e6056b41db00e322": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/l/libtirpc-1.3.6-1.fc41.x86_64.rpm",
         "sha256:236788ca0ba37b5c1168c78bd53bcf46d8a3f0be979e5b7311f15ee247d0fd69": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/l/libusb1-1.0.27-4.fc41.x86_64.rpm",
         "sha256:a674cbe15563ef49482b203b6c883b982bfea0675dc92e19fbdc7e8049316f6c": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/l/libxcrypt-4.4.36-11.fc41.x86_64.rpm",
+        "sha256:7348bc0b5257421ada54ad4753d2feb1be42fa81b206416930ba372a5e60fdaf": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/l/linux-firmware-20241110-1.fc41.noarch.rpm",
+        "sha256:8573e61fe92ebc65ea48956f5cd496388e0559388ffe04334d93eeae8fc034d2": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/l/linux-firmware-whence-20241110-1.fc41.noarch.rpm",
         "sha256:98f472b08af7d17fc21d941e88a514dea7e8ce324479a4015ff8980bd672a4eb": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/l/lorax-41.6-1.fc41.x86_64.rpm",
         "sha256:e24b4e6f979c4b6645a4e7f41f9b1b8dd9f35bd9d1ede10d72a27c095bf5cdd2": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/l/lorax-templates-generic-41.6-1.fc41.x86_64.rpm",
+        "sha256:f4f38db4871b25b37a612211b68c27f113cb3cff4ae5f3990e1f5595f0390461": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/m/mt7xxx-firmware-20241110-1.fc41.noarch.rpm",
         "sha256:0b10682c1c2dacbb18ba39e92e1275858e83a9a962b14a97817c5af066fec8fd": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/m/mtools-4.0.46-1.fc41.x86_64.rpm",
         "sha256:ca0b2e43a9e2b18fbede0e4f9ea90fafcb859d371b62b4b3bb291303e6cef8ac": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/n/netavark-1.13.1-1.fc41.x86_64.rpm",
         "sha256:f8358176307424485070b23a60e9d603e0aedbfe3fce829cc7cad101d2183976": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/n/numactl-libs-2.0.19-1.fc41.x86_64.rpm",
+        "sha256:e1d7d2f95bb48cb47723ee83e287514cbaca7a664bcc72ac74d4b3c32afab8ca": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/n/nvidia-gpu-firmware-20241110-1.fc41.noarch.rpm",
+        "sha256:7b3d60526e6cb41e1605e2ad06e3ff0c51c64242a828989790b8d47eb2096246": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/n/nxpwireless-firmware-20241110-1.fc41.noarch.rpm",
         "sha256:da49543dad6fa2050d5a2844b2cee36251f5a62ef9c1b63eb799f2e8fc5c89c0": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/o/openldap-2.6.8-6.fc41.x86_64.rpm",
         "sha256:f0f8f87c78080a581e9a2c688d5720f8cb2f826a180f89be88d719f4ec767a7f": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/o/ostree-2024.9-1.fc41.x86_64.rpm",
         "sha256:69a078726dd7faf4f3f5dd6f5b44accbfc5486b1f15a5d29f2aa7497e9d07724": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/o/ostree-libs-2024.9-1.fc41.x86_64.rpm",
@@ -1089,6 +1180,7 @@
         "sha256:13c8a0be80ea378114fc944f3bd379caa5675c6dc98b809833a8dd38280cb125": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/q/qemu-user-static-x86-9.1.2-2.fc41.x86_64.rpm",
         "sha256:3693c89fdbae37370b361f6d5efb7999bce6ab7c88fd585c756d67ff2cc9abde": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/q/qemu-user-static-xtensa-9.1.2-2.fc41.x86_64.rpm",
         "sha256:941ff1a4fd3d331f41bcc32a43fbe51b1fb1de1be96add1a46ac98f3a3f601a6": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/q/qt6-srpm-macros-6.8.0-1.fc41.noarch.rpm",
+        "sha256:d8fcf2aac41f9c5b9acdb15f81cef02ae639da6d039e95defbd553dc67fe8f2f": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/r/realtek-firmware-20241110-1.fc41.noarch.rpm",
         "sha256:f593a3407085bd522ec1d1e0005811206185e1bba1c839dd7443f3dcfd06da59": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/r/rpm-ostree-2024.9-1.fc41.x86_64.rpm",
         "sha256:cce7de2a5eb2d02491767fafb4ceacf00636182511825039be7e178c5b1f9c2a": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/r/rpm-ostree-libs-2024.9-1.fc41.x86_64.rpm",
         "sha256:f645559c99b4584656e416ba60131e7a5e5264ef797c1d6af367b7bf68e0c074": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/r/rpm-sequoia-1.7.0-3.fc41.x86_64.rpm",
@@ -1102,6 +1194,7 @@
         "sha256:72cf28887d12f739c59b7a171accf2d2dea91a2c0160a9d02bacf8826b33e51c": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/s/systemd-resolved-256.9-2.fc41.x86_64.rpm",
         "sha256:ac948f04f76efaaaa2644deed04f6f438e0c43036e7d9d3e47b55a757c9957d8": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/s/systemd-rpm-macros-256.9-2.fc41.noarch.rpm",
         "sha256:9cf1b6bb8763de7e45cca8d23ec30af223e2f8e3536d770664d29b2de3874fd0": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/s/systemd-udev-256.9-2.fc41.x86_64.rpm",
+        "sha256:e245695e60ae3466e0356192c7252d37a171dfde6cbef18a9c98de1e6c8200ad": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/t/tiwilink-firmware-20241110-1.fc41.noarch.rpm",
         "sha256:bf198907f55db7d0c54ba8a8b1a0a16b94ae08c091c2d03bdaafd16cd345cd14": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/u/unbound-anchor-1.22.0-8.fc41.x86_64.rpm",
         "sha256:e5cfa4ed0f58eaf4579cffc64276fc4bc625098bf62412877ba0200d18f9d05d": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20241210/Packages/u/unbound-libs-1.22.0-8.fc41.x86_64.rpm"
       }
