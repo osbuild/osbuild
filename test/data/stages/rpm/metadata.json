@@ -33,6 +33,26 @@
           "siggpg": null
         },
         {
+          "name": "amd-gpu-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "f65006e886c6e5a6cada29f4a7775a3b",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "amd-ucode-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "ff2c4e4ea6e9ddd1bba57bb07e7a2251",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "ansible-srpm-macros",
           "version": "1",
           "release": "16.fc41",
@@ -49,6 +69,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "fc7e63351640576a1cb77e2ccf320983",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "atheros-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "3dbb8880e4b6820ca6d8482dbadf6292",
           "sigpgp": null,
           "siggpg": null
         },
@@ -143,6 +173,16 @@
           "siggpg": null
         },
         {
+          "name": "brcmfmac-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "9bf5f41cb4507311907ed1800fd067b5",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "btrfs-progs",
           "version": "6.12",
           "release": "1.fc41",
@@ -209,6 +249,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "61337aa5d69da57c3994c4819dadd274",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "cirrus-audio-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "63f0427482565952c53d5aee4e38a2ac",
           "sigpgp": null,
           "siggpg": null
         },
@@ -1303,6 +1353,16 @@
           "siggpg": null
         },
         {
+          "name": "grubby",
+          "version": "8.40",
+          "release": "78.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "62b5548f275bc6124bfcfeb72a641907",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "gzip",
           "version": "1.13",
           "release": "2.fc41",
@@ -1359,6 +1419,26 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "e2216ca8dcf712076b860c7628243870",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "intel-audio-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "500d92803f6b5b233078a75fc9bc8543",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "intel-gpu-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "42afab367c3113a22f13382641abd409",
           "sigpgp": null,
           "siggpg": null
         },
@@ -1479,6 +1559,26 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "99024aacbf74ef4e2d7b9971eaa877a7",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "kernel-core",
+          "version": "6.11.10",
+          "release": "300.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "e1ce2d68733e9846d320aa661648f498",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "kernel-modules-core",
+          "version": "6.11.10",
+          "release": "300.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "741490e131c9b7441d6528dad31b8188",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2453,6 +2553,26 @@
           "siggpg": null
         },
         {
+          "name": "linux-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "47dad04e9dfac796945bf4b30b54b837",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "linux-firmware-whence",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "bb7498b6411a45ef2ee0e391cbe6b83e",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "llhttp",
           "version": "9.2.1",
           "release": "2.fc41",
@@ -2593,6 +2713,16 @@
           "siggpg": null
         },
         {
+          "name": "mt7xxx-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "ac99e318f908d871a189767f6be55341",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "mtools",
           "version": "4.0.46",
           "release": "1.fc41",
@@ -2669,6 +2799,26 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "4e98b17614e08be0e677064f7a0a66c1",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "nvidia-gpu-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "11f2c819aedf772f32b6a768ab06dc8c",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "nxpwireless-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "15baecb979e0fbb64a1368d9aa5485b6",
           "sigpgp": null,
           "siggpg": null
         },
@@ -3833,6 +3983,16 @@
           "siggpg": null
         },
         {
+          "name": "realtek-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "7b91f674f2065629a5e66b0ebed7bd7b",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "redhat-rpm-config",
           "version": "293",
           "release": "1.fc41",
@@ -4189,6 +4349,16 @@
           "epoch": "2",
           "arch": "x86_64",
           "sigmd5": "f5d4c8bb99049c21cfca966ac2389a71",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "tiwilink-firmware",
+          "version": "20241110",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "25bafcc529dca2df41ab9c7e8fc5cccc",
           "sigpgp": null,
           "siggpg": null
         },
