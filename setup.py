@@ -1,4 +1,7 @@
+import os
+import pathlib
 import setuptools
+
 
 setuptools.setup(
     name="osbuild",
@@ -26,4 +29,12 @@ setuptools.setup(
         "tools/osbuild-dev",
         "tools/osbuild-image-info",
     ],
+    data_files=[
+        (
+            f"lib/osbuild/{d}",
+            [os.fspath(p) for p in pathlib.Path(d).glob("*") if p.is_file()],
+        )
+        for d in ["assemblers", "runners", "sources", "devices",
+                  "inputs", "stages", "schemas", "sources", "mounts"]
+    ]
 )
