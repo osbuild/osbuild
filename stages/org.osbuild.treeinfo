@@ -1,0 +1,90 @@
+#!/usr/bin/python3
+import configparser
+import hashlib
+import os
+import sys
+from concurrent.futures import ThreadPoolExecutor
+
+import osbuild.api
+
+
+def make_value(value):
+    if isinstance(value, list):
+        return ",".join(value)
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
+def make_section(cfg, name, settings):
+    if not cfg.has_section(name):
+        cfg.add_section(name)
+
+    for key, value in settings.items():
+        val = make_value(value)
+        cfg.set(name, key, val)
+
+
+def make_named_section(cfg, name: str, section):
+    config = section["config"]
+    suffix = section.get("name")
+    if suffix:
+        name = f"{name}-{suffix}"
+
+    make_section(cfg, name, config)
+
+
+def make_sum(tree: str, file_path: str):
+    sha256_hash = hashlib.sha256()
+    file = os.path.join(tree, file_path.lstrip("/"))
+    with open(file, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(chunk)
+    return file_path, sha256_hash.hexdigest()
+
+
+def make_sums(tree: str, file_paths: list):
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        results = executor.map(lambda fp: make_sum(tree, fp), file_paths)
+    return dict(results)
+
+
+def main(tree, options):
+    path = options["path"]
+    treeinfo = options["treeinfo"]
+
+    treeinfo["header"] = {
+        "version": "1.0"
+    }
+
+    checksums = make_sums(tree, treeinfo.get("checksums", []))
+    if checksums:
+        treeinfo["checksums"] = {k: f"sha256:{v}" for k, v in checksums.items()}
+
+    cfgfile = os.path.join(tree, path.lstrip("/"))
+    cfgpath = os.path.dirname(cfgfile)
+    os.makedirs(cfgpath, exist_ok=True)
+
+    cfg = configparser.ConfigParser()
+    cfg.optionxform = lambda optionstr: optionstr
+
+    for name, items in treeinfo.items():
+        if isinstance(items, dict):
+            make_section(cfg, name, items)
+        elif isinstance(items, list):
+            for item in items:
+                make_named_section(cfg, name, item)
+        else:
+            raise ValueError(f"Invalid section type: {type(items)}")
+
+    with open(cfgfile, "w", encoding="utf8") as f:
+        os.fchmod(f.fileno(), 0o600)
+        cfg.write(f, space_around_delimiters=False)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

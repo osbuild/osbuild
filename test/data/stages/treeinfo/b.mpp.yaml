@@ -1,0 +1,64 @@
+version: '2'
+sources:
+  org.osbuild.inline:
+    items:
+      sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0:
+        encoding: base64
+        data: NDIK
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - fedora-release-common
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0: {}
+        options:
+          paths:
+            - from: input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0
+              to: tree:///testfile1
+      - type: org.osbuild.treeinfo
+        options:
+          path: "/.treeinfo"
+          treeinfo:
+            checksums:
+            - testfile1
+            general:
+              arch: x86_64
+              family: Fedora
+              name: Fedora 21
+              packagedir: Packages
+              platforms:
+              - x86_64
+              - xen
+              repository: "."
+              timestamp: 1417653911
+              variant: Server
+              version: '21'
