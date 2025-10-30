@@ -1872,7 +1872,8 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
+@pytest.mark.parametrize("with_sbom", [False, True], ids=["no-sbom", "with-sbom"])
+def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom):
     """
     Test the result of depsolve() API.
     """
@@ -1895,13 +1896,16 @@ def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
         transactions[0]["package-specs"] = ["basesystem"]
 
     repo_configs = [gen_repo_config(server) for server in repo_servers]
-    res, exit_code = depsolve(transactions, cache_dir, repos=repo_configs, dnf_config=dnf_config)
+    res, exit_code = depsolve(
+        transactions, cache_dir, repos=repo_configs, dnf_config=dnf_config, with_sbom=with_sbom)
 
     assert exit_code == 0
     # If any of  this changes, increase:
     #   "Provides: osbuild-dnf-json-api" in osbuild.spec
 
     tl_keys = ["solver", "packages", "repos", "modules"]
+    if with_sbom:
+        tl_keys.append("sbom")
     assert list(res.keys()) == tl_keys
 
     assert res["solver"] == "dnf5" if dnf_config.get("use_dnf5", False) else "dnf"
@@ -1934,6 +1938,11 @@ def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
             "sslclientkey",
             "sslverify",
         ]
+
+    if with_sbom:
+        assert "sbom" in res
+        assert isinstance(res["sbom"], dict)
+        assert res["sbom"] != {}
 
     # modules are not supported by dnf, so we don't test them for dnf5
     if dnf_config.get("use_dnf5", False):
