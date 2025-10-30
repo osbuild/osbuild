@@ -470,6 +470,7 @@ class DNF5(SolverBase):
             "solver": "dnf5",
             "packages": packages,
             "repos": repositories,
+            "modules": {},
         }
 
         if "sbom" in arguments:
