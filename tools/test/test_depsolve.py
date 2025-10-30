@@ -1138,6 +1138,22 @@ depsolve_test_cases = [
         "error_kind": "RepoError",
         "error_reason_re": r"There was a problem reading a repository: Failed to download metadata.*['\"]broken['\"].*",
     },
+    # Test no repositories
+    {
+        "id": "error_empty_rootdir_no_repos",
+        "enabled_repos": [],
+        "root_dir": "/dev/null",
+        "transactions": [
+            {
+                "package-specs": [
+                    "filesystem",
+                ],
+            },
+        ],
+        "error": True,
+        "error_kind": "NoReposError",
+        "error_reason_re": r".*There are no enabled repositories",
+    },
 ] + [depsolve_test_case_basic_2pkgs_2repos]
 
 
@@ -1769,8 +1785,9 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
     transactions = test_case["transactions"]
     repo_configs = get_test_case_repo_configs(test_case, repo_servers)
+    root_dir = test_case.get("root_dir")
 
-    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs)
+    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
 
     if test_case.get("error", False):
         assert exit_code != 0
@@ -1913,28 +1930,3 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         else:
             assert res_url == exp_url
         assert res == exp
-
-
-@pytest.mark.parametrize("dnf_config, detect_fn", [
-    ({}, assert_dnf),
-    ({"use_dnf5": False}, assert_dnf),
-    ({"use_dnf5": True}, assert_dnf5),
-], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve_no_repos(tmp_path, dnf_config, detect_fn):
-    try:
-        detect_fn()
-    except RuntimeError as e:
-        pytest.skip(str(e))
-
-    transactions = [
-        {
-            "package-specs": [
-                "filesystem",
-                "pkg-with-no-deps"
-            ],
-        },
-    ]
-    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, root_dir=tmp_path.as_posix())
-    assert exit_code == 1
-    assert res["kind"] == "NoReposError"
-    assert "There are no enabled repositories" in res["reason"]
