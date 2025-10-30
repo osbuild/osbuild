@@ -1902,11 +1902,6 @@ def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
     #   "Provides: osbuild-dnf-json-api" in osbuild.spec
 
     tl_keys = ["solver", "packages", "repos", "modules"]
-    # modules are not supported by dnf5, so we don't test them for dnf5
-    if dnf_config.get("use_dnf5", False):
-        # TODO: fix DNF5 implementation to return empty modules
-        tl_keys = ["solver", "packages", "repos"]
-
     assert list(res.keys()) == tl_keys
 
     assert res["solver"] == "dnf5" if dnf_config.get("use_dnf5", False) else "dnf"
