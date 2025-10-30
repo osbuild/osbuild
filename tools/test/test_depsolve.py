@@ -1710,7 +1710,8 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         "basic_module",
     ]
 
-    if dnf_config.get("use_dnf5", False) and test_case["id"] in dnf5_broken_test_cases:
+    with_dnf5 = dnf_config.get("use_dnf5", False)
+    if with_dnf5 and test_case["id"] in dnf5_broken_test_cases:
         pytest.skip("This test case is known to be broken with dnf5")
 
     transactions = test_case["transactions"]
@@ -1725,21 +1726,15 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         return
 
     assert exit_code == 0
-    assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-    assert res["repos"].keys() == test_case["results"]["reponames"]
 
-    # modules is optional here as the dnf5 depsolver never returns any modules
-    assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
-
-    for repo in res["repos"].values():
-        assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-        assert repo["sslverify"] is False
-
-    use_dnf5 = dnf_config.get("use_dnf5", False)
-    if use_dnf5:
-        assert res["solver"] == "dnf5"
-    else:
-        assert res["solver"] == "dnf"
+    assert_depsolve_api_v1_response(
+        res,
+        expected_pkgs=test_case["results"]["packages"],
+        expected_repos=test_case["results"]["reponames"],
+        expected_modules=test_case["results"].get("modules", set()),
+        with_dnf5=with_dnf5,
+        with_sbom=False
+    )
 
 
 @pytest.mark.parametrize("test_case", dump_test_cases, ids=tcase_idfn)
@@ -1867,49 +1862,21 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         assert res == exp
 
 
-@pytest.mark.parametrize("dnf_config, detect_fn", [
-    ({}, assert_dnf),
-    ({"use_dnf5": False}, assert_dnf),
-    ({"use_dnf5": True}, assert_dnf5),
-], ids=["no-config", "dnf4", "dnf5"])
-@pytest.mark.parametrize("with_sbom", [False, True], ids=["no-sbom", "with-sbom"])
-def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom):
+def assert_depsolve_api_v1_response(res, expected_pkgs, expected_repos, expected_modules, with_dnf5, with_sbom):
     """
-    Test the result of depsolve() API.
+    Helper function to check the v1 API response of depsolve().
+
+    If any of the fields in the response changes, increase:
+        "Provides: osbuild-dnf-json-api" in osbuild.spec
     """
-    try:
-        detect_fn()
-    except RuntimeError as e:
-        pytest.skip(str(e))
-
-    cache_dir = (tmp_path / "depsolve-cache").as_posix()
-
-    # for DNF4, we test with a module specification
-    transactions = [
-        {
-            # we pick this package to get a "modules" result
-            "package-specs": ["@nodejs:18"],
-        },
-    ]
-    # for DNF5, we test with a package specification
-    if dnf_config.get("use_dnf5", False):
-        transactions[0]["package-specs"] = ["basesystem"]
-
-    repo_configs = [gen_repo_config(server) for server in repo_servers]
-    res, exit_code = depsolve(
-        transactions, cache_dir, repos=repo_configs, dnf_config=dnf_config, with_sbom=with_sbom)
-
-    assert exit_code == 0
-    # If any of  this changes, increase:
-    #   "Provides: osbuild-dnf-json-api" in osbuild.spec
 
     tl_keys = ["solver", "packages", "repos", "modules"]
     if with_sbom:
         tl_keys.append("sbom")
     assert list(res.keys()) == tl_keys
 
-    assert res["solver"] == "dnf5" if dnf_config.get("use_dnf5", False) else "dnf"
-    assert len(res["packages"]) == 14 if dnf_config.get("use_dnf5", False) else 42
+    assert res["solver"] == "dnf5" if with_dnf5 else "dnf"
+    assert {pkg["name"] for pkg in res["packages"]} == expected_pkgs
     for pkg in res["packages"]:
         assert sorted(pkg.keys()) == [
             "arch",
@@ -1922,7 +1889,7 @@ def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn, with
             "repo_id",
             "version",
         ]
-    assert len(res["repos"]) == len({pkg["repo_id"] for pkg in res["packages"]})
+    assert res["repos"].keys() == expected_repos
     for repo in res["repos"].values():
         assert sorted(repo.keys()) == [
             "baseurl",
@@ -1938,31 +1905,30 @@ def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn, with
             "sslclientkey",
             "sslverify",
         ]
+        assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+        assert repo["sslverify"] is False
 
     if with_sbom:
         assert "sbom" in res
         assert isinstance(res["sbom"], dict)
         assert res["sbom"] != {}
 
-    # modules are not supported by dnf, so we don't test them for dnf5
-    if dnf_config.get("use_dnf5", False):
-        return
-
-    assert len(res["modules"]) == 1
-    assert sorted(res["modules"]["nodejs"]["module-file"].keys()) == [
-        "data",
-        "path",
-    ]
-    assert sorted(res["modules"]["nodejs"]["module-file"]["data"].keys()) == [
-        "name",
-        "profiles",
-        "state",
-        "stream",
-    ]
-    assert list(res["modules"]["nodejs"]["failsafe-file"].keys()) == [
-        "data",
-        "path",
-    ]
+    assert len(res["modules"]) == len(expected_modules)
+    for module_name in expected_modules:
+        assert sorted(res["modules"][module_name]["module-file"].keys()) == [
+            "data",
+            "path",
+        ]
+        assert sorted(res["modules"][module_name]["module-file"]["data"].keys()) == [
+            "name",
+            "profiles",
+            "state",
+            "stream",
+        ]
+        assert sorted(res["modules"][module_name]["failsafe-file"].keys()) == [
+            "data",
+            "path",
+        ]
 
 
 @pytest.mark.parametrize("dnf_config, detect_fn", [
