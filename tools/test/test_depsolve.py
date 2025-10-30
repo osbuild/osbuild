@@ -1497,6 +1497,75 @@ def test_get_test_case_repo_servers(test_case, repo_servers, expected):
     assert get_test_case_repo_servers(test_case, repo_servers) == expected
 
 
+def assert_depsolve_api_v1_response(res, expected_pkgs, expected_repos, expected_modules, with_dnf5, with_sbom):
+    """
+    Helper function to check the v1 API response of depsolve().
+
+    If any of the fields in the response changes, increase:
+        "Provides: osbuild-dnf-json-api" in osbuild.spec
+    """
+
+    tl_keys = ["solver", "packages", "repos", "modules"]
+    if with_sbom:
+        tl_keys.append("sbom")
+    assert list(res.keys()) == tl_keys
+
+    assert res["solver"] == "dnf5" if with_dnf5 else "dnf"
+    assert {pkg["name"] for pkg in res["packages"]} == expected_pkgs
+    for pkg in res["packages"]:
+        assert sorted(pkg.keys()) == [
+            "arch",
+            "checksum",
+            "epoch",
+            "name",
+            "path",
+            "release",
+            "remote_location",
+            "repo_id",
+            "version",
+        ]
+    assert res["repos"].keys() == expected_repos
+    for repo in res["repos"].values():
+        assert sorted(repo.keys()) == [
+            "baseurl",
+            "gpgcheck",
+            "gpgkeys",
+            "id",
+            "metalink",
+            "mirrorlist",
+            "name",
+            "repo_gpgcheck",
+            "sslcacert",
+            "sslclientcert",
+            "sslclientkey",
+            "sslverify",
+        ]
+        assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
+        assert repo["sslverify"] is False
+
+    if with_sbom:
+        assert "sbom" in res
+        assert isinstance(res["sbom"], dict)
+        assert res["sbom"] != {}
+
+    assert len(res["modules"]) == len(expected_modules)
+    for module_name in expected_modules:
+        assert sorted(res["modules"][module_name]["module-file"].keys()) == [
+            "data",
+            "path",
+        ]
+        assert sorted(res["modules"][module_name]["module-file"]["data"].keys()) == [
+            "name",
+            "profiles",
+            "state",
+            "stream",
+        ]
+        assert sorted(res["modules"][module_name]["failsafe-file"].keys()) == [
+            "data",
+            "path",
+        ]
+
+
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
@@ -1860,75 +1929,6 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         else:
             assert res_url == exp_url
         assert res == exp
-
-
-def assert_depsolve_api_v1_response(res, expected_pkgs, expected_repos, expected_modules, with_dnf5, with_sbom):
-    """
-    Helper function to check the v1 API response of depsolve().
-
-    If any of the fields in the response changes, increase:
-        "Provides: osbuild-dnf-json-api" in osbuild.spec
-    """
-
-    tl_keys = ["solver", "packages", "repos", "modules"]
-    if with_sbom:
-        tl_keys.append("sbom")
-    assert list(res.keys()) == tl_keys
-
-    assert res["solver"] == "dnf5" if with_dnf5 else "dnf"
-    assert {pkg["name"] for pkg in res["packages"]} == expected_pkgs
-    for pkg in res["packages"]:
-        assert sorted(pkg.keys()) == [
-            "arch",
-            "checksum",
-            "epoch",
-            "name",
-            "path",
-            "release",
-            "remote_location",
-            "repo_id",
-            "version",
-        ]
-    assert res["repos"].keys() == expected_repos
-    for repo in res["repos"].values():
-        assert sorted(repo.keys()) == [
-            "baseurl",
-            "gpgcheck",
-            "gpgkeys",
-            "id",
-            "metalink",
-            "mirrorlist",
-            "name",
-            "repo_gpgcheck",
-            "sslcacert",
-            "sslclientcert",
-            "sslclientkey",
-            "sslverify",
-        ]
-        assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-        assert repo["sslverify"] is False
-
-    if with_sbom:
-        assert "sbom" in res
-        assert isinstance(res["sbom"], dict)
-        assert res["sbom"] != {}
-
-    assert len(res["modules"]) == len(expected_modules)
-    for module_name in expected_modules:
-        assert sorted(res["modules"][module_name]["module-file"].keys()) == [
-            "data",
-            "path",
-        ]
-        assert sorted(res["modules"][module_name]["module-file"]["data"].keys()) == [
-            "name",
-            "profiles",
-            "state",
-            "stream",
-        ]
-        assert sorted(res["modules"][module_name]["failsafe-file"].keys()) == [
-            "data",
-            "path",
-        ]
 
 
 @pytest.mark.parametrize("dnf_config, detect_fn", [
