@@ -1190,38 +1190,9 @@ search_test_case_basic_2pkgs_2repos = {
             "pkg-with-no-deps",
         ],
     },
-    "results": [
-        {
-            "name": "zsh",
-            "summary": "Powerful interactive shell",
-            "description": """The zsh shell is a command interpreter usable as an interactive login
-shell and as a shell script command processor.  Zsh resembles the ksh
-shell (the Korn shell), but includes many enhancements.  Zsh supports
-command line editing, built-in spelling correction, programmable
-command completion, shell functions (with autoloading), a history
-mechanism, and more.""",
-            "url": "http://zsh.sourceforge.net/",
-            "repo_id": "baseos",
-            "epoch": 0,
-            "version": "5.8",
-            "release": "9.el9",
-            "arch": "x86_64",
-            "buildtime": "2022-02-23T13:47:24Z",
-            "license": "MIT",
-        },
-        {
-            'arch': 'noarch',
-            'buildtime': '2024-04-15T18:09:19Z',
-            'description': 'Provides pkg-with-no-deps',
-            'epoch': 0,
-            'license': 'BSD',
-            'name': 'pkg-with-no-deps',
-            'release': '0',
-            'repo_id': 'custom',
-            'summary': 'Provides pkg-with-no-deps',
-            'url': None,
-            'version': '1.0.0',
-        },
+    "expected_nevras": [
+        "zsh-0:5.8-9.el9.x86_64",
+        "pkg-with-no-deps-0:1.0.0-0.noarch",
     ],
 }
 
@@ -1236,25 +1207,8 @@ search_test_cases = [
                 "zsh",
             ],
         },
-        "results": [
-            {
-                "name": "zsh",
-                "summary": "Powerful interactive shell",
-                "description": """The zsh shell is a command interpreter usable as an interactive login
-shell and as a shell script command processor.  Zsh resembles the ksh
-shell (the Korn shell), but includes many enhancements.  Zsh supports
-command line editing, built-in spelling correction, programmable
-command completion, shell functions (with autoloading), a history
-mechanism, and more.""",
-                "url": "http://zsh.sourceforge.net/",
-                "repo_id": "baseos",
-                "epoch": 0,
-                "version": "5.8",
-                "release": "9.el9",
-                "arch": "x86_64",
-                "buildtime": "2022-02-23T13:47:24Z",
-                "license": "MIT",
-            },
+        "expected_nevras": [
+            "zsh-0:5.8-9.el9.x86_64",
         ],
     },
     {
@@ -1266,43 +1220,9 @@ mechanism, and more.""",
                 "zsh",
             ],
         },
-        "results": [
-            {
-                "name": "zsh",
-                "summary": "Powerful interactive shell",
-                "description": """The zsh shell is a command interpreter usable as an interactive login
-shell and as a shell script command processor.  Zsh resembles the ksh
-shell (the Korn shell), but includes many enhancements.  Zsh supports
-command line editing, built-in spelling correction, programmable
-command completion, shell functions (with autoloading), a history
-mechanism, and more.""",
-                "url": "http://zsh.sourceforge.net/",
-                "repo_id": "baseos",
-                "epoch": 0,
-                "version": "5.8",
-                "release": "7.el9",
-                "arch": "x86_64",
-                "buildtime": "2021-08-10T06:14:26Z",
-                "license": "MIT",
-            },
-            {
-                "name": "zsh",
-                "summary": "Powerful interactive shell",
-                "description": """The zsh shell is a command interpreter usable as an interactive login
-shell and as a shell script command processor.  Zsh resembles the ksh
-shell (the Korn shell), but includes many enhancements.  Zsh supports
-command line editing, built-in spelling correction, programmable
-command completion, shell functions (with autoloading), a history
-mechanism, and more.""",
-                "url": "http://zsh.sourceforge.net/",
-                "repo_id": "baseos",
-                "epoch": 0,
-                "version": "5.8",
-                "release": "9.el9",
-                "arch": "x86_64",
-                "buildtime": "2022-02-23T13:47:24Z",
-                "license": "MIT",
-            },
+        "expected_nevras": [
+            "zsh-0:5.8-7.el9.x86_64",
+            "zsh-0:5.8-9.el9.x86_64",
         ],
     },
     # Test repository error
@@ -1830,6 +1750,30 @@ def assert_dump_api_v1_response(res, expected_pkgs_count, pkg_check_fn=None):
             pkg_check_fn(pkg)
 
 
+def assert_search_api_v1_response(res, expected_nevras):
+    """
+    Helper function to check the v1 API response of search().
+    """
+    assert len(res) == len(expected_nevras)
+    nevras = []
+    for pkg in res:
+        assert sorted(pkg.keys()) == [
+            "arch",
+            "buildtime",
+            "description",
+            "epoch",
+            "license",
+            "name",
+            "release",
+            "repo_id",
+            "summary",
+            "url",
+            "version",
+        ]
+        nevras.append(f"{pkg['name']}-{pkg['epoch']}:{pkg['version']}-{pkg['release']}.{pkg['arch']}")
+    assert sorted(nevras) == sorted(expected_nevras)
+
+
 @pytest.mark.parametrize("test_case", dump_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
@@ -1897,16 +1841,7 @@ def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
             res, exit_code = search(search_args, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             assert exit_code == 0
-            for res, exp in zip(res, test_case["results"]):
-                # if the url in the package is empty, DNF4 returns None, DNF5 returns an empty string
-                exp = exp.copy()
-                exp_url = exp.pop("url")
-                res_url = res.pop("url")
-                if exp_url is None and dnf_config and dnf_config.get("use_dnf5", False):
-                    assert res_url == ""
-                else:
-                    assert res_url == exp_url
-                assert res == exp
+            assert_search_api_v1_response(res, test_case["expected_nevras"])
 
             # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
             # *filelists*
@@ -1941,13 +1876,4 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         return
 
     assert exit_code == 0
-    for res, exp in zip(res, test_case["results"]):
-        # if the url in the package is empty, DNF4 returns None, DNF5 returns an empty string
-        exp = exp.copy()
-        exp_url = exp.pop("url")
-        res_url = res.pop("url")
-        if exp_url is None and dnf_config and dnf_config.get("use_dnf5", False):
-            assert res_url == ""
-        else:
-            assert res_url == exp_url
-        assert res == exp
+    assert_search_api_v1_response(res, test_case["expected_nevras"])
