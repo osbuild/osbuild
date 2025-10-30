@@ -1591,12 +1591,6 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
                 transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             assert exit_code == 0
-            assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-            assert res["repos"].keys() == test_case["results"]["reponames"]
-
-            for repo in res["repos"].values():
-                assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-                assert repo["sslverify"] is False
 
             # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
             # *filelists*
@@ -1606,11 +1600,14 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
             else:
                 assert n_filelist_files == 0
 
-            use_dnf5 = dnf_config.get("use_dnf5", False)
-            if use_dnf5:
-                assert res["solver"] == "dnf5"
-            else:
-                assert res["solver"] == "dnf"
+            assert_depsolve_api_v1_response(
+                res,
+                expected_pkgs=test_case["results"]["packages"],
+                expected_repos=test_case["results"]["reponames"],
+                expected_modules=test_case["results"].get("modules", set()),
+                with_dnf5=dnf_config.get("use_dnf5", False),
+                with_sbom=False
+            )
 
 
 def set_config_dnfvars(baseurl, dnfvars):
@@ -1664,21 +1661,15 @@ def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnf
         return
 
     assert exit_code == 0
-    assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-    assert res["repos"].keys() == test_case["results"]["reponames"]
 
-    # modules is optional here as the dnf5 depsolver never returns any modules
-    assert res.get("modules", {}).keys() == test_case["results"].get("modules", set())
-
-    for repo in res["repos"].values():
-        assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-        assert repo["sslverify"] is False
-
-    use_dnf5 = dnf_config.get("use_dnf5", False)
-    if use_dnf5:
-        assert res["solver"] == "dnf5"
-    else:
-        assert res["solver"] == "dnf"
+    assert_depsolve_api_v1_response(
+        res,
+        expected_pkgs=test_case["results"]["packages"],
+        expected_repos=test_case["results"]["reponames"],
+        expected_modules=test_case["results"].get("modules", set()),
+        with_dnf5=dnf_config.get("use_dnf5", False),
+        with_sbom=False
+    )
 
 
 # pylint: disable=too-many-branches
@@ -1709,27 +1700,29 @@ def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom,
     res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs, with_sbom=with_sbom)
 
     assert exit_code == 0
-    assert {pkg["name"] for pkg in res["packages"]} == test_case["results"]["packages"]
-    assert res["repos"].keys() == test_case["results"]["reponames"]
 
-    for repo in res["repos"].values():
-        assert repo["gpgkeys"] == [TEST_KEY + repo["id"]]
-        assert repo["sslverify"] is False
+    assert_depsolve_api_v1_response(
+        res,
+        expected_pkgs=test_case["results"]["packages"],
+        expected_repos=test_case["results"]["reponames"],
+        expected_modules=test_case["results"].get("modules", set()),
+        with_dnf5=dnf_config.get("use_dnf5", False),
+        with_sbom=with_sbom
+    )
 
     if with_sbom:
-        assert "sbom" in res
-
+        sbom_dict = res["sbom"]
         spdx_2_3_1_schema_file = './test/data/spdx/spdx-schema-v2.3.1.json'
         with open(spdx_2_3_1_schema_file, encoding="utf-8") as f:
             spdx_schema = json.load(f)
         validator = jsonschema.Draft4Validator
         validator.check_schema(spdx_schema)
         spdx_validator = validator(spdx_schema)
-        spdx_validator.validate(res["sbom"])
+        spdx_validator.validate(sbom_dict)
 
-        assert {pkg["name"] for pkg in res["sbom"]["packages"]} == test_case["results"]["packages"]
+        assert {pkg["name"] for pkg in sbom_dict["packages"]} == test_case["results"]["packages"]
 
-        license_expressions = [pkg["licenseDeclared"] for pkg in res["sbom"]["packages"]]
+        license_expressions = [pkg["licenseDeclared"] for pkg in sbom_dict["packages"]]
         license_refs = [le for le in license_expressions if le.startswith("LicenseRef-")]
         non_license_refs = [le for le in license_expressions if not le.startswith("LicenseRef-")]
         if not is_license_expression_available():
@@ -1746,15 +1739,6 @@ def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom,
             else:
                 assert len(non_license_refs) == 2
                 assert "GPLv2" not in non_license_refs
-
-    else:
-        assert "sbom" not in res
-
-    use_dnf5 = dnf_config.get("use_dnf5", False)
-    if use_dnf5:
-        assert res["solver"] == "dnf5"
-    else:
-        assert res["solver"] == "dnf"
 
 
 # pylint: disable=too-many-branches
