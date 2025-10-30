@@ -1867,58 +1867,84 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         assert res == exp
 
 
-def test_depsolve_result_api(tmp_path, repo_servers):
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    ({}, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_depsolve_result_api(tmp_path, repo_servers, dnf_config, detect_fn):
     """
     Test the result of depsolve() API.
-
-    Note tha this test runs only with dnf4, as the dnf5 depsolver does not support modules.
     """
     try:
-        assert_dnf()
+        detect_fn()
     except RuntimeError as e:
         pytest.skip(str(e))
 
     cache_dir = (tmp_path / "depsolve-cache").as_posix()
+
+    # for DNF4, we test with a module specification
     transactions = [
         {
             # we pick this package to get a "modules" result
             "package-specs": ["@nodejs:18"],
         },
     ]
+    # for DNF5, we test with a package specification
+    if dnf_config.get("use_dnf5", False):
+        transactions[0]["package-specs"] = ["basesystem"]
 
     repo_configs = [gen_repo_config(server) for server in repo_servers]
-    res, exit_code = depsolve(transactions, cache_dir, repos=repo_configs)
+    res, exit_code = depsolve(transactions, cache_dir, repos=repo_configs, dnf_config=dnf_config)
 
     assert exit_code == 0
     # If any of  this changes, increase:
-    #   "Provides: osbuild-dnf-json-api" inosbuild.spec
-    assert list(res.keys()) == ["solver", "packages", "repos", "modules"]
-    assert isinstance(res["solver"], str)
-    assert sorted(res["packages"][0].keys()) == [
-        "arch",
-        "checksum",
-        "epoch",
-        "name",
-        "path",
-        "release",
-        "remote_location",
-        "repo_id",
-        "version",
-    ]
-    assert sorted(res["repos"]["baseos"].keys()) == [
-        "baseurl",
-        "gpgcheck",
-        "gpgkeys",
-        "id",
-        "metalink",
-        "mirrorlist",
-        "name",
-        "repo_gpgcheck",
-        "sslcacert",
-        "sslclientcert",
-        "sslclientkey",
-        "sslverify",
-    ]
+    #   "Provides: osbuild-dnf-json-api" in osbuild.spec
+
+    tl_keys = ["solver", "packages", "repos", "modules"]
+    # modules are not supported by dnf5, so we don't test them for dnf5
+    if dnf_config.get("use_dnf5", False):
+        # TODO: fix DNF5 implementation to return empty modules
+        tl_keys = ["solver", "packages", "repos"]
+
+    assert list(res.keys()) == tl_keys
+
+    assert res["solver"] == "dnf5" if dnf_config.get("use_dnf5", False) else "dnf"
+    assert len(res["packages"]) == 14 if dnf_config.get("use_dnf5", False) else 42
+    for pkg in res["packages"]:
+        assert sorted(pkg.keys()) == [
+            "arch",
+            "checksum",
+            "epoch",
+            "name",
+            "path",
+            "release",
+            "remote_location",
+            "repo_id",
+            "version",
+        ]
+    assert len(res["repos"]) == len({pkg["repo_id"] for pkg in res["packages"]})
+    for repo in res["repos"].values():
+        assert sorted(repo.keys()) == [
+            "baseurl",
+            "gpgcheck",
+            "gpgkeys",
+            "id",
+            "metalink",
+            "mirrorlist",
+            "name",
+            "repo_gpgcheck",
+            "sslcacert",
+            "sslclientcert",
+            "sslclientkey",
+            "sslverify",
+        ]
+
+    # modules are not supported by dnf, so we don't test them for dnf5
+    if dnf_config.get("use_dnf5", False):
+        return
+
+    assert len(res["modules"]) == 1
     assert sorted(res["modules"]["nodejs"]["module-file"].keys()) == [
         "data",
         "path",
