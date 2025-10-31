@@ -70,8 +70,9 @@ class DNF5(SolverBase):
         proxy = request.get("proxy")
 
         arguments = request["arguments"]
-        repos = arguments.get("repos", [])
-        root_dir = arguments.get("root_dir")
+        self.repos = arguments.get("repos", [])
+        self.request_repo_ids = {repo["id"] for repo in self.repos}
+        self.root_dir = arguments.get("root_dir")
 
         # Gather up all the exclude packages from all the transactions
         exclude_pkgs = []
@@ -135,21 +136,24 @@ class DNF5(SolverBase):
 
         try:
             # NOTE: With libdnf5 packages are excluded in the repo setup
-            for repo in repos:
+            for repo in self.repos:
                 self._dnfrepo(repo, exclude_pkgs)
 
-            if root_dir:
+            if self.root_dir:
                 # This sets the varsdir to ("{root_dir}/usr/share/dnf5/vars.d/", "{root_dir}/etc/dnf/vars/") for custom
                 # variable substitution (e.g. CentOS Stream 9's $stream variable)
-                conf.installroot = root_dir
-                conf.varsdir = (os.path.join(root_dir, "etc/dnf/vars"), os.path.join(root_dir, "usr/share/dnf5/vars.d"))
+                conf.installroot = self.root_dir
+                conf.varsdir = (
+                    os.path.join(self.root_dir, "etc/dnf/vars"),
+                    os.path.join(self.root_dir, "usr/share/dnf5/vars.d")
+                )
 
             # Cannot modify .conf() values after this
             # base.setup() should be called before loading repositories otherwise substitutions might not work.
             self.base.setup()
 
-            if root_dir:
-                repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
+            if self.root_dir:
+                repos_dir = os.path.join(self.root_dir, "etc/yum.repos.d")
                 self.base.get_repo_sack().create_repos_from_dir(repos_dir)
                 rq = dnf5.repo.RepoQuery(self.base)
                 rq.filter_enabled(True)
@@ -159,15 +163,15 @@ class DNF5(SolverBase):
                     config = repo.get_config()
                     config.sslcacert = modify_rootdir_path(
                         get_string_option(config.get_sslcacert_option()),
-                        root_dir,
+                        self.root_dir,
                     )
                     config.sslclientcert = modify_rootdir_path(
                         get_string_option(config.get_sslclientcert_option()),
-                        root_dir,
+                        self.root_dir,
                     )
                     config.sslclientkey = modify_rootdir_path(
                         get_string_option(config.get_sslclientkey_option()),
-                        root_dir,
+                        self.root_dir,
                     )
                     repo_iter.next()
 
@@ -383,9 +387,6 @@ class DNF5(SolverBase):
         """
         # Return an empty list when 'transactions' key is missing or when it is None
         transactions = arguments.get("transactions") or []
-        # collect repo IDs from the request so we know whether to translate gpg key paths
-        request_repo_ids = set(repo["id"] for repo in arguments.get("repos", []))
-        root_dir = arguments.get("root_dir")
         last_transaction: List = []
 
         for transaction in transactions:
@@ -460,7 +461,7 @@ class DNF5(SolverBase):
                 "gpgcheck": repo_cfg.get_gpgcheck_option().get_value(),
                 "repo_gpgcheck": repo_cfg.get_repo_gpgcheck_option().get_value(),
                 "gpgkeys": read_keys(repo_cfg.get_gpgkey_option().get_value(),
-                                     root_dir if repo.get_id() not in request_repo_ids else None),
+                                     self.root_dir if repo.get_id() not in self.request_repo_ids else None),
                 "sslverify": repo_cfg.get_sslverify_option().get_value(),
                 "sslclientkey": get_string_option(repo_cfg.get_sslclientkey_option()),
                 "sslclientcert": get_string_option(repo_cfg.get_sslclientcert_option()),
