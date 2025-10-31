@@ -34,8 +34,9 @@ class DNF(SolverBase):
         proxy = request.get("proxy")
 
         arguments = request["arguments"]
-        repos = arguments.get("repos", [])
-        root_dir = arguments.get("root_dir")
+        self.repos = arguments.get("repos", [])
+        self.request_repo_ids = {repo["id"] for repo in self.repos}
+        self.root_dir = arguments.get("root_dir")
 
         self.base = dnf.Base()
 
@@ -71,10 +72,10 @@ class DNF(SolverBase):
         self.base.conf.substitutions['releasever'] = releasever
 
         # variables substitution is only available when root_dir is provided
-        if root_dir:
+        if self.root_dir:
             # This sets the varsdir to ("{root_dir}/etc/yum/vars/", "{root_dir}/etc/dnf/vars/") for custom variable
             # substitution (e.g. CentOS Stream 9's $stream variable)
-            self.base.conf.substitutions.update_from_etc(root_dir)
+            self.base.conf.substitutions.update_from_etc(self.root_dir)
 
         if hasattr(self.base.conf, "optional_metadata_types"):
             # the attribute doesn't exist on older versions of dnf; ignore the option when not available
@@ -83,21 +84,18 @@ class DNF(SolverBase):
             self.base.conf.proxy = proxy
 
         try:
-            req_repo_ids = set()
-            for repo in repos:
-                self.base.repos.add(self._dnfrepo(repo, self.base.conf, root_dir is not None))
-                # collect repo IDs from the request to separate them from the ones loaded from a root_dir
-                req_repo_ids.add(repo["id"])
+            for repo in self.repos:
+                self.base.repos.add(self._dnfrepo(repo, self.base.conf, self.root_dir is not None))
 
-            if root_dir:
-                repos_dir = os.path.join(root_dir, "etc/yum.repos.d")
+            if self.root_dir:
+                repos_dir = os.path.join(self.root_dir, "etc/yum.repos.d")
                 self.base.conf.reposdir = repos_dir
                 self.base.read_all_repos()
                 for repo_id, repo_config in self.base.repos.items():
-                    if repo_id not in req_repo_ids:
-                        repo_config.sslcacert = modify_rootdir_path(repo_config.sslcacert, root_dir)
-                        repo_config.sslclientcert = modify_rootdir_path(repo_config.sslclientcert, root_dir)
-                        repo_config.sslclientkey = modify_rootdir_path(repo_config.sslclientkey, root_dir)
+                    if repo_id not in self.request_repo_ids:
+                        repo_config.sslcacert = modify_rootdir_path(repo_config.sslcacert, self.root_dir)
+                        repo_config.sslclientcert = modify_rootdir_path(repo_config.sslclientcert, self.root_dir)
+                        repo_config.sslclientkey = modify_rootdir_path(repo_config.sslclientkey, self.root_dir)
 
             self.base.update_cache()
             self.base.fill_sack(load_system_repo=False)
@@ -278,8 +276,6 @@ class DNF(SolverBase):
         # Return an empty list when 'transactions' key is missing or when it is None
         transactions = arguments.get("transactions") or []
         # collect repo IDs from the request so we know whether to translate gpg key paths
-        request_repo_ids = set(repo["id"] for repo in arguments.get("repos", []))
-        root_dir = arguments.get("root_dir")
         last_transaction: List = []
 
         for transaction in transactions:
@@ -351,7 +347,7 @@ class DNF(SolverBase):
                 "mirrorlist": repo.mirrorlist,
                 "gpgcheck": repo.gpgcheck,
                 "repo_gpgcheck": repo.repo_gpgcheck,
-                "gpgkeys": read_keys(repo.gpgkey, root_dir if repo.id not in request_repo_ids else None),
+                "gpgkeys": read_keys(repo.gpgkey, self.root_dir if repo.id not in self.request_repo_ids else None),
                 "sslverify": bool(repo.sslverify),
                 "sslcacert": repo.sslcacert,
                 "sslclientkey": repo.sslclientkey,
