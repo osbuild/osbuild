@@ -8,6 +8,7 @@ setuptools.setup(
         "osbuild",
         "osbuild.formats",
         "osbuild.solver",
+        "osbuild.solver.api",
         "osbuild.util",
         "osbuild.util.sbom",
         "osbuild.util.sbom.spdx2",
