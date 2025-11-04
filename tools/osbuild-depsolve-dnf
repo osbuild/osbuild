@@ -31,13 +31,6 @@ else:
     from osbuild.solver.dnf import DNF as Solver
 
 
-def get_string_option(option):
-    # option.get_value() causes an error if it's unset for string values, so check if it's empty first
-    if option.empty():
-        return None
-    return option.get_value()
-
-
 def setup_cachedir(request):
     arch = request["arch"]
     # If dnf-json is run as a service, we don't want users to be able to set the cache
