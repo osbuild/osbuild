@@ -9,7 +9,6 @@ In case of error, a structured error is printed to stdout as well.
 """
 import json
 import os
-import os.path
 import sys
 import tempfile
 
@@ -31,24 +30,10 @@ else:
     from osbuild.solver.dnf import DNF as Solver
 
 
-def setup_cachedir(request):
-    arch = request["arch"]
-    # If dnf-json is run as a service, we don't want users to be able to set the cache
-    cache_dir = os.environ.get("OVERWRITE_CACHE_DIR", "")
-    if cache_dir:
-        cache_dir = os.path.join(cache_dir, arch)
-    else:
-        cache_dir = request.get("cachedir", "")
-
-    if not cache_dir:
-        return "", {"kind": "Error", "reason": "No cache dir set"}
-
-    return cache_dir, None
-
-
-def solve(request, cache_dir):
+def solve(request):
     command = request["command"]
     arguments = request["arguments"]
+    cache_dir = request["cachedir"]
 
     with tempfile.TemporaryDirectory() as persistdir:
         try:
@@ -133,6 +118,12 @@ def validate_request(request):
             "reason": f"invalid command '{command}': must be one of {', '.join(valid_cmds)}"
         }
 
+    if not request.get("cachedir"):
+        return {
+            "kind": "InvalidRequest",
+            "reason": "No cache dir set"
+        }
+
     if not request.get("arch"):
         return {
             "kind": "InvalidRequest",
@@ -196,10 +187,7 @@ def main():
     if err:
         fail(err)
 
-    cachedir, err = setup_cachedir(request)
-    if err:
-        fail(err)
-    result, err = solve(request, cachedir)
+    result, err = solve(request)
     if err:
         fail(err)
     else:
