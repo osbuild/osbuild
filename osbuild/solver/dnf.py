@@ -6,13 +6,14 @@ import os
 import os.path
 import tempfile
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Set
 
 import dnf
 import hawkey
 import libdnf
 from dnf.i18n import ucd
 
+import osbuild.solver.model as model
 from osbuild.solver import (
     DepsolveError,
     MarkingError,
@@ -24,6 +25,92 @@ from osbuild.solver import (
 )
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
+
+
+def _reldep_to_dependency(reldep: hawkey.Reldep) -> model.Dependency:
+    """
+    Convert a hawkey.Reldep to an RPM Dependency.
+
+    Note: Handles compatibility with RHEL-8 where Reldep objects don't have name/relation/version attributes.
+    """
+    try:
+        return model.Dependency(reldep.name, reldep.relation.strip(), reldep.version)
+    except AttributeError:
+        # '_hawkey.Reldep' object has no attribute 'name' in the version shipped on RHEL-8
+        dep_parts = str(reldep).split()
+        while len(dep_parts) < 3:
+            dep_parts.append("")
+        return model.Dependency(dep_parts[0], dep_parts[1].strip(), dep_parts[2])
+
+
+def _dnf_pkg_to_package(pkg: dnf.package.Package) -> model.Package:
+    """
+    Convert a dnf.package.Package to an RPM Package.
+    """
+    kwargs = {
+        "name": pkg.name,
+        "version": pkg.version,
+        "release": pkg.release,
+        "arch": pkg.arch,
+        "epoch": int(pkg.epoch),
+        "group": pkg.group or "",
+        "download_size": pkg.downloadsize or 0,
+        "install_size": pkg.installsize or 0,
+        "license": pkg.license or "",
+        "source_rpm": pkg.sourcerpm or "",
+        "build_time": pkg.buildtime or 0,
+        "packager": pkg.packager or "",
+        "vendor": pkg.vendor or "",
+        "url": pkg.url or "",
+        "summary": pkg.summary or "",
+        "description": pkg.description or "",
+        "provides": sorted([_reldep_to_dependency(p) for p in pkg.provides], key=str),
+        "requires": sorted([_reldep_to_dependency(p) for p in pkg.requires], key=str),
+        "requires_pre": sorted([_reldep_to_dependency(p) for p in pkg.requires_pre], key=str),
+        "conflicts": sorted([_reldep_to_dependency(p) for p in pkg.conflicts], key=str),
+        "obsoletes": sorted([_reldep_to_dependency(p) for p in pkg.obsoletes], key=str),
+        "regular_requires": sorted([_reldep_to_dependency(p) for p in pkg.regular_requires], key=str),
+        "recommends": sorted([_reldep_to_dependency(p) for p in pkg.recommends], key=str),
+        "suggests": sorted([_reldep_to_dependency(p) for p in pkg.suggests], key=str),
+        "enhances": sorted([_reldep_to_dependency(p) for p in pkg.enhances], key=str),
+        "supplements": sorted([_reldep_to_dependency(p) for p in pkg.supplements], key=str),
+        "files": pkg.files,
+        "location": pkg.location or "",
+        "repo_id": pkg.repoid or "",
+        "reason": pkg.reason or "",
+    }
+    # NB: prevent setting a [None] list for remote_locations
+    if pkg.remote_location():
+        kwargs["remote_locations"] = [pkg.remote_location()]
+    checksum = pkg.chksum
+    if checksum and hawkey.chksum_name(checksum[0]) != "UNKNOWN":
+        kwargs["checksum"] = model.Checksum(
+            algorithm=hawkey.chksum_name(checksum[0]), value=checksum[1].hex())
+    header_checksum = pkg.hdr_chksum
+    if header_checksum and hawkey.chksum_name(header_checksum[0]) != "UNKNOWN":
+        kwargs["header_checksum"] = model.Checksum(
+            algorithm=hawkey.chksum_name(pkg.hdr_chksum[0]), value=pkg.hdr_chksum[1].hex())
+    return model.Package(**kwargs)
+
+
+def _dnf_repo_to_repository(repo: dnf.repo.Repo, root_dir: str, request_repo_ids: Set[str]) -> model.Repository:
+    """
+    Convert a dnf.repo.Repo to a Repository.
+    """
+    return model.Repository(
+        repo_id=repo.id,
+        name=repo.name,
+        baseurl=list(repo.baseurl),
+        metalink=repo.metalink,
+        mirrorlist=repo.mirrorlist,
+        gpgcheck=repo.gpgcheck,
+        repo_gpgcheck=repo.repo_gpgcheck,
+        gpgkeys=read_keys(repo.gpgkey, root_dir if repo.id not in request_repo_ids else None),
+        sslverify=bool(repo.sslverify),
+        sslcacert=repo.sslcacert,
+        sslclientkey=repo.sslclientkey,
+        sslclientcert=repo.sslclientcert,
+    )
 
 
 class DNF(SolverBase):
