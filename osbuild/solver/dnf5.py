@@ -2,7 +2,7 @@ import os
 import os.path
 import tempfile
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Set
 
 import libdnf5 as dnf5
 from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
@@ -11,6 +11,7 @@ from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
 from libdnf5.common import QueryCmp_EQ as EQ
 from libdnf5.common import QueryCmp_GLOB as GLOB
 
+import osbuild.solver.model as model
 from osbuild.solver import (
     DepsolveError,
     MarkingError,
@@ -53,6 +54,86 @@ def any_repos_enabled(base):
     """Return true if any repositories are enabled"""
     rq = dnf5.repo.RepoQuery(base)
     return rq.begin() != rq.end()
+
+
+def _reldep_to_dependency(reldep: dnf5.rpm.Reldep) -> model.Dependency:
+    """
+    Convert a libdnf5.rpm.Reldep to an RPM Dependency.
+    """
+    return model.Dependency(reldep.get_name(), reldep.get_relation().strip(), reldep.get_version())
+
+
+# pylint: disable=too-many-branches
+def _dnf_pkg_to_package(pkg: dnf5.rpm.Package) -> model.Package:
+    """
+    Convert a dnf5.rpm.Package to an RPM Package.
+    """
+    kwargs = {
+        "name": pkg.get_name(),
+        "version": pkg.get_version(),
+        "release": pkg.get_release(),
+        "arch": pkg.get_arch(),
+        "epoch": int(pkg.get_epoch()),
+        "group": pkg.get_group() or "",
+        "download_size": pkg.get_download_size() or 0,
+        "install_size": pkg.get_install_size() or 0,
+        "license": pkg.get_license() or "",
+        "source_rpm": pkg.get_sourcerpm() or "",
+        "build_time": pkg.get_build_time() or 0,
+        "packager": pkg.get_packager() or "",
+        "vendor": pkg.get_vendor() or "",
+        "url": pkg.get_url() or "",
+        "summary": pkg.get_summary() or "",
+        "description": pkg.get_description() or "",
+        "provides": sorted([_reldep_to_dependency(p) for p in pkg.get_provides()], key=str),
+        "requires": sorted([_reldep_to_dependency(p) for p in pkg.get_requires()], key=str),
+        "requires_pre": sorted([_reldep_to_dependency(p) for p in pkg.get_requires_pre()], key=str),
+        "conflicts": sorted([_reldep_to_dependency(p) for p in pkg.get_conflicts()], key=str),
+        "obsoletes": sorted([_reldep_to_dependency(p) for p in pkg.get_obsoletes()], key=str),
+        "regular_requires": sorted([_reldep_to_dependency(p) for p in pkg.get_regular_requires()], key=str),
+        "recommends": sorted([_reldep_to_dependency(p) for p in pkg.get_recommends()], key=str),
+        "suggests": sorted([_reldep_to_dependency(p) for p in pkg.get_suggests()], key=str),
+        "enhances": sorted([_reldep_to_dependency(p) for p in pkg.get_enhances()], key=str),
+        "supplements": sorted([_reldep_to_dependency(p) for p in pkg.get_supplements()], key=str),
+        "files": list(pkg.get_files()),
+        "location": pkg.get_location() or "",
+        "remote_locations": list(pkg.get_remote_locations()),
+        "repo_id": pkg.get_repo().get_id() or "",
+        "reason": pkg.get_reason() or "",
+    }
+    checksum = pkg.get_checksum()
+    if checksum and checksum.get_type() != dnf5.rpm.Checksum.Type_UNKNOWN:
+        kwargs["checksum"] = model.Checksum(
+            algorithm=checksum.get_type_str(), value=checksum.get_checksum())
+    header_checksum = pkg.get_hdr_checksum()
+    if header_checksum and header_checksum.get_type() != dnf5.rpm.Checksum.Type_UNKNOWN:
+        kwargs["header_checksum"] = model.Checksum(
+            algorithm=header_checksum.get_type_str(), value=header_checksum.get_checksum())
+    return model.Package(**kwargs)
+
+
+def _dnf_repo_to_repository(repo: dnf5.repo.Repo, root_dir: str, request_repo_ids: Set[str]) -> model.Repository:
+    """
+    Convert a dnf5.repo.Repo to a Repository.
+    """
+    repo_cfg = repo.get_config()
+    return model.Repository(
+        repo_id=repo.get_id(),
+        name=repo.get_name(),
+        baseurl=list(repo_cfg.get_baseurl_option().get_value()),
+        metalink=get_string_option(repo_cfg.get_metalink_option()),
+        mirrorlist=get_string_option(repo_cfg.get_mirrorlist_option()),
+        gpgcheck=repo_cfg.get_pkg_gpgcheck_option().get_value(),
+        repo_gpgcheck=repo_cfg.get_repo_gpgcheck_option().get_value(),
+        gpgkeys=read_keys(
+            repo_cfg.get_gpgkey_option().get_value(),
+            root_dir if repo.get_id() not in request_repo_ids else None
+        ),
+        sslverify=repo_cfg.get_sslverify_option().get_value(),
+        sslcacert=get_string_option(repo_cfg.get_sslcacert_option()),
+        sslclientkey=get_string_option(repo_cfg.get_sslclientkey_option()),
+        sslclientcert=get_string_option(repo_cfg.get_sslclientcert_option()),
+    )
 
 
 class DNF5(SolverBase):
