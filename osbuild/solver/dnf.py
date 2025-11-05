@@ -5,7 +5,6 @@ import itertools
 import os
 import os.path
 import tempfile
-from datetime import datetime
 from typing import Dict, List, Set
 
 import dnf
@@ -13,6 +12,7 @@ import hawkey
 import libdnf
 from dnf.i18n import ucd
 
+import osbuild.solver.api as api
 import osbuild.solver.model as model
 from osbuild.solver import (
     DepsolveError,
@@ -114,6 +114,8 @@ def _dnf_repo_to_repository(repo: dnf.repo.Repo, root_dir: str, request_repo_ids
 
 
 class DNF(SolverBase):
+    SOLVER_NAME = "dnf"
+
     def __init__(self, request, persistdir, cache_dir, license_index_path=None):
         arch = request["arch"]
         releasever = request.get("releasever")
@@ -274,10 +276,6 @@ class DNF(SolverBase):
 
         return repo
 
-    @staticmethod
-    def _timestamp_to_rfc3339(timestamp):
-        return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
-
     def _sbom_for_pkgset(self, pkgset: List[dnf.package.Package]) -> Dict:
         """
         Create an SBOM document for the given package set.
@@ -290,21 +288,9 @@ class DNF(SolverBase):
 
     def dump(self):
         packages = []
-        for package in self.base.sack.query().available():
-            packages.append({
-                "name": package.name,
-                "summary": package.summary,
-                "description": package.description,
-                "url": package.url,
-                "repo_id": package.repoid,
-                "epoch": package.epoch,
-                "version": package.version,
-                "release": package.release,
-                "arch": package.arch,
-                "buildtime": self._timestamp_to_rfc3339(package.buildtime),
-                "license": package.license
-            })
-        return packages
+        for pkg in self.base.sack.query().available():
+            packages.append(_dnf_pkg_to_package(pkg))
+        return api.serialize_response_dump(api.SolverAPIVersion.V1, packages)
 
     def search(self, args):
         """ Perform a search on the available packages
@@ -343,21 +329,10 @@ class DNF(SolverBase):
             if args.get("latest", False):
                 q = q.latest()
 
-            for package in q:
-                packages.append({
-                    "name": package.name,
-                    "summary": package.summary,
-                    "description": package.description,
-                    "url": package.url,
-                    "repo_id": package.repoid,
-                    "epoch": package.epoch,
-                    "version": package.version,
-                    "release": package.release,
-                    "arch": package.arch,
-                    "buildtime": self._timestamp_to_rfc3339(package.buildtime),
-                    "license": package.license
-                })
-        return packages
+            for pkg in q:
+                packages.append(_dnf_pkg_to_package(pkg))
+
+        return api.serialize_response_search(api.SolverAPIVersion.V1, packages)
 
     def depsolve(self, arguments):
         # Return an empty list when 'transactions' key is missing or when it is None
@@ -407,48 +382,14 @@ class DNF(SolverBase):
                 last_transaction.append(tsi.pkg)
 
         packages = []
-        pkg_repos = {}
+        repositories = {}
         for package in last_transaction:
-            packages.append({
-                "name": package.name,
-                "epoch": package.epoch,
-                "version": package.version,
-                "release": package.release,
-                "arch": package.arch,
-                "repo_id": package.repoid,
-                "path": package.relativepath,
-                "remote_location": package.remote_location(),
-                "checksum": f"{hawkey.chksum_name(package.chksum[0])}:{package.chksum[1].hex()}",
-            })
-            # collect repository objects by id to create the 'repositories' collection for the response
-            pkgrepo = package.repo
-            pkg_repos[pkgrepo.id] = pkgrepo
+            packages.append(_dnf_pkg_to_package(package))
+            repositories[package.repo.id] = _dnf_repo_to_repository(package.repo, self.root_dir, self.request_repo_ids)
 
-        repositories = {}  # full repository configs for the response
-        for repo in pkg_repos.values():
-            repositories[repo.id] = {
-                "id": repo.id,
-                "name": repo.name,
-                "baseurl": list(repo.baseurl) if repo.baseurl else None,
-                "metalink": repo.metalink,
-                "mirrorlist": repo.mirrorlist,
-                "gpgcheck": repo.gpgcheck,
-                "repo_gpgcheck": repo.repo_gpgcheck,
-                "gpgkeys": read_keys(repo.gpgkey, self.root_dir if repo.id not in self.request_repo_ids else None),
-                "sslverify": bool(repo.sslverify),
-                "sslcacert": repo.sslcacert,
-                "sslclientkey": repo.sslclientkey,
-                "sslclientcert": repo.sslclientcert,
-            }
-        response = {
-            "solver": "dnf",
-            "packages": packages,
-            "repos": repositories,
-            "modules": {},
-        }
-
+        sbom = None
         if "sbom" in arguments:
-            response["sbom"] = self._sbom_for_pkgset(last_transaction)
+            sbom = self._sbom_for_pkgset(last_transaction)
 
         # if any modules have been requested we add sources for these so they can
         # be used by stages to enable the modules in the eventual artifact
@@ -470,12 +411,12 @@ class DNF(SolverBase):
                 package_nevras = []
 
                 for package in packages:
-                    if package["epoch"] == 0:
+                    if package.epoch == 0:
                         package_nevras.append(
-                            f"{package['name']}-{package['version']}-{package['release']}.{package['arch']}")
+                            f"{package.name}-{package.version}-{package.release}.{package.arch}")
                     else:
                         package_nevras.append(
-                            f"{package['name']}-{package['epoch']}:{package['version']}-{package['release']}.{package['arch']}")
+                            f"{package.name}-{package.epoch}:{package.version}-{package.release}.{package.arch}")
 
                 for module_spec in itertools.chain(
                     transaction.get("module-enable-specs", []),
@@ -520,8 +461,9 @@ class DNF(SolverBase):
         # of the modulemd for the selected modules, this is to ensure that even when a
         # repository is disabled or disappears that non-modular content can't be installed
         # see: https://dnf.readthedocs.io/en/latest/modularity.html#fail-safe-mechanisms
+        modules_response = {}
         for module_ns, (module, profiles) in modules.items():
-            response["modules"][module.getName()] = {
+            modules_response[module.getName()] = {
                 "module-file": {
                     "path": f"/etc/dnf/modules.d/{module.getName()}.conf",
                     "data": {
@@ -537,4 +479,11 @@ class DNF(SolverBase):
                 },
             }
 
-        return response
+        return api.serialize_response_depsolve(
+            api.SolverAPIVersion.V1,
+            self.SOLVER_NAME,
+            packages,
+            list(repositories.values()),
+            modules_response if modules_response else None,
+            sbom if sbom else None,
+        )
