@@ -1,7 +1,6 @@
 import os
 import os.path
 import tempfile
-from datetime import datetime
 from typing import Dict, List, Set
 
 import libdnf5 as dnf5
@@ -11,6 +10,7 @@ from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
 from libdnf5.common import QueryCmp_EQ as EQ
 from libdnf5.common import QueryCmp_GLOB as GLOB
 
+import osbuild.solver.api as api
 import osbuild.solver.model as model
 from osbuild.solver import (
     DepsolveError,
@@ -142,6 +142,8 @@ class DNF5(SolverBase):
     These include depsolving a package set, searching for packages, and dumping a list
     of all available packages.
     """
+
+    SOLVER_NAME = "dnf5"
 
     # pylint: disable=too-many-arguments
     def __init__(self, request, persistdir, cachedir, license_index_path=None):
@@ -373,10 +375,6 @@ class DNF5(SolverBase):
 
         return repo
 
-    @staticmethod
-    def _timestamp_to_rfc3339(timestamp):
-        return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
-
     def _sbom_for_pkgset(self, pkgset: List[dnf5.rpm.Package]) -> Dict:
         """
         Create an SBOM document for the given package set.
@@ -393,20 +391,8 @@ class DNF5(SolverBase):
         q = dnf5.rpm.PackageQuery(self.base)
         q.filter_available()
         for package in list(q):
-            packages.append({
-                "name": package.get_name(),
-                "summary": package.get_summary(),
-                "description": package.get_description(),
-                "url": package.get_url(),
-                "repo_id": package.get_repo_id(),
-                "epoch": int(package.get_epoch()),
-                "version": package.get_version(),
-                "release": package.get_release(),
-                "arch": package.get_arch(),
-                "buildtime": self._timestamp_to_rfc3339(package.get_build_time()),
-                "license": package.get_license()
-            })
-        return packages
+            packages.append(_dnf_pkg_to_package(package))
+        return api.serialize_response_dump(api.SolverAPIVersion.V1, packages)
 
     def search(self, args):
         """ Perform a search on the available packages
@@ -448,20 +434,8 @@ class DNF5(SolverBase):
                 q.filter_latest_evr()
 
             for package in list(q):
-                packages.append({
-                    "name": package.get_name(),
-                    "summary": package.get_summary(),
-                    "description": package.get_description(),
-                    "url": package.get_url(),
-                    "repo_id": package.get_repo_id(),
-                    "epoch": int(package.get_epoch()),
-                    "version": package.get_version(),
-                    "release": package.get_release(),
-                    "arch": package.get_arch(),
-                    "buildtime": self._timestamp_to_rfc3339(package.get_build_time()),
-                    "license": package.get_license()
-                })
-        return packages
+                packages.append(_dnf_pkg_to_package(package))
+        return api.serialize_response_search(api.SolverAPIVersion.V1, packages)
 
     def depsolve(self, arguments):
         """depsolve returns a list of the dependencies for the set of transactions
@@ -513,49 +487,18 @@ class DNF5(SolverBase):
         packages = []
         pkg_repos = {}
         for package in last_transaction:
-            packages.append({
-                "name": package.get_name(),
-                "epoch": int(package.get_epoch()),
-                "version": package.get_version(),
-                "release": package.get_release(),
-                "arch": package.get_arch(),
-                "repo_id": package.get_repo_id(),
-                "path": package.get_location(),
-                "remote_location": remote_location(package),
-                "checksum": f"{package.get_checksum().get_type_str()}:{package.get_checksum().get_checksum()}",
-            })
-            # collect repository objects by id to create the 'repositories' collection for the response
-            pkg_repo = package.get_repo()
-            pkg_repos[pkg_repo.get_id()] = pkg_repo
+            packages.append(_dnf_pkg_to_package(package))
+            repo = package.get_repo()
+            pkg_repos[repo.get_id()] = _dnf_repo_to_repository(repo, self.root_dir, self.request_repo_ids)
 
-        packages = sorted(packages, key=lambda x: x["path"])
-
-        repositories = {}  # full repository configs for the response
-        for repo in pkg_repos.values():
-            repo_cfg = repo.get_config()
-            repositories[repo.get_id()] = {
-                "id": repo.get_id(),
-                "name": repo.get_name(),
-                "baseurl": list(repo_cfg.get_baseurl_option().get_value()),  # resolves to () if unset
-                "metalink": get_string_option(repo_cfg.get_metalink_option()),
-                "mirrorlist": get_string_option(repo_cfg.get_mirrorlist_option()),
-                "gpgcheck": repo_cfg.get_gpgcheck_option().get_value(),
-                "repo_gpgcheck": repo_cfg.get_repo_gpgcheck_option().get_value(),
-                "gpgkeys": read_keys(repo_cfg.get_gpgkey_option().get_value(),
-                                     self.root_dir if repo.get_id() not in self.request_repo_ids else None),
-                "sslverify": repo_cfg.get_sslverify_option().get_value(),
-                "sslclientkey": get_string_option(repo_cfg.get_sslclientkey_option()),
-                "sslclientcert": get_string_option(repo_cfg.get_sslclientcert_option()),
-                "sslcacert": get_string_option(repo_cfg.get_sslcacert_option()),
-            }
-        response = {
-            "solver": "dnf5",
-            "packages": packages,
-            "repos": repositories,
-            "modules": {},
-        }
-
+        sbom = None
         if "sbom" in arguments:
-            response["sbom"] = self._sbom_for_pkgset(last_transaction)
+            sbom = self._sbom_for_pkgset(last_transaction)
 
-        return response
+        return api.serialize_response_depsolve(
+            api.SolverAPIVersion.V1,
+            self.SOLVER_NAME,
+            packages,
+            list(pkg_repos.values()),
+            sbom=sbom,
+        )
