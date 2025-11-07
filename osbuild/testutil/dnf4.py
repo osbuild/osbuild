@@ -1,11 +1,11 @@
 import tempfile
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import dnf
 
 
 def depsolve_pkgset(
-    repo_paths: List[str],
+    repo_servers: List[Dict[str, str]],
     pkg_include: List[str],
     pkg_exclude: Optional[List[str]] = None
 ) -> List[dnf.package.Package]:
@@ -24,9 +24,9 @@ def depsolve_pkgset(
 
         base = dnf.Base(conf)
 
-        for idx, repo_path in enumerate(repo_paths):
-            repo = dnf.repo.Repo(f"repo{idx}", conf)
-            repo.baseurl = f"file://{repo_path}"
+        for repo_server in repo_servers:
+            repo = dnf.repo.Repo(repo_server["name"], conf)
+            repo.baseurl = repo_server["address"]
             base.repos.add(repo)
 
         base.fill_sack(load_system_repo=False)

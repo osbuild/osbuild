@@ -1,12 +1,12 @@
 import tempfile
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import libdnf5
 from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
 
 
 def depsolve_pkgset(
-    repo_paths: List[str],
+    repo_servers: List[Dict[str, str]],
     pkg_include: List[str]
 ) -> Tuple[libdnf5.base.Base, List[libdnf5.rpm.Package]]:
     """
@@ -24,10 +24,10 @@ def depsolve_pkgset(
         conf.varsdir = ["/dev/null"]
 
         sack = base.get_repo_sack()
-        for idx, repo_path in enumerate(repo_paths):
-            repo = sack.create_repo(f"repo{idx}")
+        for repo_server in repo_servers:
+            repo = sack.create_repo(repo_server["name"])
             conf = repo.get_config()
-            conf.baseurl = f"file://{repo_path}"
+            conf.baseurl = repo_server["address"]
 
         base.setup()
         sack.load_repos(libdnf5.repo.Repo.Type_AVAILABLE)
