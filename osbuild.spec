@@ -294,10 +294,11 @@ install -p -m 0644 tools/solver-dnf.json %{buildroot}%{pkgdir}/solver.json
 # but that's an acceptable tradeoff.
 # x86_64-specific tests:
 # test/mod/test_util_sbom_spdx.py, test/mod/test_util_sbom_dnf.py, test/mod/test_testutil_dnf4.py
+# test/mod/test_solver_implementations.py
 # test_ioctl_toggle_immutable and test_rmtree_immutable fail on s390x
 # test_cache_full_behavior fails on ppc64le
 # tools/test/test_depsolve.py fails on C9S and EPEL9
-ignore="--ignore test/mod/test_util_sbom_spdx.py --ignore test/mod/test_util_sbom_dnf.py --ignore test/mod/test_testutil_dnf4.py"
+ignore="--ignore test/mod/test_util_sbom_spdx.py --ignore test/mod/test_util_sbom_dnf.py --ignore test/mod/test_testutil_dnf4.py --ignore test/mod/test_solver_implementations.py"
 skip="not test_ioctl_toggle_immutable and not test_rmtree_immutable and not test_cache_full_behavior"
 %if 0%{?rhel}
 ignore="$ignore --ignore tools/test/test_depsolve.py"
