@@ -5,7 +5,6 @@ import json
 import os
 import pathlib
 import re
-import socket
 import subprocess as sp
 import sys
 from glob import glob
@@ -15,12 +14,6 @@ from typing import Tuple
 
 import jsonschema
 import pytest
-
-REPO_PATHS = [
-    "./test/data/testrepos/baseos/",
-    "./test/data/testrepos/appstream/",
-    "./test/data/testrepos/custom/",
-]
 
 RELEASEVER = "9"
 ARCH = "x86_64"
@@ -175,28 +168,6 @@ def search(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt_me
                    check=False, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
 
         return json.loads(p.stdout), p.returncode
-
-
-def get_rand_port():
-    s = socket.socket()
-    s.bind(("", 0))
-    return s.getsockname()[1]
-
-
-@pytest.fixture(name="repo_servers", scope="module")
-def repo_servers_fixture():
-    procs = []
-    addresses = []
-    for path in REPO_PATHS:
-        port = get_rand_port()  # this is racy, but should be okay
-        p = sp.Popen(["python3", "-m", "http.server", str(port)], cwd=path, stdout=sp.PIPE, stderr=sp.DEVNULL)
-        procs.append(p)
-        # use last path component as name
-        name = os.path.basename(path.rstrip("/"))
-        addresses.append({"name": name, "address": f"http://localhost:{port}"})
-    yield addresses
-    for p in procs:
-        p.kill()
 
 
 def tcase_idfn(param):
