@@ -26,6 +26,7 @@ def depsolve_pkgset(
 
         for repo_server in repo_servers:
             repo = dnf.repo.Repo(repo_server["name"], conf)
+            repo.name = repo_server["name"]
             repo.baseurl = repo_server["address"]
             base.repos.add(repo)
 
