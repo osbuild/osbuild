@@ -27,6 +27,7 @@ def depsolve_pkgset(
         for repo_server in repo_servers:
             repo = sack.create_repo(repo_server["name"])
             conf = repo.get_config()
+            conf.name = repo_server["name"]
             conf.baseurl = repo_server["address"]
 
         base.setup()
