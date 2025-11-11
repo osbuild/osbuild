@@ -114,6 +114,13 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     dnf_install_with_retry /tmp/epel.rpm
 fi
 
+# NOTE: Version mismatches between the packages we're about to install below
+# and the existing openssl-libs installed on the system can cause issues:
+#   symbol lookup error: /lib64/librpm_sequoia.so.1: undefined symbol: EVP_PKEY_verify_message_init, version OPENSSL_3.4.0
+# Upgrading openssl-libs so it matches the versions of the packages that will be installed.
+greenprint "📦 Upgrading openssl-libs"
+
+sudo dnf upgrade -y openssl-libs
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
 dnf_install_with_retry createrepo_c make mock python3-pip rpm-build s3cmd
