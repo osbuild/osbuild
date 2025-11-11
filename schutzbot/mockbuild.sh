@@ -9,28 +9,10 @@ function greenprint {
 # function to override template respositores with system repositories which contain rpmrepos snapshots
 function template_override {
     sudo dnf -y install jq
-    
-    # TODO: remove this, once mock-core-configs ships a template for RHEL-10
-    # Use RHEL-9 template as the baseline for now.
-    if [[ "$ID" == rhel && ${VERSION_ID%.*} == 10 ]]; then
-        TEMPLATE=${ID}-${VERSION_ID%.*}.tpl
-        sudo cp /etc/mock/templates/rhel-9.tpl /etc/mock/templates/"$TEMPLATE"
-        # change releasever to 10
-        sudo sed -i "s/config_opts\['releasever'\] = '9'/config_opts\['releasever'\] = '10'/" /etc/mock/templates/"$TEMPLATE"
-        # disable bootstrap image for el10, as there is none yet
-        sudo sed -i "s/config_opts\['bootstrap_image_ready'\] = True/config_opts\['bootstrap_image_ready'\] = False/" /etc/mock/templates/"$TEMPLATE"
-        # update hardcoded rhel9 paths to rhel10 in repository URLs
-        sudo sed -i "s/rhel9/rhel10/g" /etc/mock/templates/"$TEMPLATE"
-
-        sudo cp /etc/mock/rhel-{9,10}-"$(uname -m)".cfg
-        sudo sed -i "s/rhel-9/rhel-10/" "/etc/mock/rhel-10-$(uname -m).cfg"
-    fi
-    
     if sudo subscription-manager status; then
         greenprint "📋 Running on subscribed RHEL machine, no mock template override done."
         return 0
     fi
-
     if [[ "$ID" == rhel ]]; then
         TEMPLATE=${ID}-${VERSION_ID%.*}.tpl
         # disable subscription for nightlies
@@ -125,25 +107,11 @@ if curl --silent --fail --head --output /dev/null "${REPO_URL}/repodata/repomd.x
 fi
 
 # Mock and s3cmd is only available in EPEL for RHEL.
-# TODO: Adjust this condition, once EPEL-10 is enabled
-if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} -lt 10 ]] && ! rpm -q epel-release; then
+if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     greenprint "📦 Setting up EPEL repository"
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID%.*}.noarch.rpm
     dnf_install_with_retry /tmp/epel.rpm
-fi
-
-# TODO: Remove this workaround, once EPEL-10 is enabled
-if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
-    sudo dnf copr enable -y @osbuild/centpkg "centos-stream-10-$(uname -m)"
-fi
-
-# TODO: Remove this workaround, once https://issues.redhat.com/browse/RHEL-49567 is fixed
-# We can't workaround this in mock config due to https://github.com/rpm-software-management/mock/pull/1410
-if [[ $ID == centos && ${VERSION_ID%.*} == 10 ]]; then
-    sudo setenforce 0
-    sudo systemctl restart systemd-machined.service
-    sudo setenforce 1
 fi
 
 # Install requirements for building RPMs in mock.
