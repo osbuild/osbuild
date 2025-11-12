@@ -242,6 +242,12 @@ TEST_INPUT = [
      "ostreecontainer --url=/run/install/repo/container --transport=dir",),
     ({"bootloader": {"append": "karg1 karg2=0"}}, "bootloader --append='karg1 karg2=0'"),
 
+    # bootc
+    ({"bootc": {"source-imgref": "docker://quay.io/fedora/fedora-bootc:latest"}},
+     "bootc --source-imgref docker://quay.io/fedora/fedora-bootc:latest"),
+    ({"bootc": {"source-imgref": "oci:/run/install/repo/container", "target-imgref": "docker://quay.io/fedora/fedora-bootc:latest"}},
+     "bootc --source-imgref oci:/run/install/repo/container --target-imgref docker://quay.io/fedora/fedora-bootc:latest"),
+
     # %post
     ({"%post": [{"commands": ["mkdir /scratch"]}]}, "%post\nmkdir /scratch\n%end"),
     (
@@ -417,6 +423,34 @@ def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylin
             },
             "is valid under each of",
         ),
+        # not both bootc and ostree
+        (
+            {
+                "bootc": {
+                    "source-imgref": "docker://quay.io/fedora/fedora-bootc:latest",
+                },
+                "ostree": {
+                    "osname": "some-osname",
+                    "url": "http://some-ostree-url.com/foo",
+                    "ref": "some-ref",
+                },
+            },
+            "is valid under each of",
+        ),
+        # not both bootc and ostreecontainer
+        (
+            {
+                "bootc": {
+                    "source-imgref": "docker://quay.io/fedora/fedora-bootc:latest",
+                },
+                "ostreecontainer": {
+                    "url": "http://some-ostree-url.com/foo",
+                },
+            },
+            "is valid under each of",
+        ),
+        # bootc requires source-imgref
+        ({"bootc": {}}, "'source-imgref' is a required property"),
         ({"rootpw": {}}, "is not valid under any of the given schemas"),
         ({"rootpw": {"lock": True, "allow_ssh": True}}, "is not valid under any of the given schemas"),
         ({"rootpw": {"plaintext": True}}, "is not valid under any of the given schemas"),

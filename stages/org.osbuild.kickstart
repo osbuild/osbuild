@@ -189,7 +189,7 @@ def make_post(post_list):
     return res
 
 
-def main(tree, options):  # pylint: disable=too-many-branches
+def main(tree, options):  # pylint: disable=too-many-branches,too-many-statements
     path = options["path"].lstrip("/")
     ostree = options.get("ostree")
 
@@ -220,6 +220,15 @@ def main(tree, options):  # pylint: disable=too-many-branches
             if value:
                 cmd += f" --{name}={value}"
 
+        config += [cmd]
+
+    bootc = options.get("bootc")
+    if bootc:
+        source_imgref = bootc["source-imgref"]
+        cmd = f"bootc --source-imgref {source_imgref}"
+        target_imgref = bootc.get("target-imgref")
+        if target_imgref:
+            cmd += f" --target-imgref {target_imgref}"
         config += [cmd]
 
     liveimg = options.get("liveimg")
