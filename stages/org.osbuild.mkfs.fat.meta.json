@@ -38,7 +38,7 @@
           "maxLength": 11
         },
         "fat-size": {
-          "description": "Label for the file system",
+          "description": "The type of file allocation tables used (12, 16 or 32 bit).",
           "type": "integer",
           "enum": [
             12,
