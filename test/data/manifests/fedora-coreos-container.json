@@ -801,6 +801,7 @@
             }
           },
           "options": {
+            "agcount": 2,
             "uuid": "910678ff-f77e-4a7d-8d53-86f2ac47a823",
             "label": "root"
           }
@@ -1168,6 +1169,7 @@
             }
           },
           "options": {
+            "agcount": 2,
             "uuid": "910678ff-f77e-4a7d-8d53-86f2ac47a823",
             "label": "root"
           }
