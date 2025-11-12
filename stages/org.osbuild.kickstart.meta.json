@@ -101,39 +101,37 @@
       }
     },
     "additionalProperties": false,
-    "anyOf": [
-      {
-        "required": [
-          "path",
-          "ostree"
-        ],
-        "not": {
-          "required": [
-            "ostreecontainer"
-          ]
-        }
-      },
-      {
-        "required": [
-          "path",
-          "ostreecontainer"
-        ],
-        "not": {
-          "required": [
-            "ostree"
-          ]
-        }
-      },
+    "oneOf": [
       {
         "required": [
           "path"
         ],
         "not": {
-          "required": [
-            "ostree",
-            "ostreecontainer"
+          "anyOf": [
+            {
+              "required": [
+                "ostree"
+              ]
+            },
+            {
+              "required": [
+                "ostreecontainer"
+              ]
+            }
           ]
         }
+      },
+      {
+        "required": [
+          "ostree",
+          "path"
+        ]
+      },
+      {
+        "required": [
+          "ostreecontainer",
+          "path"
+        ]
       }
     ],
     "properties": {
