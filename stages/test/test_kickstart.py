@@ -415,7 +415,7 @@ def test_kickstart_valid(tmp_path, stage_module, test_input, expected):  # pylin
                     "gpg": True,
                 },
             },
-            "is not valid under any of the given schemas",
+            "is valid under each of",
         ),
         ({"rootpw": {}}, "is not valid under any of the given schemas"),
         ({"rootpw": {"lock": True, "allow_ssh": True}}, "is not valid under any of the given schemas"),
