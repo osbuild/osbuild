@@ -10,10 +10,14 @@ def main(devices, options):
 
     uuid = options["uuid"]
     label = options.get("label")
+    agcount = options.get("agcount")
     opts = []
 
     if label:
-        opts = ["-L", label]
+        opts.extend(["-L", label])
+
+    if agcount:
+        opts.extend(["-d", f"agcount={agcount}"])
 
     subprocess.run(["mkfs.xfs", "-m", f"uuid={uuid}"] + opts + [device],
                    encoding='utf8', check=True)
