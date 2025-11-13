@@ -1,7 +1,7 @@
 import os
 import os.path
 import tempfile
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 import libdnf5 as dnf5
 from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
@@ -20,6 +20,12 @@ from osbuild.solver import (
     SolverBase,
     modify_rootdir_path,
     read_keys,
+)
+from osbuild.solver.request import (
+    DepsolveCmdArgs,
+    RepositoryConfig,
+    SearchCmdArgs,
+    SolverRequest,
 )
 from osbuild.util.sbom.dnf5 import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
@@ -112,7 +118,11 @@ def _dnf_pkg_to_package(pkg: dnf5.rpm.Package) -> model.Package:
     return model.Package(**kwargs)
 
 
-def _dnf_repo_to_repository(repo: dnf5.repo.Repo, root_dir: str, request_repo_ids: Set[str]) -> model.Repository:
+def _dnf_repo_to_repository(
+    repo: dnf5.repo.Repo,
+    root_dir: Optional[str],
+    request_repo_ids: Set[str],
+) -> model.Repository:
     """
     Convert a dnf5.repo.Repo to a Repository.
     """
@@ -146,38 +156,37 @@ class DNF5(SolverBase):
     SOLVER_NAME = "dnf5"
 
     # pylint: disable=too-many-arguments
-    def __init__(self, request, persistdir, cachedir, license_index_path=None):
-        arch = request["arch"]
-        releasever = request.get("releasever")
-        module_platform_id = request.get("module_platform_id")
-        proxy = request.get("proxy")
+    def __init__(
+        self,
+        request: SolverRequest,
+        persistdir: os.PathLike,
+        license_index_path: Optional[os.PathLike] = None,
+    ):
+        super().__init__(request, persistdir, license_index_path)
 
-        arguments = request["arguments"]
-        self.repos = arguments.get("repos", [])
-        self.request_repo_ids = {repo["id"] for repo in self.repos}
-        self.root_dir = arguments.get("root_dir")
+        self.repos = self.request.config.repos or []
+        self.request_repo_ids = {repo.repo_id for repo in self.repos}
+        self.root_dir = self.request.config.root_dir
 
+        # pylint: disable=fixme
+        # XXX: This should be handled in the depsolve() function, where we should be setting up the
+        # repos for each transaction, because the excluded packages are setup per-transaction!
         # Gather up all the exclude packages from all the transactions
         exclude_pkgs = []
-        # Return an empty list when 'transactions' key is missing or when it is None
-        transactions = arguments.get("transactions") or []
-        for t in transactions:
-            # Return an empty list when 'exclude-specs' key is missing or when it is None
-            exclude_pkgs.extend(t.get("exclude-specs") or [])
-
-        if not exclude_pkgs:
-            exclude_pkgs = []
+        if self.request.depsolve_args:
+            for transaction in self.request.depsolve_args.transactions:
+                exclude_pkgs.extend(transaction.exclude_specs or [])
 
         self.base = dnf5.base.Base()
 
         # Base is the correct place to set substitutions, not per-repo.
         # See https://github.com/rpm-software-management/dnf5/issues/1248
-        self.base.get_vars().set("arch", arch)
-        self.base.get_vars().set("basearch", self._BASEARCH_MAP[arch])
-        if releasever:
-            self.base.get_vars().set('releasever', releasever)
-        if proxy:
-            self.base.get_vars().set('proxy', proxy)
+        self.base.get_vars().set("arch", self.request.config.arch)
+        self.base.get_vars().set("basearch", self._BASEARCH_MAP[self.request.config.arch])
+        if self.request.config.releasever:
+            self.base.get_vars().set('releasever', self.request.config.releasever)
+        if self.request.config.proxy:
+            self.base.get_vars().set('proxy', self.request.config.proxy)
 
         # Enable fastestmirror to ensure we choose the fastest mirrors for
         # downloading metadata (when depsolving) and downloading packages.
@@ -206,21 +215,24 @@ class DNF5(SolverBase):
         conf.zchunk = False
 
         # Set the rest of the dnf configuration.
-        if module_platform_id:
-            conf.module_platform_id = module_platform_id
+        if self.request.config.module_platform_id:
+            conf.module_platform_id = self.request.config.module_platform_id
         conf.config_file_path = "/dev/null"
         conf.persistdir = persistdir
-        conf.cachedir = cachedir
+        conf.cachedir = self.request.config.cachedir
 
         # Include comps metadata by default
         metadata_types = ['comps']
-        metadata_types.extend(arguments.get("optional-metadata", []))
+        if self.request.config.optional_metadata:
+            metadata_types.extend(self.request.config.optional_metadata)
         conf.optional_metadata_types = metadata_types
 
         try:
+            # pylint: disable=fixme
+            # XXX: This should be handled in the depsolve() function per transaction!
             # NOTE: With libdnf5 packages are excluded in the repo setup
-            for repo in self.repos:
-                self._dnfrepo(repo, exclude_pkgs)
+            for repo_conf in self.repos:
+                self._dnfrepo(repo_conf, exclude_pkgs)
 
             if self.root_dir:
                 # This sets the varsdir to ("{root_dir}/usr/share/dnf5/vars.d/", "{root_dir}/etc/dnf/vars/") for custom
@@ -265,9 +277,6 @@ class DNF5(SolverBase):
         if not any_repos_enabled(self.base):
             raise NoReposError("There are no enabled repositories")
 
-        # Custom license index file path use for SBOM generation
-        self.license_index_path = license_index_path
-
     _BASEARCH_MAP = _invert({
         'aarch64': ('aarch64',),
         'alpha': ('alpha', 'alphaev4', 'alphaev45', 'alphaev5', 'alphaev56',
@@ -298,44 +307,40 @@ class DNF5(SolverBase):
     })
 
     # pylint: disable=too-many-branches
-    def _dnfrepo(self, desc, exclude_pkgs=None):
-        """Makes a dnf.repo.Repo out of a JSON repository description"""
+    def _dnfrepo(self, desc: RepositoryConfig, exclude_pkgs=None):
+        """Makes a dnf.repo.Repo out of request.RepositoryConfig configuration"""
         if not exclude_pkgs:
             exclude_pkgs = []
 
         sack = self.base.get_repo_sack()
 
-        repo = sack.create_repo(desc["id"])
+        repo = sack.create_repo(desc.repo_id)
         conf = repo.get_config()
 
-        if "name" in desc:
-            conf.name = desc["name"]
+        if desc.name:
+            conf.name = desc.name
 
-        # At least one is required
-        if "baseurl" in desc:
-            conf.baseurl = desc["baseurl"]
-        elif "metalink" in desc:
-            conf.metalink = desc["metalink"]
-        elif "mirrorlist" in desc:
-            conf.mirrorlist = desc["mirrorlist"]
-        else:
-            raise ValueError("missing either `baseurl`, `metalink`, or `mirrorlist` in repo")
+        # NB: the fact that at least one is set is checked when parsing the Solver request
+        if desc.baseurl:
+            conf.baseurl = desc.baseurl
+        if desc.metalink:
+            conf.metalink = desc.metalink
+        if desc.mirrorlist:
+            conf.mirrorlist = desc.mirrorlist
 
-        conf.sslverify = desc.get("sslverify", True)
-        if "sslcacert" in desc:
-            conf.sslcacert = desc["sslcacert"]
-        if "sslclientkey" in desc:
-            conf.sslclientkey = desc["sslclientkey"]
-        if "sslclientcert" in desc:
-            conf.sslclientcert = desc["sslclientcert"]
+        conf.sslverify = desc.sslverify
+        if desc.sslcacert:
+            conf.sslcacert = desc.sslcacert
+        if desc.sslclientkey:
+            conf.sslclientkey = desc.sslclientkey
+        if desc.sslclientcert:
+            conf.sslclientcert = desc.sslclientcert
 
-        if "gpgcheck" in desc:
-            conf.gpgcheck = desc["gpgcheck"]
-        if "repo_gpgcheck" in desc:
-            conf.repo_gpgcheck = desc["repo_gpgcheck"]
-        if "gpgkey" in desc:
-            conf.gpgkey = [desc["gpgkey"]]
-        if "gpgkeys" in desc:
+        if desc.gpgcheck:
+            conf.gpgcheck = desc.gpgcheck
+        if desc.repo_gpgcheck:
+            conf.repo_gpgcheck = desc.repo_gpgcheck
+        if desc.gpgkey:
             # gpgkeys can contain a full key, or it can be a URL
             # dnf expects urls, so write the key to a temporary location and add the file://
             # path to conf.gpgkey
@@ -343,7 +348,7 @@ class DNF5(SolverBase):
             if not os.path.exists(keydir):
                 os.makedirs(keydir, mode=0o700, exist_ok=True)
 
-            for key in desc["gpgkeys"]:
+            for key in desc.gpgkey:
                 if key.startswith("-----BEGIN PGP PUBLIC KEY BLOCK-----"):
                     # Not using with because it needs to be a valid file for the duration. It
                     # is inside the temporary persistdir so will be cleaned up on exit.
@@ -355,20 +360,9 @@ class DNF5(SolverBase):
                 else:
                     conf.gpgkey += (key,)
 
-        # In dnf, the default metadata expiration time is 48 hours. However,
-        # some repositories never expire the metadata, and others expire it much
-        # sooner than that. We therefore allow this to be configured. If nothing
-        # is provided we error on the side of checking if we should invalidate
-        # the cache. If cache invalidation is not necessary, the overhead of
-        # checking is in the hundreds of milliseconds. In order to avoid this
-        # overhead accumulating for API calls that consist of several dnf calls,
-        # we set the expiration to a short time period, rather than 0.
-        conf.metadata_expire = desc.get("metadata_expire", "20s")
-
-        # This option if True disables modularization filtering. Effectively
-        # disabling modularity for given repository.
-        if "module_hotfixes" in desc:
-            repo.module_hotfixes = desc["module_hotfixes"]
+        conf.metadata_expire = desc.metadata_expire
+        if desc.module_hotfixes:
+            repo.module_hotfixes = desc.module_hotfixes
 
         # Set the packages to exclude
         conf.excludepkgs = exclude_pkgs
@@ -394,28 +388,14 @@ class DNF5(SolverBase):
             packages.append(_dnf_pkg_to_package(package))
         return api.serialize_response_dump(api.SolverAPIVersion.V1, packages)
 
-    def search(self, args):
-        """ Perform a search on the available packages
-
-        args contains a "search" dict with parameters to use for searching.
-        "packages" list of package name globs to search for
-        "latest" is a boolean that will return only the latest NEVRA instead
-        of all matching builds in the metadata.
-
-        eg.
-
-            "search": {
-                "latest": false,
-                "packages": ["tmux", "vim*", "*ssh*"]
-            },
-        """
-        pkg_globs = args.get("packages", [])
+    def search(self, args: SearchCmdArgs):
+        """ Perform a search on the available packages"""
 
         packages = []
 
         # NOTE: Build query one piece at a time, don't pass all to filterm at the same
         # time.
-        for name in pkg_globs:
+        for name in args.packages:
             q = dnf5.rpm.PackageQuery(self.base)
             q.filter_available()
 
@@ -430,28 +410,27 @@ class DNF5(SolverBase):
             else:
                 q.filter_name([name], EQ)
 
-            if args.get("latest", False):
+            if args.latest:
                 q.filter_latest_evr()
 
             for package in list(q):
                 packages.append(_dnf_pkg_to_package(package))
         return api.serialize_response_search(api.SolverAPIVersion.V1, packages)
 
-    def depsolve(self, arguments):
+    def depsolve(self, args: DepsolveCmdArgs):
         """depsolve returns a list of the dependencies for the set of transactions
         """
         # Return an empty list when 'transactions' key is missing or when it is None
-        transactions = arguments.get("transactions") or []
         last_transaction: List = []
 
-        for transaction in transactions:
+        for transaction in args.transactions:
             goal = dnf5.base.Goal(self.base)
             goal.reset()
             sack = self.base.get_rpm_package_sack()
             sack.clear_user_excludes()
 
             # weak deps are selected per-transaction
-            self.base.get_config().install_weak_deps = transaction.get("install_weak_deps", False)
+            self.base.get_config().install_weak_deps = transaction.install_weak_deps
 
             # set the packages from the last transaction as installed
             for installed_pkg in last_transaction:
@@ -462,26 +441,26 @@ class DNF5(SolverBase):
             settings.group_with_name = True
 
             # Packages are added individually, excludes are handled in the repo setup
-            for pkg in transaction.get("package-specs"):
+            for pkg in transaction.package_specs:
                 goal.add_install(pkg, settings)
-            transaction = goal.resolve()
+            transaction_result = goal.resolve()
 
-            transaction_problems = transaction.get_problems()
+            transaction_problems = transaction_result.get_problems()
             if transaction_problems == NOT_FOUND:
-                raise MarkingError("\n".join(transaction.get_resolve_logs_as_strings()))
+                raise MarkingError("\n".join(transaction_result.get_resolve_logs_as_strings()))
             if transaction_problems != NO_PROBLEM:
-                raise DepsolveError("\n".join(transaction.get_resolve_logs_as_strings()))
+                raise DepsolveError("\n".join(transaction_result.get_resolve_logs_as_strings()))
 
             # store the current transaction result
             last_transaction.clear()
-            for tsi in transaction.get_transaction_packages():
+            for tsi in transaction_result.get_transaction_packages():
                 # Only add packages being installed, upgraded, downgraded, or reinstalled
                 if not dnf5.base.transaction.transaction_item_action_is_inbound(tsi.get_action()):
                     continue
                 last_transaction.append(tsi.get_package())
 
         # Something went wrong, but no error was generated by goal.resolve()
-        if len(transactions) > 0 and len(last_transaction) == 0:
+        if len(args.transactions) > 0 and len(last_transaction) == 0:
             raise DepsolveError("Empty transaction results")
 
         packages = []
@@ -492,11 +471,11 @@ class DNF5(SolverBase):
             pkg_repos[repo.get_id()] = _dnf_repo_to_repository(repo, self.root_dir, self.request_repo_ids)
 
         sbom = None
-        if "sbom" in arguments:
+        if args.sbom_request:
             sbom = self._sbom_for_pkgset(last_transaction)
 
         return api.serialize_response_depsolve(
-            api.SolverAPIVersion.V1,
+            self.request.api_version,
             self.SOLVER_NAME,
             packages,
             list(pkg_repos.values()),

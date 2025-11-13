@@ -1862,7 +1862,7 @@ invalid_request_v1_test_cases = [
             "arguments": {"repos": []},
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"invalid command 'None': must be one of depsolve, dump, search",
+        "error_reason_re": r"Missing required field 'command'",
     },
     {
         "id": "missing_arch",
@@ -1873,7 +1873,7 @@ invalid_request_v1_test_cases = [
             "arguments": {"repos": []},
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"no 'arch' specified",
+        "error_reason_re": r"Missing required field 'arch'",
     },
     {
         "id": "missing_releasever",
@@ -1884,7 +1884,7 @@ invalid_request_v1_test_cases = [
             "arguments": {"repos": []},
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"no 'releasever' specified",
+        "error_reason_re": r"Missing required field 'releasever'",
     },
     {
         "id": "missing_cachedir",
@@ -1895,7 +1895,7 @@ invalid_request_v1_test_cases = [
             "arguments": {"repos": []},
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"No cache dir set",
+        "error_reason_re": r"Missing required field 'cachedir'",
     },
     {
         "id": "missing_arguments",
@@ -1906,7 +1906,7 @@ invalid_request_v1_test_cases = [
             "cachedir": "/tmp/cache",
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"empty 'arguments'",
+        "error_reason_re": r"Missing required field 'arguments'",
     },
     # Invalid command
     {
@@ -1919,9 +1919,21 @@ invalid_request_v1_test_cases = [
             "arguments": {"repos": []},
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"invalid command 'invalid_command': must be one of depsolve, dump, search",
+        "error_reason_re": r"Invalid command 'invalid_command': must be one of depsolve, dump, search",
     },
     # Invalid field types
+    {
+        "id": "arguments_not_dict",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": "not a dict",
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'arguments' must be a dict",
+    },
     {
         "id": "repos_not_list",
         "request": {
@@ -1933,8 +1945,8 @@ invalid_request_v1_test_cases = [
                 "repos": "not a list",
             },
         },
-        "error_kind": "TypeError",
-        "error_reason_re": r"string indices must be integers, not 'str'",
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'repos' must be a list",
     },
     {
         "id": "transactions_not_list",
@@ -1950,8 +1962,25 @@ invalid_request_v1_test_cases = [
                 "transactions": "not a list",
             },
         },
-        "error_kind": "AttributeError",
-        "error_reason_re": r"str' object has no attribute 'get'",
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'transactions' must be a list",
+    },
+    {
+        "id": "optional_metadata_not_list",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "optional-metadata": "not a list",
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'optional-metadata' must be a list",
     },
     {
         "id": "search_not_dict",
@@ -1967,8 +1996,8 @@ invalid_request_v1_test_cases = [
                 "search": "not a dict",
             },
         },
-        "error_kind": "AttributeError",
-        "error_reason_re": r"'str' object has no attribute 'get'",
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'search' must be a dict",
     },
     # SBOM validation
     {
@@ -1984,7 +2013,7 @@ invalid_request_v1_test_cases = [
             },
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"invalid 'sbom' value",
+        "error_reason_re": r"Field 'sbom' must be a dict",
     },
     {
         "id": "sbom_missing_type",
@@ -1999,7 +2028,7 @@ invalid_request_v1_test_cases = [
             },
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"missing 'type' in 'sbom'",
+        "error_reason_re": r"Missing required field 'type' in 'sbom'",
     },
     {
         "id": "sbom_with_dump_command",
@@ -2014,7 +2043,7 @@ invalid_request_v1_test_cases = [
             },
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"SBOM is only supported with 'depsolve' command",
+        "error_reason_re": r"Field 'sbom' is only supported with 'depsolve' command",
     },
     {
         "id": "sbom_with_search_command",
@@ -2025,12 +2054,12 @@ invalid_request_v1_test_cases = [
             "cachedir": "/tmp/cache",
             "arguments": {
                 "repos": [],
-                "search": {"packages": []},
+                "search": {"packages": ["package"]},
                 "sbom": {"type": "spdx"},
             },
         },
         "error_kind": "InvalidRequest",
-        "error_reason_re": r"SBOM is only supported with 'depsolve' command",
+        "error_reason_re": r"Field 'sbom' is only supported with 'depsolve' command",
     },
     # Invalid repository config
     {
@@ -2044,8 +2073,8 @@ invalid_request_v1_test_cases = [
                 "repos": ["not a dict"],
             },
         },
-        "error_kind": "TypeError",
-        "error_reason_re": r"string indices must be integers, not 'str'",
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Repository config must be a dict",
     },
     {
         "id": "repo_missing_id",
@@ -2058,8 +2087,8 @@ invalid_request_v1_test_cases = [
                 "repos": [{"name": "test"}],
             },
         },
-        "error_kind": "KeyError",
-        "error_reason_re": r"'id'",
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'id' in 'repos' item configuration",
     },
     {
         "id": "repo_no_baseurl_metalink_mirrorlist",
@@ -2072,8 +2101,8 @@ invalid_request_v1_test_cases = [
                 "repos": [{"id": "test"}],
             },
         },
-        "error_kind": "RepoError",
-        "error_reason_re": r"missing either `baseurl`, `metalink`, or `mirrorlist` in repo",
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"At least one of 'baseurl', 'metalink', or 'mirrorlist' must be specified",
     },
     # Invalid transaction config
     {
@@ -2090,10 +2119,27 @@ invalid_request_v1_test_cases = [
                 "transactions": ["not a dict"],
             },
         },
-        "error_kind": "AttributeError",
-        "error_reason_re": r"'str' object has no attribute 'get'",
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Invalid depsolve transaction: Depsolve transaction must be a dict",
     },
     # Invalid search arguments
+    {
+        "id": "search_missing_packages",
+        "request": {
+            "command": "search",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "search": {"latest": True},
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'packages' in 'search' dict",
+    },
     {
         "id": "search_packages_not_list",
         "request": {
@@ -2108,15 +2154,29 @@ invalid_request_v1_test_cases = [
                 "search": {"packages": 1},
             },
         },
-        "error_kind": "TypeError",
-        "error_reason_re": r"'int' object is not iterable",
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'packages' must be a list",
+    },
+]
+
+
+invalid_request_common_test_cases = [
+    # invalid api_version field
+    {
+        "id": "with_api_version_999",
+        "request": {
+            "api_version": 999,
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Invalid API version: 999 is not a valid SolverAPIVersion",
     },
 ]
 
 
 @pytest.mark.parametrize(
     "api_version,test_case",
-    [("v1", tc) for tc in invalid_request_v1_test_cases],
+    [("v1", tc) for tc in invalid_request_v1_test_cases] +
+    [("common", tc) for tc in invalid_request_common_test_cases],
     ids=lambda x: x if isinstance(x, str) else tcase_idfn(x)
 )
 @pytest.mark.parametrize("dnf_config, detect_fn", [
