@@ -12,7 +12,6 @@ import hawkey
 import libdnf
 from dnf.i18n import ucd
 
-import osbuild.solver.api as api
 import osbuild.solver.model as model
 from osbuild.solver import SolverBase, modify_rootdir_path, read_keys
 from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError, RepoError
@@ -274,7 +273,7 @@ class DNF(SolverBase):
         packages = []
         for pkg in self.base.sack.query().available():
             packages.append(_dnf_pkg_to_package(pkg))
-        return api.serialize_response_dump(api.SolverAPIVersion.V1, packages)
+        return self.serialize_response_dump(packages)
 
     def search(self, args: SearchCmdArgs):
         """ Perform a search on the available packages"""
@@ -301,7 +300,7 @@ class DNF(SolverBase):
             for pkg in q:
                 packages.append(_dnf_pkg_to_package(pkg))
 
-        return api.serialize_response_search(api.SolverAPIVersion.V1, packages)
+        return self.serialize_response_search(packages)
 
     def depsolve(self, args: DepsolveCmdArgs):
         # collect repo IDs from the request so we know whether to translate gpg key paths
@@ -447,9 +446,7 @@ class DNF(SolverBase):
                 },
             }
 
-        return api.serialize_response_depsolve(
-            self.request.api_version,
-            self.SOLVER_NAME,
+        return self.serialize_response_depsolve(
             packages,
             list(repositories.values()),
             modules_response if modules_response else None,
