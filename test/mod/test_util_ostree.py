@@ -247,3 +247,23 @@ def test_parse_deployment_happy(tmp_path):
     assert osname == "fedora-coreos"
     assert ref == "some-ref"
     assert serial == "0"
+
+
+def test_boot_path_happy(tmp_path):
+    test_path = "ostree/boot.1/default/b6cdf47cafd171e003c001802f1829ad39e20f7177d6e27401aba73efb71be22/0"
+    make_fake_tree(tmp_path, {test_path: ""})
+    assert ostree.default_boot_path(tmp_path) == test_path
+
+
+# Test with no matching boot entry
+# Test with more than one entry
+@pytest.mark.parametrize("tree,expected", [
+    ({"ostree/deploy/fedora-coreos/deploy/72f807.0": ""}, "Could not find boot path"),
+    ({"ostree/boot.1/default/b6cdf47cafd171e003c0/0": "",
+      "ostree/boot.1/default/29ad39e20f7177d6e274/0": ""}, "More than one boot path found")
+])
+def test_boot_path_sad(tmp_path, tree, expected):
+    make_fake_tree(tmp_path, tree)
+    with pytest.raises(ValueError) as exp:
+        ostree.default_boot_path(tmp_path)
+    assert expected in str(exp.value)
