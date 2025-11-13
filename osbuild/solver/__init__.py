@@ -3,6 +3,10 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from .request import DepsolveCmdArgs, SearchCmdArgs, SolverRequest
 
 
 class Solver(abc.ABC):
@@ -11,17 +15,26 @@ class Solver(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def depsolve(self, arguments):
+    def depsolve(self, args: "DepsolveCmdArgs"):
         pass
 
     @abc.abstractmethod
-    def search(self, args):
+    def search(self, args: "SearchCmdArgs"):
         pass
 
 
 class SolverBase(Solver):
     # put any shared helpers in here
-    pass
+
+    def __init__(
+        self,
+        request: "SolverRequest",
+        persistdir: os.PathLike,
+        license_index_path: Optional[os.PathLike] = None,
+    ):
+        self.request = request
+        self.persistdir = persistdir
+        self.license_index_path = license_index_path
 
 
 class SolverException(Exception):
