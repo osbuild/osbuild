@@ -14,21 +14,9 @@ from dnf.i18n import ucd
 
 import osbuild.solver.api as api
 import osbuild.solver.model as model
-from osbuild.solver import (
-    DepsolveError,
-    MarkingError,
-    NoReposError,
-    RepoError,
-    SolverBase,
-    modify_rootdir_path,
-    read_keys,
-)
-from osbuild.solver.request import (
-    DepsolveCmdArgs,
-    RepositoryConfig,
-    SearchCmdArgs,
-    SolverRequest,
-)
+from osbuild.solver import SolverBase, modify_rootdir_path, read_keys
+from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError, RepoError
+from osbuild.solver.request import DepsolveCmdArgs, RepositoryConfig, SearchCmdArgs, SolverRequest
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
