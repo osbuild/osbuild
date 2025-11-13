@@ -5,7 +5,7 @@ import itertools
 import os
 import os.path
 import tempfile
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 import dnf
 import hawkey
@@ -22,6 +22,12 @@ from osbuild.solver import (
     SolverBase,
     modify_rootdir_path,
     read_keys,
+)
+from osbuild.solver.request import (
+    DepsolveCmdArgs,
+    RepositoryConfig,
+    SearchCmdArgs,
+    SolverRequest,
 )
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
@@ -93,7 +99,11 @@ def _dnf_pkg_to_package(pkg: dnf.package.Package) -> model.Package:
     return model.Package(**kwargs)
 
 
-def _dnf_repo_to_repository(repo: dnf.repo.Repo, root_dir: str, request_repo_ids: Set[str]) -> model.Repository:
+def _dnf_repo_to_repository(
+    repo: dnf.repo.Repo,
+    root_dir: Optional[str],
+    request_repo_ids: Set[str],
+) -> model.Repository:
     """
     Convert a dnf.repo.Repo to a Repository.
     """
@@ -116,16 +126,17 @@ def _dnf_repo_to_repository(repo: dnf.repo.Repo, root_dir: str, request_repo_ids
 class DNF(SolverBase):
     SOLVER_NAME = "dnf"
 
-    def __init__(self, request, persistdir, cache_dir, license_index_path=None):
-        arch = request["arch"]
-        releasever = request.get("releasever")
-        module_platform_id = request.get("module_platform_id")
-        proxy = request.get("proxy")
+    def __init__(
+        self,
+        request: SolverRequest,
+        persistdir: os.PathLike,
+        license_index_path: Optional[os.PathLike] = None,
+    ):
+        super().__init__(request, persistdir, license_index_path)
 
-        arguments = request["arguments"]
-        self.repos = arguments.get("repos", [])
-        self.request_repo_ids = {repo["id"] for repo in self.repos}
-        self.root_dir = arguments.get("root_dir")
+        self.repos = self.request.config.repos or []
+        self.request_repo_ids = {repo.repo_id for repo in self.repos} if self.repos else set()
+        self.root_dir = self.request.config.root_dir
 
         self.base = dnf.Base()
 
@@ -151,14 +162,14 @@ class DNF(SolverBase):
         self.base.conf.zchunk = False
 
         # Set the rest of the dnf configuration.
-        if module_platform_id:
-            self.base.conf.module_platform_id = module_platform_id
+        if self.request.config.module_platform_id:
+            self.base.conf.module_platform_id = self.request.config.module_platform_id
         self.base.conf.config_file_path = "/dev/null"
         self.base.conf.persistdir = persistdir
-        self.base.conf.cachedir = cache_dir
-        self.base.conf.substitutions['arch'] = arch
-        self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
-        self.base.conf.substitutions['releasever'] = releasever
+        self.base.conf.cachedir = self.request.config.cachedir
+        self.base.conf.substitutions['arch'] = self.request.config.arch
+        self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(self.request.config.arch)
+        self.base.conf.substitutions['releasever'] = self.request.config.releasever
 
         # variables substitution is only available when root_dir is provided
         if self.root_dir:
@@ -166,15 +177,15 @@ class DNF(SolverBase):
             # substitution (e.g. CentOS Stream 9's $stream variable)
             self.base.conf.substitutions.update_from_etc(self.root_dir)
 
-        if hasattr(self.base.conf, "optional_metadata_types"):
+        if hasattr(self.base.conf, "optional_metadata_types") and self.request.config.optional_metadata:
             # the attribute doesn't exist on older versions of dnf; ignore the option when not available
-            self.base.conf.optional_metadata_types.extend(arguments.get("optional-metadata", []))
-        if proxy:
-            self.base.conf.proxy = proxy
+            self.base.conf.optional_metadata_types.extend(self.request.config.optional_metadata)
+        if self.request.config.proxy:
+            self.base.conf.proxy = self.request.config.proxy
 
         try:
-            for repo in self.repos:
-                self.base.repos.add(self._dnfrepo(repo, self.base.conf, self.root_dir is not None))
+            for repo_conf in self.repos:
+                self.base.repos.add(self._dnfrepo(repo_conf, self.base.conf, self.root_dir is not None))
 
             if self.root_dir:
                 repos_dir = os.path.join(self.root_dir, "etc/yum.repos.d")
@@ -197,49 +208,42 @@ class DNF(SolverBase):
         # enable module resolving
         self.base_module = dnf.module.module_base.ModuleBase(self.base)
 
-        # Custom license index file path use for SBOM generation
-        self.license_index_path = license_index_path
-
     @staticmethod
-    def _dnfrepo(desc, parent_conf=None, subs_links=False):
-        """Makes a dnf.repo.Repo out of a JSON repository description"""
+    def _dnfrepo(desc: RepositoryConfig, parent_conf=None, subs_links=False):
+        """Makes a dnf.repo.Repo out of request.RepositoryConfig configuration"""
 
-        repo = dnf.repo.Repo(desc["id"], parent_conf)
+        repo = dnf.repo.Repo(desc.repo_id, parent_conf)
         config = libdnf.conf.ConfigParser
 
-        if "name" in desc:
-            repo.name = desc["name"]
+        if desc.name:
+            repo.name = desc.name
 
         def subs(basestr):
             if subs_links and parent_conf:
                 return config.substitute(ucd(basestr), parent_conf.substitutions)
             return basestr
 
-        # at least one is required
-        if "baseurl" in desc:
-            repo.baseurl = [subs(repo) for repo in desc["baseurl"]]
-        elif "metalink" in desc:
-            repo.metalink = subs(desc["metalink"])
-        elif "mirrorlist" in desc:
-            repo.mirrorlist = subs(desc["mirrorlist"])
-        else:
-            raise ValueError("missing either `baseurl`, `metalink`, or `mirrorlist` in repo")
+        # NB: the fact that at least one is set is checked when parsing the Solver request
+        if desc.baseurl:
+            repo.baseurl = [subs(url) for url in desc.baseurl]
+        if desc.metalink:
+            repo.metalink = subs(desc.metalink)
+        if desc.mirrorlist:
+            repo.mirrorlist = subs(desc.mirrorlist)
 
-        repo.sslverify = desc.get("sslverify", True)
-        if "sslcacert" in desc:
-            repo.sslcacert = desc["sslcacert"]
-        if "sslclientkey" in desc:
-            repo.sslclientkey = desc["sslclientkey"]
-        if "sslclientcert" in desc:
-            repo.sslclientcert = desc["sslclientcert"]
+        repo.sslverify = desc.sslverify
+        if desc.sslcacert:
+            repo.sslcacert = desc.sslcacert
+        if desc.sslclientkey:
+            repo.sslclientkey = desc.sslclientkey
+        if desc.sslclientcert:
+            repo.sslclientcert = desc.sslclientcert
 
-        if "gpgcheck" in desc:
-            repo.gpgcheck = desc["gpgcheck"]
-        if "repo_gpgcheck" in desc:
-            repo.repo_gpgcheck = desc["repo_gpgcheck"]
-        if "gpgkey" in desc:
-            repo.gpgkey = [desc["gpgkey"]]
-        if "gpgkeys" in desc:
+        if desc.gpgcheck:
+            repo.gpgcheck = desc.gpgcheck
+        if desc.repo_gpgcheck:
+            repo.repo_gpgcheck = desc.repo_gpgcheck
+        if desc.gpgkey:
             # gpgkeys can contain a full key, or it can be a URL
             # dnf expects urls, so write the key to a temporary location and add the file://
             # path to repo.gpgkey
@@ -247,7 +251,7 @@ class DNF(SolverBase):
             if not os.path.exists(keydir):
                 os.makedirs(keydir, mode=0o700, exist_ok=True)
 
-            for key in desc["gpgkeys"]:
+            for key in desc.gpgkey:
                 if key.startswith("-----BEGIN PGP PUBLIC KEY BLOCK-----"):
                     # Not using with because it needs to be a valid file for the duration. It
                     # is inside the temporary persistdir so will be cleaned up on exit.
@@ -259,20 +263,12 @@ class DNF(SolverBase):
                 else:
                     repo.gpgkey.append(key)
 
-        # In dnf, the default metadata expiration time is 48 hours. However,
-        # some repositories never expire the metadata, and others expire it much
-        # sooner than that. We therefore allow this to be configured. If nothing
-        # is provided we error on the side of checking if we should invalidate
-        # the cache. If cache invalidation is not necessary, the overhead of
-        # checking is in the hundreds of milliseconds. In order to avoid this
-        # overhead accumulating for API calls that consist of several dnf calls,
-        # we set the expiration to a short time period, rather than 0.
-        repo.metadata_expire = desc.get("metadata_expire", "20s")
+        repo.metadata_expire = desc.metadata_expire
 
         # This option if True disables modularization filtering. Effectively
         # disabling modularity for given repository.
-        if "module_hotfixes" in desc:
-            repo.module_hotfixes = desc["module_hotfixes"]
+        if desc.module_hotfixes:
+            repo.module_hotfixes = desc.module_hotfixes
 
         return repo
 
@@ -292,29 +288,14 @@ class DNF(SolverBase):
             packages.append(_dnf_pkg_to_package(pkg))
         return api.serialize_response_dump(api.SolverAPIVersion.V1, packages)
 
-    def search(self, args):
-        """ Perform a search on the available packages
-
-        args contains a "search" dict with parameters to use for searching.
-        "packages" list of package name globs to search for
-        "latest" is a boolean that will return only the latest NEVRA instead
-        of all matching builds in the metadata.
-
-        eg.
-
-            "search": {
-                "latest": false,
-                "packages": ["tmux", "vim*", "*ssh*"]
-            },
-        """
-        pkg_globs = args.get("packages", [])
-
+    def search(self, args: SearchCmdArgs):
+        """ Perform a search on the available packages"""
         packages = []
 
         # NOTE: Build query one piece at a time, don't pass all to filterm at the same
         # time.
         available = self.base.sack.query().available()
-        for name in pkg_globs:
+        for name in args.packages:
             # If the package name glob has * in it, use glob.
             # If it has *name* use substr
             # If it has neither use exact match
@@ -326,7 +307,7 @@ class DNF(SolverBase):
             else:
                 q = available.filter(name__eq=name)
 
-            if args.get("latest", False):
+            if args.latest:
                 q = q.latest()
 
             for pkg in q:
@@ -334,17 +315,15 @@ class DNF(SolverBase):
 
         return api.serialize_response_search(api.SolverAPIVersion.V1, packages)
 
-    def depsolve(self, arguments):
-        # Return an empty list when 'transactions' key is missing or when it is None
-        transactions = arguments.get("transactions") or []
+    def depsolve(self, args: DepsolveCmdArgs):
         # collect repo IDs from the request so we know whether to translate gpg key paths
         last_transaction: List = []
 
-        for transaction in transactions:
+        for transaction in args.transactions:
             self.base.reset(goal=True)
             self.base.sack.reset_excludes()
 
-            self.base.conf.install_weak_deps = transaction.get("install_weak_deps", False)
+            self.base.conf.install_weak_deps = transaction.install_weak_deps
 
             try:
                 # set the packages from the last transaction as installed
@@ -353,16 +332,17 @@ class DNF(SolverBase):
 
                 # enabling a module means that packages can be installed from that
                 # module
-                self.base_module.enable(transaction.get("module-enable-specs", []))
+                if transaction.module_enable_specs:
+                    self.base_module.enable(transaction.module_enable_specs)
 
                 # installing a module takes the specification of the module and then
                 # installs all packages belonging to its default group, modules to
                 # install are listed directly in `package-specs` but prefixed with an
                 # `@` *and* containing a `:` this is up to the user of the depsolver
                 self.base.install_specs(
-                    transaction.get("package-specs"),
-                    transaction.get("exclude-specs"),
-                    reponame=transaction.get("repo-ids"),
+                    transaction.package_specs,
+                    transaction.exclude_specs,
+                    reponame=transaction.repo_ids,
                 )
             except dnf.exceptions.Error as e:
                 raise MarkingError(e) from e
@@ -388,24 +368,24 @@ class DNF(SolverBase):
             repositories[package.repo.id] = _dnf_repo_to_repository(package.repo, self.root_dir, self.request_repo_ids)
 
         sbom = None
-        if "sbom" in arguments:
+        if args.sbom_request:
             sbom = self._sbom_for_pkgset(last_transaction)
 
         # if any modules have been requested we add sources for these so they can
         # be used by stages to enable the modules in the eventual artifact
-        modules = {}
+        modules: Dict[str, Any] = {}
 
-        for transaction in transactions:
+        for transaction in args.transactions:
             # module specifications must start with an "@", if they do we try to
             # ask DNF for a module by that name, if it doesn't exist it isn't a
             # module; otherwise it is and we should use it
             modules_in_package_specs = []
 
-            for p in transaction.get("package-specs", []):
+            for p in transaction.package_specs:
                 if p.startswith("@") and self.base_module.get_modules(p):
                     modules_in_package_specs.append(p.lstrip("@"))
 
-            if transaction.get("module-enable-specs") or modules_in_package_specs:
+            if transaction.module_enable_specs or modules_in_package_specs:
                 # we'll be checking later if any packages-from-modules are in the
                 # packages-to-install set so let's do this only once here
                 package_nevras = []
@@ -419,7 +399,7 @@ class DNF(SolverBase):
                             f"{package.name}-{package.epoch}:{package.version}-{package.release}.{package.arch}")
 
                 for module_spec in itertools.chain(
-                    transaction.get("module-enable-specs", []),
+                    transaction.module_enable_specs or [],
                     modules_in_package_specs,
                 ):
                     module_packages, module_nsvcap = self.base_module.get_modules(module_spec)
@@ -480,7 +460,7 @@ class DNF(SolverBase):
             }
 
         return api.serialize_response_depsolve(
-            api.SolverAPIVersion.V1,
+            self.request.api_version,
             self.SOLVER_NAME,
             packages,
             list(repositories.values()),
