@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 
 import pytest
 
-from osbuild.solver import InvalidRequestError
 from osbuild.solver.api import (
     SolverAPIVersion,
     parse_request,
@@ -15,6 +14,7 @@ from osbuild.solver.api.v1 import parse_request as parse_request_v1
 from osbuild.solver.api.v1 import serialize_response_depsolve as serialize_response_depsolve_v1
 from osbuild.solver.api.v1 import serialize_response_dump as serialize_response_dump_v1
 from osbuild.solver.api.v1 import serialize_response_search as serialize_response_search_v1
+from osbuild.solver.exceptions import InvalidRequestError
 from osbuild.solver.model import (
     Checksum,
     Dependency,

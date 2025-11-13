@@ -9,7 +9,7 @@ specific parsers in the api/ module.
 from enum import Enum
 from typing import TYPE_CHECKING, List, Optional
 
-from osbuild.solver import InvalidRequestError
+from osbuild.solver.exceptions import InvalidRequestError
 
 if TYPE_CHECKING:
     from osbuild.solver.api import SolverAPIVersion
