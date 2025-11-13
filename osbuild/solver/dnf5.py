@@ -10,7 +10,6 @@ from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
 from libdnf5.common import QueryCmp_EQ as EQ
 from libdnf5.common import QueryCmp_GLOB as GLOB
 
-import osbuild.solver.api as api
 import osbuild.solver.model as model
 from osbuild.solver import SolverBase, modify_rootdir_path, read_keys
 from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError, RepoError
@@ -374,7 +373,7 @@ class DNF5(SolverBase):
         q.filter_available()
         for package in list(q):
             packages.append(_dnf_pkg_to_package(package))
-        return api.serialize_response_dump(api.SolverAPIVersion.V1, packages)
+        return self.serialize_response_dump(packages)
 
     def search(self, args: SearchCmdArgs):
         """ Perform a search on the available packages"""
@@ -403,7 +402,7 @@ class DNF5(SolverBase):
 
             for package in list(q):
                 packages.append(_dnf_pkg_to_package(package))
-        return api.serialize_response_search(api.SolverAPIVersion.V1, packages)
+        return self.serialize_response_search(packages)
 
     def depsolve(self, args: DepsolveCmdArgs):
         """depsolve returns a list of the dependencies for the set of transactions
@@ -462,9 +461,7 @@ class DNF5(SolverBase):
         if args.sbom_request:
             sbom = self._sbom_for_pkgset(last_transaction)
 
-        return api.serialize_response_depsolve(
-            self.request.api_version,
-            self.SOLVER_NAME,
+        return self.serialize_response_depsolve(
             packages,
             list(pkg_repos.values()),
             sbom=sbom,
