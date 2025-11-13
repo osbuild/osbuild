@@ -12,7 +12,17 @@ import os
 import sys
 import tempfile
 
-from osbuild.solver import GPGKeyReadError, MarkingError, DepsolveError, NoReposError, RepoError, InvalidRequestError
+from osbuild.solver import (
+    GPGKeyReadError,
+    MarkingError,
+    DepsolveError,
+    NoReposError,
+    RepoError,
+    InvalidRequestError,
+)
+from osbuild.solver import api
+from osbuild.solver.request import SolverCommand
+from typing import Dict, Any
 
 # Load the solver configuration
 config = {"use_dnf5": False}
@@ -30,20 +40,25 @@ else:
     from osbuild.solver.dnf import DNF as Solver
 
 
-def solve(request):
-    command = request["command"]
-    arguments = request["arguments"]
-    cache_dir = request["cachedir"]
+def solve(request_dict: Dict[str, Any]):
+    try:
+        request = api.parse_request(request_dict)
+    except InvalidRequestError as e:
+        return None, {
+            "kind": "InvalidRequest",
+            "reason": str(e)
+        }
 
     with tempfile.TemporaryDirectory() as persistdir:
         try:
-            solver = Solver(request, persistdir, cache_dir, config.get("license_index_path"))
-            if command == "dump":
-                result = solver.dump()
-            elif command == "depsolve":
-                result = solver.depsolve(arguments)
-            elif command == "search":
-                result = solver.search(arguments.get("search", {}))
+            solver = Solver(request, persistdir, config.get("license_index_path"))
+            if request.command == SolverCommand.DUMP:
+                return solver.dump(), None
+            if request.command == SolverCommand.DEPSOLVE:
+                return solver.depsolve(request.depsolve_args), None
+            if request.command == SolverCommand.SEARCH:
+                return solver.search(request.search_args), None
+            raise InvalidRequestError(f"Invalid command '{request.command}'")
         except GPGKeyReadError as e:
             printe("error reading gpgkey")
             return None, {
@@ -70,8 +85,9 @@ def solve(request):
             printe("error depsolve")
             # collect list of packages for error
             pkgs = []
-            for t in arguments.get("transactions", []):
-                pkgs.extend(t["package-specs"])
+            # NB: we assume that the request was valid and depsolving failed
+            for t in request.depsolve_args.transactions:
+                pkgs.extend(t.package_specs)
             return None, {
                 "kind": "DepsolveError",
                 "reason": f"There was a problem depsolving {', '.join(pkgs)}: {e}"
@@ -91,8 +107,6 @@ def solve(request):
                 "traceback": traceback.format_exc()
             }
 
-    return result, None
-
 
 def printe(*msg):
     print(*msg, file=sys.stderr)
@@ -110,86 +124,9 @@ def respond(result):
     print(json.dumps(result))
 
 
-# pylint: disable=too-many-return-statements
-def validate_request(request):
-    command = request.get("command")
-    valid_cmds = ("depsolve", "dump", "search")
-    if command not in valid_cmds:
-        return {
-            "kind": "InvalidRequest",
-            "reason": f"invalid command '{command}': must be one of {', '.join(valid_cmds)}"
-        }
-
-    if not request.get("cachedir"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "No cache dir set"
-        }
-
-    if not request.get("arch"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "no 'arch' specified"
-        }
-
-    if not request.get("releasever"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "no 'releasever' specified"
-        }
-
-    arguments = request.get("arguments")
-    if not arguments:
-        return {
-            "kind": "InvalidRequest",
-            "reason": "empty 'arguments'"
-        }
-
-    sbom = request["arguments"].get("sbom")
-    if sbom is not None:
-        if command != "depsolve":
-            return {
-                "kind": "InvalidRequest",
-                "reason": "SBOM is only supported with 'depsolve' command"
-            }
-        if not isinstance(sbom, dict):
-            return {
-                "kind": "InvalidRequest",
-                "reason": "invalid 'sbom' value"
-            }
-        sbom_type = sbom.get("type")
-        if sbom_type is None:
-            return {
-                "kind": "InvalidRequest",
-                "reason": "missing 'type' in 'sbom'"
-            }
-        if not isinstance(sbom_type, str):
-            return {
-                "kind": "InvalidRequest",
-                "reason": "invalid 'type' in 'sbom'"
-            }
-        if sbom_type != "spdx":
-            return {
-                "kind": "InvalidRequest",
-                "reason": "Unsupported SBOM type"
-            }
-
-    if not arguments.get("repos") and not arguments.get("root_dir"):
-        return {
-            "kind": "InvalidRequest",
-            "reason": "no 'repos' or 'root_dir' specified"
-        }
-
-    return None
-
-
 def main():
-    request = json.load(sys.stdin)
-    err = validate_request(request)
-    if err:
-        fail(err)
-
-    result, err = solve(request)
+    request_dict = json.load(sys.stdin)
+    result, err = solve(request_dict)
     if err:
         fail(err)
     else:
