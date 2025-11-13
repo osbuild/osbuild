@@ -9,6 +9,8 @@ import pytest
 
 from osbuild.solver.model import Checksum, Dependency, Package, Repository
 
+from .conftest import assert_object_equal
+
 # NB: for sanity testing specific packages, we need to use a local repository, to ensure stable 'remote_locations'
 # otherwise, the port number in the server URL would change between tests, causing the test to fail.
 TEST_REPO_SERVERS = [
@@ -227,26 +229,6 @@ def assert_rpm_package_valid_basic(rpm_pkg):
         assert rpm_pkg.header_checksum.algorithm != ""
         assert isinstance(rpm_pkg.header_checksum.value, str)
         assert re.match(r'^[0-9a-fA-F]+$', rpm_pkg.header_checksum.value)
-
-
-def assert_object_equal(obj1, obj2):
-    """
-    Assert that two objects are equal.
-
-    If the objects are not equal, print the differences.
-    """
-    assert isinstance(obj1, type(obj2)), f"Objects are not of the same type: {type(obj1)} != {type(obj2)}"
-    if obj1 != obj2:
-        differences = []
-        all_keys = set(vars(obj1).keys()) | set(vars(obj2).keys())
-        for key in sorted(all_keys):
-            val1 = vars(obj1).get(key)
-            val2 = vars(obj2).get(key)
-            if val1 != val2:
-                differences.append(f"  {key}:")
-                differences.append(f"    OBJ1: {val1!r}")
-                differences.append(f"    OBJ2: {val2!r}")
-        assert False, "Objects are not equal:\n" + "\n".join(differences)
 
 
 def test_dnf4_pkg_to_package():
