@@ -1,13 +1,17 @@
+# pylint: disable=too-many-lines
 from datetime import datetime, timezone
 
 import pytest
 
+from osbuild.solver import InvalidRequestError
 from osbuild.solver.api import (
     SolverAPIVersion,
+    parse_request,
     serialize_response_depsolve,
     serialize_response_dump,
     serialize_response_search,
 )
+from osbuild.solver.api.v1 import parse_request as parse_request_v1
 from osbuild.solver.api.v1 import serialize_response_depsolve as serialize_response_depsolve_v1
 from osbuild.solver.api.v1 import serialize_response_dump as serialize_response_dump_v1
 from osbuild.solver.api.v1 import serialize_response_search as serialize_response_search_v1
@@ -17,6 +21,18 @@ from osbuild.solver.model import (
     Package,
     Repository,
 )
+from osbuild.solver.request import (
+    DepsolveCmdArgs,
+    DepsolveTransaction,
+    RepositoryConfig,
+    SBOMRequest,
+    SearchCmdArgs,
+    SolverCommand,
+    SolverConfig,
+    SolverRequest,
+)
+
+from .conftest import assert_object_equal
 
 TEST_CHECKSUM = Checksum("sha256", "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
 
@@ -296,3 +312,728 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
         assert repo["sslcacert"] == TEST_REPOSITORIES[idx].sslcacert
         assert repo["sslclientkey"] == TEST_REPOSITORIES[idx].sslclientkey
         assert repo["sslclientcert"] == TEST_REPOSITORIES[idx].sslclientcert
+
+
+@pytest.mark.parametrize("request_dict,expected_result,expected_error", [
+    # Valid DEPSOLVE request - minimal
+    pytest.param(
+        {
+            "command": "depsolve",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "transactions": [{"package-specs": ["bash", "vim"]}],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DEPSOLVE,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+            ),
+            depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash", "vim"])]),
+        ),
+        None,
+        id="valid_depsolve_minimal",
+    ),
+    # Valid DEPSOLVE request - full
+    pytest.param(
+        {
+            "command": "depsolve",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "module_platform_id": "platform:f43",
+            "proxy": "http://proxy.example.com:8080",
+            "arguments": {
+                "repos": [
+                    {
+                        "id": "fedora",
+                        "name": "Fedora 43",
+                        "baseurl": ["https://example.com/fedora"],
+                        "metalink": "https://example.com/fedora/metalink",
+                        "mirrorlist": "https://example.com/fedora/mirrorlist",
+                        "gpgcheck": True,
+                        "repo_gpgcheck": True,
+                        "gpgkey": "https://example.com/fedora/RPM-GPG-KEY",
+                        "gpgkeys": ["https://example.com/fedora/RPM-GPG-KEY-2"],
+                        "sslverify": False,
+                        "sslcacert": "/etc/pki/ca.crt",
+                        "sslclientkey": "/etc/pki/client.key",
+                        "sslclientcert": "/etc/pki/client.crt",
+                        "metadata_expire": "1h",
+                        "module_hotfixes": True,
+                    },
+                ],
+                "transactions": [
+                    {
+                        "package-specs": ["bash", "vim"],
+                        "exclude-specs": ["emacs"],
+                        "repo-ids": ["fedora"],
+                        "module-enable-specs": ["nodejs:18"],
+                        "install_weak_deps": True,
+                    },
+                ],
+                "optional-metadata": ["filelists", "other"],
+                "sbom": {"type": "spdx"},
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DEPSOLVE,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                module_platform_id="platform:f43",
+                proxy="http://proxy.example.com:8080",
+                repos=[
+                    RepositoryConfig(
+                        repo_id="fedora",
+                        name="Fedora 43",
+                        baseurl=["https://example.com/fedora"],
+                        metalink="https://example.com/fedora/metalink",
+                        mirrorlist="https://example.com/fedora/mirrorlist",
+                        gpgcheck=True,
+                        repo_gpgcheck=True,
+                        gpgkey=[
+                            "https://example.com/fedora/RPM-GPG-KEY",
+                            "https://example.com/fedora/RPM-GPG-KEY-2",
+                        ],
+                        sslverify=False,
+                        sslcacert="/etc/pki/ca.crt",
+                        sslclientkey="/etc/pki/client.key",
+                        sslclientcert="/etc/pki/client.crt",
+                        metadata_expire="1h",
+                        module_hotfixes=True,
+                    ),
+                ],
+                optional_metadata=["filelists", "other"],
+            ),
+            depsolve_args=DepsolveCmdArgs(
+                transactions=[
+                    DepsolveTransaction(
+                        package_specs=["bash", "vim"],
+                        exclude_specs=["emacs"],
+                        repo_ids=["fedora"],
+                        module_enable_specs=["nodejs:18"],
+                        install_weak_deps=True,
+                    ),
+                ],
+                sbom_request=SBOMRequest("spdx"),
+            ),
+        ),
+        None,
+        id="valid_depsolve_full",
+    ),
+    # Valid DEPSOLVE with multiple transactions
+    pytest.param(
+        {
+            "command": "depsolve",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "transactions": [
+                    {"package-specs": ["bash"]},
+                    {"package-specs": ["vim", "emacs"]},
+                ],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DEPSOLVE,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+            ),
+            depsolve_args=DepsolveCmdArgs([
+                DepsolveTransaction(package_specs=["bash"]),
+                DepsolveTransaction(package_specs=["vim", "emacs"]),
+            ]),
+        ),
+        None,
+        id="valid_depsolve_multiple_transactions",
+    ),
+    # Valid DEPSOLVE with root_dir
+    pytest.param(
+        {
+            "command": "depsolve",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "root_dir": "/mnt/sysroot",
+                "transactions": [{"package-specs": ["bash"]}],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DEPSOLVE,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                root_dir="/mnt/sysroot",
+            ),
+            depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
+        ),
+        None,
+        id="valid_depsolve_with_root_dir",
+    ),
+    # Valid DUMP request
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DUMP,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+            ),
+        ),
+        None,
+        id="valid_dump",
+    ),
+    # Valid SEARCH request
+    pytest.param(
+        {
+            "command": "search",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "search": {
+                    "packages": ["bash", "vim"],
+                    "latest": True,
+                },
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.SEARCH,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+            ),
+            search_args=SearchCmdArgs(packages=["bash", "vim"], latest=True),
+        ),
+        None,
+        id="valid_search_with_latest",
+    ),
+    # Valid SEARCH request without latest flag
+    pytest.param(
+        {
+            "command": "search",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "search": {
+                    "packages": ["bash"],
+                },
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.SEARCH,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+            ),
+            search_args=SearchCmdArgs(packages=["bash"], latest=False),
+        ),
+        None,
+        id="valid_search_without_latest",
+    ),
+    # Valid request with multiple repos
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {
+                        "id": "fedora",
+                        "baseurl": ["https://example.com/fedora"],
+                        "gpgkeys": [
+                            "https://example.com/fedora/RPM-GPG-KEY-1",
+                            "https://example.com/fedora/RPM-GPG-KEY-2",
+                        ],
+                    },
+                    {
+                        "id": "updates",
+                        "metalink": "https://example.com/updates/metalink",
+                    },
+                ],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DUMP,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[
+                    RepositoryConfig(
+                        repo_id="fedora",
+                        baseurl=["https://example.com/fedora"],
+                        gpgkey=[
+                            "https://example.com/fedora/RPM-GPG-KEY-1",
+                            "https://example.com/fedora/RPM-GPG-KEY-2",
+                        ],
+                    ),
+                    RepositoryConfig(
+                        repo_id="updates",
+                        metalink="https://example.com/updates/metalink",
+                    ),
+                ],
+            ),
+        ),
+        None,
+        id="valid_multiple_repos",
+    ),
+    # Valid request with gpgkey (singular) - should be converted to list
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {
+                        "id": "fedora",
+                        "baseurl": ["https://example.com/fedora"],
+                        "gpgkey": "https://example.com/fedora/RPM-GPG-KEY",
+                    },
+                ],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DUMP,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[
+                    RepositoryConfig(
+                        repo_id="fedora",
+                        baseurl=["https://example.com/fedora"],
+                        gpgkey=["https://example.com/fedora/RPM-GPG-KEY"],
+                    ),
+                ],
+            ),
+        ),
+        None,
+        id="valid_gpgkey_singular",
+    ),
+    # Valid request with both gpgkey and gpgkeys - should merge
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {
+                        "id": "fedora",
+                        "baseurl": ["https://example.com/fedora"],
+                        "gpgkey": "https://example.com/fedora/RPM-GPG-KEY-1",
+                        "gpgkeys": ["https://example.com/fedora/RPM-GPG-KEY-2"],
+                    },
+                ],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DUMP,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[
+                    RepositoryConfig(
+                        repo_id="fedora",
+                        baseurl=["https://example.com/fedora"],
+                        gpgkey=[
+                            "https://example.com/fedora/RPM-GPG-KEY-1",
+                            "https://example.com/fedora/RPM-GPG-KEY-2",
+                        ],
+                    ),
+                ],
+            ),
+        ),
+        None,
+        id="valid_gpgkey_and_gpgkeys_merge",
+    ),
+    # Valid request with sslverify default (True)
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DUMP,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+            ),
+        ),
+        None,
+        id="valid_sslverify_default",
+    ),
+    # Valid request with optional-metadata
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "optional-metadata": ["filelists", "other"],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V1,
+            command=SolverCommand.DUMP,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+                optional_metadata=["filelists", "other"],
+            ),
+        ),
+        None,
+        id="valid_with_optional_metadata",
+    ),
+    # Invalid: missing 'command'
+    pytest.param(
+        {
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {},
+        },
+        None,
+        "Missing required field 'command'",
+        id="invalid_missing_command",
+    ),
+    # Invalid: missing 'arch'
+    pytest.param(
+        {
+            "command": "dump",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {},
+        },
+        None,
+        "Missing required field 'arch'",
+        id="invalid_missing_arch",
+    ),
+    # Invalid: missing 'releasever'
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "cachedir": "/tmp/cache",
+            "arguments": {},
+        },
+        None,
+        "Missing required field 'releasever'",
+        id="invalid_missing_releasever",
+    ),
+    # Invalid: missing 'cachedir'
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "arguments": {},
+        },
+        None,
+        "Missing required field 'cachedir'",
+        id="invalid_missing_cachedir",
+    ),
+    # Invalid: missing 'arguments'
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+        },
+        None,
+        "Missing required field 'arguments'",
+        id="invalid_missing_arguments",
+    ),
+    # Invalid: invalid command
+    pytest.param(
+        {
+            "command": "invalid_command",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {},
+        },
+        None,
+        "Invalid command 'invalid_command'",
+        id="invalid_command",
+    ),
+    # Invalid: arguments not a dict
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": "not a dict",
+        },
+        None,
+        "Field 'arguments' must be a dict",
+        id="invalid_arguments_not_dict",
+    ),
+    # Invalid: repos not a list
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": "not a list",
+            },
+        },
+        None,
+        "Field 'repos' must be a list",
+        id="invalid_repos_not_list",
+    ),
+    # Invalid: repo config not a dict
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": ["not a dict"],
+            },
+        },
+        None,
+        "Repository config must be a dict",
+        id="invalid_repo_not_dict",
+    ),
+    # Invalid: repo missing 'id'
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"baseurl": ["https://example.com/fedora"]}],
+            },
+        },
+        None,
+        "Missing required field 'id' in 'repos' item configuration",
+        id="invalid_repo_missing_id",
+    ),
+    # Invalid: transactions not a list
+    pytest.param(
+        {
+            "command": "depsolve",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "transactions": "not a list",
+            },
+        },
+        None,
+        "Field 'transactions' must be a list",
+        id="invalid_transactions_not_list",
+    ),
+    # Invalid: transaction not a dict
+    pytest.param(
+        {
+            "command": "depsolve",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "transactions": ["not a dict"],
+            },
+        },
+        None,
+        "Depsolve transaction must be a dict",
+        id="invalid_transaction_not_dict",
+    ),
+    # Invalid: search not a dict
+    pytest.param(
+        {
+            "command": "search",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "search": "not a dict",
+            },
+        },
+        None,
+        "Field 'search' must be a dict",
+        id="invalid_search_not_dict",
+    ),
+    # Invalid: search packages not a list
+    pytest.param(
+        {
+            "command": "search",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "search": {
+                    "packages": "not a list",
+                },
+            },
+        },
+        None,
+        "Field 'packages' must be a list",
+        id="invalid_search_packages_not_list",
+    ),
+    # Invalid: search missing packages
+    pytest.param(
+        {
+            "command": "search",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "search": {},
+            },
+        },
+        None,
+        "Missing required field 'packages' in 'search' dict",
+        id="invalid_search_missing_packages",
+    ),
+    # Invalid: sbom not a dict
+    pytest.param(
+        {
+            "command": "depsolve",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "transactions": [{"package-specs": ["bash"]}],
+                "sbom": "not a dict",
+            },
+        },
+        None,
+        "Field 'sbom' must be a dict",
+        id="invalid_sbom_not_dict",
+    ),
+    # Invalid: sbom missing type
+    pytest.param(
+        {
+            "command": "depsolve",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "transactions": [{"package-specs": ["bash"]}],
+                "sbom": {},
+            },
+        },
+        None,
+        "Missing required field 'type' in 'sbom'",
+        id="invalid_sbom_missing_type",
+    ),
+    # Invalid: optional-metadata not a list
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "optional-metadata": "not a list",
+            },
+        },
+        None,
+        "Field 'optional-metadata' must be a list",
+        id="invalid_optional_metadata_not_list",
+    ),
+    # Invalid: baseurl not a list
+    pytest.param(
+        {
+            "command": "dump",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": "https://example.com/fedora"}],
+            },
+        },
+        None,
+        "'baseurl' must be a list of URLs",
+        id="invalid_baseurl_not_list",
+    ),
+])
+@pytest.mark.parametrize("parser", [
+    parse_request_v1,
+    parse_request,
+], ids=["parse_request_v1", "parse_request"])
+def test_parse_request_v1(request_dict, expected_result, expected_error, parser):
+    """Test parse_request function with various valid and invalid inputs"""
+    if expected_error:
+        with pytest.raises(InvalidRequestError, match=expected_error):
+            parser(request_dict)
+    else:
+        result = parser(request_dict)
+        assert_object_equal(result, expected_result)
