@@ -5,8 +5,10 @@ import urllib.parse
 import urllib.request
 from typing import TYPE_CHECKING, Optional
 
+from osbuild.solver.exceptions import GPGKeyReadError
+
 if TYPE_CHECKING:
-    from .request import DepsolveCmdArgs, SearchCmdArgs, SolverRequest
+    from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverRequest
 
 
 class Solver(abc.ABC):
@@ -35,38 +37,6 @@ class SolverBase(Solver):
         self.request = request
         self.persistdir = persistdir
         self.license_index_path = license_index_path
-
-
-class SolverException(Exception):
-    pass
-
-
-class GPGKeyReadError(SolverException):
-    pass
-
-
-class TransactionError(SolverException):
-    pass
-
-
-class RepoError(SolverException):
-    pass
-
-
-class NoReposError(SolverException):
-    pass
-
-
-class MarkingError(SolverException):
-    pass
-
-
-class DepsolveError(SolverException):
-    pass
-
-
-class InvalidRequestError(SolverException):
-    pass
 
 
 def modify_rootdir_path(path, root_dir):
