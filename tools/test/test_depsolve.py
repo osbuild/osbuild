@@ -1848,3 +1848,317 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
     assert exit_code == 0
     assert_search_api_v1_response(res, test_case["expected_nevras"])
+
+
+# Test invalid requests for the V1 API
+invalid_request_v1_test_cases = [
+    # Missing required fields
+    {
+        "id": "missing_command",
+        "request": {
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"invalid command 'None': must be one of depsolve, dump, search",
+    },
+    {
+        "id": "missing_arch",
+        "request": {
+            "command": "depsolve",
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"no 'arch' specified",
+    },
+    {
+        "id": "missing_releasever",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "cachedir": "/tmp/cache",
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"no 'releasever' specified",
+    },
+    {
+        "id": "missing_cachedir",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"No cache dir set",
+    },
+    {
+        "id": "missing_arguments",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"empty 'arguments'",
+    },
+    # Invalid command
+    {
+        "id": "invalid_command",
+        "request": {
+            "command": "invalid_command",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"invalid command 'invalid_command': must be one of depsolve, dump, search",
+    },
+    # Invalid field types
+    {
+        "id": "repos_not_list",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": "not a list",
+            },
+        },
+        "error_kind": "TypeError",
+        "error_reason_re": r"string indices must be integers, not 'str'",
+    },
+    {
+        "id": "transactions_not_list",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "transactions": "not a list",
+            },
+        },
+        "error_kind": "AttributeError",
+        "error_reason_re": r"str' object has no attribute 'get'",
+    },
+    {
+        "id": "search_not_dict",
+        "request": {
+            "command": "search",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "search": "not a dict",
+            },
+        },
+        "error_kind": "AttributeError",
+        "error_reason_re": r"'str' object has no attribute 'get'",
+    },
+    # SBOM validation
+    {
+        "id": "sbom_not_dict",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [],
+                "sbom": "not a dict",
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"invalid 'sbom' value",
+    },
+    {
+        "id": "sbom_missing_type",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [],
+                "sbom": {},
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"missing 'type' in 'sbom'",
+    },
+    {
+        "id": "sbom_with_dump_command",
+        "request": {
+            "command": "dump",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [],
+                "sbom": {"type": "spdx"},
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"SBOM is only supported with 'depsolve' command",
+    },
+    {
+        "id": "sbom_with_search_command",
+        "request": {
+            "command": "search",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [],
+                "search": {"packages": []},
+                "sbom": {"type": "spdx"},
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"SBOM is only supported with 'depsolve' command",
+    },
+    # Invalid repository config
+    {
+        "id": "repo_not_dict",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": ["not a dict"],
+            },
+        },
+        "error_kind": "TypeError",
+        "error_reason_re": r"string indices must be integers, not 'str'",
+    },
+    {
+        "id": "repo_missing_id",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"name": "test"}],
+            },
+        },
+        "error_kind": "KeyError",
+        "error_reason_re": r"'id'",
+    },
+    {
+        "id": "repo_no_baseurl_metalink_mirrorlist",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "test"}],
+            },
+        },
+        "error_kind": "RepoError",
+        "error_reason_re": r"missing either `baseurl`, `metalink`, or `mirrorlist` in repo",
+    },
+    # Invalid transaction config
+    {
+        "id": "transaction_not_dict",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "transactions": ["not a dict"],
+            },
+        },
+        "error_kind": "AttributeError",
+        "error_reason_re": r"'str' object has no attribute 'get'",
+    },
+    # Invalid search arguments
+    {
+        "id": "search_packages_not_list",
+        "request": {
+            "command": "search",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "search": {"packages": 1},
+            },
+        },
+        "error_kind": "TypeError",
+        "error_reason_re": r"'int' object is not iterable",
+    },
+]
+
+
+@pytest.mark.parametrize(
+    "api_version,test_case",
+    [("v1", tc) for tc in invalid_request_v1_test_cases],
+    ids=lambda x: x if isinstance(x, str) else tcase_idfn(x)
+)
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    (None, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_invalid_requests(tmp_path, api_version, test_case, dnf_config, detect_fn):
+    """
+    Test that invalid requests are properly rejected with appropriate error messages.
+    """
+    _ = api_version
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
+    request = test_case["request"].copy()
+    if request.get("cachedir") == "/tmp/cache":
+        request["cachedir"] = tmp_path.as_posix()
+
+    print(request)
+
+    env = None
+    if dnf_config:
+        cfg_dir = tmp_path / "cfg"
+        cfg_dir.mkdir(parents=True)
+        cfg_file = cfg_dir / "solver.json"
+        json.dump(dnf_config, cfg_file.open("w"))
+        env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
+
+    p = sp.run(
+        ["./tools/osbuild-depsolve-dnf"],
+        input=json.dumps(request),
+        check=False,
+        stdout=sp.PIPE,
+        stderr=sys.stderr,
+        universal_newlines=True,
+        env=env
+    )
+
+    assert p.returncode != 0
+    result = json.loads(p.stdout)
+    assert result["kind"] == test_case["error_kind"]
+    assert re.search(test_case["error_reason_re"], result["reason"], re.DOTALL)
