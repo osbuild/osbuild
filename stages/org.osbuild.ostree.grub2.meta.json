@@ -1,0 +1,56 @@
+{
+  "summary": "Update a grub2 configuration template with the ostree boot path.",
+  "description": [
+    "This stage examines the source for an ostree boot path and then substitutes the",
+    "@OSTREE@ string in the grub configuration template file with the path."
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "filename"
+      ],
+      "properties": {
+        "filename": {
+          "description": "Filename for grub2 configuration file template with @OSTREE@",
+          "type": "string"
+        },
+        "source": {
+          "description": "Optional source (defaults to the input tree)",
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "The source, if a mount",
+              "pattern": "^mount://"
+            },
+            {
+              "type": "string",
+              "description": "The source, if an input, eg. input://tree/",
+              "pattern": "^input://[^/]+/"
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tree"
+      ],
+      "properties": {
+        "tree": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "devices": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "mounts": {
+      "type": "array"
+    }
+  }
+}

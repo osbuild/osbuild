@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+import os
+import sys
+
+import osbuild.api
+from osbuild.util import parsing
+from osbuild.util.lorax import replace
+from osbuild.util.ostree import default_boot_path
+
+
+def main(args):
+    inputs = args["inputs"]
+    output_dir = args["tree"]
+    options = args["options"]
+
+    # Optionally override default source
+    if "source" in options:
+        source = os.path.normpath(parsing.parse_location(options["source"], args))
+    else:
+        source = inputs["tree"]["path"]
+
+    filename = options["filename"].lstrip("/")
+    template = os.path.join(output_dir, filename)
+
+    # The grub template should include "ostree=@OSTREE@" on the kernel cmdline,
+    # this is replaced with the actual ostree path needed to boot the filesystem
+    boot_path = default_boot_path(source)
+    replace(template, [("@OSTREE@", boot_path)])
+
+    return 0
+
+
+if __name__ == '__main__':
+    _args = osbuild.api.arguments()
+    r = main(_args)
+    sys.exit(r)
