@@ -5,8 +5,8 @@ Unit tests for osbuild.solver.request classes
 
 import pytest
 
-from osbuild.solver import InvalidRequestError
 from osbuild.solver.api import SolverAPIVersion
+from osbuild.solver.exceptions import InvalidRequestError
 from osbuild.solver.request import (
     DepsolveCmdArgs,
     DepsolveTransaction,

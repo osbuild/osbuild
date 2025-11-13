@@ -3,7 +3,7 @@ from enum import Enum
 from types import ModuleType
 from typing import Any, Dict, List, Optional
 
-from osbuild.solver import InvalidRequestError
+from osbuild.solver.exceptions import InvalidRequestError
 from osbuild.solver.model import Package, Repository
 from osbuild.solver.request import SolverRequest
 
