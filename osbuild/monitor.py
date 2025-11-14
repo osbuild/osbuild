@@ -17,7 +17,7 @@ import os
 import sys
 import time
 from threading import Lock
-from typing import Dict, Optional, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
 import osbuild
 from osbuild.pipeline import BuildResult, DownloadResult
@@ -168,6 +168,7 @@ class Progress:
 def log_entry(message: Optional[str] = None,
               context: Optional[Context] = None,
               progress: Optional[Progress] = None,
+              options: Optional[Dict] = None,
               duration: Optional[float] = None,
               result: Union[BuildResult, DownloadResult, None] = None,
               metadata: Optional[Dict] = None,
@@ -183,6 +184,7 @@ def log_entry(message: Optional[str] = None,
         "result": result.as_dict() if result else None,
         "context": context.as_dict() if context else None,
         "progress": progress.as_dict() if progress else None,
+        "options": options if options else None,
         "timestamp": time.time(),
         "duration": duration,
         "metadata": metadata if metadata else None,
@@ -323,6 +325,7 @@ class JSONSeqMonitor(BaseMonitor):
         self._ctx_ids: Set[str] = set()
         self._progress = Progress("pipelines/sources", total_steps)
         self._context = Context(origin="org.osbuild")
+        self._module_options: Dict[str, Any] = {}
         self._jsonseq_mu = Lock()
         self._module_start_time: Optional[float] = None
 
@@ -345,6 +348,7 @@ class JSONSeqMonitor(BaseMonitor):
 
     def _module(self, module: osbuild.Stage):
         self._context.set_stage(module)
+        self._module_options = module.options or {}
         self.log(f"Starting module {module.name}", origin="osbuild.monitor")
         self._module_start_time = time.monotonic()
 
@@ -383,6 +387,7 @@ class JSONSeqMonitor(BaseMonitor):
             f"Finished module {result.name}",
             context=self._context.with_origin("osbuild.monitor"),
             progress=self._progress,
+            options=self._module_options,
             duration=duration,
             # We should probably remove the "output" key from the result
             # as it is redundant, each output already generates a "log()"
