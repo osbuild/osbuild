@@ -49,15 +49,13 @@ RPM:
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.6-ga-x86_64
           - aws/rhel-9.6-ga-aarch64
-          - aws/rhel-10.0-ga-x86_64
-          - aws/rhel-10.0-ga-aarch64
+          - aws/rhel-10.1-ga-x86_64
+          - aws/rhel-10.1-ga-aarch64
       - RUNNER:
           - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.7-nightly-aarch64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-9.8-nightly-aarch64
-          - aws/rhel-10.1-nightly-x86_64
-          - aws/rhel-10.1-nightly-aarch64
           - aws/rhel-10.2-nightly-x86_64
           - aws/rhel-10.2-nightly-aarch64
         INTERNAL_NETWORK: "true"
@@ -152,10 +150,8 @@ Manifests:
           - aws/rhel-9.7-nightly-aarch64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-9.8-nightly-aarch64
-          - aws/rhel-10.0-ga-x86_64
-          - aws/rhel-10.0-ga-aarch64
-          - aws/rhel-10.1-nightly-x86_64
-          - aws/rhel-10.1-nightly-aarch64
+          - aws/rhel-10.1-ga-x86_64
+          - aws/rhel-10.1-ga-aarch64
           - aws/rhel-10.2-nightly-x86_64
           - aws/rhel-10.2-nightly-aarch64
         INTERNAL_NETWORK: "true"
