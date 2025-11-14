@@ -13,4 +13,4 @@ jobs:
         uses: osbuild/release-action@main
         with:
           token: "${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}"
-          slack_webhook_url: "${{ secrets.SLACK_WEBHOOK_URL }}"
+          slack_bot_token: "${{ secrets.SLACK_BOT_TOKEN }}"
