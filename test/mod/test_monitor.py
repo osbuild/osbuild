@@ -221,7 +221,8 @@ def test_json_progress_monitor():
 
     manifest = osbuild.Manifest()
     pl1 = manifest.add_pipeline("test-pipeline-first", "", "")
-    first_stage = pl1.add_stage(info, {})
+    first_stage_options = {"foo": "bar"}
+    first_stage = pl1.add_stage(info, first_stage_options)
     pl1.add_stage(info, {})
 
     pl2 = manifest.add_pipeline("test-pipeline-second", "", "")
@@ -299,6 +300,7 @@ def test_json_progress_monitor():
         logitem = json.loads(log[i])
         assert logitem["message"] == "Finished module org.osbuild.noop"
         assert logitem["context"]["id"] == id_start_module
+        assert logitem["options"] == first_stage_options
         assert logitem["result"] == {
             "id": fake_noop_stage.id,
             "name": "org.osbuild.noop",
