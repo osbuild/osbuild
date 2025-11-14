@@ -191,9 +191,7 @@ Recommends: python3-license-expression
 # supports this since 116
 Conflicts: osbuild-composer <= 115
 
-# This version needs to get bumped every time the osbuild-dnf-json
-# version changes in an incompatible way. Packages like osbuild-composer
-# can depend on the exact API version this way
+# XXX: remove this once the osbuild-dnf-json V1 API is removed (osbuild/solver/api/v1.py)
 Provides: osbuild-dnf-json-api = 8
 
 %description    depsolve-dnf

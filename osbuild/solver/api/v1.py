@@ -1,3 +1,6 @@
+# pylint: disable=fixme
+# XXX: remove 'Provides: osbuild-dnf-json-api = 8' from the osbuild.spec file when this file is removed
+
 from typing import Any, Dict, List, Optional
 
 from osbuild.solver.exceptions import InvalidRequestError
