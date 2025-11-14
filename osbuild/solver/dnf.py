@@ -188,7 +188,7 @@ class DNF(SolverBase):
 
             self.base.update_cache()
             self.base.fill_sack(load_system_repo=False)
-        except dnf.exceptions.Error as e:
+        except Exception as e:
             raise RepoError(e) from e
 
         if not self.base.repos._any_enabled():
