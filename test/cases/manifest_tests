@@ -18,7 +18,7 @@ import sys
 import tempfile
 from typing import Dict, List, Optional, Tuple
 
-OSBUILD_IMAGES_REPO_URL = os.environ.get("OSBUILD_IMAGES_REPO_URL", "https://github.com/osbuild/images.git")
+from utils import checkout_images_repo
 
 OS_RELEASE_FILE = "/etc/os-release"
 
@@ -97,40 +97,6 @@ def find_image_file(build_path: str, export_name: Optional[str] = None) -> str:
         raise RuntimeError("No found in build path while searching for image file")
 
     return os.path.join(build_path, export_name, files[0])
-
-
-def checkout_images_repo(ref, workdir: os.PathLike) -> str:
-    """
-    Checkout the 'images' repository at a specific commit and return the path to the directory
-    If the repository is already checked-out, switch to the specified commit.
-    """
-    images_path = os.path.join(workdir, "images")
-
-    if not os.path.exists(images_path):
-        print(f"Checking out '{OSBUILD_IMAGES_REPO_URL}' repository at ref '{ref}'")
-        try:
-            subprocess.check_call(
-                ["git", "clone", OSBUILD_IMAGES_REPO_URL, "images"],
-                cwd=workdir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            )
-
-            subprocess.check_call(
-                ["git", "fetch", "--all"],
-                cwd=images_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            )
-
-            subprocess.check_call(
-                ["git", "checkout", ref],
-                cwd=images_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to clone 'images' repository: {e.stdout.decode()}")
-            sys.exit(1)
-    else:
-        print(f"'images' repository is already checked-out at '{images_path}'")
-
-    subprocess.check_call(["git", "checkout", ref], cwd=images_path, stdout=subprocess.DEVNULL)
-    return images_path
 
 
 def download_image_build_artifact(images_path: os.PathLike, build_dir: os.PathLike) -> None:
