@@ -1,0 +1,149 @@
+#!/usr/bin/python3
+
+"""
+Test osbuild-depsolve-dnf against osbuild/images depsolvednf package Go tests
+
+This test case clones the osbuild/images repository and runs the Go unit tests from the
+pkg/depsolvednf package against the local osbuild-depsolve-dnf script.
+
+The test ensures that changes to osbuild-depsolve-dnf do not break the integration with
+the images repository's implementation.
+"""
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+from utils import checkout_images_repo
+
+
+def check_go_available() -> bool:
+    """
+    Check if the 'go' binary is available in the system.
+    Returns True if available, False otherwise.
+    """
+    try:
+        subprocess.check_output(["go", "version"], stderr=subprocess.STDOUT)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def run_go_tests(images_path: str, osbuild_depsolve_dnf_path: str, use_dnf5: bool = False) -> int:
+    """
+    Run Go tests from the depsolvednf package in the images repository.
+
+    Args:
+        images_path: Path to the cloned images repository
+        osbuild_depsolve_dnf_path: Absolute path to the osbuild-depsolve-dnf script
+        use_dnf5: If True, configure the test to use dnf5 instead of dnf4
+
+    Returns:
+        The exit code from the go test command
+    """
+    # Set up environment variables for the go test command
+    env = os.environ.copy()
+    env["OSBUILD_DEPSOLVE_DNF"] = osbuild_depsolve_dnf_path
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        # Create temporary solver config file if dnf5 is requested for the osbuild-depsolve-dnf script
+        solver_config_file = None
+        if use_dnf5:
+            solver_config_file = os.path.join(tempdir, "solver.json")
+            with open(solver_config_file, "w", encoding="utf-8") as f:
+                json.dump({"use_dnf5": True}, f)
+            env["OSBUILD_SOLVER_CONFIG"] = solver_config_file
+            print(f"Using DNF5 solver configuration: {solver_config_file}")
+
+        cmd = ["go", "test", "./pkg/depsolvednf/", "-v", "-force-dnf"]
+
+        print(f"Running Go tests in {images_path}")
+        print(f"Command: {' '.join(cmd)}")
+        print(f"OSBUILD_DEPSOLVE_DNF={osbuild_depsolve_dnf_path}")
+        if use_dnf5:
+            print(f"OSBUILD_SOLVER_CONFIG={env['OSBUILD_SOLVER_CONFIG']}")
+            print(f"Solver config file: {solver_config_file}")
+            print(f"Content: {open(solver_config_file, "r", encoding="utf-8").read()}")
+
+        result = subprocess.run(
+            cmd,
+            cwd=images_path,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True
+        )
+        print(result.stdout)
+        return result.returncode
+
+
+def get_argparser():
+    parser = argparse.ArgumentParser(description=__doc__)
+
+    parser.add_argument(
+        "--images-ref",
+        metavar="REF",
+        default="main",
+        help="Git ref to checkout in the osbuild/images repository (default: main)"
+    )
+    parser.add_argument(
+        "--workdir",
+        metavar="PATH",
+        type=os.path.abspath,
+        help="Working directory where the images repository is checked out. "
+             "If not provided, a temporary directory will be used and deleted on exit."
+    )
+    parser.add_argument(
+        "--use-dnf5",
+        action="store_true",
+        default=False,
+        help="Test with dnf5 instead of dnf4 (creates solver config with use_dnf5=true)"
+    )
+    
+    return parser
+
+
+def main():
+    parser = get_argparser()
+    args = parser.parse_args()
+
+    if not check_go_available():
+        print("❌ ERROR: 'go' binary is not available in the system", file=sys.stderr)
+        print("Please install Go to run this test", file=sys.stderr)
+        sys.exit(1)
+
+    print("✅ Go binary is available")
+
+    # Assume the script is being run from the osbuild repository root or test/cases directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    osbuild_repo_root = os.path.dirname(os.path.dirname(script_dir))
+    osbuild_depsolve_dnf_path = os.path.join(osbuild_repo_root, "tools", "osbuild-depsolve-dnf")
+
+    if not os.path.exists(osbuild_depsolve_dnf_path):
+        print(f"❌ ERROR: osbuild-depsolve-dnf not found at {osbuild_depsolve_dnf_path}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"✅ Found osbuild-depsolve-dnf at {osbuild_depsolve_dnf_path}")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        workdir = args.workdir or tmpdir
+        os.makedirs(workdir, exist_ok=True)
+        print(f"👷 Using working directory: {workdir}")
+
+        images_path = checkout_images_repo(args.images_ref, workdir)
+        exit_code = run_go_tests(images_path, osbuild_depsolve_dnf_path, args.use_dnf5)
+
+        if exit_code == 0:
+            print("\n✅ All Go tests passed")
+        else:
+            print(f"\n❌ Go tests failed with exit code {exit_code}")
+
+        sys.exit(exit_code)
+
+
+if __name__ == "__main__":
+    main()
+
