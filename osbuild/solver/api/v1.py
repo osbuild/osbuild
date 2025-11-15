@@ -244,7 +244,7 @@ def parse_request(request_dict: Dict[str, Any]) -> SolverRequest:
         raise InvalidRequestError("Field 'optional-metadata' must be a list")
 
     depsolve_transactions = []
-    if "transactions" in arguments:
+    if command == SolverCommand.DEPSOLVE and "transactions" in arguments:
         if not isinstance(arguments["transactions"], list):
             raise InvalidRequestError("Field 'transactions' must be a list")
         try:
@@ -255,7 +255,7 @@ def parse_request(request_dict: Dict[str, Any]) -> SolverRequest:
             raise InvalidRequestError(f"Missing required field {e} in 'transactions' list") from e
 
     search_args = None
-    if "search" in arguments:
+    if command == SolverCommand.SEARCH and "search" in arguments:
         if not isinstance(arguments["search"], dict):
             raise InvalidRequestError("Field 'search' must be a dict")
         try:
