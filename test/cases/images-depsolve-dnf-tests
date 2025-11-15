@@ -102,7 +102,7 @@ def get_argparser():
         default=False,
         help="Test with dnf5 instead of dnf4 (creates solver config with use_dnf5=true)"
     )
-    
+
     return parser
 
 
@@ -146,4 +146,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
