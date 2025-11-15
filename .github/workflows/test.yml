@@ -100,3 +100,52 @@ jobs:
       # parallized, the runtime is around 1-2min with this setup.
       run: |
         tox -e py312 -- -n 16
+
+  # This test case clones the osbuild/images repository and runs the Go unit tests from the
+  # pkg/depsolvednf package against the local osbuild-depsolve-dnf script.
+  # The test ensures that changes to osbuild-depsolve-dnf do not break the integration with
+  # the images repository's implementation.
+  images-depsolve-dnf-tests:
+    name: "osbuild/images depsolvednf unit tests (${{ matrix.dnf_version }})"
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        dnf_version:
+          - dnf4
+          # XXX: DNF5 tests currently fail due to depsolve results being ordered differently than dnf4
+          #- dnf5
+    steps:
+      - name: "Clone Repository"
+        uses: actions/checkout@v4
+      - name: "Run"
+        uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
+        with:
+          image: ghcr.io/osbuild/osbuild-ci:latest-202506112350
+          run: |
+            # Install required system dependencies for Go builds
+            # XXX: This should be done in the container image
+            sudo dnf -y install \
+                gcc \
+                go \
+                gpgme-devel \
+                device-mapper-devel \
+                btrfs-progs-devel \
+                jq
+
+            # Parse Schutzfile for the images repository reference
+            IMAGES_REPO_REF=$(jq -r '.global.dependencies.images.ref' Schutzfile)
+            if [ -z "$IMAGES_REPO_REF" ]; then
+                echo "ERROR: 'images.ref' not found in Schutzfile"
+                exit 1
+            fi
+            echo "Using osbuild/images repo ref: $IMAGES_REPO_REF"
+
+            # Run the test with appropriate flags based on the matrix
+            if [ "${{ matrix.dnf_version }}" == "dnf5" ]; then
+                echo "Running tests with DNF5"
+                test/cases/images-depsolve-dnf-tests --images-ref "$IMAGES_REPO_REF" --use-dnf5
+            else
+                echo "Running tests with DNF4"
+                test/cases/images-depsolve-dnf-tests --images-ref "$IMAGES_REPO_REF"
+            fi
