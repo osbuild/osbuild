@@ -13,6 +13,7 @@ It can download files that require secrets. The support secret providers are:
 
 import os
 import sys
+import urllib.parse
 from typing import Dict
 
 import librepo
@@ -205,7 +206,7 @@ class LibRepoSource(sources.SourceService):
         """
         chksum_type, checksum = checksum.split(":")
         return librepo.PackageTarget(
-            path,
+            urllib.parse.quote(path),
             handle=handle,
             checksum_type=self.CHKSUM_TYPE[chksum_type],
             checksum=checksum,
