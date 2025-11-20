@@ -36,8 +36,14 @@ class DepsolveTransaction:
         module_enable_specs: Optional[List[str]] = None,
         install_weak_deps: bool = False,
     ):
-        if not package_specs:
-            raise InvalidRequestError("Depsolve transaction must contain at least one package specification")
+        # pylint: disable=fixme
+        # XXX: We can't enforce this, because there is a "bug" in the osbuild/images "os" pipeline implementation.
+        # https://github.com/osbuild/images/commit/8b779619aa0c3a9b8537f6bb79324303cb87909c introduced three
+        # transactions, but the "customizations" package set is added to the "chain" unconditionally, even if it
+        # is empty. This is the case for "container" and "wsl" image types. Other image types enable at least
+        # SELinux, which adds the "selinux-policy-targeted" package to the list.
+        # if not package_specs:
+        #     raise InvalidRequestError("Depsolve transaction must contain at least one package specification")
 
         self.package_specs = package_specs
         self.exclude_specs = exclude_specs
