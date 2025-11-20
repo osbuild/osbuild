@@ -5,7 +5,6 @@ import json
 import os
 import pathlib
 import re
-import socket
 import subprocess as sp
 import sys
 from glob import glob
@@ -15,12 +14,6 @@ from typing import Tuple
 
 import jsonschema
 import pytest
-
-REPO_PATHS = [
-    "./test/data/testrepos/baseos/",
-    "./test/data/testrepos/appstream/",
-    "./test/data/testrepos/custom/",
-]
 
 RELEASEVER = "9"
 ARCH = "x86_64"
@@ -175,28 +168,6 @@ def search(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt_me
                    check=False, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
 
         return json.loads(p.stdout), p.returncode
-
-
-def get_rand_port():
-    s = socket.socket()
-    s.bind(("", 0))
-    return s.getsockname()[1]
-
-
-@pytest.fixture(name="repo_servers", scope="module")
-def repo_servers_fixture():
-    procs = []
-    addresses = []
-    for path in REPO_PATHS:
-        port = get_rand_port()  # this is racy, but should be okay
-        p = sp.Popen(["python3", "-m", "http.server", str(port)], cwd=path, stdout=sp.PIPE, stderr=sp.DEVNULL)
-        procs.append(p)
-        # use last path component as name
-        name = os.path.basename(path.rstrip("/"))
-        addresses.append({"name": name, "address": f"http://localhost:{port}"})
-    yield addresses
-    for p in procs:
-        p.kill()
 
 
 def tcase_idfn(param):
@@ -1877,3 +1848,377 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
     assert exit_code == 0
     assert_search_api_v1_response(res, test_case["expected_nevras"])
+
+
+# Test invalid requests for the V1 API
+invalid_request_v1_test_cases = [
+    # Missing required fields
+    {
+        "id": "missing_command",
+        "request": {
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'command'",
+    },
+    {
+        "id": "missing_arch",
+        "request": {
+            "command": "depsolve",
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'arch'",
+    },
+    {
+        "id": "missing_releasever",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "cachedir": "/tmp/cache",
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'releasever'",
+    },
+    {
+        "id": "missing_cachedir",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'cachedir'",
+    },
+    {
+        "id": "missing_arguments",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'arguments'",
+    },
+    # Invalid command
+    {
+        "id": "invalid_command",
+        "request": {
+            "command": "invalid_command",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {"repos": []},
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Invalid command 'invalid_command': must be one of depsolve, dump, search",
+    },
+    # Invalid field types
+    {
+        "id": "arguments_not_dict",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": "not a dict",
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'arguments' must be a dict",
+    },
+    {
+        "id": "repos_not_list",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": "not a list",
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'repos' must be a list",
+    },
+    {
+        "id": "transactions_not_list",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "transactions": "not a list",
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'transactions' must be a list",
+    },
+    {
+        "id": "optional_metadata_not_list",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "optional-metadata": "not a list",
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'optional-metadata' must be a list",
+    },
+    {
+        "id": "search_not_dict",
+        "request": {
+            "command": "search",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "search": "not a dict",
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'search' must be a dict",
+    },
+    # SBOM validation
+    {
+        "id": "sbom_not_dict",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [],
+                "sbom": "not a dict",
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'sbom' must be a dict",
+    },
+    {
+        "id": "sbom_missing_type",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [],
+                "sbom": {},
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'type' in 'sbom'",
+    },
+    {
+        "id": "sbom_with_dump_command",
+        "request": {
+            "command": "dump",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [],
+                "sbom": {"type": "spdx"},
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'sbom' is only supported with 'depsolve' command",
+    },
+    {
+        "id": "sbom_with_search_command",
+        "request": {
+            "command": "search",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [],
+                "search": {"packages": ["package"]},
+                "sbom": {"type": "spdx"},
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'sbom' is only supported with 'depsolve' command",
+    },
+    # Invalid repository config
+    {
+        "id": "repo_not_dict",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": ["not a dict"],
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Repository config must be a dict",
+    },
+    {
+        "id": "repo_missing_id",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"name": "test"}],
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'id' in 'repos' item configuration",
+    },
+    {
+        "id": "repo_no_baseurl_metalink_mirrorlist",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{"id": "test"}],
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"At least one of 'baseurl', 'metalink', or 'mirrorlist' must be specified",
+    },
+    # Invalid transaction config
+    {
+        "id": "transaction_not_dict",
+        "request": {
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "transactions": ["not a dict"],
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Invalid depsolve transaction: Depsolve transaction must be a dict",
+    },
+    # Invalid search arguments
+    {
+        "id": "search_missing_packages",
+        "request": {
+            "command": "search",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "search": {"latest": True},
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Missing required field 'packages' in 'search' dict",
+    },
+    {
+        "id": "search_packages_not_list",
+        "request": {
+            "command": "search",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [
+                    {"id": "custom", "baseurl": [f"file://{os.path.abspath('./test/data/testrepos/custom/')}/"]}
+                ],
+                "search": {"packages": 1},
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Field 'packages' must be a list",
+    },
+]
+
+
+invalid_request_common_test_cases = [
+    # invalid api_version field
+    {
+        "id": "with_api_version_999",
+        "request": {
+            "api_version": 999,
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Invalid API version: 999 is not a valid SolverAPIVersion",
+    },
+]
+
+
+@pytest.mark.parametrize(
+    "api_version,test_case",
+    [("v1", tc) for tc in invalid_request_v1_test_cases] +
+    [("common", tc) for tc in invalid_request_common_test_cases],
+    ids=lambda x: x if isinstance(x, str) else tcase_idfn(x)
+)
+@pytest.mark.parametrize("dnf_config, detect_fn", [
+    (None, assert_dnf),
+    ({"use_dnf5": False}, assert_dnf),
+    ({"use_dnf5": True}, assert_dnf5),
+], ids=["no-config", "dnf4", "dnf5"])
+def test_invalid_requests(tmp_path, api_version, test_case, dnf_config, detect_fn):
+    """
+    Test that invalid requests are properly rejected with appropriate error messages.
+    """
+    _ = api_version
+    try:
+        detect_fn()
+    except RuntimeError as e:
+        pytest.skip(str(e))
+
+    request = test_case["request"].copy()
+    if request.get("cachedir") == "/tmp/cache":
+        request["cachedir"] = tmp_path.as_posix()
+
+    print(request)
+
+    env = None
+    if dnf_config:
+        cfg_dir = tmp_path / "cfg"
+        cfg_dir.mkdir(parents=True)
+        cfg_file = cfg_dir / "solver.json"
+        json.dump(dnf_config, cfg_file.open("w"))
+        env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
+
+    p = sp.run(
+        ["./tools/osbuild-depsolve-dnf"],
+        input=json.dumps(request),
+        check=False,
+        stdout=sp.PIPE,
+        stderr=sys.stderr,
+        universal_newlines=True,
+        env=env
+    )
+
+    assert p.returncode != 0
+    result = json.loads(p.stdout)
+    assert result["kind"] == test_case["error_kind"]
+    assert re.search(test_case["error_reason_re"], result["reason"], re.DOTALL)

@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 import osbuild
@@ -90,11 +88,11 @@ def test_create_spdx2_document():
 
 @pytest.mark.parametrize("licensing_available", (True, False))
 @pytest.mark.parametrize("license_index_location", (None, CUSTOM_LICENSE_DB_LOCATION))
-def test_sbom_pkgset_to_spdx2_doc(licensing_available, license_index_location):
+def test_sbom_pkgset_to_spdx2_doc(repo_servers, licensing_available, license_index_location):
     testutil_dnf4 = pytest.importorskip("osbuild.testutil.dnf4")
     bom_dnf = pytest.importorskip("osbuild.util.sbom.dnf")
 
-    dnf_pkgset = testutil_dnf4.depsolve_pkgset([os.path.abspath("./test/data/testrepos/baseos")], ["bash"])
+    dnf_pkgset = testutil_dnf4.depsolve_pkgset(repo_servers, ["bash"])
     bom_pkgset = bom_dnf.dnf_pkgset_to_sbom_pkgset(dnf_pkgset)
 
     with patch_license_expression(licensing_available) as _:

@@ -3,6 +3,14 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+from osbuild.solver.api import serialize_response_depsolve, serialize_response_dump, serialize_response_search
+from osbuild.solver.exceptions import GPGKeyReadError
+
+if TYPE_CHECKING:
+    from osbuild.solver.model import Package, Repository
+    from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverRequest
 
 
 class Solver(abc.ABC):
@@ -11,49 +19,56 @@ class Solver(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def depsolve(self, arguments):
+    def depsolve(self, args: "DepsolveCmdArgs"):
         pass
 
     @abc.abstractmethod
-    def search(self, args):
+    def search(self, args: "SearchCmdArgs"):
         pass
 
 
 class SolverBase(Solver):
     # put any shared helpers in here
-    pass
 
+    # Override this in the subclass
+    SOLVER_NAME = "unknown"
 
-class SolverException(Exception):
-    pass
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if cls.SOLVER_NAME == "unknown":
+            raise ValueError(f"{cls.__name__} must override SOLVER_NAME")
 
+    def __init__(
+        self,
+        request: "SolverRequest",
+        persistdir: os.PathLike,
+        license_index_path: Optional[os.PathLike] = None,
+    ):
+        self.request = request
+        self.persistdir = persistdir
+        self.license_index_path = license_index_path
 
-class GPGKeyReadError(SolverException):
-    pass
+    def serialize_response_depsolve(
+        self,
+        packages: List["Package"],
+        repositories: List["Repository"],
+        modules: Optional[dict] = None,
+        sbom: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        return serialize_response_depsolve(
+            self.request.api_version,
+            self.SOLVER_NAME,
+            packages,
+            repositories,
+            modules,
+            sbom,
+        )
 
+    def serialize_response_dump(self, packages: List["Package"]) -> List[Dict[str, Any]]:
+        return serialize_response_dump(self.request.api_version, packages)
 
-class TransactionError(SolverException):
-    pass
-
-
-class RepoError(SolverException):
-    pass
-
-
-class NoReposError(SolverException):
-    pass
-
-
-class MarkingError(SolverException):
-    pass
-
-
-class DepsolveError(SolverException):
-    pass
-
-
-class InvalidRequestError(SolverException):
-    pass
+    def serialize_response_search(self, packages: List["Package"]) -> List[Dict[str, Any]]:
+        return serialize_response_search(self.request.api_version, packages)
 
 
 def modify_rootdir_path(path, root_dir):

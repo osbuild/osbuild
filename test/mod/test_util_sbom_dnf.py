@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 
 import pytest
@@ -7,8 +6,8 @@ testutil_dnf4 = pytest.importorskip("osbuild.testutil.dnf4")
 sbom_dnf = pytest.importorskip("osbuild.util.sbom.dnf")
 
 
-def test_dnf_pkgset_to_sbom_pkgset():
-    dnf_pkgset = testutil_dnf4.depsolve_pkgset([os.path.abspath("./test/data/testrepos/baseos")], ["bash"])
+def test_dnf_pkgset_to_sbom_pkgset(repo_servers):
+    dnf_pkgset = testutil_dnf4.depsolve_pkgset(repo_servers, ["bash"])
     bom_pkgset = sbom_dnf.dnf_pkgset_to_sbom_pkgset(dnf_pkgset)
     assert len(bom_pkgset) == len(dnf_pkgset)
     for bom_pkg, dnf_pkg in zip(bom_pkgset, dnf_pkgset):
