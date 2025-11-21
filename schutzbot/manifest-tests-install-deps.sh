@@ -69,7 +69,7 @@ curl  "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip.sig" -o "${AWSC
 gpg --verify "${AWSCLI_SIG}" "${AWSCLI_ARCHIVE}"
 
 # Unzip the AWS CLI v2 binary and install it.
-unzip "${AWSCLI_ARCHIVE}"
+unzip -q "${AWSCLI_ARCHIVE}"
 sudo ./aws/install 1> /dev/null
 
 # Verify the installation.
