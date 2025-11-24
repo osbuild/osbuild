@@ -3,7 +3,7 @@ from enum import Enum
 from types import ModuleType
 from typing import Any, Dict, List, Optional
 
-from osbuild.solver.exceptions import InvalidRequestError
+from osbuild.solver.exceptions import InvalidAPIVersionError
 from osbuild.solver.model import Package, Repository
 from osbuild.solver.request import SolverRequest
 
@@ -19,7 +19,7 @@ def get_api_module(api_version: SolverAPIVersion) -> ModuleType:
     try:
         return importlib.import_module(f"osbuild.solver.api.v{api_version.value}")
     except ImportError as e:
-        raise ValueError(f"Invalid solver API version: {api_version}") from e
+        raise InvalidAPIVersionError(f"Failed to import solver API module for version: {api_version.value}") from e
 
 
 def parse_request(request_dict: Dict) -> SolverRequest:
@@ -37,7 +37,7 @@ def parse_request(request_dict: Dict) -> SolverRequest:
     try:
         api_version = SolverAPIVersion(version_num)
     except ValueError as e:
-        raise InvalidRequestError(f"Invalid API version: {e}") from e
+        raise InvalidAPIVersionError(f"Invalid API version: {e}") from e
 
     api_module = get_api_module(api_version)
     return api_module.parse_request(request_dict)

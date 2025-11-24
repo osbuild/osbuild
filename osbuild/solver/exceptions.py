@@ -31,5 +31,9 @@ class DepsolveError(SolverException):
     pass
 
 
+class InvalidAPIVersionError(SolverException):
+    pass
+
+
 class InvalidRequestError(SolverException):
     pass
