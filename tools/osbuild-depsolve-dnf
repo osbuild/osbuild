@@ -18,6 +18,7 @@ from osbuild.solver.exceptions import (
     DepsolveError,
     NoReposError,
     RepoError,
+    InvalidAPIVersionError,
     InvalidRequestError,
 )
 from osbuild.solver import api
@@ -85,7 +86,7 @@ def solve(request_dict: Dict[str, Any]):
                 "kind": "DepsolveError",
                 "reason": f"There was a problem depsolving {', '.join(pkgs)}: {e}"
             }
-        except InvalidRequestError as e:
+        except (InvalidRequestError, InvalidAPIVersionError) as e:
             printe("error invalid request")
             return None, {
                 "kind": "InvalidRequest",
