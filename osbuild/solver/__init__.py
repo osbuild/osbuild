@@ -3,14 +3,12 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from osbuild.solver.api import serialize_response_depsolve, serialize_response_dump, serialize_response_search
 from osbuild.solver.exceptions import GPGKeyReadError
-
-if TYPE_CHECKING:
-    from osbuild.solver.model import Package, Repository
-    from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverRequest
+from osbuild.solver.model import Package, Repository
+from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverRequest
 
 
 class Solver(abc.ABC):
