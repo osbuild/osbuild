@@ -33,7 +33,7 @@ class SolverBase(Solver):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        if cls.SOLVER_NAME == "unknown":
+        if cls.SOLVER_NAME == SolverBase.SOLVER_NAME:
             raise ValueError(f"{cls.__name__} must override SOLVER_NAME")
 
     def __init__(
