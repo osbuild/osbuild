@@ -183,12 +183,17 @@ def parse_request(request_dict: Dict[str, Any]) -> SolverRequest:
     # pylint: disable=import-outside-toplevel
     from . import SolverAPIVersion
 
-    # Validate and parse command
+    # Get required top-level fields
     try:
         command_str = request_dict["command"]
+        arch = request_dict["arch"]
+        releasever = request_dict["releasever"]
+        cachedir = request_dict["cachedir"]
+        arguments = request_dict["arguments"]
     except KeyError as e:
-        raise InvalidRequestError("Missing required field 'command'") from e
+        raise InvalidRequestError(f"Missing required field {e}") from e
 
+    # Validate and parse command
     try:
         command = SolverCommand(command_str)
     except ValueError as e:
@@ -197,32 +202,11 @@ def parse_request(request_dict: Dict[str, Any]) -> SolverRequest:
             f"Invalid command '{command_str}': must be one of {valid_cmds}"
         ) from e
 
-    # Validate required top-level fields
-    try:
-        arch = request_dict["arch"]
-    except KeyError as e:
-        raise InvalidRequestError("Missing required field 'arch'") from e
-
-    try:
-        releasever = request_dict["releasever"]
-    except KeyError as e:
-        raise InvalidRequestError("Missing required field 'releasever'") from e
-
-    try:
-        cachedir = request_dict["cachedir"]
-    except KeyError as e:
-        raise InvalidRequestError("Missing required field 'cachedir'") from e
-
     # Get optional top-level fields
     module_platform_id = request_dict.get("module_platform_id")
     proxy = request_dict.get("proxy")
 
-    # Parse command arguments
-    try:
-        arguments = request_dict["arguments"]
-    except KeyError as e:
-        raise InvalidRequestError("Missing required field 'arguments'") from e
-
+    # Validate and parse command arguments
     if not isinstance(arguments, dict):
         raise InvalidRequestError("Field 'arguments' must be a dict")
 
