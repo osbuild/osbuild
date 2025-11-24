@@ -41,16 +41,9 @@ else:
 
 
 def solve(request_dict: Dict[str, Any]):
-    try:
-        request = api.parse_request(request_dict)
-    except InvalidRequestError as e:
-        return None, {
-            "kind": "InvalidRequest",
-            "reason": str(e)
-        }
-
     with tempfile.TemporaryDirectory() as persistdir:
         try:
+            request = api.parse_request(request_dict)
             solver = Solver(request, persistdir, config.get("license_index_path"))
             if request.command == SolverCommand.DUMP:
                 return solver.dump(), None
