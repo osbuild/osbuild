@@ -28,6 +28,13 @@ jobs:
     steps:
     - name: "Clone Repository"
       uses: actions/checkout@v4
+
+    - name: Free Disk Space
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+      with:
+        tool-cache: true
+        # The following line runs apt remove which is slow
+        large-packages: false
     - name: "Run"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
