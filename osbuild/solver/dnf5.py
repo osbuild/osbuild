@@ -13,7 +13,7 @@ from libdnf5.common import QueryCmp_GLOB as GLOB
 import osbuild.solver.model as model
 from osbuild.solver import SolverBase, modify_rootdir_path, read_keys
 from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError, RepoError
-from osbuild.solver.request import DepsolveCmdArgs, RepositoryConfig, SearchCmdArgs, SolverRequest
+from osbuild.solver.request import DepsolveCmdArgs, RepositoryConfig, SearchCmdArgs, SolverConfig
 from osbuild.util.sbom.dnf5 import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
@@ -145,35 +145,39 @@ class DNF5(SolverBase):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        request: SolverRequest,
+        config: SolverConfig,
         persistdir: os.PathLike,
         license_index_path: Optional[os.PathLike] = None,
     ):
-        super().__init__(request, persistdir, license_index_path)
+        super().__init__(config, persistdir, license_index_path)
 
-        self.repos = self.request.config.repos or []
+        self.repos = self.config.repos or []
         self.request_repo_ids = {repo.repo_id for repo in self.repos}
-        self.root_dir = self.request.config.root_dir
+        self.root_dir = self.config.root_dir
 
         # pylint: disable=fixme
         # XXX: This should be handled in the depsolve() function, where we should be setting up the
         # repos for each transaction, because the excluded packages are setup per-transaction!
-        # Gather up all the exclude packages from all the transactions
-        exclude_pkgs = []
-        if self.request.depsolve_args:
-            for transaction in self.request.depsolve_args.transactions:
-                exclude_pkgs.extend(transaction.exclude_specs or [])
+        # We stopped doing this because the full request is not available any more when constructing the Solver object.
+        # Since 'basic_pkg_group_with_excludes' and 'install_pkg_excluded_in_another_transaction' test cases are broken
+        # with dnf5 anyway, there is little harm in not gathering up all the exclude packages from all the transactions.
+        # The original behavior was incorrect anyway, because it would exclude the packages from all the transactions,
+        # which explicitly breaks 'install_pkg_excluded_in_another_transaction' test case.
+        # exclude_pkgs: List[str] = []
+        # if self.request.depsolve_args:
+        #     for transaction in self.request.depsolve_args.transactions:
+        #         exclude_pkgs.extend(transaction.exclude_specs or [])
 
         self.base = dnf5.base.Base()
 
         # Base is the correct place to set substitutions, not per-repo.
         # See https://github.com/rpm-software-management/dnf5/issues/1248
-        self.base.get_vars().set("arch", self.request.config.arch)
-        self.base.get_vars().set("basearch", self._BASEARCH_MAP[self.request.config.arch])
-        if self.request.config.releasever:
-            self.base.get_vars().set('releasever', self.request.config.releasever)
-        if self.request.config.proxy:
-            self.base.get_vars().set('proxy', self.request.config.proxy)
+        self.base.get_vars().set("arch", self.config.arch)
+        self.base.get_vars().set("basearch", self._BASEARCH_MAP[self.config.arch])
+        if self.config.releasever:
+            self.base.get_vars().set('releasever', self.config.releasever)
+        if self.config.proxy:
+            self.base.get_vars().set('proxy', self.config.proxy)
 
         # Enable fastestmirror to ensure we choose the fastest mirrors for
         # downloading metadata (when depsolving) and downloading packages.
@@ -202,24 +206,24 @@ class DNF5(SolverBase):
         conf.zchunk = False
 
         # Set the rest of the dnf configuration.
-        if self.request.config.module_platform_id:
-            conf.module_platform_id = self.request.config.module_platform_id
+        if self.config.module_platform_id:
+            conf.module_platform_id = self.config.module_platform_id
         conf.config_file_path = "/dev/null"
         conf.persistdir = persistdir
-        conf.cachedir = self.request.config.cachedir
+        conf.cachedir = self.config.cachedir
 
         # Include comps metadata by default
         metadata_types = ['comps']
-        if self.request.config.optional_metadata:
-            metadata_types.extend(self.request.config.optional_metadata)
+        if self.config.optional_metadata:
+            metadata_types.extend(self.config.optional_metadata)
         conf.optional_metadata_types = metadata_types
 
         try:
-            # pylint: disable=fixme
-            # XXX: This should be handled in the depsolve() function per transaction!
+            # NB: Package exclusion was previously handled here, but it should
+            # be handled in the depsolve() function per transaction instead.
             # NOTE: With libdnf5 packages are excluded in the repo setup
             for repo_conf in self.repos:
-                self._dnfrepo(repo_conf, exclude_pkgs)
+                self._dnfrepo(repo_conf)
 
             if self.root_dir:
                 # This sets the varsdir to ("{root_dir}/usr/share/dnf5/vars.d/", "{root_dir}/etc/dnf/vars/") for custom
@@ -242,17 +246,17 @@ class DNF5(SolverBase):
                 repo_iter = rq.begin()
                 while repo_iter != rq.end():
                     repo = repo_iter.value()
-                    config = repo.get_config()
-                    config.sslcacert = modify_rootdir_path(
-                        get_string_option(config.get_sslcacert_option()),
+                    repo_config = repo.get_config()
+                    repo_config.sslcacert = modify_rootdir_path(
+                        get_string_option(repo_config.get_sslcacert_option()),
                         self.root_dir,
                     )
-                    config.sslclientcert = modify_rootdir_path(
-                        get_string_option(config.get_sslclientcert_option()),
+                    repo_config.sslclientcert = modify_rootdir_path(
+                        get_string_option(repo_config.get_sslclientcert_option()),
                         self.root_dir,
                     )
-                    config.sslclientkey = modify_rootdir_path(
-                        get_string_option(config.get_sslclientkey_option()),
+                    repo_config.sslclientkey = modify_rootdir_path(
+                        get_string_option(repo_config.get_sslclientkey_option()),
                         self.root_dir,
                     )
                     repo_iter.next()
