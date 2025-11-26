@@ -204,7 +204,7 @@ TEST_REPOSITORIES = [
     (lambda result: serialize_response_search(SolverAPIVersion.V1, result), SearchResult),
 ], ids=["dump_v1", "search_v1", "dump", "search"])
 def test_solver_response_v1_dump_search(serializer, result_class):
-    response = serializer(result_class(TEST_PACKAGES))
+    response = serializer(result_class(TEST_PACKAGES, TEST_REPOSITORIES))
     assert isinstance(response, list)
     assert len(response) == len(TEST_PACKAGES)
     for idx, pkg in enumerate(response):

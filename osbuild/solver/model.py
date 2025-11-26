@@ -411,34 +411,36 @@ class DepsolveResult:
 class DumpResult:
     """Result of a dump operation."""
 
-    def __init__(self, packages: List[Package]):
+    def __init__(self, packages: List[Package], repositories: List[Repository]):
         self.packages = packages
+        self.repositories = repositories
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, DumpResult):
             return False
-        return self.packages == other.packages
+        return self.packages == other.packages and self.repositories == other.repositories
 
     def __hash__(self) -> int:
-        return hash((tuple(self.packages)))
+        return hash((tuple(self.packages), tuple(self.repositories)))
 
     def __repr__(self) -> str:
-        return f"DumpResult(packages={self.packages})"
+        return f"DumpResult(packages={self.packages}, repositories={self.repositories})"
 
 
 class SearchResult:
     """Result of a search operation."""
 
-    def __init__(self, packages: List[Package]):
+    def __init__(self, packages: List[Package], repositories: List[Repository]):
         self.packages = packages
+        self.repositories = repositories
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SearchResult):
             return False
-        return self.packages == other.packages
+        return self.packages == other.packages and self.repositories == other.repositories
 
     def __hash__(self) -> int:
-        return hash((tuple(self.packages)))
+        return hash((tuple(self.packages), tuple(self.repositories)))
 
     def __repr__(self) -> str:
-        return f"SearchResult(packages={self.packages})"
+        return f"SearchResult(packages={self.packages}, repositories={self.repositories})"
