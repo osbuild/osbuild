@@ -294,15 +294,30 @@ class TestDumpResult:
     """Tests for the DumpResult class"""
 
     def test_equality(self):
-        result1 = DumpResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
-        result2 = DumpResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        result1 = DumpResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = DumpResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
         assert result1 == result2
         assert hash(result1) == hash(result2)
 
     def test_collections(self):
-        result1 = DumpResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
-        result2 = DumpResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
-        result3 = DumpResult(packages=[Package("zsh", "5.8", "1.fc43", "x86_64")])
+        result1 = DumpResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = DumpResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result3 = DumpResult(
+            packages=[Package("zsh", "5.8", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
         assert len({result1, result2, result3}) == 2
         result_dict = {result1: "v1"}
         result_dict[result2] = "v2"
@@ -313,15 +328,30 @@ class TestSearchResult:
     """Tests for the SearchResult class"""
 
     def test_equality(self):
-        result1 = SearchResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
-        result2 = SearchResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        result1 = SearchResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = SearchResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
         assert result1 == result2
         assert hash(result1) == hash(result2)
 
     def test_collections(self):
-        result1 = SearchResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
-        result2 = SearchResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
-        result3 = SearchResult(packages=[Package("zsh", "5.8", "1.fc43", "x86_64")])
+        result1 = SearchResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = SearchResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result3 = SearchResult(
+            packages=[Package("zsh", "5.8", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
         assert len({result1, result2, result3}) == 2
         result_dict = {result1: "v1"}
         result_dict[result2] = "v2"

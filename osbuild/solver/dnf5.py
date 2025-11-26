@@ -369,16 +369,22 @@ class DNF5(SolverBase):
     def dump(self) -> model.DumpResult:
         """dump returns a list of all available packages"""
         packages = []
+        repositories = {}
         q = dnf5.rpm.PackageQuery(self.base)
         q.filter_available()
         for package in list(q):
             packages.append(_dnf_pkg_to_package(package))
-        return model.DumpResult(packages)
+            if package.get_repo().get_id() not in repositories:
+                repositories[package.get_repo().get_id()] = _dnf_repo_to_repository(
+                    package.get_repo(), self.root_dir, self.request_repo_ids)
+
+        return model.DumpResult(packages, list(repositories.values()))
 
     def search(self, args: SearchCmdArgs) -> model.SearchResult:
         """ Perform a search on the available packages"""
 
         packages = []
+        repositories = {}
 
         # NOTE: Build query one piece at a time, don't pass all to filterm at the same
         # time.
@@ -402,7 +408,11 @@ class DNF5(SolverBase):
 
             for package in list(q):
                 packages.append(_dnf_pkg_to_package(package))
-        return model.SearchResult(packages)
+                if package.get_repo().get_id() not in repositories:
+                    repositories[package.get_repo().get_id()] = _dnf_repo_to_repository(
+                        package.get_repo(), self.root_dir, self.request_repo_ids)
+
+        return model.SearchResult(packages, list(repositories.values()))
 
     def depsolve(self, args: DepsolveCmdArgs) -> model.DepsolveResult:
         """depsolve returns a list of the dependencies for the set of transactions

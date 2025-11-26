@@ -271,13 +271,18 @@ class DNF(SolverBase):
 
     def dump(self) -> model.DumpResult:
         packages = []
+        repositories = {}
         for pkg in self.base.sack.query().available():
             packages.append(_dnf_pkg_to_package(pkg))
-        return model.DumpResult(packages)
+            if pkg.repo.id not in repositories:
+                repositories[pkg.repo.id] = _dnf_repo_to_repository(pkg.repo, self.root_dir, self.request_repo_ids)
+
+        return model.DumpResult(packages, list(repositories.values()))
 
     def search(self, args: SearchCmdArgs) -> model.SearchResult:
         """ Perform a search on the available packages"""
         packages = []
+        repositories = {}
 
         # NOTE: Build query one piece at a time, don't pass all to filterm at the same
         # time.
@@ -299,8 +304,10 @@ class DNF(SolverBase):
 
             for pkg in q:
                 packages.append(_dnf_pkg_to_package(pkg))
+                if pkg.repo.id not in repositories:
+                    repositories[pkg.repo.id] = _dnf_repo_to_repository(pkg.repo, self.root_dir, self.request_repo_ids)
 
-        return model.SearchResult(packages)
+        return model.SearchResult(packages, list(repositories.values()))
 
     def depsolve(self, args: DepsolveCmdArgs) -> model.DepsolveResult:
         # collect repo IDs from the request so we know whether to translate gpg key paths
