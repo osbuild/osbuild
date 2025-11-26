@@ -51,17 +51,17 @@ def serialize_response_depsolve(api_version: SolverAPIVersion, solver: str, resu
     return api_module.serialize_response_depsolve(solver, result)
 
 
-def serialize_response_dump(api_version: SolverAPIVersion, result: DumpResult) -> List[Dict[str, Any]]:
+def serialize_response_dump(api_version: SolverAPIVersion, solver: str, result: DumpResult) -> List[Dict[str, Any]]:
     """
     Serializes a Solver API response for the DUMP command.
     """
     api_module = get_api_module(api_version)
-    return api_module.serialize_response_dump(result)
+    return api_module.serialize_response_dump(solver, result)
 
 
-def serialize_response_search(api_version: SolverAPIVersion, result: SearchResult) -> List[Dict[str, Any]]:
+def serialize_response_search(api_version: SolverAPIVersion, solver: str, result: SearchResult) -> List[Dict[str, Any]]:
     """
     Serializes a Solver API response for the SEARCH command.
     """
     api_module = get_api_module(api_version)
-    return api_module.serialize_response_search(result)
+    return api_module.serialize_response_search(solver, result)
