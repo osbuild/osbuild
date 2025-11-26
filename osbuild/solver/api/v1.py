@@ -73,11 +73,13 @@ def _repository_as_dict(repository: Repository) -> dict:
     }
 
 
-def serialize_response_dump(result: DumpResult) -> List[dict]:
+# pylint: disable=unused-argument
+def serialize_response_dump(solver: str, result: DumpResult) -> List[dict]:
     return [_package_as_dict_dump_search(package) for package in result.packages]
 
 
-def serialize_response_search(result: SearchResult) -> List[dict]:
+# pylint: disable=unused-argument
+def serialize_response_search(solver: str, result: SearchResult) -> List[dict]:
     return [_package_as_dict_dump_search(package) for package in result.packages]
 
 

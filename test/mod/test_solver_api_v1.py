@@ -197,14 +197,15 @@ TEST_REPOSITORIES = [
 ]
 
 
+@pytest.mark.parametrize("solver", ["dnf5", "dnf"], ids=["dnf5", "dnf"])
 @pytest.mark.parametrize("serializer,result_class", [
     (serialize_response_dump_v1, DumpResult),
     (serialize_response_search_v1, SearchResult),
-    (lambda result: serialize_response_dump(SolverAPIVersion.V1, result), DumpResult),
-    (lambda result: serialize_response_search(SolverAPIVersion.V1, result), SearchResult),
+    (lambda solver, result: serialize_response_dump(SolverAPIVersion.V1, solver, result), DumpResult),
+    (lambda solver, result: serialize_response_search(SolverAPIVersion.V1, solver, result), SearchResult),
 ], ids=["dump_v1", "search_v1", "dump", "search"])
-def test_solver_response_v1_dump_search(serializer, result_class):
-    response = serializer(result_class(TEST_PACKAGES, TEST_REPOSITORIES))
+def test_solver_response_v1_dump_search(solver, serializer, result_class):
+    response = serializer(solver, result_class(TEST_PACKAGES, TEST_REPOSITORIES))
     assert isinstance(response, list)
     assert len(response) == len(TEST_PACKAGES)
     for idx, pkg in enumerate(response):
