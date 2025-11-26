@@ -45,16 +45,16 @@ def solve(request_dict: Dict[str, Any]):
     with tempfile.TemporaryDirectory() as persistdir:
         try:
             request = api.parse_request(request_dict)
-            solver = Solver(request, persistdir, config.get("license_index_path"))
+            solver = Solver(request.config, persistdir, config.get("license_index_path"))
             if request.command == SolverCommand.DUMP:
                 result = solver.dump()
-                return solver.serialize_response_dump(result), None
+                return api.serialize_response_dump(request.api_version, solver.SOLVER_NAME, result), None
             if request.command == SolverCommand.DEPSOLVE:
                 result = solver.depsolve(request.depsolve_args)
-                return solver.serialize_response_depsolve(result), None
+                return api.serialize_response_depsolve(request.api_version, solver.SOLVER_NAME, result), None
             if request.command == SolverCommand.SEARCH:
                 result = solver.search(request.search_args)
-                return solver.serialize_response_search(result), None
+                return api.serialize_response_search(request.api_version, solver.SOLVER_NAME, result), None
             raise InvalidRequestError(f"Invalid command '{request.command}'")
         except GPGKeyReadError as e:
             printe("error reading gpgkey")

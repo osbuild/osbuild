@@ -15,7 +15,7 @@ from dnf.i18n import ucd
 import osbuild.solver.model as model
 from osbuild.solver import SolverBase, modify_rootdir_path, read_keys
 from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError, RepoError
-from osbuild.solver.request import DepsolveCmdArgs, RepositoryConfig, SearchCmdArgs, SolverRequest
+from osbuild.solver.request import DepsolveCmdArgs, RepositoryConfig, SearchCmdArgs, SolverConfig
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
@@ -115,15 +115,15 @@ class DNF(SolverBase):
 
     def __init__(
         self,
-        request: SolverRequest,
+        config: SolverConfig,
         persistdir: os.PathLike,
         license_index_path: Optional[os.PathLike] = None,
     ):
-        super().__init__(request, persistdir, license_index_path)
+        super().__init__(config, persistdir, license_index_path)
 
-        self.repos = self.request.config.repos or []
+        self.repos = self.config.repos or []
         self.request_repo_ids = {repo.repo_id for repo in self.repos} if self.repos else set()
-        self.root_dir = self.request.config.root_dir
+        self.root_dir = self.config.root_dir
 
         self.base = dnf.Base()
 
@@ -149,14 +149,14 @@ class DNF(SolverBase):
         self.base.conf.zchunk = False
 
         # Set the rest of the dnf configuration.
-        if self.request.config.module_platform_id:
-            self.base.conf.module_platform_id = self.request.config.module_platform_id
+        if self.config.module_platform_id:
+            self.base.conf.module_platform_id = self.config.module_platform_id
         self.base.conf.config_file_path = "/dev/null"
         self.base.conf.persistdir = persistdir
-        self.base.conf.cachedir = self.request.config.cachedir
-        self.base.conf.substitutions['arch'] = self.request.config.arch
-        self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(self.request.config.arch)
-        self.base.conf.substitutions['releasever'] = self.request.config.releasever
+        self.base.conf.cachedir = self.config.cachedir
+        self.base.conf.substitutions['arch'] = self.config.arch
+        self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(self.config.arch)
+        self.base.conf.substitutions['releasever'] = self.config.releasever
 
         # variables substitution is only available when root_dir is provided
         if self.root_dir:
@@ -164,11 +164,11 @@ class DNF(SolverBase):
             # substitution (e.g. CentOS Stream 9's $stream variable)
             self.base.conf.substitutions.update_from_etc(self.root_dir)
 
-        if hasattr(self.base.conf, "optional_metadata_types") and self.request.config.optional_metadata:
+        if hasattr(self.base.conf, "optional_metadata_types") and self.config.optional_metadata:
             # the attribute doesn't exist on older versions of dnf; ignore the option when not available
-            self.base.conf.optional_metadata_types.extend(self.request.config.optional_metadata)
-        if self.request.config.proxy:
-            self.base.conf.proxy = self.request.config.proxy
+            self.base.conf.optional_metadata_types.extend(self.config.optional_metadata)
+        if self.config.proxy:
+            self.base.conf.proxy = self.config.proxy
 
         try:
             for repo_conf in self.repos:

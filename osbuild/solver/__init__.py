@@ -3,12 +3,11 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
-from osbuild.solver.api import serialize_response_depsolve, serialize_response_dump, serialize_response_search
 from osbuild.solver.exceptions import GPGKeyReadError
 from osbuild.solver.model import DepsolveResult, DumpResult, SearchResult
-from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverRequest
+from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverConfig
 
 
 class Solver(abc.ABC):
@@ -38,25 +37,13 @@ class SolverBase(Solver):
 
     def __init__(
         self,
-        request: "SolverRequest",
+        config: SolverConfig,
         persistdir: os.PathLike,
         license_index_path: Optional[os.PathLike] = None,
     ):
-        self.request = request
+        self.config = config
         self.persistdir = persistdir
         self.license_index_path = license_index_path
-
-    def serialize_response_depsolve(self, result: DepsolveResult) -> Dict[str, Any]:
-        """Transform a DepsolveResult to a JSON-serializable response."""
-        return serialize_response_depsolve(self.request.api_version, self.SOLVER_NAME, result)
-
-    def serialize_response_dump(self, result: DumpResult) -> List[Dict[str, Any]]:
-        """Transform a DumpResult to a JSON-serializable response."""
-        return serialize_response_dump(self.request.api_version, self.SOLVER_NAME, result)
-
-    def serialize_response_search(self, result: SearchResult) -> List[Dict[str, Any]]:
-        """Transform a SearchResult to a JSON-serializable response."""
-        return serialize_response_search(self.request.api_version, self.SOLVER_NAME, result)
 
 
 def modify_rootdir_path(path, root_dir):
