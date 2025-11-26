@@ -269,13 +269,13 @@ class DNF(SolverBase):
         spdx_doc = sbom_pkgset_to_spdx2_doc(pkgset, self.license_index_path)
         return spdx_doc.to_dict()
 
-    def dump(self):
+    def dump(self) -> model.DumpResult:
         packages = []
         for pkg in self.base.sack.query().available():
             packages.append(_dnf_pkg_to_package(pkg))
-        return self.serialize_response_dump(packages)
+        return model.DumpResult(packages)
 
-    def search(self, args: SearchCmdArgs):
+    def search(self, args: SearchCmdArgs) -> model.SearchResult:
         """ Perform a search on the available packages"""
         packages = []
 
@@ -300,9 +300,9 @@ class DNF(SolverBase):
             for pkg in q:
                 packages.append(_dnf_pkg_to_package(pkg))
 
-        return self.serialize_response_search(packages)
+        return model.SearchResult(packages)
 
-    def depsolve(self, args: DepsolveCmdArgs):
+    def depsolve(self, args: DepsolveCmdArgs) -> model.DepsolveResult:
         # collect repo IDs from the request so we know whether to translate gpg key paths
         last_transaction: List = []
 
@@ -446,9 +446,9 @@ class DNF(SolverBase):
                 },
             }
 
-        return self.serialize_response_depsolve(
-            packages,
-            list(repositories.values()),
-            modules_response if modules_response else None,
-            sbom if sbom else None,
+        return model.DepsolveResult(
+            packages=packages,
+            repositories=list(repositories.values()),
+            modules=modules_response if modules_response else None,
+            sbom=sbom if sbom else None,
         )
