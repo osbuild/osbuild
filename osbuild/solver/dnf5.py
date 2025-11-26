@@ -366,16 +366,16 @@ class DNF5(SolverBase):
         spdx_doc = sbom_pkgset_to_spdx2_doc(pkgset, self.license_index_path)
         return spdx_doc.to_dict()
 
-    def dump(self):
+    def dump(self) -> model.DumpResult:
         """dump returns a list of all available packages"""
         packages = []
         q = dnf5.rpm.PackageQuery(self.base)
         q.filter_available()
         for package in list(q):
             packages.append(_dnf_pkg_to_package(package))
-        return self.serialize_response_dump(packages)
+        return model.DumpResult(packages)
 
-    def search(self, args: SearchCmdArgs):
+    def search(self, args: SearchCmdArgs) -> model.SearchResult:
         """ Perform a search on the available packages"""
 
         packages = []
@@ -402,9 +402,9 @@ class DNF5(SolverBase):
 
             for package in list(q):
                 packages.append(_dnf_pkg_to_package(package))
-        return self.serialize_response_search(packages)
+        return model.SearchResult(packages)
 
-    def depsolve(self, args: DepsolveCmdArgs):
+    def depsolve(self, args: DepsolveCmdArgs) -> model.DepsolveResult:
         """depsolve returns a list of the dependencies for the set of transactions
         """
         # Return an empty list when 'transactions' key is missing or when it is None
@@ -461,8 +461,9 @@ class DNF5(SolverBase):
         if args.sbom_request:
             sbom = self._sbom_for_pkgset(last_transaction)
 
-        return self.serialize_response_depsolve(
-            packages,
-            list(pkg_repos.values()),
+        return model.DepsolveResult(
+            packages=packages,
+            repositories=list(pkg_repos.values()),
+            modules=None,  # DNF5 Solver does not support modules
             sbom=sbom,
         )

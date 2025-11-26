@@ -47,11 +47,14 @@ def solve(request_dict: Dict[str, Any]):
             request = api.parse_request(request_dict)
             solver = Solver(request, persistdir, config.get("license_index_path"))
             if request.command == SolverCommand.DUMP:
-                return solver.dump(), None
+                result = solver.dump()
+                return solver.serialize_response_dump(result), None
             if request.command == SolverCommand.DEPSOLVE:
-                return solver.depsolve(request.depsolve_args), None
+                result = solver.depsolve(request.depsolve_args)
+                return solver.serialize_response_depsolve(result), None
             if request.command == SolverCommand.SEARCH:
-                return solver.search(request.search_args), None
+                result = solver.search(request.search_args)
+                return solver.serialize_response_search(result), None
             raise InvalidRequestError(f"Invalid command '{request.command}'")
         except GPGKeyReadError as e:
             printe("error reading gpgkey")
