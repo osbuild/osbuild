@@ -127,6 +127,17 @@ class TestPackage:
         pkg_dict[pkg2] = "v2"
         assert len(pkg_dict) == 1 and pkg_dict[pkg1] == "v2"
 
+    def test__lt__(self):
+        pkg1 = Package("bash", "5.1", "1.fc43", "x86_64")
+        pkg2 = Package("bash", "5.8", "1.fc43", "x86_64")
+        assert pkg1 < pkg2
+        # Test equality case
+        pkg3 = Package("bash", "5.1", "1.fc43", "x86_64")
+        # pylint: disable=unnecessary-negation
+        assert not pkg1 < pkg3
+        # Test sorting
+        assert sorted([pkg2, pkg1]) == [pkg1, pkg2]
+
     def test__str__(self):
         assert str(Package("bash", "5.1", "1.fc43", "x86_64", epoch=2, repo_id="fedora")) == "bash-2:5.1-1.fc43.x86_64"
         assert str(Package("bash", "5.1", "1.fc43", "x86_64")) == "bash-0:5.1-1.fc43.x86_64"

@@ -340,6 +340,9 @@ class Package:
             self.reason,
         ))
 
+    def __lt__(self, other: "Package") -> bool:
+        return self.full_nevra() < other.full_nevra()
+
     def __str__(self) -> str:
         return self.full_nevra()
 
