@@ -48,22 +48,15 @@ class SolverBase(Solver):
 
     def serialize_response_depsolve(self, result: DepsolveResult) -> Dict[str, Any]:
         """Transform a DepsolveResult to a JSON-serializable response."""
-        return serialize_response_depsolve(
-            self.request.api_version,
-            self.SOLVER_NAME,
-            result.packages,
-            result.repositories,
-            result.modules,
-            result.sbom,
-        )
+        return serialize_response_depsolve(self.request.api_version, self.SOLVER_NAME, result)
 
     def serialize_response_dump(self, result: DumpResult) -> List[Dict[str, Any]]:
         """Transform a DumpResult to a JSON-serializable response."""
-        return serialize_response_dump(self.request.api_version, result.packages)
+        return serialize_response_dump(self.request.api_version, result)
 
     def serialize_response_search(self, result: SearchResult) -> List[Dict[str, Any]]:
         """Transform a SearchResult to a JSON-serializable response."""
-        return serialize_response_search(self.request.api_version, result.packages)
+        return serialize_response_search(self.request.api_version, result)
 
 
 def modify_rootdir_path(path, root_dir):

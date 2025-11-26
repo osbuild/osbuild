@@ -1,10 +1,10 @@
 # pylint: disable=fixme
 # XXX: remove 'Provides: osbuild-dnf-json-api = 8' from the osbuild.spec file when this file is removed
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from osbuild.solver.exceptions import InvalidRequestError
-from osbuild.solver.model import Package, Repository
+from osbuild.solver.model import DepsolveResult, DumpResult, Package, Repository, SearchResult
 from osbuild.solver.request import (
     DepsolveCmdArgs,
     DepsolveTransaction,
@@ -73,30 +73,24 @@ def _repository_as_dict(repository: Repository) -> dict:
     }
 
 
-def serialize_response_dump(packages: List[Package]) -> List[dict]:
-    return [_package_as_dict_dump_search(package) for package in packages]
+def serialize_response_dump(result: DumpResult) -> List[dict]:
+    return [_package_as_dict_dump_search(package) for package in result.packages]
 
 
-def serialize_response_search(packages: List[Package]) -> List[dict]:
-    return [_package_as_dict_dump_search(package) for package in packages]
+def serialize_response_search(result: SearchResult) -> List[dict]:
+    return [_package_as_dict_dump_search(package) for package in result.packages]
 
 
-def serialize_response_depsolve(
-    solver: str,
-    packages: List[Package],
-    repositories: List[Repository],
-    modules: Optional[dict] = None,
-    sbom: Optional[Any] = None,
-) -> Dict[str, Any]:
+def serialize_response_depsolve(solver: str, result: DepsolveResult) -> Dict[str, Any]:
     d = {
         "solver": solver,
-        "packages": [_package_as_dict_depsolve(package) for package in packages],
-        "repos": {repository.repo_id: _repository_as_dict(repository) for repository in repositories},
-        "modules": modules if modules else {},
+        "packages": [_package_as_dict_depsolve(package) for package in result.packages],
+        "repos": {repository.repo_id: _repository_as_dict(repository) for repository in result.repositories},
+        "modules": result.modules if result.modules else {},
     }
 
-    if sbom:
-        d["sbom"] = sbom
+    if result.sbom:
+        d["sbom"] = result.sbom
 
     return d
 

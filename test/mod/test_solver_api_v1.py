@@ -18,8 +18,11 @@ from osbuild.solver.exceptions import InvalidRequestError
 from osbuild.solver.model import (
     Checksum,
     Dependency,
+    DepsolveResult,
+    DumpResult,
     Package,
     Repository,
+    SearchResult,
 )
 from osbuild.solver.request import (
     DepsolveCmdArgs,
@@ -194,14 +197,14 @@ TEST_REPOSITORIES = [
 ]
 
 
-@pytest.mark.parametrize("serializer", [
-    serialize_response_dump_v1,
-    serialize_response_search_v1,
-    lambda packages: serialize_response_dump(SolverAPIVersion.V1, packages),
-    lambda packages: serialize_response_search(SolverAPIVersion.V1, packages),
+@pytest.mark.parametrize("serializer,result_class", [
+    (serialize_response_dump_v1, DumpResult),
+    (serialize_response_search_v1, SearchResult),
+    (lambda result: serialize_response_dump(SolverAPIVersion.V1, result), DumpResult),
+    (lambda result: serialize_response_search(SolverAPIVersion.V1, result), SearchResult),
 ], ids=["dump_v1", "search_v1", "dump", "search"])
-def test_solver_response_v1_dump_search(serializer):
-    response = serializer(TEST_PACKAGES)
+def test_solver_response_v1_dump_search(serializer, result_class):
+    response = serializer(result_class(TEST_PACKAGES))
     assert isinstance(response, list)
     assert len(response) == len(TEST_PACKAGES)
     for idx, pkg in enumerate(response):
@@ -240,12 +243,10 @@ def test_solver_response_v1_dump_search(serializer):
 @pytest.mark.parametrize("solver", ["dnf5", "dnf"])
 @pytest.mark.parametrize("serializer", [
     serialize_response_depsolve_v1,
-    lambda solver, packages, repositories, modules, sbom: serialize_response_depsolve(
-        SolverAPIVersion.V1, solver, packages, repositories, modules, sbom
-    ),
+    lambda solver, result: serialize_response_depsolve(SolverAPIVersion.V1, solver, result),
 ], ids=["depsolve_v1", "depsolve"])
 def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
-    response = serializer(solver, TEST_PACKAGES, TEST_REPOSITORIES, modules, sbom)
+    response = serializer(solver, DepsolveResult(TEST_PACKAGES, TEST_REPOSITORIES, modules, sbom))
     expected_keys = ["solver", "packages", "repos", "modules"]
     if sbom:
         expected_keys.append("sbom")
