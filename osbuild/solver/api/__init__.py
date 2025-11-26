@@ -1,10 +1,10 @@
 import importlib
 from enum import Enum
 from types import ModuleType
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from osbuild.solver.exceptions import InvalidAPIVersionError
-from osbuild.solver.model import Package, Repository
+from osbuild.solver.model import DepsolveResult, DumpResult, SearchResult
 from osbuild.solver.request import SolverRequest
 
 
@@ -43,32 +43,25 @@ def parse_request(request_dict: Dict) -> SolverRequest:
     return api_module.parse_request(request_dict)
 
 
-def serialize_response_depsolve(
-    api_version: SolverAPIVersion,
-    solver: str,
-    packages: List[Package],
-    repositories: List[Repository],
-    modules: Optional[dict] = None,
-    sbom: Optional[Any] = None,
-) -> Dict[str, Any]:
+def serialize_response_depsolve(api_version: SolverAPIVersion, solver: str, result: DepsolveResult) -> Dict[str, Any]:
     """
     Serializes a Solver API response for the DEPSOLVE command.
     """
     api_module = get_api_module(api_version)
-    return api_module.serialize_response_depsolve(solver, packages, repositories, modules, sbom)
+    return api_module.serialize_response_depsolve(solver, result)
 
 
-def serialize_response_dump(api_version: SolverAPIVersion, packages: List[Package]) -> List[Dict[str, Any]]:
+def serialize_response_dump(api_version: SolverAPIVersion, result: DumpResult) -> List[Dict[str, Any]]:
     """
     Serializes a Solver API response for the DUMP command.
     """
     api_module = get_api_module(api_version)
-    return api_module.serialize_response_dump(packages)
+    return api_module.serialize_response_dump(result)
 
 
-def serialize_response_search(api_version: SolverAPIVersion, packages: List[Package]) -> List[Dict[str, Any]]:
+def serialize_response_search(api_version: SolverAPIVersion, result: SearchResult) -> List[Dict[str, Any]]:
     """
     Serializes a Solver API response for the SEARCH command.
     """
     api_module = get_api_module(api_version)
-    return api_module.serialize_response_search(packages)
+    return api_module.serialize_response_search(result)
