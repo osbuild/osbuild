@@ -37,8 +37,7 @@ def _instantiate_solver(solver_class, cachedir, persistdir, repo_servers):
 
 @pytest.mark.parametrize("solver", [
     pytest.param(_get_dnf4_solver_class(), id="dnf4"),
-    # DNF5 does not return sorted results
-    # pytest.param(_get_dnf5_solver_class(), id="dnf5"),
+    pytest.param(_get_dnf5_solver_class(), id="dnf5"),
 ])
 def test_results_sorted(tmp_path, repo_servers, solver):
     cachedir = tmp_path / "cache"
