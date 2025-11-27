@@ -308,6 +308,10 @@ class DNF5(SolverBase):
         repo = sack.create_repo(desc.repo_id)
         conf = repo.get_config()
 
+        # NB: default to using the repo_id as the name, to be consistent with DNF4 solver.
+        # DNF5 documentation says that this should happen, but it doesn't seem to be the case.
+        # https://github.com/rpm-software-management/dnf5/issues/2533
+        conf.name = desc.repo_id
         if desc.name:
             conf.name = desc.name
 
