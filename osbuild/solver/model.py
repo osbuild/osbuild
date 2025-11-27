@@ -7,6 +7,7 @@ used by the solver: packages, repositories, dependencies, and checksums.
 These models are used internally by solver implementations and in API responses.
 """
 
+import json
 from datetime import datetime, timezone
 from typing import FrozenSet, List, Optional
 
@@ -367,3 +368,77 @@ class Package:
         if self.build_time is None:
             return ""
         return self._timestamp_to_rfc3339(self.build_time)
+
+
+class DepsolveResult:
+    """Result of a depsolve operation."""
+
+    def __init__(
+        self,
+        packages: List[Package],
+        repositories: List[Repository],
+        modules: Optional[dict] = None,
+        sbom: Optional[dict] = None
+    ):
+        self.packages = packages
+        self.repositories = repositories
+        self.modules = modules
+        self.sbom = sbom
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DepsolveResult):
+            return False
+        return (
+            self.packages == other.packages
+            and self.repositories == other.repositories
+            and self.modules == other.modules
+            and self.sbom == other.sbom
+        )
+
+    def __hash__(self) -> int:
+        return hash((
+            tuple(self.packages),
+            tuple(self.repositories),
+            json.dumps(self.modules, sort_keys=True) if self.modules else None,
+            json.dumps(self.sbom, sort_keys=True) if self.sbom else None,
+        ))
+
+    def __repr__(self) -> str:
+        return f"DepsolveResult(packages={self.packages}, repositories={self.repositories}, " \
+            f"modules={self.modules}, sbom={self.sbom})"
+
+
+class DumpResult:
+    """Result of a dump operation."""
+
+    def __init__(self, packages: List[Package]):
+        self.packages = packages
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DumpResult):
+            return False
+        return self.packages == other.packages
+
+    def __hash__(self) -> int:
+        return hash((tuple(self.packages)))
+
+    def __repr__(self) -> str:
+        return f"DumpResult(packages={self.packages})"
+
+
+class SearchResult:
+    """Result of a search operation."""
+
+    def __init__(self, packages: List[Package]):
+        self.packages = packages
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SearchResult):
+            return False
+        return self.packages == other.packages
+
+    def __hash__(self) -> int:
+        return hash((tuple(self.packages)))
+
+    def __repr__(self) -> str:
+        return f"SearchResult(packages={self.packages})"

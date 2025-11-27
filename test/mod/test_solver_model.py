@@ -4,7 +4,15 @@ Unit tests for osbuild.solver.model classes
 
 import pytest
 
-from osbuild.solver.model import Checksum, Dependency, Package, Repository
+from osbuild.solver.model import (
+    Checksum,
+    Dependency,
+    DepsolveResult,
+    DumpResult,
+    Package,
+    Repository,
+    SearchResult,
+)
 
 
 class TestDependency:
@@ -242,3 +250,79 @@ class TestRepository:
         repo_dict = {repo1: "v1"}
         repo_dict[repo2] = "v2"
         assert len(repo_dict) == 1 and repo_dict[repo1] == "v2"
+
+
+class TestDepsolveResult:
+    """Tests for the DepsolveResult class"""
+
+    def test_equality(self):
+        result1 = DepsolveResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])],
+            modules={"module1": {"package": {"name": "module1", "stream": "8"}, "profiles": ["base"]}},
+            sbom={"sbom": "sbom document"}
+        )
+        result2 = DepsolveResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])],
+            modules={"module1": {"package": {"name": "module1", "stream": "8"}, "profiles": ["base"]}},
+            sbom={"sbom": "sbom document"}
+        )
+        assert result1 == result2
+        assert hash(result1) == hash(result2)
+
+    def test_collections(self):
+        result1 = DepsolveResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = DepsolveResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result3 = DepsolveResult(
+            packages=[Package("zsh", "5.8", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        assert len({result1, result2, result3}) == 2
+        result_dict = {result1: "v1"}
+        result_dict[result2] = "v2"
+        assert len(result_dict) == 1 and result_dict[result1] == "v2"
+
+
+class TestDumpResult:
+    """Tests for the DumpResult class"""
+
+    def test_equality(self):
+        result1 = DumpResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        result2 = DumpResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        assert result1 == result2
+        assert hash(result1) == hash(result2)
+
+    def test_collections(self):
+        result1 = DumpResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        result2 = DumpResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        result3 = DumpResult(packages=[Package("zsh", "5.8", "1.fc43", "x86_64")])
+        assert len({result1, result2, result3}) == 2
+        result_dict = {result1: "v1"}
+        result_dict[result2] = "v2"
+        assert len(result_dict) == 1 and result_dict[result1] == "v2"
+
+
+class TestSearchResult:
+    """Tests for the SearchResult class"""
+
+    def test_equality(self):
+        result1 = SearchResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        result2 = SearchResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        assert result1 == result2
+        assert hash(result1) == hash(result2)
+
+    def test_collections(self):
+        result1 = SearchResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        result2 = SearchResult(packages=[Package("bash", "5.1", "1.fc43", "x86_64")])
+        result3 = SearchResult(packages=[Package("zsh", "5.8", "1.fc43", "x86_64")])
+        assert len({result1, result2, result3}) == 2
+        result_dict = {result1: "v1"}
+        result_dict[result2] = "v2"
+        assert len(result_dict) == 1 and result_dict[result1] == "v2"
