@@ -142,6 +142,35 @@ class DNF5(SolverBase):
 
     SOLVER_NAME = "dnf5"
 
+    _BASEARCH_MAP = _invert({
+        'aarch64': ('aarch64',),
+        'alpha': ('alpha', 'alphaev4', 'alphaev45', 'alphaev5', 'alphaev56',
+                  'alphaev6', 'alphaev67', 'alphaev68', 'alphaev7', 'alphapca56'),
+        'arm': ('armv5tejl', 'armv5tel', 'armv5tl', 'armv6l', 'armv7l', 'armv8l'),
+        'armhfp': ('armv6hl', 'armv7hl', 'armv7hnl', 'armv8hl'),
+        'i386': ('i386', 'athlon', 'geode', 'i386', 'i486', 'i586', 'i686'),
+        'ia64': ('ia64',),
+        'mips': ('mips',),
+        'mipsel': ('mipsel',),
+        'mips64': ('mips64',),
+        'mips64el': ('mips64el',),
+        'loongarch64': ('loongarch64',),
+        'noarch': ('noarch',),
+        'ppc': ('ppc',),
+        'ppc64': ('ppc64', 'ppc64iseries', 'ppc64p7', 'ppc64pseries'),
+        'ppc64le': ('ppc64le',),
+        'riscv32': ('riscv32',),
+        'riscv64': ('riscv64',),
+        'riscv128': ('riscv128',),
+        's390': ('s390',),
+        's390x': ('s390x',),
+        'sh3': ('sh3',),
+        'sh4': ('sh4', 'sh4a'),
+        'sparc': ('sparc', 'sparc64', 'sparc64v', 'sparcv8', 'sparcv9',
+                  'sparcv9v'),
+        'x86_64': ('x86_64', 'amd64', 'ia32e'),
+    })
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,
@@ -267,35 +296,6 @@ class DNF5(SolverBase):
 
         if not any_repos_enabled(self.base):
             raise NoReposError("There are no enabled repositories")
-
-    _BASEARCH_MAP = _invert({
-        'aarch64': ('aarch64',),
-        'alpha': ('alpha', 'alphaev4', 'alphaev45', 'alphaev5', 'alphaev56',
-                  'alphaev6', 'alphaev67', 'alphaev68', 'alphaev7', 'alphapca56'),
-        'arm': ('armv5tejl', 'armv5tel', 'armv5tl', 'armv6l', 'armv7l', 'armv8l'),
-        'armhfp': ('armv6hl', 'armv7hl', 'armv7hnl', 'armv8hl'),
-        'i386': ('i386', 'athlon', 'geode', 'i386', 'i486', 'i586', 'i686'),
-        'ia64': ('ia64',),
-        'mips': ('mips',),
-        'mipsel': ('mipsel',),
-        'mips64': ('mips64',),
-        'mips64el': ('mips64el',),
-        'loongarch64': ('loongarch64',),
-        'noarch': ('noarch',),
-        'ppc': ('ppc',),
-        'ppc64': ('ppc64', 'ppc64iseries', 'ppc64p7', 'ppc64pseries'),
-        'ppc64le': ('ppc64le',),
-        'riscv32': ('riscv32',),
-        'riscv64': ('riscv64',),
-        'riscv128': ('riscv128',),
-        's390': ('s390',),
-        's390x': ('s390x',),
-        'sh3': ('sh3',),
-        'sh4': ('sh4', 'sh4a'),
-        'sparc': ('sparc', 'sparc64', 'sparc64v', 'sparcv8', 'sparcv9',
-                  'sparcv9v'),
-        'x86_64': ('x86_64', 'amd64', 'ia32e'),
-    })
 
     # pylint: disable=too-many-branches
     def _dnfrepo(self, desc: RepositoryConfig, exclude_pkgs=None):
