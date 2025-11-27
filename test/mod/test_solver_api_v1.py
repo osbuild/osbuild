@@ -247,7 +247,20 @@ def test_solver_response_v1_dump_search(solver, serializer, result_class):
     lambda solver, result: serialize_response_depsolve(SolverAPIVersion.V1, solver, result),
 ], ids=["depsolve_v1", "depsolve"])
 def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
-    response = serializer(solver, DepsolveResult(TEST_PACKAGES, TEST_REPOSITORIES, modules, sbom))
+    test_packages_middle_index = len(TEST_PACKAGES) // 2
+    response = serializer(
+        solver,
+        # NB: intentionally using multiple transactions to test the most common use case.
+        DepsolveResult(
+            [
+                TEST_PACKAGES[:test_packages_middle_index],
+                TEST_PACKAGES
+            ],
+            TEST_REPOSITORIES,
+            modules,
+            sbom,
+        )
+    )
     expected_keys = ["solver", "packages", "repos", "modules"]
     if sbom:
         expected_keys.append("sbom")

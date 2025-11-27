@@ -257,13 +257,19 @@ class TestDepsolveResult:
 
     def test_equality(self):
         result1 = DepsolveResult(
-            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+                [Package("zsh", "5.8", "1.fc43", "x86_64")],
+            ],
             repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])],
             modules={"module1": {"package": {"name": "module1", "stream": "8"}, "profiles": ["base"]}},
             sbom={"sbom": "sbom document"}
         )
         result2 = DepsolveResult(
-            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+                [Package("zsh", "5.8", "1.fc43", "x86_64")],
+            ],
             repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])],
             modules={"module1": {"package": {"name": "module1", "stream": "8"}, "profiles": ["base"]}},
             sbom={"sbom": "sbom document"}
@@ -273,15 +279,22 @@ class TestDepsolveResult:
 
     def test_collections(self):
         result1 = DepsolveResult(
-            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+            ],
             repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
         )
         result2 = DepsolveResult(
-            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+            ],
             repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
         )
         result3 = DepsolveResult(
-            packages=[Package("zsh", "5.8", "1.fc43", "x86_64")],
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+                [Package("zsh", "5.8", "1.fc43", "x86_64")],
+            ],
             repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
         )
         assert len({result1, result2, result3}) == 2

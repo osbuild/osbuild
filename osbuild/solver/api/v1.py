@@ -84,9 +84,10 @@ def serialize_response_search(solver: str, result: SearchResult) -> List[dict]:
 
 
 def serialize_response_depsolve(solver: str, result: DepsolveResult) -> Dict[str, Any]:
+    last_transaction = result.transactions[-1] if result.transactions else []
     d = {
         "solver": solver,
-        "packages": [_package_as_dict_depsolve(package) for package in result.packages],
+        "packages": [_package_as_dict_depsolve(package) for package in last_transaction],
         "repos": {repository.repo_id: _repository_as_dict(repository) for repository in result.repositories},
         "modules": result.modules if result.modules else {},
     }
