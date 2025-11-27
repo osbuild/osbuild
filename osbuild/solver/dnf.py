@@ -460,7 +460,8 @@ class DNF(SolverBase):
         packages.sort()
         return model.DepsolveResult(
             packages=packages,
-            repositories=list(repositories.values()),
+            # NB: we sort the repositories by repo_id to ensure consistent ordering across DNF4 and DNF5.
+            repositories=sorted(list(repositories.values()), key=lambda x: x.repo_id),
             modules=modules_response if modules_response else None,
             sbom=sbom if sbom else None,
         )
