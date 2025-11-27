@@ -53,3 +53,4 @@ def test_results_sorted(tmp_path, repo_servers, solver):
     )
     depsolve_result = solver.depsolve(depsolve_args)
     assert depsolve_result.packages == sorted(depsolve_result.packages)
+    assert depsolve_result.repositories == sorted(depsolve_result.repositories, key=lambda x: x.repo_id)

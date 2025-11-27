@@ -487,7 +487,8 @@ class DNF5(SolverBase):
         packages.sort()
         return model.DepsolveResult(
             packages=packages,
-            repositories=list(pkg_repos.values()),
+            # NB: we sort the repositories by repo_id to ensure consistent ordering across DNF4 and DNF5.
+            repositories=sorted(list(pkg_repos.values()), key=lambda x: x.repo_id),
             modules=None,  # DNF5 Solver does not support modules
             sbom=sbom,
         )
