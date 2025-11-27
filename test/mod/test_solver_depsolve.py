@@ -30,11 +30,19 @@ def test_results_sorted(tmp_path, repo_servers, solver):
 
     depsolve_args = DepsolveCmdArgs(
         transactions=[
-            DepsolveTransaction(
-                package_specs=["bash"],
-            )
+            DepsolveTransaction(package_specs=["bash"]),
+            DepsolveTransaction(package_specs=["pkg-with-no-deps"]),
+            DepsolveTransaction(package_specs=["vim"]),
         ]
     )
     depsolve_result = solver.depsolve(depsolve_args)
-    assert depsolve_result.packages == sorted(depsolve_result.packages)
+
+    assert len(depsolve_result.transactions) == len(depsolve_args.transactions)
+
+    last_transaction_result = set()
+    for transaction_result in depsolve_result.transactions:
+        assert transaction_result == sorted(transaction_result)
+        assert last_transaction_result.issubset(transaction_result)
+        last_transaction_result = set(transaction_result)
+
     assert depsolve_result.repositories == sorted(depsolve_result.repositories, key=lambda x: x.repo_id)

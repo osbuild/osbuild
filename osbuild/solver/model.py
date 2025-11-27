@@ -375,12 +375,22 @@ class DepsolveResult:
 
     def __init__(
         self,
-        packages: List[Package],
+        transactions: List[List[Package]],
         repositories: List[Repository],
         modules: Optional[dict] = None,
         sbom: Optional[dict] = None
     ):
-        self.packages = packages
+        """
+        Args:
+            transactions: List of transaction results, each containing a list of packages that are a result of
+                          dependency resolution. The order of transactions corresponds to the order of transactions
+                          in the request. Each transaction result is a superset of the previous transaction result.
+                          The package list in each transaction is expected to be alphabetically sorted by full NEVRA.
+            repositories: List of repositories used in the transactions.
+            modules: Optional dictionary of modules-related information.
+            sbom: Optional SBOM document for the transaction.
+        """
+        self.transactions = transactions
         self.repositories = repositories
         self.modules = modules
         self.sbom = sbom
@@ -389,7 +399,7 @@ class DepsolveResult:
         if not isinstance(other, DepsolveResult):
             return False
         return (
-            self.packages == other.packages
+            self.transactions == other.transactions
             and self.repositories == other.repositories
             and self.modules == other.modules
             and self.sbom == other.sbom
@@ -397,14 +407,14 @@ class DepsolveResult:
 
     def __hash__(self) -> int:
         return hash((
-            tuple(self.packages),
+            tuple((tuple(transaction) for transaction in self.transactions)),
             tuple(self.repositories),
             json.dumps(self.modules, sort_keys=True) if self.modules else None,
             json.dumps(self.sbom, sort_keys=True) if self.sbom else None,
         ))
 
     def __repr__(self) -> str:
-        return f"DepsolveResult(packages={self.packages}, repositories={self.repositories}, " \
+        return f"DepsolveResult(transactions={self.transactions}, repositories={self.repositories}, " \
             f"modules={self.modules}, sbom={self.sbom})"
 
 
