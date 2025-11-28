@@ -105,3 +105,10 @@ def quirks():
         env["OSBUILD_QEMU_IMG_COROUTINES"] = "1"
 
     return env
+
+
+def minimal_passwd():
+    # ensure minimal /etc/passwd, "podman mount" needs that
+    passwd_path = pathlib.Path("/etc/passwd")
+    if not passwd_path.exists():
+        passwd_path.write_text("root:x:0:0:root:/root:/bin/bash")
