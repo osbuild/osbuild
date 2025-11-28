@@ -10,6 +10,7 @@ from osbuild.solver.request import SolverRequest
 
 class SolverAPIVersion(Enum):
     V1 = 1
+    V2 = 2
 
     def __str__(self) -> str:
         return self.name.lower()
