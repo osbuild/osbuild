@@ -3,6 +3,13 @@
 import subprocess
 import sys
 
+from osbuild import api
+from osbuild.util import runners
+
 if __name__ == "__main__":
-    r = subprocess.run(sys.argv[1:], check=False)
-    sys.exit(r.returncode)
+    with api.exception_handler():
+        runners.minimal_passwd()
+
+        r = subprocess.run(sys.argv[1:], check=False)
+
+        sys.exit(r.returncode)
