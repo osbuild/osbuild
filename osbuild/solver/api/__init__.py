@@ -1,7 +1,7 @@
 import importlib
 from enum import Enum
 from types import ModuleType
-from typing import Any, Dict, List
+from typing import Dict
 
 from osbuild.solver.exceptions import InvalidAPIVersionError
 from osbuild.solver.model import DepsolveResult, DumpResult, SearchResult
@@ -43,7 +43,7 @@ def parse_request(request_dict: Dict) -> SolverRequest:
     return api_module.parse_request(request_dict)
 
 
-def serialize_response_depsolve(api_version: SolverAPIVersion, solver: str, result: DepsolveResult) -> Dict[str, Any]:
+def serialize_response_depsolve(api_version: SolverAPIVersion, solver: str, result: DepsolveResult):
     """
     Serializes a Solver API response for the DEPSOLVE command.
     """
@@ -51,7 +51,7 @@ def serialize_response_depsolve(api_version: SolverAPIVersion, solver: str, resu
     return api_module.serialize_response_depsolve(solver, result)
 
 
-def serialize_response_dump(api_version: SolverAPIVersion, solver: str, result: DumpResult) -> List[Dict[str, Any]]:
+def serialize_response_dump(api_version: SolverAPIVersion, solver: str, result: DumpResult):
     """
     Serializes a Solver API response for the DUMP command.
     """
@@ -59,7 +59,7 @@ def serialize_response_dump(api_version: SolverAPIVersion, solver: str, result: 
     return api_module.serialize_response_dump(solver, result)
 
 
-def serialize_response_search(api_version: SolverAPIVersion, solver: str, result: SearchResult) -> List[Dict[str, Any]]:
+def serialize_response_search(api_version: SolverAPIVersion, solver: str, result: SearchResult):
     """
     Serializes a Solver API response for the SEARCH command.
     """
