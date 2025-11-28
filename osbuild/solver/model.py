@@ -7,6 +7,7 @@ used by the solver: packages, repositories, dependencies, and checksums.
 These models are used internally by solver implementations and in API responses.
 """
 
+import json
 from datetime import datetime, timezone
 from typing import FrozenSet, List, Optional
 
@@ -340,6 +341,9 @@ class Package:
             self.reason,
         ))
 
+    def __lt__(self, other: "Package") -> bool:
+        return self.full_nevra() < other.full_nevra()
+
     def __str__(self) -> str:
         return self.full_nevra()
 
@@ -364,3 +368,89 @@ class Package:
         if self.build_time is None:
             return ""
         return self._timestamp_to_rfc3339(self.build_time)
+
+
+class DepsolveResult:
+    """Result of a depsolve operation."""
+
+    def __init__(
+        self,
+        transactions: List[List[Package]],
+        repositories: List[Repository],
+        modules: Optional[dict] = None,
+        sbom: Optional[dict] = None
+    ):
+        """
+        Args:
+            transactions: List of transaction results, each containing a list of packages that are a result of
+                          dependency resolution. The order of transactions corresponds to the order of transactions
+                          in the request. Each transaction result is a superset of the previous transaction result.
+                          The package list in each transaction is expected to be alphabetically sorted by full NEVRA.
+            repositories: List of repositories used in the transactions.
+            modules: Optional dictionary of modules-related information.
+            sbom: Optional SBOM document for the transaction.
+        """
+        self.transactions = transactions
+        self.repositories = repositories
+        self.modules = modules
+        self.sbom = sbom
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DepsolveResult):
+            return False
+        return (
+            self.transactions == other.transactions
+            and self.repositories == other.repositories
+            and self.modules == other.modules
+            and self.sbom == other.sbom
+        )
+
+    def __hash__(self) -> int:
+        return hash((
+            tuple((tuple(transaction) for transaction in self.transactions)),
+            tuple(self.repositories),
+            json.dumps(self.modules, sort_keys=True) if self.modules else None,
+            json.dumps(self.sbom, sort_keys=True) if self.sbom else None,
+        ))
+
+    def __repr__(self) -> str:
+        return f"DepsolveResult(transactions={self.transactions}, repositories={self.repositories}, " \
+            f"modules={self.modules}, sbom={self.sbom})"
+
+
+class DumpResult:
+    """Result of a dump operation."""
+
+    def __init__(self, packages: List[Package], repositories: List[Repository]):
+        self.packages = packages
+        self.repositories = repositories
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DumpResult):
+            return False
+        return self.packages == other.packages and self.repositories == other.repositories
+
+    def __hash__(self) -> int:
+        return hash((tuple(self.packages), tuple(self.repositories)))
+
+    def __repr__(self) -> str:
+        return f"DumpResult(packages={self.packages}, repositories={self.repositories})"
+
+
+class SearchResult:
+    """Result of a search operation."""
+
+    def __init__(self, packages: List[Package], repositories: List[Repository]):
+        self.packages = packages
+        self.repositories = repositories
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SearchResult):
+            return False
+        return self.packages == other.packages and self.repositories == other.repositories
+
+    def __hash__(self) -> int:
+        return hash((tuple(self.packages), tuple(self.repositories)))
+
+    def __repr__(self) -> str:
+        return f"SearchResult(packages={self.packages}, repositories={self.repositories})"

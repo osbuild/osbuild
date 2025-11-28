@@ -15,7 +15,7 @@ from dnf.i18n import ucd
 import osbuild.solver.model as model
 from osbuild.solver import SolverBase, modify_rootdir_path, read_keys
 from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError, RepoError
-from osbuild.solver.request import DepsolveCmdArgs, RepositoryConfig, SearchCmdArgs, SolverRequest
+from osbuild.solver.request import DepsolveCmdArgs, RepositoryConfig, SearchCmdArgs, SolverConfig
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
@@ -115,15 +115,15 @@ class DNF(SolverBase):
 
     def __init__(
         self,
-        request: SolverRequest,
+        config: SolverConfig,
         persistdir: os.PathLike,
         license_index_path: Optional[os.PathLike] = None,
     ):
-        super().__init__(request, persistdir, license_index_path)
+        super().__init__(config, persistdir, license_index_path)
 
-        self.repos = self.request.config.repos or []
+        self.repos = self.config.repos or []
         self.request_repo_ids = {repo.repo_id for repo in self.repos} if self.repos else set()
-        self.root_dir = self.request.config.root_dir
+        self.root_dir = self.config.root_dir
 
         self.base = dnf.Base()
 
@@ -149,14 +149,14 @@ class DNF(SolverBase):
         self.base.conf.zchunk = False
 
         # Set the rest of the dnf configuration.
-        if self.request.config.module_platform_id:
-            self.base.conf.module_platform_id = self.request.config.module_platform_id
+        if self.config.module_platform_id:
+            self.base.conf.module_platform_id = self.config.module_platform_id
         self.base.conf.config_file_path = "/dev/null"
         self.base.conf.persistdir = persistdir
-        self.base.conf.cachedir = self.request.config.cachedir
-        self.base.conf.substitutions['arch'] = self.request.config.arch
-        self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(self.request.config.arch)
-        self.base.conf.substitutions['releasever'] = self.request.config.releasever
+        self.base.conf.cachedir = self.config.cachedir
+        self.base.conf.substitutions['arch'] = self.config.arch
+        self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(self.config.arch)
+        self.base.conf.substitutions['releasever'] = self.config.releasever
 
         # variables substitution is only available when root_dir is provided
         if self.root_dir:
@@ -164,11 +164,11 @@ class DNF(SolverBase):
             # substitution (e.g. CentOS Stream 9's $stream variable)
             self.base.conf.substitutions.update_from_etc(self.root_dir)
 
-        if hasattr(self.base.conf, "optional_metadata_types") and self.request.config.optional_metadata:
+        if hasattr(self.base.conf, "optional_metadata_types") and self.config.optional_metadata:
             # the attribute doesn't exist on older versions of dnf; ignore the option when not available
-            self.base.conf.optional_metadata_types.extend(self.request.config.optional_metadata)
-        if self.request.config.proxy:
-            self.base.conf.proxy = self.request.config.proxy
+            self.base.conf.optional_metadata_types.extend(self.config.optional_metadata)
+        if self.config.proxy:
+            self.base.conf.proxy = self.config.proxy
 
         try:
             for repo_conf in self.repos:
@@ -269,15 +269,20 @@ class DNF(SolverBase):
         spdx_doc = sbom_pkgset_to_spdx2_doc(pkgset, self.license_index_path)
         return spdx_doc.to_dict()
 
-    def dump(self):
+    def dump(self) -> model.DumpResult:
         packages = []
+        repositories = {}
         for pkg in self.base.sack.query().available():
             packages.append(_dnf_pkg_to_package(pkg))
-        return self.serialize_response_dump(packages)
+            if pkg.repo.id not in repositories:
+                repositories[pkg.repo.id] = _dnf_repo_to_repository(pkg.repo, self.root_dir, self.request_repo_ids)
 
-    def search(self, args: SearchCmdArgs):
+        return model.DumpResult(packages, list(repositories.values()))
+
+    def search(self, args: SearchCmdArgs) -> model.SearchResult:
         """ Perform a search on the available packages"""
         packages = []
+        repositories = {}
 
         # NOTE: Build query one piece at a time, don't pass all to filterm at the same
         # time.
@@ -299,12 +304,20 @@ class DNF(SolverBase):
 
             for pkg in q:
                 packages.append(_dnf_pkg_to_package(pkg))
+                if pkg.repo.id not in repositories:
+                    repositories[pkg.repo.id] = _dnf_repo_to_repository(pkg.repo, self.root_dir, self.request_repo_ids)
 
-        return self.serialize_response_search(packages)
+        return model.SearchResult(packages, list(repositories.values()))
 
-    def depsolve(self, args: DepsolveCmdArgs):
-        # collect repo IDs from the request so we know whether to translate gpg key paths
-        last_transaction: List = []
+    def depsolve(self, args: DepsolveCmdArgs) -> model.DepsolveResult:
+        """Perform a dependency resolution for the given transactions"""
+        last_dnf_transaction: List[dnf.package.Package] = []
+        # List of transaction results, each containing a list of packages that are a result of dependency resolution.
+        # Each transaction result is a superset of the previous transaction result.
+        # The package list in each transaction is alphabetically sorted by full NEVRA.
+        transactions_results: List[List[model.Package]] = []
+        repositories_by_id: Dict[str, model.Repository] = {}
+        repositories: List[model.Repository] = []
 
         for transaction in args.transactions:
             self.base.reset(goal=True)
@@ -314,7 +327,7 @@ class DNF(SolverBase):
 
             try:
                 # set the packages from the last transaction as installed
-                for installed_pkg in last_transaction:
+                for installed_pkg in last_dnf_transaction:
                     self.base.package_install(installed_pkg, strict=True)
 
                 # enabling a module means that packages can be installed from that
@@ -339,24 +352,35 @@ class DNF(SolverBase):
             except dnf.exceptions.Error as e:
                 raise DepsolveError(e) from e
 
+            transaction_result = []
             # store the current transaction result
-            last_transaction.clear()
+            last_dnf_transaction.clear()
             for tsi in self.base.transaction:
-                # Avoid using the install_set() helper, as it does not guarantee
-                # a stable order
+                # NB: we don't use the 'install_set' helper, because it is a Python set() and it
+                # does not guarantee a stable order.
                 if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
                     continue
-                last_transaction.append(tsi.pkg)
+                pkg = tsi.pkg
+                last_dnf_transaction.append(pkg)
+                transaction_result.append(_dnf_pkg_to_package(pkg))
+                repo = pkg.repo
+                if repo.id not in repositories_by_id:
+                    repositories_by_id[repo.id] = _dnf_repo_to_repository(repo, self.root_dir, self.request_repo_ids)
 
-        packages = []
-        repositories = {}
-        for package in last_transaction:
-            packages.append(_dnf_pkg_to_package(package))
-            repositories[package.repo.id] = _dnf_repo_to_repository(package.repo, self.root_dir, self.request_repo_ids)
+            # NB: DNF4 solver returns packages in alphabetical order. However, to not depend on the DNF4 API
+            # implementation details, we explicitly sort the packages alphabetically by full NEVRA.
+            # NB: the org.osbuild.rpm stage as generated by osbuild/images does not depend on the order of packages,
+            # because rpm gets the full package set at once and it will reorder the packages as needed when installing.
+            transaction_result.sort()
+            transactions_results.append(transaction_result)
+
+        # NB: we sort the repositories by repo_id to ensure consistent ordering across DNF4 and DNF5.
+        repositories = list(repositories_by_id.values())
+        repositories.sort(key=lambda x: x.repo_id)
 
         sbom = None
         if args.sbom_request:
-            sbom = self._sbom_for_pkgset(last_transaction)
+            sbom = self._sbom_for_pkgset(last_dnf_transaction)
 
         # if any modules have been requested we add sources for these so they can
         # be used by stages to enable the modules in the eventual artifact
@@ -377,7 +401,8 @@ class DNF(SolverBase):
                 # packages-to-install set so let's do this only once here
                 package_nevras = []
 
-                for package in packages:
+                # NB: len(transactions_results) == len(args.transactions), so transactions_results can't be empty.
+                for package in transactions_results[-1]:
                     if package.epoch == 0:
                         package_nevras.append(
                             f"{package.name}-{package.version}-{package.release}.{package.arch}")
@@ -446,9 +471,9 @@ class DNF(SolverBase):
                 },
             }
 
-        return self.serialize_response_depsolve(
-            packages,
-            list(repositories.values()),
-            modules_response if modules_response else None,
-            sbom if sbom else None,
+        return model.DepsolveResult(
+            transactions=transactions_results,
+            repositories=repositories,
+            modules=modules_response if modules_response else None,
+            sbom=sbom if sbom else None,
         )

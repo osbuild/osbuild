@@ -4,7 +4,15 @@ Unit tests for osbuild.solver.model classes
 
 import pytest
 
-from osbuild.solver.model import Checksum, Dependency, Package, Repository
+from osbuild.solver.model import (
+    Checksum,
+    Dependency,
+    DepsolveResult,
+    DumpResult,
+    Package,
+    Repository,
+    SearchResult,
+)
 
 
 class TestDependency:
@@ -127,6 +135,17 @@ class TestPackage:
         pkg_dict[pkg2] = "v2"
         assert len(pkg_dict) == 1 and pkg_dict[pkg1] == "v2"
 
+    def test__lt__(self):
+        pkg1 = Package("bash", "5.1", "1.fc43", "x86_64")
+        pkg2 = Package("bash", "5.8", "1.fc43", "x86_64")
+        assert pkg1 < pkg2
+        # Test equality case
+        pkg3 = Package("bash", "5.1", "1.fc43", "x86_64")
+        # pylint: disable=unnecessary-negation
+        assert not pkg1 < pkg3
+        # Test sorting
+        assert sorted([pkg2, pkg1]) == [pkg1, pkg2]
+
     def test__str__(self):
         assert str(Package("bash", "5.1", "1.fc43", "x86_64", epoch=2, repo_id="fedora")) == "bash-2:5.1-1.fc43.x86_64"
         assert str(Package("bash", "5.1", "1.fc43", "x86_64")) == "bash-0:5.1-1.fc43.x86_64"
@@ -231,3 +250,122 @@ class TestRepository:
         repo_dict = {repo1: "v1"}
         repo_dict[repo2] = "v2"
         assert len(repo_dict) == 1 and repo_dict[repo1] == "v2"
+
+
+class TestDepsolveResult:
+    """Tests for the DepsolveResult class"""
+
+    def test_equality(self):
+        result1 = DepsolveResult(
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+                [Package("zsh", "5.8", "1.fc43", "x86_64")],
+            ],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])],
+            modules={"module1": {"package": {"name": "module1", "stream": "8"}, "profiles": ["base"]}},
+            sbom={"sbom": "sbom document"}
+        )
+        result2 = DepsolveResult(
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+                [Package("zsh", "5.8", "1.fc43", "x86_64")],
+            ],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])],
+            modules={"module1": {"package": {"name": "module1", "stream": "8"}, "profiles": ["base"]}},
+            sbom={"sbom": "sbom document"}
+        )
+        assert result1 == result2
+        assert hash(result1) == hash(result2)
+
+    def test_collections(self):
+        result1 = DepsolveResult(
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+            ],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = DepsolveResult(
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+            ],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result3 = DepsolveResult(
+            transactions=[
+                [Package("bash", "5.1", "1.fc43", "x86_64")],
+                [Package("zsh", "5.8", "1.fc43", "x86_64")],
+            ],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        assert len({result1, result2, result3}) == 2
+        result_dict = {result1: "v1"}
+        result_dict[result2] = "v2"
+        assert len(result_dict) == 1 and result_dict[result1] == "v2"
+
+
+class TestDumpResult:
+    """Tests for the DumpResult class"""
+
+    def test_equality(self):
+        result1 = DumpResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = DumpResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        assert result1 == result2
+        assert hash(result1) == hash(result2)
+
+    def test_collections(self):
+        result1 = DumpResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = DumpResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result3 = DumpResult(
+            packages=[Package("zsh", "5.8", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        assert len({result1, result2, result3}) == 2
+        result_dict = {result1: "v1"}
+        result_dict[result2] = "v2"
+        assert len(result_dict) == 1 and result_dict[result1] == "v2"
+
+
+class TestSearchResult:
+    """Tests for the SearchResult class"""
+
+    def test_equality(self):
+        result1 = SearchResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = SearchResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        assert result1 == result2
+        assert hash(result1) == hash(result2)
+
+    def test_collections(self):
+        result1 = SearchResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result2 = SearchResult(
+            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        result3 = SearchResult(
+            packages=[Package("zsh", "5.8", "1.fc43", "x86_64")],
+            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+        )
+        assert len({result1, result2, result3}) == 2
+        result_dict = {result1: "v1"}
+        result_dict[result2] = "v2"
+        assert len(result_dict) == 1 and result_dict[result1] == "v2"

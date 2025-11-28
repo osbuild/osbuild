@@ -1,5 +1,9 @@
 """Common fixtures and utilities"""
 
+import os
+
+from osbuild.solver.request import RepositoryConfig, SolverConfig
+
 
 def assert_object_equal(obj1, obj2):
     """
@@ -19,3 +23,19 @@ def assert_object_equal(obj1, obj2):
                 differences.append(f"    OBJ1: {val1!r}")
                 differences.append(f"    OBJ2: {val2!r}")
         assert False, "Objects are not equal:\n" + "\n".join(differences)
+
+
+def instantiate_solver(solver_class, cachedir, persistdir, repo_servers):
+    """Prepare a solver object for testing."""
+    repo_configs = [RepositoryConfig(repo_id=r["name"], baseurl=[r["address"]]) for r in repo_servers]
+    solver = solver_class(
+        config=SolverConfig(
+            arch="x86_64",
+            releasever="9",
+            module_platform_id="platform:el9",
+            cachedir=os.fspath(cachedir),
+            repos=repo_configs,
+        ),
+        persistdir=os.fspath(persistdir),
+    )
+    return solver

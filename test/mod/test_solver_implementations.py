@@ -2,14 +2,15 @@
 Test the DNF solver implementations (DNF4 and DNF5).
 """
 
-import os.path
+import os
 import re
 
 import pytest
 
 from osbuild.solver.model import Checksum, Dependency, Package, Repository
+from osbuild.solver.request import DepsolveCmdArgs, DepsolveTransaction, SearchCmdArgs
 
-from .conftest import assert_object_equal
+from .conftest import assert_object_equal, instantiate_solver
 
 # NB: for sanity testing specific packages, we need to use a local repository, to ensure stable 'remote_locations'
 # otherwise, the port number in the server URL would change between tests, causing the test to fail.
@@ -320,3 +321,66 @@ def test_dnf5_repo_config_to_repository():
     # pylint: disable=protected-access
     repository = dnf5_solver._dnf_repo_to_repository(dnf_repo, "", [r["name"] for r in TEST_REPO_SERVERS])
     assert_object_equal(repository, TEST_REPOSITORY)
+
+
+def _instantiate_dnf4_dnf5_solvers(tmp_path, repo_servers):
+    """
+    Instantiate DNF4 and DNF5 solvers for testing.
+
+    Returns:
+        Tuple[DNF, DNF5]: A tuple containing the DNF4 and DNF5 solvers.
+    """
+    dnf4_solver_module = pytest.importorskip("osbuild.solver.dnf")
+    dnf5_solver_module = pytest.importorskip("osbuild.solver.dnf5")
+
+    dnf4_persistedir = tmp_path / "dnf4"
+    dnf5_persistedir = tmp_path / "dnf5"
+    cachedir = tmp_path / "cache"
+
+    dnf4_solver = instantiate_solver(dnf4_solver_module.DNF, cachedir, dnf4_persistedir, repo_servers)
+    dnf5_solver = instantiate_solver(dnf5_solver_module.DNF5, cachedir, dnf5_persistedir, repo_servers)
+    return dnf4_solver, dnf5_solver
+
+
+def test_dnf4_dnf5_depsolve_parity(tmp_path, repo_servers):
+    """Test that DNF4 and DNF5 produce identical depsolve results for the same packages."""
+    dnf4_solver, dnf5_solver = _instantiate_dnf4_dnf5_solvers(tmp_path, repo_servers)
+
+    depsolve_args = DepsolveCmdArgs(
+        transactions=[
+            DepsolveTransaction(package_specs=["bash"]),
+            DepsolveTransaction(package_specs=["pkg-with-no-deps"]),
+            DepsolveTransaction(package_specs=["vim"]),
+        ],
+    )
+
+    dnf4_results = dnf4_solver.depsolve(depsolve_args)
+    dnf5_results = dnf5_solver.depsolve(depsolve_args)
+
+    assert_object_equal(dnf4_results, dnf5_results)
+
+
+def test_dnf4_dnf5_dump_parity(tmp_path, repo_servers):
+    """Test that DNF4 and DNF5 produce identical dump results for the same packages."""
+    # pick only the "baseos" repository to speed up the test
+    repo_servers = [r for r in repo_servers if r["name"] == "baseos"]
+    assert len(repo_servers) == 1
+    dnf4_solver, dnf5_solver = _instantiate_dnf4_dnf5_solvers(tmp_path, repo_servers)
+
+    dnf4_results = dnf4_solver.dump()
+    dnf5_results = dnf5_solver.dump()
+
+    assert_object_equal(dnf4_results, dnf5_results)
+
+
+def test_dnf4_dnf5_search_parity(tmp_path, repo_servers):
+    """Test that DNF4 and DNF5 produce identical search results for the same packages."""
+    dnf4_solver, dnf5_solver = _instantiate_dnf4_dnf5_solvers(tmp_path, repo_servers)
+
+    dnf4_results = dnf4_solver.search(SearchCmdArgs(packages=["bash"]))
+    dnf5_results = dnf5_solver.search(SearchCmdArgs(packages=["bash"]))
+
+    # assert that the results contain at least two packages
+    assert len(dnf4_results.packages) > 1
+
+    assert_object_equal(dnf4_results, dnf5_results)
