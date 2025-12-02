@@ -12,20 +12,34 @@ import re
 
 
 class Subscriptions:
+    DEFAULT_SSL_CA_CERT = "/etc/rhsm/ca/redhat-uep.pem"
+    DEFAULT_ENTITLEMENT_DIR = "/etc/pki/entitlement"
+    DEFAULT_REPO_FILE = "/etc/yum.repos.d/redhat.repo"
+
     def __init__(self, repositories):
         self.repositories = repositories
         # These are used as a fallback if the repositories don't
         # contain secrets for a requested URL.
         self.secrets = None
 
+        if self.is_container_with_rhsm_secrets():
+            self.DEFAULT_SSL_CA_CERT = "/run/secrets/rhsm/ca/redhat-uep.pem"
+            self.DEFAULT_ENTITLEMENT_DIR = "/run/secrets/etc-pki-entitlement"
+            self.DEFAULT_REPO_FILE = "/run/secrets/redhat.repo"
+
+    @staticmethod
+    def is_container_with_rhsm_secrets():
+        """Detect if we are running inside a podman container and RHSM secrets are available."""
+        return os.path.exists("/run/.containerenv") and os.path.exists("/run/secrets")
+
     def get_fallback_rhsm_secrets(self):
         rhsm_secrets = {
-            'ssl_ca_cert': "/etc/rhsm/ca/redhat-uep.pem",
+            'ssl_ca_cert': self.DEFAULT_SSL_CA_CERT,
             'ssl_client_key': "",
             'ssl_client_cert': ""
         }
 
-        keys = glob.glob("/etc/pki/entitlement/*-key.pem")
+        keys = glob.glob(f"{self.DEFAULT_ENTITLEMENT_DIR}/*-key.pem")
         for key in keys:
             # The key and cert have the same prefix
             cert = key.rstrip("-key.pem") + ".pem"
@@ -57,7 +71,7 @@ class Subscriptions:
         """Read redhat.repo file and process the list of repositories in there."""
         ret = cls(None)
         with contextlib.suppress(FileNotFoundError):
-            with open("/etc/yum.repos.d/redhat.repo", "r", encoding="utf8") as fp:
+            with open(cls.DEFAULT_REPO_FILE, "r", encoding="utf8") as fp:
                 ret = cls.parse_repo_file(fp)
 
         with contextlib.suppress(RuntimeError):
