@@ -52,7 +52,7 @@ def aleph_container(tree, imgref):
     container_data_config = json.loads(container_data_config_json)
 
     aleph_digest = container_data['config']['digest']
-    aleph_ref = f"docker://{imgref}"
+    aleph_ref = imgref
     aleph_version = container_data_config['config']['Labels']['org.opencontainers.image.version']
     aleph_container_image = container_data_config['config']['Labels']
 
