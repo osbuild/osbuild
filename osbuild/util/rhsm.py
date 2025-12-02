@@ -54,7 +54,10 @@ class Subscriptions:
 
     @staticmethod
     def get_consumer_secrets():
-        """Returns the consumer identity certificate which uniquely identifies the system"""
+        """Returns the consumer identity certificate which uniquely identifies the system.
+
+        Will fail when running in a container. Used by ostree.
+        """
         key = "/etc/pki/consumer/key.pem"
         cert = "/etc/pki/consumer/cert.pem"
 
