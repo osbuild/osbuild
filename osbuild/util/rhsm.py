@@ -115,7 +115,14 @@ class Subscriptions:
             current = {
                 "matchurl": cls._process_baseurl(parser.get(section, "baseurl"))
             }
-            for parameter in ["sslcacert", "sslclientkey", "sslclientcert"]:
+
+            # On RHEL systems registered to Insights, the redhat.repo exists and contains entitlement
+            # certificates, however, "sslcacert" is unset and rhsm dnf plugin automatically sets that
+            # to /etc/rhsm/ca/redhat-uep.pem or /run/secrets/rhsm/ca/redhat-uep.pem respectively.
+            current["sslcacert"] = parser.get(section, "sslcacert", fallback=cls.DEFAULT_SSL_CA_CERT)
+
+            # Entitlement certificates are always present in redhat.repo
+            for parameter in ["sslclientkey", "sslclientcert"]:
                 current[parameter] = parser.get(section, parameter)
 
             repositories[section] = current
