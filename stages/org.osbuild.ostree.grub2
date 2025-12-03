@@ -4,8 +4,8 @@ import sys
 
 import osbuild.api
 from osbuild.util import parsing
-from osbuild.util.lorax import replace
 from osbuild.util.ostree import default_boot_path
+from osbuild.util.replace import replace
 
 
 def main(args):
