@@ -10,7 +10,6 @@ needed to run the post install and cleanup scripts.
 
 import contextlib
 import fnmatch
-import glob
 import os
 import re
 import shlex
@@ -20,27 +19,7 @@ from typing import Any, Dict
 
 import mako.template
 
-
-def replace(target, patterns):
-    finder = [(re.compile(p), s) for p, s in patterns]
-    newfile = target + ".replace"
-
-    with open(target, "r", encoding="utf8") as i, open(newfile, "w", encoding="utf8") as o:
-        for line in i:
-            for p, s in finder:
-                line = p.sub(s, line)
-            o.write(line)
-    os.rename(newfile, target)
-
-
-def rglob(pathname, *, fatal=False):
-    seen = set()
-    for f in glob.iglob(pathname):
-        if f not in seen:
-            seen.add(f)
-            yield f
-    if fatal and not seen:
-        raise IOError(f"nothing matching {pathname}")
+from .replace import replace, rglob
 
 
 class Script:
