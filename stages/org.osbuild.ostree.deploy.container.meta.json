@@ -39,7 +39,9 @@
           "type": "string",
           "pattern": "^(ostree-remote-registry|ostree-image-signed|ostree-unverified-registry):.*$",
           "examples": [
-            "ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable, ostree-image-signed:quay.io/fedora/fedora-coreos:stable, ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable"
+            "ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable",
+            "ostree-image-signed:quay.io/fedora/fedora-coreos:stable",
+            "ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable"
           ]
         },
         "rootfs": {
