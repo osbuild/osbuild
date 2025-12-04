@@ -30,19 +30,38 @@ def aleph_commit(tree, imgref):
 
 
 def aleph_container(tree, imgref):
-    # extract the image name from the imgref
-    imgref_list = imgref.split(':')
-    if imgref_list[0] in ["ostree-remote-registry", "ostree-remote-image"]:
-        img_name = ':'.join(imgref_list[2:])
-    elif imgref_list[0] in ["ostree-image-signed", "ostree-unverified-registry", "ostree-unverified-image"]:
-        img_name = ':'.join(imgref_list[1:])
+    # Determine the image name used for the deployment. We first attempt to do this by checking
+    # how many container images are stored in the OSTree repo. If it's only one then clearly
+    # that's the one to inspect here and we'll use that. If there's more than one we'll
+    # attempt to use the img_name (pulled from the imgref, which was pulled from the origin
+    # file) to query the image metadata.
+    #
+    # The reason to inspect first and then fallback to using the value from the origin file
+    # is that we found the name of the image stored in the ostree repo isn't directly associated
+    # with the name that gets stored in the repo. For example:
+    #
+    #   $ cat /sysroot/ostree/deploy/*/deploy/*.0.origin
+    #   [origin]
+    #   container-image-reference=ostree-unverified-registry:quay.io/podman/machine-os:6.0
+    #   $ ostree container image list --repo=/sysroot/ostree/repo
+    #   docker://quay.io/podman/machine-os:6.0
+    #
+    extra_args = [f"--repo={tree}/ostree/repo"]
+    container_list = ostree.cli("container", "image", "list", *extra_args).stdout.splitlines()
+    if len(container_list) == 1:
+        img_name = container_list[0]
     else:
-        raise ValueError(f"Image ref {imgref} has unsupported type (supported: 'ostree-remote-registry', \
-                         'ostree-remote-image', 'ostree-image-signed', 'ostree-unverified-registry', \
-                         or 'ostree-unverified-image'")
+        # There's more than one container in the repo. Extract the image name from the imgref.
+        imgref_list = imgref.split(':')
+        if imgref_list[0] in ["ostree-remote-registry", "ostree-remote-image"]:
+            img_name = ':'.join(imgref_list[2:])
+        elif imgref_list[0] in ["ostree-image-signed", "ostree-unverified-registry", "ostree-unverified-image"]:
+            img_name = ':'.join(imgref_list[1:])
+        else:
+            raise ValueError(f"Image ref {imgref} has unsupported type (supported: 'ostree-remote-registry', \
+                             'ostree-remote-image', 'ostree-image-signed', 'ostree-unverified-registry', \
+                             or 'ostree-unverified-image'")
 
-    extra_args = []
-    extra_args.append(f"--repo={tree}/ostree/repo")
     extra_args.append(img_name)
 
     container_data_json = ostree.cli("container", "image", "metadata", *extra_args).stdout.rstrip()
