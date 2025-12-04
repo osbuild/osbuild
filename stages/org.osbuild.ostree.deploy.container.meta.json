@@ -37,11 +37,13 @@
         "target_imgref": {
           "description": "imageref used as the source of truth for updates",
           "type": "string",
-          "pattern": "^(ostree-remote-registry|ostree-image-signed|ostree-unverified-registry):.*$",
+          "pattern": "^(ostree-remote-registry|ostree-remote-image|ostree-image-signed|ostree-unverified-registry|ostree-unverified-image):.*$",
           "examples": [
             "ostree-remote-registry:fedora:quay.io/fedora/fedora-coreos:stable",
-            "ostree-image-signed:quay.io/fedora/fedora-coreos:stable",
-            "ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable"
+            "ostree-remote-image:fedora:docker://quay.io/fedora/fedora-coreos:stable",
+            "ostree-image-signed:docker://quay.io/fedora/fedora-coreos:stable",
+            "ostree-unverified-registry:quay.io/fedora/fedora-coreos:stable",
+            "ostree-unverified-image:docker://quay.io/fedora/fedora-coreos:stable"
           ]
         },
         "rootfs": {
