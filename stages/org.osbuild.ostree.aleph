@@ -34,11 +34,12 @@ def aleph_container(tree, imgref):
     imgref_list = imgref.split(':')
     if imgref_list[0] in ["ostree-remote-registry", "ostree-remote-image"]:
         img_name = ':'.join(imgref_list[2:])
-    elif imgref_list[0] in ["ostree-image-signed", "ostree-unverified-registry"]:
+    elif imgref_list[0] in ["ostree-image-signed", "ostree-unverified-registry", "ostree-unverified-image"]:
         img_name = ':'.join(imgref_list[1:])
     else:
         raise ValueError(f"Image ref {imgref} has unsupported type (supported: 'ostree-remote-registry', \
-                         'ostree-remote-image', 'ostree-image-signed', or 'ostree-unverified-registry')")
+                         'ostree-remote-image', 'ostree-image-signed', 'ostree-unverified-registry', \
+                         or 'ostree-unverified-image'")
 
     extra_args = []
     extra_args.append(f"--repo={tree}/ostree/repo")
