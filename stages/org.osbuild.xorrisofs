@@ -13,6 +13,9 @@ def grub2(inputs, output_dir, options):
     filename = options["filename"]
     vol_id = options["volid"]
     sys_id = options.get("sysid")
+    pub = options.get("pub")
+    app_id = options.get("appid")
+    prep = options.get("prep")
     efi = options.get("efi")
     isolevel = options.get("isolevel")
     grub2mbr = options.get("grub2mbr")
@@ -36,6 +39,21 @@ def grub2(inputs, output_dir, options):
     if sys_id:
         cmd += [
             "-sysid", sys_id
+        ]
+
+    if pub:
+        cmd += [
+            "-publisher", pub,
+        ]
+
+    if app_id:
+        cmd += [
+            "-appid", app_id,
+        ]
+
+    if prep:
+        cmd += [
+            "-preparer", prep,
         ]
 
     if not os.path.exists(grub2mbr):
@@ -94,6 +112,9 @@ def syslinux(inputs, output_dir, options):
     filename = options["filename"]
     vol_id = options["volid"]
     sys_id = options.get("sysid")
+    pub = options.get("pub")
+    app_id = options.get("appid")
+    prep = options.get("prep")
     efi = options.get("efi")
     isohybrid = options.get("isohybridmbr")
     isolevel = options.get("isolevel")
@@ -115,6 +136,21 @@ def syslinux(inputs, output_dir, options):
     if sys_id:
         cmd += [
             "-sysid", sys_id
+        ]
+
+    if pub:
+        cmd += [
+            "-publisher", pub,
+        ]
+
+    if app_id:
+        cmd += [
+            "-appid", app_id,
+        ]
+
+    if prep:
+        cmd += [
+            "-preparer", prep,
         ]
 
     if isohybrid:
