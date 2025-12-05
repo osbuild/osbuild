@@ -94,8 +94,7 @@ class Virtiofsd:
         return False
 
 
-def find_qemu():
-    arch = platform.machine()
+def find_qemu(arch):
     binary_names = [f"qemu-system-{arch}", "qemu-kvm"]
 
     for binary_name in binary_names:
@@ -134,7 +133,8 @@ class Qemu:
         self.serials: Dict[str, str] = {}
         self.virtiofs: Dict[str, Tuple[str, Virtiofsd]] = {}
 
-        qemu_bin = find_qemu()
+        arch = platform.machine()
+        qemu_bin = find_qemu(arch)
         qemu_accels = qemu_available_accels(qemu_bin)
 
         self.cmd = [
@@ -155,6 +155,13 @@ class Qemu:
         ]
         self._id_counter = 0
 
+        console = "ttyS0"
+        if arch == "aarch64":
+            console = "ttyAMA0"
+            self.cmd += ["-machine", "virt"]
+        elif arch == "x86_64":
+            self.cmd += ["-machine", "q35"]
+
         if serial_stdout:
             self.cmd += ["-serial", "file:/dev/stdout"]
 
@@ -162,7 +169,7 @@ class Qemu:
             self.cmd += ["-enable-kvm"]
 
         init = "/mnt/osbuild/vm.py"
-        cmdline = f"console=ttyS0 quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro init={init}"
+        cmdline = f"console={console} quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro init={init}"
 
         # vm.py will add its parent to the search path to find the "osbuild" module, so
         # mount the directory with the osbuild directory at /mnt and run /mnt/osbuild/vm.py
