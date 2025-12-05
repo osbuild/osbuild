@@ -271,7 +271,6 @@ mountdir = "/run/osbuildvm"
 os.makedirs(mountdir)
 
 mounts = {
-    "libdir": "/mnt",
 }
 
 subprocess.run(["mount", "-t", "tmpfs", "tmpfs", "/tmp"], check=True)

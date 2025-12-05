@@ -1,3 +1,4 @@
+import importlib
 import io
 import json
 import os
@@ -161,10 +162,19 @@ class Qemu:
 
         init = "/mnt/osbuild/vm.py"
         cmdline = f"console=ttyS0 quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro init={init}"
+
+        # vm.py will add its parent to the search path to find the "osbuild" module, so
+        # mount the directory with the osbuild directory at /mnt and run /mnt/osbuild/vm.py
+        spec = importlib.util.find_spec("osbuild")
+        assert spec is not None and spec.origin is not None
+        modpath = os.path.dirname(spec.origin)  # $some_python_path/osbuild
+        modpath = os.path.dirname(modpath)  # $some_python_path
+
         self.add_kernel(kernel_path, initrd_path, cmdline)
         self.add_virtio_serial("ipc.0")
         self.add_virtiofs(rootfs_path, "rootfs", readonly=True)
-        self.add_virtiofs(libdir_path, "mnt0", readonly=True)
+        self.add_virtiofs(modpath, "mnt0", readonly=True)
+        self.add_virtiofs(libdir_path, "libdir", readonly=True)
         self.ipc = None
 
     def add_arguments(self, args: List[str]) -> None:
