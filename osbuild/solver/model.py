@@ -103,6 +103,7 @@ class Repository(ValidatedModel):
         "sslclientcert": (str, type(None)),
         "metadata_expire": (str, type(None)),
         "module_hotfixes": (bool, type(None)),
+        "rhsm": bool,
     }
 
     def __init__(
@@ -130,6 +131,16 @@ class Repository(ValidatedModel):
         self.sslclientcert: Optional[str] = kwargs.pop("sslclientcert", None)
         self.metadata_expire: Optional[str] = kwargs.pop("metadata_expire", None)
         self.module_hotfixes: Optional[bool] = kwargs.pop("module_hotfixes", None)
+
+        # Additional fields not represented in the YUM/DNF repository configuration.
+
+        # Whether this repository uses RHSM secrets from the host system to
+        # access its content.
+        # If True, the sslcacert, sslclientkey, and sslclientcert values should
+        # be set by the Solver if such Repository objects are passed to its
+        # constructor. Similarly, an API implementation may choose to omit these
+        # values from the API response if this flag is True.
+        self.rhsm: bool = kwargs.pop("rhsm", False)
 
         if kwargs:
             raise ValueError(
@@ -178,6 +189,7 @@ class Repository(ValidatedModel):
             and self.sslclientcert == other.sslclientcert
             and self.metadata_expire == other.metadata_expire
             and self.module_hotfixes == other.module_hotfixes
+            and self.rhsm == other.rhsm
         )
 
     def __hash__(self) -> int:
@@ -196,6 +208,7 @@ class Repository(ValidatedModel):
             self.sslclientcert,
             self.metadata_expire,
             self.module_hotfixes,
+            self.rhsm,
         ))
 
     def __repr__(self) -> str:
@@ -204,7 +217,7 @@ class Repository(ValidatedModel):
             f"repo_gpgcheck={self.repo_gpgcheck}, gpgkey={self.gpgkey}, sslverify={self.sslverify}, " \
             f"sslcacert='{self.sslcacert}', sslclientkey='{self.sslclientkey}', " \
             f"sslclientcert='{self.sslclientcert}', metadata_expire='{self.metadata_expire}', " \
-            f"module_hotfixes={self.module_hotfixes})"
+            f"module_hotfixes={self.module_hotfixes}, rhsm={self.rhsm})"
 
 
 class Dependency:

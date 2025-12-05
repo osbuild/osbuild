@@ -203,6 +203,8 @@ class TestRepository:
         pytest.param(
             {"baseurl": ["http://example.com/r1"], "module_hotfixes": True},
             {"baseurl": ["http://example.com/r1"], "module_hotfixes": False}, False, id="different_module_hotfixes"),
+        pytest.param({"baseurl": ["http://example.com/r1"], "rhsm": True},
+                     {"baseurl": ["http://example.com/r1"], "rhsm": False}, False, id="different_rhsm"),
         # SSL certificate fields
         pytest.param({"baseurl": ["http://example.com/r1"], "sslcacert": "/etc/pki/cert.pem"},
                      {"baseurl": ["http://example.com/r1"], "sslcacert": "/etc/pki/cert.pem"},
