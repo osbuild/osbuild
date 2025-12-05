@@ -241,14 +241,14 @@ def parse_input_commits(commits):
 def default_boot_path(root: PathLike) -> str:
     """Find the default ostree boot path and return it
 
-    eg. ostree/boot.1/default/b6cdf47cafd171e003c001802f1829ad39e20f7177d6e27401aba73efb71be22/0
+    eg. /ostree/boot.1/default/b6cdf47cafd171e003c001802f1829ad39e20f7177d6e27401aba73efb71be22/0
     """
     filenames = glob.glob(os.path.join(root, 'ostree/boot.?/*/*/*'))
     if len(filenames) < 1:
         raise ValueError("Could not find boot path")
     if len(filenames) > 1:
         raise ValueError(f"More than one boot path found: {filenames}")
-    return os.path.relpath(filenames[0], root)
+    return "/" + os.path.relpath(filenames[0], root)
 
 
 def parse_deployment_option(root: PathLike, deployment: Dict) -> Tuple[str, str, str]:
