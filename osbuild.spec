@@ -217,6 +217,9 @@ bzip2 -9 osbuild-container.pp
 %install
 %py3_install
 
+# Ensure vm.py is executable which is needed to run in with init= in the vm
+chmod 0755 %{buildroot}%{python3_sitelib}/%{pypi_name}/vm.py
+
 mkdir -p %{buildroot}%{pkgdir}/stages
 install -p -m 0755 $(find stages -type f -not -name "test_*.py") %{buildroot}%{pkgdir}/stages/
 

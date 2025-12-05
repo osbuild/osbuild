@@ -1,3 +1,4 @@
+import importlib
 import io
 import json
 import os
@@ -93,8 +94,7 @@ class Virtiofsd:
         return False
 
 
-def find_qemu():
-    arch = platform.machine()
+def find_qemu(arch):
     binary_names = [f"qemu-system-{arch}", "qemu-kvm"]
 
     for binary_name in binary_names:
@@ -133,7 +133,8 @@ class Qemu:
         self.serials: Dict[str, str] = {}
         self.virtiofs: Dict[str, Tuple[str, Virtiofsd]] = {}
 
-        qemu_bin = find_qemu()
+        arch = platform.machine()
+        qemu_bin = find_qemu(arch)
         qemu_accels = qemu_available_accels(qemu_bin)
 
         self.cmd = [
@@ -145,6 +146,7 @@ class Qemu:
             "none",
             "-m",
             mem,
+            "-cpu", "host",
             # This is needed for virtiofs, and size must match -m
             "-object",
             f"memory-backend-memfd,id=mem0,size={mem},share=on",
@@ -153,6 +155,13 @@ class Qemu:
         ]
         self._id_counter = 0
 
+        console = "ttyS0"
+        if arch == "aarch64":
+            console = "ttyAMA0"
+            self.cmd += ["-machine", "virt"]
+        elif arch == "x86_64":
+            self.cmd += ["-machine", "q35"]
+
         if serial_stdout:
             self.cmd += ["-serial", "file:/dev/stdout"]
 
@@ -160,11 +169,20 @@ class Qemu:
             self.cmd += ["-enable-kvm"]
 
         init = "/mnt/osbuild/vm.py"
-        cmdline = f"console=ttyS0 quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro init={init}"
+        cmdline = f"console={console} quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro init={init}"
+
+        # vm.py will add its parent to the search path to find the "osbuild" module, so
+        # mount the directory with the osbuild directory at /mnt and run /mnt/osbuild/vm.py
+        spec = importlib.util.find_spec("osbuild")
+        assert spec is not None and spec.origin is not None
+        modpath = os.path.dirname(spec.origin)  # $some_python_path/osbuild
+        modpath = os.path.dirname(modpath)  # $some_python_path
+
         self.add_kernel(kernel_path, initrd_path, cmdline)
         self.add_virtio_serial("ipc.0")
         self.add_virtiofs(rootfs_path, "rootfs", readonly=True)
-        self.add_virtiofs(libdir_path, "mnt0", readonly=True)
+        self.add_virtiofs(modpath, "mnt0", readonly=True)
+        self.add_virtiofs(libdir_path, "libdir", readonly=True)
         self.ipc = None
 
     def add_arguments(self, args: List[str]) -> None:
