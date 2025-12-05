@@ -295,7 +295,13 @@ with contextlib.ExitStack() as cm:
 
         cm.enter_context(store)
 
-    serial_device = "/dev/vport0p1"
+    devices = os.listdir("/dev")
+    serial_devices = list(sorted(filter(lambda dev: dev.startswith("vport"), devices)))
+    if len(serial_devices) == 0:
+        print("No virtual serial devices found, can't serve")
+        sys.exit(1)
+
+    serial_device = f"/dev/{serial_devices[0]}"
     print(f"Handling requests on {serial_device}")
     serial_con = SerialConnection(serial_device)
     try:
