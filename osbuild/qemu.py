@@ -146,6 +146,7 @@ class Qemu:
             "none",
             "-m",
             mem,
+            "-cpu", "host",
             # This is needed for virtiofs, and size must match -m
             "-object",
             f"memory-backend-memfd,id=mem0,size={mem},share=on",
