@@ -514,6 +514,8 @@ class Loop:
         # than mknod(), if that works just return. If it fails (e.g. because of kernel mount namespace
         # issues) fallback to mknod to avoid regressions
         if os.path.exists(host_path):
+            # note that this does not set mode=stat.S_IFBLK so
+            # its just a regular file as bind mount target
             os.mknod(self.devname, mode=(stat.S_IMODE(mode)),
                      dir_fd=dir_fd)
             try:
