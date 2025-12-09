@@ -157,7 +157,12 @@ def find_efi_source_paths(tree):
         # be able to pick up files from usr/lib/efi/(grub|shim)/<version>/EFI/
         # Let's ensure there's only 2 dirs that match (i.e. one for grub
         # one for shim) and return that list.
-        return ensure_glob(os.path.join(tree, 'usr/lib/efi/*/*/EFI'), n=2)
+        n = 2
+        basearch = os.uname().machine
+        if basearch == "ppc64le":
+            # For PowerPC we expect only grub, not shim.
+            n = 1
+        return ensure_glob(os.path.join(tree, 'usr/lib/efi/*/*/EFI'), n=n)
     # Legacy path. Just return a single entry list with the old path.
     return [os.path.join(tree, 'usr/lib/bootupd/updates/EFI')]
 
