@@ -748,7 +748,7 @@ class DepSolver:
             # rhsm secrets only need to be retrieved once and can then be reused
             if not self.subscriptions:
                 self.subscriptions = Subscriptions.from_host_system()
-            secrets = self.subscriptions.get_secrets(url)
+            secrets = self.subscriptions.get_secrets([url])
         except RuntimeError as e:
             raise ValueError(f"Error getting secrets: {e.args[0]}") from None
 

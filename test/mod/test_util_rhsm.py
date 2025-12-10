@@ -173,9 +173,9 @@ class TestSubscribedSystem:
         subscriptions = Subscriptions.parse_repo_file(StringIO(REPO_FILE))
         if not should_succeed:
             with pytest.raises(RuntimeError, match="no RHSM secret associated"):
-                subscriptions.get_secrets(url)
+                subscriptions.get_secrets([url])
         else:
-            secrets = subscriptions.get_secrets(url)
+            secrets = subscriptions.get_secrets([url])
             assert secrets["ssl_ca_cert"] == "/etc/rhsm/ca/redhat-uep.pem"
             assert secrets["ssl_client_key"] == f"/etc/pki/entitlement/{key}-key.pem"
             assert secrets["ssl_client_cert"] == f"/etc/pki/entitlement/{key}.pem"
@@ -188,7 +188,7 @@ class TestUnsubscribedSystem:
     def test_no_repositories_no_secrets(self, repositories):
         subscriptions = Subscriptions(repositories=repositories)
         with pytest.raises(RuntimeError, match="no RHSM secret associated"):
-            subscriptions.get_secrets("https://cdn.redhat.com/any/url")
+            subscriptions.get_secrets(["https://cdn.redhat.com/any/url"])
 
 
 class TestRhcSubscribedSystem:
@@ -202,7 +202,7 @@ class TestRhcSubscribedSystem:
         assert subscriptions.repositories["rhel-baseos"]["sslcacert"] == Subscriptions.DEFAULT_SSL_CA_CERT
 
         # verify that the secrets are retrieved correctly
-        secrets = subscriptions.get_secrets("https://cdn.redhat.com/9/baseos/x86_64/os/Packages/test.rpm")
+        secrets = subscriptions.get_secrets(["https://cdn.redhat.com/9/baseos/x86_64/os/Packages/test.rpm"])
         assert secrets["ssl_ca_cert"] == Subscriptions.DEFAULT_SSL_CA_CERT
         assert secrets["ssl_client_key"] == "/etc/pki/entitlement/123-key.pem"
         assert secrets["ssl_client_cert"] == "/etc/pki/entitlement/123.pem"
@@ -304,7 +304,7 @@ class TestIntegration:
 
         # Test URL matching and secret retrieval
         url = "https://cdn.redhat.com/1.0/x86_64/os/Packages/test.rpm"
-        secrets = subscriptions.get_secrets(url)
+        secrets = subscriptions.get_secrets([url])
 
         assert "ssl_ca_cert" in secrets
         assert "ssl_client_key" in secrets
@@ -330,7 +330,7 @@ sslclientcert = /etc/pki/entitlement/999.pem
 
         # URL doesn't match unrelated repo, should use fallback
         url = "https://cdn.redhat.com/some/path/test.rpm"
-        secrets = subscriptions.get_secrets(url)
+        secrets = subscriptions.get_secrets([url])
 
         assert secrets["ssl_ca_cert"] == "/fallback/ca.pem"
         assert secrets["ssl_client_key"] == "/fallback/key.pem"

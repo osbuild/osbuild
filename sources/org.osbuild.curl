@@ -286,7 +286,7 @@ class CurlSource(sources.SourceService):
             # rhsm secrets only need to be retrieved once and can then be reused
             if self.subscriptions is None:
                 self.subscriptions = Subscriptions.from_host_system()
-            desc["secrets"] = self.subscriptions.get_secrets(desc.get("url"))
+            desc["secrets"] = self.subscriptions.get_secrets([desc.get("url")])
         elif desc.get("secrets", {}).get("name") == "org.osbuild.mtls":
             key = os.getenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY")
             cert = os.getenv("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT")
