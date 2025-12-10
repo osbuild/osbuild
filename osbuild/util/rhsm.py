@@ -9,6 +9,7 @@ import contextlib
 import glob
 import os
 import re
+from typing import List
 
 
 class Subscriptions:
@@ -129,19 +130,32 @@ class Subscriptions:
 
         return cls(repositories)
 
-    def get_secrets(self, url):
+    def get_secrets(self, urls: List[str]):
+        """
+        Get the RHSM secrets for a list of URLs.
+
+        The URLs can be a baseurl, metalink, or mirrorlist. The list can
+        even combine all types of URLs. The function will iterate over the list
+        and try to find a matching URL in the redhat.repo file. The function
+        returns secrets for the first matching URL.
+
+        If no matching URL is found, the function will try the fallback
+        secrets. If no fallback secrets are found, the function will raise
+        a RuntimeError.
+        """
         # Try to find a matching URL from redhat.repo file first
         if self.repositories is not None:
             for parameters in self.repositories.values():
-                if parameters["matchurl"].match(url) is not None:
-                    return {
-                        "ssl_ca_cert": parameters["sslcacert"],
-                        "ssl_client_key": parameters["sslclientkey"],
-                        "ssl_client_cert": parameters["sslclientcert"]
-                    }
+                for url in urls:
+                    if parameters["matchurl"].match(url) is not None:
+                        return {
+                            "ssl_ca_cert": parameters["sslcacert"],
+                            "ssl_client_key": parameters["sslclientkey"],
+                            "ssl_client_cert": parameters["sslclientcert"]
+                        }
 
         # In case there is no matching URL, try the fallback
         if self.secrets:
             return self.secrets
 
-        raise RuntimeError(f"There are no RHSM secret associated with {url}")
+        raise RuntimeError(f"There are no RHSM secret associated with {urls}")
