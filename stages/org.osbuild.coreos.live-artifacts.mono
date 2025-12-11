@@ -152,7 +152,10 @@ def ensure_glob(pathname, n="", **kwargs):
 #
 # [1] https://fedoraproject.org/wiki/Changes/BootLoaderUpdatesPhase1
 def find_efi_source_paths(tree):
-    if glob.glob(os.path.join(tree, 'usr/lib/efi/*/*/EFI')):
+    # The pattern searches for files or directories two levels below EFI/,
+    # on ppc64le, there is only one existing empty directory would make
+    # ensure_glob failed.
+    if glob.glob(os.path.join(tree, 'usr/lib/efi/*/*/EFI/*/*')):
         # BootLoaderUpdatesPhase1 has been implemented and we should
         # be able to pick up files from usr/lib/efi/(grub|shim)/<version>/EFI/
         # Let's ensure there's only 2 dirs that match (i.e. one for grub
