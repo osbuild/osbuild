@@ -26,9 +26,14 @@ class Chroot:
                         "proc", f"{self.root}/proc"],
                        check=True)
 
-        subprocess.run(["mount", "-t", "devtmpfs", "-o", "mode=0755,noexec,nosuid,strictatime",
-                        "devtmpfs", f"{self.root}/dev"],
-                       check=True)
+        try:
+            subprocess.run(["mount", "-t", "devtmpfs", "-o", "mode=0755,noexec,nosuid,strictatime",
+                            "devtmpfs", f"{self.root}/dev"],
+                           check=True)
+        except subprocess.CalledProcessError:
+            # If we're not allowed to mount a new devtmpfs, try bind-mounting the host /dev
+            subprocess.run(["mount", "--bind", "/dev", f"{self.root}/dev"],
+                           check=True)
 
         subprocess.run(["mount", "-t", "sysfs", "-o", "nosuid,noexec,nodev",
                         "sysfs", f"{self.root}/sys"],
