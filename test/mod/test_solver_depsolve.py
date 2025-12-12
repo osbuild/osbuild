@@ -19,14 +19,14 @@ def _get_dnf5_solver_class():
     return dnf5_solver_module.DNF5
 
 
-@pytest.mark.parametrize("solver", [
+@pytest.mark.parametrize("solver_class", [
     pytest.param(_get_dnf4_solver_class(), id="dnf4"),
     pytest.param(_get_dnf5_solver_class(), id="dnf5"),
 ])
-def test_results_sorted(tmp_path, repo_servers, solver):
+def test_results_sorted(tmp_path, repo_servers, solver_class):
     cachedir = tmp_path / "cache"
     persistdir = tmp_path / "persist"
-    solver = instantiate_solver(solver, cachedir, persistdir, repo_servers)
+    solver = instantiate_solver(solver_class, cachedir, persistdir, repo_servers)
 
     depsolve_args = DepsolveCmdArgs(
         transactions=[
