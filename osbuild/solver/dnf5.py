@@ -122,7 +122,7 @@ def _dnf_repo_to_repository(
         mirrorlist=get_string_option(repo_cfg.get_mirrorlist_option()),
         gpgcheck=repo_cfg.get_pkg_gpgcheck_option().get_value(),
         repo_gpgcheck=repo_cfg.get_repo_gpgcheck_option().get_value(),
-        gpgkeys=read_keys(
+        gpgkey=read_keys(
             repo_cfg.get_gpgkey_option().get_value(),
             root_dir if repo.get_id() not in request_repo_ids else None
         ),

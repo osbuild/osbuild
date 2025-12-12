@@ -65,7 +65,7 @@ def _repository_as_dict(repository: Repository) -> dict:
         "mirrorlist": repository.mirrorlist,
         "gpgcheck": repository.gpgcheck,
         "repo_gpgcheck": repository.repo_gpgcheck,
-        "gpgkeys": repository.gpgkeys,
+        "gpgkeys": repository.gpgkey,
         "sslverify": repository.sslverify,
         "sslcacert": repository.sslcacert,
         "sslclientkey": repository.sslclientkey,

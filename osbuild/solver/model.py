@@ -34,36 +34,87 @@ class Repository:
     XXX: This class could be extended to represent more repository attributes common across DNF4 and DNF5.
     """
 
+    # Request-specific defaults - centralized definition
+    # These are applied when creating Repository from API requests via from_request()
+    REQUEST_DEFAULTS = {
+        "sslverify": True,
+        # In dnf, the default metadata expiration time is 48 hours. However,
+        # some repositories never expire the metadata, and others expire it much
+        # sooner than that. We therefore allow this to be configured. If nothing
+        # is provided we error on the side of checking if we should invalidate
+        # the cache. If cache invalidation is not necessary, the overhead of
+        # checking is in the hundreds of milliseconds. In order to avoid this
+        # overhead accumulating for API calls that consist of several dnf calls,
+        # we set the expiration to a short time period, rather than 0.
+        "metadata_expire": "20s",
+    }
+
     _ALLOWED_KWARGS = frozenset({
+        "name",
         "metalink",
         "mirrorlist",
         "gpgcheck",
         "repo_gpgcheck",
-        "gpgkeys",
+        "gpgkey",
         "sslverify",
         "sslcacert",
         "sslclientkey",
         "sslclientcert",
+        "metadata_expire",
+        "module_hotfixes",
     })
 
-    def __init__(self, repo_id: str, name: str, baseurl: Optional[List[str]] = None, **kwargs) -> None:
+    def __init__(
+            self,
+            repo_id: str,
+            baseurl: Optional[List[str]] = None,
+            **kwargs) -> None:
+        """
+        Create a Repository.
+
+        For creating from API requests, use Repository.from_request() which applies
+        request-specific defaults.
+        """
         _validate_kwargs(kwargs, self._ALLOWED_KWARGS, self.__class__.__name__)
 
         self.repo_id = repo_id
-        self.name = name
         self.baseurl = baseurl
+        self.name: Optional[str] = kwargs.get("name", repo_id)
         self.metalink: Optional[str] = kwargs.get("metalink")
         self.mirrorlist: Optional[str] = kwargs.get("mirrorlist")
         self.gpgcheck: Optional[bool] = kwargs.get("gpgcheck")
         self.repo_gpgcheck: Optional[bool] = kwargs.get("repo_gpgcheck")
-        self.gpgkeys: List[str] = kwargs.get("gpgkeys", [])
+        self.gpgkey: List[str] = kwargs.get("gpgkey", [])
         self.sslverify: Optional[bool] = kwargs.get("sslverify")
         self.sslcacert: Optional[str] = kwargs.get("sslcacert")
         self.sslclientkey: Optional[str] = kwargs.get("sslclientkey")
         self.sslclientcert: Optional[str] = kwargs.get("sslclientcert")
+        self.metadata_expire: Optional[str] = kwargs.get("metadata_expire")
+        self.module_hotfixes: Optional[bool] = kwargs.get("module_hotfixes")
 
         if not any([self.baseurl, self.metalink, self.mirrorlist]):
             raise ValueError("At least one of 'baseurl', 'metalink', or 'mirrorlist' must be specified")
+
+    @classmethod
+    def from_request(
+        cls,
+        repo_id: str,
+        baseurl: Optional[List[str]] = None,
+        **kwargs
+    ) -> "Repository":
+        """
+        Create a Repository from API request data, applying request-specific defaults.
+
+        This is the preferred way to create Repository objects when parsing API requests.
+        For converting from DNF repo objects, use the regular constructor which preserves
+        the actual values without applying defaults.
+        """
+        # Apply request-specific defaults for fields not explicitly provided
+        for field, default in cls.REQUEST_DEFAULTS.items():
+            if field not in kwargs or kwargs[field] is None:
+                kwargs[field] = default
+
+        return cls(repo_id=repo_id, baseurl=baseurl, **kwargs)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Repository):
@@ -76,11 +127,13 @@ class Repository:
             and self.mirrorlist == other.mirrorlist
             and self.gpgcheck == other.gpgcheck
             and self.repo_gpgcheck == other.repo_gpgcheck
-            and self.gpgkeys == other.gpgkeys
+            and self.gpgkey == other.gpgkey
             and self.sslverify == other.sslverify
             and self.sslcacert == other.sslcacert
             and self.sslclientkey == other.sslclientkey
             and self.sslclientcert == other.sslclientcert
+            and self.metadata_expire == other.metadata_expire
+            and self.module_hotfixes == other.module_hotfixes
         )
 
     def __hash__(self) -> int:
@@ -92,18 +145,22 @@ class Repository:
             self.mirrorlist,
             self.gpgcheck,
             self.repo_gpgcheck,
-            tuple(self.gpgkeys) if self.gpgkeys else None,
+            tuple(self.gpgkey) if self.gpgkey else None,
             self.sslverify,
             self.sslcacert,
             self.sslclientkey,
             self.sslclientcert,
+            self.metadata_expire,
+            self.module_hotfixes,
         ))
 
     def __repr__(self) -> str:
         return f"Repository(repo_id='{self.repo_id}', name='{self.name}', baseurl={self.baseurl}, " \
             f"metalink='{self.metalink}', mirrorlist='{self.mirrorlist}', gpgcheck={self.gpgcheck}, " \
-            f"repo_gpgcheck={self.repo_gpgcheck}, gpgkeys={self.gpgkeys}, sslverify={self.sslverify}, " \
-            f"sslcacert='{self.sslcacert}', sslclientkey='{self.sslclientkey}', sslclientcert='{self.sslclientcert}')"
+            f"repo_gpgcheck={self.repo_gpgcheck}, gpgkey={self.gpgkey}, sslverify={self.sslverify}, " \
+            f"sslcacert='{self.sslcacert}', sslclientkey='{self.sslclientkey}', " \
+            f"sslclientcert='{self.sslclientcert}', metadata_expire='{self.metadata_expire}', " \
+            f"module_hotfixes={self.module_hotfixes})"
 
 
 class Dependency:
