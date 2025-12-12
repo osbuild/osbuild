@@ -268,13 +268,21 @@ class DNF(SolverBase):
         spdx_doc = sbom_pkgset_to_spdx2_doc(pkgset, self.license_index_path)
         return spdx_doc.to_dict()
 
+    def _dnf_repo_to_repository(self, repo: dnf.repo.Repo) -> model.Repository:
+        """
+        Convert a dnf.repo.Repo to a Repository.
+        """
+        repo_model = _dnf_repo_to_repository(repo, self.root_dir, self.request_repo_ids)
+        self.set_rhsm_flag(repo_model)
+        return repo_model
+
     def dump(self) -> model.DumpResult:
         packages = []
         repositories = {}
         for pkg in self.base.sack.query().available():
             packages.append(_dnf_pkg_to_package(pkg))
             if pkg.repo.id not in repositories:
-                repositories[pkg.repo.id] = _dnf_repo_to_repository(pkg.repo, self.root_dir, self.request_repo_ids)
+                repositories[pkg.repo.id] = self._dnf_repo_to_repository(pkg.repo)
 
         return model.DumpResult(packages, list(repositories.values()))
 
@@ -304,7 +312,7 @@ class DNF(SolverBase):
             for pkg in q:
                 packages.append(_dnf_pkg_to_package(pkg))
                 if pkg.repo.id not in repositories:
-                    repositories[pkg.repo.id] = _dnf_repo_to_repository(pkg.repo, self.root_dir, self.request_repo_ids)
+                    repositories[pkg.repo.id] = self._dnf_repo_to_repository(pkg.repo)
 
         return model.SearchResult(packages, list(repositories.values()))
 
@@ -364,7 +372,7 @@ class DNF(SolverBase):
                 transaction_result.append(_dnf_pkg_to_package(pkg))
                 repo = pkg.repo
                 if repo.id not in repositories_by_id:
-                    repositories_by_id[repo.id] = _dnf_repo_to_repository(repo, self.root_dir, self.request_repo_ids)
+                    repositories_by_id[repo.id] = self._dnf_repo_to_repository(repo)
 
             # NB: DNF4 solver returns packages in alphabetical order. However, to not depend on the DNF4 API
             # implementation details, we explicitly sort the packages alphabetically by full NEVRA.

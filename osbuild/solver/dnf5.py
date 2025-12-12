@@ -376,6 +376,14 @@ class DNF5(SolverBase):
         spdx_doc = sbom_pkgset_to_spdx2_doc(pkgset, self.license_index_path)
         return spdx_doc.to_dict()
 
+    def _dnf_repo_to_repository(self, repo: dnf5.repo.Repo) -> model.Repository:
+        """
+        Convert a dnf5.repo.Repo to a Repository.
+        """
+        repo_model = _dnf_repo_to_repository(repo, self.root_dir, self.request_repo_ids)
+        self.set_rhsm_flag(repo_model)
+        return repo_model
+
     def dump(self) -> model.DumpResult:
         """dump returns a list of all available packages"""
         packages = []
@@ -385,8 +393,7 @@ class DNF5(SolverBase):
         for package in list(q):
             packages.append(_dnf_pkg_to_package(package))
             if package.get_repo().get_id() not in repositories:
-                repositories[package.get_repo().get_id()] = _dnf_repo_to_repository(
-                    package.get_repo(), self.root_dir, self.request_repo_ids)
+                repositories[package.get_repo().get_id()] = self._dnf_repo_to_repository(package.get_repo())
 
         return model.DumpResult(packages, list(repositories.values()))
 
@@ -419,8 +426,7 @@ class DNF5(SolverBase):
             for package in list(q):
                 packages.append(_dnf_pkg_to_package(package))
                 if package.get_repo().get_id() not in repositories:
-                    repositories[package.get_repo().get_id()] = _dnf_repo_to_repository(
-                        package.get_repo(), self.root_dir, self.request_repo_ids)
+                    repositories[package.get_repo().get_id()] = self._dnf_repo_to_repository(package.get_repo())
 
         return model.SearchResult(packages, list(repositories.values()))
 
@@ -473,10 +479,8 @@ class DNF5(SolverBase):
                 pkg = tsi.get_package()
                 last_dnf_transaction.append(pkg)
                 transaction_result.append(_dnf_pkg_to_package(pkg))
-                repo = pkg.get_repo()
-                if repo.get_id() not in repositories_by_id:
-                    repositories_by_id[repo.get_id()] = _dnf_repo_to_repository(
-                        repo, self.root_dir, self.request_repo_ids)
+                if pkg.get_repo().get_id() not in repositories_by_id:
+                    repositories_by_id[pkg.get_repo().get_id()] = self._dnf_repo_to_repository(pkg.get_repo())
 
             # NB: DNF5 solver returns packages in topological order, but the original DNF4 solver returns
             # alphabetically sorted packages. To be consistent and match the original DNF4 solver behavior,
