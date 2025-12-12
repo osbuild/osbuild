@@ -107,6 +107,8 @@ def _dnf_repo_to_repository(
         sslcacert=repo.sslcacert,
         sslclientkey=repo.sslclientkey,
         sslclientcert=repo.sslclientcert,
+        metadata_expire=f"{repo.metadata_expire}s" if repo.metadata_expire else None,
+        module_hotfixes=repo.module_hotfixes,
     )
 
 

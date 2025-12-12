@@ -114,6 +114,7 @@ def _dnf_repo_to_repository(
     Convert a dnf5.repo.Repo to a Repository.
     """
     repo_cfg = repo.get_config()
+    metadata_expire = get_string_option(repo_cfg.get_metadata_expire_option())
     return model.Repository(
         repo_id=repo.get_id(),
         name=repo.get_name(),
@@ -130,6 +131,8 @@ def _dnf_repo_to_repository(
         sslcacert=get_string_option(repo_cfg.get_sslcacert_option()),
         sslclientkey=get_string_option(repo_cfg.get_sslclientkey_option()),
         sslclientcert=get_string_option(repo_cfg.get_sslclientcert_option()),
+        metadata_expire=f"{metadata_expire}s" if metadata_expire else None,
+        module_hotfixes=repo_cfg.get_module_hotfixes_option().get_value(),
     )
 
 

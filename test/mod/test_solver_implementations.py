@@ -140,6 +140,9 @@ TEST_REPOSITORY = Repository(
     sslcacert="",
     sslclientkey="",
     sslclientcert="",
+    # dnf default values (172800 seconds = 48 hours)
+    metadata_expire="172800s",
+    module_hotfixes=False,
 )
 
 
