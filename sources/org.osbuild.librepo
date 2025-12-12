@@ -148,7 +148,7 @@ class LibRepoSource(sources.SourceService):
         if self.subscriptions is None:
             self.subscriptions = Subscriptions.from_host_system()
 
-        secrets = self.subscriptions.get_secrets(mirror["url"])
+        secrets = self.subscriptions.get_secrets([mirror["url"]])
         if secrets:
             if secrets.get('ssl_ca_cert'):
                 handle.sslcacert = secrets.get('ssl_ca_cert')

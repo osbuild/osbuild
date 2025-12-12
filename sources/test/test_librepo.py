@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+
+from typing import List
 from unittest.mock import patch
 
 try:
@@ -61,8 +63,8 @@ class FakeSubscriptionManager:
     def __init__(self):
         self.get_secrets_calls = []
 
-    def get_secrets(self, url):
-        self.get_secrets_calls.append(url)
+    def get_secrets(self, urls: List[str]):
+        self.get_secrets_calls.append(urls)
         return {
             "ssl_ca_cert": "rhsm-ca-cert",
             "ssl_client_cert": "rhsm-client-cert",
@@ -100,7 +102,7 @@ def test_librepo_secrets_rhsm(mocked_download_pkgs, sources_service):
     assert download_pkgs[0].handle.sslclientcert == "rhsm-client-cert"
     assert download_pkgs[0].handle.sslcacert == "rhsm-ca-cert"
     # double check that get_secrets() was called
-    assert sources_service.subscriptions.get_secrets_calls == ["http://example.com/mirrorlist"]
+    assert sources_service.subscriptions.get_secrets_calls == [["http://example.com/mirrorlist"]]
 
 
 @patch("librepo.download_packages")

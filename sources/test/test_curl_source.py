@@ -81,7 +81,7 @@ def test_curl_source_amend_secrets_subscription_mgr(sources_service):
     sources_service.subscriptions = FakeSubscriptionManager()
     checksum = "sha256:1234567890123456789012345678901234567890909b14ffb032aa20fa23d9ad6"
     checksum, desc = sources_service.amend_secrets(checksum, desc)
-    assert desc["secrets"] == "secret-for-http://localhost:80/a"
+    assert desc["secrets"] == "secret-for-['http://localhost:80/a']"
 
 
 @pytest.fixture(name="curl_parallel")
