@@ -8,7 +8,6 @@ from osbuild.solver.model import DepsolveResult, DumpResult, Package, Repository
 from osbuild.solver.request import (
     DepsolveCmdArgs,
     DepsolveTransaction,
-    RepositoryConfig,
     SBOMRequest,
     SearchCmdArgs,
     SolverCommand,
@@ -99,7 +98,7 @@ def serialize_response_depsolve(solver: str, result: DepsolveResult) -> Dict[str
 
 
 # pylint: disable=too-many-branches
-def _parse_repository(repo_dict: Dict[str, Any]) -> RepositoryConfig:
+def _parse_repository(repo_dict: Dict[str, Any]) -> Repository:
     """
     Parse repository config from dict
 
@@ -109,12 +108,12 @@ def _parse_repository(repo_dict: Dict[str, Any]) -> RepositoryConfig:
     if not isinstance(repo_dict, dict):
         raise TypeError("Repository config must be a dict")
 
-    gpgkeys = []
+    gpgkey = []
     # NB: 'gpgkey' is no longer used by osbuild/images implementation, remove it in the next API version.
     if "gpgkey" in repo_dict:
-        gpgkeys.append(repo_dict["gpgkey"])
+        gpgkey.append(repo_dict["gpgkey"])
     if "gpgkeys" in repo_dict:
-        gpgkeys.extend(repo_dict["gpgkeys"])
+        gpgkey.extend(repo_dict["gpgkeys"])
 
     kwargs = {
         "repo_id": repo_dict["id"],
@@ -134,8 +133,8 @@ def _parse_repository(repo_dict: Dict[str, Any]) -> RepositoryConfig:
         kwargs["gpgcheck"] = repo_dict["gpgcheck"]
     if "repo_gpgcheck" in repo_dict:
         kwargs["repo_gpgcheck"] = repo_dict["repo_gpgcheck"]
-    if gpgkeys:
-        kwargs["gpgkey"] = gpgkeys
+    if gpgkey:
+        kwargs["gpgkey"] = gpgkey
     if "sslverify" in repo_dict:
         kwargs["sslverify"] = repo_dict["sslverify"]
     if "sslcacert" in repo_dict:
@@ -149,7 +148,7 @@ def _parse_repository(repo_dict: Dict[str, Any]) -> RepositoryConfig:
     if "module_hotfixes" in repo_dict:
         kwargs["module_hotfixes"] = repo_dict["module_hotfixes"]
 
-    return RepositoryConfig(**kwargs)
+    return Repository.from_request(**kwargs)
 
 
 def _parse_depsolve_transaction(trans_dict: Dict[str, Any]) -> DepsolveTransaction:

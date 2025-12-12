@@ -13,7 +13,7 @@ from libdnf5.common import QueryCmp_GLOB as GLOB
 import osbuild.solver.model as model
 from osbuild.solver import SolverBase, modify_rootdir_path, read_keys
 from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError, RepoError
-from osbuild.solver.request import DepsolveCmdArgs, RepositoryConfig, SearchCmdArgs, SolverConfig
+from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverConfig
 from osbuild.util.sbom.dnf5 import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
@@ -298,8 +298,8 @@ class DNF5(SolverBase):
             raise NoReposError("There are no enabled repositories")
 
     # pylint: disable=too-many-branches
-    def _dnfrepo(self, desc: RepositoryConfig, exclude_pkgs=None):
-        """Makes a dnf.repo.Repo out of request.RepositoryConfig configuration"""
+    def _dnfrepo(self, desc: model.Repository, exclude_pkgs=None):
+        """Makes a dnf.repo.Repo out of model.Repository configuration"""
         if not exclude_pkgs:
             exclude_pkgs = []
 
@@ -323,7 +323,8 @@ class DNF5(SolverBase):
         if desc.mirrorlist:
             conf.mirrorlist = desc.mirrorlist
 
-        conf.sslverify = desc.sslverify
+        if desc.sslverify is not None:
+            conf.sslverify = desc.sslverify
         if desc.sslcacert:
             conf.sslcacert = desc.sslcacert
         if desc.sslclientkey:
@@ -331,12 +332,12 @@ class DNF5(SolverBase):
         if desc.sslclientcert:
             conf.sslclientcert = desc.sslclientcert
 
-        if desc.gpgcheck:
+        if desc.gpgcheck is not None:
             conf.gpgcheck = desc.gpgcheck
-        if desc.repo_gpgcheck:
+        if desc.repo_gpgcheck is not None:
             conf.repo_gpgcheck = desc.repo_gpgcheck
         if desc.gpgkey:
-            # gpgkeys can contain a full key, or it can be a URL
+            # gpgkey can contain a full key, or it can be a URL
             # dnf expects urls, so write the key to a temporary location and add the file://
             # path to conf.gpgkey
             keydir = os.path.join(self.base.get_config().persistdir, "gpgkeys")
@@ -355,8 +356,9 @@ class DNF5(SolverBase):
                 else:
                     conf.gpgkey += (key,)
 
-        conf.metadata_expire = desc.metadata_expire
-        if desc.module_hotfixes:
+        if desc.metadata_expire:
+            conf.metadata_expire = desc.metadata_expire
+        if desc.module_hotfixes is not None:
             repo.module_hotfixes = desc.module_hotfixes
 
         # Set the packages to exclude
