@@ -27,7 +27,6 @@ from osbuild.solver.model import (
 from osbuild.solver.request import (
     DepsolveCmdArgs,
     DepsolveTransaction,
-    RepositoryConfig,
     SBOMRequest,
     SearchCmdArgs,
     SolverCommand,
@@ -168,13 +167,12 @@ TEST_PACKAGES = [
 TEST_REPOSITORIES = [
     Repository(
         "repo1",
-        "Repo 1",
         baseurl=["https://example.com/repo1"],
         metalink="https://example.com/repo1/metalink",
         mirrorlist="https://example.com/repo1/mirrorlist",
         gpgcheck=True,
         repo_gpgcheck=True,
-        gpgkeys=["https://example.com/repo1/RPM-GPG-KEY"],
+        gpgkey=["https://example.com/repo1/RPM-GPG-KEY"],
         sslverify=True,
         sslcacert="https://example.com/repo1/ca.crt",
         sslclientkey="https://example.com/repo1/client.key",
@@ -182,13 +180,12 @@ TEST_REPOSITORIES = [
     ),
     Repository(
         "repo2",
-        "Repo 2",
         baseurl=["https://example.com/repo2"],
         metalink="https://example.com/repo2/metalink",
         mirrorlist="https://example.com/repo2/mirrorlist",
         gpgcheck=False,
         repo_gpgcheck=True,
-        gpgkeys=["https://example.com/repo2/RPM-GPG-KEY"],
+        gpgkey=["https://example.com/repo2/RPM-GPG-KEY"],
         sslverify=False,
         sslcacert="https://example.com/repo2/ca.crt",
         sslclientkey="https://example.com/repo2/client.key",
@@ -304,6 +301,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
         assert sorted(list(repo.keys())) == [
             "baseurl",
             "gpgcheck",
+            # NB: the API v1 response uses 'gpgkeys' instead of 'gpgkey' used in the model.
             "gpgkeys",
             "id",
             "metalink",
@@ -322,7 +320,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
         assert repo["mirrorlist"] == TEST_REPOSITORIES[idx].mirrorlist
         assert repo["gpgcheck"] == TEST_REPOSITORIES[idx].gpgcheck
         assert repo["repo_gpgcheck"] == TEST_REPOSITORIES[idx].repo_gpgcheck
-        assert repo["gpgkeys"] == TEST_REPOSITORIES[idx].gpgkeys
+        assert repo["gpgkeys"] == TEST_REPOSITORIES[idx].gpgkey
         assert repo["sslverify"] == TEST_REPOSITORIES[idx].sslverify
         assert repo["sslcacert"] == TEST_REPOSITORIES[idx].sslcacert
         assert repo["sslclientkey"] == TEST_REPOSITORIES[idx].sslclientkey
@@ -349,7 +347,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 arch="x86_64",
                 releasever="43",
                 cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["https://example.com/fedora"])],
             ),
             depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash", "vim"])]),
         ),
@@ -408,7 +406,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 module_platform_id="platform:f43",
                 proxy="http://proxy.example.com:8080",
                 repos=[
-                    RepositoryConfig(
+                    Repository.from_request(
                         repo_id="fedora",
                         name="Fedora 43",
                         baseurl=["https://example.com/fedora"],
@@ -468,7 +466,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 arch="x86_64",
                 releasever="43",
                 cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["https://example.com/fedora"])],
             ),
             depsolve_args=DepsolveCmdArgs([
                 DepsolveTransaction(package_specs=["bash"]),
@@ -522,7 +520,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 arch="x86_64",
                 releasever="43",
                 cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["https://example.com/fedora"])],
             ),
         ),
         None,
@@ -550,7 +548,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 arch="x86_64",
                 releasever="43",
                 cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["https://example.com/fedora"])],
             ),
             search_args=SearchCmdArgs(packages=["bash", "vim"], latest=True),
         ),
@@ -578,7 +576,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 arch="x86_64",
                 releasever="43",
                 cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["https://example.com/fedora"])],
             ),
             search_args=SearchCmdArgs(packages=["bash"], latest=False),
         ),
@@ -617,7 +615,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 releasever="43",
                 cachedir="/tmp/cache",
                 repos=[
-                    RepositoryConfig(
+                    Repository.from_request(
                         repo_id="fedora",
                         baseurl=["https://example.com/fedora"],
                         gpgkey=[
@@ -625,7 +623,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                             "https://example.com/fedora/RPM-GPG-KEY-2",
                         ],
                     ),
-                    RepositoryConfig(
+                    Repository.from_request(
                         repo_id="updates",
                         metalink="https://example.com/updates/metalink",
                     ),
@@ -660,7 +658,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 releasever="43",
                 cachedir="/tmp/cache",
                 repos=[
-                    RepositoryConfig(
+                    Repository.from_request(
                         repo_id="fedora",
                         baseurl=["https://example.com/fedora"],
                         gpgkey=["https://example.com/fedora/RPM-GPG-KEY"],
@@ -697,7 +695,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 releasever="43",
                 cachedir="/tmp/cache",
                 repos=[
-                    RepositoryConfig(
+                    Repository.from_request(
                         repo_id="fedora",
                         baseurl=["https://example.com/fedora"],
                         gpgkey=[
@@ -729,7 +727,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 arch="x86_64",
                 releasever="43",
                 cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["https://example.com/fedora"])],
             ),
         ),
         None,
@@ -754,7 +752,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
                 arch="x86_64",
                 releasever="43",
                 cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["https://example.com/fedora"])],
                 optional_metadata=["filelists", "other"],
             ),
         ),

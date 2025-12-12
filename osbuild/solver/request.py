@@ -10,6 +10,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, List, Optional
 
 from osbuild.solver.exceptions import InvalidRequestError
+from osbuild.solver.model import Repository
 
 if TYPE_CHECKING:
     from osbuild.solver.api import SolverAPIVersion
@@ -146,104 +147,6 @@ class SearchCmdArgs:
         return hash((tuple(self.packages), self.latest))
 
 
-# pylint: disable=too-many-instance-attributes
-class RepositoryConfig:
-    """Repository configuration from request"""
-
-    def __init__(
-        self,
-        repo_id: str,
-        name: Optional[str] = None,
-        baseurl: Optional[List[str]] = None,
-        metalink: Optional[str] = None,
-        mirrorlist: Optional[str] = None,
-        gpgcheck: Optional[bool] = None,
-        repo_gpgcheck: Optional[bool] = None,
-        gpgkey: Optional[List[str]] = None,
-        sslverify: bool = True,
-        sslcacert: Optional[str] = None,
-        sslclientkey: Optional[str] = None,
-        sslclientcert: Optional[str] = None,
-        # In dnf, the default metadata expiration time is 48 hours. However,
-        # some repositories never expire the metadata, and others expire it much
-        # sooner than that. We therefore allow this to be configured. If nothing
-        # is provided we error on the side of checking if we should invalidate
-        # the cache. If cache invalidation is not necessary, the overhead of
-        # checking is in the hundreds of milliseconds. In order to avoid this
-        # overhead accumulating for API calls that consist of several dnf calls,
-        # we set the expiration to a short time period, rather than 0.
-        metadata_expire: str = "20s",
-        module_hotfixes: Optional[bool] = None,
-    ):
-        if not repo_id:
-            raise InvalidRequestError("Repository 'id' cannot be empty")
-
-        if not baseurl and not metalink and not mirrorlist:
-            raise InvalidRequestError("At least one of 'baseurl', 'metalink', or 'mirrorlist' must be specified")
-
-        self.repo_id = repo_id
-        # pylint: disable=fixme
-        # XXX we should consider defaulting to the repo_id if name is not provided
-        self.name = name
-        self.baseurl = baseurl
-        self.metalink = metalink
-        self.mirrorlist = mirrorlist
-        self.gpgcheck = gpgcheck
-        self.repo_gpgcheck = repo_gpgcheck
-        self.gpgkey = gpgkey
-        self.sslverify = sslverify
-        self.sslcacert = sslcacert
-        self.sslclientkey = sslclientkey
-        self.sslclientcert = sslclientcert
-        self.metadata_expire = metadata_expire
-        self.module_hotfixes = module_hotfixes
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, RepositoryConfig):
-            return False
-        return (
-            self.repo_id == other.repo_id
-            and self.name == other.name
-            and self.baseurl == other.baseurl
-            and self.metalink == other.metalink
-            and self.mirrorlist == other.mirrorlist
-            and self.gpgcheck == other.gpgcheck
-            and self.repo_gpgcheck == other.repo_gpgcheck
-            and self.gpgkey == other.gpgkey
-            and self.sslverify == other.sslverify
-            and self.sslcacert == other.sslcacert
-            and self.sslclientkey == other.sslclientkey
-            and self.sslclientcert == other.sslclientcert
-            and self.metadata_expire == other.metadata_expire
-            and self.module_hotfixes == other.module_hotfixes
-        )
-
-    def __hash__(self) -> int:
-        return hash((
-            self.repo_id,
-            self.name,
-            tuple(self.baseurl) if self.baseurl else None,
-            self.metalink,
-            self.mirrorlist,
-            self.gpgcheck,
-            self.repo_gpgcheck,
-            tuple(self.gpgkey) if self.gpgkey else None,
-            self.sslverify,
-            self.sslcacert,
-            self.sslclientkey,
-            self.sslclientcert,
-            self.metadata_expire,
-            self.module_hotfixes,
-        ))
-
-    def __repr__(self) -> str:
-        return f"RepositoryConfig(repo_id={self.repo_id}, name={self.name}, baseurl={self.baseurl}, " \
-            f"metalink={self.metalink}, mirrorlist={self.mirrorlist}, gpgcheck={self.gpgcheck}, " \
-            f"repo_gpgcheck={self.repo_gpgcheck}, gpgkey={self.gpgkey}, sslverify={self.sslverify}, " \
-            f"sslcacert={self.sslcacert}, sslclientkey={self.sslclientkey}, sslclientcert={self.sslclientcert}, " \
-            f"metadata_expire={self.metadata_expire}, module_hotfixes={self.module_hotfixes})"
-
-
 class SolverConfig:
     """Solver configuration"""
 
@@ -254,7 +157,7 @@ class SolverConfig:
         cachedir: str,
         module_platform_id: Optional[str] = None,
         proxy: Optional[str] = None,
-        repos: Optional[List[RepositoryConfig]] = None,
+        repos: Optional[List[Repository]] = None,
         root_dir: Optional[str] = None,
         optional_metadata: Optional[List[str]] = None,
     ):
