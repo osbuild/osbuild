@@ -168,13 +168,12 @@ TEST_PACKAGES = [
 TEST_REPOSITORIES = [
     Repository(
         "repo1",
-        "Repo 1",
         baseurl=["https://example.com/repo1"],
         metalink="https://example.com/repo1/metalink",
         mirrorlist="https://example.com/repo1/mirrorlist",
         gpgcheck=True,
         repo_gpgcheck=True,
-        gpgkeys=["https://example.com/repo1/RPM-GPG-KEY"],
+        gpgkey=["https://example.com/repo1/RPM-GPG-KEY"],
         sslverify=True,
         sslcacert="https://example.com/repo1/ca.crt",
         sslclientkey="https://example.com/repo1/client.key",
@@ -182,13 +181,12 @@ TEST_REPOSITORIES = [
     ),
     Repository(
         "repo2",
-        "Repo 2",
         baseurl=["https://example.com/repo2"],
         metalink="https://example.com/repo2/metalink",
         mirrorlist="https://example.com/repo2/mirrorlist",
         gpgcheck=False,
         repo_gpgcheck=True,
-        gpgkeys=["https://example.com/repo2/RPM-GPG-KEY"],
+        gpgkey=["https://example.com/repo2/RPM-GPG-KEY"],
         sslverify=False,
         sslcacert="https://example.com/repo2/ca.crt",
         sslclientkey="https://example.com/repo2/client.key",
@@ -304,6 +302,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
         assert sorted(list(repo.keys())) == [
             "baseurl",
             "gpgcheck",
+            # NB: the API v1 response uses 'gpgkeys' instead of 'gpgkey' used in the model.
             "gpgkeys",
             "id",
             "metalink",
@@ -322,7 +321,7 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
         assert repo["mirrorlist"] == TEST_REPOSITORIES[idx].mirrorlist
         assert repo["gpgcheck"] == TEST_REPOSITORIES[idx].gpgcheck
         assert repo["repo_gpgcheck"] == TEST_REPOSITORIES[idx].repo_gpgcheck
-        assert repo["gpgkeys"] == TEST_REPOSITORIES[idx].gpgkeys
+        assert repo["gpgkeys"] == TEST_REPOSITORIES[idx].gpgkey
         assert repo["sslverify"] == TEST_REPOSITORIES[idx].sslverify
         assert repo["sslcacert"] == TEST_REPOSITORIES[idx].sslcacert
         assert repo["sslclientkey"] == TEST_REPOSITORIES[idx].sslclientkey

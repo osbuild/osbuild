@@ -178,6 +178,9 @@ class TestRepository:
                      False, id="different_repo_gpgcheck"),
         pytest.param({"baseurl": ["http://example.com/r1"], "sslverify": True},
                      {"baseurl": ["http://example.com/r1"], "sslverify": False}, False, id="different_sslverify"),
+        pytest.param(
+            {"baseurl": ["http://example.com/r1"], "module_hotfixes": True},
+            {"baseurl": ["http://example.com/r1"], "module_hotfixes": False}, False, id="different_module_hotfixes"),
         # SSL certificate fields
         pytest.param({"baseurl": ["http://example.com/r1"], "sslcacert": "/etc/pki/cert.pem"},
                      {"baseurl": ["http://example.com/r1"], "sslcacert": "/etc/pki/cert.pem"},
@@ -186,70 +189,115 @@ class TestRepository:
                      {"baseurl": ["http://example.com/r1"], "sslclientkey": "/etc/pki/key2.pem"},
                      False, id="different_sslclientkey"),
         # GPG keys list
-        pytest.param({"baseurl": ["http://example.com/r1"], "gpgkeys": ["http://example.com/key1.asc"]},
-                     {"baseurl": ["http://example.com/r1"], "gpgkeys": ["http://example.com/key1.asc"]},
+        pytest.param({"baseurl": ["http://example.com/r1"], "gpgkey": ["http://example.com/key1.asc"]},
+                     {"baseurl": ["http://example.com/r1"], "gpgkey": ["http://example.com/key1.asc"]},
                      True, id="same_gpgkeys"),
-        pytest.param({"baseurl": ["http://example.com/r1"], "gpgkeys": ["http://example.com/key1.asc"]},
-                     {"baseurl": ["http://example.com/r1"], "gpgkeys": ["http://example.com/key2.asc"]},
+        pytest.param({"baseurl": ["http://example.com/r1"], "gpgkey": ["http://example.com/key1.asc"]},
+                     {"baseurl": ["http://example.com/r1"], "gpgkey": ["http://example.com/key2.asc"]},
                      False, id="different_gpgkeys"),
         # Different required fields
         pytest.param({"baseurl": ["http://example.com/r1"]},
                      {"baseurl": ["http://example.com/r1"]}, True, id="minimal_repository"),
+        pytest.param({"repo_id": "fedora", "baseurl": ["http://example.com/r1"]},
+                     {"repo_id": "updates", "baseurl": ["http://example.com/r1"]}, False, id="different_repo_id"),
         # Complex combination
         pytest.param({
             "metalink": "http://example.com/meta1",
             "gpgcheck": True,
-            "gpgkeys": ["http://example.com/key1.asc"],
+            "gpgkey": ["http://example.com/key1.asc"],
             "sslverify": True,
         }, {
             "metalink": "http://example.com/meta1",
             "gpgcheck": True,
-            "gpgkeys": ["http://example.com/key1.asc"],
+            "gpgkey": ["http://example.com/key1.asc"],
             "sslverify": True,
         }, True, id="complex_attributes_same"),
         pytest.param({
             "baseurl": ["http://example.com/r1"],
             "gpgcheck": True,
-            "gpgkeys": ["http://example.com/key1.asc"],
+            "gpgkey": ["http://example.com/key1.asc"],
         }, {
             "baseurl": ["http://example.com/r1"],
             "gpgcheck": False,
-            "gpgkeys": ["http://example.com/key1.asc"],
+            "gpgkey": ["http://example.com/key1.asc"],
         }, False, id="complex_attributes_different"),
+        pytest.param(
+            {"baseurl": ["http://example.com/r1"], "metadata_expire": "1h"},
+            {"baseurl": ["http://example.com/r1"], "metadata_expire": "2h"},
+            False,
+            id="different_metadata_expire"
+        ),
     ])
     def test_equality(self, kwargs1, kwargs2, expected):
-        repo1 = Repository("fedora", "Fedora 43", **kwargs1)
-        repo2 = Repository("fedora", "Fedora 43", **kwargs2)
+        repo1 = Repository(kwargs1.pop("repo_id", "fedora"), **kwargs1)
+        repo2 = Repository(kwargs2.pop("repo_id", "fedora"), **kwargs2)
         assert (repo1 == repo2) == expected
         if expected:
             assert hash(repo1) == hash(repo2)
 
-    def test_equality_different_required_fields(self):
-        repo1 = Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])
-        repo2 = Repository("updates", "Fedora 43", baseurl=["http://example.com/r1"])
-        repo3 = Repository("fedora", "Fedora 44", baseurl=["http://example.com/r1"])
-        assert repo1 != repo2  # different repo_id
-        assert repo1 != repo3  # different name
-
     def test_invalid_kwargs(self):
         with pytest.raises(ValueError, match="Repository: unrecognized keyword arguments: foo"):
-            Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"], foo="bar")
+            Repository("fedora", baseurl=["http://example.com/r1"], foo="bar")
 
     def test_missing_url_fields(self):
         with pytest.raises(
             ValueError,
             match="At least one of 'baseurl', 'metalink', or 'mirrorlist' must be specified",
         ):
-            Repository("fedora", "Fedora 43")
+            Repository("fedora")
 
     def test_collections(self):
-        repo1 = Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])
-        repo2 = Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])
-        repo3 = Repository("updates", "Fedora 43 Updates", baseurl=["http://example.com/r2"])
+        repo1 = Repository("fedora", baseurl=["http://example.com/r1"])
+        repo2 = Repository("fedora", baseurl=["http://example.com/r1"])
+        repo3 = Repository("updates", baseurl=["http://example.com/r2"])
         assert len({repo1, repo2, repo3}) == 2
         repo_dict = {repo1: "v1"}
         repo_dict[repo2] = "v2"
         assert len(repo_dict) == 1 and repo_dict[repo1] == "v2"
+
+    @pytest.mark.parametrize("kwargs,expected", [
+        pytest.param(
+            {"repo_id": "fedora", "baseurl": ["http://example.com"]},
+            "fedora", id="minimal_with_baseurl"
+        ),
+        pytest.param(
+            {"repo_id": "fedora", "baseurl": ["http://example.com"], "name": "Fedora 43"},
+            "Fedora 43", id="with_name"
+        ),
+    ])
+    def test_name_defaults_to_repo_id(self, kwargs, expected):
+        repo = Repository(**kwargs)
+        assert repo.name == expected
+
+    @pytest.mark.parametrize("kwargs,expected_attrs", [
+        pytest.param(
+            {"baseurl": ["http://example.com"]},
+            {"sslverify": True, "metadata_expire": "20s"},
+            id="defaults_applied",
+        ),
+        pytest.param(
+            {"baseurl": ["http://example.com"], "sslverify": False, "metadata_expire": "2h"},
+            {"sslverify": False, "metadata_expire": "2h"},
+            id="explicit_overrides",
+        ),
+        pytest.param(
+            {"baseurl": ["http://example.com"], "sslverify": None, "metadata_expire": None},
+            {"sslverify": True, "metadata_expire": "20s"},
+            id="none_values_get_defaults",
+        ),
+    ])
+    def test_from_request(self, kwargs, expected_attrs):
+        """Test that from_request() applies request-specific defaults"""
+        repo = Repository.from_request(repo_id="fedora", **kwargs)
+        for attr, expected_value in expected_attrs.items():
+            got_attr_value = getattr(repo, attr)
+            assert got_attr_value == expected_value, f"Expected {attr}={expected_value}, got {got_attr_value}"
+
+    def test_constructor_no_defaults(self):
+        """Test that regular constructor does NOT apply defaults"""
+        repo = Repository("fedora", baseurl=["http://example.com"])
+        assert repo.sslverify is None
+        assert repo.metadata_expire is None
 
 
 class TestDepsolveResult:
@@ -261,7 +309,7 @@ class TestDepsolveResult:
                 [Package("bash", "5.1", "1.fc43", "x86_64")],
                 [Package("zsh", "5.8", "1.fc43", "x86_64")],
             ],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])],
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])],
             modules={"module1": {"package": {"name": "module1", "stream": "8"}, "profiles": ["base"]}},
             sbom={"sbom": "sbom document"}
         )
@@ -270,7 +318,7 @@ class TestDepsolveResult:
                 [Package("bash", "5.1", "1.fc43", "x86_64")],
                 [Package("zsh", "5.8", "1.fc43", "x86_64")],
             ],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])],
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])],
             modules={"module1": {"package": {"name": "module1", "stream": "8"}, "profiles": ["base"]}},
             sbom={"sbom": "sbom document"}
         )
@@ -282,20 +330,20 @@ class TestDepsolveResult:
             transactions=[
                 [Package("bash", "5.1", "1.fc43", "x86_64")],
             ],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         result2 = DepsolveResult(
             transactions=[
                 [Package("bash", "5.1", "1.fc43", "x86_64")],
             ],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         result3 = DepsolveResult(
             transactions=[
                 [Package("bash", "5.1", "1.fc43", "x86_64")],
                 [Package("zsh", "5.8", "1.fc43", "x86_64")],
             ],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         assert len({result1, result2, result3}) == 2
         result_dict = {result1: "v1"}
@@ -309,11 +357,11 @@ class TestDumpResult:
     def test_equality(self):
         result1 = DumpResult(
             packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         result2 = DumpResult(
             packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         assert result1 == result2
         assert hash(result1) == hash(result2)
@@ -321,15 +369,15 @@ class TestDumpResult:
     def test_collections(self):
         result1 = DumpResult(
             packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         result2 = DumpResult(
             packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         result3 = DumpResult(
             packages=[Package("zsh", "5.8", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         assert len({result1, result2, result3}) == 2
         result_dict = {result1: "v1"}
@@ -343,11 +391,11 @@ class TestSearchResult:
     def test_equality(self):
         result1 = SearchResult(
             packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         result2 = SearchResult(
             packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         assert result1 == result2
         assert hash(result1) == hash(result2)
@@ -355,15 +403,15 @@ class TestSearchResult:
     def test_collections(self):
         result1 = SearchResult(
             packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         result2 = SearchResult(
             packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         result3 = SearchResult(
             packages=[Package("zsh", "5.8", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", "Fedora 43", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
         )
         assert len({result1, result2, result3}) == 2
         result_dict = {result1: "v1"}

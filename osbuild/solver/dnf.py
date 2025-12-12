@@ -102,7 +102,7 @@ def _dnf_repo_to_repository(
         mirrorlist=repo.mirrorlist,
         gpgcheck=repo.gpgcheck,
         repo_gpgcheck=repo.repo_gpgcheck,
-        gpgkeys=read_keys(repo.gpgkey, root_dir if repo.id not in request_repo_ids else None),
+        gpgkey=read_keys(repo.gpgkey, root_dir if repo.id not in request_repo_ids else None),
         sslverify=bool(repo.sslverify),
         sslcacert=repo.sslcacert,
         sslclientkey=repo.sslclientkey,
