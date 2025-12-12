@@ -130,6 +130,8 @@ def _dnf_repo_to_repository(
         sslcacert=get_string_option(repo_cfg.get_sslcacert_option()),
         sslclientkey=get_string_option(repo_cfg.get_sslclientkey_option()),
         sslclientcert=get_string_option(repo_cfg.get_sslclientcert_option()),
+        metadata_expire=get_string_option(repo_cfg.get_metadata_expire_option()),
+        module_hotfixes=repo_cfg.get_module_hotfixes_option().get_value(),
     )
 
 
