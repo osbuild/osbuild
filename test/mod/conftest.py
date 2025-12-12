@@ -2,7 +2,8 @@
 
 import os
 
-from osbuild.solver.request import RepositoryConfig, SolverConfig
+from osbuild.solver.model import Repository
+from osbuild.solver.request import SolverConfig
 
 
 def assert_object_equal(obj1, obj2):
@@ -27,7 +28,7 @@ def assert_object_equal(obj1, obj2):
 
 def instantiate_solver(solver_class, cachedir, persistdir, repo_servers):
     """Prepare a solver object for testing."""
-    repo_configs = [RepositoryConfig(repo_id=r["name"], baseurl=[r["address"]]) for r in repo_servers]
+    repo_configs = [Repository.from_request(repo_id=r["name"], baseurl=[r["address"]]) for r in repo_servers]
     solver = solver_class(
         config=SolverConfig(
             arch="x86_64",

@@ -7,10 +7,10 @@ import pytest
 
 from osbuild.solver.api import SolverAPIVersion
 from osbuild.solver.exceptions import InvalidRequestError
+from osbuild.solver.model import Repository
 from osbuild.solver.request import (
     DepsolveCmdArgs,
     DepsolveTransaction,
-    RepositoryConfig,
     SBOMRequest,
     SearchCmdArgs,
     SolverCommand,
@@ -358,190 +358,6 @@ class TestSearchCmdArgs:
         assert len(args_dict) == 1 and args_dict[args1] == "v2"
 
 
-class TestRepositoryConfig:
-    """Tests for the RepositoryConfig class"""
-
-    @pytest.mark.parametrize("kwargs,exception", [
-        pytest.param(
-            {"repo_id": "fedora", "baseurl": ["http://example.com"]},
-            None,
-            id="minimal_with_baseurl",
-        ),
-        pytest.param(
-            {"repo_id": "fedora", "metalink": "http://example.com/metalink"},
-            None,
-            id="minimal_with_metalink",
-        ),
-        pytest.param(
-            {"repo_id": "fedora", "mirrorlist": "http://example.com/mirrorlist"},
-            None,
-            id="minimal_with_mirrorlist",
-        ),
-        pytest.param(
-            {
-                "repo_id": "fedora",
-                "baseurl": ["http://example.com/fedora"],
-                "name": "Fedora 43",
-                "gpgcheck": True,
-                "repo_gpgcheck": True,
-                "gpgkey": ["http://example.com/key.asc"],
-                "sslverify": True,
-                "sslcacert": "/etc/pki/ca.pem",
-                "sslclientkey": "/etc/pki/client.key",
-                "sslclientcert": "/etc/pki/client.cert",
-                "metadata_expire": "1h",
-                "module_hotfixes": True
-            },
-            None,
-            id="full_config",
-        ),
-        # Invalid requests
-        pytest.param(
-            {"repo_id": ""},
-            InvalidRequestError("Repository 'id' cannot be empty"),
-            id="invalid_empty_repo_id",
-        ),
-        pytest.param(
-            {"repo_id": "fedora"},
-            InvalidRequestError("At least one of 'baseurl', 'metalink', or 'mirrorlist' must be specified"),
-            id="invalid_missing_url_fields",
-        ),
-    ])
-    def test_constructor(self, kwargs, exception):
-        if exception:
-            with pytest.raises(type(exception), match=str(exception)):
-                RepositoryConfig(**kwargs)
-        else:
-            repo = RepositoryConfig(**kwargs)
-            assert repo.repo_id == kwargs.get("repo_id")
-            assert repo.name == kwargs.get("name")
-            assert repo.baseurl == kwargs.get("baseurl")
-            assert repo.metalink == kwargs.get("metalink")
-            assert repo.mirrorlist == kwargs.get("mirrorlist")
-            assert repo.gpgcheck == kwargs.get("gpgcheck")
-            assert repo.repo_gpgcheck == kwargs.get("repo_gpgcheck")
-            assert repo.gpgkey == kwargs.get("gpgkey")
-            assert repo.sslverify == kwargs.get("sslverify", True)
-            assert repo.sslcacert == kwargs.get("sslcacert")
-            assert repo.sslclientkey == kwargs.get("sslclientkey")
-            assert repo.sslclientcert == kwargs.get("sslclientcert")
-            assert repo.metadata_expire == kwargs.get("metadata_expire", "20s")
-            assert repo.module_hotfixes == kwargs.get("module_hotfixes")
-
-    @pytest.mark.parametrize("repo1,repo2,expected", [
-        # Basic fields
-        pytest.param(
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"]),
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"]),
-            True,
-            id="same_minimal",
-        ),
-        pytest.param(
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"]),
-            RepositoryConfig(repo_id="updates", baseurl=["http://example.com"]),
-            False,
-            id="different_repo_id",
-        ),
-        pytest.param(
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"]),
-            RepositoryConfig(repo_id="fedora", baseurl=["http://other.com"]),
-            False,
-            id="different_baseurl",
-        ),
-        pytest.param(
-            RepositoryConfig(repo_id="fedora", metalink="http://example.com/metalink"),
-            RepositoryConfig(repo_id="fedora", mirrorlist="http://example.com/mirrorlist"),
-            False,
-            id="different_url_type",
-        ),
-        # Boolean and optional fields
-        pytest.param(
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"], gpgcheck=True),
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"], gpgcheck=False),
-            False,
-            id="different_gpgcheck",
-        ),
-        pytest.param(
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"], gpgkey=["http://example.com/key1.asc"]),
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"], gpgkey=["http://example.com/key2.asc"]),
-            False,
-            id="different_gpgkey",
-        ),
-        pytest.param(
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"], metadata_expire="1h"),
-            RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"], metadata_expire="2h"),
-            False,
-            id="different_metadata_expire",
-        ),
-        # Complex combination
-        pytest.param(
-            RepositoryConfig(
-                repo_id="fedora",
-                baseurl=["http://example.com"],
-                gpgcheck=True,
-                gpgkey=["http://example.com/key1.asc"],
-                sslverify=True,
-                sslcacert="/etc/pki/ca.pem",
-                sslclientkey="/etc/pki/client.key",
-                sslclientcert="/etc/pki/client.cert",
-                metadata_expire="1h",
-                module_hotfixes=True,
-            ),
-            RepositoryConfig(
-                repo_id="fedora",
-                baseurl=["http://example.com"],
-                gpgcheck=True,
-                gpgkey=["http://example.com/key1.asc"],
-                sslverify=True,
-                sslcacert="/etc/pki/ca.pem",
-                sslclientkey="/etc/pki/client.key",
-                sslclientcert="/etc/pki/client.cert",
-                metadata_expire="1h",
-                module_hotfixes=True,
-            ),
-            True,
-            id="complex_attributes_same",
-        ),
-        pytest.param(
-            RepositoryConfig(
-                repo_id="fedora",
-                baseurl=["http://example.com"],
-                gpgcheck=True,
-                gpgkey=["http://example.com/key1.asc"],
-                metadata_expire="1h",
-                module_hotfixes=True,
-            ),
-            RepositoryConfig(
-                repo_id="fedora",
-                baseurl=["http://example.com"],
-                gpgcheck=True,
-                gpgkey=["http://example.com/key1.asc"],
-                sslverify=True,
-                sslcacert="/etc/pki/ca.pem",
-                sslclientkey="/etc/pki/client.key",
-                sslclientcert="/etc/pki/client.cert",
-                metadata_expire="2h",
-                module_hotfixes=True,
-            ),
-            False,
-            id="complex_attributes_different",
-        ),
-    ])
-    def test_equality(self, repo1, repo2, expected):
-        assert (repo1 == repo2) == expected
-        if expected:
-            assert hash(repo1) == hash(repo2)
-
-    def test_collections(self):
-        repo1 = RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])
-        repo2 = RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])
-        repo3 = RepositoryConfig(repo_id="updates", baseurl=["http://example.com"])
-        assert len({repo1, repo2, repo3}) == 2
-        repo_dict = {repo1: "v1"}
-        repo_dict[repo2] = "v2"
-        assert len(repo_dict) == 1 and repo_dict[repo1] == "v2"
-
-
 class TestSolverConfig:
     """Tests for the SolverConfig class"""
 
@@ -551,7 +367,7 @@ class TestSolverConfig:
                 "arch": "x86_64",
                 "releasever": "43",
                 "cachedir": "/tmp/cache",
-                "repos": [RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                "repos": [Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             },
             None,
             id="minimal_with_repos",
@@ -572,8 +388,8 @@ class TestSolverConfig:
                 "releasever": "43",
                 "cachedir": "/tmp/cache",
                 "repos": [
-                    RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"]),
-                    RepositoryConfig(repo_id="updates", baseurl=["http://example.com/updates"]),
+                    Repository.from_request(repo_id="fedora", baseurl=["http://example.com"]),
+                    Repository.from_request(repo_id="updates", baseurl=["http://example.com/updates"]),
                 ],
                 "optional_metadata": ["filelists", "other"],
                 "module_platform_id": "platform:f43",
@@ -588,7 +404,7 @@ class TestSolverConfig:
                 "arch": "",
                 "releasever": "43",
                 "cachedir": "/tmp/cache",
-                "repos": [RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                "repos": [Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             },
             InvalidRequestError("Field 'arch' is required"),
             id="invalid_empty_arch",
@@ -598,7 +414,7 @@ class TestSolverConfig:
                 "arch": "x86_64",
                 "releasever": "",
                 "cachedir": "/tmp/cache",
-                "repos": [RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                "repos": [Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             },
             InvalidRequestError("Field 'releasever' is required"),
             id="invalid_empty_releasever",
@@ -608,7 +424,7 @@ class TestSolverConfig:
                 "arch": "x86_64",
                 "releasever": "43",
                 "cachedir": "",
-                "repos": [RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                "repos": [Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             },
             InvalidRequestError("Field 'cachedir' is required"),
             id="invalid_empty_cachedir",
@@ -645,13 +461,13 @@ class TestSolverConfig:
                 arch="x86_64",
                 releasever="43",
                 cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             ),
             SolverConfig(
                 arch="x86_64",
                 releasever="43",
                 cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             ),
             True,
             id="same_minimal",
@@ -659,11 +475,11 @@ class TestSolverConfig:
         pytest.param(
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             ),
             SolverConfig(
                 arch="aarch64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             ),
             False,
             id="different_arch",
@@ -671,11 +487,11 @@ class TestSolverConfig:
         pytest.param(
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]
             ),
             SolverConfig(
                 arch="x86_64", releasever="44", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             ),
             False,
             id="different_releasever",
@@ -683,11 +499,11 @@ class TestSolverConfig:
         pytest.param(
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
             ),
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="updates", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="updates", baseurl=["http://example.com"])],
             ),
             False,
             id="different_repos",
@@ -696,12 +512,12 @@ class TestSolverConfig:
         pytest.param(
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 module_platform_id="platform:f43",
             ),
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 module_platform_id="platform:f44",
             ),
             False,
@@ -710,12 +526,12 @@ class TestSolverConfig:
         pytest.param(
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 proxy="http://proxy1.example.com:8080",
             ),
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 proxy="http://proxy2.example.com:8080",
             ),
             False,
@@ -730,12 +546,12 @@ class TestSolverConfig:
         pytest.param(
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 optional_metadata=["filelists"],
             ),
             SolverConfig(
                 arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 optional_metadata=["other"],
             ),
             False,
@@ -752,19 +568,19 @@ class TestSolverConfig:
             arch="x86_64",
             releasever="43",
             cachedir="/tmp/cache",
-            repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+            repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
         )
         config2 = SolverConfig(
             arch="x86_64",
             releasever="43",
             cachedir="/tmp/cache",
-            repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+            repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
         )
         config3 = SolverConfig(
             arch="aarch64",
             releasever="43",
             cachedir="/tmp/cache",
-            repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+            repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
         )
         assert len({config1, config2, config3}) == 2
         config_dict = {config1: "v1"}
@@ -784,7 +600,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
                 "depsolve_args": DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
             },
@@ -799,7 +615,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
             },
             None,
@@ -813,7 +629,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
                 "search_args": SearchCmdArgs(packages=["bash"]),
             },
@@ -850,8 +666,8 @@ class TestSolverRequest:
                     releasever="43",
                     cachedir="/tmp/cache",
                     repos=[
-                        RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"]),
-                        RepositoryConfig(repo_id="updates", baseurl=["http://example.com/updates"]),
+                        Repository.from_request(repo_id="fedora", baseurl=["http://example.com"]),
+                        Repository.from_request(repo_id="updates", baseurl=["http://example.com/updates"]),
                     ],
                     optional_metadata=["filelists", "other"],
                     module_platform_id="platform:f43",
@@ -880,7 +696,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
             },
             InvalidRequestError("Depsolve command requires arguments"),
@@ -894,7 +710,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
             },
             InvalidRequestError("Search command requires arguments"),
@@ -908,7 +724,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
                 "depsolve_args": DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
             },
@@ -923,7 +739,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
                 "depsolve_args": DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
             },
@@ -938,7 +754,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
                 "search_args": SearchCmdArgs(packages=["bash"]),
             },
@@ -953,7 +769,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
                 "search_args": SearchCmdArgs(packages=["bash"]),
             },
@@ -968,7 +784,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
             },
             InvalidRequestError("Invalid command 'invalid_command': must be one of depsolve, dump, search"),
@@ -982,7 +798,7 @@ class TestSolverRequest:
                     arch="x86_64",
                     releasever="43",
                     cachedir="/tmp/cache",
-                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])],
+                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
                 ),
             },
             InvalidRequestError("Field 'command' is required"),
@@ -1008,14 +824,14 @@ class TestSolverRequest:
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.DEPSOLVE,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
             ),
             SolverRequest(
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.DEPSOLVE,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
             ),
             True,
@@ -1026,14 +842,14 @@ class TestSolverRequest:
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.SEARCH,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 search_args=SearchCmdArgs(packages=["bash"]),
             ),
             SolverRequest(
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.SEARCH,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 search_args=SearchCmdArgs(packages=["bash"]),
             ),
             True,
@@ -1044,14 +860,14 @@ class TestSolverRequest:
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.DEPSOLVE,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
             ),
             SolverRequest(
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.SEARCH,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 search_args=SearchCmdArgs(packages=["bash"]),
             ),
             False,
@@ -1062,14 +878,14 @@ class TestSolverRequest:
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.DEPSOLVE,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
             ),
             SolverRequest(
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.DEPSOLVE,
                 config=SolverConfig(arch="aarch64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
             ),
             False,
@@ -1080,14 +896,14 @@ class TestSolverRequest:
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.DEPSOLVE,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
             ),
             SolverRequest(
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.DEPSOLVE,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["vim"])]),
             ),
             False,
@@ -1098,14 +914,14 @@ class TestSolverRequest:
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.SEARCH,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 search_args=SearchCmdArgs(packages=["bash"]),
             ),
             SolverRequest(
                 api_version=SolverAPIVersion.V1,
                 command=SolverCommand.SEARCH,
                 config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                    repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                    repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
                 search_args=SearchCmdArgs(packages=["vim"]),
             ),
             False,
@@ -1122,21 +938,21 @@ class TestSolverRequest:
             api_version=SolverAPIVersion.V1,
             command=SolverCommand.DEPSOLVE,
             config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
             depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
         )
         req2 = SolverRequest(
             api_version=SolverAPIVersion.V1,
             command=SolverCommand.DEPSOLVE,
             config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
             depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
         )
         req3 = SolverRequest(
             api_version=SolverAPIVersion.V1,
             command=SolverCommand.SEARCH,
             config=SolverConfig(arch="x86_64", releasever="43", cachedir="/tmp/cache",
-                                repos=[RepositoryConfig(repo_id="fedora", baseurl=["http://example.com"])]),
+                                repos=[Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])]),
             search_args=SearchCmdArgs(packages=["bash"]),
         )
         assert len({req1, req2, req3}) == 2

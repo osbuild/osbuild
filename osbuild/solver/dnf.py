@@ -15,7 +15,7 @@ from dnf.i18n import ucd
 import osbuild.solver.model as model
 from osbuild.solver import SolverBase, modify_rootdir_path, read_keys
 from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError, RepoError
-from osbuild.solver.request import DepsolveCmdArgs, RepositoryConfig, SearchCmdArgs, SolverConfig
+from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverConfig
 from osbuild.util.sbom.dnf import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
 
@@ -196,8 +196,8 @@ class DNF(SolverBase):
         self.base_module = dnf.module.module_base.ModuleBase(self.base)
 
     @staticmethod
-    def _dnfrepo(desc: RepositoryConfig, parent_conf=None, subs_links=False):
-        """Makes a dnf.repo.Repo out of request.RepositoryConfig configuration"""
+    def _dnfrepo(desc: model.Repository, parent_conf=None, subs_links=False):
+        """Makes a dnf.repo.Repo out of model.Repository configuration"""
 
         repo = dnf.repo.Repo(desc.repo_id, parent_conf)
         config = libdnf.conf.ConfigParser
@@ -218,7 +218,8 @@ class DNF(SolverBase):
         if desc.mirrorlist:
             repo.mirrorlist = subs(desc.mirrorlist)
 
-        repo.sslverify = desc.sslverify
+        if desc.sslverify is not None:
+            repo.sslverify = desc.sslverify
         if desc.sslcacert:
             repo.sslcacert = desc.sslcacert
         if desc.sslclientkey:
@@ -226,12 +227,12 @@ class DNF(SolverBase):
         if desc.sslclientcert:
             repo.sslclientcert = desc.sslclientcert
 
-        if desc.gpgcheck:
+        if desc.gpgcheck is not None:
             repo.gpgcheck = desc.gpgcheck
-        if desc.repo_gpgcheck:
+        if desc.repo_gpgcheck is not None:
             repo.repo_gpgcheck = desc.repo_gpgcheck
         if desc.gpgkey:
-            # gpgkeys can contain a full key, or it can be a URL
+            # gpgkey can contain a full key, or it can be a URL
             # dnf expects urls, so write the key to a temporary location and add the file://
             # path to repo.gpgkey
             keydir = os.path.join(parent_conf.persistdir, "gpgkeys")
@@ -250,11 +251,9 @@ class DNF(SolverBase):
                 else:
                     repo.gpgkey.append(key)
 
-        repo.metadata_expire = desc.metadata_expire
-
-        # This option if True disables modularization filtering. Effectively
-        # disabling modularity for given repository.
-        if desc.module_hotfixes:
+        if desc.metadata_expire:
+            repo.metadata_expire = desc.metadata_expire
+        if desc.module_hotfixes is not None:
             repo.module_hotfixes = desc.module_hotfixes
 
         return repo
