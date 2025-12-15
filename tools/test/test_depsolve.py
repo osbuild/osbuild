@@ -1569,6 +1569,53 @@ def assert_depsolve_api_v1_response(res, expected_pkgs, expected_repos, expected
         ]
 
 
+def assert_package_v2(pkg: dict):
+    """
+    Validate that a V2 package dict has all expected fields.
+    """
+    expected_keys = sorted([
+        # Core fields
+        "name", "epoch", "version", "release", "arch", "repo_id",
+        "location", "remote_locations", "checksum",
+        # Metadata fields
+        "header_checksum", "license", "summary", "description", "url",
+        "vendor", "packager", "build_time", "download_size", "install_size",
+        "group", "source_rpm", "reason",
+        # Dependency lists
+        "provides", "requires", "requires_pre", "conflicts", "obsoletes",
+        "regular_requires", "recommends", "suggests", "enhances", "supplements",
+        # File list
+        "files",
+    ])
+    assert sorted(pkg.keys()) == expected_keys
+
+    # Type checks for list fields
+    assert isinstance(pkg["remote_locations"], list)
+    assert isinstance(pkg["files"], list)
+    for dep_field in [
+        "provides", "requires", "requires_pre", "conflicts", "obsoletes",
+        "regular_requires", "recommends", "suggests", "enhances", "supplements",
+    ]:
+        assert isinstance(pkg[dep_field], list)
+
+
+def assert_repository_v2(repo: dict):
+    """
+    Validate that a V2 repository dict has all expected fields.
+    """
+    expected_keys = sorted([
+        "id", "name", "baseurl", "metalink", "mirrorlist",
+        "gpgcheck", "repo_gpgcheck", "gpgkey", "sslverify",
+        "sslcacert", "sslclientkey", "sslclientcert",
+        "metadata_expire", "module_hotfixes", "rhsm",
+    ])
+    assert sorted(repo.keys()) == expected_keys
+
+    # Type checks
+    assert isinstance(repo["gpgkey"], list)
+    assert isinstance(repo["baseurl"], list)
+
+
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
