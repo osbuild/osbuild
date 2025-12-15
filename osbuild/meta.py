@@ -460,7 +460,7 @@ class ModuleInfo:
         value = node.value
 
         if IS_PY36:
-            if not isinstance(value, ast.Str):
+            if not isinstance(value, ast.Str):  # pylint: disable=no-member
                 return {}
 
             # Get the internal value
