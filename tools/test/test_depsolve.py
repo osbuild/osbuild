@@ -1935,6 +1935,44 @@ def assert_search_api_v1_response(res, expected_nevras):
     assert sorted(nevras) == sorted(expected_nevras)
 
 
+def assert_dump_api_v2_response(res, expected_pkgs_count, with_dnf5, pkg_check_fn=None):
+    """
+    Helper function to check the V2 API response of dump().
+    """
+    assert sorted(res.keys()) == sorted(["solver", "packages", "repos"])
+    assert res["solver"] == ("dnf5" if with_dnf5 else "dnf")
+    assert len(res["packages"]) == expected_pkgs_count
+
+    for pkg in res["packages"]:
+        assert_package_v2(pkg)
+        if pkg_check_fn:
+            pkg_check_fn(pkg)
+
+    for repo in res["repos"].values():
+        assert_repository_v2(repo)
+
+
+def assert_search_api_v2_response(res, expected_nevras, with_dnf5):
+    """
+    Helper function to check the V2 API response of search().
+    """
+    assert sorted(res.keys()) == sorted(["solver", "packages", "repos"])
+    assert res["solver"] == ("dnf5" if with_dnf5 else "dnf")
+    assert len(res["packages"]) == len(expected_nevras)
+
+    nevras = []
+    for pkg in res["packages"]:
+        assert_package_v2(pkg)
+        nevras.append(
+            f"{pkg['name']}-{pkg['epoch']}:{pkg['version']}-"
+            f"{pkg['release']}.{pkg['arch']}"
+        )
+    assert sorted(nevras) == sorted(expected_nevras)
+
+    for repo in res["repos"].values():
+        assert_repository_v2(repo)
+
+
 @pytest.mark.parametrize("test_case", dump_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
