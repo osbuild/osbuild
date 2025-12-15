@@ -71,8 +71,8 @@ def _run_solver(request: dict, dnf_config: dict = None) -> Tuple[dict, int]:
         return json.loads(p.stdout), p.returncode
 
 
-def depsolve(transactions, cache_dir, dnf_config=None, repos=None, root_dir=None,
-             opt_metadata=None, with_sbom=False) -> Tuple[dict, int]:
+def depsolve_v1(transactions, cache_dir, dnf_config=None, repos=None, root_dir=None,
+                opt_metadata=None, with_sbom=False) -> Tuple[dict, int]:
     if not repos and not root_dir:
         raise ValueError("At least one of 'repos' or 'root_dir' must be specified")
 
@@ -105,7 +105,7 @@ def depsolve(transactions, cache_dir, dnf_config=None, repos=None, root_dir=None
     return _run_solver(req, dnf_config)
 
 
-def dump(cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
+def dump_v1(cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
     if not repos and not root_dir:
         raise ValueError("At least one of 'repos' or 'root_dir' must be specified")
 
@@ -130,7 +130,7 @@ def dump(cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) ->
     return _run_solver(req, dnf_config)
 
 
-def search(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
+def search_v1(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
     if not repos and not root_dir:
         raise ValueError("At least one of 'repos' or 'root_dir' must be specified")
 
@@ -1265,9 +1265,9 @@ def test_gen_config_combos(items_count, expected_combos):
     assert list(gen_config_combos(items_count)) == expected_combos
 
 
-def gen_repo_config(server):
+def gen_repo_config_v1(server):
     """
-    Generate a repository configuration dictionary for the provided server.
+    Generate a V1 API repository configuration dictionary for the provided server.
     """
     return {
         "id": server["name"],
@@ -1291,7 +1291,7 @@ def config_combos(tmp_path, servers):
             repo_configs = []
             for idx in combo[0]:  # servers to be configured through request
                 server = servers[idx]
-                repo_configs.append(gen_repo_config(server))
+                repo_configs.append(gen_repo_config_v1(server))
 
         root_dir = None
         if len(combo[1]):
@@ -1336,11 +1336,11 @@ def get_test_case_repo_servers(test_case, repo_servers):
     return repo_servers_copy
 
 
-def get_test_case_repo_configs(test_case, repo_servers):
+def get_test_case_repo_configs_v1(test_case, repo_servers):
     """
-    Return a list of repository configurations for the test case.
+    Return a list of V1 API repository configurations for the test case.
     """
-    return [gen_repo_config(server) for server in get_test_case_repo_servers(test_case, repo_servers)]
+    return [gen_repo_config_v1(server) for server in get_test_case_repo_servers(test_case, repo_servers)]
 
 
 @pytest.mark.parametrize("test_case,repo_servers,expected", [
@@ -1481,7 +1481,7 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
 
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = depsolve(
+            res, exit_code = depsolve_v1(
                 transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             assert exit_code == 0
@@ -1535,7 +1535,7 @@ def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnf
 
     test_case = depsolve_test_case_basic_2pkgs_2repos
     transactions = test_case["transactions"]
-    repo_configs = get_test_case_repo_configs(test_case, repo_servers)
+    repo_configs = get_test_case_repo_configs_v1(test_case, repo_servers)
     root_dir = None
 
     for index, config in enumerate(repo_configs):
@@ -1545,7 +1545,7 @@ def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnf
         create_dnfvars(tmp_path, {"var": "localhost"})
         root_dir = str(tmp_path)
 
-    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
+    res, exit_code = depsolve_v1(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
 
     if not use_dnfvars:
         assert exit_code != 0
@@ -1589,9 +1589,9 @@ def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom,
 
     test_case = depsolve_test_case_basic_2pkgs_2repos
     transactions = test_case["transactions"]
-    repo_configs = get_test_case_repo_configs(test_case, repo_servers)
+    repo_configs = get_test_case_repo_configs_v1(test_case, repo_servers)
 
-    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs, with_sbom=with_sbom)
+    res, exit_code = depsolve_v1(transactions, tmp_path.as_posix(), dnf_config, repo_configs, with_sbom=with_sbom)
 
     assert exit_code == 0
 
@@ -1662,10 +1662,10 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         pytest.skip("This test case is known to be broken with dnf5")
 
     transactions = test_case["transactions"]
-    repo_configs = get_test_case_repo_configs(test_case, repo_servers)
+    repo_configs = get_test_case_repo_configs_v1(test_case, repo_servers)
     root_dir = test_case.get("root_dir")
 
-    res, exit_code = depsolve(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
+    res, exit_code = depsolve_v1(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
 
     if test_case.get("error", False):
         assert exit_code != 0
@@ -1748,7 +1748,7 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = dump(cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
+            res, exit_code = dump_v1(cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             if test_case.get("error", False):
                 assert exit_code != 0
@@ -1796,7 +1796,7 @@ def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
 
     for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = search(search_args, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
+            res, exit_code = search_v1(search_args, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             assert exit_code == 0
             assert_search_api_v1_response(res, test_case["expected_nevras"])
@@ -1822,10 +1822,10 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
     except RuntimeError as e:
         pytest.skip(str(e))
 
-    repo_configs = get_test_case_repo_configs(test_case, repo_servers)
+    repo_configs = get_test_case_repo_configs_v1(test_case, repo_servers)
     search_args = test_case["search_args"]
 
-    res, exit_code = search(search_args, tmp_path.as_posix(), dnf_config, repo_configs)
+    res, exit_code = search_v1(search_args, tmp_path.as_posix(), dnf_config, repo_configs)
 
     if test_case.get("error", False):
         assert exit_code != 0
