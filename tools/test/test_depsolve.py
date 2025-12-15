@@ -1937,10 +1937,12 @@ def assert_dump_api_v1_response(res, expected_pkgs_count, with_dnf5=None, pkg_ch
             pkg_check_fn(pkg)
 
 
-def assert_search_api_v1_response(res, expected_nevras):
+def assert_search_api_v1_response(res, expected_nevras, with_dnf5=None):
     """
     Helper function to check the v1 API response of search().
+    with_dnf5 is accepted for signature compatibility but ignored (V1 has no solver field).
     """
+    _ = with_dnf5  # unused, for signature compatibility with V2
     assert len(res) == len(expected_nevras)
     nevras = []
     for pkg in res:
@@ -2049,12 +2051,16 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case, api_func
                 assert n_filelist_files == 0
 
 
+@pytest.mark.parametrize("api_funcs", [
+    (gen_repo_config_v1, search_v1, assert_search_api_v1_response),
+    (gen_repo_config_v2, search_v2, assert_search_api_v2_response),
+], ids=["v1", "v2"])
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
+def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn, api_funcs):
     """
     Test all possible configurations of repository configurations for the search function.
     Test on a single test case which searches for two packages from two repositories.
@@ -2064,16 +2070,19 @@ def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     except RuntimeError as e:
         pytest.skip(str(e))
 
+    gen_repo_config_fn, search_fn, assert_response_fn = api_funcs
+
     test_case = search_test_case_basic_2pkgs_2repos
     tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
     search_args = test_case["search_args"]
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, gen_repo_config_v1):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, gen_repo_config_fn):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = search_v1(search_args, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
+            res, exit_code = search_fn(search_args, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             assert exit_code == 0
-            assert_search_api_v1_response(res, test_case["expected_nevras"])
+            with_dnf5 = dnf_config.get("use_dnf5", False) if dnf_config else False
+            assert_response_fn(res, test_case["expected_nevras"], with_dnf5)
 
             # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
             # *filelists*
@@ -2084,22 +2093,28 @@ def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
                 assert n_filelist_files == 0
 
 
+@pytest.mark.parametrize("api_funcs", [
+    (get_test_case_repo_configs_v1, search_v1, assert_search_api_v1_response),
+    (get_test_case_repo_configs_v2, search_v2, assert_search_api_v2_response),
+], ids=["v1", "v2"])
 @pytest.mark.parametrize("test_case", search_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
+def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case, api_funcs):
     try:
         detect_fn()
     except RuntimeError as e:
         pytest.skip(str(e))
 
-    repo_configs = get_test_case_repo_configs_v1(test_case, repo_servers)
+    get_repo_configs_fn, search_fn, assert_response_fn = api_funcs
+
+    repo_configs = get_repo_configs_fn(test_case, repo_servers)
     search_args = test_case["search_args"]
 
-    res, exit_code = search_v1(search_args, tmp_path.as_posix(), dnf_config, repo_configs)
+    res, exit_code = search_fn(search_args, tmp_path.as_posix(), dnf_config, repo_configs)
 
     if test_case.get("error", False):
         assert exit_code != 0
@@ -2108,7 +2123,8 @@ def test_search(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         return
 
     assert exit_code == 0
-    assert_search_api_v1_response(res, test_case["expected_nevras"])
+    with_dnf5 = dnf_config.get("use_dnf5", False) if dnf_config else False
+    assert_response_fn(res, test_case["expected_nevras"], with_dnf5)
 
 
 # Test invalid requests for the V1 API
