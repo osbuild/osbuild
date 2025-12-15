@@ -1280,6 +1280,23 @@ def gen_repo_config_v1(server):
     }
 
 
+def gen_repo_config_v2(server):
+    """
+    Generate a V2 API repository configuration dictionary for the provided server.
+
+    V2 uses 'gpgkey' (list) instead of V1's 'gpgkeys'.
+    """
+    return {
+        "id": server["name"],
+        "name": server["name"],
+        "baseurl": [server["address"]],
+        "gpgcheck": False,
+        "sslverify": False,
+        "rhsm": False,
+        "gpgkey": [TEST_KEY + server["name"]],
+    }
+
+
 def config_combos(tmp_path, servers):
     """
     Return all configurations for the provided repositories, either as config files in a directory or as repository
@@ -1341,6 +1358,13 @@ def get_test_case_repo_configs_v1(test_case, repo_servers):
     Return a list of V1 API repository configurations for the test case.
     """
     return [gen_repo_config_v1(server) for server in get_test_case_repo_servers(test_case, repo_servers)]
+
+
+def get_test_case_repo_configs_v2(test_case, repo_servers):
+    """
+    Return a list of V2 API repository configurations for the test case.
+    """
+    return [gen_repo_config_v2(server) for server in get_test_case_repo_servers(test_case, repo_servers)]
 
 
 @pytest.mark.parametrize("test_case,repo_servers,expected", [
