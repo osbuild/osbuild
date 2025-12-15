@@ -1616,6 +1616,53 @@ def assert_repository_v2(repo: dict):
     assert isinstance(repo["baseurl"], list)
 
 
+def assert_depsolve_api_v2_response(res, expected_pkgs, expected_repos, expected_modules, with_dnf5, with_sbom):
+    """
+    Helper function to check the V2 API response of depsolve().
+    """
+    tl_keys = ["solver", "transactions", "repos", "modules"]
+    if with_sbom:
+        tl_keys.append("sbom")
+    assert sorted(res.keys()) == sorted(tl_keys)
+
+    assert res["solver"] == ("dnf5" if with_dnf5 else "dnf")
+
+    # Flatten transactions to get all packages
+    all_packages = [pkg for tx in res["transactions"] for pkg in tx]
+    assert {pkg["name"] for pkg in all_packages} == expected_pkgs
+
+    for pkg in all_packages:
+        assert_package_v2(pkg)
+
+    assert res["repos"].keys() == expected_repos
+    for repo in res["repos"].values():
+        assert_repository_v2(repo)
+        assert repo["gpgkey"] == [TEST_KEY + repo["id"]]
+        assert repo["sslverify"] is False
+
+    if with_sbom:
+        assert "sbom" in res
+        assert isinstance(res["sbom"], dict)
+        assert res["sbom"] != {}
+
+    assert len(res["modules"]) == len(expected_modules)
+    for module_name in expected_modules:
+        assert sorted(res["modules"][module_name]["module-file"].keys()) == [
+            "data",
+            "path",
+        ]
+        assert sorted(res["modules"][module_name]["module-file"]["data"].keys()) == [
+            "name",
+            "profiles",
+            "state",
+            "stream",
+        ]
+        assert sorted(res["modules"][module_name]["failsafe-file"].keys()) == [
+            "data",
+            "path",
+        ]
+
+
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
