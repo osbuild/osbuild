@@ -1382,7 +1382,7 @@ def gen_repo_config_v2(server):
     }
 
 
-def config_combos(tmp_path, servers):
+def config_combos(tmp_path, servers, gen_repo_config_fn):
     """
     Return all configurations for the provided repositories, either as config files in a directory or as repository
     configs in the depsolve request, or a combination of both.
@@ -1393,7 +1393,7 @@ def config_combos(tmp_path, servers):
             repo_configs = []
             for idx in combo[0]:  # servers to be configured through request
                 server = servers[idx]
-                repo_configs.append(gen_repo_config_v1(server))
+                repo_configs.append(gen_repo_config_fn(server))
 
         root_dir = None
         if len(combo[1]):
@@ -1682,7 +1682,7 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     transactions = test_case["transactions"]
     tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, gen_repo_config_v1):
         with TemporaryDirectory() as cache_dir:
             res, exit_code = depsolve_v1(
                 transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
@@ -1987,7 +1987,7 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
     tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, gen_repo_config_v1):
         with TemporaryDirectory() as cache_dir:
             res, exit_code = dump_v1(cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
@@ -2035,7 +2035,7 @@ def test_search_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
     search_args = test_case["search_args"]
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, gen_repo_config_v1):
         with TemporaryDirectory() as cache_dir:
             res, exit_code = search_v1(search_args, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
