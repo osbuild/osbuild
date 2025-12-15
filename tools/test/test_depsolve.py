@@ -51,6 +51,26 @@ def is_license_expression_available():
     return True
 
 
+def _run_solver(request: dict, dnf_config: dict = None) -> Tuple[dict, int]:
+    """
+    Execute the solver with the given request and return (response, exit_code).
+
+    If dnf_config is provided, it will be written to a temporary file and passed
+    to the solver via the OSBUILD_SOLVER_CONFIG environment variable.
+    """
+    with TemporaryDirectory() as cfg_dir:
+        env = None
+        if dnf_config:
+            cfg_file = pathlib.Path(cfg_dir) / "solver.json"
+            json.dump(dnf_config, cfg_file.open("w"))
+            env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
+
+        p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(request), env=env,
+                   check=False, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
+
+        return json.loads(p.stdout), p.returncode
+
+
 def depsolve(transactions, cache_dir, dnf_config=None, repos=None, root_dir=None,
              opt_metadata=None, with_sbom=False) -> Tuple[dict, int]:
     if not repos and not root_dir:
@@ -82,18 +102,7 @@ def depsolve(transactions, cache_dir, dnf_config=None, repos=None, root_dir=None
     if with_sbom:
         req["arguments"]["sbom"] = {"type": "spdx"}
 
-    # If there is a config file, write it to a temporary file and pass it to the depsolver
-    with TemporaryDirectory() as cfg_dir:
-        env = None
-        if dnf_config:
-            cfg_file = pathlib.Path(cfg_dir) / "solver.json"
-            json.dump(dnf_config, cfg_file.open("w"))
-            env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
-
-        p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
-                   check=False, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
-
-        return json.loads(p.stdout), p.returncode
+    return _run_solver(req, dnf_config)
 
 
 def dump(cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
@@ -118,18 +127,7 @@ def dump(cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) ->
     if opt_metadata:
         req["arguments"]["optional-metadata"] = opt_metadata
 
-    # If there is a config file, write it to a temporary file and pass it to the depsolver
-    with TemporaryDirectory() as cfg_dir:
-        env = None
-        if dnf_config:
-            cfg_file = pathlib.Path(cfg_dir) / "solver.json"
-            json.dump(dnf_config, cfg_file.open("w"))
-            env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
-
-        p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
-                   check=False, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
-
-        return json.loads(p.stdout), p.returncode
+    return _run_solver(req, dnf_config)
 
 
 def search(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
@@ -156,18 +154,7 @@ def search(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt_me
     if opt_metadata:
         req["arguments"]["optional-metadata"] = opt_metadata
 
-    # If there is a config file, write it to a temporary file and pass it to the depsolver
-    with TemporaryDirectory() as cfg_dir:
-        env = None
-        if dnf_config:
-            cfg_file = pathlib.Path(cfg_dir) / "solver.json"
-            json.dump(dnf_config, cfg_file.open("w"))
-            env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
-
-        p = sp.run(["./tools/osbuild-depsolve-dnf"], input=json.dumps(req), env=env,
-                   check=False, stdout=sp.PIPE, stderr=sys.stderr, universal_newlines=True)
-
-        return json.loads(p.stdout), p.returncode
+    return _run_solver(req, dnf_config)
 
 
 def tcase_idfn(param):
@@ -2198,27 +2185,8 @@ def test_invalid_requests(tmp_path, api_version, test_case, dnf_config, detect_f
     if request.get("cachedir") == "/tmp/cache":
         request["cachedir"] = tmp_path.as_posix()
 
-    print(request)
+    result, exit_code = _run_solver(request, dnf_config)
 
-    env = None
-    if dnf_config:
-        cfg_dir = tmp_path / "cfg"
-        cfg_dir.mkdir(parents=True)
-        cfg_file = cfg_dir / "solver.json"
-        json.dump(dnf_config, cfg_file.open("w"))
-        env = {"OSBUILD_SOLVER_CONFIG": os.fspath(cfg_file)}
-
-    p = sp.run(
-        ["./tools/osbuild-depsolve-dnf"],
-        input=json.dumps(request),
-        check=False,
-        stdout=sp.PIPE,
-        stderr=sys.stderr,
-        universal_newlines=True,
-        env=env
-    )
-
-    assert p.returncode != 0
-    result = json.loads(p.stdout)
+    assert exit_code != 0
     assert result["kind"] == test_case["error_kind"]
     assert re.search(test_case["error_reason_re"], result["reason"], re.DOTALL)
