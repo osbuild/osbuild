@@ -1912,10 +1912,12 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case, api_
     )
 
 
-def assert_dump_api_v1_response(res, expected_pkgs_count, pkg_check_fn=None):
+def assert_dump_api_v1_response(res, expected_pkgs_count, with_dnf5=None, pkg_check_fn=None):
     """
     Helper function to check the v1 API response of dump() and search().
+    with_dnf5 is accepted for signature compatibility but ignored (V1 has no solver field).
     """
+    _ = with_dnf5  # unused, for signature compatibility with V2
     assert len(res) == expected_pkgs_count
     for pkg in res:
         assert sorted(pkg.keys()) == [
@@ -1997,23 +1999,29 @@ def assert_search_api_v2_response(res, expected_nevras, with_dnf5):
         assert_repository_v2(repo)
 
 
+@pytest.mark.parametrize("api_funcs", [
+    (gen_repo_config_v1, dump_v1, assert_dump_api_v1_response),
+    (gen_repo_config_v2, dump_v2, assert_dump_api_v2_response),
+], ids=["v1", "v2"])
 @pytest.mark.parametrize("test_case", dump_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     (None, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
+def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case, api_funcs):
     try:
         detect_fn()
     except RuntimeError as e:
         pytest.skip(str(e))
 
+    gen_repo_config_fn, dump_fn, assert_response_fn = api_funcs
+
     tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, gen_repo_config_v1):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, gen_repo_config_fn):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = dump_v1(cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
+            res, exit_code = dump_fn(cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             if test_case.get("error", False):
                 assert exit_code != 0
@@ -2029,7 +2037,8 @@ def test_dump(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
                 else:
                     assert pkg["repo_id"] == "baseos"
 
-            assert_dump_api_v1_response(res, test_case["packages_count"], pkg_check_fn)
+            with_dnf5 = dnf_config.get("use_dnf5", False) if dnf_config else False
+            assert_response_fn(res, test_case["packages_count"], with_dnf5, pkg_check_fn)
 
             # if opt_metadata includes 'filelists', then each repository 'repodata' must include a file that matches
             # *filelists*
