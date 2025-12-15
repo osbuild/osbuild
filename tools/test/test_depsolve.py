@@ -157,6 +157,91 @@ def search_v1(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt
     return _run_solver(req, dnf_config)
 
 
+def depsolve_v2(transactions, cache_dir, dnf_config=None, repos=None, root_dir=None,
+                opt_metadata=None, with_sbom=False) -> Tuple[dict, int]:
+    if not repos and not root_dir:
+        raise ValueError("At least one of 'repos' or 'root_dir' must be specified")
+
+    req = {
+        "api_version": 2,
+        "command": "depsolve",
+        "arch": ARCH,
+        "releasever": RELEASEVER,
+        "cachedir": cache_dir,
+        "arguments": {
+            "transactions": transactions,
+        }
+    }
+
+    if repos:
+        req["arguments"]["repos"] = repos
+
+    if root_dir:
+        req["arguments"]["root_dir"] = root_dir
+
+    if opt_metadata:
+        req["arguments"]["optional-metadata"] = opt_metadata
+
+    if with_sbom:
+        req["arguments"]["sbom"] = {"type": "spdx"}
+
+    return _run_solver(req, dnf_config)
+
+
+def dump_v2(cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
+    if not repos and not root_dir:
+        raise ValueError("At least one of 'repos' or 'root_dir' must be specified")
+
+    req = {
+        "api_version": 2,
+        "command": "dump",
+        "arch": ARCH,
+        "module_platform_id": f"platform:el{RELEASEVER}",
+        "releasever": RELEASEVER,
+        "cachedir": cache_dir,
+        "arguments": {}
+    }
+
+    if repos:
+        req["arguments"]["repos"] = repos
+
+    if root_dir:
+        req["arguments"]["root_dir"] = root_dir
+
+    if opt_metadata:
+        req["arguments"]["optional-metadata"] = opt_metadata
+
+    return _run_solver(req, dnf_config)
+
+
+def search_v2(search_args, cache_dir, dnf_config, repos=None, root_dir=None, opt_metadata=None) -> Tuple[dict, int]:
+    if not repos and not root_dir:
+        raise ValueError("At least one of 'repos' or 'root_dir' must be specified")
+
+    req = {
+        "api_version": 2,
+        "command": "search",
+        "arch": ARCH,
+        "module_platform_id": f"platform:el{RELEASEVER}",
+        "releasever": RELEASEVER,
+        "cachedir": cache_dir,
+        "arguments": {
+            "search": search_args,
+        }
+    }
+
+    if repos:
+        req["arguments"]["repos"] = repos
+
+    if root_dir:
+        req["arguments"]["root_dir"] = root_dir
+
+    if opt_metadata:
+        req["arguments"]["optional-metadata"] = opt_metadata
+
+    return _run_solver(req, dnf_config)
+
+
 def tcase_idfn(param):
     return param['id']
 
