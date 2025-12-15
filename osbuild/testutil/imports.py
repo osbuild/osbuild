@@ -2,7 +2,7 @@
 """
 Import related utilities
 """
-import importlib
+import importlib.util
 import sys
 from types import ModuleType
 

@@ -13,7 +13,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from osbuild import host
 from osbuild.devices import DeviceManager
@@ -89,7 +89,7 @@ class MountManager:
     def __init__(self, devices: DeviceManager, root: str) -> None:
         self.devices = devices
         self.root = root
-        self.mounts: Dict[str, Dict[str, Mount]] = {}
+        self.mounts: Dict[str, Union[str, Dict[str, Mount]]] = {}
 
     def mount(self, mount: Mount) -> Dict:
 
