@@ -2437,6 +2437,69 @@ invalid_request_v1_test_cases = [
 ]
 
 
+# Test invalid requests for the V2 API
+invalid_request_v2_test_cases = [
+    {
+        "id": "gpgkey_must_be_list",
+        "request": {
+            "api_version": 2,
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{
+                    "id": "test-repo",
+                    "baseurl": ["http://example.com/repo"],
+                    "gpgkey": "http://example.com/key.gpg",
+                }],
+                "transactions": [{"package-specs": ["pkg"]}],
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"'gpgkey' must be a list",
+    },
+    {
+        "id": "baseurl_must_be_list",
+        "request": {
+            "api_version": 2,
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{
+                    "id": "test-repo",
+                    "baseurl": "http://example.com/repo",
+                }],
+                "transactions": [{"package-specs": ["pkg"]}],
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"'baseurl' must be a list of URLs",
+    },
+    {
+        "id": "empty_package_specs_in_transaction",
+        "request": {
+            "api_version": 2,
+            "command": "depsolve",
+            "arch": ARCH,
+            "releasever": RELEASEVER,
+            "cachedir": "/tmp/cache",
+            "arguments": {
+                "repos": [{
+                    "id": "test-repo",
+                    "baseurl": ["http://example.com/repo"],
+                }],
+                "transactions": [{"package-specs": []}],
+            },
+        },
+        "error_kind": "InvalidRequest",
+        "error_reason_re": r"Depsolve transaction must contain at least one package specification",
+    },
+]
+
+
 invalid_request_common_test_cases = [
     # invalid api_version field
     {
@@ -2453,6 +2516,7 @@ invalid_request_common_test_cases = [
 @pytest.mark.parametrize(
     "api_version,test_case",
     [("v1", tc) for tc in invalid_request_v1_test_cases] +
+    [("v2", tc) for tc in invalid_request_v2_test_cases] +
     [("common", tc) for tc in invalid_request_common_test_cases],
     ids=lambda x: x if isinstance(x, str) else tcase_idfn(x)
 )
