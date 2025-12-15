@@ -1663,12 +1663,16 @@ def assert_depsolve_api_v2_response(res, expected_pkgs, expected_repos, expected
         ]
 
 
+@pytest.mark.parametrize("api_funcs", [
+    (gen_repo_config_v1, depsolve_v1, assert_depsolve_api_v1_response),
+    (gen_repo_config_v2, depsolve_v2, assert_depsolve_api_v2_response),
+], ids=["v1", "v2"])
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
+def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn, api_funcs):
     """
     Test all possible configurations of repository configurations for the depsolve function.
     Test on a single test case which installs two packages from two repositories.
@@ -1678,13 +1682,15 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
     except RuntimeError as e:
         pytest.skip(str(e))
 
+    gen_repo_config_fn, depsolve_fn, assert_response_fn = api_funcs
+
     test_case = depsolve_test_case_basic_2pkgs_2repos
     transactions = test_case["transactions"]
     tc_repo_servers = get_test_case_repo_servers(test_case, repo_servers)
 
-    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, gen_repo_config_v1):
+    for repo_configs, root_dir, opt_metadata in config_combos(tmp_path, tc_repo_servers, gen_repo_config_fn):
         with TemporaryDirectory() as cache_dir:
-            res, exit_code = depsolve_v1(
+            res, exit_code = depsolve_fn(
                 transactions, cache_dir, dnf_config, repo_configs, root_dir, opt_metadata)
 
             assert exit_code == 0
@@ -1697,7 +1703,7 @@ def test_depsolve_config_combos(tmp_path, repo_servers, dnf_config, detect_fn):
             else:
                 assert n_filelist_files == 0
 
-            assert_depsolve_api_v1_response(
+            assert_response_fn(
                 res,
                 expected_pkgs=test_case["results"]["packages"],
                 expected_repos=test_case["results"]["reponames"],
@@ -1724,21 +1730,27 @@ def create_dnfvars(root_dir, dnfvars):
         var_path.write_text(value, encoding="utf8")
 
 
+@pytest.mark.parametrize("api_funcs", [
+    (get_test_case_repo_configs_v1, depsolve_v1, assert_depsolve_api_v1_response),
+    (get_test_case_repo_configs_v2, depsolve_v2, assert_depsolve_api_v2_response),
+], ids=["v1", "v2"])
 @pytest.mark.parametrize("use_dnfvars", [True, False], ids=["with_dnfvars", "without_dnfvars"])
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnfvars):
+def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnfvars, api_funcs):
     try:
         detect_fn()
     except RuntimeError as e:
         pytest.skip(str(e))
 
+    get_repo_configs_fn, depsolve_fn, assert_response_fn = api_funcs
+
     test_case = depsolve_test_case_basic_2pkgs_2repos
     transactions = test_case["transactions"]
-    repo_configs = get_test_case_repo_configs_v1(test_case, repo_servers)
+    repo_configs = get_repo_configs_fn(test_case, repo_servers)
     root_dir = None
 
     for index, config in enumerate(repo_configs):
@@ -1748,7 +1760,7 @@ def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnf
         create_dnfvars(tmp_path, {"var": "localhost"})
         root_dir = str(tmp_path)
 
-    res, exit_code = depsolve_v1(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
+    res, exit_code = depsolve_fn(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
 
     if not use_dnfvars:
         assert exit_code != 0
@@ -1759,7 +1771,7 @@ def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnf
 
     assert exit_code == 0
 
-    assert_depsolve_api_v1_response(
+    assert_response_fn(
         res,
         expected_pkgs=test_case["results"]["packages"],
         expected_repos=test_case["results"]["reponames"],
@@ -1770,6 +1782,10 @@ def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnf
 
 
 # pylint: disable=too-many-branches
+@pytest.mark.parametrize("api_funcs", [
+    (get_test_case_repo_configs_v1, depsolve_v1, assert_depsolve_api_v1_response),
+    (get_test_case_repo_configs_v2, depsolve_v2, assert_depsolve_api_v2_response),
+], ids=["v1", "v2"])
 @pytest.mark.parametrize("custom_license_db", [None, "./test/data/spdx/custom-license-index.json"])
 @pytest.mark.parametrize("with_sbom", [False, True])
 @pytest.mark.parametrize("dnf_config, detect_fn", [
@@ -1777,11 +1793,13 @@ def test_depsolve_dnfvars(tmp_path, repo_servers, dnf_config, detect_fn, use_dnf
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, custom_license_db):
+def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom, custom_license_db, api_funcs):
     try:
         detect_fn()
     except RuntimeError as e:
         pytest.skip(str(e))
+
+    get_repo_configs_fn, depsolve_fn, assert_response_fn = api_funcs
 
     if custom_license_db:
         if not is_license_expression_available():
@@ -1792,13 +1810,13 @@ def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom,
 
     test_case = depsolve_test_case_basic_2pkgs_2repos
     transactions = test_case["transactions"]
-    repo_configs = get_test_case_repo_configs_v1(test_case, repo_servers)
+    repo_configs = get_repo_configs_fn(test_case, repo_servers)
 
-    res, exit_code = depsolve_v1(transactions, tmp_path.as_posix(), dnf_config, repo_configs, with_sbom=with_sbom)
+    res, exit_code = depsolve_fn(transactions, tmp_path.as_posix(), dnf_config, repo_configs, with_sbom=with_sbom)
 
     assert exit_code == 0
 
-    assert_depsolve_api_v1_response(
+    assert_response_fn(
         res,
         expected_pkgs=test_case["results"]["packages"],
         expected_repos=test_case["results"]["reponames"],
@@ -1839,17 +1857,23 @@ def test_depsolve_sbom(tmp_path, repo_servers, dnf_config, detect_fn, with_sbom,
 
 
 # pylint: disable=too-many-branches
+@pytest.mark.parametrize("api_funcs", [
+    (get_test_case_repo_configs_v1, depsolve_v1, assert_depsolve_api_v1_response),
+    (get_test_case_repo_configs_v2, depsolve_v2, assert_depsolve_api_v2_response),
+], ids=["v1", "v2"])
 @pytest.mark.parametrize("test_case", depsolve_test_cases, ids=tcase_idfn)
 @pytest.mark.parametrize("dnf_config, detect_fn", [
     ({}, assert_dnf),
     ({"use_dnf5": False}, assert_dnf),
     ({"use_dnf5": True}, assert_dnf5),
 ], ids=["no-config", "dnf4", "dnf5"])
-def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
+def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case, api_funcs):
     try:
         detect_fn()
     except RuntimeError as e:
         pytest.skip(str(e))
+
+    get_repo_configs_fn, depsolve_fn, assert_response_fn = api_funcs
 
     # pylint: disable=fixme
     # TODO: remove this once dnf5 implementation is fixed
@@ -1865,10 +1889,10 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
         pytest.skip("This test case is known to be broken with dnf5")
 
     transactions = test_case["transactions"]
-    repo_configs = get_test_case_repo_configs_v1(test_case, repo_servers)
+    repo_configs = get_repo_configs_fn(test_case, repo_servers)
     root_dir = test_case.get("root_dir")
 
-    res, exit_code = depsolve_v1(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
+    res, exit_code = depsolve_fn(transactions, tmp_path.as_posix(), dnf_config, repo_configs, root_dir=root_dir)
 
     if test_case.get("error", False):
         assert exit_code != 0
@@ -1878,7 +1902,7 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case):
 
     assert exit_code == 0
 
-    assert_depsolve_api_v1_response(
+    assert_response_fn(
         res,
         expected_pkgs=test_case["results"]["packages"],
         expected_repos=test_case["results"]["reponames"],
