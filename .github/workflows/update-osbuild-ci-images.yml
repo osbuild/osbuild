@@ -1,0 +1,82 @@
+# This action updates osbuild-ci container image references in GHA workflows
+---
+name: "Update osbuild-ci images"
+
+on:
+  workflow_dispatch:
+    inputs:
+      unique_id:
+        description: "Container image tag suffix (e.g., 202512160800). If not provided, latest will be detected."
+        required: false
+        type: string
+  repository_dispatch:
+    types: [osbuild-ci-images-updated]
+
+jobs:
+  update-and-push:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Apt update and install skopeo
+        run: |
+          sudo apt update
+          sudo apt install -y skopeo
+
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          path: osbuild
+          ref: main
+
+      - name: Determine unique_id
+        id: unique_id
+        run: |
+          # Check workflow_dispatch input first, then repository_dispatch payload
+          if [ -n "${{ github.event.inputs.unique_id }}" ]; then
+            echo "value=${{ github.event.inputs.unique_id }}" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ github.event.client_payload.unique_id }}" ]; then
+            echo "value=${{ github.event.client_payload.unique_id }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update osbuild-ci images
+        working-directory: ./osbuild
+        run: |
+          if [ -n "${{ steps.unique_id.outputs.value }}" ]; then
+            ./schutzbot/update-gha-osbuild-ci-images \
+              --unique-id "${{ steps.unique_id.outputs.value }}" \
+              --report-file /tmp/report.txt
+          else
+            ./schutzbot/update-gha-osbuild-ci-images \
+              --report-file /tmp/report.txt
+          fi
+
+      - name: Open PR
+        working-directory: ./osbuild
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+        run: |
+          if git diff --exit-code; then echo "No changes"; exit 0; fi
+          git config --unset-all http.https://github.com/.extraheader
+          git config user.name "schutzbot"
+          git config user.email "schutzbot@gmail.com"
+          branch="osbuild-ci-images-$(date -I)"
+          git checkout -b "${branch}"
+          git add .github/workflows/
+          git commit -m "CI: Update osbuild-ci container images"
+          git push -f https://"$GITHUB_TOKEN"@github.com/schutzbot/osbuild.git
+
+          # Build PR body
+          echo "Update osbuild-ci container images to latest available versions." > body
+          echo "" >> body
+          if [ -f /tmp/report.txt ]; then
+            cat /tmp/report.txt >> body
+          fi
+
+          gh pr create \
+            -t "Update osbuild-ci container images" \
+            -F "body" \
+            -r "osbuild/osbuild-reviewers" \
+            --repo "osbuild/osbuild" \
+            --base "main" \
+            --head "schutzbot:${branch}"

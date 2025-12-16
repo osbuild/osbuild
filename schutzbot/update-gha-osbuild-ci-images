@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+"""
+Update osbuild-ci container image references in GitHub Actions workflows.
+
+This script scans all .github/workflows/*.yml files for osbuild-ci* container
+image references and updates them to a specified or latest available tag.
+"""
+import argparse
+import glob
+import json
+import re
+import subprocess
+import sys
+from typing import Optional
+
+WORKFLOWS_DIR = ".github/workflows"
+# Pattern to match osbuild-ci images with their registry and tag suffix
+# Group 1: full image name (e.g., ghcr.io/osbuild/osbuild-ci)
+# Group 2: tag suffix (e.g., 202512160800)
+IMAGE_PATTERN = re.compile(r"([^:\s]+/osbuild/osbuild-ci[^:\s]*):latest-(\d+)")
+
+
+def run_skopeo(args: list[str]) -> tuple[int, str, str]:
+    """Run skopeo command and return exit code, stdout, stderr."""
+    try:
+        result = subprocess.run(
+            ["skopeo"] + args,
+            check=False, capture_output=True,
+            text=True,
+            timeout=60
+        )
+        return result.returncode, result.stdout, result.stderr
+    except subprocess.TimeoutExpired:
+        return 1, "", "Command timed out"
+    except FileNotFoundError:
+        print("Error: skopeo not found. Please install skopeo.", file=sys.stderr)
+        sys.exit(1)
+
+
+def get_latest_tag_suffix(image: str) -> Optional[str]:
+    """Query registry for the latest 'latest-*' tag suffix for an image."""
+    print(f"  Querying tags for {image}...")
+    returncode, stdout, stderr = run_skopeo(["list-tags", f"docker://{image}"])
+
+    if returncode != 0:
+        print(f"  Warning: Failed to list tags for {image}: {stderr}", file=sys.stderr)
+        return None
+
+    try:
+        data = json.loads(stdout)
+        tags = data.get("Tags", [])
+    except json.JSONDecodeError:
+        print(f"  Warning: Failed to parse tags response for {image}", file=sys.stderr)
+        return None
+
+    # Filter for 'latest-*' tags and extract suffixes
+    latest_suffixes = [tag[7:] for tag in tags if tag.startswith("latest-") and tag[7:].isdigit()]
+
+    if not latest_suffixes:
+        print(f"  Warning: No 'latest-*' tags found for {image}", file=sys.stderr)
+        return None
+
+    # Return the highest (most recent) suffix
+    latest_suffixes.sort(reverse=True)
+    return latest_suffixes[0]
+
+
+def image_exists(image: str, tag_suffix: str) -> bool:
+    """Check if an image with the given tag exists."""
+    full_tag = f"docker://{image}:latest-{tag_suffix}"
+    print(f"  Checking if {image}:latest-{tag_suffix} exists...")
+    returncode, _, _ = run_skopeo(["inspect", full_tag])
+    return returncode == 0
+
+
+def discover_images(workflows_dir: str) -> dict[str, tuple[str, set[str]]]:
+    """
+    Scan workflow files and discover all osbuild-ci image references.
+
+    Returns a dict mapping workflow file paths to tuples of (content, set of images found).
+    """
+    workflow_data: dict[str, tuple[str, set[str]]] = {}
+    workflow_files = glob.glob(f"{workflows_dir}/*.yml") + glob.glob(f"{workflows_dir}/*.yaml")
+
+    for filepath in workflow_files:
+        try:
+            with open(filepath, encoding="utf-8") as f:
+                content = f.read()
+        except OSError as e:
+            print(f"Warning: Could not read {filepath}: {e}", file=sys.stderr)
+            continue
+
+        matches = IMAGE_PATTERN.findall(content)
+        if matches:
+            images = {match[0] for match in matches}
+            workflow_data[filepath] = (content, images)
+
+    return workflow_data
+
+
+def determine_target_suffix(unique_id: Optional[str], images: set[str]) -> Optional[str]:
+    """
+    Determine the target tag suffix.
+
+    If unique_id is provided, use it. Otherwise, query the first image's
+    registry to find the latest available suffix.
+    """
+    if unique_id:
+        print(f"Using provided unique_id: {unique_id}")
+        return unique_id
+
+    if not images:
+        print("Error: No images found to determine target suffix", file=sys.stderr)
+        return None
+
+    # Pick the first image (sorted for consistency)
+    first_image = sorted(images)[0]
+    print(f"No unique_id provided, querying {first_image} for latest tag...")
+    return get_latest_tag_suffix(first_image)
+
+
+def verify_and_resolve_images(images: set[str], target_suffix: str) -> tuple[dict[str, str], list[str]]:
+    """
+    Verify each image exists with target suffix, resolve fallbacks if needed.
+
+    Returns:
+        - dict mapping image name to its resolved tag suffix
+        - list of fallback messages for the report
+    """
+    resolved: dict[str, str] = {}
+    fallback_notes: list[str] = []
+
+    print(f"\nVerifying images with target suffix: {target_suffix}")
+    for image in sorted(images):
+        if image_exists(image, target_suffix):
+            print(f"  ✓ {image}:latest-{target_suffix} exists")
+            resolved[image] = target_suffix
+        else:
+            print(f"  ✗ {image}:latest-{target_suffix} NOT found, looking for fallback...")
+            fallback_suffix = get_latest_tag_suffix(image)
+            if fallback_suffix:
+                print(f"    → Using fallback: latest-{fallback_suffix}")
+                resolved[image] = fallback_suffix
+                fallback_notes.append(
+                    f"- `{image}` -> `latest-{fallback_suffix}` "
+                    f"(target `latest-{target_suffix}` not found)"
+                )
+            else:
+                print(f"    → Error: Could not find any valid tag for {image}", file=sys.stderr)
+                # Keep original - don't update this image
+                resolved[image] = ""
+
+    return resolved, fallback_notes
+
+
+def update_workflow_files(
+    workflow_data: dict[str, tuple[str, set[str]]], resolved_suffixes: dict[str, str]
+) -> list[str]:
+    """
+    Update workflow files with resolved tag suffixes.
+
+    Returns list of modified file paths.
+    """
+    modified_files: list[str] = []
+
+    print("\nUpdating workflow files...")
+    for filepath, (original_content, images) in workflow_data.items():
+        content = original_content
+        for image in images:
+            suffix = resolved_suffixes.get(image, "")
+            if not suffix:
+                # Skip images we couldn't resolve
+                continue
+
+            # Replace all occurrences of this image with any tag suffix
+            content = re.sub(re.escape(image) + r":latest-\d+", f"{image}:latest-{suffix}", content)
+
+        if content != original_content:
+            try:
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(content)
+                print(f"  Updated: {filepath}")
+                modified_files.append(filepath)
+            except OSError as e:
+                print(f"Warning: Could not write {filepath}: {e}", file=sys.stderr)
+
+    return modified_files
+
+
+def write_report(report_file: str, target_suffix: str, fallback_notes: list[str], modified_files: list[str]) -> None:
+    """Write the update report to a file."""
+    with open(report_file, "w", encoding="utf-8") as f:
+        f.write(f"**Target tag:** `latest-{target_suffix}`\n\n")
+        if fallback_notes:
+            f.write(
+                "**Note:** The following images were not available with the target tag "
+                "and were updated to their latest available version:\n\n"
+            )
+            for note in fallback_notes:
+                f.write(f"{note}\n")
+            f.write("\n")
+
+        if modified_files:
+            f.write("**Modified files:**\n")
+            for filepath in modified_files:
+                f.write(f"- `{filepath}`\n")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Update osbuild-ci container image references in GHA workflows"
+    )
+    parser.add_argument(
+        "--unique-id",
+        help="Tag suffix to update images to (e.g., 202512160800)"
+    )
+    parser.add_argument(
+        "--report-file",
+        help="Path to write the update report"
+    )
+    args = parser.parse_args()
+
+    # Step 1 & 2: Discover images in workflow files
+    print(f"Scanning {WORKFLOWS_DIR} for osbuild-ci images...")
+    workflow_data = discover_images(WORKFLOWS_DIR)
+
+    if not workflow_data:
+        print("No osbuild-ci images found in workflow files.")
+        return 0
+
+    unique_images = set().union(*(images for _, images in workflow_data.values()))
+    print(f"Found {len(unique_images)} unique image(s) in {len(workflow_data)} file(s):")
+    for image in sorted(unique_images):
+        print(f"  - {image}")
+
+    # Step 3: Determine target suffix
+    target_suffix = determine_target_suffix(args.unique_id, unique_images)
+    if not target_suffix:
+        print("Error: Could not determine target tag suffix", file=sys.stderr)
+        return 1
+
+    # Step 4: Verify images and resolve fallbacks
+    resolved_suffixes, fallback_notes = verify_and_resolve_images(unique_images, target_suffix)
+
+    # Check if any images could not be resolved
+    unresolved = [img for img, suffix in resolved_suffixes.items() if not suffix]
+    if unresolved:
+        print(f"\nWarning: Could not resolve tags for: {', '.join(unresolved)}", file=sys.stderr)
+
+    # Step 5: Update workflow files
+    modified_files = update_workflow_files(workflow_data, resolved_suffixes)
+
+    if not modified_files:
+        print("\nNo files were modified.")
+    else:
+        print(f"\nModified {len(modified_files)} file(s).")
+
+    # Step 6: Write report if requested
+    if args.report_file:
+        write_report(args.report_file, target_suffix, fallback_notes, modified_files)
+        print(f"Report written to: {args.report_file}")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
