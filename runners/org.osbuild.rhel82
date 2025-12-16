@@ -13,6 +13,7 @@ if __name__ == "__main__":
         with runners.create_machine_id_if_needed():
             runners.tmpfiles()
             runners.nsswitch()
+            runners.sequoia()
             runners.python_alternatives()
             env = runners.quirks()
             r = subprocess.run(sys.argv[1:], env=env, check=False)
