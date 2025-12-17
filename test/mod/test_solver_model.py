@@ -150,6 +150,28 @@ class TestPackage:
         assert str(Package("bash", "5.1", "1.fc43", "x86_64", epoch=2, repo_id="fedora")) == "bash-2:5.1-1.fc43.x86_64"
         assert str(Package("bash", "5.1", "1.fc43", "x86_64")) == "bash-0:5.1-1.fc43.x86_64"
 
+    @pytest.mark.parametrize("kwargs,expected_error", [
+        pytest.param(
+            {"download_size": "1024"},
+            r"Package\.download_size: expected int or None, got str", id="download_size_str"
+        ),
+        pytest.param(
+            {"provides": "glibc"},
+            r"Package\.provides: expected list, got str", id="provides_str"
+        ),
+        pytest.param(
+            {"checksum": "sha256:abc"},
+            r"Package\.checksum: expected Checksum or None, got str", id="checksum_str"
+        ),
+        pytest.param(
+            {"build_time": "12345"},
+            r"Package\.build_time: expected int or None, got str", id="build_time_str"
+        ),
+    ])
+    def test_invalid_attr_type(self, kwargs, expected_error):
+        with pytest.raises(ValueError, match=expected_error):
+            Package("bash", "5.1", "1.fc43", "x86_64", **kwargs)
+
 
 class TestRepository:
     """Tests for the Repository class"""
@@ -298,6 +320,32 @@ class TestRepository:
         repo = Repository("fedora", baseurl=["http://example.com"])
         assert repo.sslverify is None
         assert repo.metadata_expire is None
+
+    @pytest.mark.parametrize("kwargs,expected_error", [
+        pytest.param(
+            {"gpgcheck": "yes"},
+            r"Repository\.gpgcheck: expected bool or None, got str", id="gpgcheck_str"
+        ),
+        pytest.param(
+            {"gpgcheck": 1},
+            r"Repository\.gpgcheck: expected bool or None, got int", id="gpgcheck_int"
+        ),
+        pytest.param(
+            {"gpgkey": "http://key.asc"},
+            r"Repository\.gpgkey: expected list, got str", id="gpgkey_str"
+        ),
+        pytest.param(
+            {"sslverify": "true"},
+            r"Repository\.sslverify: expected bool or None, got str", id="sslverify_str"
+        ),
+        pytest.param(
+            {"metadata_expire": 1234},
+            r"Repository\.metadata_expire: expected str or None, got int", id="metadata_expire_list"
+        ),
+    ])
+    def test_invalid_attr_type(self, kwargs, expected_error):
+        with pytest.raises(ValueError, match=expected_error):
+            Repository("fedora", baseurl=["http://example.com"], **kwargs)
 
 
 class TestDepsolveResult:
