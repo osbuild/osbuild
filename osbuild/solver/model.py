@@ -9,25 +9,64 @@ These models are used internally by solver implementations and in API responses.
 
 import json
 from datetime import datetime, timezone
-from typing import FrozenSet, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 
-def _validate_kwargs(kwargs: dict, allowed: FrozenSet[str], class_name: str) -> None:
+class ValidatedModel:
     """
-    Helper function for data classes to validate that kwargs only contains allowed keys.
+    Base class providing runtime validation of allowed model attributes and their types.
 
-    Raises:
-        ValueError: If unrecognized keyword arguments are provided.
+    Subclasses must define _ATTR_TYPES as a dictionary mapping attribute names to their allowed types:
+        - Simple type: str, int, bool, list, etc.
+        - Optional type: (type, type(None)) for Optional[type]
+
+    Setting an unknown attribute or a value of the wrong type raises ValueError.
+    Private attributes (starting with '_') bypass validation.
+
+    Limitations:
+        - For list attributes, only the container type (list) is validated, not the types of items within the list.
     """
-    unrecognized = set(kwargs.keys()) - allowed
-    if unrecognized:
-        raise ValueError(
-            f"{class_name}: unrecognized keyword arguments: {', '.join(sorted(unrecognized))}"
-        )
+
+    _ATTR_TYPES: Dict[str, Union[Type, Tuple[Type, ...]]] = {}
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        if "_ATTR_TYPES" not in cls.__dict__ or not cls._ATTR_TYPES:
+            raise TypeError(
+                f"{cls.__name__} must define a non-empty '_ATTR_TYPES' class attribute"
+            )
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        # Allow private/internal attributes without validation
+        if name.startswith("_"):
+            super().__setattr__(name, value)
+            return
+
+        cls_name = self.__class__.__name__
+
+        if name not in self._ATTR_TYPES:
+            raise ValueError(f"{cls_name}: unknown attribute '{name}'")
+
+        expected_types = self._ATTR_TYPES[name]
+
+        if not isinstance(value, expected_types):
+            # Format type name for error message
+            if isinstance(expected_types, tuple):
+                # NOTE: 't' is a type, not a variable, so we need to use unidiomatic-typecheck.
+                # pylint: disable=unidiomatic-typecheck
+                type_names = ["None" if t is type(None) else t.__name__ for t in expected_types]
+                type_str = " or ".join(type_names)
+            else:
+                type_str = expected_types.__name__
+            raise ValueError(
+                f"{cls_name}.{name}: expected {type_str}, got {type(value).__name__}"
+            )
+
+        super().__setattr__(name, value)
 
 
 # pylint: disable=too-many-instance-attributes
-class Repository:
+class Repository(ValidatedModel):
     """
     Represents a DNF / YUM repository
 
@@ -49,20 +88,22 @@ class Repository:
         "metadata_expire": "20s",
     }
 
-    _ALLOWED_KWARGS = frozenset({
-        "name",
-        "metalink",
-        "mirrorlist",
-        "gpgcheck",
-        "repo_gpgcheck",
-        "gpgkey",
-        "sslverify",
-        "sslcacert",
-        "sslclientkey",
-        "sslclientcert",
-        "metadata_expire",
-        "module_hotfixes",
-    })
+    _ATTR_TYPES = {
+        "repo_id": str,
+        "baseurl": (list, type(None)),
+        "name": str,
+        "metalink": (str, type(None)),
+        "mirrorlist": (str, type(None)),
+        "gpgcheck": (bool, type(None)),
+        "repo_gpgcheck": (bool, type(None)),
+        "gpgkey": list,
+        "sslverify": (bool, type(None)),
+        "sslcacert": (str, type(None)),
+        "sslclientkey": (str, type(None)),
+        "sslclientcert": (str, type(None)),
+        "metadata_expire": (str, type(None)),
+        "module_hotfixes": (bool, type(None)),
+    }
 
     def __init__(
             self,
@@ -75,22 +116,25 @@ class Repository:
         For creating from API requests, use Repository.from_request() which applies
         request-specific defaults.
         """
-        _validate_kwargs(kwargs, self._ALLOWED_KWARGS, self.__class__.__name__)
-
         self.repo_id = repo_id
         self.baseurl = baseurl
-        self.name: Optional[str] = kwargs.get("name", repo_id)
-        self.metalink: Optional[str] = kwargs.get("metalink")
-        self.mirrorlist: Optional[str] = kwargs.get("mirrorlist")
-        self.gpgcheck: Optional[bool] = kwargs.get("gpgcheck")
-        self.repo_gpgcheck: Optional[bool] = kwargs.get("repo_gpgcheck")
-        self.gpgkey: List[str] = kwargs.get("gpgkey", [])
-        self.sslverify: Optional[bool] = kwargs.get("sslverify")
-        self.sslcacert: Optional[str] = kwargs.get("sslcacert")
-        self.sslclientkey: Optional[str] = kwargs.get("sslclientkey")
-        self.sslclientcert: Optional[str] = kwargs.get("sslclientcert")
-        self.metadata_expire: Optional[str] = kwargs.get("metadata_expire")
-        self.module_hotfixes: Optional[bool] = kwargs.get("module_hotfixes")
+        self.name: str = kwargs.pop("name", repo_id)
+        self.metalink: Optional[str] = kwargs.pop("metalink", None)
+        self.mirrorlist: Optional[str] = kwargs.pop("mirrorlist", None)
+        self.gpgcheck: Optional[bool] = kwargs.pop("gpgcheck", None)
+        self.repo_gpgcheck: Optional[bool] = kwargs.pop("repo_gpgcheck", None)
+        self.gpgkey: List[str] = kwargs.pop("gpgkey", [])
+        self.sslverify: Optional[bool] = kwargs.pop("sslverify", None)
+        self.sslcacert: Optional[str] = kwargs.pop("sslcacert", None)
+        self.sslclientkey: Optional[str] = kwargs.pop("sslclientkey", None)
+        self.sslclientcert: Optional[str] = kwargs.pop("sslclientcert", None)
+        self.metadata_expire: Optional[str] = kwargs.pop("metadata_expire", None)
+        self.module_hotfixes: Optional[bool] = kwargs.pop("module_hotfixes", None)
+
+        if kwargs:
+            raise ValueError(
+                f"{self.__class__.__name__}: unrecognized keyword arguments: {', '.join(sorted(kwargs.keys()))}"
+            )
 
         if not any([self.baseurl, self.metalink, self.mirrorlist]):
             raise ValueError("At least one of 'baseurl', 'metalink', or 'mirrorlist' must be specified")
@@ -222,7 +266,7 @@ class Checksum:
 
 
 # pylint: disable=too-many-instance-attributes
-class Package:
+class Package(ValidatedModel):
     """
     Represents an RPM package
 
@@ -232,91 +276,105 @@ class Package:
     Values are a common subset of the values in the libdnf5 and libdnf packages, which are relevant for image building.
     """
 
-    _ALLOWED_KWARGS = frozenset({
-        "group",
-        "download_size",
-        "install_size",
-        "license",
-        "source_rpm",
-        "build_time",
-        "packager",
-        "vendor",
-        "url",
-        "summary",
-        "description",
-        "provides",
-        "requires",
-        "requires_pre",
-        "conflicts",
-        "obsoletes",
-        "regular_requires",
-        "recommends",
-        "suggests",
-        "enhances",
-        "supplements",
-        "files",
-        "location",
-        "remote_locations",
-        "checksum",
-        "header_checksum",
-        "repo_id",
-        "reason",
-    })
+    _ATTR_TYPES = {
+        "name": str,
+        "version": str,
+        "release": str,
+        "arch": str,
+        "epoch": int,
+        "group": (str, type(None)),
+        "download_size": (int, type(None)),
+        "install_size": (int, type(None)),
+        "license": (str, type(None)),
+        "source_rpm": (str, type(None)),
+        "build_time": (int, type(None)),
+        "packager": (str, type(None)),
+        "vendor": (str, type(None)),
+        "url": (str, type(None)),
+        "summary": (str, type(None)),
+        "description": (str, type(None)),
+        # Regular dependencies
+        "provides": list,
+        "requires": list,
+        "requires_pre": list,
+        "conflicts": list,
+        "obsoletes": list,
+        "regular_requires": list,
+        # Weak dependencies
+        "recommends": list,
+        "suggests": list,
+        "enhances": list,
+        "supplements": list,
+        # Files
+        "files": list,
+        # Location
+        "location": (str, type(None)),
+        "remote_locations": list,
+        # Checksums
+        "checksum": (Checksum, type(None)),
+        "header_checksum": (Checksum, type(None)),
+        # Metadata
+        "repo_id": (str, type(None)),
+        "reason": (str, type(None)),
+    }
 
     def __init__(self, name: str, version: str, release: str, arch: str, epoch: int = 0, **kwargs) -> None:
-        _validate_kwargs(kwargs, self._ALLOWED_KWARGS, self.__class__.__name__)
-
         self.name = name
         self.version = version
         self.release = release
         self.arch = arch
         self.epoch = epoch
 
-        self.group: Optional[str] = kwargs.get("group")
-        self.download_size: Optional[int] = kwargs.get("download_size")
-        self.install_size: Optional[int] = kwargs.get("install_size")
-        self.license: Optional[str] = kwargs.get("license")
-        self.source_rpm: Optional[str] = kwargs.get("source_rpm")
-        self.build_time: Optional[int] = kwargs.get("build_time")
-        self.packager: Optional[str] = kwargs.get("packager")
-        self.vendor: Optional[str] = kwargs.get("vendor")
+        self.group: Optional[str] = kwargs.pop("group", None)
+        self.download_size: Optional[int] = kwargs.pop("download_size", None)
+        self.install_size: Optional[int] = kwargs.pop("install_size", None)
+        self.license: Optional[str] = kwargs.pop("license", None)
+        self.source_rpm: Optional[str] = kwargs.pop("source_rpm", None)
+        self.build_time: Optional[int] = kwargs.pop("build_time", None)
+        self.packager: Optional[str] = kwargs.pop("packager", None)
+        self.vendor: Optional[str] = kwargs.pop("vendor", None)
 
         # RPM package URL (project home address)
-        self.url: Optional[str] = kwargs.get("url")
+        self.url: Optional[str] = kwargs.pop("url", None)
 
-        self.summary: Optional[str] = kwargs.get("summary")
-        self.description: Optional[str] = kwargs.get("description")
+        self.summary: Optional[str] = kwargs.pop("summary", None)
+        self.description: Optional[str] = kwargs.pop("description", None)
 
         # Regular dependencies
-        self.provides: List[Dependency] = kwargs.get("provides", [])
-        self.requires: List[Dependency] = kwargs.get("requires", [])
-        self.requires_pre: List[Dependency] = kwargs.get("requires_pre", [])
-        self.conflicts: List[Dependency] = kwargs.get("conflicts", [])
-        self.obsoletes: List[Dependency] = kwargs.get("obsoletes", [])
-        self.regular_requires: List[Dependency] = kwargs.get("regular_requires", [])
+        self.provides: List[Dependency] = kwargs.pop("provides", [])
+        self.requires: List[Dependency] = kwargs.pop("requires", [])
+        self.requires_pre: List[Dependency] = kwargs.pop("requires_pre", [])
+        self.conflicts: List[Dependency] = kwargs.pop("conflicts", [])
+        self.obsoletes: List[Dependency] = kwargs.pop("obsoletes", [])
+        self.regular_requires: List[Dependency] = kwargs.pop("regular_requires", [])
 
         # Weak dependencies
-        self.recommends: List[Dependency] = kwargs.get("recommends", [])
-        self.suggests: List[Dependency] = kwargs.get("suggests", [])
-        self.enhances: List[Dependency] = kwargs.get("enhances", [])
-        self.supplements: List[Dependency] = kwargs.get("supplements", [])
+        self.recommends: List[Dependency] = kwargs.pop("recommends", [])
+        self.suggests: List[Dependency] = kwargs.pop("suggests", [])
+        self.enhances: List[Dependency] = kwargs.pop("enhances", [])
+        self.supplements: List[Dependency] = kwargs.pop("supplements", [])
 
         # List of files and directories the RPM package contains
-        self.files: List[str] = kwargs.get("files", [])
+        self.files: List[str] = kwargs.pop("files", [])
 
         # RPM package relative path/location from repodata
-        self.location: Optional[str] = kwargs.get("location")
+        self.location: Optional[str] = kwargs.pop("location", None)
         # RPM package remote location where the package can be download from
-        self.remote_locations: List[str] = kwargs.get("remote_locations", [])
+        self.remote_locations: List[str] = kwargs.pop("remote_locations", [])
 
         # Checksum object representing RPM package checksum and its type
-        self.checksum: Optional[Checksum] = kwargs.get("checksum")
+        self.checksum: Optional[Checksum] = kwargs.pop("checksum", None)
         # Checksum object representing RPM package header checksum and its type
-        self.header_checksum: Optional[Checksum] = kwargs.get("header_checksum")
+        self.header_checksum: Optional[Checksum] = kwargs.pop("header_checksum", None)
         # Repository ID this package belongs to
-        self.repo_id: Optional[str] = kwargs.get("repo_id")
+        self.repo_id: Optional[str] = kwargs.pop("repo_id", None)
         # Resolved reason why a package was / would be installed.
-        self.reason: Optional[str] = kwargs.get("reason")
+        self.reason: Optional[str] = kwargs.pop("reason", None)
+
+        if kwargs:
+            raise ValueError(
+                f"{self.__class__.__name__}: unrecognized keyword arguments: {', '.join(sorted(kwargs.keys()))}"
+            )
 
     def full_nevra(self) -> str:
         return f"{self.name}-{self.epoch}:{self.version}-{self.release}.{self.arch}"
