@@ -146,15 +146,20 @@ def main(tree, inputs, options):
 
     for key in options.get("gpgkeys", []):
         with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
+            ignore_gpg_import_failures = options.get("ignore_gpg_import_failures", False)
             keyfile.write(key)
             keyfile.flush()
-            subprocess.run([
+            res = subprocess.run([
                 "rpmkeys",
                 *rpm_args,
                 "--root", tree,
                 "--import", keyfile.name
-            ], check=True)
-        print("imported gpg key")
+            ], check=not ignore_gpg_import_failures)
+            if res.returncode != 0:
+                # if rpm doesn't understand some of the keys, it returns the number of such keys
+                print(f"failed to import {res.returncode} keys, ignoring them")
+            else:
+                print("all gpg keys imported successfully")
 
     for filename, data in packages.items():
         if data.get("rpm.check_gpg"):
