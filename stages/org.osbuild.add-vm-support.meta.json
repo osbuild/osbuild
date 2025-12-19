@@ -1,0 +1,22 @@
+{
+  "summary": "Add support for --in-vm use.",
+  "description": [
+    "This should be run in the build pipeline and will create",
+    "files in /vm allowing the build pipeline to run in a vm."
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "properties": {
+        "add-modules": {
+          "type": "array",
+          "additionalItems": false,
+          "items": {
+            "type": "string",
+            "description": "Add extra kernel module to initrd"
+          }
+        }
+      }
+    }
+  }
+}

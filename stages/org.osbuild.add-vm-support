@@ -1,0 +1,180 @@
+#!/usr/bin/python3
+import gzip
+import lzma
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+import osbuild.api
+
+
+class InitrdBuilder:
+    def __init__(self, modules_dir, dest_dir):
+        self.modules_dir = Path(modules_dir)
+        self.dest_dir = Path(dest_dir)
+        self.copied_modules = set()
+        self.module_counter = 0
+
+    def get_module_dependencies(self, module_path):
+        result = subprocess.run(
+            ["modinfo", "-F", "depends", str(module_path)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return []
+
+        depends = result.stdout.strip()
+        if not depends:
+            return []
+
+        deps = [dep.strip() for dep in depends.split(",") if dep.strip()]
+        return deps
+
+    def find_module(self, module_name):
+        patterns = [
+            f"{module_name}.ko",
+            f"{module_name}.ko.xz",
+            f"{module_name}.ko.zst",
+            f"{module_name}.ko.gz",
+        ]
+
+        for pattern in patterns:
+            matches = list(self.modules_dir.rglob(pattern))
+            if matches:
+                return matches[0]
+
+        return None
+
+    def decompress_module(self, module_path, dest_file):
+        """Decompress a module file to destination."""
+        module_name = module_path.name
+
+        if module_name.endswith(".ko.xz"):
+            with lzma.open(module_path, "rb") as f_in:
+                with open(dest_file, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        elif module_name.endswith(".ko.zst"):
+            subprocess.run(
+                ["zstd", "-dc", str(module_path)],
+                stdout=open(dest_file, "wb"),
+                check=True,
+            )
+        elif module_name.endswith(".ko.gz"):
+            with gzip.open(module_path, "rb") as f_in:
+                with open(dest_file, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        else:
+            shutil.copy2(module_path, dest_file)
+
+    def copy_module(self, module_name):
+        if module_name in self.copied_modules:
+            return True
+
+        module_path = self.find_module(module_name)
+        if not module_path:
+            print(f"Warning: {module_name} module not found in {self.modules_dir}", file=sys.stderr)
+            return False
+
+        dependencies = self.get_module_dependencies(module_path)
+        for dep in dependencies:
+            self.copy_module(dep)
+
+        self.module_counter += 1
+        prefix = f"{self.module_counter:03d}"
+        dest_file = self.dest_dir / f"{prefix}-{module_name}.ko"
+
+        self.decompress_module(module_path, dest_file)
+        self.copied_modules.add(module_name)
+        return True
+
+
+def create_cpio_archive(rootfs_dir, output_file):
+    with open(output_file, "wb") as f_out:
+        result = subprocess.run(
+            ["find", ".", "-print0"],
+            cwd=rootfs_dir,
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+
+        subprocess.run(
+            ["cpio", "--null", "--create", "--format=newc", "--quiet"],
+            cwd=rootfs_dir,
+            input=result.stdout,
+            stdout=f_out,
+            check=True,
+        )
+
+
+def find_kernel_dir(tree):
+    modules_dir = tree / "usr" / "lib" / "modules"
+
+    if not modules_dir.exists() or not modules_dir.is_dir():
+        return None, None
+
+    try:
+        subdirs = [d for d in modules_dir.iterdir() if d.is_dir()]
+    except PermissionError:
+        return None, None
+
+    for subdir in sorted(subdirs):
+        vmlinuz_path = subdir / "vmlinuz"
+        if vmlinuz_path.is_file():
+            return modules_dir / subdir.name
+
+    raise ValueError("No valid kernel directory found in /usr/lib/modules")
+
+
+def main(tree, options):
+    tree = Path(tree)
+    vmdir = tree / "vm"
+
+    add_modules = options.get("add-modules", [])
+
+    os.makedirs(vmdir, exist_ok=True)
+
+    kernel_dir = find_kernel_dir(tree)
+
+    shutil.copy2(kernel_dir / "vmlinuz", vmdir / "vmlinuz")
+
+    binary_path = Path("/run/osbuild/lib/initrd/initrd")
+    output_file = vmdir / "initramfs.img"
+
+    with tempfile.TemporaryDirectory() as rootfs:
+        rootfs = Path(rootfs)
+
+        modules_dest = rootfs / "usr" / "lib" / "modules"
+        modules_dest.mkdir(parents=True, exist_ok=True)
+        (rootfs / "bin").mkdir(parents=True, exist_ok=True)
+
+        init_path = rootfs / "init"
+        shutil.copy2(binary_path, init_path)
+        init_path.chmod(0o755)
+
+        subprocess.run(["strip", str(init_path)], check=False, stderr=subprocess.DEVNULL)
+
+        builder = InitrdBuilder(kernel_dir, modules_dest)
+
+        builder.copy_module("virtiofs")
+
+        for module in add_modules:
+            print(f"Copying additional module: {module}")
+            if not builder.copy_module(module):
+                print(f"Warning: Failed to copy module {module}", file=sys.stderr)
+
+        create_cpio_archive(rootfs, output_file)
+
+        print(f"Created initramfs: {output_file}")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
