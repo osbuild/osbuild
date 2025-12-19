@@ -975,65 +975,6 @@
           }
         },
         {
-          "type": "org.osbuild.dracut",
-          "options": {
-            "kernel": [
-              "6.11.10-300.fc41.x86_64"
-            ],
-            "modules": [
-              "bash",
-              "virtiofs",
-              "fstab-sys"
-            ],
-            "filesystems": [
-              "virtiofs"
-            ],
-            "force_drivers": [
-              "virtio_console",
-              "virtio_pci"
-            ],
-            "extra": [
-              "--mount",
-              "mnt0 /mnt virtiofs ro,x-initrd.mount 0 0"
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.mkdir",
-          "options": {
-            "paths": [
-              {
-                "path": "/vm"
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.copy",
-          "options": {
-            "paths": [
-              {
-                "from": "tree:///boot/initramfs-6.11.10-300.fc41.x86_64.img",
-                "to": "tree:///vm/initramfs.img"
-              },
-              {
-                "from": "tree:///boot/vmlinuz-6.11.10-300.fc41.x86_64",
-                "to": "tree:///vm/vmlinuz"
-              }
-            ]
-          }
-        },
-        {
-          "type": "org.osbuild.chmod",
-          "options": {
-            "items": {
-              "/vm/initramfs.img": {
-                "mode": "a+r"
-              }
-            }
-          }
-        },
-        {
           "type": "org.osbuild.selinux",
           "options": {
             "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts",
