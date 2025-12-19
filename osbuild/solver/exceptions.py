@@ -37,3 +37,7 @@ class InvalidAPIVersionError(SolverException):
 
 class InvalidRequestError(SolverException):
     pass
+
+
+class NoRHSMSubscriptionsError(SolverException):
+    pass
