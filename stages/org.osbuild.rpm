@@ -148,13 +148,24 @@ def main(tree, inputs, options):
         with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
             keyfile.write(key)
             keyfile.flush()
-            subprocess.run([
+            # ignore key import errors. This can happen if RPM doesn't understand some of
+            # the keys (e.q. post-quantum keys). We assume that if rpm actually requires
+            # them for checking the signatures, it will fail during --checksig below.
+            #
+            # Note that rpmkeys doesn't stop when it encounters a key it doesn't understand.
+            # See https://github.com/rpm-software-management/rpm/blob/4a9b7b5908d8b463a836b51322242677677bd8b7/lib/rpmchecksig.cc#L66
+            # (there is no break statement in the error branch)
+            res = subprocess.run([
                 "rpmkeys",
                 *rpm_args,
                 "--root", tree,
                 "--import", keyfile.name
-            ], check=True)
-        print("imported gpg key")
+            ], check=False)
+            if res.returncode != 0:
+                # if rpm doesn't understand some of the keys, it returns the number of such keys
+                print(f"failed to import {res.returncode} keys, ignoring them")
+            else:
+                print("all gpg keys imported successfully")
 
     for filename, data in packages.items():
         if data.get("rpm.check_gpg"):
