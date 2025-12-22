@@ -297,7 +297,7 @@ manifest example-1.json finished successfully
 tree:  	fa0e466784d49682a1b7b3cb129b7a75b16bff9c2aed6aee3f0f1988056ce85a
 ```
 
-The `failed to resolve user` and `group` messages might be different but they can be ignored. The output tells us that the run was successful (`manifest example-1.json finished successfully`). It also shows us the runtime duration for each stage and the output it produces while running it. Stages that call out to other commands usually don't capture the output of those commands unless they have to, and instead display it directly in the build log. Some stages also print their own log output. In many cases the output is useful for tracing and troubleshooting a stage's execution.
+The `failed to resolve user` and `group` messages might be different but they can be ignored. The output tells us that the run was successful (`manifest example-1.json finished successfully`). It also shows us the runtime duration for each stage and the output it produces while running it. Stages that call out to other commands usually don't capture the output of those commands unless need to for processing, formatting, or error handling, and instead display it directly in the build log. Some stages also print their own log output. In many cases the output is useful for tracing and troubleshooting a stage's execution.
 
 The tree under `output/1/` should look like this:
 ```
