@@ -1288,7 +1288,6 @@ $ file ./output/4/disk/disk.raw
 ```
 and we can also mount it and use it:
 ```
-achilleas@Ruby:/scratch/workdirs/manifest-guide
 $ sudo mount ./output/4/disk/disk.raw /mnt
 
 $ df -hT /mnt
