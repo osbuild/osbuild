@@ -259,6 +259,8 @@ The `--export` option tells osbuild which pipeline to export. Most useful manife
 
 The `--output-directory` option should be self-explanatory. The result of each pipeline listed in the `--export` options will be placed in this directory under a subdirectory with the pipeline's name.
 
+Note: osbuild does not check that the output directory is empty, nor does it clear any subdirectories that might share the names of the exported pipelines. When exporting to existing directories, files may be overwritten or directory contents may be merged, which is usually not desirable.
+
 The output from the command should be:
 ```
 starting example-1.json
