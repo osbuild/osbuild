@@ -1488,3 +1488,130 @@ The full example manifest will therefore be as follows:
   }
 }
 ```
+
+Save this manifest as `example-5.json` and build it, exporting the `disk` pipeline again:
+
+```
+$ sudo osbuild --export disk --output-directory output/5 example-5.json
+```
+
+The output should look like this:
+```
+starting example-5.json
+Pipeline source org.osbuild.inline: 02340d3c6f6066a404c62d82b7e05ab3ed57262f20743b159798efea27cde6e3
+Build
+  root: <host>
+Pipeline source org.osbuild.curl: 14132afec9fc2e62f13c5850d7bb4a5fb5906277dba9ca0914cfc5ddf8703325
+Build
+  root: <host>
+Pipeline files: a84f99ff31bda4f4360dc7a93e0fb07c080909eaf4e8a9b3caf6066303c0b082
+Build
+  root: <host>
+  runner: org.osbuild.fedora38 (org.osbuild.fedora38)
+org.osbuild.mkdir: 22d5fa2cb7a2f19695f5ec64afb01e024cebd36dc20be7b114c96b9e3526bef5 {
+  "paths": [
+    {
+      "path": "/resources"
+    }
+  ]
+}
+Failed to open file "/sys/fs/selinux/checkreqprot": Read-only file system
+
+⏱  Duration: 4.52s
+org.osbuild.copy: a84f99ff31bda4f4360dc7a93e0fb07c080909eaf4e8a9b3caf6066303c0b082 {
+  "paths": [
+    {
+      "from": "input://inlinefile/sha256:659c11543b435c1503e4636cd9ad810f5cb99a3cafaf7be12a34e2d026ec33b7",
+      "to": "tree:///resources/inline-file"
+    },
+    {
+      "from": "input://curlfile/sha256:29ddbe330656a28c0cd1f77332464b74146b32765bc9194112fdc0ffdade8727",
+      "to": "tree:///resources/curl-file"
+    }
+  ]
+}
+Failed to open file "/sys/fs/selinux/checkreqprot": Read-only file system
+copying '/run/osbuild/inputs/inlinefile/sha256:659c11543b435c1503e4636cd9ad810f5cb99a3cafaf7be12a34e2d026ec33b7' -> '/run/osbuild/tree/resources/inline-file'
+copying '/run/osbuild/inputs/curlfile/sha256:29ddbe330656a28c0cd1f77332464b74146b32765bc9194112fdc0ffdade8727' -> '/run/osbuild/tree/resources/curl-file'
+
+⏱  Duration: 0.95s
+Pipeline disk: b8ca8fb8893645c0182a593838b10c4927147f092b473911e9ffb56f7e7e03eb
+Build
+  root: <host>
+  runner: org.osbuild.fedora38 (org.osbuild.fedora38)
+org.osbuild.truncate: d67e048cbf50ab0f1ff4bdfc77fdc7b08e7aed6706a26f811032fc1b3b85262b {
+  "filename": "/disk.raw",
+  "size": "1G"
+}
+Failed to open file "/sys/fs/selinux/checkreqprot": Read-only file system
+
+⏱  Duration: 0.55s
+org.osbuild.mkfs.ext4: 9a1ad2ac2aca4ba6511cdc3a031ad14f02e53cd884d3fae2122d2005e5d7651a {
+  "uuid": "90f06397-4919-4dc0-aab3-f42d01d2de4f"
+}
+device/device (org.osbuild.loopback): loop0 acquired (locked: False)
+Failed to open file "/sys/fs/selinux/checkreqprot": Read-only file system
+mke2fs 1.47.3 (8-Jul-2025)
+Discarding device blocks: done
+Creating filesystem with 262144 4k blocks and 65536 inodes
+Filesystem UUID: 90f06397-4919-4dc0-aab3-f42d01d2de4f
+Superblock backups stored on blocks:
+        32768, 98304, 163840, 229376
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (8192 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+
+⏱  Duration: 0.77s
+org.osbuild.copy: b8ca8fb8893645c0182a593838b10c4927147f092b473911e9ffb56f7e7e03eb {
+  "paths": [
+    {
+      "from": "input://files-tree/",
+      "to": "mount://mnt/"
+    }
+  ]
+}
+device/image (org.osbuild.loopback): loop0 acquired (locked: False)
+mount/mnt (org.osbuild.ext4): mounting /dev/loop0 -> /scratch/workdirs/manifest-guide/.osbuild/tmp/buildroot-tmp-u0e_6was/mounts/
+Failed to open file "/sys/fs/selinux/checkreqprot": Read-only file system
+copying '/run/osbuild/inputs/files-tree/.' -> '/run/osbuild/mounts/.'
+mount/mnt (org.osbuild.ext4): umount: /scratch/workdirs/manifest-guide/.osbuild/tmp/buildroot-tmp-u0e_6was/mounts/ unmounted
+
+⏱  Duration: 1.32s
+manifest example-5.json finished successfully
+files:          a84f99ff31bda4f4360dc7a93e0fb07c080909eaf4e8a9b3caf6066303c0b082
+disk:           b8ca8fb8893645c0182a593838b10c4927147f092b473911e9ffb56f7e7e03eb
+```
+
+and the exported directory:
+
+```
+$ tree output/5
+output/5
+└── disk
+    └── disk.raw
+
+2 directories, 1 file
+```
+
+As expected, the exported tree is identical to the one from example 4, but of course the contents of the `disk.raw` image are different. If we mount the disk, we can verify that the contents of the `files` pipeline have been copied onto the disk image.
+```
+$ sudo mount ./output/5/disk/disk.raw /mnt
+
+$ df -hT /mnt
+Filesystem     Type  Size  Used Avail Use% Mounted on
+/dev/loop0     ext4  974M  292K  906M   1% /mnt
+
+$ tree /mnt
+/mnt
+├── lost+found  [error opening dir]
+└── resources
+    ├── curl-file
+    └── inline-file
+
+3 directories, 2 files
+```
+
+Note: Don't forget to `umount /mnt` before moving on.
