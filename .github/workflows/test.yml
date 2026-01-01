@@ -37,7 +37,7 @@ jobs:
     - name: "Run"
       uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
       with:
-        image: ghcr.io/osbuild/osbuild-ci:latest-202512170944
+        image: ghcr.io/osbuild/osbuild-ci:latest-202601010143
         run: |
           # Hacky replacement of container storage driver:
           # The default overlayfs doesn't work in the runner, so let's change
@@ -76,7 +76,7 @@ jobs:
           # Using 4 workers is a bit arbitrary, "auto" is probably too aggressive.
           TEST_WORKERS: "-n 4"
         with:
-          image: ghcr.io/osbuild/osbuild-ci:latest-202512170944
+          image: ghcr.io/osbuild/osbuild-ci:latest-202601010143
           run: |
             OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
             tox -e "py36" -- ${{ env.TEST_WORKERS }} test.run.test_assemblers
@@ -120,7 +120,7 @@ jobs:
       - name: "Run"
         uses: osbuild/containers/src/actions/privdocker@552e30cf1b4ed19c6ddaa57f96c342b3dff4227b
         with:
-          image: ghcr.io/osbuild/osbuild-ci:latest-202512170944
+          image: ghcr.io/osbuild/osbuild-ci:latest-202601010143
           run: |
             # Install required system dependencies for Go builds
             # XXX: This should be done in the container image
