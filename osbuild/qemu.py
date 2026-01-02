@@ -168,8 +168,8 @@ class Qemu:
         if "kvm" in qemu_accels and os.path.exists("/dev/kvm"):
             self.cmd += ["-enable-kvm"]
 
-        init = "/mnt/osbuild/vm.py"
-        cmdline = f"console={console} quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro init={init}"
+        init = "/run/mnt/mnt0/osbuild/vm.py"
+        cmdline = f"console={console} quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro mount=mnt0 init={init}"
 
         # vm.py will add its parent to the search path to find the "osbuild" module, so
         # mount the directory with the osbuild directory at /mnt and run /mnt/osbuild/vm.py
