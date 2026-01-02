@@ -348,7 +348,7 @@ class JSONSeqMonitor(BaseMonitor):
 
     def _module(self, module: osbuild.Stage):
         self._context.set_stage(module)
-        self._module_options = module.options or {}
+        self._module_options = copy.deepcopy(module.options) if module.options else {}
         self.log(f"Starting module {module.name}", origin="osbuild.monitor")
         self._module_start_time = time.monotonic()
 
