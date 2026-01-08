@@ -6,6 +6,8 @@ __pycache__
 /.osbuild
 /rpmbuild
 
+initrd
+
 /.vscode
 /.idea
 /.gdb_history
