@@ -15,6 +15,7 @@ STAGE_NAME = "org.osbuild.groups"
     ({}, ""),
     ({"groups": {"foo": {}}}, ""),
     ({"groups": {"foo": {"gid": 999}}}, ""),
+    ({"groups": {"foo": {"gid": 999}}, "force": True}, ""),
 ])
 def test_schema_validation(stage_schema, test_data, expected_err):
     test_input = {
