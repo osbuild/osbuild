@@ -125,6 +125,24 @@ def remove_unowned_etc_kernel(tree, rpm_args):
         os.rmdir("etc/kernel")
 
 
+def import_gpg_keys(tree, keys, rpm_args, ignore_failures):
+    for key in keys:
+        with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
+            keyfile.write(key)
+            keyfile.flush()
+            res = subprocess.run([
+                "rpmkeys",
+                *rpm_args,
+                "--root", tree,
+                "--import", keyfile.name
+            ], check=not ignore_failures)
+            if res.returncode != 0:
+                # if rpm doesn't understand some of the keys, it returns the number of such keys
+                print(f"failed to import {res.returncode} keys, ignoring them")
+            else:
+                print("all gpg keys imported successfully")
+
+
 def parse_input(inputs):
     packages = inputs["packages"]
     path = packages["path"]
@@ -144,22 +162,7 @@ def main(tree, inputs, options):
         print(f"dbpath set to '{dbpath}'")
         rpm_args += ["--dbpath", dbpath]
 
-    for key in options.get("gpgkeys", []):
-        with tempfile.NamedTemporaryFile(prefix="gpgkey.", mode="w") as keyfile:
-            ignore_gpg_import_failures = options.get("ignore_gpg_import_failures", False)
-            keyfile.write(key)
-            keyfile.flush()
-            res = subprocess.run([
-                "rpmkeys",
-                *rpm_args,
-                "--root", tree,
-                "--import", keyfile.name
-            ], check=not ignore_gpg_import_failures)
-            if res.returncode != 0:
-                # if rpm doesn't understand some of the keys, it returns the number of such keys
-                print(f"failed to import {res.returncode} keys, ignoring them")
-            else:
-                print("all gpg keys imported successfully")
+    import_gpg_keys(tree, options.get("gpgkeys", []), rpm_args, options.get("ignore_gpg_import_failures", False))
 
     for filename, data in packages.items():
         if data.get("rpm.check_gpg"):
