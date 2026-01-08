@@ -608,6 +608,18 @@
               }
             }
           }
+        },
+        {
+          "type": "org.osbuild.groups",
+          "options": {
+            "force": true,
+            "groups": {
+              "testgroup": {
+                "gid": 1010
+              },
+              "newgroup": {}
+            }
+          }
         }
       ]
     }

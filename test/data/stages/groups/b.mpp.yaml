@@ -32,3 +32,12 @@ pipelines:
           groups:
             testgroup:
               gid: 42042
+      - type: org.osbuild.groups
+        options:
+          force: true
+          groups:
+            # Duplicate group name from the first call to the stage, with a
+            # different GID. This should be ignored now.
+            testgroup:
+              gid: 1010
+            newgroup: {}
