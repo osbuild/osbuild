@@ -39,6 +39,9 @@ jobs:
       with:
         image: ghcr.io/osbuild/osbuild-ci:latest-202601150124
         run: |
+          # Unit test don't actually use the initrd, but need the file, so fake one instead of building it
+          mkdir -p initrd
+          touch initrd/initrd
           # Hacky replacement of container storage driver:
           # The default overlayfs doesn't work in the runner, so let's change
           # it to vfs for the local storage skopeo stage test.
@@ -78,6 +81,9 @@ jobs:
         with:
           image: ghcr.io/osbuild/osbuild-ci:latest-202601150124
           run: |
+            # Unit test don't actually use the initrd, but need the file, so fake one instead of building it
+            mkdir -p initrd
+            touch initrd/initrd
             OSBUILD_TEST_STORE="${{ env.OSBUILD_TEST_STORE }}" \
             tox -e "py36" -- ${{ env.TEST_WORKERS }} test.run.test_assemblers
 
