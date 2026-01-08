@@ -5,21 +5,25 @@ import sys
 import osbuild.api
 
 
-def groupadd(root, name, gid=None):
+def groupadd(root, name, gid=None, force=False):
     arguments = []
     if gid:
         arguments += ["--gid", str(gid)]
+
+    if force:
+        arguments += ["--force"]
 
     subprocess.run(["groupadd", "--root", root, *arguments, name], check=True)
 
 
 def main(tree, options):
     groups = options["groups"]
+    force = options.get("force", False)
 
     for name, group_options in groups.items():
         gid = group_options.get("gid")
 
-        groupadd(tree, name, gid)
+        groupadd(tree, name, gid, force)
 
     return 0
 
