@@ -127,7 +127,7 @@ man: $(MANPAGES_TROFF)
 
 .PHONY: initrd
 initrd: initrd/initrd.go
-	cd initrd && CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o initrd initrd.go
+	cd initrd && GOFLAGS="-mod=vendor" GOPROXY=off CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o initrd initrd.go
 
 #
 # Coverity
