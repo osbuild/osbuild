@@ -49,6 +49,7 @@ SHELL = /bin/bash
 
 VERSION := $(shell (cd "$(SRCDIR)" && python3 setup.py --version))
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
+OSBUILD_INITRD_VERSION=0.1
 
 #
 # Generic Targets
@@ -84,6 +85,7 @@ help:
 	@echo
 	@echo "    help:               Print this usage information."
 	@echo "    man:                Generate all man-pages"
+	@echo "    initrd:             Download and build initrd used for --in-vm (if needed)"
 	@echo
 	@echo "    lint:               Check the code with linter (tox)"
 	@echo "    lint-quick:         Check the code with fast linters only (local)"
@@ -289,17 +291,22 @@ git-diff-check:
 
 RPM_SPECFILE=rpmbuild/SPECS/osbuild-$(COMMIT).spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-$(COMMIT).tar.gz
+OSBUILD_INITRD_TARBALL=rpmbuild/SOURCES/osbuild-initrd-${OSBUILD_INITRD_VERSION}.tar.gz
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
 	(echo "%global commit $(COMMIT)"; git show HEAD:osbuild.spec) > $(RPM_SPECFILE)
+
+$(OSBUILD_INITRD_TARBALL):
+	mkdir -p $(CURDIR)/rpmbuild/SOURCES
+	curl -L https://github.com/osbuild/initrd/releases/download/$(OSBUILD_INITRD_VERSION)/osbuild-initrd-$(OSBUILD_INITRD_VERSION).tar.gz -o $(OSBUILD_INITRD_TARBALL)
 
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
 	git archive --prefix=osbuild-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
 
 .PHONY: srpm
-srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
+srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL) $(OSBUILD_INITRD_TARBALL)
 	rpmbuild -bs \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
@@ -316,6 +323,16 @@ rpm-nocheck: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		--nocheck \
 		$(RPM_SPECFILE)
+
+#
+# Build a local copy of the initrd binary, if using --in-vm
+#
+
+.PHONY: initrd
+initrd: ${OSBUILD_INITRD_TARBALL}
+	mkdir -p initrd
+	(cd initrd; tar xvf ../${OSBUILD_INITRD_TARBALL} --strip-components=1)
+	make -C initrd build
 
 #
 # Releasing
