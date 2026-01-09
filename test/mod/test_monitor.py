@@ -37,7 +37,7 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         self.logger = io.StringIO()
         self.output = None
 
-    def begin(self, pipeline: osbuild.Pipeline):
+    def begin(self, pipeline: osbuild.Pipeline, in_vm):
         self.counter["begin"] += 1
 
     def finish(self, results):
@@ -234,7 +234,7 @@ def test_json_progress_monitor():
         mon = JSONSeqMonitor(tf.fileno(), len(manifest.sources) + len(manifest.pipelines))
         mon.log("test-message-1")
         mon.log("test-message-2", origin="test.origin.override")
-        mon.begin(manifest.pipelines["test-pipeline-first"])
+        mon.begin(manifest.pipelines["test-pipeline-first"], False)
         mon.log("pipeline 1 message 1")
         mon.stage(first_stage)
         mon.log("pipeline 1 message 2")
@@ -242,7 +242,7 @@ def test_json_progress_monitor():
         mon.result(osbuild.pipeline.BuildResult(
             fake_noop_stage, returncode=0, output="some output", error=None), metadata={"meta": "data"})
         mon.finish({"success": True, "name": "test-pipeline-first"})
-        mon.begin(manifest.pipelines["test-pipeline-second"])
+        mon.begin(manifest.pipelines["test-pipeline-second"], False)
         mon.log("pipeline 2 starting", origin="org.osbuild")
         mon.log("pipeline 2 message 2")
 

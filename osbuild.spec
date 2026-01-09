@@ -7,6 +7,7 @@ Version:        169
 
 %global         pypi_name osbuild
 %global         pkgdir %{_prefix}/lib/%{pypi_name}
+%global         debug_package %{nil}
 
 Name:           %{pypi_name}
 Release:        1%{?dist}
@@ -15,7 +16,6 @@ License:        Apache-2.0
 URL:            %{forgeurl}
 
 Source0:        %{forgesource}
-BuildArch:      noarch
 Summary:        A build system for OS images
 
 BuildRequires:  make
@@ -23,6 +23,7 @@ BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 BuildRequires:  python3-setuptools
 BuildRequires:  systemd
+BuildRequires:  golang
 
 # for tests
 BuildRequires:  python3-iniparse
@@ -203,6 +204,7 @@ Contains depsolving capabilities for package managers.
 %build
 %py3_build
 make man
+make initrd
 
 # SELinux
 make -f /usr/share/selinux/devel/Makefile osbuild.pp
@@ -240,6 +242,9 @@ install -p -m 0755 $(find inputs -type f) %{buildroot}%{pkgdir}/inputs
 
 mkdir -p %{buildroot}%{pkgdir}/mounts
 install -p -m 0755 $(find mounts -type f) %{buildroot}%{pkgdir}/mounts
+
+mkdir -p %{buildroot}%{pkgdir}/initrd
+install -p -m 0755 initrd/initrd %{buildroot}%{pkgdir}/initrd
 
 # mount point for bind mounting the osbuild library
 mkdir -p %{buildroot}%{pkgdir}/osbuild

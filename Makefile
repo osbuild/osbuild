@@ -84,6 +84,7 @@ help:
 	@echo
 	@echo "    help:               Print this usage information."
 	@echo "    man:                Generate all man-pages"
+	@echo "    initrd:             Build initrd helper"
 	@echo
 	@echo "    lint:               Check the code with linter (tox)"
 	@echo "    lint-quick:         Check the code with fast linters only (local)"
@@ -123,6 +124,10 @@ $(MANPAGES_TROFF): $(BUILDDIR)/docs/%: $(SRCDIR)/docs/%.rst | $(BUILDDIR)/docs/
 
 .PHONY: man
 man: $(MANPAGES_TROFF)
+
+.PHONY: initrd
+initrd: initrd/initrd.go
+	cd initrd && GOFLAGS="-mod=vendor" GOPROXY=off CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o initrd initrd.go
 
 #
 # Coverity
