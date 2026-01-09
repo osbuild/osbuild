@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from osbuild import testutil
@@ -26,3 +28,17 @@ def test_schema_validation(stage_schema, test_data, expected_err):
     else:
         assert res.valid is False
         testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
+
+
+@pytest.mark.parametrize("ignore_failures", [
+    (False),
+    (True),
+])
+@mock.patch("subprocess.run")
+def test_import_gpg_keys(mock_run, tmp_path, stage_module, ignore_failures):
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    stage_module.import_gpg_keys(tree, ["some-key"], "my-binary", [], ignore_failures)
+    mock_run.assert_called_once()
+    assert mock_run.call_args[0][0][0] == "my-binary"
+    assert mock_run.call_args[1] == {"check": not ignore_failures}
