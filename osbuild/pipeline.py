@@ -464,8 +464,6 @@ class Pipeline:
                 buildtree_dir = os.path.join(build_tree.path, "tree")
 
                 qemu = Qemu("4G",
-                            os.path.join(buildtree_dir, "vm/vmlinuz"),
-                            os.path.join(buildtree_dir, "vm/initramfs.img"),
                             buildtree_dir,
                             libdir)
                 qemu.add_virtiofs(object_store.store, "store", readonly=False)

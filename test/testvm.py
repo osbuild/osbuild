@@ -42,8 +42,6 @@ args = parser.parse_args()
 
 qemu = Qemu(
     "4G",
-    os.path.join(args.rootfs, "vm/vmlinuz"),
-    os.path.join(args.rootfs, "vm/initramfs.img"),
     args.rootfs,
     ".",
     serial_stdout=True,
