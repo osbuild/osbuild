@@ -3,7 +3,16 @@ import os
 import shlex
 import sys
 
-from osbuild.qemu import Qemu
+# Ensure we can import osbuild module from the same directory as vm.py
+PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PARENT_DIR not in sys.path:
+    sys.path.insert(0, PARENT_DIR)
+
+# These imports really have to go after the path was modified
+# pylint: disable=C0413
+from osbuild.qemu import Qemu  # noqa: E402
+
+# pylint: enable=C0413
 
 parser = argparse.ArgumentParser(
     description="vm.py tester."
