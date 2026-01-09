@@ -203,6 +203,7 @@ class Virtiofsd:
             "--sandbox=none",
             "--xattr",
             "--security-label",
+            "--log-level=off",
         ]
         if readonly:
             self.cmd += ["--readonly"]
