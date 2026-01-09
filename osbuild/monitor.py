@@ -226,7 +226,7 @@ class BaseMonitor(abc.ABC):
         """Logging will be done to file descriptor `fd`"""
         self.out = TextWriter(fd)
 
-    def begin(self, pipeline: osbuild.Pipeline):
+    def begin(self, pipeline: osbuild.Pipeline, in_vm: bool):
         """Called once at the beginning of a pipeline"""
 
     def finish(self, results: Dict):
@@ -271,14 +271,17 @@ class LogMonitor(BaseMonitor):
             duration = time.monotonic() - self._module_start_time
             self.out.write(f"\n⏱  Duration: {duration:.2f}s\n")
 
-    def begin(self, pipeline):
+    def begin(self, pipeline, in_vm: bool):
         self.out.term(vt.bold, clear=True)
         self.out.write(f"Pipeline {pipeline.name}: {pipeline.id}")
         self.out.term(vt.reset)
         self.out.write("\n")
         self.out.write("Build\n  root: ")
         if pipeline.build:
-            self.out.write(pipeline.build)
+            if in_vm:
+                self.out.write(f"{pipeline.build} (in vm)")
+            else:
+                self.out.write(pipeline.build)
         else:
             self.out.write("<host>")
         if pipeline.runner:
@@ -329,7 +332,7 @@ class JSONSeqMonitor(BaseMonitor):
         self._jsonseq_mu = Lock()
         self._module_start_time: Optional[float] = None
 
-    def begin(self, pipeline: osbuild.Pipeline):
+    def begin(self, pipeline: osbuild.Pipeline, in_vm: bool):
         self._context.set_pipeline(pipeline)
         if pipeline.stages:
             self._progress.sub_progress = Progress(f"pipeline: {pipeline.name}", len(pipeline.stages))

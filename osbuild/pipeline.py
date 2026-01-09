@@ -520,7 +520,7 @@ class Pipeline:
 
     def run(self, store, monitor, libdir, debug_break="", stage_timeout=None, in_vm=False):
 
-        monitor.begin(self)
+        monitor.begin(self, in_vm)
 
         results = self.build_stages(store,
                                     monitor,
@@ -569,7 +569,7 @@ class Manifest:
                 # Workaround for lack of progress from sources, this
                 # will need to be reworked later.
                 dr = DownloadResult(source.name, source.id, success=True)
-                monitor.begin(source)
+                monitor.begin(source, False)
                 try:
                     source.download(mgr, store)
                 except host.RemoteError as e:
