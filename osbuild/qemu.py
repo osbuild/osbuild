@@ -1,14 +1,176 @@
+import gzip
 import importlib.util
 import io
 import json
+import lzma
 import os
 import platform
+import shutil
 import signal
 import socket
 import subprocess
+import sys
 import tempfile
 import time
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+
+def find_kernel_dir(tree):
+    modules_dir = Path(tree) / "usr" / "lib" / "modules"
+
+    if not modules_dir.exists() or not modules_dir.is_dir():
+        return None, None
+
+    try:
+        subdirs = [d for d in modules_dir.iterdir() if d.is_dir()]
+    except PermissionError:
+        return None, None
+
+    for subdir in sorted(subdirs):
+        vmlinuz_path = subdir / "vmlinuz"
+        if vmlinuz_path.is_file():
+            return modules_dir / subdir.name
+
+    raise ValueError("No valid kernel directory found in /usr/lib/modules")
+
+
+def get_module_dependencies(module_path):
+    result = subprocess.run(
+        ["modinfo", "-F", "depends", str(module_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return []
+
+    depends = result.stdout.strip()
+    if not depends:
+        return []
+
+    deps = [dep.strip() for dep in depends.split(",") if dep.strip()]
+    return deps
+
+
+class InitrdBuilder:
+    def __init__(self, source_modules):
+        self.tmpdir = None
+        self.root = None
+        self.source_modules = source_modules
+
+        self.copied_modules = set()
+        self.module_counter = 0
+
+    def __enter__(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmpdir.name)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.tmpdir.cleanup()
+
+    def mkdir(self, path):
+        (self.root / path).mkdir(parents=True)
+
+    def add_file(self, src, dest):
+        shutil.copy2(src, self.root / dest)
+
+    def add_binary(self, src, dest):
+        self.add_file(src, dest)
+        (self.root / dest).chmod(0o755)
+
+    def find_module(self, module_name):
+        patterns = [
+            f"{module_name}.ko",
+            f"{module_name}.ko.xz",
+            f"{module_name}.ko.zst",
+            f"{module_name}.ko.gz",
+        ]
+
+        for pattern in patterns:
+            matches = list(self.source_modules.rglob(pattern))
+            if matches:
+                return matches[0]
+
+        return None
+
+    def decompress_module(self, module_path, dest_file):
+        """Decompress a module file to destination."""
+        module_name = module_path.name
+
+        if module_name.endswith(".ko.xz"):
+            with lzma.open(module_path, "rb") as f_in:
+                with open(dest_file, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        elif module_name.endswith(".ko.zst"):
+            subprocess.run(
+                ["zstd", "-dc", str(module_path)],
+                stdout=open(dest_file, "wb"),
+                check=True,
+            )
+        elif module_name.endswith(".ko.gz"):
+            with gzip.open(module_path, "rb") as f_in:
+                with open(dest_file, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        else:
+            shutil.copy2(module_path, dest_file)
+
+    def copy_module(self, module_name):
+        if module_name in self.copied_modules:
+            return
+        self.copied_modules.add(module_name)
+
+        module_path = self.find_module(module_name)
+        if not module_path:
+            print(f"Warning: {module_name} module not found in {self.source_modules}", file=sys.stderr)
+            return
+
+        dependencies = get_module_dependencies(module_path)
+        for dep in dependencies:
+            self.copy_module(dep)
+
+        modules_dir = self.root / "usr/lib/modules"
+
+        if self.module_counter == 0:
+            modules_dir.mkdir(parents=True)
+        self.module_counter += 1
+
+        prefix = f"{self.module_counter:03d}"
+        dest_file = modules_dir / f"{prefix}-{module_name}.ko"
+
+        self.decompress_module(module_path, dest_file)
+
+    def write(self, dest):
+        with open(dest, "wb") as f_out:
+            result = subprocess.run(
+                ["find", ".", "-print0"],
+                cwd=self.root,
+                stdout=subprocess.PIPE,
+                check=True,
+            )
+            subprocess.run(
+                ["cpio", "--null", "--create", "--format=newc", "--quiet"],
+                cwd=self.root,
+                input=result.stdout,
+                stdout=f_out,
+                check=True,
+            )
+
+
+def create_initrd(libdir, rootfs_dir, dest, extra_modules=None):
+    kernel_dir = find_kernel_dir(rootfs_dir)
+
+    with InitrdBuilder(kernel_dir) as builder:
+        builder.mkdir("bin")
+        builder.add_binary(Path(libdir) / "initrd/initrd", "init")
+        builder.copy_module("virtiofs")
+        if extra_modules:
+            for module in extra_modules:
+                print(f"Copying additional module: {module}")
+                builder.copy_module(module)
+
+        builder.write(dest)
 
 
 def find_virtiofsd():
@@ -120,8 +282,6 @@ class Qemu:
     def __init__(
         self,
         mem: str,
-        kernel_path: str,
-        initrd_path: str,
         rootfs_path: str,
         libdir_path: str,
         serial_stdout: bool = False,
@@ -132,6 +292,12 @@ class Qemu:
         self.pidfile = os.path.join(self._tmpdir.name, "qemu.pid")
         self.serials: Dict[str, str] = {}
         self.virtiofs: Dict[str, Tuple[str, Virtiofsd]] = {}
+
+        kerneldir = find_kernel_dir(rootfs_path)
+        kernel_path = kerneldir / "vmlinuz"
+
+        initrd_path = Path(self._tmpdir.name) / "initrd"
+        create_initrd(libdir_path, rootfs_path, initrd_path)
 
         arch = platform.machine()
         qemu_bin = find_qemu(arch)
@@ -168,8 +334,8 @@ class Qemu:
         if "kvm" in qemu_accels and os.path.exists("/dev/kvm"):
             self.cmd += ["-enable-kvm"]
 
-        init = "/mnt/osbuild/vm.py"
-        cmdline = f"console={console} quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro init={init}"
+        init = "/run/mnt/mnt0/osbuild/vm.py"
+        cmdline = f"console={console} quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro mount=mnt0 init={init}"
 
         # vm.py will add its parent to the search path to find the "osbuild" module, so
         # mount the directory with the osbuild directory at /mnt and run /mnt/osbuild/vm.py
@@ -178,7 +344,7 @@ class Qemu:
         modpath = os.path.dirname(spec.origin)  # $some_python_path/osbuild
         modpath = os.path.dirname(modpath)  # $some_python_path
 
-        self.add_kernel(kernel_path, initrd_path, cmdline)
+        self.add_kernel(str(kernel_path), str(initrd_path), cmdline)
         self.add_virtio_serial("ipc.0")
         self.add_virtiofs(rootfs_path, "rootfs", readonly=True)
         self.add_virtiofs(modpath, "mnt0", readonly=True)
