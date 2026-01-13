@@ -16,7 +16,7 @@ def main(inputs, output, options):
     remove_signatures = options.get("remove-signatures")
 
     for image in images.values():
-        with containers.container_source(image) as (image_name, image_source):
+        with containers.container_source(image) as (image_name, image_source, _):
             if dest_type == "containers-storage":
                 storage_root = destination.get("storage-path", "/var/lib/containers/storage")
                 storage_driver = destination.get("storage-driver", "overlay")

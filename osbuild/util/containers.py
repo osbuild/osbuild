@@ -133,9 +133,12 @@ def containers_storage_source(image, image_filepath, container_format):
         # if we're inside a bib-continaer and only run this conidtionally.
         mg.mount(image_filepath, storage_path, remount=True, permissions=MountPermissions.READ_WRITE)
 
+        podman_opts = [f"--imagestore={storage_path}"]
+
         image_id = image["checksum"].split(":")[1]
         image_source = f"{container_format}:[{driver}@{storage_path}+/run/containers/storage]{image_id}"
-        yield image_source
+
+        yield image_source, podman_opts
 
         if driver == "overlay":
             # NOTE: the overlay sub-directory isn't always released,
@@ -161,7 +164,7 @@ def dir_oci_archive_source(image, image_filepath, container_format):
             os.symlink(image_filepath, tmp_source)
 
         image_source = f"{container_format}:{tmp_source}"
-        yield image_source
+        yield image_source, None
 
 
 @contextmanager
@@ -184,16 +187,17 @@ def container_source(image):
     # thozza: As far as I can tell, the problematic use case is when the ctx manager is used inside a generator.
     # However, this is not the case here. The ctx manager is used inside another ctx manager with the expectation
     # that the inner ctx manager won't be cleaned up until the execution returns to this ctx manager.
-    with container_source_fn(image, image_filepath, container_format) as image_source:
-        yield image_name, image_source
+    with container_source_fn(image, image_filepath, container_format) as (image_source, podman_opts):
+        yield (image_name, image_source, podman_opts)
 
 
 @contextmanager
 def container_mount(image):
     # Helper function for doing the `podman image mount`
     @contextmanager
-    def _mount_container(img, imagestore=None):
-        cmd = ["podman", f"--imagestore={imagestore}"] if imagestore else ["podman"]
+    def _mount_container(img, podman_opts):
+        cmd = ["podman"] + (podman_opts or [])
+
         result = subprocess.run(cmd + ["image", "mount", img], encoding="utf-8",
                                 check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode != 0:
@@ -205,17 +209,15 @@ def container_mount(image):
         finally:
             subprocess.run(cmd + ["image", "umount", img], check=True)
 
-    with container_source(image) as (_, source):
+    with container_source(image) as (_, source, podman_opts):
         with ExitStack() as cm:
             img = ""
-            imagestore = None
             if image["data"]["format"] == 'containers-storage':
                 # In the case where we are container storage we don't need to
                 # skopeo copy. We already have access to a mounted container storage
                 # that has the image ready to use.
                 image_id = image["checksum"].split(":")[1]
                 img = image_id
-                imagestore = HOST_CONTAINERS_STORAGE
             else:
                 # We cannot use a tmpdir as storage here because of
                 # https://github.com/containers/storage/issues/1779 so instead
@@ -229,5 +231,5 @@ def container_mount(image):
                 subprocess.run(cmd, check=True)
                 img = tmp_image_name
 
-            with _mount_container(img, imagestore) as container_mountpoint:
+            with _mount_container(img, podman_opts) as container_mountpoint:
                 yield container_mountpoint

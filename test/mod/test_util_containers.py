@@ -27,7 +27,7 @@ def test_container_mount_error():
 
     with patch("osbuild.util.containers.container_source") as mock_cs:
         # the context manager for container_source needs to return our mock_source
-        mock_cs.return_value.__enter__.return_value = ("some-image-name", "some-image-source")
+        mock_cs.return_value.__enter__.return_value = ("some-image-name", "some-image-source", None)
         with osbuild.testutil.mock_command("podman", fake_podman):
             with pytest.raises(RuntimeError) as exp:
                 with containers.container_mount(input_image):
