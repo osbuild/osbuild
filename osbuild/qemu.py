@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from osbuild.util import linux
+from osbuild.util import host, linux
 
 
 def find_kernel_dir(tree):
@@ -359,6 +359,14 @@ class Qemu:
         self.add_virtiofs(rootfs_path, "rootfs", readonly=True)
         self.add_virtiofs(modpath, "mnt0", readonly=True)
         self.add_virtiofs(libdir_path, "libdir", readonly=True)
+        try:
+            container_storage_conf = host.get_container_storage()
+            container_storage = container_storage_conf["storage"]["graphroot"]
+            if Path(container_storage).is_dir():
+                self.add_virtiofs(container_storage, "containers", readonly=True)
+        except FileNotFoundError:
+            pass
+
         self.ipc = None
 
     def add_arguments(self, args: List[str]) -> None:
