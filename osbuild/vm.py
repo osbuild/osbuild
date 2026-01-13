@@ -274,6 +274,7 @@ mounts = {
 }
 
 subprocess.run(["mount", "-t", "tmpfs", "tmpfs", "/tmp"], check=True)
+subprocess.run(["mount", "-t", "tmpfs", "tmpfs", "/var"], check=True)
 
 for subdir in os.listdir("/sys/fs/virtiofs"):
     tagfile = os.path.join("/sys/fs/virtiofs", subdir, "tag")
@@ -285,6 +286,10 @@ for subdir in os.listdir("/sys/fs/virtiofs"):
             print(f"Mounting virtiofs {tag} at {dst}")
             subprocess.run(["mount", "-t", "virtiofs", tag, dst], check=True)
             mounts[tag] = dst
+
+if "containers" in mounts:
+    os.makedirs("/var/lib/containers/storage")
+    subprocess.run(["mount", "--bind", mounts["containers"], "/var/lib/containers/storage"], check=True)
 
 with contextlib.ExitStack() as cm:
 
