@@ -18,7 +18,7 @@ def make_fs_identifier(desc):
 def ostree_container_deploy(tree, inputs, osname, target_imgref, kopts):
     images = containers.parse_containers_input(inputs)
     for image in images.values():
-        with containers.container_source(image) as (_, image_source):
+        with containers.container_source(image) as (_, image_source, _):
             extra_args = []
             imgref = f"ostree-unverified-image:{image_source}"
 

@@ -24,7 +24,7 @@ def main(options, inputs, paths):
     # is available in all our downstreams.
     env["BOOTC_SKIP_SELINUX_HOST_CHECK"] = "true"
 
-    with containers.container_source(image) as (_, source):
+    with containers.container_source(image) as (_, source, _):
         dst = paths["mounts"]
         pargs = ["bootc", "install", "to-filesystem",
                  "--source-imgref", source,
