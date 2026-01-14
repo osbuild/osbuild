@@ -90,3 +90,19 @@ jobs:
         run: find -iname "*.json" -print -exec sh -c 'jq --indent 2 . {} | sponge {}' \;
       - name: Check diff
         run: git diff --exit-code
+
+  validate-executables:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check for non-executable osbuild stages
+        run: |
+          MISSING_EXEC=$(find ./stages -path ./stages/test -prune -o -type f -name "org.osbuild*" ! -name "*.meta.json" ! -executable -print)
+          if [ -n "$MISSING_EXEC" ]; then
+            echo "::error::The following osbuild stages are missing the executable flag:"
+            echo "$MISSING_EXEC"
+            exit 1
+          else
+            echo "All osbuild stages have the correct permissions."
+          fi
