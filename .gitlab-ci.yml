@@ -85,6 +85,23 @@ OSTree Images:
       - MANIFEST: fedora-ostree-container-dev-null.json
         EXPORT: commit-archive/ostree-commit.tar
 
+PQC keys:
+  stage: test
+  extends: .terraform
+  script:
+    - schutzbot/deploy.sh
+    - sudo osbuild --export tree --output-directory build ./test/data/manifests/pqc/r97-pqc-test.json
+  interruptible: true
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/fedora-42-x86_64
+          - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.8-nightly-x86_64
+          - aws/rhel-10.1-ga-x86_64
+          - aws/rhel-10.2-nightly-x86_64
+        INTERNAL_NETWORK: "true"
+
 Manifests:
   stage: test
   extends: .terraform
