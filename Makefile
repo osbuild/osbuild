@@ -310,6 +310,13 @@ rpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
 
+.PHONY: rpm-nocheck
+rpm-nocheck: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
+	rpmbuild -bb \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		--nocheck \
+		$(RPM_SPECFILE)
+
 #
 # Releasing
 #
