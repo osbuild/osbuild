@@ -15,6 +15,8 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+from osbuild.util import linux
+
 
 def find_kernel_dir(tree):
     modules_dir = Path(tree) / "usr" / "lib" / "modules"
@@ -279,6 +281,12 @@ def qemu_available_accels(qemu):
     return info[1:]
 
 
+def set_pdeathsig():
+    PR_SET_PDEATHSIG = 1
+    libc = linux.Libc.default()
+    libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
+
+
 class Qemu:
     def __init__(
         self,
@@ -293,6 +301,7 @@ class Qemu:
         self.pidfile = os.path.join(self._tmpdir.name, "qemu.pid")
         self.serials: Dict[str, str] = {}
         self.virtiofs: Dict[str, Tuple[str, Virtiofsd]] = {}
+        self._proc: Optional[subprocess.Popen] = None
 
         kerneldir = find_kernel_dir(rootfs_path)
         kernel_path = kerneldir / "vmlinuz"
@@ -300,15 +309,15 @@ class Qemu:
         initrd_path = Path(self._tmpdir.name) / "initrd"
         create_initrd(libdir_path, rootfs_path, initrd_path)
 
+        self.qmp_path = Path(self._tmpdir.name) / "qmp.sock"
+
         arch = platform.machine()
         qemu_bin = find_qemu(arch)
         qemu_accels = qemu_available_accels(qemu_bin)
 
         self.cmd = [
             qemu_bin,
-            "-daemonize",
-            "-pidfile",
-            self.pidfile,
+            "-qmp", f"unix:{self.qmp_path},server=on,wait=off",
             "-display",
             "none",
             "-m",
@@ -418,37 +427,48 @@ class Qemu:
             ]
         )
 
-    def start(self) -> int:
+    def wait_for_qmp(self, timeout=10.0):
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            try:
+                s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                s.connect(str(self.qmp_path))
+                s.close()
+                return True
+            except (FileNotFoundError, ConnectionRefusedError):
+                time.sleep(0.1)
+        return False
+
+    def start(self) -> subprocess.Popen:
         for _path, virtfsd in self.virtiofs.values():
             virtfsd.start()
-        subprocess.run(self.cmd, check=True)
-        with open(self.pidfile, "rt", encoding="utf8") as f:
-            pid_str = f.read().strip()
-        pid = int(pid_str)
-        if pid < 1:
-            raise RuntimeError("Invalid pid in qemu pidfile")
-        self._pid = pid
-        return pid
+
+        # We try to properly clean up the child qemu in stop(), however
+        # we also call pdeathsig to enure the child is killed if the parent
+        # dies unexpectedly (sigkill for example)
+        self._proc = subprocess.Popen(self.cmd, preexec_fn=set_pdeathsig)  # noqa: PLW1509 # pylint: disable=W1509
+
+        # Wait until QMP responds, at that point we know the VM setup
+        # is completed.
+        if not self.wait_for_qmp():
+            self._proc.terminate()
+            self._proc = None
+            raise RuntimeError("QEMU did not become ready")
+
+        return self._proc
 
     def stop(self) -> None:
         """Terminate QEMU and clean up the pidfile we own."""
-        if self._pid is None:
+        proc = self._proc
+        if proc is None or proc.poll() is not None:
             self.cleanup()
             return
 
         try:
-            os.kill(self._pid, signal.SIGTERM)
-        except ProcessLookupError:
-            # Already dead
-            self.cleanup()
-            return
-
-        if not self._wait_for_exit(self._pid, timeout=5.0):
-            try:
-                os.kill(self._pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            self._wait_for_exit(self._pid, timeout=2.0)
+            proc.terminate()
+            proc.wait(timeout=5.0)
+        except subprocess.TimeoutExpired:
+            proc.kill()
 
         self.cleanup()
 
