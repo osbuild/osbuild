@@ -7,6 +7,7 @@ import multiprocessing as mp
 import os
 import pathlib
 import tempfile
+import time
 import unittest
 
 import osbuild
@@ -98,6 +99,13 @@ class TestAPI(unittest.TestCase):
             p = _mp_context.Process(target=exception, args=(path, ))
             p.start()
             p.join()
+
+        # Add a small buffer for the background thread to update 'api.error' which
+        # randomly manifests on ppc64 on our CICD.
+        start_time = time.time()
+        while api.error is None and time.time() - start_time < 5:
+            time.sleep(0.1)
+
         self.assertEqual(p.exitcode, 2)
         self.assertIsNotNone(api.error, "Error not set")
         self.assertIn("type", api.error, "Error has no 'type' set")
