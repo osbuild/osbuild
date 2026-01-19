@@ -45,6 +45,8 @@ def test_calculate_space(tmpdir):
     # Test the `_calculate_space()` helper and verify it only includes file
     # content in its calculation.
     #
+    # Allows for one-block tolerance (4096 bytes) for filesystem metadata variance.
+    #
     def du(path_target):
         env = os.environ.copy()
         env["POSIXLY_CORRECT"] = "1"
@@ -53,23 +55,23 @@ def test_calculate_space(tmpdir):
 
     test_dir = os.path.join(tmpdir, "dir")
     os.mkdir(test_dir)
-    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
+    assert abs(fscache.FsCache._calculate_space(test_dir) - du(test_dir)) <= 4096
 
     with open(os.path.join(tmpdir, "dir", "file"), "x", encoding="utf8") as f:
         pass
-    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
+    assert abs(fscache.FsCache._calculate_space(test_dir) - du(test_dir)) <= 4096
 
     with open(os.path.join(tmpdir, "dir", "file"), "w", encoding="utf8") as f:
         f.write("foobar")
-    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
+    assert abs(fscache.FsCache._calculate_space(test_dir) - du(test_dir)) <= 4096
 
     os.makedirs(os.path.join(test_dir, "dir"))
-    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
+    assert abs(fscache.FsCache._calculate_space(test_dir) - du(test_dir)) <= 4096
 
     with open(os.path.join(test_dir, "sparse-file"), "wb") as f:
         f.truncate(10 * 1024 * 1024)
         f.write(b"I'm not an empty file")
-    assert fscache.FsCache._calculate_space(test_dir) == du(test_dir)
+    assert abs(fscache.FsCache._calculate_space(test_dir) - du(test_dir)) <= 4096
 
 
 def test_pathlike(tmpdir):
