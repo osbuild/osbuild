@@ -508,6 +508,22 @@ class Libc:
         setattr(proto, "__name__", "memfd_create")
         self._memfd_create = proto
 
+        proto = ctypes.CFUNCTYPE(
+            ctypes.c_int,  # restype (return type)
+            ctypes.c_uint,
+            ctypes.c_uint,
+            use_errno=True,
+        )(
+            ("prctl", self._lib),
+            (
+                (1, "op"),
+                (1, "args"),
+            ),
+        )
+        setattr(proto, "errcheck", self._errcheck_errno)
+        setattr(proto, "__name__", "prctl")
+        self.prctl = proto
+
     # (can be removed once we move to python3.8)
     def memfd_create(self, name: str, flags: int = 0) -> int:
         """ create an anonymous file """
