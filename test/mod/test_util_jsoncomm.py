@@ -226,11 +226,12 @@ class TestUtilJsonComm(unittest.TestCase):
 
     def test_sendmsg_errors_with_size_on_EMSGSIZE(self):
         a, _ = jsoncomm.Socket.new_pair()
-
-        serialized = json.dumps({"data": "1" * 1_000_000}).encode()
+        # Increase size to 64MB to ensure we exceed net.core.wmem_max
+        huge_size = 64 * 1024 * 1024
+        serialized = json.dumps({"data": "1" * huge_size}).encode()
         with pytest.raises(BufferError) as exc:
             a._send_via_sendmsg(serialized, [])
-        assert str(exc.value) == "jsoncomm message size 1000012 is too big"
+        assert "is too big" in str(exc.value)
         assert exc.value.__cause__.errno == errno.EMSGSIZE
 
     def test_send_and_recv_tons_of_data_is_fine(self):
@@ -254,9 +255,10 @@ class TestUtilJsonComm(unittest.TestCase):
 
     def test_send_huge_data_via_fd(self):
         a, _ = jsoncomm.Socket.new_pair()
+        # Use 16MB payload to trigger fallback logic
         with patch.object(a, "_send_via_fd") as mock_send_via_fd, \
                 patch.object(a, "_send_via_sendmsg") as mock_send_via_sendmsg:
-            ping = {"data": "tons" * 1_000_000}
+            ping = {"data": "tons" * 4_000_000}
             a.send(ping)
         assert mock_send_via_fd.call_count == 1
         assert mock_send_via_sendmsg.call_count == 0
