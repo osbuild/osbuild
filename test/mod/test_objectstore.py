@@ -5,6 +5,7 @@
 import contextlib
 import os
 import tempfile
+import time
 from pathlib import Path
 
 import pytest
@@ -196,8 +197,12 @@ def test_host_tree(tmp_path):
 
 
 def test_source_epoch(object_store):
+    """
+    Uses time.sleep(0.1) to ensure time difference on high-resolution timestamp filesystems.
+    """
     tree = object_store.new("a")
     tree.source_epoch = 946688461
+    time.sleep(0.1)
 
     t = Path(tree)
 
@@ -217,6 +222,7 @@ def test_source_epoch(object_store):
 
     # FINALIZING
     tree.finalize()
+    time.sleep(0.1)
 
     for i in (a, d, l, t):
         si = os.stat(i, follow_symlinks=False)
@@ -227,11 +233,13 @@ def test_source_epoch(object_store):
 
     baum = object_store.new("b")
     baum.init(tree)
+    time.sleep(0.1)
 
     assert baum.created == tree.created
 
     b = Path(tree, "B")
     b.touch()
+    time.sleep(0.1)
 
     si = os.stat(b, follow_symlinks=False)
     before = int(si.st_mtime)
@@ -240,6 +248,8 @@ def test_source_epoch(object_store):
 
     # FINALIZING
     baum.finalize()
+    time.sleep(0.1)
+
     si = os.stat(a, follow_symlinks=False)
     after = int(si.st_mtime)
 
