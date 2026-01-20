@@ -15,6 +15,8 @@ from osbuild.solver.request import (
     SolverRequest,
 )
 
+from . import SolverAPIVersion
+
 
 def _package_as_dict_dump_search(package: Package) -> dict:
     """
@@ -175,9 +177,6 @@ def _parse_depsolve_transaction(trans_dict: Dict[str, Any]) -> DepsolveTransacti
 # pylint: disable=too-many-branches, too-many-statements
 def parse_request(request_dict: Dict[str, Any]) -> SolverRequest:
     """Parse a V1 request dict into a SolverRequest object"""
-    # Import here to avoid circular dependency at module level
-    # pylint: disable=import-outside-toplevel
-    from . import SolverAPIVersion
 
     # Get required top-level fields
     try:

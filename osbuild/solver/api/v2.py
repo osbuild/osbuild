@@ -28,6 +28,8 @@ from osbuild.solver.request import (
     SolverRequest,
 )
 
+from . import SolverAPIVersion
+
 
 def _checksum_as_dict(checksum: Checksum) -> Dict[str, Any]:
     return {
@@ -341,9 +343,6 @@ def _parse_depsolve_transaction(trans_dict: Dict[str, Any]) -> DepsolveTransacti
 # pylint: disable=too-many-branches, too-many-statements
 def parse_request(request_dict: Dict[str, Any]) -> SolverRequest:
     """Parse a V2 request dict into a SolverRequest object"""
-    # Import here to avoid circular dependency at module level
-    # pylint: disable=import-outside-toplevel
-    from . import SolverAPIVersion
 
     # Get required top-level fields
     try:
