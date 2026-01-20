@@ -35,6 +35,19 @@ menuentry 'Test this media & install ${product} ${version}' --class fedora --cla
 	initrd ${initrdpath}
 }
 $fipsentry
+$troubleshootingentry
+"""
+
+# Optional FIPS menu entry
+FIPS_ENTRY_TEMPLATE = """
+menuentry 'Install ${product} ${version} in FIPS mode' --class fedora --class gnu-linux --class gnu --class os {
+	linux ${kernelpath} ${root} quiet fips=1
+	initrd ${initrdpath}
+}
+"""
+
+# Optional Troubleshooting submenu
+TROUBLESHOOTING_ENTRY_TEMPLATE = """
 submenu 'Troubleshooting -->' {
 	menuentry 'Install ${product} ${version} in basic graphics mode' --class fedora --class gnu-linux --class gnu --class os {
 		linux ${kernelpath} ${root} nomodeset quiet
@@ -47,16 +60,7 @@ submenu 'Troubleshooting -->' {
 	menuentry 'Boot first drive' --class fedora --class gnu-linux --class gnu --class os {
 		chainloader (hd0)+1
 	}
-}
-"""
-
-# Optional FIPS menu entry
-FIPS_ENTRY_TEMPLATE = """
-menuentry 'Install ${product} ${version} in FIPS mode' --class fedora --class gnu-linux --class gnu --class os {
-	linux ${kernelpath} ${root} quiet fips=1
-	initrd ${initrdpath}
-}
-"""
+}"""
 
 DEFAULT_ENTRY_TEMPLATE = """set default="${default}"
 """
@@ -72,6 +76,7 @@ def main(root, options):
     timeout = cfg.get("timeout", 60)
     default = cfg.get("default")    # None indicates not set
     fips = options.get("fips", False)
+    troubleshooting = options.get("troubleshooting", True)
 
     grub2dir = os.path.join(root, "boot", "grub2")
     os.makedirs(grub2dir, exist_ok=True)
@@ -90,7 +95,8 @@ def main(root, options):
         "root": " ".join(kopts),
         "timeout": timeout,
         "defaultentry": "",
-        "fipsentry": ""
+        "fipsentry": "",
+        "troubleshootingentry": "",
     }
 
     # Insert default menu selection
@@ -104,6 +110,11 @@ def main(root, options):
         fips_tmpl = string.Template(FIPS_ENTRY_TEMPLATE)
         fipsentry = fips_tmpl.safe_substitute(tplt_variables)
         tplt_variables["fipsentry"] = fipsentry
+
+    if troubleshooting:
+        troubleshooting_tmpl = string.Template(TROUBLESHOOTING_ENTRY_TEMPLATE)
+        troubleshootingentry = troubleshooting_tmpl.safe_substitute(tplt_variables)
+        tplt_variables["troubleshootingentry"] = troubleshootingentry
 
     tplt = string.Template(GRUB2_CFG_TEMPLATE)
     data = tplt.safe_substitute(tplt_variables)
