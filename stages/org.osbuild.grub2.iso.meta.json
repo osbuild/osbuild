@@ -63,6 +63,10 @@
           "type": "boolean",
           "default": true
         },
+        "test": {
+          "type": "boolean",
+          "default": true
+        },
         "config": {
           "description": "Configuration options for grub itself",
           "type": "object",
