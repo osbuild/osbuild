@@ -33,13 +33,16 @@ menuentry 'Install ${product} ${version}' --class fedora --class gnu-linux --cla
 	linux ${kernelpath} ${root} quiet
 	initrd ${initrdpath}
 }
-menuentry 'Test this media & install ${product} ${version}' --class fedora --class gnu-linux --class gnu --class os {
-	linux ${kernelpath} ${root} rd.live.check quiet
-	initrd ${initrdpath}
-}
+$testentry
 $fipsentry
 $troubleshootingentry
 """
+
+TEST_ENTRY_TEMPLATE = """
+menuentry 'Test this media & install ${product} ${version}' --class fedora --class gnu-linux --class gnu --class os {
+	linux ${kernelpath} ${root} rd.live.check quiet
+	initrd ${initrdpath}
+}"""
 
 # Optional FIPS menu entry
 FIPS_ENTRY_TEMPLATE = """
@@ -78,6 +81,7 @@ def main(root, options):
     timeout = cfg.get("timeout", 60)
     default = cfg.get("default")    # None indicates not set
     fips = options.get("fips", False)
+    test = options.get("test", True)
     troubleshooting = options.get("troubleshooting", True)
 
     efidir = os.path.join(root, "EFI", "BOOT")
@@ -112,6 +116,7 @@ def main(root, options):
         "timeout": timeout,
         "defaultentry": "",
         "fipsentry": "",
+        "testentry": "",
         "troubleshootingentry": "",
     }
 
@@ -120,6 +125,11 @@ def main(root, options):
         default_tmpl = string.Template(DEFAULT_ENTRY_TEMPLATE)
         defaultentry = default_tmpl.safe_substitute({"default": default})
         tplt_variables["defaultentry"] = defaultentry
+
+    if test:
+        test_tmpl = string.Template(TEST_ENTRY_TEMPLATE)
+        testentry = test_tmpl.safe_substitute(tplt_variables)
+        tplt_variables["testentry"] = testentry
 
     # Insert optional fips menu entry
     if fips:
