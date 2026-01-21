@@ -25,11 +25,18 @@ set timeout=${timeout}
 
 search --no-floppy --set=root -l '${isolabel}'
 
+$customentries
 $installentry
 $testentry
 $fipsentry
 $troubleshootingentry
 """
+
+CUSTOM_ENTRY_TEMPLATE = """
+menuentry '${name}' --class fedora --class gnu-linux --class gnu --class os {
+	linux ${linux}
+	initrd ${initrd}
+}"""
 
 INSTALL_ENTRY_TEMPLATE = """
 menuentry 'Install ${product} ${version}' --class fedora --class gnu-linux --class gnu --class os {
@@ -84,6 +91,7 @@ def main(root, options):
     test = options.get("test", True)
     install = options.get("install", True)
     troubleshooting = options.get("troubleshooting", True)
+    custom = options.get("custom", [])
 
     grub2dir = os.path.join(root, "boot", "grub2")
     os.makedirs(grub2dir, exist_ok=True)
@@ -106,6 +114,7 @@ def main(root, options):
         "installentry": "",
         "testentry": "",
         "troubleshootingentry": "",
+        "customentries": "",
     }
 
     # Insert default menu selection
@@ -113,6 +122,12 @@ def main(root, options):
         default_tmpl = string.Template(DEFAULT_ENTRY_TEMPLATE)
         defaultentry = default_tmpl.safe_substitute({"default": default})
         tplt_variables["defaultentry"] = defaultentry
+
+    if len(custom):
+        for entry in custom:
+            custom_tmpl = string.Template(CUSTOM_ENTRY_TEMPLATE)
+            customentry = custom_tmpl.safe_substitute(entry)
+            tplt_variables["customentries"] += customentry
 
     if test:
         test_tmpl = string.Template(TEST_ENTRY_TEMPLATE)
