@@ -26,6 +26,12 @@ search --no-floppy --set=root -l 'Fedora-41-X86_64'
 
 """
 
+CONFIG_TMPL_CUSTOM = """
+menuentry '{name}' --class fedora --class gnu-linux --class gnu --class os {{
+	linux {linux}
+	initrd {initrd}
+}}"""
+
 CONFIG_PART_INSTALL = """
 menuentry 'Install Fedora-IoT 41' --class fedora --class gnu-linux --class gnu --class os {
 	linux /images/pxeboot/vmlinuz inst.ks=hd:LABEL=Fedora-41-X86_64:/install.ks quiet
@@ -71,15 +77,52 @@ CONFIG_DEFAULT = """set default="1"
 @patch("shutil.copytree")
 @pytest.mark.parametrize("test_data,expected_conf", [
     # default
-    ({}, CONFIG_PART_1 + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
+    ({}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
     # fips menu enable
-    ({"fips": True}, CONFIG_PART_1 + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_FIPS + CONFIG_PART_TROUBLESHOOTING),
+    ({"fips": True}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL +
+     CONFIG_PART_TEST + CONFIG_FIPS + CONFIG_PART_TROUBLESHOOTING),
     # default to menu entry 1
-    ({"config": {"default": 1, "timeout": 10}}, CONFIG_DEFAULT + CONFIG_PART_1 + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
+    ({"config": {"default": 1, "timeout": 10}}, CONFIG_DEFAULT + CONFIG_PART_1 +
+     "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
     # no troubleshooting
-    ({"troubleshooting": False}, CONFIG_PART_1 + CONFIG_PART_INSTALL + CONFIG_PART_TEST + "\n\n"),
+    ({"troubleshooting": False}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + "\n\n"),
     # only install
-    ({"troubleshooting": False, "test": False}, CONFIG_PART_1 + CONFIG_PART_INSTALL + "\n\n\n"),
+    ({"troubleshooting": False, "test": False}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + "\n\n\n"),
+    # nothing
+    ({"troubleshooting": False, "test": False, "install": False}, CONFIG_PART_1 + "\n\n\n\n\n"),
+    # custom entries
+    (
+        {
+            "troubleshooting": False,
+            "test": False,
+            "install": False,
+            "custom": [
+                {
+                    "name": "label 0",
+                    "linux": "/foo/bar root=baz quiet",
+                    "initrd": "/foo/bar",
+                },
+                {
+                    "name": "label 1",
+                    "linux": "/bar/foo root=baz quiet",
+                    "initrd": "/bar/foo",
+                },
+            ]
+        },
+        CONFIG_PART_1 +
+        CONFIG_TMPL_CUSTOM.format(
+            name="label 0",
+            linux="/foo/bar root=baz quiet",
+            initrd="/foo/bar",
+        ) +
+        CONFIG_TMPL_CUSTOM.format(
+            name="label 1",
+            linux="/bar/foo root=baz quiet",
+            initrd="/bar/foo",
+        ) +
+        "\n\n\n\n\n",
+    ),
+
 ])
 def test_grub2_iso_legacy_smoke(mocked_copytree, tmp_path, stage_module, test_data, expected_conf):
     treedir = tmp_path / "tree"

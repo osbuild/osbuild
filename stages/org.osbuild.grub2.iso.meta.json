@@ -71,6 +71,24 @@
           "type": "boolean",
           "default": true
         },
+        "custom": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "linux": {
+                "type": "string"
+              },
+              "initrd": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "config": {
           "description": "Configuration options for grub itself",
           "type": "object",
