@@ -27,7 +27,9 @@ set timeout=60
 
 search --no-floppy --set=root -l 'Fedora-42-Everything-x86_64'
 
-### BEGIN /etc/grub.d/10_linux ###
+"""
+
+CONFIG_PART_INSTALL = """
 menuentry 'Install Fedora 42' --class fedora --class gnu-linux --class gnu --class os {
 	linux /images/pxeboot/vmlinuz inst.stage2=hd:LABEL=Fedora-42-Everything-x86_64 quiet
 	initrd /images/pxeboot/initrd.img
@@ -69,13 +71,15 @@ CONFIG_DEFAULT = """set default="1"
 @patch("shutil.copy2")
 @pytest.mark.parametrize("test_data,expected_conf", [
     # default
-    ({}, CONFIG_PART_1 + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
+    ({}, CONFIG_PART_1 + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
     # fips menu enable
-    ({"fips": True}, CONFIG_PART_1 + CONFIG_PART_TEST + CONFIG_FIPS + CONFIG_PART_TROUBLESHOOTING),
+    ({"fips": True}, CONFIG_PART_1 + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_FIPS + CONFIG_PART_TROUBLESHOOTING),
     # default to menu entry 1
-    ({"config": {"default": 1}}, CONFIG_DEFAULT + CONFIG_PART_1 + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
+    ({"config": {"default": 1}}, CONFIG_DEFAULT + CONFIG_PART_1 + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
     # no troubleshooting
-    ({"troubleshooting": False}, CONFIG_PART_1 + CONFIG_PART_TEST + "\n\n"),
+    ({"troubleshooting": False}, CONFIG_PART_1 + CONFIG_PART_INSTALL + CONFIG_PART_TEST + "\n\n"),
+    # only install
+    ({"troubleshooting": False, "test": False}, CONFIG_PART_1 + CONFIG_PART_INSTALL + "\n\n\n"),
 ])
 def test_grub2_iso(mocked_copy2, tmp_path, stage_module, test_data, expected_conf):
     treedir = tmp_path / "tree"
