@@ -70,7 +70,26 @@ STAGE_NAME = "org.osbuild.bootc.install.config"
                     "block": ["tmp2-luks"]
                 }
             }
-        )
+        ),
+        (
+            {
+                "filename": "30-ostree.conf",
+                "config": {
+                    "install": {
+                        "ostree": {
+                            "bls-append-except-default": 'grub_users=""'
+                        }
+                    }
+                }
+            },
+            {
+                "install": {
+                    "ostree": {
+                        "bls-append-except-default": 'grub_users=""'
+                    }
+                }
+            },
+        ),
     ]
 )
 @pytest.mark.tomlwrite
@@ -151,6 +170,19 @@ def test_bootc_install_config(tmp_path, stage_module, options, expected_config):
                 },
             },
             ["'whatever' is not one of ['direct', 'tmp2-luks']"]
+        ),
+        (
+            {
+                "filename": "error.conf",
+                "config": {
+                    "install": {
+                        "ostree": {
+                            "invalid-option": "value",
+                        },
+                    }
+                },
+            },
+            ["Additional properties are not allowed ('invalid-option' was unexpected)"]
         ),
     ]
 )
