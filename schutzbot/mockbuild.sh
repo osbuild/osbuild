@@ -9,6 +9,12 @@ function greenprint {
 # function to override template respositores with system repositories which contain rpmrepos snapshots
 function template_override {
     sudo dnf -y install jq
+    if [[ "$ID" == rhel && ${VERSION_ID%.*} == 10 ]]; then
+        TEMPLATE=${ID}-${VERSION_ID%.*}.tpl
+        # the distribution-gpg-keys package hasn't been updated yet to include PQC keys
+        sudo sed -i "s/gpgcheck=1/gpgcheck=0/" /etc/mock/templates/"$TEMPLATE"
+    fi
+
     if sudo subscription-manager status; then
         greenprint "📋 Running on subscribed RHEL machine, no mock template override done."
         return 0
