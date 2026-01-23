@@ -76,6 +76,11 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
+            "required": [
+              "name",
+              "linux",
+              "initrd"
+            ],
             "properties": {
               "name": {
                 "type": "string"
