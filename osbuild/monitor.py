@@ -283,6 +283,8 @@ class LogMonitor(BaseMonitor):
             self.out.write("<host>")
         if pipeline.runner:
             self.out.write(f"\n  runner: {pipeline.runner.name} ({pipeline.runner.exec})")
+            if pipeline.run_in_vm:
+                self.out.write(" in vm")
         source_epoch = pipeline.source_epoch
         if source_epoch is not None:
             timepoint = datetime.datetime.fromtimestamp(source_epoch).strftime('%c')

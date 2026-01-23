@@ -385,6 +385,7 @@ class Pipeline:
         self.stages: List[Stage] = []
         self.assembler = None
         self.source_epoch = source_epoch
+        self.run_in_vm = False
 
     @property
     def id(self):
@@ -520,6 +521,7 @@ class Pipeline:
 
     def run(self, store, monitor, libdir, debug_break="", stage_timeout=None, in_vm=False):
 
+        self.run_in_vm = in_vm
         monitor.begin(self)
 
         results = self.build_stages(store,
