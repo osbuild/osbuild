@@ -237,6 +237,53 @@ def test_env_isolation(tempdir, runner):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_run_bootc_persistence(tempdir, runner):
+    """Test that /run/bootc is persisted across multiple runs within the same BuildRoot."""
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
+
+    # Create a temporary directory for run_bootc (simulating what Pipeline does)
+    run_bootc_dir = pathlib.Path(tempdir, "run_bootc")
+    run_bootc_dir.mkdir()
+
+    monitor = NullMonitor(sys.stderr.fileno())
+    with BuildRoot("/", runner, libdir, var, run_bootc=str(run_bootc_dir)) as root:
+        # First run: create a file in /run/bootc/install/
+        r = root.run(["/bin/sh", "-c", "mkdir -p /run/bootc/install && echo 'test-data' > /run/bootc/install/test.toml"], monitor)
+        assert r.returncode == 0, f"Failed to create file: {r.output}"
+
+        # Second run: verify the file still exists
+        r = root.run(["cat", "/run/bootc/install/test.toml"], monitor)
+        assert r.returncode == 0, f"File not found: {r.output}"
+        assert "test-data" in r.output.strip()
+
+        # Verify that regular /run is still a tmpfs (files don't persist there)
+        r = root.run(["/bin/sh", "-c", "echo 'tmpfs-data' > /run/tmpfs-test.txt"], monitor)
+        assert r.returncode == 0
+
+        # The file in /run (outside /run/bootc) should NOT persist
+        r = root.run(["cat", "/run/tmpfs-test.txt"], monitor)
+        # This should fail because /run is a fresh tmpfs for each run
+        assert r.returncode != 0 or "tmpfs-data" not in r.output
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_run_bootc_not_mounted_when_none(tempdir, runner):
+    """Test that /run/bootc is not mounted when run_bootc parameter is None."""
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
+
+    monitor = NullMonitor(sys.stderr.fileno())
+    # Without run_bootc parameter, /run/bootc should not exist
+    with BuildRoot("/", runner, libdir, var) as root:
+        r = root.run(["test", "-d", "/run/bootc"], monitor)
+        # Directory should not exist
+        assert r.returncode != 0
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
 def test_caps(tempdir, runner):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")

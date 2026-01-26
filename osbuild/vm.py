@@ -235,6 +235,11 @@ def op_run_stage(req: Dict[str, Any], serial: SerialConnection) -> Dict[str, Any
     debug_break = req["debug_break"]
     stage_timeout = req["stage_timeout"]
 
+    # Reconstruct the full path for run_bootc in the VM
+    run_bootc = None
+    if "run_bootc" in req:
+        run_bootc = os.path.join(store.store, req["run_bootc"])
+
     monitor = VMMonitor(serial)
     r = stage.run(tree_dir,
                   meta_name,
@@ -244,7 +249,8 @@ def op_run_stage(req: Dict[str, Any], serial: SerialConnection) -> Dict[str, Any
                   monitor,
                   libdir_path,
                   debug_break,
-                  stage_timeout)
+                  stage_timeout,
+                  run_bootc=run_bootc)
     return {"ok": True, "r": r.as_dict()}
 
 

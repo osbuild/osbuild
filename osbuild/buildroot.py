@@ -69,7 +69,7 @@ class ProcOverrides:
         self.overrides.add("cmdline")
 
 
-# pylint: disable=too-many-instance-attributes,too-many-branches
+# pylint: disable=too-many-instance-attributes,too-many-branches,too-many-statements
 class BuildRoot(contextlib.AbstractContextManager):
     """Build Root
 
@@ -87,7 +87,7 @@ class BuildRoot(contextlib.AbstractContextManager):
     are retained.
     """
 
-    def __init__(self, root, runner, libdir, var, *, rundir="/run/osbuild"):
+    def __init__(self, root, runner, libdir, var, *, rundir="/run/osbuild", run_bootc=None):
         self._exitstack = None
         self._rootdir = root
         self._rundir = rundir
@@ -99,6 +99,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         self.var = None
         self.proc = None
         self.tmp = None
+        self.run_bootc = run_bootc
         self.mount_boot = True
         self.caps = None
 
@@ -218,6 +219,8 @@ class BuildRoot(contextlib.AbstractContextManager):
         # Setup temporary/data file-systems.
         mounts += ["--dir", "/etc"]
         mounts += ["--tmpfs", "/run"]
+        if self.run_bootc:
+            mounts += ["--bind", self.run_bootc, "/run/bootc"]
         mounts += ["--tmpfs", "/tmp"]
         mounts += ["--bind", self.var, "/var"]
 
