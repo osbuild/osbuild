@@ -10,6 +10,8 @@ from osbuild.util.mnt import MountGuard, MountPermissions
 
 # use `/run/osbuild/containers/storage` for the host's containers-storage bind mount
 HOST_CONTAINERS_STORAGE = os.path.join(os.sep, "run", "osbuild", "containers", "storage")
+# use `/run/osbuild/containers/storage2` for and empty containers-storage
+HOST_CONTAINERS_STORAGE2 = os.path.join(os.sep, "run", "osbuild", "containers", "storage2")
 
 
 def is_manifest_list(data):
@@ -122,6 +124,7 @@ def containers_storage_source(image, image_filepath, container_format):
     driver = storage_conf.get("driver", "overlay")
 
     storage_path = HOST_CONTAINERS_STORAGE
+    storage_path_empty = HOST_CONTAINERS_STORAGE2
     os.makedirs(storage_path, exist_ok=True)
 
     with MountGuard() as mg:
@@ -133,10 +136,24 @@ def containers_storage_source(image, image_filepath, container_format):
         # if we're inside a bib-continaer and only run this conidtionally.
         mg.mount(image_filepath, storage_path, remount=True, permissions=MountPermissions.READ_WRITE)
 
-        podman_opts = [f"--imagestore={storage_path}"]
-
         image_id = image["checksum"].split(":")[1]
-        image_source = f"{container_format}:[{driver}@{storage_path}+/run/containers/storage]{image_id}"
+
+        # Only the overlayfs backend supoorts additional image store
+        use_additional_image_store = driver == "overlay"
+
+        if use_additional_image_store:
+            # If additional image store is available, then we use a setup where the base graphroot is an
+            # empty storage directory, and then we access the host via a separate directory (--imagestore
+            # or additional image store). This allows us to support accessing the host storage via virtiofsd
+            # mounts. Virtiofs mounts don't supoprt being used as an overlayfs upper dir, but when we set it
+            # up like this, the upper directory ends up being in the empty graphroot which is on tmpfs, so
+            # things work.
+            podman_opts = [f"--root={storage_path_empty}", f"--imagestore={storage_path}"]
+            image_source = f"{container_format}:[{driver}@{storage_path_empty}+/run/containers/storage:additionalimagestore={storage_path}]{image_id}"
+        else:
+            # On vfs backends, we use the traditional setup
+            podman_opts = [f"--imagestore={storage_path}"]
+            image_source = f"{container_format}:[{driver}@{storage_path}+/run/containers/storage]{image_id}"
 
         yield image_source, podman_opts
 
