@@ -5,9 +5,12 @@ Verify, and install RPM packages
 The `exclude.docs` option can be used to tell rpm to not install docs.
 
 `gpgkeys` should be an array of strings containing each GPG key to be used
-to verify the packages. Alternatively, the keys can be imported via files
-located in the tree via `gpgkeys.fromtree`. This is done after the packages
-are installed so it is possible to import keys packaged in rpms.
+to verify the packages. Keys can also be provided via the optional
+`inputs.gpgkeys` input (e.g. from org.osbuild.curl), which allows key URLs
+to be resolved at manifest build time when no network is available in the
+stage. Alternatively, the keys can be imported via files located in the tree
+via `gpgkeys.fromtree`. This is done after the packages are installed so it
+is possible to import keys packaged in rpms.
 
 `packages` is an array of objects representing RPMs. Each RPM is identified by
 its checksums. Specifically, the content hash of the rpm, not the checksums
@@ -151,9 +154,20 @@ def parse_input(inputs):
     return path, files
 
 
+def parse_gpgkeys_input(inputs):
+    gpgkeys = inputs.get("gpgkeys")
+    if gpgkeys is None:
+        return None, None
+    path = gpgkeys["path"]
+    data = gpgkeys["data"]
+    files = data["files"]
+    return path, files
+
+
 # pylint: disable=too-many-branches
 def main(tree, inputs, options):
     pkgpath, packages = parse_input(inputs)
+    keypath, gpgkey_files = parse_gpgkeys_input(inputs)
 
     dbpath = options.get("dbpath")
 
@@ -165,7 +179,15 @@ def main(tree, inputs, options):
     rpmkeys_options = options.get("rpmkeys", {})
     rpmkeys_bin = rpmkeys_options.get("bin_path", "rpmkeys")
     ignore_import_failures = rpmkeys_options.get("ignore_import_failures", False)
-    import_gpg_keys(tree, options.get("gpgkeys", []), rpmkeys_bin, rpm_args, ignore_import_failures)
+
+    # merge GPG key contents from options and inputs.gpgkeys
+    keys_to_import = list(options.get("gpgkeys", []))
+    if keypath is not None and gpgkey_files is not None:
+        for filename in gpgkey_files:
+            keyfile_path = os.path.join(keypath, filename)
+            with open(keyfile_path, "r", encoding="utf-8", errors="replace") as f:
+                keys_to_import.append(f.read())
+    import_gpg_keys(tree, keys_to_import, rpmkeys_bin, rpm_args, ignore_import_failures)
 
     for filename, data in packages.items():
         if data.get("rpm.check_gpg"):
