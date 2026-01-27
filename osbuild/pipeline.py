@@ -3,6 +3,7 @@ import contextlib
 import hashlib
 import json
 import os
+import tempfile
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, Iterator, List, Optional
@@ -241,10 +242,11 @@ class Stage:
             monitor,
             libdir,
             debug_break="",
-            timeout=None) -> BuildResult:
+            timeout=None,
+            run_bootc=None) -> BuildResult:
         with contextlib.ExitStack() as cm:
 
-            build_root = buildroot.BuildRoot(build_tree, runner.path, libdir, store.tmp)
+            build_root = buildroot.BuildRoot(build_tree, runner.path, libdir, store.tmp, run_bootc=run_bootc)
             cm.enter_context(build_root)
 
             # if we have a build root, then also bind-mount the boot
@@ -461,6 +463,11 @@ class Pipeline:
         with contextlib.ExitStack() as cm:
             qemu = None
             tree_dir = os.path.join(tree.path, "tree")
+
+            # Create a shared temporary directory for /run/bootc persistence across stages
+            run_bootc_tmpdir = tempfile.TemporaryDirectory(prefix="run-bootc-", dir=object_store.tmp)
+            run_bootc = cm.enter_context(run_bootc_tmpdir)
+
             if in_vm:
                 buildtree_dir = os.path.join(build_tree.path, "tree")
 
@@ -483,6 +490,8 @@ class Pipeline:
 
                 with tree.meta.write(stage.id) as meta:
                     if qemu:
+                        # Pass run_bootc path relative to store for the VM
+                        run_bootc_rel = str(Path(run_bootc).relative_to(object_store.store))
                         resp = qemu.monitored_request(monitor, "run_stage",
                                                       stage=stage.to_dict(libdir),
                                                       runner=self.runner.to_dict(libdir),
@@ -490,7 +499,8 @@ class Pipeline:
                                                       meta_name=str(Path(meta.name).relative_to(object_store.store)),
                                                       build_tree=build_tree.id,
                                                       debug_break=debug_break,
-                                                      stage_timeout=stage_timeout)
+                                                      stage_timeout=stage_timeout,
+                                                      run_bootc=run_bootc_rel)
                         r = BuildResult.from_dict(resp)
                     else:
                         r = stage.run(os.fspath(tree),
@@ -501,7 +511,8 @@ class Pipeline:
                                       monitor,
                                       libdir,
                                       debug_break,
-                                      stage_timeout)
+                                      stage_timeout,
+                                      run_bootc=run_bootc)
 
                 md = tree.meta.get(r.id)
                 monitor.result(r, md)
