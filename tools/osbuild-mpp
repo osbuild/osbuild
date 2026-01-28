@@ -756,11 +756,74 @@ class DepSolver:
 
         return secrets
 
+    def get_system_repos_base(self):
+        if not hasattr(self, '_system_repos_base'):
+            self._system_repos_base = dnf.Base()
+            releasever = dnf.rpm.detect_releasever("/")
+            if releasever:
+                self._system_repos_base.conf.substitutions["releasever"] = releasever
+            else:
+                print("Warning: Could not detect system releasever. "
+                      "Repos using $releasever may not resolve correctly.",
+                      file=sys.stderr)
+            self._system_repos_base.read_all_repos()
+        return self._system_repos_base
+
+    def clone_repo_config(self, source_repo, target_repo):
+        target_repo.baseurl = source_repo.baseurl
+        target_repo.metalink = source_repo.metalink
+        target_repo.mirrorlist = source_repo.mirrorlist
+        target_repo.sslclientcert = source_repo.sslclientcert
+        target_repo.sslclientkey = source_repo.sslclientkey
+        target_repo.sslcacert = source_repo.sslcacert
+        target_repo.proxy = source_repo.proxy
+        target_repo.proxy_username = source_repo.proxy_username
+        target_repo.proxy_password = source_repo.proxy_password
+        target_repo.username = source_repo.username
+        target_repo.password = source_repo.password
+        target_repo.includepkgs = source_repo.includepkgs
+        target_repo.excludepkgs = source_repo.excludepkgs
+        target_repo.gpgcheck = source_repo.gpgcheck
+        target_repo.gpgkey = source_repo.gpgkey
+        target_repo.sslverify = source_repo.sslverify
+        target_repo.priority = source_repo.priority
+        target_repo.metadata_expire = source_repo.metadata_expire
+        target_repo.skip_if_unavailable = source_repo.skip_if_unavailable
+        target_repo.enabled = source_repo.enabled
+
+    def add_system_repo(self, desc):
+        system_id = desc["system_id"]
+        repo_id = desc["id"]
+        system_base = self.get_system_repos_base()
+
+        if system_id not in system_base.repos:
+            raise ValueError(f"Repo '{system_id}' not found in system configuration")
+
+        system_repo = system_base.repos[system_id]
+        repo = dnf.repo.Repo(repo_id, self.base.conf)
+        self.clone_repo_config(system_repo, repo)
+        repo.enabled = True
+
+        for cert_path in [repo.sslclientcert, repo.sslclientkey, repo.sslcacert]:
+            if cert_path and not os.path.exists(cert_path):
+                raise ValueError(f"SSL certificate '{cert_path}' for repo '{system_id}' not found")
+
+        if "secrets" in desc:
+            self.secrets[repo_id] = desc["secrets"]
+
+        self.base.repos.add(repo)
+
+        return repo
+
     def add_repo(self, desc, baseurl):
+        # If system_id is present, use system repo
+        if "system_id" in desc:
+            return self.add_system_repo(desc)
+
         repo = dnf.repo.Repo(desc["id"], self.base.conf)
         url = None
         url_keys = ["baseurl", "metalink", "mirrorlist"]
-        skip_keys = ["id", "secrets"]
+        skip_keys = ["id", "secrets", "system_id"]
         supported = ["baseurl", "metalink", "mirrorlist",
                      "enabled", "metadata_expire", "gpgcheck", "username", "password", "priority",
                      "sslverify", "sslcacert", "sslclientkey", "sslclientcert",
