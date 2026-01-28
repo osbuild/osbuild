@@ -2,6 +2,45 @@
 # sudo osbuild --export tree --output-directory /tmp/devnull test/data/stages/rpm/b.json --json | jq .metadata >test/data/stages/rpm/metadata.json
 
 version: '2'
+
+sources:
+  org.osbuild.inline:
+    items:
+      # Fedora 43 GPG key
+      sha256:2b1449a082d3264dda8e18369f04e9ac4163bf3f8cb530b0783dc2ab064a08ec:
+        encoding: base64
+        data: |
+          LS0tLS1CRUdJTiBQR1AgUFVCTElDIEtFWSBCTE9DSy0tLS0tCgptUUlOQkdhMjNNOEJFQUM0N053
+          S0xpL2cyUzlJMnA1SnRVYkoweTNtMlN0OXpxa1NFTm1Zdy8rUitXS3ZhUDNTCktTRlFGM1FpNnBx
+          R1hKODhBREpVa0ZZcE9HR3lvYzBkaWVMQ21JUHF0V2J3R3ZCVk14QlJCZVUzK2hDbHdiU1EKc3lz
+          Vm5yOFZ4VXdpZGZzSWpOSmF2Q1p3QjBab1pieGRDUE1RTU9nUXlUTFg0T0kvdUtsUFV6ZXltREh3
+          eGpiLwp0bGxmbFNUT0d0ZFllM2dpUnppZHhOK3hiQ2I2VW9Ya2wwK2xKRUZic21wNDFPNUQvVXI1
+          TjA1bEJyc0VYb0R1CkZyOTlLZnYzQXY3ZjNKZnpEbGtxQy9FaG1meFpFWnZXajNoUmRBZmkyZkZt
+          dFZjcmRMZkdJcFFnNlkyQmFwaHAKUGhhSHFLbDl6RDVHV3F1NUdTWEdvTGFHWHVzQnZ3QktqUy9n
+          K1ZMbzdwSmZNc1VGM3NVZHVKTkczVVRoQXNycApRTFYzd1F6MEFNSFZFbFJFck9XZEJEWTBkZEFL
+          TFBMNy9tdHhqMzlwR0VwWi9kTnRRa3pnbTdWQ2RQMTBRblFaCnJ3UjJsOGs3Q1B1MHB5bFBDWG1Y
+          dktGV1YxdXY5Um56dGxXWTZCUm11ZktuK2xKc04zQmxoN25kaTVybENqUjYKbUhWclFEL2w2KzhW
+          bVNEMy9tRG5iRVhQeXpCa1NZNUQxd3BSN001VlhONWpWSFJPYzRaQTVNODhTeUk0OEVTRwpObWVB
+          d3RHYXI0NS9YK3dHNDcrRUM0K0pYcE5PN0JRckV2SGdKeEJkeW9RNktMRHJFYXFuL09RcHhCNEdm
+          bWN2ClN3a1dEcFNrOHdGbS9wR2xGSzZKNGIrYmE3ZU9ldFcrYVhyV1NpRkIxc1RBZzBPWStnZHM2
+          N09wV1FBUkFRQUIKdERGR1pXUnZjbUVnS0RRektTQThabVZrYjNKaExUUXpMWEJ5YVcxaGNubEFa
+          bVZrYjNKaGNISnZhbVZqZEM1dgpjbWMraVFKU0JCTUJDQUE4RmlFRXh1ZndnYytBNFRGR1oyNkln
+          cHRnWmpGa1ZURUZBbWEyM004Q0d3OEZDd2tJCkJ3SURJZ0lCQmhVS0NRZ0xBZ1FXQWdNQkFoNEhB
+          aGVBQUFvSkVJS2JZR1l4WkZVeGFnUVAvUllXdzVqMEdmdnYKbFdrRFFUalRWQW5IdGJLdVFMWU0x
+          M0x4NWQzVzFrMGc2WGRyb2xmNHlQamg0WVBZVlFEWGtzQjRpNlVMTGJNbwo4dTQ2VUNQTVF3Q1hU
+          ZDNBeDlpbVluK1Y3NElzbC9Da0JiS1FEOVlmU0pqaFczbVNsUGEyN2pvMnVocXBkVjBTCnhwMDVO
+          V1luV3JaTitHYnRDVXMxK3JOVEJldmFnT1VSdGxaOGYwaVBWUkEvUHhXenBqYlJhR3JDSGxJWWMz
+          Sk8KR0tMVXVRdWVMdk9VZzJwUDhkdHBsbDdTM3hVZTVBYnlxMmlmVDM0VDB3SGk2aEpBM2JmcFhv
+          MXVOWFJ2R3JOdwpnYko3VjZQN2lvVGN2eWhTMWg0emplbEtGeXZUbk9LT3k1RDA4SEttdlRNV1pR
+          V0VMN2tETnltaDFqTVY3QWJnCjRUUHA4MDhFaVBGMUdHQXpYVTU2ZmVhVVJTdkl1aXgzTWtqaEda
+          c1NRUUgya2trRUl6cTZqL0V3bXB5RU1XMzgKZHRxbDRUMmJWUy9jVGsvaFJhcVVLWmx5cnNMNjU3
+          Zy80bUZBMXdERE0zODk1ZllrSE9wWUY0Slo5U2VEcmh1YwpUZ3BDNy9UVzU1bDZ2U2lGdG5RdmNN
+          ZmpwZkNBNm1DQTRiNzVrKy94RzlSeHhCbllVMHFWdVVvLzhwT04zMXlRCkQyQU0ydjdXYkpCWVZS
+          WUxscVBya0FaVTVmZTcrMndZN1A3TjBJQVB3VkEwVEZKMXg2YXMzS2V6ZGkvMzA0bWcKb0M5OERC
+          TGpIYVVwWDJiVHhLTXRDemxtZXFQaXd0eU5rQTlPOUlRTzdxUXpBckJLeG1BZ29mNHdibE41U0w4
+          aQpmc2ppSlVxc0svZ1RZd0o3NDRJL3R6eE95NUZYakE3ego9QnFkcwotLS0tLUVORCBQR1AgUFVC
+          TElDIEtFWSBCTE9DSy0tLS0tCg==
+
 pipelines:
   - mpp-import-pipelines:
       path: ../manifests/fedora-vars.ipp.yaml
@@ -25,6 +64,11 @@ pipelines:
                 mpp-eval: repos
               packages:
                 - fedora-gpg-keys
+          gpgkeys:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:2b1449a082d3264dda8e18369f04e9ac4163bf3f8cb530b0783dc2ab064a08ec: {}
         options:
           gpgkeys:
             mpp-eval: gpgkeys
