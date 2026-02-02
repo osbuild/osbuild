@@ -311,6 +311,16 @@ def _parse_repository(repo_dict: Dict[str, Any]) -> Repository:
         kwargs["module_hotfixes"] = repo_dict["module_hotfixes"]
     if "rhsm" in repo_dict:
         kwargs["rhsm"] = repo_dict["rhsm"]
+    if "enabled" in repo_dict:
+        kwargs["enabled"] = repo_dict["enabled"]
+    if "priority" in repo_dict:
+        kwargs["priority"] = repo_dict["priority"]
+    if "username" in repo_dict:
+        kwargs["username"] = repo_dict["username"]
+    if "password" in repo_dict:
+        kwargs["password"] = repo_dict["password"]
+    if "skip_if_unavailable" in repo_dict:
+        kwargs["skip_if_unavailable"] = repo_dict["skip_if_unavailable"]
 
     return Repository.from_request(**kwargs)
 

@@ -133,6 +133,10 @@ def _dnf_repo_to_repository(
         sslclientcert=get_string_option(repo_cfg.get_sslclientcert_option()),
         metadata_expire=f"{metadata_expire}s" if metadata_expire else None,
         module_hotfixes=repo_cfg.get_module_hotfixes_option().get_value(),
+        enabled=repo_cfg.get_enabled_option().get_value(),
+        priority=repo_cfg.get_priority_option().get_value(),
+        skip_if_unavailable=repo_cfg.get_skip_if_unavailable_option().get_value(),
+        # username and password are intentionally omitted
     )
 
 
@@ -363,6 +367,16 @@ class DNF5(SolverBase):
             conf.metadata_expire = desc.metadata_expire
         if desc.module_hotfixes is not None:
             repo.module_hotfixes = desc.module_hotfixes
+        if desc.enabled is not None:
+            conf.enabled = desc.enabled
+        if desc.priority is not None:
+            conf.priority = desc.priority
+        if desc.username:
+            conf.username = desc.username
+        if desc.password:
+            conf.password = desc.password
+        if desc.skip_if_unavailable is not None:
+            conf.skip_if_unavailable = desc.skip_if_unavailable
 
         # Set the packages to exclude
         conf.excludepkgs = exclude_pkgs

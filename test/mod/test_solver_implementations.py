@@ -143,6 +143,9 @@ TEST_REPOSITORY = Repository(
     # dnf default values (172800 seconds = 48 hours)
     metadata_expire="172800s",
     module_hotfixes=False,
+    enabled=True,
+    priority=99,
+    skip_if_unavailable=False,
 )
 
 
