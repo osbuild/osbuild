@@ -313,6 +313,9 @@ def assert_serialized_repository(repo: dict, repository: Repository):
     expected_keys = [attr for attr in vars(repository) if not attr.startswith("_")]
     # repo_id is serialized as "id" in the dict
     expected_keys = ["id" if k == "repo_id" else k for k in expected_keys]
+    # These fields are input-only (used by solver but not serialized in response)
+    input_only_fields = ["password", "enabled", "priority", "username", "skip_if_unavailable"]
+    expected_keys = [k for k in expected_keys if k not in input_only_fields]
 
     # All fields should always be present (consistent schema)
     assert sorted(repo.keys()) == sorted(expected_keys)

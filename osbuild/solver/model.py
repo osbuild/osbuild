@@ -103,6 +103,11 @@ class Repository(ValidatedModel):
         "sslclientcert": (str, type(None)),
         "metadata_expire": (str, type(None)),
         "module_hotfixes": (bool, type(None)),
+        "enabled": (bool, type(None)),
+        "priority": (int, type(None)),
+        "username": (str, type(None)),
+        "password": (str, type(None)),
+        "skip_if_unavailable": (bool, type(None)),
         "rhsm": bool,
     }
 
@@ -131,6 +136,11 @@ class Repository(ValidatedModel):
         self.sslclientcert: Optional[str] = kwargs.pop("sslclientcert", None)
         self.metadata_expire: Optional[str] = kwargs.pop("metadata_expire", None)
         self.module_hotfixes: Optional[bool] = kwargs.pop("module_hotfixes", None)
+        self.enabled: Optional[bool] = kwargs.pop("enabled", None)
+        self.priority: Optional[int] = kwargs.pop("priority", None)
+        self.username: Optional[str] = kwargs.pop("username", None)
+        self.password: Optional[str] = kwargs.pop("password", None)
+        self.skip_if_unavailable: Optional[bool] = kwargs.pop("skip_if_unavailable", None)
 
         # Additional fields not represented in the YUM/DNF repository configuration.
 
@@ -189,6 +199,11 @@ class Repository(ValidatedModel):
             and self.sslclientcert == other.sslclientcert
             and self.metadata_expire == other.metadata_expire
             and self.module_hotfixes == other.module_hotfixes
+            and self.enabled == other.enabled
+            and self.priority == other.priority
+            and self.username == other.username
+            and self.password == other.password
+            and self.skip_if_unavailable == other.skip_if_unavailable
             and self.rhsm == other.rhsm
         )
 
@@ -208,6 +223,11 @@ class Repository(ValidatedModel):
             self.sslclientcert,
             self.metadata_expire,
             self.module_hotfixes,
+            self.enabled,
+            self.priority,
+            self.username,
+            self.password,
+            self.skip_if_unavailable,
             self.rhsm,
         ))
 
@@ -217,7 +237,9 @@ class Repository(ValidatedModel):
             f"repo_gpgcheck={self.repo_gpgcheck}, gpgkey={self.gpgkey}, sslverify={self.sslverify}, " \
             f"sslcacert='{self.sslcacert}', sslclientkey='{self.sslclientkey}', " \
             f"sslclientcert='{self.sslclientcert}', metadata_expire='{self.metadata_expire}', " \
-            f"module_hotfixes={self.module_hotfixes}, rhsm={self.rhsm})"
+            f"module_hotfixes={self.module_hotfixes}, enabled={self.enabled}, priority={self.priority}, " \
+            f"username='{self.username}', password='{self.password}', " \
+            f"skip_if_unavailable={self.skip_if_unavailable}, rhsm={self.rhsm})"
 
 
 class Dependency:

@@ -109,6 +109,10 @@ def _dnf_repo_to_repository(
         sslclientcert=repo.sslclientcert,
         metadata_expire=f"{repo.metadata_expire}s" if repo.metadata_expire else None,
         module_hotfixes=repo.module_hotfixes,
+        enabled=repo.enabled,
+        priority=repo.priority,
+        skip_if_unavailable=repo.skip_if_unavailable,
+        # username and password are intentionally omitted
     )
 
 
@@ -257,6 +261,16 @@ class DNF(SolverBase):
             repo.metadata_expire = desc.metadata_expire
         if desc.module_hotfixes is not None:
             repo.module_hotfixes = desc.module_hotfixes
+        if desc.enabled is not None:
+            repo.enabled = desc.enabled
+        if desc.priority is not None:
+            repo.priority = desc.priority
+        if desc.username:
+            repo.username = desc.username
+        if desc.password:
+            repo.password = desc.password
+        if desc.skip_if_unavailable is not None:
+            repo.skip_if_unavailable = desc.skip_if_unavailable
 
         return repo
 
