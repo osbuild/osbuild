@@ -77,6 +77,8 @@ The parameters for this pre-processor, version "1", look like this:
           "architecture": "x86_64",
           "module-platform-id": "f32",
           "solver": "dnf",
+          "releasever": "32",
+          "root-dir": "/",
           "baseurl": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os",
           "repos": [
             {
@@ -116,6 +118,33 @@ The parameters for this pre-processor, version "2", look like this:
     }
 ...
 ```
+
+Optional parameters:
+- "releasever": Sets the $releasever variable for repo URL substitution.
+- "root-dir": When set, repos without explicit URLs use configuration from
+  the host's /etc/yum.repos.d/. Useful for RHSM repos where the host has
+  valid subscriptions.
+- "enabled-repo-ids": List of repository IDs to use for depsolving. If not
+  specified, all enabled repos are used. Equivalent to `dnf --repo=REPO_ID`.
+
+System repo references:
+
+When using "root-dir", you can annotate system repos that require RHSM secrets
+by adding them to the "repos" list with "system-repo: true":
+
+```
+  "repos": [
+    {
+      "id": "rhel-8-baseos-rpms",
+      "system-repo": true,
+      "rhsm": true
+    }
+  ]
+```
+
+When "system-repo: true" is set, only "id" and "rhsm" fields are allowed.
+The repo configuration is loaded from the system, this entry just annotates
+that packages from this repo require RHSM secrets in the output manifest.
 
 
 Container resolving:
@@ -366,13 +395,19 @@ import urllib.parse
 import urllib.request
 from typing import Dict, List, Optional
 
-import dnf
-import hawkey
 import rpm
 import yaml
 
 from osbuild.util import containers, ostree
 from osbuild.util.rhsm import Subscriptions
+from osbuild.solver.dnf import DNF
+from osbuild.solver.model import Repository
+
+try:
+    from osbuild.solver.dnf5 import DNF5
+except ImportError:
+    DNF5 = None
+from osbuild.solver.request import SolverConfig, DepsolveCmdArgs, DepsolveTransaction
 
 # We need to resolve an image name to a resolved image manifest digest
 # and the corresponding container id (which is the digest of the config object).
@@ -582,16 +617,6 @@ class PkgInfo:
         self.url = None
         self.secrets = None
 
-    @classmethod
-    def from_dnf_package(cls, pkg: dnf.package.Package):
-        checksum_type = hawkey.chksum_name(pkg.chksum[0])
-        checksum_hex = pkg.chksum[1].hex()
-
-        checksum = f"{checksum_type}:{checksum_hex}"
-
-        return cls(checksum, pkg.name, pkg.evr, pkg.arch, pkg.license,
-                   pkg.summary, pkg.sourcerpm, pkg.buildtime, pkg.vendor)
-
     @property
     def evra(self):
         return f"{self.evr}.{self.arch}"
@@ -616,7 +641,8 @@ class PacmanSolver():
         os.makedirs(os.path.join(root, "var", "lib", "pacman"), exist_ok=True)
         os.makedirs(os.path.join(root, "etc"), exist_ok=True)
 
-    def reset(self, arch, _, _module_platform_id, _ignore_weak_deps):
+    def reset(self, arch, _, _module_platform_id, _ignore_weak_deps,
+              releasever=None, root_dir=None):  # pylint: disable=unused-argument
         self.setup_root()
         cfg = f"""
 [options]
@@ -677,51 +703,19 @@ LocalFileSigLevel = Optional
         return dict([parse_line(line) for line in lines if ":" in line])
 
 
-class DepSolver:
-    def __init__(self, cachedir, persistdir):
+class OsbuildSolver:
+
+    def __init__(self, cachedir, persistdir, solver_type="dnf"):
         self.cachedir = cachedir
         self.persistdir = persistdir
+        self.solver_type = solver_type
         self.basedir = None
-
-        self.subscriptions = None
-        self.secrets = {}
-
-        self.base = dnf.Base()
-
-    def reset(self, arch, basedir, module_platform_id, ignore_weak_deps):
-        base = self.base
-        base.reset(goal=True, repos=True, sack=True)
-        self.secrets.clear()
-
-        if self.cachedir:
-            base.conf.cachedir = self.cachedir
-        base.conf.config_file_path = "/dev/null"
-        base.conf.persistdir = self.persistdir
-        base.conf.module_platform_id = module_platform_id
-        base.conf.install_weak_deps = not ignore_weak_deps
-        base.conf.arch = arch
-
-        # We use the same cachedir for multiple architectures when
-        # OSBUILD_MPP_CACHEDIR is given. Unfortunately, this is something that
-        # doesn't work well in certain situations with zchunk:
-        # Imagine that we already have cache for arch1. Then, we use dnf
-        # to depsolve for arch2. If ZChunk is enabled and available (that's
-        # the case for Fedora), dnf will try to download only differences
-        # between arch1 and arch2 metadata. But, as these are completely
-        # different, dnf must basically redownload everything.
-        # For downloding deltas, zchunk uses HTTP range requests. Unfortunately,
-        # if the mirror doesn't support multi range requests, then zchunk will
-        # download one small segment per a request. Because we need to update
-        # the whole metadata (10s of MB), this can be extremely slow in some cases.
-        # Thus, let's just disable zchunk for now.
-
-        # Note that when OSBUILD_MPP_CACHEDIR is not given, this has basically
-        # no effect, because zchunk is only used when a persistent cachedir is
-        # used.
-        self.base.conf.zchunk = False
-
-        self.base = base
-        self.basedir = basedir
+        self._arch = None
+        self._module_platform_id = None
+        self._ignore_weak_deps = None
+        self._root_dir = None
+        self._releasever = None
+        self._repo_descs = []
 
     def expand_baseurl(self, baseurl):
         """Expand non-uris as paths relative to basedir into a file:/// uri"""
@@ -733,105 +727,158 @@ class DepSolver:
                 return path.resolve().as_uri()
         except BaseException:  # pylint: disable=broad-exception-caught
             pass
-
         return baseurl
 
-    def get_secrets(self, url, desc):
-        if not desc:
-            return None
-
-        name = desc.get("name")
-        if name != "org.osbuild.rhsm":
-            raise ValueError(f"Unknown secret type: {name}")
-
-        try:
-            # rhsm secrets only need to be retrieved once and can then be reused
-            if not self.subscriptions:
-                self.subscriptions = Subscriptions.from_host_system()
-            secrets = self.subscriptions.get_secrets([url])
-        except RuntimeError as e:
-            raise ValueError(f"Error getting secrets: {e.args[0]}") from None
-
-        secrets["type"] = "org.osbuild.rhsm"
-
-        return secrets
+    def reset(self, arch, basedir, module_platform_id, ignore_weak_deps,
+              releasever=None, root_dir=None):
+        self.basedir = basedir
+        self._arch = arch
+        self._module_platform_id = module_platform_id
+        self._ignore_weak_deps = ignore_weak_deps
+        self._root_dir = root_dir
+        # Only detect releasever from root_dir if not explicitly provided.
+        # If neither is set, use None - repos must have explicit URLs without $releasever.
+        if releasever:
+            self._releasever = releasever
+        elif root_dir:
+            self._releasever = self._get_releasever(root_dir)
+        else:
+            self._releasever = None
+        self._repo_descs = []
 
     def add_repo(self, desc, baseurl):
-        repo = dnf.repo.Repo(desc["id"], self.base.conf)
-        url = None
-        url_keys = ["baseurl", "metalink", "mirrorlist"]
-        skip_keys = ["id", "secrets"]
-        supported = ["baseurl", "metalink", "mirrorlist",
-                     "enabled", "metadata_expire", "gpgcheck", "username", "password", "priority",
-                     "sslverify", "sslcacert", "sslclientkey", "sslclientcert",
-                     "skip_if_unavailable"]
+        self._repo_descs.append((desc, baseurl))
 
+    def _get_releasever(self, root_dir):
+        os_release_path = os.path.join(root_dir, "etc/os-release")
+        try:
+            with open(os_release_path, encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("VERSION_ID="):
+                        return line.split("=", 1)[1].strip().strip('"')
+        except OSError:
+            pass
+        return ""
+
+    _SUPPORTED_REPO_KEYS = {
+        "id", "baseurl", "metalink", "mirrorlist", "gpgcheck",
+        "sslverify", "sslcacert", "sslclientkey", "sslclientcert",
+        "metadata_expire", "secrets", "rhsm", "system-repo",
+        "enabled", "priority", "username", "password", "skip_if_unavailable"
+    }
+
+    _SYSTEM_REPO_ALLOWED_KEYS = {"id", "system-repo", "rhsm"}
+
+    def _validate_system_repo(self, desc):
+        invalid_keys = set(desc.keys()) - self._SYSTEM_REPO_ALLOWED_KEYS
+        if invalid_keys:
+            raise ValueError(
+                f"System repo '{desc['id']}' has invalid fields: {', '.join(sorted(invalid_keys))}. "
+                f"Only 'id' and 'rhsm' are allowed with 'system-repo: true'."
+            )
+
+    def _repo_dict_to_model(self, desc, baseurl):
         for key in desc.keys():
-            if key in skip_keys:
-                continue  # We handled this already
-
-            if key in url_keys:
-                url = desc[key]
-            if key in supported:
-                value = desc[key]
-                if key == "baseurl":
-                    value = self.expand_baseurl(value)
-                setattr(repo, key, value)
-            else:
+            if key not in self._SUPPORTED_REPO_KEYS:
                 raise ValueError(f"Unknown repo config option {key}")
 
-        if not url:
-            url = self.expand_baseurl(baseurl)
-
-        if not url:
-            raise ValueError("repo description does not contain baseurl, metalink, or mirrorlist keys")
-
-        secrets = self.get_secrets(url, desc.get("secrets"))
-
+        secrets = desc.get("secrets")
         if secrets:
-            if "ssl_ca_cert" in secrets:
-                repo.sslcacert = secrets["ssl_ca_cert"]
-            if "ssl_client_key" in secrets:
-                repo.sslclientkey = secrets["ssl_client_key"]
-            if "ssl_client_cert" in secrets:
-                repo.sslclientcert = secrets["ssl_client_cert"]
-            self.secrets[repo.id] = secrets["type"]
+            name = secrets.get("name")
+            if name != "org.osbuild.rhsm":
+                raise ValueError(f"Unknown secret type: {name}")
 
-        self.base.repos.add(repo)
+        rhsm = bool(secrets) or desc.get("rhsm", False)
 
-        return repo
+        url = desc.get("baseurl") or baseurl
+        if url:
+            url = self.expand_baseurl(url)
 
-    def resolve(self, packages, excludes):
-        base = self.base
+        return Repository.from_request(
+            repo_id=desc["id"],
+            baseurl=[url] if url else None,
+            metalink=desc.get("metalink"),
+            mirrorlist=desc.get("mirrorlist"),
+            gpgcheck=desc.get("gpgcheck"),
+            sslverify=desc.get("sslverify"),
+            sslcacert=desc.get("sslcacert"),
+            sslclientkey=desc.get("sslclientkey"),
+            sslclientcert=desc.get("sslclientcert"),
+            metadata_expire=desc.get("metadata_expire"),
+            enabled=desc.get("enabled"),
+            priority=desc.get("priority"),
+            username=desc.get("username"),
+            password=desc.get("password"),
+            skip_if_unavailable=desc.get("skip_if_unavailable"),
+            rhsm=rhsm,
+        )
 
-        base.reset(goal=True, sack=True)
-        base.fill_sack(load_system_repo=False)
+    def _model_package_to_pkginfo(self, pkg, solver):
+        evr = f"{pkg.version}-{pkg.release}"
+        if pkg.epoch > 0:
+            evr = f"{pkg.epoch}:{evr}"
 
-        base.install_specs(packages, exclude=excludes)
-        base.resolve()
+        pkginfo = PkgInfo(
+            checksum=str(pkg.checksum),
+            name=pkg.name,
+            evr=evr,
+            arch=pkg.arch,
+            license_tag=pkg.license,
+            summary=pkg.summary,
+            sourcerpm=pkg.source_rpm,
+            buildtime=pkg.build_time,
+            vendor=pkg.vendor,
+        )
+        pkginfo.url = pkg.remote_locations[0] if pkg.remote_locations else None
+        pkginfo.secrets = "org.osbuild.rhsm" if pkg.repo_id in solver.repo_ids_with_rhsm else None
+        return pkginfo
 
-        deps = []
+    def resolve(self, packages, excludes, enabled_repo_ids=None):
+        repos = []
+        rhsm_repo_ids = set()
 
-        for tsi in base.transaction:
-            if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
+        for desc, baseurl in self._repo_descs:
+            has_rhsm = desc.get("rhsm") or (
+                desc.get("secrets", {}).get("name") == "org.osbuild.rhsm"
+            )
+            if has_rhsm:
+                rhsm_repo_ids.add(desc["id"])
+
+            # System repo reference - validate and skip (loaded from root_dir)
+            if desc.get("system-repo", False):
+                self._validate_system_repo(desc)
                 continue
 
-            path = tsi.pkg.relativepath
-            reponame = tsi.pkg.reponame
-            baseurl = self.base.repos[reponame].baseurl[0]
-            baseurl = self.expand_baseurl(baseurl)
-            # dep["path"] often starts with a "/", even though it's meant to be
-            # relative to `baseurl`. Strip any leading slashes, but ensure there's
-            # exactly one between `baseurl` and the path.
-            url = urllib.parse.urljoin(baseurl + "/", path.lstrip("/"))
+            repos.append(self._repo_dict_to_model(desc, baseurl))
 
-            pkg = PkgInfo.from_dnf_package(tsi.pkg)
-            pkg.url = url
-            pkg.secrets = self.secrets.get(reponame)
+        config = SolverConfig(
+            arch=self._arch,
+            releasever=self._releasever,
+            cachedir=self.cachedir,
+            module_platform_id=self._module_platform_id,
+            repos=repos or None,
+            root_dir=self._root_dir,
+        )
 
-            deps.append(pkg)
+        if self.solver_type == "dnf5":
+            if DNF5 is None:
+                raise RuntimeError("DNF5 solver requested but libdnf5 is not installed")
+            solver_class = DNF5
+        else:
+            solver_class = DNF
+        solver = solver_class(config, self.persistdir)
 
-        return deps
+        solver.repo_ids_with_rhsm.update(rhsm_repo_ids)
+
+        transaction = DepsolveTransaction(
+            package_specs=packages,
+            exclude_specs=excludes or None,
+            repo_ids=enabled_repo_ids or None,
+            install_weak_deps=not self._ignore_weak_deps,
+        )
+        result = solver.depsolve(DepsolveCmdArgs(transactions=[transaction]))
+
+        return [self._model_package_to_pkginfo(pkg, solver) for pkg in result.transactions[0]]
 
 
 class DepSolverFactory():
@@ -844,10 +891,13 @@ class DepSolverFactory():
     def get_depsolver(self, solver):
         if solver not in self._solvers:
             if solver == "alpm":
-                klass = PacmanSolver
+                self._solvers[solver] = PacmanSolver(self._cachedir, self._persistdir)
             else:
-                klass = DepSolver
-            self._solvers[solver] = klass(self._cachedir, self._persistdir)
+                # Default to "dnf" for unknown solvers to preserve pre-refactor behavior
+                solver_type = solver if solver in ("dnf", "dnf5") else "dnf"
+                self._solvers[solver] = OsbuildSolver(
+                    self._cachedir, self._persistdir, solver_type=solver_type
+                )
         return self._solvers[solver]
 
 
@@ -1174,6 +1224,9 @@ class ManifestFile:
         excludes = desc.get("excludes", [])
         baseurl = desc.get("baseurl")
         arch = desc.get("architecture")
+        releasever = desc.get("releasever")
+        root_dir = desc.get("root-dir")
+        enabled_repo_ids = desc.get("enabled-repo-ids")
         solver = self.solver_factory.get_depsolver(desc.get("solver", "dnf"))
 
         if not packages:
@@ -1182,12 +1235,13 @@ class ManifestFile:
         module_platform_id = desc["module-platform-id"]
         ignore_weak_deps = bool(desc.get("ignore-weak-deps"))
 
-        solver.reset(arch, self.basedir, module_platform_id, ignore_weak_deps)
+        solver.reset(arch, self.basedir, module_platform_id, ignore_weak_deps,
+                     releasever=releasever, root_dir=root_dir)
 
         for repo in repos:
             solver.add_repo(repo, baseurl)
 
-        return solver.resolve(packages, excludes)
+        return solver.resolve(packages, excludes, enabled_repo_ids=enabled_repo_ids)
 
     def add_packages(self, deps, pipeline_name):
         checksums = []
@@ -1875,7 +1929,13 @@ def main():
     cachedir = args.cachedir
     if cachedir is None:
         cachedir = os.getenv("OSBUILD_MPP_CACHEDIR")
-    with tempfile.TemporaryDirectory() as persistdir:
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        persistdir = os.path.join(tmpdir, "persist")
+        os.makedirs(persistdir)
+        if cachedir is None:
+            cachedir = os.path.join(tmpdir, "cache")
+            os.makedirs(cachedir)
         m.solver_factory = DepSolverFactory(cachedir, persistdir)
         m.process_format()
         m.solver_factory = None
