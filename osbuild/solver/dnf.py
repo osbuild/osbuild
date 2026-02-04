@@ -162,7 +162,8 @@ class DNF(SolverBase):
         self.base.conf.cachedir = self.config.cachedir
         self.base.conf.substitutions['arch'] = self.config.arch
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(self.config.arch)
-        self.base.conf.substitutions['releasever'] = self.config.releasever
+        if self.config.releasever:
+            self.base.conf.substitutions['releasever'] = self.config.releasever
 
         # variables substitution is only available when root_dir is provided
         if self.root_dir:

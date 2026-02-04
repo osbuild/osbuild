@@ -153,8 +153,8 @@ class SolverConfig:
     def __init__(
         self,
         arch: str,
-        releasever: str,
         cachedir: str,
+        releasever: Optional[str] = None,
         module_platform_id: Optional[str] = None,
         proxy: Optional[str] = None,
         repos: Optional[List[Repository]] = None,
@@ -171,7 +171,7 @@ class SolverConfig:
         self.optional_metadata = optional_metadata
 
         # Validation
-        required_args = ["arch", "releasever", "cachedir"]
+        required_args = ["arch", "cachedir"]
         for arg in required_args:
             if not getattr(self, arg):
                 raise InvalidRequestError(f"Field '{arg}' is required")
