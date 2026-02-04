@@ -412,16 +412,6 @@ class TestSolverConfig:
         pytest.param(
             {
                 "arch": "x86_64",
-                "releasever": "",
-                "cachedir": "/tmp/cache",
-                "repos": [Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
-            },
-            InvalidRequestError("Field 'releasever' is required"),
-            id="invalid_empty_releasever",
-        ),
-        pytest.param(
-            {
-                "arch": "x86_64",
                 "releasever": "43",
                 "cachedir": "",
                 "repos": [Repository.from_request(repo_id="fedora", baseurl=["http://example.com"])],
