@@ -20,12 +20,16 @@ Source0:        %{forgesource}
 Source1:        https://github.com/osbuild/initrd/releases/download/%{osbuild_initrd_version}/osbuild-initrd-%{osbuild_initrd_version}.tar.gz
 Summary:        A build system for OS images
 
+# There is no golang support for i686 on centos and RHEL
+%if 0%{?rhel} || 0%{?centos}
+ExcludeArch:    i686
+%endif
+
 BuildRequires:  make
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 BuildRequires:  python3-setuptools
 BuildRequires:  systemd
-BuildRequires:  golang
 
 # for tests
 BuildRequires:  python3-iniparse
@@ -55,7 +59,7 @@ Requires:       util-linux
 Requires:       python3-%{pypi_name} = %{version}-%{release}
 Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 Requires:       python3-librepo
-Requires:       %{name}-initrd
+Requires:       %{name}-initrd = %{version}-%{release}
 
 # This is required for `osbuild`, for RHEL-10 and above
 # the stdlib tomllib module can be used instead
@@ -124,6 +128,7 @@ to build OSTree based images.
 
 %package        initrd
 Summary:        osbuild initrd for vm support
+BuildRequires:  %{?go_compiler:compiler(go-compiler)}%{!?go_compiler:golang}
 
 %description    initrd
 Osbuild initrd used for in-vm support.
