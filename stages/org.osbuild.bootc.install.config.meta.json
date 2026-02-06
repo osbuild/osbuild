@@ -20,6 +20,15 @@
         "type": "string",
         "description": "name of the configuration file."
       },
+      "destination": {
+        "type": "string",
+        "enum": [
+          "tree",
+          "buildroot"
+        ],
+        "default": "tree",
+        "description": "Where to write the config file: 'tree' writes to /usr/lib/bootc/install/ in the target tree, 'buildroot' writes to /run/bootc/install/ in the buildroot (for runtime configuration). Use 'buildroot' when the osbuild buildroot is different from the target, allowing runtime install configuration for bootc install."
+      },
       "config": {
         "additionalProperties": false,
         "type": "object",
