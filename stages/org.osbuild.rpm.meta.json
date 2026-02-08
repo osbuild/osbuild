@@ -187,6 +187,11 @@
         "packages": {
           "type": "object",
           "additionalProperties": true
+        },
+        "gpgkeys": {
+          "description": "Optional input providing GPG key files (e.g. from org.osbuild.curl) to import for package verification",
+          "type": "object",
+          "additionalProperties": true
         }
       }
     }
