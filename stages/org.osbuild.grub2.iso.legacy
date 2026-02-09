@@ -91,14 +91,14 @@ def main(root, options):
     test = options.get("test", True)
     install = options.get("install", True)
     troubleshooting = options.get("troubleshooting", True)
+    platform = options.get("platform", "i386-pc")
     custom = options.get("custom", [])
 
     grub2dir = os.path.join(root, "boot", "grub2")
     os.makedirs(grub2dir, exist_ok=True)
 
-    # grub2 modules
-    moduledir = os.path.join(grub2dir, "i386-pc")
-    shutil.copytree("/usr/lib/grub/i386-pc", moduledir, dirs_exist_ok=True)
+    # platform specific grub2 modules
+    shutil.copytree(f"/usr/lib/grub/{platform}", f"{grub2dir}/{platform}", dirs_exist_ok=True)
 
     print(f"kernel dir at {kdir}")
     tplt_variables = {

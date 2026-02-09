@@ -78,6 +78,9 @@ CONFIG_DEFAULT = """set default="1"
 @pytest.mark.parametrize("test_data,expected_conf", [
     # default
     ({}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
+    ({"platform": "i386-pc"}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
+    ({"platform": "powerpc-ieee1275"}, CONFIG_PART_1 + "\n" +
+     CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
     # fips menu enable
     ({"fips": True}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL +
      CONFIG_PART_TEST + CONFIG_FIPS + CONFIG_PART_TROUBLESHOOTING),
@@ -150,10 +153,12 @@ def test_grub2_iso_legacy_smoke(mocked_copytree, tmp_path, stage_module, test_da
 
     stage_module.main(treedir, options)
 
+    platform = test_data.get("platform", "i386-pc")
+
     assert os.path.exists(confpath)
     assert confpath.read_text() == expected_conf
     assert mocked_copytree.call_args_list == [
-        call("/usr/lib/grub/i386-pc", os.fspath(treedir / "boot/grub2/i386-pc"),
+        call(f"/usr/lib/grub/{platform}", os.fspath(treedir / "boot/grub2" / platform),
              dirs_exist_ok=True),
     ]
 
