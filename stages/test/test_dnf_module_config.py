@@ -39,7 +39,7 @@ def test_dnf_module_config_schema_validation(stage_schema, test_data, expected_e
 
 def test_dnf_module_config_writes_file(tmp_path, stage_module):
     treepath = tmp_path / "tree"
-    confpath = "etc/dnf/modules.d/some-module.conf"
+    confpath = "etc/dnf/modules.d/some-module.module"
 
     fullpath = treepath / confpath
 
