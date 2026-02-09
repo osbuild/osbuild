@@ -17,7 +17,7 @@ def main(tree, options):
     # would normally write [a, b]
     inip[name]["profiles"] = ", ".join(conf["profiles"])
 
-    path = pathlib.Path(tree) / "etc/dnf/modules.d" / f"{name}.conf"
+    path = pathlib.Path(tree) / "etc/dnf/modules.d" / f"{name}.module"
     path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(path, "w", encoding="utf-8") as file:
