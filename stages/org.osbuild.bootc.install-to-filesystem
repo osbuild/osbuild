@@ -62,6 +62,8 @@ def main(options, inputs, paths):
                 pargs.extend(["--boot-mount-spec="])
             else:
                 pargs.extend(["--boot-mount-spec", boot_spec])
+        if options.get("bootupd-skip-boot-uuid", False):
+            pargs.extend(["--bootupd-skip-boot-uuid"])
 
         # add target and go
         pargs.append(dst)
