@@ -88,6 +88,31 @@
           "items": {
             "type": "string"
           }
+        },
+        "rational_rock": {
+          "type": "boolean",
+          "default": false,
+          "description": "Generate rationalized Rock Ridge directory information"
+        },
+        "untranslated_filenames": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow Untranslated filenames"
+        },
+        "full_filenames": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow full 31 character filenames for ISO9660 names"
+        },
+        "volset": {
+          "type": "string",
+          "description": "Volume set ID",
+          "pattern": "^.{1,128}$"
+        },
+        "chrp_boot": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mark the ISO image as MBR partition of type 0x96"
         }
       }
     },
