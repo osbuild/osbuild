@@ -109,6 +109,103 @@ def grub2(inputs, output_dir, options):
     subprocess.run(cmd, check=True)
 
 
+# Create a grub2 ppc64le bootable iso
+def grub2_ppc64le(inputs, output_dir, options):
+    tree = inputs["tree"]["path"]
+    filename = options["filename"]
+    vol_id = options["volid"]
+    sys_id = options.get("sysid")
+    pub = options.get("pub")
+    app_id = options.get("appid")
+    prep = options.get("prep")
+    efi = options.get("efi")
+    isolevel = options.get("isolevel")
+    excludes = options.get("exclude", [])
+    rational = options.get("rational_rock")
+    un_filename = options.get("untranslated_filenames")
+    full_filenames = options.get("full_filenames")
+    volset = options.get("volset")
+    chrp_boot = options.get("chrp_boot")
+
+    if efi:
+        raise RuntimeError("UEFI is not supported on PPC64LE")
+
+    cmd = [
+        "/usr/bin/xorrisofs",
+        "-verbose",
+        "-rock",
+        "-joliet",
+    ]
+
+    if isolevel:
+        cmd += [
+            "-iso-level", str(isolevel)
+        ]
+
+    cmd += [
+        "-V", vol_id
+    ]
+
+    if sys_id:
+        cmd += [
+            "-sysid", sys_id
+        ]
+
+    if pub:
+        cmd += [
+            "-publisher", pub,
+        ]
+
+    if app_id:
+        cmd += [
+            "-appid", app_id,
+        ]
+
+    if prep:
+        cmd += [
+            "-preparer", prep,
+        ]
+
+    if rational:
+        cmd += [
+            "-rational-rock"
+        ]
+
+    if un_filename:
+        cmd += [
+            "-untranslated-filenames"
+        ]
+
+    if full_filenames:
+        cmd += [
+            "-full-iso9660-filenames"
+        ]
+
+    if volset:
+        cmd += [
+            "-volset", volset,
+            # We always produce one volume
+            "-volset-size", "1",
+            "-volset-seqno", "1"
+        ]
+
+    if chrp_boot:
+        cmd += [
+            "-chrp-boot"
+        ]
+
+    for exclude in excludes:
+        cmd += ["-exclude", exclude]
+
+    cmd += [
+        '-o', os.path.join(output_dir, filename),
+        tree
+    ]
+
+    print(cmd)
+    subprocess.run(cmd, check=True)
+
+
 # Create an syslinux bootable iso
 def syslinux(inputs, output_dir, options):
     tree = inputs["tree"]["path"]
@@ -202,6 +299,9 @@ def syslinux(inputs, output_dir, options):
 
 
 def main(inputs, output_dir, options):
+    if "chrp_boot" in options:
+        return grub2_ppc64le(inputs, output_dir, options)
+
     if "grub2mbr" not in options:
         return syslinux(inputs, output_dir, options)
 
