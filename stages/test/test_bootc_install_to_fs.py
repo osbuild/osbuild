@@ -60,6 +60,9 @@ FAKE_INPUTS = {
     # boot-mount-spec
     ({"boot-mount-spec": ""}, ["--boot-mount-spec="]),
     ({"boot-mount-spec": "/dev/sda1"}, ["--boot-mount-spec", "/dev/sda1"]),
+    # bootupd-skip-boot-uuid
+    ({"bootupd-skip-boot-uuid": False}, []),
+    ({"bootupd-skip-boot-uuid": True}, ["--bootupd-skip-boot-uuid"]),
     # all
     ({"root-ssh-authorized-keys": ["key1", "key2"],
       "kernel-args": ["arg1", "arg2"],
@@ -67,6 +70,7 @@ FAKE_INPUTS = {
       "stateroot": "/some/stateroot",
       "root-mount-spec": "root-mount-spec",
       "boot-mount-spec": "boot-mount-spec",
+      "bootupd-skip-boot-uuid": True,
       },
      ["--root-ssh-authorized-keys", "/tmp/fake-named-tmpfile-name",
       "--karg", "arg1", "--karg", "arg2",
@@ -74,6 +78,7 @@ FAKE_INPUTS = {
       "--stateroot", "/some/stateroot",
       "--root-mount-spec", "root-mount-spec",
       "--boot-mount-spec", "boot-mount-spec",
+      "--bootupd-skip-boot-uuid",
       ],
      ),
 ])

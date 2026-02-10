@@ -56,6 +56,10 @@
         "boot-mount-spec": {
           "type": "string",
           "description": "Mount specification for the /boot filesystem. If `/boot` is detected as a mounted partition, then its UUID will be used."
+        },
+        "bootupd-skip-boot-uuid": {
+          "type": "boolean",
+          "description": "Don't pass --write-uuid to bootupd during bootloader installation."
         }
       }
     },
