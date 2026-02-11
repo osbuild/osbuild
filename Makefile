@@ -312,6 +312,20 @@ rpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
 
+.PHONY: rpm-mock
+rpm-mock: git-diff-check srpm
+	. /etc/os-release && \
+	ARCH=$$(uname -m) && \
+	MOCK_CONFIG=$${ID}-$${VERSION_ID%.*}-$${ARCH} && \
+	mock -r $${MOCK_CONFIG} --resultdir $(CURDIR)/rpmbuild/RPMS rpmbuild/SRPMS/*git$$(git rev-parse --short=7 HEAD)*.src.rpm
+
+.PHONY: rpm-mock-nocheck
+rpm-mock-nocheck: git-diff-check srpm
+	. /etc/os-release && \
+	ARCH=$$(uname -m) && \
+	MOCK_CONFIG=$${ID}-$${VERSION_ID%.*}-$${ARCH} && \
+	mock --nocheck -r $${MOCK_CONFIG} --resultdir $(CURDIR)/rpmbuild/RPMS rpmbuild/SRPMS/*git$$(git rev-parse --short=7 HEAD)*.src.rpm
+
 .PHONY: rpm-nocheck
 rpm-nocheck: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bb \
