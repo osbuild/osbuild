@@ -394,6 +394,7 @@ done
 %{_mandir}/man5/%{name}-manifest.5*
 %{_datadir}/osbuild/schemas
 %{pkgdir}
+%exclude %{pkgdir}/initrd
 %{_udevrulesdir}/*.rules
 # the following files are in the lvm2 sub-package
 %exclude %{pkgdir}/devices/org.osbuild.lvm2*
