@@ -49,7 +49,6 @@ SHELL = /bin/bash
 
 VERSION := $(shell (cd "$(SRCDIR)" && python3 setup.py --version))
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
-OSBUILD_INITRD_VERSION=0.1
 
 #
 # Generic Targets
@@ -291,22 +290,18 @@ git-diff-check:
 
 RPM_SPECFILE=rpmbuild/SPECS/osbuild-$(COMMIT).spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-$(COMMIT).tar.gz
-OSBUILD_INITRD_TARBALL=rpmbuild/SOURCES/osbuild-initrd-${OSBUILD_INITRD_VERSION}.tar.gz
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
 	(echo "%global commit $(COMMIT)"; git show HEAD:osbuild.spec) > $(RPM_SPECFILE)
 
-$(OSBUILD_INITRD_TARBALL):
-	mkdir -p $(CURDIR)/rpmbuild/SOURCES
-	curl -L https://github.com/osbuild/initrd/releases/download/$(OSBUILD_INITRD_VERSION)/osbuild-initrd-$(OSBUILD_INITRD_VERSION).tar.gz -o $(OSBUILD_INITRD_TARBALL)
-
-$(RPM_TARBALL):
+$(RPM_TARBALL): $(RPM_SPECFILE)
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
 	git archive --prefix=osbuild-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+	spectool --get-files --directory $(CURDIR)/rpmbuild/SOURCES --source 1 $(RPM_SPECFILE)
 
 .PHONY: srpm
-srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL) $(OSBUILD_INITRD_TARBALL)
+srpm: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 	rpmbuild -bs \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		$(RPM_SPECFILE)
@@ -329,9 +324,10 @@ rpm-nocheck: git-diff-check $(RPM_SPECFILE) $(RPM_TARBALL)
 #
 
 .PHONY: initrd
-initrd: ${OSBUILD_INITRD_TARBALL}
+initrd: ${RPM_SPECFILE}
 	mkdir -p initrd
-	(cd initrd; tar xvf ../${OSBUILD_INITRD_TARBALL} --strip-components=1)
+	spectool --get-files --source 1 $(RPM_SPECFILE)
+	(cd initrd; tar xvf ../osbuild-initrd-*.tar.gz --strip-components=1)
 	make -C initrd build
 
 #

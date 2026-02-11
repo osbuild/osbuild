@@ -129,7 +129,7 @@ greenprint "📦 Upgrading openssl-libs"
 sudo dnf upgrade -y openssl-libs
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
-dnf_install_with_retry createrepo_c make mock mock-core-configs python3-pip rpm-build s3cmd
+dnf_install_with_retry createrepo_c make mock mock-core-configs python3-pip rpm-build s3cmd rpmdevtools
 
 
 # Deal with PQC, see https://github.com/rpm-software-management/distribution-gpg-keys/pull/152/
