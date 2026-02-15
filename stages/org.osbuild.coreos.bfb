@@ -1,0 +1,88 @@
+#!/usr/bin/python3
+"""
+Create a BFB (BlueField Boot) image for NVIDIA BlueField DPUs.
+
+Buildhost commands used: `mlx-mkbfb`
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+
+import osbuild.api
+
+
+def parse_input(inputs, name):
+    data = inputs[name]
+    files = data["data"]["files"]
+    assert len(files) == 1
+    filename, _ = files.popitem()
+    return os.path.join(data["path"], filename)
+
+
+def main(inputs, output, options):
+    filename = options["filename"].lstrip("/")
+    kernel = parse_input(inputs, "kernel")
+    initramfs = parse_input(inputs, "initramfs")
+
+    # Combine initramfs + rootfs if rootfs provided
+    if "rootfs" in inputs:
+        rootfs = parse_input(inputs, "rootfs")
+        combined = os.path.join(output, "combined.img")
+        with open(combined, "wb") as out:
+            for path in [initramfs, rootfs]:
+                with open(path, "rb") as f:
+                    out.write(f.read())
+        initramfs = combined
+
+    # Boot arguments - defaults for BlueField DPUs
+    default_args_v0 = [
+        "console=ttyAMA0",
+        "earlycon=pl011,0x01000000",
+        "earlycon=pl011,0x01800000",
+        "initrd=initramfs"
+    ]
+    default_args_v2 = [
+        "console=hvc0",
+        "console=ttyAMA0",
+        "earlycon=pl011,0x13010000",
+        "initrd=initramfs",
+        "modprobe.blacklist=mlxbf_pmc",
+        "ignition.firstboot",
+        "ignition.platform.id=nvidiabluefield"
+    ]
+    boot_args_v0 = " ".join(options.get("boot_args_v0", default_args_v0))
+    boot_args_v2 = " ".join(options.get("boot_args_v2", default_args_v2))
+    boot_path = options.get("boot_path", "VenHw(F019E406-8C9C-11E5-8797-001ACA00BFC4)/Image")
+    boot_desc = options.get("boot_desc", "Linux from rshim")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        def write_tmp(name, content):
+            path = os.path.join(tmpdir, name)
+            with open(path, "w") as f:
+                f.write(content)
+            return path
+
+        cmd = [
+            "/usr/bin/mlx-mkbfb",
+            "--image", kernel,
+            "--initramfs", initramfs,
+            "--capsule", "/lib/firmware/mellanox/boot/capsule/boot_update2.cap",
+            "--boot-args-v0", write_tmp("args_v0", boot_args_v0),
+            "--boot-args-v2", write_tmp("args_v2", boot_args_v2),
+            "--boot-path", write_tmp("path", boot_path),
+            "--boot-desc", write_tmp("desc", boot_desc),
+            "/lib/firmware/mellanox/boot/default.bfb",
+            os.path.join(output, filename)
+        ]
+
+        subprocess.run(cmd, check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["inputs"], args["tree"], args["options"])
+    sys.exit(r)
