@@ -25,7 +25,7 @@ class TestCloudDetection:
         """GCP is detected when AWS fails but GCP metadata responds."""
         call_count = 0
 
-        def side_effect(req, **kwargs):
+        def side_effect(_req, **_kwargs):
             nonlocal call_count
             call_count += 1
             # First call is AWS token (PUT) — fail it
@@ -46,7 +46,7 @@ class TestCloudDetection:
         """Azure is detected when AWS and GCP fail but Azure IMDS responds."""
         call_count = 0
 
-        def side_effect(req, **kwargs):
+        def side_effect(_req, **_kwargs):
             nonlocal call_count
             call_count += 1
             # 1=AWS token, 2=GCP metadata — fail both
@@ -84,7 +84,7 @@ class TestAWSHeaders:
 
         mock_imds_get.side_effect = [doc_bytes, sig_b64_from_imds]
 
-        headers = rhui._aws_get_identity_headers()
+        headers = rhui._aws_get_identity_headers()  # pylint: disable=protected-access
 
         assert len(headers) == 2
         assert headers[0].startswith("X-RHUI-ID: ")
@@ -109,7 +109,7 @@ class TestGCPHeaders:
 
         mock_metadata_get.side_effect = [doc_bytes, sig_bytes]
 
-        headers = rhui._gcp_get_identity_headers()
+        headers = rhui._gcp_get_identity_headers()  # pylint: disable=protected-access
 
         assert len(headers) == 2
         assert headers[0].startswith("X-RHUI-ID: ")
@@ -140,7 +140,7 @@ class TestAzureNoHeaders:
 
         result = rhui.get_rhui_secrets(["https://rhui.azure.example.com/repo"])
 
-        assert result["headers"] == []
+        assert not result["headers"]
         assert result["ssl_ca_cert"] == "/etc/pki/rhui/ca.crt"
         assert result["ssl_client_key"] == "/etc/pki/rhui/key.pem"
         assert result["ssl_client_cert"] == "/etc/pki/rhui/cert.pem"
@@ -220,7 +220,7 @@ class TestGetRhuiSecrets:
 
         assert result["ssl_ca_cert"] == "/fallback/ca.crt"
         assert result["ssl_client_key"] == "/fallback/key.pem"
-        assert result["headers"] == []
+        assert not result["headers"]
 
 
 class TestIMDSFailure:
