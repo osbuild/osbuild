@@ -45,13 +45,11 @@ RPM:
           - aws/centos-stream-10-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-9.6-ga-aarch64
+          - aws/rhel-9.7-ga-x86_64
+          - aws/rhel-9.7-ga-aarch64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.1-ga-aarch64
       - RUNNER:
-          - aws/rhel-9.7-nightly-x86_64
-          - aws/rhel-9.7-nightly-aarch64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-9.8-nightly-aarch64
           - aws/rhel-10.2-nightly-x86_64
@@ -96,7 +94,7 @@ PQC keys:
     matrix:
       - RUNNER:
           - aws/fedora-42-x86_64
-          - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.7-ga-x86_64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
@@ -159,10 +157,8 @@ Manifests:
         CHUNK: [1, 2, 3, 4, 5]
         CHUNKS_COUNT: 5
       - RUNNER:
-          - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-9.6-ga-aarch64
-          - aws/rhel-9.7-nightly-x86_64
-          - aws/rhel-9.7-nightly-aarch64
+          - aws/rhel-9.7-ga-x86_64
+          - aws/rhel-9.7-ga-aarch64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-9.8-nightly-aarch64
           - aws/rhel-10.1-ga-x86_64
