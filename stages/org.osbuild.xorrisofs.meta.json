@@ -95,6 +95,10 @@
         "tree": {
           "type": "object",
           "additionalProperties": true
+        },
+        "efi-image": {
+          "type": "object",
+          "additionalProperties": true
         }
       }
     }
