@@ -78,11 +78,10 @@ class TestAWSHeaders:
         mock_token.return_value = "fake-token"
 
         doc_bytes = b'{"instanceId": "i-1234"}'
-        # IMDS returns base64-encoded signature
-        sig_raw = b"raw-signature-bytes"
-        sig_b64_from_imds = base64.b64encode(sig_raw)
+        # IMDS returns base64-encoded signature text
+        sig_from_imds = b"c2lnbmF0dXJlLWJ5dGVz"
 
-        mock_imds_get.side_effect = [doc_bytes, sig_b64_from_imds]
+        mock_imds_get.side_effect = [doc_bytes, sig_from_imds]
 
         headers = rhui._aws_get_identity_headers()  # pylint: disable=protected-access
 
@@ -90,13 +89,14 @@ class TestAWSHeaders:
         assert headers[0].startswith("X-RHUI-ID: ")
         assert headers[1].startswith("X-RHUI-SIGNATURE: ")
 
-        # Verify the doc is base64-encoded
-        decoded_doc = base64.b64decode(headers[0].split(": ", 1)[1])
+        # Verify the doc is urlsafe-base64-encoded
+        decoded_doc = base64.urlsafe_b64decode(headers[0].split(": ", 1)[1])
         assert decoded_doc == doc_bytes
 
-        # Verify the signature is re-encoded cleanly
-        decoded_sig = base64.b64decode(headers[1].split(": ", 1)[1])
-        assert decoded_sig == sig_raw
+        # The signature from IMDS is passed through urlsafe_b64encode
+        # directly (matching the amazon-id DNF plugin behavior)
+        decoded_sig = base64.urlsafe_b64decode(headers[1].split(": ", 1)[1])
+        assert decoded_sig == sig_from_imds
 
 
 class TestGCPHeaders:

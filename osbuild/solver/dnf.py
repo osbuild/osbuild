@@ -181,6 +181,13 @@ class DNF(SolverBase):
             for repo_conf in self.repos:
                 self.base.repos.add(self._dnfrepo(repo_conf, self.base.conf, self.root_dir is not None))
 
+            # Set RHUI identity headers on repos that need them
+            if self.rhui_headers:
+                for repo_conf in self.repos:
+                    if repo_conf.rhui:
+                        dnf_repo = self.base.repos[repo_conf.repo_id]
+                        dnf_repo._repo.setHttpHeaders(self.rhui_headers)
+
             if self.root_dir:
                 repos_dir = os.path.join(self.root_dir, "etc/yum.repos.d")
                 self.base.conf.reposdir = repos_dir

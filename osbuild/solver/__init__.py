@@ -48,10 +48,13 @@ class SolverBase(Solver):
         # Set of repository IDs that need RHSM secrets
         self.repo_ids_with_rhsm = set()
 
+        # Resolve RHUI secrets first (they use cloud certs, not RHSM)
+        self._resolve_rhui_secrets()
+
         # Get the RHSM secrets for the repositories that need them
         subscriptions = None
         for repo in self.config.repos or []:
-            if not repo.rhsm:
+            if not repo.rhsm or repo.rhui:
                 continue
 
             repo_urls = []
@@ -85,6 +88,70 @@ class SolverBase(Solver):
             except RuntimeError as e:
                 raise NoRHSMSubscriptionsError(f"Error getting RHSM secrets for {repo_urls}: {e}") from e
 
+            self.repo_ids_with_rhsm.add(repo.repo_id)
+
+    def _resolve_rhui_secrets(self):
+        """Resolve SSL secrets and identity headers for RHUI repositories.
+
+        RHUI (Red Hat Update Infrastructure) repos use cloud-specific SSL
+        certificates from /etc/pki/rhui/ rather than RHSM entitlement certs.
+        AWS and GCP also require X-RHUI-ID/X-RHUI-SIGNATURE identity headers.
+        """
+        rhui_repos = [r for r in (self.config.repos or []) if r.rhui]
+        if not rhui_repos:
+            self.rhui_headers = []
+            return
+
+        # Discover RHUI secrets from host repo files
+        rhui_subscriptions = Subscriptions._from_rhui_repo_files()
+        if not rhui_subscriptions.repositories:
+            raise NoRHSMSubscriptionsError(
+                "No RHUI repository files found on this host. "
+                "Ensure the RHUI client package is installed."
+            )
+
+        # Fetch cloud identity headers (AWS/GCP need them, Azure does not)
+        try:
+            from osbuild.util.rhui import (
+                _aws_get_identity_headers,
+                _gcp_get_identity_headers,
+                detect_cloud_provider,
+            )
+            provider = detect_cloud_provider()
+            if provider == "aws":
+                self.rhui_headers = _aws_get_identity_headers()
+            elif provider == "gcp":
+                self.rhui_headers = _gcp_get_identity_headers()
+            else:
+                self.rhui_headers = []
+        except Exception:
+            self.rhui_headers = []
+
+        for repo in rhui_repos:
+            repo_urls = []
+            if repo.baseurl:
+                repo_urls.extend(repo.baseurl)
+            if repo.metalink:
+                repo_urls.append(repo.metalink)
+            if repo.mirrorlist:
+                repo_urls.append(repo.mirrorlist)
+
+            # Match repo URL to RHUI repo file entries for correct certs
+            try:
+                secrets = rhui_subscriptions.get_secrets(repo_urls)
+            except RuntimeError:
+                # Fall back to first available if URL matching fails
+                first = next(iter(rhui_subscriptions.repositories.values()))
+                secrets = {
+                    "ssl_ca_cert": first["sslcacert"],
+                    "ssl_client_key": first["sslclientkey"],
+                    "ssl_client_cert": first["sslclientcert"],
+                }
+
+            repo.sslcacert = secrets["ssl_ca_cert"]
+            repo.sslclientkey = secrets["ssl_client_key"]
+            repo.sslclientcert = secrets["ssl_client_cert"]
+            # Mark as RHSM so the response correctly flags these repos
             self.repo_ids_with_rhsm.add(repo.repo_id)
 
     def set_rhsm_flag(self, repo: Repository) -> None:

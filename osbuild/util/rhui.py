@@ -54,11 +54,11 @@ def _aws_get_identity_headers() -> List[str]:
     doc = _aws_imds_get(_AWS_IDENTITY_DOC_URL, token)
     sig = _aws_imds_get(_AWS_IDENTITY_SIG_URL, token)
 
-    doc_b64 = base64.b64encode(doc).decode("utf-8")
-    # The signature from IMDS is already base64-encoded text, but RHUI
-    # expects the raw signature bytes re-encoded, so we decode then
-    # re-encode to get a single clean base64 line without whitespace.
-    sig_b64 = base64.b64encode(base64.b64decode(sig)).decode("utf-8")
+    # Use urlsafe_b64encode to match the amazon-id DNF plugin behavior
+    doc_b64 = base64.urlsafe_b64encode(doc).decode("utf-8")
+    # The signature from IMDS is already base64-encoded text; the
+    # amazon-id plugin passes it through urlsafe_b64encode directly.
+    sig_b64 = base64.urlsafe_b64encode(sig).decode("utf-8")
 
     return [
         f"X-RHUI-ID: {doc_b64}",
