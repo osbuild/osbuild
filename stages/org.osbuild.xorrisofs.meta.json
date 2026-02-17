@@ -87,7 +87,7 @@
     },
     "inputs": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "required": [
         "tree"
       ],
