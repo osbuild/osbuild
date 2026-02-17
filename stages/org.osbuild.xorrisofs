@@ -4,10 +4,20 @@ import subprocess
 import sys
 
 import osbuild.api
+from osbuild.util import parsing
+
+
+def normalize_path(path):
+    if "://" not in path:
+        return f"input://tree/{path}"
+    return path
 
 
 # Create a grub2 bootable iso
-def grub2(inputs, output_dir, options):
+def grub2(args, options):
+    inputs = args["inputs"]
+    output_dir = args["tree"]
+
     tree = inputs["tree"]["path"]
     boot = options.get("boot", {})
     filename = options["filename"]
@@ -63,7 +73,8 @@ def grub2(inputs, output_dir, options):
     ]
 
     if efi:
-        efi_path = os.path.join(tree, efi.lstrip("/"))
+        efi_path = parsing.parse_location(normalize_path(efi), args)
+
         cmd += [
             "-partition_offset", "16",
             "-appended_part_as_gpt",
@@ -106,7 +117,10 @@ def grub2(inputs, output_dir, options):
 
 
 # Create an syslinux bootable iso
-def syslinux(inputs, output_dir, options):
+def syslinux(args, options):
+    inputs = args["inputs"]
+    output_dir = args["tree"]
+
     tree = inputs["tree"]["path"]
     boot = options.get("boot", {})
     filename = options["filename"]
@@ -175,9 +189,11 @@ def syslinux(inputs, output_dir, options):
     ]
 
     if efi:
+        efi_path = parsing.parse_location(normalize_path(efi), args)
+
         cmd += [
             "-eltorito-alt-boot",
-            "-e", efi,
+            "-e", efi_path,
             "-no-emul-boot"
         ]
 
@@ -193,16 +209,14 @@ def syslinux(inputs, output_dir, options):
     subprocess.run(cmd, check=True)
 
 
-def main(inputs, output_dir, options):
+def main(args, options):
     if "grub2mbr" not in options:
-        return syslinux(inputs, output_dir, options)
+        return syslinux(args, options)
 
-    return grub2(inputs, output_dir, options)
+    return grub2(args, options)
 
 
 if __name__ == '__main__':
-    args = osbuild.api.arguments()
-    ret = main(args["inputs"],
-               args["tree"],
-               args["options"])
+    _args = osbuild.api.arguments()
+    ret = main(_args, _args["options"])
     sys.exit(ret)
