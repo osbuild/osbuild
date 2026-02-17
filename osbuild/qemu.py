@@ -322,7 +322,6 @@ class Qemu:
             "none",
             "-m",
             mem,
-            "-cpu", "host",
             # This is needed for virtiofs, and size must match -m
             "-object",
             f"memory-backend-memfd,id=mem0,size={mem},share=on",
@@ -332,17 +331,24 @@ class Qemu:
         self._id_counter = 0
 
         console = "ttyS0"
+        cpu = None
         if arch == "aarch64":
             console = "ttyAMA0"
             self.cmd += ["-machine", "virt"]
+            cpu = "cortex-a57"
         elif arch == "x86_64":
             self.cmd += ["-machine", "q35"]
+            cpu = "Haswell"  # x86-64 v3 - required by cs10
 
         if serial_stdout:
             self.cmd += ["-serial", "file:/dev/stdout"]
 
         if "kvm" in qemu_accels and os.path.exists("/dev/kvm"):
             self.cmd += ["-enable-kvm"]
+            cpu = "host"  # Override arch-specific cpu
+
+        if cpu is not None:
+            self.cmd += ["-cpu", cpu]
 
         init = "/run/mnt/mnt0/osbuild/vm.py"
         cmdline = f"console={console} quiet selinux=1 enforcing=0 rootfstype=virtiofs root=rootfs ro mount=mnt0 init={init}"
