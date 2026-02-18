@@ -24,7 +24,8 @@ def main(args):
 
     target = os.path.join(output_dir, filename)
 
-    cmd = ["mkfs.erofs", target, source]
+    # run quietly so we don't blow up the logs
+    cmd = ["mkfs.erofs", target, source, "--quiet"]
 
     if compression:
         method = compression["method"]
