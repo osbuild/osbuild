@@ -104,8 +104,9 @@ def _repository_as_dict(repository: Repository) -> Dict[str, Any]:
 
     All fields from the Repository model are included for schema consistency.
 
-    When repository.rhsm=True, SSL secret fields (sslcacert, sslclientkey, sslclientcert)
-    are set to None as they contain host-specific RHSM secrets that should not be exposed.
+    When either repository.rhsm or repository.rhui is set, SSL secret fields
+    (sslcacert, sslclientkey, sslclientcert) are set to None as they contain
+    host-specific secrets that should not be exposed.
     """
     d = {
         "id": repository.repo_id,

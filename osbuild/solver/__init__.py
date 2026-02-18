@@ -9,6 +9,11 @@ from osbuild.solver.exceptions import GPGKeyReadError, InvalidRequestError, NoRH
 from osbuild.solver.model import DepsolveResult, DumpResult, Repository, SearchResult
 from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverConfig
 from osbuild.util.rhsm import Subscriptions
+from osbuild.util.rhui import (
+    _aws_get_identity_headers,
+    _gcp_get_identity_headers,
+    detect_cloud_provider,
+)
 
 
 class Solver(abc.ABC):
@@ -47,6 +52,8 @@ class SolverBase(Solver):
         self.license_index_path = license_index_path
         # Set of repository IDs that need RHSM secrets
         self.repo_ids_with_rhsm = set()
+        # RHUI identity headers (AWS/GCP); empty for Azure or non-cloud
+        self.rhui_headers = []
 
         # Resolve RHUI secrets first (they use cloud certs, not RHSM)
         self._resolve_rhui_secrets()
@@ -54,7 +61,11 @@ class SolverBase(Solver):
         # Get the RHSM secrets for the repositories that need them
         subscriptions = None
         for repo in self.config.repos or []:
-            if not repo.rhsm or repo.rhui:
+            if repo.rhsm and repo.rhui:
+                raise InvalidRequestError(
+                    f"Repository '{repo.repo_id}' cannot have both rhsm and rhui set to true"
+                )
+            if not repo.rhsm:
                 continue
 
             repo_urls = []
@@ -99,7 +110,6 @@ class SolverBase(Solver):
         """
         rhui_repos = [r for r in (self.config.repos or []) if r.rhui]
         if not rhui_repos:
-            self.rhui_headers = []
             return
 
         # Discover RHUI secrets from host repo files
@@ -111,21 +121,11 @@ class SolverBase(Solver):
             )
 
         # Fetch cloud identity headers (AWS/GCP need them, Azure does not)
-        try:
-            from osbuild.util.rhui import (
-                _aws_get_identity_headers,
-                _gcp_get_identity_headers,
-                detect_cloud_provider,
-            )
-            provider = detect_cloud_provider()
-            if provider == "aws":
-                self.rhui_headers = _aws_get_identity_headers()
-            elif provider == "gcp":
-                self.rhui_headers = _gcp_get_identity_headers()
-            else:
-                self.rhui_headers = []
-        except Exception:
-            self.rhui_headers = []
+        provider = detect_cloud_provider()
+        if provider == "aws":
+            self.rhui_headers = _aws_get_identity_headers()
+        elif provider == "gcp":
+            self.rhui_headers = _gcp_get_identity_headers()
 
         for repo in rhui_repos:
             repo_urls = []
