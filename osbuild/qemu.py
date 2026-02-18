@@ -367,7 +367,7 @@ class Qemu:
         self.add_virtiofs(libdir_path, "libdir", readonly=True)
         try:
             container_storage_conf = host.get_container_storage()
-            container_storage = container_storage_conf["storage"]["graphroot"]
+            container_storage = container_storage_conf["storage"].get("graphroot", "/var/lib/containers/storage")
             if Path(container_storage).is_dir():
                 self.add_virtiofs(container_storage, "containers", readonly=True)
         except FileNotFoundError:
