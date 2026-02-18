@@ -108,6 +108,16 @@ def _repository_as_dict(repository: Repository) -> Dict[str, Any]:
     (sslcacert, sslclientkey, sslclientcert) are set to None as they contain
     host-specific secrets that should not be exposed.
     """
+    # Determine the secrets provider for this repository.
+    # This tells the caller which osbuild secrets provider to use for packages
+    # from this repo, so it doesn't need to compute it from the flags.
+    if repository.rhui:
+        secrets = "org.osbuild.rhui"
+    elif repository.rhsm:
+        secrets = "org.osbuild.rhsm"
+    else:
+        secrets = None
+
     d = {
         "id": repository.repo_id,
         "name": repository.name,
@@ -122,11 +132,12 @@ def _repository_as_dict(repository: Repository) -> Dict[str, Any]:
         "module_hotfixes": repository.module_hotfixes,
         "rhsm": repository.rhsm,
         "rhui": repository.rhui,
+        "secrets": secrets,
         # SSL secrets are set to None when using RHSM/RHUI (host-specific secrets not applicable),
         # otherwise return the actual values from DNF (which may be empty strings if not configured)
-        "sslcacert": None if (repository.rhsm or repository.rhui) else repository.sslcacert,
-        "sslclientkey": None if (repository.rhsm or repository.rhui) else repository.sslclientkey,
-        "sslclientcert": None if (repository.rhsm or repository.rhui) else repository.sslclientcert,
+        "sslcacert": None if secrets else repository.sslcacert,
+        "sslclientkey": None if secrets else repository.sslclientkey,
+        "sslclientcert": None if secrets else repository.sslclientcert,
     }
     return d
 

@@ -52,6 +52,8 @@ class SolverBase(Solver):
         self.license_index_path = license_index_path
         # Set of repository IDs that need RHSM secrets
         self.repo_ids_with_rhsm = set()
+        # Set of repository IDs that use RHUI secrets
+        self.repo_ids_with_rhui = set()
         # RHUI identity headers (AWS/GCP); empty for Azure or non-cloud
         self.rhui_headers = []
 
@@ -151,8 +153,9 @@ class SolverBase(Solver):
             repo.sslcacert = secrets["ssl_ca_cert"]
             repo.sslclientkey = secrets["ssl_client_key"]
             repo.sslclientcert = secrets["ssl_client_cert"]
-            # Mark as RHSM so the response correctly flags these repos
+            # Track both sets so response repos get the correct flags
             self.repo_ids_with_rhsm.add(repo.repo_id)
+            self.repo_ids_with_rhui.add(repo.repo_id)
 
     def set_rhsm_flag(self, repo: Repository) -> None:
         """
@@ -161,6 +164,12 @@ class SolverBase(Solver):
         Otherwise, set it to False.
         """
         repo.rhsm = repo.repo_id in self.repo_ids_with_rhsm
+
+    def set_rhui_flag(self, repo: Repository) -> None:
+        """
+        Set the rhui flag on the repository based on repo_ids_with_rhui.
+        """
+        repo.rhui = repo.repo_id in self.repo_ids_with_rhui
 
 
 def modify_rootdir_path(path, root_dir):
