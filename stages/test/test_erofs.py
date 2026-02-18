@@ -111,6 +111,7 @@ def test_erofs(mock_run, tmp_path, stage_module, test_options, expected):
         "mkfs.erofs",
         f"{os.path.join(tmp_path, filename)}",
         f"{fake_input_tree}",
+        "--quiet",
     ] + expected
     mock_run.assert_called_with(expected, check=True)
 
