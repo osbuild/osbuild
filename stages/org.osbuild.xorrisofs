@@ -6,6 +6,20 @@ import sys
 import osbuild.api
 
 
+def parse_efi_image_input(inputs):
+    image = inputs.get("efi-image")
+
+    # when no image is passed we don't have any
+    if not image:
+        return None
+
+    files = image["data"]["files"]
+    filename, _ = files.popitem()
+    filepath = os.path.join(image["path"], filename)
+
+    return filepath
+
+
 # Create a grub2 bootable iso
 def grub2(inputs, output_dir, options):
     tree = inputs["tree"]["path"]
@@ -62,8 +76,20 @@ def grub2(inputs, output_dir, options):
         "--grub2-mbr", grub2mbr
     ]
 
+    efi_path = None
+
     if efi:
         efi_path = os.path.join(tree, efi.lstrip("/"))
+
+    efi_image = parse_efi_image_input(inputs)
+
+    if efi and efi_image:
+        raise RuntimeError("cannot pass both `efi` and `efi_image` pick one")
+
+    if efi_image:
+        efi_path = efi_image
+
+    if efi_path:
         cmd += [
             "-partition_offset", "16",
             "-appended_part_as_gpt",
@@ -86,7 +112,7 @@ def grub2(inputs, output_dir, options):
             "-boot-info-table",
             "--grub2-boot-info",
         ]
-        if efi:
+        if efi_path:
             cmd += [
                 "-eltorito-alt-boot",
                 "-e", "--interval:appended_partition_2:all::",
@@ -174,7 +200,20 @@ def syslinux(inputs, output_dir, options):
         "-rock", "-joliet"
     ]
 
+    efi_path = None
+
     if efi:
+        efi_path = os.path.join(tree, efi.lstrip("/"))
+
+    efi_image = parse_efi_image_input(inputs)
+
+    if efi and efi_image:
+        raise RuntimeError("cannot pass both `efi` and `efi_image` pick one")
+
+    if efi_image:
+        efi_path = efi_image
+
+    if efi_path:
         cmd += [
             "-eltorito-alt-boot",
             "-e", efi,
