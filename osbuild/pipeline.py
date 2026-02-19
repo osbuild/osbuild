@@ -464,7 +464,7 @@ class Pipeline:
             if in_vm:
                 buildtree_dir = os.path.join(build_tree.path, "tree")
 
-                qemu = Qemu("4G",
+                qemu = Qemu("3G",
                             buildtree_dir,
                             libdir)
                 qemu.add_virtiofs(object_store.store, "store", readonly=False)
