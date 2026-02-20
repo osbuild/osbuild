@@ -139,6 +139,41 @@ def test_librepo_secrets_mtls(mocked_download_pkgs, sources_service, monkeypatch
     assert download_pkgs[0].handle.sslcacert == "mtls-ca-cert"
 
 
+@patch("librepo.download_packages")
+@patch("osbuild.util.rhui.get_rhui_secrets")
+def test_librepo_secrets_rhui(mock_get_rhui, mocked_download_pkgs, sources_service):
+    mock_get_rhui.return_value = {
+        "ssl_ca_cert": "/etc/pki/rhui/ca.crt",
+        "ssl_client_key": "",
+        "ssl_client_cert": "",
+        "headers": ["X-RHUI-ID: abc", "X-RHUI-SIGNATURE: xyz"],
+    }
+    TEST_SOURCES = {
+        "sha256:1111111111111111111111111111111111111111111111111111111111111111": {
+            "path": "Packages/a/a",
+            "mirror": "mirror_id",
+        }
+    }
+    sources_service.options = {
+        "mirrors": {
+            "mirror_id": {
+                "url": "http://example.com/mirrorlist",
+                "type": "mirrorlist",
+                "secrets": {
+                    "name": "org.osbuild.rhui",
+                }
+            }
+        }
+    }
+    sources_service.cache = "cachedir"
+    sources_service.fetch_all(TEST_SOURCES)
+    assert len(mocked_download_pkgs.call_args_list) == 1
+    download_pkgs = mocked_download_pkgs.call_args_list[0][0][0]
+    assert download_pkgs[0].handle.sslcacert == "/etc/pki/rhui/ca.crt"
+    assert download_pkgs[0].handle.httpheader == ["X-RHUI-ID: abc", "X-RHUI-SIGNATURE: xyz"]
+    mock_get_rhui.assert_called_once_with(["http://example.com/mirrorlist"])
+
+
 @pytest.mark.parametrize("test_mirrors,expected_err", [
     # bad
     (

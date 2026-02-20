@@ -1,7 +1,9 @@
-"""Red Hat Subscription Manager support module
+"""Red Hat Subscription Manager and RHUI support module
 
 This module implements utilities that help with interactions
-with the subscriptions attached to the host machine.
+with the subscriptions attached to the host machine, either
+via RHSM (Red Hat Subscription Manager) or RHUI (Red Hat
+Update Infrastructure).
 """
 
 import configparser
@@ -10,6 +12,9 @@ import glob
 import os
 import re
 from typing import List
+
+# Common RHUI repo file patterns across cloud providers
+RHUI_REPO_GLOB_PATTERN = "/etc/yum.repos.d/*rhui*.repo"
 
 
 class Subscriptions:
@@ -72,19 +77,50 @@ class Subscriptions:
 
     @classmethod
     def from_host_system(cls):
-        """Read redhat.repo file and process the list of repositories in there."""
+        """Read host repo files and extract subscription secrets.
+
+        Checks for credentials in the following order:
+        1. RHSM: /etc/yum.repos.d/redhat.repo (subscription-manager managed)
+        2. RHUI: /etc/yum.repos.d/rhui-*.repo (RHUI client managed)
+        3. Fallback: entitlement certificates in /etc/pki/entitlement/
+        """
         ret = cls(None)
         with contextlib.suppress(FileNotFoundError):
             with open(cls.DEFAULT_REPO_FILE, "r", encoding="utf8") as fp:
                 ret = cls.parse_repo_file(fp)
 
+        # If no RHSM repos found, try RHUI repo files
+        if not ret.repositories:
+            ret = cls._from_rhui_repo_files()
+
         with contextlib.suppress(RuntimeError):
             ret.get_fallback_rhsm_secrets()
 
         if not ret.repositories and not ret.secrets:
-            raise RuntimeError("No RHSM secrets found on this host.")
+            raise RuntimeError("No RHSM or RHUI secrets found on this host.")
 
         return ret
+
+    @classmethod
+    def _from_rhui_repo_files(cls):
+        """Read RHUI repo files and extract repository configurations.
+
+        RHUI client packages (e.g. rhui-azure-rhel9, rhui-amazon-rhel9)
+        install repo files matching /etc/yum.repos.d/rhui-*.repo that
+        point to cloud-local RHUI mirrors with their own CA and optional
+        client certificates.
+        """
+        merged = cls(None)
+        rhui_files = sorted(glob.glob(RHUI_REPO_GLOB_PATTERN))
+        for repo_file in rhui_files:
+            with contextlib.suppress(FileNotFoundError):
+                with open(repo_file, "r", encoding="utf8") as fp:
+                    parsed = cls.parse_repo_file(fp)
+                    if parsed.repositories:
+                        if merged.repositories is None:
+                            merged.repositories = {}
+                        merged.repositories.update(parsed.repositories)
+        return merged
 
     @staticmethod
     def _process_baseurl(input_url):
@@ -103,18 +139,41 @@ class Subscriptions:
         for variable in ["\\$releasever", "\\$arch", "\\$basearch", "\\$uuid"]:
             input_url = input_url.replace(variable, "[^/]*")
 
+        # Handle cloud-specific placeholders (e.g. AWS RHUI uses literal
+        # REGION in mirrorlist URLs, replaced at runtime by the DNF plugin)
+        input_url = input_url.replace("REGION", "[^./]*")
+
+        # Pulp-based CDN (RHUI) uses /pulp/mirror/ for mirrorlist/repodata
+        # requests but /pulp/content/ for actual content downloads.  Make
+        # the regex match either variant so that repo-file URLs can be
+        # matched against manifest download URLs.
+        # Handle both escaped (Python 3.6: \/) and unescaped (Python 3.7+: /) slashes
+        input_url = input_url.replace(r"pulp\/mirror", r"pulp\/(?:mirror|content)")
+        input_url = input_url.replace("pulp/mirror", "pulp/(?:mirror|content)")
+
         return re.compile(input_url)
 
     @classmethod
     def parse_repo_file(cls, fp):
-        """Take a file object and reads its content assuming it is a .repo file."""
+        """Take a file object and reads its content assuming it is a .repo file.
+
+        Handles both RHSM (redhat.repo) and RHUI repo files. RHUI repos
+        may not have sslclientkey/sslclientcert if the cloud instance
+        identity is used for authentication instead.
+        """
         parser = configparser.ConfigParser()
         parser.read_file(fp)
 
         repositories = {}
         for section in parser.sections():
+            baseurl = parser.get(section, "baseurl", fallback=None)
+            mirrorlist = parser.get(section, "mirrorlist", fallback=None)
+            url = baseurl or mirrorlist
+            if not url:
+                continue
+
             current = {
-                "matchurl": cls._process_baseurl(parser.get(section, "baseurl"))
+                "matchurl": cls._process_baseurl(url)
             }
 
             # On RHEL systems registered to Insights, the redhat.repo exists and contains entitlement
@@ -122,9 +181,11 @@ class Subscriptions:
             # to /etc/rhsm/ca/redhat-uep.pem or /run/secrets/rhsm/ca/redhat-uep.pem respectively.
             current["sslcacert"] = parser.get(section, "sslcacert", fallback=cls.DEFAULT_SSL_CA_CERT)
 
-            # Entitlement certificates are always present in redhat.repo
-            for parameter in ["sslclientkey", "sslclientcert"]:
-                current[parameter] = parser.get(section, parameter)
+            # Client certificates: always present in RHSM redhat.repo, but
+            # may be absent in RHUI repo files (cloud RHUI uses instance
+            # identity for auth instead of client certificates).
+            current["sslclientkey"] = parser.get(section, "sslclientkey", fallback="")
+            current["sslclientcert"] = parser.get(section, "sslclientcert", fallback="")
 
             repositories[section] = current
 

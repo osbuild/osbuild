@@ -177,6 +177,8 @@ def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[
                 ssl_client_key = secrets.get('ssl_client_key')
                 if ssl_client_key:
                     fp.write(f'key = "{ssl_client_key}"\n')
+                for hdr in secrets.get('headers', []):
+                    fp.write(f'header = "{hdr}"\n')
             insecure = desc.get("insecure")
             if insecure:
                 fp.write('insecure\n')
@@ -273,6 +275,7 @@ class CurlSource(sources.SourceService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.subscriptions = None
+        self.rhui_secrets = None
         self._curl_has_parallel_downloads = curl_has_parallel_downloads()
 
     def amend_secrets(self, checksum, desc_or_url):
@@ -297,6 +300,12 @@ class CurlSource(sources.SourceService):
                 'ssl_client_cert': cert,
                 'ssl_client_key': key,
             }
+        elif desc.get("secrets", {}).get("name") == "org.osbuild.rhui":
+            # rhui secrets only need to be retrieved once and can then be reused
+            if self.rhui_secrets is None:
+                from osbuild.util.rhui import get_rhui_secrets
+                self.rhui_secrets = get_rhui_secrets([desc.get("url")])
+            desc["secrets"] = self.rhui_secrets
 
         return checksum, desc
 
