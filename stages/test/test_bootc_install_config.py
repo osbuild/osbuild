@@ -1,5 +1,6 @@
 import os.path
 import re
+from unittest.mock import patch
 
 import pytest
 
@@ -195,3 +196,36 @@ def test_schema_bootc_install_config(stage_schema, options, expected_errors):
     assert res.valid is False
     for err in expected_errors:
         testutil.assert_jsonschema_error_contains(res, err)
+
+
+@pytest.mark.parametrize("destination,expected_path", [
+    ("buildroot", "/run/bootc/install/99-test.toml"),
+    ("tree", None),
+])
+@pytest.mark.tomlwrite
+def test_bootc_install_config_destination(tmp_path, stage_module, destination, expected_path):
+    """Test that destination option writes to the correct location."""
+    options = {
+        "filename": "99-test.toml",
+        "destination": destination,
+        "config": {
+            "install": {
+                "ostree": {
+                    "bls-append-except-default": 'grub_users=""'
+                }
+            }
+        }
+    }
+
+    if destination == "buildroot":
+        with patch.object(stage_module.pathlib.Path, "mkdir"):
+            with patch.object(stage_module.toml, "dump_to_file") as mock_dump:
+                stage_module.main(tmp_path, options)
+                mock_dump.assert_called_once()
+                call_args = mock_dump.call_args
+                assert call_args[0][0] == options["config"]
+                assert str(call_args[0][1]) == expected_path
+    else:
+        stage_module.main(tmp_path, options)
+        config_data = toml.load_from_file(os.path.join(tmp_path, "usr/lib/bootc/install", options["filename"]))
+        assert config_data == options["config"]
