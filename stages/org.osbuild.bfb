@@ -12,6 +12,12 @@ import tempfile
 
 import osbuild.api
 
+# BlueField firmware paths - typically from these RPMs:
+# - mlxbf-bfscripts: provides /usr/bin/mlx-mkbfb tool
+# - mlxbf-bootimages: provides firmware files below
+DEFAULT_BFB_PATH = "/lib/firmware/mellanox/boot/default.bfb"
+BOOT_CAPSULE_PATH = "/lib/firmware/mellanox/boot/capsule/boot_update2.cap"
+
 
 def parse_input(inputs, name):
     data = inputs[name]
@@ -36,21 +42,19 @@ def main(inputs, output, options):
                     out.write(f.read())
         initramfs = combined
 
-    # Boot arguments - defaults for BlueField DPUs
-    default_args_v0 = [
-        "console=ttyAMA0",
-        "earlycon=pl011,0x01000000",
-        "earlycon=pl011,0x01800000",
-        "initrd=initramfs"
-    ]
+    default_args_v0 = []
+    # Sourced from https://github.com/Mellanox/bfb-build
+    # - console=hvc0: rshim virtual console (/dev/rshim0/console)
+    # - console=ttyAMA0: IPMI serial console
+    # - earlycon=pl011,0x13010000: early serial output on BF3
+    # - initrd=initramfs: initramfs selection
+    # - modprobe.blacklist=mlxbf_pmc: avoid PMC driver conflicts on BF3
     default_args_v2 = [
         "console=hvc0",
         "console=ttyAMA0",
         "earlycon=pl011,0x13010000",
         "initrd=initramfs",
-        "modprobe.blacklist=mlxbf_pmc",
-        "ignition.firstboot",
-        "ignition.platform.id=nvidiabluefield"
+        "modprobe.blacklist=mlxbf_pmc"
     ]
     boot_args_v0 = " ".join(options.get("boot_args_v0", default_args_v0))
     boot_args_v2 = " ".join(options.get("boot_args_v2", default_args_v2))
@@ -60,7 +64,7 @@ def main(inputs, output, options):
     with tempfile.TemporaryDirectory() as tmpdir:
         def write_tmp(name, content):
             path = os.path.join(tmpdir, name)
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
             return path
 
@@ -68,12 +72,12 @@ def main(inputs, output, options):
             "/usr/bin/mlx-mkbfb",
             "--image", kernel,
             "--initramfs", initramfs,
-            "--capsule", "/lib/firmware/mellanox/boot/capsule/boot_update2.cap",
+            "--capsule", BOOT_CAPSULE_PATH,
             "--boot-args-v0", write_tmp("args_v0", boot_args_v0),
             "--boot-args-v2", write_tmp("args_v2", boot_args_v2),
             "--boot-path", write_tmp("path", boot_path),
             "--boot-desc", write_tmp("desc", boot_desc),
-            "/lib/firmware/mellanox/boot/default.bfb",
+            DEFAULT_BFB_PATH,
             os.path.join(output, filename)
         ]
 
