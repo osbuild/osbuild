@@ -1,0 +1,61 @@
+{
+  "summary": "Create a BFB image for NVIDIA BlueField DPUs",
+  "description": [
+    "Packages Linux live artifacts into NVIDIA BFB format for BlueField DPUs.",
+    "Takes kernel, initramfs, and optionally rootfs as inputs.",
+    "If rootfs is provided, it is concatenated with initramfs.",
+    "Provides hardware-specific boot arguments for BlueField DPUs.",
+    "Buildhost commands used: `mlx-mkbfb`"
+  ],
+  "schema_2": {
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kernel", "initramfs"],
+      "properties": {
+        "kernel": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "initramfs": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "rootfs": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "options": {
+      "additionalProperties": false,
+      "required": ["filename"],
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "Output BFB filename"
+        },
+        "boot_args_v0": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Boot arguments for older DPU firmware (BF1/BF2). Empty by default as BF1/BF2 support is not planned.",
+          "default": []
+        },
+        "boot_args_v2": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Boot arguments for newer DPU firmware (BF3). Defaults include essential hardware-specific arguments (console, earlycon, initrd).",
+          "default": ["console=hvc0", "console=ttyAMA0", "earlycon=pl011,0x13010000", "initrd=initramfs", "modprobe.blacklist=mlxbf_pmc"]
+        },
+        "boot_path": {
+          "type": "string",
+          "description": "UEFI boot path"
+        },
+        "boot_desc": {
+          "type": "string",
+          "description": "Boot entry description"
+        }
+      }
+    }
+  }
+}
