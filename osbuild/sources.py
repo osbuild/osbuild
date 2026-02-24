@@ -52,7 +52,6 @@ class Source:
             "options": self.options,
             "cache": cache,
             "dst_cache": dst_cache,
-            "checksums": [],
         }
 
         client = mgr.start(f"source/{source}", self.info_path)
