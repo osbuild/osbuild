@@ -286,6 +286,9 @@ install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
 mkdir -p %{buildroot}%{_libexecdir}
 install -p -m 0755 tools/osbuild-depsolve-dnf %{buildroot}%{_libexecdir}/osbuild-depsolve-dnf
 
+# Install `osbuild-store` into libexec
+install -p -m 0755 tools/osbuild-store %{buildroot}%{_libexecdir}/osbuild-store
+
 # Configure the solver for dnf
 mkdir -p %{buildroot}%{_datadir}/osbuild
 # RHEL 11 and Fedora 41 and later use dnf5, RHEL < 11 and Fedora < 41 use dnf
@@ -466,6 +469,7 @@ fi
 %{_bindir}/osbuild-image-info
 %{_bindir}/osbuild-mpp
 %{?fedora:%{_bindir}/osbuild-dev}
+%{_libexecdir}/osbuild-store
 
 %files depsolve-dnf
 %{_libexecdir}/osbuild-depsolve-dnf
