@@ -2,6 +2,7 @@ import abc
 import hashlib
 import json
 import os
+import shutil
 import tempfile
 from typing import ClassVar, Dict
 
@@ -38,6 +39,24 @@ class Source:
 
         client = mgr.start(f"source/{source}", self.info_path)
         reply = client.call("download", args)
+
+        return reply
+
+    def copy(self, mgr: host.ServiceManager, store: ObjectStore, dst_store: ObjectStore):
+        source = self.info_name
+        cache = os.path.join(store.store, "sources")
+        dst_cache = os.path.join(dst_store.store, "sources")
+
+        args = {
+            "items": self.items,
+            "options": self.options,
+            "cache": cache,
+            "dst_cache": dst_cache,
+            "checksums": [],
+        }
+
+        client = mgr.start(f"source/{source}", self.info_path)
+        reply = client.call("copy", args)
 
         return reply
 
@@ -94,6 +113,13 @@ class SourceService(host.Service):
         """Returns True if the item to download is in cache. """
         return os.path.isfile(f"{self.cache}/{checksum}")
 
+    def copy_all(self, items: Dict, dst_cache: str) -> None:
+        """Copies the source to the destination"""
+        target_dir = os.path.join(dst_cache, self.content_type)
+        os.makedirs(target_dir, exist_ok=True)
+        for item in items:
+            shutil.copy2(os.path.join(self.cache, item), os.path.join(target_dir, item))
+
     def setup(self, args):
         self.cache = os.path.join(args["cache"], self.content_type)
         os.makedirs(self.cache, exist_ok=True)
@@ -105,5 +131,10 @@ class SourceService(host.Service):
             with tempfile.TemporaryDirectory(prefix=".unverified-", dir=self.cache) as self.tmpdir:
                 self.fetch_all(args["items"])
                 return None, None
+
+        elif method == "copy":
+            self.setup(args)
+            self.copy_all(args["items"], args["dst_cache"])
+            return None, None
 
         raise host.ProtocolError("Unknown method")
