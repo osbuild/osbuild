@@ -585,6 +585,22 @@ class Manifest:
                 # as well
                 monitor.finish({"name": source.info_name})
 
+    def export_sources(self, store, dst_store, monitor):
+        with host.ServiceManager(monitor=monitor) as mgr:
+            for source in self.sources:
+                monitor.begin(source)
+                # reuse download result for copy, ideally use a separate result?
+                dr = DownloadResult(source.name, source.id, success=True)
+                try:
+                    source.copy(mgr, store, dst_store)
+                except Exception as e:
+                    dr.success = False
+                    dr.output = str(e)
+                    monitor.result(dr)
+                    raise e
+                monitor.result(dr)
+                monitor.finish({"name": source.info_name})
+
     def depsolve(self, store: ObjectStore, targets: Iterable[str]) -> List[str]:
         """Return the list of pipelines that need to be built
 
