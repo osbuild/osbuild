@@ -84,14 +84,26 @@ def python_alternatives():
         pass
 
 
-def sequoia():
-    # This provides a default set of crypto-policies which is important for
-    # re-enabling SHA1 support with rpm (so we can cross-build CentOS-Stream-9
-    # images).
+def sequoia(force_sha1=False):
     os.makedirs("/etc/crypto-policies", exist_ok=True)
+
+    # Start from the default set of crypto policies.
     shutil.copytree(
         "/usr/share/crypto-policies/back-ends/DEFAULT", "/etc/crypto-policies/back-ends"
     )
+
+    # This re-enables SHA1 support with rpm (so we can cross-build CentOS-Stream-9 images).
+    if force_sha1:
+        try:
+            with open('/etc/crypto-policies/back-ends/rpm-sequoia.config', encoding="utf-8") as f:
+                data = f.readlines()
+            for idx, line in enumerate(data):
+                if line == 'sha1.second_preimage_resistance = "never"\n':
+                    data[idx] = 'sha1.second_preimage_resistance = "always"\n'
+            with open('/etc/crypto-policies/back-ends/rpm-sequoia.config', 'w', encoding="utf-8") as f:
+                f.writelines(data)
+        except (FileNotFoundError, PermissionError):
+            pass
 
 
 def quirks():
