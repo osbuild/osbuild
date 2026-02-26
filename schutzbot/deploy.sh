@@ -27,6 +27,10 @@ gpgcheck=0
 priority=5
 EOF
 
+# Temporary workaround until we get newer CI images (2026-02-26)
+# See https://issues.redhat.com/browse/HMS-10241
+sudo dnf upgrade -y libsemanage
+
 # install pckages needed to run tests
 sudo dnf install -y osbuild \
                     osbuild-ostree \
