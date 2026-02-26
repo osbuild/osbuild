@@ -136,8 +136,8 @@ Osbuild initrd used for in-vm support.
 %package        selinux
 Summary:        SELinux policies
 Requires:       %{name} = %{version}-%{release}
-Requires:       selinux-policy-%{selinuxtype}
-Requires(post): selinux-policy-%{selinuxtype}
+Requires:       selinux-policy-%{selinuxtype} >= %{_selinux_policy_version}
+Requires(post): selinux-policy-%{selinuxtype} >= %{_selinux_policy_version}
 BuildRequires:  selinux-policy-devel
 %{?selinux_requires}
 
@@ -148,9 +148,9 @@ containers it uses to build OS artifacts.
 
 %package        container-selinux
 Summary:        SELinux container policies
-Requires:       selinux-policy-%{selinuxtype}
+Requires:       selinux-policy-%{selinuxtype} >= %{_selinux_policy_version}
 Requires:       container-selinux
-Requires(post): selinux-policy-%{selinuxtype}
+Requires(post): selinux-policy-%{selinuxtype} >= %{_selinux_policy_version}
 Requires(post): container-selinux
 BuildRequires:  selinux-policy-devel
 BuildRequires:  selinux-policy-devel
