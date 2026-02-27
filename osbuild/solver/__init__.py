@@ -9,6 +9,11 @@ from osbuild.solver.exceptions import GPGKeyReadError, InvalidRequestError, NoRH
 from osbuild.solver.model import DepsolveResult, DumpResult, Repository, SearchResult
 from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverConfig
 from osbuild.util.rhsm import Subscriptions
+from osbuild.util.rhui import (
+    _aws_get_identity_headers,
+    _gcp_get_identity_headers,
+    detect_cloud_provider,
+)
 
 
 class Solver(abc.ABC):
@@ -47,10 +52,21 @@ class SolverBase(Solver):
         self.license_index_path = license_index_path
         # Set of repository IDs that need RHSM secrets
         self.repo_ids_with_rhsm = set()
+        # Set of repository IDs that use RHUI secrets
+        self.repo_ids_with_rhui = set()
+        # RHUI identity headers (AWS/GCP); empty for Azure or non-cloud
+        self.rhui_headers = []
+
+        # Resolve RHUI secrets first (they use cloud certs, not RHSM)
+        self._resolve_rhui_secrets()
 
         # Get the RHSM secrets for the repositories that need them
         subscriptions = None
         for repo in self.config.repos or []:
+            if repo.rhsm and repo.rhui:
+                raise InvalidRequestError(
+                    f"Repository '{repo.repo_id}' cannot have both rhsm and rhui set to true"
+                )
             if not repo.rhsm:
                 continue
 
@@ -87,6 +103,60 @@ class SolverBase(Solver):
 
             self.repo_ids_with_rhsm.add(repo.repo_id)
 
+    def _resolve_rhui_secrets(self):
+        """Resolve SSL secrets and identity headers for RHUI repositories.
+
+        RHUI (Red Hat Update Infrastructure) repos use cloud-specific SSL
+        certificates from /etc/pki/rhui/ rather than RHSM entitlement certs.
+        AWS and GCP also require X-RHUI-ID/X-RHUI-SIGNATURE identity headers.
+        """
+        rhui_repos = [r for r in (self.config.repos or []) if r.rhui]
+        if not rhui_repos:
+            return
+
+        # Discover RHUI secrets from host repo files
+        rhui_subscriptions = Subscriptions._from_rhui_repo_files()
+        if not rhui_subscriptions.repositories:
+            raise NoRHSMSubscriptionsError(
+                "No RHUI repository files found on this host. "
+                "Ensure the RHUI client package is installed."
+            )
+
+        # Fetch cloud identity headers (AWS/GCP need them, Azure does not)
+        provider = detect_cloud_provider()
+        if provider == "aws":
+            self.rhui_headers = _aws_get_identity_headers()
+        elif provider == "gcp":
+            self.rhui_headers = _gcp_get_identity_headers()
+
+        for repo in rhui_repos:
+            repo_urls = []
+            if repo.baseurl:
+                repo_urls.extend(repo.baseurl)
+            if repo.metalink:
+                repo_urls.append(repo.metalink)
+            if repo.mirrorlist:
+                repo_urls.append(repo.mirrorlist)
+
+            # Match repo URL to RHUI repo file entries for correct certs
+            try:
+                secrets = rhui_subscriptions.get_secrets(repo_urls)
+            except RuntimeError:
+                # Fall back to first available if URL matching fails
+                first = next(iter(rhui_subscriptions.repositories.values()))
+                secrets = {
+                    "ssl_ca_cert": first["sslcacert"],
+                    "ssl_client_key": first["sslclientkey"],
+                    "ssl_client_cert": first["sslclientcert"],
+                }
+
+            repo.sslcacert = secrets["ssl_ca_cert"]
+            repo.sslclientkey = secrets["ssl_client_key"]
+            repo.sslclientcert = secrets["ssl_client_cert"]
+            # Track both sets so response repos get the correct flags
+            self.repo_ids_with_rhsm.add(repo.repo_id)
+            self.repo_ids_with_rhui.add(repo.repo_id)
+
     def set_rhsm_flag(self, repo: Repository) -> None:
         """
         Set the rhsm flag on the repository based on repo_ids_with_rhsm.
@@ -94,6 +164,12 @@ class SolverBase(Solver):
         Otherwise, set it to False.
         """
         repo.rhsm = repo.repo_id in self.repo_ids_with_rhsm
+
+    def set_rhui_flag(self, repo: Repository) -> None:
+        """
+        Set the rhui flag on the repository based on repo_ids_with_rhui.
+        """
+        repo.rhui = repo.repo_id in self.repo_ids_with_rhui
 
 
 def modify_rootdir_path(path, root_dir):

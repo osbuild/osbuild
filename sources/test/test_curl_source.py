@@ -70,6 +70,27 @@ class FakeSubscriptionManager:
         return f"secret-for-{url}"
 
 
+@patch("osbuild.util.rhui.get_rhui_secrets")
+def test_curl_source_amend_secrets_rhui(mock_get_rhui, sources_service):
+    mock_get_rhui.return_value = {
+        "ssl_ca_cert": "/etc/pki/rhui/ca.crt",
+        "ssl_client_key": "",
+        "ssl_client_cert": "",
+        "headers": ["X-RHUI-ID: abc", "X-RHUI-SIGNATURE: xyz"],
+    }
+    desc = {
+        "url": "http://localhost:80/a",
+        "secrets": {
+            "name": "org.osbuild.rhui",
+        },
+    }
+    checksum = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    _, new_desc = sources_service.amend_secrets(checksum, desc)
+    assert new_desc["secrets"]["ssl_ca_cert"] == "/etc/pki/rhui/ca.crt"
+    assert new_desc["secrets"]["headers"] == ["X-RHUI-ID: abc", "X-RHUI-SIGNATURE: xyz"]
+    mock_get_rhui.assert_called_once_with(["http://localhost:80/a"])
+
+
 def test_curl_source_amend_secrets_subscription_mgr(sources_service):
     desc = {
         "url": "http://localhost:80/a",
@@ -335,6 +356,31 @@ def test_curl_gen_download_config_parallel(tmp_path, sources_module):
     key = "some-ssl_client_key"
     no-insecure
     """)
+
+
+def test_curl_gen_download_config_with_headers(tmp_path, sources_module):
+    config_path = tmp_path / "curl-config.txt"
+    test_pairs = [(
+        "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+        {
+            "url": "http://example.com/file/0",
+            "secrets": {
+                "ssl_ca_cert": "/etc/pki/rhui/ca.crt",
+                "ssl_client_key": "",
+                "ssl_client_cert": "",
+                "headers": ["X-RHUI-ID: abc123", "X-RHUI-SIGNATURE: sig456"],
+            },
+        },
+    )]
+    sources_module.gen_curl_download_config(config_path, test_pairs)
+
+    content = config_path.read_text(encoding="utf8")
+    assert 'cacert = "/etc/pki/rhui/ca.crt"' in content
+    assert 'header = "X-RHUI-ID: abc123"' in content
+    assert 'header = "X-RHUI-SIGNATURE: sig456"' in content
+    # empty client key/cert should not appear
+    assert 'cert = ""' not in content
+    assert 'key = ""' not in content
 
 
 # fc39
