@@ -43,11 +43,11 @@ def make_fake_tree(basedir: pathlib.Path, fake_content: dict):
             fp.write(content)
 
 
-def make_fake_input_tree(tmpdir: pathlib.Path, fake_content: dict) -> str:
+def make_fake_input_tree(tmpdir: pathlib.Path, fake_content: dict, name: str = "tree") -> str:
     """
     Wrapper around make_fake_tree for "input trees"
     """
-    basedir = tmpdir / "tree"
+    basedir = tmpdir / name
     make_fake_tree(basedir, fake_content)
     return os.fspath(basedir)
 
