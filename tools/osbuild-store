@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""`osbuild-store` provides helper functionality for sources and store manipulation."""
+
+import argparse
+import json
+import os
+import sys
+
+import osbuild.meta
+import osbuild.monitor
+from osbuild.objectstore import ObjectStore
+
+
+def parse_manifest(path: str) -> dict:
+    if path == "-":
+        manifest = json.load(sys.stdin)
+    else:
+        with open(path, encoding="utf8") as f:
+            manifest = json.load(f)
+
+    return manifest
+
+
+def cmd_export_sources(index: osbuild.meta.Index, src_store_path: str, tgt_store_path: str, manifest_path: str):
+    desc = parse_manifest(manifest_path)
+    info = index.detect_format_info(desc)
+    if not info:
+        print("Unsupported manifest format")
+        return 1
+    fmt = info.module
+    res = fmt.validate(desc, index)
+    if not res:
+        print("Invalid manifest")
+        json.dump(res.as_dict(), sys.stdout)
+        sys.stdout.write("\n")
+        return 1
+    manifest = fmt.load(desc, index)
+
+    monitor = osbuild.monitor.make(
+        "LogMonitor", sys.stdout.fileno(), len(manifest.sources)
+    )
+    monitor.log(f"starting {manifest_path} sources copy\n", origin="osbuild-store")
+    with ObjectStore(src_store_path) as src_store:
+        with ObjectStore(tgt_store_path) as tgt_store:
+            manifest.export_sources(src_store, tgt_store, monitor)
+            return 0
+    return
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="osbuild-store", description="Build operating system images"
+    )
+    parser.add_argument("-l", "--libdir", metavar="DIRECTORY", type=os.path.abspath, default="/usr/lib/osbuild",
+                        help="directory containing schemas and the osbuild library")
+
+    subparsers = parser.add_subparsers(dest="cmd", help="subcommand help")
+    export_sources = subparsers.add_parser(
+        "export-sources",
+        help="exports the sources specified in the given manifest from --source-store to --target-store",
+    )
+    export_sources.add_argument(
+        "manifest_path",
+        metavar="MANIFEST",
+        help="json file containing the manifest that should be built, or a '-' to read from stdin",
+    )
+    export_sources.add_argument(
+        "--source-store",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        help="directory where sources and intermediary os trees are stored",
+    )
+    export_sources.add_argument(
+        "--target-store",
+        metavar="DIRECTORY",
+        type=os.path.abspath,
+        help="directory where sources and intermediary os trees are stored",
+    )
+
+    args = parser.parse_args(sys.argv[1:])
+
+    index = osbuild.meta.Index(args.libdir)
+    if args.cmd == "export-sources":
+        return cmd_export_sources(index, args.source_store, args.target_store, args.manifest_path)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
