@@ -462,6 +462,38 @@ def test_jsonseq_download_unhappy(mocked_download, tmp_path):
         assert log[1]["result"]["name"] == "source org.osbuild.curl"
         assert log[1]["result"]["success"] is False
         assert log[1]["result"]["output"] == "RuntimeError: curl: error download ...\n error stack"
+        assert log[1]["error"] is True
+
+
+def test_jsonseq_pipeline_python_exception(tmp_path):
+    store = ObjectStore(tmp_path)
+    index = osbuild.meta.Index(os.curdir)
+    info = index.get_module_info("Stage", "org.osbuild.noop")
+    manifest = osbuild.Manifest()
+    pl = manifest.add_pipeline("test-pipeline", "", "")
+    pl.add_stage(info, {})
+
+    with tempfile.TemporaryFile() as tf:
+        mon = JSONSeqMonitor(tf.fileno(), 1)
+        with patch.object(pl, "build_stages", side_effect=RuntimeError("simulated failure")):
+            with pytest.raises(RuntimeError):
+                manifest.build(store, ["test-pipeline"], mon, os.path.abspath(os.curdir))
+
+        tf.flush()
+        tf.seek(0)
+        log = []
+        for line in tf.read().decode().strip().split("\x1e"):
+            if line.strip():
+                log.append(json.loads(line))
+        # Should have "Starting pipeline", then an error entry from the exception
+        assert len(log) >= 2
+        error_entries = [e for e in log if e.get("error")]
+        assert len(error_entries) >= 1
+        exc_entry = next((e for e in error_entries if isinstance(e.get("error"), dict)
+                         and e["error"].get("type") == "exception"), None)
+        assert exc_entry is not None
+        assert exc_entry["error"]["message"] == "simulated failure"
+        assert "traceback" in exc_entry["error"]
 
 
 def test_json_progress_monitor_handles_racy_writes(tmp_path):

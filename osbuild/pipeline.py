@@ -3,6 +3,7 @@ import contextlib
 import hashlib
 import json
 import os
+import traceback
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, Iterator, List, Optional
@@ -524,16 +525,28 @@ class Pipeline:
         self.run_in_vm = in_vm
         monitor.begin(self)
 
-        results = self.build_stages(store,
-                                    monitor,
-                                    libdir,
-                                    debug_break,
-                                    stage_timeout,
-                                    in_vm)
+        try:
+            results = self.build_stages(store,
+                                        monitor,
+                                        libdir,
+                                        debug_break,
+                                        stage_timeout,
+                                        in_vm)
 
-        monitor.finish(results)
+            monitor.finish(results)
 
-        return results
+            return results
+        except Exception as e:
+            monitor.log(
+                str(e),
+                origin="osbuild.pipeline",
+                error={
+                    "type": "exception",
+                    "message": str(e),
+                    "traceback": traceback.format_exc(),
+                },
+            )
+            raise
 
 
 class Manifest:
