@@ -172,13 +172,17 @@ def log_entry(message: Optional[str] = None,
               duration: Optional[float] = None,
               result: Union[BuildResult, DownloadResult, None] = None,
               metadata: Optional[Dict] = None,
+              error: Optional[Union[bool, Dict[str, Any]]] = None,
               ) -> dict:
     """
     Create a single log entry dict with a given message, context, and progress objects.
     All arguments are optional. A timestamp is added to the message.
+
+    A top-level ``error`` field is set when stage/source returned non-zero status, or when
+    a Python exception is raised during pipeline run.
     """
-    # we probably want to add an (optional) error message here too once the
-    # monitors support that
+    if error is None and result is not None and hasattr(result, 'success') and not result.success:
+        error = True
     return omitempty({
         "message": message,
         "result": result.as_dict() if result else None,
@@ -188,6 +192,7 @@ def log_entry(message: Optional[str] = None,
         "timestamp": time.time(),
         "duration": duration,
         "metadata": metadata if metadata else None,
+        "error": error,
     })
 
 
@@ -242,7 +247,8 @@ class BaseMonitor(abc.ABC):
         """Called when a module (stage/assembler) is done with its result"""
 
     # note that this should be re-entrant
-    def log(self, message: str, origin: Optional[str] = None):
+    def log(self, message: str, origin: Optional[str] = None,
+            error: Optional[Union[bool, Dict[str, Any]]] = None):
         """Called for all module log outputs"""
 
 
@@ -315,7 +321,7 @@ class LogMonitor(BaseMonitor):
 
         self._module_start_time = time.monotonic()
 
-    def log(self, message, origin: Optional[str] = None):
+    def log(self, message, origin: Optional[str] = None, error: Optional[Union[bool, Dict[str, Any]]] = None):
         self.out.write(message)
 
 
@@ -398,11 +404,12 @@ class JSONSeqMonitor(BaseMonitor):
             metadata=metadata,
         ))
 
-    def log(self, message, origin: Optional[str] = None):
+    def log(self, message, origin: Optional[str] = None, error: Optional[Union[bool, Dict[str, Any]]] = None):
         self._jsonseq(log_entry(
             message,
             context=self._context.with_origin(origin),
             progress=self._progress,
+            error=error,
         ))
 
     def _jsonseq(self, entry: dict) -> None:
