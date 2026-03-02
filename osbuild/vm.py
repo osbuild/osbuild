@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Union
 
 # Ensure we can import osbuild module from the same directory as vm.py
 PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -210,7 +210,8 @@ class VMMonitor(BaseMonitor):
         super().__init__(sys.stderr.fileno())
         self.conn = conn
 
-    def log(self, message: str, origin: Optional[str] = None):
+    def log(self, message: str, origin: Optional[str] = None,
+            error: Optional[Union[bool, Dict[str, Any]]] = None) -> None:
         resp = {"log": message}
         self.conn.send_response(resp)
 

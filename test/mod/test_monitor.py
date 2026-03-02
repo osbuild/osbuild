@@ -52,7 +52,7 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         self.counter["result"] += 1
         self.results.add(result.id)
 
-    def log(self, message: str, origin: str = None):
+    def log(self, message: str, origin: str = None, error=None):
         self.counter["log"] += 1
         self.logger.write(message)
 
@@ -354,6 +354,20 @@ def test_log_line_with_entries():
     assert isinstance(entry["context"], dict)
     assert isinstance(entry["progress"], dict)
     assert entry["timestamp"] > 0
+
+
+def test_log_entry_error_field():
+    index = osbuild.meta.Index(os.curdir)
+    info = index.get_module_info("Stage", "org.osbuild.noop")
+    stage = osbuild.pipeline.Stage(info, None, None, None, None, None)
+
+    success_result = BuildResult(stage, returncode=0, output="ok", error={})
+    entry_success = log_entry("Done", result=success_result)
+    assert "error" not in entry_success
+
+    fail_result = BuildResult(stage, returncode=1, output="err", error={"id": "org.osbuild.error", "message": "failed"})
+    entry_fail = log_entry("Failed", result=fail_result)
+    assert entry_fail["error"] is True
 
 
 def test_context_id():
