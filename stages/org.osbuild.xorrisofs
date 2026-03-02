@@ -19,6 +19,7 @@ def grub2(inputs, output_dir, options):
     efi = options.get("efi")
     isolevel = options.get("isolevel")
     grub2mbr = options.get("grub2mbr")
+    excludes = options.get("exclude", [])
 
     cmd = [
         "/usr/bin/xorrisofs",
@@ -96,6 +97,9 @@ def grub2(inputs, output_dir, options):
         "-no-emul-boot"
     ]
 
+    for exclude in excludes:
+        cmd += ["-exclude", exclude]
+
     cmd += [
         '-o', os.path.join(output_dir, filename),
         tree
@@ -118,6 +122,7 @@ def syslinux(inputs, output_dir, options):
     efi = options.get("efi")
     isohybrid = options.get("isohybridmbr")
     isolevel = options.get("isolevel")
+    excludes = options.get("exclude", [])
 
     cmd = [
         "/usr/bin/xorrisofs",
@@ -183,6 +188,9 @@ def syslinux(inputs, output_dir, options):
 
         if isohybrid:
             cmd += ["-isohybrid-gpt-basdat"]
+
+    for exclude in excludes:
+        cmd += ["-exclude", exclude]
 
     cmd += [
         '-o', os.path.join(output_dir, filename),
