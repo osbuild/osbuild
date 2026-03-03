@@ -126,6 +126,19 @@ class OSTreeSource(sources.SourceService):
         # Remove the temporary remote again
         ostree.cli("remote", "delete", name, repo=self.repo)
 
+    def copy_all(self, items: Dict, dst_cache: str) -> None:
+        os.makedirs(os.path.join(dst_cache, self.content_type), exist_ok=True)
+        dst_repo = os.path.join(dst_cache, self.content_type, "repo")
+        ostree.cli("init", mode="archive", repo=dst_repo)
+        ostree.cli("config", "set", "repo.locking", "true", repo=dst_repo)
+
+        # add self.repo as a temporary remote to the dst_cache repo
+        name = str(uuid.uuid4())
+        ostree.setup_remote(dst_repo, name, {"url": f"file://{self.repo}"})
+        for commit in items:
+            ostree.cli("pull", name, commit, repo=dst_repo)
+        ostree.cli("remote", "delete", name, repo=dst_repo)
+
     def setup(self, args):
         super().setup(args)
         # Prepare the cache and the output repo
