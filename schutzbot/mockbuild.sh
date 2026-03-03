@@ -423,6 +423,7 @@ sudo usermod -a -G mock "$(whoami)"
 greenprint "🎁 Building RPMs with mock"
 mock -r $MOCK_CONFIG \
     --resultdir $REPO_DIR \
+    -v \
     rpmbuild/SRPMS/*.src.rpm
 sudo chown -R $USER ${REPO_DIR}
 
