@@ -18,6 +18,7 @@ import concurrent.futures
 import errno
 import hashlib
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -160,6 +161,13 @@ class SkopeoSource(sources.SourceService):
     def exists(self, checksum, _desc):
         path = os.path.join(self.cache, checksum, self.dir_name)
         return os.path.exists(path)
+
+    def copy_all(self, items: Dict, dst_cache: str) -> None:
+        """Copies the source to the destination"""
+        target_dir = os.path.join(dst_cache, self.content_type)
+        os.makedirs(target_dir, exist_ok=True)
+        for item in items:
+            shutil.copytree(os.path.join(self.cache, item), os.path.join(target_dir, item))
 
 
 def main():

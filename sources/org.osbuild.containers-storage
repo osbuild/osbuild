@@ -68,6 +68,10 @@ class ContainersStorageSource(sources.SourceService):
         for checksum in items:
             self.fetch_one(checksum, None)
 
+    def copy_all(self, items, dst_cache) -> None:
+        # nop, as the container is stored on the host's container storage
+        return
+
     def exists(self, checksum, _) -> bool:
         image_id = checksum.split(":")[1]
         source = self.local_image_name(image_id)
