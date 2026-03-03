@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import hashlib
+import os
 import pathlib
 import platform
 import re
@@ -433,3 +434,24 @@ def test_curl_download_mtls(tmp_path, monkeypatch, sources_service):
         sources_service.fetch_all(test_sources)
 
         assert httpds.reqs.count == 1
+
+
+def test_curl_copy_all(tmp_path, sources_service):
+    src_cache = tmp_path / "src-cache"
+    dst_cache = tmp_path / "dst-cache"
+    fake_httpd_root = tmp_path / "fake-httpd-root"
+    os.mkdir(src_cache)
+    os.mkdir(dst_cache)
+    os.mkdir(fake_httpd_root)
+
+    sources_service.setup({"cache": src_cache, "options": {}})
+
+    with http_serve_directory(fake_httpd_root) as httpd:
+        test_sources = make_test_sources(fake_httpd_root, httpd.server_port, 5)
+        sources_service.fetch_all(test_sources)
+        assert httpd.reqs.count == len(test_sources)
+
+    sources_service.copy_all(test_sources, dst_cache)
+
+    for chksum in test_sources:
+        assert os.path.isfile(dst_cache / sources_service.content_type / chksum)

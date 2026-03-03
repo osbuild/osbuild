@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import os
 import pathlib
 import tempfile
 
@@ -77,3 +78,24 @@ def test_ostree_pull_plain_mtls(tmp_path, sources_service, monkeypatch):
         sources_service.setup({"cache": tmp_path, "options": {}})
         sources_service.fetch_all(test_sources)
         assert sources_service.exists("sha256:" + fake_commit, None)
+
+
+@pytest.mark.skipif(not has_executable("ostree"), reason="need ostree")
+def test_ostree_copy_all(tmp_path, sources_service):
+    fake_httpd_root = tmp_path / "fake-httpd-root"
+    fake_httpd_root.mkdir(exist_ok=True)
+    fake_commit = make_repo(fake_httpd_root)
+    src_cache = tmp_path / "src-cache"
+    dst_cache = tmp_path / "dst-cache"
+
+    os.mkdir(src_cache)
+    os.mkdir(dst_cache)
+
+    with http_serve_directory(fake_httpd_root) as httpd:
+        test_sources = make_test_sources("http", httpd.server_port, fake_commit)
+        sources_service.setup({"cache": src_cache, "options": {}})
+        sources_service.fetch_all(test_sources)
+        sources_service.copy_all(test_sources, dst_cache)
+        assert sources_service.exists("sha256:" + fake_commit, None)
+        # ensure the commit exists in the dst_cache repo
+        ostree.show(dst_cache / sources_service.content_type / "repo", "sha256:" + fake_commit)
