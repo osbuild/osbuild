@@ -9,13 +9,6 @@ import pytest
 STAGE_NAME = "org.osbuild.bfb"
 
 
-@pytest.fixture(name="mocked_temp_dir")
-def mocked_temp_dir_fixture(tmp_path):
-    with patch("tempfile.TemporaryDirectory") as mock_temp_dir:
-        mock_temp_dir.return_value.__enter__.return_value = str(tmp_path)
-        yield tmp_path
-
-
 FAKE_INPUTS = {
     "kernel": {
         "path": "/input/kernel/path",
@@ -48,6 +41,12 @@ FAKE_INPUTS_WITH_ROOTFS = {
 }
 
 
+DEFAULT_BOOT_ARGS_V2 = (
+    "=console=hvc0 console=ttyAMA0 earlycon=pl011,0x13010000"
+    " initrd=initramfs modprobe.blacklist=mlxbf_pmc"
+)
+
+
 @pytest.mark.parametrize("inputs,options,expected_cmd_parts", [
     # Basic test - kernel + initramfs only
     (
@@ -58,7 +57,8 @@ FAKE_INPUTS_WITH_ROOTFS = {
             "--image", "/input/kernel/path/kernel-file",
             "--initramfs", "/input/initramfs/path/initramfs-file",
             "--capsule", "/lib/firmware/mellanox/boot/capsule/boot_update2.cap",
-            "--boot-args-v0", "--boot-args-v2",
+            "--boot-args-v0", "=",
+            "--boot-args-v2", DEFAULT_BOOT_ARGS_V2,
             "/lib/firmware/mellanox/boot/default.bfb",
         ]
     ),
@@ -69,9 +69,9 @@ FAKE_INPUTS_WITH_ROOTFS = {
         [
             "/usr/bin/mlx-mkbfb",
             "--image", "/input/kernel/path/kernel-file",
-            "--initramfs",  # Will be combined.img path
             "--capsule", "/lib/firmware/mellanox/boot/capsule/boot_update2.cap",
-            "--boot-args-v0", "--boot-args-v2",
+            "--boot-args-v0", "=",
+            "--boot-args-v2", DEFAULT_BOOT_ARGS_V2,
             "/lib/firmware/mellanox/boot/default.bfb",
         ]
     ),
@@ -101,11 +101,11 @@ def test_bfb_command_generation(
 
 
 @patch("subprocess.run")
-def test_bfb_rootfs_combination(mock_run, mocked_temp_dir, stage_module):
+def test_bfb_rootfs_combination(mock_run, tmp_path, stage_module):
     """Test that initramfs and rootfs are combined when rootfs is provided"""
 
     options = {"filename": "test.bfb"}
-    output_dir = str(mocked_temp_dir)
+    output_dir = str(tmp_path)
 
     with patch("builtins.open", unittest.mock.mock_open(read_data=b"fake_data")) as mock_file:
         stage_module.main(copy.deepcopy(FAKE_INPUTS_WITH_ROOTFS), output_dir, options)
