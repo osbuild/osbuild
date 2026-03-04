@@ -15,6 +15,9 @@ def depsolve_pkgset(
 
     with tempfile.TemporaryDirectory() as tempdir:
         base = libdnf5.base.Base()
+        # explicitly set arch as our test repos only include x86 metadata
+        base.get_vars().set("arch", "x86_64")
+        base.get_vars().set("basearch", "x86_64")
         conf = base.get_config()
         conf.config_file_path = "/dev/null"
         conf.persistdir = f"{tempdir}{conf.persistdir}"
