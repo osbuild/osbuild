@@ -81,6 +81,8 @@ DEFAULT_ENTRY_TEMPLATE = """set default="${default}"
 def main(root, options):
     name = options["product"]["name"]
     version = options["product"]["version"]
+    # NOTE: grub2dir could possibly be "" which needs to default to boot/grub2
+    grub2dir = os.path.join(root, options.get("grub2dir") or "boot/grub2")
     isolabel = options["isolabel"]
     kdir = options["kernel"].get("dir", "/images/pxeboot")
     kopts = options["kernel"].get("opts")
@@ -94,7 +96,6 @@ def main(root, options):
     platform = options.get("platform", "i386-pc")
     custom = options.get("custom", [])
 
-    grub2dir = os.path.join(root, "boot", "grub2")
     os.makedirs(grub2dir, exist_ok=True)
 
     # platform specific grub2 modules
