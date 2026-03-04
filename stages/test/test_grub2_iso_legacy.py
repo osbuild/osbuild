@@ -81,6 +81,10 @@ CONFIG_DEFAULT = """set default="1"
     ({"platform": "i386-pc"}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
     ({"platform": "powerpc-ieee1275"}, CONFIG_PART_1 + "\n" +
      CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
+    # configuration path
+    ({"grub2dir": "boot/grub2"}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
+    ({"grub2dir": ""}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
+    ({"grub2dir": "boot/grub"}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
     # fips menu enable
     ({"fips": True}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL +
      CONFIG_PART_TEST + CONFIG_FIPS + CONFIG_PART_TROUBLESHOOTING),
@@ -129,7 +133,9 @@ CONFIG_DEFAULT = """set default="1"
 ])
 def test_grub2_iso_legacy_smoke(mocked_copytree, tmp_path, stage_module, test_data, expected_conf):
     treedir = tmp_path / "tree"
-    confpath = treedir / "boot/grub2/grub.cfg"
+    # NOTE: grub2dir could possibly be "" which needs to default to boot/grub2
+    grub2dir = test_data.get("grub2dir") or "boot/grub2"
+    confpath = treedir / grub2dir / "grub.cfg"
     confpath.parent.mkdir(parents=True, exist_ok=True)
 
     # from fedora-ostree-bootiso-xz.json
@@ -158,7 +164,7 @@ def test_grub2_iso_legacy_smoke(mocked_copytree, tmp_path, stage_module, test_da
     assert os.path.exists(confpath)
     assert confpath.read_text() == expected_conf
     assert mocked_copytree.call_args_list == [
-        call(f"/usr/lib/grub/{platform}", os.fspath(treedir / "boot/grub2" / platform),
+        call(f"/usr/lib/grub/{platform}", os.fspath(treedir / grub2dir / platform),
              dirs_exist_ok=True),
     ]
 

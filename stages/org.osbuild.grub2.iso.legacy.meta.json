@@ -10,6 +10,11 @@
         "isolabel"
       ],
       "properties": {
+        "grub2dir": {
+          "description": "Directory to install grub.cfg into",
+          "type": "string",
+          "default": "boot/grub2"
+        },
         "product": {
           "type": "object",
           "additionalProperties": false,
