@@ -50,8 +50,6 @@ RPM:
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.1-ga-aarch64
       - RUNNER:
-          - aws/rhel-9.7-nightly-x86_64
-          - aws/rhel-9.7-nightly-aarch64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-9.8-nightly-aarch64
           - aws/rhel-10.2-nightly-x86_64
@@ -96,7 +94,6 @@ PQC keys:
     matrix:
       - RUNNER:
           - aws/fedora-42-x86_64
-          - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
@@ -161,8 +158,6 @@ Manifests:
       - RUNNER:
           - aws/rhel-9.6-ga-x86_64
           - aws/rhel-9.6-ga-aarch64
-          - aws/rhel-9.7-nightly-x86_64
-          - aws/rhel-9.7-nightly-aarch64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-9.8-nightly-aarch64
           - aws/rhel-10.1-ga-x86_64
