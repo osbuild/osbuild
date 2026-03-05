@@ -111,6 +111,7 @@ def _dnf_repo_to_repository(
         module_hotfixes=repo.module_hotfixes,
         enabled=repo.enabled,
         priority=repo.priority,
+        cost=repo.cost,
         skip_if_unavailable=repo.skip_if_unavailable,
         # username and password are intentionally omitted
     )
@@ -266,6 +267,8 @@ class DNF(SolverBase):
             repo.enabled = desc.enabled
         if desc.priority is not None:
             repo.priority = desc.priority
+        if desc.cost is not None:
+            repo.cost = desc.cost
         if desc.username:
             repo.username = desc.username
         if desc.password:

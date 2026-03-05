@@ -105,6 +105,7 @@ class Repository(ValidatedModel):
         "module_hotfixes": (bool, type(None)),
         "enabled": (bool, type(None)),
         "priority": (int, type(None)),
+        "cost": (int, type(None)),
         "username": (str, type(None)),
         "password": (str, type(None)),
         "skip_if_unavailable": (bool, type(None)),
@@ -138,6 +139,7 @@ class Repository(ValidatedModel):
         self.module_hotfixes: Optional[bool] = kwargs.pop("module_hotfixes", None)
         self.enabled: Optional[bool] = kwargs.pop("enabled", None)
         self.priority: Optional[int] = kwargs.pop("priority", None)
+        self.cost: Optional[int] = kwargs.pop("cost", None)
         self.username: Optional[str] = kwargs.pop("username", None)
         self.password: Optional[str] = kwargs.pop("password", None)
         self.skip_if_unavailable: Optional[bool] = kwargs.pop("skip_if_unavailable", None)
@@ -201,6 +203,7 @@ class Repository(ValidatedModel):
             and self.module_hotfixes == other.module_hotfixes
             and self.enabled == other.enabled
             and self.priority == other.priority
+            and self.cost == other.cost
             and self.username == other.username
             and self.password == other.password
             and self.skip_if_unavailable == other.skip_if_unavailable
@@ -225,6 +228,7 @@ class Repository(ValidatedModel):
             self.module_hotfixes,
             self.enabled,
             self.priority,
+            self.cost,
             self.username,
             self.password,
             self.skip_if_unavailable,
@@ -238,7 +242,7 @@ class Repository(ValidatedModel):
             f"sslcacert='{self.sslcacert}', sslclientkey='{self.sslclientkey}', " \
             f"sslclientcert='{self.sslclientcert}', metadata_expire='{self.metadata_expire}', " \
             f"module_hotfixes={self.module_hotfixes}, enabled={self.enabled}, priority={self.priority}, " \
-            f"username='{self.username}', password='{self.password}', " \
+            f"cost={self.cost}, username='{self.username}', password='{self.password}', " \
             f"skip_if_unavailable={self.skip_if_unavailable}, rhsm={self.rhsm})"
 
 
