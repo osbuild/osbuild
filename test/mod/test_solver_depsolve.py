@@ -10,20 +10,33 @@ from osbuild.solver.request import DepsolveCmdArgs, DepsolveTransaction
 from .conftest import instantiate_solver
 
 
-def _get_dnf4_solver_class():
-    dnf4_solver_module = pytest.importorskip("osbuild.solver.dnf")
-    return dnf4_solver_module.DNF
-
-
+# NB: _get_dnf5_solver_class() must be called BEFORE _get_dnf4_solver_class()
+# to avoid a shared library symbol collision. Both libdnf.so (DNF4) and
+# libdnf5.so export b_dmgettext() with incompatible implementations. The
+# dynamic linker resolves the symbol to whichever library was loaded first.
+# libdnf5's version is backward-compatible (handles both old and new
+# BgettextMessage formats), while libdnf's version doesn't understand
+# libdnf5's BGETTEXT_DOMAIN flag — causing garbled error messages.
+# By loading libdnf5 first, its b_dmgettext() wins and works for both.
 def _get_dnf5_solver_class():
     dnf5_solver_module = pytest.importorskip("osbuild.solver.dnf5")
     return dnf5_solver_module.DNF5
 
 
-@pytest.mark.parametrize("solver_class", [
-    pytest.param(_get_dnf4_solver_class(), id="dnf4"),
+def _get_dnf4_solver_class():
+    dnf4_solver_module = pytest.importorskip("osbuild.solver.dnf")
+    return dnf4_solver_module.DNF
+
+
+# The order matters: DNF5 must come first to avoid the b_dmgettext() symbol
+# collision described above.
+_SOLVER_CLASSES = [
     pytest.param(_get_dnf5_solver_class(), id="dnf5"),
-])
+    pytest.param(_get_dnf4_solver_class(), id="dnf4"),
+]
+
+
+@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
 def test_results_sorted(tmp_path, repo_servers, solver_class):
     cachedir = tmp_path / "cache"
     persistdir = tmp_path / "persist"
@@ -49,10 +62,7 @@ def test_results_sorted(tmp_path, repo_servers, solver_class):
     assert depsolve_result.repositories == sorted(depsolve_result.repositories, key=lambda x: x.repo_id)
 
 
-@pytest.mark.parametrize("solver_class", [
-    pytest.param(_get_dnf4_solver_class(), id="dnf4"),
-    pytest.param(_get_dnf5_solver_class(), id="dnf5"),
-])
+@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
 def test_rhsm_flag_set_on_repositories(tmp_path, repo_servers, solver_class):
     """
     Test that repositories returned by depsolve() have the correct rhsm flag.
@@ -87,11 +97,11 @@ def test_rhsm_flag_set_on_repositories(tmp_path, repo_servers, solver_class):
 
 
 @pytest.mark.parametrize("solver_class", [
-    pytest.param(_get_dnf4_solver_class(), id="dnf4"),
     pytest.param(
         _get_dnf5_solver_class(), id="dnf5",
         marks=pytest.mark.xfail(reason="DNF5 solver does not yet implement repo_ids restriction"),
     ),
+    pytest.param(_get_dnf4_solver_class(), id="dnf4"),
 ])
 def test_repoids_restricts_dependency_resolution(tmp_path, repo_servers, solver_class):
     """
