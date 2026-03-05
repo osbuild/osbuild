@@ -96,13 +96,7 @@ def test_rhsm_flag_set_on_repositories(tmp_path, repo_servers, solver_class):
         assert repo.rhsm is expected_rhsm, f"Expected rhsm={expected_rhsm} for repo {repo_id}"
 
 
-@pytest.mark.parametrize("solver_class", [
-    pytest.param(
-        _get_dnf5_solver_class(), id="dnf5",
-        marks=pytest.mark.xfail(reason="DNF5 solver does not yet implement repo_ids restriction"),
-    ),
-    pytest.param(_get_dnf4_solver_class(), id="dnf4"),
-])
+@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
 def test_repoids_restricts_dependency_resolution(tmp_path, repo_servers, solver_class):
     """
     Test that repo_ids restricts not just the explicitly requested packages,

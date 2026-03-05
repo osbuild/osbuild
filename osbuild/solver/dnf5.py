@@ -199,19 +199,6 @@ class DNF5(SolverBase):
         self.request_repo_ids = {repo.repo_id for repo in self.repos}
         self.root_dir = self.config.root_dir
 
-        # pylint: disable=fixme
-        # XXX: This should be handled in the depsolve() function, where we should be setting up the
-        # repos for each transaction, because the excluded packages are setup per-transaction!
-        # We stopped doing this because the full request is not available any more when constructing the Solver object.
-        # Since 'basic_pkg_group_with_excludes' and 'install_pkg_excluded_in_another_transaction' test cases are broken
-        # with dnf5 anyway, there is little harm in not gathering up all the exclude packages from all the transactions.
-        # The original behavior was incorrect anyway, because it would exclude the packages from all the transactions,
-        # which explicitly breaks 'install_pkg_excluded_in_another_transaction' test case.
-        # exclude_pkgs: List[str] = []
-        # if self.request.depsolve_args:
-        #     for transaction in self.request.depsolve_args.transactions:
-        #         exclude_pkgs.extend(transaction.exclude_specs or [])
-
         self.base = dnf5.base.Base()
 
         # Base is the correct place to set substitutions, not per-repo.
@@ -263,9 +250,6 @@ class DNF5(SolverBase):
         conf.optional_metadata_types = metadata_types
 
         try:
-            # NB: Package exclusion was previously handled here, but it should
-            # be handled in the depsolve() function per transaction instead.
-            # NOTE: With libdnf5 packages are excluded in the repo setup
             for repo_conf in self.repos:
                 self._dnfrepo(repo_conf)
 
@@ -473,6 +457,25 @@ class DNF5(SolverBase):
             sack = self.base.get_rpm_package_sack()
             sack.clear_user_excludes()
 
+            # Restrict dependency resolution to only use packages from the
+            # repos listed in repo_ids by excluding all packages from other
+            # repos from the sack. Without this, dependencies would be
+            # resolved from all enabled repos regardless of repo_ids.
+            if transaction.repo_ids:
+                allowed_repo_ids = set(transaction.repo_ids)
+                rq = dnf5.repo.RepoQuery(self.base)
+                rq.filter_enabled(True)
+                # libdnf5's RepoQuery doesn't support Python iteration
+                repo_iter = rq.begin()
+                while repo_iter != rq.end():
+                    repo = repo_iter.value()
+                    if repo.get_id() not in allowed_repo_ids:
+                        q = dnf5.rpm.PackageQuery(self.base)
+                        q.filter_available()
+                        q.filter_repo_id([repo.get_id()], EQ)
+                        sack.add_user_excludes(q)
+                    repo_iter.next()
+
             # weak deps are selected per-transaction
             self.base.get_config().install_weak_deps = transaction.install_weak_deps
 
@@ -484,8 +487,10 @@ class DNF5(SolverBase):
             settings = dnf5.base.GoalJobSettings()
             settings.group_with_name = True
 
-            # Packages are added individually
-            # XXX: Add package excludes handling here!
+            # pylint: disable=fixme
+            # XXX: Per-transaction exclude_specs are not yet handled for DNF5.
+            # See 'basic_pkg_group_with_excludes' and
+            # 'install_pkg_excluded_in_another_transaction' broken test cases.
             for package_spec in transaction.package_specs:
                 goal.add_install(package_spec, settings)
             goal_result = goal.resolve()
