@@ -87,10 +87,7 @@ def test_rhsm_flag_set_on_repositories(tmp_path, repo_servers, solver_class):
 
 
 @pytest.mark.parametrize("solver_class", [
-    pytest.param(
-        _get_dnf4_solver_class(), id="dnf4",
-        marks=pytest.mark.xfail(reason="DNF4 repo_ids restriction is not yet fully functional"),
-    ),
+    pytest.param(_get_dnf4_solver_class(), id="dnf4"),
     pytest.param(
         _get_dnf5_solver_class(), id="dnf5",
         marks=pytest.mark.xfail(reason="DNF5 solver does not yet implement repo_ids restriction"),
