@@ -59,6 +59,41 @@ metadata_expire = 86400
 enabled_metadata = 0
 """
 
+# RHUI repo file with client certs (typical on-prem or Azure RHUI)
+RHUI_REPO_FILE_WITH_CERTS = """[rhui-rhel-9-baseos]
+name = Red Hat Enterprise Linux 9 for $basearch - BaseOS from RHUI
+baseurl = https://rhui.example.com/pulp/mirror/content/dist/rhel9/$releasever/$basearch/baseos/os
+enabled = 1
+gpgcheck = 1
+gpgkey = file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+sslverify = 1
+sslcacert = /etc/pki/rhui/cdn.redhat.com-chain.crt
+sslclientkey = /etc/pki/rhui/content-key.pem
+sslclientcert = /etc/pki/rhui/content.crt
+
+[rhui-rhel-9-appstream]
+name = Red Hat Enterprise Linux 9 for $basearch - AppStream from RHUI
+baseurl = https://rhui.example.com/pulp/mirror/content/dist/rhel9/$releasever/$basearch/appstream/os
+enabled = 1
+gpgcheck = 1
+gpgkey = file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+sslverify = 1
+sslcacert = /etc/pki/rhui/cdn.redhat.com-chain.crt
+sslclientkey = /etc/pki/rhui/content-key.pem
+sslclientcert = /etc/pki/rhui/content.crt
+"""
+
+# RHUI repo file without client certs (cloud RHUI using instance identity)
+RHUI_REPO_FILE_NO_CLIENT_CERTS = """[rhui-azure-rhel9-baseos]
+name = Red Hat Enterprise Linux 9 for $basearch - BaseOS from RHUI (Azure)
+baseurl = https://rhui4-1.microsoft.com/pulp/mirror/content/dist/rhel9/$releasever/$basearch/baseos/os
+enabled = 1
+gpgcheck = 1
+gpgkey = file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+sslverify = 1
+sslcacert = /etc/pki/rhui/cdn.redhat.com-chain.crt
+"""
+
 
 @contextlib.contextmanager
 def patched_path_exists(fake_root):
@@ -335,3 +370,120 @@ sslclientcert = /etc/pki/entitlement/999.pem
         assert secrets["ssl_ca_cert"] == "/fallback/ca.pem"
         assert secrets["ssl_client_key"] == "/fallback/key.pem"
         assert secrets["ssl_client_cert"] == "/fallback/cert.pem"
+
+
+class TestRHUIRepoFiles:
+    """Tests for RHUI (Red Hat Update Infrastructure) repo file parsing."""
+
+    def test_parse_rhui_repo_with_client_certs(self):
+        subscriptions = Subscriptions.parse_repo_file(StringIO(RHUI_REPO_FILE_WITH_CERTS))
+        assert subscriptions.repositories is not None
+        assert "rhui-rhel-9-baseos" in subscriptions.repositories
+        assert "rhui-rhel-9-appstream" in subscriptions.repositories
+
+        baseos = subscriptions.repositories["rhui-rhel-9-baseos"]
+        assert baseos["sslcacert"] == "/etc/pki/rhui/cdn.redhat.com-chain.crt"
+        assert baseos["sslclientkey"] == "/etc/pki/rhui/content-key.pem"
+        assert baseos["sslclientcert"] == "/etc/pki/rhui/content.crt"
+
+    def test_parse_rhui_repo_without_client_certs(self):
+        subscriptions = Subscriptions.parse_repo_file(StringIO(RHUI_REPO_FILE_NO_CLIENT_CERTS))
+        assert subscriptions.repositories is not None
+        assert "rhui-azure-rhel9-baseos" in subscriptions.repositories
+
+        baseos = subscriptions.repositories["rhui-azure-rhel9-baseos"]
+        assert baseos["sslcacert"] == "/etc/pki/rhui/cdn.redhat.com-chain.crt"
+        assert baseos["sslclientkey"] == ""
+        assert baseos["sslclientcert"] == ""
+
+    def test_rhui_url_matching_with_certs(self):
+        subscriptions = Subscriptions.parse_repo_file(StringIO(RHUI_REPO_FILE_WITH_CERTS))
+        url = "https://rhui.example.com/pulp/mirror/content/dist/rhel9/9/x86_64/baseos/os/Packages/bash-5.1.rpm"
+        secrets = subscriptions.get_secrets([url])
+
+        assert secrets["ssl_ca_cert"] == "/etc/pki/rhui/cdn.redhat.com-chain.crt"
+        assert secrets["ssl_client_key"] == "/etc/pki/rhui/content-key.pem"
+        assert secrets["ssl_client_cert"] == "/etc/pki/rhui/content.crt"
+
+    def test_rhui_url_matching_without_client_certs(self):
+        subscriptions = Subscriptions.parse_repo_file(StringIO(RHUI_REPO_FILE_NO_CLIENT_CERTS))
+        url = "https://rhui4-1.microsoft.com/pulp/mirror/content/dist/rhel9/9/x86_64/baseos/os/Packages/bash.rpm"
+        secrets = subscriptions.get_secrets([url])
+
+        assert secrets["ssl_ca_cert"] == "/etc/pki/rhui/cdn.redhat.com-chain.crt"
+        assert secrets["ssl_client_key"] == ""
+        assert secrets["ssl_client_cert"] == ""
+
+    def test_parse_repo_skips_sections_without_baseurl(self):
+        """Sections without a baseurl (e.g. source or debug repos using metalink only) are skipped."""
+        repo_content = """[rhui-baseos]
+name = BaseOS
+baseurl = https://rhui.example.com/baseos/$basearch/os
+sslcacert = /etc/pki/rhui/ca.crt
+
+[rhui-debug]
+name = Debug (no baseurl)
+metalink = https://rhui.example.com/metalink/debug
+sslcacert = /etc/pki/rhui/ca.crt
+"""
+        subscriptions = Subscriptions.parse_repo_file(StringIO(repo_content))
+        assert "rhui-baseos" in subscriptions.repositories
+        assert "rhui-debug" not in subscriptions.repositories
+
+    def test_from_rhui_repo_files(self, tmp_path):
+        """Test _from_rhui_repo_files discovers and merges RHUI repo files."""
+        make_fake_tree(tmp_path, {
+            "etc/yum.repos.d/rhui-microsoft-azure-rhel9.repo": RHUI_REPO_FILE_WITH_CERTS,
+            "etc/yum.repos.d/rhui-microsoft-azure-rhel9-eus.repo": RHUI_REPO_FILE_NO_CLIENT_CERTS,
+        })
+        rhui_glob = os.path.join(tmp_path, "etc/yum.repos.d/rhui-*.repo")
+        with patch("osbuild.util.rhsm.RHUI_REPO_GLOB_PATTERN", rhui_glob):
+            result = Subscriptions._from_rhui_repo_files()
+        assert result.repositories is not None
+        assert "rhui-rhel-9-baseos" in result.repositories
+        assert "rhui-rhel-9-appstream" in result.repositories
+        assert "rhui-azure-rhel9-baseos" in result.repositories
+
+    def test_from_host_system_rhui_fallback(self, tmp_path):
+        """from_host_system finds RHUI repos when no redhat.repo exists."""
+        make_fake_tree(tmp_path, {
+            "etc/yum.repos.d/rhui-microsoft-azure-rhel9.repo": RHUI_REPO_FILE_WITH_CERTS,
+        })
+        rhui_glob = os.path.join(tmp_path, "etc/yum.repos.d/rhui-*.repo")
+        fake_redhat_repo = os.path.join(tmp_path, "etc/yum.repos.d/redhat.repo")
+        with patch.object(Subscriptions, "DEFAULT_REPO_FILE", fake_redhat_repo), \
+             patch("osbuild.util.rhsm.RHUI_REPO_GLOB_PATTERN", rhui_glob):
+            subs = Subscriptions.from_host_system()
+        assert subs.repositories is not None
+        assert "rhui-rhel-9-baseos" in subs.repositories
+
+        url = "https://rhui.example.com/pulp/mirror/content/dist/rhel9/9/x86_64/baseos/os/Packages/test.rpm"
+        secrets = subs.get_secrets([url])
+        assert secrets["ssl_ca_cert"] == "/etc/pki/rhui/cdn.redhat.com-chain.crt"
+        assert secrets["ssl_client_key"] == "/etc/pki/rhui/content-key.pem"
+        assert secrets["ssl_client_cert"] == "/etc/pki/rhui/content.crt"
+
+    def test_from_host_system_rhsm_preferred_over_rhui(self, tmp_path):
+        """When both redhat.repo and RHUI repos exist, RHSM takes precedence."""
+        make_fake_tree(tmp_path, {
+            "etc/yum.repos.d/redhat.repo": REPO_FILE,
+            "etc/yum.repos.d/rhui-azure.repo": RHUI_REPO_FILE_WITH_CERTS,
+        })
+        fake_redhat_repo = os.path.join(tmp_path, "etc/yum.repos.d/redhat.repo")
+        rhui_glob = os.path.join(tmp_path, "etc/yum.repos.d/rhui-*.repo")
+        with patch.object(Subscriptions, "DEFAULT_REPO_FILE", fake_redhat_repo), \
+             patch("osbuild.util.rhsm.RHUI_REPO_GLOB_PATTERN", rhui_glob):
+            subs = Subscriptions.from_host_system()
+        # RHSM repos are found so RHUI is not checked
+        assert "jpp" in subs.repositories
+        assert "rhui-rhel-9-baseos" not in subs.repositories
+
+    def test_from_host_system_no_rhsm_no_rhui_raises(self, tmp_path):
+        """When neither RHSM nor RHUI repos exist, RuntimeError is raised."""
+        fake_redhat_repo = os.path.join(tmp_path, "etc/yum.repos.d/redhat.repo")
+        rhui_glob = os.path.join(tmp_path, "etc/yum.repos.d/rhui-*.repo")
+        with patch.object(Subscriptions, "DEFAULT_REPO_FILE", fake_redhat_repo), \
+             patch("osbuild.util.rhsm.RHUI_REPO_GLOB_PATTERN", rhui_glob), \
+             patch.object(Subscriptions, "DEFAULT_ENTITLEMENT_DIR", os.path.join(tmp_path, "etc/pki/entitlement")):
+            with pytest.raises(RuntimeError, match="No RHSM or RHUI secrets found"):
+                Subscriptions.from_host_system()

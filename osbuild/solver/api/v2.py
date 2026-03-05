@@ -104,9 +104,20 @@ def _repository_as_dict(repository: Repository) -> Dict[str, Any]:
 
     All fields from the Repository model are included for schema consistency.
 
-    When repository.rhsm=True, SSL secret fields (sslcacert, sslclientkey, sslclientcert)
-    are set to None as they contain host-specific RHSM secrets that should not be exposed.
+    When either repository.rhsm or repository.rhui is set, SSL secret fields
+    (sslcacert, sslclientkey, sslclientcert) are set to None as they contain
+    host-specific secrets that should not be exposed.
     """
+    # Determine the secrets provider for this repository.
+    # This tells the caller which osbuild secrets provider to use for packages
+    # from this repo, so it doesn't need to compute it from the flags.
+    if repository.rhui:
+        secrets = "org.osbuild.rhui"
+    elif repository.rhsm:
+        secrets = "org.osbuild.rhsm"
+    else:
+        secrets = None
+
     d = {
         "id": repository.repo_id,
         "name": repository.name,
@@ -120,11 +131,13 @@ def _repository_as_dict(repository: Repository) -> Dict[str, Any]:
         "metadata_expire": repository.metadata_expire,
         "module_hotfixes": repository.module_hotfixes,
         "rhsm": repository.rhsm,
-        # SSL secrets are set to None when using RHSM (host-specific secrets not applicable),
+        "rhui": repository.rhui,
+        "secrets": secrets,
+        # SSL secrets are set to None when using RHSM/RHUI (host-specific secrets not applicable),
         # otherwise return the actual values from DNF (which may be empty strings if not configured)
-        "sslcacert": None if repository.rhsm else repository.sslcacert,
-        "sslclientkey": None if repository.rhsm else repository.sslclientkey,
-        "sslclientcert": None if repository.rhsm else repository.sslclientcert,
+        "sslcacert": None if secrets else repository.sslcacert,
+        "sslclientkey": None if secrets else repository.sslclientkey,
+        "sslclientcert": None if secrets else repository.sslclientcert,
     }
     return d
 
@@ -311,6 +324,8 @@ def _parse_repository(repo_dict: Dict[str, Any]) -> Repository:
         kwargs["module_hotfixes"] = repo_dict["module_hotfixes"]
     if "rhsm" in repo_dict:
         kwargs["rhsm"] = repo_dict["rhsm"]
+    if "rhui" in repo_dict:
+        kwargs["rhui"] = repo_dict["rhui"]
     if "enabled" in repo_dict:
         kwargs["enabled"] = repo_dict["enabled"]
     if "priority" in repo_dict:

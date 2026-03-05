@@ -137,6 +137,7 @@ class LibRepoSource(sources.SourceService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.subscriptions = None
+        self.rhui_secrets = None
         self.errors = []
 
     def fetch_one(self, checksum, desc) -> None:
@@ -168,6 +169,22 @@ class LibRepoSource(sources.SourceService):
         handle.sslcacert = os.getenv("OSBUILD_SOURCES_CURL_SSL_CA_CERT")
         handle.sslclientcert = cert
         handle.sslclientkey = key
+
+    def _setup_rhui(self, handle, mirror):
+        """Setup RHUI cloud identity headers and SSL certs."""
+        if self.rhui_secrets is None:
+            from osbuild.util.rhui import get_rhui_secrets
+            self.rhui_secrets = get_rhui_secrets([mirror["url"]])
+
+        secrets = self.rhui_secrets
+        if secrets.get('ssl_ca_cert'):
+            handle.sslcacert = secrets['ssl_ca_cert']
+        if secrets.get('ssl_client_cert'):
+            handle.sslclientcert = secrets['ssl_client_cert']
+        if secrets.get('ssl_client_key'):
+            handle.sslclientkey = secrets['ssl_client_key']
+        if secrets.get('headers'):
+            handle.httpheader = secrets['headers']
 
     # This gets called when done
     # data comes from cbdata
@@ -257,6 +274,8 @@ class LibRepoSource(sources.SourceService):
                 self._setup_rhsm(handle, mirror)
             elif secrets_name == "org.osbuild.mtls":
                 self._setup_mtls(handle)
+            elif secrets_name == "org.osbuild.rhui":
+                self._setup_rhui(handle, mirror)
 
             download = []
             for path, checksum in packages:

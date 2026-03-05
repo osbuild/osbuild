@@ -109,6 +109,7 @@ class Repository(ValidatedModel):
         "password": (str, type(None)),
         "skip_if_unavailable": (bool, type(None)),
         "rhsm": bool,
+        "rhui": bool,
     }
 
     def __init__(
@@ -151,6 +152,11 @@ class Repository(ValidatedModel):
         # constructor. Similarly, an API implementation may choose to omit these
         # values from the API response if this flag is True.
         self.rhsm: bool = kwargs.pop("rhsm", False)
+
+        # Whether this repository uses RHUI (Red Hat Update Infrastructure)
+        # secrets from the host system. If True, the solver will discover
+        # SSL certs from /etc/pki/rhui/ via the host RHUI repo files.
+        self.rhui: bool = kwargs.pop("rhui", False)
 
         if kwargs:
             raise ValueError(
@@ -205,6 +211,7 @@ class Repository(ValidatedModel):
             and self.password == other.password
             and self.skip_if_unavailable == other.skip_if_unavailable
             and self.rhsm == other.rhsm
+            and self.rhui == other.rhui
         )
 
     def __hash__(self) -> int:
@@ -229,6 +236,7 @@ class Repository(ValidatedModel):
             self.password,
             self.skip_if_unavailable,
             self.rhsm,
+            self.rhui,
         ))
 
     def __repr__(self) -> str:
@@ -239,7 +247,7 @@ class Repository(ValidatedModel):
             f"sslclientcert='{self.sslclientcert}', metadata_expire='{self.metadata_expire}', " \
             f"module_hotfixes={self.module_hotfixes}, enabled={self.enabled}, priority={self.priority}, " \
             f"username='{self.username}', password='{self.password}', " \
-            f"skip_if_unavailable={self.skip_if_unavailable}, rhsm={self.rhsm})"
+            f"skip_if_unavailable={self.skip_if_unavailable}, rhsm={self.rhsm}, rhui={self.rhui})"
 
 
 class Dependency:

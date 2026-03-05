@@ -399,6 +399,7 @@ class DNF5(SolverBase):
         """
         repo_model = _dnf_repo_to_repository(repo, self.root_dir, self.request_repo_ids)
         self.set_rhsm_flag(repo_model)
+        self.set_rhui_flag(repo_model)
         return repo_model
 
     def dump(self) -> model.DumpResult:
