@@ -4,6 +4,7 @@ Test the depsolve() method of the DNF solver implementations (DNF4 and DNF5).
 
 import pytest
 
+from osbuild.solver.exceptions import DepsolveError
 from osbuild.solver.request import DepsolveCmdArgs, DepsolveTransaction
 
 from .conftest import instantiate_solver
@@ -83,3 +84,49 @@ def test_rhsm_flag_set_on_repositories(tmp_path, repo_servers, solver_class):
     for repo_id, repo in repos_by_id.items():
         expected_rhsm = repo_id == "baseos"
         assert repo.rhsm is expected_rhsm, f"Expected rhsm={expected_rhsm} for repo {repo_id}"
+
+
+@pytest.mark.parametrize("solver_class", [
+    pytest.param(
+        _get_dnf4_solver_class(), id="dnf4",
+        marks=pytest.mark.xfail(reason="DNF4 repo_ids restriction is not yet fully functional"),
+    ),
+    pytest.param(
+        _get_dnf5_solver_class(), id="dnf5",
+        marks=pytest.mark.xfail(reason="DNF5 solver does not yet implement repo_ids restriction"),
+    ),
+])
+def test_repoids_restricts_dependency_resolution(tmp_path, repo_servers, solver_class):
+    """
+    Test that repo_ids restricts not just the explicitly requested packages,
+    but also their dependencies during dependency resolution.
+
+    The 'appstream' repo contains 'vim' which has dependencies in 'baseos'.
+    If only 'appstream' is allowed, the depsolve must fail because the
+    dependencies from 'baseos' are not available.
+    """
+    cachedir = tmp_path / "cache"
+    persistdir = tmp_path / "persist"
+    solver = instantiate_solver(solver_class, cachedir, persistdir, repo_servers)
+
+    # First, verify that depsolving 'vim' succeeds when both 'appstream' and
+    # 'baseos' are enabled, to make sure the test package and repos are valid.
+    depsolve_args_ok = DepsolveCmdArgs(
+        transactions=[
+            DepsolveTransaction(package_specs=["vim"], repo_ids=["appstream", "baseos"]),
+        ]
+    )
+    result = solver.depsolve(depsolve_args_ok)
+    assert len(result.transactions[0]) > 0
+
+    # Now, restrict to only 'appstream'. The depsolve must fail because
+    # vim's dependencies from 'baseos' are no longer available.
+    # Both DNF4 and DNF5 are expected to raise DepsolveError here because the
+    # dependency resolution fails, not just the initial package marking/selection.
+    depsolve_args_fail = DepsolveCmdArgs(
+        transactions=[
+            DepsolveTransaction(package_specs=["vim"], repo_ids=["appstream"]),
+        ]
+    )
+    with pytest.raises(DepsolveError, match="is filtered out by exclude filtering"):
+        solver.depsolve(depsolve_args_fail)
