@@ -4,6 +4,7 @@ import tempfile
 from typing import Dict, List, Optional, Set
 
 import libdnf5 as dnf5
+from libdnf5.base import GoalProblem_EXCLUDED as EXCLUDED
 from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
 from libdnf5.base import GoalProblem_NOT_FOUND as NOT_FOUND
 from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
@@ -16,6 +17,12 @@ from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError,
 from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverConfig
 from osbuild.util.sbom.dnf5 import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
+
+# GoalProblem flags that represent package marking/selection failures (as
+# opposed to dependency resolution failures). When the returned problem
+# bitmask contains only these flags, we raise MarkingError to be consistent
+# with DNF4, which raises MarkingError from install_specs().
+MARKING_PROBLEMS = NOT_FOUND | EXCLUDED
 
 
 def remote_location(package, schemes=("http", "ftp", "file", "https")):
@@ -481,10 +488,11 @@ class DNF5(SolverBase):
             goal_result = goal.resolve()
 
             transaction_problems = goal_result.get_problems()
-            if transaction_problems == NOT_FOUND:
-                raise MarkingError("\n".join(goal_result.get_resolve_logs_as_strings()))
             if transaction_problems != NO_PROBLEM:
-                raise DepsolveError("\n".join(goal_result.get_resolve_logs_as_strings()))
+                error_msg = "\n".join(goal_result.get_resolve_logs_as_strings())
+                if not (transaction_problems & ~MARKING_PROBLEMS):
+                    raise MarkingError(error_msg)
+                raise DepsolveError(error_msg)
 
             transaction_result = []
             # store the current transaction result
