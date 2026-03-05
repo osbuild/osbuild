@@ -251,6 +251,19 @@ class TestRepository:
             False,
             id="different_metadata_expire"
         ),
+        # Integer fields
+        pytest.param(
+            {"baseurl": ["http://example.com/r1"], "cost": 500},
+            {"baseurl": ["http://example.com/r1"], "cost": 500},
+            True,
+            id="same_cost"
+        ),
+        pytest.param(
+            {"baseurl": ["http://example.com/r1"], "cost": 500},
+            {"baseurl": ["http://example.com/r1"], "cost": 1000},
+            False,
+            id="different_cost"
+        ),
     ])
     def test_equality(self, kwargs1, kwargs2, expected):
         repo1 = Repository(kwargs1.pop("repo_id", "fedora"), **kwargs1)
@@ -343,6 +356,10 @@ class TestRepository:
         pytest.param(
             {"metadata_expire": 1234},
             r"Repository\.metadata_expire: expected str or None, got int", id="metadata_expire_list"
+        ),
+        pytest.param(
+            {"cost": "500"},
+            r"Repository\.cost: expected int or None, got str", id="cost_str"
         ),
     ])
     def test_invalid_attr_type(self, kwargs, expected_error):

@@ -315,6 +315,8 @@ def _parse_repository(repo_dict: Dict[str, Any]) -> Repository:
         kwargs["enabled"] = repo_dict["enabled"]
     if "priority" in repo_dict:
         kwargs["priority"] = repo_dict["priority"]
+    if "cost" in repo_dict:
+        kwargs["cost"] = repo_dict["cost"]
     if "username" in repo_dict:
         kwargs["username"] = repo_dict["username"]
     if "password" in repo_dict:

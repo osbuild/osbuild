@@ -145,6 +145,7 @@ TEST_REPOSITORY = Repository(
     module_hotfixes=False,
     enabled=True,
     priority=99,
+    cost=1000,
     skip_if_unavailable=False,
 )
 
