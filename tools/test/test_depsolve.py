@@ -1878,8 +1878,6 @@ def test_depsolve(tmp_path, repo_servers, dnf_config, detect_fn, test_case, api_
     # pylint: disable=fixme
     # TODO: remove this once dnf5 implementation is fixed
     dnf5_broken_test_cases = [
-        "basic_pkg_group_with_excludes",
-        "install_pkg_excluded_in_another_transaction",
         "basic_module",
     ]
 
