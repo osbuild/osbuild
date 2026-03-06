@@ -3,6 +3,8 @@
 import os
 from unittest import mock
 
+import pytest
+
 from osbuild.testutil import make_fake_input_tree
 
 STAGE_NAME = "org.osbuild.xorrisofs"
@@ -213,3 +215,74 @@ def test_xorrisofs_grub2_with_excludes(mock_exists, mock_run, tmp_path, stage_mo
         "-o", os.path.join(tmp_path, "test.iso"),
         fake_input_tree,
     ], check=True)
+
+
+@mock.patch("subprocess.run")
+@mock.patch("os.path.exists")
+def test_xorrisofs_grub2_ppc64le(mock_exists, mock_run, tmp_path, stage_module):
+    mock_exists.return_value = True
+
+    fake_input_tree = make_fake_input_tree(tmp_path, {})
+
+    inputs = {
+        "tree": {
+            "path": fake_input_tree,
+        }
+    }
+
+    stage_module.main(
+        inputs,
+        tmp_path,
+        {
+            "filename": "test.iso",
+            "volid": "test",
+            "prep": "image-builder",
+            "rational_rock": True,
+            "untranslated_filenames": True,
+            "full_filenames": True,
+            "volset": "Fedora-43-Everything-ppc64le",
+            "chrp_boot": True,
+        },
+    )
+
+    mock_run.assert_called_with([
+        "/usr/bin/xorrisofs",
+        "-verbose",
+        "-rock",
+        "-joliet",
+        "-V", "test",
+        "-preparer", "image-builder",
+        "-rational-rock",
+        "-untranslated-filenames",
+        "-full-iso9660-filenames",
+        "-volset", "Fedora-43-Everything-ppc64le",
+        "-volset-size", "1",
+        "-volset-seqno", "1",
+        "-chrp-boot",
+        "-o", os.path.join(tmp_path, "test.iso"),
+        fake_input_tree,
+    ], check=True)
+
+
+# NOTE: run is mocked so that if an error isn't raised it won't run xorrisofs
+@mock.patch("subprocess.run")
+def test_xorrisofs_grub2_ppc64le_efi_error(_mock_run, tmp_path, stage_module):
+    fake_input_tree = make_fake_input_tree(tmp_path, {})
+
+    inputs = {
+        "tree": {
+            "path": fake_input_tree,
+        }
+    }
+
+    with pytest.raises(RuntimeError):
+        stage_module.main(
+            inputs,
+            tmp_path,
+            {
+                "filename": "test.iso",
+                "volid": "test",
+                "efi": "images/efiboot.img",
+                "chrp_boot": True,
+            },
+        )

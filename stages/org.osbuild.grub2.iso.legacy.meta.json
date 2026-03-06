@@ -10,6 +10,11 @@
         "isolabel"
       ],
       "properties": {
+        "grub2dir": {
+          "description": "Directory to install grub.cfg into",
+          "type": "string",
+          "default": "boot/grub2"
+        },
         "product": {
           "type": "object",
           "additionalProperties": false,
@@ -61,6 +66,14 @@
         "install": {
           "type": "boolean",
           "default": true
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "i386-pc",
+            "powerpc-ieee1275"
+          ],
+          "default": "i386-pc"
         },
         "custom": {
           "type": "array",
