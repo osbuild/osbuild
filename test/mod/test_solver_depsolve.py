@@ -7,8 +7,6 @@ import pytest
 from osbuild.solver.exceptions import DepsolveError
 from osbuild.solver.request import DepsolveCmdArgs, DepsolveTransaction
 
-from .conftest import instantiate_solver
-
 
 # NB: _get_dnf5_solver_class() must be called BEFORE _get_dnf4_solver_class()
 # to avoid a shared library symbol collision. Both libdnf.so (DNF4) and
@@ -36,12 +34,8 @@ _SOLVER_CLASSES = [
 ]
 
 
-@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
-def test_results_sorted(tmp_path, repo_servers, solver_class):
-    cachedir = tmp_path / "cache"
-    persistdir = tmp_path / "persist"
-    solver = instantiate_solver(solver_class, cachedir, persistdir, repo_servers)
-
+@pytest.mark.parametrize("solver", _SOLVER_CLASSES, indirect=True)
+def test_results_sorted(solver):
     depsolve_args = DepsolveCmdArgs(
         transactions=[
             DepsolveTransaction(package_specs=["bash"]),
@@ -62,18 +56,14 @@ def test_results_sorted(tmp_path, repo_servers, solver_class):
     assert depsolve_result.repositories == sorted(depsolve_result.repositories, key=lambda x: x.repo_id)
 
 
-@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
-def test_rhsm_flag_set_on_repositories(tmp_path, repo_servers, solver_class):
+@pytest.mark.parametrize("solver", _SOLVER_CLASSES, indirect=True)
+def test_rhsm_flag_set_on_repositories(solver):
     """
     Test that repositories returned by depsolve() have the correct rhsm flag.
 
     This test bypasses actual RHSM secrets discovery by directly manipulating
     the solver's repo_ids_with_rhsm set after instantiation.
     """
-    cachedir = tmp_path / "cache"
-    persistdir = tmp_path / "persist"
-    solver = instantiate_solver(solver_class, cachedir, persistdir, repo_servers)
-
     # Simulate that "baseos" repo was configured with rhsm=True
     # by directly setting repo_ids_with_rhsm (bypassing RHSM secrets discovery)
     solver.repo_ids_with_rhsm = {"baseos"}
@@ -96,8 +86,8 @@ def test_rhsm_flag_set_on_repositories(tmp_path, repo_servers, solver_class):
         assert repo.rhsm is expected_rhsm, f"Expected rhsm={expected_rhsm} for repo {repo_id}"
 
 
-@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
-def test_repoids_restricts_dependency_resolution(tmp_path, repo_servers, solver_class):
+@pytest.mark.parametrize("solver", _SOLVER_CLASSES, indirect=True)
+def test_repoids_restricts_dependency_resolution(solver):
     """
     Test that repo_ids restricts not just the explicitly requested packages,
     but also their dependencies during dependency resolution.
@@ -106,10 +96,6 @@ def test_repoids_restricts_dependency_resolution(tmp_path, repo_servers, solver_
     If only 'appstream' is allowed, the depsolve must fail because the
     dependencies from 'baseos' are not available.
     """
-    cachedir = tmp_path / "cache"
-    persistdir = tmp_path / "persist"
-    solver = instantiate_solver(solver_class, cachedir, persistdir, repo_servers)
-
     # First, verify that depsolving 'vim' succeeds when both 'appstream' and
     # 'baseos' are enabled, to make sure the test package and repos are valid.
     depsolve_args_ok = DepsolveCmdArgs(
@@ -133,8 +119,8 @@ def test_repoids_restricts_dependency_resolution(tmp_path, repo_servers, solver_
         solver.depsolve(depsolve_args_fail)
 
 
-@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
-def test_exclude_specs_removes_packages(tmp_path, repo_servers, solver_class):
+@pytest.mark.parametrize("solver", _SOLVER_CLASSES, indirect=True)
+def test_exclude_specs_removes_packages(solver):
     """
     Test that exclude_specs prevents excluded packages from being used
     during dependency resolution, including as dependencies.
@@ -142,10 +128,6 @@ def test_exclude_specs_removes_packages(tmp_path, repo_servers, solver_class):
     'bash' depends on 'ncurses-libs'. Excluding 'ncurses-libs' should
     cause the depsolve to fail because the dependency cannot be satisfied.
     """
-    cachedir = tmp_path / "cache"
-    persistdir = tmp_path / "persist"
-    solver = instantiate_solver(solver_class, cachedir, persistdir, repo_servers)
-
     # First, verify that depsolving 'bash' succeeds without excludes.
     depsolve_args_ok = DepsolveCmdArgs(
         transactions=[
@@ -166,8 +148,8 @@ def test_exclude_specs_removes_packages(tmp_path, repo_servers, solver_class):
         solver.depsolve(depsolve_args_fail)
 
 
-@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
-def test_exclude_specs_scoped_per_transaction(tmp_path, repo_servers, solver_class):
+@pytest.mark.parametrize("solver", _SOLVER_CLASSES, indirect=True)
+def test_exclude_specs_scoped_per_transaction(solver):
     """
     Test that exclude_specs are scoped per-transaction and do not leak
     across transactions.
@@ -177,10 +159,6 @@ def test_exclude_specs_scoped_per_transaction(tmp_path, repo_servers, solver_cla
     This must succeed, proving that the exclude from the first transaction
     does not affect the second.
     """
-    cachedir = tmp_path / "cache"
-    persistdir = tmp_path / "persist"
-    solver = instantiate_solver(solver_class, cachedir, persistdir, repo_servers)
-
     depsolve_args = DepsolveCmdArgs(
         transactions=[
             DepsolveTransaction(package_specs=["bash"], exclude_specs=["pkg-with-no-deps"]),
