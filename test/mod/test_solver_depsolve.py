@@ -133,13 +133,7 @@ def test_repoids_restricts_dependency_resolution(tmp_path, repo_servers, solver_
         solver.depsolve(depsolve_args_fail)
 
 
-@pytest.mark.parametrize("solver_class", [
-    pytest.param(
-        _get_dnf5_solver_class(), id="dnf5",
-        marks=pytest.mark.xfail(reason="DNF5 solver does not yet implement exclude_specs"),
-    ),
-    pytest.param(_get_dnf4_solver_class(), id="dnf4"),
-])
+@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
 def test_exclude_specs_removes_packages(tmp_path, repo_servers, solver_class):
     """
     Test that exclude_specs prevents excluded packages from being used
