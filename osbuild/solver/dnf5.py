@@ -483,14 +483,26 @@ class DNF5(SolverBase):
             for installed_pkg in last_dnf_transaction:
                 goal.add_rpm_install(installed_pkg)
 
+            # NOTE: DNF4's install_specs() accepts exclude_specs directly and handles exclusion internally using
+            # sack.add_excludes(). DNF5's Goal API has no equivalent -- add_install() only accepts package specs,
+            # not excludes. To achieve the same effect, we explicitly exclude matching packages from the sack using
+            # sack.add_user_excludes(), the same mechanism used for repo_ids filtering above. The excludes are scoped
+            # per-transaction because sack.clear_user_excludes() is called at the start of each iteration. This block
+            # is placed after add_rpm_install() (which re-adds packages from previous transactions) to match DNF4's
+            # ordering, where package_install() precedes install_specs(). Note that sack-level excludes do not affect
+            # packages already added to the goal via add_rpm_install(), so excludes only influence the resolution
+            # of newly requested packages.
+            if transaction.exclude_specs:
+                for exclude_spec in transaction.exclude_specs:
+                    q = dnf5.rpm.PackageQuery(self.base)
+                    q.filter_available()
+                    q.filter_name([exclude_spec], GLOB)
+                    sack.add_user_excludes(q)
+
             # Support group/environment names as well as ids
             settings = dnf5.base.GoalJobSettings()
             settings.group_with_name = True
 
-            # pylint: disable=fixme
-            # XXX: Per-transaction exclude_specs are not yet handled for DNF5.
-            # See 'basic_pkg_group_with_excludes' and
-            # 'install_pkg_excluded_in_another_transaction' broken test cases.
             for package_spec in transaction.package_specs:
                 goal.add_install(package_spec, settings)
             goal_result = goal.resolve()
