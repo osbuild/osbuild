@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import os
 from typing import List
 from unittest.mock import patch
 
@@ -11,6 +12,7 @@ except ImportError:
 import pytest
 
 from osbuild import testutil
+from osbuild.testutil.net import http_serve_directory
 
 SOURCES_NAME = "org.osbuild.librepo"
 
@@ -193,3 +195,55 @@ def test_schema_validation(sources_schema, test_mirrors, expected_err):
     else:
         assert res.valid is False
         testutil.assert_jsonschema_error_contains(res, expected_err)
+
+
+def test_librepo_copy_all(tmp_path, sources_service):
+    src_cache = tmp_path / "src-cache"
+    dst_cache = tmp_path / "dst-cache"
+    fake_httpd_root = tmp_path / "fake-httpd-root"
+    os.mkdir(src_cache)
+    os.mkdir(dst_cache)
+    os.mkdir(fake_httpd_root)
+
+    TEST_SOURCES = {
+        "sha256:ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb": {
+            "path": "Packages/a/a",
+            "mirror": "mirror_id",
+        },
+        "sha256:3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d": {
+            "path": "Packages/b/b",
+            "mirror": "mirror_id",
+        },
+    }
+
+    for source in TEST_SOURCES.values():
+        path = source["path"]
+        os.makedirs(fake_httpd_root / os.path.dirname(path))
+
+        basename = os.path.basename(source["path"])
+        (fake_httpd_root / path).write_text(basename)
+
+    with http_serve_directory(fake_httpd_root) as httpd:
+        sources_service.setup(
+            {
+                "cache": src_cache,
+                "options": {
+                    "mirrors": {
+                        "mirror_id": {
+                            "url": f"http://localhost:{httpd.server_port}",
+                            "type": "baseurl",
+                        },
+                    }
+                },
+            },
+        )
+        sources_service.fetch_all(TEST_SOURCES)
+        assert httpd.reqs.count == len(TEST_SOURCES)
+
+    for source in TEST_SOURCES:
+        assert sources_service.exists(source, None)
+
+    sources_service.copy_all(TEST_SOURCES, dst_cache)
+
+    for source in TEST_SOURCES:
+        assert os.path.isfile(dst_cache / sources_service.content_type / source)
