@@ -2,6 +2,8 @@
 
 import os
 
+import pytest
+
 from osbuild.solver.model import Repository
 from osbuild.solver.request import SolverConfig
 
@@ -29,7 +31,7 @@ def assert_object_equal(obj1, obj2):
 def instantiate_solver(solver_class, cachedir, persistdir, repo_servers):
     """Prepare a solver object for testing."""
     repo_configs = [Repository.from_request(repo_id=r["name"], baseurl=[r["address"]]) for r in repo_servers]
-    solver = solver_class(
+    return solver_class(
         config=SolverConfig(
             arch="x86_64",
             releasever="9",
@@ -39,4 +41,16 @@ def instantiate_solver(solver_class, cachedir, persistdir, repo_servers):
         ),
         persistdir=os.fspath(persistdir),
     )
-    return solver
+
+
+@pytest.fixture
+def solver(tmp_path, repo_servers, request):
+    """Instantiate a solver from the parametrized solver class.
+
+    Use with @pytest.mark.parametrize("solver", ..., indirect=True).
+    Supports pytest.param(..., marks=pytest.mark.xfail(...)) for
+    per-solver-class marks.
+    """
+    cachedir = tmp_path / "cache"
+    persistdir = tmp_path / "persist"
+    return instantiate_solver(request.param, cachedir, persistdir, repo_servers)
