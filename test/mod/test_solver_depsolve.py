@@ -131,3 +131,76 @@ def test_repoids_restricts_dependency_resolution(tmp_path, repo_servers, solver_
     )
     with pytest.raises(DepsolveError, match="is filtered out by exclude filtering"):
         solver.depsolve(depsolve_args_fail)
+
+
+@pytest.mark.parametrize("solver_class", [
+    pytest.param(
+        _get_dnf5_solver_class(), id="dnf5",
+        marks=pytest.mark.xfail(reason="DNF5 solver does not yet implement exclude_specs"),
+    ),
+    pytest.param(_get_dnf4_solver_class(), id="dnf4"),
+])
+def test_exclude_specs_removes_packages(tmp_path, repo_servers, solver_class):
+    """
+    Test that exclude_specs prevents excluded packages from being used
+    during dependency resolution, including as dependencies.
+
+    'bash' depends on 'ncurses-libs'. Excluding 'ncurses-libs' should
+    cause the depsolve to fail because the dependency cannot be satisfied.
+    """
+    cachedir = tmp_path / "cache"
+    persistdir = tmp_path / "persist"
+    solver = instantiate_solver(solver_class, cachedir, persistdir, repo_servers)
+
+    # First, verify that depsolving 'bash' succeeds without excludes.
+    depsolve_args_ok = DepsolveCmdArgs(
+        transactions=[
+            DepsolveTransaction(package_specs=["bash"]),
+        ]
+    )
+    result = solver.depsolve(depsolve_args_ok)
+    assert len(result.transactions[0]) > 0
+
+    # Now, exclude 'ncurses-libs' which is a dependency of 'bash'.
+    # The depsolve must fail because the dependency cannot be satisfied.
+    depsolve_args_fail = DepsolveCmdArgs(
+        transactions=[
+            DepsolveTransaction(package_specs=["bash"], exclude_specs=["ncurses-libs"]),
+        ]
+    )
+    with pytest.raises(DepsolveError, match="is filtered out by exclude filtering"):
+        solver.depsolve(depsolve_args_fail)
+
+
+@pytest.mark.parametrize("solver_class", _SOLVER_CLASSES)
+def test_exclude_specs_scoped_per_transaction(tmp_path, repo_servers, solver_class):
+    """
+    Test that exclude_specs are scoped per-transaction and do not leak
+    across transactions.
+
+    The first transaction installs 'bash' with 'pkg-with-no-deps' excluded.
+    The second transaction installs 'pkg-with-no-deps' without any excludes.
+    This must succeed, proving that the exclude from the first transaction
+    does not affect the second.
+    """
+    cachedir = tmp_path / "cache"
+    persistdir = tmp_path / "persist"
+    solver = instantiate_solver(solver_class, cachedir, persistdir, repo_servers)
+
+    depsolve_args = DepsolveCmdArgs(
+        transactions=[
+            DepsolveTransaction(package_specs=["bash"], exclude_specs=["pkg-with-no-deps"]),
+            DepsolveTransaction(package_specs=["pkg-with-no-deps"]),
+        ]
+    )
+    result = solver.depsolve(depsolve_args)
+
+    assert len(result.transactions) == 2
+
+    # 'pkg-with-no-deps' must NOT be in the first transaction result
+    first_pkg_names = {pkg.name for pkg in result.transactions[0]}
+    assert "pkg-with-no-deps" not in first_pkg_names
+
+    # 'pkg-with-no-deps' must be in the second transaction result
+    second_pkg_names = {pkg.name for pkg in result.transactions[1]}
+    assert "pkg-with-no-deps" in second_pkg_names
