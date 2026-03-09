@@ -8,7 +8,7 @@ from osbuild.solver.exceptions import DepsolveError
 from osbuild.solver.request import DepsolveCmdArgs, DepsolveTransaction
 
 
-# NB: _get_dnf5_solver_class() must be called BEFORE _get_dnf4_solver_class()
+# NOTE: _get_dnf5_solver_class() must be called BEFORE _get_dnf4_solver_class()
 # to avoid a shared library symbol collision. Both libdnf.so (DNF4) and
 # libdnf5.so export b_dmgettext() with incompatible implementations. The
 # dynamic linker resolves the symbol to whichever library was loaded first.
