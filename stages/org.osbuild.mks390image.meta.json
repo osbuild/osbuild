@@ -1,0 +1,40 @@
+{
+  "summary": "Create an s390 bootable image with mk-s390image(1)",
+  "description": [
+    "Create a bootable image using the kernel, initrd, and prm config files",
+    "Buildhost commands used: `mk-s390image`."
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "kernel",
+        "initrd",
+        "config",
+        "image"
+      ],
+      "properties": {
+        "kernel": {
+          "description": "Path to linux kernel",
+          "type": "string",
+          "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+        },
+        "initrd": {
+          "description": "Path to initramfs file",
+          "type": "string",
+          "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+        },
+        "config": {
+          "description": "Path to prm config file",
+          "type": "string",
+          "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+        },
+        "image": {
+          "description": "Path of bootable image file to write",
+          "type": "string",
+          "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+        }
+      }
+    }
+  }
+}

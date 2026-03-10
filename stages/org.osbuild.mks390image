@@ -1,0 +1,27 @@
+#!/usr/bin/python3
+import os
+import subprocess
+import sys
+
+import osbuild.api
+
+
+def main(tree, options):
+    kernel = os.path.join(tree, options["kernel"].lstrip("/"))
+    initrd = os.path.join(tree, options["initrd"].lstrip("/"))
+    config = os.path.join(tree, options["config"].lstrip("/"))
+    image = os.path.join(tree, options["image"].lstrip("/"))
+
+    subprocess.run(["mk-s390image",
+                    kernel,
+                    image,
+                    "-r", initrd,
+                    "-p", config],
+                   check=True)
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)
