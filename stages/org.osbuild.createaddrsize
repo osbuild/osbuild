@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+import os
+import struct
+import sys
+
+import osbuild.api
+
+# Hardcoded because in the history of Lorax it has never changed
+INITRD_ADDRESS = "0x02000000"
+
+
+# Create the initrd.addrsize file required in LPAR boot process.
+def createaddrsize(addr, src, dest):
+    addrsize = open(dest, "wb")
+    addrsize_data = struct.pack(">iiii", 0, int(addr, 16), 0, os.stat(src).st_size)
+    addrsize.write(addrsize_data)
+    addrsize.close()
+
+
+def main(tree, options):
+    initrd = os.path.join(tree, options["initrd"].lstrip("/"))
+    addrsize = os.path.join(tree, options["addrsize"].lstrip("/"))
+    createaddrsize(INITRD_ADDRESS, initrd, addrsize)
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

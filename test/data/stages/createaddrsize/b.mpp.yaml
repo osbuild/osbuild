@@ -1,0 +1,35 @@
+---
+version: '2'
+sources:
+  org.osbuild.inline:
+    items:
+      sha256:ade2bb70c2f362ebf230ba12ca3cd822c6c7609f3f24945efe9bf8ab3072bb9f:
+        encoding: base64
+        data: SSBhbSBub3QgcmVhbGx5IGFuIGluaXRyZC5pbWcK  # I am not really an initrd.img
+
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.copy
+        inputs:
+          initrd:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:ade2bb70c2f362ebf230ba12ca3cd822c6c7609f3f24945efe9bf8ab3072bb9f: {}
+        options:
+          paths:
+            - from: input://initrd/sha256:ade2bb70c2f362ebf230ba12ca3cd822c6c7609f3f24945efe9bf8ab3072bb9f
+              to: tree:///initrd.img
+      - type: org.osbuild.createaddrsize
+        options:
+          initrd: /initrd.img
+          addrsize: /initrd.addrsize

@@ -1,0 +1,27 @@
+{
+  "summary": "Create the inird.addrsize file required for s390x iso booting",
+  "description": [
+    "Use the size of the initrd.img to create the addrsize file"
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "initrd",
+        "addrsize"
+      ],
+      "properties": {
+        "initrd": {
+          "description": "Path to initramfs file",
+          "type": "string",
+          "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+        },
+        "addrsize": {
+          "description": "Path of addrsize file to write",
+          "type": "string",
+          "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$"
+        }
+      }
+    }
+  }
+}
