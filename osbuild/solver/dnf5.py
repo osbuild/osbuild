@@ -4,6 +4,7 @@ import tempfile
 from typing import Dict, List, Optional, Set
 
 import libdnf5 as dnf5
+from libdnf5.base import GoalProblem_EXCLUDED as EXCLUDED
 from libdnf5.base import GoalProblem_NO_PROBLEM as NO_PROBLEM
 from libdnf5.base import GoalProblem_NOT_FOUND as NOT_FOUND
 from libdnf5.common import QueryCmp_CONTAINS as CONTAINS
@@ -16,6 +17,12 @@ from osbuild.solver.exceptions import DepsolveError, MarkingError, NoReposError,
 from osbuild.solver.request import DepsolveCmdArgs, SearchCmdArgs, SolverConfig
 from osbuild.util.sbom.dnf5 import dnf_pkgset_to_sbom_pkgset
 from osbuild.util.sbom.spdx import sbom_pkgset_to_spdx2_doc
+
+# GoalProblem flags that represent package marking/selection failures (as
+# opposed to dependency resolution failures). When the returned problem
+# bitmask contains only these flags, we raise MarkingError to be consistent
+# with DNF4, which raises MarkingError from install_specs().
+MARKING_PROBLEMS = NOT_FOUND | EXCLUDED
 
 
 def remote_location(package, schemes=("http", "ftp", "file", "https")):
@@ -135,6 +142,7 @@ def _dnf_repo_to_repository(
         module_hotfixes=repo_cfg.get_module_hotfixes_option().get_value(),
         enabled=repo_cfg.get_enabled_option().get_value(),
         priority=repo_cfg.get_priority_option().get_value(),
+        cost=repo_cfg.get_cost_option().get_value(),
         skip_if_unavailable=repo_cfg.get_skip_if_unavailable_option().get_value(),
         # username and password are intentionally omitted
     )
@@ -191,19 +199,6 @@ class DNF5(SolverBase):
         self.request_repo_ids = {repo.repo_id for repo in self.repos}
         self.root_dir = self.config.root_dir
 
-        # pylint: disable=fixme
-        # XXX: This should be handled in the depsolve() function, where we should be setting up the
-        # repos for each transaction, because the excluded packages are setup per-transaction!
-        # We stopped doing this because the full request is not available any more when constructing the Solver object.
-        # Since 'basic_pkg_group_with_excludes' and 'install_pkg_excluded_in_another_transaction' test cases are broken
-        # with dnf5 anyway, there is little harm in not gathering up all the exclude packages from all the transactions.
-        # The original behavior was incorrect anyway, because it would exclude the packages from all the transactions,
-        # which explicitly breaks 'install_pkg_excluded_in_another_transaction' test case.
-        # exclude_pkgs: List[str] = []
-        # if self.request.depsolve_args:
-        #     for transaction in self.request.depsolve_args.transactions:
-        #         exclude_pkgs.extend(transaction.exclude_specs or [])
-
         self.base = dnf5.base.Base()
 
         # Base is the correct place to set substitutions, not per-repo.
@@ -255,9 +250,6 @@ class DNF5(SolverBase):
         conf.optional_metadata_types = metadata_types
 
         try:
-            # NB: Package exclusion was previously handled here, but it should
-            # be handled in the depsolve() function per transaction instead.
-            # NOTE: With libdnf5 packages are excluded in the repo setup
             for repo_conf in self.repos:
                 self._dnfrepo(repo_conf)
 
@@ -371,6 +363,8 @@ class DNF5(SolverBase):
             conf.enabled = desc.enabled
         if desc.priority is not None:
             conf.priority = desc.priority
+        if desc.cost is not None:
+            conf.cost = desc.cost
         if desc.username:
             conf.username = desc.username
         if desc.password:
@@ -463,6 +457,25 @@ class DNF5(SolverBase):
             sack = self.base.get_rpm_package_sack()
             sack.clear_user_excludes()
 
+            # Restrict dependency resolution to only use packages from the
+            # repos listed in repo_ids by excluding all packages from other
+            # repos from the sack. Without this, dependencies would be
+            # resolved from all enabled repos regardless of repo_ids.
+            if transaction.repo_ids:
+                allowed_repo_ids = set(transaction.repo_ids)
+                rq = dnf5.repo.RepoQuery(self.base)
+                rq.filter_enabled(True)
+                # libdnf5's RepoQuery doesn't support Python iteration
+                repo_iter = rq.begin()
+                while repo_iter != rq.end():
+                    repo = repo_iter.value()
+                    if repo.get_id() not in allowed_repo_ids:
+                        q = dnf5.rpm.PackageQuery(self.base)
+                        q.filter_available()
+                        q.filter_repo_id([repo.get_id()], EQ)
+                        sack.add_user_excludes(q)
+                    repo_iter.next()
+
             # weak deps are selected per-transaction
             self.base.get_config().install_weak_deps = transaction.install_weak_deps
 
@@ -474,17 +487,20 @@ class DNF5(SolverBase):
             settings = dnf5.base.GoalJobSettings()
             settings.group_with_name = True
 
-            # Packages are added individually
-            # XXX: Add package excludes handling here!
+            # pylint: disable=fixme
+            # XXX: Per-transaction exclude_specs are not yet handled for DNF5.
+            # See 'basic_pkg_group_with_excludes' and
+            # 'install_pkg_excluded_in_another_transaction' broken test cases.
             for package_spec in transaction.package_specs:
                 goal.add_install(package_spec, settings)
             goal_result = goal.resolve()
 
             transaction_problems = goal_result.get_problems()
-            if transaction_problems == NOT_FOUND:
-                raise MarkingError("\n".join(goal_result.get_resolve_logs_as_strings()))
             if transaction_problems != NO_PROBLEM:
-                raise DepsolveError("\n".join(goal_result.get_resolve_logs_as_strings()))
+                error_msg = "\n".join(goal_result.get_resolve_logs_as_strings())
+                if not (transaction_problems & ~MARKING_PROBLEMS):
+                    raise MarkingError(error_msg)
+                raise DepsolveError(error_msg)
 
             transaction_result = []
             # store the current transaction result

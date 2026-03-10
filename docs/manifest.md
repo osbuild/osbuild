@@ -1,4 +1,4 @@
-# Purpose
+# Manifest
 
 This document is a guide to help understand the osbuild manifest. It follows the format of a tutorial, starting from the simplest instance of a valid manifest and builds up to a full example, step by step. This guide aims to be an in-depth explanation of how osbuild processes manifests to build filesystem trees and operating system artifacts. It is not, however, a full guide for the inner workings and design of osbuild itself. Therefore, while this guide is useful for contributors to osbuild, it is not sufficient for understanding the project as a whole.
 
@@ -11,11 +11,11 @@ In addition to osbuild contributors, this guide is useful for:
     - [osbuild-mpp](https://github.com/osbuild/blob/main/tools/osbuild-mpp)
 - Authors of osbuild modules ([stages](https://github.com/osbuild/osbuild/tree/main/stages), [sources](https://github.com/osbuild/osbuild/tree/main/sources), [inputs](https://github.com/osbuild/osbuild/tree/main/inputs), [mounts](https://github.com/osbuild/osbuild/tree/main/mounts), [devices](https://github.com/osbuild/osbuild/tree/main/devices)).
 
-# Introduction
+## Introduction
 
 At its core, osbuild is a pipeline processor. It reads instructions from a json file (manifest) and executes them in order, transforming a filesystem tree (directory) at each step of the process. Each pipeline consists of a series of instructions (stages). It starts with an empty filesystem tree and each stage modifies it in a specific way. Typically, but not always, these modifications work towards creating an operating system image. However, there is nothing inherent to the design or structure of a manifest that explicitly enables building operating system artifacts. It is through the choice of stages and certain parts of osbuild's internals that this particular use case is achieved. A lot of the examples we will use in this guide will not be producing operating system artifacts (images, root trees, etc), but will be very simple pipelines meant to demonstrate how osbuild operates. After the basics have been covered and understood, it will be easier to understand how a more realistic manifest can be made to create an operating system image.
 
-# The manifest
+## The manifest
 
 [Principle 4](https://osbuild.org/docs/developer-guide/projects/osbuild/#principles) of osbuild states that "Manifests are expected to be machine-generated, so OSBuild has no convenience functions to support manually created manifests". That said, it's still entirely possible to write simple manifests by hand, they just wont be very interesting. Before we look at a complete manifest, let's first describe the general structure:
 ```json
@@ -34,7 +34,7 @@ The `version` isn't very interesting. As of this writing, all manifests are vers
 Pipelines are defined under `pipelines`, which is an array of objects, each with a name and a series of stages. This pipeline isn't complete, but for the purposes of this section, these are the important properties.
 The last top-level property is something we haven't mentioned so far: `sources`. Sources define resources that will need to be retrieved and provided to stages. Sources are processed before pipeline processing begins and are the only way to provide external artifacts (files, containers, etc) to stages.
 
-## Pipelines
+### Pipelines
 
 As mentioned above, a pipeline is defined as a series of stages that operate on a filesystem tree. At the start of a pipeline, the tree is completely new and empty. Each stage modifies the tree in a specific way, transforming it step by step towards a desired end state. We haven't described stages in depth yet but, for now, it's enough to think of them as single-purpose executables. With that in mind, consider a pipeline with the following series of stages:
 1. org.osbuild.rpm
@@ -45,7 +45,7 @@ The first stage, `org.osbuild.rpm`, will install a set of rpms into the new, emp
 If we assume the rpms installed in the first stage are the ones included in the `@core` Fedora package group, it's not hard to imagine what the resulting filesystem tree will look like. It will be the full tree of an operating system, composed of all the files that come from the `@core` packages, and two extra or modified files, `etc/localtime` and `etc/locale.conf` set to the desired values.
 This is actually a simplified version of the pipeline that's used in practice to create the operating system tree for most conventional images.
 
-## Stages
+### Stages
 
 Stages, as we already mentioned, are little single-purpose executables, each identified by a unique name (`type`). Stages are defined in the `stages/` directory of the osbuild source tree and are installed in the `stages/` directory of the osbuild libdir (typically, `/usr/lib/osbuild/`). Most stage types are named after the tool they invoke, so if the name of a stage looks like a command or program you're familiar with, that's probably what it's calling. For example, `org.osbuild.tar`, `org.osbuild.truncate`, and `org.osbuild.rpm` run `tar`, `truncate`, and `rpm` respectively. The `org.osbuild.` prefix serves as a namespace for the official upstream stages. This allows external stages to be included and used while avoiding name collisions.
 Most stage types define a set of options that they support. Stage options usually map to command line options and flags, though they usually only implement the ones necessary for image building. More stage options are added as the need arises.
@@ -128,7 +128,7 @@ If we write the stage in a manifest as follows:
 ```
 then running the stage will change the mode of `newfile` to `0444` (`-r--r--r--`).
 
-## Aside: Other modules
+### Aside: Other modules
 
 Stages are considered "modules" in osbuild. They are drop-in executables that provide simple functionality when run. Other types of modules also exist:
 - Sources: Mentioned already above, sources are modules that are defined at the top level of the manifest and are meant to provide the build environment with resources.
@@ -138,7 +138,7 @@ Stages are considered "modules" in osbuild. They are drop-in executables that pr
 
 We'll learn more about these other types of modules later.
 
-## Let's write a manifest
+### Let's write a manifest
 
 Let's put some stages together and write a simple but complete and valid manifest.
 ```json
@@ -216,7 +216,7 @@ Alternatively, you can call it with the `--inspect` option to get:
 (though the real output will be on a single line).
 This is pretty much the same as the manifest we fed into osbuild, but with new `id` added to each stage. We'll come back to these later. For now, what we accomplished with this call is to verify that the manifest we created is valid according to the osbuild manifest schema and the schema of each individual stage.
 
-### Invalid manifest
+#### Invalid manifest
 
 A manifest is invalid if at any point it violates the constraints of the schema, either the whole manifest schema, which you can find at `schemas/osbuild2.json` in the project repository, or module schemas, which are defined either alongside a module (in files suffixed with `.meta.json`) or inside the module itself. Currently, for all stages, their schema defined in separate `.meta.json` files, while all other module types have their schema defined in the same file as the module itself.
 
@@ -245,7 +245,7 @@ example-1.json has errors:
 
 This tells us that the `options` of the first stage (`stages[0]`) of the first pipeline (`pipelines[0]`) failed to validate against the schema, because `'size' is a required property`. In other words, the truncate stage requires the size option to be specified. If we look at the stage scheme again, we'll see that in fact both `filename` and `size` are listed in the `required` array.
 
-## Producing a tree
+### Producing a tree
 
 Undo the change made in the [Invalid manifest](#invalid-manifest) section so that the `example-1.json` file looks exactly like it did when we first wrote it in the [Let's write a manifest](#lets-write-a-manifest) section.
 
@@ -341,7 +341,7 @@ rm -rf "$tree"                      # clean up leftover data
 
 The setup and cleanup parts aren't entirely accurate, and they don't cover everything that osbuild does to run a manifest, far from it, but for this case, they adequately capture the general idea of what osbuild is doing.
 
-## Sources and Inputs
+### Sources and Inputs
 
 Sources can be used to retrieve resources from outside the build environment before starting to process a manifest. Inputs are used to bind those resources to a stage and make them available during the stage's run.
 
@@ -450,7 +450,7 @@ The schema for `org.osbuild.curl` is:
 
 Notice again that each item is indexed by its content hash (checksum). Just like with inline files, this gives each item a unique ID for reference and is used to validate the content of each source file.
 
-## Manifest with sources
+### Manifest with sources
 
 To demonstrate how sources are used, let's expand our first manifest to also include a source file. In the process, we'll also introduce the `org.osbuild.file` input to make a file from the sources available to a stage.
 
@@ -597,7 +597,7 @@ This manifest uses two stages we haven't looked at closely yet.
 The first should be self-explanatory and simple to write, so we wont spend more time on it here.
 The second uses `inputs`, which we've talked about but haven't explained much yet.
 
-### Source inputs
+#### Source inputs
 
 Each source type in osbuild creates an artifact of a specific type. The `org.osbuild.inline` and `org.osbuild.curl` sources both create `org.osbuild.files` resources. In osbuild, inputs are a type of module that provide access to a source object for a stage. The exact internal mechanisms are beyond the scope of this guide, but in short, since each stage runs in a sandboxed, hermetic environment, it can only access resources directly from the pipeline it's working on and the inputs provided to that specific stage.
 
@@ -610,7 +610,7 @@ For the `org.osbuild.copy` stage, the name (key) of each input is arbitrary. How
 
 When a stage accepts inputs, they are also referenced in the relevant stage option. In the `org.osbuild.copy` stage, our two inputs are referenced in the `from` part of the two `paths` objects. The format of those values is also important to mention. The general form of the values are `input://<name>/<id>`, which simply means that the file to reference is an `input` defined under the name `<name>` and has ID (checksum) `<id>`.
 
-### Build the manifest with sources
+#### Build the manifest with sources
 
 Build the second example and export the pipeline:
 ```
@@ -711,11 +711,11 @@ cp -a "${tree}/." output/2/res
 rm -rf "$tree"
 ```
 
-## The osbuild cache
+### The osbuild cache
 
 In the bash script we wrote for the second example, we created `.osbuild` in the working directory. This is the default location for osbuild's working directories and file cache. The location of this directory can be controlled with the `--cache` option (or its alias, `--store`). In the script, we used this to store the sources, both the inline file and the file downloaded using `curl`. This partially mimics the real osbuild store. Artifacts defined in `sources` are stored under `.osbuild/sources/` in subdirectories named after each `input` type they produce (e.g. `org.osbuild.files`, `org.osbuild.containers`, etc). Since `org.osbuild.curl` and `org.osbuild.inline` both produce `org.osbuild.file` artifacts, both files are stored under `.osbuild/sources/org.osbuild.files/`. Files are stored using their sha256 hash, so they are content-addressable. Files under `.osbuild/sources/` are kept after a build is finished, so subsequent builds of any manifest that uses the same files do not need to retrieve these resources again.
 
-## Multi-pipeline manifest
+### Multi-pipeline manifest
 
 Most useful manifests will use multiple pipelines to produce the desired artifact. As we mentioned in the beginning, a pipeline starts with an empty filesystem tree and modifies it every time a stage is executed. To produce an operating system artifact, we usually want to construct an operating system root tree and then produce a single file, like a disk image or archive that contains that tree. The process for creating such an artifact usually involves at least two pipelines, one that will build the operating system tree and another that will "package" it into the exportable single artifact that contains the tree. To demonstrate this, we'll reuse what we created in the previous examples and add an extra pipeline to create an archive for export.
 
@@ -1067,7 +1067,7 @@ output/3
 4 directories, 4 files
 ```
 
-### Partial manifest builds
+#### Partial manifest builds
 
 Try building `example-3.json` and only export the `files` pipeline. Look closely at the build command output. You will notice that the `org.osbuild.tar` stage is never executed. However, when the `archive` pipeline was exported, the stages in the `files` pipeline were executed. When building a manifest, osbuild will only run the pipelines that are required to produce the pipelines marked for export. It achieves this by building a graph (a DAG, directed acyclic graph, to be precise) of pipeline dependencies. Run `osbuild --inspect example-3.json` and look at the `inputs` of the `org.osbuild.tar` stage. It should look like this:
 ```json
@@ -1084,7 +1084,7 @@ Try building `example-3.json` and only export the `files` pipeline. Look closely
 
 `7a83e94e53883bb2e910735f09978ad7c5da804a00ed1ff6f37b45f4031b4973` is the ID of the last stage of the `files` pipeline, which is also treated as the ID of the pipeline itself. Therefore, when the inputs of the `org.osbuild.tar` stage reference the first pipeline (`name:files`), osbuild marks the `files` pipeline as a dependency of the stage and by extension the `archive` pipeline, so any build that requires executing the `archive` pipeline, also requires building the `files` pipeline. Conversely, the `files` pipeline has no dependencies, so when exporting only that pipeline, no other pipeline needs to be built.
 
-## Manifest with devices
+### Manifest with devices
 
 The two module types we haven't talked about so far are the `mounts` and `devices`. These are very often used together to manage loop devices and mount partitions in order to create disk images populated with an operating system tree. To demonstrate how they work, we will reuse the manifest from the previous section but instead of producing a tar archive, we will create a formatted disk image.
 
@@ -1297,11 +1297,11 @@ Filesystem     Type  Size  Used Avail Use% Mounted on
 
 Note: Don't forget to `umount /mnt` before moving on.
 
-### A note on random values
+#### A note on random values
 
 As a rule, osbuild will never generate random values itself. This is important for osbuild's [first principle](https://osbuild.org/docs/developer-guide/projects/osbuild/#principles), namely that "The same manifest should always produce the same output". In other words, osbuild stages should never automatically generate random values and should always expect such values to be defined in the manifest. This ensures that manifests are functionally reproducible (however, not always bit-for-bit reproducible).
 
-## Manifest with devices and mounts
+### Manifest with devices and mounts
 
 Mount modules are used to prepare mounts for stages. Usually, they are used to mount filesystems to a path so that they can be used for writing. Other mount types also exist, such as `org.osbuild.bind`, to bind mount directories to different paths, and `org.osbuild.ostree.deployment`, which sets up all needed bind mounts for a tree to look like an ostree deployment. For this example, we will only use the `org.osbuild.ext4` mount to write files to our ext4-formatted disk image.
 

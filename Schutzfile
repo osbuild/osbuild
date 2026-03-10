@@ -6,37 +6,6 @@
       }
     }
   },
-  "fedora-41": {
-    "repos": [
-      {
-        "file": "/etc/yum.repos.d/fedora.repo",
-        "x86_64": [
-          {
-            "title": "fedora",
-            "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-fedora-20241107"
-          },
-          {
-            "title": "fedora-updates",
-            "name": "fedora-updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-updates-released-20260101"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "fedora",
-            "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-aarch64-fedora-20241107"
-          },
-          {
-            "title": "fedora-updates",
-            "name": "fedora-updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-aarch64-updates-released-20260101"
-          }
-        ]
-      }
-    ]
-  },
   "fedora-42": {
     "repos": [
       {
@@ -166,47 +135,6 @@
             "title": "crb",
             "name": "crb",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-crb-20260301"
-          }
-        ]
-      }
-    ]
-  },
-  "rhel-9.7": {
-    "repos": [
-      {
-        "file": "/etc/yum.repos.d/rhel9internal.repo",
-        "x86_64": [
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.7-20260301"
-          },
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.7-20260301"
-          },
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-crb-n9.7-20260301"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.7-20260301"
-          },
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.7-20260301"
-          },
-          {
-            "title": "RHEL-9-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-crb-n9.7-20260301"
           }
         ]
       }

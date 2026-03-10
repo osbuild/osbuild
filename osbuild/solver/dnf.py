@@ -111,6 +111,7 @@ def _dnf_repo_to_repository(
         module_hotfixes=repo.module_hotfixes,
         enabled=repo.enabled,
         priority=repo.priority,
+        cost=repo.cost,
         skip_if_unavailable=repo.skip_if_unavailable,
         # username and password are intentionally omitted
     )
@@ -266,6 +267,8 @@ class DNF(SolverBase):
             repo.enabled = desc.enabled
         if desc.priority is not None:
             repo.priority = desc.priority
+        if desc.cost is not None:
+            repo.cost = desc.cost
         if desc.username:
             repo.username = desc.username
         if desc.password:
@@ -347,6 +350,18 @@ class DNF(SolverBase):
             self.base.reset(goal=True)
             self.base.sack.reset_excludes()
 
+            # Restrict dependency resolution to only use packages from the
+            # repos listed in repo_ids by excluding all packages from other
+            # repos from the sack. The reponame parameter of install_specs()
+            # only filters the explicitly requested packages, not their
+            # dependencies.
+            if transaction.repo_ids:
+                allowed_repo_ids = set(transaction.repo_ids)
+                for repo in self.base.repos.iter_enabled():
+                    if repo.id not in allowed_repo_ids:
+                        q = self.base.sack.query().available().filterm(reponame=repo.id)
+                        self.base.sack.add_excludes(q)
+
             self.base.conf.install_weak_deps = transaction.install_weak_deps
 
             try:
@@ -366,7 +381,6 @@ class DNF(SolverBase):
                 self.base.install_specs(
                     transaction.package_specs,
                     transaction.exclude_specs,
-                    reponame=transaction.repo_ids,
                 )
             except dnf.exceptions.Error as e:
                 raise MarkingError(e) from e

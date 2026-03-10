@@ -764,7 +764,7 @@ class OsbuildSolver:
         "id", "baseurl", "metalink", "mirrorlist", "gpgcheck",
         "sslverify", "sslcacert", "sslclientkey", "sslclientcert",
         "metadata_expire", "secrets", "rhsm", "system-repo",
-        "enabled", "priority", "username", "password", "skip_if_unavailable"
+        "enabled", "priority", "cost", "username", "password", "skip_if_unavailable"
     }
 
     _SYSTEM_REPO_ALLOWED_KEYS = {"id", "system-repo", "rhsm"}
@@ -807,6 +807,7 @@ class OsbuildSolver:
             metadata_expire=desc.get("metadata_expire"),
             enabled=desc.get("enabled"),
             priority=desc.get("priority"),
+            cost=desc.get("cost"),
             username=desc.get("username"),
             password=desc.get("password"),
             skip_if_unavailable=desc.get("skip_if_unavailable"),
