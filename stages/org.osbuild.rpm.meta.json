@@ -90,6 +90,11 @@
           ]
         }
       },
+      "nodeps": {
+        "type": "boolean",
+        "description": "Do not verify package dependencies.",
+        "default": false
+      },
       "ostree_booted": {
         "type": "boolean",
         "description": "Create the '/run/ostree-booted' marker"
@@ -158,6 +163,11 @@
           "items": {
             "type": "string"
           }
+        },
+        "nodeps": {
+          "type": "boolean",
+          "description": "Do not verify package dependencies.",
+          "default": false
         },
         "ostree_booted": {
           "type": "boolean",

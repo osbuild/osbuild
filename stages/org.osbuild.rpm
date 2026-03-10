@@ -205,6 +205,9 @@ def main(tree, inputs, options):
         if no_dracut:
             masked_files = disable_dracut(tree)
 
+        if options.get("nodeps", False):
+            extra_args += ["--nodeps"]
+
         langs = options.get("install_langs")
         if langs:
             macro = "%_install_langs " + ":".join(langs)

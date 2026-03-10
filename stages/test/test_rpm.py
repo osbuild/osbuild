@@ -10,9 +10,12 @@ STAGE_NAME = "org.osbuild.rpm"
 @pytest.mark.parametrize("test_data,expected_err", [
     # bad
     ({"kernel_install_env": {"boot_root": "../rel"}}, "'../rel' does not match "),
+    ({"nodeps": "yes"}, "is not of type 'boolean'"),
     # good
     ({}, ""),
     ({"kernel_install_env": {"boot_root": "/boot"}}, ""),
+    ({"nodeps": True}, ""),
+    ({"nodeps": False}, ""),
 ])
 def test_schema_validation(stage_schema, test_data, expected_err):
     test_input = {
