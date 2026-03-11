@@ -679,7 +679,7 @@ class Manifest:
     def mark_checkpoints(self, patterns):
         """Match pipeline names, stage ids, and stage names against an iterable
         of `fnmatch`-patterns."""
-        selected = []
+        selected = set()
 
         def matching(haystack):
             return any(fnmatch(haystack, p) for p in patterns)
@@ -691,12 +691,12 @@ class Manifest:
                 continue
 
             if matching(pipeline.name):
-                selected.append(pipeline.name)
+                selected.add(pipeline.id)
                 pipeline.stages[-1].checkpoint = True
 
             for stage in pipeline.stages:
                 if matching(stage.id) or matching(stage.name):
-                    selected.append(stage.id)
+                    selected.add(stage.id)
                     stage.checkpoint = True
 
         return selected
