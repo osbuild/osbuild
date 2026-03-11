@@ -152,6 +152,8 @@ def osbuild_cli() -> int:
             print("No checkpoints matched provided patterns!")
             print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
             return 1
+    else:
+        marked = set()
 
     if args.inspect:
         result = fmt.describe(manifest, with_id=True)
@@ -211,8 +213,16 @@ def osbuild_cli() -> int:
                 sys.stdout.write("\n")
             elif not args.quiet:
                 if r["success"]:
+                    print("\nPipelines")
                     for name, pl in manifest.pipelines.items():
-                        print(f"{name + ':': <10}\t{pl.id}")
+                        print(f"  {name + ':': <10}\t{pl.id}")
+
+                    print("\nCheckpoints")
+                    for m in marked:
+                        if object_store.contains(m, only_cached=True):
+                            print(f"  {m}: cached")
+                        else:
+                            print(f"  {m}: {vt.reset}{vt.bold}{vt.red}not cached{vt.reset}")
                 else:
                     print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
 

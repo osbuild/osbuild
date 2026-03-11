@@ -383,11 +383,11 @@ class ObjectStore(contextlib.AbstractContextManager):
             self._host_tree = HostTree(self)
         return self._host_tree
 
-    def contains(self, object_id):
+    def contains(self, object_id, *, only_cached=False):
         if not object_id:
             return False
 
-        if self._get_floating(object_id):
+        if not only_cached and self._get_floating(object_id):
             return True
 
         try:
