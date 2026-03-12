@@ -78,15 +78,19 @@ def grub2(inputs, output_dir, options):
     if boot:
         image = boot["image"]
         catalog = boot["catalog"]
+        nobootinfo = boot.get("nobootinfo", False)
         cmd += [
             "-b", image,
             "-c", catalog,
             "--boot-catalog-hide",
             "-no-emul-boot",
             "-boot-load-size", "4",
-            "-boot-info-table",
-            "--grub2-boot-info",
         ]
+        if not nobootinfo:
+            cmd += [
+                "-boot-info-table",
+                "--grub2-boot-info",
+            ]
         if efi:
             cmd += [
                 "-eltorito-alt-boot",
@@ -263,12 +267,18 @@ def syslinux(inputs, output_dir, options):
     if boot:
         image = boot["image"]
         catalog = boot["catalog"]
+        nobootinfo = boot.get("nobootinfo", False)
         cmd += [
             "-b", image,
             "-c", catalog,
             "--boot-catalog-hide",
-            "-boot-load-size", "4",
-            "-boot-info-table",
+            "-boot-load-size", "4"
+        ]
+        if not nobootinfo:
+            cmd += [
+                "-boot-info-table",
+            ]
+        cmd += [
             "-no-emul-boot"
         ]
 
