@@ -181,11 +181,8 @@ manifests and osbuild.
 Summary:        Dependency solving support for DNF
 Requires:       %{name} = %{version}-%{release}
 
-# RHEL 11 and Fedora 41 and later use libdnf5, RHEL < 11 and Fedora < 41 use dnf
-# On Fedora 41 however, we force dnf4 (and depend on python3-dnf) until dnf5 issues are resolved.
-# See https://github.com/rpm-software-management/dnf5/issues/1748
-# and https://issues.redhat.com/browse/COMPOSER-2361
-%if 0%{?rhel} >= 11
+# Default to using DNF5 solver for RHEL 11 and Fedora 45 and later
+%if 0%{?rhel} >= 11 || 0%{?fedora} >= 45
 Requires: python3-libdnf5 >= 5.2.1
 %else
 Requires: python3-dnf
@@ -291,11 +288,8 @@ install -p -m 0755 tools/osbuild-store %{buildroot}%{_libexecdir}/osbuild-store
 
 # Configure the solver for dnf
 mkdir -p %{buildroot}%{_datadir}/osbuild
-# RHEL 11 and Fedora 41 and later use dnf5, RHEL < 11 and Fedora < 41 use dnf
-# On Fedora 41 however, we force dnf4 (and depend on python3-dnf) until dnf5 issues are resolved.
-# See https://github.com/rpm-software-management/dnf5/issues/1748
-# and https://issues.redhat.com/browse/COMPOSER-2361
-%if 0%{?rhel} >= 11
+# Default to using DNF5 solver for RHEL 11 and Fedora 45 and later
+%if 0%{?rhel} >= 11 || 0%{?fedora} >= 45
 install -p -m 0644 tools/solver-dnf5.json %{buildroot}%{pkgdir}/solver.json
 %else
 install -p -m 0644 tools/solver-dnf.json %{buildroot}%{pkgdir}/solver.json
