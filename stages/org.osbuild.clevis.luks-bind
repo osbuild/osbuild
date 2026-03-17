@@ -23,9 +23,6 @@ def main(devices, options):
         "-d", path, pin, policy
     ]
 
-    # The null|sss pin need this
-    os.symlink("/proc/self/fd", "/dev/fd")
-
     subprocess.run(command,
                    encoding='utf8', check=True,
                    input=passphrase)

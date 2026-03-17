@@ -16,7 +16,6 @@ def setup_env(tree):
         target = os.path.join(tree, source.lstrip("/"))
         os.makedirs(target, exist_ok=True)
         mnt.mount(source, target, ro=False)
-    os.symlink("/proc/self/fd", f"{tree}/dev/fd")
 
 
 # pylint: disable=too-many-statements,too-many-branches

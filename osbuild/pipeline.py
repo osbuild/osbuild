@@ -262,7 +262,9 @@ class Stage:
             inputs_mapped = "/run/osbuild/inputs"
             inputs: Dict[Any, Any] = {}
 
-            devices_mapped = "/dev"
+            devices_tmpdir = os.path.join(tmpdir, "devices")
+            os.makedirs(devices_tmpdir)
+            devices_mapped = "/run/osbuild/devices"
             devices: Dict[Any, Any] = {}
 
             mounts_tmpdir = os.path.join(tmpdir, "mounts")
@@ -297,6 +299,10 @@ class Stage:
                 f"{mounts_tmpdir}:{mounts_mapped}"
             ]
 
+            dev_binds = [
+                f"{devices_tmpdir}:{devices_mapped}"
+            ]
+
             storeapi = objectstore.StoreServer(store)
             cm.enter_context(storeapi)
 
@@ -308,7 +314,7 @@ class Stage:
                 data_inp = ipmgr.map(ip)
                 inputs[key] = data_inp
 
-            devmgr = DeviceManager(mgr, build_root.dev, tree_path)
+            devmgr = DeviceManager(mgr, devices_tmpdir, tree_path)
             for name, dev in self.devices.items():
                 devices[name] = devmgr.open(dev)
 
@@ -322,7 +328,7 @@ class Stage:
             api = API()
             build_root.register_api(api)
 
-            rls = remoteloop.LoopServer()
+            rls = remoteloop.LoopServer(devdir=devices_tmpdir)
             build_root.register_api(rls)
 
             extra_env = {}
@@ -338,6 +344,7 @@ class Stage:
                                timeout=timeout,
                                binds=binds,
                                readonly_binds=ro_binds,
+                               dev_binds=dev_binds,
                                extra_env=extra_env,
                                debug_shell=debug_shell)
 

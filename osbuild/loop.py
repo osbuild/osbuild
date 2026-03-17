@@ -123,6 +123,7 @@ class Loop:
         self.minor = minor
         self.on_close = None
         self.fd = -1
+        self._bind_mount_fds = []
 
         with contextlib.ExitStack() as stack:
             if not dir_fd:
@@ -144,6 +145,11 @@ class Loop:
 
         No operations on this object are valid after this call.
         """
+        while self._bind_mount_fds:
+            fd = self._bind_mount_fds.pop()
+            subprocess.run(["umount", self.devname], cwd=f"/proc/self/fd/{fd}/", check=True)
+            os.close(fd)
+
         fd, self.fd = self.fd, -1
         if fd >= 0:
             if callable(self.on_close):
@@ -518,6 +524,7 @@ class Loop:
                      dir_fd=dir_fd)
             try:
                 subprocess.run(["mount", "--bind", host_path, self.devname], cwd=f"/proc/self/fd/{dir_fd}/", check=True)
+                self._bind_mount_fds.append(os.dup(dir_fd))
                 return
             except subprocess.CalledProcessError as e:
                 print(f"WARNING: {e}: {e.stderr}", file=sys.stderr)

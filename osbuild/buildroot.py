@@ -86,27 +86,18 @@ class BuildRoot(contextlib.AbstractContextManager):
     are retained.
     """
 
-    def __init__(self, root, runner, libdir, var, *, rundir="/run/osbuild"):
+    def __init__(self, root, runner, libdir, var):
         self._exitstack = None
         self._rootdir = root
-        self._rundir = rundir
         self._vardir = var
         self._libdir = libdir
         self._runner = runner
         self._apis = []
-        self.dev = None
         self.var = None
         self.proc = None
         self.tmp = None
         self.mount_boot = True
         self.caps = None
-
-    @staticmethod
-    def _bind_dev(path, name):
-        dest = os.path.join(path, name)
-        src = os.path.join("/dev", name)
-        os.mknod(dest)
-        subprocess.run(["mount", "--bind", src, dest], check=True)
 
     def __enter__(self):
         self._exitstack = contextlib.ExitStack()
@@ -118,18 +109,10 @@ class BuildRoot(contextlib.AbstractContextManager):
             #
             # For now, this includes:
             #
-            #   * We create a tmpfs instance *without* `nodev` which we then use
-            #     as `/dev` in the container. This is required for the container
-            #     to create device nodes for loop-devices.
-            #
             #   * We create a temporary directory for variable data and then use
             #     it as '/var' in the container. This allows the container to
             #     create throw-away data that it does not want to put into a
             #     tmpfs.
-
-            os.makedirs(self._rundir, exist_ok=True)
-            dev = tempfile.TemporaryDirectory(prefix="osbuild-dev-", dir=self._rundir)
-            self.dev = self._exitstack.enter_context(dev)
 
             os.makedirs(self._vardir, exist_ok=True)
             tmp = tempfile.TemporaryDirectory(prefix="osbuild-tmp-", dir=self._vardir)
@@ -142,16 +125,6 @@ class BuildRoot(contextlib.AbstractContextManager):
             os.makedirs(proc)
             self.proc = ProcOverrides(proc)
             self.proc.cmdline = "root=/dev/osbuild"
-
-            subprocess.run(["mount", "-t", "tmpfs", "-o", "nosuid", "none", self.dev], check=True)
-            self._exitstack.callback(lambda: subprocess.run(["umount", "--lazy", self.dev], check=True))
-
-            self._bind_dev(self.dev, "full")
-            self._bind_dev(self.dev, "null")
-            self._bind_dev(self.dev, "random")
-            self._bind_dev(self.dev, "urandom")
-            self._bind_dev(self.dev, "tty")
-            self._bind_dev(self.dev, "zero")
 
             # Prepare all registered API endpoints
             for api in self._apis:
@@ -176,7 +149,14 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self._exitstack:
             self._exitstack.enter_context(api)
 
-    def run(self, argv, monitor, timeout=None, binds=None, readonly_binds=None, extra_env=None, debug_shell=False):
+    def run(self, argv,
+            monitor,
+            timeout=None,
+            binds=None,
+            readonly_binds=None,
+            dev_binds=None,
+            extra_env=None,
+            debug_shell=False):
         """Runs a command in the buildroot.
 
         Takes the command and arguments, as well as bind mounts to mirror
@@ -211,7 +191,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         mounts += ["--symlink", "usr/sbin", "/sbin"]
 
         # Setup /dev.
-        mounts += ["--dev-bind", self.dev, "/dev"]
+        mounts += ["--dev", "/dev"]
         mounts += ["--tmpfs", "/dev/shm"]
 
         # Setup temporary/data file-systems.
@@ -273,6 +253,8 @@ class BuildRoot(contextlib.AbstractContextManager):
             mounts += ["--bind"] + b.split(":")
         for b in readonly_binds or []:
             mounts += ["--ro-bind"] + b.split(":")
+        for b in dev_binds or []:
+            mounts += ["--dev-bind"] + b.split(":")
 
         # Prepare all registered API endpoints: bind mount the address with
         # the `endpoint` name, provided by the API, into the well known path
