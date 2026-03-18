@@ -257,6 +257,9 @@ class Stage:
             tmpdir = store.tempdir(prefix="buildroot-tmp-")
             tmpdir = cm.enter_context(tmpdir)
 
+            rundir = os.path.join(tmpdir, "run")
+            os.makedirs(rundir)
+
             inputs_tmpdir = os.path.join(tmpdir, "inputs")
             os.makedirs(inputs_tmpdir)
             inputs_mapped = "/run/osbuild/inputs"
@@ -303,7 +306,7 @@ class Stage:
                 f"{devices_tmpdir}:{devices_mapped}"
             ]
 
-            storeapi = objectstore.StoreServer(store)
+            storeapi = objectstore.StoreServer(store, rundir)
             cm.enter_context(storeapi)
 
             mgr = host.ServiceManager(monitor=monitor)
@@ -325,10 +328,10 @@ class Stage:
 
             self.prepare_arguments(args, args_path)
 
-            api = API()
+            api = API(rundir)
             build_root.register_api(api)
 
-            rls = remoteloop.LoopServer(devdir=devices_tmpdir)
+            rls = remoteloop.LoopServer(rundir, devices_tmpdir)
             build_root.register_api(rls)
 
             extra_env = {}
