@@ -12,7 +12,6 @@ import pytest
 import osbuild.meta
 from osbuild.buildroot import BuildRoot
 from osbuild.monitor import LogMonitor, NullMonitor
-from osbuild.util import linux
 
 from ..test import TestBase
 
@@ -248,47 +247,28 @@ def test_caps(tempdir, runner):
     monitor = NullMonitor(sys.stderr.fileno())
     with BuildRoot("/", runner, libdir, var) as root:
 
+        def get_caps_from_status(filename):
+            with open(filename, encoding="utf8") as f:
+                for line in f.readlines():
+                    if line.startswith("CapEff:"):
+                        return int(line[7:], base=16)  # strip "CapEff:"
+                raise ValueError("CapEff not found in status file")
+
         def run_and_get_caps():
             cmd = ["/bin/sh", "-c", "cat /proc/self/status > /ipc/status"]
             r = root.run(cmd, monitor, binds=[f"{ipc}:/ipc"])
-
             assert r.returncode == 0
-            with open(os.path.join(ipc, "status"), encoding="utf8") as f:
-                data = f.readlines()
-            assert data
-
-            print(data)
-            perm = list(filter(lambda x: x.startswith("CapEff"), data))
-
-            assert perm and len(perm) == 1
-            perm = perm[0]
-
-            perm = perm[7:].strip()  # strip "CapEff"
-            print(perm)
-
-            caps = linux.cap_mask_to_set(int(perm, base=16))
-            return caps
+            return get_caps_from_status(os.path.join(ipc, "status"))
 
         # check case of `BuildRoot.caps` is `None`, i.e. don't drop capabilities,
         # thus the effective capabilities should be the bounding set
         assert root.caps is None
 
-        bound_set = linux.cap_bound_set()
-
+        bound_set = get_caps_from_status("/proc/self/status")
         caps = run_and_get_caps()
         assert caps == bound_set
 
-        # drop everything but `CAP_SYS_ADMIN`
-        assert "CAP_SYS_ADMIN" in bound_set
-
-        enable = set(["CAP_SYS_ADMIN"])
-        disable = bound_set - enable
-
-        root.caps = enable
-
+        CAP_SYS_ADMIN = 21  # from <linux/capability.h>
+        root.caps = {"CAP_SYS_ADMIN"}
         caps = run_and_get_caps()
-
-        for e in enable:
-            assert e in caps
-        for d in disable:
-            assert d not in caps
+        assert caps == (1 << CAP_SYS_ADMIN)

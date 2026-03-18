@@ -17,7 +17,6 @@ import time
 from typing import Set
 
 from osbuild.api import BaseAPI
-from osbuild.util import linux
 
 __all__ = [
     "BuildRoot",
@@ -363,21 +362,9 @@ class BuildRoot(contextlib.AbstractContextManager):
         if self.caps is None:
             return args
 
-        # Under the assumption that we are running as root, the capabilities
-        # for the child process (bubblewrap) are calculated as follows:
-        #   P'(effective) = P'(permitted)
-        #   P'(permitted) = P(inheritable) | P(bounding)
-        # Thus bubblewrap will effectively run with all capabilities that
-        # are present in the bounding set. If run as root, bubblewrap will
-        # preserve all capabilities in the effective set when running the
-        # container, which corresponds to our bounding set.
-        # Therefore: drop all capabilities present in the bounding set minus
-        # the ones explicitly requested.
-        have = linux.cap_bound_set()
-        drop = have - self.caps
-
-        for cap in sorted(drop):
-            args += ["--cap-drop", cap]
+        args += ["--cap-drop", "ALL"]
+        for cap in sorted(self.caps):
+            args += ["--cap-add", cap]
 
         return args
 
