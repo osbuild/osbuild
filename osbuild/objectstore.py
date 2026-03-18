@@ -300,22 +300,20 @@ class HostTree:
         self._root = self.store.tempdir(prefix="host")
 
         root = self._root.name
-        # Create a bare bones root file system. Starting with just
-        # /usr mounted from the host.
+        # Create a bare bones root file system. Starting with just /usr from
+        # the host. Link it into the root. Bubblewrap will read-only bind it
+        # into the container.
         usr = os.path.join(root, "usr")
-        os.makedirs(usr)
+        os.symlink("/usr", usr)
+
         # Also add in /etc/containers, which will allow us to access
         # /etc/containers/policy.json and enable moving containers
         # (skopeo): https://github.com/osbuild/osbuild/pull/1410
         # If https://github.com/containers/image/issues/2157 ever gets
         # fixed we can probably remove this bind mount.
-        etc_containers = os.path.join(root, "etc", "containers")
-        os.makedirs(etc_containers)
-
-        # ensure / is read-only
-        mount(root, root)
-        mount("/usr", usr)
-        mount("/etc/containers", etc_containers)
+        if os.path.isdir("/etc/containers"):
+            os.makedirs(os.path.join(root, "etc"))
+            os.symlink("/etc/containers", os.path.join(root, "etc", "containers"))
 
     @property
     def tree(self) -> os.PathLike:
@@ -325,7 +323,6 @@ class HostTree:
 
     def cleanup(self):
         if self._root:
-            umount(self._root.name)
             self._root.cleanup()
             self._root = None
 
