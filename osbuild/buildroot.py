@@ -175,10 +175,7 @@ class BuildRoot(contextlib.AbstractContextManager):
         mounts += ["--tmpfs", "/run"]
         mounts += ["--tmpfs", "/tmp"]
         mounts += ["--bind", self.var, "/var"]
-
-        # Create a usable /var/tmp, see
-        #  https://github.com/osbuild/bootc-image-builder/issues/223
-        os.makedirs(os.path.join(self.var, "tmp"), 0o1777, exist_ok=True)
+        mounts += ["--perms", "01777", "--dir", "/var/tmp"]
 
         # Setup /proc. Don't leak /proc/cmdline from the host.
         mounts += [
