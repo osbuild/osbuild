@@ -157,7 +157,7 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         for p in imports:
             source = os.path.join(self._rootdir, p)
-            if os.path.isdir(source) and not os.path.islink(source):
+            if os.path.isdir(source):
                 mounts += ["--ro-bind", source, os.path.join("/", p)]
 
         # Create /usr symlinks.
