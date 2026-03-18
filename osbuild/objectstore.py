@@ -500,8 +500,8 @@ class StoreServer(api.BaseAPI):
 
     endpoint = "store"
 
-    def __init__(self, store: ObjectStore, *, socket_address=None):
-        super().__init__(socket_address)
+    def __init__(self, store: ObjectStore, rundir):
+        super().__init__(rundir)
         self.store = store
         self.tmproot = store.tempdir(prefix="store-server-")
         self._stack = contextlib.ExitStack()

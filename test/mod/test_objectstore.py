@@ -258,7 +258,7 @@ def test_store_server(tmp_path):
         tmp = tempfile.TemporaryDirectory()
         tmp = stack.enter_context(tmp)
 
-        server = objectstore.StoreServer(store)
+        server = objectstore.StoreServer(store, tmp)
         stack.enter_context(server)
 
         client = objectstore.StoreClient(server.socket_address)
