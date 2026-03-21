@@ -14,7 +14,6 @@ import select
 import subprocess
 import tempfile
 import time
-from typing import Set
 
 from osbuild.api import BaseAPI
 
@@ -49,25 +48,6 @@ class CompletedBuild:
         return self.output
 
 
-class ProcOverrides:
-    """Overrides for /proc inside the buildroot"""
-
-    def __init__(self, path) -> None:
-        self.path = path
-        self.overrides: Set["str"] = set()
-
-    @property
-    def cmdline(self) -> str:
-        with open(os.path.join(self.path, "cmdline"), "r", encoding="utf8") as f:
-            return f.read().strip()
-
-    @cmdline.setter
-    def cmdline(self, value) -> None:
-        with open(os.path.join(self.path, "cmdline"), "w", encoding="utf8") as f:
-            f.write(value + "\n")
-        self.overrides.add("cmdline")
-
-
 # pylint: disable=too-many-instance-attributes,too-many-branches
 class BuildRoot(contextlib.AbstractContextManager):
     """Build Root
@@ -86,18 +66,16 @@ class BuildRoot(contextlib.AbstractContextManager):
     are retained.
     """
 
-    def __init__(self, root, runner, libdir, var, *, rundir="/run/osbuild"):
+    def __init__(self, root, runner, libdir, tmpdir):
         self._exitstack = None
         self._rootdir = root
-        self._rundir = rundir
-        self._vardir = var
+        self._tmpdir = tmpdir
         self._libdir = libdir
         self._runner = runner
         self._apis = []
         self.dev = None
+        self._proc_cmdline = None
         self.var = None
-        self.proc = None
-        self.tmp = None
         self.mount_boot = True
         self.caps = None
 
@@ -113,35 +91,32 @@ class BuildRoot(contextlib.AbstractContextManager):
         with self._exitstack:
             # We create almost everything directly in the container as temporary
             # directories and mounts. However, for some things we need external
-            # setup. For these, we create temporary directories which are then
-            # bind-mounted into the container.
+            # setup. For these, we a create temporary directory with:
             #
-            # For now, this includes:
+            #   * dev: Used as /dev in he container. A tmpfs instance *without*
+            #     `nodev` which we then use as `/dev` in the container. This is
+            #     required for the container to create device nodes for
+            #     loop-devices.
             #
-            #   * We create a tmpfs instance *without* `nodev` which we then use
-            #     as `/dev` in the container. This is required for the container
-            #     to create device nodes for loop-devices.
+            #   * var: Used as '/var' in the container. This allows the
+            #     container to create throw-away data that it does not want to
+            #     put into a tmpfs.
             #
-            #   * We create a temporary directory for variable data and then use
-            #     it as '/var' in the container. This allows the container to
-            #     create throw-away data that it does not want to put into a
-            #     tmpfs.
+            #   * cmdline: Overrides /proc/cmdline in the container to not leak
+            #     the host's cmdline.
 
-            os.makedirs(self._rundir, exist_ok=True)
-            dev = tempfile.TemporaryDirectory(prefix="osbuild-dev-", dir=self._rundir)
-            self.dev = self._exitstack.enter_context(dev)
+            tmp = tempfile.TemporaryDirectory(prefix="osbuild-tmp-", dir=self._tmpdir)
+            self._exitstack.enter_context(tmp)
 
-            os.makedirs(self._vardir, exist_ok=True)
-            tmp = tempfile.TemporaryDirectory(prefix="osbuild-tmp-", dir=self._vardir)
-            self.tmp = self._exitstack.enter_context(tmp)
+            self.dev = os.path.join(tmp.name, "dev")
+            os.makedirs(self.dev, exist_ok=True)
 
-            self.var = os.path.join(self.tmp, "var")
+            self.var = os.path.join(tmp.name, "var")
             os.makedirs(self.var, exist_ok=True)
 
-            proc = os.path.join(self.tmp, "proc")
-            os.makedirs(proc)
-            self.proc = ProcOverrides(proc)
-            self.proc.cmdline = "root=/dev/osbuild"
+            self._proc_cmdline = os.path.join(tmp.name, "cmdline")
+            with open(self._proc_cmdline, "w", encoding="utf8") as f:
+                f.write("root=/dev/osbuild\n")
 
             subprocess.run(["mount", "-t", "tmpfs", "-o", "nosuid", "none", self.dev], check=True)
             self._exitstack.callback(lambda: subprocess.run(["umount", "--lazy", self.dev], check=True))
@@ -224,8 +199,13 @@ class BuildRoot(contextlib.AbstractContextManager):
         #  https://github.com/osbuild/bootc-image-builder/issues/223
         os.makedirs(os.path.join(self.var, "tmp"), 0o1777, exist_ok=True)
 
-        # Setup API file-systems.
-        mounts += ["--proc", "/proc"]
+        # Setup /proc. Don't leak /proc/cmdline from the host.
+        mounts += [
+            "--proc", "/proc",
+            "--ro-bind", self._proc_cmdline, "/proc/cmdline"
+        ]
+
+        # Setup /sys
         mounts += ["--ro-bind", "/sys", "/sys"]
         mounts += ["--ro-bind-try", "/sys/fs/selinux", "/sys/fs/selinux"]
 
@@ -259,14 +239,6 @@ class BuildRoot(contextlib.AbstractContextManager):
             modorigin = importlib.util.find_spec("osbuild").origin
             modpath = os.path.dirname(modorigin)
             mounts += ["--ro-bind", f"{modpath}", "/run/osbuild/lib/osbuild"]
-
-        # Setup /proc overrides
-        for override in self.proc.overrides:
-            mounts += [
-                "--ro-bind",
-                os.path.join(self.proc.path, override),
-                os.path.join("/proc", override)
-            ]
 
         # Make caller-provided mounts available as well.
         for b in binds or []:
