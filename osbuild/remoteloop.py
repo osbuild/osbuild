@@ -36,54 +36,48 @@ class LoopServer(api.BaseAPI):
 
     endpoint = "remoteloop"
 
-    def __init__(self, *, socket_address=None):
-        super().__init__(socket_address)
-        self.devs = []
+    def __init__(self, rundir, devdir="/dev"):
+        super().__init__(rundir)
+        self.devdir = devdir
+        self.devices = {}
         self.ctl = None
 
     def _lazy_init(self):
         if not self.ctl:
             self.ctl = loop.LoopControl()
 
-    def _create_device(
-            self,
-            fd,
-            dir_fd,
-            offset=None,
-            sizelimit=None,
-            lock=False,
-            partscan=False,
-            read_only=False,
-            sector_size=512):
+    def _create(self, msg, fds, sock):
         self._lazy_init()
-        lo = self.ctl.loop_for_fd(fd, lock=lock,
-                                  offset=offset,
-                                  sizelimit=sizelimit,
-                                  blocksize=sector_size,
-                                  partscan=partscan,
-                                  read_only=read_only,
+        lo = self.ctl.loop_for_fd(fds[msg["fd"]],
+                                  lock=msg.get("lock", False),
+                                  offset=msg.get("offset"),
+                                  sizelimit=msg.get("sizelimit"),
+                                  blocksize=msg.get("sector_size", 512),
+                                  partscan=msg.get("partscan", False),
+                                  read_only=msg.get("read_only", False),
                                   autoclear=True)
+
+        dir_fd = os.open(self.devdir, os.O_DIRECTORY)
         lo.mknod(dir_fd)
-        # Pin the Loop objects so they are only released when the LoopServer
-        # is destroyed.
-        self.devs.append(lo)
-        return lo.devname
+        os.close(dir_fd)
+
+        # Pin the Loop objects until the LoopClient closes them or the
+        # LoopServer is destroyed
+        self.devices[lo.devname] = lo
+        return { "devname": lo.devname }
+
+    def _close(self, msg, fds, sock):
+        self.devices.pop(msg["devname"]).close()
+        return {}
 
     def _message(self, msg, fds, sock):
-        fd = fds[msg["fd"]]
-        dir_fd = fds[msg["dir_fd"]]
-        offset = msg.get("offset")
-        sizelimit = msg.get("sizelimit")
-        lock = msg.get("lock", False)
-        partscan = msg.get("partscan", False)
-        read_only = msg.get("read_only", False)
-        sector_size = msg.get("sector_size", 512)
-
-        devname = self._create_device(fd, dir_fd, offset, sizelimit, lock, partscan, read_only, sector_size)
-        sock.send({"devname": devname})
+        if msg["method"] == "create":
+            sock.send(self._create(msg, fds, sock))
+        elif msg["method"] == "close":
+            sock.send(self._close(msg, fds, sock))
 
     def _cleanup(self):
-        for lo in self.devs:
+        for lo in self.devices.values():
             lo.close()
         if self.ctl:
             self.ctl.close()
@@ -109,37 +103,35 @@ class LoopClient:
             partscan=False,
             read_only=False,
             sector_size=512):
-        req = {}
-        fds = []
-
         flags = os.O_RDONLY if read_only else os.O_RDWR
         fd = os.open(filename, flags)
-        dir_fd = os.open("/dev", os.O_DIRECTORY)
 
-        fds.append(fd)
-        req["fd"] = 0
-        fds.append(dir_fd)
-        req["dir_fd"] = 1
+        req = {
+            "method": "create",
+            "fd": 0,
+            "lock": lock,
+            "partscan": partscan,
+            "read_only": read_only,
+            "sector_size": sector_size
+        }
 
         if offset:
             req["offset"] = offset
         if sizelimit:
             req["sizelimit"] = sizelimit
-        req["lock"] = lock
-        req["partscan"] = partscan
-        req["read_only"] = read_only
-        req["sector_size"] = sector_size
 
-        self.client.send(req, fds=fds)
-        os.close(dir_fd)
+        self.client.send(req, fds=[fd])
         os.close(fd)
 
         msg, _, _ = self.client.recv()
         err = api.get_exception_from_msg(msg)
         if err:
             raise RuntimeError(err)
-        path = os.path.join("/dev", msg["devname"])
+        devname = msg["devname"]
+        path = os.path.join("/run/osbuild/devices", devname)
         try:
             yield path
         finally:
+            self.client.send({ "method": "close", "devname": devname })
+            _, _, _ = self.client.recv()
             os.unlink(path)

@@ -4,7 +4,6 @@
 
 import json
 import multiprocessing as mp
-import os
 import pathlib
 import tempfile
 import time
@@ -17,8 +16,8 @@ from osbuild.util import jsoncomm
 class APITester(osbuild.api.BaseAPI):
     """Records the number of messages and if it got cleaned up"""
 
-    def __init__(self, sockaddr):
-        super().__init__(sockaddr)
+    def __init__(self, rundir):
+        super().__init__(rundir)
         self.clean = False
         self.messages = 0
 
@@ -49,10 +48,9 @@ class TestAPI(unittest.TestCase):
     def test_basic(self):
         # Basic API communication and cleanup checks
 
-        socket = os.path.join(self.tmp.name, "socket")
-        api = APITester(socket)
+        api = APITester(self.tmp.name)
         with api:
-            with jsoncomm.Socket.new_client(socket) as client:
+            with jsoncomm.Socket.new_client(api.socket_address) as client:
                 req = {'method': 'echo', 'data': 'Hello'}
                 client.send(req)
                 msg, _, _ = client.recv()
@@ -67,8 +65,7 @@ class TestAPI(unittest.TestCase):
         self.assertIsNone(api.event_loop)
 
     def test_reentrancy_guard(self):
-        socket = os.path.join(self.tmp.name, "socket")
-        api = APITester(socket)
+        api = APITester(self.tmp.name)
         with api:
             with self.assertRaises(AssertionError):
                 with api:
@@ -77,14 +74,13 @@ class TestAPI(unittest.TestCase):
     def test_exception(self):
         # Check that 'api.exception' correctly sets 'API.exception'
         tmpdir = self.tmp.name
-        path = os.path.join(tmpdir, "osbuild-api")
 
         def exception(path):
             with osbuild.api.exception_handler(path):
                 raise ValueError("osbuild test exception")
             assert False, "api.exception should exit process"
 
-        api = osbuild.api.API(socket_address=path)
+        api = osbuild.api.API(tmpdir)
         with api:
             # On macOS and newly non-macOS POSIX systems (since Python 3.14),
             # the default method has been changed to forkserver.
@@ -96,7 +92,7 @@ class TestAPI(unittest.TestCase):
             else:
                 _mp_context = mp.get_context()
 
-            p = _mp_context.Process(target=exception, args=(path, ))
+            p = _mp_context.Process(target=exception, args=(api.socket_address, ))
             p.start()
             p.join()
 
@@ -134,10 +130,9 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(metadata, data)
 
     def test_exception_in_api_message(self):
-        socket = os.path.join(self.tmp.name, "socket")
-        api = APITester(socket)
+        api = APITester(self.tmp.name)
         with api:
-            with jsoncomm.Socket.new_client(socket) as client:
+            with jsoncomm.Socket.new_client(api.socket_address) as client:
                 req = {'method': 'error-trigger'}
                 client.send(req)
                 msg, _, _ = client.recv()

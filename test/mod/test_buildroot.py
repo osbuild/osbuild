@@ -158,21 +158,50 @@ def test_selinuxfs_ro(tempdir, runner):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
-def test_proc_overrides(tempdir, runner):
+def test_proc_cmdline(tempdir, runner):
     libdir = os.path.abspath(os.curdir)
     var = pathlib.Path(tempdir, "var")
     var.mkdir()
 
-    cmdline = "is-this-the-real-world"
+    monitor = NullMonitor(sys.stderr.fileno())
+    with BuildRoot("/", runner, libdir, var) as root:
+        r = root.run(["cat", "/proc/cmdline"], monitor)
+        assert r.returncode == 0
+        assert "root=/dev/osbuild" in r.output.strip()
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+def test_dev(tempdir, runner):
+    """Test that /dev is set up via bwrap --dev and that dev_binds work"""
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
 
     monitor = NullMonitor(sys.stderr.fileno())
     with BuildRoot("/", runner, libdir, var) as root:
 
-        root.proc.cmdline = cmdline
+        # Verify /dev is populated by bwrap --dev (standard device nodes)
+        for dev in ["null", "zero", "full", "random", "urandom", "tty"]:
+            r = root.run(["test", "-e", f"/dev/{dev}"], monitor)
+            assert r.returncode == 0, f"/dev/{dev} should exist"
 
-        r = root.run(["cat", "/proc/cmdline"], monitor)
+        # Verify /dev/fd symlink exists (created by bwrap --dev)
+        r = root.run(["test", "-L", "/dev/fd"], monitor)
+        assert r.returncode == 0, "/dev/fd symlink should exist"
+
+        # Test dev_binds: create a temporary directory and dev-bind it
+        dev_dir = pathlib.Path(tempdir, "devdir")
+        dev_dir.mkdir()
+        marker = dev_dir / "marker"
+        marker.write_text("dev-bind-test")
+
+        r = root.run(
+            ["cat", "/run/osbuild/test-devdir/marker"],
+            monitor,
+            dev_binds=[f"{dev_dir}:/run/osbuild/test-devdir"],
+        )
         assert r.returncode == 0
-        assert cmdline in r.output.strip()
+        assert "dev-bind-test" in r.output
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")

@@ -184,7 +184,7 @@ def osbuild_cli() -> int:
             pipelines = manifest.depsolve(object_store, exports)
             total_steps = len(manifest.sources) + len(pipelines)
             monitor = osbuild.monitor.make(monitor_name, args.monitor_fd, total_steps)
-            monitor.log(f"starting {args.manifest_path}", origin="osbuild.main_cli")
+            monitor.log(f"starting {args.manifest_path}\n", origin="osbuild.main_cli")
 
             manifest.download(object_store, monitor)
 
