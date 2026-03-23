@@ -21,7 +21,6 @@ import os
 import sys
 
 from osbuild import inputs
-from osbuild.util.mnt import MountGuard
 
 SCHEMA = r"""
 "definitions": {
@@ -160,62 +159,47 @@ SCHEMA = r"""
 
 class ContainersInput(inputs.InputService):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.mg = MountGuard()
-
-    def map_source_ref(self, source, ref, target):
+    @staticmethod
+    def map_source_ref(source, ref):
         source_archive = os.path.join(source, ref, "image")
-        dest = os.path.join(target, ref)
-
-        # bind mount the input directory to the destination
-        os.makedirs(dest)
-        self.mg.mount(source_archive, dest)
-
-        return ref, "dir"
+        return (source_archive, ref), "dir"
 
     @staticmethod
-    def map_pipeline_ref(store, ref, target):
-        # prepare the mount point
-        os.makedirs(target, exist_ok=True)
-        print("target", target)
-
-        store.read_tree_at(ref, target)
+    def map_pipeline_ref(store, ref):
+        tree = store.read_tree(ref)
+        if not tree:
+            raise RuntimeError(f"No tree at {ref}")
 
         # Find the archive file in target, we use the first alphabetical regular file
-        files = sorted(filter(lambda f: os.path.isfile(os.path.join(target, f)),
-                              os.listdir(target)))
+        files = sorted(filter(lambda f: os.path.isfile(os.path.join(tree, f)),
+                              os.listdir(tree)))
         if len(files) == 0:
             raise RuntimeError("No archive files in source")
 
-        return files[0], "oci-archive"
+        return (os.path.join(tree, files[0]), ref), "oci-archive"
 
     def map(self, store, origin, refs, target, _options):
         source = store.source("org.osbuild.containers")
         images = {}
+        binds = []
 
         for ref, data in refs.items():
             if origin == "org.osbuild.source":
-                ref, container_format = self.map_source_ref(source, ref, target)
+                bind, container_format = self.map_source_ref(source, ref)
             else:
-                ref, container_format = self.map_pipeline_ref(store, ref, target)
+                bind, container_format = self.map_pipeline_ref(store, ref)
+
+            binds.append(bind)
 
             images[ref] = {
                 "format": container_format,
                 "name": data["name"]
             }
-            images[ref]["name"] = data["name"]
 
-        reply = {
-            "path": target,
-            "data": {
-                "archives": images
-            }
+        data = {
+            "archives": images
         }
-        return reply
-
-    def unmap(self):
-        self.mg.umount()
+        return data, binds
 
 
 def main():

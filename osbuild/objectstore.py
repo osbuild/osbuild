@@ -524,28 +524,6 @@ class StoreServer(api.BaseAPI):
 
         sock.send({"path": obj.tree})
 
-    def _read_tree_at(self, msg, sock):
-        object_id = msg["object-id"]
-        target = msg["target"]
-        subtree = msg["subtree"]
-
-        obj = self.store.get(object_id)
-        if not obj:
-            sock.send({"path": None})
-            return
-
-        try:
-            source = os.path.join(obj, subtree.lstrip("/"))
-            mount(source, target)
-            self._stack.callback(umount, target)
-
-        # pylint: disable=broad-except
-        except Exception as e:
-            sock.send({"error": str(e)})
-            return
-
-        sock.send({"path": target})
-
     def _mkdtemp(self, msg, sock):
         args = {
             "suffix": msg.get("suffix"),
@@ -565,8 +543,6 @@ class StoreServer(api.BaseAPI):
     def _message(self, msg, _fds, sock):
         if msg["method"] == "read-tree":
             self._read_tree(msg, sock)
-        elif msg["method"] == "read-tree-at":
-            self._read_tree_at(msg, sock)
         elif msg["method"] == "mkdtemp":
             self._mkdtemp(msg, sock)
         elif msg["method"] == "source":
@@ -603,23 +579,6 @@ class StoreClient:
 
         self.client.send(msg)
         msg, _, _ = self.client.recv()
-
-        return msg["path"]
-
-    def read_tree_at(self, object_id: str, target: str, path="/"):
-        msg = {
-            "method": "read-tree-at",
-            "object-id": object_id,
-            "target": os.fspath(target),
-            "subtree": os.fspath(path)
-        }
-
-        self.client.send(msg)
-        msg, _, _ = self.client.recv()
-
-        err = msg.get("error")
-        if err:
-            raise RuntimeError(err)
 
         return msg["path"]
 

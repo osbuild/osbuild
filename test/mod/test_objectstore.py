@@ -282,44 +282,28 @@ def test_store_server(tmp_path):
         p.mkdir()
         obj.finalize()
 
-        mountpoint = Path(tmp_path, "mountpoint")
-        mountpoint.mkdir()
-
         assert store.contains("42")
-        path = client.read_tree_at("42", mountpoint)
-        assert Path(path) == mountpoint
-        filepath = Path(mountpoint, "file.txt")
+
+        # read_tree returns the path to the tree directory
+        path = client.read_tree("42")
+        assert path is not None
+        filepath = Path(path, "file.txt")
         assert filepath.exists()
         txt = filepath.read_text(encoding="utf8")
         assert txt == "osbuild"
 
-        # check we can mount subtrees via `read_tree_at`
-
-        filemount = Path(tmp_path, "file")
-        filemount.touch()
-
-        path = client.read_tree_at("42", filemount, "/file.txt")
-        filepath = Path(path)
-        assert filepath.is_file()
-        txt = filepath.read_text(encoding="utf8")
+        # check we can access subtrees via read_tree + path joining
+        file_path = os.path.join(path, "file.txt")
+        assert os.path.isfile(file_path)
+        txt = Path(file_path).read_text(encoding="utf8")
         assert txt == "osbuild"
 
-        dirmount = Path(tmp_path, "dir")
-        dirmount.mkdir()
+        dir_path = os.path.join(path, "directory")
+        assert os.path.isdir(dir_path)
 
-        path = client.read_tree_at("42", dirmount, "/directory")
-        dirpath = Path(path)
-        assert dirpath.is_dir()
-
-        # check proper exceptions are raised for non existent
-        # mount points and sub-trees
-
-        with pytest.raises(RuntimeError):
-            nonexistent = os.path.join(tmp_path, "nonexistent")
-            _ = client.read_tree_at("42", nonexistent)
-
-        with pytest.raises(RuntimeError):
-            _ = client.read_tree_at("42", tmp_path, "/nonexistent")
+        # read_tree for non-existent object returns None
+        path = client.read_tree("nonexistent")
+        assert path is None
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")

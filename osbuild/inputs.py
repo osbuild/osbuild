@@ -21,7 +21,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from osbuild import host
 from osbuild.util.types import PathLike
@@ -93,9 +93,13 @@ class InputManager:
         self.service_manager = mgr
         self.storeapi = storeapi
         self.root = root
-        self.inputs: Dict[str, Input] = {}
 
-    def map(self, ip: Input) -> Tuple[str, Dict]:
+    def map(self, ip: Input) -> Tuple[Dict, List[Tuple[str, str]]]:
+        """Map an input's sources into a target directory.
+
+        Returns: A tuple containing the input's data dictionary and a list of
+        bind mounts for the stage.
+        """
 
         target = os.path.join(self.root, ip.name)
         os.makedirs(target)
@@ -117,18 +121,7 @@ class InputManager:
         }
 
         client = self.service_manager.start(f"input/{ip.name}", ip.info_path)
-        reply = client.call("map", args)
-
-        path = reply["path"]
-
-        if not path.startswith(self.root):
-            raise RuntimeError(f"returned {path} has wrong prefix")
-
-        reply["path"] = os.path.relpath(path, self.root)
-
-        self.inputs[ip.name] = reply
-
-        return reply
+        return client.call("map", args)
 
 
 class InputService(host.Service):
@@ -137,12 +130,6 @@ class InputService(host.Service):
     @abc.abstractmethod
     def map(self, store, origin, refs, target, options):
         pass
-
-    def unmap(self):
-        pass
-
-    def stop(self):
-        self.unmap()
 
     def dispatch(self, method: str, args, fds):
         if method == "map":
