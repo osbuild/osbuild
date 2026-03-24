@@ -1,0 +1,41 @@
+{
+  "summary": "Import a flatpak packaged as a container into a flatpak repository",
+  "description": [
+    "Import a flatpak packaged as a container (from its inputs) into a given",
+    "flatpak repository. Note that this doesn't actually 'deploy' or 'install'",
+    "the given flatpak. It only makes the flatpak reference available in an",
+    "ostree repository that can then be used to install from.",
+    "This is used by Anaconda in its rpm-ostree payload setup where it will scan",
+    "/flatpak/repo for all references and install those into the sysroot.",
+    "Thus this stage serves mostly to set up flatpak repositories which can then",
+    "be processed by other stages or other software."
+  ],
+  "schema_2": {
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "containers"
+      ],
+      "properties": {
+        "containers": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "repository"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "Repository to import into",
+          "pattern": "^tree:///"
+        }
+      }
+    }
+  }
+}

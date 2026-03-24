@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+import os
+import subprocess
+import sys
+import tempfile
+
+import osbuild.api
+from osbuild.util import parsing
+
+
+def parse_input(inputs):
+    containers = inputs["containers"]
+    data = containers["data"]
+    archives = data["archives"]
+    assert len(archives) == 1, "need exactly one container archive"
+    digest = list(archives.keys())[0]
+    return os.path.join(containers["path"], digest)
+
+
+def main(args):
+    options = args["options"]
+    inputs = args["inputs"]
+
+    src = parse_input(inputs)
+    dst = parsing.parse_location(options["repository"], args)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["skopeo", "copy", f"dir:{src}", f"oci:{tmp}"], check=True)
+        subprocess.run(["flatpak", "build-import-bundle", "--oci", dst, tmp], check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(osbuild.api.arguments()))
