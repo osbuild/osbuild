@@ -21,6 +21,7 @@ pipelines:
                 - dosfstools
                 - e2fsprogs
                 - erofs-utils
+                - flatpak
                 - gdisk
                 - grub2-pc
                 - policycoreutils
