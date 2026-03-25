@@ -96,7 +96,7 @@ pipelines:
       - type: org.osbuild.systemd
         options:
           enabled_services:
-            - cloud-init.service
+            - cloud-init-network.service
             - cloud-config.service
             - cloud-final.service
             - cloud-init-local.service

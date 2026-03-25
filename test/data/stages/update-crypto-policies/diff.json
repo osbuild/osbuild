@@ -56,12 +56,6 @@
         "/usr/share/crypto-policies/FIPS/opensshserver.txt"
       ]
     },
-    "/etc/crypto-policies/back-ends/openssl.config": {
-      "symlink": [
-        "/usr/share/crypto-policies/DEFAULT/openssl.txt",
-        "/usr/share/crypto-policies/FIPS/openssl.txt"
-      ]
-    },
     "/etc/crypto-policies/back-ends/openssl_fips.config": {
       "symlink": [
         "/usr/share/crypto-policies/DEFAULT/openssl_fips.txt",
@@ -94,8 +88,8 @@
     },
     "/etc/crypto-policies/state/CURRENT.pol": {
       "content": [
-        "sha256:346786a22907eb312957451eab288f88d9532c1dc84b0e90077fa7c84416dd7c",
-        "sha256:27f72c6245cb4218bd6b93b7d71a1ef395e77a04d145510121635fd6e11c44e6"
+        "sha256:d7708d5b3b821d5a65496cf9747812b61257d571ca25aef3ff1aa58ca3a8efa3",
+        "sha256:9b498ab968bc8d5147cb49baff9042d31bc2b1d4bb627895e29940b1438cbe90"
       ]
     },
     "/etc/crypto-policies/state/current": {

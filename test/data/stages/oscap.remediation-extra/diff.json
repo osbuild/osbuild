@@ -1,19 +1,7 @@
 {
   "added_files": [
-    "/etc/chrony.conf",
     "/etc/dnf/automatic.conf",
     "/etc/fstab",
-    "/etc/ipsec.conf",
-    "/etc/profile.d/tmout.sh",
-    "/etc/rsyslog.conf",
-    "/etc/rsyslog.d",
-    "/etc/rsyslog.d/cron.conf",
-    "/etc/selinux/config",
-    "/etc/ssh",
-    "/etc/ssh/sshd_config.d",
-    "/etc/ssh/sshd_config.d/00-complianceascode-hardening.conf",
-    "/etc/ssh/sshd_config.d/01-complianceascode-reinforce-os-defaults.conf",
-    "/etc/sysctl.conf",
     "/root/log.eval",
     "/root/log.eval-remediated",
     "/root/log.generate-fix",
@@ -21,8 +9,7 @@
     "/root/oscap_eval_xccdf_results.xml.xz",
     "/root/oscap_remediation.bash",
     "/root/report.html",
-    "/root/results_arf.xml.xz",
-    "/usr/lib/systemd/system/rescue.service"
+    "/root/results_arf.xml.xz"
   ],
   "deleted_files": [],
   "differences": {
@@ -80,12 +67,6 @@
         "/usr/share/crypto-policies/FIPS/opensshserver.txt"
       ]
     },
-    "/etc/crypto-policies/back-ends/openssl.config": {
-      "symlink": [
-        "/usr/share/crypto-policies/DEFAULT/openssl.txt",
-        "/usr/share/crypto-policies/FIPS/openssl.txt"
-      ]
-    },
     "/etc/crypto-policies/back-ends/openssl_fips.config": {
       "symlink": [
         "/usr/share/crypto-policies/DEFAULT/openssl_fips.txt",
@@ -118,8 +99,8 @@
     },
     "/etc/crypto-policies/state/CURRENT.pol": {
       "content": [
-        "sha256:346786a22907eb312957451eab288f88d9532c1dc84b0e90077fa7c84416dd7c",
-        "sha256:27f72c6245cb4218bd6b93b7d71a1ef395e77a04d145510121635fd6e11c44e6"
+        "sha256:d7708d5b3b821d5a65496cf9747812b61257d571ca25aef3ff1aa58ca3a8efa3",
+        "sha256:9b498ab968bc8d5147cb49baff9042d31bc2b1d4bb627895e29940b1438cbe90"
       ]
     },
     "/etc/crypto-policies/state/current": {
@@ -130,8 +111,8 @@
     },
     "/etc/pki/tls/openssl.cnf": {
       "content": [
-        "sha256:bdd11b556f2332976eb2aae1b12132fc6487ce93b15bb09f684908e82d20e481",
-        "sha256:42cf19cfb9cbdabb93f0b363423b678eaa2a2b8b269ca5334d8200af5f52af34"
+        "sha256:34108f65c3c759083f6b2d8ff8c509e3504aa78e5180b197827d90827ddc663f",
+        "sha256:632d0f2e6ca953b0e20e5b21feaa2bdfb844842ccb1ec6d637498b4df39cfaae"
       ]
     },
     "/etc/yum.repos.d/fedora-cisco-openh264.repo": {
@@ -156,12 +137,6 @@
       "content": [
         "sha256:91ec30ca30615b60119587ceb275d5318131fd7b3e56e60677eef5092a09243f",
         "sha256:2f4618499779e6e27857d3fb0f03f2b962293ee5af6456cde8fb552bb8872b6b"
-      ]
-    },
-    "/usr/lib/issue": {
-      "content": [
-        "sha256:9489d28fbd325690224dd76c0d7ae403177e15a0d63758cc0171327b5ba2aa85",
-        "sha256:0a48f732f0a2ae7c1c1884c5a5db85eda09a6506489c137656707957f2b84686"
       ]
     }
   }

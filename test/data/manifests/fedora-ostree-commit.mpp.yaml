@@ -36,10 +36,6 @@ pipelines:
                 - chrony
                 - cryptsetup
                 - dracut-config-generic
-                - greenboot-grub2
-                - greenboot-reboot
-                - greenboot-rpm-ostree-grub2
-                - greenboot-status
                 - greenboot
                 - grub2-pc
                 - kernel-core
@@ -56,7 +52,7 @@ pipelines:
           enabled_services:
             - cloud-config
             - cloud-final
-            - cloud-init
+            - cloud-init-network
             - cloud-init-local
       - type: org.osbuild.locale
         options:

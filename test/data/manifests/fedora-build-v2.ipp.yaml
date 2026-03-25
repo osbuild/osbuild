@@ -44,6 +44,7 @@ pipelines:
                 - syslinux
                 - skopeo
                 - lorax-templates-generic
+                - shadow-utils
                 - syslinux-nonlinux
                 - squashfs-tools
                 - grub2-pc-modules
@@ -69,13 +70,6 @@ pipelines:
             mpp-eval: gpgkeys
           exclude:
             docs: true
-      # Remove when https://github.com/containers/common/pull/2265
-      # has merged and is in a Fedora RPM
-      - type: org.osbuild.mkdir
-        options:
-          paths:
-            - path: /etc/containers/networks
-              mode: 493
       - type: org.osbuild.selinux
         options:
           file_contexts: etc/selinux/targeted/contexts/files/file_contexts

@@ -83,10 +83,6 @@ pipelines:
                 - tar
                 - fwupd
                 - greenboot
-                - greenboot-grub2
-                - greenboot-rpm-ostree-grub2
-                - greenboot-reboot
-                - greenboot-status
                 - ignition
                 - rsync
                 - ima-evm-utils
@@ -117,18 +113,7 @@ pipelines:
                 - efibootmgr
                 - shim-x64
                 - microcode_ctl
-                - iwl1000-firmware
-                - iwl100-firmware
-                - iwl105-firmware
-                - iwl135-firmware
-                - iwl2000-firmware
-                - iwl2030-firmware
-                - iwl3160-firmware
-                - iwl5000-firmware
-                - iwl5150-firmware
-                - iwl6000-firmware
-                - iwl6050-firmware
-                - iwl7260-firmware
+                - iwlwifi-mvm-firmware
               excludes:
                 - dracut-config-rescue
       - type: org.osbuild.locale
@@ -382,7 +367,7 @@ pipelines:
       - type: org.osbuild.truncate
         options:
           filename: LiveOS/rootfs.img
-          size: 3GB
+          size: 4GB
       - type: org.osbuild.mkfs.ext4
         devices:
           device:
