@@ -1,0 +1,32 @@
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: ../manifests/fedora-vars.ipp.yaml
+  - mpp-import-pipeline:
+      path: ../manifests/fedora-build-v2.ipp.yaml
+      id: build
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.ostree.init
+        options:
+          path: /flatpak/repo
+      - type: org.osbuild.flatpak.build-import-bundle.oci
+        options:
+          repository: tree:///flatpak/repo
+        inputs:
+          containers:
+            type: org.osbuild.containers
+            origin: org.osbuild.source
+            references:
+              sha256:7475a218411e5d792ef22860e464e67cb2f7cb27b5f553de1960d440a9c1f958:
+                name: f43/mesa
+sources:
+  org.osbuild.skopeo:
+    items:
+      sha256:7475a218411e5d792ef22860e464e67cb2f7cb27b5f553de1960d440a9c1f958:
+        image:
+          name: registry.fedoraproject.org/f43/mesa
+          digest: sha256:80cb8d67d3b1c65d7551d71cddd02f089c2e440a2b4d5bd1fb69b88e69cff1d8
