@@ -2,6 +2,8 @@
   "added_files": [
     "/etc/locale.conf"
   ],
-  "deleted_files": [],
+  "deleted_files": [
+    "/etc/.pwd.lock"
+  ],
   "differences": {}
 }

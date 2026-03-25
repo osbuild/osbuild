@@ -4,8 +4,8 @@
   "differences": {
     "/etc/ssh/sshd_config": {
       "content": [
-        "sha256:a7329525af126b8280fd52036f81df62a8f893ce8d917d787ac06ad6d6d1adaf",
-        "sha256:10ba8773be5caf8f70d275e3fb230a7ee5c4ae7b3674edfb6afdbf3639af5591"
+        "sha256:8eeff1dab245a514ef33735b94f215e53c26e97e98c3905d4f38f3187d854f5d",
+        "sha256:6b21f6d5e56d5aad51eef42b6b4534757623ab3460099c1f19ed65094721ad2c"
       ]
     }
   }

@@ -3,14 +3,16 @@
     "/etc/pki/ca-trust/extracted/pem/directory-hash/7cf11c08.0",
     "/etc/pki/ca-trust/extracted/pem/directory-hash/Test_CA_for_osbuild.pem",
     "/etc/pki/ca-trust/extracted/pem/directory-hash/a521c9ed.0",
-    "/etc/pki/ca-trust/source/anchors/sha256:4c4e8c734e4ee3a117ca8f9363ba7b706d02bfc8f297c00b02ce02babddef51c"
+    "/etc/pki/ca-trust/source/anchors/sha256:4c4e8c734e4ee3a117ca8f9363ba7b706d02bfc8f297c00b02ce02babddef51c",
+    "/etc/pki/tls/certs/7cf11c08.0",
+    "/etc/pki/tls/certs/a521c9ed.0"
   ],
   "deleted_files": [],
   "differences": {
     "/etc/pki/ca-trust/extracted/edk2/cacerts.bin": {
       "content": [
-        "sha256:cedf82443261b6a62531c2c330d8c55f9a8c3fc70a1c2a275cdd6cc7c9b2df5b",
-        "sha256:1b4018c453176053e07b6fe9dd7d4805e211f90d47f30dfd92adc0f965e2baf2"
+        "sha256:10d123f5c252a9b611aeda90281aca0dcf1b6c63698e6a5ae7080fe36ff83801",
+        "sha256:7298f704e9eec0393d63780a75bc81e5a3cf986c307f2dc029212ed183c8b4aa"
       ]
     },
     "/etc/pki/ca-trust/extracted/java/cacerts": {
@@ -21,14 +23,14 @@
     },
     "/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt": {
       "content": [
-        "sha256:e8eac205807f3ab66bfe7cb5b87d8511aa14a7f808e977c5ad3a2699a7190841",
-        "sha256:f94c195f8a0fd22f907b691bcfe46aa88ca677779e0260377b6f52b1161da850"
+        "sha256:5a8e566a20336ec17ea7c0d71b8749f03b29f9ddf77ff733dfaf6782c28c56e6",
+        "sha256:0c9a3af4ea7bf7d462c57419187d00272ff62e1f1c30ea898194835d77ca4ee4"
       ]
     },
     "/etc/pki/ca-trust/extracted/pem/email-ca-bundle.pem": {
       "content": [
-        "sha256:09510ac229308da01c129ff1cc3a68d3f9c1b21ef07fbaba9133d45b35d9d1e5",
-        "sha256:66174f4c71366b5eb6a24cb1d1a8a88ca1fd406fb39ba12f950d47e20853310f"
+        "sha256:2f2d6a53cb9542ceeccf82a2ffa7d53c24043b75b43f1623ff1266806583d1ca",
+        "sha256:2060c02459e6a740680b06acb6a7d0ef69697791273df19632a2c53559f9200e"
       ]
     },
     "/etc/pki/ca-trust/extracted/pem/objsign-ca-bundle.pem": {
@@ -39,8 +41,8 @@
     },
     "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem": {
       "content": [
-        "sha256:acd28b791f9f338d288efda11d7f192755d4e89f41f0f7c2999bb4d211779fe5",
-        "sha256:ccbf79f86fa61d1dad44ed9481a8dab6973b91a0187798e43bbb29c4be9095f2"
+        "sha256:00411c197b16f659945fba3c2f970a26030f56eef5d445c913cb59a089c813b9",
+        "sha256:b78362dc35e316f494104021922110d8a73fa9eb614df8a10f178318e7223b08"
       ]
     }
   }

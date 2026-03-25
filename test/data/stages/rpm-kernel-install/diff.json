@@ -3,13 +3,13 @@
     "/esp",
     "/esp/EFI",
     "/esp/EFI/Linux",
-    "/esp/EFI/Linux/ffffffffffffffffffffffffffffffff-6.11.10-300.fc41.x86_64.efi"
+    "/esp/EFI/Linux/ffffffffffffffffffffffffffffffff-6.19.7-200.fc43.x86_64.efi"
   ],
   "deleted_files": [
     "/boot/efi",
     "/boot/efi/EFI",
     "/boot/efi/EFI/Linux",
-    "/boot/efi/EFI/Linux/ffffffffffffffffffffffffffffffff-6.11.10-300.fc41.x86_64.efi"
+    "/boot/efi/EFI/Linux/ffffffffffffffffffffffffffffffff-6.19.7-200.fc43.x86_64.efi"
   ],
   "differences": {
     "/etc/pki/ca-trust/extracted/java/cacerts": {

@@ -4,6 +4,8 @@
     "/etc/X11/xorg.conf.d/00-keyboard.conf",
     "/etc/vconsole.conf"
   ],
-  "deleted_files": [],
+  "deleted_files": [
+    "/etc/.pwd.lock"
+  ],
   "differences": {}
 }
