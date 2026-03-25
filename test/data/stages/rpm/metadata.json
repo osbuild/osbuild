@@ -3,6 +3,16 @@
     "org.osbuild.rpm": {
       "packages": [
         {
+          "name": "ModemManager-glib",
+          "version": "1.22.0",
+          "release": "4.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "fe9e47a4bbebd75fbd4df3aa61ca80bc",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "aardvark-dns",
           "version": "1.13.1",
           "release": "1.fc41",
@@ -13,12 +23,42 @@
           "siggpg": null
         },
         {
+          "name": "abattis-cantarell-vf-fonts",
+          "version": "0.301",
+          "release": "13.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "fbe9c627c6d47d6e614f3cd5d2fbcb21",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "add-determinism",
           "version": "0.3.6",
           "release": "3.fc41",
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "21072371ab2925a4a4f60088c4ba185e",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "adobe-source-code-pro-fonts",
+          "version": "2.042.1.062.1.026",
+          "release": "5.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "8e2cc895199ef8582a3eaec7bb828fd2",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "alsa-lib",
+          "version": "1.2.13",
+          "release": "3.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "5fc769cbf2f6db1cb69b7076f1f09574",
           "sigpgp": null,
           "siggpg": null
         },
@@ -59,6 +99,26 @@
           "epoch": null,
           "arch": "noarch",
           "sigmd5": "2c531d9d4ffe356739969b6538a966ac",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "appstream",
+          "version": "1.0.2",
+          "release": "4.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "b2438690c5b875a631f08a50038b5a31",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "appstream-data",
+          "version": "41",
+          "release": "8.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "422bf8da6ef850b75639cc3e7b1e2552",
           "sigpgp": null,
           "siggpg": null
         },
@@ -113,6 +173,26 @@
           "siggpg": null
         },
         {
+          "name": "avahi-glib",
+          "version": "0.8",
+          "release": "29.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "d9a030895b80156e207972167da28522",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "avahi-libs",
+          "version": "0.8",
+          "release": "29.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "b944f17c7688a3682afe38aaea88e33f",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "basesystem",
           "version": "11",
           "release": "21.fc41",
@@ -149,6 +229,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "7e206b40c2dfa571011d6ceafb282654",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "bluez-libs",
+          "version": "5.79",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "e929e6f7b83c43bbcf3e3d236138bc06",
           "sigpgp": null,
           "siggpg": null
         },
@@ -243,12 +333,42 @@
           "siggpg": null
         },
         {
+          "name": "cairo",
+          "version": "1.18.2",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "f1465c16a12e155aa41b3bebb1a10ceb",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "cairo-gobject",
+          "version": "1.18.2",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "f74682dceb44dcd1f5c24fb3e3832202",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "catatonit",
           "version": "0.1.7",
           "release": "23.fc41",
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "61337aa5d69da57c3994c4819dadd274",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "checkpolicy",
+          "version": "3.7",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "316454e77bc7293e08114ca0d568fe2e",
           "sigpgp": null,
           "siggpg": null
         },
@@ -503,12 +623,32 @@
           "siggpg": null
         },
         {
+          "name": "dconf",
+          "version": "0.40.0",
+          "release": "14.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "dd9a0ca2cdab0908ccee3f4b4a501276",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "debugedit",
           "version": "5.1",
           "release": "2.fc41",
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "ae4de902e221e3015a57ac465822b678",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "default-fonts-core-sans",
+          "version": "4.1",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "607d469e1731f5aa397a807c09a87cf7",
           "sigpgp": null,
           "siggpg": null
         },
@@ -803,6 +943,16 @@
           "siggpg": null
         },
         {
+          "name": "fdk-aac-free",
+          "version": "2.0.0",
+          "release": "14.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "8dd18802fb4c6b9b449f1e9497db5777",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "fedora-gpg-keys",
           "version": "41",
           "release": "1",
@@ -893,12 +1043,72 @@
           "siggpg": null
         },
         {
+          "name": "flac-libs",
+          "version": "1.4.3",
+          "release": "5.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "80cfa7dd15b87ae1b159309ef590ab94",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "flatpak",
+          "version": "1.15.12",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "c34edddf035215525dacb054feb7bb0b",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "flatpak-selinux",
+          "version": "1.15.12",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "e859552ad7e2abb13ca3813b8c4e4658",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "flatpak-session-helper",
+          "version": "1.15.12",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "63df153e81e5709f09ea5af144899480",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "fmt",
           "version": "11.0.2",
           "release": "2.fc41",
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "5ce608d192578e447232a91dd708448e",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "fontconfig",
+          "version": "2.15.0",
+          "release": "8.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "bb101474986b48dfd0ff15eab3ec3894",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "fonts-filesystem",
+          "version": "2.0.5",
+          "release": "17.fc41",
+          "epoch": "1",
+          "arch": "noarch",
+          "sigmd5": "dd8378721eb0baeba1cec877d2a4905b",
           "sigpgp": null,
           "siggpg": null
         },
@@ -939,6 +1149,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "0d7d6a4a12320326bcfccbe5b54ed966",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "fribidi",
+          "version": "1.0.15",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "aed15506fb51757afa5f6f1f76d7bfb4",
           "sigpgp": null,
           "siggpg": null
         },
@@ -1043,12 +1263,32 @@
           "siggpg": null
         },
         {
+          "name": "gdk-pixbuf2",
+          "version": "2.42.12",
+          "release": "6.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "0befe1f78e2ba61970d71e94626ea733",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "genisoimage",
           "version": "1.1.11",
           "release": "56.fc41",
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "b10125228eaf8bcb6c31fa65432263e9",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "geoclue2",
+          "version": "2.7.0",
+          "release": "6.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "dbaa415d4ffddc2143d8c1709b98c22f",
           "sigpgp": null,
           "siggpg": null
         },
@@ -1089,6 +1329,16 @@
           "epoch": null,
           "arch": "noarch",
           "sigmd5": "de4af29d2af8512a6a0a7fa89c489562",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "glib-networking",
+          "version": "2.80.0",
+          "release": "4.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "994bf64620b960c826d9e8b4cf26a062",
           "sigpgp": null,
           "siggpg": null
         },
@@ -1203,8 +1453,28 @@
           "siggpg": null
         },
         {
+          "name": "google-noto-fonts-common",
+          "version": "20240701",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "59afb70af7ed7fde3911797417360541",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "google-noto-sans-vf-fonts",
+          "version": "20240701",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "6f7e5e410296f9f8d01f0f1fc3918ff1",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "gpg-pubkey",
-          "version": "e99d6ad1",
+          "version": "466cf2d8b60bc3057aa9453ed0622462e99d6ad1",
           "release": "64d2612c",
           "epoch": null,
           "arch": null,
@@ -1363,6 +1633,26 @@
           "siggpg": null
         },
         {
+          "name": "gsettings-desktop-schemas",
+          "version": "47.1",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "905c57d5506991cfbf16e43414522187",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "gsm",
+          "version": "1.0.22",
+          "release": "7.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "6591e8eef2d9d32284ea92ed0884caec",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "gzip",
           "version": "1.13",
           "release": "2.fc41",
@@ -1399,6 +1689,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "dd141cd5ceb17cda8121b22361061dd8",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "hwdata",
+          "version": "0.390",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "675fd80fe7d63aecc9efe58cd5431df2",
           "sigpgp": null,
           "siggpg": null
         },
@@ -1653,6 +1953,76 @@
           "siggpg": null
         },
         {
+          "name": "lame-libs",
+          "version": "3.100",
+          "release": "18.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "c5fbd6a7a28d0394d545c33083c6f4d4",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libX11",
+          "version": "1.8.10",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "c4c57b5e091a230db8239a9b07813cfb",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libX11-common",
+          "version": "1.8.10",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "27f9d2119913a14787bd5034f525535b",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libXau",
+          "version": "1.0.11",
+          "release": "7.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "838df88e7d92472d8b40701918917464",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libXext",
+          "version": "1.3.6",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "a67dd401777be806932a3c6fc9eff36d",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libXft",
+          "version": "2.3.8",
+          "release": "7.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "94ed8c6a94d08aed569f2b5c22106d80",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libXrender",
+          "version": "0.9.11",
+          "release": "7.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "8558c3c269608247cb10261755beceba",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "libacl",
           "version": "2.3.2",
           "release": "2.fc41",
@@ -1689,6 +2059,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "41545abbd8633816b1553cbe923aee4a",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libasyncns",
+          "version": "0.8",
+          "release": "29.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "2f47f76aa17bfe4e6bad70ff0b061948",
           "sigpgp": null,
           "siggpg": null
         },
@@ -1763,6 +2143,26 @@
           "siggpg": null
         },
         {
+          "name": "libcamera",
+          "version": "0.3.2",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "668e77f2d64c8e71a3c1c42214312786",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libcamera-ipa",
+          "version": "0.3.2",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "04f27c1cde8d79d6478ee75580b46be0",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "libcap",
           "version": "2.70",
           "release": "4.fc41",
@@ -1833,6 +2233,16 @@
           "siggpg": null
         },
         {
+          "name": "libdatrie",
+          "version": "0.2.13",
+          "release": "10.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "0a51563227261c3f272f1ea62635e31f",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "libdeflate",
           "version": "1.22",
           "release": "2.fc41",
@@ -1869,6 +2279,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "253029ef60c77ab51acc7bdee0a95089",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libdrm",
+          "version": "2.4.124",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "5147c458bc2928e9ecae155b3cbfe872",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2023,6 +2443,16 @@
           "siggpg": null
         },
         {
+          "name": "libjpeg-turbo",
+          "version": "3.0.2",
+          "release": "3.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "dc54268b58994177842c65d131645068",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "libkcapi",
           "version": "1.5.0",
           "release": "4.fc41",
@@ -2059,6 +2489,26 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "61520316971e9e365032f125c8558906",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "liblc3",
+          "version": "1.1.1",
+          "release": "3.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "7fbb8b0bfd707c22bc4099c903c6ee8d",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libldac",
+          "version": "2.0.2.3",
+          "release": "16.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "131f1061e1c23fe6451d53fab3b7e656",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2163,12 +2613,42 @@
           "siggpg": null
         },
         {
+          "name": "libnotify",
+          "version": "0.8.3",
+          "release": "4.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "ba70fd79413fc0676ecd52785157aacf",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "libnsl2",
           "version": "2.0.1",
           "release": "2.fc41",
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "92058ea435ea4b6c64ec92e5c49f1953",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libogg",
+          "version": "1.3.5",
+          "release": "9.fc41",
+          "epoch": "2",
+          "arch": "x86_64",
+          "sigmd5": "4ab9f5754c090a5584db644b8a7cc312",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libpciaccess",
+          "version": "0.16",
+          "release": "13.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "2fa762269c932d66f4587c13fcccea59",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2189,6 +2669,16 @@
           "epoch": "2",
           "arch": "x86_64",
           "sigmd5": "68ac4051c18819d38fc2f1620bcd32db",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libproxy",
+          "version": "0.5.8",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "98f070485c346374b90cbcb78e499a3c",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2219,6 +2709,26 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "2358b67de1c798d9c90fa76e182f8627",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "librsvg2",
+          "version": "2.59.2",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "8602eeaae1ff53a26c5730419e39665b",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libsbc",
+          "version": "2.0",
+          "release": "5.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "2b3685068169627a25945f32f4531b64",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2293,12 +2803,32 @@
           "siggpg": null
         },
         {
+          "name": "libsndfile",
+          "version": "1.2.2",
+          "release": "5.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "780d6d0538cae434b302ddcbab015863",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "libsolv",
           "version": "0.7.31",
           "release": "1.fc41",
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "3d065f09ee39b616d4168175fafedbcb",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libsoup3",
+          "version": "3.6.0",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "254e358442547ffe04f5db0edd088722",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2353,6 +2883,16 @@
           "siggpg": null
         },
         {
+          "name": "libstemmer",
+          "version": "2.2.0",
+          "release": "13.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "e06353ff3ed22847cc9efbd2d1bb9fdb",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "libtasn1",
           "version": "4.19.0",
           "release": "9.fc41",
@@ -2369,6 +2909,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "779805087e1d17522bc29569bb99f185",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libthai",
+          "version": "0.1.29",
+          "release": "9.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "f6137ae2ec75aa241e388e9f2e6dbb82",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2433,6 +2983,16 @@
           "siggpg": null
         },
         {
+          "name": "libunwind",
+          "version": "1.8.0",
+          "release": "5.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "bf95014c09b1761bae2ab5ae546a5f7f",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "liburing",
           "version": "2.6",
           "release": "2.fc41",
@@ -2493,6 +3053,36 @@
           "siggpg": null
         },
         {
+          "name": "libvorbis",
+          "version": "1.3.7",
+          "release": "11.fc41",
+          "epoch": "1",
+          "arch": "x86_64",
+          "sigmd5": "b0e7dda98e9ce738e4d8041e0db135cf",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libwayland-client",
+          "version": "1.23.0",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "bcfa0ae319f58acdf9acbdf9486048f8",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libxcb",
+          "version": "1.17.0",
+          "release": "3.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "c79bb9e783821acfdb2de4a8c35b747c",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "libxcrypt",
           "version": "4.4.36",
           "release": "11.fc41",
@@ -2519,6 +3109,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "b74c71ca88a73279a73113b530c6f02c",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "libxmlb",
+          "version": "0.3.21",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "89598404a1626d8d3e8f98c569d93044",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2603,6 +3203,26 @@
           "siggpg": null
         },
         {
+          "name": "low-memory-monitor",
+          "version": "2.1",
+          "release": "11.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "09d686ded2c0d4d8c15792aefaaa4795",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "lttng-ust",
+          "version": "2.13.8",
+          "release": "3.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "b7bd9a0c802df85a556c432c531db9be",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "lua-libs",
           "version": "5.4.6",
           "release": "6.fc41",
@@ -2663,6 +3283,16 @@
           "siggpg": null
         },
         {
+          "name": "malcontent-libs",
+          "version": "0.12.0",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "be8b6ece5c52199b264ac7325414e93c",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "memstrack",
           "version": "0.2.5",
           "release": "5.fc41",
@@ -2709,6 +3339,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "bb4a246ca75121c25c7bf8ee2f971e53",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "mpg123-libs",
+          "version": "1.32.9",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "92d76cd970ecbe7e215a230ad5bfb82a",
           "sigpgp": null,
           "siggpg": null
         },
@@ -2903,6 +3543,16 @@
           "siggpg": null
         },
         {
+          "name": "opus",
+          "version": "1.5.2",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "474f85981ba4fdd33e74d96b5b5a4c88",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "os-prober",
           "version": "1.81",
           "release": "8.fc41",
@@ -2943,6 +3593,16 @@
           "siggpg": null
         },
         {
+          "name": "p11-kit-server",
+          "version": "0.25.5",
+          "release": "3.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "7d8fe894e12d7d559f3292ee0e33166e",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "p11-kit-trust",
           "version": "0.25.5",
           "release": "3.fc41",
@@ -2979,6 +3639,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "9d7a9f1ee60d71fbe1c19ee10c294f24",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "pango",
+          "version": "1.54.0",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "9ae48a816a0fada75713fa1a31606f49",
           "sigpgp": null,
           "siggpg": null
         },
@@ -3113,6 +3783,86 @@
           "siggpg": null
         },
         {
+          "name": "pipewire",
+          "version": "1.2.7",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "276e2de712494a740f5a3660999306a0",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "pipewire-alsa",
+          "version": "1.2.7",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "37533a7e39530119f2508503e1a9f7f5",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "pipewire-jack-audio-connection-kit",
+          "version": "1.2.7",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "d3bbfe7454612e5012775dcd37ba2e82",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "pipewire-jack-audio-connection-kit-libs",
+          "version": "1.2.7",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "2ba09f1a28d59e8ce2e19abfc7919c60",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "pipewire-libs",
+          "version": "1.2.7",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "e0f70403465d6154bd7c7ac44d762bd3",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "pipewire-plugin-libcamera",
+          "version": "1.2.7",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "e14b444c53ca68948448b13237ab0efb",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "pipewire-pulseaudio",
+          "version": "1.2.7",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "15b7e499df1a5051f1380580ab5a05a7",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "pixman",
+          "version": "0.44.2",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "6a557721df0859aa3c8bc7c45fbe4b8b",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "pkcs11-provider",
           "version": "0.6",
           "release": "2.fc41",
@@ -3169,6 +3919,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "9ec0f5d85bc357f2129a3b4dc412599c",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "policycoreutils-python-utils",
+          "version": "3.7",
+          "release": "5.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "0a31148bb047f00bb1e1879cd025ef31",
           "sigpgp": null,
           "siggpg": null
         },
@@ -3253,6 +4013,16 @@
           "siggpg": null
         },
         {
+          "name": "pulseaudio-libs",
+          "version": "17.0",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "b766f5cfd8ccdb924e64750da035fab4",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "pyproject-srpm-macros",
           "version": "1.16.3",
           "release": "1.fc41",
@@ -3309,6 +4079,16 @@
           "epoch": null,
           "arch": "noarch",
           "sigmd5": "ebcaf933180bb764237df2a1e3ec002e",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "python3-audit",
+          "version": "4.0.2",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "d4172c721d14b53cb5bf091c49ca0e53",
           "sigpgp": null,
           "siggpg": null
         },
@@ -3389,6 +4169,16 @@
           "epoch": null,
           "arch": "x86_64",
           "sigmd5": "5458679c42565b03c785014a37b3afe7",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "python3-distro",
+          "version": "1.9.0",
+          "release": "5.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "03a2ef3a7128c936354def798b926774",
           "sigpgp": null,
           "siggpg": null
         },
@@ -3503,6 +4293,16 @@
           "siggpg": null
         },
         {
+          "name": "python3-libsemanage",
+          "version": "3.7",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "c94d5d99d206668e990abc7ab33ffb9f",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "python3-mako",
           "version": "1.2.3",
           "release": "8.fc41",
@@ -3539,6 +4339,16 @@
           "epoch": null,
           "arch": "noarch",
           "sigmd5": "6ae95d7ee795ba3835e38a6bb2883aa9",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "python3-policycoreutils",
+          "version": "3.7",
+          "release": "5.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "a214a7f3bbb1f4167b486367201033b3",
           "sigpgp": null,
           "siggpg": null
         },
@@ -3649,6 +4459,16 @@
           "epoch": null,
           "arch": "noarch",
           "sigmd5": "5323fffb276c65e93ecbb3ca730f78f7",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "python3-setools",
+          "version": "4.5.1",
+          "release": "4.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "0f017e6631ee6295ff3774a463f10f5c",
           "sigpgp": null,
           "siggpg": null
         },
@@ -4123,6 +4943,26 @@
           "siggpg": null
         },
         {
+          "name": "rsvg-pixbuf-loader",
+          "version": "2.59.2",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "454980b67dddb22c4a7cbd9048994e7a",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "rtkit",
+          "version": "0.11",
+          "release": "65.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "f4e23a6a862937a37db3d6ac2bbc9382",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "rust-srpm-macros",
           "version": "26.3",
           "release": "3.fc41",
@@ -4199,6 +5039,16 @@
           "epoch": "2",
           "arch": "x86_64",
           "sigmd5": "2ea2c5270790f748fc57442c753bf9c2",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "shared-mime-info",
+          "version": "2.3",
+          "release": "6.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "39b6e19e45ea293379fcaf978a3904a9",
           "sigpgp": null,
           "siggpg": null
         },
@@ -4463,6 +5313,16 @@
           "siggpg": null
         },
         {
+          "name": "webrtc-audio-processing",
+          "version": "1.3",
+          "release": "3.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "66087191202fc2174ec092892f4edaac",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "which",
           "version": "2.21",
           "release": "42.fc41",
@@ -4483,6 +5343,46 @@
           "siggpg": null
         },
         {
+          "name": "wireplumber",
+          "version": "0.5.5",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "c2f2fc9b740245c6bf77471cea087728",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "wireplumber-libs",
+          "version": "0.5.5",
+          "release": "2.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "7dece811653029f4465c1acdee30ce1b",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "xdg-dbus-proxy",
+          "version": "0.1.6",
+          "release": "1.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "b573cfb4ced448663535ffab888b73bf",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "xdg-desktop-portal",
+          "version": "1.18.4",
+          "release": "3.fc41",
+          "epoch": null,
+          "arch": "x86_64",
+          "sigmd5": "ae76e5e0b915eb5a3fa0e1d36098d218",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
           "name": "xfsprogs",
           "version": "6.9.0",
           "release": "1.fc41",
@@ -4499,6 +5399,16 @@
           "epoch": null,
           "arch": "noarch",
           "sigmd5": "b727fe4be1f7be7ee092cccfeefcab1d",
+          "sigpgp": null,
+          "siggpg": null
+        },
+        {
+          "name": "xml-common",
+          "version": "0.6.3",
+          "release": "65.fc41",
+          "epoch": null,
+          "arch": "noarch",
+          "sigmd5": "f0cb2816b292c24e8b17e08454ac342d",
           "sigpgp": null,
           "siggpg": null
         },
