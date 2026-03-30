@@ -108,7 +108,7 @@ class Subscriptions:
     @classmethod
     def parse_repo_file(cls, fp):
         """Take a file object and reads its content assuming it is a .repo file."""
-        parser = configparser.ConfigParser()
+        parser = configparser.ConfigParser(interpolation=None)
         parser.read_file(fp)
 
         repositories = {}

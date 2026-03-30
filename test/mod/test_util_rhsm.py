@@ -293,6 +293,34 @@ class TestUrlMatching:
         assert result == should_match
 
 
+class TestPercentEncodedUrls:
+    """Tests that repo files with percent-encoded URLs are parsed correctly."""
+
+    REPO_WITH_PERCENT = """[custom]
+name = Custom Repo
+baseurl = https://cdn.example.com/content/%40osbuild/cockpit-image-builder-main/centos-stream-10-x86_64
+enabled = 1
+gpgcheck = 0
+sslcacert = /etc/rhsm/ca/redhat-uep.pem
+sslclientkey = /etc/pki/entitlement/1-key.pem
+sslclientcert = /etc/pki/entitlement/1.pem
+"""
+
+    def test_parse_repo_file_with_percent_encoded_url(self):
+        subscriptions = Subscriptions.parse_repo_file(StringIO(self.REPO_WITH_PERCENT))
+        assert subscriptions.repositories is not None
+        assert "custom" in subscriptions.repositories
+
+    def test_get_secrets_with_percent_encoded_url(self):
+        subscriptions = Subscriptions.parse_repo_file(StringIO(self.REPO_WITH_PERCENT))
+        url = ("https://cdn.example.com/content/%40osbuild/cockpit-image-builder-main/"
+               "centos-stream-10-x86_64/Packages/test.rpm")
+        secrets = subscriptions.get_secrets([url])
+        assert secrets["ssl_ca_cert"] == "/etc/rhsm/ca/redhat-uep.pem"
+        assert secrets["ssl_client_key"] == "/etc/pki/entitlement/1-key.pem"
+        assert secrets["ssl_client_cert"] == "/etc/pki/entitlement/1.pem"
+
+
 class TestIntegration:
     """Integration-style tests using full mock filesystem setups."""
 
