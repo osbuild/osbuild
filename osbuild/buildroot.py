@@ -269,10 +269,10 @@ class BuildRoot(contextlib.AbstractContextManager):
             ]
 
         # Make caller-provided mounts available as well.
-        for b in binds or []:
-            mounts += ["--bind"] + b.split(":")
-        for b in readonly_binds or []:
-            mounts += ["--ro-bind"] + b.split(":")
+        for source, target in binds or []:
+            mounts += ["--bind", source, target]
+        for source, target in readonly_binds or []:
+            mounts += ["--ro-bind", source, target]
 
         # Prepare all registered API endpoints: bind mount the address with
         # the `endpoint` name, provided by the API, into the well known path

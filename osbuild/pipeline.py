@@ -286,15 +286,14 @@ class Stage:
             }
 
             ro_binds = [
-                f"{self.info_path}:/run/osbuild/bin/{self.name}",
-                f"{inputs_tmpdir}:{inputs_mapped}",
-                f"{args_path}:/run/osbuild/api/arguments"
+                (self.info_path, f"/run/osbuild/bin/{self.name}"),
+                (args_path, "/run/osbuild/api/arguments")
             ]
 
             binds = [
-                tree_path + ":/run/osbuild/tree",
-                meta_name + ":/run/osbuild/meta",
-                f"{mounts_tmpdir}:{mounts_mapped}"
+                (tree_path, "/run/osbuild/tree"),
+                (meta_name, "/run/osbuild/meta"),
+                (mounts_tmpdir, mounts_mapped)
             ]
 
             storeapi = objectstore.StoreServer(store)
@@ -305,8 +304,12 @@ class Stage:
 
             ipmgr = InputManager(mgr, storeapi, inputs_tmpdir)
             for key, ip in self.inputs.items():
-                data_inp = ipmgr.map(ip)
-                inputs[key] = data_inp
+                path = os.path.join(inputs_mapped, ip.name)
+                data, input_binds = ipmgr.map(ip)
+                ro_binds += [
+                    (source, os.path.join(path, target)) for source, target in input_binds
+                ]
+                inputs[key] = {"path": path, "data": data}
 
             devmgr = DeviceManager(mgr, build_root.dev, tree_path)
             for name, dev in self.devices.items():
