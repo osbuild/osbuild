@@ -27,11 +27,12 @@ jobs:
   trigger: pull_request
   targets:
   - centos-stream-9-aarch64
-  - centos-stream-9-s390x
+  # disabled until https://github.com/fedora-copr/copr/issues/4219 is resolved
+  #- centos-stream-9-s390x
   - centos-stream-9-pcc64le
   - centos-stream-9-x86_64
   - centos-stream-10-aarch64
-  - centos-stream-10-s390x
+  #- centos-stream-10-s390x
   - centos-stream-10-ppc64le
   - centos-stream-10-x86_64
   - epel-8-aarch64
@@ -39,7 +40,7 @@ jobs:
   - epel-9-aarch64
   - epel-9-x86_64
   - fedora-all-aarch64
-  - fedora-all-s390x
+  #- fedora-all-s390x
   - fedora-all-ppc64le
   - fedora-all
   - rhel-10-x86_64
