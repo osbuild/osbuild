@@ -21,6 +21,9 @@ def depsolve_pkgset(
         conf.reposdir = ["/dev/null"]
         conf.pluginconfpath = ["/dev/null"]
         conf.varsdir = ["/dev/null"]
+        # explicitly set arch as our test repos only include x86 metadata
+        conf.substitutions["arch"] = "x86_64"
+        conf.substitutions["basearch"] = "x86_64"
 
         base = dnf.Base(conf)
 
