@@ -205,6 +205,17 @@ Provides: osbuild-dnf-json-api = 8
 %description    depsolve-dnf
 Contains depsolving capabilities for package managers.
 
+%if ! (0%{?rhel} && "%{_arch}" == "ppc64le")
+%package        virt-deps
+Summary:        Dependencies required for running osbuild pipelines in a VM.
+Requires:       %{name} = %{version}-%{release}
+Requires:       qemu-kvm
+Requires:       virtiofsd
+
+%description    virt-deps
+Dependencies required for running osbuild pipelines in a VM.
+%endif
+
 %prep
 %forgeautosetup -p1
 tar xf %SOURCE1
@@ -468,6 +479,10 @@ fi
 %files depsolve-dnf
 %{_libexecdir}/osbuild-depsolve-dnf
 %{pkgdir}/solver.json
+
+%if ! (0%{?rhel} && "%{_arch}" == "ppc64le")
+%files virt-deps
+%endif
 
 %changelog
 * Mon Aug 19 2019 Miro Hrončok <mhroncok@redhat.com> - 1-3
