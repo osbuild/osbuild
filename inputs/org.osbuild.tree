@@ -79,15 +79,16 @@ class TreeInput(inputs.InputService):
         # and we have exactly one reference, i.e. a pipeline id
         pid, _ = refs.popitem()
 
-        path = None
+        tree = None
         if pid:
-            path = store.read_tree_at(pid, target)
+            tree = store.read_tree(pid)
 
-        if not path:
+        if not tree:
             raise ValueError(f"Unknown pipeline '{pid}'")
 
-        reply = {"path": target}
-        return reply
+        data = {}
+        binds = [(tree, "")]
+        return data, binds
 
 
 def main():

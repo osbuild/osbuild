@@ -112,7 +112,7 @@ def test_bind_mounts(tempdir, runner):
     monitor = NullMonitor(sys.stderr.fileno())
     with BuildRoot("/", runner, libdir, var) as root:
 
-        ro_binds = [f"{scripts}:/scripts"]
+        ro_binds = [(scripts, "/scripts")]
 
         cmd = ["/scripts/mount_flags.py",
                "/scripts",
@@ -125,7 +125,7 @@ def test_bind_mounts(tempdir, runner):
                "/rw-data",
                "ro"]
 
-        binds = [f"{rw_data}:/rw-data"]
+        binds = [(rw_data, "/rw-data")]
         r = root.run(cmd, monitor, binds=binds, readonly_binds=ro_binds)
         assert r.returncode == 1
 
@@ -147,7 +147,7 @@ def test_selinuxfs_ro(tempdir, runner):
     monitor = NullMonitor(sys.stderr.fileno())
     with BuildRoot("/", runner, libdir, var) as root:
 
-        ro_binds = [f"{scripts}:/scripts"]
+        ro_binds = [(scripts, "/scripts")]
 
         cmd = ["/scripts/mount_flags.py",
                "/sys/fs/selinux",
@@ -211,7 +211,7 @@ def test_env_isolation(tempdir, runner):
 
     with BuildRoot("/", runner, libdir, var) as root:
         cmd = ["/bin/sh", "-c", "/usr/bin/env > /ipc/env.txt"]
-        r = root.run(cmd, monitor, binds=[f"{ipc}:/ipc"])
+        r = root.run(cmd, monitor, binds=[(ipc, "/ipc")])
 
     assert r.returncode == 0
     with open(os.path.join(ipc, "env.txt"), encoding="utf8") as f:
@@ -256,7 +256,7 @@ def test_caps(tempdir, runner):
 
         def run_and_get_caps():
             cmd = ["/bin/sh", "-c", "cat /proc/self/status > /ipc/status"]
-            r = root.run(cmd, monitor, binds=[f"{ipc}:/ipc"])
+            r = root.run(cmd, monitor, binds=[(ipc, "/ipc")])
             assert r.returncode == 0
             return get_caps_from_status(os.path.join(ipc, "status"))
 

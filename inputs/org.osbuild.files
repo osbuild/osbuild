@@ -15,7 +15,6 @@ schema validation.
 """
 
 import os
-import pathlib
 import sys
 
 from osbuild import inputs
@@ -178,43 +177,39 @@ SCHEMA = r"""
 class FilesInput(inputs.InputService):
 
     @staticmethod
-    def map_pipeline_ref(store, ref, data, target):
-        filepath = data["file"].lstrip("/")
-
-        # prepare the mount point
-        filename = pathlib.Path(target, filepath)
-        os.makedirs(filename.parent, exist_ok=True)
-        filename.touch()
-
-        store.read_tree_at(ref, filename, filepath)
-
-        return filepath, data.get("metadata", {})
-
-    @staticmethod
-    def map_source_ref(source, ref, data, target):
-        os.link(f"{source}/{ref}", f"{target}/{ref}")
-        data = data.get("metadata", {})
-        return ref, data
-
-    def map(self, store, origin, refs, target, _options):
-
-        source = store.source("org.osbuild.files")
-        files = {}
+    def map_pipeline_refs(store, refs):
+        binds = []
 
         for ref, data in refs.items():
-            if origin == "org.osbuild.source":
-                ref, data = self.map_source_ref(source, ref, data, target)
-            else:
-                ref, data = self.map_pipeline_ref(store, ref, data, target)
-            files[ref] = data
+            tree = store.read_tree(ref)
+            if not tree:
+                raise RuntimeError(f"No tree at {ref}")
+            path = data["file"].lstrip("/")
+            binds.append((os.path.join(tree, path), ref))
 
-        reply = {
-            "path": target,
-            "data": {
-                "files": files
-            }
+        return binds
+
+    @staticmethod
+    def map_source_refs(store, refs, target):
+        source = store.source("org.osbuild.files")
+
+        for ref in refs.keys():
+            os.link(os.path.join(source, ref), os.path.join(target, ref))
+
+        return [(target, "")]
+
+    def map(self, store, origin, refs, target, _options):
+        binds = []
+
+        if origin == "org.osbuild.source":
+            binds = self.map_source_refs(store, refs, target)
+        else:
+            binds = self.map_pipeline_refs(store, refs)
+
+        data = {
+            "files": {ref: data.get("metadata", {}) for ref, data in refs.items()}
         }
-        return reply
+        return data, binds
 
 
 def main():
