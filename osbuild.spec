@@ -205,6 +205,15 @@ Provides: osbuild-dnf-json-api = 8
 %description    depsolve-dnf
 Contains depsolving capabilities for package managers.
 
+%package        in-vm-deps
+Summary:        Dependencies required for running osbuild pipelines in a VM.
+Requires:       %{name} = %{version}-%{release}
+Requires:       qemu-kvm
+Requires:       virtiofsd
+
+%description    in-vm-deps
+Dependencies required for running osbuild pipelines in a VM.
+
 %prep
 %forgeautosetup -p1
 tar xf %SOURCE1
