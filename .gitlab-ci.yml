@@ -52,8 +52,12 @@ RPM:
       - RUNNER:
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-9.8-nightly-aarch64
+          - aws/rhel-9.9-nightly-x86_64
+          - aws/rhel-9.9-nightly-aarch64
           - aws/rhel-10.2-nightly-x86_64
           - aws/rhel-10.2-nightly-aarch64
+          - aws/rhel-10.3-nightly-x86_64
+          - aws/rhel-10.3-nightly-aarch64
         INTERNAL_NETWORK: "true"
 
 OSTree Images:
@@ -96,8 +100,10 @@ PQC keys:
           - aws/fedora-42-x86_64
           - aws/rhel-9.7-ga-x86_64
           - aws/rhel-9.8-nightly-x86_64
+          - aws/rhel-9.9-nightly-x86_64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
+          - aws/rhel-10.3-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
 Manifests:
@@ -161,10 +167,14 @@ Manifests:
           - aws/rhel-9.7-ga-aarch64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-9.8-nightly-aarch64
+          - aws/rhel-9.9-nightly-x86_64
+          - aws/rhel-9.9-nightly-aarch64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.1-ga-aarch64
           - aws/rhel-10.2-nightly-x86_64
           - aws/rhel-10.2-nightly-aarch64
+          - aws/rhel-10.3-nightly-x86_64
+          - aws/rhel-10.3-nightly-aarch64
         INTERNAL_NETWORK: "true"
         # Test only the following manifest generation configs
         CONFIG: "empty all-customizations"
