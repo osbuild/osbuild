@@ -118,7 +118,8 @@ def fail(err):
 
 
 def respond(result):
-    print(json.dumps(result))
+    json.dump(result, sys.stdout)
+    sys.stdout.write("\n")
 
 
 def main():
