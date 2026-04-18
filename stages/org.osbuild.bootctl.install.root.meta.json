@@ -1,0 +1,53 @@
+{
+  "summary": "Run systemd-boot's bootctl install",
+  "description": [
+    "`bootctl install` is the command to install `systemd-boot` into the ESP/XBOOTLDR.",
+    "This stage implements installation with the `--root` argument. Note that systemd",
+    "performs checks on the ESP/XBOOTLDR paths which means that this stage will currently",
+    "only work on a root where those partitions are mounted. Note on a bare filesystem",
+    "tree."
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "root"
+      ],
+      "properties": {
+        "root": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Filesystem root to operate on, if a mount",
+              "pattern": "^mount://[^/]+/"
+            },
+            {
+              "type": "string",
+              "description": "Filesystem root to operate on, if the tree",
+              "pattern": "^tree:///"
+            }
+          ]
+        },
+        "esp-path": {
+          "type": "string",
+          "description": "Path to the ESP partition"
+        },
+        "boot-path": {
+          "type": "string",
+          "description": "Path to the $BOOT partition"
+        },
+        "relax-esp-checks": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "devices": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "mounts": {
+      "type": "array"
+    }
+  }
+}

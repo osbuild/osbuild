@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+import os
+import subprocess
+
+import osbuild.api
+from osbuild.util import parsing
+
+
+def main(args):
+    options = args["options"]
+
+    cmd = [
+        "bootctl", "install",
+        # no variables as we don't/can't write to the UEFI variables
+        # when building an image
+        "--no-variables",
+        "--root", os.path.normpath(parsing.parse_location(options["root"], args)),
+    ]
+
+    if options.get("esp-path"):
+        cmd += ["--esp-path", options["esp-path"]]
+
+    if options.get("boot-path"):
+        cmd += ["--boot-path", options["boot-path"]]
+
+    env = {}
+    if options.get("relax-esp-checks", False):
+        env["SYSTEMD_RELAX_ESP_CHECKS"] = 1
+
+    subprocess.run(cmd, check=True, env=env)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(osbuild.api.arguments()))
