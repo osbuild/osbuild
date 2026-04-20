@@ -2,7 +2,7 @@
   "global": {
     "dependencies": {
       "images": {
-        "ref": "e5ed76afdb50df0aa1a82d3d3678c7326eddef1b"
+        "ref": "3be6df487c52ef1f2d56e601f8905535528f46f2"
       }
     }
   },
@@ -263,7 +263,7 @@
       }
     ]
   },
-"rhel-10.3": {
+  "rhel-10.3": {
     "repos": [
       {
         "file": "/etc/yum.repos.d/rhel10internal.repo",
