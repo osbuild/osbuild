@@ -12,10 +12,19 @@ def main(tree, options):
     grub2-mkrelpath uses /proc/self/mountinfo to find the source of the file
     system it is installed to. This breaks in a container, because we
     bind-mount the tree from the host.
+
+    a similar thing happens in 90-loaderentry in kernel-install where it
+    verifies what the mount point is of /boot (or /efi, or /boot/efi) and if there
+    is none it prefixes with the path-relative-to-root; in that case the prefix
+    is actually `/boot` and we want to replace it as well
     """
     prefix = options.get("prefix", "/boot")
+    require_boot_prefix = options.get("require_boot_prefix", True)
 
-    path_re = re.compile(r"(/.*)+/boot")
+    if require_boot_prefix:
+        path_re = re.compile(r"(/.*)+/boot")
+    else:
+        path_re = re.compile(r"(/.*)*/boot")
 
     for name in glob.glob(f"{tree}/boot/loader/entries/*.conf"):
         with open(name, encoding="utf8") as f:
