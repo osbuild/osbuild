@@ -68,6 +68,11 @@
             "systemd",
             "none"
           ]
+        },
+        "composefs": {
+          "description": "Use the compsefs backend instead of the ostree backend",
+          "type": "boolean",
+          "default": "false"
         }
       }
     },
