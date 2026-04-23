@@ -63,6 +63,10 @@ FAKE_INPUTS = {
     # bootupd-skip-boot-uuid
     ({"bootupd-skip-boot-uuid": False}, []),
     ({"bootupd-skip-boot-uuid": True}, ["--bootupd-skip-boot-uuid"]),
+    # bootloader
+    ({"bootloader": "none"}, ["--bootloader", "none"]),
+    ({"bootloader": "systemd"}, ["--bootloader", "systemd"]),
+    ({"bootloader": "grub"}, ["--bootloader", "grub"]),
     # all
     ({"root-ssh-authorized-keys": ["key1", "key2"],
       "kernel-args": ["arg1", "arg2"],
