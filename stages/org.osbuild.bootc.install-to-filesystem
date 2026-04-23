@@ -66,6 +66,8 @@ def main(options, inputs, paths):
             pargs.extend(["--bootupd-skip-boot-uuid"])
         if options.get("bootloader", None):
             pargs.extend(["--bootloader", options["bootloader"]])
+        if options.get("composefs", False):
+            pargs.extend(["--composefs-backend"])
 
         # add target and go
         pargs.append(dst)

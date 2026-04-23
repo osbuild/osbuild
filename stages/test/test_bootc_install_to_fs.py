@@ -67,6 +67,9 @@ FAKE_INPUTS = {
     ({"bootloader": "none"}, ["--bootloader", "none"]),
     ({"bootloader": "systemd"}, ["--bootloader", "systemd"]),
     ({"bootloader": "grub"}, ["--bootloader", "grub"]),
+    # composefs
+    ({"composefs": False}, []),
+    ({"composefs": True}, ["--composefs-backend"]),
     # all
     ({"root-ssh-authorized-keys": ["key1", "key2"],
       "kernel-args": ["arg1", "arg2"],
