@@ -8,7 +8,7 @@ import osbuild.api
 from osbuild.util import containers
 
 
-def main(options, inputs, paths):
+def main(options, inputs, paths):  # pylint: disable=too-many-branches
     images = containers.parse_containers_input(inputs)
     assert len(images) == 1
     image = list(images.values())[0]
