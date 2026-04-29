@@ -141,6 +141,9 @@ def create_oci_dir(inputs, output_dir, options, create_time):
         "history": []
     }
 
+    if options.get("variant", None):
+        config["variant"] = options["variant"]
+
     manifest = {
         "schemaVersion": 2,
         "config": None,
