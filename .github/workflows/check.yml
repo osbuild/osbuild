@@ -1,6 +1,13 @@
+---
 name: Checks
 
-on: [pull_request, push]
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
