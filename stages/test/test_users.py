@@ -19,6 +19,7 @@ STAGE_NAME = "org.osbuild.users"
     # good
     ({}, ""),
     ({"users": {"foo": {}}}, ""),
+    ({"users": {"foo.bar.baz": {}}}, ""),
 ])
 def test_schema_validation(stage_schema, test_data, expected_err):
     test_input = {
