@@ -52,6 +52,7 @@ TEST_INPUT = [
                 "somegrp": {
                     "gid": 2337,
                 },
+                "dot.group": {},
             },
             "users": {
                 "someusr": {
@@ -72,7 +73,9 @@ TEST_INPUT = [
             },
         },
         "ostreesetup --osname=some-osname --url=http://some-ostree-url.com/foo --ref=some-ref --remote=some-remote\n"
-        + "liveimg --url some-liveimg-url\ngroup --name somegrp --gid 2337\n"
+        + "liveimg --url some-liveimg-url\n"
+        + "group --name somegrp --gid 2337\n"
+        + "group --name dot.group\n"
         + "user --name someusr --password $1$notreally --iscrypted --shell /bin/ksh --uid 1337 --gid 1337 --groups grp1,grp2 --homedir /other/home/someusr\n"
         + 'sshkey --username someusr "ssh-rsa not-really-a-real-key"\n'
         + "user --name dot.user\n"
