@@ -26,13 +26,7 @@ class NoopInput(inputs.InputService):
         path = os.path.join(target, uid)
         os.makedirs(path)
 
-        reply = {
-            "path": target,
-            "data": {
-                "refs": refs
-            }
-        }
-        return reply
+        return {"refs": refs}, []
 
 
 def main():
