@@ -217,6 +217,11 @@ class BuildRoot(contextlib.AbstractContextManager):
         # Setup temporary/data file-systems.
         mounts += ["--dir", "/etc"]
         mounts += ["--tmpfs", "/run"]
+        # Bind mount /run/udev so that lsblk can access udev database for
+        # partition info. This is needed for bootc install-to-filesystem on
+        # architectures that need to find specific partitions (e.g., PReP
+        # partition on ppc64le).
+        mounts += ["--ro-bind-try", "/run/udev", "/run/udev"]
         mounts += ["--tmpfs", "/tmp"]
         mounts += ["--bind", self.var, "/var"]
 
