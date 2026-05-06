@@ -35,10 +35,12 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
           - aws/fedora-43-x86_64
           - aws/fedora-43-aarch64
+          - aws/fedora-44-x86_64
+          - aws/fedora-44-aarch64
+          - aws/fedora-45-x86_64
+          - aws/fedora-45-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -67,7 +69,7 @@ OSTree Images:
     - schutzbot/deploy.sh
     - sudo test/cases/ostree-images --manifest "$MANIFEST" --export $EXPORT
   variables:
-    RUNNER: aws/fedora-42-x86_64
+    RUNNER: aws/fedora-43-x86_64
   parallel:
     matrix:
       - MANIFEST: fedora-ostree-tarball.json
@@ -97,7 +99,7 @@ PQC keys:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
+          - aws/fedora-43-x86_64
           - aws/rhel-9.7-ga-x86_64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-9.9-nightly-x86_64
@@ -152,8 +154,8 @@ Manifests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
+          - aws/fedora-43-x86_64
+          - aws/fedora-43-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
