@@ -23,6 +23,9 @@ def main(args):
     if options.get("make-entry-directory"):
         cmd += ["--make-entry-directory", options["make-entry-directory"]]
 
+    if options.get("entry-token"):
+        cmd += ["--entry-token", options["entry-token"]]
+
     if options.get("esp-path"):
         cmd += ["--esp-path", options["esp-path"]]
 
