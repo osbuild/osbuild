@@ -17,6 +17,9 @@ def main(args):
         "--root", os.path.normpath(parsing.parse_location(options["root"], args)),
     ]
 
+    if options.get("random-seed"):
+        cmd += ["--random-seed", options["random-seed"]]
+
     if options.get("esp-path"):
         cmd += ["--esp-path", options["esp-path"]]
 

@@ -39,6 +39,13 @@
         "relax-esp-checks": {
           "type": "boolean",
           "default": false
+        },
+        "random-seed": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no"
+          ]
         }
       }
     },
