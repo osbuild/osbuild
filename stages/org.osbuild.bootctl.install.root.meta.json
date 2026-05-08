@@ -46,6 +46,13 @@
             "yes",
             "no"
           ]
+        },
+        "make-entry-directory": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no"
+          ]
         }
       }
     },
