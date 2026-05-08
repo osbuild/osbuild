@@ -90,7 +90,8 @@ FAKE_INPUTS = {
      ),
 ])
 @patch("subprocess.run")
-def test_bootc_install_to_fs(mock_run, mocked_named_tmp, mocked_temp_dir, stage_module, options, expected_args):  # pylint: disable=unused-argument
+@patch("subprocess.check_call")
+def test_bootc_install_to_fs(_mock_check_call, mock_run, mocked_named_tmp, mocked_temp_dir, stage_module, options, expected_args):  # pylint: disable=unused-argument
     inputs = {
         "images": {
             "path": "/input/images/path",
@@ -123,7 +124,8 @@ def test_bootc_install_to_fs(mock_run, mocked_named_tmp, mocked_temp_dir, stage_
 
 
 @patch("subprocess.run")
-def test_bootc_install_to_fs_write_root_ssh_keys(mock_run, stage_module):  # pylint: disable=unused-argument
+@patch("subprocess.check_call")
+def test_bootc_install_to_fs_write_root_ssh_keys(_mock_check_call, mock_run, stage_module):  # pylint: disable=unused-argument
     paths = {
         "mounts": "/path/to/mounts",
     }
