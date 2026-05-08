@@ -15,12 +15,14 @@ STAGE_NAME = "org.osbuild.bootctl.install.root"
     ({"root": "unknown://-/"}, "'unknown://-/' is not valid under any of the given schemas"),
     ({"root": "mount://-/", "unknown": "property"}, "Additional properties are not allowed ('unknown' was unexpected)"),
     ({"root": "input://-/"}, "'input://-/' is not valid under any of the given schemas"),
+    ({"root": "tree:///", "random-seed": "false"}, "'false' is not one of ['yes', 'no']"),
     # good
     ({"root": "mount://-/"}, ""),
     ({"root": "tree:///"}, ""),
     ({"root": "tree:///with/subpath"}, ""),
     ({"root": "mount://-/", "esp-path": "/foo/bar"}, ""),
     ({"root": "mount://-/", "boot-path": "/foo/bar"}, ""),
+    ({"root": "mount://-/", "random-seed": "no"}, ""),
 ])
 def test_bootctl_install_root_schema_validation(stage_schema, test_data, expected_err):
     test_input = {
@@ -68,6 +70,7 @@ def test_bootctl_install_root_with_options(mock_run, tmp_path, stage_module):
         "esp-path": "/efi",
         "boot-path": "/boot",
         "relax-esp-checks": True,
+        "random-seed": "no",
     }
 
     fake_tree = tmp_path / "tree"
@@ -81,6 +84,7 @@ def test_bootctl_install_root_with_options(mock_run, tmp_path, stage_module):
         "bootctl", "install",
         "--no-variables",
         "--root", str(fake_tree),
+        "--random-seed", "no",
         "--esp-path", "/efi",
         "--boot-path", "/boot",
     ],
