@@ -71,7 +71,17 @@ def main(options, inputs, paths):  # pylint: disable=too-many-branches
 
         # add target and go
         pargs.append(dst)
-        subprocess.run(pargs, env=env, check=True)
+
+        # The composefs backend wants to manage loopback devices. It needs access to
+        # /dev/loop-control and any /dev/loopXpY devices that appear. `bootc` may opt
+        # to use the `composefs` backend based on the input container; we can't control
+        # this so we should always be prepared.
+        subprocess.check_call(['mount', '-t', 'devtmpfs', 'devtmpfs', '/dev/'])
+
+        try:
+            subprocess.run(pargs, env=env, check=True)
+        finally:
+            subprocess.check_call(['umount', '/dev/'])
 
 
 if __name__ == "__main__":
