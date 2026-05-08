@@ -17,6 +17,8 @@ STAGE_NAME = "org.osbuild.bootctl.install.root"
     ({"root": "input://-/"}, "'input://-/' is not valid under any of the given schemas"),
     ({"root": "tree:///", "random-seed": "false"}, "'false' is not one of ['yes', 'no']"),
     ({"root": "tree:///", "make-entry-directory": "false"}, "'false' is not one of ['yes', 'no']"),
+    ({"root": "tree:///", "entry-token": "broken"},
+     "'broken' is not one of ['auto', 'machine-id', 'os-id', 'os-image-id']"),
     # good
     ({"root": "mount://-/"}, ""),
     ({"root": "tree:///"}, ""),
@@ -25,6 +27,7 @@ STAGE_NAME = "org.osbuild.bootctl.install.root"
     ({"root": "mount://-/", "boot-path": "/foo/bar"}, ""),
     ({"root": "mount://-/", "random-seed": "no"}, ""),
     ({"root": "mount://-/", "make-entry-directory": "yes"}, ""),
+    ({"root": "mount://-/", "entry-token": "os-id"}, ""),
 ])
 def test_bootctl_install_root_schema_validation(stage_schema, test_data, expected_err):
     test_input = {
@@ -74,6 +77,7 @@ def test_bootctl_install_root_with_options(mock_run, tmp_path, stage_module):
         "relax-esp-checks": True,
         "random-seed": "no",
         "make-entry-directory": "yes",
+        "entry-token": "os-id"
     }
 
     fake_tree = tmp_path / "tree"
@@ -89,6 +93,7 @@ def test_bootctl_install_root_with_options(mock_run, tmp_path, stage_module):
         "--root", str(fake_tree),
         "--random-seed", "no",
         "--make-entry-directory", "yes",
+        "--entry-token", "os-id",
         "--esp-path", "/efi",
         "--boot-path", "/boot",
     ],

@@ -53,6 +53,15 @@
             "yes",
             "no"
           ]
+        },
+        "entry-token": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "machine-id",
+            "os-id",
+            "os-image-id"
+          ]
         }
       }
     },
