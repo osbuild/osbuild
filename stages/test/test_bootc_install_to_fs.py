@@ -2,7 +2,7 @@
 
 import tempfile
 from contextlib import contextmanager
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -91,7 +91,7 @@ FAKE_INPUTS = {
 ])
 @patch("subprocess.run")
 @patch("subprocess.check_call")
-def test_bootc_install_to_fs(_mock_check_call, mock_run, mocked_named_tmp, mocked_temp_dir, stage_module, options, expected_args):  # pylint: disable=unused-argument
+def test_bootc_install_to_fs(mock_check_call, mock_run, mocked_named_tmp, mocked_temp_dir, stage_module, options, expected_args):  # pylint: disable=unused-argument
     inputs = {
         "images": {
             "path": "/input/images/path",
@@ -121,6 +121,12 @@ def test_bootc_install_to_fs(_mock_check_call, mock_run, mocked_named_tmp, mocke
     )
     assert kwargs["check"] is True
     assert kwargs["env"]["BOOTC_SKIP_SELINUX_HOST_CHECK"] == "true"
+
+    assert mock_check_call.call_count == 2
+    mock_check_call.assert_has_calls([
+        call(['mount', '-t', 'devtmpfs', 'devtmpfs', '/dev/']),
+        call(['umount', '/dev/']),
+    ])
 
 
 @patch("subprocess.run")
