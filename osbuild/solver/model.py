@@ -9,7 +9,7 @@ These models are used internally by solver implementations and in API responses.
 
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Type, Union
 
 
 class ValidatedModel:
@@ -569,22 +569,36 @@ class DepsolveResult:
 
 
 class DumpResult:
-    """Result of a dump operation."""
+    """Result of a dump operation.
 
-    def __init__(self, packages: List[Package], repositories: List[Repository]):
-        self.packages = packages
-        self.repositories = repositories
+    Packages are always consumed as a single-use iterator. Accessing
+    .repositories before fully consuming .packages raises RuntimeError.
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, DumpResult):
-            return False
-        return self.packages == other.packages and self.repositories == other.repositories
+    When packages is a generator, repositories are populated as a
+    side-effect of iterating packages (via shared mutable references).
+    """
 
-    def __hash__(self) -> int:
-        return hash((tuple(self.packages), tuple(self.repositories)))
+    def __init__(
+        self,
+        packages: Iterable[Package],
+        repositories: List[Repository],
+    ):
+        self._repositories = repositories
+        self._packages_consumed = False
+        self.packages: Iterable[Package] = self._wrap_iter(packages)
 
-    def __repr__(self) -> str:
-        return f"DumpResult(packages={self.packages}, repositories={self.repositories})"
+    def _wrap_iter(self, it: Iterable[Package]) -> Iterator[Package]:
+        yield from it
+        self._packages_consumed = True
+
+    @property
+    def repositories(self) -> List[Repository]:
+        if not self._packages_consumed:
+            raise RuntimeError(
+                "DumpResult.repositories must not be accessed before "
+                "packages have been fully iterated"
+            )
+        return self._repositories
 
 
 class SearchResult:

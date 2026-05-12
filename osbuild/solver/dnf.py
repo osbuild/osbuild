@@ -298,14 +298,18 @@ class DNF(SolverBase):
         return repo_model
 
     def dump(self) -> model.DumpResult:
-        packages = []
-        repositories = {}
-        for pkg in self.base.sack.query().available():
-            packages.append(_dnf_pkg_to_package(pkg))
-            if pkg.repo.id not in repositories:
-                repositories[pkg.repo.id] = self._dnf_repo_to_repository(pkg.repo)
+        seen_repos = {}
+        repositories = []
 
-        return model.DumpResult(packages, list(repositories.values()))
+        def package_iter():
+            for pkg in self.base.sack.query().available():
+                if pkg.repo.id not in seen_repos:
+                    repo = self._dnf_repo_to_repository(pkg.repo)
+                    seen_repos[pkg.repo.id] = repo
+                    repositories.append(repo)
+                yield _dnf_pkg_to_package(pkg)
+
+        return model.DumpResult(package_iter(), repositories)
 
     def search(self, args: SearchCmdArgs) -> model.SearchResult:
         """ Perform a search on the available packages"""

@@ -8,6 +8,24 @@ from osbuild.solver.model import Repository
 from osbuild.solver.request import SolverConfig
 
 
+def assert_dump_result_equal(result1, result2):
+    """
+    Assert that two dump results are equal.
+    """
+    it1 = iter(result1.packages)
+    it2 = iter(result2.packages)
+    sentinel = object()
+    while True:
+        pkg1 = next(it1, sentinel)
+        pkg2 = next(it2, sentinel)
+        if pkg1 is sentinel and pkg2 is sentinel:
+            break
+        assert pkg1 is not sentinel, "result1 has fewer packages than result2"
+        assert pkg2 is not sentinel, "result2 has fewer packages than result1"
+        assert_object_equal(pkg1, pkg2)
+    assert_object_equal(result1.repositories, result2.repositories)
+
+
 def assert_object_equal(obj1, obj2):
     """
     Assert that two objects are equal.
