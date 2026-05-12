@@ -421,35 +421,66 @@ class TestDepsolveResult:
 class TestDumpResult:
     """Tests for the DumpResult class"""
 
-    def test_equality(self):
-        result1 = DumpResult(
+    def test_consumption_gating(self):
+        """Repositories raise RuntimeError before packages are consumed."""
+        result = DumpResult(
             packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
+            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])],
         )
-        result2 = DumpResult(
-            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
-        )
-        assert result1 == result2
-        assert hash(result1) == hash(result2)
+        with pytest.raises(RuntimeError, match="packages have been fully iterated"):
+            _ = result.repositories
 
-    def test_collections(self):
-        result1 = DumpResult(
-            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
+    def test_properties_after_iteration(self):
+        """Repositories are accessible after packages are consumed."""
+        repos = [Repository("fedora", baseurl=["http://example.com/r1"])]
+        result = DumpResult(
+            packages=[
+                Package("bash", "5.1", "1.fc43", "x86_64"),
+                Package("zsh", "5.8", "1.fc43", "x86_64"),
+            ],
+            repositories=repos,
         )
-        result2 = DumpResult(
-            packages=[Package("bash", "5.1", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
-        )
-        result3 = DumpResult(
-            packages=[Package("zsh", "5.8", "1.fc43", "x86_64")],
-            repositories=[Repository("fedora", baseurl=["http://example.com/r1"])]
-        )
-        assert len({result1, result2, result3}) == 2
-        result_dict = {result1: "v1"}
-        result_dict[result2] = "v2"
-        assert len(result_dict) == 1 and result_dict[result1] == "v2"
+        consumed = list(result.packages)
+        assert len(consumed) == 2
+        assert result.repositories is repos
+
+    def test_generator_input(self):
+        """Generator-based packages work with consumption gating."""
+        repos = [Repository("fedora", baseurl=["http://example.com/r1"])]
+
+        def gen():
+            yield Package("bash", "5.1", "1.fc43", "x86_64")
+            yield Package("zsh", "5.8", "1.fc43", "x86_64")
+
+        result = DumpResult(packages=gen(), repositories=repos)
+        with pytest.raises(RuntimeError, match="packages have been fully iterated"):
+            _ = result.repositories
+        consumed = list(result.packages)
+        assert len(consumed) == 2
+        assert result.repositories is repos
+
+    def test_generator_side_effects(self):
+        """Generator can populate shared mutable references for repos."""
+        repos = []
+
+        def gen():
+            yield Package("bash", "5.1", "1.fc43", "x86_64")
+            repos.append(Repository("fedora", baseurl=["http://example.com/r1"]))
+
+        result = DumpResult(packages=gen(), repositories=repos)
+        list(result.packages)
+        assert len(result.repositories) == 1
+        assert result.repositories[0].repo_id == "fedora"
+
+    def test_empty_input(self):
+        """Empty packages list works correctly."""
+        repos = [Repository("fedora", baseurl=["http://example.com/r1"])]
+        result = DumpResult(packages=[], repositories=repos)
+        with pytest.raises(RuntimeError, match="packages have been fully iterated"):
+            _ = result.repositories
+        consumed = list(result.packages)
+        assert not consumed
+        assert result.repositories is repos
 
 
 class TestSearchResult:

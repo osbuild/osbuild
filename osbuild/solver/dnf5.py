@@ -397,16 +397,21 @@ class DNF5(SolverBase):
 
     def dump(self) -> model.DumpResult:
         """dump returns a list of all available packages"""
-        packages = []
-        repositories = {}
-        q = dnf5.rpm.PackageQuery(self.base)
-        q.filter_available()
-        for package in list(q):
-            packages.append(_dnf_pkg_to_package(package))
-            if package.get_repo().get_id() not in repositories:
-                repositories[package.get_repo().get_id()] = self._dnf_repo_to_repository(package.get_repo())
+        seen_repos = {}
+        repositories = []
 
-        return model.DumpResult(packages, list(repositories.values()))
+        def package_iter():
+            q = dnf5.rpm.PackageQuery(self.base)
+            q.filter_available()
+            for package in q:
+                repo_id = package.get_repo().get_id()
+                if repo_id not in seen_repos:
+                    repo = self._dnf_repo_to_repository(package.get_repo())
+                    seen_repos[repo_id] = repo
+                    repositories.append(repo)
+                yield _dnf_pkg_to_package(package)
+
+        return model.DumpResult(package_iter(), repositories)
 
     def search(self, args: SearchCmdArgs) -> model.SearchResult:
         """ Perform a search on the available packages"""
