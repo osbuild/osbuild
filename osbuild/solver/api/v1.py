@@ -1,7 +1,8 @@
 # pylint: disable=fixme
 # XXX: remove 'Provides: osbuild-dnf-json-api = 8' from the osbuild.spec file when this file is removed
 
-from typing import Any, Dict, List
+import json
+from typing import Any, Dict, TextIO
 
 from osbuild.solver.exceptions import InvalidRequestError
 from osbuild.solver.model import DepsolveResult, DumpResult, Package, Repository, SearchResult
@@ -75,16 +76,20 @@ def _repository_as_dict(repository: Repository) -> dict:
 
 
 # pylint: disable=unused-argument
-def serialize_response_dump(solver: str, result: DumpResult) -> List[dict]:
-    return [_package_as_dict_dump_search(package) for package in result.packages]
+def serialize_response_dump(solver: str, result: DumpResult, writer: TextIO) -> None:
+    packages = [_package_as_dict_dump_search(package) for package in result.packages]
+    json.dump(packages, writer)
+    writer.write("\n")
 
 
 # pylint: disable=unused-argument
-def serialize_response_search(solver: str, result: SearchResult) -> List[dict]:
-    return [_package_as_dict_dump_search(package) for package in result.packages]
+def serialize_response_search(solver: str, result: SearchResult, writer: TextIO) -> None:
+    packages = [_package_as_dict_dump_search(package) for package in result.packages]
+    json.dump(packages, writer)
+    writer.write("\n")
 
 
-def serialize_response_depsolve(solver: str, result: DepsolveResult) -> Dict[str, Any]:
+def serialize_response_depsolve(solver: str, result: DepsolveResult, writer: TextIO) -> None:
     last_transaction = result.transactions[-1] if result.transactions else []
     d = {
         "solver": solver,
@@ -96,7 +101,8 @@ def serialize_response_depsolve(solver: str, result: DepsolveResult) -> Dict[str
     if result.sbom:
         d["sbom"] = result.sbom
 
-    return d
+    json.dump(d, writer)
+    writer.write("\n")
 
 
 # pylint: disable=too-many-branches

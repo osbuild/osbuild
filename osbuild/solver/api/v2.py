@@ -6,7 +6,8 @@
 # The only exception is the 'sbom' field, which is only included if the 'sbom'
 # was explicitly requested.
 
-from typing import Any, Dict, List, Set
+import json
+from typing import Any, Dict, List, Set, TextIO
 
 from osbuild.solver.exceptions import InvalidRequestError
 from osbuild.solver.model import (
@@ -129,20 +130,24 @@ def _repository_as_dict(repository: Repository) -> Dict[str, Any]:
     return d
 
 
-def serialize_response_dump(solver: str, result: DumpResult) -> Dict[str, Any]:
-    return {
+def serialize_response_dump(solver: str, result: DumpResult, writer: TextIO) -> None:
+    d = {
         "solver": solver,
         "packages": [_package_as_dict(package) for package in result.packages],
         "repos": {repository.repo_id: _repository_as_dict(repository) for repository in result.repositories},
     }
+    json.dump(d, writer)
+    writer.write("\n")
 
 
-def serialize_response_search(solver: str, result: SearchResult) -> Dict[str, Any]:
-    return {
+def serialize_response_search(solver: str, result: SearchResult, writer: TextIO) -> None:
+    d = {
         "solver": solver,
         "packages": [_package_as_dict(package) for package in result.packages],
         "repos": {repository.repo_id: _repository_as_dict(repository) for repository in result.repositories},
     }
+    json.dump(d, writer)
+    writer.write("\n")
 
 
 def _transactions_to_disjoint_sets(transactions: List[List[Package]]) -> List[List[Package]]:
@@ -166,7 +171,7 @@ def _transactions_to_disjoint_sets(transactions: List[List[Package]]) -> List[Li
     return disjoint_sets
 
 
-def serialize_response_depsolve(solver: str, result: DepsolveResult) -> Dict[str, Any]:
+def serialize_response_depsolve(solver: str, result: DepsolveResult, writer: TextIO) -> None:
     """
     Serializes a Solver API response for the DEPSOLVE command.
 
@@ -259,7 +264,8 @@ def serialize_response_depsolve(solver: str, result: DepsolveResult) -> Dict[str
     if result.sbom:
         d["sbom"] = result.sbom
 
-    return d
+    json.dump(d, writer)
+    writer.write("\n")
 
 
 # pylint: disable=too-many-branches
