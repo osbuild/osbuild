@@ -1,5 +1,7 @@
 # pylint: disable=too-many-lines
+import json
 from datetime import datetime, timezone
+from io import StringIO
 
 import pytest
 
@@ -349,19 +351,21 @@ def assert_serialized_repository(repo: dict, repository: Repository):
     pytest.param(serialize_response_dump_v2, DumpResult, id="dump_v2"),
     pytest.param(serialize_response_search_v2, SearchResult, id="search_v2"),
     pytest.param(
-        lambda solver, result: serialize_response_dump(SolverAPIVersion.V2, solver, result),
+        lambda solver, result, writer: serialize_response_dump(SolverAPIVersion.V2, solver, result, writer),
         DumpResult,
         id="dump",
     ),
     pytest.param(
-        lambda solver, result: serialize_response_search(SolverAPIVersion.V2, solver, result),
+        lambda solver, result, writer: serialize_response_search(SolverAPIVersion.V2, solver, result, writer),
         SearchResult,
         id="search"
     ),
 ])
 def test_solver_response_v2_dump_search(serializer, result_class):
     solver_name = "solver_name"
-    response = serializer(solver_name, result_class(TEST_PACKAGES, TEST_REPOSITORIES))
+    writer = StringIO()
+    serializer(solver_name, result_class(TEST_PACKAGES, TEST_REPOSITORIES), writer)
+    response = json.loads(writer.getvalue())
     assert isinstance(response, dict)
 
     assert sorted(list(response.keys())) == [
@@ -392,7 +396,7 @@ def test_solver_response_v2_dump_search(serializer, result_class):
 @pytest.mark.parametrize("serializer", [
     pytest.param(serialize_response_depsolve_v2, id="depsolve_v2"),
     pytest.param(
-        lambda solver, result: serialize_response_depsolve(SolverAPIVersion.V2, solver, result),
+        lambda solver, result, writer: serialize_response_depsolve(SolverAPIVersion.V2, solver, result, writer),
         id="depsolve",
     ),
 ])
@@ -410,15 +414,18 @@ def test_solver_response_v2_depsolve(modules, sbom, serializer):
         [TEST_PACKAGES[1], TEST_PACKAGES[3]],
     ]
     solver_name = "solver_name"
-    response = serializer(
+    writer = StringIO()
+    serializer(
         solver_name,
         DepsolveResult(
             transactions_result,
             TEST_REPOSITORIES,
             modules,
             sbom,
-        )
+        ),
+        writer,
     )
+    response = json.loads(writer.getvalue())
 
     expected_keys = ["modules", "repos", "solver", "transactions"]
     if sbom:
@@ -1319,7 +1326,9 @@ def test_rhsm_ssl_secrets_handling(repositories, expected_ssl_values):
         [TEST_PACKAGES[0], TEST_PACKAGES[2]],
         TEST_PACKAGES,
     ], repositories)
-    response = serialize_response_depsolve_v2("solver", result)
+    writer = StringIO()
+    serialize_response_depsolve_v2("solver", result, writer)
+    response = json.loads(writer.getvalue())
 
     assert len(response["repos"]) == len(repositories)
 

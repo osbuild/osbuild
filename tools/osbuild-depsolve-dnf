@@ -23,7 +23,7 @@ from osbuild.solver.exceptions import (
 )
 from osbuild.solver import api
 from osbuild.solver.request import SolverCommand
-from typing import Dict, Any
+from typing import Any, Dict, Optional, TextIO
 
 # Load the solver configuration
 config = {"use_dnf5": False}
@@ -41,40 +41,43 @@ else:
     from osbuild.solver.dnf import DNF as Solver
 
 
-def solve(request_dict: Dict[str, Any]):
+def solve(request_dict: Dict[str, Any], writer: TextIO) -> Optional[Dict[str, Any]]:
     with tempfile.TemporaryDirectory() as persistdir:
         try:
             request = api.parse_request(request_dict)
             solver = Solver(request.config, persistdir, config.get("license_index_path"))
             if request.command == SolverCommand.DUMP:
                 result = solver.dump()
-                return api.serialize_response_dump(request.api_version, solver.SOLVER_NAME, result), None
+                api.serialize_response_dump(request.api_version, solver.SOLVER_NAME, result, writer)
+                return None
             if request.command == SolverCommand.DEPSOLVE:
                 result = solver.depsolve(request.depsolve_args)
-                return api.serialize_response_depsolve(request.api_version, solver.SOLVER_NAME, result), None
+                api.serialize_response_depsolve(request.api_version, solver.SOLVER_NAME, result, writer)
+                return None
             if request.command == SolverCommand.SEARCH:
                 result = solver.search(request.search_args)
-                return api.serialize_response_search(request.api_version, solver.SOLVER_NAME, result), None
+                api.serialize_response_search(request.api_version, solver.SOLVER_NAME, result, writer)
+                return None
             raise InvalidRequestError(f"Invalid command '{request.command}'")
         except GPGKeyReadError as e:
             printe("error reading gpgkey")
-            return None, {
+            return {
                 "kind": type(e).__name__,
                 "reason": str(e)
             }
         except RepoError as e:
-            return None, {
+            return {
                 "kind": "RepoError",
                 "reason": f"There was a problem reading a repository: {e}"
             }
         except NoReposError as e:
-            return None, {
+            return {
                 "kind": "NoReposError",
                 "reason": f"There was a problem finding repositories: {e}"
             }
         except MarkingError as e:
             printe("error install_specs")
-            return None, {
+            return {
                 "kind": "MarkingErrors",
                 "reason": f"Error occurred when marking packages for installation: {e}"
             }
@@ -85,20 +88,20 @@ def solve(request_dict: Dict[str, Any]):
             # NB: we assume that the request was valid and depsolving failed
             for t in request.depsolve_args.transactions:
                 pkgs.extend(t.package_specs)
-            return None, {
+            return {
                 "kind": "DepsolveError",
                 "reason": f"There was a problem depsolving {', '.join(pkgs)}: {e}"
             }
         except (InvalidRequestError, InvalidAPIVersionError) as e:
             printe("error invalid request")
-            return None, {
+            return {
                 "kind": "InvalidRequest",
                 "reason": str(e)
             }
         except Exception as e:  # pylint: disable=broad-exception-caught
             printe("error traceback")
             import traceback
-            return None, {
+            return {
                 "kind": type(e).__name__,
                 "reason": str(e),
                 "traceback": traceback.format_exc()
@@ -117,18 +120,11 @@ def fail(err):
     sys.exit(1)
 
 
-def respond(result):
-    json.dump(result, sys.stdout)
-    sys.stdout.write("\n")
-
-
 def main():
     request_dict = json.load(sys.stdin)
-    result, err = solve(request_dict)
+    err = solve(request_dict, sys.stdout)
     if err:
         fail(err)
-    else:
-        respond(result)
 
 
 if __name__ == "__main__":

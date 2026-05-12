@@ -1,7 +1,7 @@
 import importlib
 from enum import Enum
 from types import ModuleType
-from typing import Dict
+from typing import Dict, TextIO
 
 from osbuild.solver.exceptions import InvalidAPIVersionError
 from osbuild.solver.model import DepsolveResult, DumpResult, SearchResult
@@ -44,7 +44,8 @@ def parse_request(request_dict: Dict) -> SolverRequest:
     return api_module.parse_request(request_dict)
 
 
-def serialize_response_depsolve(api_version: SolverAPIVersion, solver: str, result: DepsolveResult):
+def serialize_response_depsolve(
+        api_version: SolverAPIVersion, solver: str, result: DepsolveResult, writer: TextIO) -> None:
     """
     Serializes a Solver API response for the DEPSOLVE command.
 
@@ -53,10 +54,11 @@ def serialize_response_depsolve(api_version: SolverAPIVersion, solver: str, resu
           make sense to define it in the main proxy serializers.
     """
     api_module = get_api_module(api_version)
-    return api_module.serialize_response_depsolve(solver, result)
+    api_module.serialize_response_depsolve(solver, result, writer)
 
 
-def serialize_response_dump(api_version: SolverAPIVersion, solver: str, result: DumpResult):
+def serialize_response_dump(
+        api_version: SolverAPIVersion, solver: str, result: DumpResult, writer: TextIO) -> None:
     """
     Serializes a Solver API response for the DUMP command.
 
@@ -65,10 +67,11 @@ def serialize_response_dump(api_version: SolverAPIVersion, solver: str, result: 
           make sense to define it in the main proxy serializers.
     """
     api_module = get_api_module(api_version)
-    return api_module.serialize_response_dump(solver, result)
+    api_module.serialize_response_dump(solver, result, writer)
 
 
-def serialize_response_search(api_version: SolverAPIVersion, solver: str, result: SearchResult):
+def serialize_response_search(
+        api_version: SolverAPIVersion, solver: str, result: SearchResult, writer: TextIO) -> None:
     """
     Serializes a Solver API response for the SEARCH command.
 
@@ -77,4 +80,4 @@ def serialize_response_search(api_version: SolverAPIVersion, solver: str, result
           make sense to define it in the main proxy serializers.
     """
     api_module = get_api_module(api_version)
-    return api_module.serialize_response_search(solver, result)
+    api_module.serialize_response_search(solver, result, writer)

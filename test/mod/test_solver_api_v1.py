@@ -1,5 +1,7 @@
 # pylint: disable=too-many-lines
+import json
 from datetime import datetime, timezone
+from io import StringIO
 
 import pytest
 
@@ -198,11 +200,13 @@ TEST_REPOSITORIES = [
 @pytest.mark.parametrize("serializer,result_class", [
     (serialize_response_dump_v1, DumpResult),
     (serialize_response_search_v1, SearchResult),
-    (lambda solver, result: serialize_response_dump(SolverAPIVersion.V1, solver, result), DumpResult),
-    (lambda solver, result: serialize_response_search(SolverAPIVersion.V1, solver, result), SearchResult),
+    (lambda solver, result, writer: serialize_response_dump(SolverAPIVersion.V1, solver, result, writer), DumpResult),
+    (lambda solver, result, writer: serialize_response_search(SolverAPIVersion.V1, solver, result, writer), SearchResult),
 ], ids=["dump_v1", "search_v1", "dump", "search"])
 def test_solver_response_v1_dump_search(solver, serializer, result_class):
-    response = serializer(solver, result_class(TEST_PACKAGES, TEST_REPOSITORIES))
+    writer = StringIO()
+    serializer(solver, result_class(TEST_PACKAGES, TEST_REPOSITORIES), writer)
+    response = json.loads(writer.getvalue())
     assert isinstance(response, list)
     assert len(response) == len(TEST_PACKAGES)
     for idx, pkg in enumerate(response):
@@ -241,11 +245,12 @@ def test_solver_response_v1_dump_search(solver, serializer, result_class):
 @pytest.mark.parametrize("solver", ["dnf5", "dnf"])
 @pytest.mark.parametrize("serializer", [
     serialize_response_depsolve_v1,
-    lambda solver, result: serialize_response_depsolve(SolverAPIVersion.V1, solver, result),
+    lambda solver, result, writer: serialize_response_depsolve(SolverAPIVersion.V1, solver, result, writer),
 ], ids=["depsolve_v1", "depsolve"])
 def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
     test_packages_middle_index = len(TEST_PACKAGES) // 2
-    response = serializer(
+    writer = StringIO()
+    serializer(
         solver,
         # NB: intentionally using multiple transactions to test the most common use case.
         DepsolveResult(
@@ -256,8 +261,10 @@ def test_solver_response_v1_depsolve(solver, modules, sbom, serializer):
             TEST_REPOSITORIES,
             modules,
             sbom,
-        )
+        ),
+        writer,
     )
+    response = json.loads(writer.getvalue())
     expected_keys = ["solver", "packages", "repos", "modules"]
     if sbom:
         expected_keys.append("sbom")
