@@ -131,13 +131,18 @@ def _repository_as_dict(repository: Repository) -> Dict[str, Any]:
 
 
 def serialize_response_dump(solver: str, result: DumpResult, writer: TextIO) -> None:
-    d = {
-        "solver": solver,
-        "packages": [_package_as_dict(package) for package in result.packages],
-        "repos": {repository.repo_id: _repository_as_dict(repository) for repository in result.repositories},
-    }
-    json.dump(d, writer)
-    writer.write("\n")
+    writer.write('{"solver": ')
+    writer.write(json.dumps(solver))
+    writer.write(', "packages": [')
+    first = True
+    for package in result.packages:
+        if not first:
+            writer.write(', ')
+        writer.write(json.dumps(_package_as_dict(package)))
+        first = False
+    writer.write('], "repos": ')
+    writer.write(json.dumps({r.repo_id: _repository_as_dict(r) for r in result.repositories}))
+    writer.write('}\n')
 
 
 def serialize_response_search(solver: str, result: SearchResult, writer: TextIO) -> None:

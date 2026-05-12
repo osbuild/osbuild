@@ -77,9 +77,14 @@ def _repository_as_dict(repository: Repository) -> dict:
 
 # pylint: disable=unused-argument
 def serialize_response_dump(solver: str, result: DumpResult, writer: TextIO) -> None:
-    packages = [_package_as_dict_dump_search(package) for package in result.packages]
-    json.dump(packages, writer)
-    writer.write("\n")
+    writer.write('[')
+    first = True
+    for package in result.packages:
+        if not first:
+            writer.write(', ')
+        writer.write(json.dumps(_package_as_dict_dump_search(package)))
+        first = False
+    writer.write("]\n")
 
 
 # pylint: disable=unused-argument
