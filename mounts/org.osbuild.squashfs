@@ -1,0 +1,47 @@
+#!/usr/bin/python3
+"""
+squashfs mount service
+
+Mount an squashfs filesystem at the given location.
+
+Host commands used: mount
+"""
+
+import sys
+from typing import Dict
+
+from osbuild import mounts
+
+SCHEMA_2 = """
+"additionalProperties": false,
+"required": ["name", "type", "source", "target"],
+"properties": {
+  "name": { "type": "string" },
+  "type": { "type": "string" },
+  "source": {
+    "type": "string"
+  },
+  "target": {
+    "type": "string"
+  },
+  "options": {
+    "type": "object",
+    "additionalProperties": false
+  }
+}
+"""
+
+
+class SquashfsMount(mounts.FileSystemMountService):
+
+    def translate_options(self, _options: Dict):
+        return ["-t", "squashfs"]
+
+
+def main():
+    service = SquashfsMount.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()
