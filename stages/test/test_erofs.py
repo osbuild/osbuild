@@ -113,7 +113,9 @@ def test_erofs(mock_run, tmp_path, stage_module, test_options, expected):
         f"{fake_input_tree}",
         "--quiet",
     ] + expected
-    mock_run.assert_called_with(expected, check=True)
+    mock_run.assert_called_once()
+    assert mock_run.call_args[0][0] == expected
+    assert mock_run.call_args[1]["env"]["TMPDIR"] == "/var/tmp"
 
 
 @pytest.mark.parametrize("test_data,expected_err", [

@@ -45,7 +45,11 @@ def main(args):
         for e in exclude_paths:
             cmd += ["--exclude-regex", e]
 
-    subprocess.run(cmd, check=True)
+    subprocess.run(
+        cmd,
+        check=True,
+        env={**os.environ, "TMPDIR": "/var/tmp"},
+    )
 
     return 0
 
