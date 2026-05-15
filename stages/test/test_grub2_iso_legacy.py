@@ -114,6 +114,11 @@ CONFIG_DEFAULT = """set default="1"
                     "linux": "/bar/foo root=baz quiet",
                     "initrd": "/bar/foo",
                 },
+                {
+                    "name": "label 2",
+                    "linux": "${kernelpath} ${root}",
+                    "initrd": "${initrdpath}",
+                },
             ]
         },
         CONFIG_PART_1 +
@@ -126,6 +131,11 @@ CONFIG_DEFAULT = """set default="1"
             name="label 1",
             linux="/bar/foo root=baz quiet",
             initrd="/bar/foo",
+        ) +
+        CONFIG_TMPL_CUSTOM.format(
+            name="label 2",
+            linux="/images/pxeboot/vmlinuz inst.ks=hd:LABEL=Fedora-41-X86_64:/install.ks",
+            initrd="/images/pxeboot/initrd.img",
         ) +
         "\n\n\n\n\n",
     ),
