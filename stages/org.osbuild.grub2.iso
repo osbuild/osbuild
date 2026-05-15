@@ -141,8 +141,12 @@ def main(root, options):
 
     if len(custom):
         for entry in custom:
-            custom_tmpl = string.Template(CUSTOM_ENTRY_TEMPLATE)
-            customentry = custom_tmpl.safe_substitute(entry)
+            entry_tmpl = string.Template(CUSTOM_ENTRY_TEMPLATE)
+            entry_string = entry_tmpl.safe_substitute(entry)
+
+            # Substitute any of the standard variables used in the custom entry
+            custom_tmpl = string.Template(entry_string)
+            customentry = custom_tmpl.safe_substitute(tplt_variables)
             tplt_variables["customentries"] += customentry
 
     if test:
