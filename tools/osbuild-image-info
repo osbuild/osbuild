@@ -707,6 +707,40 @@ def read_fstab(tree):
     return result
 
 
+def read_mount_units(tree):
+    """
+    Find mount units under /etc/systemd/system and parse them.
+
+    Returns a list of all parsed mount unit information as a list of values as they appear in fstab lines.
+    See read_fstab() for an example of the return value.
+    """
+
+    def parse_mount_unit(path):
+        config = read_config_file_no_comment(path)
+        uuid = ""
+        mountpoint = ""
+        fs_type = ""
+        mnt_opts = ""
+
+        for line in config:
+            if line.startswith("What="):
+                # What is a path to /dev/disk/by-uuid and we need just the uuid in the format it would appear in
+                # /etc/fstab
+                uuid = line.removeprefix("What=/dev/disk/by-uuid/")
+                uuid = f"UUID={uuid}"
+            elif line.startswith("Where="):
+                mountpoint = line.removeprefix("Where=")
+            elif line.startswith("Type="):
+                fs_type = line.removeprefix("Type=")
+            elif line.startswith("Options="):
+                mnt_opts = line.removeprefix("Options=")
+
+        return [uuid, mountpoint, fs_type, mnt_opts, 0, 0]
+
+    mount_units = _read_glob_paths_with_parser(tree, ["/etc/systemd/system/*.mount"], parse_mount_unit)
+    return mount_units["/etc/systemd/system"].values()
+
+
 def read_rhsm(tree):
     """
     Read configuration changes possible via org.osbuild.rhsm stage
@@ -2691,7 +2725,11 @@ def append_partitions(report, image):
                 with mount(dev, opts) as tree:
                     root = find_osrelease_root(tree, fs["type"])
                     if root:
-                        fstab.extend(read_fstab(root))
+                        fstab_entries = read_fstab(root)
+                        if not fstab_entries:
+                            # if no fstab entries are found, look for mount units
+                            fstab_entries = read_mount_units(root)
+                        fstab.extend(fstab_entries)
                         break
             else:
                 raise RuntimeError("no fileystem with /etc/os-release found")
