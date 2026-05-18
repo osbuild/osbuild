@@ -2600,29 +2600,31 @@ def parse_subvol_list(output):
 
 def find_root_subvol(root):
     """
-    Given a btrfs volume root, find the subvolume that contains the root OS tree.
+    Given a btrfs volume root, find the subvolume that contains the root OS tree by checking for /etc/os-release.
     """
     subvols = subprocess_check_output(["btrfs", "subvolume", "list", root], parse_fn=parse_subvol_list)
 
-    # look through each subvol for /etc/fstab
+    # look through each subvol for /etc/os-release
     for subvol in subvols:
         path = os.path.join(root, subvol)
-        if os.path.exists(os.path.join(path, "etc/fstab")):
+        if os.path.exists(os.path.join(path, "etc/os-release")):
             return path
 
     return None
 
 
-def find_fstab_root(tree, fstype):
+def find_osrelease_root(tree, fstype):
     """
-    Find the root volume under tree by searching for /etc/fstab.
+    Find the root volume under tree by searching for /etc/os-release.
 
-    This function first checks if the path <tree>/etc/fstab exists and if it doesn't and the fstype is btrfs, checks all
-    subvolumes as well.
+    This function first checks if the path <tree>/etc/os-release exists and if it doesn't and the fstype is btrfs,
+    checks all subvolumes as well.
 
-    Returns None if fstab is not found.
+    Returns None if os-release is not found.
     """
-    if os.path.exists(f"{tree}/etc/fstab"):
+    os_release_path = f"{tree}/etc/os-release"
+    # os-release can be a symlink to /usr/lib/... which can be broken if /usr is on a separate volume
+    if os.path.exists(os_release_path) or os.path.islink(os_release_path):
         return tree
 
     if fstype == "btrfs":
@@ -2687,12 +2689,12 @@ def append_partitions(report, image):
                     continue
                 dev, opts = fs["device"], fs.get("mntops")
                 with mount(dev, opts) as tree:
-                    root = find_fstab_root(tree, fs["type"])
+                    root = find_osrelease_root(tree, fs["type"])
                     if root:
                         fstab.extend(read_fstab(root))
                         break
             else:
-                raise RuntimeError("no fstab file found")
+                raise RuntimeError("no fileystem with /etc/os-release found")
 
             # sort the fstab entries by the mountpoint
             fstab = sorted(fstab, key=operator.itemgetter(1))
