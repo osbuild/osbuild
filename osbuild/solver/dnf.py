@@ -73,8 +73,9 @@ def _dnf_pkg_to_package(pkg: dnf.package.Package) -> model.Package:
         "reason": pkg.reason or "",
     }
     # NB: prevent setting a [None] list for remote_locations
-    if pkg.remote_location():
-        kwargs["remote_locations"] = [pkg.remote_location()]
+    remote_location = pkg.remote_location()
+    if remote_location:
+        kwargs["remote_locations"] = [remote_location]
     checksum = pkg.chksum
     if checksum and hawkey.chksum_name(checksum[0]) != "UNKNOWN":
         kwargs["checksum"] = model.Checksum(
