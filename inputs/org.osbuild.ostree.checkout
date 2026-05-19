@@ -112,14 +112,11 @@ class OSTreeCheckoutInput(inputs.InputService):
             source = store.source("org.osbuild.ostree")
             ids = checkout(refs, source, target)
 
-        reply = {
-            "path": target,
-            "data": {
-                "refs": {i: {"path": i} for i in ids}
-            }
+        data = {
+            "refs": {i: {"path": i} for i in ids}
         }
 
-        return reply
+        return data, []
 
 
 def main():

@@ -11,12 +11,10 @@ container store that depends on the availability of the
 resource (the specific container) on the host.
 """
 
-import os
 import sys
 
 from osbuild import inputs
 from osbuild.util import host
-from osbuild.util.mnt import MountGuard
 
 SCHEMA = r"""
 "definitions": {
@@ -88,19 +86,12 @@ class ContainersStorageInput(inputs.InputService):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.mg = MountGuard()
         self.storage_conf = host.get_container_storage()
 
-    def bind_mount_local_storage(self, target):
-        source = self.storage_conf["storage"]["graphroot"]
-        dest = os.path.join(target, "storage")
-
-        # bind mount the input directory to the destination
-        os.makedirs(dest, exist_ok=True)
-        self.mg.mount(source, dest)
-
     def map(self, store, origin, refs, target, _options):
-        self.bind_mount_local_storage(target)
+        binds = [
+            (self.storage_conf["storage"]["graphroot"], "storage")
+        ]
 
         images = {}
         for ref, data in refs.items():
@@ -111,17 +102,10 @@ class ContainersStorageInput(inputs.InputService):
             images[ref]["name"] = data["name"]
             images[ref]["storage"] = self.storage_conf["storage"]
 
-        reply = {
-            "path": target,
-            "data": {
-                "archives": images
-            }
+        data = {
+            "archives": images
         }
-
-        return reply
-
-    def unmap(self):
-        self.mg.umount()
+        return data, binds
 
 
 def main():

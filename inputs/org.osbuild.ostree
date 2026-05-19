@@ -87,8 +87,7 @@ SCHEMA = """
 def export(checksums, cache, output):
     repo_cache = os.path.join(cache, "repo")
 
-    repo_out = os.path.join(output, "repo")
-    ostree.cli("init", mode="archive", repo=repo_out)
+    ostree.cli("init", mode="archive", repo=output)
 
     refs = {}
     for commit, options in checksums.items():
@@ -96,23 +95,16 @@ def export(checksums, cache, output):
         print(f"exporting {commit}", file=sys.stderr)
 
         ostree.cli("pull-local", repo_cache, commit,
-                   repo=repo_out)
+                   repo=output)
 
         ref = options.get("ref")
         if ref:
             ostree.cli("refs", "--create", ref, commit,
-                       repo=repo_out)
+                       repo=output)
 
         refs[commit] = options
 
-    reply = {
-        "path": repo_out,
-        "data": {
-            "refs": refs
-        }
-    }
-
-    return reply
+    return {"refs": refs}
 
 
 class OSTreeInput(inputs.InputService):
@@ -130,7 +122,7 @@ class OSTreeInput(inputs.InputService):
             source = store.source("org.osbuild.ostree")
             reply = export(refs, source, target)
 
-        return reply
+        return reply, [(target, "")]
 
 
 def main():

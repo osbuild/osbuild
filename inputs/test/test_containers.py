@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import os
-import pathlib
 import subprocess
 import tempfile
 
@@ -43,17 +42,8 @@ def test_containers_local_inputs_integration(tmp_path, inputs_service):
         # not using "tmp_path" here as it will "rm -rf" on cleanup and
         # that is dangerous as during the tests we bind mount the
         # system container storage read-write
-        target = pathlib.Path(tempfile.TemporaryDirectory("cnt-target").name)
-        options = None
-        try:
-            reply = inputs_service.map(store, inputs["origin"], inputs["references"], target, options)
-            assert reply["path"] == target
-            assert len(reply["data"]["archives"]) == 1
-            assert (target / "storage").exists()
-        finally:
-            inputs_service.unmap()
-            # cleanup manually, note that we only remove empty dirs here,
-            # because we only expect a bind mount under "$target/storage"
-            # Anything non-empty here means a umount() failed
-            os.rmdir(target / "storage")
-            os.rmdir(target)
+        with tempfile.TemporaryDirectory("cnt-target") as target:
+            data, binds = inputs_service.map(store, inputs["origin"], inputs["references"], target, None)
+            assert len(data["archives"]) == 1
+            assert len(binds) == 1
+            assert binds[0][1] == "storage"
