@@ -38,31 +38,27 @@ class ValidatedModel:
 
     def __setattr__(self, name: str, value: Any) -> None:
         # Allow private/internal attributes without validation
-        if name.startswith("_"):
-            super().__setattr__(name, value)
+        if name[0] == "_":
+            object.__setattr__(self, name, value)
             return
 
-        cls_name = self.__class__.__name__
-
-        if name not in self._ATTR_TYPES:
-            raise ValueError(f"{cls_name}: unknown attribute '{name}'")
-
-        expected_types = self._ATTR_TYPES[name]
-
-        if not isinstance(value, expected_types):
+        expected = self._ATTR_TYPES.get(name)
+        if expected is None:
+            raise ValueError(f"{self.__class__.__name__}: unknown attribute '{name}'")
+        if not isinstance(value, expected):
             # Format type name for error message
-            if isinstance(expected_types, tuple):
+            if isinstance(expected, tuple):
                 # NOTE: 't' is a type, not a variable, so we need to use unidiomatic-typecheck.
                 # pylint: disable=unidiomatic-typecheck
-                type_names = ["None" if t is type(None) else t.__name__ for t in expected_types]
+                type_names = ["None" if t is type(None) else t.__name__ for t in expected]
                 type_str = " or ".join(type_names)
             else:
-                type_str = expected_types.__name__
+                type_str = expected.__name__
             raise ValueError(
-                f"{cls_name}.{name}: expected {type_str}, got {type(value).__name__}"
+                f"{self.__class__.__name__}.{name}: expected {type_str}, got {type(value).__name__}"
             )
 
-        super().__setattr__(name, value)
+        object.__setattr__(self, name, value)
 
 
 # pylint: disable=too-many-instance-attributes
