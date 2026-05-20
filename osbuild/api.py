@@ -43,8 +43,9 @@ class BaseAPI(abc.ABC):
     endpoint: ClassVar[str]
     """The name of the API endpoint"""
 
-    def __init__(self, socket_address: Optional[PathLike] = None):
+    def __init__(self, socket_address: Optional[PathLike] = None, rundir="/run/osbuild"):
         self.socket_address = socket_address
+        self._rundir = rundir
         self.barrier = threading.Barrier(2)
         self.event_loop = None
         self.thread = None
@@ -103,7 +104,7 @@ class BaseAPI(abc.ABC):
         assert not self.running
 
         if not self.socket_address:
-            self._socketdir = self._make_socket_dir()
+            self._socketdir = self._make_socket_dir(self._rundir)
             address = os.path.join(self._socketdir.name, self.endpoint)
             self.socket_address = address
 
@@ -138,8 +139,8 @@ class API(BaseAPI):
 
     endpoint = "osbuild"
 
-    def __init__(self, *, socket_address=None):
-        super().__init__(socket_address)
+    def __init__(self, *, socket_address=None, rundir="/run/osbuild"):
+        super().__init__(socket_address, rundir=rundir)
         self.error = None
 
     def _message(self, msg, fds, sock):
