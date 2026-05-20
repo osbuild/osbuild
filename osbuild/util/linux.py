@@ -19,12 +19,18 @@ import hashlib
 import hmac
 import os
 import platform
+import pwd
+import shutil
 import struct
+import subprocess
 import threading
+import typing
 import uuid
+from typing import List, Optional, Tuple
 
 __all__ = [
     "fcntl_flock",
+    "IdMaps",
     "ioctl_get_immutable",
     "ioctl_toggle_immutable",
     "Libc",
@@ -291,6 +297,10 @@ class Libc:
     RENAME_NOREPLACE = ctypes.c_uint(1)
     RENAME_WHITEOUT = ctypes.c_uint(4)
 
+    # flags for unshare(2)/clone(2)
+    CLONE_NEWNS = 0x00020000
+    CLONE_NEWUSER = 0x10000000
+
     # see /usr/include/x86_64-linux-gnu/bits/stat.h
     UTIME_NOW = ctypes.c_long(((1 << 30) - 1))
     UTIME_OMIT = ctypes.c_long(((1 << 30) - 2))
@@ -373,6 +383,21 @@ class Libc:
         setattr(proto, "__name__", "prctl")
         self.prctl = proto
 
+        # prototype: unshare
+        proto = ctypes.CFUNCTYPE(
+            ctypes.c_int,  # restype (return type)
+            ctypes.c_int,
+            use_errno=True,
+        )(
+            ("unshare", self._lib),
+            (
+                (1, "flags"),
+            ),
+        )
+        setattr(proto, "errcheck", self._errcheck_errno)
+        setattr(proto, "__name__", "unshare")
+        self.unshare = proto
+
     # (can be removed once we move to python3.8)
     def memfd_create(self, name: str, flags: int = 0) -> int:
         """ create an anonymous file """
@@ -401,6 +426,112 @@ class Libc:
             msg = f"{func.__name__}{args} -> {result}: error ({err}): {os.strerror(err)}"
             raise OSError(err, msg)
         return result
+
+
+class IdMaps(typing.NamedTuple):
+    """The id/sub-id ranges needed to fully map a user namespace."""
+    uid: int
+    gid: int
+    subuid: Tuple[int, int]  # (start, count) from /etc/subuid
+    subgid: Tuple[int, int]  # (start, count) from /etc/subgid
+
+    @staticmethod
+    def _subid_range(path: str, keys: set) -> Optional[Tuple[int, int]]:
+        """Return (start, count) of the first sub-id range in `path` for `keys`."""
+        try:
+            with open(path, encoding="utf8") as f:
+                for line in f:
+                    fields = line.strip().split(":")
+                    if len(fields) != 3:
+                        continue
+                    owner, start, count = fields
+                    if owner in keys:
+                        return int(start), int(count)
+        except (FileNotFoundError, ValueError):
+            pass
+        return None
+
+    @classmethod
+    def gather(cls) -> Optional["IdMaps"]:
+        """Gather what we need to set up a fully-mapped user namespace ourselves."""
+        if shutil.which("newuidmap") is None or shutil.which("newgidmap") is None:
+            return None
+        uid, gid = os.getuid(), os.getgid()
+        name = pwd.getpwuid(uid).pw_name
+        subuid = cls._subid_range("/etc/subuid", {name, str(uid)})
+        if subuid is None:
+            return None
+        subgid = cls._subid_range("/etc/subgid", {name, str(gid)})
+        if subgid is None:
+            return None
+        return cls(uid, gid, subuid, subgid)
+
+    def install(self, pid: int) -> None:
+        """Install these uid/gid maps for the user namespace of process `pid`."""
+        su_start, su_count = self.subuid
+        sg_start, sg_count = self.subgid
+        subprocess.run(
+            ["newuidmap", str(pid),
+             "0", str(self.uid), "1",
+             "1", str(su_start), str(su_count)],
+            check=True)
+        subprocess.run(
+            ["newgidmap", str(pid),
+             "0", str(self.gid), "1",
+             "1", str(sg_start), str(sg_count)],
+            check=True)
+
+    def exec(self, argv: List[str]) -> Optional[int]:
+        """Run `argv` inside a new user namespace mapped by these id maps.
+
+        On success the parent supervises the child and returns its exit status,
+        so the caller can `sys.exit()` with it. Returns None if the namespace
+        cannot be set up.
+        """
+        ready_r, ready_w = os.pipe()  # child -> parent: namespace created
+        go_r, go_w = os.pipe()        # parent -> child: maps installed
+
+        pid = os.fork()
+        if pid == 0:
+            # --- child ---
+            os.close(ready_r)
+            os.close(go_w)
+            try:
+                Libc.default().unshare(Libc.CLONE_NEWUSER | Libc.CLONE_NEWNS)
+            except OSError:
+                os.write(ready_w, b"E")  # tell parent to fall back
+                os._exit(0)
+            os.write(ready_w, b"K")
+            os.close(ready_w)
+            # Block until the parent has installed the maps (K) or wants us
+            # to abort (EOF / anything else), in which case fall back.
+            if os.read(go_r, 1) != b"K":
+                os._exit(0)
+            os.close(go_r)
+            os.execvp(argv[0], argv)
+            os._exit(127)
+
+        # --- parent ---
+        os.close(ready_w)
+        os.close(go_r)
+        if os.read(ready_r, 1) != b"K":
+            # The child could not create the namespace: reap it and fall back.
+            os.close(go_w)
+            os.waitpid(pid, 0)
+            return None
+        os.close(ready_r)
+        try:
+            self.install(pid)
+        except (OSError, subprocess.CalledProcessError):
+            os.close(go_w)  # EOF -> child aborts
+            os.waitpid(pid, 0)
+            return None
+        os.write(go_w, b"K")
+        os.close(go_w)
+        _, status = os.waitpid(pid, 0)
+        if os.WIFEXITED(status):
+            return os.WEXITSTATUS(status)
+        return 1
 
 
 def proc_boot_id(appid: str):
