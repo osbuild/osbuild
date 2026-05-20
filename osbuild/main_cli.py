@@ -11,7 +11,7 @@ import json
 import os
 import sys
 import typing
-from typing import List
+from typing import List, Optional
 
 import osbuild
 import osbuild.meta
@@ -19,6 +19,7 @@ import osbuild.monitor
 from osbuild.meta import ValidationResult
 from osbuild.objectstore import ObjectStore
 from osbuild.pipeline import Manifest
+from osbuild.util.linux import IdMaps
 from osbuild.util.parsing import parse_size
 from osbuild.util.term import fmt as vt
 
@@ -124,7 +125,30 @@ def _default_rundir() -> str:
     return f"/run/user/{os.getuid()}/osbuild"
 
 
+def _reexec_in_userns() -> Optional[int]:
+    """Re-exec osbuild inside a user namespace with full uid/gid mappings.
+
+    Returns the exit status of the re-exec'd osbuild, for the caller to
+    `sys.exit()` with. Returns None if the required support is missing or the
+    namespace cannot be set up, so the caller can fall back to the normal code
+    path.
+    """
+    maps = IdMaps.gather()
+    if maps is None:
+        return None
+
+    argv = sys.argv.copy()
+    if argv[0].endswith("__main__.py"):
+        argv[:1] = [sys.executable, "-m", "osbuild"]
+    if "--rundir" not in argv:
+        # Keep the user rundir even though uid will be 0 in the userns
+        argv += ["--rundir", _default_rundir()]
+
+    return maps.exec(argv)
+
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
+
+
 def osbuild_cli() -> int:
     args = parse_arguments(sys.argv)
     if args.rundir is None:
