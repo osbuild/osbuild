@@ -1,0 +1,202 @@
+#!/usr/bin/python3
+"""Manage an SELinux policy module that declares types for osbuild rootless builds.
+
+When running osbuild as a regular user, osbuild cannot set
+security.selinux xattrs with type labels unknown to the host
+policy. This tool declares those types in a minimal SELinux module (no
+allow rules), making them known to the kernel (but having no
+permissions) so that context validation succeeds without requiring
+CAP_MAC_ADMIN.
+"""
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+import tempfile
+
+MODULE_NAME = "osbuild-labels"
+
+_verbose = False
+
+
+def verbose(msg):
+    if _verbose:
+        print(msg)
+
+
+def run_semodule(args, check=True, cwd=None):
+    return subprocess.run(["semodule"] + args, capture_output=True, text=True, check=check, cwd=cwd)
+
+
+def get_module_types():
+    """Extract the current set of types from the osbuild-labels module."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        r = run_semodule(["-H", "-E", MODULE_NAME], check=False, cwd=tmpdir)
+        if r.returncode != 0:
+            return set()
+        cil_path = os.path.join(tmpdir, f"{MODULE_NAME}.cil")
+        try:
+            with open(cil_path) as f:
+                content = f.read()
+        except FileNotFoundError:
+            return set()
+        except PermissionError as e:
+            # semodule runs under sudo and writes the extracted module as
+            # root; a restrictive root umask can leave it unreadable to us.
+            # Bail out rather than silently treating it as an empty module,
+            # which would drop the already-declared types on the next install.
+            print(f"Error: cannot read extracted module {cil_path}: {e}", file=sys.stderr)
+            sys.exit(1)
+    types = set()
+    for m in re.finditer(r"\(type\s+(\S+)\)", content):
+        types.add(m.group(1))
+    return types
+
+
+def get_policy_types():
+    """Get all types currently defined in the loaded policy."""
+    try:
+        import sepolicy
+        return set(sepolicy.get_all_types())
+    except ImportError:
+        r = subprocess.run(["seinfo", "-t"], capture_output=True, text=True, check=True)
+        types = set()
+        for line in r.stdout.splitlines():
+            # `seinfo -t` prints a "Types: <count>" header followed by one
+            # indented type name per line.
+            line = line.strip()
+            if line and not line.startswith("Types:"):
+                types.add(line)
+        return types
+
+
+def generate_cil(types):
+    lines = [f"(type {t})" for t in sorted(types)]
+    return "\n".join(lines) + "\n"
+
+
+def install_module(types):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cil_path = os.path.join(tmpdir, f"{MODULE_NAME}.cil")
+        with open(cil_path, "w") as f:
+            f.write(generate_cil(types))
+        try:
+            run_semodule(["-i", cil_path], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error installing module: {e.stderr}", file=sys.stderr)
+            sys.exit(1)
+
+
+def remove_module():
+    r = run_semodule(["-r", MODULE_NAME], check=False)
+    if r.returncode != 0 and "No such file or directory" not in r.stderr:
+        print(f"Error removing module: {r.stderr}", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_add(args):
+    policy_types = get_policy_types()
+    current = get_module_types()
+    to_add = set()
+    for t in args.types:
+        if t in current:
+            verbose(f"Type '{t}' is already in {MODULE_NAME} module, skipping.")
+        elif t in policy_types:
+            verbose(f"Type '{t}' already exists in the host policy, skipping.")
+        else:
+            to_add.add(t)
+
+    if not to_add:
+        verbose("No new types to add.")
+        return
+
+    new_types = current | to_add
+    install_module(new_types)
+    for t in sorted(to_add):
+        verbose(f"Added type '{t}'.")
+
+
+def cmd_remove(args):
+    current = get_module_types()
+    if not current:
+        verbose(f"Module {MODULE_NAME} does not exist, nothing to remove.")
+        return
+
+    to_remove = set()
+    for t in args.types:
+        if t in current:
+            to_remove.add(t)
+        else:
+            verbose(f"Type '{t}' is not in {MODULE_NAME} module, skipping.")
+
+    if not to_remove:
+        verbose("No types to remove.")
+        return
+
+    remaining = current - to_remove
+    if remaining:
+        install_module(remaining)
+    else:
+        remove_module()
+    for t in sorted(to_remove):
+        verbose(f"Removed type '{t}'.")
+
+
+def cmd_clear(args):
+    current = get_module_types()
+    if not current:
+        verbose(f"Module {MODULE_NAME} does not exist, nothing to clear.")
+        return
+    remove_module()
+    verbose(f"Removed module {MODULE_NAME} ({len(current)} types).")
+
+
+def cmd_list(args):
+    current = get_module_types()
+    if not current:
+        verbose(f"Module {MODULE_NAME} does not exist or has no types.")
+        return
+    for t in sorted(current):
+        print(t)
+
+
+def main():
+    if os.getuid() != 0:
+        print("This tool must be run as root")
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(
+        description="Manage SELinux type declarations for osbuild rootless builds."
+    )
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="print informational messages")
+    sub = parser.add_subparsers(dest="command")
+
+    p_add = sub.add_parser("add", help="Add type declarations")
+    p_add.add_argument("types", nargs="+", metavar="TYPE")
+    p_add.set_defaults(func=cmd_add)
+
+    p_remove = sub.add_parser("remove", help="Remove type declarations")
+    p_remove.add_argument("types", nargs="+", metavar="TYPE")
+    p_remove.set_defaults(func=cmd_remove)
+
+    p_clear = sub.add_parser("clear", help="Remove the entire module")
+    p_clear.set_defaults(func=cmd_clear)
+
+    p_list = sub.add_parser("list", help="List declared types")
+    p_list.set_defaults(func=cmd_list)
+
+    args = parser.parse_args()
+    global _verbose
+    _verbose = args.verbose
+    if not args.command:
+        parser.print_help()
+        sys.exit(1)
+
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
