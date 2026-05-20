@@ -105,15 +105,30 @@ def parse_arguments(sys_argv: List[str]) -> argparse.Namespace:
     # nargs='?' const='*' means `--break` is equivalent to `--break=*`
     parser.add_argument("--break", dest='debug_break', type=str, nargs='?', const='*',
                         help="open debug shell when executing stage. Accepts stage name or id or * (for all)")
+    parser.add_argument("--rundir", metavar="DIRECTORY", type=os.path.abspath,
+                        default=None,
+                        help="directory for temporary runtime data "
+                             "(default: /run/osbuild for root, $XDG_RUNTIME_DIR/osbuild otherwise)")
     parser.add_argument("--quiet", "-q", action="store_true",
                         help="suppress normal output")
 
     return parser.parse_args(sys_argv[1:])
 
 
+def _default_rundir() -> str:
+    if os.getuid() == 0:
+        return "/run/osbuild"
+    xdg = os.environ.get("XDG_RUNTIME_DIR")
+    if xdg:
+        return os.path.join(xdg, "osbuild")
+    return f"/run/user/{os.getuid()}/osbuild"
+
+
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
 def osbuild_cli() -> int:
     args = parse_arguments(sys.argv)
+    if args.rundir is None:
+        args.rundir = _default_rundir()
     desc = parse_manifest(args.manifest_path)
 
     index = osbuild.meta.Index(args.libdir)
@@ -193,7 +208,8 @@ def osbuild_cli() -> int:
                 args.libdir,
                 debug_break,
                 in_vm=in_vm,
-                stage_timeout=stage_timeout
+                stage_timeout=stage_timeout,
+                rundir=args.rundir
             )
             if r.success:
                 monitor.log(f"manifest {args.manifest_path} finished successfully\n", origin="osbuild.main_cli")
