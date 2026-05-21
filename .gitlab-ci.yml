@@ -47,15 +47,15 @@ RPM:
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.7-ga-x86_64
           - aws/rhel-9.7-ga-aarch64
+          - aws/rhel-9.8-ga-x86_64
+          - aws/rhel-9.8-ga-aarch64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.1-ga-aarch64
+          - aws/rhel-10.2-ga-x86_64
+          - aws/rhel-10.2-ga-aarch64
       - RUNNER:
-          - aws/rhel-9.8-nightly-x86_64
-          - aws/rhel-9.8-nightly-aarch64
           - aws/rhel-9.9-nightly-x86_64
           - aws/rhel-9.9-nightly-aarch64
-          - aws/rhel-10.2-nightly-x86_64
-          - aws/rhel-10.2-nightly-aarch64
           - aws/rhel-10.3-nightly-x86_64
           - aws/rhel-10.3-nightly-aarch64
         INTERNAL_NETWORK: "true"
@@ -98,11 +98,9 @@ PQC keys:
     matrix:
       - RUNNER:
           - aws/fedora-44-x86_64
-          - aws/rhel-9.7-ga-x86_64
-          - aws/rhel-9.8-nightly-x86_64
+          - aws/rhel-9.8-ga-x86_64
           - aws/rhel-9.9-nightly-x86_64
-          - aws/rhel-10.1-ga-x86_64
-          - aws/rhel-10.2-nightly-x86_64
+          - aws/rhel-10.2-ga-x86_64
           - aws/rhel-10.3-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
@@ -163,16 +161,12 @@ Manifests:
         CHUNK: [1, 2, 3, 4, 5]
         CHUNKS_COUNT: 5
       - RUNNER:
-          - aws/rhel-9.7-ga-x86_64
-          - aws/rhel-9.7-ga-aarch64
-          - aws/rhel-9.8-nightly-x86_64
-          - aws/rhel-9.8-nightly-aarch64
+          - aws/rhel-9.8-ga-x86_64
+          - aws/rhel-9.8-ga-aarch64
           - aws/rhel-9.9-nightly-x86_64
           - aws/rhel-9.9-nightly-aarch64
-          - aws/rhel-10.1-ga-x86_64
-          - aws/rhel-10.1-ga-aarch64
-          - aws/rhel-10.2-nightly-x86_64
-          - aws/rhel-10.2-nightly-aarch64
+          - aws/rhel-10.2-ga-x86_64
+          - aws/rhel-10.2-ga-aarch64
           - aws/rhel-10.3-nightly-x86_64
           - aws/rhel-10.3-nightly-aarch64
         INTERNAL_NETWORK: "true"
