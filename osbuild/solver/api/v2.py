@@ -151,7 +151,7 @@ def serialize_response_search(solver: str, result: SearchResult, writer: TextIO)
         "packages": [_package_as_dict(package) for package in result.packages],
         "repos": {repository.repo_id: _repository_as_dict(repository) for repository in result.repositories},
     }
-    json.dump(d, writer)
+    writer.write(json.dumps(d))
     writer.write("\n")
 
 
