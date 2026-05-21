@@ -698,7 +698,7 @@
               "type": "org.osbuild.containers",
               "origin": "org.osbuild.source",
               "references": {
-                "sha256:dbb63178dc9157068107961f11397df3fb62c02fa64f697d571bf84aad71cb99": {
+                "sha256:d0f28374e1a9b1ae28d543cadd0916b8ee4f8619a834900a964961a188bc16c4": {
                   "name": "manifest-list-test"
                 }
               }
@@ -707,7 +707,7 @@
               "type": "org.osbuild.files",
               "origin": "org.osbuild.source",
               "references": [
-                "sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
+                "sha256:11b8172c893595bfcdea054e15457deb54f208afdaf16a602d05fad8e1f6adc1"
               ]
             }
           },
@@ -1340,17 +1340,17 @@
     },
     "org.osbuild.skopeo": {
       "items": {
-        "sha256:dbb63178dc9157068107961f11397df3fb62c02fa64f697d571bf84aad71cb99": {
+        "sha256:d0f28374e1a9b1ae28d543cadd0916b8ee4f8619a834900a964961a188bc16c4": {
           "image": {
             "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test",
-            "digest": "sha256:601c98c8148720ec5c29b8e854a1d5d88faddbc443eca12920d76cf993d7290e"
+            "digest": "sha256:78bd1e02fb7b18fbcec064ec10eba0dabfbe94ab6c4513f4edf9e8c8e13396a5"
           }
         }
       }
     },
     "org.osbuild.skopeo-index": {
       "items": {
-        "sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc": {
+        "sha256:11b8172c893595bfcdea054e15457deb54f208afdaf16a602d05fad8e1f6adc1": {
           "image": {
             "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
           }
