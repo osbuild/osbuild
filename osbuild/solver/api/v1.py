@@ -96,18 +96,24 @@ def serialize_response_search(solver: str, result: SearchResult, writer: TextIO)
 
 def serialize_response_depsolve(solver: str, result: DepsolveResult, writer: TextIO) -> None:
     last_transaction = result.transactions[-1] if result.transactions else []
-    d = {
-        "solver": solver,
-        "packages": [_package_as_dict_depsolve(package) for package in last_transaction],
-        "repos": {repository.repo_id: _repository_as_dict(repository) for repository in result.repositories},
-        "modules": result.modules if result.modules else {},
-    }
-
+    writer.write('{"solver": ')
+    writer.write(json.dumps(solver))
+    writer.write(', "packages": [')
+    first = True
+    for package in last_transaction:
+        if not first:
+            writer.write(', ')
+        writer.write(json.dumps(_package_as_dict_depsolve(package)))
+        first = False
+    writer.write('], "repos": ')
+    writer.write(json.dumps({repository.repo_id: _repository_as_dict(repository)
+                 for repository in result.repositories}))
+    writer.write(', "modules": ')
+    writer.write(json.dumps(result.modules or {}))
     if result.sbom:
-        d["sbom"] = result.sbom
-
-    json.dump(d, writer)
-    writer.write("\n")
+        writer.write(', "sbom": ')
+        writer.write(json.dumps(result.sbom))
+    writer.write('}\n')
 
 
 # pylint: disable=too-many-branches

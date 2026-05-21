@@ -253,24 +253,25 @@ def serialize_response_depsolve(solver: str, result: DepsolveResult, writer: Tex
         "sbom": {...},
     }
     """
-
     transactions = _transactions_to_disjoint_sets(result.transactions)
-    transactions_as_dicts = []
+    writer.write('{"solver": ')
+    writer.write(json.dumps(solver))
+    writer.write(', "transactions": [')
+    first = True
     for transaction in transactions:
-        transactions_as_dicts.append([_package_as_dict(package) for package in transaction])
-
-    d = {
-        "solver": solver,
-        "transactions": transactions_as_dicts,
-        "repos": {repository.repo_id: _repository_as_dict(repository) for repository in result.repositories},
-        "modules": result.modules or {},
-    }
-
+        if not first:
+            writer.write(', ')
+        writer.write(json.dumps([_package_as_dict(package) for package in transaction]))
+        first = False
+    writer.write('], "repos": ')
+    writer.write(json.dumps({repository.repo_id: _repository_as_dict(repository)
+                 for repository in result.repositories}))
+    writer.write(', "modules": ')
+    writer.write(json.dumps(result.modules or {}))
     if result.sbom:
-        d["sbom"] = result.sbom
-
-    json.dump(d, writer)
-    writer.write("\n")
+        writer.write(', "sbom": ')
+        writer.write(json.dumps(result.sbom))
+    writer.write('}\n')
 
 
 # pylint: disable=too-many-branches
