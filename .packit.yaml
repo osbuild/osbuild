@@ -43,6 +43,10 @@ jobs:
   #- fedora-all-s390x
   - fedora-all-ppc64le
   - fedora-all
+  - fedora-eln-x86_64
+  - fedora-eln-aarch64
+  - fedora-eln-s390x
+  - fedora-eln-ppc64le
   - rhel-10-x86_64
   - rhel-10-aarch64
 - <<: *copr
