@@ -22,6 +22,9 @@ def main(args, options):
     if options.get("defer-partitions-factory-reset"):
         extra += ["--defer-partitions-factory-reset", "yes"]
 
+    if options.get("split"):
+        extra += ["--split", "yes"]
+
     cmd = [
         "systemd-repart",
         "--empty", "create",
