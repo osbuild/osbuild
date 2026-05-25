@@ -22,6 +22,9 @@
         "seed": {
           "type": "string",
           "default": "random"
+        },
+        "sector-size": {
+          "type": "integer"
         }
       }
     },

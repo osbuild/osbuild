@@ -14,6 +14,11 @@ def main(args, options):
     size = options["size"]
     seed = options.get("seed", "random")
 
+    extra = []
+
+    if options.get("sector-size"):
+        extra += ["--sector-size", str(options["sector-size"])]
+
     cmd = [
         "systemd-repart",
         "--empty", "create",
@@ -21,7 +26,7 @@ def main(args, options):
         "--root", root,
         "--seed", seed,
         str(tree / path),
-    ]
+    ] + extra
 
     subprocess.run(cmd, check=True)
 
