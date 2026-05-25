@@ -29,6 +29,10 @@
         "defer-partitions-factory-reset": {
           "type": "boolean",
           "default": false
+        },
+        "split": {
+          "type": "boolean",
+          "default": false
         }
       }
     },
