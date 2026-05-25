@@ -1,0 +1,126 @@
+#!/usr/bin/python3
+"""
+Discoverable Disk Image mount service.
+
+This mount service mounts DDI's, see the UAPI Specification [1] for more
+information about them. In short it mounts a disk image based on its GPT
+partition table and sets up all nested mounts for all partitions.
+
+This service implementation uses `systemd-dissect`.
+
+[1]: https://uapi-group.org/specifications/specs/discoverable_disk_image/
+"""
+
+import os
+import subprocess
+import sys
+from typing import Dict
+
+from osbuild import mounts
+
+SCHEMA_2 = """
+"additionalProperties": false,
+"required": ["name", "type", "source", "target"],
+"properties": {
+  "name": { "type": "string" },
+  "source": {
+    "type": "string"
+  },
+  "target": {
+    "type": "string"
+  },
+  "options": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "growfs": {
+        "type": "boolean",
+        "default": true
+      },
+      "read-only": {
+        "type": "boolean",
+        "default": false
+      },
+      "fsck": {
+        "type": "boolean",
+        "default": true
+      },
+      "discard": {
+        "type": "string",
+        "enum": ["disabled", "loop", "all", "crypto"]
+      },
+      "image-policy": {
+        "type": "string"
+      },
+      "image-filter": {
+        "type": "string"
+      }
+    }
+  }
+}
+"""
+
+
+class DDIMount(mounts.MountService):
+    def __init__(self, args):
+        super().__init__(args)
+        self.mountpoint = None
+
+    def umount(self):
+        if not self.mountpoint:
+            return
+
+        # ignore any umount errors here, we can't handle them anyways
+        subprocess.run(
+            ["systemd-dissect", "--umount", self.mountpoint],
+            check=False,
+        )
+
+        self.mountpoint = None
+
+    def mount(self, args: Dict):
+        root = args["root"]
+
+        source = args["source"]
+        target = args["target"]
+
+        self.mountpoint = os.path.join(root, target.lstrip("/"))
+
+        opts = args.get("options", {})
+        cmd_args = []
+
+        if opts.get("growfs") is False:
+            cmd_args.extend(["--growfs", "no"])
+
+        if opts.get("read-only") is True:
+            cmd_args.extend(["--read-only"])
+
+        if opts.get("fsck") is False:
+            cmd_args.extend(["--fsck", "no"])
+
+        if opts.get("discard"):
+            cmd_args.extend(["--discard", opts["discard"]])
+
+        if opts.get("image-policy"):
+            cmd_args.extend(["--image-policy", opts["image-policy"]])
+
+        if opts.get("image-filter"):
+            cmd_args.extend(["--image-filter", opts["image-filter"]])
+
+        subprocess.run(
+            ["systemd-dissect", "--mount", "--mkdir"] + cmd_args + [source, self.mountpoint],
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+
+        return self.mountpoint
+
+
+def main():
+    service = DDIMount.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == "__main__":
+    main()
