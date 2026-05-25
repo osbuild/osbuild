@@ -19,6 +19,9 @@ def main(args, options):
     if options.get("sector-size"):
         extra += ["--sector-size", str(options["sector-size"])]
 
+    if options.get("defer-partitions-factory-reset"):
+        extra += ["--defer-partitions-factory-reset", "yes"]
+
     cmd = [
         "systemd-repart",
         "--empty", "create",
