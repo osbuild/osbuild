@@ -25,6 +25,10 @@
         },
         "sector-size": {
           "type": "integer"
+        },
+        "defer-partitions-factory-reset": {
+          "type": "boolean",
+          "default": false
         }
       }
     },
