@@ -34,7 +34,15 @@ def main(args, options):
         str(tree / path),
     ] + extra
 
-    subprocess.run(cmd, check=True)
+    # systemd-repart conditionally needs loopback devices; we can't predict
+    # when this happens (dependent on types of filesystems, etc) so let's
+    # allow access
+    subprocess.check_call(['mount', '-t', 'devtmpfs', 'devtmpfs', '/dev/'])
+
+    try:
+        subprocess.run(cmd, check=True)
+    finally:
+        subprocess.check_call(['umount', '/dev/'])
 
     return 0
 

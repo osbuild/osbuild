@@ -44,8 +44,9 @@ def test_systemd_repart_create_schema_validation(stage_schema, test_data, expect
         testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
+@mock.patch("subprocess.check_call")
 @mock.patch("subprocess.run")
-def test_systemd_repart_create_minimal(mock_run, tmp_path, stage_module):
+def test_systemd_repart_create_minimal(mock_run, mock_check_call, tmp_path, stage_module):
     fake_tree = tmp_path / "tree"
     fake_root = tmp_path / "root"
 
@@ -63,6 +64,7 @@ def test_systemd_repart_create_minimal(mock_run, tmp_path, stage_module):
         options,
     )
 
+    mock_check_call.assert_any_call(["mount", "-t", "devtmpfs", "devtmpfs", "/dev/"])
     mock_run.assert_called_with([
         "systemd-repart",
         "--empty", "create",
@@ -71,10 +73,12 @@ def test_systemd_repart_create_minimal(mock_run, tmp_path, stage_module):
         "--seed", "random",
         str(fake_tree / "image.raw"),
     ], check=True)
+    mock_check_call.assert_any_call(["umount", "/dev/"])
 
 
+@mock.patch("subprocess.check_call")
 @mock.patch("subprocess.run")
-def test_systemd_repart_create_with_seed(mock_run, tmp_path, stage_module):
+def test_systemd_repart_create_with_seed(mock_run, mock_check_call, tmp_path, stage_module):
     fake_tree = tmp_path / "tree"
     fake_root = tmp_path / "root"
 
@@ -93,6 +97,7 @@ def test_systemd_repart_create_with_seed(mock_run, tmp_path, stage_module):
         options,
     )
 
+    mock_check_call.assert_any_call(["mount", "-t", "devtmpfs", "devtmpfs", "/dev/"])
     mock_run.assert_called_with([
         "systemd-repart",
         "--empty", "create",
@@ -101,10 +106,12 @@ def test_systemd_repart_create_with_seed(mock_run, tmp_path, stage_module):
         "--seed", "abc123",
         str(fake_tree / "disk.img"),
     ], check=True)
+    mock_check_call.assert_any_call(["umount", "/dev/"])
 
 
+@mock.patch("subprocess.check_call")
 @mock.patch("subprocess.run")
-def test_systemd_repart_create_with_sector_size(mock_run, tmp_path, stage_module):
+def test_systemd_repart_create_with_sector_size(mock_run, mock_check_call, tmp_path, stage_module):
     fake_tree = tmp_path / "tree"
     fake_root = tmp_path / "root"
 
@@ -123,6 +130,7 @@ def test_systemd_repart_create_with_sector_size(mock_run, tmp_path, stage_module
         options,
     )
 
+    mock_check_call.assert_any_call(["mount", "-t", "devtmpfs", "devtmpfs", "/dev/"])
     mock_run.assert_called_with([
         "systemd-repart",
         "--empty", "create",
@@ -132,10 +140,12 @@ def test_systemd_repart_create_with_sector_size(mock_run, tmp_path, stage_module
         str(fake_tree / "image.raw"),
         "--sector-size", "4096",
     ], check=True)
+    mock_check_call.assert_any_call(["umount", "/dev/"])
 
 
+@mock.patch("subprocess.check_call")
 @mock.patch("subprocess.run")
-def test_systemd_repart_create_with_defer_partitions_factory_reset(mock_run, tmp_path, stage_module):
+def test_systemd_repart_create_with_defer_partitions_factory_reset(mock_run, mock_check_call, tmp_path, stage_module):
     fake_tree = tmp_path / "tree"
     fake_root = tmp_path / "root"
 
@@ -154,6 +164,7 @@ def test_systemd_repart_create_with_defer_partitions_factory_reset(mock_run, tmp
         options,
     )
 
+    mock_check_call.assert_any_call(["mount", "-t", "devtmpfs", "devtmpfs", "/dev/"])
     mock_run.assert_called_with([
         "systemd-repart",
         "--empty", "create",
@@ -163,10 +174,12 @@ def test_systemd_repart_create_with_defer_partitions_factory_reset(mock_run, tmp
         str(fake_tree / "image.raw"),
         "--defer-partitions-factory-reset", "yes",
     ], check=True)
+    mock_check_call.assert_any_call(["umount", "/dev/"])
 
 
+@mock.patch("subprocess.check_call")
 @mock.patch("subprocess.run")
-def test_systemd_repart_create_with_split(mock_run, tmp_path, stage_module):
+def test_systemd_repart_create_with_split(mock_run, mock_check_call, tmp_path, stage_module):
     fake_tree = tmp_path / "tree"
     fake_root = tmp_path / "root"
 
@@ -185,6 +198,7 @@ def test_systemd_repart_create_with_split(mock_run, tmp_path, stage_module):
         options,
     )
 
+    mock_check_call.assert_any_call(["mount", "-t", "devtmpfs", "devtmpfs", "/dev/"])
     mock_run.assert_called_with([
         "systemd-repart",
         "--empty", "create",
@@ -194,3 +208,4 @@ def test_systemd_repart_create_with_split(mock_run, tmp_path, stage_module):
         str(fake_tree / "image.raw"),
         "--split", "yes",
     ], check=True)
+    mock_check_call.assert_any_call(["umount", "/dev/"])
