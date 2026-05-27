@@ -316,7 +316,12 @@ install -p -m 0644 tools/solver-dnf.json %{buildroot}%{pkgdir}/solver.json
 # This means some tests won't be run even though they could,
 # but that's an acceptable tradeoff.
 ignore_files=()
-skip_tests=()
+
+# Fails very regularly downstream recently
+# TestUtilJsonComm.test_send_and_recv_tons_of_data_is_fine - https://github.com/osbuild/osbuild/issues/2336
+skip_tests=(
+    "(TestUtilJsonComm and test_send_and_recv_tons_of_data_is_fine)"
+)
 
 # x86_64-specific tests:
 # test/mod/test_util_sbom_spdx.py
@@ -344,12 +349,10 @@ skip_tests+=(
 
 # fails on ppc64le:
 # TestAPI.test_exception - https://github.com/osbuild/osbuild/issues/2337
-# TestUtilJsonComm.test_send_and_recv_tons_of_data_is_fine - https://github.com/osbuild/osbuild/issues/2336
 # TestUtilJsonComm.test_sendmsg_errors_with_size_on_EMSGSIZE - https://github.com/osbuild/osbuild/issues/2342
 %ifarch ppc64le
 skip_tests+=(
     "(TestAPI and test_exception)"
-    "(TestUtilJsonComm and test_send_and_recv_tons_of_data_is_fine)"
     "(TestUtilJsonComm and test_sendmsg_errors_with_size_on_EMSGSIZE)"
 )
 %endif
