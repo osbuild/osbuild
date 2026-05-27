@@ -238,7 +238,12 @@ class TestUtilJsonComm(unittest.TestCase):
         a, b = jsoncomm.Socket.new_pair()
 
         ping = {"data": "tons" * 1_000_000}
-        a.send(ping)
+        try:
+            a.send(ping)
+        except OSError as e:
+            if e.errno == errno.ENOBUFS:
+                pytest.skip("kernel could not allocate socket buffer space")
+            raise
         pong, _, _ = b.send_and_recv(ping)
         self.assertEqual(ping, pong)
         pong, _, _ = a.recv()
