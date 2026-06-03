@@ -33,7 +33,7 @@ OVF_TEMPLATE = """<?xml version="1.0"?>
         <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
         <vssd:InstanceID>0</vssd:InstanceID>
         <vssd:VirtualSystemIdentifier>image</vssd:VirtualSystemIdentifier>
-        <vssd:VirtualSystemType>vmx-15</vssd:VirtualSystemType>
+        <vssd:VirtualSystemType>{vmware_virtual_hardware_version}</vssd:VirtualSystemType>
       </System>
       <Item>
         <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
@@ -164,6 +164,7 @@ def write_template(vmdk, options):
         vmdk_size=os.stat(vmdk).st_size,
         vmdk_capacity=virtual_size(vmdk),
         vmware_os_type=options.get("vmware", {}).get("os_type", "other26xLinux64Guest"),
+        vmware_virtual_hardware_version=options.get("vmware", {}).get("virtual_hardware_version", "vmx-15"),
         vbox_machine_uuid=str(uuid.uuid4()),
         vbox_disk_uuid=str(uuid.uuid4()),
         vbox_os_type=options.get("virtualbox", {}).get("os_type", "OtherLinux_64"),
