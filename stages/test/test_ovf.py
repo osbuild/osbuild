@@ -17,9 +17,12 @@ STAGE_NAME = "org.osbuild.ovf"
     ({"vmdk": "imagename.vmdk", "virtualbox": {"os_type": 1}}, "is not of type 'string'"),
     ({"vmdk": "imagename.vmdk", "virtualbox": {"mac_address": 1}}, "is not of type 'string'"),
     ({"vmdk": "imagename.vmdk", "virtualbox": {"mac_address": "1"}}, "'1' does not match '^[a-fA-F0-9]{12}$'"),
+    ({"vmdk": "imagename.vmdk", "vmware": {"virtual_hardware_version": 1}}, "is not of type 'string'"),
+    ({"vmdk": "imagename.vmdk", "vmware": {"virtual_hardware_version": "21"}}, "'21' does not match '^vmx-[0-9]+$'"),
     # Good API parameters
     ({"vmdk": "imagename.vmdk"}, ""),
-    ({"vmdk": "imagename.vmdk", "vmware": {"os_type": "OtherGuest"}, "virtualbox": {"os_type": "OtherGuest"}}, ""),
+    ({"vmdk": "imagename.vmdk", "vmware": {"os_type": "OtherGuest",
+     "virtual_hardware_version": "vmx-21"}, "virtualbox": {"os_type": "OtherGuest"}}, ""),
 ])
 # This test validates only API calls using correct and incorrect queries
 def test_schema_validation_ovf(stage_schema, test_data, expected_err):
