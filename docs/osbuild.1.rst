@@ -40,7 +40,8 @@ is not listed here, **osbuild** will deny startup and exit with an error.
 -h, --help                      print usage information and exit immediately
 --version                       print version information and exit immediately
 --cache=DIR, --store=DIR        directory where intermediary sources and file
-                                system trees are stored
+                                system trees are stored (default: /var/cache/osbuild
+                                when running as root, .osbuild otherwise)
 -l DIR, --libdir=DIR            directory containing stages, assemblers, and
                                 the osbuild library
 --cache-max-size=SIZE           maximum size of the cache (bytes) or 'unlimited'
