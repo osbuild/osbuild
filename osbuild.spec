@@ -287,6 +287,9 @@ install -D -p -m 0644 selinux/osbuild.if %{buildroot}%{_datadir}/selinux/devel/i
 mkdir -p %{buildroot}%{_udevrulesdir}
 install -p -m 0755 data/10-osbuild-inhibitor.rules %{buildroot}%{_udevrulesdir}
 
+# Cache directory for root
+mkdir -p %{buildroot}%{_localstatedir}/cache/osbuild
+
 # Remove `osbuild-dev` on non-fedora systems
 %{!?fedora:rm %{buildroot}%{_bindir}/osbuild-dev}
 
@@ -403,6 +406,7 @@ done
 %{pkgdir}
 %exclude %{pkgdir}/initrd
 %{_udevrulesdir}/*.rules
+%dir %{_localstatedir}/cache/osbuild
 # the following files are in the lvm2 sub-package
 %exclude %{pkgdir}/devices/org.osbuild.lvm2*
 %exclude %{pkgdir}/stages/org.osbuild.lvm2*

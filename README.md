@@ -71,8 +71,9 @@ To build an image:
 
 Every osbuild run uses a cache for downloaded files (sources) and, optionally,
 checkpoints of artifacts built by stages and pipelines. By default, this is
-kept in `.osbuild` (in the current working directory). The location of this
-directory can be specified using the `--cache` option.
+kept in `/var/cache/osbuild` when running as root, or `.osbuild` (in the current
+working directory) when running as a regular user. The location of this directory
+can be specified using the `--cache` option.
 
 For more information about the options and arguments, read [man pages](/docs).
 
