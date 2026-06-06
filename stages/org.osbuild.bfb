@@ -17,7 +17,28 @@ import osbuild.api
 #
 # Hardcode some firmware file paths in constants that we use below
 DEFAULT_BFB_PATH = "/lib/firmware/mellanox/boot/default.bfb"
-BOOT_CAPSULE_PATH = "/lib/firmware/mellanox/boot/capsule/boot_update2.cap"
+
+CAPSULE_PRESETS = {
+    "default": {
+        "path": "/lib/firmware/mellanox/boot/capsule/boot_update2.cap",
+        "default_args_v2": [
+            "console=hvc0",
+            "console=ttyAMA0",
+            "earlycon=pl011,0x13010000",
+            "initrd=initramfs",
+            "modprobe.blacklist=mlxbf_pmc",
+        ],
+    },
+    "redhat": {
+        "path": "/usr/share/redhat-cap/RedHat.cap",
+        "default_args_v2": [
+            "console=hvc0",
+            "console=ttyAMA0",
+            "earlycon=pl011,0x13010000",
+            "initrd=initramfs",
+        ],
+    },
+}
 
 
 def parse_input(inputs, name):
@@ -43,23 +64,11 @@ def main(inputs, output, options):
                     out.write(f.read())
         initramfs = combined
 
-    # We don't plan to support BF1/BF2 hardware where v0 args are used
+    preset = CAPSULE_PRESETS[options.get("capsule", "default")]
+
     default_args_v0 = []
-    # Sourced from https://github.com/Mellanox/bfb-build
-    # - console=hvc0: rshim virtual console (/dev/rshim0/console)
-    # - console=ttyAMA0: IPMI serial console
-    # - earlycon=pl011,0x13010000: early serial output on BF3
-    # - initrd=initramfs: initramfs selection
-    # - modprobe.blacklist=mlxbf_pmc: avoid PMC driver conflicts on BF3
-    default_args_v2 = [
-        "console=hvc0",
-        "console=ttyAMA0",
-        "earlycon=pl011,0x13010000",
-        "initrd=initramfs",
-        "modprobe.blacklist=mlxbf_pmc"
-    ]
     boot_args_v0 = " ".join(options.get("boot_args_v0", default_args_v0))
-    boot_args_v2 = " ".join(options.get("boot_args_v2", default_args_v2))
+    boot_args_v2 = " ".join(options.get("boot_args_v2", preset["default_args_v2"]))
     boot_path = options.get("boot_path", "VenHw(F019E406-8C9C-11E5-8797-001ACA00BFC4)/Image")
     boot_desc = options.get("boot_desc", "Linux from rshim")
 
@@ -67,7 +76,7 @@ def main(inputs, output, options):
         "/usr/bin/mlx-mkbfb",
         "--image", kernel,
         "--initramfs", initramfs,
-        "--capsule", BOOT_CAPSULE_PATH,
+        "--capsule", preset["path"],
         "--boot-args-v0", f"={boot_args_v0}",
         "--boot-args-v2", f"={boot_args_v2}",
         "--boot-path", f"={boot_path}",

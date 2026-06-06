@@ -40,6 +40,15 @@
           "type": "string",
           "description": "Output BFB filename"
         },
+        "capsule": {
+          "type": "string",
+          "description": "Boot capsule preset. 'default' uses the Mellanox capsule for RHEL 9.6/9.7/10.0/10.1. 'redhat' uses the Red Hat CA-8 capsule for RHEL 9.8/10.2.",
+          "default": "default",
+          "enum": [
+            "default",
+            "redhat"
+          ]
+        },
         "boot_args_v0": {
           "type": "array",
           "items": {

@@ -46,9 +46,14 @@ DEFAULT_BOOT_ARGS_V2 = (
     " initrd=initramfs modprobe.blacklist=mlxbf_pmc"
 )
 
+REDHAT_BOOT_ARGS_V2 = (
+    "console=hvc0 console=ttyAMA0 earlycon=pl011,0x13010000"
+    " initrd=initramfs"
+)
+
 
 @pytest.mark.parametrize("inputs,options,expected_cmd_parts", [
-    # Basic test - kernel + initramfs only
+    # Basic test - kernel + initramfs only (default capsule)
     (
         FAKE_INPUTS,
         {"filename": "test.bfb"},
@@ -73,6 +78,30 @@ DEFAULT_BOOT_ARGS_V2 = (
             "--boot-args-v0", "=",
             "--boot-args-v2", f"={DEFAULT_BOOT_ARGS_V2}",
             "/lib/firmware/mellanox/boot/default.bfb",
+        ]
+    ),
+    # Test with redhat capsule preset (RHEL 9.8/10.2)
+    (
+        FAKE_INPUTS,
+        {"filename": "test.bfb", "capsule": "redhat"},
+        [
+            "/usr/bin/mlx-mkbfb",
+            "--image", "/input/kernel/path/kernel-file",
+            "--initramfs", "/input/initramfs/path/initramfs-file",
+            "--capsule", "/usr/share/redhat-cap/RedHat.cap",
+            "--boot-args-v0", "=",
+            "--boot-args-v2", f"={REDHAT_BOOT_ARGS_V2}",
+            "/lib/firmware/mellanox/boot/default.bfb",
+        ]
+    ),
+    # Test redhat capsule with explicit boot_args_v2 override
+    (
+        FAKE_INPUTS,
+        {"filename": "test.bfb", "capsule": "redhat", "boot_args_v2": ["console=hvc0"]},
+        [
+            "/usr/bin/mlx-mkbfb",
+            "--capsule", "/usr/share/redhat-cap/RedHat.cap",
+            "--boot-args-v2", "=console=hvc0",
         ]
     ),
 ])
