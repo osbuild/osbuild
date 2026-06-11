@@ -1,0 +1,101 @@
+{
+  "summary": "Fetch OSTree commits from a repository",
+  "description": [
+    "Uses ostree to pull specific commits from (remote) repositories",
+    "at the provided `url`. Can verify the commit, if one or more",
+    "gpg keys are provided via `gpgkeys`. The secret providers currently",
+    "supported are:",
+    "",
+    "- `org.osbuild.mtls` for downloading content that requires client",
+    "  certificate. The paths to the key and cert should be set in the",
+    "  environment in OSBUILD_SOURCES_OSTREE_SSL_CLIENT_KEY,",
+    "  OSBUILD_SOURCES_OSTREE_SSL_CLIENT_CERT, and optionally",
+    "  OSBUILD_SOURCES_OSTREE_SSL_CA_CERT.",
+    "",
+    "- `org.osbuild.rhsm.consumer` for downloading content using RHSM",
+    "  entitlement certificate. Secret fields `consumer_cert` and",
+    "  `consumer_key` must be set.",
+    "",
+    "To skip TLS verification, set OSBUILD_SOURCES_OSTREE_INSECURE environment",
+    "variable to \"true\". To set a HTTP(S) proxy, set OSBUILD_SOURCES_OSTREE_PROXY",
+    "environment variable to the proxy URL."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "definitions": {
+      "item": {
+        "description": "The commits to fetch indexed their checksum",
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "[0-9a-f]{5,64}": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "remote"
+            ],
+            "properties": {
+              "remote": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "url"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "URL of the repository."
+                  },
+                  "contenturl": {
+                    "type": "string",
+                    "description": "content URL of the repository."
+                  },
+                  "gpgkeys": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "GPG keys to verify the commits"
+                    }
+                  },
+                  "secrets": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the secrets provider."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "properties": {
+      "items": {
+        "$ref": "#/definitions/item"
+      },
+      "commits": {
+        "$ref": "#/definitions/item"
+      }
+    },
+    "oneOf": [
+      {
+        "required": [
+          "items"
+        ]
+      },
+      {
+        "required": [
+          "commits"
+        ]
+      }
+    ]
+  }
+}

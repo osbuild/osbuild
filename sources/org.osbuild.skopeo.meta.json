@@ -1,0 +1,93 @@
+{
+  "summary": "Fetch container image from a registry using skopeo",
+  "description": [
+    "The image is stored in a directory called `image` under a directory indexed by",
+    "the \"container image id\", which is the digest of the container configuration",
+    "file (rather than the outer manifest) and is what will be shown in the \"podman",
+    "images\" output when the image is installed. This digest is stable as opposed to",
+    "the manifest digest which can change during transfer and storage due to e.g.",
+    "recompression.",
+    "",
+    "The local storage format for containers is the `dir` format which supports",
+    "retaining signatures and manifests.",
+    "",
+    "Buildhost commands used: `skopeo`."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "definitions": {
+      "item": {
+        "description": "The container image to fetch indexed by the container image id",
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "sha256:[0-9a-f]{64}": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "image"
+            ],
+            "properties": {
+              "image": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name",
+                  "digest"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the image (including registry)."
+                  },
+                  "digest": {
+                    "type": "string",
+                    "description": "Digest of image in registry.",
+                    "pattern": "sha256:[0-9a-f]{64}"
+                  },
+                  "tls-verify": {
+                    "type": "boolean",
+                    "description": "Require https (default true)."
+                  },
+                  "containers-transport": {
+                    "type": "string",
+                    "enum": [
+                      "docker",
+                      "containers-storage"
+                    ],
+                    "description": "The containers transport from which to copy the container",
+                    "default": "docker"
+                  },
+                  "storage-location": {
+                    "type": "string",
+                    "description": "The location of the local containers storage"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "properties": {
+      "items": {
+        "$ref": "#/definitions/item"
+      },
+      "digests": {
+        "$ref": "#/definitions/item"
+      }
+    },
+    "oneOf": [
+      {
+        "required": [
+          "items"
+        ]
+      },
+      {
+        "required": [
+          "digests"
+        ]
+      }
+    ]
+  }
+}

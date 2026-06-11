@@ -27,65 +27,6 @@ from typing import Dict
 from osbuild import sources
 from osbuild.util import ctx
 
-SCHEMA = """
-"additionalProperties": false,
-"definitions": {
-  "item": {
-    "description": "The container image to fetch indexed by the container image id",
-    "type": "object",
-    "additionalProperties": false,
-    "patternProperties": {
-      "sha256:[0-9a-f]{64}": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["image"],
-        "properties": {
-          "image": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["name", "digest"],
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "Name of the image (including registry)."
-              },
-              "digest": {
-                "type": "string",
-                "description": "Digest of image in registry.",
-                "pattern": "sha256:[0-9a-f]{64}"
-              },
-              "tls-verify": {
-                "type": "boolean",
-                "description": "Require https (default true)."
-              },
-              "containers-transport": {
-                "type": "string",
-                "enum": ["docker", "containers-storage" ],
-                "description": "The containers transport from which to copy the container",
-                "default": "docker"
-              },
-              "storage-location": {
-                "type": "string",
-                "description": "The location of the local containers storage"
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-},
-"properties": {
-  "items": {"$ref": "#/definitions/item"},
-  "digests": {"$ref": "#/definitions/item"}
-},
-"oneOf": [{
-  "required": ["items"]
-}, {
-  "required": ["digests"]
-}]
-"""
-
 DOCKER_TRANSPORT = "docker"
 CONTAINERS_STORAGE_TRANSPORT = "containers-storage"
 

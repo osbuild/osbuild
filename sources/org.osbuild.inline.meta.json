@@ -1,0 +1,53 @@
+{
+  "summary": "Source for binary data encoded inline in the manifest",
+  "description": [
+    "This source can be used to transport data in the source",
+    "section of the manifest. Each resource is ascii-encoded",
+    "in the `data` property, where the encoding is specified",
+    "in the `encoding` property. The resources is content",
+    "addressed via the hash value of the raw data before the",
+    "ascii encoding. This hash value is verified after the",
+    "resource is decoded and written to the store."
+  ],
+  "schema": {
+    "definitions": {
+      "item": {
+        "description": "Inline data indexed by their checksum",
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "(md5|sha1|sha256|sha384|sha512):[0-9a-f]{32,128}": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "encoding",
+              "data"
+            ],
+            "properties": {
+              "encoding": {
+                "description": "The specific encoding of `data`",
+                "enum": [
+                  "base64",
+                  "lzma+base64"
+                ]
+              },
+              "data": {
+                "description": "The ascii encoded raw data",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "items"
+    ],
+    "properties": {
+      "items": {
+        "$ref": "#/definitions/item"
+      }
+    }
+  }
+}
