@@ -12,63 +12,6 @@ import sys
 
 from osbuild import inputs
 
-SCHEMA = """
-"additionalProperties": false,
-"required": ["type", "origin", "references"],
-"properties": {
-  "type": {
-    "enum": ["org.osbuild.tree"]
-  },
-  "origin": {
-    "description": "The origin of the input (must be 'org.osbuild.pipeline')",
-    "type": "string",
-    "enum": ["org.osbuild.pipeline"]
-  },
-  "references": {
-    "description": "Exactly one pipeline identifier to use as tree input",
-    "oneOf": [{
-      "type": "array",
-      "additionalItems": false,
-      "minItems": 1,
-      "maxItems": 1,
-      "items": [{
-        "type": "string"
-      }]
-    }, {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": {
-         ".*": {
-           "type": "object",
-           "additionalProperties": false
-         }
-       },
-       "minProperties": 1,
-       "maxProperties": 1
-    }, {
-      "type": "array",
-      "additionalItems": false,
-      "minItems": 1,
-      "maxItems": 1,
-      "items": [{
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id"],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "options": {
-            "type": "object",
-            "additionalProperties": false
-          }
-        }
-      }]
-    }]
-  }
-}
-"""
-
 
 class TreeInput(inputs.InputService):
 

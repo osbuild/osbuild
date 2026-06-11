@@ -15,58 +15,6 @@ import sys
 
 from osbuild import inputs
 
-SCHEMA = """
-"additionalProperties": false,
-"required": ["type", "origin", "references"],
-"properties": {
-  "type": {
-    "enum": ["org.osbuild.ostree.checkout"]
-  },
-  "origin": {
-    "description": "The origin of the input",
-    "type": "string",
-    "enum": ["org.osbuild.source", "org.osbuild.pipeline"]
-  },
-  "references": {
-    "description": "Commit identifier to check out",
-    "oneOf": [{
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    }, {
-      "type": "object",
-      "additionalProperties": false,
-      "minProperties": 1,
-      "patternProperties": {
-        ".*": {
-          "type": "object",
-          "additionalProperties": false
-        }
-      }
-    }, {
-      "type": "array",
-      "additionalItems": false,
-      "minItems": 1,
-      "items": [{
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id"],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "options": {
-            "type": "object",
-            "additionalProperties": false
-          }
-        }
-      }]
-    }]
-  }
-}
-"""
-
 
 def ostree(*args, _input=None, **kwargs):
     args = list(args) + [f'--{k}={v}' for k, v in kwargs.items()]
