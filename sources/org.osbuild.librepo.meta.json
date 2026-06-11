@@ -1,0 +1,101 @@
+{
+  "summary": "Source for downloading rpms using librepo.",
+  "description": [
+    "Download the list of rpms using a metalink or mirrorlist URL, trying new",
+    "mirrors if there is an error. The files are written to the osbuild file cache",
+    "using the hash as the filename.",
+    "",
+    "It can download files that require secrets. The support secret providers are:",
+    "- `org.osbuild.rhsm` for downloading Red Hat content that requires a subscriptions.",
+    "- `org.osbuild.mtls`"
+  ],
+  "schema_2": {
+    "properties": {
+      "items": {
+        "description": "List of the packages and their hash to download from the mirror",
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^(sha1|sha256|sha384|sha512):[0-9a-f]{40,128}$": {
+            "required": [
+              "path",
+              "mirror"
+            ],
+            "properties": {
+              "path": {
+                "description": "Name or path of the package file. Supports bare name or relative paths",
+                "type": "string"
+              },
+              "mirror": {
+                "description": "The mirror id (from options) to use for this package",
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "required": [
+          "mirrors"
+        ],
+        "properties": {
+          "mirrors": {
+            "description": "List of mirrors to be used for downloading packages",
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[0-9a-zA-Z-._:]+$": {
+                "required": [
+                  "url",
+                  "type"
+                ],
+                "properties": {
+                  "url": {
+                    "description": "URL of the mirrorlist or metalink",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Type of mirror: mirrorlist or metalink",
+                    "type": "string",
+                    "enum": [
+                      "mirrorlist",
+                      "metalink",
+                      "baseurl"
+                    ]
+                  },
+                  "max-parallels": {
+                    "description": "Maximum number of parallel downloads.",
+                    "type": "number"
+                  },
+                  "fastest-mirror": {
+                    "description": "When true the mirrorlist is sorted by connection speed.",
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "insecure": {
+                    "description": "Skip the verification step for secure connections and proceed without checking",
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "secrets": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "required": [
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "description": "Name of the secrets provider.",
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

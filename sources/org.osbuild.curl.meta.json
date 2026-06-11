@@ -1,0 +1,90 @@
+{
+  "summary": "Source for downloading files from URLs.",
+  "description": [
+    "The files are indexed by their content hash. It can download files",
+    "that require secrets. The secret providers currently supported are:",
+    "",
+    "- `org.osbuild.rhsm` for downloading Red Hat content that requires",
+    "  a subscriptions.",
+    "- `org.osbuild.mtls` for downloading content that requires client",
+    "  certificats. The paths to the key and cert should be set in the",
+    "  environment in OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY,",
+    "  OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT, and optionally",
+    "  OSBUILD_SOURCES_CURL_SSL_CA_CERT.",
+    "",
+    "It uses curl to download the files; the files are cached in an",
+    "internal cache. Multiple parallel connections are used to speed",
+    "up the download."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "definitions": {
+      "item": {
+        "description": "The files to fetch indexed their content checksum",
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "(md5|sha1|sha256|sha384|sha512):[0-9a-f]{32,128}": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "URL to download the file from."
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "url"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "URL to download the file from."
+                  },
+                  "insecure": {
+                    "type": "boolean",
+                    "description": "Skip the verification step for secure connections and proceed without checking",
+                    "default": false
+                  },
+                  "secrets": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the secrets provider."
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "properties": {
+      "items": {
+        "$ref": "#/definitions/item"
+      },
+      "urls": {
+        "$ref": "#/definitions/item"
+      }
+    },
+    "oneOf": [
+      {
+        "required": [
+          "items"
+        ]
+      },
+      {
+        "required": [
+          "urls"
+        ]
+      }
+    ]
+  }
+}
