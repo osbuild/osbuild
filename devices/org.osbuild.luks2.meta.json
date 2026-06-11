@@ -1,0 +1,26 @@
+{
+  "summary": "Host service for Linux Unified Key Setup (LUKS, format 2) devices.",
+  "description": [
+    "This will open a LUKS container, given the path of the parent",
+    "device and the corresponding passphrase.",
+    "",
+    "NB: This will use the custom osbuild udev rule inhibitor mechanism",
+    "to suppress certain udev rules. See `osbuild.util.udev.UdevInhibitor`",
+    "for details.",
+    "",
+    "Host commands used: `cryptsetup`, `dmsetup`"
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "passphrase"
+    ],
+    "properties": {
+      "passphrase": {
+        "description": "Passphrase to use",
+        "default": "",
+        "type": "string"
+      }
+    }
+  }
+}

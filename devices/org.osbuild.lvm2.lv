@@ -37,21 +37,6 @@ from typing import Dict, Tuple, Union
 
 from osbuild import devices
 
-SCHEMA = """
-"additionalProperties": false,
-"required": ["volume"],
-"properties": {
-  "volume": {
-    "type": "string",
-    "description": "Logical volume to active"
-  },
-  "vg_partnum": {
-    "type": "number",
-    "description": "Partition number on the parent device where the LV's volume group is located"
-  }
-}
-"""
-
 
 def get_parent_path(parent: str, options: Dict) -> str:
     """ get_parent_path returns the full path to the block device for parent
