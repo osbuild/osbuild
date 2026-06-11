@@ -13,26 +13,6 @@ from urllib.parse import urlparse
 
 from osbuild import mounts
 
-SCHEMA_2 = """
-"additionalProperties": false,
-"required": ["name", "type", "target"],
-"properties": {
-  "name": { "type": "string" },
-  "type": { "type": "string" },
-  "target": {
-    "type": "string",
-    "pattern": "^tree://"
-  },
-  "options": {
-    "required": ["source"],
-    "source": {
-      "type": "string",
-      "pattern": "^mount://"
-    }
-  }
-}
-"""
-
 
 def parse_location(location, tree, mountroot: str) -> str:
     # we cannot use "osutil.util.parsing" here because it is too

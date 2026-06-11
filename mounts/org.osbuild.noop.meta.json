@@ -1,0 +1,37 @@
+{
+  "summary": "No-op mount service",
+  "description": [
+    "Does not mount anything, but only creates an empty directory.",
+    "Useful for testing."
+  ],
+  "schema_2": {
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "type",
+      "source",
+      "target"
+    ],
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      },
+      "source": {
+        "type": "string"
+      },
+      "partition": {
+        "type": "number"
+      },
+      "target": {
+        "type": "string"
+      },
+      "options": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+}
