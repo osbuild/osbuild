@@ -13,10 +13,6 @@ import uuid
 
 from osbuild import inputs
 
-SCHEMA = """
-"additionalProperties": true
-"""
-
 
 class NoopInput(inputs.InputService):
 
