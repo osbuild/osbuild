@@ -21,23 +21,6 @@ from typing import Dict
 from osbuild import sources
 from osbuild.util import host
 
-SCHEMA = """
-"additionalProperties": false,
-"properties": {
-  "items": {
-    "description": "The container image to fetch indexed by the container image id",
-    "type": "object",
-    "additionalProperties": false,
-    "patternProperties": {
-      "sha256:[0-9a-f]{64}": {
-        "type": "object",
-        "additionalProperties": false
-      }
-    }
-  }
-}
-"""
-
 
 class ContainersStorageSource(sources.SourceService):
 
