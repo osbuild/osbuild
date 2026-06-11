@@ -18,48 +18,6 @@ from typing import Dict
 
 from osbuild import mounts
 
-SCHEMA_2 = """
-"additionalProperties": false,
-"required": ["name", "type", "source", "target"],
-"properties": {
-  "name": { "type": "string" },
-  "source": {
-    "type": "string"
-  },
-  "target": {
-    "type": "string"
-  },
-  "options": {
-    "type": "object",
-    "additionalProperties": false,
-    "properties": {
-      "growfs": {
-        "type": "boolean",
-        "default": true
-      },
-      "read-only": {
-        "type": "boolean",
-        "default": false
-      },
-      "fsck": {
-        "type": "boolean",
-        "default": true
-      },
-      "discard": {
-        "type": "string",
-        "enum": ["disabled", "loop", "all", "crypto"]
-      },
-      "image-policy": {
-        "type": "string"
-      },
-      "image-filter": {
-        "type": "string"
-      }
-    }
-  }
-}
-"""
-
 
 class DDIMount(mounts.MountService):
     def __init__(self, args):
