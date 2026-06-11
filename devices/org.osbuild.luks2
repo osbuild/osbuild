@@ -23,19 +23,6 @@ from typing import Dict, Optional
 from osbuild import devices
 from osbuild.util.udev import UdevInhibitor
 
-SCHEMA = """
-"additionalProperties": false,
-"required": ["passphrase"],
-"properties": {
-  "passphrase": {
-    "description": "Passphrase to use",
-    "default": "",
-    "type": "string"
-  }
-}
-
-"""
-
 
 class CryptDeviceService(devices.DeviceService):
 

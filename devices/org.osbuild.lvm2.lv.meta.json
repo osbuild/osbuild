@@ -1,0 +1,27 @@
+{
+  "summary": "Host service for providing access to LVM2 logical volumes",
+  "description": [
+    "This host service can be used to activate logical volumes",
+    "so that they can be accessed from osbuild stages.",
+    "The parent volume group is identified via the physical",
+    "device which must be passed to this service as parent.",
+    "",
+    "Required host tools: lvchange, pvdisplay, lvdisplay"
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "volume"
+    ],
+    "properties": {
+      "volume": {
+        "type": "string",
+        "description": "Logical volume to active"
+      },
+      "vg_partnum": {
+        "type": "number",
+        "description": "Partition number on the parent device where the LV's volume group is located"
+      }
+    }
+  }
+}
