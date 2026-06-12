@@ -33,7 +33,7 @@ SCHEMA_2 = """
     "type": "object",
     "additionalProperties": false,
     "patternProperties": {
-      "^(sha256|sha384|sha512):[0-9a-f]{64,128}$": {
+      "^(sha1|sha256|sha384|sha512):[0-9a-f]{40,128}$": {
         "required": [
           "path",
           "mirror"
@@ -129,6 +129,7 @@ class LibRepoSource(sources.SourceService):
     content_type = "org.osbuild.files"
 
     CHKSUM_TYPE = {
+        "sha1": librepo.SHA1,
         "sha256": librepo.SHA256,
         "sha384": librepo.SHA384,
         "sha512": librepo.SHA512,
