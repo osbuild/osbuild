@@ -1,0 +1,65 @@
+{
+  "summary": "Discoverable Disk Image mount service.",
+  "description": [
+    "This mount service mounts DDI's, see the UAPI Specification [1] for more",
+    "information about them. In short it mounts a disk image based on its GPT",
+    "partition table and sets up all nested mounts for all partitions.",
+    "",
+    "This service implementation uses `systemd-dissect`.",
+    "",
+    "[1]: https://uapi-group.org/specifications/specs/discoverable_disk_image/"
+  ],
+  "schema_2": {
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "type",
+      "source",
+      "target"
+    ],
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "source": {
+        "type": "string"
+      },
+      "target": {
+        "type": "string"
+      },
+      "options": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "growfs": {
+            "type": "boolean",
+            "default": true
+          },
+          "read-only": {
+            "type": "boolean",
+            "default": false
+          },
+          "fsck": {
+            "type": "boolean",
+            "default": true
+          },
+          "discard": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "loop",
+              "all",
+              "crypto"
+            ]
+          },
+          "image-policy": {
+            "type": "string"
+          },
+          "image-filter": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

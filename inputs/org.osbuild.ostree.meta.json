@@ -1,0 +1,92 @@
+{
+  "summary": "Inputs for ostree commits",
+  "description": [
+    "Pull the commits specified by `references` into a newly created",
+    "repository. Optionally, if `ref` was specified, create a new",
+    "reference for that commit.",
+    "",
+    "The returned data in `refs` is a dictionary where the keys are",
+    "commit ids and the values are dictionaries. The latter will",
+    "contain `ref` if it was specified."
+  ],
+  "schema": {
+    "definitions": {
+      "options": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "OSTree reference to create for this commit"
+          }
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "type",
+      "origin",
+      "references"
+    ],
+    "properties": {
+      "type": {
+        "enum": [
+          "org.osbuild.ostree"
+        ]
+      },
+      "origin": {
+        "description": "The origin of the input (pipeline or source)",
+        "type": "string",
+        "enum": [
+          "org.osbuild.source",
+          "org.osbuild.pipeline"
+        ]
+      },
+      "references": {
+        "description": "Commit identifier",
+        "oneOf": [
+          {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "patternProperties": {
+              ".*": {
+                "$ref": "#/definitions/options"
+              }
+            }
+          },
+          {
+            "type": "array",
+            "additionalItems": false,
+            "minItems": 1,
+            "maxItems": 1,
+            "items": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "$ref": "#/definitions/options"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

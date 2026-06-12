@@ -1,0 +1,198 @@
+{
+  "summary": "Inputs for individual files",
+  "description": [
+    "Provides all the files, named via their content hash, specified",
+    "via `references` in a new directory.",
+    "",
+    "The returned data in `files` is a dictionary where the keys are",
+    "paths to the provided files and the values dictionaries with",
+    "metadata for it. The input itself currently does not set any",
+    "metadata itself, but will forward any metadata set via the",
+    "`metadata` property. Keys in that must start with a prefix,",
+    "like `rpm.` to avoid namespace clashes. This is enforced via",
+    "schema validation."
+  ],
+  "schema": {
+    "definitions": {
+      "metadata": {
+        "description": "Additional metadata to forward to the stage",
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^\\w+[.]{1}\\w+$": {
+            "additionalProperties": false
+          }
+        }
+      },
+      "file": {
+        "description": "File to access with in a pipeline",
+        "type": "string"
+      },
+      "plain-ref": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "source-options": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "metadata": {
+            "$ref": "#/definitions/metadata"
+          }
+        }
+      },
+      "source-object-ref": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "patternProperties": {
+          ".*": {
+            "$ref": "#/definitions/source-options"
+          }
+        }
+      },
+      "source-array-ref": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "options": {
+              "$ref": "#/definitions/source-options"
+            }
+          }
+        }
+      },
+      "source-origin": {
+        "type": "string",
+        "description": "When the origin of the input is a source",
+        "enum": [
+          "org.osbuild.source"
+        ]
+      },
+      "pipeline-options": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "metadata": {
+            "$ref": "#/definitions/metadata"
+          },
+          "file": {
+            "$ref": "#/definitions/file"
+          }
+        }
+      },
+      "pipeline-object-ref": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "patternProperties": {
+          ".*": {
+            "$ref": "#/definitions/pipeline-options"
+          }
+        }
+      },
+      "pipeline-array-ref": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "options": {
+              "$ref": "#/definitions/pipeline-options"
+            }
+          }
+        }
+      },
+      "pipeline-origin": {
+        "type": "string",
+        "description": "When the origin of the input is a pipeline",
+        "enum": [
+          "org.osbuild.pipeline"
+        ]
+      }
+    },
+    "additionalProperties": true,
+    "oneOf": [
+      {
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "origin",
+          "references"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "org.osbuild.files"
+            ]
+          },
+          "origin": {
+            "description": "The org.osbuild.source origin case",
+            "$ref": "#/definitions/source-origin"
+          },
+          "references": {
+            "description": "Checksums of files to use as files input",
+            "oneOf": [
+              {
+                "$ref": "#/definitions/plain-ref"
+              },
+              {
+                "$ref": "#/definitions/source-array-ref"
+              },
+              {
+                "$ref": "#/definitions/source-object-ref"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "origin",
+          "references"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "org.osbuild.files"
+            ]
+          },
+          "origin": {
+            "description": "The org.osbuild.pipeline origin case",
+            "$ref": "#/definitions/pipeline-origin"
+          },
+          "references": {
+            "description": "References to pipelines",
+            "oneOf": [
+              {
+                "$ref": "#/definitions/pipeline-array-ref"
+              },
+              {
+                "$ref": "#/definitions/pipeline-object-ref"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

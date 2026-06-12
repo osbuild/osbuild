@@ -1,0 +1,35 @@
+{
+  "summary": "Bind mount service",
+  "description": [
+    "Can (r)bind mount mounts to the tree."
+  ],
+  "schema_2": {
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "type",
+      "target"
+    ],
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      },
+      "target": {
+        "type": "string",
+        "pattern": "^tree://"
+      },
+      "options": {
+        "required": [
+          "source"
+        ],
+        "source": {
+          "type": "string",
+          "pattern": "^mount://"
+        }
+      }
+    }
+  }
+}

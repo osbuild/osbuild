@@ -21,38 +21,6 @@ from typing import Dict
 from osbuild import sources
 from osbuild.util.checksum import verify_file
 
-SCHEMA = """
-"definitions": {
-  "item": {
-    "description": "Inline data indexed by their checksum",
-    "type": "object",
-    "additionalProperties": false,
-    "patternProperties": {
-      "(md5|sha1|sha256|sha384|sha512):[0-9a-f]{32,128}": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["encoding", "data"],
-        "properties": {
-          "encoding": {
-            "description": "The specific encoding of `data`",
-            "enum": ["base64", "lzma+base64"]
-          },
-          "data": {
-            "description": "The ascii encoded raw data",
-            "type": "string"
-          }
-        }
-      }
-    }
-  }
-},
-"additionalProperties": false,
-"required": ["items"],
-"properties": {
-  "items": {"$ref": "#/definitions/item"}
-}
-"""
-
 
 class InlineSource(sources.SourceService):
 

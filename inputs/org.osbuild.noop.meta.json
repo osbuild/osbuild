@@ -1,0 +1,10 @@
+{
+  "summary": "No-op inputs",
+  "description": [
+    "Does nothing with the supplied data but just forwards",
+    "it to the stage."
+  ],
+  "schema": {
+    "additionalProperties": true
+  }
+}
