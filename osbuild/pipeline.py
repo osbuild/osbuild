@@ -45,7 +45,7 @@ def cleanup(*objs):
     _ = map(lambda o: o.cleanup(), filter(None, objs))
 
 
-class BuildResult:
+class StageResult:
     def __init__(self, origin: 'Stage', returncode: int, output: str, error: Dict[str, str]) -> None:
         self.name = origin.name
         self.id = origin.id
@@ -63,7 +63,7 @@ class BuildResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BuildResult":
+    def from_dict(cls, data: Dict[str, Any]) -> "StageResult":
         result = cls.__new__(cls)
         result.name = data["name"]
         result.id = data["id"]
@@ -225,7 +225,7 @@ class Stage:
             monitor,
             libdir,
             debug_break="",
-            timeout=None) -> BuildResult:
+            timeout=None) -> StageResult:
         with contextlib.ExitStack() as cm:
 
             build_root = buildroot.BuildRoot(build_tree, runner.path, libdir, store.tmp)
@@ -325,7 +325,7 @@ class Stage:
                                extra_env=extra_env,
                                debug_shell=debug_shell)
 
-        return BuildResult(self, r.returncode, r.output, api.error)
+        return StageResult(self, r.returncode, r.output, api.error)
 
 
 class Runner:
@@ -475,7 +475,7 @@ class Pipeline:
                                                       build_tree=build_tree.id,
                                                       debug_break=debug_break,
                                                       stage_timeout=stage_timeout)
-                        r = BuildResult.from_dict(resp)
+                        r = StageResult.from_dict(resp)
                     else:
                         r = stage.run(os.fspath(tree),
                                       meta.name,
@@ -622,7 +622,7 @@ class Manifest:
         """Build the manifest
 
         Returns a dict of string keys that contains the overall
-        "success" and the `BuildResult` of each individual pipeline.
+        "success" and the `StageResult` of each individual pipeline.
 
         The overall success "success" is stored as the string "success"
         with the bool result and the build pipelines BuildStatus is

@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from osbuild.meta import Index, ValidationResult
 
-from ..pipeline import BuildResult, Manifest, Pipeline, Runner
+from ..pipeline import Manifest, Pipeline, Runner, StageResult
 
 VERSION = "1"
 
@@ -200,7 +200,7 @@ def load(description: Dict, index: Index) -> Manifest:
 def output(manifest: Manifest, res: Dict, store=None) -> Dict:
     """Convert a result into the v1 format"""
 
-    def result_for_stage(result: BuildResult, obj):
+    def result_for_stage(result: StageResult, obj):
         return {
             "id": result.id,
             "type": result.name,
