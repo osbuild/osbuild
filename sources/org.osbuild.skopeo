@@ -103,14 +103,24 @@ class SkopeoSource(sources.SourceService):
             return f"containers-storage:{reference}"
         raise RuntimeError("Unrecognized containers transport")
 
-    def fetch_all(self, items: Dict) -> None:
-        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-
+    def fetch_all(self, items: Dict) -> Dict:
+        sr = sources.SourceResults("org.osbuild.skopeo")
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*filtered)):
-                pass
+            for result in executor.map(self.fetch_one, *zip(*items.items())):
+                sr.add(result)
+        return sr.as_dict()
 
-    def fetch_one(self, checksum, desc):
+    def fetch_one(self, checksum, desc) -> sources.SourceItemResult:
+        sr = sources.SourceItemResult()
+        sr.metadata = {
+            "checksum": checksum
+        }
+
+        if self.exists(checksum, desc):
+            sr.metadata["cached"] = True
+            return sr
+        sr.metadata["cached"] = False
+
         image_id = checksum
         image = desc["image"]
         imagename = image["name"]
@@ -140,34 +150,61 @@ class SkopeoSource(sources.SourceService):
             if not tls_verify:
                 extra_args.append("--src-tls-verify=false")
 
-            subprocess.run(["skopeo", "copy"] + extra_args + [source, destination],
-                           encoding="utf-8",
-                           check=True)
+            res = subprocess.run(["skopeo", "copy"] + extra_args + [source, destination],
+                                 encoding="utf-8",
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 check=False)
+            if res.returncode != 0:
+                sr.success = False
+                sr.error = f"unable to copy image: {res.stderr}"
+                return sr
 
             # Verify that the digest supplied downloaded the correct container image id.
             # The image id is the digest of the config, but skopeo can't currently
             # get the config id, only the full config, so we checksum it ourselves.
-            res = subprocess.check_output(["skopeo", "inspect", "--raw", "--config", destination])
-            downloaded_id = "sha256:" + hashlib.sha256(res).hexdigest()
+            res = subprocess.run(["skopeo", "inspect", "--raw", "--config", destination],
+                                 encoding="utf-8",
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 check=False)
+            if res.returncode != 0:
+                sr.success = False
+                sr.error = f"unable to inspect image: {res.stderr}"
+                return sr
+
+            downloaded_id = "sha256:" + hashlib.sha256(res.stdout.encode('utf-8')).hexdigest()
             if downloaded_id != image_id:
-                raise RuntimeError(
-                    f"Downloaded image {imagename}@{digest} has a id of {downloaded_id}, but expected {image_id}")
+                sr.success = False
+                sr.error = f"Downloaded image {imagename}@{digest} has an id of {downloaded_id}, but expected {image_id}"
+                return sr
 
             # Atomically move download archive into place on successful download
             with ctx.suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
                 os.makedirs(os.path.join(self.cache, image_id), exist_ok=True)
                 os.rename(os.path.join(archive_dir, self.dir_name), os.path.join(self.cache, image_id, self.dir_name))
+        return sr
 
-    def exists(self, checksum, _desc):
+    def exists(self, checksum, _desc) -> bool:
         path = os.path.join(self.cache, checksum, self.dir_name)
         return os.path.exists(path)
 
-    def copy_all(self, items: Dict, dst_cache: str) -> None:
+    def copy_all(self, items: Dict, dst_cache: str) -> Dict:
         """Copies the source to the destination"""
+
+        sr = sources.SourceResults("org.osbuild.skopeo")
         target_dir = os.path.join(dst_cache, self.content_type)
         os.makedirs(target_dir, exist_ok=True)
         for item in items:
-            shutil.copytree(os.path.join(self.cache, item), os.path.join(target_dir, item))
+            sir = sources.SourceItemResult(metadata={
+                "checksum": item,
+            })
+            try:
+                shutil.copytree(os.path.join(self.cache, item), os.path.join(target_dir, item))
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                sir.set_error(str(e))
+            sr.add(sir)
+        return sr.as_dict()
 
 
 def main():
