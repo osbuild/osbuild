@@ -14,7 +14,7 @@ from .inputs import Input, InputManager
 from .mounts import Mount, MountManager
 from .objectstore import ObjectStore
 from .qemu import Qemu
-from .sources import Source
+from .sources import Source, SourceResults
 from .util import experimentalflags, osrelease
 
 DEFAULT_CAPABILITIES = {
@@ -396,7 +396,7 @@ class Pipeline:
 
     def build_stages(self, object_store, monitor, libdir,
                      debug_break="", stage_timeout=None, in_vm=False):
-        results = {"success": True, "name": self.name}
+        results = []
 
         # If there are no stages, just return here
         if not self.stages:
@@ -440,8 +440,6 @@ class Pipeline:
         # referenced by the `tree_id` in the content store if they are
         # both committed. However, after the call to commit all the
         # trees will be based on the winner.
-        results["stages"] = []
-
         with contextlib.ExitStack() as cm:
             qemu = None
             tree_dir = os.path.join(tree.path, "tree")
@@ -489,11 +487,9 @@ class Pipeline:
 
                 md = tree.meta.get(r.id)
                 monitor.result(r, md)
-
-                results["stages"].append(r)
+                results.append(r)
                 if not r.success:
                     cleanup(build_tree, tree)
-                    results["success"] = False
                     return results
 
                 if stage.checkpoint:
@@ -504,20 +500,58 @@ class Pipeline:
         return results
 
     def run(self, store, monitor, libdir, debug_break="", stage_timeout=None, in_vm=False):
-
         self.run_in_vm = in_vm
         monitor.begin(self)
+        pr = PipelineResult(self.name)
+        stage_results = self.build_stages(store,
+                                          monitor,
+                                          libdir,
+                                          debug_break,
+                                          stage_timeout,
+                                          in_vm)
+        pr.set_stages(stage_results)
+        monitor.finish({"name": self.name})
+        return pr
 
-        results = self.build_stages(store,
-                                    monitor,
-                                    libdir,
-                                    debug_break,
-                                    stage_timeout,
-                                    in_vm)
 
-        monitor.finish(results)
+class DownloadResult:
+    def __init__(self):
+        self.success = True
+        self.sources = {}
 
-        return results
+    def add(self, source_type, source_results: SourceResults):
+        self.sources[source_type] = source_results
+        if not source_results.success:
+            self.success = False
+
+    def as_dict(self):
+        return {
+            "success": self.success,
+            "sources": {src_type: src.as_dict() for src_type, src in self.sources.items()}
+        }
+
+
+class PipelineResult:
+    def __init__(self, name, success=True):
+        self.success = success
+        self.name = name
+        self.stages = []
+
+    def set_stages(self, stages: List[StageResult]):
+        self.stages = stages
+        self.success = all(sr.success for sr in stages)
+
+
+class ManifestBuildResult:
+    def __init__(self, dr):
+        self.success = dr.success
+        self.download_result = dr
+        self.pipeline_results = {}
+
+    def add_pipeline(self, pl_id: str, pr: PipelineResult):
+        self.pipeline_results[pl_id] = pr
+        if not pr.success:
+            self.success = False
 
 
 class Manifest:
@@ -550,12 +584,15 @@ class Manifest:
         return source
 
     def download(self, store, monitor):
+        dr = DownloadResult()
         with host.ServiceManager(monitor=monitor) as mgr:
             for source in self.sources:
                 monitor.begin(source)
                 result = source.download(mgr, store)
                 monitor.result(result)
+                dr.add(source.info_name, result)
                 monitor.finish({"name": source.info_name})
+        return dr
 
     def export_sources(self, store, dst_store, monitor):
         with host.ServiceManager(monitor=monitor) as mgr:
@@ -618,7 +655,7 @@ class Manifest:
         return list(map(lambda x: x.name, reversed(build.values())))
 
     def build(self, store, pipelines, monitor, libdir,
-              debug_break="", stage_timeout=None, in_vm=None) -> Dict[str, Any]:
+              debug_break="", stage_timeout=None, in_vm=None) -> ManifestBuildResult:
         """Build the manifest
 
         Returns a dict of string keys that contains the overall
@@ -628,17 +665,19 @@ class Manifest:
         with the bool result and the build pipelines BuildStatus is
         stored under the pipelines ID string.
         """
-        results = {"success": True}
+        dr = self.download(store, monitor)
+        mbr = ManifestBuildResult(dr)
+        if not mbr.success:
+            return mbr
 
         for name_or_id in pipelines:
             pl = self[name_or_id]
             res = pl.run(store, monitor, libdir, debug_break, stage_timeout, in_vm=in_vm and pl.name in in_vm)
-            results[pl.id] = res
-            if not res["success"]:
-                results["success"] = False
-                return results
+            mbr.add_pipeline(pl.id, res)
+            if not mbr.success:
+                return mbr
 
-        return results
+        return mbr
 
     def mark_checkpoints(self, patterns):
         """Match pipeline names, stage ids, and stage names against an iterable
