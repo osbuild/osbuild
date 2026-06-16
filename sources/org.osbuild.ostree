@@ -26,6 +26,7 @@ import concurrent.futures
 import os
 import sys
 import uuid
+from subprocess import CalledProcessError
 from typing import Dict
 
 from osbuild import sources
@@ -104,40 +105,69 @@ class OSTreeSource(sources.SourceService):
         super().__init__(*args, **kwargs)
         self.repo = None
 
-    def fetch_all(self, items: Dict) -> None:
-        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-
+    def fetch_all(self, items: Dict) -> Dict:
+        sr = sources.SourceResults("org.osbuild.ostree")
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*filtered)):
-                pass
+            for result in executor.map(self.fetch_one, *zip(*items.items())):
+                sr.add(result)
+        return sr.as_dict()
 
-    def fetch_one(self, checksum, desc):
+    def fetch_one(self, checksum, desc) -> sources.SourceItemResult:
+        sr = sources.SourceItemResult()
+        sr.metadata = {
+            "checksum": checksum,
+        }
+        if self.exists(checksum, desc):
+            sr.metadata["cached"] = True
+            return sr
+        sr.metadata["cached"] = False
+
         commit = checksum
         remote = desc["remote"]
         # This is a temporary remote so we'll just use a random name
         name = str(uuid.uuid4())
 
-        ostree.setup_remote(self.repo, name, remote)
+        try:
+            ostree.setup_remote(self.repo, name, remote)
 
-        # Transfer the commit: remote → cache
-        print(f"pulling {commit}", file=sys.stderr)
-        ostree.cli("pull", name, commit, repo=self.repo)
+            # Transfer the commit: remote → cache
+            print(f"pulling {commit}", file=sys.stderr)
+            ostree.cli("pull", name, commit, repo=self.repo)
 
-        # Remove the temporary remote again
-        ostree.cli("remote", "delete", name, repo=self.repo)
+            # Remove the temporary remote again
+            ostree.cli("remote", "delete", name, repo=self.repo)
+        except (RuntimeError, CalledProcessError) as e:
+            sr.set_error(str(e))
+        return sr
 
-    def copy_all(self, items: Dict, dst_cache: str) -> None:
-        os.makedirs(os.path.join(dst_cache, self.content_type), exist_ok=True)
-        dst_repo = os.path.join(dst_cache, self.content_type, "repo")
-        ostree.cli("init", mode="archive", repo=dst_repo)
-        ostree.cli("config", "set", "repo.locking", "true", repo=dst_repo)
+    def copy_all(self, items: Dict, dst_cache: str) -> Dict:
+        sr = sources.SourceResults("org.osbuild.ostree")
 
-        # add self.repo as a temporary remote to the dst_cache repo
-        name = str(uuid.uuid4())
-        ostree.setup_remote(dst_repo, name, {"url": f"file://{self.repo}"})
+        try:
+            os.makedirs(os.path.join(dst_cache, self.content_type), exist_ok=True)
+            dst_repo = os.path.join(dst_cache, self.content_type, "repo")
+            ostree.cli("init", mode="archive", repo=dst_repo)
+            ostree.cli("config", "set", "repo.locking", "true", repo=dst_repo)
+            # add self.repo as a temporary remote to the dst_cache repo
+            name = str(uuid.uuid4())
+            ostree.setup_remote(dst_repo, name, {"url": f"file://{self.repo}"})
+        except (RuntimeError, CalledProcessError) as e:
+            sr.add(sources.SourceItemResult(success=False, error=str(e)))
+            return sr.as_dict()
+
         for commit in items:
-            ostree.cli("pull", name, commit, repo=dst_repo)
-        ostree.cli("remote", "delete", name, repo=dst_repo)
+            sir = sources.SourceItemResult()
+            try:
+                ostree.cli("pull", name, commit, repo=dst_repo)
+            except (RuntimeError, CalledProcessError) as e:
+                sir.set_error(str(e))
+                sr.add(sir)
+
+        try:
+            ostree.cli("remote", "delete", name, repo=dst_repo)
+        except (RuntimeError, CalledProcessError) as e:
+            sr.add(sources.SourceItemResult(success=False, error=str(e)))
+        return sr.as_dict()
 
     def setup(self, args):
         super().setup(args)
@@ -151,7 +181,7 @@ class OSTreeSource(sources.SourceService):
         ostree.cli("config", "set", "repo.locking", "true", repo=self.repo)
 
     # pylint: disable=[no-self-use]
-    def exists(self, checksum, _desc):
+    def exists(self, checksum, _desc) -> bool:
         try:
             ostree.show(self.repo, checksum)
         except RuntimeError:
