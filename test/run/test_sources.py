@@ -104,13 +104,16 @@ def make_test_cases():
 def check_case(source, case_options, store):
     with host.ServiceManager() as mgr:
         expects = case_options["expects"]
-        if expects == "error":
-            with pytest.raises(host.RemoteError):
-                source.download(mgr, store)
-        elif expects == "success":
-            source.download(mgr, store)
-        else:
+        if expects not in ("success", "error"):
             raise ValueError(f"invalid expectation: {expects}")
+
+        result = source.download(mgr, store)
+        if not isinstance(result, osbuild.sources.SourceResults):
+            raise ValueError(f"source.download should return SourceResults, got {type(result)}")
+        if expects == "error" and result.success:
+            raise ValueError(f"expected success=False from source.download, got success={result.success}")
+        if expects == "success" and not result.success:
+            raise ValueError(f"expected success=True from source.download, got success={result.success}")
 
 
 @pytest.mark.skipif(not can_setup_netns(), reason="network namespace setup failed")
