@@ -20,7 +20,7 @@ import osbuild
 import osbuild.meta
 from osbuild.monitor import Context, JSONSeqMonitor, LogMonitor, Progress, log_entry
 from osbuild.objectstore import ObjectStore
-from osbuild.pipeline import BuildResult, Runner, Stage
+from osbuild.pipeline import Runner, Stage, StageResult
 
 from .. import test
 
@@ -48,7 +48,7 @@ class TapeMonitor(osbuild.monitor.BaseMonitor):
         self.counter["stages"] += 1
         self.stages.add(stage.id)
 
-    def result(self, result: osbuild.pipeline.BuildResult, metadata: Optional[Dict] = None):
+    def result(self, result: osbuild.pipeline.StageResult, metadata: Optional[Dict] = None):
         self.counter["result"] += 1
         self.results.add(result.id)
 
@@ -239,7 +239,7 @@ def test_json_progress_monitor():
         mon.stage(first_stage)
         mon.log("pipeline 1 message 2")
         mon.log("pipeline 1 finished", origin="org.osbuild")
-        mon.result(osbuild.pipeline.BuildResult(
+        mon.result(osbuild.pipeline.StageResult(
             fake_noop_stage, returncode=0, output="some output", error=None), metadata={"meta": "data"})
         mon.finish({"success": True, "name": "test-pipeline-first"})
         mon.begin(manifest.pipelines["test-pipeline-second"])
@@ -484,7 +484,7 @@ def test_json_progress_monitor_excessive_output_in_result(tmp_path):
 
     output_path = tmp_path / "jsonseq.log"
     output = "beginning-marker-vanishes\n" + "1" * 32_000 + "\nend-marker"
-    build_result = BuildResult(stage, 0, output, {})
+    build_result = StageResult(stage, 0, output, {})
     with output_path.open("w") as fp:
         mon = JSONSeqMonitor(fp.fileno(), 1)
         mon.result(build_result)

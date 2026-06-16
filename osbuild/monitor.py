@@ -20,7 +20,7 @@ from threading import Lock
 from typing import Any, Dict, Optional, Set, Union
 
 import osbuild
-from osbuild.pipeline import BuildResult
+from osbuild.pipeline import StageResult
 from osbuild.sources import SourceResults
 from osbuild.util.term import fmt as vt
 
@@ -171,7 +171,7 @@ def log_entry(message: Optional[str] = None,
               progress: Optional[Progress] = None,
               options: Optional[Dict] = None,
               duration: Optional[float] = None,
-              result: Union[BuildResult, SourceResults, None] = None,
+              result: Union[StageResult, SourceResults, None] = None,
               metadata: Optional[Dict] = None,
               ) -> dict:
     """
@@ -239,7 +239,7 @@ class BaseMonitor(abc.ABC):
     def assembler(self, assembler: osbuild.Stage):
         """Called when an assembler is being built"""
 
-    def result(self, result: Union[BuildResult, SourceResults], metadata: Optional[Dict] = None) -> None:
+    def result(self, result: Union[StageResult, SourceResults], metadata: Optional[Dict] = None) -> None:
         """Called when a module (stage/assembler) is done with its result"""
 
     # note that this should be re-entrant
@@ -267,7 +267,7 @@ class LogMonitor(BaseMonitor):
         super().__init__(fd, total_steps)
         self._module_start_time: Optional[float] = None
 
-    def result(self, result: Union[BuildResult, SourceResults], metadata: Optional[Dict] = None) -> None:
+    def result(self, result: Union[StageResult, SourceResults], metadata: Optional[Dict] = None) -> None:
         if self._module_start_time is not None:
             duration = time.monotonic() - self._module_start_time
             self.out.write(f"\n⏱  Duration: {duration:.2f}s\n")
@@ -355,7 +355,7 @@ class JSONSeqMonitor(BaseMonitor):
         self.log(f"Starting module {module.name}", origin="osbuild.monitor")
         self._module_start_time = time.monotonic()
 
-    def result(self, result: Union[BuildResult, SourceResults], metadata: Optional[Dict] = None) -> None:
+    def result(self, result: Union[StageResult, SourceResults], metadata: Optional[Dict] = None) -> None:
         """ Called when the module (stage or download) is finished
 
         This will stream a log entry that the stage finished and the result
@@ -379,7 +379,7 @@ class JSONSeqMonitor(BaseMonitor):
         max_output_len = 31_000
         log_result = result
         # pylint: disable-next=unknown-option-value
-        if isinstance(result, BuildResult) and len(result.output) > max_output_len:  # type: ignore
+        if isinstance(result, StageResult) and len(result.output) > max_output_len:  # type: ignore
             removed = len(result.output) - max_output_len
             log_result.output = f"[...{removed} bytes hidden...]\n{result.output[removed:]}"  # type: ignore
         elif isinstance(result, SourceResults) and len(json.dumps(result.as_dict())) > max_output_len:
