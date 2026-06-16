@@ -186,8 +186,6 @@ def osbuild_cli() -> int:
             monitor = osbuild.monitor.make(monitor_name, args.monitor_fd, total_steps)
             monitor.log(f"starting {args.manifest_path}", origin="osbuild.main_cli")
 
-            manifest.download(object_store, monitor)
-
             r = manifest.build(
                 object_store,
                 pipelines,
@@ -197,22 +195,21 @@ def osbuild_cli() -> int:
                 in_vm=in_vm,
                 stage_timeout=stage_timeout
             )
-            if r["success"]:
+            if r.success:
                 monitor.log(f"manifest {args.manifest_path} finished successfully\n", origin="osbuild.main_cli")
             else:
                 # if we had monitor.error() we could use that here
                 monitor.log(f"manifest {args.manifest_path} failed\n", origin="osbuild.main_cli")
 
-            if r["success"] and exports:
+            if r.success and exports:
                 for pid in exports:
                     export(pid, output_directory, object_store, manifest)
 
             if args.json:
-                r = fmt.output(manifest, r, object_store)
-                json.dump(r, sys.stdout)
+                json.dump(fmt.output(manifest, r, object_store), sys.stdout)
                 sys.stdout.write("\n")
             elif not args.quiet:
-                if r["success"]:
+                if r.success:
                     print("\nPipelines")
                     for name, pl in manifest.pipelines.items():
                         print(f"  {name + ':': <10}\t{pl.id}")
@@ -226,7 +223,7 @@ def osbuild_cli() -> int:
                 else:
                     print(f"{vt.reset}{vt.bold}{vt.red}Failed{vt.reset}")
 
-            return 0 if r["success"] else 1
+            return 0 if r.success else 1
 
     except KeyboardInterrupt:
         print()
