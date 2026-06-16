@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from osbuild.meta import Index, ValidationResult
 
-from ..pipeline import Manifest, Pipeline, Runner, StageResult
+from ..pipeline import Manifest, ManifestBuildResult, Pipeline, PipelineResult, Runner, StageResult
 
 VERSION = "1"
 
@@ -197,7 +197,7 @@ def load(description: Dict, index: Index) -> Manifest:
     return manifest
 
 
-def output(manifest: Manifest, res: Dict, store=None) -> Dict:
+def output(manifest: Manifest, res: ManifestBuildResult, store=None) -> Dict:
     """Convert a result into the v1 format"""
 
     def result_for_stage(result: StageResult, obj):
@@ -215,9 +215,9 @@ def output(manifest: Manifest, res: Dict, store=None) -> Dict:
         # dependencies, i.e. its build pipeline, failed to
         # build. We thus need to be tolerant of a missing
         # result but still need to to recurse
-        current = res.get(pipeline.id, {})
+        current = res.pipeline_results.get(pipeline.id, PipelineResult(''))
         retval = {
-            "success": current.get("success", True)
+            "success": current.success
         }
 
         if pipeline.build:
@@ -227,7 +227,7 @@ def output(manifest: Manifest, res: Dict, store=None) -> Dict:
 
         obj = store and pipeline.id and store.get(pipeline.id)
 
-        stages = current.get("stages")
+        stages = current.stages
         if stages:
             retval["stages"] = [
                 result_for_stage(r, obj) for r in stages
@@ -240,7 +240,7 @@ def output(manifest: Manifest, res: Dict, store=None) -> Dict:
     if not assembler:
         return result
 
-    current = res.get(assembler.id)
+    current = res.pipeline_results.get(assembler.id)
     # if there was an error before getting to the assembler
     # pipeline, there might not be a result present
     if not current:
@@ -249,7 +249,7 @@ def output(manifest: Manifest, res: Dict, store=None) -> Dict:
     # The assembler pipeline must have exactly one stage
     # which is the v1 assembler
     obj = store and store.get(assembler.id)
-    stage = current["stages"][0]
+    stage = current.stages[0]
     result["assembler"] = result_for_stage(stage, obj)
     if not result["assembler"]["success"]:
         result["success"] = False

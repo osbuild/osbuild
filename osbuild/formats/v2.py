@@ -8,7 +8,7 @@ from osbuild.meta import Index, ModuleInfo, ValidationResult
 
 from ..inputs import Input
 from ..objectstore import ObjectStore
-from ..pipeline import Manifest, Pipeline, Runner, Stage
+from ..pipeline import Manifest, ManifestBuildResult, Pipeline, Runner, Stage
 from ..sources import Source
 
 VERSION = "2"
@@ -402,7 +402,7 @@ def load(description: Dict, index: Index) -> Manifest:
 
 
 # pylint: disable=too-many-branches
-def output(manifest: Manifest, res: Dict, store: Optional[ObjectStore] = None) -> Dict:
+def output(manifest: Manifest, res: ManifestBuildResult, store: Optional[ObjectStore] = None) -> Dict:
     """Convert a result into the v2 format"""
 
     def collect_metadata(p: Pipeline) -> Dict[str, Any]:
@@ -426,25 +426,50 @@ def output(manifest: Manifest, res: Dict, store: Optional[ObjectStore] = None) -
 
     result: Dict[str, Any] = {}
 
-    if not res["success"]:
-        last = list(res.keys())[-1]
-        failed = res[last]["stages"][-1]
+    if not res.success:
+        if not res.download_result.success:
+            failing_sources = list(filter(lambda src: not src[1].success, res.download_result.sources.items()))
+            if not failing_sources:
+                raise RuntimeError("sources marked as failed but no failing sources found in download result")
+            error = ''
+            failing_source_items = list(filter(lambda src: not src.success, failing_sources[0][1].results))
+            if not failing_source_items:
+                error = "cannot find failing source item"
+            else:
+                error = failing_source_items[0].error
+            result = {
+                "type": "error",
+                "success": False,
+                "error": {
+                    "type": "org.osbuild.error.source",
+                    "details": {
+                        "source": {
+                            "type": failing_sources[0][0],
+                            "output": error,
+                        },
+                    },
+                },
+            }
+        else:
+            pr = res.pipeline_results
+            last = list(pr.keys())[-1]
+            failed = pr[last].stages[-1]
 
-        result = {
-            "type": "error",
-            "success": False,
-            "error": {
-                "type": "org.osbuild.error.stage",
-                "details": {
-                    "stage": {
-                        "id": failed.id,
-                        "type": failed.name,
-                        "output": failed.output,
-                        "error": failed.error,
+            result = {
+                "type": "error",
+                "success": False,
+                "error": {
+                    "type": "org.osbuild.error.stage",
+                    "details": {
+                        "stage": {
+                            "id": failed.id,
+                            "type": failed.name,
+                            "output": failed.output,
+                            "error": failed.error,
+                        }
                     }
                 }
             }
-        }
     else:
         result = {
             "type": "result",
@@ -458,13 +483,32 @@ def output(manifest: Manifest, res: Dict, store: Optional[ObjectStore] = None) -
             if data:
                 result["metadata"][p.name] = data
 
+    # generate the sources
+    result["sources"] = {
+        "success": res.download_result.success,
+    }
+    for src_type, src in res.download_result.sources.items():
+        result["sources"][src_type] = []
+        for src_item_res in src.results:
+            src_output = {}
+            if "cached" in src_item_res.metadata:
+                src_output["cached"] = src_item_res.metadata["cached"]
+            if "checksum" in src_item_res.metadata:
+                src_output["checksum"] = src_item_res.metadata["checksum"]
+            if src_item_res.error:
+                src_output["error"] = src_item_res.error
+            result["sources"][src_type].append(src_output)
+
     # generate the log
     result["log"] = {}
     for p in manifest.pipelines.values():
-        r = res.get(p.id, {})
+        if p.id not in res.pipeline_results:
+            continue
+
+        r = res.pipeline_results[p.id]
         log = []
 
-        for stage in r.get("stages", []):
+        for stage in r.stages:
             data = {
                 "id": stage.id,
                 "type": stage.name,
