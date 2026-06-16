@@ -223,7 +223,7 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
         curl_p = subprocess.Popen(curl_command, encoding="utf-8", cwd=tmpdir, stdout=subprocess.PIPE)
         # ensure that curl is killed even if an unexpected exit happens
         cm.callback(curl_p.kill)
-        errors = []
+        results = {}
         while True:
             line = curl_p.stdout.readline()
             # empty line means eof/process finished
@@ -233,18 +233,34 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
             if not dl_details:
                 continue
             url = dl_details['url']
+            checksum = dl_details["filename_effective"]
             # Keep track of individual errors as curl will only report
             # the last download operation success/failure via the global
             # exit code. There is "--fail-early" but the downside of that
             # is that abort all in progress downloads too.
             if dl_details["exitcode"] != 0:
                 print(f"WARNING: failed to download {url}: {dl_details['errormsg']}", file=sys.stderr)
-                errors.append(f'{url}: error code {dl_details["exitcode"]}')
+                results[checksum] = sources.SourceItemResult(
+                    success=False,
+                    metadata={
+                        "checksum": checksum
+                    },
+                    error=f'curl: error downloading {url}: exit code {dl_details["exitcode"]}',
+                )
                 continue
             # the way downloads are setup the filename is the expected hash
             # so validate now and move into place
-            checksum = dl_details["filename_effective"]
-            validate_and_move_to_targetdir(tmpdir, targetdir, checksum, url)
+            try:
+                validate_and_move_to_targetdir(tmpdir, targetdir, checksum, url)
+            except RuntimeError as e:
+                results[checksum] = sources.SourceItemResult(
+                    success=False,
+                    metadata={
+                        "checksum": checksum,
+                    },
+                    error=f"failed to move to target directory: {str(e)}"
+                )
+                continue
             # remove item from download list
             for todo_chksum, desc in dl_pairs[:]:
                 if todo_chksum == checksum:
@@ -256,12 +272,23 @@ def fetch_many_new_curl(tmpdir, targetdir, dl_pairs):
             # Without it just a long pause with no progress while curl
             # downloads.
             print(f"Downloaded {url}")
+            results[checksum] = sources.SourceItemResult(
+                success=True,
+                metadata={
+                    "checksum": checksum,
+                    "cached": False,
+                },
+            )
         # return overall download status (this will be an error if any
         # transfer failed)
         curl_exit_code = curl_p.wait()
-        if not errors and curl_exit_code > 0:
-            errors.append("curl exited non-zero but reported no errors")
-        return errors
+        if not results and curl_exit_code > 0:
+            # hacky, use a single source item result to represent an overall failure case
+            results["exit-code"] = sources.SourceItemResult(
+                success=False,
+                error=f"curl exited with code {curl_exit_code} and reported no results"
+            )
+        return curl_exit_code, results
 
 
 class CurlSource(sources.SourceService):
@@ -274,6 +301,7 @@ class CurlSource(sources.SourceService):
         super().__init__(*args, **kwargs)
         self.subscriptions = None
         self._curl_has_parallel_downloads = curl_has_parallel_downloads()
+        self.sr = sources.SourceResults("org.osbuild.curl")
 
     def amend_secrets(self, checksum, desc_or_url):
         if not isinstance(desc_or_url, dict):
@@ -300,14 +328,30 @@ class CurlSource(sources.SourceService):
 
         return checksum, desc
 
-    def fetch_all(self, items: Dict) -> None:
+    def fetch_all(self, items: Dict) -> Dict:
+        # for all the items that already exist, add a cached source result
+        filtered_cached = filter(lambda i: self.exists(i[0], i[1]), items.items())
+        for item in filtered_cached:
+            self.sr.add(sources.SourceItemResult(
+                metadata={
+                    "checksum": item[0],
+                    "cached": True
+                }
+            ))
+
         filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-        amended = map(lambda i: self.amend_secrets(i[0], i[1]), filtered)
+
+        try:
+            amended = map(lambda i: self.amend_secrets(i[0], i[1]), filtered)
+        except RuntimeError as e:
+            self.sr.add(sources.SourceItemResult(success=False, error=str(e)))
+            return self.sr.as_dict()
 
         if self._curl_has_parallel_downloads:
             self._fetch_all_new_curl(amended)
         else:
             self._fetch_all_old_curl(amended)
+        return self.sr.as_dict()
 
     def _fetch_all_new_curl(self, dl_pairs):
         dl_pairs = list(dl_pairs)
@@ -316,27 +360,32 @@ class CurlSource(sources.SourceService):
 
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
+        results = {}
         with tempfile.TemporaryDirectory(prefix="osbuild-unverified-file-", dir=self.cache) as tmpdir:
             # some mirrors are sometimes broken. retry manually, because we could be
             # redirected to a different, working, one on retry.
             return_code = 0
             for _ in range(NR_RETRYS):
-                errors = fetch_many_new_curl(tmpdir, self.cache, dl_pairs)
-                if not errors:
+                return_code, res = fetch_many_new_curl(tmpdir, self.cache, dl_pairs)
+                results = {**results, **res}
+                if all(r.success for _, r in res.items()):
                     break
-            else:
-                details = ",".join(errors)
-                raise RuntimeError(f"curl: error downloading {details}")
+        for _, r in results.items():
+            self.sr.add(r)
 
         if len(dl_pairs) > 0:
-            raise RuntimeError(f"curl: finished with return_code {return_code} but {dl_pairs} left to download")
+            # using a single source item result to set the overal SourceResults
+            self.sr.add(sources.SourceItemResult(
+                success=False,
+                error=f"curl: finished with return_code {return_code} but {dl_pairs} left to download"
+            ))
 
     def _fetch_all_old_curl(self, amended):
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*amended)):
-                pass
+            for result in executor.map(self.fetch_one, *zip(*amended)):
+                self.sr.add(result)
 
-    def fetch_one(self, checksum, desc):
+    def fetch_one(self, checksum, desc) -> sources.SourceItemResult:
         url = _quote_url(desc.get("url"))
         # Download to a temporary sub cache until we have verified the checksum. Use a
         # subdirectory, so we avoid copying across block devices.
@@ -354,9 +403,24 @@ class CurlSource(sources.SourceService):
                 if return_code == 0:
                     break
             else:
-                raise RuntimeError(f"curl: error downloading {url}: error code {return_code}")
+                return sources.SourceItemResult(
+                    success=False,
+                    metadata={
+                        "checksum": checksum,
+                    },
+                    error=f"curl: error downloading {url}: exit code {return_code}"
+                )
 
-            validate_and_move_to_targetdir(tmpdir, self.cache, checksum, url)
+            try:
+                validate_and_move_to_targetdir(tmpdir, self.cache, checksum, url)
+            except RuntimeError as e:
+                return sources.SourceItemResult(
+                    success=False,
+                    metadata={
+                        "checksum": checksum,
+                    },
+                    error=f"failed to move to target directory: {str(e)}"
+                )
             # Workaround the lack of structured progress reporting from
             # stages/sources. It generates messages of the form
             #   "message": "source/org.osbuild.curl (org.osbuild.curl): Downloaded https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/f/fonts-srpm-macros-2.0.5-11.fc38.noarch.rpm\n
@@ -364,6 +428,12 @@ class CurlSource(sources.SourceService):
             # Without it just a long pause with no progress while curl
             # downloads.
             print(f"Downloaded {url}")
+            return sources.SourceItemResult(
+                metadata={
+                    "checksum": checksum,
+                    "cached": False,
+                }
+            )
 
 
 def main():
