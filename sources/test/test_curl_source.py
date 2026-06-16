@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
+import osbuild.sources
 import osbuild.testutil
 from osbuild.testutil.net import http_serve_directory, https_serve_directory, https_serve_directory_mtls
 
@@ -101,10 +102,12 @@ def test_curl_download_many_fail(curl_parallel):
             "url": "http://localhost:9876/random-not-exists",
         },
     }
-    with pytest.raises(RuntimeError) as exp:
-        curl_parallel.fetch_all(TEST_SOURCES)
-    assert str(exp.value).startswith("curl: error downloading http://localhost:9876/random-not-exists")
-    assert 'http://localhost:9876/random-not-exists: error code 7' in str(exp.value)
+
+    results = osbuild.sources.SourceResults.from_dict(curl_parallel.fetch_all(TEST_SOURCES))
+    assert not results.success
+    assert any(res.error.startswith("curl: error downloading http://localhost:9876/random-not-exists")
+               for res in results.results)
+    assert any("http://localhost:9876/random-not-exists: exit code 7" in res.error for res in results.results)
 
 
 def make_test_sources(fake_httpd_root, port, n_files, start_n=0, cacert="", secret_name=""):
@@ -167,9 +170,9 @@ def test_curl_download_many_chksum_validate(tmp_path, curl_parallel):
 
         curl_parallel.cache = tmp_path / "curl-download-dir"
         curl_parallel.cache.mkdir()
-        with pytest.raises(RuntimeError) as exp:
-            curl_parallel.fetch_all(test_sources)
-        assert re.search(r"checksum mismatch: sha256:.* http://localhost:.*/1", str(exp.value))
+        results = osbuild.sources.SourceResults.from_dict(curl_parallel.fetch_all(test_sources))
+        assert any(re.search(r"checksum mismatch: sha256:.* http://localhost:.*/1", res.error)
+                   for res in results.results)
 
 
 @pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
@@ -183,11 +186,10 @@ def test_curl_download_many_retries(tmp_path, curl_parallel):
 
         curl_parallel.cache = tmp_path / "curl-download-dir"
         curl_parallel.cache.mkdir()
-        with pytest.raises(RuntimeError) as exp:
-            curl_parallel.fetch_all(test_sources)
+        results = osbuild.sources.SourceResults.from_dict(curl_parallel.fetch_all(test_sources))
         # curl will retry 10 times
         assert httpd.reqs.count == 10 * len(test_sources)
-        assert "curl: error downloading http://localhost:" in str(exp.value)
+        assert any("curl: error downloading http://localhost:" in res.error for res in results.results)
 
 
 def test_curl_user_agent(tmp_path, sources_module):
@@ -372,9 +374,9 @@ def test_curl_result_is_double_checked(tmp_path, curl_parallel):
     # simulate that curl returned an exit code 0 even though not all
     # sources got downloaded
     with osbuild.testutil.mock_command("curl", ""):
-        with pytest.raises(RuntimeError) as exp:
-            curl_parallel.fetch_all(test_sources)
-        assert re.match(r"curl: finished with return_code 0 but .* left to download", str(exp.value))
+        results = osbuild.sources.SourceResults.from_dict((curl_parallel.fetch_all(test_sources)))
+        assert any(re.match(r"curl: finished with return_code 0 but .* left to download", res.error)
+                   for res in results.results)
 
 
 @pytest.mark.parametrize("curl_parallel", [True, False], indirect=["curl_parallel"])
