@@ -58,18 +58,27 @@ class InlineSource(sources.SourceService):
 
     content_type = "org.osbuild.files"
 
-    def fetch_all(self, items: Dict) -> None:
-        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
+    def fetch_all(self, items: Dict) -> Dict:
+        sr = sources.SourceResults("org.osbuild.inline")
+        for item in items.items():
+            sr.add(self.fetch_one(*item))
+        return sr.as_dict()
 
-        for args in filtered:
-            self.fetch_one(*args)
+    def fetch_one(self, checksum, desc) -> sources.SourceItemResult:
+        sr = sources.SourceItemResult()
+        sr.metadata = {
+            "checksum": checksum
+        }
 
-    def fetch_one(self, checksum, desc):
+        if self.exists(checksum, desc):
+            sr.metadata["cached"] = True
+            return sr
+        sr.metadata["cached"] = False
+
         target = os.path.join(self.cache, checksum)
         floating = os.path.join(self.tmpdir, checksum)
-
         if os.path.isfile(target):
-            return
+            return sr
 
         encoding = desc["encoding"]
         if encoding == "base64":
@@ -78,7 +87,9 @@ class InlineSource(sources.SourceService):
             data = base64.b64decode(desc["data"])
             data = lzma.decompress(data)
         else:
-            raise RuntimeError(f"Unknown encoding {encoding}")
+            sr.success = False
+            sr.error = f"unknown encoding {encoding}"
+            return sr
 
         # Write the bits to disk and then verify the checksum
         # This ensures that 1) the data is ok and that 2) we
@@ -87,10 +98,13 @@ class InlineSource(sources.SourceService):
             f.write(data)
 
         if not verify_file(floating, checksum):
-            raise RuntimeError(f"Checksum mismatch for {format(checksum)}")
+            sr.success = False
+            sr.error = f"Checksum mismatch for {format(checksum)}"
+            return sr
 
         with contextlib.suppress(FileExistsError):
             os.rename(floating, target)
+        return sr
 
 
 def main():
