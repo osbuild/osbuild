@@ -87,14 +87,25 @@ class SkopeoIndexSource(sources.SourceService):
             return f"containers-storage:{reference}"
         raise RuntimeError("Unrecognized containers transport")
 
-    def fetch_all(self, items: Dict) -> None:
-        filtered = filter(lambda i: not self.exists(i[0], i[1]), items.items())  # discards items already in cache
-
+    def fetch_all(self, items: Dict) -> Dict:
+        sr = sources.SourceResults("org.osbuild.skopeo-index")
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            for _ in executor.map(self.fetch_one, *zip(*filtered)):
-                pass
+            for result in executor.map(self.fetch_one, *zip(*items.items())):
+                sr.add(result)
+        return sr.as_dict()
 
-    def fetch_one(self, checksum, desc):
+    def fetch_one(self, checksum, desc) -> sources.SourceItemResult:
+        # pylint: disable=too-many-return-statements
+        sr = sources.SourceItemResult()
+        sr.metadata = {
+            "checksum": checksum
+        }
+
+        if self.exists(checksum, desc):
+            sr.metadata["cached"] = True
+            return sr
+        sr.metadata["cached"] = False
+
         digest = checksum
         image = desc["image"]
         imagename = image["name"]
@@ -121,28 +132,56 @@ class SkopeoIndexSource(sources.SourceService):
             if not tls_verify:
                 extra_args.append("--src-tls-verify=false")
 
-            subprocess.run(["skopeo", "copy", "--multi-arch=index-only", *extra_args, source, destination],
-                           encoding="utf-8", check=True)
+            res = subprocess.run(["skopeo", "copy", "--multi-arch=index-only", *extra_args, source, destination],
+                                 encoding="utf-8",
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 check=False)
+            if res.returncode != 0:
+                sr.success = False
+                sr.error = f"unable to copy image: {res.stderr}"
+                return sr
 
             # Verify that the digest supplied downloaded a manifest-list.
-            res = subprocess.check_output(["skopeo", "inspect", "--raw", destination])
-            if not containers.is_manifest_list(json.loads(res)):
-                raise RuntimeError(
-                    f"{imagename}@{digest} is not a manifest-list")
+            res = subprocess.run(["skopeo", "inspect", "--raw", destination],
+                                 encoding="utf-8",
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 check=False)
+            if res.returncode != 0:
+                sr.success = False
+                sr.error = f"unable to inspect image: {res.stderr}"
+                return sr
+            if not containers.is_manifest_list(json.loads(res.stdout)):
+                sr.success = False
+                sr.error = f"{imagename}@{digest} is not a manifest-list"
+                return sr
 
             # use skopeo to calculate the checksum instead of our verify utility to make sure it's computed properly for
             # all types of manifests and handles any potential future changes to the way it's calculated
             manifest_path = os.path.join(archive_dir, "manifest.json")
-            dl_checksum = subprocess.check_output(["skopeo", "manifest-digest", manifest_path]).decode().strip()
+            res = subprocess.run(["skopeo", "manifest-digest", manifest_path],
+                                 encoding="utf-8",
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 check=False)
+            if res.returncode != 0:
+                sr.success = False
+                sr.error = f"unable to get manifest digest: {res.stderr}"
+                return sr
+
+            dl_checksum = res.stdout.strip()
             if dl_checksum != checksum:
-                raise RuntimeError(
-                    f"Downloaded manifest-list {imagename}@{digest} has a checksum of {dl_checksum}, "
-                    f"but expected {checksum}"
-                )
+                sr.success = False
+                sr.error = (f"Downloaded manifest-list {imagename}@{digest} has a checksum of {dl_checksum}, "
+                            f"but expected {checksum}")
+                return sr
 
             # Move manifest into place on successful download
             with ctx.suppress_oserror(errno.ENOTEMPTY, errno.EEXIST):
                 os.rename(f"{archive_dir}/manifest.json", f"{self.cache}/{digest}")
+
+        return sr
 
 
 def main():
