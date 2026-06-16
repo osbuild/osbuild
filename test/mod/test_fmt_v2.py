@@ -7,8 +7,12 @@ import itertools
 import os
 import unittest
 
+import pytest
+
 import osbuild
 import osbuild.meta
+import osbuild.pipeline
+import osbuild.sources
 
 BASIC_PIPELINE = {
     "version": "2",
@@ -511,3 +515,218 @@ class TestFormatV2(unittest.TestCase):
             {"id": k, "options": {}} for k in refs
         ]
         self.check_input_references(desc)
+
+
+HAPPY_RESULT_OUTPUT = {
+    "type": "result",
+    "success": True,
+    "metadata": {},
+    "sources": {
+        "success": True,
+        "org.osbuild.curl": [
+            {
+                "checksum": "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
+                "cached": False
+            }
+        ],
+        "org.osbuild.ostree": [
+            {
+                "checksum": "sha256:439911411ce7868a7b058c2a660e421991eb2df10e2bdce1fa559bd4390105d1",
+                "cached": True
+            }
+        ]
+    },
+    "log": {
+        "build": [
+            {
+                "id": "04f0cae3c09fe8184094ad73fd4bc2c08745b4cd1153ccdbc5aa0ff22740bc29",
+                "type": "org.osbuild.noop",
+                "output": "build.0"
+            }
+        ],
+        "tree": [
+            {
+                "id": "52ae4ffe396a55b6b89134c9f91c1c69dd56d51e56b15d2ad19ecd0645b38301",
+                "type": "org.osbuild.noop",
+                "output": "tree.0"
+            }
+        ],
+        "assembler": [
+            {
+                "id": "d9888cf6b5d2b3ec725f790c495316b5b7de5c620473045474eddb76865d05b1",
+                "type": "org.osbuild.noop",
+                "output": "assembler.0"
+            }
+        ]
+    }
+}
+
+
+BAD_SOURCES_OUTPUT = {
+    "type": "error",
+    "success": False,
+    "error": {
+        "type": "org.osbuild.error.source",
+        "details": {
+            "source": {
+                "type": "org.osbuild.curl",
+                "output": "curl error"
+            }
+        }
+    },
+    "sources": {
+        "success": False,
+        "org.osbuild.curl": [
+            {
+                "checksum": "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
+                "error": "curl error"
+            }
+        ],
+        "org.osbuild.ostree": [
+            {
+                "checksum": "sha256:439911411ce7868a7b058c2a660e421991eb2df10e2bdce1fa559bd4390105d1",
+                "cached": True
+            }
+        ]
+    },
+    "log": {}
+}
+
+
+BAD_STAGE_OUTPUT = {
+    "type": "error",
+    "success": False,
+    "error": {
+        "type": "org.osbuild.error.stage",
+        "details": {
+            "stage": {
+                "id": "52ae4ffe396a55b6b89134c9f91c1c69dd56d51e56b15d2ad19ecd0645b38301",
+                "type": "org.osbuild.noop",
+                "output": "tree.0",
+                "error": {
+                    "error": "error in tree pipeline"
+                }
+            }
+        }
+    },
+    "sources": {
+        "success": True,
+        "org.osbuild.curl": [
+            {
+                "checksum": "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
+                "cached": False
+            }
+        ],
+        "org.osbuild.ostree": [
+            {
+                "checksum": "sha256:439911411ce7868a7b058c2a660e421991eb2df10e2bdce1fa559bd4390105d1",
+                "cached": True
+            }
+        ]
+    },
+    "log": {
+        "build": [
+            {
+                "id": "04f0cae3c09fe8184094ad73fd4bc2c08745b4cd1153ccdbc5aa0ff22740bc29",
+                "type": "org.osbuild.noop",
+                "output": "build.0"
+            }
+        ],
+        "tree": [
+            {
+                "id": "52ae4ffe396a55b6b89134c9f91c1c69dd56d51e56b15d2ad19ecd0645b38301",
+                "type": "org.osbuild.noop",
+                "output": "tree.0",
+                "success": False,
+                "error": {
+                    "error": "error in tree pipeline"
+                }
+            }
+        ]
+    }
+}
+
+
+@pytest.mark.parametrize("source_item_results, stage_results, expected", [
+    # happy case
+    (
+        (
+            osbuild.sources.SourceItemResult(success=True, metadata={
+                "checksum": "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
+                "cached": False,
+            }),
+            osbuild.sources.SourceItemResult(success=True, metadata={
+                "checksum": "sha256:439911411ce7868a7b058c2a660e421991eb2df10e2bdce1fa559bd4390105d1",
+                "cached": True,
+            }),
+        ),
+        {
+            "build": (0, "build.0", {}),
+            "tree": (0, "tree.0", {}),
+            "assembler": (0, "assembler.0", {}),
+        },
+        HAPPY_RESULT_OUTPUT,
+    ),
+    # bad sources
+    (
+        (
+            osbuild.sources.SourceItemResult(success=False, metadata={
+                "checksum": "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
+            }, error="curl error"),
+            osbuild.sources.SourceItemResult(success=True, metadata={
+                "checksum": "sha256:439911411ce7868a7b058c2a660e421991eb2df10e2bdce1fa559bd4390105d1",
+                "cached": True,
+            }),
+        ),
+        {
+            "build": (0, "build.0", {}),
+            "tree": (0, "tree.0", {}),
+            "assembler": (0, "assembler.0", {}),
+        },
+        BAD_SOURCES_OUTPUT,
+    ),
+    # stage error
+    (
+        (
+            osbuild.sources.SourceItemResult(success=True, metadata={
+                "checksum": "sha256:6eeebf21f245bf0d6f58962dc49b6dfb51f55acb6a595c6b9cbe9628806b80a4",
+                "cached": False,
+            }),
+            osbuild.sources.SourceItemResult(success=True, metadata={
+                "checksum": "sha256:439911411ce7868a7b058c2a660e421991eb2df10e2bdce1fa559bd4390105d1",
+                "cached": True,
+            }),
+        ),
+        {
+            "build": (0, "build.0", {}),
+            "tree": (1, "tree.0", {"error": "error in tree pipeline"}),
+        },
+        BAD_STAGE_OUTPUT,
+    )
+])
+def test_output(source_item_results, stage_results, expected):
+    index = osbuild.meta.Index(os.curdir)
+    info = index.detect_format_info(BASIC_PIPELINE)
+    fmt = info.module
+    manifest = fmt.load(BASIC_PIPELINE, index)
+
+    dr = osbuild.pipeline.DownloadResult()
+    sr0 = osbuild.sources.SourceResults("org.osbuild.curl")
+    sr0.add(source_item_results[0])
+    dr.add("org.osbuild.curl", sr0)
+    sr1 = osbuild.sources.SourceResults("org.osbuild.ostree")
+    sr1.add(source_item_results[1])
+    dr.add("org.osbuild.ostree", sr1)
+
+    mbr = osbuild.pipeline.ManifestBuildResult(dr)
+    if dr.success:
+        for pl in manifest.pipelines:
+            # results might not exist as osbuild exits after a failed stage
+            if pl not in stage_results:
+                continue
+            pr = osbuild.pipeline.PipelineResult(pl)
+            pr.set_stages([osbuild.pipeline.StageResult(manifest.pipelines[pl].stages[0], *stage_results[pl])])
+            mbr.add_pipeline(manifest.pipelines[pl].id, pr)
+
+    output = fmt.output(manifest, mbr)
+    assert output == expected
