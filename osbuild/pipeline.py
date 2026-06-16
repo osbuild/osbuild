@@ -73,22 +73,6 @@ class BuildResult:
         return result
 
 
-class DownloadResult:
-    def __init__(self, name: str, source_id: str, success: bool) -> None:
-        self.name = name
-        self.id = source_id
-        self.success = success
-        self.output = ""
-
-    def as_dict(self) -> Dict[str, Any]:
-        return {
-            "name": self.name,
-            "id": self.id,
-            "success": self.success,
-            "output": self.output,
-        }
-
-
 # pylint: disable=too-many-instance-attributes
 class Stage:
     def __init__(self, info, source_options, build, base, options, source_epoch):
@@ -568,37 +552,17 @@ class Manifest:
     def download(self, store, monitor):
         with host.ServiceManager(monitor=monitor) as mgr:
             for source in self.sources:
-                # Workaround for lack of progress from sources, this
-                # will need to be reworked later.
-                dr = DownloadResult(source.name, source.id, success=True)
                 monitor.begin(source)
-                try:
-                    source.download(mgr, store)
-                except host.RemoteError as e:
-                    dr.success = False
-                    dr.output = str(e)
-                    monitor.result(dr)
-                    raise e
-                monitor.result(dr)
-                # ideally we would make the whole of download more symmetric
-                # to "build_stages" and return a "results" here in "finish"
-                # as well
+                result = source.download(mgr, store)
+                monitor.result(result)
                 monitor.finish({"name": source.info_name})
 
     def export_sources(self, store, dst_store, monitor):
         with host.ServiceManager(monitor=monitor) as mgr:
             for source in self.sources:
                 monitor.begin(source)
-                # reuse download result for copy, ideally use a separate result?
-                dr = DownloadResult(source.name, source.id, success=True)
-                try:
-                    source.copy(mgr, store, dst_store)
-                except Exception as e:
-                    dr.success = False
-                    dr.output = str(e)
-                    monitor.result(dr)
-                    raise e
-                monitor.result(dr)
+                result = source.copy(mgr, store, dst_store)
+                monitor.result(result)
                 monitor.finish({"name": source.info_name})
 
     def depsolve(self, store: ObjectStore, targets: Iterable[str]) -> List[str]:
