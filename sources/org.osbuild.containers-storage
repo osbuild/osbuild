@@ -16,6 +16,7 @@ Buildhost commands used: `skopeo`.
 import hashlib
 import subprocess as sp
 import sys
+from typing import Dict
 
 from osbuild import sources
 from osbuild.util import host
@@ -56,21 +57,33 @@ class ContainersStorageSource(sources.SourceService):
 
         return f"containers-storage:[{driver}@{graphroot}+{runroot}]{imagename}"
 
-    def fetch_one(self, checksum, desc) -> None:
+    def fetch_one(self, checksum, desc) -> sources.SourceItemResult:
         # Instead of fetching anything, just check that it exists.
         #
         # Note that there's an obvious TOCTOU issue here, but it's unavoidable without copying the storage or a
         # container out of it, which is exactly what we want to avoid with this source.
         # Unlike all other sources, this source relies on external storage not controlled by osbuild itself.
-        self.exists(checksum, desc)
+        sr = sources.SourceItemResult(
+            metadata={
+                "checksum": checksum
+            }
+        )
+        try:
+            if not self.exists(checksum, desc):
+                sr.set_error(f"image {checksum} does not exist in local container storage")
+        except RuntimeError as e:
+            sr.set_error(str(e))
+        return sr
 
-    def fetch_all(self, items) -> None:
+    def fetch_all(self, items) -> Dict:
+        sr = sources.SourceResults("org.osbuild.containers-storage")
         for checksum in items:
-            self.fetch_one(checksum, None)
+            sr.add(self.fetch_one(checksum, None))
+        return sr.as_dict()
 
-    def copy_all(self, items, dst_cache) -> None:
+    def copy_all(self, items, dst_cache) -> Dict:
         # nop, as the container is stored on the host's container storage
-        return
+        return sources.SourceResults("org.osbuild.containers-storage").as_dict()
 
     def exists(self, checksum, _) -> bool:
         image_id = checksum.split(":")[1]
