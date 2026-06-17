@@ -156,7 +156,7 @@ def test_ostree(osbuild):
 @pytest.mark.skipif(not test.TestBase.have_tree_diff(), reason="tree-diff missing")
 @pytest.mark.skipif(not test.TestBase.have_test_data(), reason="no test-data access")
 @pytest.mark.skipif(not test.TestBase.can_bind_mount(), reason="root-only")
-@pytest.mark.parametrize("fmt,", ["raw", "raw.xz", "qcow2", "vmdk", "vdi"])
+@pytest.mark.parametrize("fmt", ["raw", "raw.xz", "qcow2", "vmdk", "vdi"])
 @pytest.mark.parametrize("fs_type", ["ext4", "xfs", "btrfs"])
 def test_qemu(osbuild, fmt, fs_type):
     loctl = loop.LoopControl()
