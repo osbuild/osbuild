@@ -39,7 +39,7 @@ class DepsolveTransaction:
     ):
         # pylint: disable=fixme
         # XXX: We can't enforce this, because there is a "bug" in the osbuild/images "os" pipeline implementation.
-        # https://github.com/osbuild/images/commit/8b779619aa0c3a9b8537f6bb79324303cb87909c introduced three
+        # https://github.com/osbuild/image-builder/commit/8b779619aa0c3a9b8537f6bb79324303cb87909c introduced three
         # transactions, but the "customizations" package set is added to the "chain" unconditionally, even if it
         # is empty. This is the case for "container" and "wsl" image types. Other image types enable at least
         # SELinux, which adds the "selinux-policy-targeted" package to the list.

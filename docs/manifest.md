@@ -4,10 +4,8 @@ This document is a guide to help understand the osbuild manifest. It follows the
 
 In addition to osbuild contributors, this guide is useful for:
 - Developers of and contributors to manifest generator tools:
-    - [osbuild/images](https://github.com/osbuild/images) (the osbuild image definition library) and the projects that use it:
+    - [osbuild/image-builder](https://github.com/osbuild/image-builder) (the osbuild image library and executables (`image-builder`, `bootc-image-builder`) and the projects that use it:
         - [osbuild-composer](https://github.com/osbuild/osbuild-composer).
-        - [image-builder-cli](https://github.com/osbuild/image-builder-cli).
-        - [bootc-image-builder](https://github.com/osbuild/bootc-image-builder).
     - [osbuild-mpp](https://github.com/osbuild/blob/main/tools/osbuild-mpp)
 - Authors of osbuild modules ([stages](https://github.com/osbuild/osbuild/tree/main/stages), [sources](https://github.com/osbuild/osbuild/tree/main/sources), [inputs](https://github.com/osbuild/osbuild/tree/main/inputs), [mounts](https://github.com/osbuild/osbuild/tree/main/mounts), [devices](https://github.com/osbuild/osbuild/tree/main/devices)).
 
