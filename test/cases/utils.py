@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 
-OSBUILD_IMAGES_REPO_URL = os.environ.get("OSBUILD_IMAGES_REPO_URL", "https://github.com/osbuild/images.git")
+OSBUILD_IMAGES_REPO_URL = os.environ.get("OSBUILD_IMAGES_REPO_URL", "https://github.com/osbuild/image-builder.git")
 
 
 def checkout_images_repo(ref, workdir: os.PathLike) -> str:
