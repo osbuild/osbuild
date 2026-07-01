@@ -1,5 +1,6 @@
 """Path handling utility functions"""
 import errno
+import glob
 import os
 import os.path
 from typing import Optional, Union
@@ -56,3 +57,16 @@ def join_abs(root: Union[str, os.PathLike], *paths: Union[str, os.PathLike]) -> 
         else:
             final_path = os.path.join(final_path, path)
     return os.path.normpath(os.path.join(os.sep, final_path))
+
+
+def ensure_glob(pathname, n="", **kwargs):
+    """
+    Call glob.glob() and fail if there are no results or
+    if the number of results doesn't match provided n
+    """
+    ret = glob.glob(pathname, **kwargs)
+    if not ret:
+        raise ValueError(f'No matches for {pathname}')
+    if n != "" and len(ret) != int(n):
+        raise ValueError(f'Matches for {pathname} does not match expected ({n})')
+    return ret
