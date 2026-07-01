@@ -27,6 +27,7 @@ import osbuild.api
 import osbuild.remoteloop as remoteloop
 from osbuild.util import checksum, osrelease
 from osbuild.util.chroot import Chroot
+from osbuild.util.path import ensure_glob
 
 # Size of file used to embed an Ignition config within a CPIO.
 IGNITION_IMG_SIZE = 256 * 1024
@@ -128,19 +129,6 @@ def make_stream_hash(src, dest):
                 if not buf:
                     break
                 outf.write(hashlib.sha256(buf).hexdigest() + '\n')
-
-
-def ensure_glob(pathname, n="", **kwargs):
-    """
-    Call glob.glob() and fail if there are no results or
-    if the number of results doesn't match provided n
-    """
-    ret = glob.glob(pathname, **kwargs)
-    if not ret:
-        raise ValueError(f'No matches for {pathname}')
-    if n != "" and len(ret) != int(n):
-        raise ValueError(f'Matches for {pathname} does not match expected ({n})')
-    return ret
 
 
 # This function finds the source EFI paths to copy from /usr/ to the EFI/
