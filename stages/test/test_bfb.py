@@ -1,8 +1,10 @@
 #!/usr/bin/python3
+# pylint: disable=redefined-outer-name
 
+import contextlib
 import copy
-import unittest.mock
-from unittest.mock import patch
+import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -41,12 +43,34 @@ FAKE_INPUTS_WITH_ROOTFS = {
 }
 
 
-DEFAULT_BOOT_ARGS_V2 = (
-    "console=hvc0 console=ttyAMA0 earlycon=pl011,0x13010000"
-    " initrd=initramfs modprobe.blacklist=mlxbf_pmc"
-)
+@pytest.fixture
+def mock_makeefi(stage_module):
+    def fake_mkefidir(efidir, source_tree):  # pylint: disable=unused-argument
+        os.makedirs(os.path.join(efidir, "BOOT"), exist_ok=True)
+
+    def fake_mkefiboot(efidir, output_efiboot_img, loop_client):  # pylint: disable=unused-argument
+        with open(output_efiboot_img, "wb") as f:
+            f.write(b"fake_efiboot")
+
+    with patch.object(stage_module.makeefi, "mkefidir",
+                      side_effect=fake_mkefidir), \
+            patch.object(stage_module.makeefi, "mkefiboot",
+                         side_effect=fake_mkefiboot):
+        yield
 
 
+@pytest.fixture
+def mock_loop_client():
+    client = MagicMock()
+
+    @contextlib.contextmanager
+    def _fake_device(_path):
+        yield "/dev/loop99"
+    client.device = MagicMock(side_effect=_fake_device)
+    return client
+
+
+@pytest.mark.usefixtures("mock_makeefi")
 @pytest.mark.parametrize("inputs,options,expected_cmd_parts", [
     # Basic test - kernel + initramfs only
     (
@@ -54,69 +78,108 @@ DEFAULT_BOOT_ARGS_V2 = (
         {"filename": "test.bfb"},
         [
             "/usr/bin/mlx-mkbfb",
-            "--image", "/input/kernel/path/kernel-file",
-            "--initramfs", "/input/initramfs/path/initramfs-file",
-            "--capsule", "/lib/firmware/mellanox/boot/capsule/boot_update2.cap",
-            "--boot-args-v0", "=",
-            "--boot-args-v2", f"={DEFAULT_BOOT_ARGS_V2}",
+            "--ramdisk",
+            "--capsule",
+            "--boot-path",
+            "--boot-desc",
             "/lib/firmware/mellanox/boot/default.bfb",
         ]
     ),
-    # Test with rootfs (should use combined file)
+    # Test with rootfs
     (
         FAKE_INPUTS_WITH_ROOTFS,
         {"filename": "test.bfb"},
         [
             "/usr/bin/mlx-mkbfb",
-            "--image", "/input/kernel/path/kernel-file",
-            "--capsule", "/lib/firmware/mellanox/boot/capsule/boot_update2.cap",
-            "--boot-args-v0", "=",
-            "--boot-args-v2", f"={DEFAULT_BOOT_ARGS_V2}",
+            "--ramdisk",
+            "--capsule",
+            "--boot-path",
+            "--boot-desc",
             "/lib/firmware/mellanox/boot/default.bfb",
         ]
     ),
 ])
 @patch("subprocess.run")
-@patch("builtins.open", new_callable=unittest.mock.mock_open)
 def test_bfb_command_generation(
-        _mock_file,
         mock_run,
+        tmp_path,
         stage_module,
+        mock_loop_client,
         inputs,
         options,
         expected_cmd_parts):
     """Test that stage generates correct mlx-mkbfb command"""
 
-    output_dir = "/fake/output"
+    output_dir = str(tmp_path / "output")
+    os.makedirs(output_dir)
 
-    # Deep copy to prevent parse_input()'s popitem() from mutating shared test data
-    stage_module.main(copy.deepcopy(inputs), output_dir, options)
+    # Create fake input files so file I/O works
+    test_inputs = copy.deepcopy(inputs)
+    for name in test_inputs:
+        inp = test_inputs[name]
+        files = inp["data"]["files"]
+        fname = list(files.keys())[0]
+        inp["path"] = str(tmp_path / name)
+        os.makedirs(inp["path"], exist_ok=True)
+        with open(os.path.join(inp["path"], fname), "wb") as f:
+            f.write(b"fake")
 
-    mock_run.assert_called_once()
-    actual_cmd = mock_run.call_args[0][0]
+    stage_module.main(test_inputs, output_dir, options, mock_loop_client)
+
+    actual_cmd = mock_run.call_args_list[-1][0][0]
 
     for part in expected_cmd_parts:
         assert part in actual_cmd, f"Expected {part!r} in command: {actual_cmd}"
     assert f"{output_dir}/{options['filename']}" in actual_cmd
 
 
+@pytest.mark.usefixtures("mock_makeefi")
 @patch("subprocess.run")
-def test_bfb_rootfs_combination(mock_run, tmp_path, stage_module):
+def test_bfb_rootfs_combination(mock_run, tmp_path, mock_loop_client, stage_module):
     """Test that initramfs and rootfs are combined when rootfs is provided"""
 
     options = {"filename": "test.bfb"}
-    output_dir = str(tmp_path)
+    output_dir = str(tmp_path / "output")
+    os.makedirs(output_dir)
 
-    with patch("builtins.open", unittest.mock.mock_open(read_data=b"fake_data")) as mock_file:
-        stage_module.main(copy.deepcopy(FAKE_INPUTS_WITH_ROOTFS), output_dir, options)
+    test_inputs = copy.deepcopy(FAKE_INPUTS_WITH_ROOTFS)
+    for name in test_inputs:
+        inp = test_inputs[name]
+        fname = list(inp["data"]["files"].keys())[0]
+        inp["path"] = str(tmp_path / name)
+        os.makedirs(inp["path"], exist_ok=True)
+        with open(os.path.join(inp["path"], fname), "wb") as f:
+            f.write(b"fake_data")
 
-    mock_file.assert_called()
-    mock_run.assert_called_once()
+    stage_module.main(test_inputs, output_dir, options, mock_loop_client)
 
-    actual_cmd = mock_run.call_args[0][0]
-    initramfs_idx = actual_cmd.index("--initramfs") + 1
-    initramfs_path = actual_cmd[initramfs_idx]
-    assert "combined.img" in initramfs_path
+    # mlx-mkbfb is the last call
+    actual_cmd = mock_run.call_args_list[-1][0][0]
+    assert "--ramdisk" in actual_cmd
+
+
+@pytest.mark.usefixtures("mock_makeefi")
+@patch("subprocess.run")
+def test_bfb_no_rootfs(mock_run, tmp_path, mock_loop_client, stage_module):
+    """Test that initramfs is used directly when rootfs is not provided"""
+
+    options = {"filename": "test.bfb"}
+    output_dir = str(tmp_path / "output")
+    os.makedirs(output_dir)
+
+    test_inputs = copy.deepcopy(FAKE_INPUTS)
+    for name in test_inputs:
+        inp = test_inputs[name]
+        fname = list(inp["data"]["files"].keys())[0]
+        inp["path"] = str(tmp_path / name)
+        os.makedirs(inp["path"], exist_ok=True)
+        with open(os.path.join(inp["path"], fname), "wb") as f:
+            f.write(b"fake_data")
+
+    stage_module.main(test_inputs, output_dir, options, mock_loop_client)
+
+    actual_cmd = mock_run.call_args_list[-1][0][0]
+    assert "--ramdisk" in actual_cmd
 
 
 def test_parse_input(stage_module):
