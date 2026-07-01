@@ -1,0 +1,72 @@
+{
+  "summary": "Write a GRUB2 drop-in configuration file",
+  "description": [
+    "Write a GRUB2 configuration snippet to a drop-in file.",
+    "The path is specified as a location URL (tree:// or mount://).",
+    "",
+    "Examples:",
+    "  - 'tree:///boot/grub2/console.cfg' for bootupd-managed bootloaders",
+    "  - 'mount://root/etc/grub.d/99-serial.cfg' for grub2-mkconfig setups",
+    "",
+    "The config options support the same serial, terminal_input,",
+    "and terminal_output fields as the org.osbuild.grub2 stage."
+  ],
+  "schema_2": {
+    "definitions": {
+      "terminal": {
+        "description": "Terminal device list",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "config",
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "description": "Location URL for the drop-in file (tree:// or mount://)",
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^mount://[^/]+/"
+            },
+            {
+              "type": "string",
+              "pattern": "^tree:///"
+            }
+          ]
+        },
+        "config": {
+          "description": "GRUB2 configuration to write",
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "terminal_input": {
+              "$ref": "#/definitions/terminal"
+            },
+            "terminal_output": {
+              "$ref": "#/definitions/terminal"
+            },
+            "serial": {
+              "description": "The grub serial command (e.g. 'serial --speed=115200')",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "devices": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "mounts": {
+      "type": "array"
+    }
+  }
+}
