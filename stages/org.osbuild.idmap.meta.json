@@ -1,0 +1,56 @@
+{
+  "summary": "Recursively apply idmaps on all items in a given path",
+  "description": [
+    "Stage to change the ownership of directories and files recursively",
+    "by shifting the UID and GID based on an given idmapping. The mapping",
+    " uses the same syntax as the X-mount.idmap from mount(8):",
+    "   `id-type:id-mount:id-host:id-range`",
+    "",
+    "The `id-type` prefix specifies if the mapping is applied to UID,",
+    "GID or both and can take the following values:",
+    "   - `u`: only UIDs are mapped",
+    "   - `g`: only GIDs are mapped",
+    "   - `b`: UIDs and GIDs are mapped",
+    "Omitting the `id-type` prefix is synonym to using `b`.",
+    "",
+    "The `id-host` parameter specifies the current ID in the file system.",
+    "The `id-mount` parameter specifies the starting ID to which the",
+    "`id-host` gets mapped to.",
+    "The `id-range` parameter indicates how many IDs are to be mapped.",
+    "",
+    "For example, the following configuration would map UIDs and GIDs of",
+    "all files and directories in /usr/lib/qm/rootfs:",
+    "",
+    "   type: org.osbuild.idmap",
+    "     options:",
+    "       items:",
+    "         /usr/lib/qm/rootfs:",
+    "           - 'b:1000:0:10'",
+    "",
+    "A file `a` owned by user 0:0 (UID:GID) would be changed to be owned",
+    "by user 1000:1000. The ownership of a file `b` initially owned by",
+    "user 1:1 would transition to user 1001:1001. And so on. If a file",
+    "`z` is owned by user 20:20, however, then no mapping is applied."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Paths",
+        "patternProperties": {
+          "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$": {
+            "type": "array",
+            "description": "List of idmaps to recursively apply to all items in the given path",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^(?:(?:u|g|b):)?[0-9]+:[0-9]+:[1-9][0-9]*$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

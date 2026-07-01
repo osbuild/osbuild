@@ -1,0 +1,126 @@
+#!/usr/bin/python3
+import os
+import re
+import sys
+from enum import Enum
+from typing import Dict, List, Tuple
+
+import osbuild.api
+
+
+class IDType(Enum):
+    USER = "user"
+    GROUP = "group"
+
+
+IDMAP_PATTERN = re.compile(
+    r"^(?:(?P<type>[ugb]):)?"
+    r"(?P<inside>\d+):"
+    r"(?P<outside>\d+):"
+    r"(?P<size>[1-9]\d*)$"
+)
+
+
+class IDMap():
+
+    def __init__(self, inside: int, outside: int, size: int):
+        self.inside = inside
+        self.outside = outside
+        self.size = size
+
+    @staticmethod
+    def from_list(entries) -> Dict[IDType, List["IDMap"]]:
+        idmaps = {
+            IDType.USER: [],
+            IDType.GROUP: [],
+        }
+
+        for entry in entries:
+            m = IDMAP_PATTERN.fullmatch(entry)
+            if not m:
+                raise ValueError(f"Invalid idmap entry: '{entry}'")
+
+            t = m.group("type")
+            inside = int(m.group("inside"))
+            outside = int(m.group("outside"))
+            size = int(m.group("size"))
+            if t == "u":
+                idmaps[IDType.USER].append(IDMap(inside, outside, size))
+            elif t == "g":
+                idmaps[IDType.GROUP].append(IDMap(inside, outside, size))
+            # 'b' or nothing, mismatches are filtered by regex
+            else:
+                idmaps[IDType.USER].append(IDMap(inside, outside, size))
+                idmaps[IDType.GROUP].append(IDMap(inside, outside, size))
+
+        return idmaps
+
+
+def determine_new_ids(file_uid, file_gid, idmaps: Dict[IDType, List[IDMap]]) -> Tuple[int, int]:
+    new_uid = file_uid
+    for idmap in idmaps[IDType.USER]:
+        if idmap.outside <= file_uid < (idmap.outside + idmap.size):
+            new_uid = file_uid - idmap.outside + idmap.inside
+            break
+    new_gid = file_gid
+    for idmap in idmaps[IDType.GROUP]:
+        if idmap.outside <= file_gid < (idmap.outside + idmap.size):
+            new_gid = file_gid - idmap.outside + idmap.inside
+            break
+
+    # No mapping found, assign them to user nobody
+    if new_uid == file_uid and new_gid == file_gid:
+        new_uid = 65534
+        new_gid = 65534
+
+    return (new_uid, new_gid)
+
+
+def main(tree, options):
+    for path, idmaps in options["items"].items():
+        parsed_idmaps = IDMap.from_list(idmaps)
+
+        seen_devino = set()
+        full_path = f"{tree}{path}"
+        for directory, _, files, directory_fd in os.fwalk(full_path):
+            stat = os.stat(directory_fd)
+
+            new_uid, new_gid = determine_new_ids(stat.st_uid, stat.st_gid, parsed_idmaps)
+            if stat.st_uid != new_uid or stat.st_gid != new_gid:
+                os.fchown(directory_fd, new_uid, new_gid)
+
+            # Apply id mapping on each file in the explored directory.
+            # Do not follow symlinks, so the offset is applied to symlinks as well.
+            # If a symlink target is in the given directory, its ids are mapped also.
+            # If a symlink target is outside the given directory, no changes are done to the target.
+            for file in files:
+                try:
+                    stat = os.stat(file, dir_fd=directory_fd, follow_symlinks=False)
+                except FileNotFoundError:
+                    print(f"File '{directory}/{file}' not found, skipping...")
+                    continue
+
+                # Tracking hard linked files to the id mapping is not applied multiple times
+                devino = (stat.st_dev, stat.st_ino)
+                if devino in seen_devino:
+                    continue
+                seen_devino.add(devino)
+
+                new_uid, new_gid = determine_new_ids(stat.st_uid, stat.st_gid, parsed_idmaps)
+                if stat.st_uid == new_uid and stat.st_gid == new_gid:
+                    continue
+
+                try:
+                    os.chown(file, new_uid, new_gid, dir_fd=directory_fd, follow_symlinks=False)
+                    new_mode = os.stat(file, dir_fd=directory_fd, follow_symlinks=False).st_mode
+                    if new_mode != stat.st_mode:
+                        os.chmod(file, stat.st_mode, dir_fd=directory_fd, follow_symlinks=False)
+                except OSError as ex:
+                    print(f"Failed to apply idmapping to {directory}/{file}: {ex}")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    sys.exit(main(args["tree"], args["options"]))
