@@ -58,6 +58,9 @@ def generate_package_metadata(tree, rpm_args):
     "epoch": %|EPOCH?{"%{EPOCH}"}:{null}|,
     "arch": %|ARCH?{"%{ARCH}"}:{null}|,
     "sigmd5": %|SIGMD5?{"%{SIGMD5}"}:{null}|,
+    "sha1header": %|SHA1HEADER?{"%{SHA1HEADER}"}:{null}|,
+    "sha256header": %|SHA256HEADER?{"%{SHA256HEADER}"}:{null}|,
+    "sha3_256header": %|SHA3_256HEADER?{"%{SHA3_256HEADER}"}:{null}|,
     "sigpgp": %|SIGPGP?{"%{SIGPGP}"}:{null}|,
     "siggpg": %|SIGGPG?{"%{SIGGPG}"}:{null}|
     \},
