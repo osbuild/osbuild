@@ -119,6 +119,10 @@ def mkefiboot(efidir, output_efiboot_img, loop_client):
     # Create the efiboot image file. Determine the size we should make
     # it by taking the tarball size and adding 2MiB for fs overhead.
     size = os.path.getsize(efitarfile.name) + 2 * 1024 * 1024
+    # Align to 512 byte boundary. Some firmeware (like nvidiabluefield)
+    # derives block device sector size from image size; unaligned sizes
+    # produce sector size 1 which GRUB cannot handle
+    size = (size + 511) & ~511
     with open(output_efiboot_img, "wb") as out:
         out.truncate(size)
 
