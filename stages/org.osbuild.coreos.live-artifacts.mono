@@ -277,7 +277,7 @@ def gen_live_artifacts(paths, tree, filenames, deployed_tree, loop_client, versi
     test_fixture = check_for_test_fixture(deployed_tree)
     basearch = os.uname().machine
 
-    kargs_json = copy_configs_and_init_kargs_json(deployed_tree, paths, blsentry_kargs, volid)
+    kargs_json = copy_configs_and_init_kargs_json(deployed_tree, paths, blsentry_kargs, volid, basearch)
 
     # Add placeholder for Ignition CPIO file.  This allows an external tool,
     # `coreos-installer iso ignition embed`, to modify an existing ISO image
@@ -316,7 +316,7 @@ def gen_live_artifacts(paths, tree, filenames, deployed_tree, loop_client, versi
         # directory: efidir
         makeefi.mkefidir(efidir=efidir, source_tree=deployed_tree)
         # Discover the vendor ID (can be different on Fedora/RHEL/CentOS)
-        vendor_id = makeefi.find_efi_vendor_dir_name(efidir)
+        vendor_id = makeefi.find_efi_vendor_dir_name(source_tree=deployed_tree)
         # Get the grub configuration for booting from the ISO and write it out
         # to $efidir/BOOT/grub.cfg. See the comment in the function for explanation
         # of config used.
@@ -553,7 +553,7 @@ def mkrootfs_metal(paths, workdir, img_metal, fstype, fsoptions, loop_client):
 
 
 # pylint: disable=too-many-branches
-def copy_configs_and_init_kargs_json(deployed_tree, paths, blsentry_kargs, volid):
+def copy_configs_and_init_kargs_json(deployed_tree, paths, blsentry_kargs, volid, basearch):
     # Filter kernel arguments for substituting into ISO bootloader
     kargs_array = [karg for karg in blsentry_kargs
                    if karg.split('=')[0] not in LIVE_EXCLUDE_KARGS]
@@ -620,12 +620,8 @@ def copy_configs_and_init_kargs_json(deployed_tree, paths, blsentry_kargs, volid
     # [1] https://github.com/coreos/fedora-coreos-config/tree/testing-devel/live/EFI/fedora
     # [2] https://github.com/openshift/os/tree/master/live/EFI/vendor
     # [3] https://github.com/openshift/os/issues/954
-    #
-    # To find the string for the vendor ID we only need to inspect one
-    # of the source EFI directories. Grab one here.
-    efidir = makeefi.find_efi_source_paths(deployed_tree)[0]
-    if os.path.exists(efidir):
-        vendor_id = makeefi.find_efi_vendor_dir_name(efidir)
+    if basearch in ("x86_64", "aarch64"):
+        vendor_id = makeefi.find_efi_vendor_dir_name(source_tree=deployed_tree)
         grubfilepath = ensure_glob(os.path.join(paths["iso"], 'EFI/*/grub.cfg'), n=1)[0]
         srcdir = os.path.dirname(grubfilepath)
         dstdir = os.path.join(paths["iso"], f"EFI/{vendor_id}")
