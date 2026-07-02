@@ -32,7 +32,23 @@ def find_efi_source_paths(tree):
     return [os.path.join(tree, 'usr/lib/bootupd/updates/EFI')]
 
 
-def find_efi_vendor_dir_name(efidir):
+def find_efi_vendor_dir_name(efidir=None, source_tree=None):
+    """
+    Searches either an EFI directory structure (efidir) or a source tree
+    (source_tree) for an EFI vendor directory name (usually fedora,
+    redhat, or centos). If source_tree is given the efidir will be found
+    first using find_efi_source_paths().
+    """
+    if source_tree and efidir:
+        raise ValueError("find_efi_vendor_dir_name: cannot pass both efidir and source_tree")
+    if not source_tree and not efidir:
+        raise ValueError("find_efi_vendor_dir_name: must pass either efidir or source_tree")
+    # If the user provided a source_tree and not an efidir then
+    # we must first find the efidir within the source_tree.
+    if source_tree:
+        # To find the string for the vendor ID we only need to inspect one
+        # of the source EFI directories. Grab one here.
+        efidir = find_efi_source_paths(source_tree)[0]
     # Find name of vendor directory for this distro. i.e. "fedora" or "redhat".
     dirs = [n for n in os.listdir(efidir) if n != "BOOT"]
     if len(dirs) != 1:
@@ -49,7 +65,7 @@ def mkefidir(efidir, source_tree):
     for path in find_efi_source_paths(source_tree):
         shutil.copytree(path, efidir, dirs_exist_ok=True)
 
-    vendor_id = find_efi_vendor_dir_name(efidir)
+    vendor_id = find_efi_vendor_dir_name(efidir=efidir)
 
     # Delete fallback and its CSV file.  Its purpose is to create
     # EFI boot variables, which we don't want when booting from
