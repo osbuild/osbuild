@@ -77,10 +77,13 @@ def main(options, inputs, paths):  # pylint: disable=too-many-branches
         # to use the `composefs` backend based on the input container; we can't control
         # this so we should always be prepared.
         subprocess.check_call(['mount', '-t', 'devtmpfs', 'devtmpfs', '/dev/'])
+        os.makedirs('/dev/shm', exist_ok=True)
+        subprocess.check_call(['mount', '-t', 'tmpfs', 'tmpfs', '/dev/shm'])
 
         try:
             subprocess.run(pargs, env=env, check=True)
         finally:
+            subprocess.check_call(['umount', '/dev/shm'])
             subprocess.check_call(['umount', '/dev/'])
 
 

@@ -122,9 +122,11 @@ def test_bootc_install_to_fs(mock_check_call, mock_run, mocked_named_tmp, mocked
     assert kwargs["check"] is True
     assert kwargs["env"]["BOOTC_SKIP_SELINUX_HOST_CHECK"] == "true"
 
-    assert mock_check_call.call_count == 2
+    assert mock_check_call.call_count == 4
     mock_check_call.assert_has_calls([
         call(['mount', '-t', 'devtmpfs', 'devtmpfs', '/dev/']),
+        call(['mount', '-t', 'tmpfs', 'tmpfs', '/dev/shm']),
+        call(['umount', '/dev/shm']),
         call(['umount', '/dev/']),
     ])
 
