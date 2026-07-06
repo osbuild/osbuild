@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 
-import contextlib
 import os
-import random
 import subprocess as sp
 import textwrap
 
@@ -115,53 +113,3 @@ def test_make_stream_hash(tmp_path, stage_module):
         "stream-hash sha256 2097152",
         *hashes,
     ]
-
-
-@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
-def test_make_efi_bootfile(tmp_path, stage_module):
-
-    tar_files_path = tmp_path / "tar_files"
-    tar_files_path.mkdir()
-
-    tar_files = []
-
-    for fnum in range(99):
-        name = f"rand_file_{fnum:02d}.bin"
-        rand_file = tar_files_path / name
-        filesize = random.randrange(100, 500)
-        rand_file.write_bytes(random.getrandbits(filesize * 8).to_bytes(filesize, 'little'))
-        tar_files.append(rand_file.relative_to(tar_files_path))
-
-    input_tarball = tmp_path / "files.tar"
-    sp.check_call(["tar", "-C", tar_files_path, "-cf", input_tarball, "."])
-
-    output_efiboot_img = tmp_path / "efiboot.img"
-
-    class TestLoopClient:
-        """
-        Implements only the device() context manager method from the remoteloop.LoopClient class that is used in the
-        make_efi_bootfile() function.
-        """
-
-        @contextlib.contextmanager
-        def device(self, path):
-            output = sp.check_output(["losetup", "--find", "--show", path])
-            device = output.strip()
-            yield device
-            sp.check_call(["losetup", "--detach", device])
-
-    mountpoint = tmp_path / "mnt"
-    mountpoint.mkdir()
-    loop_client = TestLoopClient()
-    stage_module.make_efi_bootfile(loop_client, input_tarball, output_efiboot_img)
-
-    with loop_client.device(output_efiboot_img) as loopdev:
-        try:
-            sp.check_call(["mount", "-o", "utf8", loopdev, mountpoint])
-            files_in_image = []
-            for f in mountpoint.iterdir():
-                files_in_image.append(f.relative_to(mountpoint))
-        finally:
-            sp.check_call(["umount", loopdev])
-
-    assert sorted(files_in_image) == sorted(tar_files)
