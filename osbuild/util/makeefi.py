@@ -13,15 +13,17 @@ import tempfile
 from osbuild.util.path import ensure_glob
 
 
-# This function finds the source EFI paths to copy from /usr/ to the EFI/
-# directory. Historically this was just the usr/lib/bootupd/updates/EFI/
-# directory (populated by bootupd) or boot/efi/EFI (package mode), but
-# as part of BootLoaderUpdatesPhase1 [1] the shim and grub packages started
-# delivering files in /usr/lib/efi/(grub|shim)/<version>/EFI/ directly.
-# Lets prefer the new paths and fallback to the legacy paths.
-#
-# [1] https://fedoraproject.org/wiki/Changes/BootLoaderUpdatesPhase1
 def find_efi_source_paths(tree):
+    """
+    This function finds the source EFI paths to copy from /usr/ to the EFI/
+    directory. Historically this was just the usr/lib/bootupd/updates/EFI/
+    directory (populated by bootupd) or boot/efi/EFI (package mode), but
+    as part of BootLoaderUpdatesPhase1 [1] the shim and grub packages started
+    delivering files in /usr/lib/efi/(grub|shim)/<version>/EFI/ directly.
+    Lets prefer the new paths and fallback to the legacy paths.
+
+    [1] https://fedoraproject.org/wiki/Changes/BootLoaderUpdatesPhase1
+    """
     if glob.glob(os.path.join(tree, 'usr/lib/efi/*/*/EFI')):
         # BootLoaderUpdatesPhase1 has been implemented and we should
         # be able to pick up files from usr/lib/efi/(grub|shim)/<version>/EFI/
