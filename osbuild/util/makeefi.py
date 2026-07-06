@@ -15,10 +15,10 @@ from osbuild.util.path import ensure_glob
 
 # This function finds the source EFI paths to copy from /usr/ to the EFI/
 # directory. Historically this was just the usr/lib/bootupd/updates/EFI/
-# directory (populated by bootupd), but as part of BootLoaderUpdatesPhase1 [1]
-# the shim and grub packages started delivering files in
-# /usr/lib/efi/(grub|shim)/<version>/EFI/ directly. Lets prefer the
-# new paths and fallback to the legacy path if those don't exist.
+# directory (populated by bootupd) or boot/efi/EFI (package mode), but
+# as part of BootLoaderUpdatesPhase1 [1] the shim and grub packages started
+# delivering files in /usr/lib/efi/(grub|shim)/<version>/EFI/ directly.
+# Lets prefer the new paths and fallback to the legacy paths.
 #
 # [1] https://fedoraproject.org/wiki/Changes/BootLoaderUpdatesPhase1
 def find_efi_source_paths(tree):
@@ -28,8 +28,14 @@ def find_efi_source_paths(tree):
         # Let's ensure there's only 2 dirs that match (i.e. one for grub
         # one for shim) and return that list.
         return ensure_glob(os.path.join(tree, 'usr/lib/efi/*/*/EFI'), n=2)
-    # Legacy path. Just return a single entry list with the old path.
-    return [os.path.join(tree, 'usr/lib/bootupd/updates/EFI')]
+    # Legacy paths:
+    #   - 'usr/lib/bootupd/updates/EFI' - on Image Mode systems
+    #   - 'boot/efi/EFI'                - on Package Mode systems
+    for path in ['usr/lib/bootupd/updates/EFI', 'boot/efi/EFI']:
+        fullpath = os.path.join(tree, path)
+        if os.path.exists(fullpath):
+            return [fullpath]
+    raise ValueError(f'No EFI source paths found in {tree}')
 
 
 def find_efi_vendor_dir_name(efidir=None, source_tree=None):
