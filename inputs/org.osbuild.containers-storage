@@ -86,13 +86,18 @@ SCHEMA = r"""
 
 class ContainersStorageInput(inputs.InputService):
 
+    # Default values matching containers/storage library defaults for root
+    # c.f. https://github.com/podman-container-tools/container-libs/blob/main/storage/storage.conf
+    DEFAULT_GRAPHROOT = "/var/lib/containers/storage"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mg = MountGuard()
         self.storage_conf = host.get_container_storage()
 
     def bind_mount_local_storage(self, target):
-        source = self.storage_conf["storage"]["graphroot"]
+        storage = self.storage_conf.get("storage", {})
+        source = storage.get("graphroot", self.DEFAULT_GRAPHROOT)
         dest = os.path.join(target, "storage")
 
         # bind mount the input directory to the destination
