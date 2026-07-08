@@ -43,6 +43,12 @@ class ContainersStorageSource(sources.SourceService):
 
     content_type = "org.osbuild.containers-storage"
 
+    # Default values matching containers/storage library defaults for root
+    # c.f. https://github.com/podman-container-tools/container-libs/blob/main/storage/storage.conf
+    DEFAULT_DRIVER = "overlay"
+    DEFAULT_GRAPHROOT = "/var/lib/containers/storage"
+    DEFAULT_RUNROOT = "/run/containers/storage"
+
     storage_conf = None
 
     def local_image_name(self, imagename):
@@ -51,9 +57,10 @@ class ContainersStorageSource(sources.SourceService):
         """
         if self.storage_conf is None:
             self.storage_conf = host.get_container_storage()
-        driver = self.storage_conf["storage"]["driver"]
-        graphroot = self.storage_conf["storage"]["graphroot"]
-        runroot = self.storage_conf["storage"]["runroot"]
+        storage = self.storage_conf.get("storage", {})
+        driver = storage.get("driver", self.DEFAULT_DRIVER)
+        graphroot = storage.get("graphroot", self.DEFAULT_GRAPHROOT)
+        runroot = storage.get("runroot", self.DEFAULT_RUNROOT)
 
         return f"containers-storage:[{driver}@{graphroot}+{runroot}]{imagename}"
 
