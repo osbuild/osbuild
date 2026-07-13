@@ -3,6 +3,7 @@ import os
 import re
 import sys
 from enum import Enum
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import osbuild.api
@@ -30,10 +31,7 @@ class IDMap():
 
     @staticmethod
     def from_list(entries) -> Dict[IDType, List["IDMap"]]:
-        idmaps = {
-            IDType.USER: [],
-            IDType.GROUP: [],
-        }
+        idmaps = new_idmaps()
 
         for entry in entries:
             m = IDMAP_PATTERN.fullmatch(entry)
@@ -55,21 +53,65 @@ class IDMap():
 
         return idmaps
 
+    @staticmethod
+    def from_subordinate_files(tree, user: str, group: str) -> Dict[IDType, List["IDMap"]]:
+        idmaps = new_idmaps()
+
+        subuid_file = Path(f"{tree}/etc/subuid")
+        subgid_file = Path(f"{tree}/etc/subgid")
+
+        if subuid_file.exists():
+            with open(subuid_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith(f"{user}:"):
+                        _, start, size = line.strip().split(":")
+                        idmaps[IDType.USER].append(
+                            IDMap(
+                                int(start), 0, int(size),
+                            )
+                        )
+                        break
+        if subgid_file.exists():
+            with open(subgid_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith(f"{group}:"):
+                        _, start, size = line.strip().split(":")
+                        idmaps[IDType.GROUP].append(
+                            IDMap(
+                                int(start), 0, int(size),
+                            )
+                        )
+                        break
+
+        return idmaps
+
+
+def new_idmaps() -> Dict[IDType, List[IDMap]]:
+    return {
+        IDType.USER: [],
+        IDType.GROUP: [],
+    }
+
 
 def determine_new_ids(file_uid, file_gid, idmaps: Dict[IDType, List[IDMap]]) -> Tuple[int, int]:
+    has_uid_mapping = False
+    has_gid_mapping = False
+
     new_uid = file_uid
     for idmap in idmaps[IDType.USER]:
         if idmap.outside <= file_uid < (idmap.outside + idmap.size):
             new_uid = file_uid - idmap.outside + idmap.inside
+            has_uid_mapping = True
             break
     new_gid = file_gid
     for idmap in idmaps[IDType.GROUP]:
         if idmap.outside <= file_gid < (idmap.outside + idmap.size):
             new_gid = file_gid - idmap.outside + idmap.inside
+            has_gid_mapping = True
             break
 
     # No mapping found, assign them to user nobody
-    if new_uid == file_uid and new_gid == file_gid:
+    if not (has_uid_mapping or has_gid_mapping):
         new_uid = 65534
         new_gid = 65534
 
@@ -78,7 +120,13 @@ def determine_new_ids(file_uid, file_gid, idmaps: Dict[IDType, List[IDMap]]) -> 
 
 def main(tree, options):
     for path, idmaps in options["items"].items():
-        parsed_idmaps = IDMap.from_list(idmaps)
+        parsed_idmaps: Dict[IDType, List[IDMap]]
+        if isinstance(idmaps, list):
+            parsed_idmaps = IDMap.from_list(idmaps)
+        elif isinstance(idmaps, dict):
+            parsed_idmaps = IDMap.from_subordinate_files(tree, idmaps.get("user"), idmaps.get("group"))
+        else:
+            raise ValueError(f"Invalid idmap option of type '{type(idmaps)}'")
 
         seen_devino = set()
         full_path = f"{tree}{path}"

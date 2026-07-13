@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import os
+
 import pytest
 
 from osbuild import testutil
@@ -10,6 +12,8 @@ STAGE_NAME = "org.osbuild.idmap"
 @pytest.mark.parametrize(
     "test_data",
     [
+        # #####################
+        # idmapping by id lists
         {
             "items": {}
         },
@@ -55,6 +59,16 @@ STAGE_NAME = "org.osbuild.idmap"
                 ],
             }
         },
+        # ########################
+        # idmap by user/group name
+        {
+            "items": {
+                "/var/test-1": {
+                    "user": "test-user",
+                    "group": "test-group"
+                }
+            }
+        },
     ],
 )
 @pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
@@ -70,6 +84,9 @@ def test_schema_validation_good(stage_schema, test_data):
 @pytest.mark.parametrize(
     "test_data,expected_err",
     [
+        # #####################
+        # idmapping by id lists
+
         # Missing slash as first character
         (
             {
@@ -88,9 +105,9 @@ def test_schema_validation_good(stage_schema, test_data):
                     ],
                 }
             },
-            "does not match '^(?:(?:u|g|b):)?[0-9]+:[0-9]+:[1-9][0-9]*$'",
+            "is not valid under any of the given schemas",
         ),
-        # Invalid idmap 3 - empty idmap
+        # Invalid idmap 2 - empty idmap
         (
             {
                 "items": {
@@ -99,9 +116,9 @@ def test_schema_validation_good(stage_schema, test_data):
                     ],
                 }
             },
-            "does not match '^(?:(?:u|g|b):)?[0-9]+:[0-9]+:[1-9][0-9]*$'",
+            "is not valid under any of the given schemas",
         ),
-        # Invalid idmap 4 - empty idmap
+        # Invalid idmap 3 - empty idmap
         (
             {
                 "items": {
@@ -110,9 +127,9 @@ def test_schema_validation_good(stage_schema, test_data):
                     ],
                 }
             },
-            "does not match '^(?:(?:u|g|b):)?[0-9]+:[0-9]+:[1-9][0-9]*$'",
+            "is not valid under any of the given schemas",
         ),
-        # Invalid idmap 5 - negative values
+        # Invalid idmap 4 - negative values
         (
             {
                 "items": {
@@ -121,8 +138,50 @@ def test_schema_validation_good(stage_schema, test_data):
                     ],
                 }
             },
-            "does not match '^(?:(?:u|g|b):)?[0-9]+:[0-9]+:[1-9][0-9]*$'",
-        )
+            "is not valid under any of the given schemas",
+        ),
+
+        # ########################
+        # idmap by user/group name
+        (
+            {
+                "items": {
+                    "/var/test-1": {}
+                }
+            },
+            "{} is not valid under any of the given schemas",
+        ),
+        (
+            {
+                "items": {
+                    "/var/test-1": {
+                        "user": "test-user",
+                    }
+                }
+            },
+            "{'user': 'test-user'} is not valid under any of the given schemas",
+        ),
+        (
+            {
+                "items": {
+                    "/var/test-1": {
+                        "group": "test-group",
+                    }
+                }
+            },
+            "{'group': 'test-group'} is not valid under any of the given schemas",
+        ),
+        (
+            {
+                "items": {
+                    "/var/test-1": {
+                        "user": "",
+                        "group": "",
+                    }
+                }
+            },
+            "{'user': '', 'group': ''} is not valid under any of the given schemas",
+        ),
     ],
 )
 @pytest.mark.parametrize("stage_schema", ["1"], indirect=True)
@@ -136,21 +195,7 @@ def test_schema_validation_bad(stage_schema, test_data, expected_err):
     testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
-@pytest.mark.parametrize(
-    # The same order in idmap_inputs and expected_ is assumed by the test
-    # which needs to be taken into account writing the test data
-    "idmap_inputs,expected_uid_maps,expected_gid_maps", [
-        ([], [], []),
-        (["u:1000:0:10"], [(1000, 0, 10)], []),
-        (["g:1000:0:10"], [], [(1000, 0, 10)]),
-        (["b:1000:0:10"], [(1000, 0, 10)], [(1000, 0, 10)]),
-        (["1000:0:10"], [(1000, 0, 10)], [(1000, 0, 10)]),
-        (["b:1000:0:10", "u:1020:20:10"], [(1000, 0, 10), (1020, 20, 10)], [(1000, 0, 10)]),
-    ]
-)
-def test_idmaps_from_list_good(stage_module, idmap_inputs, expected_uid_maps, expected_gid_maps):
-    mappings = stage_module.IDMap.from_list(idmap_inputs)
-
+def compare_mappings(stage_module, mappings, expected_uid_maps, expected_gid_maps):
     user_mappings = mappings[stage_module.IDType.USER]
     assert len(user_mappings) == len(expected_uid_maps)
     for i, umap in enumerate(user_mappings):
@@ -171,6 +216,23 @@ def test_idmaps_from_list_good(stage_module, idmap_inputs, expected_uid_maps, ex
 
 
 @pytest.mark.parametrize(
+    # The same order in idmap_inputs and expected_ is assumed by the test
+    # which needs to be taken into account writing the test data
+    "idmap_inputs,expected_uid_maps,expected_gid_maps", [
+        ([], [], []),
+        (["u:1000:0:10"], [(1000, 0, 10)], []),
+        (["g:1000:0:10"], [], [(1000, 0, 10)]),
+        (["b:1000:0:10"], [(1000, 0, 10)], [(1000, 0, 10)]),
+        (["1000:0:10"], [(1000, 0, 10)], [(1000, 0, 10)]),
+        (["b:1000:0:10", "u:1020:20:10"], [(1000, 0, 10), (1020, 20, 10)], [(1000, 0, 10)]),
+    ]
+)
+def test_idmaps_from_list_good(stage_module, idmap_inputs, expected_uid_maps, expected_gid_maps):
+    mappings = stage_module.IDMap.from_list(idmap_inputs)
+    compare_mappings(stage_module, mappings, expected_uid_maps, expected_gid_maps)
+
+
+@pytest.mark.parametrize(
     "idmap_inputs", [
         ([""]),
         (["x:100:0:10"]),
@@ -181,6 +243,47 @@ def test_idmaps_from_list_good(stage_module, idmap_inputs, expected_uid_maps, ex
 def test_idmaps_from_list_bad(stage_module, idmap_inputs):
     with pytest.raises(ValueError):
         stage_module.IDMap.from_list(idmap_inputs)
+
+
+SAMPLE_ETC_SUBUID = """
+test-user:1000:3000
+blobb:10000:5000
+"""
+SAMPLE_ETC_SUBGID = """
+test-group:1000:3000
+blobb:10000:5000
+"""
+
+
+@pytest.mark.parametrize(
+    "user,group,subuid_content,subgid_content,expected_uid_maps,expected_gid_maps", [
+        ("", "", SAMPLE_ETC_SUBUID, SAMPLE_ETC_SUBGID, [], []),
+        ("", "", SAMPLE_ETC_SUBUID, SAMPLE_ETC_SUBGID, [], []),
+        ("test-user", "", SAMPLE_ETC_SUBUID, SAMPLE_ETC_SUBGID, [(1000, 0, 3000)], []),
+        ("", "test-group", SAMPLE_ETC_SUBUID, SAMPLE_ETC_SUBGID, [], [(1000, 0, 3000)]),
+        ("test-user", "test-group", SAMPLE_ETC_SUBUID, SAMPLE_ETC_SUBGID, [(1000, 0, 3000)], [(1000, 0, 3000)]),
+        ("blobb", "blobb", SAMPLE_ETC_SUBUID, SAMPLE_ETC_SUBGID, [(10000, 0, 5000)], [(10000, 0, 5000)]),
+    ]
+)
+def test_idmaps_from_subordinate_files_good(
+        tmp_path,
+        stage_module,
+        user,
+        group,
+        subuid_content,
+        subgid_content,
+        expected_uid_maps,
+        expected_gid_maps):
+
+    # Set up test data
+    os.makedirs(f"{tmp_path}/etc")
+    with open(f"{tmp_path}/etc/subuid", "w", encoding="utf-8") as f:
+        f.write(subuid_content)
+    with open(f"{tmp_path}/etc/subgid", "w", encoding="utf-8") as f:
+        f.write(subgid_content)
+
+    mappings = stage_module.IDMap.from_subordinate_files(tmp_path, user, group)
+    compare_mappings(stage_module, mappings, expected_uid_maps, expected_gid_maps)
 
 
 @pytest.mark.parametrize(
