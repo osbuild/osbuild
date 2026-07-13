@@ -5,6 +5,9 @@ sources:
       sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0:
         encoding: base64
         data: NDIK
+      sha256:7eec1317ff42c712a7d9391c45d9908d91ee3e6fc686d37f24e3fb9545e31593:
+        encoding: base64
+        data: dGVzdC11c2VyOjEwMDA6MjAwMAo=
 pipelines:
   - mpp-import-pipelines:
       path: ../manifests/fedora-vars.ipp.yaml
@@ -42,6 +45,23 @@ pipelines:
               parents: true
             - path: /var/test-2/
               parents: true
+            - path: /var/test-3/
+              parents: true
+            - path: /var/test-4/
+              parents: true
+      - type: org.osbuild.copy
+        inputs:
+          inlinefile:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            references:
+              sha256:7eec1317ff42c712a7d9391c45d9908d91ee3e6fc686d37f24e3fb9545e31593: {}
+        options:
+          paths:
+            - from: input://inlinefile/sha256:7eec1317ff42c712a7d9391c45d9908d91ee3e6fc686d37f24e3fb9545e31593
+              to: tree:///etc/subuid
+            - from: input://inlinefile/sha256:7eec1317ff42c712a7d9391c45d9908d91ee3e6fc686d37f24e3fb9545e31593
+              to: tree:///etc/subgid
       - type: org.osbuild.copy
         inputs:
           inlinefile:
@@ -63,6 +83,14 @@ pipelines:
               to: tree:///var/test-2/file5
             - from: input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0
               to: tree:///var/test-2/file6
+            - from: input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0
+              to: tree:///var/test-3/file7
+            - from: input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0
+              to: tree:///var/test-3/file8
+            - from: input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0
+              to: tree:///var/test-4/file9
+            - from: input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0
+              to: tree:///var/test-4/file10
       - type: org.osbuild.idmap
         options:
           items:
@@ -71,3 +99,9 @@ pipelines:
             /var/test-2:
               - "u:9999:0:10"
               - "g:9999:0:10"
+            /var/test-3:
+              user: "non-existing-user"
+              group: "non-existing-group"
+            /var/test-4:
+              user: "test-user"
+              group: "test-group"

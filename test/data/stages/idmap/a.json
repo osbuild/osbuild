@@ -1372,6 +1372,14 @@
               {
                 "path": "/var/test-2/",
                 "parents": true
+              },
+              {
+                "path": "/var/test-3/",
+                "parents": true
+              },
+              {
+                "path": "/var/test-4/",
+                "parents": true
               }
             ]
           }
@@ -1412,6 +1420,22 @@
               {
                 "from": "input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0",
                 "to": "tree:///var/test-2/file6"
+              },
+              {
+                "from": "input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0",
+                "to": "tree:///var/test-3/file7"
+              },
+              {
+                "from": "input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0",
+                "to": "tree:///var/test-3/file8"
+              },
+              {
+                "from": "input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0",
+                "to": "tree:///var/test-4/file9"
+              },
+              {
+                "from": "input://inlinefile/sha256:084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0",
+                "to": "tree:///var/test-4/file10"
               }
             ]
           }

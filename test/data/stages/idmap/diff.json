@@ -2,6 +2,36 @@
   "added_files": [],
   "deleted_files": [],
   "differences": {
+    "/etc/pki/ca-trust/extracted/java/cacerts": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/etc/subgid": {
+      "content": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:7eec1317ff42c712a7d9391c45d9908d91ee3e6fc686d37f24e3fb9545e31593"
+      ]
+    },
+    "/etc/subuid": {
+      "content": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:7eec1317ff42c712a7d9391c45d9908d91ee3e6fc686d37f24e3fb9545e31593"
+      ]
+    },
+    "/usr/lib/sysimage/rpm/rpmdb.sqlite": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/var/cache/ldconfig/aux-cache": {
+      "content": [
+        null,
+        null
+      ]
+    },
     "/var/test-1": {
       "gid": [
         0,
@@ -80,6 +110,54 @@
       "uid": [
         0,
         9999
+      ]
+    },
+    "/var/test-3": {
+      "gid": [
+        0,
+        65534
+      ],
+      "uid": [
+        0,
+        65534
+      ]
+    },
+    "/var/test-3/file7": {
+      "gid": [
+        0,
+        65534
+      ],
+      "uid": [
+        0,
+        65534
+      ]
+    },
+    "/var/test-3/file8": {
+      "gid": [
+        0,
+        65534
+      ],
+      "uid": [
+        0,
+        65534
+      ]
+    },
+    "/var/test-4": {
+      "uid": [
+        0,
+        1000
+      ]
+    },
+    "/var/test-4/file10": {
+      "uid": [
+        0,
+        1000
+      ]
+    },
+    "/var/test-4/file9": {
+      "uid": [
+        0,
+        1000
       ]
     }
   }
