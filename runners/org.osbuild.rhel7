@@ -8,6 +8,7 @@ from osbuild.util import runners
 
 if __name__ == "__main__":
     with api.exception_handler():
+        runners.minimal_passwd()
         runners.ldconfig("/usr/lib64/iscsi")
         runners.nsswitch()
 
