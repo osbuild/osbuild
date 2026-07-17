@@ -3,7 +3,7 @@
   "description": [
     "Sets correct SELinux labels for every file in the tree or on mount, according to",
     "the SELinux policy.",
-    "Uses the host's `setfiles` program and the tree's `file_contexts`, usually",
+    "Uses configurable `setfiles` with default set to the build environment and the tree's `file_contexts`, usually",
     "    /etc/selinux/<SELINUXTYPE>/contexts/files/file_contexts",
     "where <SELINUXTYPE> is the value set in /etc/selinux/config (usually \"targeted\"",
     "but may also be \"minimum\" or \"mls\").",
@@ -61,6 +61,15 @@
           "type": "boolean",
           "description": "Do not use. Forces auto-relabelling on first boot. Affects target's root or tree:/// by default",
           "default": false
+        },
+        "setfiles_from": {
+          "type": "string",
+          "description": "Where to find the setfiles binary. 'host' uses setfiles from the build environment (default). 'tree' runs setfiles from the tree.",
+          "enum": [
+            "host",
+            "tree"
+          ],
+          "default": "host"
         }
       }
     },
