@@ -39,6 +39,8 @@ RPM:
           - aws/fedora-43-aarch64
           - aws/fedora-44-x86_64
           - aws/fedora-44-aarch64
+          - aws/fedora-45-x86_64
+          - aws/fedora-45-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
