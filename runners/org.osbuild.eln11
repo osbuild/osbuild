@@ -1,1 +1,20 @@
-org.osbuild.fedora38
+#!/usr/bin/python3
+
+import subprocess
+import sys
+
+from osbuild import api
+from osbuild.util import runners
+
+if __name__ == "__main__":
+    with api.exception_handler():
+        runners.minimal_passwd()
+        runners.ldconfig()
+        runners.sysusers()
+        with runners.create_machine_id_if_needed():
+            runners.tmpfiles()
+            runners.nsswitch()
+            runners.sequoia()
+            r = subprocess.run(sys.argv[1:], check=False)
+
+        sys.exit(r.returncode)
