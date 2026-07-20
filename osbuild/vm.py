@@ -276,6 +276,14 @@ mounts = {
 subprocess.run(["mount", "-t", "tmpfs", "tmpfs", "/tmp"], check=True)
 subprocess.run(["mount", "-t", "tmpfs", "tmpfs", "/var"], check=True)
 
+# Mount cgroup2 for Podman 6+ which requires cgroups v2
+# This is needed because the initrd may not have been able to move the mount
+# to the sysroot if /sys/fs/cgroup didn't exist in the rootfs
+cgroup_path = "/sys/fs/cgroup"
+if not os.path.ismount(cgroup_path):
+    os.makedirs(cgroup_path, exist_ok=True)
+    subprocess.run(["mount", "-t", "cgroup2", "cgroup2", cgroup_path], check=True)
+
 for subdir in os.listdir("/sys/fs/virtiofs"):
     tagfile = os.path.join("/sys/fs/virtiofs", subdir, "tag")
     with open(tagfile, "r", encoding="utf8") as file:
