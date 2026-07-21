@@ -78,25 +78,63 @@ def find_manifest_file(build_path: str) -> str:
     return os.path.join(build_path, "manifest.json")
 
 
-def find_image_file(build_path: str, export_name: Optional[str] = None) -> str:
+def build_metadata_filenames(basename: str) -> set:
     """
-    Find the path to the image by searching for the file under the directory named 'export_name'. If the name of the
-    export pipeline is not provided, determine it by reading the manifest to get the name of the last pipeline.
-    Raises RuntimeError if no or multiple files are found in the expected path.
+    Return filenames in a build directory that are not the image artifact.
+    Mirrors the logic in image-builder's imgtestlib core.py build_metadata_filenames function.
     """
-    if export_name is None:
-        manifest_file = find_manifest_file(build_path)
-        export_name = manifest_pipeline_names(manifest_file)[-1]
-    files = os.listdir(os.path.join(build_path, export_name))
-    if len(files) > 1:
-        error = "Multiple files found in build path while searching for image file"
-        error += "\n".join(files)
-        raise RuntimeError(error)
+    return {
+        "manifest.json",
+        "info.json",
+        "rpmlist.json",
+        f"{basename}.osbuild-manifest.json",
+        f"{basename}.buildlog",
+    }
 
-    if len(files) == 0:
-        raise RuntimeError("No found in build path while searching for image file")
 
-    return os.path.join(build_path, export_name, files[0])
+def find_image_file(build_path: str) -> str:
+    """
+    Find the image file in an image-builder build output directory.
+    """
+    basename = os.path.basename(os.path.normpath(build_path))
+    prefix = f"{basename}."
+    skip_names = build_metadata_filenames(basename)
+
+    candidates = []
+    for name in os.listdir(build_path):
+        if name in skip_names or not name.startswith(prefix):
+            continue
+
+        path = os.path.join(build_path, name)
+        if os.path.isfile(path):
+            candidates.append(path)
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    if not candidates:
+        raise RuntimeError(
+            f"Expected exactly one image artifact in {build_path}, found none")
+
+    names = [os.path.basename(path) for path in candidates]
+    raise RuntimeError(
+        f"Expected exactly one image artifact in {build_path}, found: {names}")
+
+
+def find_exported_image(output_dir: str, export_name: str) -> str:
+    """
+    Find the single file under osbuild --export output: <outdir>/<export>/<file>.
+    """
+    export_path = os.path.join(output_dir, export_name)
+    files = [
+        f for f in os.listdir(export_path)
+        if os.path.isfile(os.path.join(export_path, f))
+    ]
+    if len(files) != 1:
+        raise RuntimeError(
+            f"Expected exactly one file in osbuild export {export_path}, found: {files}")
+
+    return os.path.join(export_path, files[0])
 
 
 def download_image_build_artifact(images_path: os.PathLike, build_dir: os.PathLike) -> None:
@@ -234,14 +272,15 @@ def run_manifest_behavior_test(
     os.makedirs(rebuild_dir, exist_ok=True)
     osbuild = OSBuild(osbuild_store, rebuild_dir)
     print("Rebuilding the image artifact using installed osbuild version")
-    retcode, stdout, stderr = osbuild.run(manifest, [manifest_pipelines[-1]], ["build"])
+    export_name = manifest_pipelines[-1]
+    retcode, stdout, stderr = osbuild.run(manifest, [export_name], ["build"])
     with open(os.path.join(rebuild_dir, "image_rebuild_osbuild.log"), "w", encoding="utf-8") as f:
         f.write(stdout)
         f.write(stderr)
     if retcode != 0:
         raise RuntimeError(f"Failed to rebuild the image artifact:\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}")
 
-    rebuilt_image = find_image_file(rebuild_dir, manifest_pipelines[-1])
+    rebuilt_image = find_exported_image(rebuild_dir, export_name)
     rebuilt_image_iminfo = os.path.join(results_dir, "rebuilt_image_iminfo.json")
     print(f"📜 Generating image info report for rebuilt image: '{rebuilt_image}' to '{rebuilt_image_iminfo}'")
     gen_image_info_report(rebuilt_image, rebuilt_image_iminfo)
