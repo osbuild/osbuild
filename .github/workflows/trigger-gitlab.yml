@@ -26,6 +26,7 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
+          allow-unsafe-pr-checkout: true
 
       - uses: octokit/request-action@v2.x
         id: fetch_pulls
