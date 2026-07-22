@@ -97,6 +97,7 @@
               "enum": [
                 "Azure",
                 "Ec2",
+                "Oracle",
                 "NoCloud",
                 "WSL",
                 "None"
