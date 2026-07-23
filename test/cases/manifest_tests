@@ -95,6 +95,10 @@ def build_metadata_filenames(basename: str) -> set:
 def find_image_file(build_path: str) -> str:
     """
     Find the image file in an image-builder build output directory.
+
+    Prefer the top-level artifact (<basename>.<ext>) produced by
+    image-builder. Fall back to the legacy export-pipeline layout
+    (<export>/<filename>) still present in some S3 cache entries.
     """
     basename = os.path.basename(os.path.normpath(build_path))
     prefix = f"{basename}."
@@ -112,13 +116,19 @@ def find_image_file(build_path: str) -> str:
     if len(candidates) == 1:
         return candidates[0]
 
-    if not candidates:
+    if len(candidates) > 1:
+        names = [os.path.basename(path) for path in candidates]
         raise RuntimeError(
-            f"Expected exactly one image artifact in {build_path}, found none")
+            f"Expected exactly one image artifact in {build_path}, found: {names}")
 
-    names = [os.path.basename(path) for path in candidates]
-    raise RuntimeError(
-        f"Expected exactly one image artifact in {build_path}, found: {names}")
+    # Legacy cache layout: artifact under the export pipeline directory.
+    # Example: archive/root.tar.xz for tar image types.
+    try:
+        export_name = manifest_pipeline_names(find_manifest_file(build_path))[-1]
+        return find_exported_image(build_path, export_name)
+    except (OSError, RuntimeError, IndexError, KeyError, json.JSONDecodeError) as err:
+        raise RuntimeError(
+            f"Expected exactly one image artifact in {build_path}, found none") from err
 
 
 def find_exported_image(output_dir: str, export_name: str) -> str:
