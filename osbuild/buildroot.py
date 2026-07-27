@@ -152,6 +152,7 @@ class BuildRoot(contextlib.AbstractContextManager):
             self._bind_dev(self.dev, "urandom")
             self._bind_dev(self.dev, "tty")
             self._bind_dev(self.dev, "zero")
+            self._bind_dev(self.dev, "fuse")
 
             # Prepare all registered API endpoints
             for api in self._apis:
