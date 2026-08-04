@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import glob
 import os
 import shutil
 import string
@@ -106,10 +107,22 @@ def main(root, options):
             (f"mm{arch}.efi", f"mm{arch}.efi"),
             (f"gcd{arch}.efi", f"grub{arch}.efi")
         ]
+        sources = []
+        for pattern in [
+            os.path.join("/usr/lib/efi/shim/*/EFI", vendor),
+            os.path.join("/usr/lib/efi/grub2/*/EFI", vendor),
+            os.path.join("/boot/efi/EFI", vendor),
+        ]:
+            for path in glob.glob(pattern):
+                if os.path.isdir(path):
+                    sources.append(path)
 
         for src, dst in targets:
-            shutil.copy2(os.path.join("/boot/efi/EFI/", vendor, src),
-                         os.path.join(efidir, dst))
+            for source in sources:
+                source_path = os.path.join(source, src)
+                if os.path.exists(source_path):
+                    shutil.copy2(source_path, os.path.join(efidir, dst))
+                    break
 
     # the font
     fontdir = os.path.join(efidir, "fonts")

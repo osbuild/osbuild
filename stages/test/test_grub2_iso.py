@@ -1,11 +1,71 @@
 #!/usr/bin/python3
 
+import glob
 import os.path
-from unittest.mock import call, patch
+import shutil
+from contextlib import contextmanager
+from unittest.mock import patch
 
 import pytest
 
+from osbuild.testutil import make_fake_tree
+
 STAGE_NAME = "org.osbuild.grub2.iso"
+
+# Real layout from Fedora 44+
+EFI_LAYOUT_USR_LIB = {
+    "usr/lib/efi/grub2/1:2.12-60.fc44/EFI/fedora/grubx64.efi": "grubx64",
+    "usr/lib/efi/grub2/1:2.12-60.fc44/EFI/fedora/gcdx64.efi": "gcdx64",
+    "usr/lib/efi/shim/16.1-5/EFI/BOOT/BOOTX64.EFI": "bootx64",
+    "usr/lib/efi/shim/16.1-5/EFI/BOOT/fbx64.efi": "fbx64",
+    "usr/lib/efi/shim/16.1-5/EFI/fedora/BOOTX64.CSV": "csv",
+    "usr/lib/efi/shim/16.1-5/EFI/fedora/mmx64.efi": "mmx64",
+    "usr/lib/efi/shim/16.1-5/EFI/fedora/shim.efi": "shim",
+    "usr/lib/efi/shim/16.1-5/EFI/fedora/shimx64.efi": "shimx64",
+    "usr/share/grub/unicode.pf2": "font",
+}
+
+EFI_LAYOUT_LEGACY = {
+    "boot/efi/EFI/fedora/shimx64.efi": "shimx64",
+    "boot/efi/EFI/fedora/mmx64.efi": "mmx64",
+    "boot/efi/EFI/fedora/gcdx64.efi": "gcdx64",
+    "usr/share/grub/unicode.pf2": "font",
+}
+
+
+@contextmanager
+def fake_host_root(host_root):
+    """Redirect absolute EFI/font paths into a temporary host root."""
+    prefixes = ("/usr/lib/efi", "/boot/efi", "/usr/share/grub")
+    real_glob = glob.glob
+    real_exists = os.path.exists
+    real_isdir = os.path.isdir
+    real_copy2 = shutil.copy2
+
+    def remap(path):
+        path = os.fspath(path)
+        if path.startswith(prefixes):
+            return os.fspath(host_root / path.lstrip("/"))
+        return path
+
+    def patched_glob(pathname, **kwargs):
+        return real_glob(remap(pathname), **kwargs)
+
+    def patched_exists(path):
+        return real_exists(remap(path))
+
+    def patched_isdir(path):
+        return real_isdir(remap(path))
+
+    def patched_copy2(src, dst, *args, **kwargs):
+        return real_copy2(remap(src), dst, *args, **kwargs)
+
+    with patch("glob.glob", patched_glob), \
+            patch("os.path.exists", patched_exists), \
+            patch("os.path.isdir", patched_isdir), \
+            patch("shutil.copy2", patched_copy2):
+        yield
+
 
 CONFIG_PART_1 = """
 function load_video {
@@ -74,7 +134,6 @@ CONFIG_DEFAULT = """set default="1"
 """
 
 
-@patch("shutil.copy2")
 @pytest.mark.parametrize("test_data,expected_conf", [
     # default
     ({}, CONFIG_PART_1 + "\n" + CONFIG_PART_INSTALL + CONFIG_PART_TEST + CONFIG_PART_TROUBLESHOOTING),
@@ -140,7 +199,10 @@ CONFIG_DEFAULT = """set default="1"
         "\n\n\n\n\n",
     ),
 ])
-def test_grub2_iso(mocked_copy2, tmp_path, stage_module, test_data, expected_conf):
+def test_grub2_iso(tmp_path, stage_module, test_data, expected_conf):
+    host = tmp_path / "host"
+    make_fake_tree(host, EFI_LAYOUT_USR_LIB)
+
     treedir = tmp_path / "tree"
     treedir.mkdir(parents=True, exist_ok=True)
     efidir = treedir / "EFI/BOOT"
@@ -166,16 +228,52 @@ def test_grub2_iso(mocked_copy2, tmp_path, stage_module, test_data, expected_con
     }
     options.update(test_data)
 
-    stage_module.main(treedir, options)
+    with fake_host_root(host):
+        stage_module.main(treedir, options)
 
     assert os.path.exists(confpath)
     assert confpath.read_text() == expected_conf
-    assert mocked_copy2.call_args_list == [
-        call("/boot/efi/EFI/fedora/shimx64.efi", os.fspath(efidir / "BOOTX64.EFI")),
-        call("/boot/efi/EFI/fedora/mmx64.efi", os.fspath(efidir / "mmx64.efi")),
-        call("/boot/efi/EFI/fedora/gcdx64.efi", os.fspath(efidir / "grubx64.efi")),
-        call("/usr/share/grub/unicode.pf2", os.fspath(efidir / "fonts"))
-    ]
+    assert (efidir / "BOOTX64.EFI").read_text() == "shimx64"
+    assert (efidir / "mmx64.efi").read_text() == "mmx64"
+    assert (efidir / "grubx64.efi").read_text() == "gcdx64"
+    assert (efidir / "fonts/unicode.pf2").read_text() == "font"
+
+
+def test_grub2_iso_legacy_boot_efi(tmp_path, stage_module):
+    host = tmp_path / "host"
+    make_fake_tree(host, EFI_LAYOUT_LEGACY)
+
+    treedir = tmp_path / "tree"
+    treedir.mkdir(parents=True, exist_ok=True)
+    efidir = treedir / "EFI/BOOT"
+
+    options = {
+        "product": {
+            "name": "Fedora",
+            "version": "42"
+        },
+        "kernel": {
+            "dir": "/images/pxeboot",
+            "opts": [
+                "inst.stage2=hd:LABEL=Fedora-42-Everything-x86_64"
+            ]
+        },
+        "isolabel": "Fedora-42-Everything-x86_64",
+        "architectures": [
+            "X64"
+        ],
+        "vendor": "fedora",
+        "troubleshooting": False,
+        "test": False,
+        "install": False,
+    }
+
+    with fake_host_root(host):
+        stage_module.main(treedir, options)
+
+    assert (efidir / "BOOTX64.EFI").read_text() == "shimx64"
+    assert (efidir / "mmx64.efi").read_text() == "mmx64"
+    assert (efidir / "grubx64.efi").read_text() == "gcdx64"
 
 
 @pytest.mark.parametrize("test_data,expected_err", [
