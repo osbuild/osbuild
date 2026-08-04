@@ -173,6 +173,13 @@
           "type": "boolean",
           "description": "Create the '/run/ostree-booted' marker"
         },
+        "generic_env": {
+          "description": "Set generic environment variables",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "kernel_install_env": {
           "description": "Set environment variables understood by kernel-install and plugins (kernel-install(8))",
           "type": "object",
@@ -182,6 +189,20 @@
               "type": "string",
               "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$",
               "description": "Sets $BOOT_ROOT for kernel-install to override $KERNEL_INSTALL_BOOT_ROOT, the installation location for boot entries"
+            },
+            "conf_root": {
+              "type": "string",
+              "pattern": "^\\/?(?!\\.\\.)((?!\\/\\.\\.\\/).)+$",
+              "description": "Sets $KERNEL_INSTALL_CONF_ROOT to override the location of configuration files read by kernel-install"
+            },
+            "plugins": {
+              "type": "string",
+              "description": "Sets $KERNEL_INSTALL_PLUGINS to override the list of plugins executed by kernel-install"
+            },
+            "machine_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$",
+              "description": "Sets $MACHINE_ID for kernel-install to override $KERNEL_INSTALL_MACHINE_ID"
             }
           }
         }
