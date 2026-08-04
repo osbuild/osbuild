@@ -165,6 +165,29 @@ def main(tree, inputs, options):
         print(f"dbpath set to '{dbpath}'")
         rpm_args += ["--dbpath", dbpath]
 
+    generic_env = options.get("generic_env", {})
+    kernel_install_env = options.get("kernel_install_env", {})
+
+    kernel_install_env_map = {
+        "boot_root": "BOOT_ROOT",
+        "conf_root": "KERNEL_INSTALL_CONF_ROOT",
+        "plugins": "KERNEL_INSTALL_PLUGINS",
+        "machine_id": "MACHINE_ID",
+    }
+
+    resolved_kernel_env = {}
+    for opt_key, env_key in kernel_install_env_map.items():
+        value = kernel_install_env.get(opt_key)
+        if value:
+            resolved_kernel_env[env_key] = value
+
+    conflicts = set(generic_env) & set(resolved_kernel_env)
+    if conflicts:
+        raise ValueError(
+            f"environment variable(s) set in both generic_env and "
+            f"kernel_install_env: {', '.join(sorted(conflicts))}"
+        )
+
     rpmkeys_options = options.get("rpmkeys", {})
     rpmkeys_bin = rpmkeys_options.get("bin_path", "rpmkeys")
     ignore_import_failures = rpmkeys_options.get("ignore_import_failures", False)
@@ -220,12 +243,8 @@ def main(tree, inputs, options):
             ]
 
         env = os.environ.copy()
-        # update the environment with variables for kernel-install if any are defined
-        kernel_install_env = options.get("kernel_install_env", {})
-        if kernel_install_env:
-            boot_root = kernel_install_env.get("boot_root")
-            if boot_root:
-                env["BOOT_ROOT"] = boot_root
+        env.update(generic_env)
+        env.update(resolved_kernel_env)
 
         with tempfile.NamedTemporaryFile(prefix="manifest.", mode='w') as manifest:
             manifest.writelines(c + '\n' for c in packages)
