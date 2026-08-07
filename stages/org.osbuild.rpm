@@ -50,22 +50,51 @@ from osbuild.util.runners import create_machine_id_if_needed
 OSTREE_BOOTED_MARKER = "run/ostree-booted"
 
 
-def generate_package_metadata(tree, rpm_args):
-    query = r"""\{
-    "name": "%{NAME}",
-    "version": "%{VERSION}",
-    "release": "%{RELEASE}",
-    "epoch": %|EPOCH?{"%{EPOCH}"}:{null}|,
-    "arch": %|ARCH?{"%{ARCH}"}:{null}|,
-    "sigmd5": %|SIGMD5?{"%{SIGMD5}"}:{null}|,
-    "sha1header": %|SHA1HEADER?{"%{SHA1HEADER}"}:{null}|,
-    "sha256header": %|SHA256HEADER?{"%{SHA256HEADER}"}:{null}|,
-    "sha3_256header": %|SHA3_256HEADER?{"%{SHA3_256HEADER}"}:{null}|,
-    "sigpgp": %|SIGPGP?{"%{SIGPGP}"}:{null}|,
-    "siggpg": %|SIGGPG?{"%{SIGGPG}"}:{null}|
-    \},
-    """
+PACKAGE_METADATA_REQUIRED = (
+    ("name", "NAME"),
+    ("version", "VERSION"),
+    ("release", "RELEASE"),
+)
 
+PACKAGE_METADATA_OPTIONAL = (
+    ("epoch", "EPOCH"),
+    ("arch", "ARCH"),
+    ("sigmd5", "SIGMD5"),
+    ("sha1header", "SHA1HEADER"),
+    ("sha256header", "SHA256HEADER"),
+    ("sha3_256header", "SHA3_256HEADER"),
+    ("sigpgp", "SIGPGP"),
+    ("siggpg", "SIGGPG"),
+)
+
+
+def rpm_querytags():
+    """Returns tags supported by rpm on the buildroot."""
+    res = subprocess.run(["rpm", "--querytags"],
+                         stdout=subprocess.PIPE,
+                         check=True, encoding="utf8")
+    return set(res.stdout.split())
+
+
+def package_metadata_query_format(available):
+    """Build an rpm --qf string for package metadata."""
+    fields = []
+
+    for key, tag in PACKAGE_METADATA_REQUIRED:
+        fields.append(f'    "{key}": "%{{{tag}}}"')
+
+    for key, tag in PACKAGE_METADATA_OPTIONAL:
+        if tag in available:
+            fields.append(f'    "{key}": %|{tag}?{{"%{{{tag}}}"}}:{{null}}|')
+        else:
+            fields.append(f'    "{key}": null')
+
+    return "\\{\n" + ",\n".join(fields) + "\n    \\},\n    "
+
+
+def generate_package_metadata(tree, rpm_args):
+    """Collect installed package metadata via rpm -qa."""
+    query = package_metadata_query_format(rpm_querytags())
     cmd = [
         "rpm",
         *rpm_args,
