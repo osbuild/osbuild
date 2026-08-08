@@ -1,0 +1,129 @@
+#!/usr/bin/python3
+"""Compute the delta between an overlay tree and a reference tree, keeping only new or changed files."""
+
+import filecmp
+import os
+import stat
+import subprocess
+import sys
+
+import osbuild.api
+
+
+def is_same_entry(overlay_path, ref_path):
+    """Check if two files are identical (type, content, symlink target)."""
+    try:
+        ostat = os.lstat(overlay_path)
+        rstat = os.lstat(ref_path)
+    except OSError:
+        return False
+
+    if ostat.st_mode != rstat.st_mode:
+        return False
+
+    if stat.S_ISLNK(ostat.st_mode):
+        return os.readlink(overlay_path) == os.readlink(ref_path)
+
+    if stat.S_ISREG(ostat.st_mode):
+        if ostat.st_size != rstat.st_size:
+            return False
+        return filecmp.cmp(overlay_path, ref_path, shallow=False)
+
+    return False
+
+
+def copy_entry(src, dest):
+    """Copy a single file, symlink, or directory (non-recursively) preserving attributes."""
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    subprocess.run(["cp", "-a", "--reflink=auto", src, dest], check=True)
+
+
+def is_excluded(rel_path, exclude_set):
+    """Check if a canonical path starts with any of the exclude prefixes."""
+    canonical = os.path.normpath("/" + rel_path)
+    for excl in exclude_set:
+        if canonical.startswith(excl):
+            return True
+    return False
+
+
+def has_excluded_descendants(rel_path, exclude_set):
+    """Check if any exclude prefix falls under this directory."""
+    prefix = os.path.normpath("/" + rel_path) + "/"
+    for excl in exclude_set:
+        if excl.startswith(prefix):
+            return True
+    return False
+
+
+def trim_tree(overlay_root, ref_root, output_root, paths_filter=None, exclude_paths=None):
+    """Walk overlay_root and copy entries not present or different in ref_root."""
+    for dirpath, dirnames, filenames in os.walk(overlay_root):
+        rel_dir = os.path.relpath(dirpath, overlay_root)
+
+        if paths_filter and rel_dir == ".":
+            dirnames[:] = [d for d in dirnames if f"/{d}" in paths_filter]
+            filenames = [f for f in filenames if f"/{f}" in paths_filter]
+
+        for name in filenames:
+            rel_path = os.path.join(rel_dir, name)
+
+            if exclude_paths and is_excluded(rel_path, exclude_paths):
+                continue
+
+            overlay_path = os.path.join(overlay_root, rel_path)
+            ref_path = os.path.join(ref_root, rel_path)
+            dest_path = os.path.join(output_root, rel_path)
+
+            if not is_same_entry(overlay_path, ref_path):
+                copy_entry(overlay_path, dest_path)
+
+        for name in list(dirnames):
+            rel_path = os.path.join(rel_dir, name)
+
+            if exclude_paths and is_excluded(rel_path, exclude_paths):
+                dirnames.remove(name)
+                continue
+
+            overlay_path = os.path.join(overlay_root, rel_path)
+            ref_path = os.path.join(ref_root, rel_path)
+
+            if os.path.islink(overlay_path):
+                dest_path = os.path.join(output_root, rel_path)
+                if not is_same_entry(overlay_path, ref_path):
+                    copy_entry(overlay_path, dest_path)
+                dirnames.remove(name)
+            elif not (os.path.lexists(ref_path) and stat.S_ISDIR(os.lstat(ref_path).st_mode)):
+                if exclude_paths and has_excluded_descendants(rel_path, exclude_paths):
+                    continue
+                dest_path = os.path.join(output_root, rel_path)
+                os.makedirs(dest_path, exist_ok=True)
+                subprocess.run(
+                    ["cp", "-a", "--reflink=auto", f"{overlay_path}/.", f"{dest_path}/"],
+                    check=True,
+                )
+                dirnames.remove(name)
+
+
+def main(args):
+    overlay = args["inputs"]["overlay"]["path"]
+    reference = args["inputs"]["reference"]["path"]
+    tree = args["tree"]
+
+    options = args.get("options", {})
+    paths_filter = options.get("paths")
+    if paths_filter:
+        paths_filter = set(paths_filter)
+
+    exclude_paths = options.get("exclude_paths")
+    if exclude_paths:
+        exclude_paths = set(exclude_paths)
+
+    trim_tree(overlay, reference, tree, paths_filter, exclude_paths)
+
+    return 0
+
+
+if __name__ == '__main__':
+    _args = osbuild.api.arguments()
+    sys.exit(main(_args))
