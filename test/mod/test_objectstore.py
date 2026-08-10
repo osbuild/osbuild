@@ -92,6 +92,38 @@ def test_cleanup(tmp_path):
         assert object_store.get("A") is None
 
 
+def test_prune_tmp_removes_orphans_on_enter(tmp_path):
+    orphan = tmp_path / "tmp" / "buildroot-tmp-orphan"
+    orphan.mkdir(parents=True)
+    (orphan / "leftover").write_text("x", encoding="utf-8")
+
+    with objectstore.ObjectStore(tmp_path) as object_store:
+        assert not orphan.exists()
+        assert os.path.isdir(object_store.tmp)
+
+    assert os.path.isdir(tmp_path / "tmp")
+    assert not os.listdir(tmp_path / "tmp")
+
+
+def test_prune_tmp_removes_orphans_on_exit(tmp_path):
+    with objectstore.ObjectStore(tmp_path) as object_store:
+        orphan = Path(object_store.tmp) / "buildroot-tmp-orphan"
+        orphan.mkdir()
+        (orphan / "leftover").write_text("x", encoding="utf-8")
+
+    assert not os.listdir(tmp_path / "tmp")
+
+
+def test_prune_tmp_skips_read_only_store(tmp_path):
+    orphan = tmp_path / "tmp" / "buildroot-tmp-orphan"
+    orphan.mkdir(parents=True)
+    (orphan / "leftover").write_text("x", encoding="utf-8")
+
+    with objectstore.ObjectStore(tmp_path, read_only=True) as object_store:
+        assert orphan.exists()
+        assert os.path.isdir(object_store.tmp)
+
+
 def test_metadata(tmp_path):
 
     # test metadata object directly first
