@@ -261,6 +261,12 @@ class TestStages(test.TestBase):
                         self.assertEqual(test_pkg["name"], got_pkg["name"])
                         if test_pkg["name"] != "gpg-pubkey":
                             continue
+
+                        # header checksums of gpg-pubkey might depend on the host rpm version, let's remove them too
+                        for key in ("sha1header", "sha256header", "sha3_256header"):
+                            test_pkg.pop(key, None)
+                            got_pkg.pop(key, None)
+
                         if len(test_pkg["version"]) == len(got_pkg["version"]):
                             continue
 
