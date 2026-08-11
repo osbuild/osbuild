@@ -1,0 +1,44 @@
+{
+  "summary": "Copy raw bytes from an input to the tree.",
+  "description": [
+    "Copy raw bytes from a source file  to a destination file in the current tree",
+    "Thin wrapper around `dd`.",
+    "Buildhost commands used: `dd`."
+  ],
+  "schema_2": {
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "src",
+        "dst",
+        "count"
+      ],
+      "properties": {
+        "src": {
+          "description": "Source URL (e.g. input://image/disk.img)",
+          "type": "string",
+          "pattern": "^(input|tree|mount)://."
+        },
+        "dst": {
+          "description": "Destination filename in the tree",
+          "type": "string"
+        },
+        "src_offset": {
+          "description": "Byte offset into the source",
+          "type": "integer",
+          "default": 0,
+          "minimum": 0
+        },
+        "count": {
+          "description": "Number of bytes to copy",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
