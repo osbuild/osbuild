@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+import os
+import subprocess
+import sys
+
+import osbuild.api
+from osbuild.util import parsing
+
+
+def main(args, options):
+    src = parsing.parse_location(options["src"], args)
+    dst = os.path.join(args["tree"], options["dst"].lstrip("/"))
+    src_offset = options.get("src_offset", 0)
+    count = options["count"]
+
+    cmd = [
+        "dd",
+        f"if={src}",
+        f"of={dst}",
+        "bs=4096",
+        f"skip={src_offset}",
+        f"count={count}",
+        "iflag=skip_bytes,count_bytes",
+        "conv=notrunc",
+    ]
+
+    subprocess.run(cmd, check=True)
+
+    return 0
+
+
+if __name__ == '__main__':
+    _args = osbuild.api.arguments()
+    ret = main(_args, _args["options"])
+    sys.exit(ret)
