@@ -62,7 +62,7 @@ def test_schema_validation(stage_schema, test_data, expected_err):
     ],
 )
 @mock.patch("subprocess.run")
-def test_env_conflict_detection(tmp_path, stage_module, generic_env, kernel_install_env, expected_err):
+def test_env_conflict_detection(_mock_run, tmp_path, stage_module, generic_env, kernel_install_env, expected_err):
     tree = str(tmp_path / "tree")
     os.makedirs(tree)
     inputs = {"packages": {"path": str(tmp_path), "data": {"files": {}}}}
