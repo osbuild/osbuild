@@ -1,0 +1,23 @@
+---
+version: '2'
+
+mpp-vars:
+  arch: riscv64
+  release: 43
+  releasever: f$release
+  snapshot: '20260106'
+  updates: '20260315'
+  ref: fedora/$arch/osbuild
+  isolabel: Fedora-$release-X86_64
+  reposx86_64:
+    - id: default
+      baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$releasever-x86_64-fedora-$snapshot/
+    - id: updates
+      baseurl: https://rpmrepo.osbuild.org/v2/mirror/public/$releasever/$releasever-x86_64-updates-released-$updates/
+  repos:
+    - id: fedora
+      baseurl: https://riscv-koji.fedoraproject.org/repos-dist/f43/latest/riscv64/
+    - id: staging
+      baseurl: https://riscv-koji.fedoraproject.org/repos-dist/f43-staging/latest/riscv64/
+  gpgkeys:
+    - "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGa23M8BEAC47NwKLi/g2S9I2p5JtUbJ0y3m2St9zqkSENmYw/+R+WKvaP3S\nKSFQF3Qi6pqGXJ88ADJUkFYpOGGyoc0dieLCmIPqtWbwGvBVMxBRBeU3+hClwbSQ\nsysVnr8VxUwidfsIjNJavCZwB0ZoZbxdCPMQMOgQyTLX4OI/uKlPUzeymDHwxjb/\ntllflSTOGtdYe3giRzidxN+xbCb6UoXkl0+lJEFbsmp41O5D/Ur5N05lBrsEXoDu\nFr99Kfv3Av7f3JfzDlkqC/EhmfxZEZvWj3hRdAfi2fFmtVcrdLfGIpQg6Y2Baphp\nPhaHqKl9zD5GWqu5GSXGoLaGXusBvwBKjS/g+VLo7pJfMsUF3sUduJNG3UThAsrp\nQLV3wQz0AMHVElRErOWdBDY0ddAKLPL7/mtxj39pGEpZ/dNtQkzgm7VCdP10QnQZ\nrwR2l8k7CPu0pylPCXmXvKFWV1uv9RnztlWY6BRmufKn+lJsN3Blh7ndi5rlCjR6\nmHVrQD/l6+8VmSD3/mDnbEXPyzBkSY5D1wpR7M5VXN5jVHROc4ZA5M88SyI48ESG\nNmeAwtGar45/X+wG47+EC4+JXpNO7BQrEvHgJxBdyoQ6KLDrEaqn/OQpxB4Gfmcv\nSwkWDpSk8wFm/pGlFK6J4b+ba7eOetW+aXrWSiFB1sTAg0OY+gds67OpWQARAQAB\ntDFGZWRvcmEgKDQzKSA8ZmVkb3JhLTQzLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJSBBMBCAA8FiEExufwgc+A4TFGZ26IgptgZjFkVTEFAma23M8CGw8FCwkI\nBwIDIgIBBhUKCQgLAgQWAgMBAh4HAheAAAoJEIKbYGYxZFUxagQP/RYWw5j0Gfvv\nlWkDQTjTVAnHtbKuQLYM13Lx5d3W1k0g6Xdrolf4yPjh4YPYVQDXksB4i6ULLbMo\n8u46UCPMQwCXTd3Ax9imYn+V74Isl/CkBbKQD9YfSJjhW3mSlPa27jo2uhqpdV0S\nxp05NWYnWrZN+GbtCUs1+rNTBevagOURtlZ8f0iPVRA/PxWzpjbRaGrCHlIYc3JO\nGKLUuQueLvOUg2pP8dtpll7S3xUe5Abyq2ifT34T0wHi6hJA3bfpXo1uNXRvGrNw\ngbJ7V6P7ioTcvyhS1h4zjelKFyvTnOKOy5D08HKmvTMWZQWEL7kDNymh1jMV7Abg\n4TPp808EiPF1GGAzXU56feaURSvIuix3MkjhGZsSQQH2kkkEIzq6j/EwmpyEMW38\ndtql4T2bVS/cTk/hRaqUKZlyrsL657g/4mFA1wDDM3895fYkHOpYF4JZ9SeDrhuc\nTgpC7/TW55l6vSiFtnQvcMfjpfCA6mCA4b75k+/xG9RxxBnYU0qVuUo/8pON31yQ\nD2AM2v7WbJBYVRYLlqPrkAZU5fe7+2wY7P7N0IAPwVA0TFJ1x6as3Kezdi/304mg\noC98DBLjHaUpX2bTxKMtCzlmeqPiwtyNkA9O9IQO7qQzArBKxmAgof4wblN5SL8i\nfsjiJUqsK/gTYwJ744I/tzxOy5FXjA7z\n=Bqds\n-----END PGP PUBLIC KEY BLOCK-----\n"
