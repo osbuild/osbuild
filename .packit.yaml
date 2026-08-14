@@ -41,6 +41,7 @@ jobs:
   - epel-9-x86_64
   - fedora-all-aarch64
   #- fedora-all-s390x
+  - fedora-all-riscv64
   - fedora-all-ppc64le
   - fedora-all
   - fedora-eln-x86_64
