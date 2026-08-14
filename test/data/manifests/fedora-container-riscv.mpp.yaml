@@ -1,0 +1,88 @@
+---
+version: '2'
+pipelines:
+  - mpp-import-pipelines:
+      path: fedora-vars-riscv.ipp.yaml
+    runner:
+      mpp-format-string: org.osbuild.fedora{release}
+  - name: build
+    source-epoch: 1659397331
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: x86_64  # use host arch for buildroot
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: "reposx86_64"
+              packages:
+                - tar
+                - selinux-policy-targeted
+                - gzip
+        options:
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+      - type: org.osbuild.selinux
+        options:
+          file_contexts: etc/selinux/targeted/contexts/files/file_contexts
+          labels:
+            /usr/bin/cp: system_u:object_r:install_exec_t:s0
+            /usr/bin/tar: system_u:object_r:install_exec_t:s0
+  - name: tree
+    build: name:build
+    stages:
+      - type: org.osbuild.rpm
+        inputs:
+          packages:
+            type: org.osbuild.files
+            origin: org.osbuild.source
+            mpp-depsolve:
+              architecture: $arch
+              module-platform-id: $module_platform_id
+              repos:
+                mpp-eval: repos
+              packages:
+                - "@core"
+              excludes:
+                - dosfstools
+                - e2fsprogs
+                - fuse-libs
+                - fwupd
+                - gnupg2-smime
+                - grubby
+                - kernel
+                - libss
+                - pinentry
+                - plymouth
+                - shared-mime-info
+                - trousers
+                - xkeyboard-config
+        options:
+          ignorearch: true
+          gpgkeys:
+            mpp-eval: gpgkeys
+          exclude:
+            docs: true
+          install_langs:
+            - en_US
+  - name: container
+    build: name:build
+    stages:
+      - type: org.osbuild.oci-archive
+        inputs:
+          base:
+            type: org.osbuild.tree
+            origin: org.osbuild.pipeline
+            references:
+              - name:tree
+        options:
+          architecture: riscv64
+          filename: fedora-container-riscv.tar
+          config:
+            Cmd:
+              - /bin/sh
