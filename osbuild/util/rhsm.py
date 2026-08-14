@@ -28,6 +28,14 @@ class Subscriptions:
             self.DEFAULT_ENTITLEMENT_DIR = "/run/secrets/etc-pki-entitlement"
             self.DEFAULT_REPO_FILE = "/run/secrets/redhat.repo"
 
+        # Prefer the Katello CA on Satellite-registered hosts. The
+        # katello-server-ca.pem contains the CA chain needed to validate
+        # TLS certificates of Satellite content proxies, while the default
+        # redhat-uep.pem only covers direct Red Hat CDN access.
+        katello_ca = os.path.join(os.path.dirname(self.DEFAULT_SSL_CA_CERT), "katello-server-ca.pem")
+        if os.path.exists(katello_ca):
+            self.DEFAULT_SSL_CA_CERT = katello_ca
+
     @staticmethod
     def is_container_with_rhsm_secrets():
         """Detect if we are running inside a podman container and RHSM secrets are available."""
