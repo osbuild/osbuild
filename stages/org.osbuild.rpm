@@ -271,6 +271,9 @@ def main(tree, inputs, options):
                 "--define", macro,
             ]
 
+        if options.get("ignorearch", False):
+            extra_args += ["--ignorearch"]
+
         env = os.environ.copy()
         env.update(generic_env)
         env.update(resolved_kernel_env)
