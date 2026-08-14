@@ -150,6 +150,56 @@ class TestContainerDetection:
         assert subscriptions.DEFAULT_REPO_FILE == "/run/secrets/redhat.repo"
 
 
+class TestKatelloCA:
+    """Tests for Katello CA preference on Satellite-registered hosts."""
+
+    def test_prefers_katello_ca_on_host(self, tmp_path):
+        make_fake_tree(tmp_path, {
+            "etc/rhsm/ca/redhat-uep.pem": "FAKE UEP CA",
+            "etc/rhsm/ca/katello-server-ca.pem": "FAKE KATELLO CA",
+        })
+        with patched_path_exists(tmp_path):
+            subscriptions = Subscriptions(repositories=None)
+            assert subscriptions.DEFAULT_SSL_CA_CERT == "/etc/rhsm/ca/katello-server-ca.pem"
+
+    def test_falls_back_to_uep_without_katello(self, tmp_path):
+        make_fake_tree(tmp_path, {
+            "etc/rhsm/ca/redhat-uep.pem": "FAKE UEP CA",
+        })
+        with patched_path_exists(tmp_path):
+            subscriptions = Subscriptions(repositories=None)
+            assert subscriptions.DEFAULT_SSL_CA_CERT == "/etc/rhsm/ca/redhat-uep.pem"
+
+    def test_prefers_katello_ca_in_container(self, tmp_path):
+        make_fake_tree(tmp_path, {
+            "run/.containerenv": "",
+            "run/secrets/rhsm/ca/redhat-uep.pem": "FAKE UEP CA",
+            "run/secrets/rhsm/ca/katello-server-ca.pem": "FAKE KATELLO CA",
+        })
+        with patched_path_exists(tmp_path):
+            subscriptions = Subscriptions(repositories=None)
+            assert subscriptions.DEFAULT_SSL_CA_CERT == "/run/secrets/rhsm/ca/katello-server-ca.pem"
+
+    def test_explicit_sslcacert_takes_precedence_over_katello(self, tmp_path):
+        # Even when the Katello CA is present and becomes the default, an
+        # sslcacert explicitly set in the repo file must still win.
+        make_fake_tree(tmp_path, {
+            "etc/rhsm/ca/redhat-uep.pem": "FAKE UEP CA",
+            "etc/rhsm/ca/katello-server-ca.pem": "FAKE KATELLO CA",
+        })
+        with patched_path_exists(tmp_path):
+            subscriptions = Subscriptions.parse_repo_file(StringIO(REPO_FILE))
+
+        # The instance default was switched to the Katello CA, but REPO_FILE
+        # explicitly sets sslcacert to redhat-uep.pem, which must override it.
+        assert subscriptions.DEFAULT_SSL_CA_CERT == "/etc/rhsm/ca/katello-server-ca.pem"
+        assert subscriptions.repositories["jpp"]["sslcacert"] == "/etc/rhsm/ca/redhat-uep.pem"
+
+        secrets = subscriptions.get_secrets(
+            ["https://cdn.redhat.com/1.0/x86_64/os/Packages/test.rpm"])
+        assert secrets["ssl_ca_cert"] == "/etc/rhsm/ca/redhat-uep.pem"
+
+
 class TestSubscribedSystem:
     """Tests for regular subscribed RHEL systems."""
 
