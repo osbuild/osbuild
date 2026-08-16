@@ -121,6 +121,12 @@ class Manifest:
             ].items():
                 sources[hasj] = url
 
+        if "org.osbuild.librepo" in self.data["sources"]:
+            for hasj, item in self.data["sources"]["org.osbuild.librepo"][
+                "items"
+            ].items():
+                sources[hasj] = item["path"]
+
         for pipeline in self.data["pipelines"]:
             for stage in pipeline["stages"]:
                 if stage["type"] == "org.osbuild.rpm":
