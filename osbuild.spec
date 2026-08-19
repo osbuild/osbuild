@@ -2,7 +2,7 @@
 %global         selinuxtype targeted
 
 Version:        191
-%global         osbuild_initrd_version 0.1
+%global         osbuild_initrd_version 0.2
 
 %forgemeta
 
