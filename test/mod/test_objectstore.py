@@ -184,11 +184,10 @@ def test_host_tree(tmp_path):
         assert host.tree
         assert os.fspath(host)
 
-        # check we actually cannot write to the path
-        p = Path(host.tree, "osbuild-test-file")
-        with pytest.raises(OSError):
-            p.touch()
-            print("FOO")
+        # /usr should be a symlink pointing to /usr on the host
+        usr = os.path.join(host.tree, "usr")
+        assert os.path.islink(usr)
+        assert os.readlink(usr) == "/usr"
 
     # We cannot access the tree property after cleanup
     with pytest.raises(AssertionError):
@@ -259,7 +258,7 @@ def test_store_server(tmp_path):
         tmp = tempfile.TemporaryDirectory()
         tmp = stack.enter_context(tmp)
 
-        server = objectstore.StoreServer(store)
+        server = objectstore.StoreServer(store, tmp)
         stack.enter_context(server)
 
         client = objectstore.StoreClient(server.socket_address)

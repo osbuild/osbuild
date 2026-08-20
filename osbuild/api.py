@@ -5,10 +5,9 @@ import io
 import json
 import os
 import sys
-import tempfile
 import threading
 import traceback
-from typing import ClassVar, Dict, Optional
+from typing import ClassVar, Dict
 
 from .util import jsoncomm
 from .util.types import PathLike
@@ -43,12 +42,11 @@ class BaseAPI(abc.ABC):
     endpoint: ClassVar[str]
     """The name of the API endpoint"""
 
-    def __init__(self, socket_address: Optional[PathLike] = None):
-        self.socket_address = socket_address
+    def __init__(self, rundir: PathLike):
+        self.socket_address = os.path.join(rundir, self.endpoint)
         self.barrier = threading.Barrier(2)
         self.event_loop = None
         self.thread = None
-        self._socketdir = None
 
     @abc.abstractmethod
     def _message(self, msg: Dict, fds: jsoncomm.FdSet, sock: jsoncomm.Socket):
@@ -60,12 +58,6 @@ class BaseAPI(abc.ABC):
 
     def _cleanup(self):
         """Called after the event loop is shut down"""
-
-    @classmethod
-    def _make_socket_dir(cls, rundir: PathLike = "/run/osbuild"):
-        """Called to create the temporary socket dir"""
-        os.makedirs(rundir, exist_ok=True)
-        return tempfile.TemporaryDirectory(prefix="api-", dir=rundir)
 
     def _dispatch(self, sock: jsoncomm.Socket):
         """Called when data is available on the socket"""
@@ -102,11 +94,6 @@ class BaseAPI(abc.ABC):
         # We are not re-entrant, so complain if re-entered.
         assert not self.running
 
-        if not self.socket_address:
-            self._socketdir = self._make_socket_dir()
-            address = os.path.join(self._socketdir.name, self.endpoint)
-            self.socket_address = address
-
         self.event_loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_event_loop)
 
@@ -126,11 +113,7 @@ class BaseAPI(abc.ABC):
 
         self.thread = None
         self.event_loop = None
-
-        if self._socketdir:
-            self._socketdir.cleanup()
-            self._socketdir = None
-            self.socket_address = None
+        self.socket_address = None
 
 
 class API(BaseAPI):
@@ -138,8 +121,8 @@ class API(BaseAPI):
 
     endpoint = "osbuild"
 
-    def __init__(self, *, socket_address=None):
-        super().__init__(socket_address)
+    def __init__(self, rundir):
+        super().__init__(rundir)
         self.error = None
 
     def _message(self, msg, fds, sock):
