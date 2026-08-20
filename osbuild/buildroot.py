@@ -153,6 +153,11 @@ class BuildRoot(contextlib.AbstractContextManager):
             self._bind_dev(self.dev, "tty")
             self._bind_dev(self.dev, "zero")
 
+            # /dev/fuse is needed by podman for fuse-overlayfs in a vm
+            # in some cases
+            if os.path.exists("/dev/fuse"):
+                self._bind_dev(self.dev, "fuse")
+
             # Prepare all registered API endpoints
             for api in self._apis:
                 self._exitstack.enter_context(api)
