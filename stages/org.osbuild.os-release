@@ -1,0 +1,34 @@
+#!/usr/bin/python3
+import os
+import sys
+
+import osbuild.api
+
+
+def format_value(value):
+    if ' ' in value or any(c in value for c in ('"', "'", '\\', '`', '$')):
+        escaped = value.replace('\\', '\\\\').replace('"', '\\"').replace('$', '\\$').replace('`', '\\`')
+        return f'"{escaped}"'
+    return value
+
+
+def main(tree, options):
+    path = options.get("path", "usr/lib/os-release")
+    filepath = os.path.join(tree, path)
+
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+    with open(filepath, "w", encoding="utf8") as f:
+        for key, value in options["vars"].items():
+            f.write(f"{key}={format_value(value)}\n")
+
+    if not options.get("extension-release-strict", True):
+        os.setxattr(filepath, "user.extension-release.strict", b"0")
+
+    return 0
+
+
+if __name__ == '__main__':
+    args = osbuild.api.arguments()
+    r = main(args["tree"], args["options"])
+    sys.exit(r)

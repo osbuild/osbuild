@@ -1,0 +1,202 @@
+{
+  "summary": "Create an os-release file",
+  "description": [
+    "Create an os-release file at a given path in the tree.",
+    "The default path is /usr/lib/os-release.",
+    "This file format is also used for extension-release files in sysexts",
+    "and confexts (see systemd-sysext(8)).",
+    "See os-release(5) for details on the format and recognized variables."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "vars"
+    ],
+    "properties": {
+      "path": {
+        "type": "string",
+        "default": "usr/lib/os-release",
+        "description": "Path to the os-release file to write, relative to the tree root."
+      },
+      "extension-release-strict": {
+        "type": "boolean",
+        "default": true,
+        "description": "Set to false to add the user.extension-release.strict=0 xattr, relaxing image name matching for sysexts."
+      },
+      "vars": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Variables to set in the os-release file.",
+        "properties": {
+          "NAME": {
+            "type": "string",
+            "description": "A string identifying the operating system."
+          },
+          "ID": {
+            "type": "string",
+            "pattern": "^[a-z0-9._-]+$",
+            "description": "A lower-case string identifying the operating system."
+          },
+          "ID_LIKE": {
+            "type": "string",
+            "pattern": "^[a-z0-9._\\- ]+$",
+            "description": "A space-separated list of operating system identifiers."
+          },
+          "VERSION": {
+            "type": "string",
+            "description": "A string identifying the operating system version."
+          },
+          "VERSION_ID": {
+            "type": "string",
+            "pattern": "^[a-z0-9._-]+$",
+            "description": "A lower-case string identifying the operating system version."
+          },
+          "VERSION_CODENAME": {
+            "type": "string",
+            "pattern": "^[a-z0-9._-]+$",
+            "description": "A lower-case string identifying the operating system release code name."
+          },
+          "PRETTY_NAME": {
+            "type": "string",
+            "description": "A pretty operating system name in a format suitable for presentation to the user."
+          },
+          "ANSI_COLOR": {
+            "type": "string",
+            "description": "A suggested presentation color when showing the OS name on the console."
+          },
+          "CPE_NAME": {
+            "type": "string",
+            "description": "A CPE name for the operating system, in URI binding syntax."
+          },
+          "HOME_URL": {
+            "type": "string",
+            "description": "A URL to the homepage of the operating system."
+          },
+          "DOCUMENTATION_URL": {
+            "type": "string",
+            "description": "A URL to the documentation of the operating system."
+          },
+          "SUPPORT_URL": {
+            "type": "string",
+            "description": "A URL to the support page of the operating system."
+          },
+          "BUG_REPORT_URL": {
+            "type": "string",
+            "description": "A URL to the bug tracker of the operating system."
+          },
+          "PRIVACY_POLICY_URL": {
+            "type": "string",
+            "description": "A URL to the privacy policy of the operating system."
+          },
+          "BUILD_ID": {
+            "type": "string",
+            "description": "A string uniquely identifying the system image used as the origin for a distribution."
+          },
+          "VARIANT": {
+            "type": "string",
+            "description": "A string identifying a specific variant or edition of the operating system."
+          },
+          "VARIANT_ID": {
+            "type": "string",
+            "pattern": "^[a-z0-9._-]+$",
+            "description": "A lower-case string identifying a specific variant or edition of the operating system."
+          },
+          "LOGO": {
+            "type": "string",
+            "description": "A string specifying the name of an icon for the operating system."
+          },
+          "IMAGE_ID": {
+            "type": "string",
+            "pattern": "^[a-z0-9._-]+$",
+            "description": "A lower-case string identifying a specific image of the operating system."
+          },
+          "IMAGE_VERSION": {
+            "type": "string",
+            "pattern": "^[a-z0-9._-]+$",
+            "description": "A lower-case string identifying the image version of the operating system."
+          },
+          "DEFAULT_HOSTNAME": {
+            "type": "string",
+            "description": "A string specifying the default hostname for the operating system."
+          },
+          "ARCHITECTURE": {
+            "type": "string",
+            "description": "A string identifying the native CPU architecture of the operating system."
+          },
+          "VENDOR_NAME": {
+            "type": "string",
+            "description": "The name of the OS vendor."
+          },
+          "VENDOR_URL": {
+            "type": "string",
+            "description": "The homepage of the OS vendor."
+          },
+          "SYSEXT_LEVEL": {
+            "type": "string",
+            "description": "A string identifying the system extension compatibility level."
+          },
+          "CONFEXT_LEVEL": {
+            "type": "string",
+            "description": "A string identifying the configuration extension compatibility level."
+          },
+          "SYSEXT_SCOPE": {
+            "type": "string",
+            "description": "The scope of system extensions. A space-separated list of system, initrd, portable."
+          },
+          "CONFEXT_SCOPE": {
+            "type": "string",
+            "description": "The scope of configuration extensions. A space-separated list of system, initrd, portable."
+          },
+          "PORTABLE_PREFIXES": {
+            "type": "string",
+            "description": "A space-separated list of unit name prefixes for portable services."
+          },
+          "PLATFORM_ID": {
+            "type": "string",
+            "description": "A string identifying the platform for which packages are built."
+          },
+          "SUPPORT_END": {
+            "type": "string",
+            "description": "The date at which support for this version of the OS ends."
+          },
+          "OSTREE_VERSION": {
+            "type": "string",
+            "description": "The OSTree version string."
+          },
+          "EXTENSION_RELOAD_MANAGER": {
+            "type": "string",
+            "enum": [
+              "1"
+            ],
+            "description": "Set to 1 if the extension requires a daemon-reload after merge."
+          },
+          "PORTABLE_SCOPE": {
+            "type": "string",
+            "enum": [
+              "system",
+              "user",
+              "any"
+            ],
+            "description": "The scope of the portable service."
+          },
+          "RELEASE_TYPE": {
+            "type": "string",
+            "enum": [
+              "stable",
+              "lts",
+              "development",
+              "experiment"
+            ],
+            "description": "The release type of the operating system."
+          }
+        },
+        "patternProperties": {
+          "^SYSEXT_[A-Z_]+$": {
+            "type": "string",
+            "description": "A SYSEXT_-prefixed variable identifying properties of the extension itself."
+          }
+        }
+      }
+    }
+  }
+}
