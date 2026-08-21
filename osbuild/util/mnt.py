@@ -44,7 +44,7 @@ def umount(target, lazy=False):
     if lazy:
         args += ["--lazy"]
     subprocess.run(["sync", "-f", target], check=True)
-    subprocess.run(["umount", "-R"] + args + [target], check=True)
+    subprocess.run(["umount", "--lazy"] + args + [target], check=True)
 
 
 class MountGuard(contextlib.AbstractContextManager):
@@ -63,7 +63,7 @@ class MountGuard(contextlib.AbstractContextManager):
         self.remount = remount
         options = []
         if bind:
-            options += ["bind"]
+            options += ["rbind"]
         if remount:
             options += ["remount"]
         if permissions:
@@ -99,7 +99,7 @@ class MountGuard(contextlib.AbstractContextManager):
             # Calling  `sync` does not hurt so we keep it for now.
             if not self.remount:
                 subprocess.run(["sync", "-f", target], check=True)
-                subprocess.run(["umount", target], check=True)
+                subprocess.run(["umount", "--lazy", target], check=True)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.umount()
