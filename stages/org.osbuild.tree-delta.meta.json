@@ -1,0 +1,71 @@
+{
+  "capabilities": [
+    "CAP_MAC_ADMIN"
+  ],
+  "description": [
+    "Takes two tree inputs: a 'reference' layer (e.g. a base OS tree)",
+    "and an 'overlay' layer (e.g. a different tree). Walks the overlay",
+    "and copies only files that are either absent from or different from",
+    "the corresponding file in the reference layer, trimming away",
+    "everything the reference already provides.",
+    "This is useful for building delta trees that contain only the files",
+    "not already present in the reference tree.",
+    "",
+    "An optional 'paths' filter restricts which top-level directories",
+    "are considered (e.g. [\"/usr\", \"/opt\"]). Files outside those",
+    "paths are ignored. An optional 'exclude_paths' filter skips any",
+    "path that starts with one of the given prefixes (e.g.",
+    "[\"/usr/share/doc\"]).",
+    "",
+    "File attributes (permissions, ownership, timestamps, symlinks,",
+    "extended attributes) are preserved via 'cp -a'.",
+    "",
+    "The comparison is content-based: files are considered identical if",
+    "they have the same type, permission bits, and content (or symlink",
+    "target). Metadata-only changes (ownership, timestamps, xattrs)",
+    "will not cause a file to appear in the delta. Hardlink",
+    "relationships between files are also not preserved in the output."
+  ],
+  "schema_2": {
+    "inputs": {
+      "additionalProperties": false,
+      "properties": {
+        "overlay": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "reference": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "required": [
+        "reference",
+        "overlay"
+      ],
+      "type": "object"
+    },
+    "options": {
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "description": "List of top-level paths to include (e.g. [\"/usr\", \"/opt\"]). If omitted, the entire tree is trimmed.",
+          "items": {
+            "pattern": "^/",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "exclude_paths": {
+          "description": "List of canonical paths to exclude. Any path starting with an entry is skipped (e.g. [\"/usr/share/doc\"]).",
+          "items": {
+            "pattern": "^/",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    }
+  },
+  "summary": "Compute the delta between an overlay tree and a reference layer"
+}
