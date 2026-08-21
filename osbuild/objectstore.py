@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Optional, Set, Union
 
-from osbuild.util import jsoncomm
+from osbuild.util import jsoncomm, rmrf
 from osbuild.util.fscache import FsCache, FsCacheInfo
 from osbuild.util.mnt import mount, umount
 from osbuild.util.path import clamp_mtime
@@ -454,6 +454,29 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         self.cache.store_tree(object_id, obj.path + "/.")
 
+    def prune_tmp(self):
+        """Remove leftover files under store/tmp.
+
+        Stage TemporaryDirectory objects normally clean up on exit, but
+        crashed or interrupted builds can leave orphans (for example
+        buildroot-tmp-*) that fill the disk and break later builds.
+        """
+        if self._read_only:
+            return
+
+        try:
+            with os.scandir(self.tmp) as entries:
+                for entry in entries:
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            rmrf.rmtree(entry.path)
+                        else:
+                            os.unlink(entry.path)
+                    except OSError:
+                        pass
+        except FileNotFoundError:
+            os.makedirs(self.tmp, exist_ok=True)
+
     def cleanup(self):
         """Cleanup all created Objects that are still alive"""
         if self._host_tree:
@@ -462,6 +485,7 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         self._stack.close()
         self._objs = set()
+        self.prune_tmp()
 
     # export active floating objects so another store can load them,
     # typically in a VM
@@ -492,6 +516,9 @@ class ObjectStore(contextlib.AbstractContextManager):
     def __enter__(self):
         assert not self.active
         self._stack.enter_context(self.cache)
+        # Drop leftovers from previous crashed/interrupted runs before
+        # allocating new temporary buildroots under store/tmp.
+        self.prune_tmp()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
