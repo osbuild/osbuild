@@ -79,7 +79,7 @@ def test_noop_cli(monkeypatch, capfd, tmp_path, jsondata):
         f"--store={tmp_path}",
         "--quiet",
     ])
-    ret_code = osbuild.main_cli.osbuild_cli()
+    ret_code = osbuild.main_cli.osbuild_cli(no_reexec=True)
     assert ret_code == 0
 
     captured = capfd.readouterr()

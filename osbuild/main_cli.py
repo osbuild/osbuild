@@ -149,7 +149,17 @@ def _reexec_in_userns() -> Optional[int]:
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
 
 
-def osbuild_cli() -> int:
+def osbuild_cli(no_reexec: bool = False) -> int:
+    if not no_reexec and os.getuid() != 0:
+        # Re-exec inside a user namespace when running rootless. Do this here in
+        # the shared entrypoint (rather than in __main__.py) so it also triggers
+        # for the installed `osbuild` console-script, which loads this function
+        # directly and never runs __main__.py. Returns the child's exit status,
+        # or None to fall through to the normal code path.
+        r = _reexec_in_userns()
+        if r is not None:
+            return r
+
     args = parse_arguments(sys.argv)
     if args.rundir is None:
         args.rundir = _default_rundir()
