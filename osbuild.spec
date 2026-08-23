@@ -1,7 +1,7 @@
 %global         forgeurl https://github.com/osbuild/osbuild
 %global         selinuxtype targeted
 
-Version:        191
+Version:        192
 %global         osbuild_initrd_version 0.2
 
 %forgemeta
