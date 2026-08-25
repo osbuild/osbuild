@@ -8,6 +8,7 @@ import platform
 import shutil
 import signal
 import socket
+import struct
 import subprocess
 import sys
 import tempfile
@@ -35,6 +36,77 @@ def find_kernel_dir(tree):
             return modules_dir / subdir.name
 
     raise ValueError("No valid kernel directory found in /usr/lib/modules")
+
+
+def _decompress_zstd(payload):
+    # Python 3.14 added compression.zstd
+    try:
+        # pylint: disable=import-outside-toplevel
+        from compression import zstd as _zstd
+        return _zstd.ZstdDecompressor().decompress(payload)
+    except ImportError:
+        pass
+
+    # Else fall back to zstd tool
+    return subprocess.run(
+        ["zstd", "-dc"],
+        input=payload, stdout=subprocess.PIPE, check=True,
+    ).stdout
+
+
+# EFI zboot ("zimg") self-decompressing kernel image support.
+#
+# Format reference (struct linux_efi_zboot_header):
+# https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S
+_EFI_ZBOOT_HEADER = struct.Struct("<2s2s4sII8s32s4sI")
+_EFI_ZBOOT_MSDOS_MAGIC = b"MZ"
+_EFI_ZBOOT_ZIMG_MAGIC = b"zimg"
+_EFI_ZBOOT_LINUX_MAGIC = b"\xcd\x23\x82\x81"
+
+
+def unpack_kernel_image_if_needed(path):
+    """Uncompress kernel image formats that qemu doesn't support.
+
+    Returns the raw (decompressed) kernel image bytes, or None if there
+    is no need to uncompress the kernel. Currently this only handles
+    EFI zboot images, as used on aarch64.
+    """
+    with open(path, "rb") as f:
+        header = f.read(_EFI_ZBOOT_HEADER.size)
+
+        if len(header) < _EFI_ZBOOT_HEADER.size:
+            return None
+
+        (msdos_magic, _reserved0, zimg, payload_offset, payload_size,
+         _reserved1, compression_type, linux_magic, _pe_header_offset) = \
+            _EFI_ZBOOT_HEADER.unpack_from(header, 0)
+
+        if (msdos_magic != _EFI_ZBOOT_MSDOS_MAGIC or
+                zimg != _EFI_ZBOOT_ZIMG_MAGIC or
+                linux_magic != _EFI_ZBOOT_LINUX_MAGIC):
+            return None
+
+        compression = compression_type.split(b"\x00", 1)[0].decode("ascii")
+
+        # QEMU'can handle gzip, no need to unpack
+        if compression == "gzip":
+            return None
+
+        f.seek(payload_offset)
+        payload = f.read(payload_size)
+        if len(payload) < payload_size:
+            raise RuntimeError(f"corrupt EFI zboot image {os.fspath(path)!r}")
+
+    if compression in ("zstd", "zstd22"):
+        return _decompress_zstd(payload)
+    if compression == "xz":
+        return lzma.LZMADecompressor(format=lzma.FORMAT_XZ).decompress(payload)
+    if compression == "lzma":
+        return lzma.LZMADecompressor(format=lzma.FORMAT_ALONE).decompress(payload)
+
+    raise RuntimeError(
+        f"unable to handle EFI zboot image {os.fspath(path)!r} "
+        f"with {compression!r} compression")
 
 
 def get_module_dependencies(module_path):
@@ -305,6 +377,11 @@ class Qemu:
 
         kerneldir = find_kernel_dir(rootfs_path)
         kernel_path = kerneldir / "vmlinuz"
+
+        raw_kernel = unpack_kernel_image_if_needed(kernel_path)
+        if raw_kernel is not None:
+            kernel_path = Path(self._tmpdir.name) / "vmlinuz"
+            kernel_path.write_bytes(raw_kernel)
 
         initrd_path = Path(self._tmpdir.name) / "initrd"
         create_initrd(libdir_path, rootfs_path, initrd_path)
