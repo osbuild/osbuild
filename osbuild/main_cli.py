@@ -125,6 +125,32 @@ def _default_rundir() -> str:
     return f"/run/user/{os.getuid()}/osbuild"
 
 
+def _rootless_container_storage_env() -> dict:
+    """Compute CONTAINERS_GRAPHROOT/RUNROOT for the calling (rootless) user.
+
+    Inside the user namespace we appear as uid 0, so c/storage would otherwise
+    default to the system-global storage (/var/lib/containers, /run/containers).
+    Point it back at the per-user rootless storage instead, just like
+    `podman unshare` does, using the rootless c/storage defaults.
+    """
+    env = {}
+
+    graphroot = os.environ.get("CONTAINERS_GRAPHROOT")
+    if not graphroot:
+        data_home = os.environ.get("XDG_DATA_HOME") or \
+            os.path.join(os.path.expanduser("~"), ".local", "share")
+        graphroot = os.path.join(data_home, "containers", "storage")
+    env["CONTAINERS_GRAPHROOT"] = graphroot
+
+    runroot = os.environ.get("CONTAINERS_RUNROOT")
+    if not runroot:
+        runtime_dir = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+        runroot = os.path.join(runtime_dir, "containers")
+    env["CONTAINERS_RUNROOT"] = runroot
+
+    return env
+
+
 def _reexec_in_userns() -> Optional[int]:
     """Re-exec osbuild inside a user namespace with full uid/gid mappings.
 
@@ -144,7 +170,7 @@ def _reexec_in_userns() -> Optional[int]:
         # Keep the user rundir even though uid will be 0 in the userns
         argv += ["--rundir", _default_rundir()]
 
-    return maps.exec(argv)
+    return maps.exec(argv, env=_rootless_container_storage_env())
 
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
 

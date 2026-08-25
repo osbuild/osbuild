@@ -26,7 +26,7 @@ import subprocess
 import threading
 import typing
 import uuid
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 __all__ = [
     "fcntl_flock",
@@ -481,12 +481,15 @@ class IdMaps(typing.NamedTuple):
              "1", str(sg_start), str(sg_count)],
             check=True)
 
-    def exec(self, argv: List[str]) -> Optional[int]:
+    def exec(self, argv: List[str], env: Optional[Dict[str, str]] = None) -> Optional[int]:
         """Run `argv` inside a new user namespace mapped by these id maps.
 
         On success the parent supervises the child and returns its exit status,
         so the caller can `sys.exit()` with it. Returns None if the namespace
         cannot be set up.
+
+        If `env` is given, those variables are added to (overriding) the current
+        environment for the re-exec'd process.
         """
         ready_r, ready_w = os.pipe()  # child -> parent: namespace created
         go_r, go_w = os.pipe()        # parent -> child: maps installed
@@ -508,7 +511,10 @@ class IdMaps(typing.NamedTuple):
             if os.read(go_r, 1) != b"K":
                 os._exit(0)
             os.close(go_r)
-            os.execvp(argv[0], argv)
+            if env:
+                os.execvpe(argv[0], argv, {**os.environ, **env})
+            else:
+                os.execvp(argv[0], argv)
             os._exit(127)
 
         # --- parent ---
