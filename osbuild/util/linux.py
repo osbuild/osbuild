@@ -31,11 +31,25 @@ from typing import Dict, List, Optional, Tuple
 __all__ = [
     "fcntl_flock",
     "IdMaps",
+    "in_init_user_namespace",
     "ioctl_get_immutable",
     "ioctl_toggle_immutable",
     "Libc",
     "proc_boot_id",
 ]
+
+
+# This is the inode number of initial user namespace. See
+# `proc_ns_operations` in the kernel and `PROC_USER_INIT_INO`.
+USER_NS_INIT_INO = 0xEFFF_FFFD
+
+
+def in_init_user_namespace() -> bool:
+    """Check whether we run in the initial (host) user namespace."""
+    try:
+        return os.stat("/proc/self/ns/user").st_ino == USER_NS_INIT_INO
+    except OSError:
+        return False
 
 
 # NOTE: These are wrong on at least ALPHA and SPARC. They use different
