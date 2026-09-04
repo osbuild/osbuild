@@ -13,6 +13,7 @@ def main(args):
     options = args["options"]
     file_contexts = options.get("file_contexts")
     exclude_paths = options.get("exclude_paths")
+    setfiles_from = options.get("setfiles_from", "host")
     target = options.get("target", "tree:///")
     root, target = parsing.parse_location_into_parts(target, args)
 
@@ -23,7 +24,11 @@ def main(args):
             file_contexts = parsing.parse_location(file_contexts, args)
         if exclude_paths:
             exclude_paths = [os.path.normpath(f"{root}/{target}/{p}") for p in exclude_paths]
-        selinux.setfiles(file_contexts, os.path.normpath(root), target, exclude_paths=exclude_paths)
+        selinux.setfiles(file_contexts,
+                         os.path.normpath(root),
+                         target,
+                         exclude_paths=exclude_paths,
+                         setfiles_from=setfiles_from)
 
     labels = options.get("labels", {})
     for path, label in labels.items():

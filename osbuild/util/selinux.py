@@ -5,6 +5,8 @@ import os
 import subprocess
 from typing import Dict, List, Optional, TextIO
 
+from osbuild.util.chroot import Chroot
+
 # Extended attribute name for SELinux labels
 XATTR_NAME_SELINUX = b"security.selinux"
 
@@ -35,7 +37,32 @@ def config_get_policy(config: Dict[str, str]):
     return config.get('SELINUXTYPE', None)
 
 
-def setfiles(spec_file: str, root: str, *paths, exclude_paths: Optional[List[str]] = None) -> None:
+def chroot_rel_path(path: str, root: str) -> str:
+    path = os.fspath(path)
+    root = os.fspath(root)
+    rel = os.path.relpath(path, root)
+    if rel.startswith(".."):
+        return path  # not under root
+    if rel == ".":
+        return "/"
+    return f"/{rel}"
+
+
+def setfiles_binary_in_tree(root: str) -> str:
+    setfiles_location = "/usr/bin/setfiles"
+    if os.path.isfile(os.path.join(root, setfiles_location.lstrip("/"))):
+        return setfiles_location
+    raise RuntimeError(
+        f"setfiles not found at {root} (try using setfiles_from='host')"
+    )
+
+
+def setfiles(
+        spec_file: str,
+        root: str,
+        *paths,
+        exclude_paths: Optional[List[str]] = None,
+        setfiles_from: str = "host") -> None:
     """Initialize the security context fields for `paths`
 
     Initialize the security context fields (extended attributes)
@@ -44,19 +71,44 @@ def setfiles(spec_file: str, root: str, *paths, exclude_paths: Optional[List[str
     and the entries in `path` are interpreted as relative to it.
     Uses the setfiles(8) tool to actually set the contexts.
     Paths can be excluded via the exclude_paths argument.
+
+    With ``setfiles_from='tree'``, setfiles is executed from the tree
+    via chroot(2),.
     """
+    if setfiles_from not in ["host", "tree"]:
+        raise ValueError(f"invalid setfiles_from: {setfiles_from}")
+
     if exclude_paths is None:
         exclude_paths = []
+
+    if setfiles_from == "host":
+        exclude_paths_args = []
+        for p in exclude_paths:
+            exclude_paths_args.extend(["-e", p])
+
+        for path in paths:
+            subprocess.run(["setfiles", "-F",
+                            "-r", root,
+                            *exclude_paths_args,
+                            spec_file,
+                            f"{root}{path}"],
+                           check=True)
+        return
+
+    # Changing chroot means we need to change relative path
+    # to a specfile and excluded paths.
+    setfiles_bin = setfiles_binary_in_tree(root)
+    spec = chroot_rel_path(spec_file, root)
     exclude_paths_args = []
     for p in exclude_paths:
-        exclude_paths_args.extend(["-e", p])
+        exclude_paths_args.extend(["-e", chroot_rel_path(p, root)])
 
-    for path in paths:
-        subprocess.run(["setfiles", "-F",
-                        "-r", root,
+    with Chroot(root) as chroot:
+        for path in paths:
+            chroot.run([setfiles_bin, "-F",
                         *exclude_paths_args,
-                        spec_file,
-                        f"{root}{path}"],
+                        spec,
+                        path],
                        check=True)
 
 
