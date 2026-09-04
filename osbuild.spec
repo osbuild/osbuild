@@ -476,6 +476,7 @@ fi
 %files tools
 %{_bindir}/osbuild-image-info
 %{_bindir}/osbuild-mpp
+%{_bindir}/osbuild-add-selinux-labels
 %{?fedora:%{_bindir}/osbuild-dev}
 %{_libexecdir}/osbuild-store
 
