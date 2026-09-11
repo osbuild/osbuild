@@ -6,6 +6,17 @@ import pytest
 
 from osbuild import testutil
 
+
+def _skip_if_no_xattr(path):
+    try:
+        f = os.path.join(path, ".xattr_test")
+        open(f, "w", encoding="utf-8").close()
+        os.setxattr(f, "user.test", b"1")
+        os.unlink(f)
+    except OSError:
+        pytest.skip("filesystem does not support user xattrs")
+
+
 STAGE_NAME = "org.osbuild.os-release"
 
 
@@ -199,6 +210,7 @@ def test_os_release_creates_intermediate_dirs(tmp_path, stage_module):
 
 
 def test_extension_release_strict_false(tmp_path, stage_module):
+    _skip_if_no_xattr(tmp_path)
     options = {"extension-release-strict": False, "vars": {"ID": "fedora"}}
     stage_module.main(tmp_path, options)
     filepath = os.path.join(tmp_path, "usr", "lib", "os-release")
@@ -207,6 +219,7 @@ def test_extension_release_strict_false(tmp_path, stage_module):
 
 
 def test_extension_release_strict_default(tmp_path, stage_module):
+    _skip_if_no_xattr(tmp_path)
     stage_module.main(tmp_path, {"vars": {"ID": "fedora"}})
     filepath = os.path.join(tmp_path, "usr", "lib", "os-release")
     with pytest.raises(OSError):
