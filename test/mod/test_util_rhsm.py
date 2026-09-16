@@ -336,6 +336,24 @@ class TestUrlMatching:
             True,
             id="UUID variable",
         ),
+        pytest.param(
+            "https://cdn.redhat.com/content/dist/rhel10/$releasever/x86_64/baseos/os",
+            "https://cdn.redhat.com/content/dist/rhel9/9.8/x86_64/baseos/os",
+            True,
+            id="cross major rhel10 to rhel9",
+        ),
+        pytest.param(
+            "https://rhel10.example.com/content/dist/rhel10/$releasever/x86_64/baseos/os",
+            "https://rhel9.example.com/content/dist/rhel9/9.8/x86_64/baseos/os",
+            False,
+            id="rhel major in hostname is not wildcarded",
+        ),
+        pytest.param(
+            "https://rhel10.example.com/content/dist/rhel10/$releasever/x86_64/baseos/os",
+            "https://rhel10.example.com/content/dist/rhel9/9.8/x86_64/baseos/os",
+            True,
+            id="same rhelN hostname, cross major path",
+        ),
     ])
     def test_process_baseurl_matching(self, baseurl, test_url, should_match):
         pattern = Subscriptions._process_baseurl(baseurl)
