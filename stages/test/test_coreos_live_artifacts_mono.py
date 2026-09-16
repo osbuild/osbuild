@@ -6,10 +6,12 @@ import textwrap
 
 import pytest
 
+from osbuild.util.features import get_os_features
+
 STAGE_NAME = "org.osbuild.coreos.live-artifacts.mono"
 
 
-def test_get_os_features(tmp_path, stage_module):
+def test_get_os_features(tmp_path):
     cfg_path = tmp_path / "usr/share/coreos-installer/example-config.yaml"
     cfg_path.parent.mkdir(parents=True)
     cfg_path.write_text(textwrap.dedent("""\
@@ -18,7 +20,7 @@ def test_get_os_features(tmp_path, stage_module):
     # Manually specify the image URL
     image-url: URL
     """))
-    features = stage_module.get_os_features(tmp_path)
+    features = get_os_features(tmp_path)
     assert {
         "installer-config": True,
         "installer-config-directives": {

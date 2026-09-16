@@ -6,6 +6,7 @@ import sys
 
 import osbuild.api
 from osbuild.util import bls
+from osbuild.util.features import write_os_features
 
 # Constants
 # For console.cfg see https://github.com/coreos/bootupd/pull/620
@@ -66,6 +67,7 @@ def main(paths, options):
     # Append kernel arguments in bls entries
     bls.options_append(boot_path, kernel_arguments)
 
+    write_os_features(root, os.path.join(root, "boot/coreos/features.json"))
 
 if __name__ == "__main__":
     args = osbuild.api.arguments()
