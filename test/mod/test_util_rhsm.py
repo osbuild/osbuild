@@ -59,6 +59,34 @@ metadata_expire = 86400
 enabled_metadata = 0
 """
 
+# SATELLITE_REPO is a redhat.repo from a Satellite-registered host: the baseurl is
+# templated on $releasever with a literal arch, and sslcacert is the Katello CA
+# rather than the default redhat-uep.pem.
+SATELLITE_REPO = """[rhel-10-for-x86_64-baseos-rpms]
+name = Red Hat Enterprise Linux 10 for x86_64 - BaseOS (RPMs)
+baseurl = https://satellite.example.com/pulp/content/dist/rhel10/$releasever/x86_64/baseos/os
+enabled = 1
+gpgcheck = 1
+sslverify = 1
+sslcacert = /etc/rhsm/ca/katello-server-ca.pem
+sslclientkey = /etc/pki/entitlement/517534911145439618-key.pem
+sslclientcert = /etc/pki/entitlement/517534911145439618.pem
+metadata_expire = 1
+enabled_metadata = 1
+"""
+
+FALLBACK_SECRETS = {
+    "ssl_ca_cert": "/etc/rhsm/ca/redhat-uep.pem",
+    "ssl_client_key": "/etc/pki/entitlement/fallback-key.pem",
+    "ssl_client_cert": "/etc/pki/entitlement/fallback.pem",
+}
+
+SATELLITE_SECRETS = {
+    "ssl_ca_cert": "/etc/rhsm/ca/katello-server-ca.pem",
+    "ssl_client_key": "/etc/pki/entitlement/517534911145439618-key.pem",
+    "ssl_client_cert": "/etc/pki/entitlement/517534911145439618.pem",
+}
+
 
 @contextlib.contextmanager
 def patched_path_exists(fake_root):
@@ -320,6 +348,12 @@ class TestUrlMatching:
         ),
         pytest.param(
             "https://cdn.redhat.com/$releasever/repo/$basearch/os",
+            "https://cdn.redhat.com/9.8/repo/x86_64/os/test.rpm",
+            True,
+            id="point release releasever",
+        ),
+        pytest.param(
+            "https://cdn.redhat.com/$releasever/repo/$basearch/os",
             "https://cdn.redhat.com/9/different/x86_64/os/test.rpm",
             False,
             id="wrong path structure",
@@ -359,6 +393,60 @@ class TestUrlMatching:
         pattern = Subscriptions._process_baseurl(baseurl)
         result = pattern.match(test_url) is not None
         assert result == should_match
+
+
+class TestSatelliteMatching:
+    """Tests for Satellite-registered hosts: $releasever, point releases, and
+    cross-major matching must resolve to the subscription's Katello CA rather
+    than the global fallback. Mirrors image-builder's pkg/rhsm/secrets_test.go.
+    """
+
+    SATELLITE_BASE = "https://satellite.example.com/pulp/content/dist/rhel10"
+
+    @pytest.mark.parametrize("url,should_match", [
+        pytest.param(f"{SATELLITE_BASE}/10/x86_64/baseos/os", True, id="rolling"),
+        pytest.param(f"{SATELLITE_BASE}/10.2/x86_64/baseos/os", True, id="point release"),
+        pytest.param(
+            "https://satellite.example.com/pulp/content/dist/rhel9/9.8/x86_64/baseos/os",
+            True,
+            id="cross major 9.8",
+        ),
+        pytest.param(
+            "https://satellite.example.com/pulp/content/dist/rhel9/9/x86_64/baseos/os",
+            True,
+            id="cross major 9 rolling",
+        ),
+        pytest.param(f"{SATELLITE_BASE}/10/x86_64/appstream/os", False, id="wrong path structure"),
+        pytest.param(
+            "https://cdn.redhat.com/content/dist/rhel10/10/x86_64/baseos/os",
+            False,
+            id="different host",
+        ),
+    ])
+    def test_get_secrets_matching(self, url, should_match):
+        # no fallback secrets set, so a miss surfaces as an error rather than
+        # the fallback CA, isolating these cases to the matching behaviour.
+        subscriptions = Subscriptions.parse_repo_file(StringIO(SATELLITE_REPO))
+        if not should_match:
+            with pytest.raises(RuntimeError, match="no RHSM secret associated"):
+                subscriptions.get_secrets([url])
+            return
+        secrets = subscriptions.get_secrets([url])
+        assert secrets == SATELLITE_SECRETS
+
+    def test_point_release_prefers_subscription_ca(self):
+        subscriptions = Subscriptions.parse_repo_file(StringIO(SATELLITE_REPO))
+        subscriptions.secrets = FALLBACK_SECRETS
+        secrets = subscriptions.get_secrets(
+            [f"{self.SATELLITE_BASE}/10.2/x86_64/baseos/os"])
+        assert secrets == SATELLITE_SECRETS
+
+    def test_cross_major_prefers_subscription_ca(self):
+        subscriptions = Subscriptions.parse_repo_file(StringIO(SATELLITE_REPO))
+        subscriptions.secrets = FALLBACK_SECRETS
+        secrets = subscriptions.get_secrets(
+            ["https://satellite.example.com/pulp/content/dist/rhel9/9.8/x86_64/baseos/os"])
+        assert secrets == SATELLITE_SECRETS
 
 
 class TestPercentEncodedUrls:
