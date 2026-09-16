@@ -17,12 +17,16 @@ MEDIA_TYPES = {
     "config": "application/vnd.oci.image.config.v1+json"
 }
 
-# The extended attributes that should be recorded for the
-# contents of file system layers:
+# The extended attributes that should be recorded for the contents of file
+# system layers. GNU tar interprets these as glob patterns:
 #  - user.*: user specified extended attributes
 #  - security.ima: Integrity Measurement Architecture (IMA)
 #  - security.capability: Linux capabilities(7)
-XATTRS_WANT = r"^(user.|security\.ima|security\.capability)"
+XATTRS_WANT = [
+    "user.*",
+    "security.ima",
+    "security.capability",
+]
 
 
 def sha256sum(path: str) -> str:
@@ -69,7 +73,7 @@ def blobs_add_layer(blobs: str, tree: str):
         "--no-selinux",
         "--acls",
         "--xattrs",
-        "--xattrs-include=" + XATTRS_WANT,
+        *("--xattrs-include=" + pattern for pattern in XATTRS_WANT),
         # Enforce standard format
         "--format=posix",
         # Drop atime and ctime for better reproduceability
