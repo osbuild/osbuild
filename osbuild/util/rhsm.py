@@ -11,6 +11,10 @@ import os
 import re
 from typing import List
 
+# Path segment /rhel8/, /rhel9/, /rhel10/, ... in a content URL.
+# The regex is a bit complicated as we need to support re.compile() in Python 3.6 which escapes '/'
+_RHEL_MAJOR_PATH = re.compile(r"\\?/rhel[0-9]+\\?/")
+
 
 class Subscriptions:
     DEFAULT_SSL_CA_CERT = "/etc/rhsm/ca/redhat-uep.pem"
@@ -110,6 +114,11 @@ class Subscriptions:
         # Now replace variables with regexes (see man 5 yum.conf for the list)
         for variable in ["\\$releasever", "\\$arch", "\\$basearch", "\\$uuid"]:
             input_url = input_url.replace(variable, "[^/]*")
+
+        # The major release version must be escaped to support cross-major
+        # builds. Otherwise the matcher fails because the subscription
+        # baseurl has rhelX and the image baseurl has rhelY.
+        input_url = _RHEL_MAJOR_PATH.sub("/rhel[^/]*/", input_url)
 
         return re.compile(input_url)
 
