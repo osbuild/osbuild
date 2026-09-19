@@ -26,5 +26,6 @@ setuptools.setup(
         "tools/osbuild-mpp",
         "tools/osbuild-dev",
         "tools/osbuild-image-info",
+        "tools/osbuild-add-selinux-labels",
     ],
 )
