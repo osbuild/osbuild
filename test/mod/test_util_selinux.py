@@ -42,6 +42,21 @@ def test_selinux_config():
     assert policy == 'targeted'
 
 
+def test_chroot_rel_path(tmp_path):
+    root = tmp_path / "rootfs"
+    root.mkdir()
+    (root / "etc" / "selinux").mkdir(parents=True)
+    spec = root / "etc" / "selinux" / "config-file"
+    spec.touch()
+
+    assert selinux.chroot_rel_path(spec, root) == "/etc/selinux/config-file"
+    assert selinux.chroot_rel_path(root, root) == "/"
+    assert selinux.chroot_rel_path(root / "sysroot", root) == "/sysroot"
+    assert selinux.chroot_rel_path("/etc/selinux/thing", root) == "/etc/selinux/thing"
+    assert selinux.chroot_rel_path(root / "etc/../etc/selinux/config-file", root) == "/etc/selinux/config-file"
+    assert selinux.chroot_rel_path(tmp_path / "other", root) == os.fspath(tmp_path / "other")
+
+
 def test_setfilecon():
     with mock.patch("os.setxattr") as setxattr:
 
@@ -86,4 +101,25 @@ def test_selinux_setfiles_exclude(mocked_run, tmp_path):
             ["setfiles", "-F", "-r", os.fspath(tmp_path),
              "-e", "/sysroot", "-e", "/other/dir",
              "/etc/selinux/thing", os.fspath(tmp_path) + "/"], check=True),
+    ]
+
+
+@mock.patch("osbuild.util.selinux.Chroot")
+def test_selinux_setfiles_from_tree(mocked_chroot, tmp_path):
+    setfiles_bin = tmp_path / "usr/bin/setfiles"
+    setfiles_bin.parent.mkdir(parents=True)
+    setfiles_bin.touch()
+    chroot = mock.MagicMock()
+    mocked_chroot.return_value.__enter__.return_value = chroot
+    spec = tmp_path / "etc/selinux/config-file"
+    selinux.setfiles(spec, tmp_path, "/", "/boot",
+                     exclude_paths=[f"{tmp_path}/sysroot"],
+                     setfiles_from="tree")
+    assert chroot.run.call_args_list == [
+        mock.call(["/usr/bin/setfiles", "-F",
+                   "-e", "/sysroot",
+                   "/etc/selinux/config-file", "/"], check=True),
+        mock.call(["/usr/bin/setfiles", "-F",
+                   "-e", "/sysroot",
+                   "/etc/selinux/config-file", "/boot"], check=True),
     ]

@@ -1,0 +1,30 @@
+{
+  "added_files": [],
+  "deleted_files": [],
+  "differences": {
+    "/etc/pki/ca-trust/extracted/java/cacerts": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/selinux-test": {
+      "selinux": [
+        "unconfined_u:object_r:user_tmp_t:s0",
+        "system_u:object_r:default_t:s0"
+      ]
+    },
+    "/usr/lib/sysimage/rpm/rpmdb.sqlite": {
+      "content": [
+        null,
+        null
+      ]
+    },
+    "/var/cache/ldconfig/aux-cache": {
+      "content": [
+        null,
+        null
+      ]
+    }
+  }
+}
