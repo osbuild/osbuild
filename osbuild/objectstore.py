@@ -334,6 +334,10 @@ class HostTree:
 
 
 class ObjectStore(contextlib.AbstractContextManager):
+    # tmp entries newer than this are assumed to belong to a live parallel
+    # build and must not be pruned. 24h is well beyond a typical image build.
+    TMP_STALE_AFTER = 24 * 60 * 60
+
     def __init__(self, store: PathLike, read_only: bool = False):
         self.cache = FsCache("osbuild", store)
         self.tmp = os.path.join(store, "tmp")
@@ -455,19 +459,26 @@ class ObjectStore(contextlib.AbstractContextManager):
         self.cache.store_tree(object_id, obj.path + "/.")
 
     def prune_tmp(self):
-        """Remove leftover files under store/tmp.
+        """Remove stale leftovers under store/tmp.
 
         Stage TemporaryDirectory objects normally clean up on exit, but
         crashed or interrupted builds can leave orphans (for example
         buildroot-tmp-*) that fill the disk and break later builds.
+
+        Only entries whose mtime is older than TMP_STALE_AFTER are
+        removed so concurrent builds sharing the same store are not
+        affected. Read-only stores are left untouched.
         """
         if self._read_only:
             return
 
+        cutoff = time.time() - self.TMP_STALE_AFTER
         try:
             with os.scandir(self.tmp) as entries:
                 for entry in entries:
                     try:
+                        if entry.stat(follow_symlinks=False).st_mtime > cutoff:
+                            continue
                         if entry.is_dir(follow_symlinks=False):
                             rmrf.rmtree(entry.path)
                         else:
@@ -485,7 +496,6 @@ class ObjectStore(contextlib.AbstractContextManager):
 
         self._stack.close()
         self._objs = set()
-        self.prune_tmp()
 
     # export active floating objects so another store can load them,
     # typically in a VM
@@ -516,8 +526,8 @@ class ObjectStore(contextlib.AbstractContextManager):
     def __enter__(self):
         assert not self.active
         self._stack.enter_context(self.cache)
-        # Drop leftovers from previous crashed/interrupted runs before
-        # allocating new temporary buildroots under store/tmp.
+        # Drop stale leftovers from previous crashed/interrupted runs
+        # before allocating new temporary buildroots under store/tmp.
         self.prune_tmp()
         return self
 

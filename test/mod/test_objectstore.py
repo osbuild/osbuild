@@ -5,6 +5,7 @@
 import contextlib
 import os
 import tempfile
+import time
 from pathlib import Path
 
 import pytest
@@ -92,10 +93,16 @@ def test_cleanup(tmp_path):
         assert object_store.get("A") is None
 
 
-def test_prune_tmp_removes_orphans_on_enter(tmp_path):
+def _age_path(path: Path, seconds_ago: float) -> None:
+    ts = time.time() - seconds_ago
+    os.utime(path, (ts, ts))
+
+
+def test_prune_tmp_removes_stale_orphans_on_enter(tmp_path):
     orphan = tmp_path / "tmp" / "buildroot-tmp-orphan"
     orphan.mkdir(parents=True)
     (orphan / "leftover").write_text("x", encoding="utf-8")
+    _age_path(orphan, objectstore.ObjectStore.TMP_STALE_AFTER + 60)
 
     with objectstore.ObjectStore(tmp_path) as object_store:
         assert not orphan.exists()
@@ -105,19 +112,43 @@ def test_prune_tmp_removes_orphans_on_enter(tmp_path):
     assert not os.listdir(tmp_path / "tmp")
 
 
-def test_prune_tmp_removes_orphans_on_exit(tmp_path):
-    with objectstore.ObjectStore(tmp_path) as object_store:
-        orphan = Path(object_store.tmp) / "buildroot-tmp-orphan"
-        orphan.mkdir()
-        (orphan / "leftover").write_text("x", encoding="utf-8")
+def test_prune_tmp_leaves_recent_dirs(tmp_path):
+    live = tmp_path / "tmp" / "buildroot-tmp-live"
+    live.mkdir(parents=True)
+    (live / "work").write_text("x", encoding="utf-8")
 
-    assert not os.listdir(tmp_path / "tmp")
+    with objectstore.ObjectStore(tmp_path) as object_store:
+        mine = Path(object_store.tmp) / "buildroot-tmp-mine"
+        mine.mkdir()
+        (mine / "work").write_text("x", encoding="utf-8")
+        assert live.exists()
+        assert mine.exists()
+
+    # No prune on exit: a parallel build's tmp dir, and a leftover from
+    # this run, stay until they go stale.
+    assert live.exists()
+    assert mine.exists()
+
+
+def test_prune_tmp_mixed_stale_and_recent(tmp_path):
+    stale = tmp_path / "tmp" / "buildroot-tmp-stale"
+    recent = tmp_path / "tmp" / "buildroot-tmp-recent"
+    stale.mkdir(parents=True)
+    recent.mkdir(parents=True)
+    (stale / "leftover").write_text("x", encoding="utf-8")
+    (recent / "work").write_text("x", encoding="utf-8")
+    _age_path(stale, objectstore.ObjectStore.TMP_STALE_AFTER + 60)
+
+    with objectstore.ObjectStore(tmp_path):
+        assert not stale.exists()
+        assert recent.exists()
 
 
 def test_prune_tmp_skips_read_only_store(tmp_path):
     orphan = tmp_path / "tmp" / "buildroot-tmp-orphan"
     orphan.mkdir(parents=True)
     (orphan / "leftover").write_text("x", encoding="utf-8")
+    _age_path(orphan, objectstore.ObjectStore.TMP_STALE_AFTER + 60)
 
     with objectstore.ObjectStore(tmp_path, read_only=True) as object_store:
         assert orphan.exists()
