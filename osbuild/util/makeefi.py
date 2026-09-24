@@ -118,37 +118,42 @@ def mkefiboot(efidir, output_efiboot_img, loop_client):
             tarinfo.mode = 0o0644
         return tarinfo
 
-    # Install binaries from the efidir
-    # Manually construct the tarball to ensure proper permissions and ownership
-    efitarfile = tempfile.NamedTemporaryFile(suffix=".tar")
-    with tarfile.open(efitarfile.name, "w:", dereference=True) as tar:
-        tar.add(efidir, arcname="/EFI", filter=strip_tar)
+    # Use a working directory for the temporary files that is in the
+    # same target filesystem as the image we are supposed to output,
+    # since that filesystem likely has enough free space.
+    with tempfile.TemporaryDirectory(dir=os.path.dirname(output_efiboot_img)) as workdir:
 
-    # Create the efiboot image file. Determine the size we should make
-    # it by taking the tarball size and adding 2MiB for fs overhead.
-    size = os.path.getsize(efitarfile.name) + 2 * 1024 * 1024
-    # Align to 512 byte boundary. Some firmeware (like nvidiabluefield)
-    # derives block device sector size from image size; unaligned sizes
-    # produce sector size 1 which GRUB cannot handle
-    size = (size + 511) & ~511
-    with open(output_efiboot_img, "wb") as out:
-        out.truncate(size)
+        # Install binaries from the efidir
+        # Manually construct the tarball to ensure proper permissions and ownership
+        efitarfile = tempfile.NamedTemporaryFile(dir=workdir, suffix=".tar")
+        with tarfile.open(efitarfile.name, "w:", dereference=True) as tar:
+            tar.add(efidir, arcname="/EFI", filter=strip_tar)
 
-    # Make loopback device; mkfs; populate with files
-    with loop_client.device(output_efiboot_img) as loopdev:
-        # On RHEL 8, when booting from a disk device (rather than a CD),
-        # https://github.com/systemd/systemd/issues/14408 causes the
-        # hybrid ESP to race with the ISO9660 filesystem for the
-        # /dev/disk/by-label symlink unless the ESP has its own label,
-        # so set EFI-SYSTEM for consistency with the metal image.
-        # This should not be needed on Fedora or RHEL 9, but seems like
-        # a good thing to do anyway.
-        label = 'EFI-SYSTEM'
-        # NOTE: the arguments to mkfs here match how virt-make-fs calls mkfs
-        subprocess.check_call(['mkfs', '-t', 'vfat', '-I', '--mbr=n', '-n', label, loopdev])
-        with tempfile.TemporaryDirectory() as d:
-            try:
-                subprocess.check_call(['mount', '-o', 'utf8', loopdev, d])
-                subprocess.check_call(['tar', '-C', d, '-xf', efitarfile.name])
-            finally:
-                subprocess.check_call(['umount', d])
+        # Create the efiboot image file. Determine the size we should make
+        # it by taking the tarball size and adding 2MiB for fs overhead.
+        size = os.path.getsize(efitarfile.name) + 2 * 1024 * 1024
+        # Align to 512 byte boundary. Some firmeware (like nvidiabluefield)
+        # derives block device sector size from image size; unaligned sizes
+        # produce sector size 1 which GRUB cannot handle
+        size = (size + 511) & ~511
+        with open(output_efiboot_img, "wb") as out:
+            out.truncate(size)
+
+        # Make loopback device; mkfs; populate with files
+        with loop_client.device(output_efiboot_img) as loopdev:
+            # On RHEL 8, when booting from a disk device (rather than a CD),
+            # https://github.com/systemd/systemd/issues/14408 causes the
+            # hybrid ESP to race with the ISO9660 filesystem for the
+            # /dev/disk/by-label symlink unless the ESP has its own label,
+            # so set EFI-SYSTEM for consistency with the metal image.
+            # This should not be needed on Fedora or RHEL 9, but seems like
+            # a good thing to do anyway.
+            label = 'EFI-SYSTEM'
+            # NOTE: the arguments to mkfs here match how virt-make-fs calls mkfs
+            subprocess.check_call(['mkfs', '-t', 'vfat', '-I', '--mbr=n', '-n', label, loopdev])
+            with tempfile.TemporaryDirectory(dir=workdir) as mntdir:
+                try:
+                    subprocess.check_call(['mount', '-o', 'utf8', loopdev, mntdir])
+                    subprocess.check_call(['tar', '-C', mntdir, '-xf', efitarfile.name])
+                finally:
+                    subprocess.check_call(['umount', mntdir])
