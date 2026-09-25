@@ -20,11 +20,10 @@ import subprocess
 import sys
 import tempfile
 
-import yaml
-
 import osbuild.api
 import osbuild.remoteloop as remoteloop
 from osbuild.util import checksum, makeefi, osrelease
+from osbuild.util.features import write_os_features
 from osbuild.util.chroot import Chroot
 from osbuild.util.path import ensure_glob
 
@@ -56,24 +55,6 @@ def align_initrd_for_uncompressed_append(destf):
     offset = destf.tell()
     if offset % 4:
         destf.write(b'\0' * (4 - offset % 4))
-
-
-# Return OS features table for features.json, which is read by
-# coreos-installer {iso|pxe} customize
-def get_os_features(tree):
-    features = {
-        # coreos-installer >= 0.12.0
-        'installer-config': True,
-        # coreos/fedora-coreos-config@3edd2f28
-        'live-initrd-network': True,
-    }
-    file = os.path.join(tree, 'usr/share/coreos-installer/example-config.yaml')
-    with open(file, encoding='utf8') as f:
-        example_config_yaml = yaml.safe_load(f)
-    features['installer-config-directives'] = {
-        k: True for k in example_config_yaml
-    }
-    return features
 
 
 # https://www.kernel.org/doc/html/latest/admin-guide/initrd.html#compressed-cpio-images
@@ -824,13 +805,11 @@ def main(workdir, tree, inputs, options, loop_client):
     # Generate JSON file that lists OS features available to
     # coreos-installer {iso|pxe} customize.  Put it in the initramfs for
     # pxe customize and the ISO for iso customize.
-    features = json.dumps(get_os_features(tree=deployed_tree), indent=2, sort_keys=True) + '\n'
-    featurespath = paths["initrd/etc/coreos/features.json"]
-    os.makedirs(os.path.dirname(featurespath), exist_ok=True)
-    with open(featurespath, 'w', encoding='utf8') as fh:
-        fh.write(features)
-    with open(paths["iso/coreos/features.json"], 'w', encoding='utf8') as fh:
-        fh.write(features)
+    write_os_features(
+        deployed_tree,
+        paths["initrd/etc/coreos/features.json"],
+        paths["iso/coreos/features.json"],
+    )
 
     mk_osmet_files(deployed_tree, img_metal, img_metal4k, loop_client, paths, os_release)
 
