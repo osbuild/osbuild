@@ -241,7 +241,8 @@ class FileSystemMountService(MountService):
 
         # It's possible this mountpoint has already been unmounted
         # if a umount -R was run by another process, as is done in
-        # mounts/org.osbuild.ostree.deployment.
+        # mounts/org.osbuild.ostree.deployment and
+        # mounts/org.osbuild.bootc.deployment.
         if not os.path.ismount(self.mountpoint):
             print(f"already unmounted: {self.mountpoint}")
             return

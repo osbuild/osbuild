@@ -1,0 +1,50 @@
+{
+  "summary": "bootc deployment mount service",
+  "description": [
+    "Mount the deployment of a bootc installation, as done by the",
+    "`org.osbuild.bootc.install-to-filesystem` stage, so that it looks",
+    "as it will after boot: the deployment's root file system, with",
+    "its persistent `/etc` and `/var` from the physical root. Both",
+    "the ostree and the composefs backends are supported.",
+    "",
+    "This runs `bootc install mount` from the build root, the same",
+    "bootc that installed the deployment. The build root must provide",
+    "bootc with the `install mount` command, and the `/proc`, `/dev`,",
+    "`/sys`, `/run` and `/tmp` directories.",
+    "",
+    "Unlike `org.osbuild.ostree.deployment`, `/boot` and `/sysroot`",
+    "are not mounted in the deployment.",
+    "",
+    "bootc runs in the host's mount namespace, which is where it has to",
+    "leave the deployment mounted, but in new network and PID namespaces.",
+    "",
+    "Host commands used: chroot, mount, mountpoint, sync, umount, unshare"
+  ],
+  "schema_2": {
+    "additionalProperties": false,
+    "required": [
+      "name",
+      "type"
+    ],
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      },
+      "options": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "type": "string",
+            "pattern": "^(mount|tree)$",
+            "default": "tree",
+            "description": "Where the physical root of the installation is. If 'mount', there should be a preceding mount defined that's mounted at /."
+          }
+        }
+      }
+    }
+  }
+}
