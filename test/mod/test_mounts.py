@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
 from osbuild.meta import ModuleInfo
-from osbuild.mounts import Mount
+from osbuild.mounts import Mount, MountManager
 
 
 def test_mount_calc_id_is_stable():
@@ -19,3 +19,22 @@ def test_mount_calc_id_is_stable():
     assert mount1.id == "15066da9ff760a60f1d1a360de2ad584cc0c97d6f6034e3258b3275ba3da6bb2"
     mount2 = Mount("name", info, device, partition, target, opts)
     assert mount1.id == mount2.id
+
+
+def test_mount_manager_passes_buildroot():
+    devices = Mock()
+    devices.device_abspath.return_value = None
+    devices.device_relpath.return_value = None
+    devices.tree = "/tree"
+    client = devices.service_manager.start.return_value
+    client.call.return_value = None
+    info = Mock(spec=ModuleInfo)
+    info.name = "org.osbuild.noop"
+    info.path = "/some/path"
+
+    MountManager(devices, "/root", "/buildroot").mount(Mount("name", info, None, None, "/", {}))
+
+    method, args = client.call.call_args[0]
+    assert method == "mount"
+    assert args["root"] == "/root"
+    assert args["buildroot"] == "/buildroot"
