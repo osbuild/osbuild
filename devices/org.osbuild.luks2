@@ -24,6 +24,15 @@ from osbuild import devices
 from osbuild.util.udev import UdevInhibitor
 
 
+def get_parent_path(parent: str, options: Dict) -> str:
+    assert not parent.startswith("/")
+    parent_path = os.path.join("/dev", parent)
+    partnum = options.get("partnum")
+    if partnum is not None:
+        parent_path += f"p{partnum}"
+    return parent_path
+
+
 class CryptDeviceService(devices.DeviceService):
 
     def __init__(self, args: argparse.Namespace):
@@ -64,7 +73,7 @@ class CryptDeviceService(devices.DeviceService):
     def open(self, devpath: str, parent: str, tree: str, options: Dict):
         passphrase = options.get("passphrase", "")
 
-        parent_dev = os.path.join("/dev", parent)
+        parent_dev = get_parent_path(parent, options)
 
         # Generate a random name for it, since this is a temporary name
         # that is not store in the device at all
