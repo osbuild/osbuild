@@ -20,6 +20,11 @@
         "description": "Passphrase to use",
         "default": "",
         "type": "string"
+      },
+      "partnum": {
+        "description": "Partition number on the parent device",
+        "type": "integer",
+        "minimum": 1
       }
     }
   }
