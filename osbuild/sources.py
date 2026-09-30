@@ -64,6 +64,8 @@ class SourceResults:
     def output(self):
         if self.success:
             return f"source {self.source_type} finished successfully"
+        if len(self.results) == 0:
+            return f"source {self.source_type} finished unsuccessfully: no results"
         error = self.results[-1].error
         return f"source {self.source_type} finished unsuccessfully: {error}"
 
