@@ -5,9 +5,39 @@ from unittest import mock
 
 import pytest
 
+from osbuild import testutil
 from osbuild.testutil import make_fake_input_tree
 
 STAGE_NAME = "org.osbuild.xorrisofs"
+
+
+@pytest.mark.parametrize("test_data,expected_err", [
+    # bad
+    ({"volid": ""}, "'' does not match"),
+    ({"volid": "x" * 33}, "does not match"),
+    ({"volid": "has spaces"}, "does not match"),
+    # good
+    ({"volid": "UPPER"}, ""),
+    ({"volid": "lower"}, ""),
+    ({"volid": "Fedora-S-dvd-x86_64-rawh"}, ""),
+    ({"volid": "Fedora-43-X86_64"}, ""),
+])
+def test_schema_validation_xorrisofs(stage_schema, test_data, expected_err):
+    test_input = {
+        "type": STAGE_NAME,
+        "options": {
+            "filename": "test.iso",
+            "volid": "default",
+        },
+    }
+    test_input["options"].update(test_data)
+    res = stage_schema.validate(test_input)
+
+    if expected_err == "":
+        assert res.valid is True, f"err: {[e.as_dict() for e in res.errors]}"
+    else:
+        assert res.valid is False
+        testutil.assert_jsonschema_error_contains(res, expected_err, expected_num_errs=1)
 
 
 @mock.patch("subprocess.run")
