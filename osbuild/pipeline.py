@@ -297,7 +297,7 @@ class Stage:
             for name, dev in self.devices.items():
                 devices[name] = devmgr.open(dev)
 
-            mntmgr = MountManager(devmgr, mounts_tmpdir)
+            mntmgr = MountManager(devmgr, mounts_tmpdir, os.fspath(build_tree))
             for key, mount in self.mounts.items():
                 data_mnt = mntmgr.mount(mount)
                 mounts[key] = data_mnt

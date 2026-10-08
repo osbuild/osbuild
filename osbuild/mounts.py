@@ -13,7 +13,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from osbuild import host
 from osbuild.devices import DeviceManager
@@ -83,12 +83,14 @@ class MountManager:
     Uses a `host.ServiceManager` to activate `Mount` instances.
     Takes a `DeviceManager` to access devices and a directory
     called `root`, which is the root of all the specified mount
-    points.
+    points. `buildroot` is the tree of the build pipeline that the
+    stage runs in, for mount services that need programs from it.
     """
 
-    def __init__(self, devices: DeviceManager, root: str) -> None:
+    def __init__(self, devices: DeviceManager, root: str, buildroot: Optional[str] = None) -> None:
         self.devices = devices
         self.root = root
+        self.buildroot = buildroot
         self.mounts: Dict[str, Union[str, Dict[str, Mount]]] = {}
 
     def mount(self, mount: Mount) -> Dict:
@@ -119,6 +121,7 @@ class MountManager:
 
             "root": root,
             "tree": os.fspath(self.devices.tree),
+            "buildroot": self.buildroot,
 
             "options": mount.options,
         }
@@ -238,7 +241,8 @@ class FileSystemMountService(MountService):
 
         # It's possible this mountpoint has already been unmounted
         # if a umount -R was run by another process, as is done in
-        # mounts/org.osbuild.ostree.deployment.
+        # mounts/org.osbuild.ostree.deployment and
+        # mounts/org.osbuild.bootc.deployment.
         if not os.path.ismount(self.mountpoint):
             print(f"already unmounted: {self.mountpoint}")
             return
