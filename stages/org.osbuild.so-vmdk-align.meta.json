@@ -1,0 +1,22 @@
+{
+  "summary": "Ensure a stream optimized VMDK is correctly formatted.",
+  "description": [
+    "This stage is meant to be run on VMDK disks created by the",
+    "`qemu-img` stage. It rewrites the specified VMDK, ensuring",
+    "the correct amount of trailing 0s at the end.",
+    "Note that this does not modify the header or remove redundant",
+    "grain directories."
+  ],
+  "schema": {
+    "additionalProperties": false,
+    "required": [
+      "filename"
+    ],
+    "properties": {
+      "filename": {
+        "description": "filename of the VMDK to rewrite",
+        "type": "string"
+      }
+    }
+  }
+}
