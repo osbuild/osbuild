@@ -1,0 +1,211 @@
+#!/usr/bin/python3
+"""
+bootc deployment mount service
+
+Mount the deployment of a bootc installation, as done by the
+`org.osbuild.bootc.install-to-filesystem` stage, so that it looks
+as it will after boot: the deployment's root file system, with
+its persistent `/etc` and `/var` from the physical root. Both
+the ostree and the composefs backends are supported.
+
+This runs `bootc install mount` from the build root, the same
+bootc that installed the deployment, so that the mount always
+matches the on-disk format of the installation. The build root
+must provide bootc with the `install mount` command, and the
+`/proc`, `/dev`, `/sys`, `/run` and `/tmp` directories.
+
+Unlike `org.osbuild.ostree.deployment`, `/boot` and `/sysroot`
+are not mounted in the deployment.
+
+bootc runs in the host's mount namespace, which is where it has to
+leave the deployment mounted, but in new network and PID namespaces.
+
+Host commands used: chroot, mount, mountpoint, sync, umount, unshare
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+from typing import Dict
+
+from osbuild import mounts
+from osbuild.util.chroot import Chroot
+
+# Where the physical root and the deployment are mounted for bootc, on a
+# tmpfs over the build root's /run
+STAGING_DIR = "/run/osbuild-bootc-deployment"
+# Directories of the (read-only) build root that get a tmpfs for bootc
+TMPFS_DIRS = ["run", "tmp"]
+# Directories that must exist in the build root to run bootc there
+BUILDROOT_DIRS = ["proc", "dev", "sys"] + TMPFS_DIRS
+
+
+def mount(*args):
+    subprocess.run(["mount", *args], check=True)
+
+
+class BootcDeploymentMount(mounts.MountService):
+
+    def __init__(self, args):
+        super().__init__(args)
+
+        self.mountpoint = None
+        self.check = False
+        # The directory holding the staging root, and whether that is mounted
+        self.tmpdir = None
+        self.staged = False
+
+    @property
+    def staging_root(self):
+        return os.path.join(self.tmpdir, "root")
+
+    def is_mounted(self):
+        # See org.osbuild.ostree.deployment for why this does not use
+        # os.path.ismount(); `mountpoint` exits with 32 if it is not one.
+        cp = subprocess.run(["mountpoint", "-q", self.mountpoint], check=False)
+        if cp.returncode not in [0, 32]:
+            cp.check_returncode()  # will raise error
+        return cp.returncode == 0
+
+    @staticmethod
+    def check_buildroot(buildroot):
+        if not buildroot:
+            raise RuntimeError("no build root: the deployment is mounted with bootc from the build pipeline")
+        missing = [d for d in BUILDROOT_DIRS if not os.path.isdir(os.path.join(buildroot, d))]
+        if missing:
+            raise RuntimeError(
+                f"build root has no {', '.join('/' + d for d in missing)}: "
+                "the deployment is mounted with bootc from the build pipeline, "
+                "which must be a bootc container")
+
+    def stage(self, buildroot, sysroot):
+        """Set up the staging root: `buildroot` with `sysroot` mounted in it for bootc"""
+        self.tmpdir = tempfile.mkdtemp(prefix="osbuild-bootc-deployment-")
+        root = self.staging_root
+        os.mkdir(root)
+        # A read-only view of the build root, so that neither this
+        # nor bootc can change the build pipeline's tree
+        mount("--bind", "-o", "ro", "--make-private", buildroot, root)
+        self.staged = True
+        for d in TMPFS_DIRS:
+            mount("-t", "tmpfs", "--make-private", "tmpfs", os.path.join(root, d))
+        staging = os.path.join(root, STAGING_DIR.lstrip("/"))
+        for d in ["sysroot", "deployment"]:
+            os.makedirs(os.path.join(staging, d))
+        # Recursively, so that bootc also sees a separate /boot (and ESP)
+        # mounted on the physical root: with ostree it finds the
+        # deployment through the boot loader entries there.
+        mount("--rbind", "--make-rprivate", sysroot, os.path.join(staging, "sysroot"))
+
+    def assemble(self, target):
+        """Mount the deployment at `target` with bootc in the staging root"""
+        root = self.staging_root
+        staging = os.path.join(root, STAGING_DIR.lstrip("/"))
+        with Chroot(root):
+            # bootc must mount in this mount namespace, so this can't use
+            # bwrap; still keep it off the network and away from the
+            # host's processes.
+            subprocess.run(["unshare", "--net", "--pid", "--fork", "--kill-child",
+                            "chroot", root,
+                            "bootc", "install", "mount",
+                            "--sysroot", f"{STAGING_DIR}/sysroot",
+                            "--latest",
+                            f"{STAGING_DIR}/deployment"],
+                           check=True)
+
+        # bootc leaves the deployment mounted in our namespace; move it
+        # out of the staging area. The staging area stays until umount():
+        # the deployment keeps using the physical root through the sysroot
+        # bind mount there (with composefs, for its EROFS image and object
+        # store).
+        mount("--move", os.path.join(staging, "deployment"), target)
+
+    def remove_staging(self, check):
+        """Unmount and remove the staging area; with `check`, fail if that doesn't work"""
+        if not self.tmpdir:
+            return
+        root = self.staging_root
+        if self.staged:
+            # Not lazily: a leftover user of the physical root must fail
+            # here rather than keep its file system alive unnoticed
+            cp = subprocess.run(["umount", "-R", root], check=check)
+            if cp.returncode != 0:
+                print(f"failed to unmount {root}")
+                return
+            self.staged = False
+        try:
+            # Not rmtree: should anything still be mounted, this fails
+            # instead of deleting from the mounted file systems
+            if os.path.exists(root):
+                os.rmdir(root)
+            os.rmdir(self.tmpdir)
+        except OSError:
+            if check:
+                raise
+            print(f"failed to remove {self.tmpdir}")
+            return
+        self.tmpdir = None
+
+    def mount(self, args: Dict):
+        options = args["options"]
+        source = options.get("source", "tree")
+        buildroot = args.get("buildroot")
+
+        self.check_buildroot(buildroot)
+
+        # The user could specify either the tree or mountroot as the
+        # place where we want the deployment to be mounted.
+        if source == "mount":
+            target = args["root"]
+        else:
+            target = args["tree"]
+
+        bound = False
+        try:
+            # Before the bind mount below, which hides what is mounted
+            # below the physical root
+            self.stage(buildroot, target)
+            # The deployment is moved on top of the physical root, which
+            # needs a private mount there: "moving a mount residing under
+            # a shared mount is invalid and unsupported." - `mount(8)`
+            mount("--bind", "--make-private", target, target)
+            bound = True
+            self.assemble(target)
+        except BaseException:
+            # Moving the deployment is the last step, so nothing is on top
+            # of the private mount from above yet. Clean up without
+            # hiding the original error.
+            self.remove_staging(check=False)
+            if bound:
+                subprocess.run(["umount", target], check=False)
+            raise
+
+        print(f"mounted bootc deployment at {target}")
+        self.mountpoint = target
+        self.check = True
+
+    def umount(self):
+        if self.mountpoint:
+            subprocess.run(["sync", "-f", self.mountpoint],
+                           check=self.check)
+            subprocess.run(["umount", "-v", "-R", self.mountpoint],
+                           check=self.check)
+            # Older util-linux does not unmount everything with umount -R
+            # after a mount --move, see org.osbuild.ostree.deployment
+            while self.is_mounted():
+                print(f"extra unmount {self.mountpoint}")
+                subprocess.run(["umount", "-v", self.mountpoint],
+                               check=self.check)
+            self.mountpoint = None
+        # Only now that the deployment is gone can the staging area go
+        self.remove_staging(check=self.check)
+
+
+def main():
+    service = BootcDeploymentMount.from_args(sys.argv[1:])
+    service.main()
+
+
+if __name__ == '__main__':
+    main()
