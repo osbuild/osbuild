@@ -9,6 +9,22 @@ import pytest
 
 import osbuild.testutil
 from osbuild.util import containers
+from osbuild.util.mnt import MountPermissions
+
+
+@pytest.mark.parametrize("driver", ["overlay", "vfs"])
+def test_containers_storage_source_recursive_permissions(driver, tmp_path, monkeypatch):
+    storage_path = tmp_path / "storage"
+    monkeypatch.setattr(containers, "HOST_CONTAINERS_STORAGE", str(storage_path))
+    monkeypatch.setattr(containers, "HOST_CONTAINERS_STORAGE2", str(tmp_path / "storage2"))
+    image = {"data": {"storage": {"driver": driver}}, "checksum": "sha256:1234"}
+    with patch("osbuild.util.containers.MountGuard") as guard, \
+            patch("osbuild.util.containers.subprocess.run"):
+        with containers.containers_storage_source(image, "/input/storage", "containers-storage"):
+            guard.return_value.__enter__.return_value.mount.assert_called_once_with(
+                "/input/storage", str(storage_path), permissions=MountPermissions.READ_WRITE,
+                recursive_permissions=True,
+            )
 
 
 def test_container_mount_error():

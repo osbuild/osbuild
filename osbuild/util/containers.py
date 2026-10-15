@@ -128,13 +128,13 @@ def containers_storage_source(image, image_filepath, container_format):
     os.makedirs(storage_path, exist_ok=True)
 
     with MountGuard() as mg:
-        mg.mount(image_filepath, storage_path, permissions=MountPermissions.READ_WRITE)
-        # NOTE: the ostree.deploy.container needs explicit `rw` access to
-        # the containers-storage store even when bind mounted. Remounting
-        # the bind mount is a pretty dirty fix to get us up and running with
-        # containers-storage in `bootc-image-builder`. We could maybe check
-        # if we're inside a bib-continaer and only run this conidtionally.
-        mg.mount(image_filepath, storage_path, remount=True, permissions=MountPermissions.READ_WRITE)
+        # The build root exposes its inputs read-only, including the store's overlay
+        # child mount. Bootc's bound-image lookup writes driver metadata there,
+        # so a writable root with read-only children doesn't work. Let's restore
+        # write access recursively. The input mounts still stay read-only, but
+        # writes through this alias still update the shared store data.
+        mg.mount(image_filepath, storage_path, permissions=MountPermissions.READ_WRITE,
+                 recursive_permissions=True)
 
         image_id = image["checksum"].split(":")[1]
 
