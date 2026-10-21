@@ -21,6 +21,7 @@ STAGE_NAME = "org.osbuild.xorrisofs"
     ({"volid": "lower"}, ""),
     ({"volid": "Fedora-S-dvd-x86_64-rawh"}, ""),
     ({"volid": "Fedora-43-X86_64"}, ""),
+    ({"volid": "RHEL-10.1-bootc-Installer"}, ""),
 ])
 def test_schema_validation_xorrisofs(stage_schema, test_data, expected_err):
     test_input = {
