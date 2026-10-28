@@ -27,9 +27,6 @@
         "type": "object",
         "additionalProperties": false,
         "description": "Configures network information for the target system and activates network devices in the installation environment",
-        "required": [
-          "device"
-        ],
         "properties": {
           "activate": {
             "description": "Activate (or reactivate) the device. When set to false prevents the device from automatically activating on boot",
