@@ -1,0 +1,33 @@
+name: "Update RPM repo reference"
+
+on:
+  workflow_dispatch:
+  schedule:
+    # At 12:00 on every day
+    - cron: "0 12 * * *"
+
+jobs:
+  update-and-push:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+    steps:
+      - name: Clone rpmrepo repository
+        uses: actions/checkout@v4
+        with:
+          repository: osbuild/rpmrepo
+          path: rpmrepo
+
+      - name: Clone osbuild repository
+        uses: actions/checkout@v4
+        with:
+          repository: osbuild/osbuild
+          path: rpmrepo/osbuild
+          fetch-depth: 0
+
+      - name: Update schutzfile and open PR in osbuild repository
+        working-directory: rpmrepo
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+          REPO: "osbuild"
+        run: .github/scripts/snapshot_update_pr.sh
