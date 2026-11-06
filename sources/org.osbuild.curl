@@ -12,6 +12,10 @@ that require secrets. The secret providers currently supported are:
   environment in OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY,
   OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT, and optionally
   OSBUILD_SOURCES_CURL_SSL_CA_CERT.
+- `org.osbuild.basic_auth` for downloading content that requires basic
+  access authentication. `OSBUILD_SOURCES_HTTP_BASIC_AUTH_USER` and
+  `OSBUILD_SOURCES_HTTP_BASIC_AUTH_PASSWORD` should be set in the
+  environment.
 
 It uses curl to download the files; the files are cached in an
 internal cache. Multiple parallel connections are used to speed
@@ -116,6 +120,9 @@ def gen_curl_download_config(config_path: pathlib.Path, chksum_desc_tuple: List[
                 ssl_client_key = secrets.get('ssl_client_key')
                 if ssl_client_key:
                     fp.write(f'key = "{ssl_client_key}"\n')
+                basic_auth = secrets.get('basic_auth')
+                if basic_auth:
+                    fp.write(f'user = "{basic_auth}"\n')
             insecure = desc.get("insecure")
             if insecure:
                 fp.write('insecure\n')
@@ -263,6 +270,16 @@ class CurlSource(sources.SourceService):
                 'ssl_ca_cert': os.getenv("OSBUILD_SOURCES_CURL_SSL_CA_CERT"),
                 'ssl_client_cert': cert,
                 'ssl_client_key': key,
+            }
+        elif desc.get("secrets", {}).get("name") == "org.osbuild.basic_auth":
+            user = os.getenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_USER")
+            password = os.getenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_PASSWORD")
+            if not (user and password):
+                raise RuntimeError("basic auth required but user or password not set")
+            # to be on the safe side, escape any quotes in the user or
+            # password variables
+            desc["secrets"] = {
+                'basic_auth': f"{user}:{password}".replace("\\", "\\\\").replace('"', '\\"'),
             }
 
         return checksum, desc
