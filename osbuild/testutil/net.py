@@ -2,6 +2,7 @@
 """
 network related utilities
 """
+import base64
 import contextlib
 import http.server
 import socket
@@ -32,6 +33,10 @@ def _get_free_port():
 
 
 class SilentHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        self.basic_auth = kwargs.pop("basic_auth")
+        super().__init__(*args, **kwargs)
+
     def log_message(self, *args, **kwargs):
         pass
 
@@ -39,36 +44,40 @@ class SilentHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # silence errors when the other side "hangs up" unexpectedly
         # (our tests will do that when downloading in parallel)
         try:
+            if self.basic_auth and self.headers.get("Authorization") != "Basic " + self.basic_auth:
+                self.send_response(401)
             super().do_GET()
         except (ConnectionResetError, BrokenPipeError):
             pass
 
 
 class DirHTTPServer(ThreadingHTTPServer):
-    def __init__(self, *args, directory=None, simulate_failures=0, **kwargs):
+    def __init__(self, *args, directory=None, simulate_failures=0, basic_auth=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.directory = directory
         self.simulate_failures = AtomicCounter(simulate_failures)
         self.reqs = AtomicCounter()
+        self.basic_auth = basic_auth
 
     def finish_request(self, request, client_address):
         self.reqs.inc()
         if self.simulate_failures.count > 0:
             self.simulate_failures.dec()
             SilentHTTPRequestHandler(
-                request, client_address, self, directory="does-not-exists")
+                request, client_address, self, directory="does-not-exists", basic_auth=self.basic_auth)
             return
         SilentHTTPRequestHandler(
-            request, client_address, self, directory=self.directory)
+            request, client_address, self, directory=self.directory, basic_auth=self.basic_auth)
 
 
-def _httpd(rootdir, simulate_failures, ctx=None):
+def _httpd(rootdir, simulate_failures, ctx=None, basic_auth=None):
     port = _get_free_port()
     httpd = DirHTTPServer(
         ("localhost", port),
         http.server.SimpleHTTPRequestHandler,
         directory=rootdir,
         simulate_failures=simulate_failures,
+        basic_auth=basic_auth,
     )
     if ctx:
         httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
@@ -79,6 +88,19 @@ def _httpd(rootdir, simulate_failures, ctx=None):
 @contextlib.contextmanager
 def http_serve_directory(rootdir, simulate_failures=0):
     httpd = _httpd(rootdir, simulate_failures)
+    try:
+        yield httpd
+    finally:
+        httpd.shutdown()
+
+
+@contextlib.contextmanager
+def http_serve_directory_basic_auth(rootdir, user, password, simulate_failures=0):
+    httpd = _httpd(
+        rootdir,
+        simulate_failures,
+        basic_auth=base64.b64encode(
+            f"{user}:{password}".encode("utf-8")).decode())
     try:
         yield httpd
     finally:

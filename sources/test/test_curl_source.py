@@ -13,7 +13,12 @@ import pytest
 
 import osbuild.sources
 import osbuild.testutil
-from osbuild.testutil.net import http_serve_directory, https_serve_directory, https_serve_directory_mtls
+from osbuild.testutil.net import (
+    http_serve_directory,
+    http_serve_directory_basic_auth,
+    https_serve_directory,
+    https_serve_directory_mtls,
+)
 
 SOURCES_NAME = "org.osbuild.curl"
 
@@ -86,6 +91,21 @@ def test_curl_source_amend_secrets_subscription_mgr(sources_service):
     assert desc["secrets"] == "secret-for-['http://localhost:80/a']"
 
 
+def test_curl_source_amend_secrets_basic_auth(monkeypatch, sources_service):
+    desc = {
+        "url": "http://localhost:80/a",
+        "secrets": {
+            "name": "org.osbuild.basic_auth",
+        },
+    }
+
+    monkeypatch.setenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_USER", "admin")
+    monkeypatch.setenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_PASSWORD", "foobar")
+    checksum = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    _, new_desc = sources_service.amend_secrets(checksum, desc)
+    assert new_desc["secrets"]["basic_auth"] == "admin:foobar"
+
+
 @pytest.fixture(name="curl_parallel")
 def curl_parallel_fixture(sources_module, sources_service, request):
     use_parallel = request.param
@@ -129,10 +149,12 @@ def make_test_sources(fake_httpd_root, port, n_files, start_n=0, cacert="", secr
         val = {
             "url": f"{proto}://localhost:{port}/{name}",
         }
-        if cacert:
+        if secret_name != "":
             val["secrets"] = {}
-            if secret_name != "":
-                val["secrets"]["name"] = secret_name
+            val["secrets"]["name"] = secret_name
+        if cacert:
+            if "secrets" not in val:
+                val["secrets"] = {}
             val["secrets"]["ssl_ca_cert"] = cacert
         sources[key] = val
         (fake_httpd_root / name).write_text(name, encoding="utf8")
@@ -457,3 +479,20 @@ def test_curl_copy_all(tmp_path, sources_service):
 
     for chksum in test_sources:
         assert os.path.isfile(dst_cache / sources_service.content_type / chksum)
+
+
+def test_curl_download_http_basic_auth(tmp_path, monkeypatch, sources_service):
+    fake_httpd_root = tmp_path / "fake-httpd-root"
+
+    monkeypatch.setenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_USER", "admin")
+    monkeypatch.setenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_PASSWORD", "foobar")
+
+    with http_serve_directory_basic_auth(fake_httpd_root, "admin", "foobar") as httpd:
+        test_sources = make_test_sources(
+            fake_httpd_root, httpd.server_port, 1, secret_name="org.osbuild.basic_auth")
+
+        sources_service.cache = tmp_path / "curl-download-dir"
+        sources_service.cache.mkdir()
+        sources_service.fetch_all(test_sources)
+
+        assert httpd.reqs.count == 1
