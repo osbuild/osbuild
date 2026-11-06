@@ -28,7 +28,6 @@ ExcludeArch:    i686
 BuildRequires:  make
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
-BuildRequires:  python3-setuptools
 BuildRequires:  systemd
 
 # for tests
@@ -38,6 +37,7 @@ BuildRequires:  python3-kickstart
 BuildRequires:  python3-mako
 BuildRequires:  python3-PyYAML
 BuildRequires:  python3-pytest
+BuildRequires:  python3-dnf
 %if 0%{?fedora}
 BuildRequires:  python3-license-expression
 BuildRequires:  python3-pytest-xdist
@@ -86,14 +86,12 @@ Requires:       python3-tomli
 # /usr/bin/python3 is present so stages and assemblers can be run.
 %global __brp_mangle_shebangs_exclude_from ^%{pkgdir}/(assemblers|runners|stages)/.*$
 
-%{?python_enable_dependency_generator}
 
 %description
 A build system for OS images
 
 %package -n     python3-%{pypi_name}
 Summary:        %{summary}
-%{?python_provide:%python_provide python3-%{pypi_name}}
 
 %description -n python3-%{pypi_name}
 A build system for OS images
@@ -221,7 +219,7 @@ Dependencies required for running osbuild pipelines in a VM.
 tar xf %SOURCE1
 
 %build
-%py3_build
+%pyproject_wheel
 make man
 (cd osbuild-initrd-%{osbuild_initrd_version}; make build)
 
@@ -236,7 +234,8 @@ bzip2 -9 osbuild-container.pp
 %selinux_relabel_pre -s %{selinuxtype}
 
 %install
-%py3_install
+%pyproject_install
+%pyproject_save_files -l %{pypi_name}
 (cd osbuild-initrd-%{osbuild_initrd_version}; %make_install)
 
 # Ensure vm.py is executable which is needed to run in with init= in the vm
@@ -308,6 +307,8 @@ install -p -m 0644 tools/solver-dnf.json %{buildroot}%{pkgdir}/solver.json
 
 %if 0%{?fedora} || 0%{?rhel} >= 9
 %check
+# osbuild.vm mounts selinuxfs as a module-level side effect (needs root/privileged mock)
+%pyproject_check_import -e osbuild.vm
 # skip toml-writing tests in RHEL (no such library available there)
 # There is a bunch of tests failing on specific arch/OS combinations.
 # osbuild is a noarch package, meaning the architecture conditionals don't work.
@@ -418,11 +419,8 @@ done
 %exclude %{pkgdir}/stages/org.osbuild.experimental.ostree*
 %exclude %{pkgdir}/stages/org.osbuild.rpm-ostree
 
-%files -n       python3-%{pypi_name}
-%license LICENSE
+%files -n       python3-%{pypi_name} -f %{pyproject_files}
 %doc README.md
-%{python3_sitelib}/%{pypi_name}-*.egg-info/
-%{python3_sitelib}/%{pypi_name}/
 
 %files initrd
 %{pkgdir}/initrd
