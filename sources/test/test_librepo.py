@@ -12,7 +12,10 @@ except ImportError:
 import pytest
 
 from osbuild import testutil
-from osbuild.testutil.net import http_serve_directory
+from osbuild.testutil.net import (
+    http_serve_directory,
+    http_serve_directory_basic_auth,
+)
 
 SOURCES_NAME = "org.osbuild.librepo"
 
@@ -139,6 +142,51 @@ def test_librepo_secrets_mtls(mocked_download_pkgs, sources_service, monkeypatch
     assert download_pkgs[0].handle.sslclientkey == "mtls-client-key"
     assert download_pkgs[0].handle.sslclientcert == "mtls-client-cert"
     assert download_pkgs[0].handle.sslcacert == "mtls-ca-cert"
+
+
+def test_librepo_secrets_basic_auth(tmp_path, sources_service, monkeypatch):
+    src_cache = tmp_path / "src-cache"
+    fake_httpd_root = tmp_path / "fake-httpd-root"
+
+    TEST_SOURCES = {
+        "sha256:ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb": {
+            "path": "Packages/a/a",
+            "mirror": "mirror_id",
+        },
+        "sha256:3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d": {
+            "path": "Packages/b/b",
+            "mirror": "mirror_id",
+        },
+    }
+    for source in TEST_SOURCES.values():
+        path = source["path"]
+        os.makedirs(fake_httpd_root / os.path.dirname(path))
+
+        basename = os.path.basename(source["path"])
+        (fake_httpd_root / path).write_text(basename)
+
+    monkeypatch.setenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_USER", "admin")
+    monkeypatch.setenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_PASSWORD", "foobar")
+
+    with http_serve_directory_basic_auth(fake_httpd_root, "admin", "foobar") as httpd:
+        sources_service.setup(
+            {
+                "cache": src_cache,
+                "options": {
+                    "mirrors": {
+                        "mirror_id": {
+                            "url": f"http://localhost:{httpd.server_port}",
+                            "type": "baseurl",
+                            "secrets": {
+                                "name": "org.osbuild.basic_auth",
+                            },
+                        },
+                    }
+                },
+            },
+        )
+        sources_service.fetch_all(TEST_SOURCES)
+        assert httpd.reqs.count == len(TEST_SOURCES)
 
 
 @pytest.mark.parametrize("test_mirrors,expected_err", [

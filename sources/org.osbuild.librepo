@@ -9,6 +9,7 @@ using the hash as the filename.
 It can download files that require secrets. The support secret providers are:
 - `org.osbuild.rhsm` for downloading Red Hat content that requires a subscriptions.
 - `org.osbuild.mtls`
+- `org.osbuild.basic_auth`
 """
 
 import os
@@ -74,6 +75,13 @@ class LibRepoSource(sources.SourceService):
         handle.sslcacert = os.getenv("OSBUILD_SOURCES_CURL_SSL_CA_CERT")
         handle.sslclientcert = cert
         handle.sslclientkey = key
+
+    def _setup_basic_auth(self, handle):
+        user = os.getenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_USER")
+        password = os.getenv("OSBUILD_SOURCES_HTTP_BASIC_AUTH_PASSWORD")
+        if not (user and password):
+            raise RuntimeError("basic auth required but user or password not set")
+        handle.userpwd = f"{user}:{password}"
 
     # This gets called when done
     # data comes from cbdata
@@ -189,6 +197,8 @@ class LibRepoSource(sources.SourceService):
                 self._setup_rhsm(handle, mirror)
             elif secrets_name == "org.osbuild.mtls":
                 self._setup_mtls(handle)
+            elif secrets_name == "org.osbuild.basic_auth":
+                self._setup_basic_auth(handle)
 
             download = []
             for path, checksum in packages:
