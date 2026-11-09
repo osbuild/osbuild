@@ -128,7 +128,10 @@ class Object:
             self._cache.stage()
         )
         self._path = os.path.join(self._cache, name)
-        os.makedirs(os.path.join(self._path, "tree"))
+        tree = os.path.join(self._path, "tree")
+        os.makedirs(tree)
+        # Initialize the output root independently of the host umask.
+        os.chmod(tree, 0o755)
 
     def to_dict(self):
         return {

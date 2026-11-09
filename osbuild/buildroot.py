@@ -293,6 +293,10 @@ class BuildRoot(contextlib.AbstractContextManager):
         runner = f"/run/osbuild/runner/{runner_name}"
         mounts += ["--ro-bind", self._runner, runner]
 
+        umask_wrapper = [
+            "/bin/bash", "-c", 'umask 022 && exec "$@"', "osbuild-buildroot",
+        ]
+
         cmd = [
             "bwrap",
             "--chdir", "/",
@@ -307,8 +311,7 @@ class BuildRoot(contextlib.AbstractContextManager):
 
         cmd += mounts
         debug_shell_cmd = cmd + ["--", "/bin/bash"]  # used for debugging if requested
-        cmd += ["--", runner]
-        cmd += argv
+        cmd += ["--", runner] + argv
 
         # Setup a new environment for the container.
         env = {
@@ -325,9 +328,9 @@ class BuildRoot(contextlib.AbstractContextManager):
         # If the user requested it then break into a shell here
         # for debugging.
         if debug_shell:
-            subprocess.run(debug_shell_cmd, check=True)
+            subprocess.run(umask_wrapper + debug_shell_cmd, check=True)
 
-        proc = subprocess.Popen(cmd,
+        proc = subprocess.Popen(umask_wrapper + cmd,
                                 bufsize=0,
                                 env=env,
                                 stdin=subprocess.DEVNULL,
