@@ -57,6 +57,26 @@ def test_basic(tempdir, runner):
 
 
 @pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
+@pytest.mark.parametrize("umask", [0o022, 0o027, 0o077])
+def test_umask(tempdir, runner, umask):
+    libdir = os.path.abspath(os.curdir)
+    var = pathlib.Path(tempdir, "var")
+    var.mkdir()
+
+    monitor = NullMonitor(sys.stderr.fileno())
+    previous_umask = os.umask(umask)
+    try:
+        with BuildRoot("/", runner, libdir, var) as root:
+            r = root.run(["/bin/sh", "-c", "umask"], monitor)
+            assert r.returncode == 0, r.output
+            assert int(r.output.strip().splitlines()[-1], 8) == 0o022
+
+        assert os.umask(umask) == umask
+    finally:
+        os.umask(previous_umask)
+
+
+@pytest.mark.skipif(not TestBase.can_bind_mount(), reason="root only")
 def test_runner_fail(tempdir):
     runner = "org.osbuild.nonexistantrunner"
     libdir = os.path.abspath(os.curdir)
