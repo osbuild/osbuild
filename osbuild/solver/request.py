@@ -160,6 +160,7 @@ class SolverConfig:
         repos: Optional[List[Repository]] = None,
         root_dir: Optional[str] = None,
         optional_metadata: Optional[List[str]] = None,
+        cacheonly: Optional[bool] = None,
     ):
         self.arch = arch
         self.releasever = releasever
@@ -169,6 +170,7 @@ class SolverConfig:
         self.repos = repos
         self.root_dir = root_dir
         self.optional_metadata = optional_metadata
+        self.cacheonly = cacheonly
 
         # Validation
         required_args = ["arch", "cachedir"]
@@ -192,6 +194,7 @@ class SolverConfig:
             and self.repos == other.repos
             and self.root_dir == other.root_dir
             and self.optional_metadata == other.optional_metadata
+            and self.cacheonly == other.cacheonly
         )
 
     def __hash__(self) -> int:
@@ -204,12 +207,13 @@ class SolverConfig:
             tuple(self.repos) if self.repos else None,
             self.root_dir,
             tuple(self.optional_metadata) if self.optional_metadata else None,
+            self.cacheonly,
         ))
 
     def __repr__(self) -> str:
         return f"SolverConfig(arch={self.arch}, releasever={self.releasever}, cachedir={self.cachedir}, " \
             f"module_platform_id={self.module_platform_id}, proxy={self.proxy}, repos={self.repos}, " \
-            f"root_dir={self.root_dir}, optional_metadata={self.optional_metadata})"
+            f"root_dir={self.root_dir}, optional_metadata={self.optional_metadata}, cacheonly={self.cacheonly})"
 
 
 # pylint: disable=too-many-instance-attributes
