@@ -162,6 +162,10 @@ class DNF(SolverBase):
         self.base.conf.config_file_path = "/dev/null"
         self.base.conf.persistdir = persistdir
         self.base.conf.cachedir = self.config.cachedir
+        if self.config.cacheonly:
+            # Run entirely from the repository metadata cache: no metadata
+            # refresh, so a pre-warmed cache works without network access.
+            self.base.conf.cacheonly = True
         self.base.conf.substitutions['arch'] = self.config.arch
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(self.config.arch)
         if self.config.releasever:
@@ -193,7 +197,8 @@ class DNF(SolverBase):
                         repo_config.sslclientcert = modify_rootdir_path(repo_config.sslclientcert, self.root_dir)
                         repo_config.sslclientkey = modify_rootdir_path(repo_config.sslclientkey, self.root_dir)
 
-            self.base.update_cache()
+            if not self.config.cacheonly:
+                self.base.update_cache()
             self.base.fill_sack(load_system_repo=False)
         except Exception as e:
             raise RepoError(e) from e

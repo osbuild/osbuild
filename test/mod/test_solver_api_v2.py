@@ -480,6 +480,35 @@ def test_solver_response_v2_depsolve(modules, sbom, serializer):
         None,
         id="valid_depsolve_minimal",
     ),
+    # Valid DEPSOLVE request - cacheonly
+    pytest.param(
+        {
+            "api_version": 2,
+            "command": "depsolve",
+            "arch": "x86_64",
+            "releasever": "43",
+            "cachedir": "/tmp/cache",
+            "cacheonly": True,
+            "arguments": {
+                "repos": [{"id": "fedora", "baseurl": ["https://example.com/fedora"]}],
+                "transactions": [{"package-specs": ["bash"]}],
+            },
+        },
+        SolverRequest(
+            api_version=SolverAPIVersion.V2,
+            command=SolverCommand.DEPSOLVE,
+            config=SolverConfig(
+                arch="x86_64",
+                releasever="43",
+                cachedir="/tmp/cache",
+                cacheonly=True,
+                repos=[Repository.from_request(repo_id="fedora", baseurl=["https://example.com/fedora"])],
+            ),
+            depsolve_args=DepsolveCmdArgs([DepsolveTransaction(package_specs=["bash"])]),
+        ),
+        None,
+        id="valid_depsolve_cacheonly",
+    ),
     # Valid DEPSOLVE request - full
     pytest.param(
         {
