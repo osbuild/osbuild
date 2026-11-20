@@ -4,6 +4,7 @@
 
 import contextlib
 import os
+import stat
 import tempfile
 from pathlib import Path
 
@@ -75,6 +76,28 @@ def test_basic(object_store):
     tree = object_store.get("b")
     assert tree is not None
     assert tree.mode == objectstore.Object.Mode.READ
+
+
+@pytest.mark.parametrize("umask", [0o022, 0o027, 0o077])
+def test_new_tree_permissions(object_store, umask):
+    previous_umask = os.umask(umask)
+    try:
+        tree = object_store.new("a")
+        assert stat.S_IMODE(os.stat(tree).st_mode) == 0o755
+        assert os.umask(umask) == umask
+    finally:
+        os.umask(previous_umask)
+
+
+def test_tree_permissions_preserved(object_store):
+    tree = object_store.new("a")
+    os.chmod(tree, 0o700)
+    tree.finalize()
+    assert stat.S_IMODE(os.stat(tree).st_mode) == 0o700
+
+    other = object_store.new("b")
+    other.init(tree)
+    assert stat.S_IMODE(os.stat(other).st_mode) == 0o700
 
 
 def test_cleanup(tmp_path):
