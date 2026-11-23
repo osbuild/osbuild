@@ -13,6 +13,7 @@ It can download files that require secrets. The support secret providers are:
 """
 
 import os
+import platform
 import sys
 import urllib.parse
 from typing import Dict
@@ -168,6 +169,7 @@ class LibRepoSource(sources.SourceService):
         for mirror_id, packages in packages_from_mirror.items():
             mirror = self.options["mirrors"][mirror_id]
             handle = librepo.Handle()
+            handle.useragent = f"osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
             handle.repotype = librepo.YUMREPO
             if mirror["type"] == "metalink":
                 handle.metalinkurl = mirror["url"]

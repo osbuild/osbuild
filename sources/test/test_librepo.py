@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import platform
 from typing import List
 from unittest.mock import patch
 
@@ -55,6 +56,7 @@ def test_librepo_download_mocked(mocked_download_pkgs, sources_service):
     assert download_pkgs[0].relative_url == "Packages/a/a"
     assert download_pkgs[0].dest == "cachedir/sha256:1111111111111111111111111111111111111111111111111111111111111111"
     assert download_pkgs[0].handle.mirrorlisturl == "http://example.com/mirrorlist"
+    assert download_pkgs[0].handle.useragent == f"osbuild (Linux.{platform.machine()}; https://osbuild.org/)"
     # and now the second call
     download_pkgs = mocked_download_pkgs.call_args_list[1][0][0]
     assert download_pkgs[0].checksum == "2111111111111111111111111111111111111111111111111111111111111111"
