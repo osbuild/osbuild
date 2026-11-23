@@ -43,6 +43,11 @@
             "type": "boolean",
             "description": "Do not install documentation.",
             "default": false
+          },
+          "artifacts": {
+            "type": "boolean",
+            "description": "Do not install any files which are marked as artifacts, such as build-id links.",
+            "default": false
           }
         }
       },
