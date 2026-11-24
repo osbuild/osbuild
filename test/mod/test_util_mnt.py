@@ -100,7 +100,8 @@ def test_mount_guard_recursive_permissions_real_mounts(tmp_path):
         subprocess.run(["mount", "-t", "tmpfs", "-o", "nosuid,nodev,noexec", "tmpfs", os.fspath(child)], check=True)
         mounts.callback(subprocess.run, ["umount", "--lazy", os.fspath(child)], check=True)
         (child / "image").write_text("bound image data", encoding="utf-8")
-        subprocess.run(["mount", "--rbind", os.fspath(source), os.fspath(input_path)], check=True)
+        # Keep unmounting the input from also detaching the source's child mount.
+        subprocess.run(["mount", "--rbind", "--make-rprivate", os.fspath(source), os.fspath(input_path)], check=True)
         mounts.callback(subprocess.run, ["umount", "--lazy", os.fspath(input_path)], check=True)
         # Model the build root's read-only input, including its child mount.
         subprocess.run(["mount", "-o", "remount,bind,ro,nosuid,nodev,noexec", "none",
