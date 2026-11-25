@@ -7,12 +7,19 @@ import osbuild.api
 
 
 def iter_files(tree, include):
-    for root, _, files in os.walk(tree, topdown=True):
-        for f in files:
-            path = os.path.relpath(os.path.join(root, f), tree)
-            yield path
+    for root, dirs, files in os.walk(tree, topdown=True, followlinks=False):
         if tree != root or include:
             yield os.path.relpath(root, tree)
+
+        # sort for stable, filesystems can give arbitrary ordering
+        dirs.sort()
+
+        # os.walk puts symlinks to directories in dirs without visiting them so lets
+        # pull them back out so we can put them last.
+        links = [name for name in dirs if os.path.islink(os.path.join(root, name))]
+
+        for name in sorted(files + links):
+            yield os.path.relpath(os.path.join(root, name), tree)
 
 
 def main(inputs, output_dir, options):
