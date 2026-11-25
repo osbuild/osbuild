@@ -1,0 +1,25 @@
+version: '2'
+pipelines:
+  - name: tree
+    stages:
+      - type: org.osbuild.mkdir
+        options:
+          paths:
+            - path: /etc
+      - type: org.osbuild.machine-id
+        options:
+          first-boot: 'no'
+      - type: org.osbuild.fstab
+        options:
+          filesystems:
+            - device: /dev/vda1
+              path: /
+              vfs_type: ext4
+      - type: org.osbuild.anaconda
+        options:
+          kickstart-modules:
+            - org.fedoraproject.Anaconda.Modules.Users
+      - type: org.osbuild.truncate
+        options:
+          filename: testfile
+          size: '1'

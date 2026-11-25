@@ -11,6 +11,7 @@ import pprint
 import random
 import re
 import shutil
+import stat
 import string
 import subprocess
 import tarfile
@@ -846,3 +847,34 @@ class TestStages(test.TestBase):
                 # ignore comments in the comparison, since it contains a timestamp which is unpredictable
                 continue
             assert stage_line == plugin_line
+
+
+@unittest.skipUnless(test.TestBase.can_bind_mount(), "root-only")
+class TestUmask(test.TestBase):
+    def test_file_creation_umask(self):
+        manifest = os.path.join(self.locate_test_data(), "manifests/fedora-umask.json")
+        expected_modes = {
+            "": 0o755,
+            "etc": 0o755,
+            "etc/machine-id": 0o644,
+            "etc/fstab": 0o644,
+            "etc/anaconda": 0o755,
+            "etc/anaconda/conf.d": 0o755,
+            "etc/anaconda/conf.d/90-osbuild.conf": 0o644,
+            "testfile": 0o644,
+        }
+
+        for umask in (0o022, 0o027, 0o077):
+            with self.subTest(umask=oct(umask)), test.OSBuild() as osb, \
+                    tempfile.TemporaryDirectory(dir="/var/tmp") as outdir:
+                previous_umask = os.umask(umask)
+                try:
+                    osb.compile_file(manifest, exports=["tree"], output_dir=outdir)
+                    self.assertEqual(os.umask(umask), umask)
+                finally:
+                    os.umask(previous_umask)
+
+                for path, mode in expected_modes.items():
+                    with self.subTest(path=path):
+                        object_metadata = os.stat(os.path.join(outdir, "tree", path))
+                        self.assertEqual(stat.S_IMODE(object_metadata.st_mode), mode)
