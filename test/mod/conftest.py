@@ -14,14 +14,14 @@ def assert_dump_result_equal(result1, result2):
     """
     it1 = iter(result1.packages)
     it2 = iter(result2.packages)
-    sentinel = object()
+    exhausted = object()
     while True:
-        pkg1 = next(it1, sentinel)
-        pkg2 = next(it2, sentinel)
-        if pkg1 is sentinel and pkg2 is sentinel:
+        pkg1 = next(it1, exhausted)
+        pkg2 = next(it2, exhausted)
+        if pkg1 is exhausted and pkg2 is exhausted:
             break
-        assert pkg1 is not sentinel, "result1 has fewer packages than result2"
-        assert pkg2 is not sentinel, "result2 has fewer packages than result1"
+        assert pkg1 is not exhausted, "result1 has fewer packages than result2"
+        assert pkg2 is not exhausted, "result2 has fewer packages than result1"
         assert_object_equal(pkg1, pkg2)
     assert_object_equal(result1.repositories, result2.repositories)
 
