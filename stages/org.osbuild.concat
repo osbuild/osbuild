@@ -1,0 +1,30 @@
+#!/usr/bin/python3
+import os
+import shutil
+import sys
+
+import osbuild.api
+from osbuild.util import parsing
+from osbuild.util.path import join_abs
+
+
+def main(args):
+    options = args["options"]
+    alignment = options.get("alignment", 1)
+    filename = options["filename"].lstrip("/")
+    target = join_abs(args["tree"], f"/{filename}")
+    sources = [parsing.parse_location(location, args) for location in options["files"]]
+
+    with open(target, "wb") as output:
+        for source in sources:
+            with open(source, "rb") as member:
+                output.seek(-output.tell() % alignment, os.SEEK_CUR)
+                shutil.copyfileobj(member, output)
+        # Extend the file if alignment moved past EOF before an empty input.
+        output.truncate()
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(osbuild.api.arguments()))
