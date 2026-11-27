@@ -254,6 +254,8 @@ def main(tree, inputs, options):
         extra_args = []
         if options.get("exclude", {}).get("docs"):
             extra_args += ["--excludedocs"]
+        if options.get("exclude", {}).get("artifacts"):
+            extra_args += ["--excludeartifacts"]
 
         # prevent dracut from running, if enabled
         no_dracut = options.get("disable_dracut", False)
