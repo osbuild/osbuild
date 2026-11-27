@@ -59,6 +59,11 @@ jobs:
           sed -i '/^driver = /s/overlay/vfs/g' /usr/share/containers/storage.conf  # default system config
           sed -i '/^driver = /s/overlay/vfs/g' /etc/containers/storage.conf || true  # potential overrides
           if [ "${{ matrix.test }}" == "parallel" ]; then
+              # needs to be used with buildah
+              # buildah#6892
+              mkdir -p /var/tmp/buildah-tmp
+              mount -t tmpfs -o size=512m tmpfs /var/tmp/buildah-tmp || true
+              export TMPDIR=/var/tmp/buildah-tmp
               # 4 is a bit arbitrary
               TEST_WORKERS="-n 4"
               TEST_CATEGORY="test_stages.py"
