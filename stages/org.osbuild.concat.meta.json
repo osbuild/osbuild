@@ -1,0 +1,47 @@
+{
+  "summary": "Concatenate input files",
+  "description": [
+    "Copy the bytes of the input files to a new file in the output tree,",
+    "in the order given in files. If alignment is set, insert zero bytes",
+    "as needed before each input file so it begins on the specified byte",
+    "boundary."
+  ],
+  "schema_2": {
+    "inputs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "options": {
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "files"
+      ],
+      "properties": {
+        "filename": {
+          "description": "Path of the output file in the tree",
+          "type": "string",
+          "minLength": 1
+        },
+        "files": {
+          "description": "Ordered list of input file URLs",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^input://[^/]+/.+"
+          }
+        },
+        "alignment": {
+          "description": "Byte alignment of each input file in the output",
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        }
+      }
+    }
+  }
+}
