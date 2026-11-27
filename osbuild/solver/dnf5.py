@@ -242,6 +242,12 @@ class DNF5(SolverBase):
         conf.config_file_path = "/dev/null"
         conf.persistdir = persistdir
         conf.cachedir = self.config.cachedir
+        if self.config.cacheonly:
+            # Run entirely from the repository metadata cache: no metadata
+            # refresh, so a pre-warmed cache works without network access.
+            # In libdnf5 this is a string enum ("none"/"metadata"/"all"),
+            # not a boolean.
+            conf.cacheonly = "all"
 
         # Include comps metadata by default
         metadata_types = ['comps']

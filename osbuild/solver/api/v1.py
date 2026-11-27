@@ -217,6 +217,7 @@ def parse_request(request_dict: Dict[str, Any]) -> SolverRequest:
     # Get optional top-level fields
     module_platform_id = request_dict.get("module_platform_id")
     proxy = request_dict.get("proxy")
+    cacheonly = request_dict.get("cacheonly")
 
     # Validate and parse command arguments
     if not isinstance(arguments, dict):
@@ -297,6 +298,7 @@ def parse_request(request_dict: Dict[str, Any]) -> SolverRequest:
             repos=repos,
             root_dir=root_dir,
             optional_metadata=optional_metadata,
+            cacheonly=cacheonly,
         ),
         depsolve_args=depsolve_args,
         search_args=search_args,
