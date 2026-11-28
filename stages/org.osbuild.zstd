@@ -19,13 +19,15 @@ def parse_input(inputs):
 def main(inputs, output, options):
     filename = options["filename"].lstrip("/")
 
+    level = options.get("level", 1)
+
     source = parse_input(inputs)
     target = os.path.join(output, filename)
 
     with open(target, "w", encoding="utf8") as f:
 
         cmd = [
-            "zstd", "--keep", "--stdout", "-T0", "-1", source
+            "zstd", "--keep", "--stdout", "-T0", f"-{level}", source
         ]
 
         subprocess.run(

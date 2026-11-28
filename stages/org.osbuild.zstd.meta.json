@@ -26,6 +26,13 @@
         "filename": {
           "description": "Filename to use for the compressed file",
           "type": "string"
+        },
+        "level": {
+          "description": "Compression level",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 19,
+          "default": 1
         }
       }
     }

@@ -15,7 +15,12 @@ STAGE_NAME = "org.osbuild.zstd"
 @pytest.mark.parametrize("test_data,expected_err", [
     # bad
     ({}, "'filename' is a required property"),
+    ({"filename": "image.zst", "level": 0}, "0 is less than the minimum of 1"),
+    ({"filename": "image.zst", "level": 20}, "20 is greater than the maximum of 19"),
     # good
+    ({"filename": "image.zst", "level": 1}, ""),
+    ({"filename": "image.zst", "level": 9}, ""),
+    ({"filename": "image.zst", "level": 19}, ""),
     ({"filename": "image.zst"}, ""),
 ])
 def test_schema_validation_zstd(stage_schema, test_data, expected_err):
@@ -67,14 +72,17 @@ def test_zstd_integration(tmp_path, stage_module, fake_input_tree):  # pylint: d
     assert "A file to be compressed" in output
 
 
+@pytest.mark.parametrize("level", [None, 1, 9, 19])
 @mock.patch("subprocess.run")
-def test_zstd_cmdline(mock_run, tmp_path, stage_module, fake_input_tree):
+def test_zstd_cmdline(mock_run, tmp_path, stage_module, fake_input_tree, level):
     fake_input_path = fake_input_tree[0]
     inputs = fake_input_tree[1]
     filename = "image.txt.zst"
     options = {
         "filename": filename,
     }
+    if level is not None:
+        options["level"] = level
     stage_module.main(inputs, tmp_path, options)
 
     expected = [
@@ -82,7 +90,7 @@ def test_zstd_cmdline(mock_run, tmp_path, stage_module, fake_input_tree):
         "--keep",
         "--stdout",
         "-T0",
-        "-1",
+        f"-{level if level is not None else 1}",
         os.path.join(fake_input_path, "sha256:ff3e910ceb79fd66e67b7ff4a9073b1d584c748a5f3d1e6b1873afa1cf35ec59")
     ]
     mock_run.assert_called_with(expected, stdout=mock.ANY, check=True)
