@@ -1,0 +1,38 @@
+{
+  "summary": "Copy kernel modules from a pipeline tree",
+  "description": [
+    "Copy the selected kernel release's module tree and metadata into /usr/lib/modules.",
+    "Kernel images, initramfs images, build links, and build artifacts are excluded.",
+    "Firmware is not copied. Buildhost commands used: `cp`."
+  ],
+  "schema_2": {
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tree"
+      ],
+      "properties": {
+        "tree": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kernel_version"
+      ],
+      "properties": {
+        "kernel_version": {
+          "description": "Kernel release directory to copy from the source tree",
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\.{1,2}$)[^/]+$"
+        }
+      }
+    }
+  }
+}

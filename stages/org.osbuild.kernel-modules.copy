@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+"""Copy a kernel's module tree without its kernel image or build artifacts."""
+
+import pathlib
+import subprocess
+import sys
+
+import osbuild.api
+
+
+def main(inputs, tree, options):
+    version = options["kernel_version"]
+    if version in ("", ".", "..") or "/" in version:
+        raise ValueError(f"Invalid kernel version: {version!r}")
+
+    source = pathlib.Path(inputs["tree"]["path"]) / "usr/lib/modules" / version
+    if not source.is_dir():
+        raise FileNotFoundError(f"Kernel module directory not found: {source}")
+
+    target = pathlib.Path(tree) / "usr/lib/modules" / version
+    target.mkdir(parents=True, exist_ok=True)
+
+    excluded = {
+        "vmlinuz", ".vmlinuz.hmac", "vmlinux", "initramfs.img", "initrd.img",
+        "build", "source", "config", "System.map", "symvers.xz", "systemtap",
+    }
+    for entry in sorted(source.iterdir()):
+        if entry.name not in excluded:
+            subprocess.run(["cp", "-a", "--reflink=auto", str(entry), str(target) + "/"], check=True)
+
+    return 0
+
+
+if __name__ == "__main__":
+    args = osbuild.api.arguments()
+    sys.exit(main(args["inputs"], args["tree"], args["options"]))
